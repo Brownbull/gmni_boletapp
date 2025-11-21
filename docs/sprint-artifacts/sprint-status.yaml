@@ -40,5 +40,5 @@ development_status:
   1-2-production-build-configuration: done
   1-3-git-repository-setup: done
   1-4-firebase-deployment-infrastructure: done
-  1-5-production-deployment-verification: review
+  1-5-production-deployment-verification: done
   epic-1-retrospective: optional
