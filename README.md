@@ -127,28 +127,76 @@ src/
 
 ## Deployment
 
+### Prerequisites
+
+- Firebase CLI installed (`npm install -g firebase-tools`)
+- Authenticated with Firebase (`firebase login`)
+- Production build completed (`npm run build`)
+
 ### Firebase Hosting
 
-1. Install Firebase CLI:
-   ```bash
-   npm install -g firebase-tools
-   ```
+#### Staging Deployment
 
-2. Login to Firebase:
-   ```bash
-   firebase login
-   ```
+Test your changes in a staging environment before production:
 
-3. Initialize hosting (if not already done):
-   ```bash
-   firebase init hosting
-   ```
+```bash
+npm run build
+firebase hosting:channel:deploy staging
+```
 
-4. Build and deploy:
-   ```bash
-   npm run build
-   firebase deploy --only hosting
-   ```
+This creates a temporary preview URL that expires after 7 days.
+
+#### Production Deployment
+
+Deploy to production hosting:
+
+```bash
+npm run build
+firebase deploy --only hosting
+```
+
+Or use the combined script:
+
+```bash
+npm run deploy
+```
+
+This runs both `build` and `deploy --only hosting` in sequence.
+
+#### Deployment Verification
+
+After deployment:
+
+1. Check the deployment URL in terminal output
+2. Open the Firebase Console: https://console.firebase.google.com/project/boletapp-d609f/hosting
+3. Verify all features work (auth, scanning, CRUD, analytics)
+4. Monitor for errors in Firebase Console
+
+#### Rollback Procedure
+
+If issues are detected after deployment:
+
+1. Go to Firebase Console > Hosting
+2. Find the previous working deployment
+3. Click the three-dot menu > "Rollback"
+4. Confirm the rollback
+
+### Troubleshooting
+
+**"firebase command not found"**
+- Install Firebase CLI: `npm install -g firebase-tools`
+
+**"Permission denied" or not authenticated**
+- Run `firebase login` and sign in with your Google account
+
+**"Project not found"**
+- Check `.firebaserc` contains the correct project ID (`boletapp-d609f`)
+- Run `firebase projects:list` to see available projects
+
+**"Build failed"**
+- Run `npm run build` separately to debug
+- Check for TypeScript errors with `npm run type-check`
+- Ensure all environment variables are set in `.env`
 
 ## Repository
 
