@@ -1,0 +1,711 @@
+# API Contracts - Boletapp
+
+## Overview
+
+Boletapp integrates with three external APIs to provide authentication, data persistence, and AI-powered receipt analysis. This document details the contracts, request/response formats, and error handling for each integration.
+
+---
+
+## Firebase Authentication API
+
+### Purpose
+Handles user authentication and session management using Google Sign-In (OAuth 2.0).
+
+### SDK Integration
+
+**Provider:** Firebase Auth SDK (v10.x)
+**Module:** `firebase/auth`
+**Initialization:** Lines 11-16, 300
+
+### Authentication Methods
+
+#### Google Sign-In (OAuth Popup)
+
+**Implementation:** Lines 337-345
+
+```javascript
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+
+const handleGoogleLogin = async () => {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(services.auth, provider);
+};
+```
+
+**Request Flow:**
+1. User clicks "Sign in with Google" button
+2. OAuth popup window opens
+3. User selects Google account and grants permissions
+4. Popup closes, Firebase auth token received
+5. `onAuthStateChanged` listener fires with user object
+
+**Response Object:**
+
+```typescript
+interface User {
+    uid: string;              // Unique user identifier (e.g., "abc123...")
+    email: string;            // User's email address
+    displayName: string;      // User's full name
+    photoURL: string;         // Profile picture URL
+    emailVerified: boolean;   // Email verification status
+    providerData: Array<{     // OAuth provider info
+        providerId: string;   // "google.com"
+        uid: string;          // Google user ID
+    }>;
+}
+```
+
+**Error Handling:**
+
+| Error Code | Description | User Message |
+|------------|-------------|--------------|
+| `auth/popup-closed-by-user` | User closed OAuth popup | "Login cancelled" |
+| `auth/network-request-failed` | Network error | "Network error, try again" |
+| `auth/unauthorized-domain` | Domain not whitelisted in Firebase Console | "Login failed: unauthorized domain" |
+| `auth/operation-not-allowed` | Google sign-in not enabled | "Google sign-in not configured" |
+
+**Implementation:** Line 343
+
+```javascript
+catch (e) {
+    alert("Login Failed: " + e.message);
+}
+```
+
+#### Sign Out
+
+**Implementation:** Lines 347-350
+
+```javascript
+import { signOut } from 'firebase/auth';
+
+const handleLogout = async () => {
+    await signOut(services.auth);
+};
+```
+
+**Effect:**
+- Clears Firebase auth token
+- `onAuthStateChanged` listener fires with `null`
+- User redirected to login screen
+
+#### Session Persistence
+
+**Implementation:** Lines 308
+
+```javascript
+import { onAuthStateChanged } from 'firebase/auth';
+
+onAuthStateChanged(auth, setUser);
+```
+
+**Behavior:**
+- Automatically restores session on page refresh
+- Token stored in browser's IndexedDB
+- Token expires after 1 hour (auto-refreshed by SDK)
+
+### Security Configuration
+
+**Required Firebase Console Settings:**
+1. Enable Google Sign-In provider
+2. Add authorized domains (e.g., `localhost`, `yourdomain.com`)
+3. Configure OAuth consent screen
+
+---
+
+## Firebase Firestore API
+
+### Purpose
+NoSQL document database for storing and syncing transaction data in real-time.
+
+### SDK Integration
+
+**Provider:** Firebase Firestore SDK (v10.x)
+**Module:** `firebase/firestore`
+**Initialization:** Lines 18-27, 301
+
+### Operations
+
+#### Create Transaction
+
+**Method:** `addDoc()`
+**Implementation:** Lines 398-399
+
+```javascript
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+
+const ref = collection(
+    db,
+    'artifacts', appId,
+    'users', userId,
+    'transactions'
+);
+
+await addDoc(ref, {
+    merchant: "Walmart",
+    date: "2025-11-20",
+    total: 45000,
+    category: "Supermarket",
+    alias: "Walmart",
+    items: [...],
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+});
+```
+
+**Request:**
+- **Path:** `/artifacts/{appId}/users/{userId}/transactions`
+- **Body:** Transaction document (see Data Models)
+- **Auth:** Requires valid Firebase ID token
+
+**Response:**
+
+```typescript
+{
+    id: string;  // Auto-generated document ID
+}
+```
+
+**Errors:**
+
+| Error Code | Description | Handling |
+|------------|-------------|----------|
+| `permission-denied` | Security rules reject write | Show "Permission denied" message |
+| `unavailable` | Firestore service offline | Retry with exponential backoff |
+| `invalid-argument` | Malformed document data | Validate data before write |
+
+#### Read Transactions (Real-time)
+
+**Method:** `onSnapshot()`
+**Implementation:** Lines 316-335
+
+```javascript
+import { collection, onSnapshot } from 'firebase/firestore';
+
+const q = collection(
+    db,
+    'artifacts', appId,
+    'users', userId,
+    'transactions'
+);
+
+const unsubscribe = onSnapshot(q, (snapshot) => {
+    const transactions = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+    }));
+
+    setTransactions(transactions);
+});
+
+// Cleanup on unmount
+return unsubscribe;
+```
+
+**Request:**
+- **Path:** `/artifacts/{appId}/users/{userId}/transactions`
+- **Method:** WebSocket connection (real-time listener)
+- **Auth:** Requires valid Firebase ID token
+
+**Response:**
+
+```typescript
+interface QuerySnapshot {
+    docs: Array<{
+        id: string;
+        data(): Transaction;
+    }>;
+    size: number;        // Total document count
+    empty: boolean;      // True if no documents
+}
+```
+
+**Behavior:**
+- Initial snapshot contains all existing documents
+- Subsequent snapshots fire on any data change (create, update, delete)
+- Automatic reconnection on network failure
+
+**Errors:**
+
+| Error Code | Description | Handling |
+|------------|-------------|----------|
+| `permission-denied` | Security rules reject read | Redirect to login |
+| `unavailable` | Firestore service offline | Show "Connecting..." indicator |
+
+#### Update Transaction
+
+**Method:** `updateDoc()`
+**Implementation:** Line 399
+
+```javascript
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+
+const ref = doc(
+    db,
+    'artifacts', appId,
+    'users', userId,
+    'transactions', transactionId
+);
+
+await updateDoc(ref, {
+    merchant: "Updated Name",
+    total: 50000,
+    updatedAt: serverTimestamp()
+});
+```
+
+**Request:**
+- **Path:** `/artifacts/{appId}/users/{userId}/transactions/{transactionId}`
+- **Body:** Partial document (only fields to update)
+- **Auth:** Requires valid Firebase ID token
+
+**Response:** None (void promise)
+
+**Errors:** Same as Create Transaction
+
+#### Delete Transaction
+
+**Method:** `deleteDoc()`
+**Implementation:** Lines 404-409
+
+```javascript
+import { doc, deleteDoc } from 'firebase/firestore';
+
+if (!window.confirm("Delete?")) return;
+
+const ref = doc(
+    db,
+    'artifacts', appId,
+    'users', userId,
+    'transactions', transactionId
+);
+
+await deleteDoc(ref);
+```
+
+**Request:**
+- **Path:** `/artifacts/{appId}/users/{userId}/transactions/{transactionId}`
+- **Auth:** Requires valid Firebase ID token
+
+**Response:** None (void promise)
+
+**Errors:** Same as Create Transaction
+
+#### Bulk Delete (Wipe Database)
+
+**Method:** `getDocs()` + `deleteDoc()`
+**Implementation:** Lines 411-422
+
+```javascript
+import { collection, getDocs, deleteDoc } from 'firebase/firestore';
+
+const q = collection(
+    db,
+    'artifacts', appId,
+    'users', userId,
+    'transactions'
+);
+
+const snapshot = await getDocs(q);
+await Promise.all(snapshot.docs.map(doc => deleteDoc(doc.ref)));
+```
+
+**Warning:** This operation is NOT atomic. If it fails mid-execution, some documents may remain.
+
+### Firestore Timestamps
+
+**Type:** `Timestamp` (Firestore native type)
+**Conversion:**
+
+```javascript
+// Write: Use serverTimestamp()
+createdAt: serverTimestamp()
+
+// Read: Convert to Date
+const date = firestoreTimestamp.toDate();
+
+// Convert to ISO string
+const isoDate = firestoreTimestamp.toDate().toISOString().split('T')[0];
+```
+
+**Implementation:** Lines 87, 324
+
+---
+
+## Google Gemini AI API
+
+### Purpose
+Analyzes receipt images using multimodal AI to extract structured transaction data.
+
+### API Specification
+
+**Endpoint:** `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent`
+**Model:** `gemini-2.5-flash-preview-09-2025` (configurable, line 41)
+**Authentication:** API key in query parameter
+**Method:** POST
+**Content-Type:** `application/json`
+
+### Request Format
+
+**Implementation:** Lines 137-156
+
+```javascript
+const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+
+const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        contents: [
+            {
+                parts: [
+                    { text: promptString },
+                    ...imageParts
+                ]
+            }
+        ]
+    })
+});
+```
+
+### Request Body Structure
+
+```typescript
+interface GeminiRequest {
+    contents: Array<{
+        parts: Array<{
+            text?: string;           // Text prompt
+            inlineData?: {           // Image data
+                mimeType: string;    // e.g., "image/jpeg"
+                data: string;        // Base64 encoded image
+            };
+        }>;
+    }>;
+}
+```
+
+**Image Encoding:** Lines 140-148
+
+```javascript
+const imageParts = images.map(base64String => {
+    const match = base64String.match(/^data:(.+);base64,(.+)$/);
+    return {
+        inlineData: {
+            mimeType: match ? match[1] : 'image/jpeg',
+            data: match ? match[2] : base64String
+        }
+    };
+});
+```
+
+**Supported Formats:**
+- JPEG (`.jpg`, `.jpeg`)
+- PNG (`.png`)
+- WebP (`.webp`)
+- GIF (`.gif`) - first frame only
+
+**Size Limits:**
+- Max image size: 4MB per image
+- Max images per request: 16
+- Recommended: 1-3 images for best accuracy
+
+### Prompt Engineering
+
+**Implementation:** Lines 150-151
+
+```javascript
+const todayStr = new Date().toISOString().split('T')[0];
+const prompt = `Analyze receipt. Context: ${currency}. Today: ${todayStr}. Strict JSON output. Return 'total' and 'price' as INTEGERS (no dots/commas). Extract: merchant (store name), date (YYYY-MM-DD), total, category (one of: Supermarket, Restaurant, Bakery, Butcher, Bazaar, Veterinary, PetShop, Medical, Pharmacy, Technology, StreetVendor, Transport, Services, Other). Items: name, price, category (Fresh Food, Pantry, Drinks, Household, Personal Care, Pets, Electronics, Apparel, Other), subcategory. If multiple dates, choose closest to today.`;
+```
+
+**Prompt Components:**
+1. **Context:** Currency and current date for intelligent parsing
+2. **Format Constraints:** Integers only, specific date format
+3. **Schema Definition:** Expected JSON structure
+4. **Fallback Logic:** Date selection rules for ambiguous receipts
+
+### Response Format
+
+**Success Response:**
+
+```typescript
+interface GeminiResponse {
+    candidates: Array<{
+        content: {
+            parts: Array<{
+                text: string;  // JSON string with extracted data
+            }>;
+        };
+        finishReason: string;  // "STOP" | "MAX_TOKENS" | "SAFETY"
+    }>;
+    usageMetadata?: {
+        promptTokenCount: number;
+        candidatesTokenCount: number;
+        totalTokenCount: number;
+    };
+}
+```
+
+**Expected Data Schema (embedded in response text):**
+
+```typescript
+interface ExtractedReceipt {
+    merchant: string;              // "Walmart Supercenter"
+    date: string;                  // "2025-11-20"
+    total: number;                 // 45600 (integer, no decimals)
+    category: string;              // "Supermarket"
+    items?: Array<{
+        name: string;              // "Organic Milk 1L"
+        price: number;             // 3500 (integer)
+        category: string;          // "Fresh Food"
+        subcategory?: string;      // "Dairy"
+    }>;
+}
+```
+
+**Parsing Implementation:** Lines 154-156
+
+```javascript
+const json = await res.json();
+if (!json.candidates) throw new Error("API Error");
+return JSON.parse(cleanJson(json.candidates[0].content.parts[0].text));
+```
+
+**JSON Extraction (cleanJson utility):** Lines 72-77
+
+```javascript
+const cleanJson = (text) => {
+    if (!text) return "{}";
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    return (start !== -1 && end !== -1)
+        ? text.substring(start, end + 1)
+        : "{}";
+};
+```
+
+**Why JSON Cleaning is Needed:**
+- Gemini sometimes adds markdown formatting (e.g., ` ```json ... ``` `)
+- Extra explanatory text before/after JSON
+- `cleanJson` extracts only the JSON object
+
+### Error Handling
+
+**HTTP Status Codes:**
+
+| Status | Meaning | Handling |
+|--------|---------|----------|
+| 200 | Success | Parse response |
+| 400 | Invalid request (bad image format, missing key) | Show "Invalid image" error |
+| 401 | Invalid API key | Show "API key error" |
+| 403 | Quota exceeded or API disabled | Show "Service unavailable" |
+| 429 | Rate limit exceeded | Show "Too many requests, wait" |
+| 500 | Gemini service error | Show "Service error, retry" |
+
+**Implementation:** Lines 387-390
+
+```javascript
+catch (e) {
+    alert("Scan failed: " + e.message);
+    setScanError("Failed: " + e.message);
+}
+```
+
+**Common Error Scenarios:**
+
+1. **Empty API Key:**
+   ```javascript
+   const GEMINI_API_KEY = "";  // Line 40
+   // Result: 400 Bad Request
+   ```
+
+2. **Invalid Image Format:**
+   ```javascript
+   // User uploads .pdf or .txt file
+   // Result: 400 Bad Request
+   ```
+
+3. **Quota Exceeded:**
+   ```javascript
+   // Free tier: 60 requests/minute
+   // Result: 429 Rate Limit
+   ```
+
+4. **Malformed JSON Response:**
+   ```javascript
+   // Gemini returns non-JSON text
+   // Result: JSON.parse() throws SyntaxError
+   // Fallback: cleanJson returns "{}", causes validation error
+   ```
+
+### Rate Limits & Quotas
+
+**Free Tier (No Credit Card):**
+- 60 requests per minute
+- 1,500 requests per day
+- No cost
+
+**Paid Tier (with Billing):**
+- Rate limits lifted
+- Pay per request (~$0.002 per image)
+
+**Quota Monitoring:**
+- Check [Google AI Studio](https://makersuite.google.com/)
+- Enable billing alerts in Google Cloud Console
+
+### Response Time
+
+**Typical Latency:**
+- Single image: 2-4 seconds
+- Multiple images: 4-8 seconds
+- Network-dependent (user's connection + API processing)
+
+**UI Handling:** Lines 368-390
+- Shows loading spinner during analysis
+- Disables scan button to prevent duplicate requests
+- Error state displays on failure
+
+---
+
+## API Error Handling Strategy
+
+### Network Errors
+
+```javascript
+try {
+    await apiCall();
+} catch (error) {
+    if (error.message.includes('network')) {
+        // Retry logic
+    } else {
+        // Show error to user
+        alert("Operation failed: " + error.message);
+    }
+}
+```
+
+### Authentication Errors
+
+```javascript
+// Firebase Auth automatically handles:
+// - Token refresh
+// - Session restoration
+// - Network reconnection
+
+onAuthStateChanged(auth, (user) => {
+    if (!user) {
+        // Redirect to login
+        setUser(null);
+    } else {
+        // User authenticated
+        setUser(user);
+    }
+});
+```
+
+### Data Validation
+
+All external API data is sanitized before use:
+
+1. **Numbers:** `parseStrictNumber()` ensures integers
+2. **Dates:** `getSafeDate()` ensures valid ISO format
+3. **Strings:** Default values for null/undefined
+4. **Arrays:** Array.isArray() checks before mapping
+
+**Implementation:** Lines 320-328 (Firestore), 371-384 (Gemini)
+
+---
+
+## API Dependencies
+
+### Required Environment Variables
+
+```javascript
+// Firebase Configuration (lines 30-37)
+const firebaseConfig = {
+    apiKey: "...",
+    authDomain: "...",
+    projectId: "...",
+    storageBucket: "...",
+    messagingSenderId: "...",
+    appId: "..."
+};
+
+// Gemini API Key (line 40)
+const GEMINI_API_KEY = "...";
+```
+
+### SDK Versions
+
+- **Firebase SDK:** v10.x (loaded via CDN)
+- **React:** v18.x (loaded via CDN)
+- **Lucide React:** Latest (loaded via CDN)
+
+### CORS Configuration
+
+**Firebase:** CORS handled automatically by SDK
+**Gemini:** Public API, no CORS configuration needed
+
+---
+
+## Testing APIs
+
+### Firebase Auth Testing
+
+```javascript
+// Test login
+handleGoogleLogin();
+
+// Verify user object
+console.log(user);
+
+// Test logout
+handleLogout();
+```
+
+### Firestore Testing
+
+```javascript
+// Test write
+saveTransaction();
+
+// Test read
+console.log(transactions);
+
+// Test delete
+deleteTransaction(transactionId);
+```
+
+### Gemini Testing
+
+```javascript
+// Test with sample receipt image
+const testImage = "data:image/jpeg;base64,...";
+const result = await analyzeWithGemini([testImage], "CLP");
+console.log(result);
+```
+
+**Mock Response:**
+```json
+{
+    "merchant": "Test Store",
+    "date": "2025-11-20",
+    "total": 10000,
+    "category": "Supermarket",
+    "items": [
+        {
+            "name": "Test Item",
+            "price": 10000,
+            "category": "Other",
+            "subcategory": "Test"
+        }
+    ]
+}
+```
+
+---
+
+**Generated by BMAD Document Project Workflow**
+*Date: 2025-11-20*

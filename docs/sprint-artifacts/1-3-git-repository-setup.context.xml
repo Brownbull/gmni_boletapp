@@ -1,0 +1,217 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>3</storyId>
+    <title>git-repository-setup</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-20</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-3-git-repository-setup.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>the codebase tracked in version control on GitHub</iWant>
+    <soThat>code is backed up, versioned, and ready for collaboration</soThat>
+    <tasks>
+      - Task 1: Pre-commit Security Validation (AC: #1, #2)
+      - Task 2: Initialize Git Repository (AC: #1)
+      - Task 3: Prepare Initial Commit (AC: #2)
+      - Task 4: Create Initial Commit (AC: #2)
+      - Task 5: Push to GitHub (AC: #3, #5)
+      - Task 6: Update README.md (AC: #4)
+      - Task 7: Repository Configuration and Verification (AC: #5)
+      - Task 8: Documentation Update (AC: #4)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    - AC #1: Git repository initialized with proper .gitignore (Verify .env and node_modules excluded via git status)
+    - AC #2: Initial commit includes all source code excluding node_modules, .env, dist (Verify commit contains src/, docs/, config files)
+    - AC #3: Repository pushed to https://github.com/Brownbull/gmni_boletapp (Access GitHub URL and verify files visible)
+    - AC #4: README.md updated with new project structure and setup instructions (Review README for Vite, env setup, deployment instructions)
+    - AC #5: Repository is accessible and viewable on GitHub web interface (Open repository URL in browser, verify all files present)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Production Deployment Readiness</title>
+        <section>Implementation Details - Git Repository Setup</section>
+        <snippet>Git workflow best practices: conventional commit messages, atomic commits, descriptive messages explaining "why" not just "what". Branch strategy: main branch for production-ready code, direct commits to main for initial setup. Security: never commit API keys, use .env for sensitive configuration, commit .env.example as template.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Production Deployment Readiness</title>
+        <section>Workflows and Sequencing - Git Setup</section>
+        <snippet>Story 1.3 workflow: git init, create .gitignore (exclude .env, node_modules, dist), git add ., git commit with conventional message, git remote add origin, git push -u origin main. Ensures proper version control initialization.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Production Deployment Readiness</title>
+        <section>Security - API Key Security</section>
+        <snippet>CRITICAL IMPROVEMENT: Current risk has keys hardcoded in source visible in devtools. Epic mitigation: .env file MUST be git-ignored, .env.example template with placeholders, all config reads from import.meta.env.VITE_* variables, no hardcoded keys in source, build validates required env vars present.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document - Boletapp</title>
+        <section>Deployment Architecture</section>
+        <snippet>Firebase Hosting deployment via 'firebase deploy --only hosting'. Global CDN, free HTTPS SSL certificate, custom domain support, one-click rollback to previous versions. No build pipeline currently required for single-file app.</snippet>
+      </artifact>
+      <artifact>
+        <path>docs/epics.md</path>
+        <title>boletapp - Epic Breakdown</title>
+        <section>Story 1.3: Git Repository Setup</section>
+        <snippet>Acceptance Criteria: Git repository initialized with proper .gitignore, initial commit includes all source code excluding node_modules/.env/dist, repository pushed to https://github.com/Brownbull/gmni_boletapp, README.md updated with project structure and setup instructions, repository accessible on GitHub.</snippet>
+      </artifact>
+    </docs>
+    <code>
+      <artifact>
+        <path>package.json</path>
+        <kind>configuration</kind>
+        <symbol>npm scripts</symbol>
+        <lines>1-25</lines>
+        <reason>Core dependency manifest defining build scripts (dev, build, preview, type-check) and all project dependencies that must be committed to Git</reason>
+      </artifact>
+      <artifact>
+        <path>vite.config.ts</path>
+        <kind>configuration</kind>
+        <symbol>Vite configuration</symbol>
+        <lines>1-20</lines>
+        <reason>Vite build tool configuration required for development and production builds, must be version controlled</reason>
+      </artifact>
+      <artifact>
+        <path>tsconfig.json</path>
+        <kind>configuration</kind>
+        <symbol>TypeScript compiler options</symbol>
+        <lines>1-30</lines>
+        <reason>TypeScript configuration defining compiler strictness and module resolution, essential for project builds</reason>
+      </artifact>
+      <artifact>
+        <path>src/config/firebase.ts</path>
+        <kind>configuration</kind>
+        <symbol>firebaseConfig</symbol>
+        <lines>1-20</lines>
+        <reason>Firebase initialization reading from environment variables - MUST verify no hardcoded keys before committing</reason>
+      </artifact>
+      <artifact>
+        <path>src/config/gemini.ts</path>
+        <kind>configuration</kind>
+        <symbol>GEMINI_API_KEY, GEMINI_MODEL</symbol>
+        <lines>1-10</lines>
+        <reason>Gemini API configuration reading from environment variables - MUST verify no hardcoded keys before committing</reason>
+      </artifact>
+      <artifact>
+        <path>src/</path>
+        <kind>directory</kind>
+        <symbol>modular source code</symbol>
+        <lines>N/A</lines>
+        <reason>Entire refactored source directory (29 files) including components/, views/, services/, hooks/, utils/, types/ - all must be committed to Git</reason>
+      </artifact>
+      <artifact>
+        <path>docs/</path>
+        <kind>directory</kind>
+        <symbol>project documentation</symbol>
+        <lines>N/A</lines>
+        <reason>Architecture, tech-spec, epics, and sprint artifacts documentation - all should be version controlled</reason>
+      </artifact>
+      <artifact>
+        <path>index.html</path>
+        <kind>file</kind>
+        <symbol>HTML entry point</symbol>
+        <lines>1-20</lines>
+        <reason>Vite HTML template that loads src/main.tsx, required for application to run</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <ecosystem name="npm">
+        <package name="react" version="^18.3.1" type="production" />
+        <package name="react-dom" version="^18.3.1" type="production" />
+        <package name="firebase" version="^10.14.1" type="production" />
+        <package name="lucide-react" version="^0.460.0" type="production" />
+        <package name="vite" version="^5.4.0" type="development" />
+        <package name="typescript" version="^5.3.3" type="development" />
+        <package name="@vitejs/plugin-react" version="^4.3.0" type="development" />
+        <package name="@types/react" version="^18.3.0" type="development" />
+        <package name="@types/react-dom" version="^18.3.0" type="development" />
+      </ecosystem>
+      <note>All dependencies defined in package.json which will be committed. Actual node_modules/ directory excluded via .gitignore (can be reinstalled with npm install).</note>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - MUST exclude .env file from version control (CRITICAL SECURITY)
+    - MUST exclude node_modules/ directory from Git (can be reinstalled)
+    - MUST exclude dist/ build output directory from Git (regenerated)
+    - Use conventional commit message format: type(scope): description
+    - Commit types: feat, fix, docs, refactor, test, chore, ci
+    - Keep commits atomic and focused on single logical change
+    - Write descriptive commit messages explaining "why" not just "what"
+    - No hardcoded API keys or credentials in any committed files
+    - Verify no sensitive files staged before each commit using 'git status'
+    - Create .gitignore BEFORE running 'git init' to prevent accidental commits
+    - Repository target: https://github.com/Brownbull/gmni_boletapp (must have push access)
+    - Include .env.example template with placeholder values (safe to commit)
+    - Update README.md with Vite-specific setup instructions for new clones
+    - All Git operations on main branch (no branching for initial setup)
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>Git CLI</name>
+      <kind>command-line tool</kind>
+      <signature>git init, git add, git commit, git remote, git push, git status</signature>
+      <path>system-installed</path>
+      <note>Core Git commands used throughout story tasks for repository initialization and management</note>
+    </interface>
+    <interface>
+      <name>GitHub Repository API</name>
+      <kind>remote repository</kind>
+      <signature>https://github.com/Brownbull/gmni_boletapp.git</signature>
+      <path>remote</path>
+      <note>Target GitHub repository for pushing code. Must have push access configured (HTTPS token or SSH key)</note>
+    </interface>
+    <interface>
+      <name>.gitignore file format</name>
+      <kind>configuration file</kind>
+      <signature>Pattern-based exclusion rules (glob patterns)</signature>
+      <path>.gitignore</path>
+      <note>Git exclusion patterns: .env, .env.*, node_modules/, dist/, *.log, .DS_Store, .vscode/*, .idea/</note>
+    </interface>
+    <interface>
+      <name>npm package.json</name>
+      <kind>manifest file</kind>
+      <signature>JSON with dependencies, scripts, project metadata</signature>
+      <path>package.json</path>
+      <note>Defines all dependencies that Git references but does not contain (node_modules excluded)</note>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Manual testing approach per architecture document and tech-spec. No automated test framework in scope for Epic 1.
+      Pre-commit validation: grep source for hardcoded API keys, verify .gitignore excludes sensitive files, check git status before each commit.
+      Post-push validation: clone repository to fresh directory, run npm install, verify all source files present, test no secrets visible in GitHub web interface.
+      README validation: follow setup instructions from fresh clone, verify all commands work as documented.
+    </standards>
+    <locations>
+      No automated test directories. Manual testing performed via:
+      - Browser devtools console for runtime errors
+      - Git commands (status, log, diff) for repository state
+      - GitHub web interface for repository visibility
+      - Fresh clone in /tmp for verification
+    </locations>
+    <ideas>
+      - AC #1: Test .gitignore by running 'git status' and verifying .env and node_modules are NOT listed as untracked
+      - AC #1: Grep source files for 'AIza', 'YOUR_', 'firebaseapp.com' to detect hardcoded credentials
+      - AC #2: Verify 'git log' shows initial commit with correct message format and includes src/, docs/, config files
+      - AC #2: Check commit does NOT include .env, node_modules/, dist/ by examining 'git ls-files'
+      - AC #3: Test 'git push' succeeds without errors and returns success message
+      - AC #3: Open https://github.com/Brownbull/gmni_boletapp in browser and verify files visible
+      - AC #4: Review README.md contains: project description, tech stack, prerequisites, environment setup steps, development commands, project structure
+      - AC #5: Clone repository to /tmp directory and verify: npm install works, .env.example exists as template, no .env in repo, all source files present
+      - AC #5: Test authentication works (HTTPS token or SSH key configured correctly)
+      - Security test: Verify .env file is in .gitignore BEFORE first commit
+      - Regression test: After Git setup, verify 'npm run dev' still works and application functions identically
+    </ideas>
+  </tests>
+</story-context>

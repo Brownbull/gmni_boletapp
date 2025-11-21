@@ -1,0 +1,59 @@
+# Workflow Status Template
+
+# This tracks progress through BMM methodology Analysis, Planning, and Solutioning phases.
+# Implementation phase is tracked separately in sprint-status.yaml
+
+# STATUS DEFINITIONS:
+# ==================
+# Initial Status (before completion):
+#   - required: Must be completed to progress
+#   - optional: Can be completed but not required
+#   - recommended: Strongly suggested but not required
+#   - conditional: Required only if certain conditions met (e.g., if_has_ui)
+#
+# Completion Status:
+#   - {file-path}: File created/found (e.g., "docs/product-brief.md")
+#   - skipped: Optional/conditional workflow that was skipped
+
+generated: "2025-11-20"
+project: "boletapp"
+project_type: "expense-tracker-pwa"
+selected_track: "quick-flow"
+field_type: "brownfield"
+workflow_path: "quick-flow-brownfield"
+workflow_status:
+  # === PREREQUISITE: Documentation ===
+  document-project:
+    status: "required"
+    agent: "analyst"
+    command: "/bmad:bmm:workflows:document-project"
+    output: "Comprehensive project documentation"
+    note: "Understand existing codebase before planning"
+
+  # === PHASE 0: Discovery (Optional) ===
+  brainstorm-project:
+    status: "optional"
+    agent: "analyst"
+    command: "/bmad:bmm:workflows:brainstorm-project"
+    note: "User selected during init"
+
+  research:
+    status: "optional"
+    agent: "analyst"
+    command: "/bmad:bmm:workflows:research"
+    note: "User selected during init"
+
+  # === PHASE 1: Planning ===
+  tech-spec:
+    status: "required"
+    agent: "pm"
+    command: "/bmad:bmm:workflows:tech-spec"
+    output: "Technical Specification with stories"
+    note: "Integrates with existing codebase patterns"
+
+  # === PHASE 2: Implementation ===
+  sprint-planning:
+    status: "required"
+    agent: "sm"
+    command: "/bmad:bmm:workflows:sprint-planning"
+    note: "Creates sprint plan with all stories"

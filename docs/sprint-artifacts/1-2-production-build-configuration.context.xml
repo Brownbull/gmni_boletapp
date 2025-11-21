@@ -1,0 +1,263 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>2</storyId>
+    <title>production-build-configuration</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-20</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/home/khujta/projects/bmad/boletapp/docs/sprint-artifacts/1-2-production-build-configuration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>proper environment variable management and production build configuration</iWant>
+    <soThat>API keys are secure and the application can be built for production deployment</soThat>
+    <tasks>
+      <task id="1" acs="1,2,5">Create Environment Configuration Files (.env, .env.example)</task>
+      <task id="2" acs="1,5">Update Configuration Files to Use Environment Variables</task>
+      <task id="3" acs="3">Production Build Validation (npm run build)</task>
+      <task id="4" acs="4">Production Preview Testing (npm run preview)</task>
+      <task id="5" acs="5">Security Validation (grep for hardcoded keys)</task>
+      <task id="6" acs="2">Documentation and Cleanup</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="1">
+      <description>.env file configured with all Firebase and Gemini credentials (git-ignored)</description>
+      <verification>Verify all VITE_* vars present</verification>
+    </ac>
+    <ac id="2">
+      <description>.env.example template created and documented</description>
+      <verification>Verify template has placeholders</verification>
+    </ac>
+    <ac id="3">
+      <description>npm run build completes successfully producing optimized dist/ folder</description>
+      <verification>Run build, check exit code 0</verification>
+    </ac>
+    <ac id="4">
+      <description>npm run preview serves production build locally with all features functional</description>
+      <verification>Run preview, test all features</verification>
+    </ac>
+    <ac id="5">
+      <description>No hardcoded API keys remain in source code</description>
+      <verification>grep -r "AIza" "YOUR_" in src/</verification>
+    </ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Production Deployment Readiness</title>
+        <section>Security - API Key Security</section>
+        <snippet>Environment variables externalized to .env file. Keys must not be hardcoded. All config reads from import.meta.env.VITE_* variables.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Production Deployment Readiness</title>
+        <section>APIs and Interfaces - Environment Variables Interface</section>
+        <snippet>Firebase config (API_KEY, AUTH_DOMAIN, PROJECT_ID, STORAGE_BUCKET, MESSAGING_SENDER_ID, APP_ID) and Gemini config (API_KEY, MODEL) required as VITE_* env vars.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Production Deployment Readiness</title>
+        <section>Workflows and Sequencing - Build & Deployment Workflow</section>
+        <snippet>Story 1.2 workflow: Create .env → Update config files → Test prod build (npm run build) → Test preview (npm run preview) → Security validation (no hardcoded keys).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Production Deployment Readiness</title>
+        <section>Non-Functional Requirements - Performance</section>
+        <snippet>Bundle size target: ≤300KB gzipped. Vite must tree-shake unused code. Production build time: &lt;30 seconds.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document - Boletapp</title>
+        <section>Security Model - API Key Security</section>
+        <snippet>Current risk: Keys hardcoded in source, visible in devtools. Mitigations: Firebase security rules, API key restrictions in Google Cloud Console, App Check recommended.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document - Boletapp</title>
+        <section>Deployment Architecture</section>
+        <snippet>Firebase Hosting recommended with CDN, HTTPS, custom domain support. No build pipeline currently (single-file app).</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/config/firebase.ts</path>
+        <kind>config</kind>
+        <symbol>firebaseConfig</symbol>
+        <lines>1-8</lines>
+        <reason>PRIMARY TARGET: Config file with placeholder values that MUST be replaced with environment variables (import.meta.env.VITE_FIREBASE_*)</reason>
+      </artifact>
+      <artifact>
+        <path>src/config/gemini.ts</path>
+        <kind>config</kind>
+        <symbol>GEMINI_API_KEY, GEMINI_MODEL</symbol>
+        <lines>1-2</lines>
+        <reason>PRIMARY TARGET: Config file with placeholder/empty values that MUST be replaced with environment variables (import.meta.env.VITE_GEMINI_*)</reason>
+      </artifact>
+      <artifact>
+        <path>src/hooks/useAuth.ts</path>
+        <kind>hook</kind>
+        <symbol>useAuth</symbol>
+        <lines>N/A</lines>
+        <reason>Uses firebase config - ensure environment variable changes don't break auth hook integration</reason>
+      </artifact>
+      <artifact>
+        <path>src/services/gemini.ts</path>
+        <kind>service</kind>
+        <symbol>analyzeWithGemini</symbol>
+        <lines>N/A</lines>
+        <reason>Uses GEMINI_API_KEY and GEMINI_MODEL - verify import statements work after env var migration</reason>
+      </artifact>
+      <artifact>
+        <path>src/services/firestore.ts</path>
+        <kind>service</kind>
+        <symbol>Firestore services</symbol>
+        <lines>N/A</lines>
+        <reason>Uses Firebase config - ensure services still initialize correctly after env var migration</reason>
+      </artifact>
+      <artifact>
+        <path>vite.config.ts</path>
+        <kind>config</kind>
+        <symbol>defineConfig</symbol>
+        <lines>1-7</lines>
+        <reason>Vite configuration - current setup is minimal, production build uses this config</reason>
+      </artifact>
+      <artifact>
+        <path>package.json</path>
+        <kind>manifest</kind>
+        <symbol>scripts</symbol>
+        <lines>6-10</lines>
+        <reason>Build scripts: dev, build (tsc + vite build), preview, type-check. AC#3 and AC#4 use npm run build and npm run preview</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package name="react" version="^18.3.1">UI framework</package>
+        <package name="react-dom" version="^18.3.1">React DOM rendering</package>
+        <package name="firebase" version="^10.14.1">Firebase SDK (Auth + Firestore)</package>
+        <package name="lucide-react" version="^0.460.0">Icon library</package>
+      </node>
+      <dev>
+        <package name="vite" version="^5.4.0">Build tool and dev server</package>
+        <package name="@vitejs/plugin-react" version="^4.3.0">React HMR and JSX transform</package>
+        <package name="typescript" version="^5.3.3">Type checking</package>
+        <package name="@types/react" version="^18.3.0">React type definitions</package>
+        <package name="@types/react-dom" version="^18.3.0">ReactDOM type definitions</package>
+      </dev>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>CRITICAL: All Firebase and Gemini credentials MUST be externalized to environment variables - NO hardcoded values allowed in any source file</constraint>
+    <constraint>Environment variables MUST use Vite's import.meta.env.VITE_* pattern (Vite requirement for client-side env vars)</constraint>
+    <constraint>.env file MUST be git-ignored to prevent credential exposure (security requirement)</constraint>
+    <constraint>.env.example MUST be provided with placeholder values for documentation (onboarding requirement)</constraint>
+    <constraint>Config files MUST throw clear errors if required environment variables are missing (fail-fast principle)</constraint>
+    <constraint>NO fallback to hardcoded values if env vars missing (security requirement)</constraint>
+    <constraint>Production build (npm run build) MUST complete with exit code 0 and produce dist/ folder (AC#3)</constraint>
+    <constraint>Bundle size target: ≤300KB gzipped (performance requirement from tech-spec)</constraint>
+    <constraint>Vite must tree-shake unused code to maintain small bundle</constraint>
+    <constraint>All environment variables baked into build at compile time (static SPA, no runtime env var loading)</constraint>
+    <constraint>Preserve all existing architecture patterns from Story 1.1 (Service Layer, Custom Hooks, Type Safety)</constraint>
+    <constraint>.gitignore MUST exclude .env, node_modules, and dist (if it doesn't exist yet, this story should verify/create it)</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>Environment Variables (Vite)</name>
+      <kind>Build-time configuration</kind>
+      <signature>
+Required Firebase variables:
+- VITE_FIREBASE_API_KEY: string
+- VITE_FIREBASE_AUTH_DOMAIN: string (format: {project-id}.firebaseapp.com)
+- VITE_FIREBASE_PROJECT_ID: string
+- VITE_FIREBASE_STORAGE_BUCKET: string (format: {project-id}.firebasestorage.app)
+- VITE_FIREBASE_MESSAGING_SENDER_ID: string
+- VITE_FIREBASE_APP_ID: string
+
+Required Gemini variables:
+- VITE_GEMINI_API_KEY: string
+- VITE_GEMINI_MODEL: string (default: gemini-2.5-flash-preview-09-2025)
+      </signature>
+      <path>src/config/firebase.ts, src/config/gemini.ts</path>
+    </interface>
+    <interface>
+      <name>Firebase Config Object</name>
+      <kind>Configuration interface</kind>
+      <signature>
+export const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
+};
+      </signature>
+      <path>src/config/firebase.ts</path>
+    </interface>
+    <interface>
+      <name>Gemini Config Exports</name>
+      <kind>Configuration interface</kind>
+      <signature>
+export const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+export const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || "gemini-2.5-flash-preview-09-2025";
+      </signature>
+      <path>src/config/gemini.ts</path>
+    </interface>
+    <interface>
+      <name>npm Scripts (package.json)</name>
+      <kind>Build pipeline</kind>
+      <signature>
+"dev": "vite"                    # Dev server with HMR
+"build": "tsc &amp;&amp; vite build"    # TypeScript check + production build
+"preview": "vite preview"        # Serve production build locally
+"type-check": "tsc --noEmit"     # TypeScript validation only
+      </signature>
+      <path>package.json</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Manual testing approach per Architecture § Testing Strategy. No automated test framework for this epic (deferred to future work).
+
+Testing checkpoints:
+- After Task 2: Dev server (npm run dev) loads environment variables correctly
+- After Task 3: Production build (npm run build) succeeds with exit code 0
+- After Task 4: Production preview (npm run preview) works identically to dev server
+- After Task 5: Security validation passes (no hardcoded keys in source)
+
+Full regression test required at AC#4 checkpoint per tech-spec § Test Strategy Summary.
+    </standards>
+    <locations>
+No test directories - manual testing only. Test production build output at dist/ folder.
+    </locations>
+    <ideas>
+      <idea ac="1">Verify .env file contains all 8 required VITE_* variables with real values (not placeholders)</idea>
+      <idea ac="1">Test dev server reads .env: Check import.meta.env object in browser console</idea>
+      <idea ac="2">Verify .env.example has placeholder values like "YOUR_API_KEY" and helpful comments</idea>
+      <idea ac="2">Test .env.example as setup guide: Can someone follow it to create .env?</idea>
+      <idea ac="3">Run npm run build and verify exit code 0 (success)</idea>
+      <idea ac="3">Check dist/ folder created with index.html and assets/ subdirectory</idea>
+      <idea ac="3">Verify bundle size ≤300KB gzipped (tech-spec requirement)</idea>
+      <idea ac="3">Review build output for warnings or errors</idea>
+      <idea ac="4">Run npm run preview and access localhost:4173</idea>
+      <idea ac="4">Test authentication flow (Google sign-in/sign-out) in preview</idea>
+      <idea ac="4">Test receipt scanning with sample image in preview</idea>
+      <idea ac="4">Test CRUD operations (create, edit, delete transaction) in preview</idea>
+      <idea ac="4">Test analytics charts render correctly in preview</idea>
+      <idea ac="4">Verify no console errors during full regression in preview</idea>
+      <idea ac="5">Run grep -r "AIza" src/ to find any Gemini API key patterns</idea>
+      <idea ac="5">Run grep -r "YOUR_" src/ to find any placeholder patterns</idea>
+      <idea ac="5">Run grep -r "firebaseapp" src/ to find any hardcoded Firebase domains</idea>
+      <idea ac="5">Manually review src/config/firebase.ts and src/config/gemini.ts for any hardcoded strings</idea>
+      <idea ac="5">Test with missing .env file - should fail with clear error message, not silent fallback</idea>
+      <idea ac="all">Verify .env is git-ignored: Run git status and ensure .env not listed</idea>
+    </ideas>
+  </tests>
+</story-context>

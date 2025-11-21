@@ -1,0 +1,319 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1</storyId>
+    <title>refactor-to-modular-architecture</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-20</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-1-refactor-to-modular-architecture.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>the single-file application refactored into a modular component structure</iWant>
+    <soThat>the codebase is maintainable, testable, and follows modern development practices</soThat>
+    <tasks>
+### Task 1: Initialize Vite Project and Install Dependencies (AC: #2, #3)
+- Run `npm create vite@latest . -- --template react-ts`
+- Install base dependencies: `npm install`
+- Install Firebase SDK: `npm install firebase`
+- Install Lucide React: `npm install lucide-react`
+- Configure tsconfig.json for React + Vite
+- Configure vite.config.ts with React plugin
+- Verify dev server starts: `npm run dev`
+
+### Task 2: Extract Utilities (Phase 1) (AC: #1, #3)
+- Create src/utils/ directory structure
+- Extract parseStrictNumber, getSafeDate to src/utils/validation.ts
+- Extract formatCurrency to src/utils/currency.ts
+- Extract formatDate, getSafeDateStr to src/utils/date.ts
+- Extract cleanJson to src/utils/json.ts
+- Extract downloadCSV to src/utils/csv.ts
+- Extract colorForCategory, stableColor to src/utils/colors.ts
+- Create src/config/constants.ts with STORE_CATEGORIES, ITEMS_PER_PAGE
+- Test utilities compile with TypeScript
+
+### Task 3: Extract Services (Phase 2) (AC: #1, #3)
+- Create src/services/ directory
+- Extract Gemini API integration to src/services/gemini.ts
+- Create analyzeReceipt function with proper types
+- Extract Firestore operations to src/services/firestore.ts
+- Create addTransaction, updateTransaction, deleteTransaction, subscribeToTransactions functions
+- Create src/config/firebase.ts and src/config/gemini.ts (with placeholder env vars for now)
+- Test API functions compile
+
+### Task 4: Extract Hooks (Phase 3) (AC: #1, #3)
+- Create src/hooks/ directory
+- Extract auth state management to src/hooks/useAuth.ts
+- Create useAuth hook returning { user, services, signIn, signOut }
+- Extract Firestore sync to src/hooks/useTransactions.ts
+- Create useTransactions hook with real-time subscription
+- Test hooks compile
+
+### Task 5: Extract Components (Phase 4) (AC: #1, #3, #4)
+- Create src/components/ directory
+- Extract ErrorBoundary class to src/components/ErrorBoundary.tsx
+- Create src/components/charts/ directory
+- Extract SimplePieChart to src/components/charts/SimplePieChart.tsx
+- Extract GroupedBarChart to src/components/charts/GroupedBarChart.tsx
+- Extract CategoryBadge component to src/components/CategoryBadge.tsx
+- Extract Nav component to src/components/Nav.tsx
+- Test all components render without errors
+
+### Task 6: Extract Views (Phase 5) (AC: #1, #3, #4)
+- Create src/views/ directory
+- Extract LoginScreen to src/views/LoginScreen.tsx
+- Extract DashboardView to src/views/DashboardView.tsx
+- Extract ScanView to src/views/ScanView.tsx
+- Extract EditView to src/views/EditView.tsx
+- Extract TrendsView to src/views/TrendsView.tsx
+- Extract HistoryView to src/views/HistoryView.tsx
+- Extract SettingsView to src/views/SettingsView.tsx
+- Test all views render correctly
+
+### Task 7: Create Main App Component (Phase 6) (AC: #1, #3, #4)
+- Create src/types/ directory
+- Create src/types/transaction.ts with Transaction, TransactionItem, StoreCategory types
+- Create src/types/settings.ts with AppSettings, Currency, Language, Theme types
+- Create src/App.tsx
+- Import and compose all views and components
+- Implement view routing logic
+- Create src/main.tsx entry point
+- Import App component and render to DOM
+- Delete original main.tsx file
+
+### Task 8: Full Integration Testing and Validation (AC: #2, #4, #5)
+- Run dev server: `npm run dev`
+- Test authentication flow (Google sign-in/sign-out)
+- Test receipt scanning workflow (upload → process → edit)
+- Test transaction CRUD (create, edit, delete, real-time sync)
+- Test analytics (pie chart, bar chart, category filtering, date filtering)
+- Test history view (pagination, edit, delete)
+- Test settings (language, currency, theme, CSV export)
+- Navigate all views and verify zero console errors
+- Run TypeScript check: `npm run type-check` (or `tsc --noEmit`)
+- Document any issues found and resolve before completion
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+**AC #1:** All code from main.tsx extracted into logical modules (components/, utils/, hooks/, services/)
+- Verification: Verify all module files exist and export correctly
+- Source: Story 1.1 from epics.md
+
+**AC #2:** Vite development server runs successfully with hot module replacement
+- Verification: Run `npm run dev`, test HMR by editing a component
+- Source: Story 1.1 from epics.md
+
+**AC #3:** TypeScript compilation succeeds with no errors
+- Verification: Run `tsc --noEmit` and check exit code 0
+- Source: Story 1.1 from epics.md
+
+**AC #4:** All existing features work identically to original main.tsx
+- Verification: Full regression test - auth, scan, CRUD, charts, settings
+- Source: Story 1.1 from epics.md
+
+**AC #5:** No console errors in browser devtools during normal operation
+- Verification: Open devtools, navigate all views, verify zero errors
+- Source: Story 1.1 from epics.md
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Production Deployment Readiness</title>
+        <section>Services and Modules</section>
+        <snippet>Complete module extraction mapping from main.tsx lines to target modules in src/ structure. Defines extraction strategy in 6 phases: utilities, services, hooks, components, views, and main app.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Production Deployment Readiness</title>
+        <section>Data Models and Contracts</section>
+        <snippet>TypeScript interface definitions for Transaction, TransactionItem, StoreCategory, and Settings types that will be extracted to src/types/.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Production Deployment Readiness</title>
+        <section>APIs and Interfaces</section>
+        <snippet>Complete API signatures for Firebase Auth, Firestore CRUD operations, and Gemini AI integration to be extracted to src/services/.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document - Boletapp</title>
+        <section>Component Architecture</section>
+        <snippet>Component hierarchy and separation of concerns: Presentational (charts, badges), Container (MainApp state management), View (page-level sections). Props flow down, events flow up.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document - Boletapp</title>
+        <section>State Management Strategy</section>
+        <snippet>React Hooks only (useState, useEffect, useRef). No external state library. State categories: Authentication (Firebase listener), UI (user interactions), Data (Firestore real-time sync), Settings (component-scoped).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document - Boletapp</title>
+        <section>Error Handling Strategy</section>
+        <snippet>Layered error handling: ErrorBoundary (React), Try-Catch (API calls), Data Validation (input sanitization), Defensive Programming (null checks, default values).</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Story 1.1: Refactor to Modular Architecture</section>
+        <snippet>First story in Epic 1. Extract 621 lines from main.tsx into modular structure: components/, utils/, hooks/, services/. Use Vite 5.x with TypeScript 5.3.3. Preserve 100% feature parity.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>main.tsx</path>
+        <kind>source-file</kind>
+        <symbol>All application code (621 lines)</symbol>
+        <lines>1-621</lines>
+        <reason>Complete single-file application to be refactored. Contains all utilities, services, hooks, components, and views that need extraction.</reason>
+      </artifact>
+      <artifact>
+        <path>main.tsx</path>
+        <kind>utilities</kind>
+        <symbol>cleanJson, parseStrictNumber, getSafeDate, formatCurrency, formatDate, getSafeDateStr, downloadCSV, colorForCategory, stableColor</symbol>
+        <lines>71-135</lines>
+        <reason>Utility functions to be extracted to src/utils/ in Phase 1. Pure functions with no dependencies.</reason>
+      </artifact>
+      <artifact>
+        <path>main.tsx</path>
+        <kind>service</kind>
+        <symbol>analyzeWithGemini</symbol>
+        <lines>136-250</lines>
+        <reason>Gemini API integration to be extracted to src/services/gemini.ts in Phase 2.</reason>
+      </artifact>
+      <artifact>
+        <path>main.tsx</path>
+        <kind>component</kind>
+        <symbol>ErrorBoundary</symbol>
+        <lines>52-69</lines>
+        <reason>React error boundary class component to be extracted to src/components/ErrorBoundary.tsx in Phase 4.</reason>
+      </artifact>
+      <artifact>
+        <path>main.tsx</path>
+        <kind>component</kind>
+        <symbol>SimplePieChart, GroupedBarChart</symbol>
+        <lines>370-540</lines>
+        <reason>Chart visualization components to be extracted to src/components/charts/ in Phase 4.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <ecosystem name="npm">
+        <package name="react" version="^18.3.1" />
+        <package name="react-dom" version="^18.3.1" />
+        <package name="firebase" version="^10.x" />
+        <package name="lucide-react" version="^0.460.0" />
+        <package name="vite" version="^5.4.0" dev="true" />
+        <package name="@vitejs/plugin-react" version="^4.3.0" dev="true" />
+        <package name="typescript" version="^5.3.3" dev="true" />
+        <package name="@types/react" version="^18.3.0" dev="true" />
+        <package name="@types/react-dom" version="^18.3.0" dev="true" />
+      </ecosystem>
+      <global name="firebase-tools" purpose="Deployment CLI (Story 1.4+)" />
+      <global name="node" version="18+" purpose="Runtime for Vite" />
+      <global name="npm" version="9+" purpose="Package manager" />
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">Continue using React Hooks for state management (useState, useEffect, useRef) - no external state library</constraint>
+    <constraint type="architecture">Preserve layered error handling: ErrorBoundary, try-catch, validation, defensive programming</constraint>
+    <constraint type="architecture">Maintain unidirectional data flow: props down, events up</constraint>
+    <constraint type="architecture">Component patterns: Presentational (pure rendering), Container (state management), View (page-level)</constraint>
+    <constraint type="feature-parity">NO feature changes allowed - pure refactoring only. All existing features must work identically</constraint>
+    <constraint type="feature-parity">NO UI modifications - maintain exact same visual appearance and UX</constraint>
+    <constraint type="feature-parity">NO database schema changes - preserve Firebase Firestore structure</constraint>
+    <constraint type="testing">Manual testing only - no automated test framework in this story (deferred to future epic)</constraint>
+    <constraint type="testing">Test after each phase: utilities, services, hooks, components, views, app integration</constraint>
+    <constraint type="extraction">Phased extraction approach: Phase 1 (utilities), Phase 2 (services), Phase 3 (hooks), Phase 4 (components), Phase 5 (views), Phase 6 (app)</constraint>
+    <constraint type="build">Use Vite 5.x with React TypeScript template</constraint>
+    <constraint type="build">TypeScript compilation must succeed with zero errors (AC #3)</constraint>
+    <constraint type="build">Vite dev server must run with hot module replacement working (AC #2)</constraint>
+    <constraint type="security">Placeholder environment variables for now (Story 1.2 will externalize to .env)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Firebase Authentication</name>
+      <kind>external-api</kind>
+      <signature>signInWithPopup(auth: Auth, provider: GoogleAuthProvider): Promise&lt;UserCredential&gt;</signature>
+      <path>firebase/auth</path>
+      <notes>Google OAuth integration - preserve existing pattern in src/hooks/useAuth.ts</notes>
+    </interface>
+    <interface>
+      <name>Firestore CRUD Operations</name>
+      <kind>external-api</kind>
+      <signature>
+        addDoc(collection, data): Promise&lt;DocumentReference&gt;
+        updateDoc(docRef, updates): Promise&lt;void&gt;
+        deleteDoc(docRef): Promise&lt;void&gt;
+        onSnapshot(query, callback): Unsubscribe
+      </signature>
+      <path>firebase/firestore</path>
+      <notes>Extract to src/services/firestore.ts with functions: addTransaction, updateTransaction, deleteTransaction, subscribeToTransactions</notes>
+    </interface>
+    <interface>
+      <name>Gemini AI API</name>
+      <kind>external-api</kind>
+      <signature>POST https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent</signature>
+      <path>src/services/gemini.ts</path>
+      <notes>Extract analyzeWithGemini function to src/services/gemini.ts with proper TypeScript types</notes>
+    </interface>
+    <interface>
+      <name>Transaction Interface</name>
+      <kind>type-definition</kind>
+      <signature>
+        interface Transaction {
+          id: string;
+          date: string;
+          storeName: string;
+          storeCategory: StoreCategory;
+          total: number;
+          items: TransactionItem[];
+          createdAt: FirebaseTimestamp;
+        }
+      </signature>
+      <path>src/types/transaction.ts</path>
+      <notes>Extract from tech-spec to create TypeScript type definitions</notes>
+    </interface>
+    <interface>
+      <name>App Settings Interface</name>
+      <kind>type-definition</kind>
+      <signature>
+        interface AppSettings {
+          lang: Language; // 'es' | 'en'
+          currency: Currency; // 'CLP' | 'USD' | 'EUR'
+          theme: Theme; // 'light' | 'dark'
+        }
+      </signature>
+      <path>src/types/settings.ts</path>
+      <notes>Extract from tech-spec to create TypeScript type definitions</notes>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Manual testing approach per Architecture § Testing Strategy and Epic scope. No automated test framework (deferred to future epic). Test each extraction phase before proceeding to next. Focus on feature parity - all existing functionality must work identically. Regression testing at 3 checkpoints: after Phase 6 (dev server), after Story 1.2 (production build), after Story 1.5 (deployed production).
+    </standards>
+    <locations>
+      <location type="browser-console">Browser DevTools console - verify zero errors during normal operation (AC #5)</location>
+      <location type="dev-server">Vite dev server at localhost:5173 for development testing</location>
+      <location type="typescript">TypeScript compiler via `tsc --noEmit` or `npm run type-check` (AC #3)</location>
+    </locations>
+    <ideas>
+      <idea ac="AC #1, #3">After Phase 1 (utilities): Test each utility function in isolation - formatCurrency, parseStrictNumber, getSafeDate, downloadCSV, colorForCategory. Verify TypeScript compiles.</idea>
+      <idea ac="AC #1, #3">After Phase 2 (services): Test Gemini API integration with sample receipt image. Test Firestore operations (add, update, delete, subscribe). Verify TypeScript compiles.</idea>
+      <idea ac="AC #1, #3">After Phase 3 (hooks): Test useAuth hook (Firebase initialization, sign-in, sign-out). Test useTransactions hook (real-time subscription). Verify TypeScript compiles.</idea>
+      <idea ac="AC #1, #3, #4">After Phase 4 (components): Render ErrorBoundary, SimplePieChart, GroupedBarChart, CategoryBadge, Nav in isolation. Verify props work correctly. Verify TypeScript compiles.</idea>
+      <idea ac="AC #1, #3, #4">After Phase 5 (views): Render each view (LoginScreen, DashboardView, ScanView, EditView, TrendsView, HistoryView, SettingsView). Verify all UI elements present. Verify TypeScript compiles.</idea>
+      <idea ac="AC #2, #4, #5">After Phase 6 (app integration): Full regression test on dev server. Test authentication flow, receipt scanning, CRUD operations, analytics charts, history pagination, settings persistence. Verify zero console errors. Test hot module replacement.</idea>
+      <idea ac="AC #4">Cross-browser testing: Test in Chrome/Firefox/Safari if possible (primary target: mobile browsers)</idea>
+      <idea ac="AC #4">Responsive testing: Test on mobile viewport (primary use case) and desktop viewport</idea>
+      <idea ac="AC #4">Edge case testing: Empty transaction list, network offline, invalid receipt image, malformed data, session expiration</idea>
+    </ideas>
+  </tests>
+</story-context>
