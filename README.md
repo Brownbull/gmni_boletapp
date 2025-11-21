@@ -124,3 +124,37 @@ src/
 ### Auth errors
 - Add `localhost` to Firebase Console > Authentication > Settings > Authorized domains
 - Enable Google sign-in provider in Firebase Console
+
+## Deployment
+
+### Firebase Hosting
+
+1. Install Firebase CLI:
+   ```bash
+   npm install -g firebase-tools
+   ```
+
+2. Login to Firebase:
+   ```bash
+   firebase login
+   ```
+
+3. Initialize hosting (if not already done):
+   ```bash
+   firebase init hosting
+   ```
+
+4. Build and deploy:
+   ```bash
+   npm run build
+   firebase deploy --only hosting
+   ```
+
+## Repository
+
+- **GitHub:** https://github.com/Brownbull/gmni_boletapp
+- **Clone:** `git clone https://github.com/Brownbull/gmni_boletapp.git`
+
+## License
+
+Private project. All rights reserved.
