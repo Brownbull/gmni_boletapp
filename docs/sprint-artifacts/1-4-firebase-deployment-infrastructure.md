@@ -1,6 +1,6 @@
 # Story 1.4: firebase-deployment-infrastructure
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -181,10 +181,10 @@ This story configures Firebase Hosting infrastructure to enable production deplo
 - [x] Stage changes: `git add README.md`
 
 ### Task 7: Commit Firebase Configuration (AC: #2, #3, #5)
-- [ ] Review all staged changes: `git status`
-- [ ] Expected files: firebase.json, .firebaserc, README.md
-- [ ] Verify dist/ is NOT staged (should be .gitignored)
-- [ ] Create commit with conventional message:
+- [x] Review all staged changes: `git status`
+- [x] Expected files: firebase.json, .firebaserc, README.md
+- [x] Verify dist/ is NOT staged (should be .gitignored)
+- [x] Create commit with conventional message:
   ```bash
   git commit -m "feat: configure Firebase Hosting with optimized caching
 
@@ -197,20 +197,20 @@ This story configures Firebase Hosting infrastructure to enable production deplo
   Story: 1.4 (Firebase Deployment Infrastructure)
   Epic: Production Deployment Readiness"
   ```
-- [ ] Push to GitHub: `git push origin main`
-- [ ] Verify commit appears on GitHub
+- [x] Push to GitHub: `git push origin main`
+- [x] Verify commit appears on GitHub
 
 ### Task 8: Validation and Final Checks (AC: #1-#5)
-- [ ] Verify Firebase CLI authenticated: `firebase projects:list` shows boletapp
-- [ ] Verify firebase.json configured correctly:
-  - [ ] `"public": "dist"`
-  - [ ] SPA rewrite rule present
-  - [ ] Cache headers for JS/CSS present
-- [ ] Verify .firebaserc contains correct project ID
-- [ ] Verify staging deployment URL still accessible (if within 7 days)
-- [ ] Verify README.md contains deployment instructions
-- [ ] Verify all files committed to Git (no uncommitted changes)
-- [ ] Clean up staging channel (optional): `firebase hosting:channel:delete staging`
+- [x] Verify Firebase CLI authenticated: `firebase projects:list` shows boletapp
+- [x] Verify firebase.json configured correctly:
+  - [x] `"public": "dist"`
+  - [x] SPA rewrite rule present
+  - [x] Cache headers for JS/CSS present
+- [x] Verify .firebaserc contains correct project ID
+- [x] Verify staging deployment URL still accessible (if within 7 days)
+- [x] Verify README.md contains deployment instructions
+- [x] Verify all files committed to Git (no uncommitted changes)
+- [x] Clean up staging channel (optional): `firebase hosting:channel:delete staging`
 
 ## Dev Notes
 
@@ -422,16 +422,57 @@ Returns production URL
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 
 ### Debug Log References
 
+N/A - All tasks completed successfully without debugging required.
+
 ### Completion Notes List
 
+✅ **Firebase Hosting Successfully Configured**
+- Firebase CLI v14.26.0 already installed and authenticated
+- Firebase project `boletapp-d609f` configured in `.firebaserc`
+- Hosting configured with Vite `dist/` as public directory
+- SPA rewrites configured for client-side routing support
+- Cache headers optimized for static assets (max-age=31536000)
+
+✅ **Staging Deployment Tested**
+- Successfully deployed to staging channel
+- Staging URL: https://boletapp-d609f--staging-sk3j852w.web.app (expires 2025-11-28)
+- Application accessible via HTTPS
+- All acceptance criteria verified
+
+✅ **Documentation Enhanced**
+- README.md updated with comprehensive deployment section
+- Staging deployment workflow documented
+- Production deployment commands documented
+- Rollback procedure documented
+- Troubleshooting section added
+- Added `npm run deploy` script to package.json
+
+✅ **Git Integration Complete**
+- All configuration files committed to Git
+- `.firebase/` directory properly gitignored
+- Conventional commit message format maintained
+- Changes pushed to GitHub successfully
+
 ### File List
+
+**New Files Created:**
+- `firebase.json` - Firebase Hosting configuration
+- `.firebaserc` - Firebase project settings
+
+**Modified Files:**
+- `README.md` - Enhanced deployment documentation
+- `package.json` - Added deploy script
+- `.gitignore` - Added .firebase/ exclusion
+- `docs/sprint-artifacts/sprint-status.yaml` - Updated story status to in-progress → review
+- `docs/sprint-artifacts/1-4-firebase-deployment-infrastructure.md` - Marked all tasks complete
 
 ### Change Log
 
 | Date | Change | Author |
 |------|--------|--------|
 | 2025-11-21 | Story drafted by create-story workflow | Claude (sm agent) |
+| 2025-11-21 | Configured Firebase Hosting, tested staging deployment, committed changes | Claude (dev agent) |
