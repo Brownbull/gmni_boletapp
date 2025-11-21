@@ -809,6 +809,38 @@ npm run dev
 **Branch Strategy:** Main branch for production-ready code
 **Status:** Accepted (Epic 1, Story 1.3)
 
+### ADR-006: Production Deployment with Firestore Security Rules
+
+**Decision:** Deploy to Firebase Hosting with mandatory Firestore security rules
+**Context:** Production deployment requires data persistence, user isolation, and secure access control
+**Consequences:**
+- ✅ Production app live at https://boletapp-d609f.web.app
+- ✅ HTTPS automatically enabled by Firebase CDN
+- ✅ User data isolated via security rules pattern
+- ✅ Global CDN distribution for fast loading
+- ✅ One-click rollback capability in Firebase Console
+- ⚠️ Firestore rules required or data access denied by default
+- ❌ Cold start latency for Firestore connections
+
+**Security Model:**
+```
+/artifacts/{appId}/users/{userId}/**
+  → allow read, write: if request.auth.uid == userId
+```
+
+**Deployment Process:**
+1. Build: `npm run build` → creates optimized dist/
+2. Deploy Hosting: `firebase deploy --only hosting`
+3. Deploy Rules: `firebase deploy --only firestore:rules` (critical!)
+4. Verify: Test all features in production
+5. Monitor: Firebase Console for errors and metrics
+
+**Production URL:** https://boletapp-d609f.web.app
+**Deployment Date:** 2025-11-21
+**Status:** Accepted (Epic 1, Story 1.5)
+
+**Critical Learning:** Firestore security rules MUST be deployed alongside the application. Without rules, Firestore denies all access by default, causing data persistence failures. Always include `firestore:rules` in initial deployment.
+
 ---
 
 ## Conclusion

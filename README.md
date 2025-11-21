@@ -125,6 +125,38 @@ src/
 - Add `localhost` to Firebase Console > Authentication > Settings > Authorized domains
 - Enable Google sign-in provider in Firebase Console
 
+## Production Deployment
+
+**Live Application:** 🚀 **https://boletapp-d609f.web.app**
+
+**Deployment Date:** November 21, 2025
+
+### Access Instructions
+
+1. Visit the production URL: https://boletapp-d609f.web.app
+2. Click "Sign in with Google"
+3. Authorize with your Google account
+4. Start tracking expenses!
+
+### Features Available in Production
+
+- ✅ **Google Authentication** - Secure OAuth sign-in
+- ✅ **AI Receipt Scanning** - Powered by Google Gemini 2.5 Flash
+- ✅ **Transaction Management** - Create, edit, delete transactions
+- ✅ **Analytics & Charts** - Visualize spending patterns
+- ✅ **History View** - Browse transaction history with pagination
+- ✅ **Multi-language** - English and Spanish support
+- ✅ **Theme Support** - Light and dark modes
+- ✅ **Data Persistence** - Your data is securely stored in Firestore
+- ✅ **HTTPS Enabled** - All traffic encrypted
+
+### Security
+
+- User data is isolated - each user can only access their own transactions
+- Firestore security rules enforce authentication and authorization
+- All traffic served over HTTPS
+- API keys restricted by authorized domains
+
 ## Deployment
 
 ### Prerequisites
@@ -155,6 +187,12 @@ npm run build
 firebase deploy --only hosting
 ```
 
+If this is your first deployment or you've updated Firestore rules:
+
+```bash
+firebase deploy --only hosting,firestore:rules
+```
+
 Or use the combined script:
 
 ```bash
@@ -176,10 +214,18 @@ After deployment:
 
 If issues are detected after deployment:
 
+**Method 1: Firebase Console (Recommended)**
 1. Go to Firebase Console > Hosting
 2. Find the previous working deployment
 3. Click the three-dot menu > "Rollback"
 4. Confirm the rollback
+
+**Method 2: Git-based Rollback**
+1. Checkout previous commit: `git checkout <previous-commit>`
+2. Rebuild: `npm run build`
+3. Redeploy: `firebase deploy --only hosting`
+
+**Emergency Contact:** Check Firebase Console for deployment status and errors
 
 ### Troubleshooting
 
