@@ -2,42 +2,51 @@
 
 ## Overview
 
-Boletapp is a single-file Progressive Web Application (PWA) that requires minimal setup. The entire application is contained in `main.tsx` and runs directly in modern browsers without a build step.
+Boletapp is a modular Progressive Web Application (PWA) built with React, TypeScript, and Vite. The codebase is organized into components, views, hooks, and services for maintainability.
 
 ## Prerequisites
 
 ### Required
 
-- **Modern Web Browser** with ES6+ support (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+)
+- **Node.js 18+** and **npm 9+**
+- **Git** - For version control
 - **Firebase Account** - Free tier is sufficient for development
 - **Google Gemini API Key** - Required for AI receipt scanning functionality
 
 ### Recommended
 
-- **Local Development Server** - For testing PWA features and avoiding CORS issues
-- **Firebase CLI** - For deployment and testing (optional)
+- **VS Code** - Recommended IDE with TypeScript support
+- **Firebase CLI** - For deployment (`npm install -g firebase-tools`)
 
-## Local Setup
+## Getting Started
 
-### 1. Configure Firebase
+### 1. Clone the Repository
 
-1. Create a new Firebase project at [Firebase Console](https://console.firebase.google.com/)
-2. Register a web app and copy the configuration object
-3. Open `/home/khujta/projects/bmad/boletapp/main.tsx` and locate the configuration section (lines 30-37)
-4. Replace the placeholder values with your Firebase credentials:
-
-```javascript
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
+```bash
+git clone https://github.com/Brownbull/gmni_boletapp.git
+cd gmni_boletapp
+npm install
 ```
 
-### 2. Enable Firebase Services
+### 2. Configure Environment Variables
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and add your credentials:
+
+```env
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project_id.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+VITE_GEMINI_API_KEY=your_gemini_api_key
+```
+
+### 4. Enable Firebase Services
 
 #### Firestore Database
 
@@ -64,99 +73,112 @@ service cloud.firestore {
 3. Enable **Google** sign-in method
 4. Configure OAuth consent screen and authorized domains
 
-### 3. Add Gemini API Key
-
-1. Obtain a Google Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Open `main.tsx` and locate line 40
-3. Replace the empty string with your API key:
-
-```javascript
-const GEMINI_API_KEY = "your_gemini_api_key_here";
-```
-
-**Note:** The app uses the `gemini-2.5-flash-preview-09-2025` model by default (line 41). Update if a different model is preferred.
-
 ## Running the Application
 
-### Option 1: Direct Browser Open
-
-1. Open `main.tsx` directly in your browser
-2. Accept any file:// protocol warnings
-3. Note: Some features (like camera access) may be limited
-
-### Option 2: Local Development Server (Recommended)
-
-#### Using Python
+### Development Server
 
 ```bash
-cd /home/khujta/projects/bmad/boletapp
-python3 -m http.server 8000
+npm run dev
 ```
 
-Then navigate to `http://localhost:8000/main.tsx`
+Opens at http://localhost:5173 with Hot Module Replacement (HMR).
 
-#### Using Node.js (http-server)
+### Production Build
 
 ```bash
-npm install -g http-server
-cd /home/khujta/projects/bmad/boletapp
-http-server -p 8000
+npm run build
+npm run preview    # Preview at http://localhost:4175
 ```
 
-Then navigate to `http://localhost:8000/main.tsx`
+### Available Scripts
 
-#### Using Live Server (VS Code Extension)
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server with HMR |
+| `npm run build` | Create production build in `dist/` |
+| `npm run preview` | Preview production build locally |
+| `npm run type-check` | Run TypeScript type checking |
 
-1. Install the "Live Server" extension
-2. Right-click on `main.tsx`
-3. Select "Open with Live Server"
+## Project Structure
 
-## Build Process
-
-**No build process is required.** Boletapp is designed as a single-file application that runs directly in the browser with embedded dependencies loaded via CDN imports.
-
-### Dependencies
-
-All dependencies are loaded at runtime:
-- **React 18** - UI framework (via CDN)
-- **Firebase SDK** - Auth and Firestore (via CDN)
-- **Lucide React** - Icon library (via CDN)
-
-No package.json, webpack, or bundler configuration is needed.
+```
+src/
+├── components/     # Reusable UI components
+│   └── charts/     # Chart components (Pie, Bar)
+├── config/         # Configuration (Firebase, Gemini)
+├── hooks/          # Custom React hooks
+├── services/       # API services (Firestore, Gemini)
+├── types/          # TypeScript type definitions
+├── utils/          # Utility functions
+├── views/          # Page-level components
+├── App.tsx         # Main application component
+└── main.tsx        # Application entry point
+```
 
 ## Development Workflow
 
 ### Making Changes
 
-1. Edit `main.tsx` directly
-2. Save the file
-3. Refresh the browser to see changes
-4. Check browser console for errors
+1. Edit source files in `src/`
+2. Save changes - HMR updates browser automatically
+3. Check browser console for errors
+4. Run `npm run type-check` to verify types
 
-### Common Development Tasks
+### Adding a New Component
 
-#### Adding a New Component
+Create a new file in `src/components/`:
 
-Components are defined as functions within `main.tsx`. Add your component function anywhere between lines 159-620.
+```typescript
+// src/components/MyComponent.tsx
+import React from 'react';
 
-```javascript
-const MyNewComponent = ({ prop1, prop2 }) => {
-    return <div>Your JSX here</div>;
+interface MyComponentProps {
+    prop1: string;
+    prop2: number;
+}
+
+export const MyComponent: React.FC<MyComponentProps> = ({ prop1, prop2 }) => {
+    return <div>{prop1}: {prop2}</div>;
 };
 ```
 
-#### Adding a New View
+### Adding a New View
 
-1. Add a new view state to the `view` useState hook
-2. Create a new section in the main render method (lines 502-615)
-3. Add navigation logic in the `Nav` component or header buttons
+1. Create file in `src/views/`
+2. Add routing in `App.tsx`
+3. Update navigation component
 
-#### Modifying Firestore Schema
+## Git Workflow
 
-Update the transaction structure in:
-- `saveTransaction` function (lines 393-402)
-- `onSnapshot` callback (lines 316-335)
-- `currentTransaction` state management
+### Daily Development
+
+```bash
+# Check status
+git status
+
+# Stage and commit changes
+git add .
+git commit -m "feat: add new feature"
+
+# Push to GitHub
+git push origin main
+```
+
+### Commit Message Format
+
+Use conventional commits:
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation changes
+- `refactor:` - Code refactoring
+- `test:` - Adding tests
+- `chore:` - Maintenance tasks
+
+### Pull Changes
+
+```bash
+git pull origin main
+```
 
 ## Testing Approach
 
@@ -243,19 +265,28 @@ Monitor the browser console for:
 
 ## Environment Variables
 
-This application does not use traditional environment variables. All configuration is hardcoded in `main.tsx`:
+Configuration is managed via `.env` files:
 
-- `firebaseConfig` (lines 30-37) - Firebase project credentials
-- `GEMINI_API_KEY` (line 40) - Google Gemini API key
-- `GEMINI_MODEL` (line 41) - AI model identifier
-- `STORE_CATEGORIES` (lines 44-48) - Available store categories
-- `ITEMS_PER_PAGE` (line 50) - Pagination size
+| Variable | Description |
+|----------|-------------|
+| `VITE_FIREBASE_API_KEY` | Firebase API key |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Firebase auth domain |
+| `VITE_FIREBASE_PROJECT_ID` | Firebase project ID |
+| `VITE_FIREBASE_STORAGE_BUCKET` | Firebase storage bucket |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID |
+| `VITE_FIREBASE_APP_ID` | Firebase app ID |
+| `VITE_GEMINI_API_KEY` | Google Gemini API key |
+| `VITE_GEMINI_MODEL` | Gemini model (default: gemini-2.5-flash-preview-09-2025) |
+
+Access in code via `import.meta.env.VITE_*`.
+
+**Important:** Never commit `.env` - it's git-ignored. Use `.env.example` as template.
 
 ## Security Considerations
 
-### API Key Exposure
+### API Key Security
 
-**Warning:** API keys are visible in the source code. For production:
+The `.env` file keeps API keys out of source control. For additional production security:
 
 1. Use Firebase App Check to restrict API usage
 2. Set Firebase Security Rules to validate requests

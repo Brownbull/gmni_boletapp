@@ -548,28 +548,55 @@ firebase deploy --only hosting
 
 ### Build Pipeline
 
-**None required** - No transpilation or bundling
+**Vite 5.x with TypeScript** - Modern build tooling
+
+```bash
+# Development
+npm run dev        # Start dev server with HMR
+
+# Production
+npm run build      # Outputs optimized bundle to dist/
+npm run preview    # Preview production build locally
+```
 
 **Deployment Checklist:**
-1. ✅ Firebase config added
-2. ✅ Gemini API key added
+1. ✅ Firebase config added to `.env`
+2. ✅ Gemini API key added to `.env`
 3. ✅ Firestore security rules deployed
 4. ✅ Authentication providers enabled
 5. ✅ Domain whitelisted in Firebase Console
+6. ✅ Git repository initialized and pushed to GitHub
 
 ### Environment Configuration
 
-**No Environment Variables**
-- All config hardcoded in `main.tsx`
-- Must manually update for different environments
+**Environment Variables via `.env`**
+- `.env` - Local credentials (git-ignored)
+- `.env.example` - Template with placeholders (committed)
+- Access via `import.meta.env.VITE_*`
 
-**Multi-Environment Setup (Optional):**
-```javascript
-const ENV = 'production'; // or 'development'
+**Required Variables:**
+```
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+VITE_GEMINI_API_KEY=
+```
 
-const firebaseConfig = ENV === 'production'
-    ? { /* prod keys */ }
-    : { /* dev keys */ };
+### Version Control
+
+**Repository:** https://github.com/Brownbull/gmni_boletapp
+
+**Git Workflow:**
+```bash
+git clone https://github.com/Brownbull/gmni_boletapp.git
+cd gmni_boletapp
+npm install
+cp .env.example .env
+# Configure .env with credentials
+npm run dev
 ```
 
 ---
@@ -752,17 +779,35 @@ const firebaseConfig = ENV === 'production'
 
 ---
 
-### ADR-004: No Build Step
+### ADR-004: Vite Build Pipeline
 
-**Decision:** Run React directly in browser (no webpack/vite)
-**Context:** Simplify development workflow
+**Decision:** Migrate from no-build to Vite 5.x with TypeScript
+**Context:** Need proper TypeScript support, faster HMR, and production optimization
 **Consequences:**
-- ✅ Edit → refresh workflow
-- ✅ No node_modules
-- ❌ No TypeScript type checking
-- ❌ No tree-shaking
+- ✅ TypeScript type checking enabled
+- ✅ Hot Module Replacement (HMR) for fast development
+- ✅ Optimized production builds with tree-shaking
+- ✅ Environment variable support via import.meta.env
+- ❌ Requires node_modules and npm install
 
-**Status:** Accepted for MVP, add build step if performance becomes issue
+**Status:** Accepted (Epic 1, Story 1.1)
+
+---
+
+### ADR-005: Git Version Control with GitHub
+
+**Decision:** Initialize Git repository and host on GitHub
+**Context:** Need version control for collaboration, backup, and deployment automation
+**Consequences:**
+- ✅ Full commit history and code backup
+- ✅ Collaboration-ready with branch workflows
+- ✅ GitHub Actions CI/CD integration possible
+- ✅ Easy rollback to previous versions
+- ❌ Requires Git knowledge for team members
+
+**Repository:** https://github.com/Brownbull/gmni_boletapp
+**Branch Strategy:** Main branch for production-ready code
+**Status:** Accepted (Epic 1, Story 1.3)
 
 ---
 
