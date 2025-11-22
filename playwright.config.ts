@@ -4,7 +4,7 @@ import { defineConfig, devices } from '@playwright/test';
  * Playwright Configuration
  *
  * End-to-end testing configuration for Boletapp.
- * Tests run against the local development server (http://localhost:5173)
+ * Tests run against the local development server (http://localhost:5174)
  *
  * See https://playwright.dev/docs/test-configuration
  */
@@ -29,7 +29,7 @@ export default defineConfig({
   /* Shared settings for all the projects below */
   use: {
     /* Base URL to use in actions like `await page.goto('/')` */
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:5174',
 
     /* Collect trace when retrying the failed test */
     trace: 'on-first-retry',
@@ -59,7 +59,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: 'npm run dev',
-    url: 'http://localhost:5173',
+    url: 'http://localhost:5174',
     reuseExistingServer: !process.env.CI,
     timeout: 120000, // 2 minutes
   },

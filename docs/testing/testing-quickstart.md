@@ -264,6 +264,8 @@ Opens Playwright Inspector for step-by-step debugging.
 npx playwright show-report
 ```
 
+**Note:** Boletapp uses port 5174 for the dev server (not 5173) to avoid conflicts with other applications.
+
 ---
 
 ## Troubleshooting
