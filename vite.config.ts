@@ -7,4 +7,21 @@ export default defineConfig({
   preview: {
     port: 4175,
   },
+  test: {
+    globals: true,
+    environment: 'happy-dom',
+    setupFiles: './tests/setup/vitest.setup.ts',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'json'],
+      exclude: [
+        'tests/**',
+        'scripts/**',
+        '**/*.config.ts',
+        '**/*.config.js',
+        '**/node_modules/**',
+        '**/dist/**',
+      ],
+    },
+  },
 })

@@ -1,0 +1,21 @@
+services:
+  firebase-emulators:
+    build:
+      context: .
+      dockerfile: Dockerfile.emulators
+    container_name: boletapp-firebase-emulators
+    ports:
+      - "4000:4000"   # Emulator UI
+      - "8080:8080"   # Firestore Emulator
+      - "9099:9099"   # Auth Emulator
+      - "4400:4400"   # Emulator Hub
+    volumes:
+      - ./emulator-data:/app/emulator-data
+    environment:
+      - HOST=0.0.0.0
+    networks:
+      - firebase-net
+
+networks:
+  firebase-net:
+    driver: bridge

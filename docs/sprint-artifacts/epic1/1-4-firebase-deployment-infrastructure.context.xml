@@ -1,0 +1,288 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>4</storyId>
+    <title>firebase-deployment-infrastructure</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-21</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-4-firebase-deployment-infrastructure.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>Firebase Hosting configured and ready for deployment</iWant>
+    <soThat>the application can be deployed to production with automated deployment scripts</soThat>
+    <tasks>### Task 1: Install and Configure Firebase CLI (AC: #1)
+- Check if Firebase CLI already installed: `firebase --version`
+- If not installed, install globally: `npm install -g firebase-tools`
+- Verify installation: `firebase --version` (should show version 13.x or higher)
+- Login to Firebase: `firebase login`
+- List accessible projects: `firebase projects:list`
+
+### Task 2: Initialize Firebase Hosting (AC: #2)
+- Navigate to project root: `/home/khujta/projects/bmad/boletapp`
+- Run Firebase init: `firebase init hosting`
+- Configure: Use existing project, public directory: `dist`, SPA: yes, GitHub deploys: no
+- Verify files created: firebase.json, .firebaserc
+
+### Task 3: Configure Optimized Caching Headers (AC: #3)
+- Add headers section to firebase.json for JS/CSS/image asset optimization
+- Cache-Control: max-age=31536000 for static assets
+- Verify JSON syntax is valid
+
+### Task 4: Build Application for Deployment (AC: #4)
+- Run production build: `npm run build`
+- Verify dist/ directory with optimized bundles
+- Preview production build locally: `npm run preview`
+
+### Task 5: Test Staging Deployment (AC: #4)
+- Deploy to staging: `firebase hosting:channel:deploy staging`
+- Test complete user flow on staging URL
+- Verify HTTPS, auth, scanning, CRUD, analytics work
+
+### Task 6: Document Deployment Process (AC: #5)
+- Update README.md with deployment instructions
+- Add troubleshooting section for common issues
+
+### Task 7: Commit Firebase Configuration (AC: #2, #3, #5)
+- Stage firebase.json, .firebaserc, README.md
+- Commit with conventional message
+- Push to GitHub
+
+### Task 8: Validation and Final Checks (AC: #1-#5)
+- Verify all acceptance criteria met
+- Clean up staging channel if desired</tasks>
+  </story>
+
+  <acceptanceCriteria>**AC #1:** Firebase CLI installed and authenticated
+- Verification: Run `firebase --version` and `firebase projects:list`
+
+**AC #2:** `firebase init hosting` completed with correct settings (public: dist, SPA config)
+- Verification: firebase.json exists with public: "dist" and SPA rewrite rules
+
+**AC #3:** firebase.json includes caching headers for optimized asset delivery
+- Verification: firebase.json contains cache headers for JS/CSS files (max-age=31536000)
+
+**AC #4:** Staging deployment tested successfully
+- Verification: `firebase hosting:channel:deploy staging` succeeds and app is accessible
+
+**AC #5:** Deployment process documented in README.md
+- Verification: README contains deployment commands and Firebase Hosting instructions</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- Technical Specification -->
+      <doc>
+        <path>docs/tech-spec.md</path>
+        <title>Technical Specification - boletapp</title>
+        <section>Firebase Deployment Configuration</section>
+        <snippet>Firebase Hosting configuration with firebase.json: public directory set to "dist", SPA rewrites for client-side routing, and cache headers for JS/CSS files (max-age=31536000).</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec.md</path>
+        <title>Technical Specification - boletapp</title>
+        <section>Deployment Pipeline</section>
+        <snippet>Simple deployment workflow: npm run build creates optimized production build in dist/, firebase deploy --only hosting deploys to Firebase Hosting, verify deployment and monitor via Firebase Console.</snippet>
+      </doc>
+
+      <!-- Architecture Documentation -->
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document - Boletapp</title>
+        <section>Deployment Architecture</section>
+        <snippet>Firebase Hosting recommended for global CDN, free HTTPS, custom domain support, and one-click rollback. Vite 5.x build pipeline with TypeScript outputs optimized bundle to dist/.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document - Boletapp</title>
+        <section>ADR-005: Git Version Control</section>
+        <snippet>Repository: https://github.com/Brownbull/gmni_boletapp. Full commit history, collaboration-ready, GitHub Actions CI/CD integration possible, easy rollback to previous versions.</snippet>
+      </doc>
+
+      <!-- Epic Documentation -->
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown - boletapp</title>
+        <section>Story 1.4: Firebase Deployment Infrastructure</section>
+        <snippet>Configure Firebase Hosting with correct settings (public: dist, SPA config), include caching headers for optimized asset delivery, test staging deployment, and document deployment process in README.md.</snippet>
+      </doc>
+
+      <!-- README Documentation -->
+      <doc>
+        <path>README.md</path>
+        <title>Boletapp README</title>
+        <section>Deployment - Firebase Hosting</section>
+        <snippet>Install Firebase CLI, login, initialize hosting, build and deploy: npm run build && firebase deploy --only hosting</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <!-- Build Configuration -->
+      <artifact>
+        <path>package.json</path>
+        <kind>config</kind>
+        <symbol>scripts</symbol>
+        <lines>6-10</lines>
+        <reason>npm scripts for dev, build, preview, and type-check - relevant for build and deployment process</reason>
+      </artifact>
+      <artifact>
+        <path>vite.config.ts</path>
+        <kind>config</kind>
+        <symbol>vite configuration</symbol>
+        <lines>1-10</lines>
+        <reason>Vite build configuration with React plugin - controls how production build is created</reason>
+      </artifact>
+
+      <!-- Project Documentation -->
+      <artifact>
+        <path>README.md</path>
+        <kind>documentation</kind>
+        <symbol>deployment section</symbol>
+        <lines>128-151</lines>
+        <reason>Existing deployment documentation that will be expanded in this story</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <firebase>^10.14.1</firebase>
+        <lucide-react>^0.460.0</lucide-react>
+        <react>^18.3.1</react>
+        <react-dom>^18.3.1</react-dom>
+      </node>
+      <node-dev>
+        <types-react>^18.3.0</types-react>
+        <types-react-dom>^18.3.0</types-react-dom>
+        <vitejs-plugin-react>^4.3.0</vitejs-plugin-react>
+        <typescript>^5.3.3</typescript>
+        <vite>^5.4.0</vite>
+      </node-dev>
+      <global>
+        <firebase-tools>Required for deployment (install via: npm install -g firebase-tools)</firebase-tools>
+      </global>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <!-- Architectural Constraints -->
+    <constraint>Use Vite dist/ folder as Firebase Hosting public directory (configured in Story 1.1)</constraint>
+    <constraint>Configure as Single-Page Application (SPA) with rewrites to serve index.html for all routes</constraint>
+    <constraint>Follow conventional commit message format established in Story 1.3</constraint>
+    <constraint>Maintain backward compatibility - do not break existing features</constraint>
+    <constraint>Git repository already initialized and pushed to GitHub in Story 1.3</constraint>
+
+    <!-- Firebase Constraints -->
+    <constraint>Firebase project must already exist with Auth and Firestore configured</constraint>
+    <constraint>Deploy only hosting service (--only hosting flag required)</constraint>
+    <constraint>Use long cache headers (31536000 seconds = 1 year) for static assets due to Vite's content hashing</constraint>
+    <constraint>Do not cache index.html (allow Firebase defaults) to enable instant updates</constraint>
+
+    <!-- Security Constraints -->
+    <constraint>firebase.json and .firebaserc should be committed to Git (configuration files, not secrets)</constraint>
+    <constraint>Environment variables (.env) must remain git-ignored</constraint>
+    <constraint>Test staging deployment before marking story as complete</constraint>
+
+    <!-- Deployment Constraints -->
+    <constraint>Staging channels expire after 7 days by default - document this behavior</constraint>
+    <constraint>Production deployment deferred to Story 1.5 - this story only configures infrastructure</constraint>
+  </constraints>
+
+  <interfaces>
+    <!-- Firebase CLI Interface -->
+    <interface>
+      <name>Firebase CLI</name>
+      <kind>CLI Tool</kind>
+      <signature>firebase --version, firebase login, firebase init hosting, firebase hosting:channel:deploy [channel], firebase deploy --only hosting</signature>
+      <path>Global npm package: firebase-tools</path>
+    </interface>
+
+    <!-- Build Output Interface -->
+    <interface>
+      <name>Vite Build Output</name>
+      <kind>Build Artifact</kind>
+      <signature>dist/ directory containing: index.html, assets/ (JS/CSS bundles with content hashes), optimized and minified files</signature>
+      <path>dist/</path>
+    </interface>
+
+    <!-- Firebase Configuration Interface -->
+    <interface>
+      <name>firebase.json</name>
+      <kind>Configuration File</kind>
+      <signature>
+{
+  "hosting": {
+    "public": "dist",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [{"source": "**", "destination": "/index.html"}],
+    "headers": [{"source": "**/*.@(js|css)", "headers": [{"key": "Cache-Control", "value": "max-age=31536000"}]}]
+  }
+}
+      </signature>
+      <path>firebase.json</path>
+    </interface>
+
+    <!-- npm Scripts Interface -->
+    <interface>
+      <name>npm build script</name>
+      <kind>npm script</kind>
+      <signature>npm run build - Runs TypeScript compilation and Vite build, outputs to dist/</signature>
+      <path>package.json</path>
+    </interface>
+    <interface>
+      <name>npm preview script</name>
+      <kind>npm script</kind>
+      <signature>npm run preview - Serves production build locally at http://localhost:4175</signature>
+      <path>package.json</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>No automated testing framework configured yet (deferred to future story per Tech Spec). Current approach is manual browser testing: load app, click through views, test features, verify Firestore writes, and cross-browser compatibility checks.</standards>
+
+    <locations>
+      <location>No test files exist yet</location>
+      <location>Manual testing in browser at http://localhost:5173 (dev) and http://localhost:4175 (preview)</location>
+      <location>Staging deployment testing via Firebase staging channel URL</location>
+      <location>Firebase Console for monitoring deployment activity</location>
+    </locations>
+
+    <ideas>
+      <!-- AC #1 Testing -->
+      <test ac="1">
+        <description>Verify Firebase CLI installed and authenticated</description>
+        <steps>Run `firebase --version` to confirm CLI installed (should show 13.x or higher). Run `firebase projects:list` to verify authentication and confirm boletapp project appears in list.</steps>
+      </test>
+
+      <!-- AC #2 Testing -->
+      <test ac="2">
+        <description>Verify firebase.json and .firebaserc created with correct settings</description>
+        <steps>Check firebase.json exists with public: "dist", rewrites for SPA, and hosting section. Verify .firebaserc contains correct Firebase project ID.</steps>
+      </test>
+
+      <!-- AC #3 Testing -->
+      <test ac="3">
+        <description>Verify caching headers configured in firebase.json</description>
+        <steps>Check firebase.json headers section contains cache-control for **/*.@(js|css) with max-age=31536000. Validate JSON syntax using JSON validator or IDE.</steps>
+      </test>
+
+      <!-- AC #4 Testing -->
+      <test ac="4">
+        <description>Test staging deployment end-to-end</description>
+        <steps>Run npm run build to create production bundle. Deploy to staging: firebase hosting:channel:deploy staging. Open staging URL in browser. Test complete user flow: sign in, receipt scanning, CRUD operations, analytics, history, settings. Verify HTTPS enabled, no console errors, mobile responsive, and all features functional.</steps>
+      </test>
+
+      <!-- AC #5 Testing -->
+      <test ac="5">
+        <description>Verify deployment documentation in README.md</description>
+        <steps>Check README.md Deployment section contains: Firebase CLI installation, authentication steps, staging deployment command, production deployment command, deployment verification steps, Firebase Console URL, and troubleshooting section with common issues.</steps>
+      </test>
+
+      <!-- Regression Testing -->
+      <test ac="all">
+        <description>Verify no breaking changes to existing functionality</description>
+        <steps>After committing firebase.json and .firebaserc, run npm run dev and test all features work identically. Verify Git status shows only expected files (firebase.json, .firebaserc, README.md) and dist/ remains git-ignored.</steps>
+      </test>
+    </ideas>
+  </tests>
+</story-context>

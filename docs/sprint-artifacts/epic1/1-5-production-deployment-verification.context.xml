@@ -1,0 +1,203 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>5</storyId>
+    <title>production-deployment-verification</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-21</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-5-production-deployment-verification.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>product owner</asA>
+    <iWant>the application deployed to production and verified working</iWant>
+    <soThat>end users can access the live application via HTTPS</soThat>
+    <tasks>
+### Task 1: Pre-Deployment Validation (AC: #1)
+- Verify all previous stories (1.1-1.4) marked as complete or approved
+- Verify Git repository is up to date
+- Verify environment variables configured
+- Run clean production build: `npm run build`
+- Test production build locally: `npm run preview`
+
+### Task 2: Production Deployment (AC: #2, #3)
+- Verify Firebase CLI authenticated
+- Verify firebase.json configuration
+- Deploy to production: `firebase deploy --only hosting`
+- Verify HTTPS enabled
+
+### Task 3: Production Environment Testing (AC: #4)
+- Test complete user journey (auth, scanning, CRUD, analytics, history, settings)
+- Check browser console for errors
+- Test on mobile device or responsive mode
+- Test on different browsers
+
+### Task 4: Firebase Console Monitoring (AC: #5)
+- Check Hosting dashboard
+- Review hosting metrics
+- Check Firestore usage
+- Check Authentication
+- Monitor for 10-15 minutes
+
+### Task 5: Documentation and Communication (AC: #6)
+- Update README.md with production URL
+- Add rollback procedure
+- Update architecture.md with ADR-006
+- Commit and push changes
+
+### Task 6: Stakeholder Communication (AC: #6)
+- Prepare deployment announcement
+- Share with stakeholders
+
+### Task 7: Post-Deployment Monitoring (AC: #5)
+- Monitor Firebase Console for 24 hours
+- Set up Firebase alerts (optional)
+
+### Task 8: Epic Completion and Retrospective Prep (AC: #1-#6)
+- Verify all acceptance criteria met
+- Update sprint-status.yaml
+- Prepare notes for Epic 1 retrospective
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+**AC #1:** Production build created and tested locally
+- Verification: Run `npm run build` and `npm run preview`, test all features locally
+
+**AC #2:** `firebase deploy --only hosting` succeeds without errors
+- Verification: Deployment command completes successfully with Firebase URL returned
+
+**AC #3:** Application accessible via Firebase Hosting URL with HTTPS enabled
+- Verification: Open production URL in browser, verify HTTPS padlock icon
+
+**AC #4:** All features (auth, scanning, CRUD, analytics) work in production environment
+- Verification: Complete regression test of all user flows in production
+
+**AC #5:** No errors in Firebase Console logs after deployment
+- Verification: Check Firebase Console > Hosting dashboard for errors
+
+**AC #6:** Production URL documented and shared
+- Verification: README.md updated with production URL and access instructions
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- Technical Specification -->
+      <doc>
+        <path>docs/tech-spec.md</path>
+        <title>Technical Specification - Quick Flow</title>
+        <section>Deployment Strategy</section>
+        <snippet>Production deployment via Firebase Hosting. Build process: npm run build → firebase deploy. Vite creates optimized production bundle with tree-shaking and minification.</snippet>
+      </doc>
+      <doc>
+        <path>docs/tech-spec.md</path>
+        <title>Technical Specification - Quick Flow</title>
+        <section>Implementation Guide - Story 5</section>
+        <snippet>Final production build, test locally with npm run preview, deploy via firebase deploy --only hosting, verify all features in production, monitor Firebase Console for errors.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Deployment Architecture</section>
+        <snippet>Firebase Hosting with global CDN, automatic HTTPS, one-click rollback. Vite 5.x build pipeline. Environment variables via .env (git-ignored).</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Story 1.5: Production Deployment</section>
+        <snippet>Deploy to production, verify all features work in production environment, ensure HTTPS enabled, monitor Firebase Console, document production URL.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>package.json</path>
+        <kind>config</kind>
+        <symbol>scripts</symbol>
+        <lines>6-10</lines>
+        <reason>npm scripts for build, preview, and deployment workflow</reason>
+      </artifact>
+      <artifact>
+        <path>vite.config.ts</path>
+        <kind>config</kind>
+        <symbol>defineConfig</symbol>
+        <lines>1-10</lines>
+        <reason>Vite build configuration for production optimization</reason>
+      </artifact>
+      <artifact>
+        <path>firebase.json</path>
+        <kind>config</kind>
+        <symbol>hosting</symbol>
+        <lines>1-36</lines>
+        <reason>Firebase Hosting configuration: dist/ folder, SPA rewrites, cache headers</reason>
+      </artifact>
+      <artifact>
+        <path>src/config/firebase.ts</path>
+        <kind>config</kind>
+        <symbol>firebaseConfig</symbol>
+        <lines>all</lines>
+        <reason>Firebase initialization - verify Auth and Firestore work in production</reason>
+      </artifact>
+      <artifact>
+        <path>src/config/gemini.ts</path>
+        <kind>config</kind>
+        <symbol>geminiConfig</symbol>
+        <lines>all</lines>
+        <reason>Gemini API configuration - verify receipt scanning works in production</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <runtime>Node.js 18+, npm 9+, Modern browsers (Chrome 90+, Firefox 88+, Safari 14+)</runtime>
+      <production>react@18.3.1, react-dom@18.3.1, firebase@10.14.1, lucide-react@0.460.0</production>
+      <development>typescript@5.3.3, vite@5.4.0, @vitejs/plugin-react@4.3.0, @types/react@18.3.0</development>
+      <deployment>firebase-tools (CLI), Firebase Hosting (CDN with HTTPS)</deployment>
+      <external>Google Gemini API 2.5-flash, Firebase Auth (Google OAuth), Cloud Firestore</external>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <development>No feature changes - deployment/verification only. All features must work identically. Zero tolerance for regressions. Full regression testing required.</development>
+    <architecture>Vite build system required. Environment variables use VITE_ prefix. Production output: dist/ folder. SPA with client-side routing. No hardcoded API keys.</architecture>
+    <deployment>HTTPS required (automatic via Firebase). Use firebase deploy --only hosting. Test staging first. Document rollback procedure. Monitor Firebase Console post-deployment.</deployment>
+    <testing>Manual regression testing only (no automated tests). All acceptance criteria must pass. Cross-browser and mobile testing required. Test locally with npm run preview before deployment.</testing>
+    <security>Firebase Security Rules enforce user isolation. API keys restricted by domain. HTTPS for all traffic. No sensitive data in Git.</security>
+    <documentation>Document production URL in README.md. Record deployment date. Document rollback procedure. Update architecture.md with production deployment ADR.</documentation>
+  </constraints>
+
+  <interfaces>
+    <api>
+      <interface name="Firebase Authentication" kind="External Service" signature="signInWithPopup(auth, GoogleAuthProvider)" path="src/hooks/useAuth.ts">Google OAuth sign-in - verify works with authorized domains</interface>
+      <interface name="Cloud Firestore" kind="External Service" signature="collection(db, 'artifacts', appId, 'users', userId, 'transactions')" path="src/services/firestore.ts">Real-time database - verify CRUD and sync in production</interface>
+      <interface name="Google Gemini AI" kind="REST API" signature="POST /v1beta/models/{model}:generateContent" path="src/services/gemini.ts">Receipt scanning - test with real images in production</interface>
+    </api>
+    <build>
+      <interface name="Vite Build" kind="Build Tool" signature="npm run build" path="package.json">Creates production bundle in dist/</interface>
+      <interface name="Vite Preview" kind="Build Tool" signature="npm run preview" path="package.json">Local production testing at http://localhost:4175</interface>
+    </build>
+    <deployment>
+      <interface name="Firebase Deploy" kind="CLI Tool" signature="firebase deploy --only hosting" path="firebase.json">Deploys dist/ to Firebase Hosting CDN</interface>
+      <interface name="Firebase Staging" kind="CLI Tool" signature="firebase hosting:channel:deploy staging" path="firebase.json">Temporary staging URL for testing</interface>
+    </deployment>
+  </interfaces>
+
+  <tests>
+    <standards>Manual testing only. Comprehensive regression testing of all user flows in production. Verify auth, scanning, CRUD, analytics, history, settings. Cross-browser (Chrome, Firefox, Safari) and mobile testing required. Performance: page load &lt;3s, scanning &lt;5s, no console errors. Test production build locally before deployment. Monitor Firebase Console post-deployment.</standards>
+    <locations>
+      <location>Production build: npm run build → dist/</location>
+      <location>Local preview: npm run preview → http://localhost:4175</location>
+      <location>Production: firebase deploy → Firebase Hosting URL</location>
+      <location>Firebase Console: https://console.firebase.google.com</location>
+      <location>Browser DevTools: Console and Network tabs</location>
+    </locations>
+    <ideas>
+      <test id="AC1">Production build: npm run build succeeds, dist/ created, npm run preview works, test all features locally, no console errors</test>
+      <test id="AC2">Firebase deploy: CLI authenticated, firebase.json correct, firebase deploy --only hosting succeeds, production URL returned</test>
+      <test id="AC3">HTTPS verification: Open production URL, verify padlock icon, SSL certificate valid, DNS resolves correctly</test>
+      <test id="AC4">Feature testing: Auth (Google sign-in), Scanning (Gemini API), CRUD (Firestore sync), Analytics (charts, CSV), History (pagination), Settings (language, currency, theme), Sign out. Test on Chrome, Firefox, Safari, and mobile.</test>
+      <test id="AC5">Firebase Console: Hosting dashboard shows Success, metrics show activity, Firestore reads/writes incrementing, Auth users appear, monitor 10-15 minutes, check Gemini API quota</test>
+      <test id="AC6">Documentation: Copy production URL, update README.md with deployment section, document rollback procedure, update architecture.md with ADR, commit and push to Git</test>
+    </ideas>
+  </tests>
+</story-context>

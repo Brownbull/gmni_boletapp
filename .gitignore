@@ -33,3 +33,6 @@ dist-ssr
 *.sln
 *.sw?
 .firebase/
+
+# Firebase Emulator data
+emulator-data/
