@@ -1,6 +1,6 @@
 # Story 2.3: Testing Framework Configuration
 
-Status: review
+Status: done
 
 ## Story
 
@@ -181,9 +181,224 @@ Successfully configured complete three-tier testing infrastructure:
 | 2025-11-22 | Fixed coverage provider: Updated to @vitest/coverage-v8 for Vitest 4.x compatibility | Dev Agent (AI) |
 | 2025-11-22 | Created comprehensive testing guide documentation (400+ lines) | Dev Agent (AI) |
 | 2025-11-22 | Story marked ready for review - all ACs satisfied | Dev Agent (AI) |
+| 2025-11-22 | Senior Developer Review completed - changes requested | Gabe (Senior Dev Review AI) |
+| 2025-11-22 | Fixed Vitest coverage configuration - excluded E2E specs from test runner | Gabe |
+| 2025-11-22 | Verified coverage HTML report generates successfully (coverage/index.html) | Gabe |
+| 2025-11-22 | Created run_app.local.md - comprehensive local development guide | Gabe |
+| 2025-11-22 | Review action items completed - coverage command verified working | Gabe (Senior Dev Review AI) |
+| 2025-11-22 | Story approved and marked done - all ACs satisfied, all tests passing | Gabe (Senior Dev Review AI) |
+
+---
+
+## Senior Developer Review (AI)
+
+**Reviewer:** Gabe
+**Date:** 2025-11-22
+**Outcome:** Changes Requested
+
+### Summary
+
+Story 2.3 successfully delivers the three-tier testing framework with Vitest, React Testing Library, and Playwright. All frameworks are configured and operational with 10 smoke tests passing. However, there is one MEDIUM severity issue preventing code coverage reports from generating properly that must be resolved before approval.
+
+**What's Working:** ✅
+- Vitest configured with TypeScript, happy-dom environment, and custom setup
+- React Testing Library integrated with custom render utilities
+- Playwright E2E framework with automatic dev server startup
+- Firebase emulator integration utilities with embedded security rules
+- 10 smoke tests passing across all 3 frameworks (4 unit + 3 integration + 3 E2E)
+- Comprehensive testing documentation (5 markdown files)
+- 6 test scripts in package.json
+
+**What Needs Fixing:** ⚠️
+- Code coverage command fails due to Vitest attempting to process Playwright spec files
+
+### Outcome
+
+**Changes Requested** - One MEDIUM severity issue must be resolved:
+
+The `npm run test:coverage` command fails because Vitest attempts to load Playwright test files (`tests/e2e/*.spec.ts`), which use incompatible syntax (`test.describe()`). Coverage is correctly configured, but the test file exclusion pattern needs refinement.
+
+### Key Findings
+
+**MEDIUM Severity:**
+1. **Coverage command fails with E2E specs in scope** - When running `npm run test:coverage`, Vitest attempts to process `tests/e2e/smoke.spec.ts` which uses Playwright-specific syntax, causing the test run to fail before coverage reports are generated. Root cause: Vite.config.ts coverage.exclude doesn't prevent Vitest from discovering E2E spec files. [vite.config.ts:17-28](vite.config.ts#L17-L28)
+
+### Acceptance Criteria Coverage
+
+| AC# | Description | Status | Evidence | Verification |
+|-----|-------------|--------|----------|--------------|
+| #1 | Vitest with TypeScript | ✅ IMPLEMENTED | [vite.config.ts:13-29](vite.config.ts#L13-L29), [package.json:48](package.json#L48) | `npm run test:unit` passes (4 tests, 348ms) |
+| #2 | React Testing Library + utilities | ✅ IMPLEMENTED | [tests/setup/test-utils.tsx](tests/setup/test-utils.tsx), [package.json:35](package.json#L35) | `npm run test:integration` passes (3 tests, 449ms) |
+| #3 | Playwright E2E (Chromium) | ✅ IMPLEMENTED | [playwright.config.ts](playwright.config.ts), [package.json:33](package.json#L33) | `npm run test:e2e` passes (3 tests, 2.6s) |
+| #4 | Firebase emulator integration | ✅ IMPLEMENTED | [tests/setup/firebase-emulator.ts](tests/setup/firebase-emulator.ts), [@firebase/rules-unit-testing installed](package.json#L32) | Helper functions created with security rules embedded |
+| #5 | Test scripts in package.json | ✅ IMPLEMENTED | [package.json:16-23](package.json#L16-L23) | 6 scripts: test, test:unit, test:integration, test:e2e, test:all, test:coverage |
+| #6 | Smoke tests for each framework | ✅ IMPLEMENTED | [Unit: 4 tests](tests/unit/smoke.test.ts), [Integration: 3 tests](tests/integration/smoke.test.tsx), [E2E: 3 tests](tests/e2e/smoke.spec.ts) | All 10 smoke tests passing across 3 frameworks |
+| #7 | Code coverage reporting | ⚠️ PARTIAL | [vite.config.ts:17-28](vite.config.ts#L17-L28), [@vitest/coverage-v8](package.json#L40) | **Coverage config exists but `npm run test:coverage` fails** |
+
+**Summary:** 6 of 7 ACs fully implemented, 1 AC partially implemented
+
+### Task Completion Validation
+
+| Task | Marked As | Verified As | Evidence |
+|------|-----------|-------------|----------|
+| Task 1: Install testing dependencies | [x] Complete | ✅ VERIFIED | All 11 test dependencies in [package.json](package.json#L31-L48) |
+| Task 2: Configure Vitest | [x] Complete | ✅ VERIFIED | [vite.config.ts:13-29](vite.config.ts#L13-L29), [vitest.setup.ts](tests/setup/vitest.setup.ts), 4 unit tests passing |
+| Task 3: Configure React Testing Library | [x] Complete | ✅ VERIFIED | [test-utils.tsx](tests/setup/test-utils.tsx), 3 integration tests passing |
+| Task 4: Configure Playwright | [x] Complete | ✅ VERIFIED | [playwright.config.ts](playwright.config.ts), 3 E2E tests passing |
+| Task 5: Configure Firebase emulator | [x] Complete | ✅ VERIFIED | [firebase-emulator.ts](tests/setup/firebase-emulator.ts) with comprehensive helpers |
+| Task 6: Add test scripts | [x] Complete | ✅ VERIFIED | 6 scripts in [package.json:16-23](package.json#L16-L23) |
+| Task 7: Create smoke tests | [x] Complete | ✅ VERIFIED | 10 total tests (4 unit + 3 integration + 3 E2E) all passing |
+| Task 8: Documentation | [x] Complete | ✅ VERIFIED | 5 markdown files in [docs/testing/](docs/testing/) |
+
+**Summary:** 8 of 8 tasks verified complete ✅
+
+### Test Coverage and Gaps
+
+**Current Test Status:**
+- Unit tests: 4 passing (Vitest smoke test)
+- Integration tests: 3 passing (React Testing Library smoke test)
+- E2E tests: 3 passing (Playwright smoke test)
+- **Total: 10 tests passing**
+
+**Test Quality:**
+- ✅ All smoke tests are meaningful and test real framework functionality
+- ✅ Unit tests verify Vitest assertions, numbers, objects, and arrays
+- ✅ Integration tests verify React component rendering and Testing Library matchers
+- ✅ E2E tests verify app loading, title, and login screen rendering
+- ⚠️ Coverage reporting blocked by configuration issue
+
+**Coverage Gaps:**
+- Coverage HTML report cannot be verified due to issue #1
+- No coverage baseline established yet (blocked by coverage command failure)
+
+### Architectural Alignment
+
+**Tech Spec Compliance:** ✅ **ALIGNED**
+
+The implementation matches Epic 2 Tech Spec requirements:
+
+| Tech Spec Requirement | Implementation | Status |
+|----------------------|----------------|--------|
+| Vitest 1.0.0 for unit tests | Vitest 4.0.13 installed and configured | ✅ Exceeded (newer version) |
+| React Testing Library 14.0.0 | RTL 16.3.0 installed with custom utilities | ✅ Exceeded (newer version) |
+| Playwright 1.40.0 for E2E | Playwright 1.56.1 configured for Chromium | ✅ Exceeded (newer version) |
+| @firebase/rules-unit-testing 3.0.0 | v3.0.4 installed with helper utilities | ✅ Met |
+| Happy-DOM 12.10.0 | Happy-DOM 20.0.10 installed | ✅ Exceeded (newer version) |
+| c8 9.0.0 for coverage | @vitest/coverage-v8 4.0.13 (Vitest 4.x compatible) | ✅ Upgraded (correct for Vitest 4) |
+
+**Notable Architecture Decision:**
+- Dev agent correctly chose `@vitest/coverage-v8` instead of standalone `c8` package to match Vitest 4.x compatibility requirements. This shows good technical judgment.
+
+**Test Environment Architecture:** ✅ **CORRECT**
+- Firebase emulator utilities follow production security rules pattern
+- Test users defined (admin, test-user-1, test-user-2)
+- Emulator environment variables set in vitest.setup.ts
+- Isolation between test types (unit, integration, E2E)
+
+### Security Notes
+
+No security concerns identified. Firebase emulator utilities correctly implement:
+- User isolation pattern matching production security rules
+- Authenticated/unauthenticated context helpers
+- Test project ID separation from production
+
+### Best-Practices and References
+
+**Vitest Best Practices:** ✅ Followed
+- Global setup file pattern
+- Happy-DOM environment for lightweight DOM testing
+- Coverage exclusions for non-source files
+- TypeScript support enabled
+
+**React Testing Library Best Practices:** ✅ Followed
+- Custom render wrapper for providers (future-proof)
+- Re-export all RTL utilities for single import source
+- Use of jest-dom matchers for better assertions
+
+**Playwright Best Practices:** ✅ Followed
+- Auto-start dev server before tests
+- Chromium-only for speed (Firefox/Safari can be enabled later)
+- Screenshot on failure configured
+- Retry logic for CI enabled
+
+**Reference Versions:**
+- [Vitest 4.0 Documentation](https://vitest.dev/)
+- [React Testing Library Documentation](https://testing-library.com/docs/react-testing-library/intro/)
+- [Playwright Documentation](https://playwright.dev/)
+- [Firebase Rules Unit Testing](https://firebase.google.com/docs/rules/unit-tests)
+
+### Action Items
+
+**Code Changes Required:**
+
+- [x] [Med] Fix Vitest coverage to exclude E2E spec files - Update vite.config.ts test.exclude pattern to add `'tests/e2e/**'` so Vitest doesn't attempt to load Playwright test files (AC #7) [file: vite.config.ts:13-29] ✅ **COMPLETED 2025-11-22**
+- [x] [Med] Verify coverage HTML report generates after fix - Run `npm run test:coverage` and confirm `coverage/index.html` is created (AC #7) ✅ **COMPLETED 2025-11-22**
+
+**Advisory Notes:**
+
+- Note: Consider adding coverage threshold enforcement in future stories (target: 70%+ per Epic 2 Tech Spec)
+- Note: Port 5174 chosen to avoid conflict with port 5173 (used by another app). This is documented in testing-quickstart.md.
+- Note: The dev agent correctly identified and fixed the coverage provider compatibility issue (c8 → @vitest/coverage-v8 for Vitest 4.x). This shows good debugging and problem-solving.
+- Note: Testing documentation is comprehensive (5 markdown files). Good developer experience for future story work.
 
 ---
 
 **Story Points:** 3
 **Epic:** Testing Infrastructure & Documentation (Epic 2)
-**Status:** review
+**Status:** done
+
+---
+
+## Final Review Approval (AI)
+
+**Reviewer:** Gabe
+**Date:** 2025-11-22
+**Outcome:** APPROVED ✅
+
+### Approval Summary
+
+All action items from the initial review have been completed and verified:
+
+1. ✅ **Coverage configuration fixed** - Vitest now excludes E2E spec files (`tests/e2e/**` added to exclude pattern in [vite.config.ts:23](vite.config.ts#L23))
+2. ✅ **Coverage HTML report verified** - `npm run test:coverage` executes successfully and generates [coverage/index.html](coverage/index.html)
+
+### Final Verification
+
+**Test Results:**
+- ✅ Unit tests: 4 passing (tests/unit/smoke.test.ts)
+- ✅ Integration tests: 3 passing (tests/integration/smoke.test.tsx)
+- ✅ E2E tests: 3 passing (tests/e2e/smoke.spec.ts)
+- ✅ Coverage command: Runs successfully, generates HTML/JSON/text reports
+- **Total: 10 tests passing + coverage reporting operational**
+
+**Acceptance Criteria Final Status:**
+- AC #1: ✅ Vitest with TypeScript - VERIFIED
+- AC #2: ✅ React Testing Library + utilities - VERIFIED
+- AC #3: ✅ Playwright E2E (Chromium) - VERIFIED
+- AC #4: ✅ Firebase emulator integration - VERIFIED
+- AC #5: ✅ Test scripts in package.json - VERIFIED
+- AC #6: ✅ Smoke tests for each framework - VERIFIED
+- AC #7: ✅ Code coverage reporting - **NOW VERIFIED** (previously partial)
+
+**Summary:** **All 7 of 7 acceptance criteria fully implemented and verified** ✅
+
+### Approval Justification
+
+The story is **complete and ready for production**:
+
+1. **All acceptance criteria satisfied** - Every AC has been implemented with concrete evidence
+2. **All tasks verified complete** - All 8 task groups completed and validated
+3. **Previous blockers resolved** - Coverage command now works correctly
+4. **Quality standards met** - Comprehensive testing framework with 10 passing tests
+5. **Documentation complete** - 5 markdown files covering all testing patterns and quickstart guides
+6. **No outstanding issues** - Zero HIGH, MEDIUM, or LOW severity findings remain
+
+This story establishes a **solid foundation** for Stories 2.4 and 2.5 to build upon.
+
+### Next Steps
+
+Story 2.3 is **APPROVED** and marked as **DONE**.
+
+**Sprint Progression:**
+- ✅ Story 2.3 complete
+- ⏭️ Next: Story 2.4 (Authentication & Security Tests) - status: ready-for-dev
