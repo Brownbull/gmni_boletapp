@@ -1,0 +1,72 @@
+{
+  "successfulReceipt": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "text": "```json\n{\n  \"merchant\": \"Whole Foods Market\",\n  \"date\": \"2025-11-23\",\n  \"total\": 8743,\n  \"category\": \"Supermarket\",\n  \"items\": [\n    {\n      \"name\": \"Organic Milk\",\n      \"price\": 699,\n      \"category\": \"Fresh Food\",\n      \"subcategory\": \"Dairy\"\n    },\n    {\n      \"name\": \"Fresh Vegetables\",\n      \"price\": 1250,\n      \"category\": \"Fresh Food\",\n      \"subcategory\": \"Produce\"\n    },\n    {\n      \"name\": \"Chicken Breast\",\n      \"price\": 1599,\n      \"category\": \"Fresh Food\",\n      \"subcategory\": \"Meat\"\n    }\n  ]\n}\n```"
+            }
+          ]
+        },
+        "finishReason": "STOP"
+      }
+    ]
+  },
+  "restaurantReceipt": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "text": "{\"merchant\":\"Pizza Palace\",\"date\":\"2025-11-22\",\"total\":4200,\"category\":\"Restaurant\",\"items\":[{\"name\":\"Large Pepperoni Pizza\",\"price\":1899,\"category\":\"Food\"},{\"name\":\"Caesar Salad\",\"price\":899,\"category\":\"Food\"},{\"name\":\"Garlic Bread\",\"price\":650,\"category\":\"Food\"}]}"
+            }
+          ]
+        },
+        "finishReason": "STOP"
+      }
+    ]
+  },
+  "invalidImageError": {
+    "error": {
+      "code": 400,
+      "message": "Invalid image format",
+      "status": "INVALID_ARGUMENT"
+    }
+  },
+  "apiKeyError": {
+    "error": {
+      "code": 401,
+      "message": "API key not valid. Please pass a valid API key.",
+      "status": "UNAUTHENTICATED"
+    }
+  },
+  "quotaExceededError": {
+    "error": {
+      "code": 429,
+      "message": "Quota exceeded for quota metric 'Generate Content API requests per minute'",
+      "status": "RESOURCE_EXHAUSTED"
+    }
+  },
+  "serviceError": {
+    "error": {
+      "code": 500,
+      "message": "Internal server error",
+      "status": "INTERNAL"
+    }
+  },
+  "malformedResponse": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "text": "This is not valid JSON, just some random text that the API returned for some reason."
+            }
+          ]
+        },
+        "finishReason": "STOP"
+      }
+    ]
+  }
+}
