@@ -36,3 +36,8 @@ dist-ssr
 
 # Firebase Emulator data
 emulator-data/
+
+# Test coverage and reports
+coverage/
+playwright-report/
+test-results/
