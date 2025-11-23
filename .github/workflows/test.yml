@@ -1,0 +1,129 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Setup Node.js 18
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      # Step 3: Cache node_modules for faster builds
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      # Step 4: Install dependencies (npm ci for deterministic builds)
+      - name: Install dependencies
+        run: npm ci
+
+      # Step 5: Install Firebase CLI
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      # Step 6: Install Playwright browsers
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      # Step 7: Start Firebase emulators in background
+      - name: Start Firebase emulators
+        run: |
+          firebase emulators:start --only auth,firestore --project boletapp-d609f &
+          # Wait for emulators to be ready (max 30s)
+          echo "Waiting for Firebase emulators to start..."
+          for i in {1..30}; do
+            if curl -s http://localhost:4000 > /dev/null; then
+              echo "Firebase emulators ready!"
+              break
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 1
+          done
+
+      # Step 8: Run unit tests
+      - name: Run unit tests
+        run: npm run test:unit
+        continue-on-error: false
+
+      # Step 9: Run integration tests
+      - name: Run integration tests
+        run: npm run test:integration
+        continue-on-error: false
+        env:
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+
+      # Step 10: Start Vite dev server in background for E2E tests
+      - name: Start Vite dev server
+        run: |
+          npm run dev &
+          # Wait for dev server to be ready (max 30s)
+          echo "Waiting for Vite dev server to start..."
+          for i in {1..30}; do
+            if curl -s http://localhost:5174 > /dev/null; then
+              echo "Vite dev server ready!"
+              break
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 1
+          done
+
+      # Step 11: Run E2E tests
+      - name: Run E2E tests
+        run: npm run test:e2e
+        continue-on-error: false
+        env:
+          CI: true
+
+      # Step 12: Generate coverage report
+      - name: Generate coverage report
+        run: npm run test:coverage
+        continue-on-error: false
+        env:
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+
+      # Step 13: Upload HTML coverage report as artifact
+      - name: Upload coverage report (HTML)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report-html
+          path: coverage/
+          retention-days: 30
+
+      # Step 14: Upload lcov coverage for potential badge integration
+      - name: Upload coverage report (lcov)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report-lcov
+          path: coverage/coverage-final.json
+          retention-days: 30
+
+      # Step 15: Display coverage summary in logs
+      - name: Display coverage summary
+        if: always()
+        run: |
+          echo "Coverage report generated. Download artifacts to view detailed HTML report."
+          if [ -f coverage/coverage-final.json ]; then
+            echo "✅ Coverage data available"
+          else
+            echo "⚠️ Coverage data not found"
+          fi

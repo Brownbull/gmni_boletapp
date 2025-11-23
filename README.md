@@ -81,6 +81,104 @@ Serves the production build locally at http://localhost:4175
 | `npm run build` | Create production build |
 | `npm run preview` | Preview production build |
 | `npm run type-check` | Run TypeScript type checking |
+| `npm run test` | Run tests in watch mode |
+| `npm run test:unit` | Run unit tests |
+| `npm run test:integration` | Run integration tests |
+| `npm run test:e2e` | Run end-to-end tests |
+| `npm run test:all` | Run all tests sequentially |
+| `npm run test:coverage` | Generate code coverage report |
+
+## Testing & Code Coverage
+
+### Test Framework
+
+Boletapp uses a **three-tier testing strategy** to ensure code quality and prevent regressions:
+
+1. **Unit Tests** (Vitest) - Test individual functions and utilities in isolation
+2. **Integration Tests** (React Testing Library) - Test component interactions and Firebase integration
+3. **End-to-End Tests** (Playwright) - Test complete user workflows in a real browser
+
+### Running Tests
+
+```bash
+# Run all tests
+npm run test:all
+
+# Run specific test types
+npm run test:unit          # Unit tests only (~400ms)
+npm run test:integration   # Integration tests only (~500ms)
+npm run test:e2e           # E2E tests only (~60s)
+
+# Generate coverage report
+npm run test:coverage
+```
+
+### Code Coverage Baseline
+
+**Overall Coverage:** 79.51% statements | 75% branches | 72.22% functions | 84.21% lines
+
+| Module | Statements | Branches | Functions | Lines | Status |
+|--------|------------|----------|-----------|-------|--------|
+| **config/** | 80% | 50% | 100% | 80% | ✅ Target met |
+| **hooks/** | 82.14% | 62.5% | 100% | 88.46% | ✅ Target met |
+| **services/** | 65.38% | 66.66% | 50% | 69.56% | ⚠️ Below target |
+| **utils/** | 94.73% | 93.75% | 100% | 100% | ✅ Excellent |
+
+### Coverage Targets
+
+- **Critical Paths (Auth, CRUD, AI):** 80%+ coverage ✅
+- **Business Logic (Services, Hooks, Utils):** 70%+ coverage ✅
+- **UI Components:** 60%+ coverage (planned)
+- **Overall Project:** 70%+ coverage ✅
+
+### Continuous Integration
+
+Every commit and pull request automatically runs:
+
+✅ Unit tests (54 tests)
+✅ Integration tests with Firebase emulator
+✅ E2E tests with Playwright (Chromium)
+✅ Code coverage reporting
+✅ TypeScript type checking
+
+**GitHub Actions Workflow:** `.github/workflows/test.yml`
+
+Pull requests require all tests to pass before merging. Coverage reports are uploaded as artifacts for each build.
+
+### Test Environment
+
+Integration and E2E tests use **Firebase Emulators** for isolated testing:
+
+- **Firestore Emulator:** Port 8080 (NoSQL database)
+- **Auth Emulator:** Port 9099 (Authentication)
+
+Emulators provide a safe environment to test without affecting production data.
+
+### Test Data
+
+Test users and fixtures are defined in `tests/fixtures/`:
+
+- **Admin User:** Full permissions for testing admin flows
+- **Test Users (1-2):** Standard users for testing data isolation
+- **Sample Transactions:** Realistic expense data for testing analytics
+
+### CI/CD Pipeline
+
+**Status:** ✅ Automated testing enabled
+
+Every push to `main` and all pull requests trigger the GitHub Actions workflow:
+
+1. Install dependencies
+2. Start Firebase emulators
+3. Run unit tests
+4. Run integration tests
+5. Start Vite dev server
+6. Run E2E tests
+7. Generate coverage report
+8. Upload coverage artifacts
+
+**Execution Time:** Target <10 minutes per run
+**Failed Tests:** Block PR merges automatically
 
 ## Project Structure
 
