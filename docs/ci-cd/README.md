@@ -33,6 +33,21 @@ If you're new to CI/CD, start here:
 - **Test Coverage:** 79.51% (target: 70%+)
 
 ### Test Commands
+
+**Using the centralized test script (recommended):**
+```bash
+./scripts/test-local.sh quick      # Fast tests before commit (2-5s)
+./scripts/test-local.sh all        # Complete validation before push (30-60s)
+./scripts/test-local.sh ci         # Full CI simulation with build (60-90s)
+./scripts/test-local.sh unit       # Unit tests only
+./scripts/test-local.sh integration # Integration tests
+./scripts/test-local.sh e2e        # E2E tests
+./scripts/test-local.sh coverage   # Generate coverage report
+./scripts/test-local.sh watch      # TDD mode with auto-rerun
+./scripts/test-local.sh help       # Show all options
+```
+
+**Using npm scripts directly:**
 ```bash
 npm run test:unit          # Unit tests only (~500ms)
 npm run test:integration   # Integration tests (~1s)

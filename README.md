@@ -100,17 +100,35 @@ Boletapp uses a **three-tier testing strategy** to ensure code quality and preve
 
 ### Running Tests
 
+**Using the centralized test script (recommended):**
 ```bash
-# Run all tests
-npm run test:all
+# Before committing - fast feedback
+./scripts/test-local.sh quick      # ~2-5s (type-check + unit)
 
-# Run specific test types
-npm run test:unit          # Unit tests only (~400ms)
-npm run test:integration   # Integration tests only (~500ms)
-npm run test:e2e           # E2E tests only (~60s)
+# Before pushing - complete validation
+./scripts/test-local.sh all        # ~30-60s (all tests + coverage)
 
-# Generate coverage report
-npm run test:coverage
+# Full CI simulation - exact GitHub Actions environment
+./scripts/test-local.sh ci         # ~60-90s (includes build)
+
+# Individual test suites
+./scripts/test-local.sh unit       # Unit tests only
+./scripts/test-local.sh integration # Integration tests (auto-starts emulators)
+./scripts/test-local.sh e2e        # E2E tests (Playwright manages dev server)
+./scripts/test-local.sh coverage   # Generate coverage report
+
+# Development modes
+./scripts/test-local.sh watch      # TDD mode - auto-rerun on file changes
+./scripts/test-local.sh help       # Show all available commands
+```
+
+**Using npm scripts directly:**
+```bash
+npm run test:all            # All tests sequentially
+npm run test:unit           # Unit tests only (~400ms)
+npm run test:integration    # Integration tests only (~500ms)
+npm run test:e2e            # E2E tests only (~60s)
+npm run test:coverage       # Generate coverage report
 ```
 
 ### Code Coverage Baseline
