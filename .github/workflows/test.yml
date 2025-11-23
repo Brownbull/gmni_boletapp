@@ -70,36 +70,21 @@ jobs:
         env:
           FIRESTORE_EMULATOR_HOST: localhost:8080
 
-      # Step 10: Start Vite dev server in background for E2E tests
-      - name: Start Vite dev server
-        run: |
-          npm run dev &
-          # Wait for dev server to be ready (max 30s)
-          echo "Waiting for Vite dev server to start..."
-          for i in {1..30}; do
-            if curl -s http://localhost:5174 > /dev/null; then
-              echo "Vite dev server ready!"
-              break
-            fi
-            echo "Waiting... ($i/30)"
-            sleep 1
-          done
-
-      # Step 11: Run E2E tests
+      # Step 10: Run E2E tests (Playwright manages dev server via webServer config)
       - name: Run E2E tests
         run: npm run test:e2e
         continue-on-error: false
         env:
           CI: true
 
-      # Step 12: Generate coverage report
+      # Step 11: Generate coverage report
       - name: Generate coverage report
         run: npm run test:coverage
         continue-on-error: false
         env:
           FIRESTORE_EMULATOR_HOST: localhost:8080
 
-      # Step 13: Upload HTML coverage report as artifact
+      # Step 12: Upload HTML coverage report as artifact
       - name: Upload coverage report (HTML)
         uses: actions/upload-artifact@v4
         if: always()
@@ -108,7 +93,7 @@ jobs:
           path: coverage/
           retention-days: 30
 
-      # Step 14: Upload lcov coverage for potential badge integration
+      # Step 13: Upload lcov coverage for potential badge integration
       - name: Upload coverage report (lcov)
         uses: actions/upload-artifact@v4
         if: always()
@@ -117,7 +102,7 @@ jobs:
           path: coverage/coverage-final.json
           retention-days: 30
 
-      # Step 15: Display coverage summary in logs
+      # Step 14: Display coverage summary in logs
       - name: Display coverage summary
         if: always()
         run: |
