@@ -49,5 +49,5 @@ development_status:
   2-3-testing-framework-configuration: done
   2-4-authentication-security-tests: done
   2-5-core-workflow-tests: done
-  2-6-cicd-pipeline-coverage-baseline: review
+  2-6-cicd-pipeline-coverage-baseline: done
   epic-2-retrospective: optional

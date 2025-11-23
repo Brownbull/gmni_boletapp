@@ -1,6 +1,6 @@
 # Story 2.6: CI/CD Pipeline & Coverage Baseline
 
-Status: todo
+Status: done
 
 ## Story
 
