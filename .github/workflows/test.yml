@@ -16,11 +16,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Setup Node.js 18
+      # Step 2: Setup Node.js 20 (LTS)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       # Step 3: Cache node_modules for faster builds
       - name: Cache dependencies
