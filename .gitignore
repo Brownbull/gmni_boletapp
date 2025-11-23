@@ -36,8 +36,17 @@ dist-ssr
 
 # Firebase Emulator data
 emulator-data/
+firebase-export-*/
+firestore-debug.log
+ui-debug.log
+firebase-debug.log
 
 # Test coverage and reports
 coverage/
 playwright-report/
 test-results/
+
+# Backup files
+*.backup
+*.bak
+*~
