@@ -472,3 +472,294 @@ AC #7: Workflow execution time < 10 minutes
 *Updated with Epic 2: Testing Infrastructure & Documentation*
 *Total Epics: 2*
 *Total Stories: 11*
+
+## Epic 3: Production-Grade Quality & Testing Completion
+
+**Slug:** production-grade-quality
+
+### Goal
+
+Complete the testing and quality infrastructure to production-grade standards by implementing real E2E workflows, accessibility testing, performance monitoring, and process improvements identified in Epic 2 retrospective. Close all testing gaps from Epic 2 and establish sustainable quality practices for future development.
+
+### Scope
+
+**In Scope:**
+- Replace skeletal E2E tests with real user workflow tests (17 tests → 19 meaningful tests)
+- Implement accessibility testing framework (@axe-core/playwright)
+- Establish performance baselines (Lighthouse CI, bundle size tracking)
+- Configure branch protection rules (require PR + passing CI)
+- Enforce epic evolution document updates in story workflow
+- Document CI/CD debugging workflow (using `act` framework)
+- Configure test coverage enforcement gates (70%+ required for PR merge)
+- Create accessibility tests for critical user paths (keyboard navigation, screen readers, color contrast)
+- Implement performance monitoring and regression detection
+
+**Out of Scope:**
+- Visual regression testing (Chromatic, Percy) - deferred to future epics
+- Load/stress testing (Artillery, k6) - low user count expected
+- Cross-browser testing (Firefox, Safari, Edge) - Chrome coverage sufficient for MVP
+- Advanced monitoring (Sentry, Datadog, New Relic) - Firebase Console sufficient
+- Security penetration testing - external audit deferred
+- New feature development - focus is quality infrastructure only
+
+### Success Criteria
+
+1. ✅ All 19 E2E tests validate real user workflows (no skeletal tests remain)
+2. ✅ Accessibility testing covers all critical user paths (10+ tests)
+3. ✅ Performance baselines established (Lighthouse CI operational)
+4. ✅ Branch protection prevents broken code from reaching main
+5. ✅ Epic evolution document maintained throughout epic (updated after each story)
+6. ✅ Test coverage maintained at 70%+ (enforced by CI)
+7. ✅ Zero test coverage regressions (CI blocks drops >2%)
+8. ✅ Application reaches "production-grade" quality standards
+
+### Dependencies
+
+**External:**
+- GitHub Actions (free tier - 2000 min/month)
+- Playwright browsers (Chromium)
+- @axe-core/playwright (npm package)
+- @lhci/cli (npm package for Lighthouse CI)
+- Firebase emulator (already installed from Epic 2)
+
+**Internal:**
+- Epic 2 completed ✅ (testing infrastructure exists)
+- Firebase emulator configured ✅ (Story 2.2)
+- Test users and fixtures available ✅ (Story 2.2)
+- CI/CD pipeline operational ✅ (Story 2.6)
+
+---
+
+## Story Map - Epic 3
+
+```
+Epic 3: Production-Grade Quality & Testing Completion (24 points total)
+│
+├── Story 3.1: Process & Governance Setup (2 points)
+│   Dependencies: None
+│   Deliverable: Branch protection, epic evolution enforcement, CI/CD debugging guide
+│
+├── Story 3.2: E2E Authentication & Navigation Workflow (3 points)
+│   Dependencies: Story 3.1
+│   Deliverable: 5 real auth/navigation workflow tests (replace 3 skeletal)
+│
+├── Story 3.3: E2E Transaction Management Workflow (5 points)
+│   Dependencies: Story 3.1
+│   Deliverable: 7 real transaction CRUD workflow tests (replace 7 skeletal)
+│
+├── Story 3.4: E2E Analytics & Data Export Workflow (5 points)
+│   Dependencies: Story 3.1
+│   Deliverable: 7 real analytics/export workflow tests (replace 7 skeletal)
+│
+├── Story 3.5: Accessibility Testing Framework & Critical Path Tests (4 points)
+│   Dependencies: Story 3.1
+│   Deliverable: 10+ accessibility tests with @axe-core/playwright
+│
+├── Story 3.6: Performance Baselines & Lighthouse CI (3 points)
+│   Dependencies: Stories 3.2, 3.3, 3.4 (E2E workflows needed for full page scans)
+│   Deliverable: Lighthouse CI integration, bundle size tracking
+│
+└── Story 3.7: Test Coverage Enforcement & CI Quality Gates (2 points)
+    Dependencies: All previous stories
+    Deliverable: CI blocks PRs below 70% coverage, coverage regression detection
+```
+
+---
+
+## Stories - Epic 3
+
+### Story 3.1: Process & Governance Setup
+
+As a DevOps engineer,
+I want branch protection and process enforcement mechanisms in place,
+So that code quality is maintained through automated guardrails.
+
+**Acceptance Criteria:**
+
+AC #1: GitHub branch protection enabled on `main` (require PR, require passing CI, prevent direct pushes)
+AC #2: Story creation workflow updated to include mandatory AC: "Update Epic Evolution document"
+AC #3: CI/CD debugging guide created at `docs/ci-cd/debugging-guide.md` documenting `act` usage
+AC #4: Verified: Direct push to main blocked, PR without passing tests cannot merge
+AC #5: Epic 3 evolution document updated with Story 3.1 completion
+
+**Prerequisites:** Epic 2 completed
+
+**Technical Notes:** Configure GitHub Settings → Branches → Branch protection rules for `main`. Update `.bmad/bmm/workflows/create-story/template.md` to include epic evolution AC. Document common CI failures and `act` framework usage for local testing.
+
+**Estimated Effort:** 2 story points
+
+---
+
+### Story 3.2: E2E Authentication & Navigation Workflow
+
+As a QA engineer,
+I want E2E tests that validate real authentication and navigation workflows,
+So that regressions in core user journeys are caught before deployment.
+
+**Acceptance Criteria:**
+
+AC #1: 5 authentication/navigation workflow tests implemented (replace 3 skeletal smoke tests)
+AC #2: Test: Complete auth flow (login → dashboard → logout)
+AC #3: Test: Navigation between all views (dashboard → scan → trends → history → settings → dashboard)
+AC #4: Test: Unauthenticated user redirect to login
+AC #5: Test: Authenticated user persists across page refresh
+AC #6: Test: Sign out clears auth state and redirects to login
+AC #7: All 5 tests use real user interactions (not just page load assertions)
+AC #8: Epic 3 evolution document updated with Story 3.2 completion
+
+**Prerequisites:** Story 3.1 (branch protection enables clean PR workflow)
+
+**Technical Notes:** Use Playwright's `page.waitForSelector()` for robust waiting. Reset Firebase emulator data before each test. Use test-user-1 credentials. Focus on user workflows, not component implementation details.
+
+**Estimated Effort:** 3 story points
+
+---
+
+### Story 3.3: E2E Transaction Management Workflow
+
+As a QA engineer,
+I want E2E tests that validate real transaction CRUD workflows,
+So that core application features are protected from regressions.
+
+**Acceptance Criteria:**
+
+AC #1: 7 transaction workflow tests implemented (replace 7 skeletal transaction-management tests)
+AC #2: Test: Create manual transaction → verify in list → edit → save → verify changes → delete → verify removed
+AC #3: Test: Receipt scan → review extracted data → save → verify in list
+AC #4: Test: Filter transactions by date range → verify filtered results
+AC #5: Test: Sort transactions (newest first, oldest first) → verify sort order
+AC #6: Test: Transaction data persists across page refresh
+AC #7: Test: Multiple transactions displayed correctly with pagination/scrolling
+AC #8: Test: Empty state displayed when no transactions exist
+AC #9: Epic 3 evolution document updated with Story 3.3 completion
+
+**Prerequisites:** Story 3.1 (branch protection)
+
+**Technical Notes:** Use Firebase emulator reset script before each test. Test with test-user-1 fixtures (10 transactions). Validate both happy paths and edge cases (empty state, single transaction).
+
+**Estimated Effort:** 5 story points
+
+---
+
+### Story 3.4: E2E Analytics & Data Export Workflow
+
+As a QA engineer,
+I want E2E tests that validate real analytics and export workflows,
+So that data visualization and export features work correctly.
+
+**Acceptance Criteria:**
+
+AC #1: 7 analytics/export workflow tests implemented (replace 7 skeletal analytics tests)
+AC #2: Test: View monthly trends → verify chart renders with correct data
+AC #3: Test: View category breakdown → verify percentages calculated correctly
+AC #4: Test: Filter analytics by date range → verify recalculation and chart update
+AC #5: Test: Export transactions to CSV → verify file downloads with correct data
+AC #6: Test: Export transactions to JSON → verify file downloads with correct structure
+AC #7: Test: Analytics with empty data displays "No data" message
+AC #8: Test: Analytics with single transaction displays correctly
+AC #9: Epic 3 evolution document updated with Story 3.4 completion
+
+**Prerequisites:** Story 3.1 (branch protection)
+
+**Technical Notes:** Use Playwright's download event handling for export tests. Validate chart rendering (canvas/SVG elements present). Test with varying data sets (empty, single transaction, multiple transactions).
+
+**Estimated Effort:** 5 story points
+
+---
+
+### Story 3.5: Accessibility Testing Framework & Critical Path Tests
+
+As a UX engineer,
+I want automated accessibility testing for critical user paths,
+So that the application is usable by people with disabilities.
+
+**Acceptance Criteria:**
+
+AC #1: @axe-core/playwright installed and configured
+AC #2: 10+ accessibility tests implemented for critical paths (login, dashboard, scan, trends, history, settings)
+AC #3: Test: Keyboard navigation works (Tab, Enter, Escape, Space keys)
+AC #4: Test: Screen reader labels present (ARIA labels, alt text, roles)
+AC #5: Test: Color contrast meets WCAG AA standards (4.5:1 for text)
+AC #6: Test: Focus management works correctly (modals, dropdowns, navigation)
+AC #7: Zero critical or serious axe violations on any page
+AC #8: Accessibility test documentation created at `docs/testing/accessibility-testing.md`
+AC #9: Epic 3 evolution document updated with Story 3.5 completion
+
+**Prerequisites:** Story 3.1 (branch protection)
+
+**Technical Notes:** Focus on WCAG 2.1 Level AA automated checks only. Use @axe-core/playwright for automated scans. Manual testing (screen readers) deferred to future epics. Document findings and fixes for future reference.
+
+**Estimated Effort:** 4 story points
+
+---
+
+### Story 3.6: Performance Baselines & Lighthouse CI
+
+As a DevOps engineer,
+I want performance monitoring integrated into CI/CD pipeline,
+So that performance regressions are caught before deployment.
+
+**Acceptance Criteria:**
+
+AC #1: Lighthouse CI (@lhci/cli) installed and configured
+AC #2: `.github/workflows/test.yml` updated to run Lighthouse scans
+AC #3: Performance baselines documented (Performance, Accessibility, Best Practices, SEO scores)
+AC #4: Bundle size tracking configured (warn on 10%+ increase)
+AC #5: Lighthouse reports uploaded to GitHub Actions artifacts
+AC #6: Performance documentation created at `docs/performance/performance-baselines.md`
+AC #7: Baseline metrics: Performance 90+, Accessibility 90+, Best Practices 90+, SEO 90+
+AC #8: Epic 3 evolution document updated with Story 3.6 completion
+
+**Prerequisites:** Stories 3.2, 3.3, 3.4 (E2E workflows needed for full page scans)
+
+**Technical Notes:** Establish baselines from CI environment (not local). Use "warn" mode initially, not "fail". Allow 5-point score variance for flaky metrics. Focus on regression detection, not absolute scores.
+
+**Estimated Effort:** 3 story points
+
+---
+
+### Story 3.7: Test Coverage Enforcement & CI Quality Gates
+
+As a DevOps engineer,
+I want test coverage enforcement in CI/CD pipeline,
+So that code quality doesn't regress over time.
+
+**Acceptance Criteria:**
+
+AC #1: `.github/workflows/test.yml` updated to require 70%+ coverage
+AC #2: CI fails if coverage drops below 70%
+AC #3: CI fails if coverage drops >2% from main branch
+AC #4: Coverage reports automatically posted to PR comments
+AC #5: Coverage requirements documented in CONTRIBUTING.md
+AC #6: Verified: PR with 65% coverage blocked from merge
+AC #7: Verified: PR with 71% coverage allowed to merge
+AC #8: Epic 3 evolution document updated with Story 3.7 completion
+
+**Prerequisites:** All previous stories (final quality gate)
+
+**Technical Notes:** Use vitest `--coverage.thresholds.lines=70` flag. Consider coveralls.io or codecov.io for PR comment integration. Apply enforcement to main branch only (not feature branches).
+
+**Estimated Effort:** 2 story points
+
+---
+
+## Implementation Timeline - Epic 3
+
+**Total Story Points:** 24 points
+
+**Estimated Timeline:** 16-22 days (assuming 1.5-2 points per day)
+
+**Implementation Sequence:**
+1. Story 3.1 (Process Setup) - Foundation work, enables clean workflow
+2. Stories 3.2, 3.3, 3.4 (E2E Workflows) - Can be done in parallel or sequentially
+3. Story 3.5 (Accessibility) - Can be done in parallel with E2E stories
+4. Story 3.6 (Performance) - Requires E2E workflows complete
+5. Story 3.7 (Coverage Enforcement) - Final quality gate
+
+**Recommended Approach:** Sequential execution (3.1 → 3.2 → 3.3 → 3.4 → 3.5 → 3.6 → 3.7) for single developer. Stories 3.2, 3.3, 3.4 could be parallelized if multiple developers available. Story 3.5 can run in parallel with E2E stories if resourced.
+
+---
+
+*Updated with Epic 3: Production-Grade Quality & Testing Completion*
+*Total Epics: 3*
+*Total Stories: 18*

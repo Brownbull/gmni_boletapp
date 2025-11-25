@@ -1,0 +1,196 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>1</storyId>
+    <title>Process & Governance Setup</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic3/3-1-process-governance-setup.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>DevOps engineer</asA>
+    <iWant>branch protection and process enforcement mechanisms in place</iWant>
+    <soThat>code quality is maintained through automated guardrails</soThat>
+    <tasks>
+      <task id="1" ac="1">Create Multi-Branch Structure (staging, develop from main)</task>
+      <task id="2" ac="2,5">Configure Branch Protection for main (Production)</task>
+      <task id="3" ac="3,5">Configure Branch Protection for staging (QA/UAT)</task>
+      <task id="4" ac="4,5">Configure Branch Protection for develop (Development)</task>
+      <task id="5" ac="2,3,4,5">Verify Branch Protection (test direct push blocked, PR workflow)</task>
+      <task id="6" ac="6">Create Branching Strategy Documentation (docs/branching-strategy.md)</task>
+      <task id="7" ac="7">Create CI/CD Debugging Guide (docs/ci-cd/debugging-guide.md)</task>
+      <task id="8" ac="8">Update Epic 3 Evolution Document</task>
+      <task id="9" ac="all">Final Validation</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Multi-branch strategy established (main, staging, develop branches)</criterion>
+    <criterion id="AC2">GitHub branch protection enabled on main (production) - strictest level</criterion>
+    <criterion id="AC3">GitHub branch protection enabled on staging (QA/UAT) - moderate level</criterion>
+    <criterion id="AC4">GitHub branch protection enabled on develop (development) - standard level</criterion>
+    <criterion id="AC5">CI status checks required before merge on all protected branches</criterion>
+    <criterion id="AC6">Branching workflow documented in docs/branching-strategy.md</criterion>
+    <criterion id="AC7">CI/CD debugging guide created at docs/ci-cd/debugging-guide.md</criterion>
+    <criterion id="AC8">Epic 3 evolution document updated with Story 3.1 completion</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Story 3.1: Process &amp; Governance Setup</section>
+        <snippet>Branch protection rules (require PR + passing CI), CI/CD debugging guide, epic evolution enforcement. AC 3.1.1-3.1.5 define testable conditions.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Build and Deployment Architecture</section>
+        <snippet>Current deployment via manual firebase deploy. GitHub Actions CI/CD planned. Production URL: https://boletapp-d609f.web.app</snippet>
+      </doc>
+      <doc>
+        <path>docs/planning/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Story 3.1: Process &amp; Governance Setup</section>
+        <snippet>2 story points. Establishes branch protection, epic evolution enforcement, and CI/CD debugging documentation.</snippet>
+      </doc>
+      <doc>
+        <path>.github/workflows/test.yml</path>
+        <title>GitHub Actions Test Workflow</title>
+        <section>Full workflow configuration</section>
+        <snippet>14-step workflow: checkout, Node 20 setup, npm ci, Firebase emulators, unit/integration/E2E tests, coverage. Job name is "test" - use this for required status checks.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ci-cd/README.md</path>
+        <title>CI/CD Documentation Index</title>
+        <section>Quick Reference</section>
+        <snippet>Existing docs: overview, setup guide, local testing, reading logs, best practices. Workflow execution ~3-4 minutes. Coverage 79.51%.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ci-cd/03-local-testing.md</path>
+        <title>Local Testing Guide</title>
+        <section>act Framework Usage</section>
+        <snippet>Use ./scripts/test-local.sh for local testing. The act framework can run GitHub Actions locally but has limitations with Firebase emulators.</snippet>
+      </doc>
+      <doc>
+        <path>docs/testing/test-strategy.md</path>
+        <title>Test Strategy &amp; Risk Register</title>
+        <section>CI/CD Integration</section>
+        <snippet>GitHub Actions for automated test execution. Test job runs unit, integration, E2E sequentially. Coverage baseline 79.51%.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic3/epic-3-evolution.md</path>
+        <title>Epic 3 Evolution Document</title>
+        <section>Story 3.1 Section</section>
+        <snippet>Must be updated upon story completion per AC #8. Track before/after state changes.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>.github/workflows/test.yml</path>
+        <kind>ci-workflow</kind>
+        <symbol>test (job name)</symbol>
+        <lines>1-125</lines>
+        <reason>Primary CI workflow - "test" job name must be used as required status check in branch protection rules</reason>
+      </file>
+      <file>
+        <path>scripts/test-local.sh</path>
+        <kind>shell-script</kind>
+        <symbol>test-local.sh</symbol>
+        <reason>Local test runner script referenced in CI/CD debugging guide for local workflow testing</reason>
+      </file>
+      <file>
+        <path>firebase.json</path>
+        <kind>config</kind>
+        <symbol>firebase.json</symbol>
+        <reason>Firebase configuration - hosting and firestore rules deployment config</reason>
+      </file>
+    </code>
+    <dependencies>
+      <node>
+        <package>firebase-tools</package>
+        <version>global</version>
+        <purpose>Firebase CLI for deployment and emulators</purpose>
+      </node>
+      <node>
+        <package>@playwright/test</package>
+        <version>^1.56.1</version>
+        <purpose>E2E testing framework</purpose>
+      </node>
+      <node>
+        <package>vitest</package>
+        <version>^4.0.13</version>
+        <purpose>Unit and integration test runner</purpose>
+      </node>
+      <node>
+        <package>@vitest/coverage-v8</package>
+        <version>^4.0.13</version>
+        <purpose>Code coverage reporting</purpose>
+      </node>
+      <github>
+        <tool>gh CLI</tool>
+        <purpose>GitHub CLI for branch protection configuration and PR management</purpose>
+      </github>
+      <github>
+        <tool>act</tool>
+        <purpose>Run GitHub Actions locally for debugging CI workflows</purpose>
+      </github>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="process">Branch protection must use "test" as the required status check name (matches .github/workflows/test.yml job name)</constraint>
+    <constraint type="process">Direct pushes to main, staging, and develop must be blocked after branch protection is enabled</constraint>
+    <constraint type="process">All PRs must pass CI status checks before merging on any protected branch</constraint>
+    <constraint type="architecture">No changes to src/ directory - this story is infrastructure/process only</constraint>
+    <constraint type="architecture">No changes to firestore.rules or firebase.json hosting configuration</constraint>
+    <constraint type="documentation">CI/CD debugging guide must reference existing docs/ci-cd/ documentation</constraint>
+    <constraint type="documentation">Branching strategy must follow the multi-branch pattern: feature/* → develop → staging → main</constraint>
+    <constraint type="testing">GitHub Actions workflow must complete in under 10 minutes</constraint>
+    <constraint type="testing">All existing 71 tests (14 unit, 40 integration, 17 E2E) must pass before enabling branch protection</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>GitHub Branch Protection API</name>
+      <kind>GitHub Settings UI / gh CLI</kind>
+      <signature>Repository Settings → Branches → Branch protection rules</signature>
+      <path>https://github.com/Brownbull/gmni_boletapp/settings/branches</path>
+    </interface>
+    <interface>
+      <name>GitHub Actions Status Checks</name>
+      <kind>CI/CD integration</kind>
+      <signature>jobs.test (from .github/workflows/test.yml)</signature>
+      <path>.github/workflows/test.yml</path>
+    </interface>
+    <interface>
+      <name>Git Branch Commands</name>
+      <kind>CLI commands</kind>
+      <signature>git checkout -b {branch}; git push -u origin {branch}</signature>
+      <path>N/A - git CLI</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>This story is primarily process/infrastructure setup with manual verification rather than automated tests. Branch protection is verified through manual testing: attempt direct push (should fail), create PR with failing tests (merge should be blocked), create PR with passing tests (merge should succeed). Document test results in story file.</standards>
+    <locations>
+      <location>Manual verification via GitHub UI and git CLI</location>
+      <location>Existing test suite: tests/unit/, tests/integration/, tests/e2e/</location>
+      <location>.github/workflows/test.yml - CI workflow that must pass</location>
+    </locations>
+    <ideas>
+      <idea ac="AC1">Verify branches exist: git branch -r should show origin/main, origin/staging, origin/develop</idea>
+      <idea ac="AC2">Test main protection: git push origin main (direct) should fail with "protected branch" error</idea>
+      <idea ac="AC3">Test staging protection: git push origin staging (direct) should fail with "protected branch" error</idea>
+      <idea ac="AC4">Test develop protection: git push origin develop (direct) should fail with "protected branch" error</idea>
+      <idea ac="AC5">Create test PR with intentionally failing test, verify merge is blocked</idea>
+      <idea ac="AC5">Fix test, verify PR can now merge (green status checks required)</idea>
+      <idea ac="AC6">Verify docs/branching-strategy.md exists with Mermaid diagram and branch flow documentation</idea>
+      <idea ac="AC7">Verify docs/ci-cd/debugging-guide.md exists with act framework documentation</idea>
+      <idea ac="AC8">Verify docs/sprint-artifacts/epic3/epic-3-evolution.md has Story 3.1 section completed</idea>
+    </ideas>
+  </tests>
+</story-context>
