@@ -39,7 +39,7 @@ Complete the testing and quality infrastructure to production-grade standards by
 - [ ] Application reaches "production-grade" quality standards
 
 ### Stories in This Epic
-1. Story 3.1: Process & Governance Setup - Status: backlog
+1. Story 3.1: Process & Governance Setup - Status: **completed** ✅
 2. Story 3.2: E2E Authentication & Navigation Workflow - Status: backlog
 3. Story 3.3: E2E Transaction Management Workflow - Status: backlog
 4. Story 3.4: E2E Analytics & Data Export Workflow - Status: backlog
@@ -323,30 +323,113 @@ service cloud.firestore {
 
 ### Story 3.1: Process & Governance Setup
 
-**Status:** backlog
-**Completed:** N/A
-**Branch:** N/A
+**Status:** completed ✅
+**Completed:** 2025-11-25
+**Branch:** feature/3-1-process-governance (merged via PR workflow)
 
 #### What Changed
-[Will be updated when story completes]
+
+1. **Multi-Branch Strategy Established:**
+   - Created `staging` branch from `main` (QA/UAT environment)
+   - Created `develop` branch from `main` (active development)
+   - All three branches now exist with distinct purposes
+
+2. **GitHub Branch Protection Enabled:**
+   - `main` (Production): STRICTEST protection
+     - Requires PR reviews
+     - Requires `test` status check to pass
+     - Dismisses stale approvals
+     - Requires conversation resolution
+     - Enforces for admins (no bypass)
+     - Blocks force pushes and deletions
+   - `staging` (QA/UAT): MODERATE protection
+     - Requires PR
+     - Requires `test` status check to pass
+     - Enforces for admins
+   - `develop` (Development): STANDARD protection
+     - Requires PR
+     - Requires `test` status check to pass
+     - Enforces for admins
+
+3. **Documentation Created:**
+   - `docs/branching-strategy.md` - Comprehensive branching workflow guide
+   - `docs/ci-cd/debugging-guide.md` - CI/CD debugging with `act` framework
+
+4. **Process Verification:**
+   - Tested direct push to `main` - blocked as expected
+   - Verified `test` job required as status check
 
 #### Files Added/Modified
-[Will be updated when story completes]
+
+**Files Added (2):**
+- `docs/branching-strategy.md` - Complete branching strategy documentation with Mermaid diagrams
+- `docs/ci-cd/debugging-guide.md` - Comprehensive CI/CD debugging guide with `act` framework documentation
+
+**Files Modified (1):**
+- `docs/ci-cd/README.md` - Added link to new debugging guide
+
+**GitHub Configuration Changes:**
+- Branch protection rules added for `main`, `staging`, `develop`
+- All branches require PR + passing `test` status check
 
 #### Architecture Impact
-[Will be updated when story completes]
+
+**ADR-008: Multi-Branch Strategy**
+
+| Decision | Rationale |
+|----------|-----------|
+| Three-branch model | Separates production, QA, and development concerns |
+| `main` for production | Clear deployment target, matches Firebase Hosting |
+| `staging` for QA | Testing ground before production |
+| `develop` for integration | Feature branches merge here first |
+| Branch protection on all three | Prevents accidental direct pushes |
+| `test` as required status check | Ensures CI passes before any merge |
+
+**Impact on Development Workflow:**
+- All future work must use feature branches
+- PRs required for all merges (no direct pushes)
+- CI must pass before merge is allowed
+- Cleaner git history with PR-based workflow
 
 #### Data Model Changes
-None expected
+None - this story focuses on infrastructure/process only
 
 #### Discoveries
-[Will be updated when story completes]
+
+1. **Branch Protection API:** GitHub API requires JSON input format for complex settings; `--field` syntax doesn't work for nested objects.
+
+2. **Status Check Name:** The required status check must match the job name in the workflow file (`test` from `.github/workflows/test.yml`).
+
+3. **enforce_admins:** Setting this to `true` prevents even repository admins from bypassing protection rules - critical for maintaining process integrity.
+
+4. **PR Workflow Implication:** With branch protection enabled, Story 3.1 itself had to be committed to main before protection was enabled, otherwise we'd have a chicken-and-egg problem.
 
 #### Before → After Snapshot
 ```diff
-Before: [Brief description]
-After:  [Brief description]
+Before: Single `main` branch with no protection
+        - Direct pushes allowed
+        - No PR required
+        - CI runs but doesn't gate merges
+
+After:  Three protected branches (main, staging, develop)
+        - Direct pushes blocked on all branches
+        - PR required for all merges
+        - CI `test` job must pass before merge
+        - Comprehensive documentation for workflows
 ```
+
+#### Success Criteria Met
+
+| Criterion | Status |
+|-----------|--------|
+| Multi-branch strategy (main/staging/develop) | ✅ |
+| Branch protection on main (PR + CI) | ✅ |
+| Branch protection on staging (PR + CI) | ✅ |
+| Branch protection on develop (PR + CI) | ✅ |
+| Direct push blocked (verified) | ✅ |
+| Branching strategy documented | ✅ |
+| CI/CD debugging guide created | ✅ |
+| Epic 3 evolution document updated | ✅ |
 
 ---
 
@@ -562,7 +645,7 @@ After:  [Will be updated - CI blocks PRs below 70%]
 ### Quality Gates
 | Metric | Before | After |
 |--------|--------|-------|
-| Branch Protection | No | [Yes - Story 3.1] |
+| Branch Protection | No | **Yes** ✅ (Story 3.1) |
 | Coverage Enforcement | No | [Yes - Story 3.7] |
 | Performance Monitoring | No | [Yes - Story 3.6] |
 
@@ -643,10 +726,11 @@ After:  [Will be updated - CI blocks PRs below 70%]
 | Date | Change | Author |
 |------|--------|--------|
 | 2025-11-23 | Epic 3 evolution document created with Before State | Winston (Architect) |
+| 2025-11-25 | Story 3.1 completed - added multi-branch strategy, branch protection, CI/CD debugging guide | Dev Agent (Claude) |
 
 ---
 
-**Document Version:** 1.0
-**Last Updated:** 2025-11-23
+**Document Version:** 1.1
+**Last Updated:** 2025-11-25
 **Status:** Active (Epic 3 in progress)
-**Next Update:** After Story 3.1 completion
+**Next Update:** After Story 3.2 completion
