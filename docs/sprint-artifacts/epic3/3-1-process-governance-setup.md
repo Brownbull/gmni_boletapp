@@ -1,6 +1,6 @@
 # Story 3.1: Process & Governance Setup
 
-Status: review
+Status: done
 
 ## Story
 
