@@ -8,7 +8,7 @@
  * Coverage: Firestore service layer, transaction lifecycle
  */
 
-import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterEach, afterAll } from 'vitest';
 import {
   setupFirebaseEmulator,
   clearFirestoreData,
@@ -25,6 +25,12 @@ const APP_ID = 'boletapp-d609f';
 describe('Transaction CRUD Operations', () => {
   beforeAll(async () => {
     await setupFirebaseEmulator();
+  });
+
+  // Clear data BEFORE each test to ensure test isolation
+  // This handles cases where previous test runs left data behind
+  beforeEach(async () => {
+    await clearFirestoreData();
   });
 
   afterEach(async () => {
