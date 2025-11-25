@@ -10,6 +10,7 @@ This folder contains comprehensive documentation about the Continuous Integratio
 3. **[Local Testing](./03-local-testing.md)** - Testing workflows locally before pushing to GitHub
 4. **[Reading Workflow Logs](./04-reading-logs.md)** - How to debug failures in GitHub Actions
 5. **[Best Practices](./05-best-practices.md)** - CI/CD best practices for React/TypeScript projects
+6. **[Debugging Guide](./debugging-guide.md)** - Comprehensive troubleshooting with `act` framework and common issues
 
 ### Reference Materials
 - **[Troubleshooting Guide](./troubleshooting.md)** - Common issues and solutions
