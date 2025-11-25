@@ -1,0 +1,208 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.4</storyId>
+    <title>E2E Analytics & Data Export Workflow</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic3/3-4-e2e-analytics-export-workflow.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a QA engineer</asA>
+    <iWant>E2E tests that validate real analytics and export workflows</iWant>
+    <soThat>data visualization and export features work correctly</soThat>
+    <tasks>
+      <task id="1" status="pending">Analyze Current Skeletal Analytics Tests</task>
+      <task id="2" status="pending">Create Analytics Workflow Test File</task>
+      <task id="3" status="pending">Implement Monthly Trends Chart Test</task>
+      <task id="4" status="pending">Implement Category Breakdown Test</task>
+      <task id="5" status="pending">Implement Date Range Filter Test</task>
+      <task id="6" status="pending">Implement CSV Export Test</task>
+      <task id="7" status="pending">Implement JSON Export Test</task>
+      <task id="8" status="pending">Implement Empty Data Test</task>
+      <task id="9" status="pending">Implement Single Transaction Test</task>
+      <task id="10" status="pending">Remove/Archive Skeletal Tests</task>
+      <task id="11" status="pending">Verify All Tests Pass</task>
+      <task id="12" status="pending">Update Epic 3 Evolution Document</task>
+      <task id="13" status="pending">Final Validation</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">7 analytics/export workflow tests implemented - Verification: tests/e2e/analytics-*.spec.ts files contain 7 passing tests total</criterion>
+    <criterion id="AC2">Monthly trends chart test - Validates chart renders with correct monthly data aggregations</criterion>
+    <criterion id="AC3">Category breakdown test - Validates pie chart with correct percentage calculations</criterion>
+    <criterion id="AC4">Date range filter test - Validates analytics recalculate when date filter applied</criterion>
+    <criterion id="AC5">CSV export test - Validates CSV file downloads with correct transaction data</criterion>
+    <criterion id="AC6">JSON export test - Validates JSON file downloads with correct structure</criterion>
+    <criterion id="AC7">Empty data test - Validates "No data" message displays when no transactions exist</criterion>
+    <criterion id="AC8">Single transaction test - Validates analytics display correctly with single transaction</criterion>
+    <criterion id="AC9">Epic 3 evolution document updated - Story 3.4 section completed in epic-3-evolution.md</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Story 3.4: E2E Analytics & Data Export Workflow</section>
+        <snippet>Replace 7 skeletal analytics tests with meaningful workflow tests that validate the TrendsView analytics features and CSV/JSON export capabilities. Tests must validate chart rendering, data calculations, filtering, and export functionality.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Component Architecture - TrendsView</section>
+        <snippet>TrendsView component renders SimplePieChart and GroupedBarChart for analytics visualization. Includes CSV export via Download button, year/month filtering, and category drill-down capabilities.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic3/3-2-e2e-auth-navigation-workflow.md</path>
+        <title>Story 3.2 - E2E Auth & Navigation (Completed)</title>
+        <section>E2E Testing Patterns</section>
+        <snippet>Established patterns: Firebase emulator reset before each test, real user interactions, Playwright auto-waiting, test file naming pattern {feature}-workflow.spec.ts</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic3/3-3-e2e-transaction-management-workflow.md</path>
+        <title>Story 3.3 - E2E Transaction Management (In Progress)</title>
+        <section>Test Organization Patterns</section>
+        <snippet>Single file with multiple describe blocks, beforeEach for common setup, fixture data for predictable scenarios, organized by workflow aspect</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/views/TrendsView.tsx</path>
+        <kind>view</kind>
+        <symbol>TrendsView</symbol>
+        <lines>1-275</lines>
+        <reason>Main analytics view component - renders charts, handles filtering, manages export functionality</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/charts/SimplePieChart.tsx</path>
+        <kind>component</kind>
+        <symbol>SimplePieChart</symbol>
+        <lines>1-66</lines>
+        <reason>Pie chart visualization for category breakdown - SVG-based, interactive slices, handles empty state</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/charts/GroupedBarChart.tsx</path>
+        <kind>component</kind>
+        <symbol>GroupedBarChart</symbol>
+        <lines>1-63</lines>
+        <reason>Bar chart for monthly trends - stacked segments, tooltips, responsive design</reason>
+      </artifact>
+      <artifact>
+        <path>src/utils/csv.ts</path>
+        <kind>utility</kind>
+        <symbol>exportToCSV</symbol>
+        <lines>1-25</lines>
+        <reason>CSV export utility - formats transaction data, triggers browser download with proper headers</reason>
+      </artifact>
+      <artifact>
+        <path>tests/e2e/analytics.spec.ts</path>
+        <kind>test</kind>
+        <symbol>Analytics E2E Workflow</symbol>
+        <lines>1-124</lines>
+        <reason>Existing skeletal analytics tests - currently placeholder tests that only verify page structure, need replacement with real workflow validation</reason>
+      </artifact>
+      <artifact>
+        <path>tests/e2e/auth-workflow.spec.ts</path>
+        <kind>test</kind>
+        <symbol>Authentication & Navigation Workflows</symbol>
+        <lines>1-50</lines>
+        <reason>Reference for E2E test patterns - shows proper Playwright structure, beforeEach setup, real user interactions</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package>@playwright/test</package>
+        <version>^1.56.1</version>
+        <usage>E2E test framework - test runner, assertions, download event handling</usage>
+      </node>
+      <node>
+        <package>firebase</package>
+        <version>^10.14.1</version>
+        <usage>Firebase SDK - Auth and Firestore for test data setup</usage>
+      </node>
+      <node>
+        <package>react</package>
+        <version>^18.3.1</version>
+        <usage>UI framework - TrendsView component rendering</usage>
+      </node>
+      <node>
+        <package>lucide-react</package>
+        <version>^0.460.0</version>
+        <usage>Icon library - Download, ArrowLeft, BarChart2, PieChart icons in TrendsView</usage>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="testing-framework">Use Playwright for E2E tests - established in Epic 2</constraint>
+    <constraint type="test-isolation">Reset Firebase emulator data before each test using beforeEach hook</constraint>
+    <constraint type="test-execution">Sequential execution only (fileParallelism: false in playwright.config.ts) to prevent emulator race conditions</constraint>
+    <constraint type="file-organization">Single test file pattern: tests/e2e/analytics-workflow.spec.ts with multiple describe blocks</constraint>
+    <constraint type="fixture-data">Minimum 10 transactions across 3-6 months and 4-6 categories for realistic analytics testing</constraint>
+    <constraint type="chart-validation">Validate chart rendering via DOM elements (SVG/canvas presence) and data attributes, not visual comparison</constraint>
+    <constraint type="export-testing">Use Playwright download event listener for CSV/JSON export validation</constraint>
+    <constraint type="skeletal-removal">Remove or archive existing skeletal analytics tests after implementing real workflow tests</constraint>
+    <constraint type="epic-evolution">Update docs/sprint-artifacts/epic3/epic-3-evolution.md Story 3.4 section upon completion</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Transaction</name>
+      <kind>TypeScript Interface</kind>
+      <signature>interface Transaction { id: string; merchant: string; date: string; total: number; category: string; alias?: string; items: Array&lt;{name: string; price: number; category?: string}&gt; }</signature>
+      <path>src/types/transaction.ts</path>
+      <usage>Transaction data structure - used for fixture data and export validation</usage>
+    </interface>
+    <interface>
+      <name>exportToCSV</name>
+      <kind>Function Signature</kind>
+      <signature>exportToCSV(data: Transaction[], filename: string): void</signature>
+      <path>src/utils/csv.ts:1</path>
+      <usage>CSV export function - formats data with headers: Date, Merchant, Alias, Category, Total, Items</usage>
+    </interface>
+    <interface>
+      <name>SimplePieChart Props</name>
+      <kind>React Component Props</kind>
+      <signature>interface SimplePieChartProps { data: PieChartData[]; onSliceClick?: (label: string) =&gt; void; theme: string }</signature>
+      <path>src/components/charts/SimplePieChart.tsx:9</path>
+      <usage>Pie chart component - renders SVG with interactive slices, shows "No Data" when total is 0</usage>
+    </interface>
+    <interface>
+      <name>GroupedBarChart Props</name>
+      <kind>React Component Props</kind>
+      <signature>interface GroupedBarChartProps { data: BarChartData[]; theme: string; currency: string }</signature>
+      <path>src/components/charts/GroupedBarChart.tsx:16</path>
+      <usage>Bar chart component - renders stacked bars with tooltips, shows "No Data" when data.length is 0</usage>
+    </interface>
+    <interface>
+      <name>TrendsView Download Button</name>
+      <kind>UI Element</kind>
+      <signature>&lt;button onClick={() =&gt; exportToCSV(filteredTrans, `export_${selectedMonth || 'year'}.csv`)}&gt;&lt;Download /&gt;&lt;/button&gt;</signature>
+      <path>src/views/TrendsView.tsx:155</path>
+      <usage>Export trigger - downloads CSV of filtered transactions when clicked</usage>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Playwright E2E testing with Firebase emulator isolation. Each test must: (1) Reset emulator data in beforeEach hook, (2) Use real user interactions (page.click, page.fill, page.selectOption), (3) Validate with expect() assertions on visible DOM elements, (4) Use Playwright auto-waiting (waitForSelector with timeout), (5) Follow naming pattern: tests/e2e/{feature}-workflow.spec.ts. Chart validation: verify SVG/canvas element presence, data attributes/labels in DOM, avoid brittle screenshot comparison. Export validation: use page.waitForEvent('download') to capture file, read content, verify structure/format.
+    </standards>
+    <locations>
+      <location>tests/e2e/analytics-workflow.spec.ts</location>
+      <location>tests/e2e/analytics.spec.ts (to be removed/archived)</location>
+    </locations>
+    <ideas>
+      <test criterion="AC2">Test monthly trends chart: Load 10+ transactions across 3 months, navigate to Trends, verify chart SVG exists, verify month labels in DOM match expected months, verify aggregated totals displayed</test>
+      <test criterion="AC3">Test category breakdown: Load transactions across Groceries(40%), Restaurant(30%), Transportation(20%), Other(10%), verify pie chart renders, verify percentage labels/tooltips match calculations</test>
+      <test criterion="AC4">Test date range filtering: Load 6 months of data, select "last 30 days" filter, verify chart updates (month count changes), clear filter, verify full dataset returns</test>
+      <test criterion="AC5">Test CSV export: Click Download button, capture download event, verify CSV headers "Date,Merchant,Alias,Category,Total,Items", verify row count matches transaction count, verify date/number formatting</test>
+      <test criterion="AC6">Test JSON export: (Note: Current implementation only supports CSV - may need to implement JSON export or adjust AC to focus on CSV only)</test>
+      <test criterion="AC7">Test empty state: Start with clean emulator, navigate to Trends, verify "No Data" text visible, verify no chart SVG/canvas rendered</test>
+      <test criterion="AC8">Test single transaction: Load exactly 1 transaction, verify chart renders (no division by zero), verify category breakdown shows 100%, verify monthly trends shows single month</test>
+    </ideas>
+  </tests>
+</story-context>
