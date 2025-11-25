@@ -1,0 +1,220 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.3</storyId>
+    <title>E2E Transaction Management Workflow</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic3/3-3-e2e-transaction-management-workflow.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a QA engineer</asA>
+    <iWant>E2E tests that validate real transaction CRUD workflows</iWant>
+    <soThat>core application features are protected from regressions</soThat>
+    <tasks>
+      <task id="1" ac="1">Analyze Current Skeletal Tests - Identify patterns to avoid</task>
+      <task id="2" ac="1,2">Create Transaction CRUD Test File - Set up test structure and fixtures</task>
+      <task id="3" ac="2,8">Implement Create → Read → Update → Delete Test - Full CRUD workflow validation</task>
+      <task id="4" ac="3,8">Implement Receipt Scan Workflow Test - Upload → Process → Review → Save</task>
+      <task id="5" ac="4,8">Implement Filter by Date Range Test - Apply filters and verify results</task>
+      <task id="6" ac="5,8">Implement Sort Transactions Test - Validate sort by newest/oldest first</task>
+      <task id="7" ac="6,8">Implement Data Persistence Test - Verify transactions persist across page refresh</task>
+      <task id="8" ac="7,8">Implement Multiple Transactions and Edge Cases Test - Empty state, single, 10+ transactions</task>
+      <task id="9" ac="1">Remove/Archive Skeletal Tests - Clean up old placeholder tests</task>
+      <task id="10" ac="1-8">Verify All Tests Pass - Run in local and CI environment</task>
+      <task id="11" ac="9">Update Epic 3 Evolution Document - Mark Story 3.3 complete</task>
+      <task id="12" ac="all">Final Validation - Verify all acceptance criteria met</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="1">7 transaction workflow tests implemented in tests/e2e/transaction-*.spec.ts</ac>
+    <ac id="2">Create → Read → Update → Delete test validates complete CRUD workflow with real user interactions</ac>
+    <ac id="3">Receipt scan workflow test validates upload → Gemini processing → review → save → verify</ac>
+    <ac id="4">Filter by date range test validates filtering transactions within specific date ranges</ac>
+    <ac id="5">Sort transactions test validates sorting by newest first and oldest first</ac>
+    <ac id="6">Data persistence test validates transactions persist across page refresh</ac>
+    <ac id="7">Multiple transactions and edge cases test validates empty state, single, and 10+ transactions</ac>
+    <ac id="8">Real user interactions - All tests use click/type/fill actions, not just assertions</ac>
+    <ac id="9">Epic 3 evolution document updated with Story 3.3 completion</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Story 3.3: E2E Transaction Management Workflow</section>
+        <snippet>Replaces 7 skeletal E2E transaction tests with meaningful workflow tests validating CRUD operations, receipt scanning, filtering, sorting, and data persistence. Tests must use real user interactions.</snippet>
+      </doc>
+      <doc>
+        <path>docs/testing/testing-guide.md</path>
+        <title>Testing Guide</title>
+        <section>Writing E2E Tests</section>
+        <snippet>E2E tests verify complete user workflows using Playwright. Best practices: use page.waitForSelector(), reset test data before tests, query by role/label, take screenshots on failure.</snippet>
+      </doc>
+      <doc>
+        <path>docs/testing/testing-guide.md</path>
+        <title>Testing Guide</title>
+        <section>Testing with Firebase Emulators</section>
+        <snippet>Tests connect to Firebase emulators (Firestore: localhost:8080, Auth: localhost:9099). Use npm run test:reset-data to populate fixtures. Emulators provide test isolation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Architecture Pattern - Modular SPA</section>
+        <snippet>App uses modular structure with views: DashboardView, ScanView, EditView, HistoryView, TrendsView, SettingsView. Navigation via view state changes.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>tests/e2e/transaction-management.spec.ts</path>
+        <kind>e2e-test</kind>
+        <symbol>Transaction Management E2E Workflow Test</symbol>
+        <lines>1-127</lines>
+        <reason>Current skeletal tests to be replaced - contains 7 placeholder tests that only verify page loads, no real user interactions</reason>
+      </artifact>
+      <artifact>
+        <path>tests/integration/crud-operations.test.tsx</path>
+        <kind>integration-test</kind>
+        <symbol>Transaction CRUD Operations</symbol>
+        <lines>1-50</lines>
+        <reason>Integration test patterns for transaction CRUD - shows how to use Firebase emulator, test data setup, and transaction service calls</reason>
+      </artifact>
+      <artifact>
+        <path>src/services/firestore.ts</path>
+        <kind>service</kind>
+        <symbol>Firestore service</symbol>
+        <reason>Contains transaction CRUD functions: addTransaction, updateTransaction, deleteTransaction, subscribeToTransactions</reason>
+      </artifact>
+      <artifact>
+        <path>src/services/gemini.ts</path>
+        <kind>service</kind>
+        <symbol>Gemini AI service</symbol>
+        <reason>Receipt scanning service (analyzeReceipt) - needs mocking in E2E tests per Dev Notes recommendation</reason>
+      </artifact>
+      <artifact>
+        <path>src/views/EditView.tsx</path>
+        <kind>component</kind>
+        <symbol>EditView</symbol>
+        <reason>Transaction creation/editing form - primary UI for CRUD operations</reason>
+      </artifact>
+      <artifact>
+        <path>src/views/ScanView.tsx</path>
+        <kind>component</kind>
+        <symbol>ScanView</symbol>
+        <reason>Receipt scanning UI - upload/camera interface for receipt workflow test</reason>
+      </artifact>
+      <artifact>
+        <path>src/views/HistoryView.tsx</path>
+        <kind>component</kind>
+        <symbol>HistoryView</symbol>
+        <reason>Transaction list with filtering and sorting - primary UI for read, filter, sort tests</reason>
+      </artifact>
+      <artifact>
+        <path>src/views/DashboardView.tsx</path>
+        <kind>component</kind>
+        <symbol>DashboardView</symbol>
+        <reason>Dashboard with recent transactions and shortcuts - entry point for transaction workflows</reason>
+      </artifact>
+      <artifact>
+        <path>playwright.config.ts</path>
+        <kind>config</kind>
+        <symbol>Playwright Configuration</symbol>
+        <reason>E2E test configuration - baseURL: localhost:5174, screenshot on failure, trace on retry</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <production>
+          <package name="firebase" version="^10.14.1">Auth, Firestore, Hosting</package>
+          <package name="react" version="^18.3.1">UI framework</package>
+          <package name="react-dom" version="^18.3.1">React DOM renderer</package>
+          <package name="lucide-react" version="^0.460.0">Icons</package>
+        </production>
+        <devDependencies>
+          <package name="@playwright/test" version="^1.56.1">E2E testing framework</package>
+          <package name="@testing-library/react" version="^16.3.0">Component testing</package>
+          <package name="@testing-library/jest-dom" version="^6.9.1">DOM matchers</package>
+          <package name="@testing-library/user-event" version="^14.6.1">User interaction simulation</package>
+          <package name="@firebase/rules-unit-testing" version="^3.0.4">Firestore emulator testing</package>
+          <package name="vitest" version="^4.0.13">Unit test runner</package>
+          <package name="@vitest/coverage-v8" version="^4.0.13">Code coverage</package>
+          <package name="happy-dom" version="^20.0.10">DOM environment</package>
+        </devDependencies>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>All tests must use real user interactions (clicks, typing, form fills) - NOT just page.textContent() assertions</constraint>
+    <constraint>Use Firebase emulator for test isolation - reset data before each test using beforeEach hook</constraint>
+    <constraint>Replace 7 skeletal tests with 7 real workflow tests - maintain same test count</constraint>
+    <constraint>Mock Gemini API for receipt scanning tests - use fixture responses for speed and determinism</constraint>
+    <constraint>Use Playwright auto-wait features - avoid arbitrary timeouts, use page.waitForSelector() with specific selectors</constraint>
+    <constraint>Follow patterns from Story 3.2 (auth-workflow.spec.ts) - use test-user-1 credentials, sequential execution</constraint>
+    <constraint>Tests must work in CI environment with fileParallelism: false to prevent emulator race conditions</constraint>
+    <constraint>Update Epic 3 evolution document (docs/sprint-artifacts/epic3/epic-3-evolution.md) - required AC #9</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Transaction Interface</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface Transaction { id: string; merchant: string; date: string; total: number; category: string; alias?: string; items: Array&lt;{name: string; price: number; category?: string}&gt; }</signature>
+      <path>src/types/transaction.ts</path>
+    </interface>
+    <interface>
+      <name>addTransaction</name>
+      <kind>Firestore service function</kind>
+      <signature>async function addTransaction(userId: string, transaction: Omit&lt;Transaction, 'id'&gt;): Promise&lt;string&gt;</signature>
+      <path>src/services/firestore.ts</path>
+    </interface>
+    <interface>
+      <name>updateTransaction</name>
+      <kind>Firestore service function</kind>
+      <signature>async function updateTransaction(userId: string, transactionId: string, updates: Partial&lt;Transaction&gt;): Promise&lt;void&gt;</signature>
+      <path>src/services/firestore.ts</path>
+    </interface>
+    <interface>
+      <name>deleteTransaction</name>
+      <kind>Firestore service function</kind>
+      <signature>async function deleteTransaction(userId: string, transactionId: string): Promise&lt;void&gt;</signature>
+      <path>src/services/firestore.ts</path>
+    </interface>
+    <interface>
+      <name>analyzeReceipt</name>
+      <kind>Gemini AI service function</kind>
+      <signature>async function analyzeReceipt(imageDataUrls: string[], currency: string): Promise&lt;{merchant: string; total: number; items: Array&lt;{name: string; price: number}&gt;}&gt;</signature>
+      <path>src/services/gemini.ts</path>
+    </interface>
+    <interface>
+      <name>Playwright Page API</name>
+      <kind>E2E testing API</kind>
+      <signature>page.goto(url), page.click(selector), page.fill(selector, value), page.waitForSelector(selector), page.reload(), page.getByRole(role, options)</signature>
+      <path>@playwright/test</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Use Playwright E2E framework with Firebase emulator for isolated testing. Reset test data before each test using beforeEach hook. Use accessibility selectors (getByRole, getByLabel, getByText) over CSS selectors. Implement page.waitForSelector() for robust element waiting. Mock Gemini API calls using fixtures for deterministic, fast tests. Follow test user pattern: test-user-1@boletapp.test with 10 fixture transactions. Take screenshots on failure (configured in playwright.config.ts). Use sequential execution (fileParallelism: false) to prevent emulator race conditions.</standards>
+    <locations>
+      <location>tests/e2e/*.spec.ts - E2E test files</location>
+      <location>tests/fixtures/test-receipt.jpg - Sample receipt image (if needed)</location>
+      <location>tests/fixtures/gemini-mock-response.json - Mock Gemini API response (if needed)</location>
+      <location>scripts/reset-test-data.ts - Test data reset utility</location>
+    </locations>
+    <ideas>
+      <idea ac="1,2">Create transaction CRUD workflow test: Navigate to dashboard → click "New Transaction" → fill form (merchant, date, total, category) → save → verify in list → click to edit → modify fields → save → verify changes → delete → confirm → verify removed</idea>
+      <idea ac="3">Receipt scan workflow test: Navigate to scan view → upload test-receipt.jpg (or mock camera) → wait for Gemini processing (mock response) → verify form populates → review data → save → navigate to history → verify transaction exists with correct data</idea>
+      <idea ac="4">Date range filter test: Create fixture data with transactions across multiple dates → navigate to history → verify all transactions visible → open date filter → set start/end dates → apply → verify only filtered results → clear filter → verify all return</idea>
+      <idea ac="5">Sort transactions test: Create 3+ transactions with different dates → navigate to history → click sort dropdown → select "Newest First" → verify descending order → select "Oldest First" → verify ascending order</idea>
+      <idea ac="6">Data persistence test: Login → create transaction → verify in list → page.reload() → wait for auth → navigate to history → verify transaction still exists with same data</idea>
+      <idea ac="7">Multiple transactions and edge cases test: Test empty state (delete all → verify "No transactions" message) → test single transaction → test 10+ transactions (use fixtures, verify pagination/scrolling)</idea>
+      <idea ac="8">Real user interactions validation: Review all tests to ensure every assertion is preceded by user action (click, type, fill) - no tests that only check page content without interaction</idea>
+      <idea ac="9">Remove skeletal tests: Review tests/e2e/transaction-management.spec.ts → decide to delete or add migration comment → update test documentation if needed</idea>
+    </ideas>
+  </tests>
+</story-context>
