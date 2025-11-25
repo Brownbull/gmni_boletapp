@@ -2,9 +2,9 @@ name: Test Suite
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, staging, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, staging, develop ]
 
 jobs:
   test:
@@ -62,6 +62,10 @@ jobs:
       - name: Run unit tests
         run: npm run test:unit
         continue-on-error: false
+        env:
+          # Required for config/gemini.ts initialization
+          VITE_GEMINI_API_KEY: test-gemini-key
+          VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
 
       # Step 9: Run integration tests
       - name: Run integration tests
@@ -93,6 +97,9 @@ jobs:
         continue-on-error: false
         env:
           FIRESTORE_EMULATOR_HOST: localhost:8080
+          # Required for config/gemini.ts initialization
+          VITE_GEMINI_API_KEY: test-gemini-key
+          VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
 
       # Step 12: Upload HTML coverage report as artifact
       - name: Upload coverage report (HTML)
