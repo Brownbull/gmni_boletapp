@@ -1,0 +1,143 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.2</storyId>
+    <title>E2E Authentication &amp; Navigation Workflow</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic3/3-2-e2e-auth-navigation-workflow.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>QA engineer</asA>
+    <iWant>E2E tests that validate real authentication and navigation workflows</iWant>
+    <soThat>regressions in core user journeys are caught before deployment</soThat>
+    <tasks>
+      <task id="1" ac="1">Analyze Current Smoke Tests - Read tests/e2e/smoke.spec.ts, identify skeletal patterns to avoid</task>
+      <task id="2" ac="1,7">Create Auth Workflow Test File - Create tests/e2e/auth-workflow.spec.ts with proper setup</task>
+      <task id="3" ac="2,7">Implement Login → Dashboard → Logout Test - Click sign in, verify dashboard, click logout</task>
+      <task id="4" ac="3,7">Implement Navigation Test - Navigate Dashboard → Scan → Trends → History → Settings → Dashboard</task>
+      <task id="5" ac="4,7">Implement Unauthenticated Redirect Test - Verify protected routes redirect to login</task>
+      <task id="6" ac="5,7">Implement Session Persistence Test - Login, refresh page, verify still authenticated</task>
+      <task id="7" ac="6,7">Implement Sign Out State Clearing Test - Logout clears auth state completely</task>
+      <task id="8" ac="1">Remove/Archive Skeletal Smoke Tests - Delete or rename smoke.spec.ts</task>
+      <task id="9" ac="1-7">Verify All Tests Pass - Run test:e2e, check for flakiness</task>
+      <task id="10" ac="8">Update Epic 3 Evolution Document - Complete Story 3.2 section</task>
+      <task id="11" ac="all">Final Validation - Verify all 8 acceptance criteria met</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">5 authentication/navigation workflow tests implemented in tests/e2e/auth-workflow.spec.ts, replacing 3 skeletal tests in smoke.spec.ts</criterion>
+    <criterion id="2">Login → Dashboard → Logout test validates complete auth flow with real user interactions (click sign in, verify dashboard, click logout, verify return to login)</criterion>
+    <criterion id="3">Navigation between all views test - Dashboard → Scan → Trends → History → Settings → Dashboard using UI clicks</criterion>
+    <criterion id="4">Unauthenticated redirect test - unauthenticated users redirected to login when accessing protected routes</criterion>
+    <criterion id="5">Session persistence test - authenticated user persists across page.reload()</criterion>
+    <criterion id="6">Sign out state clearing test - logout clears all auth state, redirects to login, blocks protected route access</criterion>
+    <criterion id="7">All 5 tests use click/type actions, not just assertions - must simulate actual user behavior</criterion>
+    <criterion id="8">Epic 3 evolution document updated - Story 3.2 section completed in docs/sprint-artifacts/epic3/epic-3-evolution.md</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/tech-spec-epic-3.md" title="Epic 3 Tech Spec" section="Story 3.2 Acceptance Criteria">
+        Defines 8 ACs for E2E auth/navigation tests: 5 workflow tests replacing 3 skeletal smoke tests, covering login/logout, navigation, unauthenticated redirect, session persistence, and sign out state clearing.
+      </doc>
+      <doc path="docs/architecture/architecture.md" title="Architecture Document" section="Component Hierarchy, Data Flow">
+        Shows view navigation pattern: LoginScreen (unauthenticated) → App with Nav component controlling view state (dashboard, scan, trends, list, settings). Firebase Auth manages sessions.
+      </doc>
+      <doc path="docs/testing/testing-guide.md" title="Testing Guide" section="Writing E2E Tests, Firebase Emulators">
+        Covers Playwright E2E patterns: use page.waitForSelector() for robust waiting, reset emulator data before tests, test user test-user-1@boletapp.test, screenshots on failure configured.
+      </doc>
+      <doc path="docs/planning/epics.md" title="Epic Breakdown" section="Story 3.2">
+        User story: As QA engineer, want E2E tests validating real auth/navigation workflows to catch regressions. Prerequisites: Story 3.1 complete, Firebase emulator configured.
+      </doc>
+    </docs>
+    <code>
+      <code path="tests/e2e/smoke.spec.ts" kind="e2e-test" symbol="Playwright E2E Smoke Test" lines="1-42" reason="Current skeletal tests to REPLACE - only checks page loads, no real user interactions">
+        3 tests that need replacing: should load application (just checks body visible), should have title (regex check), should render login screen (just checks body has text).
+      </code>
+      <code path="src/views/LoginScreen.tsx" kind="view" symbol="LoginScreen" lines="1-24" reason="Login screen component - contains Sign in with Google button, need to locate button for click">
+        Button: onClick=onSignIn, text from t('signin') = "Sign in with Google" (EN) or "Entrar con Google" (ES). Uses Globe icon.
+      </code>
+      <code path="src/App.tsx" kind="container" symbol="App" lines="47-519" reason="Main orchestrator - manages view state, auth state, navigation logic. Key for understanding app flow.">
+        View type: dashboard|scan|edit|trends|list|settings. Shows LoginScreen if !user, else authenticated app with Nav. signOut from useAuth clears session.
+      </code>
+      <code path="src/components/Nav.tsx" kind="component" symbol="Nav" lines="1-62" reason="Navigation component with 5 buttons - need to understand selectors for navigation test">
+        Nav items: Home (dashboard), Trends (trends), Scan (camera button), History (list), Settings (settings). Uses text from translations.
+      </code>
+      <code path="src/views/SettingsView.tsx" kind="view" symbol="SettingsView" lines="147-157" reason="Contains sign out button - need to locate for logout test">
+        Sign out button: onClick=onSignOut, text from t('signout') = "Sign Out" (EN) or "Cerrar Sesión" (ES).
+      </code>
+      <code path="src/hooks/useAuth.ts" kind="hook" symbol="useAuth" reason="Authentication hook - manages Firebase auth state, provides signIn/signOut functions">
+        Exports: user, services, initError, signIn (Google popup), signOut (Firebase signOut).
+      </code>
+      <code path="src/utils/translations.ts" kind="utility" symbol="TRANSLATIONS" lines="1-50" reason="UI text translations - need for locating buttons by text">
+        Key translations: signin="Sign in with Google", signout="Sign Out", home="Home", trends="Trends", history="History", settings="Settings".
+      </code>
+      <code path="playwright.config.ts" kind="config" symbol="Playwright Config" lines="1-67" reason="E2E test configuration - baseURL localhost:5174, Chromium only, screenshots on failure">
+        webServer starts npm run dev, timeout 120s. Sequential execution in CI (workers: 1).
+      </code>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@playwright/test" version="^1.56.1">E2E testing framework</package>
+        <package name="firebase" version="^10.14.1">Auth and Firestore</package>
+        <package name="react" version="^18.3.1">UI framework</package>
+        <package name="vite" version="^5.4.0">Dev server on port 5174</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="Tech Spec">Use Firebase emulator for isolated E2E testing - Auth emulator on localhost:9099, Firestore on localhost:8080</constraint>
+    <constraint source="Tech Spec">Tests must use real user interactions (clicks, typing) not just page load assertions</constraint>
+    <constraint source="Tech Spec">Sequential E2E execution (fileParallelism: false in CI) to prevent emulator race conditions</constraint>
+    <constraint source="Testing Guide">Use page.waitForSelector() with appropriate timeouts, not arbitrary delays</constraint>
+    <constraint source="Testing Guide">Reset test data before tests with npm run test:reset-data</constraint>
+    <constraint source="Testing Guide">Test user: test-user-1@boletapp.test</constraint>
+    <constraint source="Story">Replace existing smoke.spec.ts with new auth-workflow.spec.ts (5 tests replacing 3)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="Firebase Auth Emulator" kind="service" path="src/hooks/useAuth.ts">
+      signInWithPopup(auth, GoogleAuthProvider) - opens OAuth popup (simplified in emulator)
+      signOut(auth) - clears auth session
+      onAuthStateChanged(auth, callback) - real-time auth state listener
+    </interface>
+    <interface name="Navigation State" kind="component" path="src/App.tsx">
+      View type: 'dashboard' | 'scan' | 'edit' | 'trends' | 'list' | 'settings'
+      setView(v: string) - changes current view
+      Conditional render: !user → LoginScreen, user → authenticated views + Nav
+    </interface>
+    <interface name="Nav Component" kind="component" path="src/components/Nav.tsx">
+      Props: view, setView, onScanClick, onTrendsClick, theme, t
+      Buttons: Home (dashboard), Trends, Scan (camera), History (list), Settings
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Playwright E2E testing with Chromium browser. Tests run against local dev server (localhost:5174).
+      Use page.waitForSelector() for robust waiting instead of arbitrary timeouts.
+      Firebase emulator provides isolated test environment - Auth on 9099, Firestore on 8080.
+      Screenshots captured on failure automatically (configured in playwright.config.ts).
+      Reset test data before each test run using npm run test:reset-data.
+    </standards>
+    <locations>
+      <location>tests/e2e/*.spec.ts</location>
+      <location>tests/e2e/auth-workflow.spec.ts (to be created)</location>
+    </locations>
+    <ideas>
+      <idea ac="2">Test login flow: goto(/), click "Sign in with Google", wait for dashboard view, verify Home nav is active</idea>
+      <idea ac="2">Test logout: from authenticated state, navigate to Settings, click "Sign Out", verify return to LoginScreen</idea>
+      <idea ac="3">Test navigation cycle: Dashboard → click Trends → click History → click Settings → click Home → verify back at dashboard</idea>
+      <idea ac="3">Test scan button: click camera button, verify scan view appears (may need to handle file dialog)</idea>
+      <idea ac="4">Test redirect: try to access app without auth, verify LoginScreen is shown</idea>
+      <idea ac="5">Test session persistence: login, page.reload(), verify still authenticated (dashboard visible, not LoginScreen)</idea>
+      <idea ac="6">Test sign out clears state: logout, try to navigate (should stay on login), verify no user data accessible</idea>
+      <idea ac="7">Ensure all tests use page.click() and page.waitForSelector() - no tests that only check textContent</idea>
+    </ideas>
+  </tests>
+</story-context>
