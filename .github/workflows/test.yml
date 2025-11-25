@@ -73,6 +73,16 @@ jobs:
         continue-on-error: false
         env:
           FIRESTORE_EMULATOR_HOST: localhost:8080
+          # Firebase config (using Firebase emulator, so placeholder values are OK)
+          VITE_FIREBASE_API_KEY: test-api-key
+          VITE_FIREBASE_AUTH_DOMAIN: test-project.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: boletapp-d609f
+          VITE_FIREBASE_STORAGE_BUCKET: test-project.firebasestorage.app
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
+          VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
+          # Gemini API config
+          VITE_GEMINI_API_KEY: test-gemini-key
+          VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
 
       # Step 10: Run E2E tests (Playwright manages dev server via webServer config)
       - name: Run E2E tests
@@ -97,7 +107,14 @@ jobs:
         continue-on-error: false
         env:
           FIRESTORE_EMULATOR_HOST: localhost:8080
-          # Required for config/gemini.ts initialization
+          # Firebase config (using Firebase emulator, so placeholder values are OK)
+          VITE_FIREBASE_API_KEY: test-api-key
+          VITE_FIREBASE_AUTH_DOMAIN: test-project.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: boletapp-d609f
+          VITE_FIREBASE_STORAGE_BUCKET: test-project.firebasestorage.app
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
+          VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
+          # Gemini API config
           VITE_GEMINI_API_KEY: test-gemini-key
           VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
 
