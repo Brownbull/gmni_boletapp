@@ -1,6 +1,6 @@
 # Boletapp Documentation Index
 
-**AI-Assisted Development Reference** | **Last Updated:** 2025-11-22 (Post-Epic 2 Story 2.2)
+**AI-Assisted Development Reference** | **Last Updated:** 2025-11-26 (Post-Epic 3 Complete)
 
 This is the primary entry point for AI-assisted development of Boletapp, a Smart Expense Tracker PWA.
 
@@ -119,6 +119,9 @@ Complete guide to test environment setup and usage:
 ### 10. [Test Strategy & Risk Register](./testing/test-strategy.md) ⚡ **NEW** (Epic 2)
 17 test categories with risk analysis and implementation roadmap
 
+### 11. [Performance Baselines](./performance/performance-baselines.md) ⚡ **NEW** (Epic 3)
+Lighthouse CI performance baselines and bundle size tracking
+
 ---
 
 ## Planning Documentation
@@ -170,20 +173,37 @@ Automated project structure analysis (JSON)
 4. [Story 1.4](./sprint-artifacts/epic1/1-4-firebase-deployment-infrastructure.md) - Firebase Hosting Configuration
 5. [Story 1.5](./sprint-artifacts/epic1/1-5-production-deployment-verification.md) - Production Deployment
 
-### Epic 2: Testing Infrastructure & Documentation (IN PROGRESS 🚧)
+### Epic 2: Testing Infrastructure & Documentation (COMPLETE ✅)
 
 **Location:** [`sprint-artifacts/epic2/`](./sprint-artifacts/epic2/)
 
 - **[Epic 2 Evolution Document](./sprint-artifacts/epic2/epic-2-evolution.md)** - Epic 2 state tracking (Before/After)
 - **[Epic 2 Tech Spec](./sprint-artifacts/epic2/epic-2-tech-spec.md)** - Comprehensive testing infrastructure specification
+- **[Epic 2 Retrospective](./sprint-artifacts/epic2/epic-2-retro-2025-11-23.md)** - Lessons learned and action items
 
-**Epic 2 Stories:**
-1. [Story 2.1](./sprint-artifacts/epic2/2-1-documentation-epic-evolution.md) - Documentation & Epic Evolution ✅ DONE
-2. [Story 2.2](./sprint-artifacts/epic2/2-2-test-environment-setup.md) - Test Environment Setup 🔍 IN REVIEW
-3. Story 2.3 - Testing Framework Configuration (Ready for Dev)
-4. Story 2.4 - Authentication & Security Tests (Ready for Dev)
-5. Story 2.5 - Core Workflow Tests (Ready for Dev)
-6. Story 2.6 - CI/CD Pipeline & Coverage Baseline (Ready for Dev)
+**Epic 2 Stories (All Complete):**
+1. [Story 2.1](./sprint-artifacts/epic2/2-1-documentation-epic-evolution.md) - Documentation & Epic Evolution ✅
+2. [Story 2.2](./sprint-artifacts/epic2/2-2-test-environment-setup.md) - Test Environment Setup ✅
+3. [Story 2.3](./sprint-artifacts/epic2/2-3-testing-framework-configuration.md) - Testing Framework Configuration ✅
+4. [Story 2.4](./sprint-artifacts/epic2/2-4-authentication-security-tests.md) - Authentication & Security Tests ✅
+5. [Story 2.5](./sprint-artifacts/epic2/2-5-core-workflow-tests.md) - Core Workflow Tests ✅
+6. [Story 2.6](./sprint-artifacts/epic2/2-6-cicd-pipeline-coverage-baseline.md) - CI/CD Pipeline & Coverage Baseline ✅
+
+### Epic 3: Production-Grade Quality & Testing Completion (COMPLETE ✅)
+
+**Location:** [`sprint-artifacts/epic3/`](./sprint-artifacts/epic3/)
+
+- **[Epic 3 Evolution Document](./sprint-artifacts/epic3/epic-3-evolution.md)** - Epic 3 state tracking (Before/After)
+- **[Epic 3 Tech Spec](./sprint-artifacts/epic3/epic-3-tech-spec.md)** - Quality & testing specification
+
+**Epic 3 Stories (All Complete):**
+1. [Story 3.1](./sprint-artifacts/epic3/3-1-process-governance-setup.md) - Process & Governance Setup ✅
+2. [Story 3.2](./sprint-artifacts/epic3/3-2-e2e-auth-navigation-workflow.md) - E2E Auth & Navigation Workflow ✅
+3. [Story 3.3](./sprint-artifacts/epic3/3-3-e2e-transaction-management-workflow.md) - E2E Transaction Management Workflow ✅
+4. [Story 3.4](./sprint-artifacts/epic3/3-4-e2e-analytics-export-workflow.md) - E2E Analytics & Export Workflow ✅
+5. [Story 3.5](./sprint-artifacts/epic3/3-5-accessibility-testing-framework.md) - Accessibility Testing Framework ✅
+6. [Story 3.6](./sprint-artifacts/epic3/3-6-performance-baselines-lighthouse-ci.md) - Performance Baselines & Lighthouse CI ✅
+7. [Story 3.7](./sprint-artifacts/epic3/3-7-coverage-enforcement-quality-gates.md) - Coverage Enforcement & Quality Gates ✅
 
 ---
 
@@ -219,15 +239,15 @@ When planning new features or modifications:
 5. **For New Features:** Follow architecture patterns and ADRs in [Architecture](./architecture/architecture.md)
 6. **For Testing:** Reference [Test Strategy](./testing/test-strategy.md) and [Test Environment Guide](./testing/test-environment.md)
 
-**Epic 2 Context:**
-Epic 2 focuses on **automated testing infrastructure and enhanced documentation**. Key deliverables:
-- ✅ **Visual Architecture Diagrams:** 3 Mermaid diagrams added to architecture.md
-- ✅ **Epic Evolution Tracking:** Template created, Epic 2 evolution document tracking Before/After state
-- ✅ **Test Strategy & Risk Register:** 17 test categories with risk levels and implementation roadmap
-- ✅ **Test Environment:** 3 test users + fixtures + reset script (Story 2.2 - IN REVIEW)
-- 🚧 **Testing Frameworks:** Vitest + React Testing Library + Playwright (Story 2.3)
-- 🚧 **Automated Tests:** 39+ tests covering HIGH and MEDIUM risk areas (Stories 2.4-2.5)
-- 🚧 **CI/CD Pipeline:** GitHub Actions running tests automatically (Story 2.6)
+**Epic 3 Achievements:**
+Epic 3 focused on **production-grade quality and testing completion**. Key deliverables:
+- ✅ **Process & Governance:** Multi-branch strategy (main/develop/staging), branch protection
+- ✅ **E2E Test Workflows:** 28 E2E tests covering auth, navigation, transactions, analytics
+- ✅ **Accessibility Testing:** 16 tests with @axe-core/playwright for WCAG 2.1 Level AA
+- ✅ **Performance Baselines:** Lighthouse CI with playwright-lighthouse, bundle size tracking
+- ✅ **Coverage Enforcement:** Thresholds enforced in CI (45% lines, 30% branches)
+- ✅ **PR Coverage Comments:** vitest-coverage-report-action integration
+- ✅ **19-Step CI Pipeline:** Complete GitHub Actions workflow with quality gates
 
 ---
 
@@ -289,6 +309,9 @@ Epic 2 focuses on **automated testing infrastructure and enhanced documentation*
 | **Epic definitions** | [Epics](./planning/epics.md) |
 | **Technical specs** | [Tech Spec](./planning/tech-spec.md) |
 | **Test strategy** | [Test Strategy](./testing/test-strategy.md) |
+| **Performance baselines** | [Performance Baselines](./performance/performance-baselines.md) |
+| **Contribution guidelines** | [CONTRIBUTING.md](../CONTRIBUTING.md) |
+| **CI/CD pipeline** | [CI/CD README](./ci-cd/README.md) |
 
 ---
 
@@ -304,6 +327,6 @@ The `.bmad/` directory contains the BMAD (Breakthrough Modern Agile Development)
 
 ---
 
-**Documentation Version:** 3.0
-**Generated:** 2025-11-22 (Post-Epic 2 Story 2.2 - Documentation Reorganization)
-**Next Update:** After Epic 2 completion
+**Documentation Version:** 4.0
+**Generated:** 2025-11-26 (Post-Epic 3 Complete)
+**Next Update:** After Epic 4 planning
