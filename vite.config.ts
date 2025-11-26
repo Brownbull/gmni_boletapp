@@ -27,7 +27,7 @@ export default defineConfig({
     ],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'html', 'json'],
+      reporter: ['text', 'html', 'json', 'json-summary', 'lcov'],
       exclude: [
         'tests/**',
         'scripts/**',
@@ -36,6 +36,18 @@ export default defineConfig({
         '**/node_modules/**',
         '**/dist/**',
       ],
+      // Coverage thresholds - CI will fail if below these values
+      // Story 3.7: Coverage enforcement infrastructure
+      // Note: Vitest measures coverage only for files imported by tests
+      // Baseline (2025-11-26): ~51% lines, ~38% branches, ~30% functions, ~46% statements
+      // Thresholds set 5-10% below baseline to allow for variance while catching regressions
+      // Future improvement: Raise thresholds as test coverage improves
+      thresholds: {
+        lines: 45,
+        branches: 30,
+        functions: 25,
+        statements: 40,
+      },
     },
   },
 })

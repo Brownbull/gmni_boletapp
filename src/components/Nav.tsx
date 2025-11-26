@@ -38,6 +38,7 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onTrendsCl
                 <button
                     onClick={onScanClick}
                     className="bg-blue-600 text-white p-4 rounded-full shadow-xl hover:scale-105 transition-transform"
+                    aria-label={t('scan')}
                 >
                     <Camera size={24} />
                 </button>
