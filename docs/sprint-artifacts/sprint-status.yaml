@@ -60,4 +60,17 @@ development_status:
   3-5-accessibility-testing-framework: done
   3-6-performance-baselines-lighthouse-ci: done
   3-7-coverage-enforcement-quality-gates: done
-  epic-3-retrospective: optional
+  epic-3-retrospective: completed
+
+  # Epic 4: Security Hardening & Penetration Testing
+  epic-4: contexted
+  4-1-secrets-detection-prevention: done
+  4-2-gemini-api-protection: done
+  4-3-dependency-static-security: ready-for-dev
+  4-4-security-documentation: ready-for-dev
+
+  # Future Epics (defined in Epic 3 retrospective)
+  epic-5: backlog  # Enhanced Data Export
+  epic-6: backlog  # Smart Category Learning
+  epic-7: backlog  # Subscription & Monetization (Mercado Pago)
+  epic-8: backlog  # Mobile App (iOS & Android)

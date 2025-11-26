@@ -128,6 +128,63 @@ The emulators run on:
 - Auth: `localhost:9099`
 - Emulator UI: `localhost:4000`
 
+## Security
+
+### Pre-commit Hooks (Secrets Detection)
+
+This project uses **husky** and **gitleaks** to prevent accidental commit of secrets (API keys, credentials, etc.).
+
+**How it works:**
+- A pre-commit hook automatically scans staged files before every commit
+- If potential secrets are detected, the commit is blocked
+- You'll see a clear error message explaining what was found
+
+**Installing gitleaks (required for full protection):**
+
+macOS:
+```bash
+brew install gitleaks
+```
+
+Linux:
+```bash
+wget https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz
+tar -xzf gitleaks_8.18.4_linux_x64.tar.gz
+sudo mv gitleaks /usr/local/bin/
+```
+
+**If the hook blocks your commit:**
+1. Review the error message to identify the secret
+2. Remove or replace the secret with a placeholder
+3. Use `.env` files for local secrets (gitignored)
+4. Retry your commit
+
+**Emergency bypass (NOT RECOMMENDED):**
+```bash
+git commit --no-verify -m "your message"
+```
+Only use this if you're certain it's a false positive. Contact maintainers if unsure.
+
+### Manual Secrets Scanning
+
+You can manually scan for secrets at any time:
+
+```bash
+# Scan current files
+./scripts/scan-secrets.sh
+
+# Scan full git history
+./scripts/scan-secrets.sh --history
+```
+
+### Security Documentation
+
+For more information, see:
+- [Secrets Scan Report](docs/security/secrets-scan-report.md) - Initial scan findings and configuration details
+- [Security Overview](docs/security/README.md) - Security practices and guidelines (coming in Story 4.4)
+
+---
+
 ## Code Quality
 
 ### Linting and Formatting
@@ -159,5 +216,5 @@ If you have questions or need help:
 
 ---
 
-**Version:** 1.0
-**Last Updated:** 2025-11-26 (Story 3.7)
+**Version:** 1.1
+**Last Updated:** 2025-11-26 (Story 4.1 - Added Security section)
