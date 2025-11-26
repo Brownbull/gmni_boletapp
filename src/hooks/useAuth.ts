@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { initializeApp, FirebaseApp } from 'firebase/app';
+import { initializeApp, FirebaseApp, getApps } from 'firebase/app';
 import {
     getAuth,
     Auth,
@@ -7,9 +7,11 @@ import {
     onAuthStateChanged,
     GoogleAuthProvider,
     signInWithPopup,
+    signInWithEmailAndPassword,
+    connectAuthEmulator,
     signOut as firebaseSignOut
 } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
+import { getFirestore, Firestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { firebaseConfig } from '../config/firebase';
 
 export interface Services {
@@ -23,6 +25,7 @@ export interface UseAuthReturn {
     services: Services | null;
     initError: string | null;
     signIn: () => Promise<void>;
+    signInWithTestCredentials: (email?: string, password?: string) => Promise<void>;
     signOut: () => Promise<void>;
 }
 
@@ -38,11 +41,31 @@ export function useAuth(): UseAuthReturn {
                 throw new Error("Firebase Config Missing");
             }
 
-            const app: FirebaseApp = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
-            const appId = firebaseConfig.projectId;
+            // Initialize Firebase app (reuse existing if already initialized)
+            let app: FirebaseApp;
+            let auth: Auth;
+            let db: Firestore;
 
+            if (getApps().length > 0) {
+                app = getApps()[0];
+                auth = getAuth(app);
+                db = getFirestore(app);
+            } else {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                // Connect to Firebase emulators IMMEDIATELY after first init
+                // MUST be called before any auth operations
+                const isDev = import.meta.env.DEV || window.location.hostname === 'localhost';
+                if (isDev) {
+                    connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+                    connectFirestoreEmulator(db, '127.0.0.1', 8080);
+                    console.log('[useAuth] Connected to Firebase emulators');
+                }
+            }
+
+            const appId = firebaseConfig.projectId;
             setServices({ auth, db, appId });
 
             // Standard Firebase Auth Listener
@@ -64,10 +87,43 @@ export function useAuth(): UseAuthReturn {
         }
     };
 
+    const signInWithTestCredentials = async (
+        email: string = 'khujta@gmail.com',
+        password: string = 'password.123'
+    ) => {
+        console.log('[signInWithTestCredentials] Starting...');
+        console.log('[signInWithTestCredentials] services:', !!services);
+
+        if (!services) {
+            console.error('[signInWithTestCredentials] No services available!');
+            return;
+        }
+
+        // Only allow in development/test environments
+        const isDev = import.meta.env.DEV || window.location.hostname === 'localhost';
+        console.log('[signInWithTestCredentials] isDev:', isDev);
+
+        if (!isDev) {
+            throw new Error('Test authentication is only available in development/test environments');
+        }
+
+        // Log auth config to see emulator settings
+        console.log('[signInWithTestCredentials] Auth emulator host:', (services.auth as any).emulatorConfig);
+        console.log('[signInWithTestCredentials] Attempting sign in with:', email);
+
+        try {
+            const result = await signInWithEmailAndPassword(services.auth, email, password);
+            console.log('[signInWithTestCredentials] Success!', result.user.email);
+        } catch (e: any) {
+            console.error("[signInWithTestCredentials] Failed:", e.code, e.message);
+            alert("Test Login Failed: " + e.message);
+        }
+    };
+
     const signOut = async () => {
         if (!services) return;
         await firebaseSignOut(services.auth);
     };
 
-    return { user, services, initError, signIn, signOut };
+    return { user, services, initError, signIn, signInWithTestCredentials, signOut };
 }

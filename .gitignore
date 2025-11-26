@@ -45,6 +45,8 @@ firebase-debug.log
 coverage/
 playwright-report/
 test-results/
+lighthouse-reports/
+.lighthouseci/
 
 # Backup files
 *.backup

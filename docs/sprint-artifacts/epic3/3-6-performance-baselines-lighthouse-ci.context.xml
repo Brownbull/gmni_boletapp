@@ -1,0 +1,320 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.6</storyId>
+    <title>Performance Baselines & Lighthouse CI</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic3/3-6-performance-baselines-lighthouse-ci.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a DevOps engineer</asA>
+    <iWant>performance monitoring integrated into the CI/CD pipeline</iWant>
+    <soThat>performance regressions are caught before deployment and user experience remains fast</soThat>
+    <tasks>
+### Task 1: Install and Configure Lighthouse CI (AC: #1)
+- [ ] Install `@lhci/cli` version 0.13.x via npm
+- [ ] Verify installation in `package.json` dependencies
+- [ ] Create Lighthouse CI configuration file: `lighthouserc.json`
+- [ ] Configure Lighthouse categories: performance, accessibility, best-practices, seo, pwa (optional)
+- [ ] Configure assertion thresholds (warn mode initially, not fail mode)
+- [ ] Run local Lighthouse audit to verify configuration: `npx lhci autorun`
+
+### Task 2: Integrate Lighthouse CI into GitHub Actions Workflow (AC: #2, #6)
+- [ ] Open `.github/workflows/test.yml`
+- [ ] Add new job or step: "Lighthouse Performance Audit"
+- [ ] Configure Lighthouse CI to run after E2E tests complete
+- [ ] Use test authentication bypass (from Story 3.5) to scan authenticated views
+- [ ] Configure Lighthouse to scan 5+ major views:
+  - [ ] Dashboard view (`http://localhost:5173/` after login)
+  - [ ] Scan view (`http://localhost:5173/scan` after login)
+  - [ ] Trends view (`http://localhost:5173/trends` after login)
+  - [ ] History view (`http://localhost:5173/list` after login)
+  - [ ] Settings view (`http://localhost:5173/settings` after login)
+- [ ] Configure workflow to warn (not fail) on score drops >10 points
+- [ ] Verify Lighthouse CI step runs successfully in GitHub Actions
+
+### Task 3: Establish and Document Performance Baselines (AC: #3)
+- [ ] Create directory: `docs/performance/`
+- [ ] Create baseline document: `docs/performance/performance-baselines.md`
+- [ ] Run Lighthouse audits locally for all 5 major views
+- [ ] Record baseline scores for each view (Performance 90+, Accessibility 90+, Best Practices 90+, SEO 90+)
+- [ ] Record Core Web Vitals metrics (LCP <2.5s, FID <100ms, CLS <0.1)
+- [ ] Record page load metrics (FCP <1.5s, TTI <3.0s, Speed Index <3.0s)
+- [ ] Document baseline date and environment (CI environment)
+
+### Task 4: Configure Bundle Size Tracking (AC: #4)
+- [ ] Research bundle size tracking options (bundlesize vs. custom script)
+- [ ] Implement chosen solution
+- [ ] Document current bundle size baseline (~624KB)
+- [ ] Configure threshold: warn if bundle increases >10% (>686KB)
+- [ ] Add bundle size check to GitHub Actions workflow
+- [ ] Test bundle size tracking locally
+
+### Task 5: Configure Lighthouse Report Uploads (AC: #5)
+- [ ] Configure Lighthouse CI to generate HTML and JSON reports
+- [ ] Add GitHub Actions step to upload Lighthouse reports as artifacts
+- [ ] Use `actions/upload-artifact@v3` or later
+- [ ] Configure artifact retention (90 days default)
+- [ ] Verify reports accessible via GitHub Actions UI
+- [ ] Test artifact download and report viewing
+
+### Task 6: Validate Performance Targets (AC: #3, #6, #7)
+- [ ] Run Lighthouse CI in GitHub Actions on test branch
+- [ ] Verify all 5 views scanned successfully
+- [ ] Verify performance scores meet or exceed targets (90+)
+- [ ] Verify Core Web Vitals are within acceptable ranges
+- [ ] Document any view-specific performance issues
+
+### Task 7: Document Performance Monitoring Process (AC: #3)
+- [ ] Document how to run Lighthouse locally
+- [ ] Document how to view Lighthouse reports in GitHub Actions artifacts
+- [ ] Document what to do if performance scores drop
+- [ ] Document performance budget guidelines for future development
+
+### Task 8: Update Epic 3 Evolution Document (AC: #8)
+- [ ] Open `docs/sprint-artifacts/epic3/epic-3-evolution.md`
+- [ ] Complete Story 3.6 section (status, what changed, files, performance impact)
+
+### Task 9: Final Validation (AC: All)
+- [ ] Verify all 8 acceptance criteria are met
+- [ ] Verify Lighthouse CI runs successfully in GitHub Actions on PR
+- [ ] Verify performance baselines documented accurately
+- [ ] Verify bundle size tracking functional
+- [ ] Verify Lighthouse reports accessible in GitHub Actions artifacts
+- [ ] Update story status to `review`
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+**AC #1:** Lighthouse CI (@lhci/cli) installed and configured
+- Verification: `package.json` includes `@lhci/cli` dependency (version 0.13.x)
+- Verification: `lighthouserc.json` configuration file created with CI settings
+- Verification: Lighthouse configuration includes performance, accessibility, best-practices, and SEO categories
+
+**AC #2:** GitHub Actions workflow updated to run Lighthouse scans
+- Verification: `.github/workflows/test.yml` includes Lighthouse CI step
+- Verification: Lighthouse CI runs after E2E tests complete (requires live application)
+- Verification: Lighthouse scans executed for all major views (at minimum: Dashboard, Scan, Trends, History, Settings)
+- Verification: Workflow fails gracefully if Lighthouse scores drop significantly (>10 points)
+
+**AC #3:** Performance baselines documented
+- Verification: Performance baseline document created at `docs/performance/performance-baselines.md`
+- Verification: Document includes baseline scores for Performance, Accessibility, Best Practices, SEO
+- Verification: Document includes Core Web Vitals metrics (LCP, FID, CLS)
+- Verification: Document includes page load metrics (First Contentful Paint, Time to Interactive)
+- Verification: Baseline scores: Performance 90+, Accessibility 90+, Best Practices 90+, SEO 90+
+
+**AC #4:** Bundle size tracking configured
+- Verification: Bundle size tracking tool installed (e.g., bundlesize package or custom script)
+- Verification: Workflow warns on 10%+ bundle size increase
+- Verification: Current bundle size baseline documented (~624KB from architecture.md)
+
+**AC #5:** Lighthouse reports uploaded to GitHub Actions artifacts
+- Verification: Lighthouse HTML/JSON reports available in workflow artifacts
+- Verification: Reports accessible via GitHub Actions UI for debugging
+- Verification: Reports persist for at least 90 days (GitHub default)
+
+**AC #6:** Performance monitoring operational in CI
+- Verification: Lighthouse CI runs successfully on every PR and main branch commit
+- Verification: Performance scores visible in workflow logs
+- Verification: Failed Lighthouse audits result in workflow warnings (not failures initially)
+
+**AC #7:** Lighthouse scans validate 5+ major views
+- Verification: Scans run for Dashboard, Scan, Trends, History, Settings views at minimum
+- Verification: Each view receives separate Lighthouse audit
+- Verification: View-specific performance metrics captured
+
+**AC #8:** Epic 3 evolution document updated
+- Verification: Story 3.6 section completed in `docs/sprint-artifacts/epic3/epic-3-evolution.md`
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/epic3/epic-3-tech-spec.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Phase 4: Performance Monitoring (Story 3.6)</section>
+        <snippet>Integrate Lighthouse CI into GitHub Actions, establish performance baselines (Performance 90+, Accessibility 90+, Best Practices 90+, SEO 90+), configure bundle size tracking (warn on 10%+ increase), monitor Core Web Vitals (LCP, FID, CLS) and page load metrics (FCP, TTI).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic3/epic-3-tech-spec.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Technical Stack - Performance Monitoring</section>
+        <snippet>@lhci/cli 0.13.x (Lighthouse CI), lighthouse 11.x (performance auditing), bundlesize 0.18.x (bundle size tracking). Baselines: Performance 90+, Accessibility 90+, Best Practices 90+, SEO 90+, FCP &lt;1.5s, TTI &lt;3s, Bundle size ~624KB (warn &gt;686KB).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic3/epic-3-tech-spec.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Risk 3: Performance Baselines Too Strict</section>
+        <snippet>Lighthouse scores may fail in CI due to environment differences. Mitigation: Establish baselines from CI environment (not local), use "warn" mode initially, allow 5-10 point variance for flaky metrics.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/architecture.md</path>
+        <title>Architecture Document - Boletapp</title>
+        <section>Technology Stack &amp; Build Tool</section>
+        <snippet>Vite 5.4.0 fast ES module bundler with HMR. Current production bundle: ~624KB JavaScript + CSS served via Firebase Hosting global CDN with automatic HTTPS.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic3/3-5-accessibility-testing-framework.md</path>
+        <title>Story 3.5: Accessibility Testing Framework</title>
+        <section>Learnings - Test Authentication Bypass Pattern</section>
+        <snippet>Story 3.5 implemented test authentication bypass via signInWithTestCredentials() in useAuth.ts and test login button in LoginScreen.tsx (dev/test only). Reuse this pattern to authenticate before Lighthouse scans authenticated views.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>.github/workflows/test.yml</path>
+        <kind>ci-workflow</kind>
+        <symbol>Test Suite workflow</symbol>
+        <lines>1-149</lines>
+        <reason>GitHub Actions workflow where Lighthouse CI step will be added. Currently runs unit, integration, E2E tests, and coverage. Lighthouse should run after E2E tests (Step 10) when application is built and running.</reason>
+      </artifact>
+      <artifact>
+        <path>src/hooks/useAuth.ts</path>
+        <kind>hook</kind>
+        <symbol>signInWithTestCredentials</symbol>
+        <lines>89-119</lines>
+        <reason>Test authentication bypass method from Story 3.5. Use this pattern to authenticate headless Lighthouse scans for authenticated views (Dashboard, Scan, Trends, History, Settings).</reason>
+      </artifact>
+      <artifact>
+        <path>src/views/LoginScreen.tsx</path>
+        <kind>component</kind>
+        <symbol>LoginScreen test button</symbol>
+        <lines>27</lines>
+        <reason>Test login UI component from Story 3.5 (dev/test only). Reference for how test auth is integrated into the application.</reason>
+      </artifact>
+      <artifact>
+        <path>vite.config.ts</path>
+        <kind>config</kind>
+        <symbol>Vite build configuration</symbol>
+        <lines>1-41</lines>
+        <reason>Build configuration for bundle analysis. Current build outputs show bundle size ~637KB (dist/assets/index-*.js). Use for baseline documentation.</reason>
+      </artifact>
+      <artifact>
+        <path>package.json</path>
+        <kind>manifest</kind>
+        <symbol>npm scripts and dependencies</symbol>
+        <lines>6-24</lines>
+        <reason>npm scripts for build, preview, and testing. Will add Lighthouse CI dependency here. Preview server (npm run preview) needed for Lighthouse scans.</reason>
+      </artifact>
+      <artifact>
+        <path>tests/e2e/accessibility.spec.ts</path>
+        <kind>test</kind>
+        <symbol>E2E accessibility tests</symbol>
+        <lines>N/A</lines>
+        <reason>Story 3.5 E2E accessibility tests. Reference pattern for authenticated E2E workflow - similar auth setup needed for Lighthouse scans.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <vite>^5.4.0</vite>
+        <react>^18.3.1</react>
+        <firebase>^10.14.1</firebase>
+        <playwright>^1.56.1 (devDependencies)</playwright>
+        <vitest>^4.0.13 (devDependencies)</vitest>
+        <axe-core-playwright>^4.11.0 (devDependencies)</axe-core-playwright>
+        <to-add-lhci-cli>0.13.x (Story 3.6)</to-add-lhci-cli>
+        <to-add-bundlesize>0.18.x or custom script (Story 3.6)</to-add-bundlesize>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Lighthouse CI must run AFTER E2E tests complete in GitHub Actions workflow (requires live application server)</constraint>
+    <constraint>Use "warn" mode for Lighthouse assertions (not "error" mode) to prevent CI failures on minor score fluctuations (per Tech Spec Risk #3)</constraint>
+    <constraint>Establish performance baselines from CI environment, not local development environment, for consistency</constraint>
+    <constraint>Test authentication bypass pattern must be used to scan authenticated views (Dashboard, Scan, Trends, History, Settings) - cannot scan login screen only</constraint>
+    <constraint>Bundle size baseline is ~637KB (current build output from dist/assets/index-*.js) - warn if exceeds 10% increase (&gt;700KB)</constraint>
+    <constraint>Lighthouse configuration must scan minimum 5 major views: Dashboard, Scan, Trends, History, Settings</constraint>
+    <constraint>Performance targets: Performance 90+, Accessibility 90+, Best Practices 90+, SEO 90+, Core Web Vitals within Google "good" thresholds</constraint>
+    <constraint>Epic evolution document (epic-3-evolution.md) must be updated after Story 3.6 completion (AC #8)</constraint>
+    <constraint>Use Vite preview server (npm run preview) for Lighthouse scans, not dev server, to match production build performance</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>GitHub Actions Workflow - Test Suite</name>
+      <kind>CI/CD Pipeline</kind>
+      <signature>GitHub Actions YAML workflow with jobs: test (Steps 1-14 currently, will add Lighthouse step after Step 10)</signature>
+      <path>.github/workflows/test.yml</path>
+    </interface>
+    <interface>
+      <name>Lighthouse CI Configuration</name>
+      <kind>Configuration File</kind>
+      <signature>lighthouserc.json - JSON config with ci.collect (URLs, numberOfRuns, settings), ci.assert (assertions), ci.upload (target, outputDir)</signature>
+      <path>lighthouserc.json (to be created)</path>
+    </interface>
+    <interface>
+      <name>Vite Build Output</name>
+      <kind>Build Artifact</kind>
+      <signature>dist/assets/index-[hash].js - Main JavaScript bundle (~637KB current baseline)</signature>
+      <path>dist/assets/</path>
+    </interface>
+    <interface>
+      <name>Test Authentication API</name>
+      <kind>Function Signature</kind>
+      <signature>signInWithTestCredentials(email?: string, password?: string): Promise&lt;void&gt;</signature>
+      <path>src/hooks/useAuth.ts:89-119</path>
+    </interface>
+    <interface>
+      <name>Performance Baseline Documentation</name>
+      <kind>Markdown Document</kind>
+      <signature>docs/performance/performance-baselines.md - Structured markdown with baseline scores, Core Web Vitals, page load metrics per view</signature>
+      <path>docs/performance/performance-baselines.md (to be created)</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Story 3.6 uses Lighthouse CI for automated performance testing, not traditional unit/integration/E2E test frameworks. Testing approach:
+
+**Lighthouse CI Standards:**
+- Run 3 audits per URL and median results (reduces flakiness from numberOfRuns: 3)
+- Use desktop throttling profile (align with development environment)
+- Assert performance thresholds in "warn" mode (not "error" mode) to prevent CI blockage on minor fluctuations
+- Scan all major authenticated views (minimum 5: Dashboard, Scan, Trends, History, Settings)
+- Upload HTML/JSON reports to GitHub Actions artifacts for debugging and historical comparison
+
+**Performance Testing Methodology:**
+- Establish baselines from CI environment (not local) for consistency across developers
+- Document baseline scores per view in docs/performance/performance-baselines.md
+- Allow 5-10 point variance for Lighthouse scores (per Tech Spec Risk #3 mitigation)
+- Monitor Core Web Vitals (LCP, FID, CLS) and page load metrics (FCP, TTI, Speed Index)
+
+**Bundle Size Testing:**
+- Use bundlesize package or custom script to track bundle size
+- Baseline: ~637KB (current dist/assets/index-*.js from npm run build)
+- Threshold: Warn if exceeds 10% increase (&gt;700KB)
+- Run on every PR to detect unexpected bundle bloat
+
+**Testing Frameworks (from Epic 2):**
+- Vitest 4.0.13 for unit/integration tests (not applicable to Story 3.6)
+- Playwright 1.56.1 for E2E tests (used by Story 3.5, not directly by Story 3.6)
+- Lighthouse 11.x via @lhci/cli 0.13.x for performance audits (Story 3.6 focus)
+    </standards>
+    <locations>
+      <location>lighthouserc.json - Lighthouse CI configuration (URLs to scan, assertion thresholds, upload settings)</location>
+      <location>.github/workflows/test.yml - GitHub Actions workflow (new Lighthouse CI step after E2E tests)</location>
+      <location>docs/performance/performance-baselines.md - Performance baseline documentation</location>
+      <location>lighthouse-reports/ - Lighthouse HTML/JSON reports output directory (uploaded to GitHub Actions artifacts)</location>
+      <location>dist/ - Vite build output for bundle size analysis</location>
+    </locations>
+    <ideas>
+      <idea ac="AC #1">Lighthouse CI installation test: Verify @lhci/cli installed in package.json devDependencies, npx lhci --version succeeds</idea>
+      <idea ac="AC #1">Configuration validation test: Verify lighthouserc.json exists with ci.collect.url array (5+ URLs), ci.assert.assertions configured, ci.upload.outputDir set</idea>
+      <idea ac="AC #2">GitHub Actions integration test: Verify Lighthouse CI step exists in .github/workflows/test.yml after E2E tests, uses correct environment variables</idea>
+      <idea ac="AC #2">Workflow execution test: Run GitHub Actions workflow on test branch, verify Lighthouse CI step completes without errors</idea>
+      <idea ac="AC #3">Baseline documentation test: Verify docs/performance/performance-baselines.md exists with Performance/Accessibility/Best Practices/SEO scores for all 5 views</idea>
+      <idea ac="AC #3">Core Web Vitals documentation test: Verify performance-baselines.md includes LCP, FID, CLS metrics with target thresholds documented</idea>
+      <idea ac="AC #4">Bundle size tracking test: Verify bundlesize package installed OR custom script exists in scripts/, verify baseline ~637KB documented</idea>
+      <idea ac="AC #4">Bundle size threshold test: Verify GitHub Actions workflow includes bundle size check that warns at 10% increase (&gt;700KB)</idea>
+      <idea ac="AC #5">Report upload test: Verify Lighthouse HTML reports uploaded to GitHub Actions artifacts, accessible via Actions UI</idea>
+      <idea ac="AC #5">Report retention test: Verify artifact retention-days set to 90 (default) in upload-artifact action</idea>
+      <idea ac="AC #6">CI operational test: Verify Lighthouse CI runs on every PR and main branch commit, scores visible in workflow logs</idea>
+      <idea ac="AC #7">Multi-view scan test: Verify Lighthouse scans all 5 major views (Dashboard, Scan, Trends, History, Settings), separate audit results per view</idea>
+      <idea ac="AC #8">Epic evolution update test: Verify docs/sprint-artifacts/epic3/epic-3-evolution.md Story 3.6 section completed with files added/modified</idea>
+    </ideas>
+  </tests>
+</story-context>
