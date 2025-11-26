@@ -45,7 +45,7 @@ interface BarData {
 }
 
 function App() {
-    const { user, services, initError, signIn, signOut } = useAuth();
+    const { user, services, initError, signIn, signInWithTestCredentials, signOut } = useAuth();
     const transactions = useTransactions(user, services);
 
     // UI State
@@ -313,7 +313,7 @@ function App() {
     }
 
     if (!user) {
-        return <LoginScreen onSignIn={signIn} t={t} />;
+        return <LoginScreen onSignIn={signIn} onTestSignIn={() => signInWithTestCredentials()} t={t} />;
     }
 
     // Compute analytics data

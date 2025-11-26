@@ -26,12 +26,12 @@ export const ScanView: React.FC<ScanViewProps> = ({
 
     return (
         <div className="h-full flex flex-col">
-            <button onClick={onBack} className="self-start mb-4">
+            <button onClick={onBack} className="self-start mb-4" aria-label={t('back')}>
                 <ArrowLeft />
             </button>
             <div className={`flex-1 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center mb-4 overflow-hidden ${card}`}>
                 {scanImages.length === 0 ? (
-                    <div className="text-center opacity-50">
+                    <div className="text-center text-slate-600">
                         <p>{t('addPhoto')}</p>
                     </div>
                 ) : (
