@@ -84,7 +84,14 @@ jobs:
           VITE_GEMINI_API_KEY: test-gemini-key
           VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
 
-      # Step 10: Run E2E tests (Playwright manages dev server via webServer config)
+      # Step 10: Create test user for E2E accessibility tests
+      # Story 3.5: Test user needed for authenticated view accessibility testing
+      - name: Create test user in Firebase Auth emulator
+        run: npx tsx scripts/create-test-user.ts
+        env:
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+
+      # Step 11: Run E2E tests (Playwright manages dev server via webServer config)
       - name: Run E2E tests
         run: npm run test:e2e
         continue-on-error: false
@@ -101,7 +108,7 @@ jobs:
           VITE_GEMINI_API_KEY: test-gemini-key
           VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
 
-      # Step 11: Generate coverage report with threshold enforcement
+      # Step 12: Generate coverage report with threshold enforcement
       # Story 3.7: Coverage thresholds configured in vite.config.ts
       # Thresholds: lines 45%, branches 30%, functions 25%, statements 40%
       # Vitest exits with non-zero code if coverage below thresholds
@@ -121,7 +128,7 @@ jobs:
           VITE_GEMINI_API_KEY: test-gemini-key
           VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
 
-      # Step 12: Upload HTML coverage report as artifact
+      # Step 13: Upload HTML coverage report as artifact
       - name: Upload coverage report (HTML)
         uses: actions/upload-artifact@v4
         if: always()
@@ -130,7 +137,7 @@ jobs:
           path: coverage/
           retention-days: 30
 
-      # Step 13: Upload lcov coverage for potential badge integration
+      # Step 14: Upload lcov coverage for potential badge integration
       - name: Upload coverage report (lcov)
         uses: actions/upload-artifact@v4
         if: always()
@@ -139,7 +146,7 @@ jobs:
           path: coverage/coverage-final.json
           retention-days: 30
 
-      # Step 14: Display coverage summary in logs
+      # Step 15: Display coverage summary in logs
       - name: Display coverage summary
         if: always()
         run: |
@@ -150,7 +157,7 @@ jobs:
             echo "⚠️ Coverage data not found"
           fi
 
-      # Step 15: Post coverage report to PR comments
+      # Step 16: Post coverage report to PR comments
       # Story 3.7: Uses vitest-coverage-report-action for PR coverage visibility
       # Shows coverage breakdown and comparison to base branch
       - name: Post coverage report to PR
@@ -163,7 +170,7 @@ jobs:
           file-coverage-mode: 'all'
           name: 'Coverage Report'
 
-      # Step 16: Run Lighthouse CI Performance Audits (was Step 15)
+      # Step 17: Run Lighthouse CI Performance Audits
       # Story 3.6: Runs Lighthouse audits on all major views (Login + 5 authenticated)
       - name: Run Lighthouse performance audits
         run: npm run test:lighthouse
@@ -179,7 +186,7 @@ jobs:
           VITE_GEMINI_API_KEY: test-gemini-key
           VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
 
-      # Step 17: Upload Lighthouse reports as artifacts (was Step 16)
+      # Step 18: Upload Lighthouse reports as artifacts
       - name: Upload Lighthouse reports
         uses: actions/upload-artifact@v4
         if: always()
@@ -188,7 +195,7 @@ jobs:
           path: lighthouse-reports/
           retention-days: 90
 
-      # Step 18: Check bundle size (was Step 17)
+      # Step 19: Check bundle size
       # Story 3.6: Warn if bundle size increases >10% from baseline (~637KB)
       - name: Check bundle size
         run: |
