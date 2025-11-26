@@ -50,7 +50,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
 
     return (
         <div className="pb-24">
-            <button onClick={onBack} className="mb-4">
+            <button onClick={onBack} className="mb-4" aria-label={t('back')}>
                 <ArrowLeft />
             </button>
             <h1 className="text-2xl font-bold mb-4">{t('history')}</h1>

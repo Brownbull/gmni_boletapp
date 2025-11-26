@@ -1,0 +1,356 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3.5</storyId>
+    <title>Accessibility Testing Framework & Critical Path Tests</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic3/3-5-accessibility-testing-framework.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a QA engineer</asA>
+    <iWant>automated accessibility testing for critical user paths</iWant>
+    <soThat>the application meets WCAG AA standards and is usable by all users</soThat>
+    <tasks>
+      <task id="1" ac="1">
+        <title>Install and Configure @axe-core/playwright</title>
+        <subtasks>
+          <subtask>Install @axe-core/playwright version 4.x via npm</subtask>
+          <subtask>Verify installation in package.json dependencies</subtask>
+          <subtask>Create accessibility test file: tests/e2e/accessibility.spec.ts</subtask>
+          <subtask>Import and configure axe-core in test file</subtask>
+          <subtask>Run initial test to verify library is working</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="2,5,8">
+        <title>Implement Automated Axe Scans for Major Views</title>
+        <subtasks>
+          <subtask>Create test describe block for axe scans</subtask>
+          <subtask>Write test for Dashboard view axe scan (navigate, analyze, assert zero critical/serious violations, document moderate/minor)</subtask>
+          <subtask>Write test for Scan view axe scan</subtask>
+          <subtask>Write test for Trends view axe scan</subtask>
+          <subtask>Write test for History view axe scan</subtask>
+          <subtask>Write test for Settings view axe scan</subtask>
+          <subtask>Verify all 5 view tests pass</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="3">
+        <title>Implement Keyboard Navigation Tests</title>
+        <subtasks>
+          <subtask>Create test describe block for keyboard navigation</subtask>
+          <subtask>Write test for tab order through navigation (verify logical order and focus visible)</subtask>
+          <subtask>Write test for Enter/Space activation (navigate with Tab, activate with Enter/Space)</subtask>
+          <subtask>Write test for Escape key behavior (close modals/dropdowns)</subtask>
+          <subtask>Write test for full keyboard-only workflow (login and navigate without mouse)</subtask>
+        </subtasks>
+      </task>
+      <task id="4" ac="4">
+        <title>Implement Screen Reader Label Tests</title>
+        <subtasks>
+          <subtask>Create test describe block for screen reader labels</subtask>
+          <subtask>Write test for ARIA labels on interactive elements (buttons, links, form inputs)</subtask>
+          <subtask>Write test for ARIA roles on semantic elements (navigation, main, buttons)</subtask>
+          <subtask>Write test for form input label associations (label with for attribute or aria-label)</subtask>
+          <subtask>Write test for image alt text if images present</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="6">
+        <title>Implement Focus Management Tests</title>
+        <subtasks>
+          <subtask>Create test describe block for focus management</subtask>
+          <subtask>Write test for modal focus trap if app has modals (focus stays within, cycles, returns on close)</subtask>
+          <subtask>Write test for dropdown focus management if app has dropdowns (focus moves through items, closes, returns)</subtask>
+        </subtasks>
+      </task>
+      <task id="6" ac="8">
+        <title>Document Accessibility Violations</title>
+        <subtasks>
+          <subtask>Review axe scan results for moderate violations</subtask>
+          <subtask>Document each moderate violation in test file comments with acceptance rationale</subtask>
+          <subtask>Review axe scan results for minor violations and document with rationale</subtask>
+          <subtask>Ensure critical/serious violations are zero (tests fail if present)</subtask>
+        </subtasks>
+      </task>
+      <task id="7" ac="7">
+        <title>Verify All Tests Pass</title>
+        <subtasks>
+          <subtask>Run npm run test:e2e locally and verify at least 10 accessibility tests pass</subtask>
+          <subtask>Fix any test failures</subtask>
+          <subtask>Run tests in CI environment (GitHub Actions) and verify tests pass</subtask>
+        </subtasks>
+      </task>
+      <task id="8" ac="9">
+        <title>Update Epic 3 Evolution Document</title>
+        <subtasks>
+          <subtask>Open docs/sprint-artifacts/epic3/epic-3-evolution.md</subtask>
+          <subtask>Complete Story 3.5 section: change status, document what changed, files added/modified, testing impact, before/after snapshot</subtask>
+        </subtasks>
+      </task>
+      <task id="9" ac="all">
+        <title>Final Validation</title>
+        <subtasks>
+          <subtask>Verify all 9 acceptance criteria are met</subtask>
+          <subtask>Ensure tests follow E2E patterns from Story 3.2, 3.3, 3.4</subtask>
+          <subtask>Ensure tests use Playwright API correctly</subtask>
+          <subtask>Update story status to review</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">
+      <description>@axe-core/playwright installed and configured</description>
+      <verification>
+        <item>package.json includes @axe-core/playwright dependency (version 4.x)</item>
+        <item>Accessibility test file imports and uses axe-core library</item>
+      </verification>
+      <source>Tech Spec § Phase 3: Accessibility Testing</source>
+    </criterion>
+    <criterion id="2">
+      <description>Automated axe scans for all major views (5 views)</description>
+      <verification>
+        <item>Tests run axe scan on Dashboard, Scan, Trends, History, and Settings views</item>
+        <item>Each view scanned for WCAG AA violations</item>
+        <item>Tests assert zero critical violations (color contrast, missing labels)</item>
+        <item>Tests assert zero serious violations (keyboard navigation, focus management)</item>
+      </verification>
+      <source>Tech Spec § Validation Approach</source>
+    </criterion>
+    <criterion id="3">
+      <description>Keyboard navigation tests implemented (3+ tests)</description>
+      <verification>
+        <item>Test validates tab order through navigation elements</item>
+        <item>Test validates Enter/Space key activation of interactive elements</item>
+        <item>Test validates Escape key closes modals/dropdowns</item>
+        <item>Test validates keyboard-only workflow (no mouse interactions)</item>
+      </verification>
+      <source>Tech Spec § Story 3.5 Technical Stack</source>
+    </criterion>
+    <criterion id="4">
+      <description>Screen reader label tests implemented (3+ tests)</description>
+      <verification>
+        <item>Test validates ARIA labels on interactive elements</item>
+        <item>Test validates ARIA roles on semantic elements</item>
+        <item>Test validates alt text on images (if present)</item>
+        <item>Test validates form input labels associated correctly</item>
+      </verification>
+      <source>Tech Spec § Story 3.5 Technical Stack</source>
+    </criterion>
+    <criterion id="5">
+      <description>Color contrast validation (automated)</description>
+      <verification>
+        <item>Axe scans validate WCAG AA color contrast (4.5:1 for text, 3:1 for UI)</item>
+        <item>Critical contrast violations fail the test</item>
+        <item>Documented exceptions for brand colors with rationale</item>
+      </verification>
+      <source>Tech Spec § ADR-010: Accessibility Testing Scope</source>
+    </criterion>
+    <criterion id="6">
+      <description>Focus management tests implemented (2+ tests)</description>
+      <verification>
+        <item>Test validates focus traps in modals (tab cycles within modal)</item>
+        <item>Test validates focus restoration after modal close</item>
+        <item>Test validates dropdown focus management</item>
+      </verification>
+      <source>Tech Spec § Story 3.5</source>
+    </criterion>
+    <criterion id="7">
+      <description>10+ accessibility tests passing</description>
+      <verification>
+        <item>Test suite includes at least 10 accessibility tests across all criteria</item>
+        <item>All tests pass in CI/CD pipeline</item>
+      </verification>
+      <source>Tech Spec § Story 3.5</source>
+    </criterion>
+    <criterion id="8">
+      <description>Accessibility violations documented</description>
+      <verification>
+        <item>Moderate/minor violations documented in test file comments</item>
+        <item>Documented violations include acceptance rationale (e.g., "Tailwind default color scheme, acceptable for MVP")</item>
+        <item>Critical/serious violations result in test failures (zero tolerance)</item>
+      </verification>
+      <source>Tech Spec § Validation Approach</source>
+    </criterion>
+    <criterion id="9">
+      <description>Epic 3 evolution document updated</description>
+      <verification>
+        <item>Story 3.5 section completed in docs/sprint-artifacts/epic3/epic-3-evolution.md</item>
+      </verification>
+      <source>Tech Spec § Appendix B: Epic 3 Story Checklist Template</source>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/epic3/epic-3-tech-spec.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Phase 3: Accessibility Testing (Week 2 - Days 11-14)</section>
+        <snippet>Install @axe-core/playwright for automated accessibility testing. Test keyboard navigation, screen reader labels, color contrast (WCAG AA minimum 4.5:1), focus management. Coverage: 10+ accessibility tests for critical user paths.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic3/epic-3-tech-spec.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>ADR-010: Accessibility Testing Scope</section>
+        <snippet>Focus on WCAG 2.1 Level AA automated checks only. Scope: Automated axe-core checks (~30% WCAG coverage), keyboard navigation (Tab/Enter/Escape/Space), screen reader labels (ARIA/alt text), color contrast (4.5:1 text, 3:1 UI). Out of scope: Manual testing, Level AAA, video/audio, cognitive testing.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic3/epic-3-tech-spec.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Validation Approach</section>
+        <snippet>Run axe scan on each major view (dashboard, scan, trends, history, settings). Assert zero critical violations (color contrast, missing labels). Assert zero serious violations (keyboard navigation, focus management). Allow moderate/minor violations with documentation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic3/epic-3-evolution.md</path>
+        <title>Epic 3 Evolution Document</title>
+        <section>Story 3.4 Learnings</section>
+        <snippet>Accessibility testing SHOULD use Playwright E2E tests because: Axe-core requires full DOM rendering in browser, keyboard navigation testing requires real browser keyboard events, focus management testing requires real browser focus behavior. Recommendation: Use Playwright with authenticated user session (reuse login flow from Story 3.2).</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Component Hierarchy</section>
+        <snippet>Main app structure: App (Main Orchestrator) → Nav (Always visible) → Views (DashboardView, ScanView, TrendsView, HistoryView, SettingsView). All views receive props from App.tsx and manage view-specific UI state.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>tests/e2e/auth-workflow.spec.ts</path>
+        <kind>e2e-test</kind>
+        <symbol>Authentication & Navigation Workflows - E2E</symbol>
+        <lines>1-187</lines>
+        <reason>Reference implementation for E2E test structure, Playwright API patterns, bilingual support, and comprehensive documentation. Use as template for accessibility test file structure.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/Nav.tsx</path>
+        <kind>component</kind>
+        <symbol>Nav</symbol>
+        <lines>1-62</lines>
+        <reason>Navigation component to test for keyboard navigation (tab order, focus management). Contains 5 buttons: Home, Trends, Scan (floating), History, Settings. All buttons use semantic button elements.</reason>
+      </artifact>
+      <artifact>
+        <path>src/views/DashboardView.tsx</path>
+        <kind>view</kind>
+        <symbol>DashboardView</symbol>
+        <lines>all</lines>
+        <reason>First view for axe scan. Dashboard displays summary stats and shortcuts for authenticated users.</reason>
+      </artifact>
+      <artifact>
+        <path>src/views/ScanView.tsx</path>
+        <kind>view</kind>
+        <symbol>ScanView</symbol>
+        <lines>all</lines>
+        <reason>Second view for axe scan. Receipt camera/upload interface with form inputs.</reason>
+      </artifact>
+      <artifact>
+        <path>src/views/TrendsView.tsx</path>
+        <kind>view</kind>
+        <symbol>TrendsView</symbol>
+        <lines>all</lines>
+        <reason>Third view for axe scan. Analytics page with charts (SimplePieChart, GroupedBarChart) and CSV export button.</reason>
+      </artifact>
+      <artifact>
+        <path>src/views/HistoryView.tsx</path>
+        <kind>view</kind>
+        <symbol>HistoryView</symbol>
+        <lines>all</lines>
+        <reason>Fourth view for axe scan. Transaction list with pagination and filtering controls.</reason>
+      </artifact>
+      <artifact>
+        <path>src/views/SettingsView.tsx</path>
+        <kind>view</kind>
+        <symbol>SettingsView</symbol>
+        <lines>all</lines>
+        <reason>Fifth view for axe scan. App preferences with form controls (language toggle, etc.).</reason>
+      </artifact>
+      <artifact>
+        <path>src/views/EditView.tsx</path>
+        <kind>view</kind>
+        <symbol>EditView</symbol>
+        <lines>all</lines>
+        <reason>Transaction creation/editing form. Use for form label association tests (merchant, date, amount, category inputs).</reason>
+      </artifact>
+      <artifact>
+        <path>playwright.config.ts</path>
+        <kind>config</kind>
+        <symbol>Playwright Configuration</symbol>
+        <lines>1-67</lines>
+        <reason>Playwright config reference. Base URL: http://localhost:5174, Chromium only, screenshot on failure, trace on retry.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <nodejs>
+        <package name="@playwright/test" version="^1.56.1">E2E testing framework for browser automation</package>
+        <package name="react" version="^18.3.1">UI framework for components being tested</package>
+        <package name="lucide-react" version="^0.460.0">Icon library used in Nav component</package>
+        <package name="@axe-core/playwright" version="4.x">To be installed - automated WCAG accessibility testing</package>
+      </nodejs>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Use Playwright E2E tests (not Vitest integration tests) because axe-core requires full DOM rendering in real browser, keyboard navigation requires real browser events, and focus management requires real browser focus behavior.</constraint>
+    <constraint>Follow Story 3.2 E2E test file structure pattern: comprehensive JSDoc header, bilingual support (EN/ES regex patterns), test.describe blocks for organization, beforeEach for common setup.</constraint>
+    <constraint>All 5 major views MUST be scanned with axe: Dashboard, Scan, Trends, History, Settings. Each view requires navigation after login (authenticated state).</constraint>
+    <constraint>Zero tolerance for critical and serious axe violations - tests MUST fail if any found. Moderate/minor violations allowed with documented acceptance rationale in test file comments.</constraint>
+    <constraint>Keyboard navigation tests MUST verify: tab order (logical sequence), Enter/Space activation (interactive elements), Escape key (modal/dropdown close), and full keyboard-only workflow (no mouse).</constraint>
+    <constraint>Screen reader tests MUST verify: ARIA labels on interactive elements (buttons/links), ARIA roles on semantic elements (nav/main), form input label associations (label[for] or aria-label), and alt text on images if present.</constraint>
+    <constraint>Focus management tests MUST verify: modal focus trap (tab cycles within modal), focus restoration after modal close, and dropdown focus management if dropdowns exist.</constraint>
+    <constraint>Use accessibility selectors from Playwright: page.getByRole('button'), page.getByLabel('Email'), page.getByText('Sign In') for screen reader compatibility testing.</constraint>
+    <constraint>Document all moderate/minor violations with acceptance rationale (e.g., "Tailwind default color scheme, acceptable for MVP") in test file comments.</constraint>
+    <constraint>Test file MUST be created at: tests/e2e/accessibility.spec.ts (matches Story 3.2 pattern of dedicated E2E test file per workflow).</constraint>
+    <constraint>After all tests pass, update docs/sprint-artifacts/epic3/epic-3-evolution.md with Story 3.5 completion details (What Changed, Files Added/Modified, Before → After Snapshot).</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>@axe-core/playwright AxeBuilder API</name>
+      <kind>external-library</kind>
+      <signature>new AxeBuilder({ page }).analyze() → Promise&lt;AxeResults&gt;</signature>
+      <path>@axe-core/playwright package (to be installed)</path>
+    </interface>
+    <interface>
+      <name>@axe-core/playwright AxeBuilder with WCAG tags</name>
+      <kind>external-library</kind>
+      <signature>new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze() → Promise&lt;AxeResults&gt;</signature>
+      <path>@axe-core/playwright package</path>
+    </interface>
+    <interface>
+      <name>Playwright Keyboard API</name>
+      <kind>playwright-api</kind>
+      <signature>page.keyboard.press('Tab' | 'Enter' | 'Escape' | 'Space') → Promise&lt;void&gt;</signature>
+      <path>@playwright/test</path>
+    </interface>
+    <interface>
+      <name>Playwright Accessibility Selectors</name>
+      <kind>playwright-api</kind>
+      <signature>page.getByRole(role: string, options?: { name: string | RegExp }) → Locator</signature>
+      <path>@playwright/test</path>
+    </interface>
+    <interface>
+      <name>Playwright Accessibility Selectors</name>
+      <kind>playwright-api</kind>
+      <signature>page.getByLabel(text: string | RegExp) → Locator</signature>
+      <path>@playwright/test</path>
+    </interface>
+    <interface>
+      <name>Nav Component Props</name>
+      <kind>react-component</kind>
+      <signature>NavProps { view: string; setView: (view: string) =&gt; void; onScanClick: () =&gt; void; onTrendsClick?: () =&gt; void; theme: string; t: (key: string) =&gt; string; }</signature>
+      <path>src/components/Nav.tsx</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Use Playwright E2E testing framework with @axe-core/playwright for automated accessibility testing. Follow Story 3.2 pattern: dedicated test file (tests/e2e/accessibility.spec.ts), comprehensive JSDoc documentation, bilingual support (EN/ES regex patterns), test.describe blocks for organization, beforeEach for common setup. Run tests against local dev server (http://localhost:5174). Zero tolerance for critical/serious violations, document moderate/minor violations with rationale.</standards>
+    <locations>tests/e2e/accessibility.spec.ts (to be created)</locations>
+    <ideas>
+      <idea ac="1,2,5">Axe Scans: Install @axe-core/playwright v4.x. Create 5 tests scanning Dashboard, Scan, Trends, History, Settings views for WCAG AA violations. Filter violations by severity (critical, serious, moderate). Assert zero critical/serious, document moderate/minor with rationale.</idea>
+      <idea ac="3">Keyboard Navigation: Test tab order through Nav component (Home→Trends→Scan→History→Settings). Test Enter/Space activation on buttons. Test Escape key closing modals/dropdowns (if present). Test full keyboard-only workflow (login without mouse if OAuth allows, or document limitation).</idea>
+      <idea ac="4">Screen Reader Labels: Test ARIA labels on Nav buttons (page.getByRole('button', {name: 'Home'})). Test ARIA roles on semantic elements (role="navigation", role="main"). Test form input labels in EditView (getByLabel('Merchant'), getByLabel('Date'), etc.). Test image alt text if images present.</idea>
+      <idea ac="6">Focus Management: Test modal focus trap if modals exist (tab cycles within modal, focus returns on close). Test dropdown focus management if dropdowns exist. Verify focus visible state (outline or box-shadow styling).</idea>
+      <idea ac="7,8">Validation: Verify at least 10 accessibility tests total across all criteria. Run tests locally (npm run test:e2e) and in CI (GitHub Actions). Document all violations with acceptance rationale. Update Epic 3 evolution document.</idea>
+    </ideas>
+  </tests>
+</story-context>

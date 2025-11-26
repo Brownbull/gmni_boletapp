@@ -78,14 +78,14 @@ export const EditView: React.FC<EditViewProps> = ({
     return (
         <div className="pb-24">
             <div className="flex justify-between mb-6">
-                <button onClick={onBack}>
+                <button onClick={onBack} aria-label={t('back')}>
                     <ArrowLeft />
                 </button>
                 <h1 className="font-bold">
                     {currentTransaction.id ? t('editTrans') : t('newTrans')}
                 </h1>
                 {currentTransaction.id && (
-                    <button onClick={() => onDelete(currentTransaction.id!)} className="text-red-500">
+                    <button onClick={() => onDelete(currentTransaction.id!)} className="text-red-500" aria-label={t('delete')}>
                         <Trash2 />
                     </button>
                 )}
@@ -146,6 +146,7 @@ export const EditView: React.FC<EditViewProps> = ({
                     <button
                         onClick={handleAddItem}
                         className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded"
+                        aria-label={t('addItem')}
                     >
                         <Plus size={12} />
                     </button>
@@ -179,12 +180,14 @@ export const EditView: React.FC<EditViewProps> = ({
                                         <button
                                             onClick={() => handleDeleteItem(i)}
                                             className="text-red-500"
+                                            aria-label={t('deleteItem')}
                                         >
                                             <Trash2 size={16} />
                                         </button>
                                         <button
                                             onClick={() => onSetEditingItemIndex(null)}
                                             className="text-blue-600"
+                                            aria-label={t('confirmItem')}
                                         >
                                             <Check size={16} />
                                         </button>

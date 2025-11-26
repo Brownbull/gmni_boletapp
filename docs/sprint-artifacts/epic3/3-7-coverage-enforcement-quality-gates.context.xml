@@ -1,0 +1,238 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>7</storyId>
+    <title>Test Coverage Enforcement &amp; CI Quality Gates</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-25</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic3/3-7-coverage-enforcement-quality-gates.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>DevOps engineer</asA>
+    <iWant>test coverage enforcement in the CI/CD pipeline</iWant>
+    <soThat>code quality doesn't regress over time and PRs below coverage thresholds are blocked from merging</soThat>
+    <tasks>
+      <task id="1" title="Configure Vitest Coverage Thresholds" ac="1">
+        <subtask>Open vite.config.ts or create vitest.config.ts if coverage config needs separation</subtask>
+        <subtask>Add coverage threshold configuration: lines: 70, branches: 60, functions: 70, statements: 70</subtask>
+        <subtask>Verify configuration: Run npm run test:coverage locally</subtask>
+        <subtask>Verify threshold enforcement: Temporarily lower coverage and confirm failure</subtask>
+      </task>
+      <task id="2" title="Update GitHub Actions Workflow for Coverage Enforcement" ac="1,2">
+        <subtask>Open .github/workflows/test.yml</subtask>
+        <subtask>Modify the coverage step to enforce thresholds via --coverage.thresholds.lines=70 flag or vite.config.ts</subtask>
+        <subtask>Add coverage regression detection step (compare PR coverage to main branch baseline)</subtask>
+        <subtask>Ensure workflow fails (not just warns) on coverage violations</subtask>
+      </task>
+      <task id="3" title="Configure PR Coverage Comment Integration" ac="3">
+        <subtask>Implement vitest-coverage-report-action for GitHub PR comments</subtask>
+        <subtask>Add necessary GitHub Action steps and configure permissions for PR comment posting</subtask>
+        <subtask>Verify coverage breakdown included (statements, branches, functions, lines)</subtask>
+        <subtask>Verify comparison to main branch shown</subtask>
+      </task>
+      <task id="4" title="Create/Update CONTRIBUTING.md with Coverage Requirements" ac="4">
+        <subtask>Create CONTRIBUTING.md with Test Coverage Requirements section</subtask>
+        <subtask>Document 70% minimum coverage threshold</subtask>
+        <subtask>Document how to run coverage locally: npm run test:coverage</subtask>
+        <subtask>Document coverage regression policy (>2% drop fails CI)</subtask>
+      </task>
+      <task id="5" title="Verify Coverage Blocking for Low Coverage PR" ac="5">
+        <subtask>Create test branch with intentionally low coverage</subtask>
+        <subtask>Push branch and create PR</subtask>
+        <subtask>Verify CI workflow fails with coverage error and PR merge is blocked</subtask>
+      </task>
+      <task id="6" title="Verify Coverage Passing for Adequate Coverage PR" ac="6">
+        <subtask>Create test branch with coverage maintained at 71%+</subtask>
+        <subtask>Verify CI workflow passes coverage check</subtask>
+        <subtask>Verify PR can proceed to merge</subtask>
+      </task>
+      <task id="7" title="Update Epic 3 Evolution Document" ac="7">
+        <subtask>Complete Story 3.7 section in docs/sprint-artifacts/epic3/epic-3-evolution.md</subtask>
+        <subtask>Document What Changed, Files Added/Modified, Discoveries</subtask>
+      </task>
+      <task id="8" title="Final Validation" ac="all">
+        <subtask>Verify all 7 acceptance criteria are met</subtask>
+        <subtask>Update story status to review</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1" title="CI requires 70%+ coverage">
+      <verification>.github/workflows/test.yml includes coverage threshold check</verification>
+      <verification>Vitest coverage thresholds configured (lines, branches, functions)</verification>
+      <verification>Workflow fails when coverage below 70%</verification>
+    </criterion>
+    <criterion id="AC2" title="Coverage regression detection (>2% drop blocked)">
+      <verification>CI compares PR coverage to main branch baseline</verification>
+      <verification>Workflow fails if coverage drops more than 2% from main</verification>
+      <verification>Regression detection considers overall coverage, not per-file</verification>
+    </criterion>
+    <criterion id="AC3" title="Coverage reports in PR comments">
+      <verification>GitHub Actions bot posts coverage summary to PR comments</verification>
+      <verification>Comment includes total coverage percentage and change from main</verification>
+      <verification>Comment includes coverage breakdown by category</verification>
+    </criterion>
+    <criterion id="AC4" title="Requirements documented in CONTRIBUTING.md">
+      <verification>CONTRIBUTING.md created with coverage requirements section</verification>
+      <verification>Document explains 70% minimum coverage threshold</verification>
+      <verification>Document explains how to check coverage locally</verification>
+    </criterion>
+    <criterion id="AC5" title="65% coverage PR blocked (verified)">
+      <verification>Test PR with code that drops coverage to 65%</verification>
+      <verification>CI workflow fails with clear coverage error message</verification>
+      <verification>PR cannot be merged with failing coverage check</verification>
+    </criterion>
+    <criterion id="AC6" title="71% coverage PR allowed (verified)">
+      <verification>Test PR with 71% coverage passes CI</verification>
+      <verification>Coverage check step shows PASS status</verification>
+      <verification>PR can proceed to merge</verification>
+    </criterion>
+    <criterion id="AC7" title="Epic 3 evolution document updated">
+      <verification>Story 3.7 section completed in docs/sprint-artifacts/epic3/epic-3-evolution.md</verification>
+      <verification>Document includes What Changed, files added/modified, discoveries</verification>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/epic3/epic-3-tech-spec.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Phase 5: Coverage Enforcement &amp; Quality Gates, Story 3.7</section>
+        <snippet>Configure CI to require 70%+ coverage for PR merge. Add coverage regression detection (fail if coverage drops >2%). Configure coverage reports in PR comments. Document coverage requirements in CONTRIBUTING.md.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic3/epic-3-evolution.md</path>
+        <title>Epic 3 Evolution Document</title>
+        <section>Story 3.7 section (backlog - to be completed)</section>
+        <snippet>Before: 79.51% coverage but no enforcement. After: CI blocks PRs below 70%. Story 3.7 is the final story in Epic 3 closing quality gate infrastructure.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Testing Strategy, CI/CD Workflow</section>
+        <snippet>Vitest 4.0.13 for unit tests, React Testing Library 16.3.0 for integration tests, Playwright 1.56.1 for E2E tests. Coverage: 79.51% with @vitest/coverage-v8. GitHub Actions CI/CD workflow operational.</snippet>
+      </doc>
+      <doc>
+        <path>docs/testing/testing-guide.md</path>
+        <title>Testing Guide</title>
+        <section>Test Coverage</section>
+        <snippet>npm run test:coverage generates reports. Coverage goals: Critical paths 90%+, Services 80%+, Utils 80%+, Components 70%+, Views 60%+. Reports in coverage/ directory (text, html, json).</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>.github/workflows/test.yml</path>
+        <kind>workflow</kind>
+        <symbol>test job</symbol>
+        <lines>1-198</lines>
+        <reason>CI workflow to modify for coverage enforcement. Currently has Step 11 for coverage report but no threshold enforcement. Add coverage threshold check and PR comment integration.</reason>
+      </artifact>
+      <artifact>
+        <path>vite.config.ts</path>
+        <kind>config</kind>
+        <symbol>coverage configuration</symbol>
+        <lines>28-39</lines>
+        <reason>Coverage configuration exists but lacks thresholds. Add thresholds: {lines: 70, branches: 60, functions: 70, statements: 70} to coverage section.</reason>
+      </artifact>
+      <artifact>
+        <path>package.json</path>
+        <kind>config</kind>
+        <symbol>test:coverage script</symbol>
+        <lines>23</lines>
+        <reason>test:coverage script exists. May need to add --coverage.thresholds.lines=70 flag or rely on vite.config.ts thresholds.</reason>
+      </artifact>
+      <artifact>
+        <path>scripts/check-bundle-size.sh</path>
+        <kind>script</kind>
+        <symbol>Bundle size threshold pattern</symbol>
+        <lines>1-62</lines>
+        <reason>Pattern for threshold-based CI validation script. Similar approach could work for coverage baseline comparison if needed.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package>vitest</package>
+        <version>^4.0.13</version>
+        <purpose>Test runner with coverage support</purpose>
+      </node>
+      <package>@vitest/coverage-v8</package>
+        <version>^4.0.13</version>
+        <purpose>Coverage provider for Vitest (v8/c8 engine)</purpose>
+      </dependencies>
+      <githubActions>
+        <action>actions/checkout@v4</action>
+        <action>actions/setup-node@v4</action>
+        <action>actions/upload-artifact@v4</action>
+        <action>davelosert/vitest-coverage-report-action@v2 (recommended for PR comments)</action>
+      </githubActions>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="pattern">Multi-branch protection strategy (main/staging/develop) - all require PR + passing test status check</constraint>
+    <constraint type="pattern">Coverage configuration should be in vite.config.ts test.coverage section to maintain single source of truth</constraint>
+    <constraint type="pattern">CI workflow Step numbering continues from Step 17 (bundle size check from Story 3.6)</constraint>
+    <constraint type="pattern">Use warn mode initially for coverage enforcement, then switch to fail mode once stable (per Tech Spec Risk #4)</constraint>
+    <constraint type="testing">70% coverage threshold with 10% buffer (baseline is 79.51%)</constraint>
+    <constraint type="testing">Allow 2% coverage regression to accommodate code restructuring</constraint>
+    <constraint type="documentation">CONTRIBUTING.md must be created (does not exist yet)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Vitest Coverage Thresholds</name>
+      <kind>config</kind>
+      <signature>
+        coverage: {
+          thresholds: {
+            lines: number,
+            branches: number,
+            functions: number,
+            statements: number
+          }
+        }
+      </signature>
+      <path>vite.config.ts</path>
+    </interface>
+    <interface>
+      <name>vitest-coverage-report-action</name>
+      <kind>GitHub Action</kind>
+      <signature>
+        uses: davelosert/vitest-coverage-report-action@v2
+        with:
+          json-summary-path: './coverage/coverage-summary.json'
+          json-final-path: './coverage/coverage-final.json'
+      </signature>
+      <path>.github/workflows/test.yml</path>
+    </interface>
+    <interface>
+      <name>npm run test:coverage</name>
+      <kind>npm script</kind>
+      <signature>vitest run tests/unit tests/integration --coverage</signature>
+      <path>package.json:23</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Three-tier testing framework: Vitest for unit tests (tests/unit/), React Testing Library for integration tests (tests/integration/), Playwright for E2E tests (tests/e2e/). Coverage targets: Critical paths 90%+, Services 80%+, Utils 80%+. Firebase emulator required for integration tests (localhost:8080 Firestore, localhost:9099 Auth). Sequential test execution (fileParallelism: false) to avoid emulator race conditions.
+    </standards>
+    <locations>
+      <location>tests/unit/**/*.test.ts</location>
+      <location>tests/integration/**/*.test.tsx</location>
+      <location>tests/e2e/**/*.spec.ts</location>
+      <location>coverage/ (generated reports: text, html, json)</location>
+    </locations>
+    <ideas>
+      <idea ac="1">Manually modify vite.config.ts to lower thresholds temporarily, run npm run test:coverage, verify it fails</idea>
+      <idea ac="2">Create mock coverage-summary.json with lower coverage, run comparison script to verify regression detection</idea>
+      <idea ac="3">Test PR comment action locally using act framework or create test PR</idea>
+      <idea ac="5">Add untested code file to temporarily drop coverage, verify CI fails</idea>
+      <idea ac="6">Normal PR with existing tests should pass coverage check</idea>
+    </ideas>
+  </tests>
+</story-context>
