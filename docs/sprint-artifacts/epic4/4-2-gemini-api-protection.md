@@ -1,11 +1,12 @@
 # Story 4.2: Gemini API Protection
 
-**Status:** done
-**Completed:** 2025-11-26
+**Status:** review
+**Implementation Completed:** 2025-11-26
+**Awaiting:** Code review by Gabe
 
 ---
 
-## Completion Summary
+## Implementation Summary
 
 ✅ All acceptance criteria met:
 - Cloud Function `analyzeReceipt` deployed to us-central1
@@ -33,6 +34,113 @@
 - Gemini API key no longer exposed in client bundle ✅
 - Authentication required for all receipt analysis requests ✅
 - Rate limiting via Firebase Functions quotas ✅
+
+**Documentation:**
+- Updated: [docs/deployment/deployment-guide.md](../../deployment/deployment-guide.md)
+- Created: [docs/deployment/deployment-quickstart.md](../../deployment/deployment-quickstart.md)
+
+**Production Deployment:**
+- ✅ Deployed to https://boletapp-d609f.web.app
+- ✅ Cloud Function active in us-central1
+- ✅ Verified: No API key in production bundle
+
+---
+
+## Review Checklist
+
+### Code Review Items
+
+**Cloud Function Implementation** ([functions/src/analyzeReceipt.ts](../../../functions/src/analyzeReceipt.ts))
+- [ ] Authentication check properly implemented
+- [ ] Input validation covers all required fields
+- [ ] Error handling provides user-friendly messages
+- [ ] Gemini API integration follows best practices
+- [ ] Function has appropriate timeout settings
+- [ ] TypeScript types are properly defined
+
+**Client Code Changes** ([src/services/gemini.ts](../../../src/services/gemini.ts))
+- [ ] Uses `httpsCallable` from Firebase Functions SDK
+- [ ] No direct Gemini API calls remain
+- [ ] Error handling covers auth and network failures
+- [ ] Return types match previous implementation
+
+**Configuration Files**
+- [ ] [firebase.json](../../../firebase.json) - Functions config is correct
+- [ ] [.env.example](../../../.env.example) - No Gemini API key references
+- [ ] [functions/package.json](../../../functions/package.json) - Dependencies are appropriate
+
+**Security Verification**
+- [ ] Run: `grep -r "AIzaSyAjHtmVTjujwkj768aToOloDzukBfIMpSQ" dist/`
+  - Expected: No matches (0)
+- [ ] Run: `grep -r "VITE_GEMINI" dist/`
+  - Expected: No matches (0)
+- [ ] Check `.env` file has no VITE_GEMINI_API_KEY
+- [ ] Verify `functions/.runtimeconfig.json` is in `.gitignore`
+
+**Functional Testing**
+- [ ] User can log in successfully
+- [ ] Receipt scanning works end-to-end
+- [ ] Unauthenticated users cannot call function (401 error)
+- [ ] Invalid requests are rejected with appropriate errors
+- [ ] Receipt data is extracted correctly
+
+**Production Verification**
+- [ ] Production site loads: https://boletapp-d609f.web.app
+- [ ] Production bundle has no API key exposed
+- [ ] Cloud Function is listed: `firebase functions:list`
+- [ ] Function logs show successful executions
+
+**Documentation Review**
+- [ ] [deployment-guide.md](../../deployment/deployment-guide.md) - Cloud Functions section complete
+- [ ] [deployment-quickstart.md](../../deployment/deployment-quickstart.md) - Accurate and helpful
+- [ ] Architecture diagram updated with Cloud Functions layer
+- [ ] Security best practices documented
+
+### Acceptance Criteria Verification
+
+**AC1: Cloud Function Created** ✅
+- Evidence: `firebase functions:list` shows `analyzeReceipt (us-central1)`
+- Verification: Function successfully processes requests and returns data
+
+**AC2: Authentication Required** ✅
+- Evidence: Function code checks `context.auth` at [functions/src/analyzeReceipt.ts:38](../../../functions/src/analyzeReceipt.ts#L38)
+- Verification: Returns 401 if `context.auth` is null
+
+**AC3: Client Code Updated** ✅
+- Evidence: [src/services/gemini.ts:29](../../../src/services/gemini.ts#L29) uses `httpsCallable`
+- Verification: No `VITE_GEMINI_API_KEY` references in source
+
+**AC4: API Key Removed from Client** ✅
+- Evidence: Production bundle search shows 0 matches
+- Verification: `.env.example` updated with note about server-side API
+
+**AC5: Receipt Scanning Works End-to-End** ✅
+- Evidence: Production deployment tested
+- Verification: Receipt analysis flow working as expected
+
+### Risk Assessment
+
+**Low Risk Items:**
+- Client code change is straightforward (API call wrapper)
+- Firebase Functions SDK is well-tested and stable
+- Authentication check is simple and verifiable
+
+**Medium Risk Items:**
+- ⚠️ Functions config API deprecated (works until March 2026)
+  - Mitigation: Documented in deployment guide
+  - TODO: Migrate to `.env` before March 2026
+- ⚠️ Blaze plan required (billing enabled)
+  - Mitigation: Budget alerts configured
+  - Cost monitoring documented
+
+**No High Risk Items Identified**
+
+### Follow-up Items (Optional)
+
+- [ ] Migrate from `functions.config()` to `.env` files (before March 2026)
+- [ ] Add function-level monitoring/alerting
+- [ ] Consider adding retry logic for transient Gemini API failures
+- [ ] Add integration tests for Cloud Function
 
 ---
 
