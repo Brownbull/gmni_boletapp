@@ -65,9 +65,10 @@ development_status:
   # Epic 4: Security Hardening & Penetration Testing
   epic-4: contexted
   4-1-secrets-detection-prevention: done
-  4-2-gemini-api-protection: review
-  4-3-dependency-static-security: ready-for-dev
-  4-4-security-documentation: ready-for-dev
+  4-2-gemini-api-protection: done
+  4-3-dependency-static-security: done
+  4-4-security-documentation: done
+  epic-4-retrospective: optional  # Epic 4 complete - consider running retrospective
 
   # Future Epics (defined in Epic 3 retrospective)
   epic-5: backlog  # Enhanced Data Export

@@ -41,12 +41,13 @@ src/
 
 ## Documentation Organization
 
-Documentation is organized into **5 thematic folders** for easy navigation:
+Documentation is organized into **6 thematic folders** for easy navigation:
 
 ```
 docs/
 ├── architecture/      # System architecture and technical design
 ├── development/       # Developer guides and operational docs
+├── security/          # Security documentation and audit reports (Epic 4)
 ├── testing/           # Test environment and testing guides
 ├── planning/          # Epic planning and technical specs
 ├── reference/         # Quick reference and project scans
@@ -69,7 +70,7 @@ Complete architecture documentation including:
 - Firebase & Gemini API integration
 - Build and deployment process
 - Security model and Firestore rules
-- All 7 ADRs (including ADR-007: Documentation Strategy)
+- All 8 ADRs (including ADR-008: Security Hardening)
 
 ### 2. [API Contracts](./architecture/api-contracts.md)
 Firebase Auth, Firestore CRUD, Gemini AI integration details
@@ -94,6 +95,27 @@ Deployment architecture, Firebase Hosting setup, production deployment, monitori
 
 ### 7. [Component Inventory](./development/component-inventory.md)
 Complete catalog of React components, props, responsibilities
+
+---
+
+## Security Documentation
+
+**Location:** [`security/`](./security/)
+
+### [Security Overview](./security/README.md)
+Security practices, tools, and guidelines for developers
+
+### [OWASP Top 10 Checklist](./security/owasp-checklist.md)
+Validation against OWASP Top 10 (2021) security categories with evidence
+
+### [Security Audit Report](./security/audit-report.md)
+Epic 4 security audit findings and improvements
+
+### [Incident Response](./security/incident-response.md)
+Security incident response procedures
+
+### [Secrets Scan Report](./security/secrets-scan-report.md)
+gitleaks scan results and configuration details
 
 ---
 
@@ -205,6 +227,18 @@ Automated project structure analysis (JSON)
 6. [Story 3.6](./sprint-artifacts/epic3/3-6-performance-baselines-lighthouse-ci.md) - Performance Baselines & Lighthouse CI ✅
 7. [Story 3.7](./sprint-artifacts/epic3/3-7-coverage-enforcement-quality-gates.md) - Coverage Enforcement & Quality Gates ✅
 
+### Epic 4: Security Hardening & Penetration Testing (COMPLETE ✅)
+
+**Location:** [`sprint-artifacts/epic4/`](./sprint-artifacts/epic4/)
+
+- **[Epic 4 Tech Spec](./sprint-artifacts/epic4/tech-spec.md)** - Security hardening specification
+
+**Epic 4 Stories (All Complete):**
+1. [Story 4.1](./sprint-artifacts/epic4/4-1-secrets-detection-prevention.md) - Secrets Detection & Prevention ✅
+2. [Story 4.2](./sprint-artifacts/epic4/4-2-gemini-api-protection.md) - Gemini API Protection ✅
+3. [Story 4.3](./sprint-artifacts/epic4/4-3-dependency-static-security.md) - Dependency & Static Security ✅
+4. [Story 4.4](./sprint-artifacts/epic4/4-4-security-documentation.md) - Security Documentation ✅
+
 ---
 
 ## Document Templates
@@ -310,6 +344,8 @@ Epic 3 focused on **production-grade quality and testing completion**. Key deliv
 | **Technical specs** | [Tech Spec](./planning/tech-spec.md) |
 | **Test strategy** | [Test Strategy](./testing/test-strategy.md) |
 | **Performance baselines** | [Performance Baselines](./performance/performance-baselines.md) |
+| **Security overview** | [Security README](./security/README.md) |
+| **OWASP checklist** | [OWASP Checklist](./security/owasp-checklist.md) |
 | **Contribution guidelines** | [CONTRIBUTING.md](../CONTRIBUTING.md) |
 | **CI/CD pipeline** | [CI/CD README](./ci-cd/README.md) |
 
@@ -327,6 +363,6 @@ The `.bmad/` directory contains the BMAD (Breakthrough Modern Agile Development)
 
 ---
 
-**Documentation Version:** 4.0
-**Generated:** 2025-11-26 (Post-Epic 3 Complete)
-**Next Update:** After Epic 4 planning
+**Documentation Version:** 5.0
+**Generated:** 2025-11-27 (Post-Epic 4 Complete)
+**Next Update:** After Epic 5 planning

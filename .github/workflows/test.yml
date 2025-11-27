@@ -228,3 +228,23 @@ jobs:
           VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
           VITE_GEMINI_API_KEY: test-gemini-key
           VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
+
+      # Step 21: Run npm audit for dependency vulnerabilities
+      # Story 4.3: Scans package dependencies for HIGH/CRITICAL vulnerabilities
+      # Fails CI if any HIGH or CRITICAL severity vulnerabilities are found
+      - name: Run npm audit
+        run: |
+          echo "🔍 Scanning dependencies for vulnerabilities..."
+          npm audit --audit-level=high
+          echo "✅ No HIGH or CRITICAL vulnerabilities found"
+        continue-on-error: false
+
+      # Step 22: Run ESLint security rules
+      # Story 4.3: Static code analysis for security anti-patterns
+      # Detects: eval(), unsafe regex, object injection, timing attacks
+      - name: Run security lint
+        run: |
+          echo "🔍 Running security-focused static analysis..."
+          npx eslint -c eslint.config.security.mjs src/
+          echo "✅ Security lint passed"
+        continue-on-error: false

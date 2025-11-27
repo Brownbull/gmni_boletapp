@@ -177,11 +177,59 @@ You can manually scan for secrets at any time:
 ./scripts/scan-secrets.sh --history
 ```
 
+### Security Audit (Story 4.3)
+
+A comprehensive security audit script runs all security checks in one command:
+
+```bash
+# Run full security audit (npm audit + gitleaks + eslint security)
+npm run security:audit
+
+# Run only security linting
+npm run security:lint
+```
+
+**What the audit checks:**
+
+| Check | Description | Threshold |
+|-------|-------------|-----------|
+| npm audit | Scans dependencies for vulnerabilities | Zero HIGH/CRITICAL |
+| gitleaks | Scans for secrets in git history | Zero secrets |
+| ESLint security | Static analysis for dangerous patterns | Zero errors |
+
+**Security ESLint Rules:**
+
+The project uses `eslint-plugin-security` to detect dangerous code patterns:
+
+| Rule | Severity | Description |
+|------|----------|-------------|
+| detect-eval-with-expression | error | Blocks `eval()` usage |
+| detect-unsafe-regex | error | Blocks ReDoS-vulnerable regex |
+| detect-buffer-noassert | error | Blocks unsafe buffer operations |
+| detect-object-injection | warn | Warns on `obj[var]` patterns |
+| detect-possible-timing-attacks | warn | Warns on timing-sensitive comparisons |
+
+**Running Before PR:**
+
+Always run the security audit before creating a PR:
+
+```bash
+npm run security:audit
+```
+
+CI will fail PRs with HIGH/CRITICAL vulnerabilities or security lint errors.
+
 ### Security Documentation
 
-For more information, see:
-- [Secrets Scan Report](docs/security/secrets-scan-report.md) - Initial scan findings and configuration details
-- [Security Overview](docs/security/README.md) - Security practices and guidelines (coming in Story 4.4)
+For comprehensive security information, see the [`docs/security/`](docs/security/) directory:
+
+| Document | Description |
+|----------|-------------|
+| [Security Overview](docs/security/README.md) | Security practices, tools, and guidelines |
+| [OWASP Checklist](docs/security/owasp-checklist.md) | OWASP Top 10 (2021) validation |
+| [Audit Report](docs/security/audit-report.md) | Epic 4 security findings |
+| [Incident Response](docs/security/incident-response.md) | Security incident procedures |
+| [Secrets Scan Report](docs/security/secrets-scan-report.md) | gitleaks scan results |
 
 ---
 
@@ -216,5 +264,5 @@ If you have questions or need help:
 
 ---
 
-**Version:** 1.1
-**Last Updated:** 2025-11-26 (Story 4.1 - Added Security section)
+**Version:** 1.3
+**Last Updated:** 2025-11-27 (Story 4.4 - Security Documentation complete)

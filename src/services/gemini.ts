@@ -34,22 +34,34 @@ export async function analyzeReceipt(
         const result = await analyzeReceiptFn({ images, currency });
 
         return result.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
         // Handle Firebase Functions errors
         console.error('Error calling analyzeReceipt Cloud Function:', error);
 
-        // Provide user-friendly error messages
-        if (error.code === 'unauthenticated') {
-            throw new Error('You must be logged in to scan receipts.');
+        // Type guard for Firebase Functions errors
+        if (error && typeof error === 'object' && 'code' in error) {
+            const functionsError = error as { code: string; message?: string };
+
+            // Provide user-friendly error messages based on error code
+            if (functionsError.code === 'unauthenticated') {
+                throw new Error('You must be logged in to scan receipts.');
+            }
+
+            if (functionsError.code === 'invalid-argument') {
+                throw new Error('Invalid receipt data. Please try again.');
+            }
+
+            if (functionsError.code === 'resource-exhausted') {
+                throw new Error('Too many requests. Please wait a moment and try again.');
+            }
+
+            // Re-throw with original message if available
+            if (functionsError.message) {
+                throw new Error(functionsError.message);
+            }
         }
 
-        if (error.code === 'invalid-argument') {
-            throw new Error('Invalid receipt data. Please try again.');
-        }
-
-        // Re-throw with original message or generic message
-        throw new Error(
-            error.message || 'Failed to analyze receipt. Please try again or enter manually.'
-        );
+        // Generic error fallback
+        throw new Error('Failed to analyze receipt. Please try again or enter manually.');
     }
 }
