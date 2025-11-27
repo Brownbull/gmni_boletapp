@@ -58,6 +58,22 @@ import AxeBuilder from '@axe-core/playwright';
  * without requiring manual OAuth interactions.
  */
 
+/**
+ * Helper function to authenticate via test login button
+ * Includes extended timeouts for CI environment stability
+ */
+async function authenticateViaTestLogin(page: import('@playwright/test').Page) {
+  // Wait for test login button to be visible (may take longer in CI)
+  const testLoginButton = page.getByTestId('test-login-button');
+  await expect(testLoginButton).toBeVisible({ timeout: 15000 });
+
+  // Click and wait for dashboard
+  await testLoginButton.click();
+
+  // Extended timeout for CI - auth emulator may be slower
+  await page.waitForSelector('text=/Dashboard|Inicio/i', { timeout: 30000 });
+}
+
 test.describe('Accessibility: Automated Axe Scans', () => {
   /**
    * TEST 1: Login View Axe Scan
@@ -111,13 +127,8 @@ test.describe('Accessibility: Automated Axe Scans', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // Click test login button to authenticate
-    const testLoginButton = page.getByTestId('test-login-button');
-    await expect(testLoginButton).toBeVisible();
-    await testLoginButton.click();
-
-    // Wait for authentication and dashboard to load
-    await page.waitForSelector('text=/Dashboard|Inicio/i', { timeout: 10000 });
+    // Authenticate via test login helper
+    await authenticateViaTestLogin(page);
 
     // Run axe scan on Dashboard view
     const accessibilityScanResults = await new AxeBuilder({ page })
@@ -139,9 +150,8 @@ test.describe('Accessibility: Automated Axe Scans', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // Authenticate via test login
-    await page.getByTestId('test-login-button').click();
-    await page.waitForSelector('text=/Dashboard|Inicio/i', { timeout: 10000 });
+    // Authenticate via test login helper
+    await authenticateViaTestLogin(page);
 
     // Navigate to Scan view using the Nav FAB (use aria-label to avoid ambiguity)
     await page.getByLabel(/^(Scan|Escanear)$/i).click();
@@ -167,9 +177,8 @@ test.describe('Accessibility: Automated Axe Scans', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // Authenticate via test login
-    await page.getByTestId('test-login-button').click();
-    await page.waitForSelector('text=/Dashboard|Inicio/i', { timeout: 10000 });
+    // Authenticate via test login helper
+    await authenticateViaTestLogin(page);
 
     // Navigate to Trends view
     await page.getByRole('button', { name: /Trends|Tendencias/i }).click();
@@ -195,9 +204,8 @@ test.describe('Accessibility: Automated Axe Scans', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // Authenticate via test login
-    await page.getByTestId('test-login-button').click();
-    await page.waitForSelector('text=/Dashboard|Inicio/i', { timeout: 10000 });
+    // Authenticate via test login helper
+    await authenticateViaTestLogin(page);
 
     // Navigate to History view
     await page.getByRole('button', { name: /History|Historial/i }).click();
@@ -223,9 +231,8 @@ test.describe('Accessibility: Automated Axe Scans', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // Authenticate via test login
-    await page.getByTestId('test-login-button').click();
-    await page.waitForSelector('text=/Dashboard|Inicio/i', { timeout: 10000 });
+    // Authenticate via test login helper
+    await authenticateViaTestLogin(page);
 
     // Navigate to Settings view
     await page.getByRole('button', { name: /Settings|Ajustes/i }).click();
