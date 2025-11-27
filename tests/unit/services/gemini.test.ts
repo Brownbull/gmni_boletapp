@@ -1,236 +1,214 @@
 /**
  * Gemini AI Service Unit Tests
  *
- * Tests the receipt scanning functionality using mocked Gemini API responses.
- * Covers 6+ test cases as defined in Story 2.5.
+ * Tests the receipt scanning functionality using mocked Firebase Cloud Functions.
+ * The actual Gemini API calls happen server-side - this tests the client-side interface.
  *
  * Risk Level: HIGH (AI-powered core feature)
- * Coverage: Gemini API integration, OCR processing, error handling
+ * Coverage: Cloud Function integration, error handling
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+// Mock Firebase modules before importing the service
+vi.mock('firebase/functions', () => ({
+  getFunctions: vi.fn(() => ({})),
+  httpsCallable: vi.fn()
+}));
+
+vi.mock('../../../src/config/firebase', () => ({
+  app: {}
+}));
+
+// Import after mocking
+import { httpsCallable } from 'firebase/functions';
 import { analyzeReceipt } from '../../../src/services/gemini';
 import geminiResponses from '../../fixtures/gemini-responses.json';
 
-// Mock the global fetch function
-global.fetch = vi.fn();
+describe('Gemini AI Service (Cloud Function)', () => {
+  const mockCallable = vi.fn();
 
-describe('Gemini AI Service', () => {
   beforeEach(() => {
-    // Reset all mocks before each test
     vi.clearAllMocks();
+    // Setup httpsCallable to return a mock function
+    vi.mocked(httpsCallable).mockReturnValue(mockCallable);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   /**
-   * Test 1: Image upload preprocesses correctly
-   * Verifies that base64 images are correctly formatted for the API
+   * Test 1: Cloud Function called with correct parameters
    */
-  it('should preprocess base64 images correctly', async () => {
-    const mockFetch = vi.mocked(global.fetch);
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => geminiResponses.successfulReceipt
-    } as Response);
+  it('should call Cloud Function with images and currency', async () => {
+    mockCallable.mockResolvedValueOnce({
+      data: {
+        merchant: 'Test Store',
+        date: '2025-11-23',
+        total: 1000,
+        category: 'Supermarket',
+        items: []
+      }
+    });
 
-    const base64Image = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlbaWmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD5/ooooA//2Q==';
+    const images = ['data:image/jpeg;base64,test123'];
+    await analyzeReceipt(images, 'USD');
 
-    await analyzeReceipt([base64Image], 'USD');
-
-    // Verify fetch was called with correct payload structure
-    expect(mockFetch).toHaveBeenCalledOnce();
-    const callArgs = mockFetch.mock.calls[0];
-    const requestBody = JSON.parse(callArgs[1]?.body as string);
-
-    expect(requestBody.contents).toBeDefined();
-    expect(requestBody.contents[0].parts).toHaveLength(2); // text prompt + image
-    expect(requestBody.contents[0].parts[1].inlineData).toBeDefined();
-    expect(requestBody.contents[0].parts[1].inlineData.mimeType).toBe('image/jpeg');
-    expect(requestBody.contents[0].parts[1].inlineData.data).not.toContain('data:image'); // Base64 prefix should be stripped
+    expect(httpsCallable).toHaveBeenCalledWith(expect.anything(), 'analyzeReceipt');
+    expect(mockCallable).toHaveBeenCalledWith({ images, currency: 'USD' });
   });
 
   /**
-   * Test 2: Gemini API called with correct payload
-   * Verifies that the API is called with the proper structure and prompt
+   * Test 2: Successful receipt analysis
    */
-  it('should call Gemini API with correct payload structure', async () => {
-    const mockFetch = vi.mocked(global.fetch);
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => geminiResponses.successfulReceipt
-    } as Response);
+  it('should return parsed transaction data on success', async () => {
+    const expectedTransaction = {
+      merchant: 'Whole Foods Market',
+      date: '2025-11-23',
+      total: 8743,
+      category: 'Supermarket',
+      items: [
+        { name: 'Organic Bananas', price: 299, category: 'Produce' },
+        { name: 'Almond Milk', price: 549, category: 'Dairy' },
+        { name: 'Whole Grain Bread', price: 499, category: 'Bakery' }
+      ]
+    };
 
-    const testImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+    mockCallable.mockResolvedValueOnce({ data: expectedTransaction });
 
-    await analyzeReceipt([testImage], 'CLP');
+    const result = await analyzeReceipt(['data:image/jpeg;base64,test'], 'USD');
 
-    expect(mockFetch).toHaveBeenCalledOnce();
-    const callArgs = mockFetch.mock.calls[0];
-
-    // Verify URL structure
-    expect(callArgs[0]).toContain('generativelanguage.googleapis.com');
-    expect(callArgs[0]).toContain('generateContent');
-
-    // Verify request body
-    const requestBody = JSON.parse(callArgs[1]?.body as string);
-    expect(requestBody.contents[0].parts[0].text).toContain('CLP'); // Currency in prompt
-    expect(requestBody.contents[0].parts[0].text).toContain('Analyze receipt');
-  });
-
-  /**
-   * Test 3: OCR result parsed successfully
-   * Verifies that the Gemini response is correctly parsed into a Transaction object
-   */
-  it('should parse OCR result successfully', async () => {
-    const mockFetch = vi.mocked(global.fetch);
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => geminiResponses.successfulReceipt
-    } as Response);
-
-    const testImage = 'data:image/jpeg;base64,test';
-    const result = await analyzeReceipt([testImage], 'USD');
-
-    expect(result).toBeDefined();
+    expect(result).toEqual(expectedTransaction);
     expect(result.merchant).toBe('Whole Foods Market');
-    expect(result.date).toBe('2025-11-23');
     expect(result.total).toBe(8743);
-    expect(result.category).toBe('Supermarket');
     expect(result.items).toHaveLength(3);
   });
 
   /**
-   * Test 4: Transaction fields extracted (date, total, category)
-   * Verifies that all required transaction fields are extracted correctly
+   * Test 3: Transaction fields extracted correctly
    */
-  it('should extract all transaction fields correctly', async () => {
-    const mockFetch = vi.mocked(global.fetch);
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => geminiResponses.restaurantReceipt
-    } as Response);
+  it('should extract all required transaction fields', async () => {
+    mockCallable.mockResolvedValueOnce({
+      data: {
+        merchant: 'Pizza Palace',
+        date: '2025-11-22',
+        total: 4200,
+        category: 'Restaurant',
+        items: [{ name: 'Large Pepperoni Pizza', price: 1899, category: 'Food' }]
+      }
+    });
 
-    const testImage = 'data:image/jpeg;base64,test';
-    const result = await analyzeReceipt([testImage], 'USD');
+    const result = await analyzeReceipt(['data:image/jpeg;base64,test'], 'CLP');
 
-    // Verify all required fields
     expect(result.merchant).toBe('Pizza Palace');
-    expect(result.date).toMatch(/^\d{4}-\d{2}-\d{2}$/); // ISO date format
+    expect(result.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(typeof result.total).toBe('number');
-    expect(result.total).toBe(4200);
     expect(result.category).toBe('Restaurant');
-
-    // Verify items array
     expect(Array.isArray(result.items)).toBe(true);
-    expect(result.items.length).toBeGreaterThan(0);
-    expect(result.items[0].name).toBe('Large Pepperoni Pizza');
-    expect(result.items[0].price).toBe(1899);
   });
 
   /**
-   * Test 5: Error handling for invalid images
-   * Verifies that invalid image errors are properly handled
+   * Test 4: Handle authentication errors
    */
-  it('should handle invalid image errors', async () => {
-    const mockFetch = vi.mocked(global.fetch);
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 400,
-      json: async () => geminiResponses.invalidImageError
-    } as Response);
+  it('should handle unauthenticated errors', async () => {
+    const authError = { code: 'unauthenticated', message: 'User not authenticated' };
+    mockCallable.mockRejectedValueOnce(authError);
 
-    const invalidImage = 'data:text/plain;base64,notanimage';
-
-    await expect(analyzeReceipt([invalidImage], 'USD')).rejects.toThrow();
+    await expect(analyzeReceipt(['data:image/jpeg;base64,test'], 'USD'))
+      .rejects.toThrow('You must be logged in to scan receipts.');
   });
 
   /**
-   * Test 6: Error handling for Gemini API failures
-   * Verifies that API errors (auth, quota, service errors) are properly handled
+   * Test 5: Handle invalid argument errors
    */
-  it('should handle Gemini API authentication errors', async () => {
-    const mockFetch = vi.mocked(global.fetch);
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 401,
-      json: async () => geminiResponses.apiKeyError
-    } as Response);
+  it('should handle invalid argument errors', async () => {
+    const invalidArgError = { code: 'invalid-argument', message: 'Invalid image data' };
+    mockCallable.mockRejectedValueOnce(invalidArgError);
 
-    const testImage = 'data:image/jpeg;base64,test';
-
-    await expect(analyzeReceipt([testImage], 'USD')).rejects.toThrow();
-  });
-
-  it('should handle Gemini API quota exceeded errors', async () => {
-    const mockFetch = vi.mocked(global.fetch);
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 429,
-      json: async () => geminiResponses.quotaExceededError
-    } as Response);
-
-    const testImage = 'data:image/jpeg;base64,test';
-
-    await expect(analyzeReceipt([testImage], 'USD')).rejects.toThrow();
-  });
-
-  it('should handle Gemini API service errors', async () => {
-    const mockFetch = vi.mocked(global.fetch);
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 500,
-      json: async () => geminiResponses.serviceError
-    } as Response);
-
-    const testImage = 'data:image/jpeg;base64,test';
-
-    await expect(analyzeReceipt([testImage], 'USD')).rejects.toThrow();
+    await expect(analyzeReceipt(['invalid'], 'USD'))
+      .rejects.toThrow('Invalid receipt data. Please try again.');
   });
 
   /**
-   * Bonus Test: Handle malformed JSON responses
-   * Verifies that malformed responses are handled gracefully
+   * Test 6: Handle rate limiting errors
    */
-  it('should handle malformed JSON responses', async () => {
-    const mockFetch = vi.mocked(global.fetch);
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => geminiResponses.malformedResponse
-    } as Response);
+  it('should handle rate limiting errors', async () => {
+    const rateLimitError = { code: 'resource-exhausted', message: 'Rate limit exceeded' };
+    mockCallable.mockRejectedValueOnce(rateLimitError);
 
-    const testImage = 'data:image/jpeg;base64,test';
-
-    // The cleanJson utility extracts "{}" from malformed text, which parses as empty object
-    const result = await analyzeReceipt([testImage], 'USD');
-    expect(result).toEqual({});
+    await expect(analyzeReceipt(['data:image/jpeg;base64,test'], 'USD'))
+      .rejects.toThrow('Too many requests. Please wait a moment and try again.');
   });
 
   /**
-   * Bonus Test: Handle multiple images
-   * Verifies that multiple images can be sent in a single request
+   * Test 7: Handle generic errors
+   */
+  it('should handle generic errors with fallback message', async () => {
+    mockCallable.mockRejectedValueOnce(new Error('Network error'));
+
+    await expect(analyzeReceipt(['data:image/jpeg;base64,test'], 'USD'))
+      .rejects.toThrow('Failed to analyze receipt. Please try again or enter manually.');
+  });
+
+  /**
+   * Test 8: Handle errors with custom message
+   */
+  it('should preserve custom error messages from server', async () => {
+    const customError = { code: 'internal', message: 'Custom server error message' };
+    mockCallable.mockRejectedValueOnce(customError);
+
+    await expect(analyzeReceipt(['data:image/jpeg;base64,test'], 'USD'))
+      .rejects.toThrow('Custom server error message');
+  });
+
+  /**
+   * Test 9: Handle multiple images
    */
   it('should handle multiple images in a single request', async () => {
-    const mockFetch = vi.mocked(global.fetch);
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => geminiResponses.successfulReceipt
-    } as Response);
+    mockCallable.mockResolvedValueOnce({
+      data: {
+        merchant: 'Multi-page Receipt Store',
+        date: '2025-11-23',
+        total: 5000,
+        category: 'Retail',
+        items: []
+      }
+    });
 
     const images = [
-      'data:image/jpeg;base64,image1',
-      'data:image/png;base64,image2',
-      'data:image/webp;base64,image3'
+      'data:image/jpeg;base64,page1',
+      'data:image/jpeg;base64,page2',
+      'data:image/jpeg;base64,page3'
     ];
 
     await analyzeReceipt(images, 'USD');
 
-    expect(mockFetch).toHaveBeenCalledOnce();
-    const callArgs = mockFetch.mock.calls[0];
-    const requestBody = JSON.parse(callArgs[1]?.body as string);
+    expect(mockCallable).toHaveBeenCalledWith({
+      images,
+      currency: 'USD'
+    });
+  });
 
-    // Should have 1 text prompt + 3 images = 4 parts
-    expect(requestBody.contents[0].parts).toHaveLength(4);
-    expect(requestBody.contents[0].parts[1].inlineData.mimeType).toBe('image/jpeg');
-    expect(requestBody.contents[0].parts[2].inlineData.mimeType).toBe('image/png');
-    expect(requestBody.contents[0].parts[3].inlineData.mimeType).toBe('image/webp');
+  /**
+   * Test 10: Currency is passed correctly
+   */
+  it('should pass currency parameter to Cloud Function', async () => {
+    mockCallable.mockResolvedValueOnce({
+      data: {
+        merchant: 'Chilean Store',
+        date: '2025-11-23',
+        total: 100000,
+        category: 'Retail',
+        items: []
+      }
+    });
+
+    await analyzeReceipt(['data:image/jpeg;base64,test'], 'CLP');
+
+    expect(mockCallable).toHaveBeenCalledWith({
+      images: ['data:image/jpeg;base64,test'],
+      currency: 'CLP'
+    });
   });
 });
