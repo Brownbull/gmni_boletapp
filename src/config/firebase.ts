@@ -1,3 +1,5 @@
+import { initializeApp, getApps } from 'firebase/app';
+
 // Validate required environment variables
 const requiredEnvVars = [
     'VITE_FIREBASE_API_KEY',
@@ -27,3 +29,6 @@ export const firebaseConfig = {
     messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
     appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
+
+// Initialize Firebase app (singleton pattern)
+export const app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
