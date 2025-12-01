@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ArrowLeft, Trash2, Plus, Check } from 'lucide-react';
 import { CategoryBadge } from '../components/CategoryBadge';
+import { ImageViewer } from '../components/ImageViewer';
 
 interface TransactionItem {
     name: string;
@@ -17,6 +18,8 @@ interface Transaction {
     total: number;
     category: string;
     items: TransactionItem[];
+    imageUrls?: string[];
+    thumbnailUrl?: string;
 }
 
 interface EditViewProps {
@@ -52,8 +55,11 @@ export const EditView: React.FC<EditViewProps> = ({
     onUpdateTransaction,
     onSetEditingItemIndex,
 }) => {
+    const [showImageViewer, setShowImageViewer] = useState(false);
     const card = theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100';
     const input = theme === 'dark' ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200';
+
+    const hasImages = currentTransaction.imageUrls && currentTransaction.imageUrls.length > 0;
 
     const handleAddItem = () => {
         onUpdateTransaction({
@@ -103,6 +109,32 @@ export const EditView: React.FC<EditViewProps> = ({
                     className="bg-transparent text-3xl font-bold text-center w-full outline-none"
                 />
             </div>
+
+            {/* Receipt Image Thumbnail */}
+            {(currentTransaction.thumbnailUrl || hasImages) && (
+                <div className={`p-4 rounded-xl border mb-4 ${card}`}>
+                    <button
+                        onClick={() => setShowImageViewer(true)}
+                        className="block mx-auto"
+                        aria-label="View receipt image"
+                    >
+                        <img
+                            src={currentTransaction.thumbnailUrl || currentTransaction.imageUrls?.[0]}
+                            alt="Receipt thumbnail"
+                            className="w-20 h-24 object-cover rounded-lg border-2 border-slate-200 dark:border-slate-700 hover:border-blue-500 transition-colors cursor-pointer"
+                        />
+                    </button>
+                </div>
+            )}
+
+            {/* ImageViewer Modal */}
+            {showImageViewer && hasImages && (
+                <ImageViewer
+                    images={currentTransaction.imageUrls!}
+                    merchantName={currentTransaction.merchant}
+                    onClose={() => setShowImageViewer(false)}
+                />
+            )}
 
             <div className={`p-4 rounded-xl border space-y-3 mb-4 ${card}`}>
                 <input

@@ -1,0 +1,363 @@
+<story-context id="4-5-2-cloud-function-image-processing" v="1.0">
+  <metadata>
+    <epicId>4.5</epicId>
+    <storyId>2</storyId>
+    <title>Cloud Function Image Processing</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic4-5/4-5-2-cloud-function-image-processing.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user scanning receipts</asA>
+    <iWant>my receipt images automatically stored after analysis</iWant>
+    <soThat>I can view the original receipt later for verification</soThat>
+    <tasks>
+      <task id="1" ac="1,2">
+        <title>Add sharp dependency</title>
+        <subtasks>
+          <subtask>cd functions &amp;&amp; npm install sharp</subtask>
+          <subtask>Verify sharp works in Cloud Functions environment (Node.js 20)</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="1,2">
+        <title>Create imageProcessing.ts</title>
+        <subtasks>
+          <subtask>Define IMAGE_CONFIG constants (dimensions, quality)</subtask>
+          <subtask>Implement resizeAndCompress(buffer, config) function</subtask>
+          <subtask>Implement generateThumbnail(buffer) function</subtask>
+          <subtask>Strip EXIF metadata during processing</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="3">
+        <title>Create storageService.ts</title>
+        <subtasks>
+          <subtask>Implement uploadImage(userId, transactionId, buffer, index) function</subtask>
+          <subtask>Implement uploadThumbnail(userId, transactionId, buffer) function</subtask>
+          <subtask>Generate signed URLs with long expiration</subtask>
+          <subtask>Handle upload errors gracefully</subtask>
+        </subtasks>
+      </task>
+      <task id="4" ac="4">
+        <title>Modify analyzeReceipt.ts</title>
+        <subtasks>
+          <subtask>Import imageProcessing and storageService</subtask>
+          <subtask>Generate transactionId before Gemini call (needed for storage path)</subtask>
+          <subtask>After Gemini analysis, process and store images</subtask>
+          <subtask>Add imageUrls and thumbnailUrl to response</subtask>
+          <subtask>Handle storage failures (return transaction without images)</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="4">
+        <title>Update response interface</title>
+        <subtasks>
+          <subtask>Extend AnalyzeReceiptResponse with imageUrls and thumbnailUrl</subtask>
+          <subtask>Ensure backward compatibility</subtask>
+        </subtasks>
+      </task>
+      <task id="6" ac="5">
+        <title>Write unit tests</title>
+        <subtasks>
+          <subtask>Test resize maintains aspect ratio</subtask>
+          <subtask>Test compress produces correct quality</subtask>
+          <subtask>Test thumbnail generation</subtask>
+          <subtask>Test various input formats</subtask>
+        </subtasks>
+      </task>
+      <task id="7" ac="6">
+        <title>Write integration tests</title>
+        <subtasks>
+          <subtask>Test full scan flow with Storage emulator</subtask>
+          <subtask>Verify images are retrievable from URLs</subtask>
+          <subtask>Test multi-image receipt (3 images)</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="1" title="Image Normalization">
+      <given>a receipt image in any supported format (JPEG, PNG, WebP, HEIC)</given>
+      <when>processed by the Cloud Function</when>
+      <then>full-size image is resized to max 1200x1600px (maintaining aspect ratio)</then>
+      <and>converted to JPEG with 80% quality</and>
+      <and>EXIF metadata is stripped</and>
+    </ac>
+    <ac id="2" title="Thumbnail Generation">
+      <given>a receipt scan with 1-3 images</given>
+      <when>processed by the Cloud Function</when>
+      <then>a thumbnail is generated from the first image</then>
+      <and>thumbnail is 120x160px, JPEG 70% quality</and>
+    </ac>
+    <ac id="3" title="Storage Path">
+      <given>processed images for user X and transaction Y</given>
+      <when>stored to Firebase Storage</when>
+      <then>full-size images are at users/X/receipts/Y/image-0.jpg, image-1.jpg, etc.</then>
+      <and>thumbnail is at users/X/receipts/Y/thumbnail.jpg</and>
+    </ac>
+    <ac id="4" title="Response Structure">
+      <given>a successful receipt scan</given>
+      <when>the Cloud Function returns</when>
+      <then>response includes imageUrls: string[] with download URLs for all images</then>
+      <and>response includes thumbnailUrl: string with thumbnail download URL</and>
+      <and>existing transaction fields (merchant, date, total, items, category) are unchanged</and>
+    </ac>
+    <ac id="5" title="Unit Tests">
+      <given>the imageProcessing.ts module</given>
+      <when>unit tests run</when>
+      <then>resize, compress, and thumbnail functions are tested</then>
+      <and>edge cases (large images, small images, various formats) are covered</and>
+    </ac>
+    <ac id="6" title="Integration Tests">
+      <given>the Storage emulator running</given>
+      <when>integration tests execute a scan flow</when>
+      <then>images are stored and retrievable</then>
+      <and>URLs in response point to actual stored images</and>
+    </ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec.md</path>
+        <title>Epic 4.5 Technical Specification</title>
+        <section>Image Processing Pipeline</section>
+        <snippet>Defines IMAGE_CONFIG constants, sharp library usage, storage path structure, and complete implementation flow for image processing in Cloud Functions.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>ADR-008: Security Hardening</section>
+        <snippet>Documents Cloud Function patterns, Firebase Admin SDK usage, and existing analyzeReceipt function architecture that this story extends.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 4.5 Definition</title>
+        <section>Story 4.5-2: Cloud Function Image Processing</section>
+        <snippet>5 story points. Core implementation modifying analyzeReceipt Cloud Function. Dependencies: Story 4.5-1 (Storage infrastructure).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic4-5/4-5-1-firebase-storage-infrastructure.md</path>
+        <title>Story 4.5-1: Firebase Storage Infrastructure</title>
+        <section>Full Story</section>
+        <snippet>Prerequisite story establishing storage.rules, Storage emulator on port 9199, and Firebase Storage client initialization. Must be completed first.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>functions/src/analyzeReceipt.ts</path>
+        <kind>Cloud Function</kind>
+        <symbol>analyzeReceipt</symbol>
+        <lines>129-234</lines>
+        <reason>PRIMARY MODIFICATION TARGET - Main Cloud Function to extend with image storage logic after Gemini API call (line 205-210 insertion point)</reason>
+      </artifact>
+      <artifact>
+        <path>functions/src/analyzeReceipt.ts</path>
+        <kind>Function</kind>
+        <symbol>validateImages</symbol>
+        <lines>55-77</lines>
+        <reason>REUSE - Existing image validation logic for size (10MB) and count (5 max) constraints</reason>
+      </artifact>
+      <artifact>
+        <path>functions/src/analyzeReceipt.ts</path>
+        <kind>Function</kind>
+        <symbol>extractMimeType</symbol>
+        <lines>85-106</lines>
+        <reason>REUSE - Existing MIME type extraction from base64 data URI for format detection</reason>
+      </artifact>
+      <artifact>
+        <path>functions/src/analyzeReceipt.ts</path>
+        <kind>Interface</kind>
+        <symbol>AnalyzeReceiptResponse</symbol>
+        <lines>113-123</lines>
+        <reason>MODIFY - Extend with imageUrls: string[] and thumbnailUrl: string fields</reason>
+      </artifact>
+      <artifact>
+        <path>src/types/transaction.ts</path>
+        <kind>Interface</kind>
+        <symbol>Transaction</symbol>
+        <lines>14-24</lines>
+        <reason>REFERENCE - Client-side Transaction interface will need imageUrls/thumbnailUrl in Story 4.5-3</reason>
+      </artifact>
+      <artifact>
+        <path>src/config/firebase.ts</path>
+        <kind>Config</kind>
+        <symbol>firebaseConfig</symbol>
+        <lines>24-31</lines>
+        <reason>REFERENCE - Storage bucket name available: VITE_FIREBASE_STORAGE_BUCKET</reason>
+      </artifact>
+      <artifact>
+        <path>functions/src/index.ts</path>
+        <kind>Entry Point</kind>
+        <symbol>exports</symbol>
+        <lines>all</lines>
+        <reason>May need to export new functions if cascade delete trigger is added here</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <cloudFunctions>
+        <package name="firebase-functions" version="^4.5.0">Cloud Functions SDK</package>
+        <package name="firebase-admin" version="^12.0.0">Admin SDK for Storage access</package>
+        <package name="@google/generative-ai" version="^0.2.0">Gemini AI SDK (existing)</package>
+        <package name="sharp" version="^0.33.5" status="TO_ADD">Image processing library - resize, compress, format conversion</package>
+      </cloudFunctions>
+      <frontend>
+        <package name="firebase" version="^10.14.1">Firebase client SDK with Storage module</package>
+        <package name="react" version="^18.3.1">UI framework</package>
+        <package name="typescript" version="^5.3.3">Type definitions</package>
+      </frontend>
+      <testing>
+        <package name="vitest" version="^4.0.13">Unit and integration testing</package>
+        <package name="@playwright/test" version="^1.56.1">E2E testing</package>
+        <package name="jest" version="^30.2.0">Cloud Functions unit testing (functions/package.json)</package>
+      </testing>
+    </dependencies>
+  </artifacts>
+
+  <interfaces>
+    <interface>
+      <name>AnalyzeReceiptResponse (CURRENT)</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+interface AnalyzeReceiptResponse {
+  merchant: string;
+  date: string;
+  total: number;
+  category: string;
+  items: Array&lt;{ name: string; price: number; category?: string }&gt;;
+}
+      </signature>
+      <path>functions/src/analyzeReceipt.ts:113-123</path>
+    </interface>
+    <interface>
+      <name>AnalyzeReceiptResponse (EXTENDED)</name>
+      <kind>TypeScript Interface</kind>
+      <signature>
+interface AnalyzeReceiptResponse {
+  merchant: string;
+  date: string;
+  total: number;
+  category: string;
+  items: Array&lt;{ name: string; price: number; category?: string }&gt;;
+  // NEW FIELDS
+  imageUrls?: string[];      // Full-size image download URLs
+  thumbnailUrl?: string;     // Thumbnail download URL
+}
+      </signature>
+      <path>functions/src/analyzeReceipt.ts</path>
+    </interface>
+    <interface>
+      <name>IMAGE_CONFIG</name>
+      <kind>Configuration Constants</kind>
+      <signature>
+const IMAGE_CONFIG = {
+  fullSize: { maxWidth: 1200, maxHeight: 1600, quality: 80, format: 'jpeg' },
+  thumbnail: { width: 120, height: 160, quality: 70, format: 'jpeg' }
+};
+      </signature>
+      <path>functions/src/imageProcessing.ts (TO CREATE)</path>
+    </interface>
+    <interface>
+      <name>Storage Path Pattern</name>
+      <kind>Firebase Storage</kind>
+      <signature>
+users/{userId}/receipts/{transactionId}/image-{index}.jpg
+users/{userId}/receipts/{transactionId}/thumbnail.jpg
+      </signature>
+      <path>Firebase Storage bucket: boletapp-d609f.appspot.com</path>
+    </interface>
+    <interface>
+      <name>firebase-admin Storage API</name>
+      <kind>Admin SDK</kind>
+      <signature>
+admin.storage().bucket()
+bucket.file(path).save(buffer, { contentType: 'image/jpeg' })
+bucket.file(path).getSignedUrl({ action: 'read', expires: '03-01-2500' })
+      </signature>
+      <path>firebase-admin SDK</path>
+    </interface>
+  </interfaces>
+
+  <constraints>
+    <constraint type="prerequisite">Story 4.5-1 (Firebase Storage Infrastructure) MUST be completed first - provides storage.rules and emulator config</constraint>
+    <constraint type="pattern">Follow existing Cloud Function error handling pattern: throw functions.https.HttpsError with appropriate codes</constraint>
+    <constraint type="pattern">Use async/await for all asynchronous operations (existing codebase pattern)</constraint>
+    <constraint type="pattern">Named exports (e.g., export async function functionName) - TypeScript strict mode</constraint>
+    <constraint type="pattern">Console logging pattern: console.log(`Action completed for user ${context.auth.uid}: details`)</constraint>
+    <constraint type="security">Firebase Auth required for all requests - existing check at line 135-140</constraint>
+    <constraint type="security">Rate limiting already implemented (10 requests/minute) - reuse existing</constraint>
+    <constraint type="validation">Existing image validation: max 10MB per image, max 5 images - reuse validateImages()</constraint>
+    <constraint type="backward-compatibility">imageUrls and thumbnailUrl fields MUST be optional - existing transactions have no images</constraint>
+    <constraint type="error-handling">Storage failures should NOT fail the entire scan - return transaction without images</constraint>
+    <constraint type="testing">Unit tests: functions/ directory uses Jest (see functions/package.json)</constraint>
+    <constraint type="testing">Integration tests: root tests/ directory uses Vitest with Firebase emulators</constraint>
+    <constraint type="testing">Coverage thresholds: 45% lines, 30% branches, 25% functions, 40% statements</constraint>
+    <constraint type="node-version">Cloud Functions runtime: Node.js 20 (functions/package.json engines)</constraint>
+    <constraint type="style">TypeScript strict mode, single quotes, no semicolons, 2-space indentation</constraint>
+  </constraints>
+
+  <tests>
+    <standards>
+Unit tests for Cloud Functions use Jest (functions/package.json). Integration tests use Vitest with Firebase emulators (sequential execution via fileParallelism: false). Tests follow describe/it pattern with beforeAll/afterAll for emulator setup/teardown and beforeEach/afterEach for data cleanup. Coverage thresholds enforced: 45% lines, 30% branches. Test files follow pattern: *.test.ts for unit, *.test.tsx for integration with React, *.spec.ts for E2E.
+    </standards>
+    <locations>
+      <location>tests/unit/*.test.ts - Unit tests (Vitest)</location>
+      <location>tests/integration/*.test.tsx - Integration tests (Vitest + Firebase emulators)</location>
+      <location>tests/e2e/*.spec.ts - E2E tests (Playwright)</location>
+      <location>functions/src/__tests__/*.test.ts - Cloud Function unit tests (Jest) - TO CREATE</location>
+    </locations>
+    <ideas>
+      <idea ac="1,2">
+        <title>Image resize maintains aspect ratio</title>
+        <description>Test that 2000x3000 image becomes 1067x1600 (not distorted)</description>
+      </idea>
+      <idea ac="1">
+        <title>EXIF metadata stripped</title>
+        <description>Input image with EXIF, output should have no EXIF data</description>
+      </idea>
+      <idea ac="1">
+        <title>Format conversion</title>
+        <description>PNG input produces JPEG output with 80% quality</description>
+      </idea>
+      <idea ac="2">
+        <title>Thumbnail from first image only</title>
+        <description>Multi-image receipt generates single thumbnail from images[0]</description>
+      </idea>
+      <idea ac="3">
+        <title>Storage path structure</title>
+        <description>Verify files exist at users/{uid}/receipts/{txId}/image-0.jpg pattern</description>
+      </idea>
+      <idea ac="4">
+        <title>Response includes image URLs</title>
+        <description>analyzeReceipt response has imageUrls array and thumbnailUrl string</description>
+      </idea>
+      <idea ac="4">
+        <title>Backward compatibility</title>
+        <description>Existing transaction fields unchanged when images added</description>
+      </idea>
+      <idea ac="5">
+        <title>Edge case: small image</title>
+        <description>Image smaller than 1200x1600 should not be upscaled</description>
+      </idea>
+      <idea ac="5">
+        <title>Edge case: HEIC format</title>
+        <description>HEIC input (iPhone) correctly converted to JPEG</description>
+      </idea>
+      <idea ac="6">
+        <title>Full scan flow with Storage emulator</title>
+        <description>End-to-end: upload → Gemini → storage → verify URLs work</description>
+      </idea>
+      <idea ac="6">
+        <title>Multi-image receipt</title>
+        <description>3 images uploaded, all 3 stored, 3 URLs returned plus thumbnail</description>
+      </idea>
+      <idea ac="6">
+        <title>Storage failure graceful degradation</title>
+        <description>If Storage upload fails, transaction data still returned without images</description>
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

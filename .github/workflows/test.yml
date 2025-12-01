@@ -53,10 +53,19 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
 
+      # Step 7.5: Install functions dependencies and build
+      # Epic 4.5: Integration tests verify compiled Cloud Functions output
+      - name: Install and build Cloud Functions
+        run: |
+          cd functions
+          npm ci
+          npm run build
+          cd ..
+
       # Step 8: Start Firebase emulators in background
       - name: Start Firebase emulators
         run: |
-          firebase emulators:start --only auth,firestore --project boletapp-d609f &
+          firebase emulators:start --only auth,firestore,storage --project boletapp-d609f &
           # Wait for emulators to be ready (max 30s)
           echo "Waiting for Firebase emulators to start..."
           for i in {1..30}; do
