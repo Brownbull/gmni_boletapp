@@ -1,5 +1,13 @@
 import * as functions from 'firebase-functions'
+import * as admin from 'firebase-admin'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { processReceiptImages } from './imageProcessing'
+import { uploadReceiptImages } from './storageService'
+
+// Initialize Firebase Admin if not already initialized
+if (!admin.apps.length) {
+  admin.initializeApp()
+}
 
 // Initialize Gemini AI with API key from Firebase config
 const getGenAI = () => {
@@ -110,7 +118,10 @@ interface AnalyzeReceiptRequest {
   currency: string
 }
 
-interface AnalyzeReceiptResponse {
+/**
+ * Response from Gemini AI analysis (parsed from receipt)
+ */
+interface GeminiAnalysisResult {
   merchant: string
   date: string
   total: number
@@ -120,6 +131,28 @@ interface AnalyzeReceiptResponse {
     price: number
     category?: string
   }>
+}
+
+/**
+ * Full response from analyzeReceipt Cloud Function
+ * Includes Gemini analysis plus image storage URLs
+ */
+interface AnalyzeReceiptResponse extends GeminiAnalysisResult {
+  transactionId: string        // Pre-generated ID for Firestore document
+  imageUrls?: string[]         // Full-size image download URLs
+  thumbnailUrl?: string        // Thumbnail download URL
+}
+
+/**
+ * Generate a unique transaction ID (Firestore-style)
+ */
+function generateTransactionId(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let id = ''
+  for (let i = 0; i < 20; i++) {
+    id += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return id
 }
 
 /**
@@ -166,9 +199,17 @@ export const analyzeReceipt = functions.https.onCall(
     // Validate image size and count
     validateImages(data.images)
 
+    // Generate transaction ID upfront (needed for storage path)
+    const transactionId = generateTransactionId()
+
     try {
       const genAI = getGenAI()
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+      // Using stable GA model - gemini-2.0-flash has better rate limits than experimental
+      // Pricing: $0.10/1M input tokens, $0.40/1M output tokens
+      const model = genAI.getGenerativeModel(
+        { model: 'gemini-2.0-flash' },
+        { apiVersion: 'v1beta' }
+      )
 
       // Convert base64 images to Gemini format with strict MIME type validation
       const imageParts = data.images.map((b64: string) => {
@@ -202,12 +243,44 @@ export const analyzeReceipt = functions.https.onCall(
         .replace(/^```\s*/i, '')
         .trim()
 
-      const parsed: AnalyzeReceiptResponse = JSON.parse(cleanedText)
+      const parsed: GeminiAnalysisResult = JSON.parse(cleanedText)
 
       // Log successful analysis (helpful for monitoring)
-      console.log(`Receipt analyzed for user ${context.auth.uid}: ${parsed.merchant}`)
+      console.log(`Receipt analyzed for user ${userId}: ${parsed.merchant}`)
 
-      return parsed
+      // Process and store images (graceful failure - don't fail transaction if storage fails)
+      let imageUrls: string[] | undefined
+      let thumbnailUrl: string | undefined
+
+      try {
+        // Process images: resize, compress, generate thumbnail
+        const { fullSizeBuffers, thumbnailBuffer } = await processReceiptImages(data.images)
+
+        // Upload to Firebase Storage
+        const uploadResult = await uploadReceiptImages(
+          userId,
+          transactionId,
+          fullSizeBuffers,
+          thumbnailBuffer
+        )
+
+        imageUrls = uploadResult.imageUrls
+        thumbnailUrl = uploadResult.thumbnailUrl
+
+        console.log(`Images stored for transaction ${transactionId}: ${imageUrls.length} images + thumbnail`)
+      } catch (storageError) {
+        // Log storage error but don't fail the transaction
+        console.error(`Image storage failed for transaction ${transactionId}:`, storageError)
+        // Continue without images - transaction data is still valuable
+      }
+
+      // Return combined response
+      return {
+        ...parsed,
+        transactionId,
+        imageUrls,
+        thumbnailUrl
+      }
     } catch (error) {
       console.error('Error analyzing receipt:', error)
 

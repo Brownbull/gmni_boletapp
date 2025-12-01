@@ -1,4 +1,5 @@
-import { initializeApp, getApps } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app'
+import { getStorage, connectStorageEmulator } from 'firebase/storage'
 
 // Validate required environment variables
 const requiredEnvVars = [
@@ -31,4 +32,12 @@ export const firebaseConfig = {
 };
 
 // Initialize Firebase app (singleton pattern)
-export const app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
+export const app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig)
+
+// Initialize Firebase Storage
+export const storage = getStorage(app)
+
+// Connect to Storage emulator in development mode
+if (import.meta.env.DEV) {
+  connectStorageEmulator(storage, 'localhost', 9199)
+}

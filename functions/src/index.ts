@@ -4,3 +4,4 @@
  */
 
 export { analyzeReceipt } from './analyzeReceipt'
+export { onTransactionDeleted } from './deleteTransactionImages'

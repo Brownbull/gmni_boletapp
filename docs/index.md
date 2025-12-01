@@ -1,6 +1,6 @@
 # Boletapp Documentation Index
 
-**AI-Assisted Development Reference** | **Last Updated:** 2025-11-26 (Post-Epic 3 Complete)
+**AI-Assisted Development Reference** | **Last Updated:** 2025-12-01 (Post-Epic 4.5 Complete)
 
 This is the primary entry point for AI-assisted development of Boletapp, a Smart Expense Tracker PWA.
 
@@ -41,11 +41,12 @@ src/
 
 ## Documentation Organization
 
-Documentation is organized into **6 thematic folders** for easy navigation:
+Documentation is organized into **7 thematic folders** for easy navigation:
 
 ```
 docs/
 ├── architecture/      # System architecture and technical design
+├── business/          # Pricing, costs, revenue projections (NEW - Epic 4 Retro)
 ├── development/       # Developer guides and operational docs
 ├── security/          # Security documentation and audit reports (Epic 4)
 ├── testing/           # Test environment and testing guides
@@ -95,6 +96,24 @@ Deployment architecture, Firebase Hosting setup, production deployment, monitori
 
 ### 7. [Component Inventory](./development/component-inventory.md)
 Complete catalog of React components, props, responsibilities
+
+---
+
+## Business Documentation
+
+**Location:** [`business/`](./business/)
+
+### [Business Overview](./business/README.md)
+Strategic decisions, pricing model, and business documentation index
+
+### [Pricing Model](./business/pricing-model.md)
+4-tier subscription structure (Free/Basic/Pro/Max), feature allocation, retention policies
+
+### [Cost Analysis](./business/cost-analysis.md)
+Detailed breakdown of infrastructure costs (Storage, Gemini API, Cloud Functions, Firestore)
+
+### [Revenue Projections](./business/revenue-projections.md)
+Scenario modeling at 10K, 25K, 50K, 100K users with multiple price points
 
 ---
 
@@ -239,6 +258,26 @@ Automated project structure analysis (JSON)
 3. [Story 4.3](./sprint-artifacts/epic4/4-3-dependency-static-security.md) - Dependency & Static Security ✅
 4. [Story 4.4](./sprint-artifacts/epic4/4-4-security-documentation.md) - Security Documentation ✅
 
+### Epic 4.5: Receipt Image Storage (COMPLETE ✅)
+
+**Location:** [`sprint-artifacts/epic4-5/`](./sprint-artifacts/epic4-5/)
+
+- **[Epic 4.5 Tech Spec](./tech-spec.md)** - Image storage technical specification (defined in Epic 4 retrospective)
+
+**Epic 4.5 Stories (All Complete):**
+1. [Story 4.5-1](./sprint-artifacts/epic4-5/4-5-1-firebase-storage-infrastructure.md) - Firebase Storage Infrastructure ✅
+2. [Story 4.5-2](./sprint-artifacts/epic4-5/4-5-2-cloud-function-image-processing.md) - Cloud Function Image Processing ✅
+3. [Story 4.5-3](./sprint-artifacts/epic4-5/4-5-3-client-updates-ui.md) - Client Updates & UI ✅
+4. [Story 4.5-4](./sprint-artifacts/epic4-5/4-5-4-cascade-delete-documentation.md) - Cascade Delete & Documentation ✅
+
+**Epic 4.5 Achievements:**
+- ✅ **Firebase Storage:** User-scoped image storage with security rules
+- ✅ **Image Processing:** Server-side compression with sharp (1200x1600 max, 80% JPEG)
+- ✅ **Thumbnails:** Auto-generated 120x160 thumbnails for list views
+- ✅ **UI Components:** ImageViewer modal for viewing full-size receipts
+- ✅ **Cascade Delete:** Firestore trigger automatically deletes images when transaction deleted
+- ✅ **Documentation:** ADR-009 documents architectural decisions
+
 ---
 
 ## Document Templates
@@ -346,6 +385,8 @@ Epic 3 focused on **production-grade quality and testing completion**. Key deliv
 | **Performance baselines** | [Performance Baselines](./performance/performance-baselines.md) |
 | **Security overview** | [Security README](./security/README.md) |
 | **OWASP checklist** | [OWASP Checklist](./security/owasp-checklist.md) |
+| **Pricing model** | [Pricing Model](./business/pricing-model.md) |
+| **Cost analysis** | [Cost Analysis](./business/cost-analysis.md) |
 | **Contribution guidelines** | [CONTRIBUTING.md](../CONTRIBUTING.md) |
 | **CI/CD pipeline** | [CI/CD README](./ci-cd/README.md) |
 
@@ -363,6 +404,6 @@ The `.bmad/` directory contains the BMAD (Breakthrough Modern Agile Development)
 
 ---
 
-**Documentation Version:** 5.0
-**Generated:** 2025-11-27 (Post-Epic 4 Complete)
+**Documentation Version:** 6.0
+**Generated:** 2025-12-01 (Post-Epic 4.5 Complete)
 **Next Update:** After Epic 5 planning
