@@ -19,7 +19,10 @@ export const TRANSLATIONS = {
         cleaning: "Cleaning...", cleaned: "Cleaned!", export: "Export CSV",
         exportAll: "Export All", prev: "Prev", next: "Next", page: "Page",
         monthsBreakdown: "Monthly Breakdown", allTime: "All Time", login: "Login",
-        signin: "Sign in with Google", signout: "Sign Out"
+        signin: "Sign in with Google", signout: "Sign Out",
+        back: "Back", scan: "Scan", deleteItem: "Delete item", confirmItem: "Confirm item",
+        showBarChart: "Show bar chart", showPieChart: "Show pie chart",
+        selectMonth: "Select month", selectYear: "Select year"
     },
     es: {
         overview: "Resumen", welcome: "Rastreo Inteligente", totalSpent: "Total Gastado",
@@ -41,7 +44,10 @@ export const TRANSLATIONS = {
         cleaning: "Limpiando...", cleaned: "¡Listo!", export: "Exportar CSV",
         exportAll: "Exportar Todo", prev: "Ant", next: "Sig", page: "Pág",
         monthsBreakdown: "Desglose Mensual", allTime: "Histórico", login: "Ingresar",
-        signin: "Entrar con Google", signout: "Cerrar Sesión"
+        signin: "Entrar con Google", signout: "Cerrar Sesión",
+        back: "Volver", scan: "Escanear", deleteItem: "Eliminar ítem", confirmItem: "Confirmar ítem",
+        showBarChart: "Mostrar gráfico de barras", showPieChart: "Mostrar gráfico circular",
+        selectMonth: "Seleccionar mes", selectYear: "Seleccionar año"
     }
 };
 

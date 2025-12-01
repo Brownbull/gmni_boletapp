@@ -1,0 +1,290 @@
+<story-context id="4-5-3-client-updates-ui" v="1.0">
+  <metadata>
+    <epicId>4.5</epicId>
+    <storyId>3</storyId>
+    <title>Client Updates &amp; UI</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic4-5/4-5-3-client-updates-ui.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user viewing transaction history</asA>
+    <iWant>to see receipt thumbnails and view full-size images</iWant>
+    <soThat>I can quickly identify transactions and verify details</soThat>
+    <tasks>
+      <task id="1" ac="1">Update Transaction interface
+        <subtask>Add imageUrls?: string[] to Transaction type</subtask>
+        <subtask>Add thumbnailUrl?: string to Transaction type</subtask>
+        <subtask>Update any type guards or validation</subtask>
+      </task>
+      <task id="2" ac="1">Create storage.ts client utilities
+        <subtask>Helper for checking if transaction has images</subtask>
+        <subtask>Optional: preload image utility</subtask>
+      </task>
+      <task id="3" ac="2,4">Update HistoryView for thumbnails
+        <subtask>Add thumbnail column/area to transaction list</subtask>
+        <subtask>Conditionally render thumbnail when thumbnailUrl exists</subtask>
+        <subtask>Style: 40x50px, rounded corners, subtle border</subtask>
+        <subtask>Handle loading state (skeleton/placeholder)</subtask>
+        <subtask>Handle error state (failed to load)</subtask>
+      </task>
+      <task id="4" ac="3,5">Create ImageViewer component
+        <subtask>Modal overlay with dark background</subtask>
+        <subtask>Full-size image display</subtask>
+        <subtask>Close button (X) with click and Escape key handlers</subtask>
+        <subtask>Navigation arrows for multi-image</subtask>
+        <subtask>Image counter ("1 of 3")</subtask>
+        <subtask>Accessibility: focus trap, aria-labels</subtask>
+      </task>
+      <task id="5" ac="3">Wire up click handler
+        <subtask>Thumbnail click opens ImageViewer</subtask>
+        <subtask>Pass imageUrls array to viewer</subtask>
+        <subtask>Track currently selected transaction</subtask>
+      </task>
+      <task id="6" ac="2,3">Write component tests
+        <subtask>Test thumbnail renders when URL present</subtask>
+        <subtask>Test no errors when URL missing</subtask>
+        <subtask>Test ImageViewer opens/closes</subtask>
+        <subtask>Test multi-image navigation</subtask>
+      </task>
+      <task id="7" ac="6">Write E2E test
+        <subtask>Scan receipt flow</subtask>
+        <subtask>Verify thumbnail in history</subtask>
+        <subtask>Click to view full-size</subtask>
+        <subtask>Close modal</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1" title="Transaction Interface Extension">
+      <given>the Transaction TypeScript interface</given>
+      <when>a new transaction with images is received</when>
+      <then>the interface supports imageUrls?: string[] field</then>
+      <and>the interface supports thumbnailUrl?: string field</and>
+    </criterion>
+    <criterion id="2" title="Thumbnail Display in History">
+      <given>the HistoryView with transactions</given>
+      <when>a transaction has a thumbnailUrl</when>
+      <then>a 40x50px thumbnail displays on the left of the transaction row</then>
+      <and>the thumbnail has a subtle border and rounded corners</and>
+    </criterion>
+    <criterion id="3" title="Image Viewer Modal">
+      <given>a transaction with images in HistoryView</given>
+      <when>the user clicks the thumbnail</when>
+      <then>an ImageViewer modal opens with the full-size image</then>
+      <and>the modal has a dark semi-transparent background</and>
+      <and>a close button (X) in the top-right corner</and>
+    </criterion>
+    <criterion id="4" title="Backward Compatibility">
+      <given>existing transactions without imageUrls/thumbnailUrl</given>
+      <when>displayed in HistoryView</when>
+      <then>no thumbnail is shown (empty space or placeholder)</then>
+      <and>no errors occur</and>
+      <and>transaction data displays correctly</and>
+    </criterion>
+    <criterion id="5" title="Multi-Image Navigation">
+      <given>a transaction with multiple images (2-3)</given>
+      <when>ImageViewer is open</when>
+      <then>navigation arrows allow moving between images</then>
+      <and>current image index is displayed (e.g., "1 of 3")</and>
+    </criterion>
+    <criterion id="6" title="E2E Test">
+      <given>a Playwright test environment</given>
+      <when>E2E test scans a receipt and views history</when>
+      <then>thumbnail is visible in the transaction list</then>
+      <and>clicking thumbnail opens the full-size image</and>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec.md</path>
+        <title>Technical Specification - Epic 4.5</title>
+        <section>UX/UI Considerations, Component patterns</section>
+        <snippet>UI components for image display: HistoryView thumbnail (40x50px), ImageViewer modal with dark overlay, TransactionCard component pattern. Accessibility: thumbnail alt text, Escape key to close, focus trap in modal.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Component Architecture, Component Hierarchy</section>
+        <snippet>React functional components with props interfaces. HistoryView is a view component under src/views/. Reusable components under src/components/. Follow existing CategoryBadge pattern for new components.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 4.5 Definition</title>
+        <section>Story 4.5-3 Acceptance Criteria</section>
+        <snippet>6 acceptance criteria covering Transaction interface extension, thumbnail display, ImageViewer modal, backward compatibility, multi-image navigation, and E2E test.</snippet>
+      </doc>
+      <doc>
+        <path>docs/development/component-inventory.md</path>
+        <title>Component Inventory</title>
+        <section>Reusable UI Components</section>
+        <snippet>Existing components: CategoryBadge, ErrorBoundary, Nav. Views: LoginScreen, DashboardView, ScanView, EditView, TrendsView, HistoryView, SettingsView.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <file>
+        <path>src/types/transaction.ts</path>
+        <kind>type-definition</kind>
+        <symbol>Transaction, TransactionItem, StoreCategory</symbol>
+        <lines>1-25</lines>
+        <reason>MODIFY: Add imageUrls?: string[] and thumbnailUrl?: string fields to Transaction interface after line 21 (items field).</reason>
+      </file>
+      <file>
+        <path>src/views/HistoryView.tsx</path>
+        <kind>view-component</kind>
+        <symbol>HistoryView, HistoryViewProps</symbol>
+        <lines>1-98</lines>
+        <reason>MODIFY: Add thumbnail display to transaction list. Add state for ImageViewer modal. Import and use new ImageViewer component.</reason>
+      </file>
+      <file>
+        <path>src/components/CategoryBadge.tsx</path>
+        <kind>component</kind>
+        <symbol>CategoryBadge, CategoryBadgeProps</symbol>
+        <lines>1-27</lines>
+        <reason>REFERENCE: Follow this component pattern for ImageViewer - interface for props, React.FC with destructured props, Tailwind classes for styling.</reason>
+      </file>
+      <file>
+        <path>src/components/ErrorBoundary.tsx</path>
+        <kind>component</kind>
+        <symbol>ErrorBoundary</symbol>
+        <reason>REFERENCE: Error handling pattern for components.</reason>
+      </file>
+      <file>
+        <path>tests/e2e/transaction-management.spec.ts</path>
+        <kind>e2e-test</kind>
+        <symbol>Transaction management E2E tests</symbol>
+        <reason>REFERENCE: Follow E2E test patterns for scan-with-images.spec.ts - Playwright test structure, selectors, assertions.</reason>
+      </file>
+      <file>
+        <path>tests/e2e/auth-workflow.spec.ts</path>
+        <kind>e2e-test</kind>
+        <symbol>Auth workflow E2E tests</symbol>
+        <reason>REFERENCE: Follow authentication and navigation E2E patterns.</reason>
+      </file>
+    </code>
+
+    <dependencies>
+      <node>
+        <package>react</package>
+        <version>^18.3.1</version>
+        <usage>React.FC, useState, useEffect, useCallback for component state and lifecycle</usage>
+      </node>
+      <node>
+        <package>lucide-react</package>
+        <version>^0.460.0</version>
+        <usage>Icons: X (close), ChevronLeft, ChevronRight (navigation), Image (placeholder)</usage>
+      </node>
+      <node>
+        <package>@playwright/test</package>
+        <version>^1.56.1</version>
+        <usage>E2E testing for scan-with-images flow</usage>
+      </node>
+      <node>
+        <package>@testing-library/react</package>
+        <version>^16.3.0</version>
+        <usage>Component testing for ImageViewer</usage>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="docs/tech-spec.md">Thumbnail Size: 40x50px in list view, subtle border, rounded corners</constraint>
+    <constraint source="docs/tech-spec.md">Full-size Images: Load on demand when modal opens (not preloaded)</constraint>
+    <constraint source="docs/tech-spec.md">Backward Compatibility: Existing transactions without images must render without errors</constraint>
+    <constraint source="docs/tech-spec.md">Accessibility: Alt text "Receipt from {merchant}", Escape key to close modal, focus trap</constraint>
+    <constraint source="docs/architecture/architecture.md">Component Pattern: React.FC with TypeScript interface for props</constraint>
+    <constraint source="package.json">Code Style: TypeScript strict mode, single quotes, no semicolons, 2-space indentation</constraint>
+    <constraint source="package.json">Styling: Tailwind CSS utility classes (no external CSS files)</constraint>
+    <constraint source="story">Prerequisite: Story 4.5-2 must be complete (images available from Cloud Function)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Transaction Interface (Extended)</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+export interface Transaction {
+  id?: string;
+  date: string;
+  merchant: string;
+  alias?: string;
+  category: StoreCategory;
+  total: number;
+  items: TransactionItem[];
+  imageUrls?: string[];     // NEW: Array of full-size image download URLs
+  thumbnailUrl?: string;    // NEW: Thumbnail download URL
+  createdAt?: any;
+  updatedAt?: any;
+}
+      </signature>
+      <path>src/types/transaction.ts</path>
+    </interface>
+    <interface>
+      <name>ImageViewer Component Props</name>
+      <kind>React component props</kind>
+      <signature>
+interface ImageViewerProps {
+  images: string[];           // Array of image URLs
+  initialIndex?: number;      // Starting image index (default 0)
+  merchantName: string;       // For alt text
+  onClose: () =&gt; void;        // Close handler
+}
+
+export const ImageViewer: React.FC&lt;ImageViewerProps&gt; = ({...}) =&gt; {...}
+      </signature>
+      <path>src/components/ImageViewer.tsx (CREATE)</path>
+    </interface>
+    <interface>
+      <name>HistoryView Transaction Row</name>
+      <kind>React component pattern</kind>
+      <signature>
+// Transaction row with optional thumbnail
+&lt;div className="p-4 rounded-xl border flex gap-3 cursor-pointer"&gt;
+  {/* Thumbnail column - only if thumbnailUrl exists */}
+  {tx.thumbnailUrl &amp;&amp; (
+    &lt;img
+      src={tx.thumbnailUrl}
+      alt={`Receipt from ${tx.alias || tx.merchant}`}
+      className="w-10 h-[50px] object-cover rounded border"
+      onClick={(e) =&gt; { e.stopPropagation(); openImageViewer(tx); }}
+    /&gt;
+  )}
+  {/* Existing transaction details */}
+  &lt;div&gt;...&lt;/div&gt;
+&lt;/div&gt;
+      </signature>
+      <path>src/views/HistoryView.tsx</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Vitest 4.0.13 for unit/component tests. Playwright 1.56.1 for E2E tests. Use @testing-library/react for component testing. Follow existing patterns in tests/e2e/transaction-management.spec.ts for E2E structure. Test file naming: component tests in tests/unit/*.test.tsx, E2E in tests/e2e/*.spec.ts. Coverage thresholds: 45% lines, 30% branches.
+    </standards>
+    <locations>
+      <location>tests/unit/ImageViewer.test.tsx (CREATE)</location>
+      <location>tests/e2e/scan-with-images.spec.ts (CREATE)</location>
+    </locations>
+    <ideas>
+      <idea ac="1">Test Transaction type accepts imageUrls and thumbnailUrl fields without TypeScript errors</idea>
+      <idea ac="2">Test HistoryView renders thumbnail when transaction has thumbnailUrl</idea>
+      <idea ac="2">Test thumbnail has correct dimensions (40x50px) and styling</idea>
+      <idea ac="3">Test ImageViewer opens when thumbnail is clicked</idea>
+      <idea ac="3">Test ImageViewer closes when X button clicked</idea>
+      <idea ac="3">Test ImageViewer closes when Escape key pressed</idea>
+      <idea ac="3">Test ImageViewer closes when clicking outside modal</idea>
+      <idea ac="4">Test HistoryView renders without errors when transaction has no images</idea>
+      <idea ac="4">Test existing transaction data still displays correctly</idea>
+      <idea ac="5">Test ImageViewer shows navigation arrows when multiple images</idea>
+      <idea ac="5">Test ImageViewer navigation updates displayed image and counter</idea>
+      <idea ac="5">Test ImageViewer hides navigation for single-image transactions</idea>
+      <idea ac="6">E2E: Scan receipt → verify thumbnail in history → click to view full-size → close modal</idea>
+    </ideas>
+  </tests>
+</story-context>

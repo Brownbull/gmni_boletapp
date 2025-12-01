@@ -118,7 +118,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
         <div className="space-y-4">
             <div className="flex justify-between items-center">
                 <div className="flex gap-2">
-                    <button onClick={handleBackClick}>
+                    <button onClick={handleBackClick} aria-label={t('back')}>
                         <ArrowLeft />
                     </button>
                     <div className="flex flex-col justify-center">
@@ -132,6 +132,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                     className="ml-2 bg-transparent text-xs opacity-0 absolute w-20 h-8 cursor-pointer"
                                     value={selectedMonth.split('-')[1]}
                                     onChange={(e) => handleMonthChange(e.target.value)}
+                                    aria-label={t('selectMonth')}
                                 >
                                     {Array.from({ length: 12 }, (_, i) => {
                                         const m = String(i + 1).padStart(2, '0');
@@ -155,10 +156,14 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                     <button
                         onClick={() => exportToCSV(filteredTrans, `export_${selectedMonth || 'year'}.csv`)}
                         className="text-blue-600"
+                        aria-label={t('export')}
                     >
                         <Download />
                     </button>
-                    <button onClick={() => onSetChartType(chartType === 'pie' ? 'bar' : 'pie')}>
+                    <button
+                        onClick={() => onSetChartType(chartType === 'pie' ? 'bar' : 'pie')}
+                        aria-label={chartType === 'pie' ? t('showBarChart') : t('showPieChart')}
+                    >
                         {chartType === 'pie' ? <BarChart2 /> : <PieChart />}
                     </button>
                     {!selectedMonth && (
@@ -166,6 +171,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                             value={selectedYear}
                             onChange={(e) => onSetSelectedYear(e.target.value)}
                             className={`text-sm p-1 rounded border ${input}`}
+                            aria-label={t('selectYear')}
                         >
                             {years.map(y => (
                                 <option key={y} value={y}>{y}</option>

@@ -57,7 +57,28 @@ development_status:
   3-2-e2e-auth-navigation-workflow: done
   3-3-e2e-transaction-management-workflow: done
   3-4-e2e-analytics-export-workflow: done
-  3-5-accessibility-testing-framework: backlog
-  3-6-performance-baselines-lighthouse-ci: backlog
-  3-7-coverage-enforcement-quality-gates: backlog
-  epic-3-retrospective: optional
+  3-5-accessibility-testing-framework: done
+  3-6-performance-baselines-lighthouse-ci: done
+  3-7-coverage-enforcement-quality-gates: done
+  epic-3-retrospective: completed
+
+  # Epic 4: Security Hardening & Penetration Testing
+  epic-4: contexted
+  4-1-secrets-detection-prevention: done
+  4-2-gemini-api-protection: done
+  4-3-dependency-static-security: done
+  4-4-security-documentation: done
+  epic-4-retrospective: completed  # Completed 2025-11-29
+
+  # Epic 4.5: Receipt Image Storage (defined in Epic 4 retrospective)
+  epic-4-5: contexted  # Tech-spec completed 2025-11-29
+  4-5-1-firebase-storage-infrastructure: done  # 3 points - Code Review APPROVED 2025-11-30
+  4-5-2-cloud-function-image-processing: done  # 5 points - Code Review APPROVED 2025-11-30
+  4-5-3-client-updates-ui: done  # 3 points - Code Review APPROVED 2025-12-01
+  4-5-4-cascade-delete-documentation: done  # 2 points - Code Review APPROVED 2025-12-01
+
+  # Future Epics (updated in Epic 4 retrospective)
+  epic-5: backlog  # Enhanced Data Export (now includes image export)
+  epic-6: backlog  # Smart Category Learning
+  epic-7: backlog  # Subscription & Monetization (4-tier model, Mercado Pago)
+  epic-8: backlog  # Mobile App (iOS & Android)

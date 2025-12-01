@@ -126,19 +126,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
                 <button
                     onClick={onExportAll}
-                    className="bg-blue-100 text-blue-600 px-3 py-1 rounded font-bold text-sm"
+                    className="bg-blue-200 text-blue-800 px-3 py-1 rounded font-bold text-sm"
                 >
                     CSV
                 </button>
             </div>
 
             <div className={`p-4 rounded-xl border flex justify-between items-center ${card}`}>
-                <div className="flex gap-2 text-red-500">
+                <div className="flex gap-2 text-red-700">
                     <Trash2 /> {t('wipe')}
                 </div>
                 <button
                     onClick={onWipeDB}
-                    className="bg-red-100 text-red-600 px-3 py-1 rounded font-bold text-sm"
+                    className="bg-red-200 text-red-800 px-3 py-1 rounded font-bold text-sm"
                 >
                     {wiping ? '...' : t('wipe')}
                 </button>

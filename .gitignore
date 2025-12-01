@@ -45,8 +45,16 @@ firebase-debug.log
 coverage/
 playwright-report/
 test-results/
+lighthouse-reports/
+.lighthouseci/
 
 # Backup files
 *.backup
 *.bak
 *~
+
+# Local binaries (gitleaks, etc.)
+bin/
+
+# Security scan reports (may contain sensitive paths)
+secrets-report.json

@@ -1,0 +1,72 @@
+# Gitleaks Configuration for Boletapp
+# Story 4.1: Secrets Detection & Prevention
+#
+# This configuration extends gitleaks' default rules and adds
+# custom patterns for Firebase and Gemini API keys.
+#
+# Usage:
+#   Pre-commit (staged files): gitleaks protect --staged
+#   Full repo scan: gitleaks detect --source . --verbose
+
+[extend]
+# Use gitleaks' built-in rules as baseline
+useDefault = true
+
+# Custom Rules for Project-Specific Secrets
+[[rules]]
+id = "firebase-api-key-env"
+description = "Firebase API Key in environment variable"
+regex = '''VITE_FIREBASE_API_KEY\s*=\s*['"]?AIza[0-9A-Za-z_-]{35}['"]?'''
+keywords = ["firebase", "FIREBASE_API_KEY", "AIza"]
+entropy = 3.5
+
+[[rules]]
+id = "gemini-api-key-env"
+description = "Gemini API Key in environment variable"
+regex = '''VITE_GEMINI_API_KEY\s*=\s*['"]?AIza[0-9A-Za-z_-]{35}['"]?'''
+keywords = ["gemini", "GEMINI_API_KEY", "AIza"]
+entropy = 3.5
+
+[[rules]]
+id = "google-api-key-generic"
+description = "Google API Key (generic pattern)"
+regex = '''['"]AIza[0-9A-Za-z_-]{35}['"]'''
+keywords = ["AIza"]
+entropy = 3.5
+
+[[rules]]
+id = "firebase-service-account"
+description = "Firebase Service Account Key"
+regex = '''"type"\s*:\s*"service_account"'''
+keywords = ["service_account", "private_key"]
+
+# Allowlist - files and patterns that should NOT trigger alerts
+[allowlist]
+description = "Global allowlist - files that are safe to contain key patterns"
+
+# Path patterns for files to exclude from scanning
+paths = [
+  # Environment example files (contain placeholders, not real secrets)
+  '''.env\.example$''',
+  '''\.env\.sample$''',
+  '''\.env\.template$''',
+  # Local .env file (gitignored, but may exist locally)
+  '''\.env$''',
+  # Build output (contains baked-in keys from env vars)
+  '''dist/.*''',
+  # Documentation (may contain key format examples)
+  '''docs/.*\.md$''',
+  '''sprint-artifacts/.*\.md$''',
+  # CI workflow files (contain test placeholder keys)
+  '''\.github/workflows/.*\.yml$''',
+]
+
+# Regex patterns for content to ignore (placeholder values)
+regexes = [
+  '''VITE_\w+_API_KEY=your-.*-here''',
+  '''your-api-key-here''',
+  '''test-api-key''',
+  '''test-gemini-key''',
+  '''placeholder''',
+  '''example''',
+]

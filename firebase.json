@@ -2,6 +2,19 @@
   "firestore": {
     "rules": "firestore.rules"
   },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "functions": {
+    "source": "functions",
+    "codebase": "default",
+    "ignore": [
+      "node_modules",
+      ".git",
+      "firebase-debug.log",
+      "firebase-debug.*.log"
+    ]
+  },
   "hosting": {
     "public": "dist",
     "ignore": [
@@ -38,11 +51,17 @@
   },
   "emulators": {
     "auth": {
+      "host": "0.0.0.0",
       "port": 9099
     },
     "firestore": {
+      "host": "0.0.0.0",
       "port": 8080,
       "rules": "firestore.emulator.rules"
+    },
+    "storage": {
+      "host": "0.0.0.0",
+      "port": 9199
     },
     "ui": {
       "enabled": true,

@@ -796,6 +796,150 @@ VITE_GEMINI_API_KEY=...
 
 ---
 
+### ADR-009: Receipt Image Storage (Epic 4.5)
+
+**Decision:** Store receipt images in Firebase Storage with Cloud Function processing and cascade delete
+**Context:** Users scanning receipts need to view original images for verification and audit purposes
+**Date:** 2025-11-29 (Epic 4.5)
+
+**Architecture Decisions:**
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Storage Provider | Firebase Storage | Already using Firebase ecosystem, unified auth/rules |
+| Image Processing | Server-side (Cloud Function) | Consistent results, no client-side sharp dependency |
+| Path Structure | `users/{userId}/receipts/{transactionId}/` | User isolation, easy cascade delete |
+| Image Format | JPEG (80% quality) | Good compression, universal support |
+| Thumbnail | 120x160 JPEG (70% quality) | Fast list rendering, minimal storage |
+| Cascade Delete | Firestore onDelete trigger | Guaranteed execution, works for all deletion methods |
+
+**Image Processing Pipeline:**
+```
+Upload → Base64 decode → sharp resize/compress → Firebase Storage
+                              ↓
+                         Generate thumbnail (120x160)
+```
+
+**Storage Path Pattern:**
+```
+users/{userId}/receipts/{transactionId}/
+├── image-0.jpg        (max 1200x1600, 80% quality)
+├── image-1.jpg        (if multi-page receipt)
+├── image-2.jpg        (max 3 images per transaction)
+└── thumbnail.jpg      (120x160, 70% quality)
+```
+
+**Security Model (storage.rules):**
+```javascript
+match /users/{userId}/receipts/{allPaths=**} {
+  allow read, write: if request.auth != null && request.auth.uid == userId;
+}
+```
+
+**Cascade Delete Flow:**
+```
+Transaction deleted → Firestore onDelete trigger fires
+                              ↓
+                    onTransactionDeleted Cloud Function
+                              ↓
+                    deleteTransactionImages(userId, transactionId)
+                              ↓
+                    bucket.getFiles({ prefix: folderPath })
+                              ↓
+                    Promise.all(files.map(f => f.delete()))
+```
+
+**Cost Analysis (from Epic 4 retrospective):**
+- Storage: ~$0.02/GB/month (Firebase Storage pricing)
+- Per transaction: ~310-610KB (3 images + thumbnail)
+- Monthly estimate: 10K users → ~$26/month, 50K users → ~$130/month
+
+**Consequences:**
+- ✅ Users can view original receipt images for verification
+- ✅ Audit trail for expense tracking
+- ✅ Foundation for future features (PDF export with images)
+- ✅ Subscription tier differentiation possible via retention policies
+- ✅ Automatic cleanup prevents orphaned files
+- ⚠️ Requires Blaze plan (Cloud Functions + Storage)
+- ⚠️ Additional latency during scan (~1-2s for image processing)
+
+**Status:** Accepted (Epic 4.5 Complete)
+
+---
+
+### ADR-008: Security Hardening (Epic 4)
+
+**Decision:** Implement comprehensive security hardening across secrets detection, API protection, dependency scanning, and security documentation
+**Context:** Production application handling financial data requires defense-in-depth security approach
+**Date:** 2025-11-27 (Epic 4)
+
+**Epic 4 Security Implementations:**
+
+| Story | Implementation | Status |
+|-------|----------------|--------|
+| 4.1 Secrets Detection | gitleaks pre-commit + CI scanning | Accepted |
+| 4.2 API Protection | Gemini API moved to Cloud Function | Accepted |
+| 4.3 Dependency Security | npm audit + eslint-plugin-security | Accepted |
+| 4.4 Security Documentation | OWASP checklist, audit report, incident response | Accepted |
+
+**Story 4.1 - Secrets Detection:**
+- Pre-commit hook scans staged files with gitleaks
+- CI Step 2 scans full repository on PRs
+- Custom rules for Firebase/Gemini API key patterns
+- Zero secrets found in git history (37 commits)
+
+**Story 4.2 - Gemini API Protection:**
+```
+BEFORE: Browser → Gemini API (API key in JS bundle)
+AFTER:  Browser → Cloud Function → Gemini API (API key server-side)
+```
+- Cloud Function `analyzeReceipt` deployed to us-central1
+- Firebase Auth required for all requests
+- Rate limiting: 10 requests/minute per user
+- Image validation: max 10MB per image, 5 images per request
+
+**Story 4.3 - Dependency & Static Security:**
+- npm audit in CI (Step 21): Zero HIGH/CRITICAL allowed
+- ESLint security rules (Step 22): Detects eval(), unsafe regex, etc.
+- Combined audit script: `npm run security:audit`
+- 16 remaining vulnerabilities (all LOW/MODERATE in dev dependencies)
+
+**Story 4.4 - Security Documentation:**
+- docs/security/README.md - Security overview
+- docs/security/owasp-checklist.md - OWASP Top 10 (2021) validation
+- docs/security/audit-report.md - Epic 4 findings
+- docs/security/incident-response.md - Incident procedures
+
+**Consequences:**
+- ✅ API key theft risk eliminated (Cloud Function proxy)
+- ✅ Accidental secret commit prevented (pre-commit + CI)
+- ✅ Vulnerable dependencies detected automatically
+- ✅ Insecure code patterns blocked
+- ✅ OWASP Top 10 compliance documented
+- ✅ 22-step CI pipeline with security gates
+- ⚠️ Blaze plan required for Cloud Functions (billing enabled)
+- ⚠️ Rate limiting uses in-memory storage (single instance)
+
+**Security Architecture:**
+```
+        ┌─────────────────────────────────────┐
+        │         Security Layers             │
+        ├─────────────────────────────────────┤
+        │  [1] Authentication (Firebase Auth) │
+        │  [2] Authorization (Firestore Rules)│
+        │  [3] API Protection (Cloud Function)│
+        │  [4] Transport (HTTPS/TLS)          │
+        │  [5] Input Validation               │
+        │  [6] Dependency Scanning            │
+        │  [7] Secrets Detection              │
+        │  [8] Static Code Analysis           │
+        └─────────────────────────────────────┘
+```
+
+**Status:** Accepted (Epic 4 Complete)
+
+---
+
 ## Conclusion
 
 Boletapp's architecture has evolved from a **rapid MVP prototype** (single-file SPA) to a **production-ready modular application** while maintaining its core strengths: simplicity, serverless infrastructure, and AI-powered intelligence.
@@ -825,6 +969,6 @@ The modular architecture provides a solid foundation for future enhancements whi
 
 ---
 
-**Document Version:** 2.0
-**Last Updated:** 2025-11-21
-**Epic:** Post-Epic 1 (Production Deployment Readiness)
+**Document Version:** 4.0
+**Last Updated:** 2025-12-01
+**Epic:** Post-Epic 4.5 (Receipt Image Storage Complete)
