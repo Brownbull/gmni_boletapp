@@ -10,6 +10,9 @@
 #   macOS: brew install gitleaks
 #   Linux: wget https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz
 
+# Add ~/.local/bin to PATH for user-installed gitleaks
+export PATH="$HOME/.local/bin:$PATH"
+
 # Check if gitleaks is installed
 if ! command -v gitleaks &> /dev/null; then
     echo "WARNING: gitleaks is not installed. Skipping secrets scan."

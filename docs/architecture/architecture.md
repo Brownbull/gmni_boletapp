@@ -796,6 +796,77 @@ VITE_GEMINI_API_KEY=...
 
 ---
 
+### ADR-009: Receipt Image Storage (Epic 4.5)
+
+**Decision:** Store receipt images in Firebase Storage with Cloud Function processing and cascade delete
+**Context:** Users scanning receipts need to view original images for verification and audit purposes
+**Date:** 2025-11-29 (Epic 4.5)
+
+**Architecture Decisions:**
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Storage Provider | Firebase Storage | Already using Firebase ecosystem, unified auth/rules |
+| Image Processing | Server-side (Cloud Function) | Consistent results, no client-side sharp dependency |
+| Path Structure | `users/{userId}/receipts/{transactionId}/` | User isolation, easy cascade delete |
+| Image Format | JPEG (80% quality) | Good compression, universal support |
+| Thumbnail | 120x160 JPEG (70% quality) | Fast list rendering, minimal storage |
+| Cascade Delete | Firestore onDelete trigger | Guaranteed execution, works for all deletion methods |
+
+**Image Processing Pipeline:**
+```
+Upload → Base64 decode → sharp resize/compress → Firebase Storage
+                              ↓
+                         Generate thumbnail (120x160)
+```
+
+**Storage Path Pattern:**
+```
+users/{userId}/receipts/{transactionId}/
+├── image-0.jpg        (max 1200x1600, 80% quality)
+├── image-1.jpg        (if multi-page receipt)
+├── image-2.jpg        (max 3 images per transaction)
+└── thumbnail.jpg      (120x160, 70% quality)
+```
+
+**Security Model (storage.rules):**
+```javascript
+match /users/{userId}/receipts/{allPaths=**} {
+  allow read, write: if request.auth != null && request.auth.uid == userId;
+}
+```
+
+**Cascade Delete Flow:**
+```
+Transaction deleted → Firestore onDelete trigger fires
+                              ↓
+                    onTransactionDeleted Cloud Function
+                              ↓
+                    deleteTransactionImages(userId, transactionId)
+                              ↓
+                    bucket.getFiles({ prefix: folderPath })
+                              ↓
+                    Promise.all(files.map(f => f.delete()))
+```
+
+**Cost Analysis (from Epic 4 retrospective):**
+- Storage: ~$0.02/GB/month (Firebase Storage pricing)
+- Per transaction: ~310-610KB (3 images + thumbnail)
+- Monthly estimate: 10K users → ~$26/month, 50K users → ~$130/month
+
+**Consequences:**
+- ✅ Users can view original receipt images for verification
+- ✅ Audit trail for expense tracking
+- ✅ Foundation for future features (PDF export with images)
+- ✅ Subscription tier differentiation possible via retention policies
+- ✅ Automatic cleanup prevents orphaned files
+- ⚠️ Requires Blaze plan (Cloud Functions + Storage)
+- ⚠️ Additional latency during scan (~1-2s for image processing)
+
+**Status:** Accepted (Epic 4.5 Complete)
+
+---
+
 ### ADR-008: Security Hardening (Epic 4)
 
 **Decision:** Implement comprehensive security hardening across secrets detection, API protection, dependency scanning, and security documentation
@@ -898,6 +969,6 @@ The modular architecture provides a solid foundation for future enhancements whi
 
 ---
 
-**Document Version:** 3.0
-**Last Updated:** 2025-11-27
-**Epic:** Post-Epic 4 (Security Hardening Complete)
+**Document Version:** 4.0
+**Last Updated:** 2025-12-01
+**Epic:** Post-Epic 4.5 (Receipt Image Storage Complete)

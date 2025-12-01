@@ -2,6 +2,9 @@
   "firestore": {
     "rules": "firestore.rules"
   },
+  "storage": {
+    "rules": "storage.rules"
+  },
   "functions": {
     "source": "functions",
     "codebase": "default",
@@ -55,6 +58,10 @@
       "host": "0.0.0.0",
       "port": 8080,
       "rules": "firestore.emulator.rules"
+    },
+    "storage": {
+      "host": "0.0.0.0",
+      "port": 9199
     },
     "ui": {
       "enabled": true,

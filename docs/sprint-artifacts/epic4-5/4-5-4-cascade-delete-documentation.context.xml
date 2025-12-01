@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="4.5-4" story-key="4-5-4-cascade-delete-documentation" generated="2025-11-29">
+  <meta>
+    <epic-id>4.5</epic-id>
+    <epic-title>Receipt Image Storage</epic-title>
+    <story-title>Cascade Delete &amp; Documentation</story-title>
+    <story-points>2</story-points>
+    <status>ready-for-dev</status>
+  </meta>
+
+  <user-story>
+    <as-a>user deleting a transaction</as-a>
+    <i-want>associated images automatically deleted</i-want>
+    <so-that>I don't accumulate orphaned images in storage</so-that>
+  </user-story>
+
+  <acceptance-criteria>
+    <ac id="1" title="Firestore Trigger Function">
+      <given>A transaction document with associated images in Storage</given>
+      <when>The transaction document is deleted from Firestore</when>
+      <then>A Cloud Function trigger automatically deletes the entire Storage folder `users/{userId}/receipts/{transactionId}/`</then>
+    </ac>
+    <ac id="2" title="Integration Test">
+      <given>The Storage and Firestore emulators running</given>
+      <when>Integration tests execute cascade delete scenario</when>
+      <then>Test verifies images are deleted when transaction is deleted</then>
+      <and>Test verifies orphaned images don't remain in Storage</and>
+    </ac>
+    <ac id="3" title="ADR-009 Documentation">
+      <given>Epic 4.5 implementation complete</given>
+      <when>Documentation is updated</when>
+      <then>ADR-009 documents the image storage architecture decisions</then>
+      <and>Includes rationale for cascade delete strategy (Firestore trigger vs client-side)</and>
+    </ac>
+    <ac id="4" title="docs/index.md Updated">
+      <given>Epic 4.5 documentation complete</given>
+      <when>index.md is reviewed</when>
+      <then>Epic 4.5 section added with all story links</then>
+      <and>Documentation version updated</and>
+    </ac>
+    <ac id="5" title="Architecture Documentation">
+      <given>Storage security rules deployed</given>
+      <when>Architecture documentation is reviewed</when>
+      <then>Storage security rules are documented in architecture.md</then>
+      <and>New Transaction interface fields (imageUrls, thumbnailUrl) documented in data-models.md</and>
+    </ac>
+  </acceptance-criteria>
+
+  <technical-context>
+    <tech-stack>
+      <frontend>
+        <item name="React" version="18.3.1" />
+        <item name="TypeScript" version="5.3.3" />
+        <item name="Vite" version="5.4.0" />
+        <item name="Firebase Client SDK" version="10.14.1" />
+      </frontend>
+      <backend>
+        <item name="Node.js" version="20.x" />
+        <item name="firebase-functions" version="4.5.0" />
+        <item name="firebase-admin" version="12.0.0" />
+        <item name="@google/generative-ai" version="0.2.0" />
+      </backend>
+      <testing>
+        <item name="Vitest" version="4.0.13" />
+        <item name="Playwright" version="1.56.1" />
+        <item name="@testing-library/react" version="16.3.0" />
+        <item name="@firebase/rules-unit-testing" version="3.0.4" />
+      </testing>
+    </tech-stack>
+
+    <existing-patterns>
+      <pattern name="Cloud Function Export">
+        <description>Export functions from index.ts</description>
+        <example><![CDATA[// functions/src/index.ts
+export { analyzeReceipt } from './analyzeReceipt'
+// Add: export { deleteTransactionImages } from './deleteTransactionImages']]></example>
+      </pattern>
+      <pattern name="Firestore Document Path">
+        <description>User-scoped transaction documents</description>
+        <path>/artifacts/{appId}/users/{userId}/transactions/{transactionId}</path>
+      </pattern>
+      <pattern name="Storage Path Structure">
+        <description>User-scoped receipt images (defined in tech-spec)</description>
+        <path>users/{userId}/receipts/{transactionId}/image-0.jpg, image-1.jpg, thumbnail.jpg</path>
+      </pattern>
+      <pattern name="Cloud Function Error Handling">
+        <description>Use HttpsError for client-facing errors</description>
+        <example><![CDATA[throw new functions.https.HttpsError('internal', 'User-friendly message')]]></example>
+      </pattern>
+      <pattern name="Test File Naming">
+        <description>Follow existing test naming conventions</description>
+        <unit>tests/unit/*.test.ts</unit>
+        <integration>tests/integration/*.test.tsx</integration>
+        <e2e>tests/e2e/*.spec.ts</e2e>
+      </pattern>
+    </existing-patterns>
+
+    <code-conventions>
+      <convention>TypeScript strict mode</convention>
+      <convention>Single quotes for strings</convention>
+      <convention>No semicolons</convention>
+      <convention>2-space indentation</convention>
+      <convention>Named exports pattern (not default exports)</convention>
+      <convention>Async/await for asynchronous operations</convention>
+      <convention>JSDoc comments for public functions</convention>
+    </code-conventions>
+  </technical-context>
+
+  <implementation-context>
+    <files-to-create>
+      <file path="functions/src/deleteTransactionImages.ts" purpose="Firestore trigger Cloud Function for cascade delete">
+        <description>
+          Creates a Firestore onDelete trigger that fires when a transaction document is deleted.
+          The function reads the userId and transactionId from context.params, then deletes
+          the entire Storage folder at `users/{userId}/receipts/{transactionId}/`.
+        </description>
+        <template><![CDATA[import * as functions from 'firebase-functions'
+import * as admin from 'firebase-admin'
+
+/**
+ * Firestore trigger that deletes associated images when a transaction is deleted.
+ * This ensures cascade delete of Storage images to prevent orphaned files.
+ */
+export const deleteTransactionImages = functions.firestore
+  .document('artifacts/{appId}/users/{userId}/transactions/{transactionId}')
+  .onDelete(async (snapshot, context) => {
+    const { userId, transactionId } = context.params
+
+    try {
+      await deleteStorageFolder(`users/${userId}/receipts/${transactionId}`)
+      console.log(`Deleted images for transaction ${transactionId} (user: ${userId})`)
+    } catch (error) {
+      // Log error but don't throw - transaction already deleted
+      console.error(`Failed to delete images for ${transactionId}:`, error)
+    }
+  })
+
+/**
+ * Delete all files in a Storage folder
+ */
+async function deleteStorageFolder(folderPath: string): Promise<void> {
+  const bucket = admin.storage().bucket()
+  const [files] = await bucket.getFiles({ prefix: folderPath })
+
+  if (files.length === 0) {
+    console.log(`No files found at ${folderPath}`)
+    return
+  }
+
+  await Promise.all(files.map(file => file.delete()))
+  console.log(`Deleted ${files.length} files from ${folderPath}`)
+}]]></template>
+      </file>
+      <file path="tests/integration/cascade-delete.test.tsx" purpose="Integration tests for cascade delete">
+        <description>
+          Tests that verify images are automatically deleted when a transaction is deleted.
+          Uses Firebase emulators (Firestore + Storage) for testing.
+        </description>
+      </file>
+      <file path="docs/architecture/ADR-009-image-storage.md" purpose="Architecture Decision Record for image storage">
+        <description>
+          Documents the key architectural decisions for Epic 4.5:
+          - Why Firebase Storage vs alternatives (S3, Cloudinary)
+          - Why server-side image processing (Cloud Function) vs client-side
+          - Why Firestore trigger for cascade delete vs client-side delete
+          - Image compression strategy rationale
+          - Storage path structure decisions
+        </description>
+      </file>
+    </files-to-create>
+
+    <files-to-modify>
+      <file path="functions/src/index.ts" purpose="Export the new deleteTransactionImages function">
+        <current-content><![CDATA[export { analyzeReceipt } from './analyzeReceipt']]></current-content>
+        <required-change>Add export for deleteTransactionImages</required-change>
+      </file>
+      <file path="functions/src/storageService.ts" purpose="Add deleteFolder utility (created in Story 4.5-2)">
+        <description>
+          The deleteStorageFolder function may be moved to storageService.ts for reuse,
+          or kept inline in deleteTransactionImages.ts if simpler.
+        </description>
+      </file>
+      <file path="docs/index.md" purpose="Add Epic 4.5 section">
+        <required-change>
+          Add Epic 4.5: Receipt Image Storage section with links to all 4 stories.
+          Update documentation version number.
+          Update "Last Updated" date.
+        </required-change>
+      </file>
+      <file path="docs/architecture/architecture.md" purpose="Add ADR-009 reference and Storage security section">
+        <required-change>
+          Add ADR-009 to the list of ADRs.
+          Update Security Architecture section to include Storage rules.
+        </required-change>
+      </file>
+      <file path="docs/architecture/data-models.md" purpose="Document new Transaction fields">
+        <required-change>
+          Add imageUrls?: string[] and thumbnailUrl?: string fields to Transaction interface documentation.
+          Note these are optional for backward compatibility.
+        </required-change>
+      </file>
+    </files-to-modify>
+
+    <dependencies-on-previous-stories>
+      <dependency story="4.5-1" title="Firebase Storage Infrastructure">
+        <provides>Storage emulator configured, storage.rules deployed, Storage client SDK initialized</provides>
+        <required-for>Testing cascade delete with emulators</required-for>
+      </dependency>
+      <dependency story="4.5-2" title="Cloud Function Image Processing">
+        <provides>storageService.ts with upload functions, sharp image processing</provides>
+        <required-for>deleteFolder function may be added to storageService.ts</required-for>
+      </dependency>
+      <dependency story="4.5-3" title="Client Updates &amp; UI">
+        <provides>Updated Transaction interface with imageUrls/thumbnailUrl, client uses new fields</provides>
+        <required-for>End-to-end testing of cascade delete flow</required-for>
+      </dependency>
+    </dependencies-on-previous-stories>
+  </implementation-context>
+
+  <testing-context>
+    <test-framework>
+      <unit>Vitest 4.0.13</unit>
+      <integration>Vitest + Firebase Emulators</integration>
+      <e2e>Playwright 1.56.1</e2e>
+    </test-framework>
+
+    <emulator-setup>
+      <command>npm run emulators</command>
+      <ports>
+        <port service="auth">9099</port>
+        <port service="firestore">8080</port>
+        <port service="storage">9199</port>
+        <port service="functions">5001</port>
+      </ports>
+    </emulator-setup>
+
+    <test-scenarios>
+      <scenario id="1" title="Cascade Delete Happy Path">
+        <setup>Create transaction with images in Storage emulator</setup>
+        <action>Delete the transaction document</action>
+        <verify>Storage folder is empty (no files remain)</verify>
+      </scenario>
+      <scenario id="2" title="Delete Transaction Without Images">
+        <setup>Create transaction without imageUrls (backward compatibility)</setup>
+        <action>Delete the transaction document</action>
+        <verify>No errors thrown, transaction deleted successfully</verify>
+      </scenario>
+      <scenario id="3" title="Multiple Images Deleted">
+        <setup>Create transaction with 3 images + thumbnail (4 files total)</setup>
+        <action>Delete the transaction document</action>
+        <verify>All 4 files deleted from Storage</verify>
+      </scenario>
+      <scenario id="4" title="Storage Folder Already Deleted">
+        <setup>Create transaction, manually delete Storage folder</setup>
+        <action>Delete the transaction document</action>
+        <verify>Trigger handles gracefully (no errors), transaction deleted</verify>
+      </scenario>
+    </test-scenarios>
+
+    <existing-test-patterns>
+      <pattern name="Firebase Emulator Setup" file="tests/setup/firebase-emulator.ts">
+        <exports>setupFirebaseEmulator, clearFirestoreData, teardownFirebaseEmulator, getAuthedFirestore, TEST_USERS</exports>
+      </pattern>
+      <pattern name="Test Structure" file="tests/integration/crud-operations.test.tsx">
+        <description>Follow beforeAll/beforeEach/afterEach/afterAll pattern with clearFirestoreData</description>
+      </pattern>
+    </existing-test-patterns>
+  </testing-context>
+
+  <documentation-updates>
+    <update target="docs/index.md">
+      <section>Epic 4.5: Receipt Image Storage</section>
+      <content>
+        Add new section after Epic 4 with:
+        - Story 4.5-1: Firebase Storage Infrastructure
+        - Story 4.5-2: Cloud Function Image Processing
+        - Story 4.5-3: Client Updates &amp; UI
+        - Story 4.5-4: Cascade Delete &amp; Documentation
+      </content>
+    </update>
+
+    <update target="docs/architecture/architecture.md">
+      <section>ADR-009: Image Storage Architecture</section>
+      <content>
+        Document decisions:
+        - Firebase Storage for image hosting (vs S3, Cloudinary)
+        - Server-side image processing in Cloud Function (vs client-side)
+        - Firestore onDelete trigger for cascade delete (vs client-side delete)
+        - sharp library for image processing
+        - User-scoped Storage paths for security
+      </content>
+    </update>
+
+    <update target="docs/architecture/data-models.md">
+      <section>Transaction Document Schema</section>
+      <content>
+        Add new optional fields:
+        - imageUrls?: string[] - Array of full-size image download URLs
+        - thumbnailUrl?: string - Thumbnail image download URL
+        Note backward compatibility with existing transactions.
+      </content>
+    </update>
+  </documentation-updates>
+
+  <key-code-references>
+    <reference file="functions/src/index.ts" line="6-7" purpose="Export pattern for Cloud Functions" />
+    <reference file="functions/src/analyzeReceipt.ts" line="129-234" purpose="Cloud Function structure pattern" />
+    <reference file="src/services/firestore.ts" line="39-47" purpose="deleteTransaction function that triggers cascade" />
+    <reference file="src/types/transaction.ts" line="14-24" purpose="Transaction interface to extend" />
+    <reference file="tests/integration/crud-operations.test.tsx" line="209-234" purpose="Delete transaction test pattern" />
+  </key-code-references>
+
+  <constraints>
+    <constraint type="backward-compatibility">
+      Existing transactions without imageUrls must continue to work.
+      The cascade delete trigger must handle missing Storage folders gracefully.
+    </constraint>
+    <constraint type="error-handling">
+      Storage deletion failures should be logged but not throw errors.
+      The transaction is already deleted - we can't reverse that.
+      Orphaned images are acceptable (cleanup job can be added later).
+    </constraint>
+    <constraint type="security">
+      The Cloud Function runs with admin privileges.
+      It validates userId from the document path, not from user input.
+      No user-provided data is used to construct Storage paths.
+    </constraint>
+    <constraint type="emulator-testing">
+      All tests must use Firebase emulators (Storage + Firestore + Functions).
+      Tests must clear data between runs for isolation.
+    </constraint>
+  </constraints>
+
+  <definition-of-done>
+    <item>deleteTransactionImages Cloud Function deployed and working</item>
+    <item>Integration tests pass for cascade delete scenarios</item>
+    <item>ADR-009 documents image storage architecture decisions</item>
+    <item>docs/index.md updated with Epic 4.5 section</item>
+    <item>architecture.md updated with Storage security and ADR-009 reference</item>
+    <item>data-models.md updated with new Transaction fields</item>
+    <item>All existing tests continue to pass</item>
+    <item>No console errors in cascade delete flow</item>
+  </definition-of-done>
+</story-context>

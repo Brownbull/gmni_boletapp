@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "deploy": "npm run build && firebase deploy --only hosting",
-    "emulators": "firebase emulators:start --only auth,firestore --project boletapp-d609f --import=./emulator-data --export-on-exit=./emulator-data",
+    "emulators": "firebase emulators:start --only auth,firestore,storage --project boletapp-d609f --import=./emulator-data --export-on-exit=./emulator-data",
     "emulators:docker": "docker-compose up -d",
     "emulators:docker:stop": "docker-compose down",
     "emulators:docker:logs": "docker-compose logs -f firebase-emulators",
