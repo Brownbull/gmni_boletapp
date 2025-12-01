@@ -1,0 +1,38 @@
+# Pre-commit hook: Scan staged files for secrets
+# Story 4.1: Secrets Detection & Prevention
+#
+# This hook runs gitleaks in "protect" mode to scan only staged files
+# before allowing a commit. If secrets are detected, the commit is blocked.
+#
+# To bypass this hook (NOT RECOMMENDED): git commit --no-verify
+#
+# To install gitleaks locally:
+#   macOS: brew install gitleaks
+#   Linux: wget https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz
+
+# Add ~/.local/bin to PATH for user-installed gitleaks
+export PATH="$HOME/.local/bin:$PATH"
+
+# Check if gitleaks is installed
+if ! command -v gitleaks &> /dev/null; then
+    echo "WARNING: gitleaks is not installed. Skipping secrets scan."
+    echo "Install gitleaks to enable pre-commit secrets detection:"
+    echo "  macOS: brew install gitleaks"
+    echo "  Linux: See docs/security/secrets-scan-report.md"
+    exit 0
+fi
+
+# Run gitleaks on staged files only
+echo "Scanning staged files for secrets..."
+gitleaks protect --staged --config .gitleaks.toml --verbose
+
+# Exit with gitleaks exit code
+exit_code=$?
+if [ $exit_code -ne 0 ]; then
+    echo ""
+    echo "COMMIT BLOCKED: Potential secrets detected in staged files."
+    echo "Please remove secrets before committing."
+    echo ""
+    echo "To bypass this check (NOT RECOMMENDED): git commit --no-verify"
+fi
+exit $exit_code

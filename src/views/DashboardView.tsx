@@ -63,6 +63,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <button
                     onClick={onCreateNew}
                     className="bg-blue-600 text-white p-2 rounded-full shadow"
+                    aria-label={t('newTrans')}
                 >
                     <Plus />
                 </button>
@@ -73,7 +74,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     onClick={() => onViewTrends(null)}
                     className="bg-blue-600 text-white p-5 rounded-2xl shadow cursor-pointer"
                 >
-                    <div className="text-sm opacity-80 mb-1">{t('totalSpent')}</div>
+                    <div className="text-sm text-white mb-1">{t('totalSpent')}</div>
                     <div className="text-2xl font-bold">{formatCurrency(totalSpent, currency)}</div>
                 </div>
                 <div

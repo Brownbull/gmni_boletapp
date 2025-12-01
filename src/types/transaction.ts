@@ -19,6 +19,22 @@ export interface Transaction {
     category: StoreCategory;
     total: number;
     items: TransactionItem[];
+    imageUrls?: string[];
+    thumbnailUrl?: string;
     createdAt?: any;
     updatedAt?: any;
+}
+
+/**
+ * Type guard to check if a transaction has images
+ */
+export function hasTransactionImages(transaction: Transaction): boolean {
+    return Boolean(transaction.imageUrls && transaction.imageUrls.length > 0)
+}
+
+/**
+ * Type guard to check if a transaction has a thumbnail
+ */
+export function hasTransactionThumbnail(transaction: Transaction): boolean {
+    return Boolean(transaction.thumbnailUrl)
 }

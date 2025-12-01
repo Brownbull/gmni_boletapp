@@ -1,6 +1,6 @@
 # Running Boletapp Locally - Quick Start Guide
 
-**Last Updated:** 2025-11-22
+**Last Updated:** 2025-11-26 (Post-Epic 3)
 **Purpose:** Complete guide to run the app locally with test data for development and testing
 
 ---
@@ -295,6 +295,63 @@ xdg-open coverage/index.html  # Linux
 start coverage/index.html  # Windows
 ```
 
+**Coverage Thresholds (Epic 3):**
+- Lines: 45%
+- Branches: 30%
+- Functions: 25%
+- Statements: 40%
+
+Tests will fail if coverage drops below these thresholds.
+
+---
+
+### Run Accessibility Tests (Epic 3)
+
+```bash
+npm run test:accessibility
+```
+
+**What this does:**
+- Runs 16 E2E accessibility tests using @axe-core/playwright
+- Tests WCAG 2.1 Level AA compliance on all 6 major views
+- Validates keyboard navigation and ARIA labels
+- Requires Firebase emulator running for authenticated tests
+
+**Prerequisite:** Create test user for authenticated views:
+```bash
+npm run emulators  # In terminal 1
+npm run test:create-user  # In terminal 2 (one-time setup)
+```
+
+---
+
+### Run Lighthouse Performance Audits (Epic 3)
+
+```bash
+npm run test:lighthouse
+```
+
+**What this does:**
+- Runs Lighthouse CI audits on Login + 5 authenticated views
+- Measures Performance, Accessibility, Best Practices, SEO scores
+- Generates HTML reports in `lighthouse-reports/`
+
+**Note:** Lighthouse tests run in "warn" mode - they report but don't fail CI.
+
+---
+
+### Check Bundle Size (Epic 3)
+
+```bash
+npm run build && npm run check:bundle
+```
+
+**What this does:**
+- Builds production bundle
+- Checks if bundle size exceeds 700KB threshold
+- Current baseline: ~637KB
+- Warns (but doesn't fail) if threshold exceeded
+
 ---
 
 ## Common Development Tasks
@@ -499,8 +556,11 @@ boletapp/
 │   ├── e2e/            # Playwright E2E tests
 │   └── setup/          # Test configuration
 ├── scripts/             # Utility scripts
-│   ├── reset-test-data.ts  # Reset emulator data
-│   └── view-emulator-data.ts  # View emulator data
+│   ├── reset-test-data.ts    # Reset emulator data
+│   ├── view-emulator-data.ts # View emulator data
+│   ├── create-test-user.ts   # Create test user for E2E auth (Epic 3)
+│   ├── check-bundle-size.sh  # Bundle size threshold checker (Epic 3)
+│   └── lighthouse-auth.js    # Lighthouse auth helper (Epic 3)
 ├── docs/                # Documentation
 ├── public/              # Static assets
 ├── dist/                # Production build output (generated)
@@ -510,6 +570,8 @@ boletapp/
 ├── playwright.config.ts # Playwright E2E configuration
 ├── firebase.json        # Firebase Hosting + Emulator config
 ├── firestore.rules      # Firestore security rules
+├── lighthouserc.json    # Lighthouse CI configuration (Epic 3)
+├── CONTRIBUTING.md      # Contribution guidelines with coverage requirements (Epic 3)
 └── package.json         # Dependencies and scripts
 ```
 
@@ -527,9 +589,14 @@ boletapp/
 | `npm run test` | `vitest` | Interactive test mode (watch) |
 | `npm run test:unit` | `vitest run tests/unit` | Run unit tests |
 | `npm run test:integration` | `vitest run tests/integration` | Run integration tests |
-| `npm run test:e2e` | `playwright test` | Run E2E tests |
+| `npm run test:e2e` | `playwright test` | Run E2E tests (28 tests) |
 | `npm run test:all` | Sequential all tests | Run all test suites |
-| `npm run test:coverage` | `vitest run --coverage` | Generate coverage report |
+| `npm run test:coverage` | `vitest run --coverage` | Generate coverage report with thresholds |
+| **Quality Gates (Epic 3)** |||
+| `npm run test:lighthouse` | `playwright test tests/e2e/lighthouse.spec.ts` | Run Lighthouse performance audits |
+| `npm run test:accessibility` | `playwright test tests/e2e/accessibility.spec.ts` | Run accessibility tests (16 tests) |
+| `npm run test:create-user` | `tsx scripts/create-test-user.ts` | Create test user for E2E auth |
+| `npm run check:bundle` | `scripts/check-bundle-size.sh` | Check bundle size (<700KB threshold) |
 | **Emulator** |||
 | `npm run emulators` | `firebase emulators:start` | Start Firebase emulator |
 | `npm run test:reset-data` | `tsx scripts/reset-test-data.ts` | Reset test data |
@@ -544,22 +611,26 @@ boletapp/
 
 After getting the app running locally:
 
-1. **Explore the codebase:** Read [docs/architecture.md](docs/architecture.md) for system overview
+1. **Explore the codebase:** Read [docs/architecture/architecture.md](docs/architecture/architecture.md) for system overview
 2. **Run tests:** Verify everything works with `npm run test:all`
 3. **Read test strategy:** See [docs/testing/testing-guide.md](docs/testing/testing-guide.md) for writing tests
 4. **Check documentation:** Browse [docs/index.md](docs/index.md) for complete doc index
-5. **Start developing:** Pick a story from [docs/planning/epics.md](docs/planning/epics.md)
+5. **Read contribution guidelines:** See [CONTRIBUTING.md](CONTRIBUTING.md) for coverage requirements
+6. **Start developing:** Pick a story from [docs/planning/epics.md](docs/planning/epics.md)
 
 ---
 
 ## Additional Resources
 
-- **Architecture Documentation:** [docs/architecture.md](docs/architecture.md)
-- **Development Guide:** [docs/development-guide.md](docs/development-guide.md)
+- **Architecture Documentation:** [docs/architecture/architecture.md](docs/architecture/architecture.md)
+- **Development Guide:** [docs/development/development-guide.md](docs/development/development-guide.md)
 - **Testing Guide:** [docs/testing/testing-guide.md](docs/testing/testing-guide.md)
 - **Test Environment Setup:** [docs/testing/test-environment.md](docs/testing/test-environment.md)
-- **Deployment Guide:** [docs/deployment-guide.md](docs/deployment-guide.md)
-- **Component Inventory:** [docs/component-inventory.md](docs/component-inventory.md)
+- **Deployment Guide:** [docs/development/deployment-guide.md](docs/development/deployment-guide.md)
+- **Component Inventory:** [docs/development/component-inventory.md](docs/development/component-inventory.md)
+- **CI/CD Pipeline:** [docs/ci-cd/README.md](docs/ci-cd/README.md)
+- **Performance Baselines:** [docs/performance/performance-baselines.md](docs/performance/performance-baselines.md) (Epic 3)
+- **Contribution Guidelines:** [CONTRIBUTING.md](CONTRIBUTING.md) (Epic 3)
 
 **Live Production App:** https://boletapp-d609f.web.app
 

@@ -1,7 +1,7 @@
 # Testing Guide - Boletapp
 
-**Version:** 1.0
-**Last Updated:** 2025-11-22 (Epic 2, Story 2.3)
+**Version:** 2.0
+**Last Updated:** 2025-11-26 (Epic 3 Complete)
 **Status:** Active
 
 ## Overview
@@ -11,6 +11,8 @@ This guide covers testing patterns and best practices for Boletapp's three-tier 
 1. **Unit Tests** (Vitest) - Test pure functions and isolated components
 2. **Integration Tests** (React Testing Library) - Test component interactions
 3. **E2E Tests** (Playwright) - Test complete user workflows
+4. **Accessibility Tests** (axe-core/Playwright) - Test WCAG 2.1 Level AA compliance (Epic 3)
+5. **Performance Tests** (Lighthouse CI) - Test performance baselines (Epic 3)
 
 ## Testing Framework Stack
 
@@ -20,6 +22,8 @@ This guide covers testing patterns and best practices for Boletapp's three-tier 
 | **React Testing Library** | Integration tests | `tests/integration/` |
 | **Playwright** | E2E tests | `tests/e2e/` |
 | **@firebase/rules-unit-testing** | Security rules tests | `tests/integration/` |
+| **@axe-core/playwright** | Accessibility tests | `tests/e2e/accessibility.spec.ts` |
+| **playwright-lighthouse** | Performance tests | `tests/e2e/lighthouse.spec.ts` |
 
 ## Quick Start
 
@@ -60,6 +64,12 @@ npm test
 
 # Run tests with coverage report
 npm run test:coverage
+
+# Run accessibility tests (Epic 3)
+npm run test:accessibility
+
+# Run Lighthouse performance tests (Epic 3)
+npm run test:lighthouse
 ```
 
 ## Writing Unit Tests
@@ -246,6 +256,104 @@ test('should scan receipt and create transaction', async ({ page }) => {
 - **Take screenshots on failure** - Configured automatically in playwright.config.ts
 - **Test critical paths only** - E2E tests are slow, focus on HIGH risk workflows
 
+## Writing Accessibility Tests (Epic 3)
+
+Accessibility tests verify WCAG 2.1 Level AA compliance using automated axe-core scans.
+
+### Location
+`tests/e2e/accessibility.spec.ts`
+
+### Example: Testing View Accessibility
+
+```typescript
+// tests/e2e/accessibility.spec.ts
+import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+
+test('Dashboard view should have no critical/serious accessibility violations', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+
+  // Authenticate via test login button
+  await page.getByTestId('test-login-button').click();
+  await page.waitForSelector('text=/Dashboard|Inicio/i', { timeout: 10000 });
+
+  // Run axe scan
+  const accessibilityScanResults = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa'])
+    .analyze();
+
+  const critical = accessibilityScanResults.violations.filter(v => v.impact === 'critical');
+  const serious = accessibilityScanResults.violations.filter(v => v.impact === 'serious');
+
+  expect(critical).toEqual([]);
+  expect(serious).toEqual([]);
+});
+```
+
+### Test User Setup for Authenticated Tests
+
+Create a test user in the Firebase Auth emulator:
+
+```bash
+npm run emulators  # Terminal 1
+npm run test:create-user  # Terminal 2 (one-time setup)
+```
+
+This creates a test user (`khujta@gmail.com` / `password.123`) that the test login button uses.
+
+### Best Practices
+
+- **Test all major views** - Login, Dashboard, Scan, History, Trends, Settings
+- **Focus on critical/serious violations** - Minor violations can be informational
+- **Include keyboard navigation tests** - Ensure all interactive elements are accessible
+- **Check ARIA labels** - All buttons, inputs, and interactive elements need labels
+- **Test both languages** - App supports English and Spanish
+
+## Writing Performance Tests (Epic 3)
+
+Performance tests use Lighthouse CI to establish and monitor performance baselines.
+
+### Location
+`tests/e2e/lighthouse.spec.ts`
+
+### Example: Testing View Performance
+
+```typescript
+// tests/e2e/lighthouse.spec.ts
+import { test, expect } from '@playwright/test';
+import { playAudit } from 'playwright-lighthouse';
+
+test('Dashboard view should meet performance thresholds', async ({ page }) => {
+  await page.goto('/');
+
+  // Authenticate first
+  await page.getByTestId('test-login-button').click();
+  await page.waitForSelector('text=/Dashboard|Inicio/i');
+
+  // Run Lighthouse audit
+  const report = await playAudit({
+    page,
+    thresholds: {
+      performance: 50,
+      accessibility: 80,
+      'best-practices': 80,
+      seo: 70,
+    },
+    port: 9222,
+  });
+
+  expect(report.lhr.categories.performance.score * 100).toBeGreaterThanOrEqual(50);
+});
+```
+
+### Best Practices
+
+- **Use warn mode in CI** - Performance can vary, don't fail CI on minor drops
+- **Track baselines over time** - Document baseline scores in [docs/performance/performance-baselines.md](../performance/performance-baselines.md)
+- **Test on consistent hardware** - CI provides consistent environment
+- **Focus on critical views** - Login, Dashboard, Scan are most important
+
 ## Testing with Firebase Emulators
 
 ### Setup
@@ -325,6 +433,21 @@ This generates:
 - **HTML report** - Open `coverage/index.html` in a browser
 - **JSON report** - `coverage/coverage-final.json` for CI tools
 
+### Coverage Thresholds (Epic 3)
+
+Coverage thresholds are enforced in CI via `vite.config.ts`:
+
+| Metric | Threshold | Current |
+|--------|-----------|---------|
+| **Lines** | 45% | ~51% |
+| **Branches** | 30% | ~38% |
+| **Functions** | 25% | ~30% |
+| **Statements** | 40% | ~46% |
+
+**Note:** Coverage below thresholds will cause CI to fail.
+
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for full coverage requirements.
+
 ### Coverage Goals
 
 | Category | Target | Priority |
@@ -392,7 +515,8 @@ After reading this guide:
 2. ✅ Run all tests to verify setup: `npm run test:all`
 3. ✅ Read [Test Environment Guide](./test-environment.md) for test user management
 4. ✅ Read [Test Strategy & Risk Register](./test-strategy.md) for test prioritization
-5. ✅ Start writing tests for your features!
+5. ✅ Review [CONTRIBUTING.md](../../CONTRIBUTING.md) for coverage requirements
+6. ✅ Start writing tests for your features!
 
 ---
 
@@ -401,6 +525,10 @@ After reading this guide:
 - [Test Strategy & Risk Register](./test-strategy.md) - Risk analysis and test prioritization
 - [Architecture Document](../architecture/architecture.md) - System architecture
 - [Development Guide](../development/development-guide.md) - Development setup
+- [Performance Baselines](../performance/performance-baselines.md) - Lighthouse baselines (Epic 3)
+- [CONTRIBUTING.md](../../CONTRIBUTING.md) - Coverage requirements (Epic 3)
+- [CI/CD Pipeline](../ci-cd/README.md) - Automated testing workflow
 
 **Version History:**
+- 2.0 (2025-11-26) - Added accessibility testing, performance testing, coverage thresholds (Epic 3)
 - 1.0 (2025-11-22) - Initial version (Epic 2, Story 2.3)
