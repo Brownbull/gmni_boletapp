@@ -117,6 +117,15 @@ Scenario modeling at 10K, 25K, 50K, 100K users with multiple price points
 
 ---
 
+## Integrations Documentation
+
+**Location:** [`integrations/`](./integrations/)
+
+### [Gemini API Notes](./integrations/gemini-api-notes.md)
+Known behaviors, edge cases, and workarounds for Google Gemini API integration. Includes prompt engineering tips, error handling, and testing guidance.
+
+---
+
 ## Security Documentation
 
 **Location:** [`security/`](./security/)
@@ -385,6 +394,7 @@ Epic 3 focused on **production-grade quality and testing completion**. Key deliv
 | **Performance baselines** | [Performance Baselines](./performance/performance-baselines.md) |
 | **Security overview** | [Security README](./security/README.md) |
 | **OWASP checklist** | [OWASP Checklist](./security/owasp-checklist.md) |
+| **Gemini API notes** | [Gemini API Notes](./integrations/gemini-api-notes.md) |
 | **Pricing model** | [Pricing Model](./business/pricing-model.md) |
 | **Cost analysis** | [Cost Analysis](./business/cost-analysis.md) |
 | **Contribution guidelines** | [CONTRIBUTING.md](../CONTRIBUTING.md) |
