@@ -1,6 +1,6 @@
 # Boletapp Epic Workflow Guide
 
-**Last Updated:** 2025-11-29 (Post-Epic 4 Retrospective)
+**Last Updated:** 2025-12-02 (Post-Epic 4.5 Retrospective)
 **Framework:** BMad Method Module (BMM)
 
 ---
@@ -70,32 +70,44 @@ product-brief → research → prd → create-ux-design → architecture → tec
 
 ---
 
-### NEXT: Epic 4.5 - Receipt Image Storage (Infrastructure Epic)
+### COMPLETED: Epic 4.5 - Receipt Image Storage (Infrastructure Epic) ✅
 
 **Type:** Infrastructure (backend focus, minimal UI changes)
+**Completed:** 2025-12-02
+**Deployed:** https://boletapp-d609f.web.app
 
-| Step | Command | Output | Notes |
-|------|---------|--------|-------|
-| 1 | `/bmad:bmm:workflows:tech-spec` | Tech spec with stories | Firebase Storage, Cloud Function updates |
-| 2 | `/bmad:bmm:workflows:create-story` | Story files | ~3-4 stories expected |
-| 3 | `/bmad:bmm:workflows:story-ready` | Mark ready | |
-| 4 | `/bmad:bmm:workflows:dev-story` | Implementation | |
-| 5 | `/bmad:bmm:workflows:code-review` | Review | |
-| 6 | `/bmad:bmm:workflows:story-done` | Complete | |
-| 7 | Repeat 2-6 | Per story | |
-| 8 | `/bmad:bmm:workflows:retrospective` | Retrospective | |
+| Step | Command | Output | Status |
+|------|---------|--------|--------|
+| 1 | `/bmad:bmm:workflows:tech-spec` | Tech spec with 4 stories | ✅ Done |
+| 2-6 | Story cycle | 4.5-1: Firebase Storage Infrastructure (3 pts) | ✅ Done |
+| 2-6 | Story cycle | 4.5-2: Cloud Function Image Processing (5 pts) | ✅ Done |
+| 2-6 | Story cycle | 4.5-3: Client Updates & UI (3 pts) | ✅ Done |
+| 2-6 | Story cycle | 4.5-4: Cascade Delete & Documentation (2 pts) | ✅ Done |
+| 7 | `/bmad:bmm:workflows:retrospective` | Epic 4.5 retrospective | ✅ Done |
 
-**Key Decisions (from Epic 4 Retro):**
-- Scan = Image Storage (unified operation)
-- Cloud Function compression
-- 2-month rolling retention (Free tier)
-- 12/24-month rolling (paid tiers)
+**Deliverables:**
+- Firebase Storage with user-scoped security rules
+- Cloud Functions: `analyzeReceipt` (updated), `onTransactionDeleted` (new)
+- ImageViewer component with accessibility support
+- Thumbnail display in HistoryView
+- Cascade delete trigger for data integrity
+
+**Key Learnings (from Retrospective):**
+- Testing infrastructure is a force multiplier
+- Deployment process needs explicit documentation in stories
+- CI pipeline improvements compound over time
+- "Absorbing failures and transforming them into resilience"
+
+**Action Items Created:**
+1. Add deployment checklist to story template
+2. Document Gemini API quirks
 
 ---
 
-### PLANNED: Epic 5 - Enhanced Data Export (Feature Epic)
+### NEXT: Epic 5 - Enhanced Data Export (Feature Epic)
 
 **Type:** Feature (user-facing, includes image export)
+**Prerequisites:** Epic 4.5 complete ✅ (image export capability enabled)
 
 | Step | Command | Output | Team |
 |------|---------|--------|------|
@@ -111,7 +123,7 @@ product-brief → research → prd → create-ux-design → architecture → tec
 **Scope:**
 - Aggregation levels: Yearly, Quarterly, Monthly, Weekly, Daily
 - Export formats: Excel (.xlsx with tabs), CSV per level
-- Image export (depends on Epic 4.5)
+- Image export (enabled by Epic 4.5 - imageUrls/thumbnailUrl in Transaction interface)
 
 ---
 
