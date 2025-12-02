@@ -761,5 +761,299 @@ AC #8: Epic 3 evolution document updated with Story 3.7 completion
 ---
 
 *Updated with Epic 3: Production-Grade Quality & Testing Completion*
-*Total Epics: 3*
-*Total Stories: 18*
+
+---
+
+## Epic 4: Security Hardening & Penetration Testing
+
+**Slug:** security-hardening
+
+### Goal
+
+Harden the application security posture through comprehensive security scanning, penetration testing, and vulnerability remediation. Ensure the application is secure before adding feature-driven epics that handle sensitive data (subscriptions, payments, user preferences).
+
+### Scope
+
+**In Scope:**
+- Dependency security audit (npm audit, vulnerable package updates)
+- Firebase Security Rules penetration testing (Firestore rules, tenant isolation verification)
+- OWASP Top 10 validation (XSS, CSRF, injection, auth/session review)
+- API security testing (API key exposure, rate limiting)
+- Static code analysis (eslint-plugin-security, secrets detection)
+- CI/CD security integration (automated security scanning in pipeline)
+
+**Out of Scope:**
+- External professional penetration testing (may be considered later)
+- SOC 2 / ISO 27001 compliance (enterprise-grade, not MVP)
+- Advanced threat modeling (deferred to enterprise scale)
+- Bug bounty program (requires user base first)
+
+### Success Criteria
+
+1. ✅ Zero HIGH or CRITICAL vulnerabilities in npm audit
+2. ✅ Firebase Security Rules pass all penetration tests
+3. ✅ No secrets or API keys exposed in source code
+4. ✅ OWASP Top 10 checklist validated
+5. ✅ Security scanning integrated into CI/CD pipeline
+6. ✅ Security documentation created (findings, remediations, ongoing practices)
+
+### Dependencies
+
+**External:**
+- OWASP ZAP or similar security scanning tool
+- eslint-plugin-security
+- Firebase Security Rules testing framework
+
+**Internal:**
+- Epic 3 completed ✅ (production-grade quality baseline)
+- CI/CD pipeline operational ✅
+
+---
+
+## Epic 5: Enhanced Data Export
+
+**Slug:** enhanced-data-export
+
+### Goal
+
+Provide users with comprehensive data export capabilities including multi-level time aggregation and multiple export formats. Enable users to extract their financial data at various granularities for personal analysis, tax preparation, or external tool integration.
+
+### Scope
+
+**In Scope:**
+
+**Aggregation Levels:**
+- Yearly aggregation (annual summaries)
+- Quarterly aggregation (Q1, Q2, Q3, Q4)
+- Monthly aggregation (existing, enhanced)
+- Weekly aggregation (week-by-week breakdown)
+- Daily aggregation (day-by-day details)
+
+**Export Formats:**
+- Excel file (.xlsx) with tabs per aggregation level
+- Individual CSV downloads per aggregation level
+- UI options to select export granularity and date range
+
+**Out of Scope:**
+- Hourly aggregation (not useful for expense tracking)
+- PDF report generation (deferred)
+- Automated scheduled exports (deferred)
+- Cloud storage integration (Google Drive, Dropbox)
+- Email delivery of exports
+
+### Success Criteria
+
+1. ✅ Users can export data at 5 aggregation levels (yearly, quarterly, monthly, weekly, daily)
+2. ✅ Excel export generates file with separate tabs per selected level
+3. ✅ CSV export allows individual file downloads per level
+4. ✅ UI provides clear selection for export format and date range
+5. ✅ Export data matches displayed analytics data exactly
+6. ✅ Large exports (1000+ transactions) complete without timeout
+
+### Dependencies
+
+**External:**
+- Excel generation library (xlsx, exceljs, or similar)
+
+**Internal:**
+- Epic 4 completed (security hardened before data export features)
+
+---
+
+## Epic 6: Smart Category Learning
+
+**Slug:** smart-category-learning
+
+### Goal
+
+Implement AI-assisted category learning that remembers user category corrections and automatically applies learned categories to future similar items. Reduce manual categorization effort while maintaining user control over classifications.
+
+### Scope
+
+**In Scope:**
+
+**Core Functionality:**
+- User category overrides are remembered per user
+- Future receipts with similar items auto-apply learned categories
+- AI-assisted but user-correctable classification system
+- Fuzzy matching for item similarity detection
+
+**Technical Components:**
+- New Firestore collection for category mappings (`user_category_mappings`)
+- Fuzzy matching logic for item similarity (item name, vendor patterns)
+- Integration into receipt scanning flow (apply learned categories)
+- UI for managing learned categories (view, edit, delete mappings)
+
+**Out of Scope:**
+- Cross-user category learning (privacy concern)
+- Category suggestions based on transaction amount
+- Machine learning model training (use rule-based fuzzy matching)
+- Category hierarchy or sub-categories
+
+### Success Criteria
+
+1. ✅ User category corrections persist in Firestore
+2. ✅ Subsequent similar items receive learned category automatically
+3. ✅ Users can view and manage their learned category mappings
+4. ✅ Fuzzy matching detects similar items (e.g., "Uber" matches "UBER EATS", "Uber Trip")
+5. ✅ Learning is per-user (no cross-user data sharing)
+6. ✅ Users can override AI suggestions at any time
+
+### Dependencies
+
+**External:**
+- Fuzzy matching library (fuse.js, string-similarity, or similar)
+
+**Internal:**
+- Epic 4 completed (security hardened)
+- Epic 5 completed (export features ensure data portability)
+
+---
+
+## Epic 7: Subscription & Monetization
+
+**Slug:** subscription-monetization
+
+### Goal
+
+Implement subscription tiers and payment integration to monetize the application. Enable sustainable business model with free tier for basic usage and paid tiers for power users.
+
+### Scope
+
+**In Scope:**
+
+**Subscription Tiers:**
+
+| Tier | Scans/Month | Items/Receipt | Insights Access | Price (CLP) |
+|------|-------------|---------------|-----------------|-------------|
+| **Free** | 20 scans (1/day limit) | 200 items max | Basic | $0 |
+| **Pro** | 100 scans | 200 items max | Pro insights | TBD |
+| **Max** | 1,000 scans | 200 items max | Full insights | TBD |
+
+**Technical Components:**
+- User subscription tier tracking (Firestore `user_subscriptions` collection)
+- Usage metering (scans per day/month, items per receipt)
+- Rate limiting enforcement based on tier
+- Mercado Pago integration for Chile market
+- Tier-gated features (enforce limits, show upgrade prompts)
+- Billing management UI (view plan, change plan, payment history)
+
+**Out of Scope:**
+- Multiple currencies (CLP only for MVP)
+- Annual subscription discounts (monthly only initially)
+- Team/organization subscriptions
+- Refund automation (manual process initially)
+- Invoice generation
+
+### Success Criteria
+
+1. ✅ Three subscription tiers operational (Free, Pro, Max)
+2. ✅ Usage tracking accurately counts scans and items
+3. ✅ Rate limiting enforces tier limits correctly
+4. ✅ Mercado Pago payment flow completes successfully
+5. ✅ Users can upgrade/downgrade subscription tiers
+6. ✅ Free tier users see upgrade prompts when approaching limits
+7. ✅ Payment webhook handles subscription changes reliably
+
+### Dependencies
+
+**External:**
+- Mercado Pago developer account and API keys
+- Mercado Pago SDK for Chile
+
+**Internal:**
+- Epic 4 completed (security hardened before handling payments)
+
+---
+
+## Epic 8: Mobile App
+
+**Slug:** mobile-app
+
+### Goal
+
+Deliver native mobile applications for iOS (App Store) and Android (Play Store) to expand reach and improve user experience for mobile-first users. Enable receipt scanning with device camera integration.
+
+### Scope
+
+**In Scope:**
+
+**Platforms:**
+- Android app → Google Play Store deployment
+- iOS app → Apple App Store deployment
+
+**Core Features:**
+- All existing web app features in mobile format
+- Native camera integration for receipt scanning
+- Push notifications for usage limits and reminders
+- Offline capability for viewing transaction history
+
+**Technical Approach (TBD during planning):**
+- Option A: React Native (code sharing with web)
+- Option B: PWA enhancement (minimal native code)
+- Option C: Capacitor/Ionic (hybrid approach)
+- Option D: Native development (maximum platform integration)
+
+**Out of Scope:**
+- Tablet-optimized layouts (phone-first)
+- Watch apps (Apple Watch, Wear OS)
+- Widget support (iOS/Android home screen widgets)
+- Background sync (manual sync only)
+
+### Success Criteria
+
+1. ✅ Android app published on Google Play Store
+2. ✅ iOS app published on Apple App Store
+3. ✅ Native camera integration works for receipt scanning
+4. ✅ All core features functional on mobile
+5. ✅ App store billing integrated (if required by store policies)
+6. ✅ Mobile-specific UI optimizations implemented
+7. ✅ Push notifications operational
+
+### Dependencies
+
+**External:**
+- Apple Developer account ($99/year)
+- Google Play Developer account ($25 one-time)
+- App Store/Play Store billing integration (if required)
+
+**Internal:**
+- Epic 7 completed (subscription system operational)
+- May need dual payment integration (Mercado Pago web + Store billing mobile)
+
+### Considerations
+
+- App Store / Play Store may require in-app purchase for subscriptions purchased within mobile app
+- Privacy policy and terms of service required for store submissions
+- COPPA compliance review if app could be used by children
+- App signing keys management and secure storage
+
+---
+
+## Epic Dependency Graph
+
+```
+Epic 1: Production Deployment ─────────────────┐
+                                               │
+Epic 2: Testing Infrastructure ────────────────┤
+                                               │
+Epic 3: Production-Grade Quality ──────────────┤
+                                               ▼
+Epic 4: Security Hardening ◄───────────────────┘
+        │
+        ├──────────────────┬─────────────────┐
+        ▼                  ▼                 ▼
+Epic 5: Data Export    Epic 6: Category   Epic 7: Subscription
+        │              Learning               │
+        │                  │                  │
+        └──────────────────┼──────────────────┘
+                           │
+                           ▼
+                    Epic 8: Mobile App
+```
+
+---
+
+*Updated with Epics 4-8 from Epic 3 Retrospective (2025-11-26)*
+*Total Epics: 8*
+*Total Stories: 18 (Epics 1-3), TBD (Epics 4-8)*

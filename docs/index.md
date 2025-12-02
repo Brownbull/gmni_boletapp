@@ -1,6 +1,6 @@
 # Boletapp Documentation Index
 
-**AI-Assisted Development Reference** | **Last Updated:** 2025-11-22 (Post-Epic 2 Story 2.2)
+**AI-Assisted Development Reference** | **Last Updated:** 2025-12-01 (Post-Epic 4.5 Complete)
 
 This is the primary entry point for AI-assisted development of Boletapp, a Smart Expense Tracker PWA.
 
@@ -41,12 +41,14 @@ src/
 
 ## Documentation Organization
 
-Documentation is organized into **5 thematic folders** for easy navigation:
+Documentation is organized into **7 thematic folders** for easy navigation:
 
 ```
 docs/
 ├── architecture/      # System architecture and technical design
+├── business/          # Pricing, costs, revenue projections (NEW - Epic 4 Retro)
 ├── development/       # Developer guides and operational docs
+├── security/          # Security documentation and audit reports (Epic 4)
 ├── testing/           # Test environment and testing guides
 ├── planning/          # Epic planning and technical specs
 ├── reference/         # Quick reference and project scans
@@ -69,7 +71,7 @@ Complete architecture documentation including:
 - Firebase & Gemini API integration
 - Build and deployment process
 - Security model and Firestore rules
-- All 7 ADRs (including ADR-007: Documentation Strategy)
+- All 8 ADRs (including ADR-008: Security Hardening)
 
 ### 2. [API Contracts](./architecture/api-contracts.md)
 Firebase Auth, Firestore CRUD, Gemini AI integration details
@@ -97,6 +99,45 @@ Complete catalog of React components, props, responsibilities
 
 ---
 
+## Business Documentation
+
+**Location:** [`business/`](./business/)
+
+### [Business Overview](./business/README.md)
+Strategic decisions, pricing model, and business documentation index
+
+### [Pricing Model](./business/pricing-model.md)
+4-tier subscription structure (Free/Basic/Pro/Max), feature allocation, retention policies
+
+### [Cost Analysis](./business/cost-analysis.md)
+Detailed breakdown of infrastructure costs (Storage, Gemini API, Cloud Functions, Firestore)
+
+### [Revenue Projections](./business/revenue-projections.md)
+Scenario modeling at 10K, 25K, 50K, 100K users with multiple price points
+
+---
+
+## Security Documentation
+
+**Location:** [`security/`](./security/)
+
+### [Security Overview](./security/README.md)
+Security practices, tools, and guidelines for developers
+
+### [OWASP Top 10 Checklist](./security/owasp-checklist.md)
+Validation against OWASP Top 10 (2021) security categories with evidence
+
+### [Security Audit Report](./security/audit-report.md)
+Epic 4 security audit findings and improvements
+
+### [Incident Response](./security/incident-response.md)
+Security incident response procedures
+
+### [Secrets Scan Report](./security/secrets-scan-report.md)
+gitleaks scan results and configuration details
+
+---
+
 ## Testing Documentation
 
 **Location:** [`testing/`](./testing/)
@@ -118,6 +159,9 @@ Complete guide to test environment setup and usage:
 
 ### 10. [Test Strategy & Risk Register](./testing/test-strategy.md) ⚡ **NEW** (Epic 2)
 17 test categories with risk analysis and implementation roadmap
+
+### 11. [Performance Baselines](./performance/performance-baselines.md) ⚡ **NEW** (Epic 3)
+Lighthouse CI performance baselines and bundle size tracking
 
 ---
 
@@ -170,20 +214,69 @@ Automated project structure analysis (JSON)
 4. [Story 1.4](./sprint-artifacts/epic1/1-4-firebase-deployment-infrastructure.md) - Firebase Hosting Configuration
 5. [Story 1.5](./sprint-artifacts/epic1/1-5-production-deployment-verification.md) - Production Deployment
 
-### Epic 2: Testing Infrastructure & Documentation (IN PROGRESS 🚧)
+### Epic 2: Testing Infrastructure & Documentation (COMPLETE ✅)
 
 **Location:** [`sprint-artifacts/epic2/`](./sprint-artifacts/epic2/)
 
 - **[Epic 2 Evolution Document](./sprint-artifacts/epic2/epic-2-evolution.md)** - Epic 2 state tracking (Before/After)
 - **[Epic 2 Tech Spec](./sprint-artifacts/epic2/epic-2-tech-spec.md)** - Comprehensive testing infrastructure specification
+- **[Epic 2 Retrospective](./sprint-artifacts/epic2/epic-2-retro-2025-11-23.md)** - Lessons learned and action items
 
-**Epic 2 Stories:**
-1. [Story 2.1](./sprint-artifacts/epic2/2-1-documentation-epic-evolution.md) - Documentation & Epic Evolution ✅ DONE
-2. [Story 2.2](./sprint-artifacts/epic2/2-2-test-environment-setup.md) - Test Environment Setup 🔍 IN REVIEW
-3. Story 2.3 - Testing Framework Configuration (Ready for Dev)
-4. Story 2.4 - Authentication & Security Tests (Ready for Dev)
-5. Story 2.5 - Core Workflow Tests (Ready for Dev)
-6. Story 2.6 - CI/CD Pipeline & Coverage Baseline (Ready for Dev)
+**Epic 2 Stories (All Complete):**
+1. [Story 2.1](./sprint-artifacts/epic2/2-1-documentation-epic-evolution.md) - Documentation & Epic Evolution ✅
+2. [Story 2.2](./sprint-artifacts/epic2/2-2-test-environment-setup.md) - Test Environment Setup ✅
+3. [Story 2.3](./sprint-artifacts/epic2/2-3-testing-framework-configuration.md) - Testing Framework Configuration ✅
+4. [Story 2.4](./sprint-artifacts/epic2/2-4-authentication-security-tests.md) - Authentication & Security Tests ✅
+5. [Story 2.5](./sprint-artifacts/epic2/2-5-core-workflow-tests.md) - Core Workflow Tests ✅
+6. [Story 2.6](./sprint-artifacts/epic2/2-6-cicd-pipeline-coverage-baseline.md) - CI/CD Pipeline & Coverage Baseline ✅
+
+### Epic 3: Production-Grade Quality & Testing Completion (COMPLETE ✅)
+
+**Location:** [`sprint-artifacts/epic3/`](./sprint-artifacts/epic3/)
+
+- **[Epic 3 Evolution Document](./sprint-artifacts/epic3/epic-3-evolution.md)** - Epic 3 state tracking (Before/After)
+- **[Epic 3 Tech Spec](./sprint-artifacts/epic3/epic-3-tech-spec.md)** - Quality & testing specification
+
+**Epic 3 Stories (All Complete):**
+1. [Story 3.1](./sprint-artifacts/epic3/3-1-process-governance-setup.md) - Process & Governance Setup ✅
+2. [Story 3.2](./sprint-artifacts/epic3/3-2-e2e-auth-navigation-workflow.md) - E2E Auth & Navigation Workflow ✅
+3. [Story 3.3](./sprint-artifacts/epic3/3-3-e2e-transaction-management-workflow.md) - E2E Transaction Management Workflow ✅
+4. [Story 3.4](./sprint-artifacts/epic3/3-4-e2e-analytics-export-workflow.md) - E2E Analytics & Export Workflow ✅
+5. [Story 3.5](./sprint-artifacts/epic3/3-5-accessibility-testing-framework.md) - Accessibility Testing Framework ✅
+6. [Story 3.6](./sprint-artifacts/epic3/3-6-performance-baselines-lighthouse-ci.md) - Performance Baselines & Lighthouse CI ✅
+7. [Story 3.7](./sprint-artifacts/epic3/3-7-coverage-enforcement-quality-gates.md) - Coverage Enforcement & Quality Gates ✅
+
+### Epic 4: Security Hardening & Penetration Testing (COMPLETE ✅)
+
+**Location:** [`sprint-artifacts/epic4/`](./sprint-artifacts/epic4/)
+
+- **[Epic 4 Tech Spec](./sprint-artifacts/epic4/tech-spec.md)** - Security hardening specification
+
+**Epic 4 Stories (All Complete):**
+1. [Story 4.1](./sprint-artifacts/epic4/4-1-secrets-detection-prevention.md) - Secrets Detection & Prevention ✅
+2. [Story 4.2](./sprint-artifacts/epic4/4-2-gemini-api-protection.md) - Gemini API Protection ✅
+3. [Story 4.3](./sprint-artifacts/epic4/4-3-dependency-static-security.md) - Dependency & Static Security ✅
+4. [Story 4.4](./sprint-artifacts/epic4/4-4-security-documentation.md) - Security Documentation ✅
+
+### Epic 4.5: Receipt Image Storage (COMPLETE ✅)
+
+**Location:** [`sprint-artifacts/epic4-5/`](./sprint-artifacts/epic4-5/)
+
+- **[Epic 4.5 Tech Spec](./tech-spec.md)** - Image storage technical specification (defined in Epic 4 retrospective)
+
+**Epic 4.5 Stories (All Complete):**
+1. [Story 4.5-1](./sprint-artifacts/epic4-5/4-5-1-firebase-storage-infrastructure.md) - Firebase Storage Infrastructure ✅
+2. [Story 4.5-2](./sprint-artifacts/epic4-5/4-5-2-cloud-function-image-processing.md) - Cloud Function Image Processing ✅
+3. [Story 4.5-3](./sprint-artifacts/epic4-5/4-5-3-client-updates-ui.md) - Client Updates & UI ✅
+4. [Story 4.5-4](./sprint-artifacts/epic4-5/4-5-4-cascade-delete-documentation.md) - Cascade Delete & Documentation ✅
+
+**Epic 4.5 Achievements:**
+- ✅ **Firebase Storage:** User-scoped image storage with security rules
+- ✅ **Image Processing:** Server-side compression with sharp (1200x1600 max, 80% JPEG)
+- ✅ **Thumbnails:** Auto-generated 120x160 thumbnails for list views
+- ✅ **UI Components:** ImageViewer modal for viewing full-size receipts
+- ✅ **Cascade Delete:** Firestore trigger automatically deletes images when transaction deleted
+- ✅ **Documentation:** ADR-009 documents architectural decisions
 
 ---
 
@@ -219,15 +312,15 @@ When planning new features or modifications:
 5. **For New Features:** Follow architecture patterns and ADRs in [Architecture](./architecture/architecture.md)
 6. **For Testing:** Reference [Test Strategy](./testing/test-strategy.md) and [Test Environment Guide](./testing/test-environment.md)
 
-**Epic 2 Context:**
-Epic 2 focuses on **automated testing infrastructure and enhanced documentation**. Key deliverables:
-- ✅ **Visual Architecture Diagrams:** 3 Mermaid diagrams added to architecture.md
-- ✅ **Epic Evolution Tracking:** Template created, Epic 2 evolution document tracking Before/After state
-- ✅ **Test Strategy & Risk Register:** 17 test categories with risk levels and implementation roadmap
-- ✅ **Test Environment:** 3 test users + fixtures + reset script (Story 2.2 - IN REVIEW)
-- 🚧 **Testing Frameworks:** Vitest + React Testing Library + Playwright (Story 2.3)
-- 🚧 **Automated Tests:** 39+ tests covering HIGH and MEDIUM risk areas (Stories 2.4-2.5)
-- 🚧 **CI/CD Pipeline:** GitHub Actions running tests automatically (Story 2.6)
+**Epic 3 Achievements:**
+Epic 3 focused on **production-grade quality and testing completion**. Key deliverables:
+- ✅ **Process & Governance:** Multi-branch strategy (main/develop/staging), branch protection
+- ✅ **E2E Test Workflows:** 28 E2E tests covering auth, navigation, transactions, analytics
+- ✅ **Accessibility Testing:** 16 tests with @axe-core/playwright for WCAG 2.1 Level AA
+- ✅ **Performance Baselines:** Lighthouse CI with playwright-lighthouse, bundle size tracking
+- ✅ **Coverage Enforcement:** Thresholds enforced in CI (45% lines, 30% branches)
+- ✅ **PR Coverage Comments:** vitest-coverage-report-action integration
+- ✅ **19-Step CI Pipeline:** Complete GitHub Actions workflow with quality gates
 
 ---
 
@@ -289,6 +382,13 @@ Epic 2 focuses on **automated testing infrastructure and enhanced documentation*
 | **Epic definitions** | [Epics](./planning/epics.md) |
 | **Technical specs** | [Tech Spec](./planning/tech-spec.md) |
 | **Test strategy** | [Test Strategy](./testing/test-strategy.md) |
+| **Performance baselines** | [Performance Baselines](./performance/performance-baselines.md) |
+| **Security overview** | [Security README](./security/README.md) |
+| **OWASP checklist** | [OWASP Checklist](./security/owasp-checklist.md) |
+| **Pricing model** | [Pricing Model](./business/pricing-model.md) |
+| **Cost analysis** | [Cost Analysis](./business/cost-analysis.md) |
+| **Contribution guidelines** | [CONTRIBUTING.md](../CONTRIBUTING.md) |
+| **CI/CD pipeline** | [CI/CD README](./ci-cd/README.md) |
 
 ---
 
@@ -304,6 +404,6 @@ The `.bmad/` directory contains the BMAD (Breakthrough Modern Agile Development)
 
 ---
 
-**Documentation Version:** 3.0
-**Generated:** 2025-11-22 (Post-Epic 2 Story 2.2 - Documentation Reorganization)
-**Next Update:** After Epic 2 completion
+**Documentation Version:** 6.0
+**Generated:** 2025-12-01 (Post-Epic 4.5 Complete)
+**Next Update:** After Epic 5 planning

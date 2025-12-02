@@ -132,7 +132,10 @@ function App() {
                 items: (result.items || []).map(i => ({
                     ...i,
                     price: parseStrictNumber(i.price)
-                }))
+                })),
+                // Include image URLs from Cloud Function response
+                imageUrls: result.imageUrls,
+                thumbnailUrl: result.thumbnailUrl
             });
             setScanImages([]);
             setView('edit');

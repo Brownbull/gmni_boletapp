@@ -1,38 +1,67 @@
-import { GEMINI_API_KEY, GEMINI_MODEL } from '../config/gemini';
-import { cleanJson } from '../utils/json';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { app } from '../config/firebase';
 import { Transaction } from '../types/transaction';
 
+// Initialize Firebase Functions
+const functions = getFunctions(app);
+
+// Type definition for Cloud Function request
+interface AnalyzeReceiptRequest {
+    images: string[];
+    currency: string;
+}
+
+/**
+ * Analyzes receipt images using Firebase Cloud Function
+ * The actual Gemini API call happens server-side for security
+ *
+ * @param images - Array of base64 encoded images
+ * @param currency - Currency code (e.g., "CLP")
+ * @returns Promise<Transaction> - Parsed transaction data
+ * @throws Error if analysis fails or user is not authenticated
+ */
 export async function analyzeReceipt(
     images: string[],
     currency: string
 ): Promise<Transaction> {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+    try {
+        // Call the Cloud Function
+        const analyzeReceiptFn = httpsCallable<AnalyzeReceiptRequest, Transaction>(
+            functions,
+            'analyzeReceipt'
+        );
 
-    const imageParts = images.map(b64 => {
-        const match = b64.match(/^data:(.+);base64,(.+)$/);
-        return {
-            inlineData: {
-                mimeType: match ? match[1] : 'image/jpeg',
-                data: match ? match[2] : b64
+        const result = await analyzeReceiptFn({ images, currency });
+
+        return result.data;
+    } catch (error: unknown) {
+        // Handle Firebase Functions errors
+        console.error('Error calling analyzeReceipt Cloud Function:', error);
+
+        // Type guard for Firebase Functions errors
+        if (error && typeof error === 'object' && 'code' in error) {
+            const functionsError = error as { code: string; message?: string };
+
+            // Provide user-friendly error messages based on error code
+            if (functionsError.code === 'unauthenticated') {
+                throw new Error('You must be logged in to scan receipts.');
             }
-        };
-    });
 
-    const todayStr = new Date().toISOString().split('T')[0];
-    const prompt = `Analyze receipt. Context: ${currency}. Today: ${todayStr}. Strict JSON output. Return 'total' and 'price' as INTEGERS (no dots/commas). Extract: merchant (store name), date (YYYY-MM-DD), total, category (one of: Supermarket, Restaurant, Bakery, Butcher, Bazaar, Veterinary, PetShop, Medical, Pharmacy, Technology, StreetVendor, Transport, Services, Other). Items: name, price, category (Fresh Food, Pantry, Drinks, Household, Personal Care, Pets, Electronics, Apparel, Other), subcategory. If multiple dates, choose closest to today.`;
+            if (functionsError.code === 'invalid-argument') {
+                throw new Error('Invalid receipt data. Please try again.');
+            }
 
-    const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            contents: [{
-                parts: [{ text: prompt }, ...imageParts]
-            }]
-        })
-    });
+            if (functionsError.code === 'resource-exhausted') {
+                throw new Error('Too many requests. Please wait a moment and try again.');
+            }
 
-    const json = await res.json();
-    if (!json.candidates) throw new Error("API Error");
+            // Re-throw with original message if available
+            if (functionsError.message) {
+                throw new Error(functionsError.message);
+            }
+        }
 
-    return JSON.parse(cleanJson(json.candidates[0].content.parts[0].text));
+        // Generic error fallback
+        throw new Error('Failed to analyze receipt. Please try again or enter manually.');
+    }
 }

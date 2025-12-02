@@ -1,0 +1,237 @@
+<story-context id="4-5-1-firebase-storage-infrastructure" v="1.0">
+  <metadata>
+    <epicId>4.5</epicId>
+    <storyId>1</storyId>
+    <title>Firebase Storage Infrastructure</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2025-11-29</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic4-5/4-5-1-firebase-storage-infrastructure.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>Firebase Storage initialized with security rules and emulator support</iWant>
+    <soThat>receipt images can be securely stored with user isolation</soThat>
+    <tasks>
+      <task id="1" ac="1">Create storage.rules file
+        <subtask>Add user-scoped access pattern: users/{userId}/receipts/{allPaths=**}</subtask>
+        <subtask>Ensure authentication required for all operations</subtask>
+        <subtask>Default deny for all other paths</subtask>
+      </task>
+      <task id="2" ac="2,4">Update firebase.json
+        <subtask>Add "storage": { "rules": "storage.rules" } section</subtask>
+        <subtask>Add storage emulator to emulators config (port 9199)</subtask>
+        <subtask>Update hosting/firestore config if needed</subtask>
+      </task>
+      <task id="3" ac="4">Update package.json emulators script
+        <subtask>Add storage to --only flag</subtask>
+        <subtask>Verify import/export includes storage data</subtask>
+      </task>
+      <task id="4" ac="3">Initialize Storage in firebase.ts
+        <subtask>Import getStorage from firebase/storage</subtask>
+        <subtask>Export storage instance</subtask>
+        <subtask>Add emulator connection for development</subtask>
+      </task>
+      <task id="5" ac="1">Deploy storage rules to production
+        <subtask>Run firebase deploy --only storage</subtask>
+        <subtask>Verify rules in Firebase Console</subtask>
+      </task>
+      <task id="6" ac="5">Write infrastructure tests
+        <subtask>Test authenticated user can write to own path</subtask>
+        <subtask>Test authenticated user cannot write to other user's path</subtask>
+        <subtask>Test unauthenticated request is denied</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1" title="Storage Security Rules">
+      <given>the Firebase project</given>
+      <when>storage rules are deployed</when>
+      <then>users can only read/write files under users/{userId}/receipts/**</then>
+      <and>unauthenticated requests are denied</and>
+    </criterion>
+    <criterion id="2" title="Storage Emulator">
+      <given>the development environment</given>
+      <when>running npm run emulators</when>
+      <then>Storage emulator starts on port 9199</then>
+      <and>emulator data persists between restarts</and>
+    </criterion>
+    <criterion id="3" title="Client SDK Initialization">
+      <given>the React application</given>
+      <when>Firebase is initialized</when>
+      <then>getStorage() is exported from src/config/firebase.ts</then>
+      <and>Storage connects to emulator in development mode</and>
+    </criterion>
+    <criterion id="4" title="NPM Scripts Updated">
+      <given>the package.json</given>
+      <when>emulators script is run</when>
+      <then>auth, firestore, storage, and functions emulators all start</then>
+    </criterion>
+    <criterion id="5" title="Infrastructure Test">
+      <given>the Storage emulator is running</given>
+      <when>infrastructure tests execute</when>
+      <then>security rules correctly allow/deny access based on user ID</then>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/tech-spec.md</path>
+        <title>Technical Specification - Epic 4.5</title>
+        <section>Implementation Details - Firebase Storage Setup</section>
+        <snippet>Complete technical specification for Epic 4.5 Receipt Image Storage including storage path structure, security rules template, and integration points.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Security Architecture, Firestore Security Rules</section>
+        <snippet>Existing Firestore security rules pattern showing user isolation: match /artifacts/{appId}/users/{userId}/{document=**} { allow read, write: if request.auth != null &amp;&amp; request.auth.uid == userId; }</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 4.5 Definition</title>
+        <section>Story 4.5-1 Acceptance Criteria</section>
+        <snippet>Story breakdown with 5 acceptance criteria covering security rules, emulator setup, SDK initialization, npm scripts, and infrastructure testing.</snippet>
+      </doc>
+      <doc>
+        <path>docs/testing/testing-guide.md</path>
+        <title>Testing Guide</title>
+        <section>Integration Testing with Firebase Emulators</section>
+        <snippet>Vitest + Firebase Emulators pattern for integration testing. Use @firebase/rules-unit-testing for security rules validation.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <file>
+        <path>src/config/firebase.ts</path>
+        <kind>configuration</kind>
+        <symbol>app, firebaseConfig</symbol>
+        <lines>1-35</lines>
+        <reason>MODIFY: Add getStorage import and export storage instance. Add emulator connection for development mode.</reason>
+      </file>
+      <file>
+        <path>firebase.json</path>
+        <kind>configuration</kind>
+        <symbol>emulators, firestore, hosting</symbol>
+        <lines>1-64</lines>
+        <reason>MODIFY: Add "storage" section with rules path. Add storage emulator config (port 9199).</reason>
+      </file>
+      <file>
+        <path>firestore.rules</path>
+        <kind>security-rules</kind>
+        <symbol>user isolation pattern</symbol>
+        <lines>1-16</lines>
+        <reason>REFERENCE: Follow same user isolation pattern for storage.rules: request.auth != null &amp;&amp; request.auth.uid == userId</reason>
+      </file>
+      <file>
+        <path>package.json</path>
+        <kind>configuration</kind>
+        <symbol>scripts.emulators</symbol>
+        <lines>12</lines>
+        <reason>MODIFY: Add "storage" to --only flag in emulators script</reason>
+      </file>
+      <file>
+        <path>tests/integration/firestore-rules.test.ts</path>
+        <kind>test</kind>
+        <symbol>Firestore Security Rules tests</symbol>
+        <lines>1-257</lines>
+        <reason>REFERENCE: Follow same test pattern for storage-rules.test.ts - use assertSucceeds/assertFails helpers</reason>
+      </file>
+      <file>
+        <path>tests/setup/firebase-emulator.ts</path>
+        <kind>test-setup</kind>
+        <symbol>setupFirebaseEmulator, getAuthedFirestore, TEST_USERS</symbol>
+        <reason>MODIFY: Add Storage emulator setup and helpers (getAuthedStorage, getUnauthStorage)</reason>
+      </file>
+    </code>
+
+    <dependencies>
+      <node>
+        <package>firebase</package>
+        <version>^10.14.1</version>
+        <usage>Client SDK - getStorage, ref, uploadBytes, getDownloadURL</usage>
+      </node>
+      <node>
+        <package>@firebase/rules-unit-testing</package>
+        <version>^3.0.4</version>
+        <usage>Security rules testing for Storage</usage>
+      </node>
+      <node>
+        <package>firebase-admin</package>
+        <version>^13.6.0</version>
+        <usage>Admin SDK for test setup</usage>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="docs/tech-spec.md">Security Rules Pattern: User isolation required - users can only access files under users/{userId}/receipts/**</constraint>
+    <constraint source="docs/tech-spec.md">Storage Path: gs://boletapp-d609f.appspot.com/users/{userId}/receipts/{transactionId}/</constraint>
+    <constraint source="docs/tech-spec.md">Emulator Port: Storage emulator must run on port 9199 (Firebase default)</constraint>
+    <constraint source="docs/architecture/architecture.md">Authentication Required: All storage operations require valid Firebase Auth session</constraint>
+    <constraint source="firestore.rules">Default Deny: All paths not explicitly allowed must be denied</constraint>
+    <constraint source="package.json">Code Style: TypeScript strict mode, single quotes, no semicolons, 2-space indentation</constraint>
+    <constraint source="docs/tech-spec.md">Backward Compatible: Existing tests and flows must continue to work</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Firebase Storage Client API</name>
+      <kind>SDK</kind>
+      <signature>
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+const storage = getStorage(app);
+const storageRef = ref(storage, 'users/{userId}/receipts/{transactionId}/image.jpg');
+      </signature>
+      <path>node_modules/firebase/storage</path>
+    </interface>
+    <interface>
+      <name>Storage Security Rules</name>
+      <kind>firebase-rules</kind>
+      <signature>
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /users/{userId}/receipts/{allPaths=**} {
+      allow read, write: if request.auth != null &amp;&amp; request.auth.uid == userId;
+    }
+  }
+}
+      </signature>
+      <path>storage.rules (CREATE)</path>
+    </interface>
+    <interface>
+      <name>Emulator Connection</name>
+      <kind>configuration</kind>
+      <signature>
+import { connectStorageEmulator } from 'firebase/storage';
+if (import.meta.env.DEV) {
+  connectStorageEmulator(storage, 'localhost', 9199);
+}
+      </signature>
+      <path>src/config/firebase.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Vitest 4.0.13 for unit and integration tests. Use @firebase/rules-unit-testing for security rules validation. Follow existing patterns in tests/integration/firestore-rules.test.ts for assertSucceeds/assertFails helpers. Integration tests require Firebase Emulators running (npm run emulators). Test file naming: *.test.ts for integration tests. Coverage thresholds: 45% lines, 30% branches (existing CI requirements).
+    </standards>
+    <locations>
+      <location>tests/integration/storage-rules.test.ts (CREATE)</location>
+      <location>tests/setup/firebase-emulator.ts (MODIFY - add Storage helpers)</location>
+    </locations>
+    <ideas>
+      <idea ac="1,5">Test authenticated user can upload file to own path: users/{userId}/receipts/test/image.jpg</idea>
+      <idea ac="1,5">Test authenticated user CANNOT upload to another user's path</idea>
+      <idea ac="1,5">Test unauthenticated user is denied all Storage operations</idea>
+      <idea ac="2">Verify Storage emulator starts on port 9199 when running npm run emulators</idea>
+      <idea ac="3">Verify getStorage() export from firebase.ts connects to emulator in dev mode</idea>
+      <idea ac="4">Verify emulators script includes storage in --only flag</idea>
+      <idea ac="1">Test default deny for paths outside users/{userId}/receipts/**</idea>
+    </ideas>
+  </tests>
+</story-context>
