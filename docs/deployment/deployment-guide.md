@@ -18,12 +18,12 @@
 Boletapp is a single-file Progressive Web Application (PWA) with a serverless backend architecture. This guide covers deployment strategies, infrastructure requirements, and operational procedures.
 
 ### Architecture Summary
-- **Frontend:** Single-file React application (main.tsx)
-- **Backend:** Serverless (Firebase)
+- **Frontend:** React application (Vite build)
+- **Backend:** Firebase Cloud Functions (serverless)
 - **Database:** Firebase Firestore (managed NoSQL)
 - **Authentication:** Firebase Auth (managed)
-- **AI Service:** Google Gemini API (external)
-- **Build Process:** Optional (can deploy raw TSX or build to JS)
+- **AI Service:** Google Gemini API (via Cloud Function)
+- **Build Process:** Vite (production builds)
 
 ---
 
@@ -60,19 +60,22 @@ Boletapp is a single-file Progressive Web Application (PWA) with a serverless ba
 │  • favicon.ico, icons/                                      │
 └───────────────────────┬─────────────────────────────────────┘
                         │
-        ┌───────────────┼───────────────┐
-        │               │               │
-        ▼               ▼               ▼
-┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-│   Firebase   │ │   Firebase   │ │  Google AI   │
-│     Auth     │ │  Firestore   │ │   Platform   │
-│              │ │              │ │              │
-│ • Google     │ │ • Real-time  │ │ • Gemini API │
-│   OAuth      │ │   Database   │ │ • Receipt    │
-│ • Session    │ │ • Security   │ │   Analysis   │
-│   Mgmt       │ │   Rules      │ │              │
-└──────────────┘ └──────────────┘ └──────────────┘
-   (Managed)        (Managed)        (Managed)
+        ┌───────────────┼───────────────┬───────────────┐
+        │               │               │               │
+        ▼               ▼               ▼               ▼
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│   Firebase   │ │   Firebase   │ │   Firebase   │ │  Google AI   │
+│     Auth     │ │  Firestore   │ │  Functions   │ │   Platform   │
+│              │ │              │ │              │ │              │
+│ • Google     │ │ • Real-time  │ │ • Cloud      │ │ • Gemini API │
+│   OAuth      │ │   Database   │ │   Functions  │ │ • Receipt    │
+│ • Session    │ │ • Security   │ │ • Server-    │ │   Analysis   │
+│   Mgmt       │ │   Rules      │ │   side Logic │ │   (Secure)   │
+└──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
+   (Managed)        (Managed)        (Managed)           ▲
+                                           │              │
+                                           └──────────────┘
+                                         (API key protected)
 ```
 
 ### Traffic Flow
@@ -83,7 +86,7 @@ Boletapp is a single-file Progressive Web Application (PWA) with a serverless ba
 4. **App Initialization** → Firebase SDK connects to Auth/Firestore
 5. **User Authentication** → Firebase Auth (Google Sign-In)
 6. **Data Operations** → Firestore (CRUD operations)
-7. **Receipt Scan** → Gemini API (image analysis)
+7. **Receipt Scan** → Firebase Cloud Function → Gemini API (secure server-side processing)
 
 ---
 
@@ -345,9 +348,14 @@ npm run build
 npm run build
 ```
 
-#### Step 4: Deploy
+#### Step 4: Deploy Hosting and Functions
 ```bash
+# Deploy both hosting and functions
+firebase deploy --only hosting,functions
+
+# Or deploy separately:
 firebase deploy --only hosting
+firebase deploy --only functions
 ```
 
 #### Step 5: Verify Deployment
@@ -355,6 +363,144 @@ firebase deploy --only hosting
 # Firebase will output URL:
 # Hosting URL: https://your-project.web.app
 ```
+
+---
+
+### Cloud Functions Deployment (Required for Receipt Scanning)
+
+#### Prerequisites
+- Firebase project upgraded to **Blaze Plan** (pay-as-you-go)
+- Gemini API key obtained from Google AI Studio
+- Firebase CLI installed and logged in
+
+#### Step 1: Verify Blaze Plan
+```bash
+# Check current Firebase plan
+firebase projects:list
+
+# Upgrade to Blaze plan in Firebase Console:
+# https://console.firebase.google.com/project/YOUR_PROJECT/usage/details
+```
+
+#### Step 2: Configure Gemini API Key
+```bash
+# Set API key in Firebase Functions config (legacy method - works until March 2026)
+firebase functions:config:set gemini.api_key="YOUR_GEMINI_API_KEY"
+
+# Verify configuration
+firebase functions:config:get
+
+# For local testing, create runtime config
+cat > functions/.runtimeconfig.json << EOF
+{
+  "gemini": {
+    "api_key": "YOUR_GEMINI_API_KEY"
+  }
+}
+EOF
+
+# Add to .gitignore (should already be there)
+echo "functions/.runtimeconfig.json" >> functions/.gitignore
+```
+
+**⚠️ Migration Note:** The `functions.config()` API is deprecated and will stop working in March 2026. Migrate to `.env` files in the future. See: https://firebase.google.com/docs/functions/config-env#migrate-to-dotenv
+
+#### Step 3: Build Functions
+```bash
+cd functions
+npm install
+npm run build
+
+# Verify TypeScript compilation
+ls -la lib/
+# Should see: analyzeReceipt.js, index.js
+```
+
+#### Step 4: Deploy Functions
+```bash
+cd ..  # Back to project root
+
+# Deploy only functions
+firebase deploy --only functions
+
+# Expected output:
+# ✔  functions[analyzeReceipt(us-central1)] Successful create operation
+```
+
+#### Step 5: Verify Function Deployment
+```bash
+# List deployed functions
+firebase functions:list
+
+# Expected output:
+# ┌────────────────┬─────────┬──────────┬─────────────┬────────┬──────────┐
+# │ Function       │ Version │ Trigger  │ Location    │ Memory │ Runtime  │
+# ├────────────────┼─────────┼──────────┼─────────────┼────────┼──────────┤
+# │ analyzeReceipt │ v1      │ callable │ us-central1 │ 256    │ nodejs20 │
+# └────────────────┴─────────┴──────────┴─────────────┴────────┴──────────┘
+```
+
+#### Step 6: Test Function (Optional)
+```bash
+# View function logs
+firebase functions:log --only analyzeReceipt
+
+# Monitor function in Firebase Console
+# https://console.firebase.google.com/project/YOUR_PROJECT/functions
+```
+
+#### Common Issues and Solutions
+
+**Issue: "Your project must be on the Blaze plan"**
+```
+Error: Your project must be on the Blaze (pay-as-you-go) plan
+```
+**Solution:** Upgrade to Blaze plan in Firebase Console
+
+**Issue: "API key not configured"**
+```
+Error: GEMINI_API_KEY not configured
+```
+**Solution:** Run `firebase functions:config:set gemini.api_key="YOUR_KEY"`
+
+**Issue: Build fails with TypeScript errors**
+```bash
+# Clean and rebuild
+cd functions
+rm -rf lib node_modules
+npm install
+npm run build
+```
+
+**Issue: Function times out**
+- Default timeout: 60 seconds
+- Gemini API can be slow for large images
+- Timeout is sufficient for most receipts
+- If needed, increase in `functions/src/analyzeReceipt.ts`:
+```typescript
+export const analyzeReceipt = functions
+  .runWith({ timeoutSeconds: 120 })  // Increase to 120 seconds
+  .https.onCall(...)
+```
+
+#### Security Best Practices
+
+1. **Never commit API keys**
+   - ✅ API keys in Firebase Functions config (server-side)
+   - ✅ `.runtimeconfig.json` in `.gitignore`
+   - ❌ Never in client code or `.env` files committed to git
+
+2. **Verify Authentication**
+   - Cloud Function checks `context.auth` before processing
+   - Returns 401 if user not authenticated
+
+3. **Input Validation**
+   - Function validates images array and currency parameter
+   - Rejects invalid requests with 400 error
+
+4. **Monitor Usage**
+   - Set up Firebase budget alerts
+   - Monitor Gemini API quota in Google Cloud Console
 
 ---
 

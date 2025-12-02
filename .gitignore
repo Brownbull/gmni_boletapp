@@ -52,3 +52,9 @@ lighthouse-reports/
 *.backup
 *.bak
 *~
+
+# Local binaries (gitleaks, etc.)
+bin/
+
+# Security scan reports (may contain sensitive paths)
+secrets-report.json

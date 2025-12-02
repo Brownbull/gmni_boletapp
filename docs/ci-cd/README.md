@@ -29,9 +29,10 @@ If you're new to CI/CD, start here:
 
 ### Current Workflow Status
 - **Location:** `.github/workflows/test.yml`
-- **Triggers:** Push to `main`, all pull requests
-- **Execution Time:** ~3-4 minutes
-- **Test Coverage:** 79.51% (target: 70%+)
+- **Triggers:** Push to `main`/`develop`/`staging`, all pull requests
+- **Execution Time:** ~7-8 minutes
+- **Test Coverage:** ~51% (thresholds: 45% lines, 30% branches, 25% functions, 40% statements)
+- **Workflow Steps:** 19 (updated in Epic 3)
 
 ### Test Commands
 
@@ -62,18 +63,22 @@ npm run test:coverage     # Generate coverage report
 - **Latest Run:** `gh run list --limit 1`
 - **View Logs:** `gh run view <run-id> --log`
 
-## 📊 Current Test Statistics
+## 📊 Current Test Statistics (Post-Epic 3)
 
 - **Unit Tests:** 14 tests (Vitest)
-- **Integration Tests:** 40 tests (React Testing Library + Firebase)
-- **E2E Tests:** 17 tests (Playwright)
-- **Total:** 71 automated tests
+- **Integration Tests:** 47 tests (React Testing Library + Firebase)
+- **E2E Tests:** 28 tests (Playwright) - includes auth, transactions, accessibility
+- **Accessibility Tests:** 16 tests (@axe-core/playwright) - WCAG 2.1 Level AA
+- **Lighthouse Tests:** 6 tests (playwright-lighthouse) - Performance baselines
+- **Total:** 95+ automated tests
 
 ## 🛠️ Tools Used
 
 - **CI Platform:** GitHub Actions
 - **Test Frameworks:** Vitest, React Testing Library, Playwright
-- **Coverage:** @vitest/coverage-v8
+- **Coverage:** @vitest/coverage-v8, vitest-coverage-report-action (PR comments)
+- **Accessibility:** @axe-core/playwright (WCAG 2.1 Level AA)
+- **Performance:** playwright-lighthouse, Lighthouse CI
 - **Local Testing:** `act` (GitHub Actions locally)
 - **Firebase Emulators:** For isolated testing
 
@@ -93,7 +98,31 @@ When adding new tests or modifying the workflow:
 3. Update this documentation if you change the workflow
 4. Document any new issues in the troubleshooting guide
 
+## 🔧 Workflow Steps (Epic 3)
+
+The CI/CD workflow now includes 19 steps:
+
+1. Checkout repository
+2. Setup Node.js 20
+3. Install dependencies
+4. Start Firebase Emulators
+5. Wait for Emulators
+6. Run unit tests
+7. Run integration tests
+8. Run type check
+9. Build application
+10. **Create test user** (for authenticated E2E tests)
+11. Run E2E tests
+12. **Generate coverage with thresholds**
+13. Upload coverage report (HTML)
+14. Upload coverage report (lcov)
+15. Display coverage summary
+16. **Post coverage report to PR** (vitest-coverage-report-action)
+17. **Run Lighthouse audits** (6 views)
+18. Upload Lighthouse reports
+19. **Check bundle size** (<700KB threshold)
+
 ---
 
-**Last Updated:** 2025-11-23
-**Workflow Version:** 1.0 (14 steps, Node.js 20)
+**Last Updated:** 2025-11-26
+**Workflow Version:** 2.0 (19 steps, Node.js 20, Epic 3 Complete)
