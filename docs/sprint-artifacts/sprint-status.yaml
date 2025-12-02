@@ -71,11 +71,13 @@ development_status:
   epic-4-retrospective: completed  # Completed 2025-11-29
 
   # Epic 4.5: Receipt Image Storage (defined in Epic 4 retrospective)
+  # DEPLOYED TO PRODUCTION: 2025-12-02
   epic-4-5: contexted  # Tech-spec completed 2025-11-29
   4-5-1-firebase-storage-infrastructure: done  # 3 points - Code Review APPROVED 2025-11-30
   4-5-2-cloud-function-image-processing: done  # 5 points - Code Review APPROVED 2025-11-30
   4-5-3-client-updates-ui: done  # 3 points - Code Review APPROVED 2025-12-01
-  4-5-4-cascade-delete-documentation: done  # 2 points - Code Review APPROVED 2025-12-01
+  4-5-4-cascade-delete-documentation: done  # 2 points - Code Review APPROVED 2025-12-01, Deployed 2025-12-02
+  epic-4-5-retrospective: optional  # Ready for retrospective
 
   # Future Epics (updated in Epic 4 retrospective)
   epic-5: backlog  # Enhanced Data Export (now includes image export)
