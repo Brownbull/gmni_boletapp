@@ -1,0 +1,594 @@
+# Boletapp Team Standards & Knowledge Base
+
+**Last Updated:** 2025-12-03 (Post-Epic 5 Retrospective)
+**Purpose:** Single source of truth for team agreements, workflow standards, and lessons learned
+
+---
+
+## Table of Contents
+
+1. [Team Agreements](#team-agreements)
+2. [Workflow Standards](#workflow-standards)
+3. [Testing Standards](#testing-standards)
+4. [Deployment Standards](#deployment-standards)
+5. [Documentation Standards](#documentation-standards)
+6. [Security Standards](#security-standards)
+7. [Document Index](#document-index)
+8. [Lessons Learned](#lessons-learned)
+9. [Known Gotchas](#known-gotchas)
+
+---
+
+## Team Agreements
+
+Agreements made in retrospectives that define how we work as a team.
+
+### Story & Review Process (Epic 4)
+
+1. **Developers never mark stories "done"**
+   - Developers mark stories as "review" only
+   - Only reviewers mark stories as "done" after approval
+   - Prevents false completion patterns
+   - *Source: Epic 4 Retrospective*
+
+2. **Blocked code reviews prevent bigger problems**
+   - Review friction is valuable friction
+   - Better to catch issues in review than in production
+   - *Source: Epic 3 Retrospective*
+
+### Deployment Process (Epics 4.5, 5)
+
+3. **Deployment is part of the deliverable**
+   - Epic is not complete until deployed and verified in production
+   - Include deployment steps in story completion criteria
+   - *Source: Epic 4.5 Retrospective*
+
+4. **Branch strategy must be explicit in stories**
+   - Reference `docs/branching-strategy.md` in all stories
+   - Document merge flow: feature → develop → staging → main
+   - *Source: Epic 4.5 Retrospective*
+
+5. **Firebase commands in completion criteria**
+   - Stories that require deployment must include Firebase commands
+   - Example: `firebase deploy --only hosting`
+   - *Source: Epic 4.5 Retrospective*
+
+6. **Every epic ends with a deployment story**
+   - Final story uses standard deployment template
+   - Includes branch strategy, merge steps, deployment verification
+   - *Source: Epic 5 Retrospective*
+
+7. **CI/CD must auto-deploy to Firebase**
+   - No manual deployment steps for production
+   - GitHub Actions deploys on merge to main
+   - Implemented in Story 6.0 (Epic 6)
+   - *Source: Epic 5 Retrospective*
+
+### Documentation (Epics 1, 2, 3, 5)
+
+8. **Epic Evolution Document maintained throughout**
+   - Every story must include AC: "Update Epic Evolution document with story changes"
+   - Document must track: what changed, gaps discovered, architectural decisions
+   - Stories cannot be marked 'done' without evolution doc update
+   - *Source: Epic 2 Retrospective*
+
+9. **Document learnings in real-time**
+   - Capture issues while they're fresh
+   - Don't wait for retrospective to document problems
+   - *Source: Epic 4.5 Retrospective*
+
+10. **Team standards live in one document**
+    - This document (`docs/team-standards.md`) is the single source of truth
+    - Update after each retrospective with new agreements
+    - *Source: Epic 5 Retrospective*
+
+11. **Testing patterns and gotchas are documented**
+    - Prevent future developers from hitting known issues
+    - See [Known Gotchas](#known-gotchas) section
+    - *Source: Epic 5 Retrospective*
+
+### Testing & Quality (Epics 2, 3)
+
+12. **Test quality over quantity**
+    - No skeletal/placeholder tests
+    - Every test must validate meaningful behavior
+    - False confidence from hollow tests is dangerous
+    - *Source: Epic 2 Retrospective*
+
+13. **Not everything needs automation**
+    - Manual testing has value for third-party integrations (e.g., Firebase Auth OAuth)
+    - Document rationale for manual vs. automated testing decisions
+    - *Source: Epic 3 Retrospective*
+
+14. **Metrics without validation are just numbers**
+    - Always question: What's included? How is it calculated?
+    - Validate methodology before celebrating metrics
+    - *Source: Epic 3 Retrospective*
+
+### Security (Epic 4)
+
+15. **Secrets awareness**
+    - Always use pre-commit hooks (gitleaks)
+    - Cloud Functions for sensitive operations
+    - Never commit API keys or secrets
+    - *Source: Epic 4 Retrospective*
+
+### Architecture (Epic 1)
+
+16. **Shared API Key Model**
+    - Use shared Gemini API key for all users (standard SaaS pattern)
+    - Users don't need their own API keys
+    - *Source: Epic 1 Retrospective*
+
+17. **Centralized Firestore Database**
+    - User-isolated data paths: `/artifacts/{appId}/users/{userId}/**`
+    - Tenant isolation via security rules
+    - *Source: Epic 1 Retrospective*
+
+### Epic Sequencing (Epic 3)
+
+18. **Security-first approach**
+    - Harden before adding features
+    - Epic sequence: Security → Export → Category Learning → Subscriptions → Mobile
+    - *Source: Epic 3 Retrospective*
+
+---
+
+## Workflow Standards
+
+### Git Branching Strategy
+
+```
+main (production)
+  ↑
+staging (pre-production testing)
+  ↑
+develop (integration branch)
+  ↑
+feature/* (feature branches)
+```
+
+**Branch Flow:**
+1. Create feature branch from `develop`: `feature/epic-X-description`
+2. Develop and test locally
+3. PR to `develop` - requires CI pass
+4. PR from `develop` to `staging` - integration testing
+5. PR from `staging` to `main` - production deployment
+6. Auto-deploy to Firebase on merge to main (Epic 6+)
+
+**Branch Protection:**
+- All three branches (main, staging, develop) are protected
+- Require PR + passing CI before merge
+- No direct pushes allowed
+
+See: [docs/branching-strategy.md](branching-strategy.md)
+
+### Pull Request Process
+
+1. Create PR with descriptive title
+2. Fill out PR template (if exists)
+3. Wait for CI checks to pass
+4. Request review (self-review acceptable for solo dev)
+5. Address review feedback
+6. Merge when approved and CI green
+7. Delete feature branch after merge
+
+### Story Workflow
+
+```
+create-story → story-ready → dev-story → code-review → story-done
+```
+
+1. **create-story**: SM creates story file from epic
+2. **story-ready**: Mark ready for development
+3. **dev-story**: Developer implements
+4. **code-review**: Senior dev reviews (may BLOCK or APPROVE)
+5. **story-done**: REVIEWER marks complete (not developer!)
+
+---
+
+## Testing Standards
+
+### Test Pyramid
+
+```
+        E2E (19 tests)
+       /            \
+      / Integration  \
+     /   (48 tests)   \
+    /                  \
+   /    Unit Tests      \
+  /      (70+ tests)     \
+ /________________________\
+```
+
+### Test File Naming
+
+- Unit tests: `tests/unit/*.test.ts`
+- Integration tests: `tests/integration/*.test.tsx`
+- E2E tests: `tests/e2e/*.spec.ts`
+
+### Test Coverage Thresholds
+
+- Lines: 45% minimum
+- Branches: 30% minimum
+- Functions: 25% minimum
+- Statements: 40% minimum
+
+### Testing Commands
+
+```bash
+# Run all tests
+npm test
+
+# Run unit tests only
+npm run test:unit
+
+# Run integration tests only
+npm run test:integration
+
+# Run E2E tests
+npm run test:e2e
+
+# Run with coverage
+npm run test:coverage
+
+# Reset test data
+npm run test:reset-data
+```
+
+### Hybrid Testing Strategy
+
+For features with third-party integrations (OAuth, etc.):
+- **E2E tests**: UI validation, user interactions, accessibility
+- **Integration tests**: Auth state management, business logic, data persistence
+- **Manual testing**: OAuth flows, third-party SDK functionality
+
+Document rationale for manual vs. automated testing decisions.
+
+---
+
+## Deployment Standards
+
+### Pre-Deployment Checklist
+
+- [ ] All tests passing (unit, integration, E2E)
+- [ ] TypeScript compiles without errors
+- [ ] No secrets in code (gitleaks check)
+- [ ] PR approved and merged through proper flow
+- [ ] Production URL verified after deployment
+
+### Firebase Deployment Commands
+
+```bash
+# Deploy hosting only
+firebase deploy --only hosting
+
+# Deploy functions only
+firebase deploy --only functions
+
+# Deploy everything
+firebase deploy
+
+# Deploy to staging channel
+firebase hosting:channel:deploy staging
+```
+
+### Auto-Deploy (Story 6.0)
+
+**Trigger:** Push to `main` branch after tests pass
+
+**How it works:**
+1. All tests must pass in the `test` job
+2. Deploy job runs automatically on push to `main`
+3. Firebase Hosting is updated with new build
+4. No manual intervention required
+
+**Required Secrets (GitHub Repository):**
+- `FIREBASE_SERVICE_ACCOUNT` - Firebase service account JSON
+- `VITE_FIREBASE_API_KEY` - Firebase API key
+- `VITE_FIREBASE_AUTH_DOMAIN` - Firebase auth domain
+- `VITE_FIREBASE_PROJECT_ID` - Firebase project ID
+- `VITE_FIREBASE_STORAGE_BUCKET` - Firebase storage bucket
+- `VITE_FIREBASE_MESSAGING_SENDER_ID` - Firebase messaging sender ID
+- `VITE_FIREBASE_APP_ID` - Firebase app ID
+- `VITE_GEMINI_API_KEY` - Gemini API key
+- `VITE_GEMINI_MODEL` - Gemini model name
+
+**Manual Deployment (if needed):**
+```bash
+firebase deploy --only hosting
+```
+
+### Post-Deployment Verification
+
+1. Visit production URL: https://boletapp-d609f.web.app
+2. Test critical user flows:
+   - Authentication (sign in/out)
+   - Receipt scanning
+   - Transaction CRUD
+   - Data export
+3. Check browser console for errors
+4. Verify Firebase console for function errors
+
+---
+
+## Documentation Standards
+
+### Required Documentation Per Story
+
+1. **Dev Notes**: Technical approach, architecture constraints
+2. **Completion Notes**: What was implemented, any deviations
+3. **Code Review Notes**: Review outcome, findings, action items
+4. **File List**: Files created/modified
+
+### Epic Evolution Document
+
+Location: `docs/sprint-artifacts/epic{N}/epic-{N}-evolution.md`
+
+Must include:
+- Before State (at epic start)
+- After State (updated per story)
+- Story-by-Story changes
+- Gaps discovered
+- Architectural decisions
+
+### ADR (Architecture Decision Records)
+
+Location: `docs/architecture.md` or `docs/adr/`
+
+Format:
+- Context
+- Decision
+- Rationale
+- Consequences
+
+---
+
+## Security Standards
+
+### Defense in Depth Layers
+
+1. **Layer 1**: Pre-commit hook (gitleaks) - prevents secrets from entering git
+2. **Layer 2**: CI scanning (gitleaks full history) - catches anything missed
+3. **Layer 3**: Architecture pattern (Cloud Functions for sensitive operations)
+4. **Layer 4**: Dependency scanning (npm audit + eslint-plugin-security)
+
+### Secrets Management
+
+- **Never** commit API keys, passwords, or secrets
+- Use environment variables for sensitive configuration
+- Cloud Functions handle sensitive API calls (Gemini)
+- Firebase security rules enforce tenant isolation
+
+### Pre-Commit Hook Setup
+
+```bash
+# Install gitleaks
+brew install gitleaks  # macOS
+# or download from https://github.com/gitleaks/gitleaks
+
+# Pre-commit hook is configured in .husky/pre-commit
+```
+
+---
+
+## Document Index
+
+### Core Documentation
+
+| Document | Location | Purpose |
+|----------|----------|---------|
+| Team Standards | `docs/team-standards.md` | This document - team agreements and standards |
+| Architecture | `docs/architecture.md` | System architecture, ADRs, diagrams |
+| PRD | `docs/prd.md` | Product requirements |
+| Epics | `docs/epics.md` | Epic definitions and story breakdowns |
+| Branching Strategy | `docs/branching-strategy.md` | Git workflow |
+
+### Sprint Artifacts
+
+| Document | Location | Purpose |
+|----------|----------|---------|
+| Sprint Status | `docs/sprint-artifacts/sprint-status.yaml` | Epic/story status tracking |
+| Story Files | `docs/sprint-artifacts/epic{N}/` | Individual story details |
+| Retrospectives | `docs/sprint-artifacts/epic{N}/epic-{N}-retro-*.md` | Epic retrospective notes |
+
+### Business Documentation
+
+| Document | Location | Purpose |
+|----------|----------|---------|
+| Pricing Model | `docs/business/pricing-model.md` | 4-tier subscription structure |
+| Cost Analysis | `docs/business/cost-analysis.md` | Infrastructure costs |
+| Revenue Projections | `docs/business/revenue-projections.md` | Business scenarios |
+
+### Testing Documentation
+
+| Document | Location | Purpose |
+|----------|----------|---------|
+| Testing Guide | `docs/testing-guide.md` | Comprehensive testing documentation |
+| Test Strategy | `docs/test-strategy.md` | Risk-based test prioritization |
+| Test Environment | `docs/test-environment.md` | Test users, fixtures, setup |
+
+### Security Documentation
+
+| Document | Location | Purpose |
+|----------|----------|---------|
+| Security README | `docs/security/README.md` | Security overview |
+| OWASP Checklist | `docs/security/owasp-checklist.md` | OWASP Top 10 validation |
+| Incident Response | `docs/security/incident-response.md` | Security incident procedures |
+
+### Templates
+
+| Template | Location | Purpose |
+|----------|----------|---------|
+| Deployment Story | `docs/templates/deployment-story-template.md` | Final epic story template |
+| Epic Evolution | `docs/templates/epic-evolution-template.md` | Epic tracking template |
+
+### Retrospective Documents
+
+| Epic | Date | Location |
+|------|------|----------|
+| Epic 1 | 2025-11-21 | `docs/sprint-artifacts/epic1/epic-1-retro-2025-11-21.md` |
+| Epic 2 | 2025-11-23 | `docs/sprint-artifacts/epic2/epic-2-retro-2025-11-23.md` |
+| Epic 3 | 2025-11-26 | `docs/sprint-artifacts/epic3/epic-3-retro-2025-11-26.md` |
+| Epic 4 | 2025-11-29 | `docs/sprint-artifacts/epic4/epic-4-retro-2025-11-29.md` |
+| Epic 4.5 | 2025-12-02 | `docs/sprint-artifacts/epic4-5/epic-4-5-retro-2025-12-02.md` |
+| Epic 5 | 2025-12-03 | `docs/sprint-artifacts/epic5/epic-5-retro-2025-12-03.md` |
+
+---
+
+## Lessons Learned
+
+Key insights from retrospectives that improved our process.
+
+### Technical Lessons
+
+1. **Testing infrastructure is a velocity multiplier** (Epic 5)
+   - Investment in Epics 2-3 enabled 5 stories in 2 days
+   - Can move fast AND be confident nothing breaks
+
+2. **Foundation-first architecture pays off** (Epic 5)
+   - CSV utilities in Story 5.1 enabled rapid development of 5.2, 5.4, 5.5
+   - Generic, reusable code beats copy-paste
+
+3. **Firestore requires security rules for data persistence** (Epic 1)
+   - Without rules, Firestore denies all access by default
+   - User isolation pattern: `/artifacts/{appId}/users/{userId}/**`
+
+4. **Phased extraction prevents integration issues** (Epic 1)
+   - Start with lowest-risk, no-dependency code (utilities)
+   - Build up incrementally (services → hooks → components → views)
+
+5. **CI environment differs from local** (Epic 2)
+   - First-time CI setup requires debugging iteration
+   - Document specific configurations that work
+
+6. **Hybrid testing strategy works** (Epic 3)
+   - E2E for UI, integration for business logic
+   - Combined coverage exceeds either alone
+
+### Process Lessons
+
+7. **Process enforcement works** (Epic 3)
+   - If it's not in the AC, it doesn't get done
+   - Explicit requirements beat implicit expectations
+
+8. **Action item follow-through enables success** (Epic 2)
+   - 100% completion of previous retro items enabled Epic 2 success
+   - Follow-through matters more than quantity
+
+9. **Iterative code review improves solutions** (Epic 4)
+   - First review identifies improvements
+   - Second review validates implementation
+   - Better solutions emerge through iteration
+
+10. **Deployment is part of the deliverable** (Epic 4.5)
+    - Not complete until deployed and verified
+    - Include deployment steps in acceptance criteria
+
+---
+
+## Known Gotchas
+
+Technical issues and their solutions that future developers should know about.
+
+### Vitest Module State Contamination (Epic 5)
+
+**Problem:** Cross-test spy assertions can fail due to vitest module state contamination.
+
+**Symptoms:**
+- Spy on a function in one test
+- Assertion fails in another test even though the function was called
+- Tests pass individually but fail when run together
+
+**Solution:**
+- Avoid cross-test spy assertions
+- Reset mocks between tests: `vi.resetAllMocks()` in `beforeEach`
+- Use isolated test contexts where possible
+
+**Example:**
+```typescript
+// DON'T: Rely on spy state across tests
+const spy = vi.spyOn(module, 'function');
+// ... later in another test
+expect(spy).toHaveBeenCalled(); // May fail due to module state
+
+// DO: Reset mocks between tests
+beforeEach(() => {
+  vi.resetAllMocks();
+});
+```
+
+*Source: Epic 5 Story 5.5*
+
+### Firebase Auth OAuth in Headless CI (Epic 3)
+
+**Problem:** Firebase Auth OAuth popup cannot be automated in headless CI.
+
+**Solution:** Hybrid testing strategy:
+- E2E tests: UI validation without full OAuth flow
+- Integration tests: Auth state management with mocked auth
+- Manual testing: Full OAuth flow in browser
+
+**Test Authentication Bypass:**
+```typescript
+// For E2E testing, use signInWithTestCredentials pattern
+// See tests/e2e/auth-workflow.spec.ts for implementation
+```
+
+*Source: Epic 3 Retrospective*
+
+### Firestore Offline Persistence Hanging (Epic 1)
+
+**Problem:** Firestore's offline persistence can make `addDoc` hang if there are network issues.
+
+**Solution:** Fire-and-forget pattern for optimistic UI updates:
+```typescript
+// Don't await if you want optimistic UI
+addDoc(collection, data); // Fire and forget
+
+// Or handle the promise separately
+addDoc(collection, data).catch(handleError);
+```
+
+*Source: Epic 1 Story 1.2*
+
+### ESLint 9 Flat Config (Epic 4)
+
+**Problem:** ESLint 9 uses flat config format (`eslint.config.mjs`), not legacy `.eslintrc.json`.
+
+**Solution:** Use flat config format:
+```javascript
+// eslint.config.mjs
+export default [
+  // ... configuration
+];
+```
+
+*Source: Epic 4 Story 4.3*
+
+### Coverage Including Test Files (Epic 3)
+
+**Problem:** Vitest coverage reporter was including test files in coverage calculation, inflating numbers.
+
+**Solution:** Exclude test files from coverage:
+```typescript
+// vite.config.ts
+coverage: {
+  exclude: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts']
+}
+```
+
+*Source: Epic 3 Story 3.7*
+
+---
+
+## Maintenance
+
+This document should be updated:
+- After each retrospective with new agreements
+- When new gotchas are discovered
+- When standards change
+- When new documentation is created
+
+**Last updated by:** Epic 5 Retrospective (2025-12-03)

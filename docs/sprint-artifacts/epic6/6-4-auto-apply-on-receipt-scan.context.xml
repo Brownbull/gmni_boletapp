@@ -1,0 +1,243 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>4</storyId>
+    <title>Auto-Apply on Receipt Scan</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-03</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic6/story-6.4-auto-apply-on-receipt-scan.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user scanning a receipt</asA>
+    <iWant>learned categories to be automatically applied to matching items</iWant>
+    <soThat>I don't have to manually categorize items I've categorized before</soThat>
+    <tasks>
+      <task id="1" ac="1">Modify receipt scan flow to apply mappings after Gemini response
+        <subtask>Get user's category mappings from hook</subtask>
+        <subtask>Call applyCategoryMappings() on transaction</subtask>
+      </task>
+      <task id="2" ac="2">Implement merchant matching logic</task>
+      <task id="3" ac="3">Implement item-level matching logic</task>
+      <task id="4" ac="4">Add confidence threshold check</task>
+      <task id="5" ac="5">Call incrementMappingUsage() when mapping applied</task>
+      <task id="6" ac="6">Create tests/integration/category-apply.test.tsx</task>
+      <task id="7">Run all tests and verify passing</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">After Gemini analyzes receipt, learned categories are applied</criterion>
+    <criterion id="AC2">Merchant name is matched for store-level category override</criterion>
+    <criterion id="AC3">Individual items are matched for item-level category override</criterion>
+    <criterion id="AC4">Only matches with confidence > 0.7 are applied</criterion>
+    <criterion id="AC5">Mapping usage count is incremented when mapping is applied</criterion>
+    <criterion id="AC6">Integration tests verify auto-apply flow with mock mappings</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/epic6/tech-spec.md</path>
+        <title>Epic 6 Technical Specification: Smart Category Learning</title>
+        <section>Category Application Pattern</section>
+        <snippet>The applyCategoryMappings function checks merchant name for store-level category, then individual items. Only applies mappings with confidence > 0.7 threshold.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic6/tech-spec.md</path>
+        <title>Epic 6 Technical Specification</title>
+        <section>ADR-013: Client-Side Fuzzy Matching Strategy</section>
+        <snippet>Fuzzy matching runs client-side using fuse.js with threshold 0.3. Zero server costs, instant category suggestions, works offline if mappings cached.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic6/tech-spec.md</path>
+        <title>Epic 6 Technical Specification</title>
+        <section>Story-to-File Mapping</section>
+        <snippet>Story 6.4 Auto-Apply: Primary files are src/services/gemini.ts, src/hooks/useCategoryMappings.ts. Test file: tests/integration/category-apply.test.tsx</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/architecture.md</path>
+        <title>Architecture Document - Boletapp</title>
+        <section>Data Flow: Receipt Scanning Workflow</section>
+        <snippet>User uploads image -> ScanView converts to Base64 -> Gemini API analyzes -> Parser extracts fields -> EditView displays for user review -> Firestore saves.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Component Architecture</section>
+        <snippet>App.tsx orchestrates all views and navigation. processScan() function at line 125 calls analyzeReceipt() and sets currentTransaction state before navigating to EditView.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic6/story-6.4-auto-apply-on-receipt-scan.md</path>
+        <title>Story 6.4: Auto-Apply on Receipt Scan</title>
+        <section>Technical Summary</section>
+        <snippet>Integration point is after analyzeReceipt() returns transaction data, before transaction is displayed/saved. Matching priority: store category from merchant first, then item category.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic6/tech-spec.md</path>
+        <title>Epic 6 Technical Specification</title>
+        <section>Testing Strategy - Integration Tests</section>
+        <snippet>Story 6.4 integration test should verify: Scan receipt -> matching categories applied. Test file location: tests/integration/category-apply.test.tsx</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <file>
+        <path>src/App.tsx</path>
+        <kind>main-orchestrator</kind>
+        <symbol>processScan</symbol>
+        <lines>125-158</lines>
+        <reason>Key integration point: processScan() calls analyzeReceipt() and sets currentTransaction. Category mappings must be applied between receipt analysis and setting state.</reason>
+      </file>
+      <file>
+        <path>src/utils/categoryMatcher.ts</path>
+        <kind>utility</kind>
+        <symbol>applyCategoryMappings, findCategoryMatch, createMatcher</symbol>
+        <lines>1-190</lines>
+        <reason>Core fuzzy matching implementation from Story 6.2. Contains applyCategoryMappings() function to call, with AUTO_APPLY_CONFIDENCE_THRESHOLD = 0.7 constant.</reason>
+      </file>
+      <file>
+        <path>src/hooks/useCategoryMappings.ts</path>
+        <kind>hook</kind>
+        <symbol>useCategoryMappings</symbol>
+        <lines>1-159</lines>
+        <reason>React hook providing user's mappings array and CRUD operations. App.tsx needs to call this hook to get mappings for applyCategoryMappings().</reason>
+      </file>
+      <file>
+        <path>src/services/categoryMappingService.ts</path>
+        <kind>service</kind>
+        <symbol>incrementMappingUsage</symbol>
+        <lines>131-143</lines>
+        <reason>AC#5 requirement: Call incrementMappingUsage() when a mapping is auto-applied to track usage statistics.</reason>
+      </file>
+      <file>
+        <path>src/services/gemini.ts</path>
+        <kind>service</kind>
+        <symbol>analyzeReceipt</symbol>
+        <lines>1-67</lines>
+        <reason>Receipt analysis service called by processScan(). Returns Transaction object that needs category mappings applied.</reason>
+      </file>
+      <file>
+        <path>src/types/categoryMapping.ts</path>
+        <kind>types</kind>
+        <symbol>CategoryMapping, MatchResult</symbol>
+        <lines>1-47</lines>
+        <reason>Type definitions for category mappings and match results. MatchResult includes confidence score used for threshold check.</reason>
+      </file>
+      <file>
+        <path>src/types/transaction.ts</path>
+        <kind>types</kind>
+        <symbol>Transaction, TransactionItem, StoreCategory</symbol>
+        <lines>1-41</lines>
+        <reason>Transaction type with category field that gets updated by applyCategoryMappings. Items array has optional category field for item-level overrides.</reason>
+      </file>
+      <file>
+        <path>tests/unit/categoryMatcher.test.ts</path>
+        <kind>test</kind>
+        <symbol>applyCategoryMappings tests</symbol>
+        <lines>269-415</lines>
+        <reason>Reference for test patterns. Comprehensive unit tests for applyCategoryMappings covering empty mappings, merchant matching, item matching, and edge cases.</reason>
+      </file>
+    </code>
+
+    <dependencies>
+      <node>
+        <package>firebase</package>
+        <version>^10.14.1</version>
+        <purpose>Firestore for mapping storage, Auth for user context</purpose>
+      </node>
+      <node>
+        <package>fuse.js</package>
+        <version>^7.1.0</version>
+        <purpose>Fuzzy matching library for category matching (already installed)</purpose>
+      </node>
+      <node>
+        <package>react</package>
+        <version>^18.3.1</version>
+        <purpose>UI framework, hooks for state management</purpose>
+      </node>
+      <devDependency>
+        <package>vitest</package>
+        <version>^4.0.13</version>
+        <purpose>Test runner for unit and integration tests</purpose>
+      </devDependency>
+      <devDependency>
+        <package>@testing-library/react</package>
+        <version>^16.3.0</version>
+        <purpose>React component testing utilities</purpose>
+      </devDependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="pattern">Do not mutate original transaction object - applyCategoryMappings returns new object</constraint>
+    <constraint type="threshold">Only apply mappings with confidence > 0.7 (AUTO_APPLY_CONFIDENCE_THRESHOLD)</constraint>
+    <constraint type="order">Apply merchant match first (store-level category), then item matches (item-level category)</constraint>
+    <constraint type="architecture">Integration happens in App.tsx processScan function, NOT in gemini.ts service</constraint>
+    <constraint type="async">incrementMappingUsage is async - fire and forget or await as needed</constraint>
+    <constraint type="testing">Use React Testing Library patterns matching existing integration tests</constraint>
+    <constraint type="layer">Category matching is client-side only, no Cloud Function changes needed</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>applyCategoryMappings</name>
+      <kind>function</kind>
+      <signature>applyCategoryMappings(transaction: Transaction, mappings: CategoryMapping[]): Transaction</signature>
+      <path>src/utils/categoryMatcher.ts</path>
+    </interface>
+    <interface>
+      <name>findCategoryMatch</name>
+      <kind>function</kind>
+      <signature>findCategoryMatch(matcher: Fuse&lt;CategoryMapping&gt;, itemName: string, _merchant?: string): MatchResult | null</signature>
+      <path>src/utils/categoryMatcher.ts</path>
+    </interface>
+    <interface>
+      <name>createMatcher</name>
+      <kind>function</kind>
+      <signature>createMatcher(mappings: CategoryMapping[]): Fuse&lt;CategoryMapping&gt;</signature>
+      <path>src/utils/categoryMatcher.ts</path>
+    </interface>
+    <interface>
+      <name>incrementMappingUsage</name>
+      <kind>function</kind>
+      <signature>incrementMappingUsage(db: Firestore, userId: string, appId: string, mappingId: string): Promise&lt;void&gt;</signature>
+      <path>src/services/categoryMappingService.ts</path>
+    </interface>
+    <interface>
+      <name>useCategoryMappings</name>
+      <kind>hook</kind>
+      <signature>useCategoryMappings(user: User | null, services: Services | null): UseCategoryMappingsReturn</signature>
+      <path>src/hooks/useCategoryMappings.ts</path>
+    </interface>
+    <interface>
+      <name>analyzeReceipt</name>
+      <kind>function</kind>
+      <signature>analyzeReceipt(images: string[], currency: string): Promise&lt;Transaction&gt;</signature>
+      <path>src/services/gemini.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing uses Vitest as the test runner with React Testing Library for component integration tests. Unit tests are pure function tests without React rendering. Integration tests use happy-dom for DOM simulation and mock Firebase services. Tests follow AAA pattern (Arrange, Act, Assert) with descriptive test names.
+    </standards>
+    <locations>
+      <location>tests/unit/*.test.ts - Pure unit tests</location>
+      <location>tests/integration/*.test.tsx - React integration tests</location>
+      <location>tests/e2e/*.spec.ts - Playwright E2E tests</location>
+    </locations>
+    <ideas>
+      <idea ac="AC1">Test that applyCategoryMappings is called after analyzeReceipt returns and before state is set</idea>
+      <idea ac="AC2">Test merchant name matching updates transaction.category field</idea>
+      <idea ac="AC3">Test item names matching updates transaction.items[].category fields</idea>
+      <idea ac="AC4">Test that matches with confidence &lt;= 0.7 are NOT applied</idea>
+      <idea ac="AC5">Test incrementMappingUsage is called for each applied mapping with correct mappingId</idea>
+      <idea ac="AC6">Integration test: mock useCategoryMappings, render App or processScan component, verify categories applied to scanned transaction</idea>
+      <idea>Test empty mappings array returns transaction unchanged</idea>
+      <idea>Test partial matches (merchant matches but items don't, or vice versa)</idea>
+      <idea>Test multiple items with different category matches</idea>
+    </ideas>
+  </tests>
+</story-context>

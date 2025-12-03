@@ -79,15 +79,28 @@ development_status:
 
   # Epic 5: Data Download & Export
   # Tech-spec completed 2025-12-02, PRD completed 2025-12-02
+  # DEPLOYED TO PRODUCTION: 2025-12-03
   epic-5: contexted
   5-1-csv-export-utilities: done  # Context generated 2025-12-02, Dev completed 2025-12-02, Code Review APPROVED 2025-12-02
   5-2-basic-data-export-settings: done  # Context generated 2025-12-02, Dev completed 2025-12-02, Code Review APPROVED 2025-12-02
   5-3-subscription-tier-check-infrastructure: done  # Context generated 2025-12-02, Dev completed 2025-12-03, Code Review APPROVED 2025-12-03
   5-4-premium-transaction-export: done  # Context generated 2025-12-03, Dev completed 2025-12-03, Code Review APPROVED 2025-12-03
-  5-5-premium-statistics-export-upgrade-prompt: done  # Context generated 2025-12-03, Dev completed 2025-12-03, Code Review APPROVED 2025-12-03
-  epic-5-retrospective: optional
+  5-5-premium-statistics-export-upgrade-prompt: done  # Context generated 2025-12-03, Dev completed 2025-12-03, Code Review APPROVED 2025-12-03, Deployed 2025-12-03
+  epic-5-retrospective: completed  # Completed 2025-12-03
+
+  # Epic 6: Smart Category Learning
+  # Infrastructure pre-requisite: CI/CD Auto-Deploy (from Epic 5 retro)
+  # Tech-spec completed 2025-12-03
+  epic-6: contexted  # Starting 2025-12-03
+  6-0-cicd-auto-deploy-firebase: done  # Infrastructure story - Code Review APPROVED 2025-12-03
+  6-1-category-mapping-infrastructure: done  # 3 points - Types, Firestore service, security rules - Code Review APPROVED 2025-12-03
+  6-2-fuzzy-matching-engine: done  # 3 points - fuse.js integration, matcher logic - Code Review APPROVED 2025-12-03
+  6-3-category-learning-prompt: done  # 2 points - UI prompt on category edit - Code Review APPROVED 2025-12-03
+  6-4-auto-apply-on-receipt-scan: done  # 3 points - Apply mappings to Gemini results - Code Review APPROVED 2025-12-03
+  6-5-mappings-management-ui: done  # 3 points - Settings section for viewing/editing/deleting - Code Review APPROVED 2025-12-03
+  6-6-epic-release-deployment: in-progress  # 1 point - Context generated 2025-12-03, Dev started 2025-12-03
+  epic-6-retrospective: optional  # To be completed after all Epic 6 stories are done
 
   # Future Epics (updated in Epic 4 retrospective)
-  epic-6: backlog  # Smart Category Learning
   epic-7: backlog  # Subscription & Monetization (4-tier model, Mercado Pago)
   epic-8: backlog  # Mobile App (iOS & Android)
