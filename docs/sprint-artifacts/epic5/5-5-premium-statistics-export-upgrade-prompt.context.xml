@@ -1,0 +1,142 @@
+<story-context id="5-5-premium-statistics-export-upgrade-prompt" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>5</storyId>
+    <title>Premium Statistics Export &amp; Upgrade Prompt</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-03</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic5/5-5-premium-statistics-export-upgrade-prompt.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Pro/Max subscriber viewing yearly analytics / free/basic user</asA>
+    <iWant>to download yearly aggregated statistics / to see a clear upgrade path when I try to download</iWant>
+    <soThat>I can see my spending patterns in external tools / I understand this is a premium feature</soThat>
+    <tasks>
+      <task id="1" ac="4,5,6,7">Create UpgradePromptModal component with accessibility (role="dialog", aria-modal, focus trap, Escape key handling)</task>
+      <task id="2" ac="1,3,5">Add statistics export translations (exportStatistics, downloadStatistics, upgradeRequired, upgradeMessage, upgradeCta, maybeLater) in EN/ES</task>
+      <task id="3" ac="1,2,9">Implement downloadYearlyStatistics function - aggregate by month/category, calculate percentage, generate sorted CSV with summary row</task>
+      <task id="4" ac="1,2,3,8">Extend TrendsView with statistics export logic - detect view type, update icon dynamically (FileText vs BarChart2), loading state</task>
+      <task id="5" ac="4,5,6">Integrate upgrade prompt for non-subscribers - check canAccessPremiumExport from useSubscriptionTier hook</task>
+      <task id="6" ac="9">Write unit tests for statistics aggregation (month grouping, percentage calculation, transaction count, filename generation)</task>
+      <task id="7" ac="4,5,6,7">Write integration tests for upgrade prompt (modal appears, content, Escape key, focus return)</task>
+      <task id="8" ac="1,2,8">Write E2E test for statistics export flow</task>
+      <task id="9" ac="all">Manual testing checklist</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="1" title="Statistics Export for Year View">CSV downloads with yearly aggregated statistics (category totals per month, monthly spending trends, period summaries). Filename: boletapp-statistics-YYYY.csv</ac>
+    <ac id="2" title="Statistics Export for Quarter View">Quarter view exports YEARLY statistics (not quarterly - MVP scope), identical to year view</ac>
+    <ac id="3" title="Icon Style Indicates Statistics Export">Download icon shows BarChart2 for statistics (year/quarter), FileText for transactions (month). Distinct visual with hover/tooltip</ac>
+    <ac id="4" title="Upgrade Prompt for Non-Subscribers">Modal appears for free/basic users, no file downloads, focus trapped for accessibility</ac>
+    <ac id="5" title="Upgrade Prompt Content">Explains Pro/Max feature, mentions what subscribers can download, CTA "Upgrade Now"/"Actualizar Ahora", dismiss "Maybe Later"/"Quizás Después"</ac>
+    <ac id="6" title="Upgrade Prompt Dismissal">Modal closes on "Maybe Later"/X/Escape, no download, focus returns to download button, can re-trigger</ac>
+    <ac id="7" title="Upgrade Prompt Accessibility">role="dialog", aria-modal="true", focus trapped, Escape closes, title announced</ac>
+    <ac id="8" title="Performance Requirement">Download completes in under 2 seconds, UI responsive, loading indicator shown</ac>
+    <ac id="9" title="Statistics CSV Content">Columns: Month, Category, Total, Transaction Count, Percentage of Monthly Spend. Grouped by month, sorted chronologically, summary row for yearly totals</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/epic5/tech-spec.md" title="Epic 5 Tech Spec" section="Statistics Export Schema, ADR-011, ADR-012">
+        Statistics export provides yearly aggregated data with columns Month (YYYY-MM), Category, Total, Transaction Count, Percentage. ADR-011 defines subscription gating mock strategy. ADR-012 defines export type detection via view granularity.
+      </doc>
+      <doc path="docs/prd.md" title="Epic 5 PRD" section="FR16-FR19, FR23, NFR3, NFR9-NFR11">
+        FR16: Statistics provides yearly aggregated data. FR17: Includes category totals, spending trends, period summaries. FR18: Available from quarter and year views. FR23: Free/Basic users shown clear upgrade path. NFR3: Statistics export under 2 seconds. NFR9-11: Accessibility requirements.
+      </doc>
+      <doc path="docs/epics.md" title="Epics" section="Story 5.5">
+        Story 5.5 covers statistics download for Pro/Max on quarter/year views, upgrade prompt for free/basic users with CTA placeholder.
+      </doc>
+      <doc path="docs/architecture/architecture.md" title="Architecture" section="General patterns">
+        React/TypeScript PWA with Firebase backend. Client-side processing pattern established.
+      </doc>
+    </docs>
+
+    <code>
+      <file path="src/utils/csvExport.ts" kind="utility" symbol="downloadStatistics, generateCSV, downloadCSV" lines="376-418" reason="Existing statistics export function aggregates by category for year. Story 5.5 needs monthly breakdown - may need new downloadYearlyStatistics function or extend existing downloadStatistics"/>
+      <file path="src/utils/csvExport.ts" kind="utility" symbol="StatisticsRow, STATISTICS_COLUMNS" lines="347-363" reason="Current statistics schema: category, transactionCount, totalAmount, averageAmount, percentageOfTotal. Story 5.5 needs Month column added for monthly breakdown"/>
+      <file path="src/hooks/useSubscriptionTier.ts" kind="hook" symbol="useSubscriptionTier, canAccessPremiumExport, SubscriptionTier, SubscriptionInfo" lines="1-101" reason="Subscription check hook from Story 5.3. Returns { tier: 'max', canAccessPremiumExport: true } during mock phase. Use to gate premium export"/>
+      <file path="src/views/TrendsView.tsx" kind="view" symbol="TrendsView" lines="141-156" reason="Current download button calls downloadYearTransactions or downloadMonthlyTransactions. Story 5.5 needs to add statistics export path and subscription check"/>
+      <file path="src/utils/translations.ts" kind="utility" symbol="TRANSLATIONS" lines="1-60" reason="Translation keys for EN/ES. Story 5.5 needs: exportStatistics, downloadStatistics, upgradeRequired, upgradeMessage, upgradeCta, maybeLater"/>
+      <file path="tests/unit/csvExport.test.ts" kind="test" symbol="csvExport tests" reason="Existing unit tests for CSV utilities. Story 5.5 should extend with statistics aggregation tests"/>
+      <file path="tests/unit/subscription.test.ts" kind="test" symbol="subscription tests" reason="15 unit tests for subscription utilities from Story 5.3. Pattern reference for testing"/>
+      <file path="tests/integration/settings-export.test.tsx" kind="test" symbol="settings export tests" reason="Integration test pattern for export functionality from Story 5.2. Pattern reference for upgrade prompt tests"/>
+    </code>
+
+    <dependencies>
+      <node>
+        <runtime>
+          <package name="react" version="^18.3.1"/>
+          <package name="react-dom" version="^18.3.1"/>
+          <package name="firebase" version="^10.14.1"/>
+          <package name="lucide-react" version="^0.460.0" note="Icons: Download, BarChart2, FileText for export UI"/>
+        </runtime>
+        <dev>
+          <package name="vitest" version="^4.0.13" note="Unit and integration test runner"/>
+          <package name="@testing-library/react" version="^16.3.0" note="React component testing"/>
+          <package name="@testing-library/user-event" version="^14.6.1" note="User interaction simulation"/>
+          <package name="@playwright/test" version="^1.56.1" note="E2E testing"/>
+          <package name="typescript" version="^5.3.3"/>
+        </dev>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="ADR-010">Client-side only - no Cloud Functions. Use browser Blob API for CSV download.</constraint>
+    <constraint source="ADR-011">Subscription gating uses mock returning true during testing. Single point of change for Epic 7.</constraint>
+    <constraint source="ADR-012">Export type detection via selectedMonth state: null = statistics (year/quarter view), set = transactions (month view)</constraint>
+    <constraint source="Tech-spec">Reuse csvExport.ts - extend existing module, DO NOT create new file for statistics</constraint>
+    <constraint source="PRD NFR9-11">WCAG 2.1 Level AA accessibility for modal: role="dialog", aria-modal="true", focus trap, Escape to close</constraint>
+    <constraint source="PRD NFR3">Statistics export must complete in under 2 seconds</constraint>
+    <constraint source="Story 5.2/5.3">Follow established patterns: exporting state in App.tsx, requestAnimationFrame for non-blocking UI, toast for feedback</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="useSubscriptionTier" kind="React hook" path="src/hooks/useSubscriptionTier.ts">
+      <signature>function useSubscriptionTier(): SubscriptionInfo</signature>
+      <returns>{ tier: SubscriptionTier, canAccessPremiumExport: boolean }</returns>
+      <note>Returns { tier: 'max', canAccessPremiumExport: true } during mock phase</note>
+    </interface>
+    <interface name="canAccessPremiumExport" kind="utility function" path="src/hooks/useSubscriptionTier.ts">
+      <signature>function canAccessPremiumExport(): boolean</signature>
+      <returns>true (mock) - for non-React contexts</returns>
+    </interface>
+    <interface name="downloadStatistics" kind="utility function" path="src/utils/csvExport.ts">
+      <signature>function downloadStatistics(transactions: Transaction[], year: string): void</signature>
+      <note>Existing function aggregates by category only. Story 5.5 may need new downloadYearlyStatistics with monthly breakdown</note>
+    </interface>
+    <interface name="UpgradePromptModal" kind="React component" path="src/components/UpgradePromptModal.tsx">
+      <signature>interface UpgradePromptModalProps { isOpen: boolean; onClose: () => void; onUpgrade: () => void; }</signature>
+      <note>New component to create for Story 5.5</note>
+    </interface>
+    <interface name="TrendsView props" kind="React component props" path="src/views/TrendsView.tsx">
+      <signature>interface TrendsViewProps { selectedMonth: string | null; selectedYear: string; filteredTrans: Transaction[]; ... }</signature>
+      <note>selectedMonth null = year/quarter view (statistics), selectedMonth set = month view (transactions)</note>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Vitest for unit/integration tests. @testing-library/react for component testing. Playwright for E2E.
+      Tests organized: tests/unit/, tests/integration/, tests/e2e/. Coverage thresholds: 45% lines, 30% branches.
+      Use happy-dom for component rendering. Mock Firebase with vi.mock patterns from existing tests.
+    </standards>
+    <locations>
+      <loc>tests/unit/csvExport.test.ts - Extend with statistics aggregation tests</loc>
+      <loc>tests/integration/trends-export.test.tsx - Create for upgrade prompt tests</loc>
+      <loc>tests/e2e/export.spec.ts - Extend with statistics export flow</loc>
+    </locations>
+    <ideas>
+      <idea ac="9">Test statistics aggregation: groups by month correctly, calculates percentage of monthly spend, includes transaction count, sorts chronologically</idea>
+      <idea ac="9">Test downloadYearlyStatistics: generates correct filename (boletapp-statistics-YYYY.csv), handles empty transactions, handles single month of data</idea>
+      <idea ac="4,5">Test upgrade prompt renders: modal appears when canAccessPremiumExport is false, has correct content (title, message, buttons)</idea>
+      <idea ac="6,7">Test modal dismissal: Escape key closes modal, "Maybe Later" closes modal, focus returns to download button after close</idea>
+      <idea ac="3">Test icon switching: BarChart2 shown when selectedMonth is null, FileText shown when selectedMonth is set</idea>
+      <idea ac="4">Test subscription gate: subscribers bypass modal and download directly, non-subscribers see modal</idea>
+      <idea ac="8">Test performance: statistics export completes in under 2 seconds with 1000+ transactions</idea>
+    </ideas>
+  </tests>
+</story-context>
