@@ -1,5 +1,5 @@
 import React from 'react';
-import { Globe, DollarSign, Calendar, Moon, Download, Trash2, ArrowRightLeft } from 'lucide-react';
+import { Globe, DollarSign, Calendar, Moon, Download, Trash2, ArrowRightLeft, Loader2 } from 'lucide-react';
 
 interface SettingsViewProps {
     lang: string;
@@ -7,6 +7,7 @@ interface SettingsViewProps {
     dateFormat: string;
     theme: string;
     wiping: boolean;
+    exporting: boolean;
     t: (key: string) => string;
     onSetLang: (lang: string) => void;
     onSetCurrency: (currency: string) => void;
@@ -23,6 +24,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     dateFormat,
     theme,
     wiping,
+    exporting,
     t,
     onSetLang,
     onSetCurrency,
@@ -122,13 +124,27 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
             <div className={`p-4 rounded-xl border flex justify-between items-center ${card}`}>
                 <div className="flex gap-2">
-                    <Download /> {t('exportAll')}
+                    <Download /> {t('downloadAllData')}
                 </div>
                 <button
                     onClick={onExportAll}
-                    className="bg-blue-200 text-blue-800 px-3 py-1 rounded font-bold text-sm"
+                    disabled={exporting}
+                    aria-label={t('downloadAllData') + ' as CSV'}
+                    aria-busy={exporting}
+                    className={`flex items-center gap-1 px-3 py-1 rounded font-bold text-sm ${
+                        exporting
+                            ? 'bg-blue-100 text-blue-400 cursor-not-allowed'
+                            : 'bg-blue-200 text-blue-800 hover:bg-blue-300'
+                    }`}
                 >
-                    CSV
+                    {exporting ? (
+                        <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            {t('exportingData')}
+                        </>
+                    ) : (
+                        'CSV'
+                    )}
                 </button>
             </div>
 

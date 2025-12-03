@@ -1,0 +1,241 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>3</storyId>
+    <title>Subscription Tier Check Infrastructure</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-02</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic5/5-3-subscription-tier-check-infrastructure.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>a subscription check utility that can be easily updated when Epic 7 lands</iWant>
+    <soThat>premium features can be properly gated without major refactoring later</soThat>
+    <tasks>
+      <task id="1" acs="1">
+        <title>Create subscription type definitions</title>
+        <subtasks>
+          <subtask>Create `src/hooks/useSubscriptionTier.ts` (types will be in same file per single-file architecture)</subtask>
+          <subtask>Define SubscriptionTier type: 'free' | 'basic' | 'pro' | 'max'</subtask>
+          <subtask>Define SubscriptionInfo interface for hook return value</subtask>
+        </subtasks>
+      </task>
+      <task id="2" acs="2,3,4,5">
+        <title>Create useSubscriptionTier hook</title>
+        <subtasks>
+          <subtask>Implement mock useSubscriptionTier() hook returning { tier: 'max', canAccessPremiumExport: true }</subtask>
+          <subtask>Export helper function canAccessPremiumExport() for non-component usage</subtask>
+          <subtask>Add comprehensive TODO comments for Epic 7 integration points</subtask>
+          <subtask>Use useMemo to ensure stable return object reference</subtask>
+        </subtasks>
+      </task>
+      <task id="3" acs="6">
+        <title>Write unit tests</title>
+        <subtasks>
+          <subtask>Create tests/unit/subscription.test.ts</subtask>
+          <subtask>Test canAccessPremiumExport() returns true</subtask>
+          <subtask>Test useSubscriptionTier() returns correct structure</subtask>
+          <subtask>Test hook returns stable reference (doesn't cause re-renders)</subtask>
+          <subtask>Add comments documenting expected Epic 7 behavior</subtask>
+        </subtasks>
+      </task>
+      <task id="4" acs="4">
+        <title>Verify integration with existing code</title>
+        <subtasks>
+          <subtask>Ensure hook follows existing hook patterns in src/hooks/</subtask>
+          <subtask>Verify exports are consistent with useAuth, useTransactions</subtask>
+          <subtask>Run full test suite to ensure no regressions</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1" title="Subscription Tier Type Definition">
+      <given>the application needs to model subscription tiers</given>
+      <when>importing subscription types</when>
+      <then>SubscriptionTier type is available: 'free' | 'basic' | 'pro' | 'max'</then>
+      <and>type is exported from a central location for consistent usage</and>
+    </criterion>
+    <criterion id="2" title="canAccessPremiumExport() Utility Function">
+      <given>a component needs to check premium export access</given>
+      <when>canAccessPremiumExport() is called</when>
+      <then>it returns true for all users during testing phase (mock implementation)</then>
+      <and>function is pure (no side effects)</and>
+      <and>function signature is clear: () => boolean</and>
+    </criterion>
+    <criterion id="3" title="useSubscriptionTier() React Hook">
+      <given>a React component needs subscription tier information</given>
+      <when>using useSubscriptionTier() hook</when>
+      <then>it returns an object with tier and canAccessPremiumExport</then>
+      <and>tier returns current subscription tier ('max' during testing)</and>
+      <and>canAccessPremiumExport returns boolean (true during testing)</and>
+      <and>hook is stable and doesn't cause unnecessary re-renders</and>
+    </criterion>
+    <criterion id="4" title="Single Point of Change Architecture">
+      <given>Epic 7 will introduce real subscription logic</given>
+      <when>subscription infrastructure is implemented</when>
+      <then>all subscription logic is contained in one file (src/hooks/useSubscriptionTier.ts)</then>
+      <and>no other files need to check subscription directly (they use the hook)</and>
+      <and>updating for Epic 7 requires only changing implementation, not consumers</and>
+    </criterion>
+    <criterion id="5" title="TODO Comments for Epic 7 Integration">
+      <given>the subscription module is created</given>
+      <when>reviewing the code</when>
+      <then>clear TODO comments mark where Epic 7 integration will occur</then>
+      <and>comments specify: what to replace, expected Firestore path, data structure hints</and>
+      <and>example: // TODO: Epic 7 - Replace with Firestore subscription lookup: users/{uid}/subscription</and>
+    </criterion>
+    <criterion id="6" title="Unit Tests for Subscription Utilities">
+      <given>the subscription infrastructure</given>
+      <when>running unit tests</when>
+      <then>tests verify canAccessPremiumExport() returns true during testing</then>
+      <and>tests verify useSubscriptionTier() returns { tier: 'max', canAccessPremiumExport: true }</and>
+      <and>tests document expected behavior for future Epic 7 implementation</and>
+      <and>all tests pass</and>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Epic 5 PRD - Data Download Feature</title>
+        <section>Dependencies - Epic 7 Dependency (Subscription System)</section>
+        <snippet>Create useSubscriptionTier() hook or canAccessPremiumExport() utility. Returns true for all users during testing phase. Designed as single point of change when Epic 7 lands.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Epic 5 PRD - Subscription Gating Requirements</title>
+        <section>Functional Requirements FR20-FR23</section>
+        <snippet>FR20: System checks subscription tier. FR21: Mock returns true during testing. FR22: Utility designed for easy Epic 7 replacement. FR23: Free/Basic shown upgrade path.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epic 5 Story Map and Stories</title>
+        <section>Story 5.3: Subscription Tier Check Infrastructure</section>
+        <snippet>Story defines canAccessPremiumExport(), useSubscriptionTier() hook, SubscriptionTier type, single file architecture, and TODO comments for Epic 7 integration.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic5/5-2-basic-data-export-settings.md</path>
+        <title>Story 5.2 Completion Notes</title>
+        <section>Dev Agent Record - Learnings</section>
+        <snippet>Toast system available via state management in App.tsx. Translation patterns established in translations.ts. Test patterns in tests/integration/settings-export.test.tsx.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/hooks/useAuth.ts</path>
+        <kind>hook</kind>
+        <symbol>useAuth</symbol>
+        <lines>32-129</lines>
+        <reason>Reference pattern for creating React hooks. Uses useState, useEffect, returns typed interface. Story 5.3 should follow this pattern for useSubscriptionTier.</reason>
+      </artifact>
+      <artifact>
+        <path>src/hooks/useTransactions.ts</path>
+        <kind>hook</kind>
+        <symbol>useTransactions</symbol>
+        <lines>8-44</lines>
+        <reason>Reference for Firestore subscription pattern. Epic 7 will need to adapt this pattern for subscription data fetching. Note useState, useEffect, subscribeToTransactions usage.</reason>
+      </artifact>
+      <artifact>
+        <path>src/utils/csvExport.ts</path>
+        <kind>utility</kind>
+        <symbol>downloadBasicData, downloadStatistics</symbol>
+        <lines>230-244, 376-418</lines>
+        <reason>Story 5.4 and 5.5 will call useSubscriptionTier() before allowing these premium exports. Shows the consumer pattern.</reason>
+      </artifact>
+      <artifact>
+        <path>tests/unit/csvExport.test.ts</path>
+        <kind>test</kind>
+        <symbol>csvExport utilities unit tests</symbol>
+        <lines>1-731</lines>
+        <reason>Reference for unit test patterns with vitest. Shows describe/it structure, mocking, beforeEach/afterEach patterns for Story 5.3 tests.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="react" version="^18.3.1" />
+        <package name="firebase" version="^10.14.1" />
+        <package name="vitest" version="^4.0.13" devDep="true" />
+        <package name="@testing-library/react" version="^16.3.0" devDep="true" />
+        <package name="typescript" version="^5.3.3" devDep="true" />
+      </ecosystem>
+      <notes>
+        No new dependencies required for Story 5.3. Uses React core (useMemo) and vitest for testing.
+        Future Epic 7 will need Firestore hooks but current mock implementation requires nothing beyond existing deps.
+      </notes>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="story-dev-notes">Single file architecture: All subscription logic in src/hooks/useSubscriptionTier.ts</constraint>
+    <constraint source="story-dev-notes">No Firestore queries yet: Pure mock implementation (Epic 7 will add real queries)</constraint>
+    <constraint source="story-dev-notes">Type-safe: Explicit TypeScript types for subscription tiers</constraint>
+    <constraint source="story-dev-notes">Stable hook: Use useMemo to prevent unnecessary re-renders</constraint>
+    <constraint source="story-dev-notes">Forward-compatible: Structure hook return value to include future fields (loading, error)</constraint>
+    <constraint source="prd">Mock returns true for ALL users during testing phase - no actual tier checking until Epic 7</constraint>
+    <constraint source="hook-patterns">Follow existing hook patterns in src/hooks/ - see useAuth.ts for interface typing, useTransactions.ts for Firestore patterns</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>SubscriptionTier</name>
+      <kind>TypeScript type</kind>
+      <signature>export type SubscriptionTier = 'free' | 'basic' | 'pro' | 'max'</signature>
+      <path>src/hooks/useSubscriptionTier.ts</path>
+    </interface>
+    <interface>
+      <name>SubscriptionInfo</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+export interface SubscriptionInfo {
+  tier: SubscriptionTier;
+  canAccessPremiumExport: boolean;
+  // TODO: Epic 7 - Add loading and error states
+  // loading: boolean;
+  // error: Error | null;
+}
+      </signature>
+      <path>src/hooks/useSubscriptionTier.ts</path>
+    </interface>
+    <interface>
+      <name>canAccessPremiumExport</name>
+      <kind>function</kind>
+      <signature>export function canAccessPremiumExport(): boolean</signature>
+      <path>src/hooks/useSubscriptionTier.ts</path>
+    </interface>
+    <interface>
+      <name>useSubscriptionTier</name>
+      <kind>React hook</kind>
+      <signature>export function useSubscriptionTier(): SubscriptionInfo</signature>
+      <path>src/hooks/useSubscriptionTier.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Vitest testing framework with @testing-library/react for hook testing.
+      Unit tests use describe/it blocks with clear test names.
+      Mocking via vi.fn(), vi.spyOn() for browser APIs.
+      Test location: tests/unit/ for pure logic, tests/integration/ for component tests.
+      Coverage enforced: 45% lines, 30% branches, 25% functions (see vite.config.ts).
+    </standards>
+    <locations>
+      <location>tests/unit/*.test.ts</location>
+      <location>tests/integration/*.test.tsx</location>
+    </locations>
+    <ideas>
+      <idea ac="1">Test that SubscriptionTier type allows only valid values (compile-time check via TypeScript)</idea>
+      <idea ac="2">Test canAccessPremiumExport() returns true without any arguments</idea>
+      <idea ac="2">Test canAccessPremiumExport() is pure (calling twice returns same result)</idea>
+      <idea ac="3">Test useSubscriptionTier() returns object with tier='max' and canAccessPremiumExport=true</idea>
+      <idea ac="3">Test useSubscriptionTier() returns stable reference (same object on re-render)</idea>
+      <idea ac="4">Test that only one file exports subscription logic (architectural constraint)</idea>
+      <idea ac="5">Test file contains TODO comments mentioning "Epic 7" (documentation test)</idea>
+      <idea ac="6">Test suite passes with 100% coverage for the subscription module</idea>
+    </ideas>
+  </tests>
+</story-context>
