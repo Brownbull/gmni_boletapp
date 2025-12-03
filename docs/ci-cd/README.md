@@ -30,9 +30,10 @@ If you're new to CI/CD, start here:
 ### Current Workflow Status
 - **Location:** `.github/workflows/test.yml`
 - **Triggers:** Push to `main`/`develop`/`staging`, all pull requests
-- **Execution Time:** ~7-8 minutes
+- **Execution Time:** ~7-8 minutes (tests) + ~2 minutes (deploy on main)
 - **Test Coverage:** ~51% (thresholds: 45% lines, 30% branches, 25% functions, 40% statements)
-- **Workflow Steps:** 19 (updated in Epic 3)
+- **Test Job Steps:** 22 (updated in Epic 4)
+- **Deploy Job:** Automatic on merge to `main` (Story 6.0)
 
 ### Test Commands
 
@@ -98,31 +99,59 @@ When adding new tests or modifying the workflow:
 3. Update this documentation if you change the workflow
 4. Document any new issues in the troubleshooting guide
 
-## 🔧 Workflow Steps (Epic 3)
+## 🔧 Workflow Jobs
 
-The CI/CD workflow now includes 19 steps:
+### Test Job (22 steps)
+
+The test job validates code quality before deployment:
+
+1. Checkout repository (fetch-depth: 0 for gitleaks)
+2. **Scan for secrets** (gitleaks)
+3. Setup Node.js 20
+4. Cache dependencies
+5. Install dependencies
+6. Install Firebase CLI
+7. Install Playwright browsers
+8. Install and build Cloud Functions
+9. Start Firebase Emulators
+10. Run unit tests
+11. Run integration tests
+12. Create test user (for E2E)
+13. Run E2E tests
+14. Generate coverage with thresholds
+15. Upload coverage report (HTML)
+16. Upload coverage report (lcov)
+17. Display coverage summary
+18. Post coverage report to PR
+19. Run Lighthouse audits
+20. Upload Lighthouse reports
+21. Check bundle size (<700KB)
+22. **Run npm audit** (dependency vulnerabilities)
+23. **Run security lint** (eslint-plugin-security)
+
+### Deploy Job (Story 6.0) - NEW
+
+The deploy job runs **only on push to `main`** after tests pass:
 
 1. Checkout repository
 2. Setup Node.js 20
-3. Install dependencies
-4. Start Firebase Emulators
-5. Wait for Emulators
-6. Run unit tests
-7. Run integration tests
-8. Run type check
-9. Build application
-10. **Create test user** (for authenticated E2E tests)
-11. Run E2E tests
-12. **Generate coverage with thresholds**
-13. Upload coverage report (HTML)
-14. Upload coverage report (lcov)
-15. Display coverage summary
-16. **Post coverage report to PR** (vitest-coverage-report-action)
-17. **Run Lighthouse audits** (6 views)
-18. Upload Lighthouse reports
-19. **Check bundle size** (<700KB threshold)
+3. Cache dependencies
+4. Install dependencies
+5. Build for production (with secrets)
+6. **Deploy to Firebase Hosting**
+7. Deployment notification
+
+**Trigger conditions:**
+- Branch: `main` only
+- Event: `push` only (not PRs)
+- Dependency: `test` job must pass
+
+**Required Secrets:**
+- `FIREBASE_SERVICE_ACCOUNT` - Firebase service account JSON
+- `VITE_FIREBASE_*` - Firebase configuration
+- `VITE_GEMINI_*` - Gemini API configuration
 
 ---
 
-**Last Updated:** 2025-11-26
-**Workflow Version:** 2.0 (19 steps, Node.js 20, Epic 3 Complete)
+**Last Updated:** 2025-12-03
+**Workflow Version:** 3.0 (22 test steps + 7 deploy steps, auto-deploy on main)

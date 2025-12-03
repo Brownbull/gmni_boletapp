@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Trash2, Plus, Check } from 'lucide-react';
 import { CategoryBadge } from '../components/CategoryBadge';
 import { ImageViewer } from '../components/ImageViewer';
+import { CategoryLearningPrompt } from '../components/CategoryLearningPrompt';
+import { StoreCategory } from '../types/transaction';
 
 interface TransactionItem {
     name: string;
@@ -37,6 +39,10 @@ interface EditViewProps {
     onSave: () => Promise<void>;
     onUpdateTransaction: (transaction: Transaction) => void;
     onSetEditingItemIndex: (index: number | null) => void;
+    /** Optional: Save category mapping function from useCategoryMappings hook */
+    onSaveMapping?: (item: string, category: StoreCategory, source?: 'user' | 'ai') => Promise<string>;
+    /** Optional: Show toast notification */
+    onShowToast?: (text: string) => void;
 }
 
 export const EditView: React.FC<EditViewProps> = ({
@@ -54,8 +60,38 @@ export const EditView: React.FC<EditViewProps> = ({
     onSave,
     onUpdateTransaction,
     onSetEditingItemIndex,
+    onSaveMapping,
+    onShowToast,
 }) => {
     const [showImageViewer, setShowImageViewer] = useState(false);
+
+    // Story 6.3: Category learning prompt state
+    const [showLearningPrompt, setShowLearningPrompt] = useState(false);
+    const [itemToLearn, setItemToLearn] = useState<string>('');
+    const [categoryToLearn, setCategoryToLearn] = useState<StoreCategory>('Other');
+
+    // Track original values on mount for detecting changes
+    // Triggers: category, merchant, item names
+    // Does NOT trigger: item prices, add/remove items, alias, date, total
+    const originalValuesRef = useRef<{
+        category: string;
+        merchant: string;
+        itemNames: string[];
+    }>({
+        category: currentTransaction.category,
+        merchant: currentTransaction.merchant,
+        itemNames: currentTransaction.items.map(item => item.name),
+    });
+
+    // Reset original values when transaction changes (different transaction loaded)
+    useEffect(() => {
+        originalValuesRef.current = {
+            category: currentTransaction.category,
+            merchant: currentTransaction.merchant,
+            itemNames: currentTransaction.items.map(item => item.name),
+        };
+    }, [currentTransaction.id]); // Reset when transaction changes
+
     const card = theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100';
     const input = theme === 'dark' ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200';
 
@@ -79,6 +115,78 @@ export const EditView: React.FC<EditViewProps> = ({
         const newItems = currentTransaction.items.filter((_, x) => x !== index);
         onUpdateTransaction({ ...currentTransaction, items: newItems });
         onSetEditingItemIndex(null);
+    };
+
+    // Story 6.3: Detect if any tracked field has changed
+    // Triggers: category, merchant, item names
+    // Does NOT trigger: item prices, add/remove items, alias, date, total
+    const hasScannedDataChanged = (): boolean => {
+        const original = originalValuesRef.current;
+
+        // Check category change
+        if (currentTransaction.category !== original.category) {
+            return true;
+        }
+
+        // Check merchant change
+        if (currentTransaction.merchant !== original.merchant) {
+            return true;
+        }
+
+        // Check item name changes only (not prices, not count)
+        // Compare names of items that exist in both original and current
+        const currentItems = currentTransaction.items;
+        const originalItemNames = original.itemNames;
+        const minLength = Math.min(currentItems.length, originalItemNames.length);
+
+        for (let i = 0; i < minLength; i++) {
+            if (currentItems[i].name !== originalItemNames[i]) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    // Story 6.3: Handle save with category learning prompt
+    const handleSaveWithLearning = async () => {
+        // Save the transaction first
+        await onSave();
+
+        // Check if any scanned data changed and we have items to learn from
+        const dataChanged = hasScannedDataChanged();
+        const hasItemsToLearn = currentTransaction.items.length > 0 && currentTransaction.items[0].name;
+
+        // Only show prompt if:
+        // 1. Any tracked field was changed (category, merchant, item names, item prices)
+        // 2. There are items with names
+        // 3. onSaveMapping function is available
+        if (dataChanged && hasItemsToLearn && onSaveMapping) {
+            setItemToLearn(currentTransaction.items[0].name);
+            setCategoryToLearn(currentTransaction.category as StoreCategory);
+            setShowLearningPrompt(true);
+        }
+    };
+
+    // Story 6.3: Handle learning prompt confirmation
+    const handleLearnConfirm = async () => {
+        if (onSaveMapping && itemToLearn && categoryToLearn) {
+            try {
+                await onSaveMapping(itemToLearn, categoryToLearn, 'user');
+                // AC#5: Show success toast
+                if (onShowToast) {
+                    onShowToast(t('learnCategorySuccess'));
+                }
+            } catch (error) {
+                console.error('Failed to save category mapping:', error);
+            }
+        }
+        setShowLearningPrompt(false);
+    };
+
+    // Story 6.3: Handle learning prompt dismiss
+    const handleLearnDismiss = () => {
+        setShowLearningPrompt(false);
     };
 
     return (
@@ -248,11 +356,22 @@ export const EditView: React.FC<EditViewProps> = ({
             </div>
 
             <button
-                onClick={async () => { await onSave(); }}
+                onClick={handleSaveWithLearning}
                 className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg"
             >
                 {t('save')}
             </button>
+
+            {/* Story 6.3: Category Learning Prompt Modal */}
+            <CategoryLearningPrompt
+                isOpen={showLearningPrompt}
+                itemName={itemToLearn}
+                category={categoryToLearn}
+                onConfirm={handleLearnConfirm}
+                onClose={handleLearnDismiss}
+                t={t}
+                theme={theme as 'light' | 'dark'}
+            />
         </div>
     );
 };

@@ -1,0 +1,152 @@
+<story-context id="bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>6.6</storyId>
+    <title>Epic 6 Release and Deployment</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-03</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic6/story-6.6-epic-release-deployment.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>to merge Epic 6 changes through the standard branch flow and deploy to production</iWant>
+    <soThat>Smart Category Learning features are available to all users</soThat>
+    <tasks>
+      <task id="1">Verify all Epic 6 stories are complete (6.1-6.5)</task>
+      <task id="2">Create PR: develop → staging with passing CI</task>
+      <task id="3">Create PR: staging → main with passing CI</task>
+      <task id="4">Verify production deployment (auto-triggered by CI/CD)</task>
+      <task id="5">Production smoke test - category learning, auto-apply, mappings UI</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">All Epic 6 stories (6.1-6.5) are merged to develop branch</criterion>
+    <criterion id="AC2">Changes merged from develop → staging with passing CI</criterion>
+    <criterion id="AC3">Changes merged from staging → main with passing CI</criterion>
+    <criterion id="AC4">Firebase Hosting deployment successful (auto-triggered by CI/CD)</criterion>
+    <criterion id="AC5">Production verification confirms features work correctly</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/epic6/tech-spec.md</path>
+        <title>Epic 6 Technical Specification</title>
+        <section>Full document</section>
+        <snippet>Smart Category Learning tech spec with ADR-013/014/015, fuse.js fuzzy matching, Firestore schema, component architecture, and story breakdown.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic6/6-0-cicd-auto-deploy-firebase.md</path>
+        <title>Story 6.0: CI/CD Auto-Deploy to Firebase</title>
+        <section>Technical Implementation</section>
+        <snippet>Infrastructure story implementing auto-deploy on merge to main. Deploy job in test.yml runs after tests pass, uses FirebaseExtended/action-hosting-deploy action.</snippet>
+      </doc>
+      <doc>
+        <path>docs/team-standards.md</path>
+        <title>Team Standards and Knowledge Base</title>
+        <section>Deployment Standards, Workflow Standards</section>
+        <snippet>Branch flow: develop → staging → main. Auto-deploy on main via GitHub Actions. Post-deployment verification checklist included.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ci-cd/README.md</path>
+        <title>CI/CD Documentation</title>
+        <section>Deploy Job</section>
+        <snippet>Deploy job (7 steps) runs only on push to main after tests pass. Required secrets: FIREBASE_SERVICE_ACCOUNT, VITE_FIREBASE_*, VITE_GEMINI_*.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Deployment Pipeline Diagram</section>
+        <snippet>Mermaid diagram showing CI/CD flow from developer to production via GitHub Actions, Vite build, and Firebase Hosting CDN.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>.github/workflows/test.yml</path>
+        <kind>CI/CD workflow</kind>
+        <symbol>deploy job</symbol>
+        <lines>267-326</lines>
+        <reason>Contains the deploy job that auto-deploys to Firebase on merge to main. Key integration point for this story.</reason>
+      </file>
+    </code>
+    <dependencies>
+      <dependency type="prerequisite">Story 6.0 (CI/CD Auto-Deploy) - DONE</dependency>
+      <dependency type="prerequisite">Story 6.1 (Category Mapping Infrastructure) - DONE</dependency>
+      <dependency type="prerequisite">Story 6.2 (Fuzzy Matching Engine) - DONE</dependency>
+      <dependency type="prerequisite">Story 6.3 (Category Learning Prompt) - DONE</dependency>
+      <dependency type="prerequisite">Story 6.4 (Auto-Apply on Receipt Scan) - DONE</dependency>
+      <dependency type="prerequisite">Story 6.5 (Mappings Management UI) - ready-for-dev</dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="process">Branch strategy must follow: develop → staging → main</constraint>
+    <constraint type="process">All PRs require passing CI before merge</constraint>
+    <constraint type="process">No direct pushes to protected branches (main, staging, develop)</constraint>
+    <constraint type="process">Stories 6.1-6.5 must be DONE before this story starts</constraint>
+    <constraint type="deployment">Deploy job only triggers on push to main (not PRs, not other branches)</constraint>
+    <constraint type="verification">Production URL must be verified after deployment: https://boletapp-d609f.web.app</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>GitHub Actions Deploy Job</name>
+      <kind>CI/CD workflow job</kind>
+      <signature>jobs.deploy (needs: test, if: github.ref == 'refs/heads/main')</signature>
+      <path>.github/workflows/test.yml:267-326</path>
+    </interface>
+    <interface>
+      <name>FirebaseExtended/action-hosting-deploy</name>
+      <kind>GitHub Action</kind>
+      <signature>uses: FirebaseExtended/action-hosting-deploy@v0 with channelId: live</signature>
+      <path>.github/workflows/test.yml:312-318</path>
+    </interface>
+    <interface>
+      <name>gh pr create</name>
+      <kind>GitHub CLI command</kind>
+      <signature>gh pr create --base TARGET --head SOURCE --title "TITLE" --body "BODY"</signature>
+      <path>N/A (CLI command)</path>
+    </interface>
+    <interface>
+      <name>Production URL</name>
+      <kind>Firebase Hosting endpoint</kind>
+      <signature>https://boletapp-d609f.web.app</signature>
+      <path>firebase.json</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      This is a deployment/release story with NO new code to write. Testing involves:
+      1. Verifying CI passes for all PRs (unit, integration, E2E tests)
+      2. Post-deployment smoke testing in production
+
+      Test commands are already configured:
+      - npm run test:unit (unit tests)
+      - npm run test:integration (integration tests)
+      - npm run test:e2e (E2E tests)
+      - npm run test:all (all tests sequentially)
+
+      CI pipeline has 22 test steps including coverage thresholds (45% lines, 30% branches).
+    </standards>
+    <locations>
+      <location>tests/unit/*.test.ts</location>
+      <location>tests/integration/*.test.tsx</location>
+      <location>tests/e2e/*.spec.ts</location>
+    </locations>
+    <ideas>
+      <testIdea ac="AC1">Verify git log shows all Epic 6 stories merged to develop</testIdea>
+      <testIdea ac="AC2">Monitor GitHub Actions for develop → staging PR CI status</testIdea>
+      <testIdea ac="AC3">Monitor GitHub Actions for staging → main PR CI status</testIdea>
+      <testIdea ac="AC4">Verify deploy job runs successfully after main merge (gh run view)</testIdea>
+      <testIdea ac="AC5">Production smoke test checklist:
+        - Category learning prompt appears when editing transaction category
+        - Auto-apply works on new receipt scan with known merchant
+        - Settings shows "Learned Categories" section with CRUD operations
+      </testIdea>
+    </ideas>
+  </tests>
+</story-context>

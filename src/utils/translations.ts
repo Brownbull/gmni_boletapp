@@ -35,7 +35,22 @@ export const TRANSLATIONS = {
         maybeLater: "Maybe Later",
         downloadStatistics: "Download statistics as CSV",
         exportStatistics: "Export Statistics",
-        close: "Close"
+        close: "Close",
+        // Story 6.3: Category learning prompt
+        learnCategoryTitle: "Learn This Category?",
+        learnCategoryMessage: "Remember \"{item}\" as {category} for future receipts?",
+        learnCategoryConfirm: "Yes, Remember",
+        learnCategorySkip: "Not Now",
+        learnCategorySuccess: "Got it! I'll remember this.",
+        // Story 6.5: Mappings management UI
+        learnedCategories: "Learned Categories",
+        learnedCategoriesEmpty: "No learned categories yet",
+        learnedCategoriesHint: "Edit a transaction's category to start learning",
+        deleteMapping: "Delete",
+        deleteMappingConfirm: "Remove this learned category?",
+        usedTimes: "Used {count} times",
+        cancel: "Cancel",
+        confirm: "Confirm"
     },
     es: {
         overview: "Resumen", welcome: "Rastreo Inteligente", totalSpent: "Total Gastado",
@@ -73,7 +88,22 @@ export const TRANSLATIONS = {
         maybeLater: "Quizás Después",
         downloadStatistics: "Descargar estadísticas como CSV",
         exportStatistics: "Exportar Estadísticas",
-        close: "Cerrar"
+        close: "Cerrar",
+        // Story 6.3: Category learning prompt
+        learnCategoryTitle: "¿Aprender Esta Categoría?",
+        learnCategoryMessage: "¿Recordar \"{item}\" como {category} para futuras boletas?",
+        learnCategoryConfirm: "Sí, Recordar",
+        learnCategorySkip: "Ahora No",
+        learnCategorySuccess: "¡Entendido! Lo recordaré.",
+        // Story 6.5: Mappings management UI
+        learnedCategories: "Categorías Aprendidas",
+        learnedCategoriesEmpty: "Aún no hay categorías aprendidas",
+        learnedCategoriesHint: "Edita la categoría de una transacción para empezar a aprender",
+        deleteMapping: "Eliminar",
+        deleteMappingConfirm: "¿Eliminar esta categoría aprendida?",
+        usedTimes: "Usado {count} veces",
+        cancel: "Cancelar",
+        confirm: "Confirmar"
     }
 };
 

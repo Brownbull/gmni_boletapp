@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { useTransactions } from './hooks/useTransactions';
+import { useCategoryMappings } from './hooks/useCategoryMappings';
 import { LoginScreen } from './views/LoginScreen';
 import { DashboardView } from './views/DashboardView';
 import { ScanView } from './views/ScanView';
@@ -25,6 +26,8 @@ import { downloadBasicData } from './utils/csvExport';
 import { getColor } from './utils/colors';
 import { TRANSLATIONS } from './utils/translations';
 import { ITEMS_PER_PAGE, STORE_CATEGORIES } from './config/constants';
+import { applyCategoryMappings } from './utils/categoryMatcher';
+import { incrementMappingUsage } from './services/categoryMappingService';
 
 type View = 'dashboard' | 'scan' | 'edit' | 'trends' | 'list' | 'settings';
 
@@ -47,6 +50,7 @@ interface BarData {
 function App() {
     const { user, services, initError, signIn, signInWithTestCredentials, signOut } = useAuth();
     const transactions = useTransactions(user, services);
+    const { mappings, loading: mappingsLoading, saveMapping, deleteMapping } = useCategoryMappings(user, services);
 
     // UI State
     const [view, setView] = useState<View>('dashboard');
@@ -133,7 +137,8 @@ function App() {
             const merchant = result.merchant || 'Unknown';
             const finalTotal = parseStrictNumber(result.total);
 
-            setCurrentTransaction({
+            // Build initial transaction from Gemini response
+            const initialTransaction: Transaction = {
                 merchant: merchant,
                 date: d,
                 total: finalTotal,
@@ -146,7 +151,22 @@ function App() {
                 // Include image URLs from Cloud Function response
                 imageUrls: result.imageUrls,
                 thumbnailUrl: result.thumbnailUrl
-            });
+            };
+
+            // Story 6.4: Apply learned category mappings (AC#1-4)
+            // Only matches with confidence > 0.7 are applied
+            const { transaction: categorizedTransaction, appliedMappingIds } =
+                applyCategoryMappings(initialTransaction, mappings);
+
+            // Story 6.4 AC#5: Increment usage count for applied mappings (fire-and-forget)
+            if (appliedMappingIds.length > 0 && user && services) {
+                appliedMappingIds.forEach(mappingId => {
+                    incrementMappingUsage(services.db, user.uid, services.appId, mappingId)
+                        .catch(err => console.error('Failed to increment mapping usage:', err));
+                });
+            }
+
+            setCurrentTransaction(categorizedTransaction);
             setScanImages([]);
             setView('edit');
         } catch (e: any) {
@@ -450,6 +470,8 @@ function App() {
                         onDelete={deleteTransaction}
                         onUpdateTransaction={setCurrentTransaction as any}
                         onSetEditingItemIndex={setEditingItemIndex}
+                        onSaveMapping={saveMapping}
+                        onShowToast={(text: string) => setToastMessage({ text, type: 'success' })}
                     />
                 )}
 
@@ -535,6 +557,10 @@ function App() {
                         onExportAll={handleExportData}
                         onWipeDB={wipeDB}
                         onSignOut={signOut}
+                        // Story 6.5: Category mappings management
+                        mappings={mappings}
+                        mappingsLoading={mappingsLoading}
+                        onDeleteMapping={deleteMapping}
                     />
                 )}
             </main>
