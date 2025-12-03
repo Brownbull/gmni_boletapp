@@ -17,12 +17,25 @@ export const TRANSLATIONS = {
         backToCat: "Back", transactions: "Transactions", alias: "Alias",
         dateFormat: "Date Format", wipe: "Factory Reset", wipeConfirm: "Delete ALL data?",
         cleaning: "Cleaning...", cleaned: "Cleaned!", export: "Export CSV",
-        exportAll: "Export All", prev: "Prev", next: "Next", page: "Page",
+        exportAll: "Export All", downloadAllData: "Download All Your Data",
+        noTransactionsToExport: "No transactions to export", exportSuccess: "Export complete",
+        exportingData: "Exporting...", prev: "Prev", next: "Next", page: "Page",
         monthsBreakdown: "Monthly Breakdown", allTime: "All Time", login: "Login",
         signin: "Sign in with Google", signout: "Sign Out",
         back: "Back", scan: "Scan", deleteItem: "Delete item", confirmItem: "Confirm item",
         showBarChart: "Show bar chart", showPieChart: "Show pie chart",
-        selectMonth: "Select month", selectYear: "Select year"
+        selectMonth: "Select month", selectYear: "Select year",
+        // Story 5.4: Premium transaction export
+        downloadTransactions: "Download transactions as CSV",
+        exportingTransactions: "Exporting transactions...",
+        // Story 5.5: Statistics export and upgrade prompt
+        upgradeRequired: "Upgrade Required",
+        upgradeMessage: "Transaction and statistics exports are available for Pro and Max subscribers.",
+        upgradeCta: "Upgrade Now",
+        maybeLater: "Maybe Later",
+        downloadStatistics: "Download statistics as CSV",
+        exportStatistics: "Export Statistics",
+        close: "Close"
     },
     es: {
         overview: "Resumen", welcome: "Rastreo Inteligente", totalSpent: "Total Gastado",
@@ -42,12 +55,25 @@ export const TRANSLATIONS = {
         backToCat: "Volver", transactions: "Transacciones", alias: "Alias",
         dateFormat: "Formato Fecha", wipe: "Restablecer", wipeConfirm: "¿Borrar TODOS los datos?",
         cleaning: "Limpiando...", cleaned: "¡Listo!", export: "Exportar CSV",
-        exportAll: "Exportar Todo", prev: "Ant", next: "Sig", page: "Pág",
+        exportAll: "Exportar Todo", downloadAllData: "Descargar Todos Tus Datos",
+        noTransactionsToExport: "No hay transacciones para exportar", exportSuccess: "Exportación completa",
+        exportingData: "Exportando...", prev: "Ant", next: "Sig", page: "Pág",
         monthsBreakdown: "Desglose Mensual", allTime: "Histórico", login: "Ingresar",
         signin: "Entrar con Google", signout: "Cerrar Sesión",
         back: "Volver", scan: "Escanear", deleteItem: "Eliminar ítem", confirmItem: "Confirmar ítem",
         showBarChart: "Mostrar gráfico de barras", showPieChart: "Mostrar gráfico circular",
-        selectMonth: "Seleccionar mes", selectYear: "Seleccionar año"
+        selectMonth: "Seleccionar mes", selectYear: "Seleccionar año",
+        // Story 5.4: Premium transaction export
+        downloadTransactions: "Descargar transacciones como CSV",
+        exportingTransactions: "Exportando transacciones...",
+        // Story 5.5: Statistics export and upgrade prompt
+        upgradeRequired: "Actualización Requerida",
+        upgradeMessage: "Las exportaciones de transacciones y estadísticas están disponibles para suscriptores Pro y Max.",
+        upgradeCta: "Actualizar Ahora",
+        maybeLater: "Quizás Después",
+        downloadStatistics: "Descargar estadísticas como CSV",
+        exportStatistics: "Exportar Estadísticas",
+        close: "Cerrar"
     }
 };
 

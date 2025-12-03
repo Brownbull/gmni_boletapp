@@ -1,4 +1,4 @@
-# generated: 2025-11-20
+# generated: 2025-12-02
 # project: boletapp
 # project_key: boletapp
 # tracking_system: file-system
@@ -28,7 +28,7 @@
 # - SM typically drafts next story ONLY after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', dev reviews, then Dev moves to 'done'
 
-generated: 2025-11-20
+generated: 2025-12-02
 project: boletapp
 project_key: boletapp
 tracking_system: file-system
@@ -77,8 +77,17 @@ development_status:
   4-5-3-client-updates-ui: done  # 3 points - Code Review APPROVED 2025-12-01
   4-5-4-cascade-delete-documentation: done  # 2 points - Code Review APPROVED 2025-12-01
 
+  # Epic 5: Data Download & Export
+  # Tech-spec completed 2025-12-02, PRD completed 2025-12-02
+  epic-5: contexted
+  5-1-csv-export-utilities: done  # Context generated 2025-12-02, Dev completed 2025-12-02, Code Review APPROVED 2025-12-02
+  5-2-basic-data-export-settings: done  # Context generated 2025-12-02, Dev completed 2025-12-02, Code Review APPROVED 2025-12-02
+  5-3-subscription-tier-check-infrastructure: done  # Context generated 2025-12-02, Dev completed 2025-12-03, Code Review APPROVED 2025-12-03
+  5-4-premium-transaction-export: done  # Context generated 2025-12-03, Dev completed 2025-12-03, Code Review APPROVED 2025-12-03
+  5-5-premium-statistics-export-upgrade-prompt: done  # Context generated 2025-12-03, Dev completed 2025-12-03, Code Review APPROVED 2025-12-03
+  epic-5-retrospective: optional
+
   # Future Epics (updated in Epic 4 retrospective)
-  epic-5: backlog  # Enhanced Data Export (now includes image export)
   epic-6: backlog  # Smart Category Learning
   epic-7: backlog  # Subscription & Monetization (4-tier model, Mercado Pago)
   epic-8: backlog  # Mobile App (iOS & Android)
