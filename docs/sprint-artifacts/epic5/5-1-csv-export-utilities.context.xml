@@ -1,0 +1,274 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>5.1</storyId>
+    <title>CSV Export Utilities</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-02</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic5/5-1-csv-export-utilities.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>reusable CSV generation utilities with proper formatting</iWant>
+    <soThat>all export features have consistent, Excel-compatible output</soThat>
+    <tasks>
+      <task id="1" title="Create csvExport.ts module" ac="1,2">
+        <subtask>Create /src/utils/csvExport.ts</subtask>
+        <subtask>Implement escapeCSVValue(value: any): string - handles null, quotes, commas</subtask>
+        <subtask>Implement generateCSV&lt;T&gt;(data: T[], columns: Column[]): string</subtask>
+        <subtask>Add TypeScript interface Column = { key: keyof T; header: string }</subtask>
+        <subtask>Add JSDoc documentation for all exported functions</subtask>
+      </task>
+      <task id="2" title="Implement download functionality" ac="6">
+        <subtask>Implement downloadCSV(content: string, filename: string): void</subtask>
+        <subtask>Use Browser Blob API with type: 'text/csv;charset=utf-8;'</subtask>
+        <subtask>Create temporary anchor element for download trigger</subtask>
+        <subtask>Clean up object URL after download</subtask>
+      </task>
+      <task id="3" title="Add security and encoding" ac="5,7">
+        <subtask>Add UTF-8 BOM prefix (\ufeff) to generated CSV</subtask>
+        <subtask>Implement sanitizeCSVValue(value: string): string for injection prevention</subtask>
+        <subtask>Escape leading =, +, -, @, \t, \r with single quote</subtask>
+      </task>
+      <task id="4" title="Create export convenience functions" ac="3,4">
+        <subtask>Implement downloadBasicData(transactions: Transaction[]): void</subtask>
+        <subtask>Implement downloadTransactions(transactions: Transaction[], year: string, month: string): void</subtask>
+        <subtask>Implement downloadStatistics(transactions: Transaction[], year: string): void</subtask>
+        <subtask>Ensure date formatting uses YYYY-MM-DD</subtask>
+        <subtask>Ensure numbers exported without currency symbols</subtask>
+      </task>
+      <task id="5" title="Write unit tests" ac="8">
+        <subtask>Create /tests/unit/csvExport.test.ts</subtask>
+        <subtask>Test escapeCSVValue with null, undefined, empty string</subtask>
+        <subtask>Test escapeCSVValue with commas, quotes, newlines</subtask>
+        <subtask>Test generateCSV produces header row</subtask>
+        <subtask>Test generateCSV includes UTF-8 BOM</subtask>
+        <subtask>Test sanitizeCSVValue escapes formula characters</subtask>
+        <subtask>Test date formatting is YYYY-MM-DD</subtask>
+        <subtask>Test currency values are numbers only</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1" title="CSV Generation Function">
+      <given>an array of transaction or statistics data</given>
+      <when>generateCSV(data, columns) is called</when>
+      <then>output is comma-separated with proper quoting for strings containing commas</then>
+      <and>strings with embedded quotes are escaped with double quotes per RFC 4180</and>
+    </criterion>
+    <criterion id="2" title="Header Row">
+      <given>column configuration with key/header mapping</given>
+      <when>CSV is generated</when>
+      <then>first row contains column header names in order</then>
+      <and>subsequent rows contain data values in matching order</and>
+    </criterion>
+    <criterion id="3" title="Date Formatting">
+      <given>transaction data with date fields</given>
+      <when>CSV is generated</when>
+      <then>dates are formatted as YYYY-MM-DD (ISO 8601, Excel-compatible)</then>
+    </criterion>
+    <criterion id="4" title="Currency Formatting">
+      <given>transaction data with numeric currency values</given>
+      <when>CSV is generated</when>
+      <then>values are raw numbers without symbols (e.g., 1234.56 not $1,234.56)</then>
+      <and>numbers are suitable for spreadsheet formulas</and>
+    </criterion>
+    <criterion id="5" title="UTF-8 Encoding with BOM">
+      <given>transaction data with international characters (Spanish, etc.)</given>
+      <when>CSV is generated</when>
+      <then>file is UTF-8 encoded</then>
+      <and>includes UTF-8 BOM (\ufeff) for Excel compatibility</and>
+    </criterion>
+    <criterion id="6" title="File Download Function">
+      <given>CSV content string and filename</given>
+      <when>downloadCSV(content, filename) is called</when>
+      <then>browser triggers file download</then>
+      <and>downloaded file has correct filename pattern: boletapp-{type}-{date}.csv</and>
+      <and>Blob is cleaned up after download (URL.revokeObjectURL)</and>
+    </criterion>
+    <criterion id="7" title="CSV Injection Prevention">
+      <given>data that could contain formula injection characters (=, +, -, @)</given>
+      <when>CSV is generated</when>
+      <then>leading formula characters are escaped with single quote prefix</then>
+      <and>exported data is safe for Excel/Google Sheets</and>
+    </criterion>
+    <criterion id="8" title="Unit Tests">
+      <given>the csvExport module</given>
+      <when>tests are run</when>
+      <then>all utility functions have unit test coverage</then>
+      <and>tests cover: null handling, comma escaping, quote escaping, BOM presence, injection prevention</and>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd.md</path>
+        <title>Epic 5 PRD - Data Download Feature</title>
+        <section>Functional Requirements FR24-FR28</section>
+        <snippet>CSV files use standard formatting, include header row, Excel-compatible date formatting, currency as raw numbers, UTF-8 encoding with BOM.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic5/tech-spec.md</path>
+        <title>Epic 5 Technical Specification</title>
+        <section>CSV Generation Pattern, API Contracts, Testing Strategy</section>
+        <snippet>RFC 4180 compliant CSV generation with escapeCSVValue(), generateCSV(), downloadCSV() functions. ADR-010 mandates client-side implementation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture/architecture.md</path>
+        <title>Boletapp Architecture Document</title>
+        <section>ADR-001: Modular Architecture, src/utils structure</section>
+        <snippet>Utilities in src/utils/ directory. Existing csv.ts exports exportToCSV function. Type safety with TypeScript generics.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>src/utils/csv.ts</path>
+        <kind>utility</kind>
+        <symbol>exportToCSV</symbol>
+        <lines>1-24</lines>
+        <reason>Existing CSV export function - reference for patterns. Story will extend/replace this with enhanced csvExport.ts module.</reason>
+      </file>
+      <file>
+        <path>src/utils/date.ts</path>
+        <kind>utility</kind>
+        <symbol>formatDate</symbol>
+        <lines>1-6</lines>
+        <reason>Date formatting utility - reference for consistent date handling patterns.</reason>
+      </file>
+      <file>
+        <path>src/types/transaction.ts</path>
+        <kind>type</kind>
+        <symbol>Transaction, TransactionItem, hasTransactionImages</symbol>
+        <lines>1-40</lines>
+        <reason>Transaction type definition - required for type-safe CSV generation functions.</reason>
+      </file>
+      <file>
+        <path>tests/unit/smoke.test.ts</path>
+        <kind>test</kind>
+        <symbol>describe, it, expect</symbol>
+        <lines>1-35</lines>
+        <reason>Reference for Vitest test structure and assertion patterns.</reason>
+      </file>
+      <file>
+        <path>vite.config.ts</path>
+        <kind>config</kind>
+        <symbol>test configuration</symbol>
+        <lines>13-52</lines>
+        <reason>Test configuration with coverage thresholds - tests must maintain coverage.</reason>
+      </file>
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="vitest" version="^4.0.13" purpose="Unit testing framework" />
+        <package name="@vitest/coverage-v8" version="^4.0.13" purpose="Coverage reporting" />
+        <package name="typescript" version="^5.3.3" purpose="Type checking" />
+        <package name="vite" version="^5.4.0" purpose="Build tooling" />
+        <package name="react" version="^18.3.1" purpose="UI framework" />
+      </ecosystem>
+      <notes>No external CSV library needed - pure TypeScript/browser APIs per ADR-010.</notes>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="ADR-010">Client-side only - no Cloud Functions required for CSV generation</constraint>
+    <constraint source="tech-spec">No external libraries - use native Browser APIs only</constraint>
+    <constraint source="tech-spec">Functions designed for reuse by Stories 5.2, 5.4, and 5.5</constraint>
+    <constraint source="story">Full TypeScript generics for data arrays</constraint>
+    <constraint source="prd">Date format must be YYYY-MM-DD (ISO 8601)</constraint>
+    <constraint source="prd">Currency values exported as raw numbers without symbols</constraint>
+    <constraint source="prd">UTF-8 BOM (\ufeff) required for Excel compatibility</constraint>
+    <constraint source="prd">RFC 4180 compliant CSV formatting</constraint>
+    <constraint source="vite.config">Coverage thresholds: 45% lines, 30% branches, 25% functions, 40% statements</constraint>
+    <constraint source="existing-pattern">Tests in tests/unit/ directory, run with npm run test:unit</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Column&lt;T&gt;</name>
+      <kind>TypeScript interface</kind>
+      <signature>{ key: keyof T; header: string }</signature>
+      <path>src/utils/csvExport.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>escapeCSVValue</name>
+      <kind>function</kind>
+      <signature>(value: any) => string</signature>
+      <path>src/utils/csvExport.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>sanitizeCSVValue</name>
+      <kind>function</kind>
+      <signature>(value: string) => string</signature>
+      <path>src/utils/csvExport.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>generateCSV&lt;T&gt;</name>
+      <kind>function</kind>
+      <signature>(data: T[], columns: Column&lt;T&gt;[]) => string</signature>
+      <path>src/utils/csvExport.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>downloadCSV</name>
+      <kind>function</kind>
+      <signature>(content: string, filename: string) => void</signature>
+      <path>src/utils/csvExport.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>downloadBasicData</name>
+      <kind>function</kind>
+      <signature>(transactions: Transaction[]) => void</signature>
+      <path>src/utils/csvExport.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>downloadTransactions</name>
+      <kind>function</kind>
+      <signature>(transactions: Transaction[], year: string, month: string) => void</signature>
+      <path>src/utils/csvExport.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>downloadStatistics</name>
+      <kind>function</kind>
+      <signature>(transactions: Transaction[], year: string) => void</signature>
+      <path>src/utils/csvExport.ts (to be created)</path>
+    </interface>
+    <interface>
+      <name>Transaction</name>
+      <kind>TypeScript interface</kind>
+      <signature>{ id?, date, merchant, alias?, category, total, items, imageUrls?, thumbnailUrl?, createdAt?, updatedAt? }</signature>
+      <path>src/types/transaction.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Unit tests use Vitest framework with happy-dom environment. Tests organized in tests/unit/ directory with .test.ts extension. Use describe/it/expect pattern. Coverage thresholds enforced: 45% lines, 30% branches, 25% functions, 40% statements. Run with npm run test:unit. Coverage reports generated with npm run test:coverage.
+    </standards>
+    <locations>
+      <location>tests/unit/*.test.ts</location>
+      <location>tests/unit/**/*.test.ts</location>
+    </locations>
+    <ideas>
+      <idea ac="1">Test escapeCSVValue with string containing comma returns quoted string</idea>
+      <idea ac="1">Test escapeCSVValue with string containing double quotes escapes to double-double quotes</idea>
+      <idea ac="1">Test escapeCSVValue with string containing newline returns quoted string</idea>
+      <idea ac="1">Test escapeCSVValue with null returns empty string</idea>
+      <idea ac="1">Test escapeCSVValue with undefined returns empty string</idea>
+      <idea ac="1">Test escapeCSVValue with number returns string representation</idea>
+      <idea ac="2">Test generateCSV produces header row as first line</idea>
+      <idea ac="2">Test generateCSV data rows match column order</idea>
+      <idea ac="3">Test date fields remain YYYY-MM-DD format in output</idea>
+      <idea ac="4">Test numeric values output without currency symbols</idea>
+      <idea ac="5">Test generated CSV starts with UTF-8 BOM character \ufeff</idea>
+      <idea ac="5">Test CSV handles Spanish characters (accents: á, é, ñ)</idea>
+      <idea ac="7">Test sanitizeCSVValue escapes leading = character</idea>
+      <idea ac="7">Test sanitizeCSVValue escapes leading + character</idea>
+      <idea ac="7">Test sanitizeCSVValue escapes leading - character</idea>
+      <idea ac="7">Test sanitizeCSVValue escapes leading @ character</idea>
+      <idea ac="7">Test sanitizeCSVValue does not modify values without dangerous leading chars</idea>
+    </ideas>
+  </tests>
+</story-context>

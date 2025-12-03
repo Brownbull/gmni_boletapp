@@ -1,0 +1,200 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>2</storyId>
+    <title>Basic Data Export (Settings)</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-02</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic5/5-2-basic-data-export-settings.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user (any subscription tier)</asA>
+    <iWant>to download all my transaction data from Settings</iWant>
+    <soThat>I have a portable copy of my data for compliance or personal records</soThat>
+    <tasks>
+      <task id="1" name="Add translations" acs="1,6,7">
+        <subtask>Add to src/utils/translations.ts: downloadAllData, noTransactionsToExport, exportSuccess, exportingData</subtask>
+        <subtask>Verify translations display correctly in both English and Spanish</subtask>
+      </task>
+      <task id="2" name="Update SettingsView component" acs="1,5,6">
+        <subtask>Open src/views/SettingsView.tsx</subtask>
+        <subtask>Add export button to appropriate section (data management or account section)</subtask>
+        <subtask>Add state: const [exporting, setExporting] = useState(false)</subtask>
+        <subtask>Add proper aria-label for accessibility</subtask>
+        <subtask>Style button consistently with existing Settings UI</subtask>
+      </task>
+      <task id="3" name="Implement export handler" acs="2,3,4,8">
+        <subtask>Create handleExportData async function</subtask>
+        <subtask>Use useTransactions hook to get all user transactions</subtask>
+        <subtask>Call downloadBasicData(transactions) from csvExport.ts</subtask>
+        <subtask>Implement loading state management (setExporting true/false)</subtask>
+        <subtask>Use requestAnimationFrame pattern for non-blocking UI</subtask>
+      </task>
+      <task id="4" name="Implement empty state handling" acs="7">
+        <subtask>Check transactions.length === 0 before export</subtask>
+        <subtask>Display toast or inline message for empty data</subtask>
+        <subtask>Prevent CSV download if no transactions</subtask>
+      </task>
+      <task id="5" name="Add success feedback" acs="6">
+        <subtask>Import or use existing toast/notification system</subtask>
+        <subtask>Show success message after download completes</subtask>
+        <subtask>Auto-dismiss after appropriate duration</subtask>
+      </task>
+      <task id="6" name="Write integration tests" acs="1-8">
+        <subtask>Create tests/integration/settings-export.test.tsx</subtask>
+        <subtask>Test: Export button renders in Settings</subtask>
+        <subtask>Test: Click triggers downloadBasicData with transactions</subtask>
+        <subtask>Test: Loading state shows during export</subtask>
+        <subtask>Test: Empty state message when no transactions</subtask>
+        <subtask>Test: Success toast appears after export</subtask>
+        <subtask>Test: Button accessibility (aria-label, disabled state)</subtask>
+      </task>
+      <task id="7" name="Manual testing checklist">
+        <subtask>Test with Firebase emulator (create sample transactions)</subtask>
+        <subtask>Verify CSV opens correctly in Excel/Google Sheets</subtask>
+        <subtask>Verify Spanish translations display correctly</subtask>
+        <subtask>Verify accessibility with keyboard navigation</subtask>
+        <subtask>Test with 0, 1, 100, 1000+ transactions</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1" name="Download Button in Settings">
+      <given>I am an authenticated user on the Settings page</given>
+      <when>the Settings page loads</when>
+      <then>I see a "Download All Your Data" button in the data management section</then>
+      <and>the button has proper accessibility label: aria-label="Download all your data as CSV"</and>
+    </criterion>
+    <criterion id="AC2" name="Basic Export Data Scope">
+      <given>I click "Download All Your Data"</given>
+      <when>the export generates</when>
+      <then>a CSV file downloads containing ALL my transactions (no date filter)</then>
+      <and>each row contains ONLY: date, total amount, merchant name (minimal fields)</and>
+      <and>no sensitive or premium fields are included</and>
+    </criterion>
+    <criterion id="AC3" name="File Naming Convention">
+      <given>I download my data</given>
+      <when>the file downloads</when>
+      <then>filename follows pattern: boletapp-data-export-YYYY-MM-DD.csv</then>
+      <and>date in filename is the current date (download date)</and>
+    </criterion>
+    <criterion id="AC4" name="Performance Requirement">
+      <given>I have up to 10,000 transactions</given>
+      <when>I click download</when>
+      <then>download completes in under 2 seconds</then>
+      <and>UI remains responsive during generation</and>
+    </criterion>
+    <criterion id="AC5" name="Loading State UX">
+      <given>I click "Download All Your Data"</given>
+      <when>export is generating</when>
+      <then>UI shows loading indicator on the button (spinner or loading state)</then>
+      <and>button is disabled during export to prevent double-clicks</and>
+      <and>loading state is announced to screen readers (aria-busy="true")</and>
+    </criterion>
+    <criterion id="AC6" name="Success Feedback">
+      <given>export completes successfully</given>
+      <when>file downloads</when>
+      <then>success toast/notification appears confirming download completed</then>
+      <and>button returns to normal state</and>
+    </criterion>
+    <criterion id="AC7" name="Empty Data Handling">
+      <given>I have no transactions</given>
+      <when>I click "Download All Your Data"</when>
+      <then>I see a message "No transactions to export"</then>
+      <and>no empty file is downloaded</and>
+      <and>message is appropriately styled (info or warning)</and>
+    </criterion>
+    <criterion id="AC8" name="Integration with csvExport Utilities">
+      <given>the csvExport module from Story 5.1</given>
+      <when>export is triggered</when>
+      <then>uses downloadBasicData(transactions) from src/utils/csvExport.ts</then>
+      <and>CSV format matches Story 5.1 specifications (BOM, RFC 4180, etc.)</and>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/epic5/tech-spec.md" title="Epic 5 Technical Specification" section="Basic Export Schema" snippet="Basic export includes Date, Total, Merchant fields. Client-side only, no Cloud Function. Uses browser Blob API." />
+      <doc path="docs/sprint-artifacts/epic5/tech-spec.md" title="Epic 5 Technical Specification" section="ADR-010" snippet="All export functionality runs client-side using browser APIs. Client-side avoids Cloud Function latency and costs." />
+      <doc path="docs/sprint-artifacts/epic5/tech-spec.md" title="Epic 5 Technical Specification" section="Loading State Pattern" snippet="Use requestAnimationFrame pattern for non-blocking UI during export generation." />
+      <doc path="docs/sprint-artifacts/epic5/tech-spec.md" title="Epic 5 Technical Specification" section="Accessibility Requirements" snippet="Download button: aria-label='Download all your data as CSV'. Loading state: aria-busy='true'." />
+      <doc path="docs/sprint-artifacts/epic5/tech-spec.md" title="Epic 5 Technical Specification" section="Translation Keys" snippet="downloadAllData, noTransactionsToExport, exportSuccess keys defined for EN/ES." />
+      <doc path="docs/prd.md" title="Epic 5 PRD" section="Functional Requirements" snippet="FR1-FR5: All authenticated users can access Download All Data from Settings. Basic export includes all transactions with date, total, merchant." />
+      <doc path="docs/architecture/architecture.md" title="Architecture Document" section="Modular Architecture" snippet="src/views/SettingsView.tsx handles app preferences. src/utils/ contains pure utility functions." />
+      <doc path="docs/sprint-artifacts/epic5/5-1-csv-export-utilities.md" title="Story 5.1 Completed" section="Completion Notes" snippet="csvExport.ts complete with downloadBasicData(), generateCSV(), escapeCSVValue(). 94.2% statement coverage." />
+    </docs>
+    <code>
+      <file path="src/utils/csvExport.ts" kind="utility" symbol="downloadBasicData" reason="Core function to call for basic export - already implemented in Story 5.1" />
+      <file path="src/utils/csvExport.ts" kind="utility" symbol="generateCSV" reason="CSV generation with UTF-8 BOM and RFC 4180 compliance" />
+      <file path="src/utils/csvExport.ts" kind="utility" symbol="escapeCSVValue" reason="CSV injection prevention and proper escaping" />
+      <file path="src/views/SettingsView.tsx" kind="view" symbol="SettingsView" reason="Target component for adding export button - existing export button to enhance" />
+      <file path="src/utils/translations.ts" kind="utility" symbol="TRANSLATIONS" reason="Add new translation keys for export feature" />
+      <file path="src/hooks/useTransactions.ts" kind="hook" symbol="useTransactions" reason="Hook to access user transactions - already used in App.tsx" />
+      <file path="src/hooks/useAuth.ts" kind="hook" symbol="useAuth" reason="Authentication hook for user context" />
+      <file path="tests/unit/csvExport.test.ts" kind="test" symbol="downloadBasicData tests" reason="Test pattern to follow for integration tests" />
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="react" version="^18.3.1" />
+        <package name="typescript" version="^5.3.3" />
+        <package name="lucide-react" version="^0.460.0" />
+        <package name="vitest" version="^2.1.4" devOnly="true" />
+        <package name="@testing-library/react" version="^16.0.1" devOnly="true" />
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">Client-side only - No Cloud Functions (ADR-010)</constraint>
+    <constraint type="pattern">Use downloadBasicData() from csvExport.ts - DO NOT recreate export logic</constraint>
+    <constraint type="accessibility">WCAG 2.1 Level AA compliance required - aria-label, aria-busy</constraint>
+    <constraint type="i18n">Support English and Spanish translations</constraint>
+    <constraint type="performance">Export must complete in under 2 seconds for 10K transactions</constraint>
+    <constraint type="ui">Consistent with existing Settings UI styling (card, toggleBg patterns)</constraint>
+    <constraint type="testing">Integration tests required in tests/integration/ directory</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="downloadBasicData" kind="function" path="src/utils/csvExport.ts">
+      <signature>function downloadBasicData(transactions: Transaction[]): void</signature>
+      <notes>Generates CSV with columns: Date, Merchant, Alias, Category, Total. Filename: boletapp-basic-YYYY-MM-DD.csv</notes>
+    </interface>
+    <interface name="SettingsViewProps" kind="interface" path="src/views/SettingsView.tsx">
+      <signature>interface SettingsViewProps { lang, currency, dateFormat, theme, wiping, t, onSetLang, onSetCurrency, onSetDateFormat, onSetTheme, onExportAll, onWipeDB, onSignOut }</signature>
+      <notes>Existing onExportAll prop already wired - enhance the handler in App.tsx</notes>
+    </interface>
+    <interface name="useTransactions" kind="hook" path="src/hooks/useTransactions.ts">
+      <signature>function useTransactions(user, services): { transactions, loading, error }</signature>
+      <notes>Returns real-time Firestore subscription to user's transactions</notes>
+    </interface>
+    <interface name="TRANSLATIONS" kind="object" path="src/utils/translations.ts">
+      <signature>const TRANSLATIONS: { en: { [key]: string }, es: { [key]: string } }</signature>
+      <notes>Add downloadAllData, noTransactionsToExport, exportSuccess, exportingData keys</notes>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Vitest for unit tests, @testing-library/react for component tests.
+      Mock browser APIs (URL.createObjectURL, document.createElement).
+      Follow csvExport.test.ts patterns. Integration tests use Firebase emulator.
+    </standards>
+    <locations>
+      <location>tests/unit/*.test.ts</location>
+      <location>tests/integration/*.test.tsx</location>
+    </locations>
+    <ideas>
+      <idea ac="1">Test export button renders in SettingsView with correct aria-label</idea>
+      <idea ac="2">Test downloadBasicData called with transactions array</idea>
+      <idea ac="3">Test filename pattern (mock Date for deterministic testing)</idea>
+      <idea ac="4">Performance benchmark with large dataset (use vi.mock to verify timing)</idea>
+      <idea ac="5">Test loading state: button disabled, aria-busy=true during export</idea>
+      <idea ac="6">Test success feedback appears after export completes</idea>
+      <idea ac="7">Test empty transactions shows message, no download triggered</idea>
+      <idea ac="8">Verify csvExport.downloadBasicData integration</idea>
+    </ideas>
+  </tests>
+</story-context>
