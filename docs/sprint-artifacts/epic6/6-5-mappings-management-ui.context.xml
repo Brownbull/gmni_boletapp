@@ -1,0 +1,227 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>5</storyId>
+    <title>Mappings Management UI</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-03</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic6/story-6.5-mappings-management-ui.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to view and manage my learned category mappings in Settings</iWant>
+    <soThat>I can edit or delete mappings that are no longer correct</soThat>
+    <tasks>
+- Create `src/components/CategoryMappingsList.tsx` (AC: #2, #3, #4, #5)
+  - List component with mapping items
+  - Display: item name, category badge, usage count
+  - Delete button with confirmation modal
+  - Empty state with hint message
+  - Keyboard navigation (AC: #6)
+- Modify `src/views/SettingsView.tsx` (AC: #1)
+  - Add "Learned Categories" section
+  - Include CategoryMappingsList component
+- Add translations to `src/utils/translations.ts`
+- Create `tests/e2e/category-mappings.spec.ts` (AC: #7)
+- Run all tests and verify passing
+
+Optional Enhancement (from Story 6.4 feedback):
+- Add visual indicator for auto-applied categories in EditView
+  - Small blue dot indicator next to auto-categorized items
+  - Subtle background tint: `bg-blue-50` (light) / `bg-blue-900/20` (dark)
+  - Alternative: tiny sparkle icon (✨) if dot feels too subtle
+  - Pass `appliedMappingIds` to EditView to track which items were auto-categorized
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+- AC #1: "Learned Categories" section added to SettingsView
+- AC #2: List displays all user's category mappings
+- AC #3: Each mapping shows item name, category, and usage count
+- AC #4: User can delete a mapping with confirmation
+- AC #5: Empty state shows helpful message when no mappings exist
+- AC #6: List is keyboard navigable and accessible
+- AC #7: E2E test covers view, edit, delete flow
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/epic6/tech-spec.md</path>
+        <title>Epic 6 Technical Specification</title>
+        <section>Component Architecture - CategoryMappingsList</section>
+        <snippet>New Settings component displays all user mappings with real-time subscription. Includes delete with confirmation modal, empty state with hint message.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic6/tech-spec.md</path>
+        <title>Epic 6 Technical Specification</title>
+        <section>Translation Keys</section>
+        <snippet>Required i18n: learnedCategories, learnedCategoriesEmpty, learnedCategoriesHint, deleteMapping, deleteMappingConfirm, mappingsLimit (EN/ES).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic6/tech-spec.md</path>
+        <title>Epic 6 Technical Specification</title>
+        <section>Accessibility Requirements</section>
+        <snippet>Mappings list keyboard navigable with aria-labels. Delete confirmation focus on confirm button. Toast aria-live announcements.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic6/story-6.4-auto-apply-on-receipt-scan.md</path>
+        <title>Story 6.4 Learnings</title>
+        <section>Dev Agent Record</section>
+        <snippet>ApplyMappingsResult returns appliedMappingIds array. Fire-and-forget pattern for incrementMappingUsage(). Integration test pattern established.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/hooks/useCategoryMappings.ts</path>
+        <kind>hook</kind>
+        <symbol>useCategoryMappings</symbol>
+        <lines>1-159</lines>
+        <reason>Provides real-time subscription to category mappings, saveMapping, deleteMapping functions. Complete CRUD operations for the list component.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/CategoryLearningPrompt.tsx</path>
+        <kind>component</kind>
+        <symbol>CategoryLearningPrompt</symbol>
+        <lines>1-242</lines>
+        <reason>Reference modal component with accessibility features (focus trap, keyboard handling, WCAG 2.1 AA). Pattern for confirmation modals.</reason>
+      </artifact>
+      <artifact>
+        <path>src/views/SettingsView.tsx</path>
+        <kind>component</kind>
+        <symbol>SettingsView</symbol>
+        <lines>1-177</lines>
+        <reason>Target for modification. Shows existing card-based settings pattern with toggle groups and action buttons. Theme-aware styling.</reason>
+      </artifact>
+      <artifact>
+        <path>src/services/categoryMappingService.ts</path>
+        <kind>service</kind>
+        <symbol>subscribeToCategoryMappings, deleteCategoryMapping</symbol>
+        <lines>-</lines>
+        <reason>Firestore CRUD operations for category mappings. Real-time subscription and delete operations used by the list component.</reason>
+      </artifact>
+      <artifact>
+        <path>src/types/categoryMapping.ts</path>
+        <kind>type</kind>
+        <symbol>CategoryMapping</symbol>
+        <lines>-</lines>
+        <reason>Data structure for mappings: id, originalItem, normalizedItem, targetCategory, usageCount, confidence, source, timestamps.</reason>
+      </artifact>
+      <artifact>
+        <path>src/utils/translations.ts</path>
+        <kind>utility</kind>
+        <symbol>translations</symbol>
+        <lines>-</lines>
+        <reason>Target for adding new i18n keys for learned categories section.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package>react</package>
+        <version>18.3.1</version>
+        <purpose>UI framework - useState, useEffect hooks</purpose>
+      </package>
+      <package>lucide-react</package>
+      <version>0.460.0</version>
+      <purpose>Icon library - Trash2, BookMarked icons</purpose>
+    </node>
+      <node>
+        <package>firebase</package>
+        <version>10.14.1</version>
+        <purpose>Firestore real-time subscriptions via useCategoryMappings hook</purpose>
+      </package>
+      <node>
+        <package>fuse.js</package>
+        <version>7.1.0</version>
+        <purpose>Fuzzy matching (used in Story 6.2, not directly in this story)</purpose>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+Development Constraints:
+- Follow existing SettingsView card pattern (rounded-xl border with theme-aware styling)
+- Use CategoryLearningPrompt as reference for accessible modal implementation
+- Real-time subscription via useCategoryMappings hook (no manual queries)
+- Fire-and-forget pattern for incrementMappingUsage() operations
+- Theme-aware styling: bg-slate-900/bg-white, text colors for dark/light modes
+- TypeScript strict mode with explicit types
+- Keyboard navigation: Tab, Enter, Escape keys
+- WCAG 2.1 Level AA compliance (aria-labels, focus management, keyboard support)
+- Empty state when mappings.length === 0
+- Confirmation modal before delete operations
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>useCategoryMappings Hook</name>
+      <kind>React Hook</kind>
+      <signature>useCategoryMappings(user: User | null, services: Services | null): UseCategoryMappingsReturn</signature>
+      <path>src/hooks/useCategoryMappings.ts</path>
+      <description>Returns mappings array, loading state, error, saveMapping, deleteMapping, findMatch functions</description>
+    </interface>
+    <interface>
+      <name>CategoryMapping Type</name>
+      <kind>TypeScript Interface</kind>
+      <signature>{ id?: string; originalItem: string; normalizedItem: string; targetCategory: StoreCategory; confidence: number; source: 'user' | 'ai'; createdAt: Timestamp; updatedAt: Timestamp; usageCount: number; }</signature>
+      <path>src/types/categoryMapping.ts</path>
+      <description>Data structure for category mappings stored in Firestore</description>
+    </interface>
+    <interface>
+      <name>SettingsView Props</name>
+      <kind>React Component Props</kind>
+      <signature>SettingsViewProps extends existing props + optional mappings data</signature>
+      <path>src/views/SettingsView.tsx</path>
+      <description>Existing props: lang, currency, dateFormat, theme, t function, onSetLang, onSetCurrency, etc.</description>
+    </interface>
+    <interface>
+      <name>Modal Pattern (CategoryLearningPrompt)</name>
+      <kind>React Component Pattern</kind>
+      <signature>{ isOpen: boolean; onConfirm: () => void; onClose: () => void; t: (key: string) => string; theme?: 'light' | 'dark' }</signature>
+      <path>src/components/CategoryLearningPrompt.tsx</path>
+      <description>Reference for accessible modal with focus trap, Escape handling, theme-aware styling</description>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Testing Framework: Vitest 4.0.13 for unit/integration tests, Playwright 1.56.1 for E2E tests. All tests use TypeScript. Component tests use @testing-library/react 16.3.0. Firebase emulators for integration tests. Accessibility tests use @axe-core/playwright 4.11.0. Coverage targets: 45% lines, 30% branches (existing thresholds). Test naming: *.test.ts for unit/integration, *.spec.ts for E2E.</standards>
+    <locations>
+      <location>tests/e2e/</location>
+      <description>E2E tests with Playwright - category-mappings.spec.ts</description>
+    </locations>
+    <locations>
+      <location>tests/integration/</location>
+      <description>Integration tests (if needed) - follow pattern from category-apply.test.tsx</description>
+    </locations>
+    <ideas>
+      <test id="AC1">
+        <description>E2E: Navigate to Settings, verify "Learned Categories" section exists and is visible</description>
+        <ac>#1</ac>
+      </test>
+      <test id="AC2">
+        <description>E2E: Create test mappings in Firestore, navigate to Settings, verify all mappings displayed in list</description>
+        <ac>#2</ac>
+      </test>
+      <test id="AC3">
+        <description>E2E: Verify each mapping card shows originalItem name, targetCategory badge, and usageCount</description>
+        <ac>#3</ac>
+      </test>
+      <test id="AC4">
+        <description>E2E: Click delete button on mapping, verify confirmation modal appears, click confirm, verify mapping removed from list and Firestore</description>
+        <ac>#4</ac>
+      </test>
+      <test id="AC5">
+        <description>E2E: With no mappings, navigate to Settings, verify empty state message displayed with hint text</description>
+        <ac>#5</ac>
+      </test>
+      <test id="AC6">
+        <description>E2E + Accessibility: Tab through mappings list, verify focus order, test Escape key closes modal, verify aria-labels present</description>
+        <ac>#6</ac>
+      </test>
+      <test id="AC7">
+        <description>E2E: Full flow - create mapping via learning prompt, view in Settings list, delete mapping, verify removed</description>
+        <ac>#7</ac>
+      </test>
+    </ideas>
+  </tests>
+</story-context>

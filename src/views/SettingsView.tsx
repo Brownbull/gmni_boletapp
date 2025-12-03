@@ -1,5 +1,7 @@
 import React from 'react';
-import { Globe, DollarSign, Calendar, Moon, Download, Trash2, ArrowRightLeft, Loader2 } from 'lucide-react';
+import { Globe, DollarSign, Calendar, Moon, Download, Trash2, ArrowRightLeft, Loader2, BookMarked } from 'lucide-react';
+import { CategoryMappingsList } from '../components/CategoryMappingsList';
+import { CategoryMapping } from '../types/categoryMapping';
 
 interface SettingsViewProps {
     lang: string;
@@ -16,6 +18,10 @@ interface SettingsViewProps {
     onExportAll: () => void;
     onWipeDB: () => Promise<void>;
     onSignOut: () => void;
+    // Story 6.5: Category mappings management
+    mappings?: CategoryMapping[];
+    mappingsLoading?: boolean;
+    onDeleteMapping?: (mappingId: string) => Promise<void>;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -33,6 +39,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     onExportAll,
     onWipeDB,
     onSignOut,
+    // Story 6.5: Category mappings management
+    mappings = [],
+    mappingsLoading = false,
+    onDeleteMapping,
 }) => {
     const card = theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100';
     const toggleBg = theme === 'dark' ? 'bg-slate-700' : 'bg-slate-100';
@@ -120,6 +130,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         Dark
                     </button>
                 </div>
+            </div>
+
+            {/* Story 6.5: Learned Categories Section (AC#1) */}
+            <div className={`p-4 rounded-xl border ${card}`}>
+                <div className="flex gap-2 items-center mb-4">
+                    <BookMarked className="text-blue-500" />
+                    <span className="font-medium">{t('learnedCategories')}</span>
+                </div>
+                {onDeleteMapping && (
+                    <CategoryMappingsList
+                        mappings={mappings}
+                        loading={mappingsLoading}
+                        onDeleteMapping={onDeleteMapping}
+                        t={t}
+                        theme={theme as 'light' | 'dark'}
+                    />
+                )}
             </div>
 
             <div className={`p-4 rounded-xl border flex justify-between items-center ${card}`}>

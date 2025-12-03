@@ -1,0 +1,249 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context" v="1.0">
+  <metadata>
+    <epicId>6</epicId>
+    <storyId>3</storyId>
+    <title>Category Learning Prompt</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-03</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic6/story-6.3-category-learning-prompt.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user editing a transaction's category</asA>
+    <iWant>to be asked if I want the app to remember this category preference</iWant>
+    <soThat>future similar items are automatically categorized correctly</soThat>
+    <tasks>
+      <task id="1" ac="1,2,3,4">Create src/components/CategoryLearningPrompt.tsx
+        <subtask>Modal with item name and category display</subtask>
+        <subtask>Yes, Remember button with save action</subtask>
+        <subtask>Not Now button with dismiss action</subtask>
+        <subtask>Proper focus management (AC: 6)</subtask>
+      </task>
+      <task id="2" ac="1">Modify src/views/EditView.tsx
+        <subtask>Add state for showing prompt</subtask>
+        <subtask>Trigger prompt on category change</subtask>
+        <subtask>Pass item name and new category to prompt</subtask>
+      </task>
+      <task id="3" ac="5">Add success toast on save</task>
+      <task id="4" ac="7">Add translations to src/utils/translations.ts</task>
+      <task id="5">Create tests/integration/category-learning.test.tsx</task>
+      <task id="6">Run all tests and verify passing</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">When user changes transaction category, a prompt appears</criterion>
+    <criterion id="2">Prompt shows item name and new category clearly</criterion>
+    <criterion id="3">"Yes, Remember" button saves the category mapping</criterion>
+    <criterion id="4">"Not Now" button dismisses without saving</criterion>
+    <criterion id="5">Success toast confirms "Got it! I'll remember this"</criterion>
+    <criterion id="6">Prompt is accessible (focus trap, keyboard navigation)</criterion>
+    <criterion id="7">Translations added for English and Spanish</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/epic6/tech-spec.md" relevance="primary">
+        Epic 6 Tech Spec with ADR-015: Category Override Capture Strategy
+      </doc>
+      <doc path="docs/sprint-artifacts/epic6/story-6.2-fuzzy-matching-engine.md" relevance="high">
+        Previous story with learnings and patterns
+      </doc>
+      <doc path="docs/sprint-artifacts/epic6/story-6.1-category-mapping-infrastructure.md" relevance="high">
+        Infrastructure story establishing useCategoryMappings hook
+      </doc>
+      <doc path="docs/index.md" relevance="reference">
+        Project documentation index
+      </doc>
+    </docs>
+    <code>
+      <file path="src/hooks/useCategoryMappings.ts" action="USE" relevance="critical">
+        Hook with saveMapping() function - use this to save category mappings
+        Key functions: saveMapping(item, category, source), deleteMapping(mappingId), findMatch(itemName)
+      </file>
+      <file path="src/views/EditView.tsx" action="MODIFY" relevance="critical">
+        Transaction edit view - integration point for learning prompt
+        Category change on line 167 (onChange handler for category select)
+        Needs state for prompt visibility and item/category to learn
+        Pattern: follow ImageViewer modal integration pattern (lines 58, 117-137)
+      </file>
+      <file path="src/components/UpgradePromptModal.tsx" action="REFERENCE" relevance="high">
+        Modal pattern to follow - accessible modal with focus trap
+        Key patterns: useRef for focus management, Escape key handling, aria attributes
+        226 lines - comprehensive accessible modal implementation
+      </file>
+      <file path="src/utils/translations.ts" action="MODIFY" relevance="high">
+        Add category learning translations (lines 38 and 76 for EN/ES)
+        Translation keys defined in tech-spec.md
+      </file>
+      <file path="src/types/categoryMapping.ts" action="USE" relevance="high">
+        CategoryMapping interface and types (from Story 6.1)
+      </file>
+      <file path="src/services/categoryMappingService.ts" action="USE" relevance="high">
+        saveCategoryMapping(), normalizeItemName() functions (from Story 6.1)
+      </file>
+      <file path="src/utils/categoryMatcher.ts" action="USE" relevance="medium">
+        normalizeItemName() utility (from Story 6.2)
+      </file>
+      <file path="src/components/CategoryLearningPrompt.tsx" action="CREATE" relevance="critical">
+        New modal component following UpgradePromptModal pattern
+      </file>
+      <file path="tests/integration/category-learning.test.tsx" action="CREATE" relevance="high">
+        Integration tests for learning prompt flow
+      </file>
+    </code>
+    <dependencies>
+      <dependency name="fuse.js" version="^7.1.0" status="installed">
+        Fuzzy matching library (from Story 6.2)
+      </dependency>
+      <dependency name="lucide-react" version="^0.460.0" status="installed">
+        Icon library - use X icon for close button
+      </dependency>
+      <dependency name="firebase" version="^10.14.1" status="installed">
+        Firestore for saving mappings
+      </dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="accessibility">
+      WCAG 2.1 Level AA compliance required for modal
+      - Focus trap within modal while open
+      - Escape key closes modal
+      - aria-modal="true", role="dialog"
+      - aria-labelledby for title, aria-describedby for message
+      - Focus returns to trigger element after close
+    </constraint>
+    <constraint type="architecture">
+      No Cloud Functions required - client-side only feature
+      Use existing useCategoryMappings hook for save operation
+    </constraint>
+    <constraint type="ux">
+      Non-blocking prompt - user can dismiss without saving
+      Success toast after save confirmation
+    </constraint>
+    <constraint type="i18n">
+      All user-facing text must use translation keys
+      Support English and Spanish (existing pattern)
+    </constraint>
+    <constraint type="code-style">
+      TypeScript strict mode
+      Single quotes for strings
+      No semicolons
+      2-space indentation
+      Named exports pattern
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="CategoryLearningPromptProps">
+      <prop name="isOpen" type="boolean">Whether modal is visible</prop>
+      <prop name="itemName" type="string">Item name to learn (e.g., "UBER EATS")</prop>
+      <prop name="category" type="StoreCategory">Target category to save</prop>
+      <prop name="onConfirm" type="() => void">Called when user clicks "Yes, Remember"</prop>
+      <prop name="onClose" type="() => void">Called when user dismisses</prop>
+      <prop name="t" type="(key: string) => string">Translation function</prop>
+      <prop name="theme" type="'light' | 'dark'" optional="true">Current theme</prop>
+    </interface>
+    <interface name="useCategoryMappings" path="src/hooks/useCategoryMappings.ts">
+      <method name="saveMapping">
+        <signature>(item: string, category: StoreCategory, source?: 'user' | 'ai') => Promise&lt;string&gt;</signature>
+        <description>Saves category mapping to Firestore, returns mapping ID</description>
+      </method>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <standard>Vitest for unit/integration tests</standard>
+      <standard>@testing-library/react for component testing</standard>
+      <standard>Test file naming: *.test.ts, *.test.tsx</standard>
+      <standard>Coverage thresholds: 45% lines, 30% branches</standard>
+    </standards>
+    <locations>
+      <location path="tests/integration/category-learning.test.tsx" action="CREATE">
+        Integration tests for learning prompt flow
+      </location>
+      <location path="tests/unit/" pattern="*.test.ts">
+        Unit tests location (if needed)
+      </location>
+    </locations>
+    <ideas>
+      <test name="modal-renders-on-category-change">
+        When user changes transaction category, learning prompt appears with correct item name and category
+      </test>
+      <test name="confirm-saves-mapping">
+        Clicking "Yes, Remember" calls saveMapping with correct parameters
+      </test>
+      <test name="dismiss-closes-without-saving">
+        Clicking "Not Now" closes modal without calling saveMapping
+      </test>
+      <test name="escape-key-closes-modal">
+        Pressing Escape key dismisses the modal (accessibility)
+      </test>
+      <test name="focus-trap-works">
+        Tab navigation stays within modal while open
+      </test>
+      <test name="success-toast-shown">
+        After successful save, success toast is displayed
+      </test>
+      <test name="translations-work">
+        Modal content displays correctly in both English and Spanish
+      </test>
+      <test name="no-prompt-for-empty-items">
+        If transaction has no items, no prompt is shown
+      </test>
+    </ideas>
+  </tests>
+
+  <previousStoryLearnings>
+    <story id="6.2" title="Fuzzy Matching Engine">
+      <learning>fuse.js v7.1.0 installed and working</learning>
+      <learning>normalizeItemName() utility available in categoryMatcher.ts</learning>
+      <learning>Test pattern: 30 unit tests covering exact/fuzzy/no-match scenarios</learning>
+      <learning>Code review approved with no changes required</learning>
+      <learning>Files created: src/utils/categoryMatcher.ts, tests/unit/categoryMatcher.test.ts</learning>
+    </story>
+    <story id="6.1" title="Category Mapping Infrastructure">
+      <learning>useCategoryMappings hook available with saveMapping() function</learning>
+      <learning>CategoryMapping type defined in src/types/categoryMapping.ts</learning>
+      <learning>Firestore collection: artifacts/{appId}/users/{userId}/category_mappings/{mappingId}</learning>
+      <learning>Security rules already deployed for category_mappings collection</learning>
+    </story>
+  </previousStoryLearnings>
+
+  <implementationGuide>
+    <step order="1" task="4">
+      Add translation keys to src/utils/translations.ts (EN and ES)
+      Keys from tech-spec: learnCategoryTitle, learnCategoryMessage, learnCategoryConfirm, learnCategorySkip, learnCategorySuccess
+    </step>
+    <step order="2" task="1">
+      Create CategoryLearningPrompt.tsx following UpgradePromptModal.tsx pattern
+      - Copy accessibility patterns (focus trap, escape key, aria attributes)
+      - Simplify content to show item name and category
+      - Two buttons: confirm (primary) and dismiss (secondary)
+    </step>
+    <step order="3" task="2">
+      Modify EditView.tsx to integrate the prompt
+      - Add state: showLearningPrompt, itemToLearn, categoryToLearn
+      - Track original category on mount to detect changes
+      - Trigger prompt on save when category changed
+      - Pass useCategoryMappings hook (need to add to props or use context)
+    </step>
+    <step order="4" task="3">
+      Add success toast after save
+      - Use existing toast pattern or simple alert
+      - Message: "Got it! I'll remember this."
+    </step>
+    <step order="5" task="5">
+      Create integration tests for the flow
+      - Follow existing test patterns in tests/integration/
+      - Test the full flow: edit category -> prompt -> confirm -> mapping saved
+    </step>
+    <step order="6" task="6">
+      Run all tests: npm run test:all
+      Verify coverage thresholds met
+    </step>
+  </implementationGuide>
+</story-context>
