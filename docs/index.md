@@ -1,6 +1,6 @@
 # Boletapp Documentation Index
 
-**AI-Assisted Development Reference** | **Last Updated:** 2025-12-01 (Post-Epic 4.5 Complete)
+**AI-Assisted Development Reference** | **Last Updated:** 2025-12-03 (Post-Epic 5 Complete)
 
 This is the primary entry point for AI-assisted development of Boletapp, a Smart Expense Tracker PWA.
 
@@ -278,6 +278,44 @@ Automated project structure analysis (JSON)
 - ✅ **Cascade Delete:** Firestore trigger automatically deletes images when transaction deleted
 - ✅ **Documentation:** ADR-009 documents architectural decisions
 
+### Epic 5: Data Download & Export (COMPLETE ✅)
+
+**Location:** [`sprint-artifacts/epic5/`](./sprint-artifacts/epic5/)
+
+- **[Epic 5 Retrospective](./sprint-artifacts/epic5/epic-5-retro-2025-12-03.md)** - Lessons learned and action items
+
+**Epic 5 Stories (All Complete):**
+1. [Story 5-1](./sprint-artifacts/epic5/5-1-csv-export-utilities.md) - CSV Export Utilities ✅
+2. [Story 5-2](./sprint-artifacts/epic5/5-2-basic-data-export-settings.md) - Basic Data Export (Settings) ✅
+3. [Story 5-3](./sprint-artifacts/epic5/5-3-subscription-tier-check-infrastructure.md) - Subscription Tier Check Infrastructure ✅
+4. [Story 5-4](./sprint-artifacts/epic5/5-4-premium-transaction-export.md) - Premium Transaction Export ✅
+5. [Story 5-5](./sprint-artifacts/epic5/5-5-premium-statistics-export-upgrade-prompt.md) - Premium Statistics Export & Upgrade Prompt ✅
+
+**Epic 5 Achievements:**
+- ✅ **CSV Utilities:** RFC 4180 compliant, UTF-8 BOM for Excel, CSV injection prevention
+- ✅ **Basic Export:** All users can download data from Settings (date, total, merchant)
+- ✅ **Subscription Infrastructure:** useSubscriptionTier hook ready for Epic 7
+- ✅ **Premium Transaction Export:** Pro/Max users download full transaction data from Analytics
+- ✅ **Premium Statistics Export:** Pro/Max users download yearly aggregated statistics
+- ✅ **Upgrade Prompt:** Modal for non-subscribers with upgrade CTA
+- ✅ **Tests:** 335+ tests (137 unit, 167 integration, 31 E2E)
+- ✅ **Deployed:** 2025-12-03 to https://boletapp-d609f.web.app
+
+---
+
+## Team Standards
+
+**Location:** [`team-standards.md`](./team-standards.md)
+
+### [Team Standards & Knowledge Base](./team-standards.md) - **NEW** (Epic 5 Retro)
+Single source of truth for:
+- Team agreements from all retrospectives
+- Workflow standards (branching, PRs, deployment)
+- Testing standards and patterns
+- Security standards
+- Document index
+- Lessons learned and known gotchas
+
 ---
 
 ## Document Templates
@@ -287,6 +325,7 @@ Automated project structure analysis (JSON)
 Templates for creating consistent documentation:
 - Epic evolution template
 - Story template (BMAD framework)
+- **[Deployment Story Template](./templates/deployment-story-template.md)** - **NEW** (Epic 5 Retro) - For final story of each epic
 
 ---
 
@@ -389,6 +428,8 @@ Epic 3 focused on **production-grade quality and testing completion**. Key deliv
 | **Cost analysis** | [Cost Analysis](./business/cost-analysis.md) |
 | **Contribution guidelines** | [CONTRIBUTING.md](../CONTRIBUTING.md) |
 | **CI/CD pipeline** | [CI/CD README](./ci-cd/README.md) |
+| **Team standards** | [Team Standards](./team-standards.md) |
+| **Deployment template** | [Deployment Story Template](./templates/deployment-story-template.md) |
 
 ---
 
@@ -404,6 +445,6 @@ The `.bmad/` directory contains the BMAD (Breakthrough Modern Agile Development)
 
 ---
 
-**Documentation Version:** 6.0
-**Generated:** 2025-12-01 (Post-Epic 4.5 Complete)
-**Next Update:** After Epic 5 planning
+**Documentation Version:** 7.0
+**Generated:** 2025-12-03 (Post-Epic 5 Complete)
+**Next Update:** After Epic 6 planning
