@@ -79,12 +79,13 @@ development_status:
 
   # Epic 5: Data Download & Export
   # Tech-spec completed 2025-12-02, PRD completed 2025-12-02
+  # DEPLOYED TO PRODUCTION: 2025-12-03
   epic-5: contexted
   5-1-csv-export-utilities: done  # Context generated 2025-12-02, Dev completed 2025-12-02, Code Review APPROVED 2025-12-02
   5-2-basic-data-export-settings: done  # Context generated 2025-12-02, Dev completed 2025-12-02, Code Review APPROVED 2025-12-02
   5-3-subscription-tier-check-infrastructure: done  # Context generated 2025-12-02, Dev completed 2025-12-03, Code Review APPROVED 2025-12-03
   5-4-premium-transaction-export: done  # Context generated 2025-12-03, Dev completed 2025-12-03, Code Review APPROVED 2025-12-03
-  5-5-premium-statistics-export-upgrade-prompt: done  # Context generated 2025-12-03, Dev completed 2025-12-03, Code Review APPROVED 2025-12-03
+  5-5-premium-statistics-export-upgrade-prompt: done  # Context generated 2025-12-03, Dev completed 2025-12-03, Code Review APPROVED 2025-12-03, Deployed 2025-12-03
   epic-5-retrospective: optional
 
   # Future Epics (updated in Epic 4 retrospective)
