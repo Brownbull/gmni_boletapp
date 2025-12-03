@@ -405,6 +405,39 @@ N/A
 | 2025-12-03 | 1.0 | Initial story draft created by SM workflow |
 | 2025-12-03 | 1.1 | Implementation complete - all 9 tasks done, moved to review |
 | 2025-12-03 | 1.2 | Senior Developer Code Review completed - APPROVED |
+| 2025-12-03 | 1.3 | Deployed to production - Epic 5 complete |
+
+---
+
+## Deployment Notes
+
+### Production Deployment - 2025-12-03
+
+**Deployment Path:**
+1. `feature/epic-5-data-export` → `develop` (PR #18 merged)
+2. `develop` → `staging` (PR #19 merged, conflicts resolved)
+3. `staging` → `main` (PR #20 merged)
+4. Manual `firebase deploy --only hosting` required
+
+**Retrospective Items for Epic 5:**
+
+1. **CI/CD Gap Identified**: The test.yml workflow only runs tests - it does NOT auto-deploy to Firebase Hosting. Required manual `firebase deploy` after merge to main.
+   - **Action**: Consider adding auto-deploy step to workflow for main branch pushes
+   - **Workaround**: Manual deployment after each production merge
+
+2. **Merge Conflicts**: Staging branch had conflicts with develop due to parallel Epic 4.5 deployment work. Required manual conflict resolution in:
+   - `src/utils/translations.ts`
+   - `src/views/SettingsView.tsx`
+   - `src/views/TrendsView.tsx`
+   - `docs/epics.md`
+   - `docs/sprint-artifacts/sprint-status.yaml`
+
+3. **Testing Verification**: All 5 stories passed code review with comprehensive test coverage:
+   - 137 unit tests
+   - 167 integration tests
+   - 31 E2E tests passing
+
+**Production URL:** https://boletapp-d609f.web.app
 
 ---
 
