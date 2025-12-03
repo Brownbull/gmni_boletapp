@@ -21,7 +21,7 @@ import { Language, Currency, Theme } from './types/settings';
 import { formatCurrency } from './utils/currency';
 import { formatDate } from './utils/date';
 import { getSafeDate, parseStrictNumber } from './utils/validation';
-import { exportToCSV } from './utils/csv';
+import { downloadBasicData } from './utils/csvExport';
 import { getColor } from './utils/colors';
 import { TRANSLATIONS } from './utils/translations';
 import { ITEMS_PER_PAGE, STORE_CATEGORIES } from './config/constants';
@@ -62,6 +62,8 @@ function App() {
     const [theme, setTheme] = useState<Theme>('light');
     const [dateFormat, setDateFormat] = useState<'LatAm' | 'US'>('LatAm');
     const [wiping, setWiping] = useState(false);
+    const [exporting, setExporting] = useState(false);
+    const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' } | null>(null);
 
     // Analytics State
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
@@ -86,6 +88,14 @@ function App() {
         });
         setDistinctAliases(Array.from(aliases).sort());
     }, [transactions]);
+
+    // Auto-dismiss toast after 3 seconds
+    useEffect(() => {
+        if (toastMessage) {
+            const timer = setTimeout(() => setToastMessage(null), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [toastMessage]);
 
     // Scan Handlers
     const triggerScan = () => {
@@ -197,6 +207,27 @@ function App() {
             alert('Failed to wipe');
         }
         setWiping(false);
+    };
+
+    // Export Data Handler (Story 5.2)
+    const handleExportData = async () => {
+        // AC#7: Empty state handling - check if no transactions
+        if (transactions.length === 0) {
+            setToastMessage({ text: t('noTransactionsToExport'), type: 'info' });
+            return;
+        }
+
+        setExporting(true);
+        try {
+            // AC#4: Use requestAnimationFrame for non-blocking UI
+            await new Promise(resolve => requestAnimationFrame(resolve));
+            // AC#8: Use downloadBasicData from csvExport.ts (Story 5.1)
+            downloadBasicData(transactions);
+            // AC#6: Success feedback
+            setToastMessage({ text: t('exportSuccess'), type: 'success' });
+        } finally {
+            setExporting(false);
+        }
     };
 
     // Analytics Computation
@@ -441,7 +472,6 @@ function App() {
                         lang={lang}
                         t={t}
                         formatCurrency={formatCurrency}
-                        exportToCSV={exportToCSV}
                         onBack={() => {
                             if (selectedSubcategory) setSelectedSubcategory(null);
                             else if (selectedGroup) setSelectedGroup(null);
@@ -458,6 +488,13 @@ function App() {
                         onEditTransaction={(transaction: any) => {
                             setCurrentTransaction(transaction);
                             setView('edit');
+                        }}
+                        // Story 5.4: Premium transaction export props
+                        exporting={exporting}
+                        onExporting={setExporting}
+                        onUpgradeRequired={() => {
+                            // Story 5.5 placeholder: Show upgrade prompt
+                            setToastMessage({ text: t('upgradeRequired'), type: 'info' });
                         }}
                     />
                 )}
@@ -489,12 +526,13 @@ function App() {
                         theme={theme}
                         dateFormat={dateFormat}
                         wiping={wiping}
+                        exporting={exporting}
                         t={t}
                         onSetLang={(l: string) => setLang(l as Language)}
                         onSetCurrency={(c: string) => setCurrency(c as Currency)}
                         onSetTheme={(th: string) => setTheme(th as Theme)}
                         onSetDateFormat={(f: string) => setDateFormat(f as 'LatAm' | 'US')}
-                        onExportAll={() => exportToCSV(transactions, 'full_backup.csv')}
+                        onExportAll={handleExportData}
                         onWipeDB={wipeDB}
                         onSignOut={signOut}
                     />
@@ -514,6 +552,21 @@ function App() {
                 theme={theme}
                 t={t}
             />
+
+            {/* Toast notification for feedback (AC#6, AC#7) */}
+            {toastMessage && (
+                <div
+                    role="status"
+                    aria-live="polite"
+                    className={`fixed bottom-24 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg z-50 animate-fade-in ${
+                        toastMessage.type === 'success'
+                            ? 'bg-green-500 text-white'
+                            : 'bg-blue-500 text-white'
+                    }`}
+                >
+                    {toastMessage.text}
+                </div>
+            )}
         </div>
     );
 }

@@ -1,0 +1,179 @@
+<story-context id="5-4-premium-transaction-export" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>4</storyId>
+    <title>Premium Transaction Export (Analytics - Month/Week/Day Views)</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-03</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic5/5-4-premium-transaction-export.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Pro/Max subscriber viewing analytics</asA>
+    <iWant>to download my current month's transactions with full details</iWant>
+    <soThat>I can use my categorized expense data in external tools</soThat>
+    <tasks>
+      <task id="1" ac="1">Import and integrate subscription hook - Import useSubscriptionTier from Story 5.3, check canAccessPremiumExport before allowing download</task>
+      <task id="2" ac="1,2,3">Update TrendsView download handler - Modify click handler to check subscription first, call existing downloadMonthlyTransactions()</task>
+      <task id="3" ac="5,6">Add loading state management - Add exporting state, show loading indicator, disable button during export, aria-busy attribute</task>
+      <task id="4" ac="7">Enhance download icon accessibility - Proper aria-label, verify positioning, keyboard navigation support</task>
+      <task id="5" ac="6,7">Add translations for new UI elements - downloadTransactions, exportingTransactions, upgradeRequired (EN/ES)</task>
+      <task id="6" ac="1-8">Write integration tests - Create tests/integration/trends-export.test.tsx with subscription check, export, loading state tests</task>
+      <task id="7">Manual testing checklist - Firebase emulator, Excel/Sheets compatibility, all 11 columns, month/week/day views</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1" priority="high">
+      <title>Subscription Check Before Download</title>
+      <given>I click the download icon in the analytics view</given>
+      <when>the system processes the request</when>
+      <then>it checks my subscription tier using useSubscriptionTier() hook; if Pro/Max proceeds with download, else blocks with upgrade prompt placeholder</then>
+    </criterion>
+    <criterion id="2" priority="high">
+      <title>Context-Aware Export for Month View</title>
+      <given>I am a Pro/Max subscriber viewing a specific month</given>
+      <when>I click the download icon</when>
+      <then>CSV downloads with full transaction details: Transaction ID, Date, Merchant, Alias, Category, Transaction Total, Item Name, Qty, Item Price, Item Category, Item Subcategory; items exploded (one row per item)</then>
+    </criterion>
+    <criterion id="3" priority="medium">
+      <title>Context-Aware Export for Week/Day Views</title>
+      <given>I am a Pro/Max subscriber viewing week or day granularity</given>
+      <when>I click the download icon</when>
+      <then>I STILL get the FULL current month's data (not just that week/day)</then>
+    </criterion>
+    <criterion id="4" priority="medium">
+      <title>File Naming Convention</title>
+      <given>I download month/week/day data</given>
+      <when>the file downloads</when>
+      <then>filename follows pattern: boletapp-month-YYYY-MM.csv where YYYY-MM is current view's month</then>
+    </criterion>
+    <criterion id="5" priority="medium">
+      <title>Performance Requirement</title>
+      <given>I have up to 10,000 transactions in a month</given>
+      <when>I click download</when>
+      <then>download completes in under 3 seconds; UI remains responsive during generation</then>
+    </criterion>
+    <criterion id="6" priority="high">
+      <title>Loading State UX</title>
+      <given>I click the download icon</given>
+      <when>export is generating</when>
+      <then>UI shows loading indicator (spinner replaces icon); download icon disabled; loading state announced to screen readers (aria-busy)</then>
+    </criterion>
+    <criterion id="7" priority="medium">
+      <title>Download Icon in Analytics Header</title>
+      <given>I am on the analytics view (TrendsView)</given>
+      <when>the view loads</when>
+      <then>download icon visible in header with proper accessibility label; consistently positioned regardless of view state</then>
+    </criterion>
+    <criterion id="8" priority="medium">
+      <title>Integration with Existing CSV Utilities</title>
+      <given>the csvExport module from Story 5.1</given>
+      <when>export is triggered</when>
+      <then>uses existing downloadMonthlyTransactions() function; CSV format consistent with Story 5.1 specs</then>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/prd.md" title="Epic 5 PRD" section="Premium Analytics Export">
+        FR6-FR15 define premium transaction export requirements. FR10: Month/Week/Day views export current month's transactions. FR12-FR14 specify full transaction details including all scanned metadata.
+      </doc>
+      <doc path="docs/epics.md" title="Epic Breakdown" section="Story 5.4">
+        Story definition with acceptance criteria, technical notes, FR coverage (FR6, FR7, FR10, FR12-FR15). Notes that download icon already exists in analytics view.
+      </doc>
+      <doc path="docs/index.md" title="Documentation Index" section="Analytics &amp; Trends">
+        Entry point: src/views/TrendsView.tsx. Charts: src/components/charts/. Component patterns reference.
+      </doc>
+      <doc path="docs/sprint-artifacts/epic5/5-2-basic-data-export-settings.md" title="Story 5.2 (done)" section="Dev Agent Record">
+        Pattern reference: State management in App.tsx passed to views; Toast system established; requestAnimationFrame pattern for non-blocking UI; accessibility with aria-label, aria-busy, disabled.
+      </doc>
+      <doc path="docs/sprint-artifacts/epic5/5-3-subscription-tier-check-infrastructure.md" title="Story 5.3 (review)" section="Implementation">
+        useSubscriptionTier() hook now implemented and available at src/hooks/useSubscriptionTier.ts. Returns { tier, canAccessPremiumExport }. Currently mocked to return true for all users.
+      </doc>
+    </docs>
+    <code>
+      <file path="src/views/TrendsView.tsx" kind="view" symbol="TrendsView" lines="141-156" reason="EXISTING export button implementation - already has downloadMonthlyTransactions() and downloadYearTransactions() calls; needs subscription check, loading state, and accessibility enhancements">
+        Current implementation at lines 141-156: onClick handler already calls downloadMonthlyTransactions(filteredTrans, year, month) for month view and downloadYearTransactions for year view. Missing: subscription check, loading state, proper aria attributes.
+      </file>
+      <file path="src/utils/csvExport.ts" kind="utility" symbol="downloadMonthlyTransactions" lines="294-345" reason="REUSE - Full monthly transaction export with item-level detail; includes 11 columns as required by AC#2">
+        downloadMonthlyTransactions(transactions, year, month) exports: Transaction ID, Date, Merchant, Alias, Category, Transaction Total, Item Name, Qty, Item Price, Item Category, Item Subcategory. Filename: boletapp-month-YYYY-MM.csv.
+      </file>
+      <file path="src/hooks/useSubscriptionTier.ts" kind="hook" symbol="useSubscriptionTier" lines="91-101" reason="USE - Subscription tier check hook from Story 5.3 (now implemented); returns { tier, canAccessPremiumExport }">
+        Hook returns stable object via useMemo. canAccessPremiumExport currently returns true (mock). TODO comments mark Epic 7 integration points.
+      </file>
+      <file path="src/utils/translations.ts" kind="utility" symbol="TRANSLATIONS" lines="1-60" reason="MODIFY - Add new translation keys for downloadTransactions, exportingTransactions, upgradeRequired">
+        Existing keys include: export, exportAll, downloadAllData, noTransactionsToExport, exportSuccess, exportingData. Pattern: add EN and ES translations.
+      </file>
+      <file path="src/App.tsx" kind="orchestrator" symbol="App" lines="47-100" reason="PATTERN REFERENCE - State management pattern for exporting state; may need to pass exporting state as prop to TrendsView">
+        Line 65: const [exporting, setExporting] = useState(false). Pattern: state in App.tsx, passed to views as props. Toast system at lines 66, 93-98.
+      </file>
+      <file path="tests/integration/settings-export.test.tsx" kind="test" reason="PATTERN REFERENCE - Integration test patterns for export functionality from Story 5.2">
+        19 tests covering: export button renders, click triggers downloadBasicData, loading state, empty state, success toast, accessibility attributes.
+      </file>
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="react" version="^18.3.1">React framework</package>
+        <package name="lucide-react" version="^0.460.0">Icons - Download, Loader2</package>
+        <package name="firebase" version="^10.14.1">Firebase SDK</package>
+        <package name="@testing-library/react" version="^16.3.0">Testing utilities</package>
+        <package name="vitest" version="^4.0.13">Test runner</package>
+        <package name="@playwright/test" version="^1.56.1">E2E testing</package>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture" source="ADR-010">Client-side only export using Browser APIs - no Cloud Function needed. Use Blob API and URL.createObjectURL for download.</constraint>
+    <constraint type="pattern" source="Story 5.2">State management: exporting state in App.tsx passed to views as props. Use requestAnimationFrame pattern before export for non-blocking UI.</constraint>
+    <constraint type="reuse" source="Story 5.1">DO NOT recreate CSV generation - use existing downloadMonthlyTransactions() from src/utils/csvExport.ts.</constraint>
+    <constraint type="dependency" source="Story 5.3">Use useSubscriptionTier() hook from src/hooks/useSubscriptionTier.ts for subscription check.</constraint>
+    <constraint type="accessibility" source="docs/prd.md NFR9-NFR11">WCAG 2.1 Level AA compliance required. Use aria-label, aria-busy, disabled attributes. Loading and success states announced to screen readers.</constraint>
+    <constraint type="i18n" source="docs/prd.md">Support English and Spanish translations for all user-facing text.</constraint>
+    <constraint type="performance" source="docs/prd.md NFR2">Export must complete in under 3 seconds for monthly data.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="useSubscriptionTier" kind="React Hook" path="src/hooks/useSubscriptionTier.ts">
+      <signature>function useSubscriptionTier(): SubscriptionInfo</signature>
+      <returns>{ tier: SubscriptionTier, canAccessPremiumExport: boolean }</returns>
+      <notes>Use canAccessPremiumExport to gate download; if false, show upgrade prompt placeholder for Story 5.5</notes>
+    </interface>
+    <interface name="downloadMonthlyTransactions" kind="function" path="src/utils/csvExport.ts">
+      <signature>function downloadMonthlyTransactions(transactions: Transaction[], year: string, month: string): void</signature>
+      <notes>Already imported in TrendsView. Exports item-level detail with 11 columns. Filename: boletapp-month-YYYY-MM.csv</notes>
+    </interface>
+    <interface name="TrendsViewProps" kind="TypeScript interface" path="src/views/TrendsView.tsx">
+      <signature>interface TrendsViewProps { selectedYear, selectedMonth, filteredTrans, t, ...other props }</signature>
+      <notes>May need to add exporting?: boolean and onExporting?: (value: boolean) => void props to match Story 5.2 pattern</notes>
+    </interface>
+    <interface name="TRANSLATIONS" kind="object" path="src/utils/translations.ts">
+      <signature>export const TRANSLATIONS = { en: {...}, es: {...} }</signature>
+      <notes>Add new keys: downloadTransactions, exportingTransactions, upgradeRequired with EN and ES values</notes>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing follows Vitest + React Testing Library pattern established in Epic 2-3. Integration tests use happy-dom and mock Firebase services. Tests cover both happy path and edge cases. Accessibility testing with aria attributes verification. Pattern: describe blocks by AC, test names describe behavior.
+    </standards>
+    <locations>
+      <location>tests/integration/trends-export.test.tsx (TO CREATE)</location>
+      <location>tests/integration/settings-export.test.tsx (PATTERN REFERENCE)</location>
+      <location>tests/unit/csvExport.test.ts (EXISTING - CSV utilities tests)</location>
+      <location>tests/unit/subscription.test.ts (EXISTING - Story 5.3 tests)</location>
+    </locations>
+    <ideas>
+      <idea ac="1">Test: Subscription check gates download - mock useSubscriptionTier to return false, verify download blocked</idea>
+      <idea ac="1">Test: Subscription allows download - mock useSubscriptionTier to return true, verify downloadMonthlyTransactions called</idea>
+      <idea ac="2">Test: Month view triggers downloadMonthlyTransactions with correct year/month params</idea>
+      <idea ac="3">Test: Week/day views (when selectedMonth is set) still call downloadMonthlyTransactions for full month</idea>
+      <idea ac="6">Test: Loading state shows during export - exporting=true triggers spinner, button disabled</idea>
+      <idea ac="6">Test: aria-busy attribute set during export</idea>
+      <idea ac="7">Test: Download icon has proper aria-label</idea>
+      <idea ac="8">Test: Empty data handling - no crash when filteredTrans is empty, shows appropriate message</idea>
+    </ideas>
+  </tests>
+</story-context>

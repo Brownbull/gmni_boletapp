@@ -1,22 +1,11 @@
-import React from 'react';
-import { ArrowLeft, Download, BarChart2, PieChart } from 'lucide-react';
+import React, { useState, useCallback, useRef } from 'react';
+import { ArrowLeft, BarChart2, PieChart, Loader2, FileText, BarChart } from 'lucide-react';
 import { SimplePieChart } from '../components/charts/SimplePieChart';
 import { GroupedBarChart } from '../components/charts/GroupedBarChart';
-
-interface Transaction {
-    id: string;
-    merchant: string;
-    alias?: string;
-    date: string;
-    total: number;
-    category: string;
-    items?: Array<{
-        name: string;
-        price: number;
-        category?: string;
-        subcategory?: string;
-    }>;
-}
+import { downloadMonthlyTransactions, downloadYearlyStatistics } from '../utils/csvExport';
+import { useSubscriptionTier } from '../hooks/useSubscriptionTier';
+import { UpgradePromptModal } from '../components/UpgradePromptModal';
+import type { Transaction } from '../types/transaction';
 
 interface PieData {
     label: string;
@@ -52,7 +41,6 @@ interface TrendsViewProps {
     lang: string;
     t: (key: string) => string;
     formatCurrency: (amount: number, currency: string) => string;
-    exportToCSV: (data: Transaction[], filename: string) => void;
     onBack: () => void;
     onSetSelectedYear: (year: string) => void;
     onSetSelectedMonth: (month: string | null) => void;
@@ -61,6 +49,12 @@ interface TrendsViewProps {
     onSetSelectedSubcategory: (subcategory: string | null) => void;
     onSetChartType: (type: string) => void;
     onEditTransaction: (transaction: Transaction) => void;
+    /** Whether export is in progress (Story 5.4) */
+    exporting?: boolean;
+    /** Callback to set exporting state (Story 5.4) */
+    onExporting?: (value: boolean) => void;
+    /** Callback for premium upgrade prompt (Story 5.5 placeholder) */
+    onUpgradeRequired?: () => void;
 }
 
 export const TrendsView: React.FC<TrendsViewProps> = ({
@@ -81,7 +75,6 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     lang,
     t,
     formatCurrency,
-    exportToCSV,
     onBack,
     onSetSelectedYear,
     onSetSelectedMonth,
@@ -90,9 +83,26 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     onSetSelectedSubcategory,
     onSetChartType,
     onEditTransaction,
+    exporting = false,
+    onExporting,
+    onUpgradeRequired,
 }) => {
     const card = theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100';
     const input = theme === 'dark' ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200';
+
+    // Story 5.4: Subscription tier check for premium export
+    const { canAccessPremiumExport } = useSubscriptionTier();
+
+    // Story 5.5: Upgrade prompt modal state (AC#4, AC#5, AC#6)
+    const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+    const downloadButtonRef = useRef<HTMLButtonElement>(null);
+
+    /**
+     * Story 5.5: Determine export type based on view granularity (AC#3, ADR-012)
+     * - selectedMonth null = year/quarter view = statistics export
+     * - selectedMonth set = month view = transactions export
+     */
+    const isStatisticsExport = selectedMonth === null;
 
     const handleBackClick = () => {
         if (selectedSubcategory) onSetSelectedSubcategory(null);
@@ -100,6 +110,59 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
         else if (selectedCategory) onSetSelectedCategory(null);
         else if (selectedMonth) onSetSelectedMonth(null);
         else onBack();
+    };
+
+    /**
+     * Handle upgrade modal close - return focus to download button (AC#6)
+     */
+    const handleCloseUpgradePrompt = useCallback(() => {
+        setShowUpgradePrompt(false);
+        // Focus will be returned by the modal component
+    }, []);
+
+    /**
+     * Handle upgrade CTA click (placeholder for Epic 7)
+     * TODO: Epic 7 - Navigate to subscription page or Mercado Pago
+     */
+    const handleUpgrade = useCallback(() => {
+        // TODO: Epic 7 - Replace with actual navigation to subscription page
+        console.log('Upgrade requested - Epic 7 will implement Mercado Pago integration');
+        setShowUpgradePrompt(false);
+    }, []);
+
+    /**
+     * Story 5.4 + 5.5: Handle export with subscription check and loading state
+     * AC#1: Check subscription tier before download
+     * AC#2, AC#3: Context-aware export (transactions vs statistics based on view)
+     * AC#4: Show upgrade prompt for non-subscribers
+     * AC#5, AC#6: Loading state during export with non-blocking UI
+     */
+    const handleExport = async () => {
+        // AC#1, AC#4: Subscription check - show upgrade prompt if not premium
+        if (!canAccessPremiumExport) {
+            // Story 5.5: Show upgrade prompt modal instead of callback
+            setShowUpgradePrompt(true);
+            onUpgradeRequired?.(); // Keep callback for backwards compatibility
+            return;
+        }
+
+        // Set loading state
+        onExporting?.(true);
+        try {
+            // AC#5: Use requestAnimationFrame for non-blocking UI
+            await new Promise(resolve => requestAnimationFrame(resolve));
+
+            if (selectedMonth) {
+                // Month view: export transactions with item-level detail
+                const [year, month] = selectedMonth.split('-');
+                downloadMonthlyTransactions(filteredTrans as Transaction[], year, month);
+            } else {
+                // Story 5.5 AC#1, AC#2: Year/quarter view exports statistics, not transactions
+                downloadYearlyStatistics(filteredTrans as Transaction[], selectedYear);
+            }
+        } finally {
+            onExporting?.(false);
+        }
     };
 
     const handleSliceClick = (label: string) => {
@@ -153,18 +216,31 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                     </div>
                 </div>
                 <div className="flex gap-2">
+                    {/* Story 5.4 + 5.5: Download button with context-aware icon and subscription check */}
                     <button
-                        onClick={() => exportToCSV(filteredTrans, `export_${selectedMonth || 'year'}.csv`)}
-                        className="text-blue-600"
-                        aria-label={t('export')}
+                        ref={downloadButtonRef}
+                        onClick={handleExport}
+                        className="text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label={isStatisticsExport ? t('downloadStatistics') : t('downloadTransactions')}
+                        aria-busy={exporting}
+                        disabled={exporting}
+                        title={isStatisticsExport ? t('downloadStatistics') : t('downloadTransactions')}
                     >
-                        <Download />
+                        {exporting ? (
+                            <Loader2 className="animate-spin" aria-hidden="true" />
+                        ) : isStatisticsExport ? (
+                            /* Story 5.5 AC#3: BarChart2 icon for statistics export (year/quarter view) */
+                            <BarChart2 aria-hidden="true" />
+                        ) : (
+                            /* Story 5.4: FileText icon for transactions export (month view) */
+                            <FileText aria-hidden="true" />
+                        )}
                     </button>
                     <button
                         onClick={() => onSetChartType(chartType === 'pie' ? 'bar' : 'pie')}
                         aria-label={chartType === 'pie' ? t('showBarChart') : t('showPieChart')}
                     >
-                        {chartType === 'pie' ? <BarChart2 /> : <PieChart />}
+                        {chartType === 'pie' ? <BarChart aria-hidden="true" /> : <PieChart aria-hidden="true" />}
                     </button>
                     {!selectedMonth && (
                         <select
@@ -275,6 +351,15 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                     </div>
                 ))}
             </div>
+
+            {/* Story 5.5: Upgrade prompt modal for non-subscribers (AC#4-AC#7) */}
+            <UpgradePromptModal
+                isOpen={showUpgradePrompt}
+                onClose={handleCloseUpgradePrompt}
+                onUpgrade={handleUpgrade}
+                t={t}
+                theme={theme as 'light' | 'dark'}
+            />
         </div>
     );
 };
