@@ -1,7 +1,7 @@
 # Story 6.6: Epic 6 Release & Deployment
 
 **Epic:** Epic 6 - Smart Category Learning
-**Status:** ready-for-dev
+**Status:** in-progress
 **Story Points:** 1
 
 ---
