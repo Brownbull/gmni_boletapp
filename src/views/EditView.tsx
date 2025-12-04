@@ -77,20 +77,33 @@ export const EditView: React.FC<EditViewProps> = ({
         category: string;
         merchant: string;
         itemNames: string[];
+        transactionId: string | undefined;
     }>({
-        category: currentTransaction.category,
-        merchant: currentTransaction.merchant,
-        itemNames: currentTransaction.items.map(item => item.name),
+        category: '',
+        merchant: '',
+        itemNames: [],
+        transactionId: undefined,
     });
 
-    // Reset original values when transaction changes (different transaction loaded)
+    // Capture original values ONCE when transaction data first becomes available
+    // or when switching to a different transaction (id changes)
+    // This handles both:
+    // 1. Editing existing transactions (id is set)
+    // 2. New transactions from scan (id is undefined, but merchant/items are populated)
     useEffect(() => {
-        originalValuesRef.current = {
-            category: currentTransaction.category,
-            merchant: currentTransaction.merchant,
-            itemNames: currentTransaction.items.map(item => item.name),
-        };
-    }, [currentTransaction.id]); // Reset when transaction changes
+        const hasData = currentTransaction.merchant || currentTransaction.items.length > 0;
+        const isNewTransaction = originalValuesRef.current.transactionId !== currentTransaction.id;
+
+        // Capture if: we have data AND (this is a new/different transaction OR we haven't captured yet)
+        if (hasData && (isNewTransaction || originalValuesRef.current.transactionId === undefined)) {
+            originalValuesRef.current = {
+                category: currentTransaction.category,
+                merchant: currentTransaction.merchant,
+                itemNames: currentTransaction.items.map(item => item.name),
+                transactionId: currentTransaction.id,
+            };
+        }
+    }, [currentTransaction.id, currentTransaction.category, currentTransaction.merchant, currentTransaction.items]);
 
     const card = theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100';
     const input = theme === 'dark' ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200';
