@@ -18,11 +18,11 @@ import type { StoreCategory } from '../../src/types/transaction'
 
 // Mock translations
 const mockTranslations: Record<string, string> = {
-  learnCategoryTitle: 'Learn This Category?',
-  learnCategoryMessage: 'Remember "{item}" as {category} for future receipts?',
-  learnCategoryConfirm: 'Yes, Remember',
+  learnCategoryTitle: 'Learn These Groups?',
+  learnCategoryMessage: 'Remember these groups for future receipts?',
+  learnCategoryConfirm: 'Yes, Remember All',
   learnCategorySkip: 'Not Now',
-  learnCategorySuccess: "Got it! I'll remember this.",
+  learnCategorySuccess: "Got it! I'll remember these.",
   close: 'Close',
   back: 'Back',
   editTrans: 'Edit Transaction',
@@ -47,8 +47,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
   describe('CategoryLearningPrompt Component', () => {
     const defaultProps = {
       isOpen: true,
-      itemName: 'UBER EATS',
-      category: 'Transport' as StoreCategory,
+      items: [{ itemName: 'UBER EATS', newGroup: 'Transport' }],
       onConfirm: vi.fn(),
       onClose: vi.fn(),
       t: mockT,
@@ -64,12 +63,12 @@ describe('Category Learning Prompt - Story 6.3', () => {
       document.body.style.overflow = ''
     })
 
-    describe('AC#1: Prompt appears on category change', () => {
-      it('should render when isOpen is true', () => {
+    describe('AC#1: Prompt appears on item group change', () => {
+      it('should render when isOpen is true with items', () => {
         render(<CategoryLearningPrompt {...defaultProps} />)
 
         expect(screen.getByRole('dialog')).toBeInTheDocument()
-        expect(screen.getByText('Learn This Category?')).toBeInTheDocument()
+        expect(screen.getByText('Learn These Groups?')).toBeInTheDocument()
       })
 
       it('should not render when isOpen is false', () => {
@@ -77,52 +76,58 @@ describe('Category Learning Prompt - Story 6.3', () => {
 
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
       })
+
+      it('should not render when items array is empty', () => {
+        render(<CategoryLearningPrompt {...defaultProps} items={[]} />)
+
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      })
+
+      it('should display all items to learn', () => {
+        const multipleItems = [
+          { itemName: 'UBER EATS', newGroup: 'Transport' },
+          { itemName: 'STARBUCKS', newGroup: 'Food' },
+        ]
+        render(<CategoryLearningPrompt {...defaultProps} items={multipleItems} />)
+
+        expect(screen.getByText('UBER EATS')).toBeInTheDocument()
+        expect(screen.getByText('Transport')).toBeInTheDocument()
+        expect(screen.getByText('STARBUCKS')).toBeInTheDocument()
+        expect(screen.getByText('Food')).toBeInTheDocument()
+      })
     })
 
-    describe('AC#2: Prompt shows item name and category', () => {
-      it('should display item name in message', () => {
-        render(<CategoryLearningPrompt {...defaultProps} itemName="UBER EATS" />)
+    describe('AC#2: Prompt shows items and groups', () => {
+      it('should display items list with their groups', () => {
+        render(<CategoryLearningPrompt {...defaultProps} />)
 
-        expect(
-          screen.getByText('Remember "UBER EATS" as Transport for future receipts?')
-        ).toBeInTheDocument()
+        expect(screen.getByText('UBER EATS')).toBeInTheDocument()
+        expect(screen.getByText('Transport')).toBeInTheDocument()
       })
 
-      it('should display category in message', () => {
-        render(
-          <CategoryLearningPrompt {...defaultProps} category="Restaurant" />
-        )
-
-        expect(
-          screen.getByText('Remember "UBER EATS" as Restaurant for future receipts?')
-        ).toBeInTheDocument()
-      })
-
-      it('should update message when item or category changes', () => {
+      it('should update list when items change', () => {
         const { rerender } = render(
-          <CategoryLearningPrompt {...defaultProps} itemName="STARBUCKS" category="Restaurant" />
+          <CategoryLearningPrompt {...defaultProps} items={[{ itemName: 'STARBUCKS', newGroup: 'Restaurant' }]} />
         )
 
-        expect(
-          screen.getByText('Remember "STARBUCKS" as Restaurant for future receipts?')
-        ).toBeInTheDocument()
+        expect(screen.getByText('STARBUCKS')).toBeInTheDocument()
+        expect(screen.getByText('Restaurant')).toBeInTheDocument()
 
         rerender(
-          <CategoryLearningPrompt {...defaultProps} itemName="WALMART" category="Supermarket" />
+          <CategoryLearningPrompt {...defaultProps} items={[{ itemName: 'WALMART', newGroup: 'Supermarket' }]} />
         )
 
-        expect(
-          screen.getByText('Remember "WALMART" as Supermarket for future receipts?')
-        ).toBeInTheDocument()
+        expect(screen.getByText('WALMART')).toBeInTheDocument()
+        expect(screen.getByText('Supermarket')).toBeInTheDocument()
       })
     })
 
-    describe('AC#3: "Yes, Remember" button saves mapping', () => {
+    describe('AC#3: "Yes, Remember All" button saves mappings', () => {
       it('should render confirm button with correct text', () => {
         render(<CategoryLearningPrompt {...defaultProps} />)
 
         expect(
-          screen.getByRole('button', { name: 'Yes, Remember' })
+          screen.getByRole('button', { name: 'Yes, Remember All' })
         ).toBeInTheDocument()
       })
 
@@ -130,7 +135,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
         const onConfirm = vi.fn()
         render(<CategoryLearningPrompt {...defaultProps} onConfirm={onConfirm} />)
 
-        fireEvent.click(screen.getByRole('button', { name: 'Yes, Remember' }))
+        fireEvent.click(screen.getByRole('button', { name: 'Yes, Remember All' }))
 
         expect(onConfirm).toHaveBeenCalledTimes(1)
       })
@@ -186,7 +191,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
         const dialog = screen.getByRole('dialog')
         expect(dialog).toHaveAttribute('aria-labelledby', 'learn-modal-title')
 
-        const title = screen.getByText('Learn This Category?')
+        const title = screen.getByText('Learn These Groups?')
         expect(title).toHaveAttribute('id', 'learn-modal-title')
       })
 
@@ -257,18 +262,17 @@ describe('Category Learning Prompt - Story 6.3', () => {
       it('should display English translations', () => {
         render(<CategoryLearningPrompt {...defaultProps} />)
 
-        expect(screen.getByText('Learn This Category?')).toBeInTheDocument()
-        expect(screen.getByRole('button', { name: 'Yes, Remember' })).toBeInTheDocument()
+        expect(screen.getByText('Learn These Groups?')).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: 'Yes, Remember All' })).toBeInTheDocument()
         expect(screen.getByRole('button', { name: 'Not Now' })).toBeInTheDocument()
       })
 
       it('should display Spanish translations', () => {
         const spanishT = (key: string) => {
           const translations: Record<string, string> = {
-            learnCategoryTitle: '¿Aprender Esta Categoría?',
-            learnCategoryMessage:
-              '¿Recordar "{item}" como {category} para futuras boletas?',
-            learnCategoryConfirm: 'Sí, Recordar',
+            learnCategoryTitle: '¿Aprender Estos Grupos?',
+            learnCategoryMessage: '¿Recordar estos grupos para futuras boletas?',
+            learnCategoryConfirm: 'Sí, Recordar Todos',
             learnCategorySkip: 'Ahora No',
             close: 'Cerrar',
           }
@@ -277,9 +281,9 @@ describe('Category Learning Prompt - Story 6.3', () => {
 
         render(<CategoryLearningPrompt {...defaultProps} t={spanishT} />)
 
-        expect(screen.getByText('¿Aprender Esta Categoría?')).toBeInTheDocument()
+        expect(screen.getByText('¿Aprender Estos Grupos?')).toBeInTheDocument()
         expect(
-          screen.getByRole('button', { name: 'Sí, Recordar' })
+          screen.getByRole('button', { name: 'Sí, Recordar Todos' })
         ).toBeInTheDocument()
         expect(
           screen.getByRole('button', { name: 'Ahora No' })
@@ -344,7 +348,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     })
 
-    it('should show learning prompt when category is changed and save is clicked', async () => {
+    it('should show learning prompt when item group is changed and save is clicked', async () => {
       const onUpdateTransaction = vi.fn()
       const onSave = vi.fn().mockResolvedValue(undefined)
 
@@ -356,11 +360,11 @@ describe('Category Learning Prompt - Story 6.3', () => {
         />
       )
 
-      // Simulate category change by re-rendering with new category
+      // Simulate item group change by re-rendering with new item category
       // (In real usage, onUpdateTransaction updates the transaction)
       const updatedTransaction = {
         ...defaultTransaction,
-        category: 'Transport',
+        items: [{ name: 'UBER EATS', price: 50, category: 'Transport' }], // Changed from 'Food' to 'Transport'
       }
 
       rerender(
@@ -376,17 +380,16 @@ describe('Category Learning Prompt - Story 6.3', () => {
       const saveButton = screen.getByRole('button', { name: 'Save' })
       fireEvent.click(saveButton)
 
-      await waitFor(() => {
-        expect(onSave).toHaveBeenCalled()
-      })
-
-      // Learning prompt should appear
+      // Learning prompt should appear BEFORE save (because save navigates away)
       await waitFor(() => {
         expect(screen.getByRole('dialog')).toBeInTheDocument()
       })
+
+      // onSave should NOT be called yet - it's called after user responds to prompt
+      expect(onSave).not.toHaveBeenCalled()
     })
 
-    it('should not show learning prompt when category is unchanged', async () => {
+    it('should not show learning prompt when item group is unchanged', async () => {
       const onSave = vi.fn().mockResolvedValue(undefined)
 
       render(
@@ -396,7 +399,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
         />
       )
 
-      // Click save without changing category
+      // Click save without changing item group
       const saveButton = screen.getByRole('button', { name: 'Save' })
       fireEvent.click(saveButton)
 
@@ -413,7 +416,6 @@ describe('Category Learning Prompt - Story 6.3', () => {
       const transactionWithNoItems = {
         ...defaultTransaction,
         items: [],
-        category: 'Transport', // Category changed
       }
 
       render(
@@ -440,7 +442,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
       const onSave = vi.fn().mockResolvedValue(undefined)
       const onSaveMapping = vi.fn().mockResolvedValue('mapping-123')
 
-      // First render with original category
+      // First render with original item group
       const { rerender } = render(
         <EditView
           {...defaultEditViewProps}
@@ -450,10 +452,10 @@ describe('Category Learning Prompt - Story 6.3', () => {
         />
       )
 
-      // Simulate category change via rerender
+      // Simulate item group change via rerender
       const updatedTransaction = {
         ...defaultTransaction,
-        category: 'Transport',
+        items: [{ name: 'UBER EATS', price: 50, category: 'Transport' }], // Changed from 'Food' to 'Transport'
       }
 
       rerender(
@@ -474,7 +476,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
       })
 
       // Click confirm
-      const confirmButton = screen.getByRole('button', { name: 'Yes, Remember' })
+      const confirmButton = screen.getByRole('button', { name: 'Yes, Remember All' })
       fireEvent.click(confirmButton)
 
       await waitFor(() => {
@@ -487,7 +489,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
       const onSaveMapping = vi.fn().mockResolvedValue('mapping-123')
       const onShowToast = vi.fn()
 
-      // First render with original category
+      // First render with original item group
       const { rerender } = render(
         <EditView
           {...defaultEditViewProps}
@@ -498,10 +500,10 @@ describe('Category Learning Prompt - Story 6.3', () => {
         />
       )
 
-      // Simulate category change via rerender
+      // Simulate item group change via rerender
       const updatedTransaction = {
         ...defaultTransaction,
-        category: 'Transport',
+        items: [{ name: 'UBER EATS', price: 50, category: 'Transport' }],
       }
 
       rerender(
@@ -522,10 +524,10 @@ describe('Category Learning Prompt - Story 6.3', () => {
       })
 
       // Click confirm
-      fireEvent.click(screen.getByRole('button', { name: 'Yes, Remember' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Yes, Remember All' }))
 
       await waitFor(() => {
-        expect(onShowToast).toHaveBeenCalledWith("Got it! I'll remember this.")
+        expect(onShowToast).toHaveBeenCalledWith("Got it! I'll remember these.")
       })
     })
 
@@ -533,7 +535,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
       const onSave = vi.fn().mockResolvedValue(undefined)
       const onSaveMapping = vi.fn()
 
-      // First render with original category
+      // First render with original item group
       const { rerender } = render(
         <EditView
           {...defaultEditViewProps}
@@ -543,10 +545,10 @@ describe('Category Learning Prompt - Story 6.3', () => {
         />
       )
 
-      // Simulate category change via rerender
+      // Simulate item group change via rerender
       const updatedTransaction = {
         ...defaultTransaction,
-        category: 'Transport',
+        items: [{ name: 'UBER EATS', price: 50, category: 'Transport' }],
       }
 
       rerender(
@@ -579,17 +581,27 @@ describe('Category Learning Prompt - Story 6.3', () => {
     it('should not show prompt when onSaveMapping is not provided', async () => {
       const onSave = vi.fn().mockResolvedValue(undefined)
 
+      // Item group changed but no onSaveMapping provided
+      const { rerender } = render(
+        <EditView
+          {...defaultEditViewProps}
+          currentTransaction={defaultTransaction}
+          onSave={onSave}
+          onSaveMapping={undefined} // Not provided
+        />
+      )
+
       const updatedTransaction = {
         ...defaultTransaction,
-        category: 'Transport',
+        items: [{ name: 'UBER EATS', price: 50, category: 'Transport' }],
       }
 
-      render(
+      rerender(
         <EditView
           {...defaultEditViewProps}
           currentTransaction={updatedTransaction}
           onSave={onSave}
-          onSaveMapping={undefined} // Not provided
+          onSaveMapping={undefined}
         />
       )
 
@@ -604,9 +616,9 @@ describe('Category Learning Prompt - Story 6.3', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     })
 
-    // Expanded trigger tests - Story 6.3 scope expansion
-    describe('Expanded Triggers (merchant, item name)', () => {
-      it('should show learning prompt when merchant is changed', async () => {
+    // Non-triggers: changes that do NOT trigger the learning prompt
+    describe('Non-Triggers (transaction category, merchant, item name, price, alias, date, total do NOT trigger prompt)', () => {
+      it('should NOT show learning prompt when only transaction category is changed', async () => {
         const onSave = vi.fn().mockResolvedValue(undefined)
 
         const { rerender } = render(
@@ -617,10 +629,10 @@ describe('Category Learning Prompt - Story 6.3', () => {
           />
         )
 
-        // Simulate merchant change via rerender
+        // Only transaction category changed, NOT item group
         const updatedTransaction = {
           ...defaultTransaction,
-          merchant: 'New Store Name', // Only merchant changed
+          category: 'Transport', // Transaction category changed
         }
 
         rerender(
@@ -638,13 +650,11 @@ describe('Category Learning Prompt - Story 6.3', () => {
           expect(onSave).toHaveBeenCalled()
         })
 
-        // Learning prompt should appear
-        await waitFor(() => {
-          expect(screen.getByRole('dialog')).toBeInTheDocument()
-        })
+        // No prompt - only item group changes trigger
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
       })
 
-      it('should show learning prompt when item name is changed', async () => {
+      it('should NOT show learning prompt when only merchant is changed', async () => {
         const onSave = vi.fn().mockResolvedValue(undefined)
 
         const { rerender } = render(
@@ -655,10 +665,10 @@ describe('Category Learning Prompt - Story 6.3', () => {
           />
         )
 
-        // Simulate item name change via rerender
+        // Only merchant changed
         const updatedTransaction = {
           ...defaultTransaction,
-          items: [{ name: 'CORRECTED ITEM NAME', price: 50, category: 'Food' }], // Only item name changed
+          merchant: 'New Store Name',
         }
 
         rerender(
@@ -676,14 +686,45 @@ describe('Category Learning Prompt - Story 6.3', () => {
           expect(onSave).toHaveBeenCalled()
         })
 
-        // Learning prompt should appear
-        await waitFor(() => {
-          expect(screen.getByRole('dialog')).toBeInTheDocument()
-        })
+        // No prompt - only item group changes trigger
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
       })
-    })
 
-    describe('Non-Triggers (item prices, add/remove items, alias, date, total do NOT trigger prompt)', () => {
+      it('should NOT show learning prompt when only item name is changed', async () => {
+        const onSave = vi.fn().mockResolvedValue(undefined)
+
+        const { rerender } = render(
+          <EditView
+            {...defaultEditViewProps}
+            currentTransaction={defaultTransaction}
+            onSave={onSave}
+          />
+        )
+
+        // Only item name changed, NOT item group
+        const updatedTransaction = {
+          ...defaultTransaction,
+          items: [{ name: 'CORRECTED ITEM NAME', price: 50, category: 'Food' }],
+        }
+
+        rerender(
+          <EditView
+            {...defaultEditViewProps}
+            currentTransaction={updatedTransaction}
+            onSave={onSave}
+          />
+        )
+
+        // Click save
+        fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+        await waitFor(() => {
+          expect(onSave).toHaveBeenCalled()
+        })
+
+        // No prompt - only item group changes trigger
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      })
       it('should NOT show learning prompt when only item price is changed', async () => {
         const onSave = vi.fn().mockResolvedValue(undefined)
 
