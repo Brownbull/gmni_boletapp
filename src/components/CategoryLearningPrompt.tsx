@@ -10,7 +10,14 @@
 
 import React, { useEffect, useRef, useCallback } from 'react'
 import { X, BookMarked } from 'lucide-react'
-import { StoreCategory } from '../types/transaction'
+
+/**
+ * Item to learn mapping
+ */
+export interface ItemToLearn {
+  itemName: string
+  newGroup: string
+}
 
 /**
  * Props for the CategoryLearningPrompt component
@@ -18,10 +25,8 @@ import { StoreCategory } from '../types/transaction'
 export interface CategoryLearningPromptProps {
   /** Whether the modal is currently open */
   isOpen: boolean
-  /** Item name to learn (e.g., "UBER EATS") */
-  itemName: string
-  /** Target category to save */
-  category: StoreCategory
+  /** Items to learn (array of item name → group mappings) */
+  items: ItemToLearn[]
   /** Callback when user clicks "Yes, Remember" */
   onConfirm: () => void
   /** Callback when user dismisses the modal */
@@ -60,8 +65,7 @@ export interface CategoryLearningPromptProps {
  */
 export const CategoryLearningPrompt: React.FC<CategoryLearningPromptProps> = ({
   isOpen,
-  itemName,
-  category,
+  items,
   onConfirm,
   onClose,
   t,
@@ -151,20 +155,14 @@ export const CategoryLearningPrompt: React.FC<CategoryLearningPromptProps> = ({
     }
   }, [isOpen])
 
-  if (!isOpen) return null
+  if (!isOpen || items.length === 0) return null
 
   // Theme-aware styling
   const cardBg = theme === 'dark' ? 'bg-slate-800' : 'bg-white'
   const textColor = theme === 'dark' ? 'text-white' : 'text-slate-900'
   const secondaryText = theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
   const borderColor = theme === 'dark' ? 'border-slate-700' : 'border-slate-200'
-
-  // Format message with item name and category
-  const formatMessage = (template: string): string => {
-    return template
-      .replace('{item}', itemName)
-      .replace('{category}', category)
-  }
+  const itemBg = theme === 'dark' ? 'bg-slate-700' : 'bg-slate-100'
 
   return (
     <div
@@ -210,13 +208,25 @@ export const CategoryLearningPrompt: React.FC<CategoryLearningPromptProps> = ({
             {t('learnCategoryTitle')}
           </h2>
 
-          {/* Description */}
-          <p
+          {/* Description - show list of items to learn */}
+          <div
             id="learn-modal-description"
             className={`mb-6 ${secondaryText}`}
           >
-            {formatMessage(t('learnCategoryMessage'))}
-          </p>
+            <p className="mb-3">{t('learnCategoryMessage')}</p>
+            <ul className="text-left space-y-2">
+              {items.map((item, index) => (
+                <li
+                  key={index}
+                  className={`px-3 py-2 rounded-lg ${itemBg} text-sm`}
+                >
+                  <span className="font-medium">{item.itemName}</span>
+                  <span className={secondaryText}> → </span>
+                  <span className="font-semibold text-blue-600 dark:text-blue-400">{item.newGroup}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           {/* Action buttons */}
           <div className="flex flex-col gap-3">
