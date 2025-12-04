@@ -98,7 +98,7 @@ development_status:
   6-3-category-learning-prompt: done  # 2 points - UI prompt on category edit - Code Review APPROVED 2025-12-03
   6-4-auto-apply-on-receipt-scan: done  # 3 points - Apply mappings to Gemini results - Code Review APPROVED 2025-12-03
   6-5-mappings-management-ui: done  # 3 points - Settings section for viewing/editing/deleting - Code Review APPROVED 2025-12-03
-  6-6-epic-release-deployment: in-progress  # 1 point - Context generated 2025-12-03, Dev started 2025-12-03
+  6-6-epic-release-deployment: review  # 1 point - Context generated 2025-12-03, Dev completed 2025-12-04, deployed to Firebase Hosting
   epic-6-retrospective: optional  # To be completed after all Epic 6 stories are done
 
   # Future Epics (updated in Epic 4 retrospective)

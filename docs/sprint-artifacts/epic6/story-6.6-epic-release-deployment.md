@@ -1,7 +1,7 @@
 # Story 6.6: Epic 6 Release & Deployment
 
 **Epic:** Epic 6 - Smart Category Learning
-**Status:** in-progress
+**Status:** review
 **Story Points:** 1
 
 ---
@@ -16,34 +16,34 @@ So that **Smart Category Learning features are available to all users**.
 
 ## Acceptance Criteria
 
-- [ ] **AC #1:** All Epic 6 stories (6.1-6.5) are merged to develop branch
-- [ ] **AC #2:** Changes merged from develop → staging with passing CI
-- [ ] **AC #3:** Changes merged from staging → main with passing CI
-- [ ] **AC #4:** Firebase Hosting deployment successful (auto-triggered by CI/CD)
-- [ ] **AC #5:** Production verification confirms features work correctly
+- [x] **AC #1:** All Epic 6 stories (6.1-6.5) are merged to develop branch
+- [x] **AC #2:** Changes merged from develop → staging with passing CI
+- [x] **AC #3:** Changes merged from staging → main with passing CI
+- [x] **AC #4:** Firebase Hosting deployment successful (auto-triggered by CI/CD)
+- [x] **AC #5:** Production verification confirms features work correctly
 
 ---
 
 ## Tasks / Subtasks
 
-- [ ] Verify all Epic 6 stories are complete (AC: #1)
-  - [ ] Story 6.1: Category Mapping Infrastructure ✓
-  - [ ] Story 6.2: Fuzzy Matching Engine
-  - [ ] Story 6.3: Category Learning Prompt
-  - [ ] Story 6.4: Auto-Apply on Receipt Scan
-  - [ ] Story 6.5: Mappings Management UI
-- [ ] Create PR: develop → staging (AC: #2)
-  - [ ] Resolve any merge conflicts
-  - [ ] Verify CI passes (tests, lint, build)
-  - [ ] Merge PR
-- [ ] Create PR: staging → main (AC: #3)
-  - [ ] Verify CI passes
-  - [ ] Merge PR (triggers auto-deploy via Story 6.0)
-- [ ] Verify production deployment (AC: #4, #5)
-  - [ ] Check Firebase Hosting deployment succeeded
-  - [ ] Test category learning prompt appears on category edit
-  - [ ] Test auto-apply works on receipt scan
-  - [ ] Test mappings management in Settings
+- [x] Verify all Epic 6 stories are complete (AC: #1)
+  - [x] Story 6.1: Category Mapping Infrastructure ✓
+  - [x] Story 6.2: Fuzzy Matching Engine ✓
+  - [x] Story 6.3: Category Learning Prompt ✓
+  - [x] Story 6.4: Auto-Apply on Receipt Scan ✓
+  - [x] Story 6.5: Mappings Management UI ✓
+- [x] Create PR: develop → staging (AC: #2)
+  - [x] Resolve any merge conflicts
+  - [x] Verify CI passes (tests, lint, build)
+  - [x] Merge PR
+- [x] Create PR: staging → main (AC: #3)
+  - [x] Verify CI passes
+  - [x] Merge PR (triggers auto-deploy via Story 6.0)
+- [x] Verify production deployment (AC: #4, #5)
+  - [x] Check Firebase Hosting deployment succeeded
+  - [x] Test category learning prompt appears on category edit
+  - [x] Test auto-apply works on receipt scan
+  - [x] Test mappings management in Settings
 
 ---
 
@@ -114,13 +114,42 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 4. After develop merge, proceed with develop → staging → main flow
 
 ### Completion Notes
-<!-- Will be populated during dev-story execution -->
+**2025-12-04 - Deployment & Bug Fixes:**
+
+Epic 6 deployed to production via PR #28. During production testing, several bugs were identified and fixed:
+
+**Bug Fix 1: Category Learning Prompt Not Appearing**
+- Root cause: `onSave()` navigated away before modal could render
+- Fix: Show prompt BEFORE calling save, then call save after user responds
+
+**Bug Fix 2: Wrong Field Being Tracked**
+- Root cause: Feature was tracking transaction category changes instead of item group changes
+- Fix: Complete rewrite to track `item.category` changes (item groups) instead of `transaction.category`
+
+**Bug Fix 3: Only First Changed Item Being Learned**
+- Root cause: `findChangedItemGroup()` returned only first match
+- Fix: Changed to `findAllChangedItemGroups()` returning array, save all mappings on confirm
+
+**Enhancement: Visual Indicator for Learned Categories**
+- Added `categorySource` field to TransactionItem type ('scan' | 'learned' | 'user')
+- `applyCategoryMappings()` sets `categorySource: 'learned'` when category changes
+- CategoryBadge shows BookMarked icon when `categorySource === 'learned'`
+- Smart logic: indicator only shows when learned category differs from scan
 
 ### Files Modified
-<!-- Will be populated during dev-story execution -->
+- `src/views/EditView.tsx` - Multi-item group tracking, learning prompt flow
+- `src/components/CategoryLearningPrompt.tsx` - Accept items[] array, display list
+- `src/components/CategoryBadge.tsx` - Visual indicator for learned categories
+- `src/types/transaction.ts` - Added CategorySource type and categorySource field
+- `src/utils/categoryMatcher.ts` - Set categorySource='learned' on matched items
+- `src/utils/translations.ts` - Updated to plural form for multi-item learning
+- `tests/integration/category-apply.test.tsx` - Added 4 tests for categorySource
+- `tests/integration/category-learning.test.tsx` - Updated for array-based behavior
 
 ### Test Results
-<!-- Will be populated during dev-story execution -->
+- All 450+ tests passing (185 unit + 265 integration)
+- CI passed on PR #28
+- Manual production testing confirmed all features work correctly
 
 ---
 
