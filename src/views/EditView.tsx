@@ -3,13 +3,14 @@ import { ArrowLeft, Trash2, Plus, Check } from 'lucide-react';
 import { CategoryBadge } from '../components/CategoryBadge';
 import { ImageViewer } from '../components/ImageViewer';
 import { CategoryLearningPrompt } from '../components/CategoryLearningPrompt';
-import { StoreCategory } from '../types/transaction';
+import { StoreCategory, CategorySource } from '../types/transaction';
 
 interface TransactionItem {
     name: string;
     price: number;
     category?: string;
     subcategory?: string;
+    categorySource?: CategorySource;
 }
 
 interface Transaction {
@@ -359,6 +360,7 @@ export const EditView: React.FC<EditViewProps> = ({
                                         <CategoryBadge
                                             category={item.category || 'Other'}
                                             subcategory={item.subcategory}
+                                            categorySource={item.categorySource}
                                         />
                                     </div>
                                     <div className="font-mono text-sm">

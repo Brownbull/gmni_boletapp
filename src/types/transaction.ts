@@ -3,12 +3,22 @@ export type StoreCategory =
     | 'Veterinary' | 'PetShop' | 'Medical' | 'Pharmacy' | 'Technology'
     | 'StreetVendor' | 'Transport' | 'Services' | 'Other';
 
+/**
+ * Source of the category assignment for an item.
+ * - 'scan': Category came from Gemini AI scan
+ * - 'learned': Category was auto-applied from a learned mapping
+ * - 'user': Category was manually set by the user
+ */
+export type CategorySource = 'scan' | 'learned' | 'user';
+
 export interface TransactionItem {
     name: string;
     qty?: number;
     price: number;
     category?: string;
     subcategory?: string;
+    /** Source of the category assignment (scan, learned, or user) */
+    categorySource?: CategorySource;
 }
 
 export interface Transaction {
