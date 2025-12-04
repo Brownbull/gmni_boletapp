@@ -10,7 +10,6 @@
 
 import React, { useEffect, useRef, useCallback } from 'react'
 import { X, BookMarked } from 'lucide-react'
-import { StoreCategory } from '../types/transaction'
 
 /**
  * Item to learn mapping
