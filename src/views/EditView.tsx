@@ -67,43 +67,36 @@ export const EditView: React.FC<EditViewProps> = ({
 
     // Story 6.3: Category learning prompt state
     const [showLearningPrompt, setShowLearningPrompt] = useState(false);
-    const [itemToLearn, setItemToLearn] = useState<string>('');
-    const [categoryToLearn, setCategoryToLearn] = useState<StoreCategory>('Other');
+    const [itemsToLearn, setItemsToLearn] = useState<Array<{ itemName: string; newGroup: string }>>([]);
 
-    // Track original values on mount for detecting changes
-    // Triggers: category, merchant, item names
-    // Does NOT trigger: item prices, add/remove items, alias, date, total
-    const originalValuesRef = useRef<{
-        category: string;
-        merchant: string;
-        itemNames: string[];
-        transactionId: string | undefined;
+    // Track original item groups on mount for detecting changes
+    // We learn: item name → item group (category field on item)
+    const originalItemGroupsRef = useRef<{
+        items: Array<{ name: string; category: string }>; // name and group for each item
+        capturedForTransactionKey: string | null; // null = not captured yet
     }>({
-        category: '',
-        merchant: '',
-        itemNames: [],
-        transactionId: undefined,
+        items: [],
+        capturedForTransactionKey: null,
     });
 
-    // Capture original values ONCE when transaction data first becomes available
-    // or when switching to a different transaction (id changes)
-    // This handles both:
-    // 1. Editing existing transactions (id is set)
-    // 2. New transactions from scan (id is undefined, but merchant/items are populated)
+    // Capture original item groups ONCE when transaction data first becomes available
     useEffect(() => {
         const hasData = currentTransaction.merchant || currentTransaction.items.length > 0;
-        const isNewTransaction = originalValuesRef.current.transactionId !== currentTransaction.id;
+        // Use transaction id, or for new transactions use 'new' as a key
+        const transactionKey = currentTransaction.id || 'new';
+        const alreadyCaptured = originalItemGroupsRef.current.capturedForTransactionKey === transactionKey;
 
-        // Capture if: we have data AND (this is a new/different transaction OR we haven't captured yet)
-        if (hasData && (isNewTransaction || originalValuesRef.current.transactionId === undefined)) {
-            originalValuesRef.current = {
-                category: currentTransaction.category,
-                merchant: currentTransaction.merchant,
-                itemNames: currentTransaction.items.map(item => item.name),
-                transactionId: currentTransaction.id,
+        // Only capture ONCE per transaction (when key doesn't match)
+        if (hasData && !alreadyCaptured) {
+            originalItemGroupsRef.current = {
+                items: currentTransaction.items.map(item => ({
+                    name: item.name,
+                    category: item.category || ''
+                })),
+                capturedForTransactionKey: transactionKey,
             };
         }
-    }, [currentTransaction.id, currentTransaction.category, currentTransaction.merchant, currentTransaction.items]);
+    }, [currentTransaction.id, currentTransaction.items]);
 
     const card = theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100';
     const input = theme === 'dark' ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200';
@@ -130,76 +123,86 @@ export const EditView: React.FC<EditViewProps> = ({
         onSetEditingItemIndex(null);
     };
 
-    // Story 6.3: Detect if any tracked field has changed
-    // Triggers: category, merchant, item names
-    // Does NOT trigger: item prices, add/remove items, alias, date, total
-    const hasScannedDataChanged = (): boolean => {
-        const original = originalValuesRef.current;
-
-        // Check category change
-        if (currentTransaction.category !== original.category) {
-            return true;
-        }
-
-        // Check merchant change
-        if (currentTransaction.merchant !== original.merchant) {
-            return true;
-        }
-
-        // Check item name changes only (not prices, not count)
-        // Compare names of items that exist in both original and current
+    // Story 6.3: Find ALL items whose group (category) has changed
+    // Returns array of { itemName, newGroup } for all changed items
+    const findAllChangedItemGroups = (): Array<{ itemName: string; newGroup: string }> => {
+        const originalItems = originalItemGroupsRef.current.items;
         const currentItems = currentTransaction.items;
-        const originalItemNames = original.itemNames;
-        const minLength = Math.min(currentItems.length, originalItemNames.length);
+        const changedItems: Array<{ itemName: string; newGroup: string }> = [];
 
-        for (let i = 0; i < minLength; i++) {
-            if (currentItems[i].name !== originalItemNames[i]) {
-                return true;
+        // Check each item to see if its group changed
+        for (let i = 0; i < currentItems.length; i++) {
+            const currentItem = currentItems[i];
+            const originalItem = originalItems[i];
+
+            // Skip if no original item to compare (new item added)
+            if (!originalItem) continue;
+
+            // Skip if item has no name
+            if (!currentItem.name) continue;
+
+            // Check if group changed (and new group is not empty)
+            const currentGroup = currentItem.category || '';
+            const originalGroup = originalItem.category || '';
+
+            if (currentGroup && currentGroup !== originalGroup) {
+                changedItems.push({
+                    itemName: currentItem.name,
+                    newGroup: currentGroup
+                });
             }
         }
 
-        return false;
+        return changedItems;
     };
 
     // Story 6.3: Handle save with category learning prompt
+    // Shows prompt BEFORE saving if item groups changed, because onSave navigates away
     const handleSaveWithLearning = async () => {
-        // Save the transaction first
-        await onSave();
-
-        // Check if any scanned data changed and we have items to learn from
-        const dataChanged = hasScannedDataChanged();
-        const hasItemsToLearn = currentTransaction.items.length > 0 && currentTransaction.items[0].name;
+        // Check if any item's group was changed
+        const changedItems = findAllChangedItemGroups();
 
         // Only show prompt if:
-        // 1. Any tracked field was changed (category, merchant, item names, item prices)
-        // 2. There are items with names
-        // 3. onSaveMapping function is available
-        if (dataChanged && hasItemsToLearn && onSaveMapping) {
-            setItemToLearn(currentTransaction.items[0].name);
-            setCategoryToLearn(currentTransaction.category as StoreCategory);
+        // 1. At least one item's group was changed
+        // 2. onSaveMapping function is available
+        if (changedItems.length > 0 && onSaveMapping) {
+            // Show prompt first - onSave will be called after user responds
+            setItemsToLearn(changedItems);
             setShowLearningPrompt(true);
+        } else {
+            // No changes to learn, just save directly
+            await onSave();
         }
     };
 
     // Story 6.3: Handle learning prompt confirmation
     const handleLearnConfirm = async () => {
-        if (onSaveMapping && itemToLearn && categoryToLearn) {
+        if (onSaveMapping && itemsToLearn.length > 0) {
             try {
-                await onSaveMapping(itemToLearn, categoryToLearn, 'user');
+                // Save mappings for ALL changed items
+                for (const item of itemsToLearn) {
+                    await onSaveMapping(item.itemName, item.newGroup as StoreCategory, 'user');
+                }
                 // AC#5: Show success toast
                 if (onShowToast) {
                     onShowToast(t('learnCategorySuccess'));
                 }
             } catch (error) {
-                console.error('Failed to save category mapping:', error);
+                console.error('Failed to save category mappings:', error);
             }
         }
         setShowLearningPrompt(false);
+        setItemsToLearn([]);
+        // Now save the transaction after user confirmed learning
+        await onSave();
     };
 
     // Story 6.3: Handle learning prompt dismiss
-    const handleLearnDismiss = () => {
+    const handleLearnDismiss = async () => {
         setShowLearningPrompt(false);
+        setItemsToLearn([]);
+        // Still save the transaction even if user skipped learning
+        await onSave();
     };
 
     return (
@@ -378,8 +381,7 @@ export const EditView: React.FC<EditViewProps> = ({
             {/* Story 6.3: Category Learning Prompt Modal */}
             <CategoryLearningPrompt
                 isOpen={showLearningPrompt}
-                itemName={itemToLearn}
-                category={categoryToLearn}
+                items={itemsToLearn}
                 onConfirm={handleLearnConfirm}
                 onClose={handleLearnDismiss}
                 t={t}
