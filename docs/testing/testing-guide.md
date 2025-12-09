@@ -1,7 +1,7 @@
 # Testing Guide - Boletapp
 
-**Version:** 2.0
-**Last Updated:** 2025-11-26 (Epic 3 Complete)
+**Version:** 3.0
+**Last Updated:** 2025-12-07 (Epic 7 Test Optimization)
 **Status:** Active
 
 ## Overview
@@ -46,31 +46,42 @@ The emulators will start on:
 
 ### Running Tests
 
+#### Tiered Test Commands (Epic 7+)
+
+Use tiered tests based on your current phase:
+
+| Command | Duration | Use When |
+|---------|----------|----------|
+| `npm run test:quick` | ~35s | During development, after each task |
+| `npm run test:story` | ~2min | Before marking story as "review" |
+| `npm run test:sprint` | ~5min | End of epic, before deployment |
+
 ```bash
-# Run all unit tests
-npm run test:unit
+# RECOMMENDED: Tiered testing (fastest to most comprehensive)
+npm run test:quick      # TypeScript + parallel unit tests (~35s)
+npm run test:story      # Quick + integration tests (~2min)
+npm run test:sprint     # Full suite: unit + integration + E2E (~5min)
 
-# Run all integration tests
-npm run test:integration
+# Individual test types
+npm run test:unit              # Unit tests only (sequential)
+npm run test:unit:parallel     # Unit tests with parallelization
+npm run test:integration       # Integration tests only
+npm run test:e2e               # E2E tests only
+npm run test:all               # All tests sequentially
 
-# Run all E2E tests
-npm run test:e2e
+# Development utilities
+npm test                       # Watch mode (useful during development)
+npm run test:coverage          # Tests + coverage report
 
-# Run all tests (unit + integration + E2E)
-npm run test:all
-
-# Run tests in watch mode (useful during development)
-npm test
-
-# Run tests with coverage report
-npm run test:coverage
-
-# Run accessibility tests (Epic 3)
-npm run test:accessibility
-
-# Run Lighthouse performance tests (Epic 3)
-npm run test:lighthouse
+# Specialized tests
+npm run test:accessibility     # Accessibility tests (Epic 3)
+npm run test:lighthouse        # Lighthouse performance tests (Epic 3)
 ```
+
+**Why tiered testing?**
+- Unit tests (610+) run in parallel via `vitest.config.unit.ts`
+- Integration tests (300+) must run sequentially (Firebase emulator)
+- E2E tests are slow - only needed for epic completion
 
 ## Writing Unit Tests
 
@@ -512,7 +523,7 @@ timeout: 60000, // 60 seconds
 After reading this guide:
 
 1. ✅ Review existing smoke tests in `tests/unit/smoke.test.ts`, `tests/integration/smoke.test.tsx`, `tests/e2e/smoke.spec.ts`
-2. ✅ Run all tests to verify setup: `npm run test:all`
+2. ✅ Run quick tests to verify setup: `npm run test:quick`
 3. ✅ Read [Test Environment Guide](./test-environment.md) for test user management
 4. ✅ Read [Test Strategy & Risk Register](./test-strategy.md) for test prioritization
 5. ✅ Review [CONTRIBUTING.md](../../CONTRIBUTING.md) for coverage requirements
@@ -530,5 +541,6 @@ After reading this guide:
 - [CI/CD Pipeline](../ci-cd/README.md) - Automated testing workflow
 
 **Version History:**
+- 3.0 (2025-12-07) - Added tiered test strategy with parallel unit tests (Epic 7)
 - 2.0 (2025-11-26) - Added accessibility testing, performance testing, coverage thresholds (Epic 3)
 - 1.0 (2025-11-22) - Initial version (Epic 2, Story 2.3)

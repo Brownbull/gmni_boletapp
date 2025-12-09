@@ -1,0 +1,349 @@
+<story-context id="7-18-drilldown-card-progress-bar" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>18</storyId>
+    <title>Drill-Down Card Progress Bar Indicator</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-08</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic7/story-7.18-drilldown-card-progress-bar.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to see a thin colored progress bar below each drill-down card label that visually represents the percentage</iWant>
+    <soThat>I can quickly and intuitively understand the relative proportion of each item without reading the numbers</soThat>
+    <tasks>
+      <task id="1" ac="1,2,3,4">
+        Update DrillDownCard component structure
+        <subtasks>
+          <subtask>Add progress bar container below label (left side of card)</subtask>
+          <subtask>Add background track element (subtle gray, h-0.5 = 2px height)</subtask>
+          <subtask>Add filled bar element with width based on percentage prop</subtask>
+          <subtask>Style bar with rounded-full corners and overflow-hidden</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="3,8">
+        Implement progress bar color matching
+        <subtasks>
+          <subtask>Use same color as dot indicator (via colorKey prop)</subtask>
+          <subtask>Apply color to filled bar using inline style</subtask>
+          <subtask>Test color consistency across both themes</subtask>
+          <subtask>Verify proper contrast in both light and dark modes</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="7">
+        Add smooth width transition animation
+        <subtasks>
+          <subtask>Add transition-all duration-300 to filled bar</subtask>
+          <subtask>Test animation when cards appear initially</subtask>
+          <subtask>Test animation when percentage values change</subtask>
+        </subtasks>
+      </task>
+      <task id="4" ac="5,6">
+        Verify functionality across drill-down modes
+        <subtasks>
+          <subtask>Test temporal drill-down: Q1-Q4 display</subtask>
+          <subtask>Test temporal drill-down: months display</subtask>
+          <subtask>Test temporal drill-down: weeks display</subtask>
+          <subtask>Test temporal drill-down: days display</subtask>
+          <subtask>Test category drill-down: store categories</subtask>
+          <subtask>Test category drill-down: item groups</subtask>
+          <subtask>Test category drill-down: subcategories</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="all">
+        Run tests and verify
+        <subtasks>
+          <subtask>TypeScript compilation (npx tsc --noEmit)</subtask>
+          <subtask>Unit tests for DrillDownCard progress bar rendering</subtask>
+          <subtask>Integration tests for DrillDownGrid with percentages</subtask>
+          <subtask>Visual verification in both light and dark themes</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">Each drill-down card displays a thin horizontal progress bar below the label (left side)</criterion>
+    <criterion id="2">Progress bar width represents the percentage (e.g., 22.5% = 22.5% of the bar filled)</criterion>
+    <criterion id="3">Progress bar color matches the colored dot indicator on the left of the card</criterion>
+    <criterion id="4">Progress bar is subtle/thin (2-3px height) to not distract from the main content</criterion>
+    <criterion id="5">Works for both Temporal drill-down cards (Q1-Q4, months, weeks, days)</criterion>
+    <criterion id="6">Works for Category drill-down cards (Supermarket, Restaurant, etc.)</criterion>
+    <criterion id="7">Progress bar animates smoothly when cards appear or percentages change</criterion>
+    <criterion id="8">Works correctly in both light and dark themes</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/epic7/story-7.18-drilldown-card-progress-bar.md</path>
+        <title>Story 7.18 Definition</title>
+        <section>Visual Reference</section>
+        <snippet>Shows current layout with just percentage text, and new layout with progress bar below label. Bar should be 22.5% filled for 22.5% value, matching dot color. User feedback: "I want a line that represents the percentage".</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic7/story-7.18-drilldown-card-progress-bar.md</path>
+        <title>Story 7.18 Definition</title>
+        <section>Dev Notes - Progress Bar Styling</section>
+        <snippet>Example implementation: h-0.5 bg-slate-200 dark:bg-slate-700 rounded-full for track, width based on percentage, backgroundColor from dotColor, transition-all duration-300 for animation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture-epic7.md</path>
+        <title>Epic 7 Architecture</title>
+        <section>Pattern 4: Drill-Down Card Pattern</section>
+        <snippet>DrillDownCard is pure/presentational component with colorKey prop for consistent color assignment. Uses React.memo for performance optimization.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Visual Hierarchy Guidelines</section>
+        <snippet>Progress bars should be subtle (thin), informative (width shows percentage), consistent (same color as dot), and smooth (animated transitions).</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <file>
+        <path>src/components/analytics/DrillDownCard.tsx</path>
+        <kind>component</kind>
+        <symbol>DrillDownCard</symbol>
+        <lines>100-215</lines>
+        <reason>Primary component to modify - need to add progress bar element in the left side layout section. Lines 183-192 contain the left-side colored dot + label layout where progress bar should be added below the label.</reason>
+      </file>
+      <file>
+        <path>src/components/analytics/DrillDownGrid.tsx</path>
+        <kind>component</kind>
+        <symbol>DrillDownGrid</symbol>
+        <lines>155-305</lines>
+        <reason>Parent component that passes percentage prop to DrillDownCard. No changes needed - already calculates percentage in getTemporalChildren (lines 155-305) and getCategoryChildren (lines 320-458), passing it to cards at lines 587 and 664.</reason>
+      </file>
+      <file>
+        <path>src/utils/colors.ts</path>
+        <kind>utility</kind>
+        <symbol>getColor</symbol>
+        <lines>115-131</lines>
+        <reason>Color assignment utility - DrillDownCard already uses this at line 113 for dot color. Same color value should be used for progress bar to ensure consistency. Handles temporal keys (temporal-N) and category names, returns theme-aware colors from CSS custom properties.</reason>
+      </file>
+      <file>
+        <path>src/types/analytics.ts</path>
+        <kind>types</kind>
+        <symbol>DrillDownCardProps</symbol>
+        <lines>19-40</lines>
+        <reason>Interface definition - percentage prop already exists at line 24 as optional number (0-100). colorKey at line 28. theme at line 35. No type changes needed.</reason>
+      </file>
+    </code>
+
+    <dependencies>
+      <node>
+        <package>react</package>
+        <version>^18.3.1</version>
+      </node>
+      <node>
+        <package>typescript</package>
+        <version>^5.3.3</version>
+      </node>
+      <node>
+        <package>vitest</package>
+        <version>^4.0.13</version>
+      </node>
+      <node>
+        <package>@testing-library/react</package>
+        <version>^16.3.0</version>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="PRD FR54">All spacing follows 8px grid system (mt-1 = 4px is acceptable for subtle spacing between label and progress bar)</constraint>
+    <constraint source="PRD FR55">Touch targets must remain 44x44px minimum - progress bar is visual only, not interactive</constraint>
+    <constraint source="Architecture ADR-014">Incremental extraction - modify only DrillDownCard component, no changes to DrillDownGrid needed</constraint>
+    <constraint source="UX Spec">Progress bar should be subtle (2-3px height via h-0.5 or h-1) so it doesn't compete with text</constraint>
+    <constraint source="UX Spec">Progress bar color must match dot indicator for visual connection</constraint>
+    <constraint source="Story 7.10">DrillDownCard already uses colored dot pattern (w-3 h-3 rounded-full) - progress bar extends this visual system</constraint>
+    <constraint source="Story Definition">Width clearly shows relative percentage - use percentage prop directly as inline style width: `${percentage}%`</constraint>
+    <constraint source="Theme Support">Track background must adapt to theme: bg-slate-200 (light) vs bg-slate-700 (dark) to maintain subtlety</constraint>
+    <constraint source="Story Dependency">This story builds on Story 7.10 (colored dots) and Story 7.5 (drill-down cards grid)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>DrillDownCardProps</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface DrillDownCardProps { label: string; value: number; percentage?: number; onClick: () => void; colorKey?: string; isEmpty?: boolean; emptyMessage?: string; theme?: 'light' | 'dark'; locale?: string; currency?: string; }</signature>
+      <path>src/components/analytics/DrillDownCard.tsx</path>
+      <note>No changes needed - percentage (line 24) and colorKey (line 28) props already exist</note>
+    </interface>
+    <interface>
+      <name>getColor</name>
+      <kind>Function</kind>
+      <signature>function getColor(key: string): string</signature>
+      <path>src/utils/colors.ts</path>
+      <note>Returns hex color string from theme-aware CSS variables (--chart-1 through --chart-6). Handles temporal-N keys (maps to chart colors 1-4) and category names (uses CATEGORY_COLOR_INDEX mapping).</note>
+    </interface>
+    <interface>
+      <name>TemporalChildData</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface TemporalChildData { label: string; position: TemporalPosition; total: number; percentage: number; transactionCount: number; isEmpty: boolean; colorKey: string; }</signature>
+      <path>src/components/analytics/DrillDownGrid.tsx</path>
+      <note>Lines 35-43 - percentage is calculated as (total / viewTotal) * 100 in getTemporalChildren function</note>
+    </interface>
+    <interface>
+      <name>CategoryChildData</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface CategoryChildData { label: string; position: CategoryPosition; total: number; percentage: number; transactionCount: number; isEmpty: boolean; colorKey: string; }</signature>
+      <path>src/components/analytics/DrillDownGrid.tsx</path>
+      <note>Lines 45-53 - percentage is calculated as (total / filteredTotal) * 100 in getCategoryChildren function</note>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing follows three-tier strategy: Quick tests (~35s) for development using `npm run test:quick` (TypeScript + parallel unit tests), Story tests (~2min) using `npm run test:story` (Quick + integration tests) before review, Sprint tests (~5min) using `npm run test:sprint` (full suite including E2E) before deployment. Coverage targets: 80% for critical paths, 70% for business logic, 60% for UI components. Testing stack: Vitest 4.0.13 for unit/integration tests, React Testing Library 16.3.0 for component tests, Playwright 1.56.1 for E2E tests.
+    </standards>
+    <locations>
+      <location>tests/unit/analytics/DrillDownCard.test.tsx</location>
+      <location>tests/integration/analytics/</location>
+    </locations>
+    <ideas>
+      <idea ac="1,4">Test DrillDownCard renders progress bar container below label with h-0.5 height (2px)</idea>
+      <idea ac="2">Test progress bar width matches percentage prop - 22.5% renders as width: 22.5%</idea>
+      <idea ac="2">Test progress bar width edge cases: 0% shows empty track, 100% fills completely</idea>
+      <idea ac="3">Test progress bar background color matches dot color from same colorKey</idea>
+      <idea ac="3">Test different colorKeys produce different progress bar colors (temporal-0, temporal-1, category names)</idea>
+      <idea ac="3">Test temporal keys (temporal-0 through temporal-3) use chart colors 1-4 in sequence</idea>
+      <idea ac="3">Test category names use CATEGORY_COLOR_INDEX mapping (Supermarket, Restaurant, etc.)</idea>
+      <idea ac="4">Test progress bar track uses bg-slate-200 in light theme</idea>
+      <idea ac="4">Test progress bar track uses bg-slate-700 in dark theme</idea>
+      <idea ac="5">Test temporal drill-down cards: Q1-Q4 display with progress bars</idea>
+      <idea ac="5">Test temporal drill-down cards: months, weeks, days display with progress bars</idea>
+      <idea ac="6">Test category drill-down cards: store categories, groups, subcategories with progress bars</idea>
+      <idea ac="7">Test progress bar has transition-all duration-300 CSS class for smooth animation</idea>
+      <idea ac="8">Test progress bar visibility and color contrast in both light and dark themes</idea>
+      <idea ac="all">Test progress bar only renders when percentage prop is defined (percentage !== undefined)</idea>
+      <idea ac="all">Test empty cards (isEmpty=true) behavior - recommend hiding progress bar for cleaner UX</idea>
+      <idea ac="all">Test card layout remains responsive in 1-column (mobile) and 2-column (desktop) grids</idea>
+    </ideas>
+  </tests>
+
+  <implementation>
+    <currentStructure>
+      <cardLayout>DrillDownCard uses flex justify-between layout with left side (colored dot + label) and right side (amount + percentage text)</cardLayout>
+      <leftSideContainer>Lines 183-192: div.flex.items-center.gap-3 containing w-3 h-3 rounded-full dot (line 185-189) and label span (line 191)</leftSideContainer>
+      <rightSideContainer>Lines 194-212: div.text-right containing amount (lines 202-204) and percentage text (lines 205-209)</rightSideContainer>
+      <colorSource>Line 113: const color = colorKey ? getColor(colorKey) : '#94a3b8' - this value is used for dot background, should be reused for progress bar</colorSource>
+      <percentageData>Already available as optional prop (line 24 of interface), passed from DrillDownGrid at lines 587 (temporal) and 664 (category)</percentageData>
+    </currentStructure>
+    <modificationApproach>
+      <step1>Restructure left-side container to wrap label and progress bar vertically</step1>
+      <step2>Keep colored dot at same vertical position (items-center alignment)</step2>
+      <step3>Add flex-col container for label + progress bar stack</step3>
+      <step4>Add progress bar below label with mt-1 spacing (4px)</step4>
+      <step5>Use two-div pattern: outer track (fixed width, theme background) + inner fill (dynamic width, color from getColor)</step5>
+      <step6>Apply rounded-full and overflow-hidden to track for smooth appearance</step6>
+      <step7>Add transition-all duration-300 to fill for smooth width animation</step7>
+      <step8>Conditionally render progress bar only when percentage !== undefined</step8>
+    </modificationApproach>
+    <codePattern>
+      <leftSideLayout>
+        {/* Left side: Colored dot + Label + Progress Bar */}
+        &lt;div className="flex items-center gap-3"&gt;
+          {/* Colored dot indicator (AC #3) */}
+          &lt;div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} /&gt;
+
+          {/* Label + Progress Bar container */}
+          &lt;div className="flex flex-col gap-1 flex-1"&gt;
+            {/* Label */}
+            &lt;span className={labelClasses}&gt;{label}&lt;/span&gt;
+
+            {/* Progress Bar (AC #1, #2, #3, #4, #7, #8) */}
+            {percentage !== undefined &amp;&amp; (
+              &lt;div className={`h-0.5 rounded-full overflow-hidden ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}&gt;
+                &lt;div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{ width: `${percentage}%`, backgroundColor: color }}
+                /&gt;
+              &lt;/div&gt;
+            )}
+          &lt;/div&gt;
+        &lt;/div&gt;
+      </leftSideLayout>
+    </codePattern>
+    <stylingDetails>
+      <track>h-0.5 (2px height), bg-slate-200 (light theme) or bg-slate-700 (dark theme), rounded-full, overflow-hidden</track>
+      <fill>h-full, rounded-full, transition-all duration-300, width via inline style (${percentage}%), backgroundColor via inline style (color from getColor)</fill>
+      <spacing>mt-1 between label and progress bar (4px gap), flex-col gap-1 on container</spacing>
+      <flexBehavior>flex-1 on label+progress container allows it to grow and fill available space, min-w-0 if text truncation needed</flexBehavior>
+    </stylingDetails>
+    <colorConsistency>
+      <principle>Both dot and progress bar use the same color variable computed once at line 113</principle>
+      <temporalColors>temporal-0 through temporal-3 map to chart colors 1-4 via getColor (lines 118-121 of colors.ts)</temporalColors>
+      <categoryColors>Category names map to color indices via CATEGORY_COLOR_INDEX (lines 79-106 of colors.ts)</categoryColors>
+      <themeSupport>getColor uses getCssVariable to read CSS custom properties (--chart-1 through --chart-6) which automatically change with theme</themeSupport>
+      <emptyState>Consider hiding progress bar for empty cards (isEmpty=true) for cleaner UX, or use grayed color like dot</emptyState>
+    </colorConsistency>
+    <edgeCases>
+      <case>percentage === undefined - Don't render progress bar at all</case>
+      <case>percentage === 0 - Show empty track (0% width fill), provides visual consistency</case>
+      <case>percentage === 100 - Fill entire track width</case>
+      <case>isEmpty === true - Recommend hiding progress bar or using grayed color to match grayed dot</case>
+      <case>Long labels - flex-1 on container handles text wrapping/truncation if needed</case>
+    </edgeCases>
+  </implementation>
+
+  <relatedStories>
+    <story id="7.5" status="done">
+      <title>Drill-Down Cards Grid</title>
+      <relevance>Created DrillDownCard and DrillDownGrid components. Established data flow: Grid calculates totals/percentages, passes to Card. Defined responsive grid layout (1 column mobile, 2 columns desktop).</relevance>
+    </story>
+    <story id="7.10" status="done">
+      <title>UX Cards &amp; Visual Elements Alignment</title>
+      <relevance>Introduced colored dots (w-3 h-3 rounded-full) matching category colors. Established card layout: colored dot + label (left), amount + percentage (right). Defined color assignment pattern using colorKey with getColor() utility.</relevance>
+    </story>
+    <story id="7.16" status="done">
+      <title>Drill-Down Mode Toggle</title>
+      <relevance>Controls which drill-down section is shown (temporal vs category). Both sections use the same DrillDownCard component, so progress bar will work in both modes automatically.</relevance>
+    </story>
+  </relatedStories>
+
+  <testingGuidance>
+    <unitTests>
+      <focus>DrillDownCard component in isolation</focus>
+      <test>Render with percentage prop - verify progress bar appears</test>
+      <test>Render without percentage prop - verify progress bar does not appear</test>
+      <test>Verify progress bar width style matches percentage value</test>
+      <test>Verify progress bar color matches dot color (both from getColor)</test>
+      <test>Verify track background color matches theme (light/dark)</test>
+      <test>Verify h-0.5 height class is present</test>
+      <test>Verify transition-all duration-300 class is present</test>
+      <test>Test edge case: percentage=0 shows empty track</test>
+      <test>Test edge case: percentage=100 fills track completely</test>
+      <test>Test empty card behavior (isEmpty=true)</test>
+    </unitTests>
+    <integrationTests>
+      <focus>DrillDownGrid passing data to cards</focus>
+      <test>Verify temporal cards (Q1-Q4) all show progress bars with correct widths</test>
+      <test>Verify month cards show progress bars with correct widths</test>
+      <test>Verify week cards show progress bars with correct widths</test>
+      <test>Verify day cards show progress bars with correct widths</test>
+      <test>Verify category cards show progress bars with correct widths</test>
+      <test>Verify group cards show progress bars with correct widths</test>
+      <test>Verify subcategory cards show progress bars with correct widths</test>
+      <test>Verify color consistency across all cards in a grid</test>
+    </integrationTests>
+    <visualTests>
+      <focus>Manual verification in browser</focus>
+      <test>Navigate to Analytics view → verify Year level Q1-Q4 cards show progress bars</test>
+      <test>Drill to Quarter → verify month cards show progress bars</test>
+      <test>Drill to Month → verify week cards show progress bars</test>
+      <test>Drill to Week → verify day cards show progress bars</test>
+      <test>Toggle to category drill-down → verify category cards show progress bars</test>
+      <test>Verify progress bar colors match dot colors on each card</test>
+      <test>Verify progress bar widths visually represent relative percentages</test>
+      <test>Verify bars are subtle (thin, not distracting from content)</test>
+      <test>Verify smooth animation when drilling down or changing filters</test>
+      <test>Switch theme in Settings → verify track colors change appropriately</test>
+      <test>Verify responsive layout: progress bars work in both 1-column (mobile) and 2-column (desktop) grids</test>
+    </visualTests>
+  </testingGuidance>
+</story-context>

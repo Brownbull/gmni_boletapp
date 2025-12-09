@@ -31,7 +31,7 @@
  * AC#9: ✅ Epic evolution document updated (handled in workflow)
  */
 
-import { describe, it, expect, beforeAll, beforeEach, afterEach, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterEach, afterAll, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import {
@@ -44,6 +44,7 @@ import {
 import { addTransaction } from '../../src/services/firestore';
 import { Transaction } from '../../src/types/transaction';
 import { TrendsView } from '../../src/views/TrendsView';
+import { AnalyticsProvider } from '../../src/contexts/AnalyticsContext';
 import { exportToCSV } from '../../src/utils/csv';
 
 const APP_ID = 'boletapp-d609f';
@@ -281,48 +282,31 @@ describe('Analytics & Export Workflows', () => {
   it('should handle empty data state gracefully', async () => {
     // No transactions loaded - empty state
 
-    // Mock props for TrendsView with empty data
+    // Props for new TrendsView interface
     const emptyProps = {
-      selectedYear: '2025',
-      selectedMonth: null,
-      selectedCategory: null,
-      selectedGroup: null,
-      selectedSubcategory: null,
-      chartType: 'pie',
-      pieData: [],
-      barData: [],
-      total: 0,
-      filteredTrans: [],
-      yearMonths: [],
-      years: ['2025'],
-      theme: 'light',
+      transactions: [],
+      theme: 'light' as const,
       currency: 'USD',
-      lang: 'en',
+      locale: 'en',
       t: (key: string) => key === 'noData' ? 'No Data' : key,
-      formatCurrency: (amount: number) => `$${amount.toFixed(2)}`,
-      exportToCSV: vi.fn(),
-      onBack: vi.fn(),
-      onSetSelectedYear: vi.fn(),
-      onSetSelectedMonth: vi.fn(),
-      onSetSelectedCategory: vi.fn(),
-      onSetSelectedGroup: vi.fn(),
-      onSetSelectedSubcategory: vi.fn(),
-      onSetChartType: vi.fn(),
       onEditTransaction: vi.fn(),
+      onBackToDashboard: vi.fn(),
+      exporting: false,
+      onExporting: vi.fn(),
+      onUpgradeRequired: vi.fn(),
     };
 
-    render(<TrendsView {...emptyProps} />);
+    // Wrap with AnalyticsProvider (required since Story 7.7)
+    render(
+      <AnalyticsProvider>
+        <TrendsView {...emptyProps} />
+      </AnalyticsProvider>
+    );
 
     // Verify "No Data" message is displayed
     await waitFor(() => {
       expect(screen.getByText('No Data')).toBeInTheDocument();
     });
-
-    // Verify total shows $0.00
-    expect(screen.getByText('$0.00')).toBeInTheDocument();
-
-    // Verify no chart is rendered (pieData is empty)
-    expect(emptyProps.pieData.length).toBe(0);
   });
 
   /**

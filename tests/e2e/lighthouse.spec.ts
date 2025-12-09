@@ -277,8 +277,8 @@ test.describe('Lighthouse Performance Audits', () => {
     try {
       await authenticate(page);
 
-      // Navigate to History view
-      await page.getByRole('button', { name: /History|Historial/i }).click();
+      // Navigate to Receipts view (Story 7.10: label renamed from History to Receipts)
+      await page.getByRole('button', { name: /Receipts|Recibos/i }).click();
       await page.waitForLoadState('networkidle');
 
       const result = await playAudit({
