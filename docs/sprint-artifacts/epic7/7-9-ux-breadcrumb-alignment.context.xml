@@ -1,0 +1,255 @@
+<story-context id="7-9-ux-breadcrumb-alignment" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>9</storyId>
+    <title>UX Breadcrumb and Navigation Alignment</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic7/story-7.9-ux-breadcrumb-alignment.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>the breadcrumb navigation to match the approved UX design with compact side-by-side buttons and dropdown menus</iWant>
+    <soThat>I can efficiently navigate temporal and category hierarchies without excessive scrolling</soThat>
+    <tasks>
+      <task id="1">Redesign TemporalBreadcrumb component (AC: #1-#8)
+        - Change layout from vertical chips to compact button
+        - Show only current level label with Calendar icon
+        - Add chevron-down indicator for dropdown affordance
+        - Implement dropdown overlay with all ancestor levels
+        - Style dropdown items with level indicators
+        - Highlight active level with accent styling
+        - Add outside-click handler to close dropdown</task>
+      <task id="2">Redesign CategoryBreadcrumb component (AC: #1-#8)
+        - Change layout from vertical chips to compact button
+        - Show only current category label with Tag icon
+        - Add chevron-down indicator for dropdown affordance
+        - Implement dropdown overlay with category hierarchy
+        - Style dropdown items with level indicators
+        - Highlight active category with accent styling
+        - Add outside-click handler to close dropdown</task>
+      <task id="3">Update breadcrumb container layout (AC: #1)
+        - Change flex direction from column to row
+        - Add gap-3 between temporal and category buttons
+        - Ensure responsive behavior on narrow screens</task>
+      <task id="4">Redesign ChartModeToggle component (AC: #9, #10)
+        - Update container to outlined style with secondary border
+        - Update active button to have accent background with white text
+        - Update inactive button to show secondary text only
+        - Add Pie chart icon for Aggregation mode
+        - Add Bar chart icon for Comparison mode
+        - Ensure proper touch targets (44px minimum)</task>
+      <task id="5">Update TrendsView integration (AC: All)
+        - Update breadcrumb container styling in TrendsView
+        - Verify breadcrumbs and chart toggle work together
+        - Test navigation flow with new design</task>
+      <task id="6">Run tests and verify (AC: All)
+        - TypeScript compilation
+        - Unit tests for breadcrumb components
+        - Integration tests for navigation
+        - Visual verification against UX spec</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">Temporal and Category breadcrumbs display as two compact buttons side-by-side (not vertically stacked)</criterion>
+    <criterion id="2">Each breadcrumb button shows current level only (e.g., "November" or "Groceries") with an icon prefix</criterion>
+    <criterion id="3">Breadcrumb buttons have outlined style with border matching UX spec: border: 1px solid var(--secondary)</criterion>
+    <criterion id="4">Tapping a breadcrumb button opens a dropdown overlay showing all ancestor levels</criterion>
+    <criterion id="5">Dropdown items show level indicator (e.g., "Year", "Quarter") with the label</criterion>
+    <criterion id="6">Active level in dropdown is highlighted with accent background and white text</criterion>
+    <criterion id="7">Breadcrumb icons match UX spec: Calendar icon for temporal, Tag icon for category</criterion>
+    <criterion id="8">Dropdowns close when tapping outside or selecting an item</criterion>
+    <criterion id="9">Chart mode toggle matches UX spec: outlined container with active button filled with accent color</criterion>
+    <criterion id="10">Mode toggle shows icons (Pie chart for Aggregation, Bar chart for Comparison) with labels</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/ux-design-directions.html</path>
+        <title>UX Design Direction Mockups</title>
+        <section>Breadcrumb Button CSS</section>
+        <snippet>Target CSS: .breadcrumb-button { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; font-size: 14px; font-weight: 500; background-color: var(--surface); border: 1px solid var(--secondary); opacity: 0.8; }</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-directions.html</path>
+        <title>UX Design Direction Mockups</title>
+        <section>Breadcrumb Dropdown CSS</section>
+        <snippet>.breadcrumb-dropdown { position: absolute; top: 100%; left: 0; background-color: var(--surface); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); padding: 8px; z-index: 20; } .breadcrumb-item.active { background-color: var(--accent); color: white; font-weight: 600; }</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>Boletapp UX Design Specification</title>
+        <section>4.3 Analytics Screen Layout</section>
+        <snippet>Two buttons side-by-side showing current level only: Calendar icon + "November" | Tag icon + "Groceries". Collapsed state is default, tap expands dropdown showing all ancestor levels.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>Boletapp UX Design Specification</title>
+        <section>4.4 Breadcrumb Expansion Behavior</section>
+        <snippet>Collapsed State (default): Two buttons side-by-side showing current level only. Expanded State (on tap): Dropdown shows all ancestor levels, each level labeled (Year, Quarter, Month, Week, Day), current level highlighted with accent color.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture-epic7.md</path>
+        <title>Architecture - Epic 7: Analytics UX Redesign</title>
+        <section>Pattern 3: Breadcrumb Dropdown Pattern</section>
+        <snippet>Collapsible dropdowns should follow this structure: useState for isOpen, useRef for outside click detection, minimum 44px touch targets, aria-expanded and aria-haspopup attributes for accessibility.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd-epic7.md</path>
+        <title>Boletapp Epic 7 - PRD</title>
+        <section>Dual Breadcrumb Navigation Architecture</section>
+        <snippet>The analytics view has two independent breadcrumb trails: Temporal (5 levels: Year/Quarter/Month/Week/Day) and Category (3 levels: Category/Group/Subcategory). Each segment is tappable to jump back.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic7/tech-spec-epic-7.md</path>
+        <title>Epic Technical Specification</title>
+        <section>Acceptance Criteria (Authoritative)</section>
+        <snippet>AC12: Breadcrumb displays position - Temporal breadcrumb shows current hierarchy (e.g., "2024 &gt; Q4 &gt; October"). AC13: Breadcrumb segments tappable - Each segment in temporal breadcrumb dropdown is tappable.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/components/analytics/TemporalBreadcrumb.tsx</path>
+        <kind>component</kind>
+        <symbol>TemporalBreadcrumb</symbol>
+        <lines>1-413</lines>
+        <reason>Primary component to modify. Currently uses bg-slate-100/bg-slate-800 styling, needs to change to outlined style with border: 1px solid var(--secondary). Dropdown currently shows chevron indicators but needs level labels (Year, Quarter, etc.) as prefix per UX spec.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/analytics/CategoryBreadcrumb.tsx</path>
+        <kind>component</kind>
+        <symbol>CategoryBreadcrumb</symbol>
+        <lines>1-363</lines>
+        <reason>Secondary component to modify. Same styling changes as TemporalBreadcrumb. Currently uses bg-slate-100/bg-slate-800, needs outlined style.</reason>
+      </artifact>
+      <artifact>
+        <path>src/components/analytics/ChartModeToggle.tsx</path>
+        <kind>component</kind>
+        <symbol>ChartModeToggle</symbol>
+        <lines>1-177</lines>
+        <reason>Tertiary component to modify. Currently uses rounded-full pill style. UX spec shows outlined container with secondary border, active button with accent fill. Currently shows icons correctly (PieChart, BarChart2).</reason>
+      </artifact>
+      <artifact>
+        <path>src/views/TrendsView.tsx</path>
+        <kind>view</kind>
+        <symbol>TrendsView</symbol>
+        <lines>479-514</lines>
+        <reason>Orchestration component. Header section (lines 481-513) arranges breadcrumbs. Currently uses flex with gap-2, may need to ensure breadcrumbs are side-by-side as per AC #1.</reason>
+      </artifact>
+      <artifact>
+        <path>src/hooks/useAnalyticsNavigation.ts</path>
+        <kind>hook</kind>
+        <symbol>useAnalyticsNavigation</symbol>
+        <reason>Context hook used by breadcrumb components. No changes needed, but important to understand the dispatch actions available for navigation.</reason>
+      </artifact>
+      <artifact>
+        <path>src/contexts/AnalyticsContext.tsx</path>
+        <kind>context</kind>
+        <symbol>AnalyticsContext</symbol>
+        <reason>Provides navigation state to breadcrumb components. No changes needed.</reason>
+      </artifact>
+      <artifact>
+        <path>src/utils/translations.ts</path>
+        <kind>utility</kind>
+        <symbol>TRANSLATIONS</symbol>
+        <reason>Contains i18n strings. May need to add level indicator translations (Year, Quarter, Month, Week, Day in en/es) if not already present.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package>react</package>
+        <version>^18.3.1</version>
+        <usage>Component framework</usage>
+      </node>
+      <node>
+        <package>lucide-react</package>
+        <version>^0.460.0</version>
+        <usage>Icons: Calendar, Tag, ChevronDown, PieChart, BarChart2</usage>
+      </node>
+      <node>
+        <package>tailwindcss</package>
+        <version>CDN</version>
+        <usage>Styling via utility classes</usage>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>All icons must be 24px with stroke-width 2 (FR2, FR53)</constraint>
+    <constraint>All interactive elements must have minimum 44x44px touch targets (FR55, NFR10)</constraint>
+    <constraint>Breadcrumb dropdown must close on outside click (AC #8)</constraint>
+    <constraint>Styling must use CSS variables for theme support (--surface, --secondary, --accent)</constraint>
+    <constraint>Must preserve existing accessibility: aria-expanded, aria-haspopup, role attributes</constraint>
+    <constraint>No changes to navigation state management - only visual styling changes</constraint>
+    <constraint>Must work in both light and dark themes</constraint>
+    <constraint>Dropdown items must show level indicator (e.g., "Year", "Quarter") per AC #5</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>TemporalBreadcrumbProps</name>
+      <kind>component interface</kind>
+      <signature>{ theme?: string; locale?: string; }</signature>
+      <path>src/components/analytics/TemporalBreadcrumb.tsx:168-173</path>
+    </interface>
+    <interface>
+      <name>CategoryBreadcrumbProps</name>
+      <kind>component interface</kind>
+      <signature>{ theme?: string; locale?: string; }</signature>
+      <path>src/components/analytics/CategoryBreadcrumb.tsx:111-116</path>
+    </interface>
+    <interface>
+      <name>ChartModeToggleProps</name>
+      <kind>component interface</kind>
+      <signature>{ theme?: string; locale?: 'en' | 'es'; }</signature>
+      <path>src/components/analytics/ChartModeToggle.tsx:23-28</path>
+    </interface>
+    <interface>
+      <name>CSS Variables (Theme)</name>
+      <kind>CSS interface</kind>
+      <signature>--bg, --surface, --primary, --secondary, --accent, --chart-1 through --chart-6</signature>
+      <path>docs/ux-design-directions.html:33-85</path>
+    </interface>
+    <interface>
+      <name>useAnalyticsNavigation</name>
+      <kind>hook</kind>
+      <signature>() => { temporal, category, chartMode, temporalLevel, dispatch }</signature>
+      <path>src/hooks/useAnalyticsNavigation.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <paragraph>
+        Boletapp uses a three-tier testing framework: Unit (Vitest), Integration (React Testing Library), E2E (Playwright).
+        Use tiered commands: npm run test:quick (~35s) during development, npm run test:story (~2min) before marking story as review.
+        New code must have at least 80% line coverage. All interactive elements need ARIA labels and keyboard accessibility.
+        Visual styling changes should be verified manually against UX spec (docs/ux-design-directions.html).
+      </paragraph>
+    </standards>
+    <locations>
+      <location>tests/unit/analytics/*.test.ts</location>
+      <location>tests/integration/analytics/*.test.tsx</location>
+      <location>tests/e2e/analytics/*.spec.ts</location>
+    </locations>
+    <ideas>
+      <testIdea ac="1">Unit test: TemporalBreadcrumb and CategoryBreadcrumb render side-by-side in a flex row container</testIdea>
+      <testIdea ac="2">Unit test: Collapsed breadcrumb shows only current level label with correct icon</testIdea>
+      <testIdea ac="3">Unit test: Breadcrumb button has border class with secondary color</testIdea>
+      <testIdea ac="4">Integration test: Clicking breadcrumb button opens dropdown with all ancestor levels</testIdea>
+      <testIdea ac="5">Unit test: Dropdown items show level indicator prefix (e.g., "Year:", "Quarter:")</testIdea>
+      <testIdea ac="6">Unit test: Active level in dropdown has accent background styling</testIdea>
+      <testIdea ac="7">Unit test: TemporalBreadcrumb uses Calendar icon, CategoryBreadcrumb uses Tag icon</testIdea>
+      <testIdea ac="8">Integration test: Clicking outside dropdown closes it; selecting item closes it</testIdea>
+      <testIdea ac="9">Unit test: ChartModeToggle has outlined container with border styling</testIdea>
+      <testIdea ac="10">Unit test: ChartModeToggle shows PieChart icon for aggregation, BarChart2 for comparison</testIdea>
+      <testIdea>Visual regression: Compare rendered breadcrumbs against UX mockup screenshots</testIdea>
+    </ideas>
+  </tests>
+</story-context>

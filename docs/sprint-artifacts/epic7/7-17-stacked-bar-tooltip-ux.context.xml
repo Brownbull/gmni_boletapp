@@ -1,0 +1,722 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story_context>
+  <metadata>
+    <story_id>7.17</story_id>
+    <story_title>Stacked Bar Tooltip UX Improvements</story_title>
+    <epic>Epic 7 - Analytics View</epic>
+    <status>drafted</status>
+    <created_date>2025-12-08</created_date>
+  </metadata>
+
+  <story_requirements>
+    <user_story>
+      As a user,
+      I want to see clear, readable tooltips when I tap on stacked bar segments,
+      so that I can easily understand the category breakdown details without the text being hidden or too small.
+    </user_story>
+
+    <acceptance_criteria>
+      <criterion id="AC1">
+        <description>Tooltip text size matches the toggle button font size (text-sm/text-base, ~14-16px)</description>
+        <current_state>Tooltip uses text-[8px] which is too small (lines 109)</current_state>
+        <target_state>Use text-sm (14px) or text-base (16px) to match toggle buttons</target_state>
+      </criterion>
+
+      <criterion id="AC2">
+        <description>Tooltips are positioned to never be hidden behind the bars (above or beside the bar)</description>
+        <current_state>Tooltip uses "bottom-full" positioning which can be hidden behind tall bars (line 109)</current_state>
+        <target_state>Smart positioning that detects bar height and positions tooltip above or to the side</target_state>
+      </criterion>
+
+      <criterion id="AC3">
+        <description>Tooltips show: Category name, Amount (formatted), Percentage</description>
+        <current_state>Only shows "label: currency" (line 111)</current_state>
+        <target_state>Show all three: category name (bold), amount (formatted), percentage of total</target_state>
+      </criterion>
+
+      <criterion id="AC4">
+        <description>Tapping a bar segment shows tooltip details (same behavior as pie chart slices)</description>
+        <current_state>Only onMouseEnter/onMouseLeave (lines 103-104) - desktop-centric</current_state>
+        <target_state>Add onClick handlers for mobile tap interaction</target_state>
+      </criterion>
+
+      <criterion id="AC5">
+        <description>Both chart types (pie and bar) have consistent tap behavior - show details, not filter</description>
+        <current_state>Pie chart has onSliceClick that triggers filtering (SimplePieChart line 66)</current_state>
+        <target_state>Bar chart should only show tooltip on tap, not navigate/filter</target_state>
+      </criterion>
+
+      <criterion id="AC6">
+        <description>Tooltip has sufficient contrast and padding for readability</description>
+        <current_state>Uses p-1 padding which is minimal (4px)</current_state>
+        <target_state>Increase to p-2 or p-3 for better touch targets and readability</target_state>
+      </criterion>
+
+      <criterion id="AC7">
+        <description>Works correctly in both light and dark themes</description>
+        <current_state>Theme handling exists (isDark conditional, line 109)</current_state>
+        <target_state>Verify and maintain theme support with new styling</target_state>
+      </criterion>
+
+      <criterion id="AC8">
+        <description>Works correctly in both English and Spanish</description>
+        <current_state>No translation needed for numbers, but percentage symbol format may vary</current_state>
+        <target_state>Use locale-aware number formatting</target_state>
+      </criterion>
+    </acceptance_criteria>
+
+    <background>
+      <user_feedback>
+        <issue>Text too small: The tooltip text that appears when clicking stacked bar segments is very hard to read</issue>
+        <issue>Hidden behind bar: Sometimes the tooltip description is shown but hidden behind the bar chart itself</issue>
+        <issue>Inconsistent behavior: Clicking pie chart filters to category, but bar chart should show tooltip like pie does</issue>
+      </user_feedback>
+
+      <expected_behavior>
+        Both charts should:
+        - Show a clear, readable tooltip on tap
+        - Display: Category, Amount, Percentage
+        - NOT automatically filter/navigate on tap (that's what drill-down cards are for)
+      </expected_behavior>
+
+      <visual_reference>
+        User provided screenshot showing:
+        - Stacked bar chart in Q4 view (Oct, Nov, Dic)
+        - Temporal/Categoría toggle visible below chart
+        - Issue: tooltip text is small and can be hidden behind tall bars
+      </visual_reference>
+    </background>
+  </story_requirements>
+
+  <code_context>
+    <file path="/home/khujta/projects/bmad/boletapp/src/components/charts/GroupedBarChart.tsx">
+      <description>
+        Main stacked bar chart component (also aliased as StackedBarChart).
+        Displays vertical bars with category segments stacked within each bar.
+        Currently has basic tooltip implementation with readability issues.
+      </description>
+
+      <component_structure>
+        <location>Lines 1-131</location>
+        <exported_names>
+          <export>StackedBarChart (main export)</export>
+          <export>GroupedBarChart (alias for backward compatibility, line 130)</export>
+        </exported_names>
+        <note>Both export names reference the same component, so changes affect both imports</note>
+      </component_structure>
+
+      <current_tooltip_implementation>
+        <location>Lines 42-113</location>
+        <state_management>
+          <code>const [hoveredSegment, setHoveredSegment] = useState&lt;{ barIndex: number; segIndex: number } | null&gt;(null);</code>
+          <note>Uses hover state to track which segment tooltip to display</note>
+        </state_management>
+
+        <tooltip_rendering>
+          <location>Lines 107-113</location>
+          <code><![CDATA[
+{isHovered && (
+  <div
+    className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-1 text-[8px] p-1 rounded whitespace-nowrap z-50 shadow-sm border pointer-events-none ${isDark ? 'bg-black text-white border-gray-700' : 'bg-white text-black border-gray-200'}`}
+  >
+    {seg.label}: {formatCurrency(seg.value, currency)}
+  </div>
+)}
+          ]]></code>
+          <issues>
+            <issue>text-[8px] is too small (needs text-sm or text-base)</issue>
+            <issue>p-1 padding is minimal (4px) - needs p-2 or p-3</issue>
+            <issue>bottom-full positioning can be hidden behind tall bars</issue>
+            <issue>Only shows label and amount, missing percentage</issue>
+            <issue>No percentage calculation available in current scope</issue>
+          </issues>
+        </tooltip_rendering>
+
+        <interaction_handlers>
+          <location>Lines 103-104</location>
+          <code><![CDATA[
+onMouseEnter={() => setHoveredSegment({ barIndex, segIndex })}
+onMouseLeave={() => setHoveredSegment(null)}
+          ]]></code>
+          <note>Desktop-only hover interaction, needs onClick for mobile</note>
+        </interaction_handlers>
+
+        <segment_data_available>
+          <code>const segmentHeightPercent = d.total > 0 ? (seg.value / d.total) * 100 : 0;</code>
+          <note>Percentage of segment within its bar - this is the segment's share of that specific bar</note>
+          <note>For tooltip, we need percentage of segment value relative to bar's total (d.total)</note>
+          <available_in_scope>
+            <item>seg.label - Category name (string)</item>
+            <item>seg.value - Category amount (number)</item>
+            <item>seg.color - Category color (string)</item>
+            <item>d.total - Total for this bar (number)</item>
+            <item>barIndex - Index of current bar</item>
+            <item>segIndex - Index of current segment within bar</item>
+          </available_in_scope>
+        </segment_data_available>
+
+        <segment_structure_in_render>
+          <location>Lines 85-116</location>
+          <context>Segments are rendered inside a flex-col-reverse container that represents the bar</context>
+          <positioning_parent>
+            <code><![CDATA[
+<div
+  className="flex flex-col-reverse w-full relative"
+  style={{
+    height: `${(d.total / maxTotal) * 100}%`,
+    minHeight: d.total > 0 ? '4px' : '0',
+    maxWidth: needsScroll ? undefined : '48px'
+  }}
+>
+            ]]></code>
+            <note>Bar container uses relative positioning - tooltip positioned absolute within this context</note>
+            <note>Segments are stacked using flex-col-reverse, so first segment is at bottom</note>
+          </positioning_parent>
+        </segment_structure_in_render>
+      </current_tooltip_implementation>
+
+      <font_size_reference>
+        <location>Lines 119-121</location>
+        <code>
+          &lt;div className={`text-sm mt-2 font-medium text-center ${isDark ? 'text-slate-400' : 'text-slate-500'}`}&gt;
+            {d.label}
+          &lt;/div&gt;
+        </code>
+        <note>Period labels use text-sm (14px), which is readable - tooltip should match or be larger</note>
+      </font_size_reference>
+
+      <theme_handling>
+        <code>const isDark = theme === 'dark';</code>
+        <note>Theme passed as prop, used for conditional styling throughout component</note>
+        <note>Component does not use Tailwind dark: prefix - uses prop-based theming</note>
+      </theme_handling>
+
+      <data_interfaces>
+        <location>Lines 4-14</location>
+        <code><![CDATA[
+export interface BarSegment {
+    label: string;
+    value: number;
+    color: string;
+}
+
+export interface BarChartData {
+    label: string;
+    total: number;
+    segments: BarSegment[];
+}
+        ]]></code>
+        <note>BarSegment does not include percentage - must be calculated</note>
+        <note>BarChartData.total is the sum of all segment values in that bar</note>
+      </data_interfaces>
+    </file>
+
+    <file path="/home/khujta/projects/bmad/boletapp/src/components/charts/SimplePieChart.tsx">
+      <description>
+        Pie chart component for comparison and consistency reference.
+        Shows how tooltips should be structured (though pie chart doesn't have explicit tooltips yet).
+      </description>
+
+      <interaction_pattern>
+        <location>Lines 60-69</location>
+        <code><![CDATA[
+<path
+  key={i}
+  d={d}
+  fill={slice.color}
+  stroke={bgColor}
+  strokeWidth="2"
+  onClick={() => onSliceClick && onSliceClick(slice.label)}
+  className="hover:opacity-80 cursor-pointer"
+/>
+        ]]></code>
+        <note>Pie chart slices trigger onSliceClick callback which navigates/filters</note>
+        <note>Per AC #5, bar chart should NOT do this - only show tooltip</note>
+      </interaction_pattern>
+
+      <data_structure>
+        <code>
+export interface PieChartData {
+  label: string;
+  value: number;
+  color: string;
+}
+        </code>
+        <note>Similar to BarSegment but pie chart has full context of total</note>
+      </data_structure>
+    </file>
+
+    <file path="/home/khujta/projects/bmad/boletapp/src/views/TrendsView.tsx">
+      <description>
+        Parent component that uses both charts. Shows how charts are integrated and data flow.
+      </description>
+
+      <pie_chart_integration>
+        <location>Lines 579-586</location>
+        <code><![CDATA[
+<SimplePieChart
+  data={pieData}
+  theme={theme}
+  onSliceClick={handleSliceClick}
+/>
+        ]]></code>
+        <note>Pie chart has onSliceClick handler that filters/navigates (lines 400-420)</note>
+        <note>Per story requirements, this filtering behavior should NOT be replicated in bar chart tooltips</note>
+      </pie_chart_integration>
+
+      <bar_chart_integration>
+        <location>Lines 592-594</location>
+        <code><![CDATA[
+<GroupedBarChart data={barData} theme={theme} currency={currency} />
+        ]]></code>
+        <note>Bar chart has NO click handler - purely display</note>
+        <note>Should stay this way - tooltips are internal to component, not navigation triggers</note>
+      </bar_chart_integration>
+
+      <bar_data_computation>
+        <location>Lines 193-324</location>
+        <note>computeBarData function creates BarData[] with total and segments</note>
+        <note>Each bar knows its total, but tooltip needs grand total for percentage calculation</note>
+      </bar_data_computation>
+    </file>
+
+    <file path="/home/khujta/projects/bmad/boletapp/src/components/analytics/ChartModeToggle.tsx">
+      <description>
+        Reference for toggle button styling - used to determine target font size for tooltips.
+      </description>
+
+      <button_font_size>
+        <location>Line 193</location>
+        <code>&lt;span className="text-sm"&gt;{labels[labelKey]}&lt;/span&gt;</code>
+        <note>Toggle buttons use text-sm (14px) - this is the target size for tooltips per AC #1</note>
+      </button_font_size>
+
+      <button_padding>
+        <location>Line 142</location>
+        <code>px-4 py-2</code>
+        <note>Toggle buttons use py-2 (8px vertical padding) - tooltip should have similar or more</note>
+      </button_padding>
+
+      <touch_target_size>
+        <location>Line 144</location>
+        <code>min-h-11</code>
+        <note>Minimum 44px touch target - tooltip should be easy to read on mobile</note>
+      </touch_target_size>
+    </file>
+
+    <file path="/home/khujta/projects/bmad/boletapp/src/components/analytics/DrillDownModeToggle.tsx">
+      <description>
+        Additional toggle component reference for consistent styling patterns.
+      </description>
+
+      <button_styling_pattern>
+        <location>Lines 112-127</location>
+        <note>Same styling pattern as ChartModeToggle - text-sm, py-2 padding, min-h-11</note>
+        <note>Confirms text-sm is the standard for interactive elements in the analytics view</note>
+      </button_styling_pattern>
+    </file>
+
+    <file path="/home/khujta/projects/bmad/boletapp/src/utils/translations.ts">
+      <description>
+        Translation utility for internationalization support.
+      </description>
+
+      <relevant_translations>
+        <note>No specific tooltip translations needed - will format numbers/currency inline</note>
+        <note>Currency formatting handled by formatCurrency utility</note>
+        <note>Percentage symbol is universal but may need locale-aware number formatting</note>
+      </relevant_translations>
+
+      <locale_support>
+        <code>
+export type Language = keyof typeof TRANSLATIONS; // 'en' | 'es'
+        </code>
+        <note>App supports English and Spanish locales</note>
+      </locale_support>
+    </file>
+  </code_context>
+
+  <implementation_guidance>
+    <tooltip_content_format>
+      <description>Target tooltip content structure per story requirements</description>
+      <example><![CDATA[
+┌─────────────────────┐
+│ Supermercado        │  ← Category name (bold)
+│ $185,230 (28.8%)    │  ← Amount + percentage
+└─────────────────────┘
+      ]]></example>
+      <implementation_notes>
+        <note>Category name should be bold (font-bold or font-semibold)</note>
+        <note>Amount and percentage on same line, space-separated</note>
+        <note>Percentage calculated as: (segment.value / grandTotal) * 100</note>
+        <note>Use formatCurrency for amount formatting</note>
+        <note>Format percentage with 1 decimal place: `${percentage.toFixed(1)}%`</note>
+      </implementation_notes>
+    </tooltip_content_format>
+
+    <percentage_calculation>
+      <challenge>Current code only has bar total, not grand total across all bars</challenge>
+      <solution>
+        <option priority="1">
+          Calculate grand total in component: `const maxTotal = Math.max(...data.map(d => d.total), 1);`
+          Then sum all values: `const grandTotal = data.reduce((sum, d) => sum + d.total, 0);`
+        </option>
+        <option priority="2">
+          Calculate percentage within bar context where segment is rendered
+        </option>
+      </solution>
+    </percentage_calculation>
+
+    <positioning_strategy>
+      <current_issue>
+        Tooltip uses `bottom-full` which positions above segment, but can be hidden behind taller bars above it
+      </current_issue>
+      <recommended_approach>
+        <strategy name="simple">
+          Always position tooltip above the entire bar (at bar top), not above segment
+        </strategy>
+        <strategy name="smart">
+          Calculate if there's enough space above bar, otherwise position to the side or below
+        </strategy>
+        <strategy name="fixed">
+          Use fixed positioning relative to viewport to ensure always visible
+        </strategy>
+      </recommended_approach>
+      <implementation_suggestion>
+        Start with "simple" strategy: position at top of bar container (relative to parent bar div, not segment)
+        This ensures tooltip is always above the tallest segment in that bar.
+      </implementation_suggestion>
+    </positioning_strategy>
+
+    <font_sizing>
+      <target>text-sm (14px) to match toggle buttons</target>
+      <fallback>text-base (16px) if text-sm is still too small for mobile readability</fallback>
+      <reference>Toggle buttons use text-sm with font-medium for good readability</reference>
+    </font_sizing>
+
+    <padding_spacing>
+      <current>p-1 (4px all sides) - too cramped</current>
+      <recommended>p-2 (8px) or p-3 (12px) for better readability</recommended>
+      <vertical_spacing>Consider py-2 px-3 for better aspect ratio</vertical_spacing>
+    </padding_spacing>
+
+    <mobile_interaction>
+      <challenge>Current implementation only uses onMouseEnter/onMouseLeave (desktop hover)</challenge>
+      <solution>
+        Add onClick handler to toggle tooltip visibility for mobile tap
+        Consider using touch-specific event handlers if needed
+        May need separate state for mobile vs desktop interaction
+      </solution>
+      <behavior>
+        On mobile: tap to show tooltip, tap again or tap elsewhere to hide
+        On desktop: hover to show, mouse leave to hide
+      </behavior>
+    </mobile_interaction>
+
+    <theme_consistency>
+      <light_theme>
+        <background>bg-white</background>
+        <text>text-black or text-slate-900</text>
+        <border>border-gray-200 or border-slate-300</border>
+      </light_theme>
+      <dark_theme>
+        <background>bg-black or bg-slate-800</background>
+        <text>text-white</text>
+        <border>border-gray-700 or border-slate-600</border>
+      </dark_theme>
+      <contrast_requirement>
+        Ensure WCAG AA contrast ratio (4.5:1 for normal text, 3:1 for large text)
+        Consider shadow-lg for additional depth and separation from background
+      </contrast_requirement>
+    </theme_consistency>
+
+    <testing_considerations>
+      <visual_testing>
+        <test>Verify tooltip readability in both light and dark themes</test>
+        <test>Test tooltip positioning at various bar heights (short bars, medium bars, tall bars)</test>
+        <test>Verify tooltip doesn't overflow viewport boundaries</test>
+        <test>Check tooltip on mobile devices with small screens</test>
+      </visual_testing>
+      <functional_testing>
+        <test>Verify percentage calculations are accurate</test>
+        <test>Test hover interaction on desktop</test>
+        <test>Test tap interaction on mobile/touch devices</test>
+        <test>Verify tooltip dismisses when tapping outside</test>
+        <test>Test with English and Spanish locales</test>
+      </functional_testing>
+      <edge_cases>
+        <test>Bars with zero or very small values</test>
+        <test>Single segment bars (100% of bar)</test>
+        <test>Many segments in single bar (crowded layout)</test>
+        <test>Very long category names in tooltip</test>
+      </edge_cases>
+    </testing_considerations>
+
+    <comparison_with_pie_chart>
+      <note>SimplePieChart does NOT have explicit tooltips currently</note>
+      <note>SimplePieChart has onClick handler that triggers navigation/filtering</note>
+      <note>Per story requirements, bar chart should NOT navigate on click</note>
+      <note>Tooltips are informational only, not interactive navigation triggers</note>
+      <future_consideration>
+        Consider adding similar tooltips to pie chart slices in future story
+        Would need to decouple tooltip display from navigation behavior
+      </future_consideration>
+    </comparison_with_pie_chart>
+
+    <code_patterns_to_follow>
+      <pattern name="conditional_styling">
+        <description>Use isDark ternary for theme-specific classes</description>
+        <example>className={`${isDark ? 'bg-black text-white' : 'bg-white text-black'}`}</example>
+      </pattern>
+      <pattern name="tailwind_composition">
+        <description>Build className strings with template literals</description>
+        <example>className={`base-classes ${conditional ? 'when-true' : 'when-false'}`}</example>
+      </pattern>
+      <pattern name="state_management">
+        <description>Use React useState for hover/tap state</description>
+        <example>const [hoveredSegment, setHoveredSegment] = useState&lt;...&gt;(null);</example>
+      </pattern>
+      <pattern name="number_formatting">
+        <description>Use existing formatCurrency utility for amounts</description>
+        <example>formatCurrency(seg.value, currency)</example>
+      </pattern>
+    </code_patterns_to_follow>
+
+    <implementation_checklist>
+      <task>Calculate grand total for percentage computation</task>
+      <task>Update tooltip content to include category name, amount, and percentage</task>
+      <task>Increase font size from text-[8px] to text-sm or text-base</task>
+      <task>Increase padding from p-1 to p-2 or p-3</task>
+      <task>Fix positioning to avoid overlap with bars (position at bar top or use smart positioning)</task>
+      <task>Add onClick handler for mobile tap interaction</task>
+      <task>Make category name bold in tooltip</task>
+      <task>Ensure theme styles provide sufficient contrast</task>
+      <task>Test in both English and Spanish locales</task>
+      <task>Verify TypeScript compilation passes</task>
+      <task>Visual verification in both light and dark themes</task>
+      <task>Test at various bar heights and screen sizes</task>
+    </implementation_checklist>
+
+    <related_utilities>
+      <utility>
+        <name>formatCurrency</name>
+        <import>import { formatCurrency } from '../../utils/currency';</import>
+        <usage>formatCurrency(value: number, currency: string): string</usage>
+        <note>Already imported and used in current implementation (line 2)</note>
+      </utility>
+    </related_utilities>
+
+    <theme_system_reference>
+      <css_variables>
+        <source>index.html lines 10-83</source>
+        <description>App uses CSS custom properties for theme-aware colors</description>
+        <light_mode>
+          <variable name="--bg">#f8fafc (slate-50)</variable>
+          <variable name="--surface">#ffffff (white)</variable>
+          <variable name="--primary">#0f172a (slate-900)</variable>
+          <variable name="--secondary">#64748b (slate-500)</variable>
+          <variable name="--accent">#3b82f6 (blue-500)</variable>
+          <chart_colors>
+            <variable name="--chart-1">#3b82f6 (blue-500)</variable>
+            <variable name="--chart-2">#22c55e (green-500)</variable>
+            <variable name="--chart-3">#f59e0b (amber-500)</variable>
+            <variable name="--chart-4">#ef4444 (red-500)</variable>
+            <variable name="--chart-5">#8b5cf6 (violet-500)</variable>
+            <variable name="--chart-6">#ec4899 (pink-500)</variable>
+          </chart_colors>
+        </light_mode>
+        <dark_mode>
+          <variable name="--bg">#0f172a (slate-900)</variable>
+          <variable name="--surface">#1e293b (slate-800)</variable>
+          <variable name="--primary">#f8fafc (slate-50)</variable>
+          <variable name="--secondary">#94a3b8 (slate-400)</variable>
+          <variable name="--accent">#60a5fa (blue-400)</variable>
+        </dark_mode>
+        <ghibli_theme>
+          <note>App also supports Ghibli color theme (data-theme="ghibli")</note>
+          <light_ghibli>
+            <variable name="--bg">#f5f0e8 (warm cream)</variable>
+            <variable name="--surface">#ffffff (white)</variable>
+            <variable name="--primary">#2d3a4a (night blue)</variable>
+          </light_ghibli>
+        </ghibli_theme>
+        <note>Tooltip should use Tailwind classes, not CSS variables, for simplicity</note>
+        <note>Component uses theme prop ('light' | 'dark') not data-theme attribute</note>
+      </css_variables>
+    </theme_system_reference>
+
+    <code_examples>
+      <example name="improved_tooltip_content">
+        <description>Tooltip with all three required pieces of information</description>
+        <code><![CDATA[
+{isHovered && (
+  <div
+    className={`absolute top-full mt-2 left-1/2 -translate-x-1/2 text-sm px-3 py-2 rounded-md whitespace-nowrap z-50 shadow-lg border ${
+      isDark
+        ? 'bg-slate-800 text-white border-slate-600'
+        : 'bg-white text-slate-900 border-slate-300'
+    }`}
+  >
+    <div className="font-bold">{seg.label}</div>
+    <div>
+      {formatCurrency(seg.value, currency)} ({((seg.value / d.total) * 100).toFixed(1)}%)
+    </div>
+  </div>
+)}
+        ]]></code>
+        <changes>
+          <change>Font size: text-[8px] → text-sm</change>
+          <change>Padding: p-1 → px-3 py-2</change>
+          <change>Shadow: shadow-sm → shadow-lg</change>
+          <change>Content: Added percentage calculation</change>
+          <change>Content: Made category name bold</change>
+          <change>Positioning: bottom-full → top-full mt-2 (position below segment)</change>
+          <change>Background: bg-black → bg-slate-800 (dark), bg-white (light)</change>
+          <change>Text: adjusted for better contrast</change>
+        </changes>
+      </example>
+
+      <example name="smart_positioning">
+        <description>Smart positioning based on segment position within bar</description>
+        <code><![CDATA[
+// Determine if this is a top segment (last in array since flex-col-reverse)
+const isTopSegment = segIndex === d.segments.length - 1;
+
+// Position tooltip below top segments, above others
+const tooltipPositionClasses = isTopSegment
+  ? 'top-full mt-2'  // Below the top segment
+  : 'bottom-full mb-2';  // Above other segments
+
+{isHovered && (
+  <div
+    className={`absolute ${tooltipPositionClasses} left-1/2 -translate-x-1/2 text-sm px-3 py-2 rounded-md whitespace-nowrap z-50 shadow-lg border ${
+      isDark
+        ? 'bg-slate-800 text-white border-slate-600'
+        : 'bg-white text-slate-900 border-slate-300'
+    }`}
+  >
+    <div className="font-bold">{seg.label}</div>
+    <div>
+      {formatCurrency(seg.value, currency)} ({((seg.value / d.total) * 100).toFixed(1)}%)
+    </div>
+  </div>
+)}
+        ]]></code>
+        <note>This prevents tooltip from being hidden behind segments above it</note>
+      </example>
+
+      <example name="mobile_tap_interaction">
+        <description>Combined desktop hover and mobile tap interaction</description>
+        <code><![CDATA[
+// Add click handler for mobile tap
+const handleSegmentClick = (e: React.MouseEvent, barIdx: number, segIdx: number) => {
+  e.stopPropagation();
+  // Toggle: if already showing this segment, hide it
+  if (hoveredSegment?.barIndex === barIdx && hoveredSegment?.segIndex === segIdx) {
+    setHoveredSegment(null);
+  } else {
+    setHoveredSegment({ barIndex: barIdx, segIndex: segIdx });
+  }
+};
+
+// In segment render:
+<div
+  key={segIndex}
+  className={`relative transition-opacity cursor-pointer ${segIndex === d.segments.length - 1 ? 'rounded-t' : ''}`}
+  style={{
+    height: `${segmentHeightPercent}%`,
+    backgroundColor: seg.color,
+    minHeight: seg.value > 0 ? '2px' : '0',
+    opacity: isHovered ? 0.8 : 1
+  }}
+  onMouseEnter={() => setHoveredSegment({ barIndex, segIndex })}
+  onMouseLeave={() => setHoveredSegment(null)}
+  onClick={(e) => handleSegmentClick(e, barIndex, segIndex)}
+>
+        ]]></code>
+        <note>Keep hover handlers for desktop, add click for mobile</note>
+        <note>stopPropagation prevents event bubbling to parent elements</note>
+      </example>
+
+      <example name="percentage_calculation_options">
+        <description>Different ways to calculate and display percentage</description>
+        <option id="1">
+          <name>Percentage within bar (current scope)</name>
+          <code>{((seg.value / d.total) * 100).toFixed(1)}%</code>
+          <note>Shows what percent of THIS bar the segment represents</note>
+          <note>This is what user feedback screenshots suggest (per-bar percentage)</note>
+          <recommended>true</recommended>
+        </option>
+        <option id="2">
+          <name>Percentage of grand total (across all bars)</name>
+          <code><![CDATA[
+// Calculate grand total at component level
+const grandTotal = data.reduce((sum, bar) => sum + bar.total, 0);
+
+// In tooltip
+{((seg.value / grandTotal) * 100).toFixed(1)}%
+          ]]></code>
+          <note>Shows what percent of ALL spending across all bars</note>
+          <note>Requires calculating grandTotal at component level</note>
+          <recommended>false - more complex, less intuitive for user</recommended>
+        </option>
+      </example>
+    </code_examples>
+
+    <accessibility_considerations>
+      <tooltip_visibility>
+        Tooltips should be keyboard accessible for screen reader users
+        Consider aria-label or aria-describedby for segment descriptions
+      </tooltip_visibility>
+      <contrast>
+        Ensure WCAG AA compliance for color contrast
+        Test with accessibility tools
+      </contrast>
+      <touch_targets>
+        Bar segments should be large enough to tap on mobile (minimum 44x44px when possible)
+        Current implementation uses cursor-pointer which is good
+      </touch_targets>
+    </accessibility_considerations>
+  </implementation_guidance>
+
+  <constraints_and_dependencies>
+    <constraint type="visual">
+      Tooltip must not interfere with chart readability or block other bars
+    </constraint>
+    <constraint type="behavior">
+      Bar chart should NOT trigger navigation/filtering on click (unlike pie chart)
+      Tooltips are informational only
+    </constraint>
+    <constraint type="consistency">
+      Font size and styling should match toggle buttons (text-sm, proper padding)
+    </constraint>
+    <constraint type="theme">
+      Must work in both light and dark themes with proper contrast
+    </constraint>
+    <constraint type="locale">
+      Must work in both English and Spanish with proper number formatting
+    </constraint>
+    <dependency>
+      Requires existing formatCurrency utility from utils/currency
+    </dependency>
+    <dependency>
+      Uses existing theme prop-based theming (not Tailwind dark: prefix)
+    </dependency>
+    <dependency>
+      Must maintain existing BarSegment and BarChartData interfaces
+    </dependency>
+  </constraints_and_dependencies>
+
+  <success_criteria>
+    <criterion>Tooltip text is clearly readable at text-sm size (matches toggles)</criterion>
+    <criterion>Tooltip displays all required information: category name (bold), amount, percentage</criterion>
+    <criterion>Tooltip is never hidden behind bars - positioned intelligently</criterion>
+    <criterion>Tooltip works on both hover (desktop) and tap (mobile)</criterion>
+    <criterion>Tooltip has good contrast in both light and dark themes</criterion>
+    <criterion>Tooltip has comfortable padding (p-2 or p-3) for readability</criterion>
+    <criterion>Clicking bar segments shows tooltip only - no navigation/filtering</criterion>
+    <criterion>Works correctly in both English and Spanish locales</criterion>
+    <criterion>TypeScript compilation passes with no errors</criterion>
+    <criterion>Visual consistency with rest of analytics view UI</criterion>
+  </success_criteria>
+</story_context>

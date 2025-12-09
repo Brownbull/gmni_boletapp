@@ -50,7 +50,44 @@ export const TRANSLATIONS = {
         deleteMappingConfirm: "Remove this learned category?",
         usedTimes: "Used {count} times",
         cancel: "Cancel",
-        confirm: "Confirm"
+        confirm: "Confirm",
+        // Story 7.3: Category breadcrumb
+        allCategories: "All Categories",
+        // Story 7.4: Chart mode toggle
+        aggregation: "Aggregation",
+        comparison: "Comparison",
+        q1: "Quarter 1",
+        q2: "Quarter 2",
+        q3: "Quarter 3",
+        q4: "Quarter 4",
+        // Story 7.5: Drill-down cards
+        drillDownByTime: "Drill down by time",
+        drillDownByCategory: "Drill down by category",
+        noTransactionsIn: "No transactions in {period}",
+        scanToAddData: "Scan a receipt to add data",
+        // Story 7.9: Breadcrumb level indicators
+        levelYear: "Year",
+        levelQuarter: "Quarter",
+        levelMonth: "Month",
+        levelWeek: "Week",
+        levelDay: "Day",
+        levelCategory: "Category",
+        levelGroup: "Group",
+        levelSubcategory: "Subcategory",
+        levelAll: "All",
+        // Story 7.10: UX Cards & Visual Elements
+        tapToDrillDown: "Tap to drill down",
+        receipts: "Receipts",
+        analytics: "Analytics",
+        // Story 7.11: Floating Download FAB
+        downloadAnalytics: "Download Analytics",
+        // Story 7.12 AC#11: Color theme selector (Story 7.17: renamed themes)
+        colorTheme: "Color Palette",
+        colorThemeNormal: "Normal",
+        colorThemeProfessional: "Professional",
+        // Story 7.16: Drill-down mode toggle
+        drillDownTemporal: "Temporal",
+        drillDownCategory: "Category"
     },
     es: {
         overview: "Resumen", welcome: "Rastreo Inteligente", totalSpent: "Total Gastado",
@@ -103,7 +140,44 @@ export const TRANSLATIONS = {
         deleteMappingConfirm: "¿Eliminar esta categoría aprendida?",
         usedTimes: "Usado {count} veces",
         cancel: "Cancelar",
-        confirm: "Confirmar"
+        confirm: "Confirmar",
+        // Story 7.3: Category breadcrumb
+        allCategories: "Todas las Categorías",
+        // Story 7.4: Chart mode toggle
+        aggregation: "Agregado",
+        comparison: "Comparar",
+        q1: "Trimestre 1",
+        q2: "Trimestre 2",
+        q3: "Trimestre 3",
+        q4: "Trimestre 4",
+        // Story 7.5: Drill-down cards
+        drillDownByTime: "Desglosar por tiempo",
+        drillDownByCategory: "Desglosar por categoría",
+        noTransactionsIn: "Sin transacciones en {period}",
+        scanToAddData: "Escanea un recibo para agregar datos",
+        // Story 7.9: Breadcrumb level indicators
+        levelYear: "Año",
+        levelQuarter: "Trimestre",
+        levelMonth: "Mes",
+        levelWeek: "Semana",
+        levelDay: "Día",
+        levelCategory: "Categoría",
+        levelGroup: "Grupo",
+        levelSubcategory: "Subcategoría",
+        levelAll: "Todo",
+        // Story 7.10: UX Cards & Visual Elements
+        tapToDrillDown: "Toca para desglosar",
+        receipts: "Recibos",
+        analytics: "Analíticas",
+        // Story 7.11: Floating Download FAB
+        downloadAnalytics: "Descargar Analíticas",
+        // Story 7.12 AC#11: Color theme selector (Story 7.17: renamed themes)
+        colorTheme: "Paleta de Color",
+        colorThemeNormal: "Normal",
+        colorThemeProfessional: "Profesional",
+        // Story 7.16: Drill-down mode toggle
+        drillDownTemporal: "Temporal",
+        drillDownCategory: "Categoría"
     }
 };
 
