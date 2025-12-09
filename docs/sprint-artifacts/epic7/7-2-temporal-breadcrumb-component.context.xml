@@ -1,0 +1,183 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>2</storyId>
+    <title>Temporal Breadcrumb Component</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic7/story-7.2-temporal-breadcrumb-component.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user viewing analytics</asA>
+    <iWant>a collapsible breadcrumb showing my current time position</iWant>
+    <soThat>I always know where I am and can jump to any ancestor level</soThat>
+    <tasks>
+      <task n="1" desc="Create TemporalBreadcrumb component shell">
+        <subtask>Create src/components/analytics/TemporalBreadcrumb.tsx</subtask>
+        <subtask>Create src/components/analytics/ directory if not exists</subtask>
+        <subtask>Import and use useAnalyticsNavigation() hook from Story 7.1</subtask>
+        <subtask>Render collapsed button with Calendar icon (Lucide: Calendar, 24px) and current level label</subtask>
+        <subtask>Add chevron icon (ChevronDown) to indicate expandability</subtask>
+      </task>
+      <task n="2" desc="Implement dropdown state and rendering">
+        <subtask>Add useState for isOpen dropdown state</subtask>
+        <subtask>Render dropdown panel with full temporal path when open</subtask>
+        <subtask>Build path dynamically from context state: Year - Quarter (if set) - Month (if set) - Week (if set) - Day (if set)</subtask>
+        <subtask>Each path segment rendered as tappable item with label and appropriate styling</subtask>
+      </task>
+      <task n="3" desc="Implement outside click and escape key handlers">
+        <subtask>Add useRef for dropdown container</subtask>
+        <subtask>Add useEffect with mousedown listener to detect outside clicks</subtask>
+        <subtask>Add useEffect with keydown listener for Escape key</subtask>
+        <subtask>Clean up event listeners on unmount</subtask>
+      </task>
+      <task n="4" desc="Implement navigation dispatch">
+        <subtask>On ancestor tap, call dispatch({ type: 'SET_TEMPORAL_LEVEL', payload: { level, year, quarter?, month?, week? } })</subtask>
+        <subtask>Ensure category filter is NOT modified (dual-axis independence from Story 7.1)</subtask>
+        <subtask>Close dropdown after navigation</subtask>
+        <subtask>Verify breadcrumb re-renders with new state immediately</subtask>
+      </task>
+      <task n="5" desc="Implement visual styling">
+        <subtask>Current/active level has distinct visual styling (accent color, bold, or both)</subtask>
+        <subtask>All interactive items have min-h-11 (44px) for touch targets</subtask>
+        <subtask>Collapsed button has min-w-11 min-h-11 ensuring 44x44px minimum</subtask>
+        <subtask>Dropdown items have proper padding and hover/focus states</subtask>
+        <subtask>Use Tailwind classes consistent with existing component patterns</subtask>
+      </task>
+      <task n="6" desc="Implement keyboard accessibility">
+        <subtask>Button receives focus on Tab</subtask>
+        <subtask>Enter/Space opens dropdown</subtask>
+        <subtask>Arrow keys navigate between dropdown options when open</subtask>
+        <subtask>Enter selects focused option</subtask>
+        <subtask>Focus management: return focus to button after selection</subtask>
+      </task>
+      <task n="7" desc="Implement ARIA attributes">
+        <subtask>Button: aria-expanded={isOpen}, aria-haspopup="listbox"</subtask>
+        <subtask>Container: role="navigation", aria-label="Time period"</subtask>
+        <subtask>Dropdown: role="listbox"</subtask>
+        <subtask>Options: role="option", aria-selected for current level</subtask>
+      </task>
+      <task n="8" desc="Write unit tests">
+        <subtask>Create tests/unit/analytics/TemporalBreadcrumb.test.tsx</subtask>
+        <subtask>Test collapsed state renders current level</subtask>
+        <subtask>Test dropdown opens on click</subtask>
+        <subtask>Test dropdown closes on outside click</subtask>
+        <subtask>Test dropdown closes on Escape</subtask>
+        <subtask>Test navigation dispatch on ancestor tap</subtask>
+        <subtask>Test ARIA attributes present</subtask>
+        <subtask>Test keyboard navigation (if using @testing-library/user-event)</subtask>
+        <subtask>Verify >=80% coverage on new file</subtask>
+      </task>
+      <task n="9" desc="Write integration test">
+        <subtask>Create tests/integration/analytics/temporalBreadcrumb.test.tsx</subtask>
+        <subtask>Test breadcrumb + AnalyticsContext interaction</subtask>
+        <subtask>Verify category filter preserved when temporal changes</subtask>
+        <subtask>Verify state updates reflect immediately in breadcrumb</subtask>
+      </task>
+      <task n="10" desc="Verify and document">
+        <subtask>Run full test suite (npm run test:all)</subtask>
+        <subtask>Verify component renders correctly at all 5 temporal levels</subtask>
+        <subtask>Verify no TypeScript errors</subtask>
+        <subtask>Manual test on mobile viewport (375px) for touch targets</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">When on any temporal level (Year/Quarter/Month/Week/Day), viewing the temporal breadcrumb shows a collapsed button displaying the current level (e.g., "Calendar icon October ChevronDown")</criterion>
+    <criterion id="AC2">When tapping the breadcrumb button, dropdown expands showing full path (e.g., Year > Q4 > October)</criterion>
+    <criterion id="AC3">Each ancestor level in the dropdown is tappable to navigate directly to that level</criterion>
+    <criterion id="AC4">Current level is highlighted with accent color and/or bold styling</criterion>
+    <criterion id="AC5">Tapping outside the dropdown closes it</criterion>
+    <criterion id="AC6">Pressing Escape key closes the dropdown</criterion>
+    <criterion id="AC7">Tapping an ancestor (e.g., "Q4") navigates to Q4 level while preserving the current category filter</criterion>
+    <criterion id="AC8">Breadcrumb updates immediately when user navigates (within same render cycle)</criterion>
+    <criterion id="AC9">Component is keyboard accessible: Tab to focus, Enter to expand, Arrow keys to navigate options, Escape to close</criterion>
+    <criterion id="AC10">All interactive elements have minimum 44x44px touch targets</criterion>
+    <criterion id="AC11">ARIA attributes present: aria-expanded, aria-haspopup="listbox", role="navigation", aria-label="Time period"</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/prd-epic7.md" title="Epic 7 PRD" section="Temporal Breadcrumb" snippet="FR12-FR15 define requirements: temporal breadcrumb displays current position in hierarchy, each segment is tappable to jump directly to that level, updates immediately, current level is visually distinguished."/>
+      <doc path="docs/architecture-epic7.md" title="Epic 7 Architecture" section="Pattern 3: Breadcrumb Dropdown Pattern" snippet="Collapsible dropdowns with useRef for outside click detection, useEffect listeners for mousedown and keydown (Escape), aria-expanded and aria-haspopup attributes."/>
+      <doc path="docs/architecture-epic7.md" title="Epic 7 Architecture" section="Component Boundaries" snippet="TemporalBreadcrumb: Reads 'temporal' from context, writes via SET_TEMPORAL_LEVEL dispatch only. Single responsibility for displaying temporal path and handling dropdown."/>
+      <doc path="docs/sprint-artifacts/epic7/tech-spec-epic-7.md" title="Epic 7 Tech Spec" section="Temporal Breadcrumb (FR12-15)" snippet="AC12-AC15 cover breadcrumb display position, tappable segments, immediate updates, and visual distinction of current level."/>
+      <doc path="docs/ux-design-specification.md" title="UX Design Spec" section="4.4 Breadcrumb Expansion Behavior" snippet="Collapsed State shows icon + currentLabel + chevron. Expanded State dropdown shows all ancestor levels with current level highlighted. Tap outside closes dropdown."/>
+      <doc path="docs/ux-design-specification.md" title="UX Design Spec" section="6.2 Core Components - CollapsibleBreadcrumb" snippet="Props: type (temporal|category), items array, currentLabel, isExpanded, onToggle, onSelect. Behavior: collapsed shows icon + currentLabel + chevron, expanded shows all ancestors."/>
+    </docs>
+    <code>
+      <artifact path="src/types/analytics.ts" kind="types" symbol="TemporalLevel, TemporalPosition" lines="18-31" reason="Type definitions for temporal hierarchy levels (year|quarter|month|week|day) and position interface that the breadcrumb must consume"/>
+      <artifact path="src/types/analytics.ts" kind="types" symbol="NavigationAction" lines="101-106" reason="Action types including SET_TEMPORAL_LEVEL that the breadcrumb dispatches for navigation"/>
+      <artifact path="src/contexts/AnalyticsContext.tsx" kind="context" symbol="AnalyticsContext, setTemporalLevel" lines="34, 177-179" reason="Context provider and action creator that TemporalBreadcrumb will consume via useAnalyticsNavigation hook"/>
+      <artifact path="src/hooks/useAnalyticsNavigation.ts" kind="hook" symbol="useAnalyticsNavigation, UseAnalyticsNavigationReturn" lines="74-106" reason="Custom hook providing typed access to temporal state and dispatch - the ONLY way components should access navigation context"/>
+      <artifact path="src/hooks/useAnalyticsNavigation.ts" kind="hook" symbol="getParentTemporalLevel, getChildTemporalLevel" lines="120-156" reason="Helper functions for navigating temporal hierarchy - useful for building breadcrumb path"/>
+      <artifact path="src/utils/analyticsHelpers.ts" kind="utils" symbol="getQuarterFromMonth" lines="21-27" reason="Derives quarter string from month - needed when building temporal path for breadcrumb display"/>
+      <artifact path="src/utils/analyticsHelpers.ts" kind="utils" symbol="validateNavigationState" lines="59-74" reason="Validates state after dispatch - ensures breadcrumb state is always consistent"/>
+      <artifact path="src/utils/translations.ts" kind="utils" symbol="TRANSLATIONS" lines="1-112" reason="Translation system - new temporal keys will be needed for Quarter, Week labels (currently missing, Story 7.8 will add)"/>
+      <artifact path="src/components/Nav.tsx" kind="component" symbol="Nav" reason="Reference for existing navigation patterns, icon sizing (24px), Tailwind class conventions used in the app"/>
+      <artifact path="tests/unit/analytics/analyticsReducer.test.ts" kind="test" symbol="analyticsReducer tests" reason="Existing tests for reducer logic - pattern to follow for TemporalBreadcrumb tests"/>
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="react" version="^18.3.1">React framework with hooks (useState, useRef, useEffect, useContext)</package>
+        <package name="lucide-react" version="^0.460.0">Icons: Calendar (24px), ChevronDown (16px) for breadcrumb button</package>
+        <package name="@testing-library/react" version="^16.3.0">Testing utilities for component tests</package>
+        <package name="@testing-library/user-event" version="^14.6.1">User event simulation for keyboard accessibility tests</package>
+        <package name="vitest" version="^4.0.13">Test runner for unit and integration tests</package>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="pattern">Use useAnalyticsNavigation() hook, NOT direct useContext(AnalyticsContext) - Pattern 1 from architecture</constraint>
+    <constraint type="architecture">Component must only dispatch SET_TEMPORAL_LEVEL action - category must be preserved (dual-axis independence)</constraint>
+    <constraint type="accessibility">All interactive elements minimum 44x44px (NFR10) - use min-h-11 min-w-11 Tailwind classes</constraint>
+    <constraint type="accessibility">WCAG 2.1 AA compliance required (NFR5) - focus indicators, ARIA labels, keyboard navigation</constraint>
+    <constraint type="visual">Icons must be 24px size with stroke-width 2 (FR53) - consistent with existing components</constraint>
+    <constraint type="visual">Spacing follows 8px grid (FR54) - use Tailwind spacing utilities (p-2, p-4, gap-2, etc.)</constraint>
+    <constraint type="performance">View transitions under 300ms (NFR1) - use CSS transforms for dropdown animation</constraint>
+    <constraint type="testing">New code must have >= 80% coverage (NFR15)</constraint>
+    <constraint type="dependency">Story 7.1 must be complete before implementation - provides AnalyticsContext, useAnalyticsNavigation hook, and TemporalPosition type</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="useAnalyticsNavigation" kind="hook signature" path="src/hooks/useAnalyticsNavigation.ts">
+      <signature>function useAnalyticsNavigation(): UseAnalyticsNavigationReturn</signature>
+      <returns>{ state, dispatch, temporal, category, chartMode, temporalLevel, categoryLevel, isYearLevel, hasCategoryFilter, isComparisonMode }</returns>
+    </interface>
+    <interface name="SET_TEMPORAL_LEVEL" kind="dispatch action" path="src/types/analytics.ts">
+      <signature>dispatch({ type: 'SET_TEMPORAL_LEVEL', payload: TemporalPosition })</signature>
+      <example>dispatch({ type: 'SET_TEMPORAL_LEVEL', payload: { level: 'quarter', year: '2024', quarter: 'Q4' } })</example>
+    </interface>
+    <interface name="TemporalPosition" kind="type" path="src/types/analytics.ts">
+      <signature>{ level: TemporalLevel; year: string; quarter?: string; month?: string; week?: number; day?: string; }</signature>
+    </interface>
+    <interface name="TemporalLevel" kind="type" path="src/types/analytics.ts">
+      <signature>'year' | 'quarter' | 'month' | 'week' | 'day'</signature>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Unit tests use Vitest with React Testing Library. Integration tests wrap components in AnalyticsProvider. Tests should mock minimal dependencies. User interactions tested with @testing-library/user-event. Coverage target is 80% minimum on new code. Test files follow naming convention: ComponentName.test.tsx for unit, feature-name.test.tsx for integration.</standards>
+    <locations>
+      <location>tests/unit/analytics/ - Unit tests for analytics components</location>
+      <location>tests/integration/analytics/ - Integration tests for analytics workflows</location>
+    </locations>
+    <ideas>
+      <idea ac="AC1">Test that collapsed breadcrumb shows Calendar icon + current level label + ChevronDown</idea>
+      <idea ac="AC2">Test that clicking button sets isOpen to true and renders dropdown with full path</idea>
+      <idea ac="AC3">Test that clicking ancestor item in dropdown dispatches SET_TEMPORAL_LEVEL with correct payload</idea>
+      <idea ac="AC4">Test that current level option has distinct CSS class (e.g., font-bold, text-blue-500)</idea>
+      <idea ac="AC5">Test that clicking outside dropdown container closes it (mousedown event)</idea>
+      <idea ac="AC6">Test that pressing Escape key closes dropdown (keydown event)</idea>
+      <idea ac="AC7">Integration test: verify category filter preserved after temporal navigation</idea>
+      <idea ac="AC8">Test that state change triggers immediate re-render with new temporal value</idea>
+      <idea ac="AC9">Test keyboard navigation: Tab focuses button, Enter opens, Arrow keys navigate, Enter selects</idea>
+      <idea ac="AC10">Snapshot or computed style test verifying min-h-11 min-w-11 classes applied</idea>
+      <idea ac="AC11">Test presence of aria-expanded, aria-haspopup, role="navigation", aria-label attributes</idea>
+    </ideas>
+  </tests>
+</story-context>

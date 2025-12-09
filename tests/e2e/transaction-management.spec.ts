@@ -63,7 +63,7 @@ test.describe('Transaction Management E2E Workflows', () => {
     await expect(signInButton).toBeEnabled();
 
     // Verify transaction management views are NOT visible (requires auth)
-    await expect(page.getByRole('button', { name: /History|Historial/i })).not.toBeVisible();
+    await expect(page.getByRole('button', { name: /Receipts|Recibos/i })).not.toBeVisible();
     await expect(page.getByRole('button', { name: /Scan|Escanear/i })).not.toBeVisible();
   });
 
@@ -169,7 +169,7 @@ test.describe('Transaction Management E2E Workflows', () => {
     await expect(page.getByRole('button', { name: /sign in with google|entrar con google/i })).toBeVisible();
 
     // Verify transaction UI not present (requires authentication)
-    await expect(page.getByRole('button', { name: /History|Historial/i })).not.toBeVisible();
+    await expect(page.getByRole('button', { name: /Receipts|Recibos/i })).not.toBeVisible();
   });
 
   /**

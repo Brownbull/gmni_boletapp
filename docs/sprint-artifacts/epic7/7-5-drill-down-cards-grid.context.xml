@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Story Context: 7-5-drill-down-cards-grid
+  Generated: 2025-12-05
+  Purpose: Provide implementation context for DrillDownCard & DrillDownGrid components
+-->
+<story-context storyKey="7-5-drill-down-cards-grid" epicId="7" storyId="5">
+  <metadata>
+    <title>Drill-Down Cards Grid</title>
+    <sourceStoryPath>docs/sprint-artifacts/epic7/story-7.5-drill-down-cards-grid.md</sourceStoryPath>
+    <generatedDate>2025-12-05</generatedDate>
+    <status>ready-for-dev</status>
+  </metadata>
+
+  <story>
+    <asA>user exploring analytics</asA>
+    <iWant>tappable cards showing child periods and subcategories below the chart</iWant>
+    <soThat>I can drill deeper into my spending data by clicking on specific time periods or category breakdowns</soThat>
+  </story>
+
+  <acceptance-criteria>
+    <ac id="1">Year view: drill-down cards display Q1, Q2, Q3, Q4 with totals</ac>
+    <ac id="2">Quarter view: drill-down cards display 3 months with totals</ac>
+    <ac id="3">Month view: drill-down cards display weeks (Oct 1-7, Oct 8-14, etc.) with totals</ac>
+    <ac id="4">Week view: drill-down cards display days (Mon-Sun) with totals</ac>
+    <ac id="5">Day view: no temporal drill-down cards (leaf level)</ac>
+    <ac id="6">Cards display: label, total amount, percentage of current view</ac>
+    <ac id="7">Cards have color indicator matching chart segment colors</ac>
+    <ac id="8">Tapping temporal card dispatches SET_TEMPORAL_LEVEL</ac>
+    <ac id="9">With category filter: show BOTH temporal AND category children</ac>
+    <ac id="10">Category cards show child categories/groups/subcategories</ac>
+    <ac id="11">Tapping category card dispatches SET_CATEGORY_FILTER</ac>
+    <ac id="12">Empty period: "No transactions in [period]" message</ac>
+    <ac id="13">Empty state CTA: "Scan a receipt to add data"</ac>
+    <ac id="14">Empty periods grayed but tappable</ac>
+    <ac id="15">44x44px minimum touch targets (full-width mobile)</ac>
+    <ac id="16">Hover/tap feedback: border highlight, slight lift</ac>
+    <ac id="17">DrillDownCard is pure/presentational with React.memo</ac>
+    <ac id="18">DrillDownGrid consumes AnalyticsContext</ac>
+  </acceptance-criteria>
+
+  <tasks>
+    <task id="1">Create DrillDownCard presentational component (src/components/analytics/DrillDownCard.tsx)</task>
+    <task id="2">Create DrillDownGrid container component (src/components/analytics/DrillDownGrid.tsx)</task>
+    <task id="3">Implement temporal drill-down logic (getTemporalChildren helper)</task>
+    <task id="4">Implement category drill-down logic (getCategoryChildren helper)</task>
+    <task id="5">Implement empty state handling with grayed styling</task>
+    <task id="6">Implement grid layout and responsive styling</task>
+    <task id="7">Add section labels and i18n translations</task>
+    <task id="8">Write unit tests for DrillDownCard</task>
+    <task id="9">Write unit tests for DrillDownGrid</task>
+    <task id="10">Write integration tests for drill-down navigation</task>
+    <task id="11">Verify tests and documentation</task>
+  </tasks>
+
+  <documentation>
+    <doc path="docs/prd-epic7.md" relevance="FR definitions">
+      <excerpt title="FR40-46 Drill-Down Requirements">
+FR40: Below chart, drill-down options show available child periods
+FR41: Below chart, drill-down options show available subcategories
+FR42: Each drill-down option displays label and total amount
+FR43: Tapping a drill-down option navigates to that level
+FR44: When period has no transactions, display specific message
+FR45: Empty state includes suggested action
+FR46: Empty periods appear grayed out but tappable
+FR55: All interactive elements have minimum 44x44px touch targets
+      </excerpt>
+    </doc>
+
+    <doc path="docs/architecture-epic7.md" relevance="Pattern 4">
+      <excerpt title="ADR-011 Drill-Down Card Pattern">
+DrillDownCard = presentational only:
+- Props: label, value, onClick, icon?, colorIndex?, isEmpty?
+- Uses React.memo for performance
+- onClick callback (not direct dispatch)
+- aria-label for accessibility
+
+DrillDownGrid = container:
+- Reads temporal, category from context
+- Computes children based on current state
+- Dispatches SET_TEMPORAL_LEVEL or SET_CATEGORY_FILTER
+      </excerpt>
+      <excerpt title="Component Boundaries">
+| Component | Reads Context | Writes Context |
+|-----------|---------------|----------------|
+| DrillDownCard | None (props) | None (callback) |
+| DrillDownGrid | temporal, category | SET_TEMPORAL_LEVEL, SET_CATEGORY_FILTER |
+      </excerpt>
+    </doc>
+
+    <doc path="docs/ux-design-specification.md" relevance="Visual design">
+      <excerpt title="DrillDownCard UX">
+Props:
+- label: string
+- amount: string
+- percent: string
+- colorIndex: number
+- onPress: () => void
+
+Behavior:
+- Full-width card with color indicator
+- Hover: border highlight, slight lift
+- Touch: scale feedback
+- 44px minimum height
+      </excerpt>
+    </doc>
+
+    <doc path="docs/epics.md" relevance="Story definition">
+      <excerpt title="Story 7.5 in Epic Map">
+Story 7.5: Drill-Down Cards Grid
+- Dependencies: Story 7.1
+- Deliverable: DrillDownCard, DrillDownGrid components
+- Covers: FR40-FR46 (drill-down options, empty states)
+      </excerpt>
+    </doc>
+
+    <doc path="docs/team-standards.md" relevance="Testing strategy">
+      <excerpt title="Fast Verification Strategy">
+During development:
+1. npx tsc --noEmit (type check)
+2. npm run test:unit -- --run "tests/unit/analytics/DrillDown*"
+3. npm run test:unit -- --run tests/unit/smoke.test.ts
+
+Full suite only before marking "review"
+      </excerpt>
+    </doc>
+  </documentation>
+
+  <code-artifacts>
+    <artifact path="src/types/analytics.ts" reason="Type definitions for navigation state">
+      <description>
+TemporalPosition: level, year, quarter?, month?, week?, day?
+CategoryPosition: level, category?, group?, subcategory?
+TemporalLevel: 'year' | 'quarter' | 'month' | 'week' | 'day'
+CategoryLevel: 'all' | 'category' | 'group' | 'subcategory'
+NavigationAction: SET_TEMPORAL_LEVEL | SET_CATEGORY_FILTER | etc.
+PeriodSummary: { label, value, total, transactionCount } - for drill cards
+CategorySummary: { label, total, percentage, color } - for drill cards
+      </description>
+    </artifact>
+
+    <artifact path="src/contexts/AnalyticsContext.tsx" reason="Context provider and reducer">
+      <description>
+- AnalyticsProvider wraps analytics views
+- analyticsReducer handles navigation actions
+- Action creators: setTemporalLevel(), setCategoryFilter()
+- Dual-axis independence: temporal changes preserve category (and vice versa)
+      </description>
+    </artifact>
+
+    <artifact path="src/hooks/useAnalyticsNavigation.ts" reason="Primary hook for consuming context">
+      <description>
+- useAnalyticsNavigation() returns { state, dispatch, temporal, category, chartMode, ... }
+- Memoized selectors: temporalLevel, categoryLevel, isYearLevel, hasCategoryFilter
+- Helper functions: getChildTemporalLevel(), getChildCategoryLevel()
+      </description>
+    </artifact>
+
+    <artifact path="src/utils/analyticsHelpers.ts" reason="Validation and helper functions">
+      <description>
+- validateNavigationState() - catches impossible states
+- getDefaultNavigationState(year) - initial state
+- getQuarterFromMonth(month) - Q1-Q4 from YYYY-MM
+- getCurrentYear() - for initialization
+      </description>
+    </artifact>
+
+    <artifact path="src/utils/colors.ts" reason="Color utility for chart/card coordination">
+      <description>
+getColor(key: string): string
+- Preset colors for categories (Supermarket, Restaurant, etc.)
+- Fallback to hash-based color generation
+- Use same colors for drill-down cards as chart segments
+      </description>
+    </artifact>
+
+    <artifact path="src/components/analytics/TemporalBreadcrumb.tsx" reason="Pattern reference">
+      <description>
+Pattern to follow:
+- useAnalyticsNavigation() hook consumption
+- dispatch({ type: 'SET_TEMPORAL_LEVEL', payload: position })
+- min-h-11 for 44px touch targets
+- Tailwind hover/focus states
+- getWeekLabel(), getMonthName() helpers for labels
+      </description>
+    </artifact>
+
+    <artifact path="src/components/analytics/CategoryBreadcrumb.tsx" reason="Pattern reference">
+      <description>
+Pattern to follow:
+- useAnalyticsNavigation() hook consumption
+- dispatch({ type: 'SET_CATEGORY_FILTER', payload: position })
+- dispatch({ type: 'CLEAR_CATEGORY_FILTER' }) for "All Categories"
+- Translation function t(key, language)
+      </description>
+    </artifact>
+
+    <artifact path="src/utils/translations.ts" reason="Add new translation keys">
+      <description>
+Required new keys:
+- drillDownByTime: 'Drill down by time' / 'Desglosar por tiempo'
+- drillDownByCategory: 'Drill down by category' / 'Desglosar por categoría'
+- noTransactionsIn: 'No transactions in {period}'
+- scanToAddData: 'Scan a receipt to add data'
+      </description>
+    </artifact>
+  </code-artifacts>
+
+  <interfaces>
+    <interface name="DrillDownCardProps">
+      <description>Props for presentational DrillDownCard component</description>
+      <definition>
+interface DrillDownCardProps {
+  label: string;              // "Q4", "October", "Food"
+  value: number;              // Total amount in cents/units
+  percentage?: number;        // 0-100, optional
+  onClick: () => void;        // Navigation callback
+  colorIndex?: number;        // Index for getColor()
+  colorKey?: string;          // Key for getColor() (alternative)
+  isEmpty?: boolean;          // True if no transactions
+  emptyMessage?: string;      // Custom empty message
+  theme?: 'light' | 'dark';
+  locale?: string;            // For currency formatting
+}
+      </definition>
+    </interface>
+
+    <interface name="DrillDownGridProps">
+      <description>Props for container DrillDownGrid component</description>
+      <definition>
+interface DrillDownGridProps {
+  transactions: Transaction[];  // Filtered transactions for current view
+  theme?: 'light' | 'dark';
+  locale?: string;
+}
+      </definition>
+    </interface>
+
+    <interface name="TemporalChildData">
+      <description>Data structure for temporal drill-down options</description>
+      <definition>
+interface TemporalChildData {
+  label: string;              // "Q4", "October", "Oct 1-7", "Mon"
+  position: TemporalPosition; // Full position for navigation
+  total: number;
+  percentage: number;
+  transactionCount: number;
+  isEmpty: boolean;
+}
+      </definition>
+    </interface>
+
+    <interface name="CategoryChildData">
+      <description>Data structure for category drill-down options</description>
+      <definition>
+interface CategoryChildData {
+  label: string;              // "Food", "Groceries", "Meats"
+  position: CategoryPosition; // Full position for navigation
+  total: number;
+  percentage: number;
+  transactionCount: number;
+  isEmpty: boolean;
+  colorKey: string;           // For getColor()
+}
+      </definition>
+    </interface>
+  </interfaces>
+
+  <constraints>
+    <constraint type="architecture">
+DrillDownCard MUST be pure/presentational using React.memo - no context access
+DrillDownGrid MUST consume context via useAnalyticsNavigation() hook
+Actions dispatch must preserve dual-axis independence (tested in Story 7.1)
+    </constraint>
+    <constraint type="ux">
+All cards must have min-h-11 (44px) touch targets per UX spec
+Cards full-width on mobile (&lt;640px), 2-column on larger screens
+Hover: border highlight, tap: slight scale transform (0.98)
+Empty cards: grayed (opacity-50) but remain tappable
+    </constraint>
+    <constraint type="week-calculation">
+Weeks are MONTH-ALIGNED (Oct 1-7, 8-14, etc.) per ADR-012
+NOT ISO weeks - last week may be shorter (Oct 29-31 = 3 days)
+Use same logic as TemporalBreadcrumb.getWeekLabel()
+    </constraint>
+    <constraint type="i18n">
+All labels must support English and Spanish
+Use TRANSLATIONS from src/utils/translations.ts
+Date/currency formatting via Intl.DateTimeFormat/NumberFormat
+    </constraint>
+    <constraint type="testing">
+Unit tests target ≥80% coverage on new files
+Use targeted testing during development: npm run test:unit -- --run "tests/unit/analytics/DrillDown*"
+Full suite (npm run test:all) only before marking "review"
+    </constraint>
+    <constraint type="performance">
+DrillDownCard wrapped in React.memo to prevent unnecessary re-renders
+Grid computation should be memoized with useMemo
+Chart and cards should render within 500ms combined
+    </constraint>
+  </constraints>
+
+  <dependencies>
+    <dependency name="react" version="^18.3.1">Core React library</dependency>
+    <dependency name="lucide-react" version="^0.460.0">Icons (24px, strokeWidth 2)</dependency>
+    <dependency name="tailwindcss" version="cdn">Utility-first CSS</dependency>
+    <dependency name="vitest" version="^4.0.13">Test runner</dependency>
+    <dependency name="@testing-library/react" version="^16.3.0">Component testing</dependency>
+  </dependencies>
+
+  <testing>
+    <standards>
+      <item>Unit tests: tests/unit/analytics/DrillDownCard.test.tsx</item>
+      <item>Unit tests: tests/unit/analytics/DrillDownGrid.test.tsx</item>
+      <item>Integration tests: tests/integration/analytics/drillDown.test.tsx</item>
+      <item>Target ≥80% coverage on new files</item>
+      <item>Test each temporal level renders correct children (5 cases)</item>
+      <item>Test each category level renders correct children (4 cases)</item>
+      <item>Test click handlers dispatch correct actions</item>
+      <item>Test empty state styling and messages</item>
+      <item>Test dual-axis independence (temporal drill preserves category)</item>
+    </standards>
+    <test-locations>
+      <location>tests/unit/analytics/DrillDownCard.test.tsx</location>
+      <location>tests/unit/analytics/DrillDownGrid.test.tsx</location>
+      <location>tests/integration/analytics/drillDown.test.tsx</location>
+    </test-locations>
+    <test-ideas>
+      <idea ac="1,2,3,4,5">Test getTemporalChildren returns correct children for each level</idea>
+      <idea ac="6">Test card renders label, formatted currency, percentage</idea>
+      <idea ac="7">Test color indicator uses getColor() correctly</idea>
+      <idea ac="8">Test temporal card onClick dispatches SET_TEMPORAL_LEVEL</idea>
+      <idea ac="9">Test grid shows both temporal AND category cards when filter active</idea>
+      <idea ac="10">Test getCategoryChildren returns correct children for each level</idea>
+      <idea ac="11">Test category card onClick dispatches SET_CATEGORY_FILTER</idea>
+      <idea ac="12,13">Test empty state renders message and CTA</idea>
+      <idea ac="14">Test empty cards have grayed styling but are still clickable</idea>
+      <idea ac="15">Test cards have min-h-11 class for touch targets</idea>
+      <idea ac="16">Test hover/tap classes are applied</idea>
+      <idea ac="17">Test React.memo prevents re-render with same props</idea>
+      <idea ac="18">Test DrillDownGrid reads from AnalyticsContext correctly</idea>
+      <idea ac="all">Integration: Test full drill-down flow Year→Quarter→Month→Week→Day</idea>
+      <idea ac="all">Integration: Test category drill-down All→Category→Group→Subcategory</idea>
+    </test-ideas>
+  </testing>
+
+  <files-to-create>
+    <file>src/components/analytics/DrillDownCard.tsx</file>
+    <file>src/components/analytics/DrillDownGrid.tsx</file>
+    <file>tests/unit/analytics/DrillDownCard.test.tsx</file>
+    <file>tests/unit/analytics/DrillDownGrid.test.tsx</file>
+    <file>tests/integration/analytics/drillDown.test.tsx</file>
+  </files-to-create>
+
+  <files-to-modify>
+    <file>src/utils/translations.ts - Add new translation keys</file>
+  </files-to-modify>
+</story-context>

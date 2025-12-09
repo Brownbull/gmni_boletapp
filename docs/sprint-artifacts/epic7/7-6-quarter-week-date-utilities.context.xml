@@ -1,0 +1,246 @@
+<story-context id="7-6-quarter-week-date-utilities" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>6</storyId>
+    <title>Quarter & Week Date Utilities</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2025-12-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic7/story-7.6-quarter-week-date-utilities.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>utilities for quarter and week calculations</iWant>
+    <soThat>temporal navigation works correctly with consistent edge-case handling</soThat>
+    <tasks>
+      <task id="1" status="pending">
+        <title>Create quarter utility functions (AC: #1, #5, #6)</title>
+        <subtasks>
+          <subtask>Create `getQuartersInYear(year: number): Quarter[]` function returning array of 4 quarter objects</subtask>
+          <subtask>Create `getMonthsInQuarter(year: number, quarter: string): string[]` function mapping Q1-Q4 to months</subtask>
+          <subtask>Create `getQuarterFromMonth(month: string): string` function parsing month to Q1-Q4</subtask>
+        </subtasks>
+      </task>
+      <task id="2" status="pending">
+        <title>Create week utility functions (AC: #2, #3, #4, #7, #8)</title>
+        <subtasks>
+          <subtask>Create `getWeeksInMonth(month: string): WeekRange[]` function with month-aligned chunks per ADR-012</subtask>
+          <subtask>Create `formatWeekLabel(start: string, end: string, locale: string): string` function using Intl.DateTimeFormat</subtask>
+        </subtasks>
+      </task>
+      <task id="3" status="pending">
+        <title>Create type definitions</title>
+        <subtasks>
+          <subtask>Add Quarter interface to src/utils/date.ts</subtask>
+          <subtask>Add WeekRange interface to src/utils/date.ts</subtask>
+        </subtasks>
+      </task>
+      <task id="4" status="pending">
+        <title>Handle edge cases (AC: #9)</title>
+        <subtasks>
+          <subtask>February leap year: 2024 has 29 days, 2025 has 28 days</subtask>
+          <subtask>Short months: April, June, September, November have 30 days</subtask>
+          <subtask>Year transitions: Handle Q4 of one year correctly</subtask>
+          <subtask>Month boundary: Week starting Dec 25 doesn't extend to January</subtask>
+        </subtasks>
+      </task>
+      <task id="5" status="pending">
+        <title>Write unit tests for quarter functions (AC: #1, #5, #6)</title>
+        <subtasks>
+          <subtask>Create tests/unit/date.test.ts (or extend existing)</subtask>
+          <subtask>Test getQuartersInYear returns 4 quarters with correct months</subtask>
+          <subtask>Test getMonthsInQuarter for all quarters</subtask>
+          <subtask>Test getQuarterFromMonth for all months</subtask>
+        </subtasks>
+      </task>
+      <task id="6" status="pending">
+        <title>Write unit tests for week functions (AC: #2, #3, #4)</title>
+        <subtasks>
+          <subtask>Test October 2024 (31 days) returns 5 weeks with correct ranges</subtask>
+          <subtask>Test February 2024 (leap year) ends on Feb 29</subtask>
+          <subtask>Test February 2025 (non-leap year) ends on Feb 28</subtask>
+          <subtask>Test April 2024 (30 days) has correct week boundaries</subtask>
+        </subtasks>
+      </task>
+      <task id="7" status="pending">
+        <title>Write unit tests for locale formatting (AC: #7, #8)</title>
+        <subtasks>
+          <subtask>Test formatWeekLabel with 'en' locale</subtask>
+          <subtask>Test formatWeekLabel with 'es' locale</subtask>
+        </subtasks>
+      </task>
+      <task id="8" status="pending">
+        <title>Verify and document (AC: All)</title>
+        <subtasks>
+          <subtask>Run targeted test suite: npm run test:unit -- --run "tests/unit/date.test.ts"</subtask>
+          <subtask>Run full test suite before marking complete</subtask>
+          <subtask>Verify TypeScript compiles without errors</subtask>
+          <subtask>Update story file with completion notes and file list</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Given a year (e.g., 2024), when `getQuartersInYear(2024)` is called, then it returns an array of 4 quarter objects with label and months</criterion>
+    <criterion id="AC2">Given a month string (e.g., "2024-10"), when `getWeeksInMonth('2024-10')` is called, then it returns month-aligned week chunks with labels and date ranges</criterion>
+    <criterion id="AC3">Given October 2024 (31 days), when `getWeeksInMonth('2024-10')` is called, then the last week is "Oct 29-31" (partial weeks included)</criterion>
+    <criterion id="AC4">Given February 2024 (leap year), when `getWeeksInMonth('2024-02')` is called, then the last day is Feb 29</criterion>
+    <criterion id="AC5">Given a quarter string (e.g., "Q4") and year, when `getMonthsInQuarter(2024, 'Q4')` is called, then it returns ['2024-10', '2024-11', '2024-12']</criterion>
+    <criterion id="AC6">Given a month string (e.g., "2024-10"), when `getQuarterFromMonth('2024-10')` is called, then it returns 'Q4'</criterion>
+    <criterion id="AC7">Given a week start and end date with locale 'en', when `formatWeekLabel('2024-10-01', '2024-10-07', 'en')` is called, then it returns "Oct 1-7"</criterion>
+    <criterion id="AC8">Given a week start and end date with locale 'es', when `formatWeekLabel('2024-10-01', '2024-10-07', 'es')` is called, then it returns locale-appropriate format</criterion>
+    <criterion id="AC9">All date utility functions handle edge cases: year transitions, February boundary (28 vs 29 days), short months (April, June, September, November)</criterion>
+    <criterion id="AC10">No external date libraries required - uses native JavaScript Date and Intl.DateTimeFormat</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/epic7/tech-spec-epic-7.md</path>
+        <title>Epic 7 Technical Specification</title>
+        <section>Services and Modules - Date Utilities</section>
+        <snippet>Date Utilities in src/utils/date.ts (extended): getQuartersInYear(), getWeeksInMonth(), getQuarterFromMonth(), formatWeekLabel() - Story 7.6. AC5-AC10 cover quarter/week utilities.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture-epic7.md</path>
+        <title>Epic 7 Architecture</title>
+        <section>ADR-012: Month-Aligned Week Chunks</section>
+        <snippet>Use fixed 7-day chunks within each month: Oct 1-7, Oct 8-14, Oct 15-21, Oct 22-28, Oct 29-31. The last "week" may have fewer than 7 days. Matches user mental model of "October's weeks".</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd-epic7.md</path>
+        <title>Epic 7 Product Requirements</title>
+        <section>Temporal Navigation FR5-FR11</section>
+        <snippet>FR8: Users can view analytics at Week level showing weekly totals with date range labels (e.g., "Oct 1-7"). Week labeling uses date ranges (not week numbers).</snippet>
+      </doc>
+      <doc>
+        <path>docs/team-standards.md</path>
+        <title>Team Standards</title>
+        <section>Fast Verification Strategy</section>
+        <snippet>During development use targeted testing: npx tsc --noEmit, then npm run test:unit -- --run tests/unit/date.test.ts. Full suite only before marking story as "review".</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <file>
+        <path>src/utils/date.ts</path>
+        <kind>utility</kind>
+        <symbol>formatDate</symbol>
+        <lines>1-7</lines>
+        <reason>PRIMARY FILE TO EXTEND - Currently only has formatDate(). Story 7.6 adds quarter and week utility functions here.</reason>
+      </file>
+      <file>
+        <path>src/utils/chartModeRegistry.ts</path>
+        <kind>utility</kind>
+        <symbol>getWeeksInMonth, getMonthsInQuarter, getShortMonthName, getMonthName</symbol>
+        <lines>36-99</lines>
+        <reason>CONTAINS INLINE IMPLEMENTATIONS to extract. After Story 7.6, this file should import from date.ts instead of defining inline helpers.</reason>
+      </file>
+      <file>
+        <path>src/types/analytics.ts</path>
+        <kind>types</kind>
+        <symbol>TemporalPosition, TemporalLevel</symbol>
+        <lines>17-32</lines>
+        <reason>Type definitions for temporal navigation. Week is number 1-5 (week index within month, month-aligned chunks).</reason>
+      </file>
+      <file>
+        <path>tests/unit/analytics/chartModeRegistry.test.ts</path>
+        <kind>test</kind>
+        <symbol>getWeekLabelsForMonth, getMonthLabelsForQuarter tests</symbol>
+        <lines>337-419</lines>
+        <reason>REFERENCE TEST PATTERNS - Contains existing tests for week/quarter labels. New date.test.ts can reference similar patterns and edge cases.</reason>
+      </file>
+    </code>
+
+    <dependencies>
+      <ecosystem name="node">
+        <package name="react" version="^18.3.1" />
+        <package name="typescript" version="^5.3.3" />
+        <package name="vitest" version="^4.0.13" />
+      </ecosystem>
+      <note>NO external date libraries allowed per AC #10. Use native JavaScript Date and Intl.DateTimeFormat only.</note>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="ADR-012">Week calculation uses month-aligned chunks NOT ISO weeks. Oct 1-7, Oct 8-14, etc. Last week may be shorter (1-7 days).</constraint>
+    <constraint source="AC #10">No external date libraries - use native JavaScript Date and Intl.DateTimeFormat only.</constraint>
+    <constraint source="Dev Notes">Functions should be pure utilities with no side effects, suitable for unit testing.</constraint>
+    <constraint source="Architecture">New functions extend src/utils/date.ts - do not create new files for utilities.</constraint>
+    <constraint source="team-standards.md">Test quality over quantity - every test must validate meaningful behavior.</constraint>
+    <constraint source="Story 7.4 Learnings">chartModeRegistry.ts already has inline implementations that should be refactored to use new utilities after Story 7.6 completes.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Quarter</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface Quarter { label: 'Q1' | 'Q2' | 'Q3' | 'Q4'; months: [string, string, string]; // YYYY-MM format }</signature>
+      <path>src/utils/date.ts (to be added)</path>
+    </interface>
+    <interface>
+      <name>WeekRange</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface WeekRange { label: string; start: string; // YYYY-MM-DD end: string; // YYYY-MM-DD weekNumber: number; // 1-5 within month }</signature>
+      <path>src/utils/date.ts (to be added)</path>
+    </interface>
+    <interface>
+      <name>getQuartersInYear</name>
+      <kind>function signature</kind>
+      <signature>getQuartersInYear(year: number): Quarter[]</signature>
+      <path>src/utils/date.ts (to be added)</path>
+    </interface>
+    <interface>
+      <name>getMonthsInQuarter</name>
+      <kind>function signature</kind>
+      <signature>getMonthsInQuarter(year: number, quarter: string): string[]</signature>
+      <path>src/utils/date.ts (to be added)</path>
+    </interface>
+    <interface>
+      <name>getQuarterFromMonth</name>
+      <kind>function signature</kind>
+      <signature>getQuarterFromMonth(month: string): string</signature>
+      <path>src/utils/date.ts (to be added)</path>
+    </interface>
+    <interface>
+      <name>getWeeksInMonth</name>
+      <kind>function signature</kind>
+      <signature>getWeeksInMonth(month: string): WeekRange[]</signature>
+      <path>src/utils/date.ts (to be added)</path>
+    </interface>
+    <interface>
+      <name>formatWeekLabel</name>
+      <kind>function signature</kind>
+      <signature>formatWeekLabel(start: string, end: string, locale: string): string</signature>
+      <path>src/utils/date.ts (to be added)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Unit tests use Vitest with Testing Library patterns. Tests live in tests/unit/ with .test.ts extension.
+      Coverage target ≥80% for new code. Use targeted testing during development: npx tsc --noEmit first,
+      then npm run test:unit -- --run tests/unit/date.test.ts. Full suite only before marking story as "review".
+    </standards>
+    <locations>
+      <location>tests/unit/date.test.ts (to be created)</location>
+      <location>tests/unit/analytics/chartModeRegistry.test.ts (reference for edge cases)</location>
+    </locations>
+    <ideas>
+      <idea acRefs="AC1">Test getQuartersInYear(2024) returns 4 quarters with correct month arrays: Q1=['2024-01','2024-02','2024-03'], etc.</idea>
+      <idea acRefs="AC1">Test getQuartersInYear(2025) uses 2025 in month strings</idea>
+      <idea acRefs="AC2,AC3">Test getWeeksInMonth('2024-10') returns 5 weeks: Oct 1-7, Oct 8-14, Oct 15-21, Oct 22-28, Oct 29-31</idea>
+      <idea acRefs="AC4">Test getWeeksInMonth('2024-02') ends on Feb 29 (leap year)</idea>
+      <idea acRefs="AC4">Test getWeeksInMonth('2025-02') ends on Feb 28 (non-leap year)</idea>
+      <idea acRefs="AC5">Test getMonthsInQuarter(2024, 'Q1') returns ['2024-01','2024-02','2024-03']</idea>
+      <idea acRefs="AC5">Test getMonthsInQuarter(2024, 'Q4') returns ['2024-10','2024-11','2024-12']</idea>
+      <idea acRefs="AC6">Test getQuarterFromMonth('2024-01') returns 'Q1', ('2024-04')='Q2', ('2024-07')='Q3', ('2024-10')='Q4'</idea>
+      <idea acRefs="AC7">Test formatWeekLabel('2024-10-01', '2024-10-07', 'en') returns 'Oct 1-7'</idea>
+      <idea acRefs="AC8">Test formatWeekLabel('2024-10-01', '2024-10-07', 'es') returns Spanish locale format</idea>
+      <idea acRefs="AC9">Test edge case: April 2024 (30 days) has correct week boundaries ending at Apr 30</idea>
+      <idea acRefs="AC9">Test edge case: December 2024 weeks don't extend to January 2025</idea>
+    </ideas>
+  </tests>
+</story-context>

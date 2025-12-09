@@ -35,28 +35,31 @@ If you're new to CI/CD, start here:
 - **Test Job Steps:** 22 (updated in Epic 4)
 - **Deploy Job:** Automatic on merge to `main` (Story 6.0)
 
-### Test Commands
+### Test Commands (Epic 7 Tiered Strategy)
 
-**Using the centralized test script (recommended):**
+**Tiered testing for optimal development speed:**
 ```bash
-./scripts/test-local.sh quick      # Fast tests before commit (2-5s)
-./scripts/test-local.sh all        # Complete validation before push (30-60s)
-./scripts/test-local.sh ci         # Full CI simulation with build (60-90s)
-./scripts/test-local.sh unit       # Unit tests only
-./scripts/test-local.sh integration # Integration tests
-./scripts/test-local.sh e2e        # E2E tests
-./scripts/test-local.sh coverage   # Generate coverage report
-./scripts/test-local.sh watch      # TDD mode with auto-rerun
-./scripts/test-local.sh help       # Show all options
+npm run test:quick         # TypeScript + parallel unit tests (~35s) ⚡
+npm run test:story         # Quick + integration tests (~2min) 📝
+npm run test:sprint        # Full suite: unit + integration + E2E (~5min) 🏁
 ```
 
-**Using npm scripts directly:**
+**Individual test types:**
 ```bash
-npm run test:unit          # Unit tests only (~500ms)
-npm run test:integration   # Integration tests (~1s)
-npm run test:e2e          # E2E tests (~18s)
-npm run test:all          # All tests sequentially
-npm run test:coverage     # Generate coverage report
+npm run test:unit              # Unit tests only (sequential ~3min)
+npm run test:unit:parallel     # Unit tests with parallelization (~22s)
+npm run test:integration       # Integration tests (~1min)
+npm run test:e2e               # E2E tests (~60s)
+npm run test:all               # All tests sequentially (~5min)
+npm run test:coverage          # Generate coverage report
+```
+
+**Using the centralized test script:**
+```bash
+./scripts/test-local.sh quick      # Fast tests before commit
+./scripts/test-local.sh all        # Complete validation before push
+./scripts/test-local.sh ci         # Full CI simulation with build
+./scripts/test-local.sh help       # Show all options
 ```
 
 ### Viewing Workflow Results
@@ -64,14 +67,14 @@ npm run test:coverage     # Generate coverage report
 - **Latest Run:** `gh run list --limit 1`
 - **View Logs:** `gh run view <run-id> --log`
 
-## 📊 Current Test Statistics (Post-Epic 3)
+## 📊 Current Test Statistics (Epic 7)
 
-- **Unit Tests:** 14 tests (Vitest)
-- **Integration Tests:** 47 tests (React Testing Library + Firebase)
+- **Unit Tests:** 610+ tests (Vitest) - parallelized for speed
+- **Integration Tests:** 300+ tests (React Testing Library + Firebase)
 - **E2E Tests:** 28 tests (Playwright) - includes auth, transactions, accessibility
 - **Accessibility Tests:** 16 tests (@axe-core/playwright) - WCAG 2.1 Level AA
 - **Lighthouse Tests:** 6 tests (playwright-lighthouse) - Performance baselines
-- **Total:** 95+ automated tests
+- **Total:** 950+ automated tests
 
 ## 🛠️ Tools Used
 
@@ -153,5 +156,5 @@ The deploy job runs **only on push to `main`** after tests pass:
 
 ---
 
-**Last Updated:** 2025-12-03
-**Workflow Version:** 3.0 (22 test steps + 7 deploy steps, auto-deploy on main)
+**Last Updated:** 2025-12-07
+**Workflow Version:** 3.1 (22 test steps + 7 deploy steps, auto-deploy on main, tiered local testing)

@@ -1,0 +1,266 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>7</storyId>
+    <title>TrendsView Integration</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic7/story-7.7-trendsview-integration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>the analytics view to use the new navigation components</iWant>
+    <soThat>I can explore my spending with the dual-axis breadcrumb system</soThat>
+    <tasks>
+      <task n="1" title="Wrap TrendsView with AnalyticsContext.Provider" ac="3, 19">
+        <subtask>Edit src/App.tsx to import AnalyticsContext from Story 7.1</subtask>
+        <subtask>Wrap TrendsView route/component with AnalyticsProvider</subtask>
+        <subtask>Verify context is accessible in TrendsView</subtask>
+      </task>
+      <task n="2" title="Migrate TrendsView navigation state to context" ac="3, 4">
+        <subtask>Identify existing useState calls in TrendsView related to navigation</subtask>
+        <subtask>Remove local state for: selectedYear, selectedMonth, selectedCategory, etc.</subtask>
+        <subtask>Replace with useAnalyticsNavigation() hook</subtask>
+        <subtask>Remove prop drilling from App.tsx to TrendsView for navigation state</subtask>
+      </task>
+      <task n="3" title="Integrate TemporalBreadcrumb component" ac="1, 2">
+        <subtask>Import TemporalBreadcrumb from Story 7.2</subtask>
+        <subtask>Place in header area (top left per UX spec)</subtask>
+        <subtask>Remove any existing temporal navigation UI</subtask>
+        <subtask>Verify breadcrumb updates on navigation</subtask>
+      </task>
+      <task n="4" title="Integrate CategoryBreadcrumb component" ac="1, 2">
+        <subtask>Import CategoryBreadcrumb from Story 7.3</subtask>
+        <subtask>Place in header area (top right or below temporal per UX spec)</subtask>
+        <subtask>Remove any existing category filter UI</subtask>
+        <subtask>Verify All Categories option clears filter</subtask>
+      </task>
+      <task n="5" title="Integrate ChartModeToggle and chart display" ac="1, 2">
+        <subtask>Import ChartModeToggle from Story 7.4</subtask>
+        <subtask>Place toggle below total amount display</subtask>
+        <subtask>Integrate AnalyticsChart wrapper</subtask>
+        <subtask>Verify mode toggle switches between pie/bar and grouped bar</subtask>
+        <subtask>Hide mode toggle on Day view (no children to compare)</subtask>
+      </task>
+      <task n="6" title="Integrate DrillDownGrid component" ac="1, 2">
+        <subtask>Import DrillDownGrid from Story 7.5</subtask>
+        <subtask>Place below chart area</subtask>
+        <subtask>Verify temporal drill-down cards render based on current level</subtask>
+        <subtask>Verify category drill-down cards render when category filter active</subtask>
+      </task>
+      <task n="7" title="Implement temporal navigation views" ac="5-9">
+        <subtask>Verify Year view: Annual totals with Q1-Q4 drill-down options</subtask>
+        <subtask>Verify Quarter view: 3-month aggregation with month options</subtask>
+        <subtask>Verify Month view: Monthly totals with week options</subtask>
+        <subtask>Verify Week view: Weekly totals with day options</subtask>
+        <subtask>Verify Day view: Daily totals with no temporal drill-down</subtask>
+      </task>
+      <task n="8" title="Implement category navigation flows" ac="10-13">
+        <subtask>Verify category selection from pie slice dispatches SET_CATEGORY_FILTER</subtask>
+        <subtask>Verify group selection preserves temporal level</subtask>
+        <subtask>Verify subcategory selection preserves temporal level</subtask>
+        <subtask>Verify category drill-down cards navigate correctly</subtask>
+      </task>
+      <task n="9" title="Ensure layout consistency and performance" ac="14-17">
+        <subtask>Verify all temporal views use identical structure</subtask>
+        <subtask>Add fixed dimensions to breadcrumb/chart containers</subtask>
+        <subtask>Apply useMemo for derived state</subtask>
+        <subtask>Apply React.memo to presentation components</subtask>
+      </task>
+      <task n="10" title="Refactor TrendsView to orchestration-only" ac="18">
+        <subtask>Remove any inline rendering logic for child components</subtask>
+        <subtask>Ensure TrendsView only provides layout structure</subtask>
+        <subtask>Move complex computation to analyticsHelpers.ts or context</subtask>
+      </task>
+      <task n="11" title="Write integration tests for full TrendsView flow" ac="All">
+        <subtask>Create tests/integration/analytics/trendsView.test.tsx</subtask>
+        <subtask>Test Year - Quarter - Month - Week - Day navigation</subtask>
+        <subtask>Test category filter application and preservation</subtask>
+        <subtask>Test dual-axis independence</subtask>
+        <subtask>Test chart mode switching</subtask>
+        <subtask>Test drill-down card navigation</subtask>
+      </task>
+      <task n="12" title="Write E2E tests for complete user journey" ac="All">
+        <subtask>Create tests/e2e/analytics/navigation.spec.ts</subtask>
+        <subtask>Test full drill-down journey from Year to Day</subtask>
+        <subtask>Test breadcrumb jump-back navigation</subtask>
+        <subtask>Test combined temporal + category filtering</subtask>
+        <subtask>Test empty state handling</subtask>
+      </task>
+      <task n="13" title="Verify and document" ac="All">
+        <subtask>Run TypeScript compilation</subtask>
+        <subtask>Run targeted tests</subtask>
+        <subtask>Run integration tests</subtask>
+        <subtask>Run full test suite</subtask>
+        <subtask>Update story file with completion notes and file list</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">When I navigate to Analytics (TrendsView), the view loads with: Temporal breadcrumb (top left), Category breadcrumb (top right or below temporal), Total amount for current view, Chart mode toggle, Chart (pie/bar or grouped bar based on mode), Drill-down cards grid</criterion>
+    <criterion id="2">The layout matches the UX structure with breadcrumbs, period label, total, mode toggle, chart, and drill-down cards</criterion>
+    <criterion id="3">All analytics navigation state is managed by AnalyticsContext - no useState calls for navigation in TrendsView</criterion>
+    <criterion id="4">Existing TrendsView props/state are migrated to AnalyticsContext (removing 6+ useState calls, 20+ prop drilling)</criterion>
+    <criterion id="5">Year view displays annual totals with drill-down options for Q1-Q4</criterion>
+    <criterion id="6">Quarter view displays 3-month aggregation (e.g., Q4 = Oct+Nov+Dec totals) with month drill-down options</criterion>
+    <criterion id="7">Month view displays monthly totals with week drill-down options</criterion>
+    <criterion id="8">Week view displays weekly totals using date range labels (e.g., Oct 1-7) with day drill-down options</criterion>
+    <criterion id="9">Day view displays daily totals for selected date (no temporal drill-down options)</criterion>
+    <criterion id="10">Selecting a category in the chart or drill-down filters to that category, preserving temporal level</criterion>
+    <criterion id="11">Selecting a group filters to items with that group, preserving temporal level</criterion>
+    <criterion id="12">Selecting a subcategory filters to items with that subcategory, preserving temporal level</criterion>
+    <criterion id="13">Category drill-down via cards drills into subcategories</criterion>
+    <criterion id="14">All temporal views use identical layout structure (FR52)</criterion>
+    <criterion id="15">No layout shifts during navigation - CLS less than 0.1 (NFR3)</criterion>
+    <criterion id="16">View transitions complete in under 300ms (NFR1)</criterion>
+    <criterion id="17">Chart renders in under 500ms after data is available (NFR2)</criterion>
+    <criterion id="18">TrendsView becomes orchestration-only - delegates all rendering to child components (no direct state management)</criterion>
+    <criterion id="19">AnalyticsContext.Provider wraps TrendsView in App.tsx</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc priority="critical" path="docs/prd-epic7.md">PRD for Epic 7 - Analytics Navigation Enhancement. Defines 8 user stories, functional requirements FR50-FR60, non-functional requirements NFR1-NFR3 (transitions under 300ms, charts under 500ms, CLS under 0.1).</doc>
+      <doc priority="critical" path="docs/architecture-epic7.md">Architecture for Epic 7 - ADR-010 (React Context), ADR-011 (Chart Registry), ADR-012 (Week Alignment). Defines AnalyticsContext pattern, dual-axis independence, reducer actions.</doc>
+      <doc priority="critical" path="docs/sprint-artifacts/epic7/tech-spec-epic-7.md">Technical specification with detailed implementation for all 8 stories. Includes type definitions, component signatures, and testing requirements.</doc>
+      <doc priority="high" path="docs/ux-design-specification.md">UX design spec with visual structure: temporal breadcrumb (top left), category breadcrumb (top right), total amount, chart mode toggle, chart, drill-down cards grid.</doc>
+    </docs>
+
+    <code>
+      <source title="Analytics Context (Story 7.1)" path="src/contexts/AnalyticsContext.tsx" status="complete">
+        AnalyticsProvider component and analyticsReducer. Actions: SET_TEMPORAL_LEVEL, SET_CATEGORY_FILTER, TOGGLE_CHART_MODE, RESET_TO_YEAR, CLEAR_CATEGORY_FILTER. Implements dual-axis independence.
+      </source>
+      <source title="Analytics Types" path="src/types/analytics.ts" status="complete">
+        Type definitions for TemporalPosition, CategoryPosition, TemporalLevel, CategoryLevel, ChartMode, NavigationAction, AnalyticsNavigationState, AnalyticsContextValue.
+      </source>
+      <source title="useAnalyticsNavigation Hook" path="src/hooks/useAnalyticsNavigation.ts" status="complete">
+        Custom hook providing typed access to state, dispatch, and convenience selectors (temporal, category, chartMode, temporalLevel, categoryLevel, isYearLevel, hasCategoryFilter, isComparisonMode).
+      </source>
+      <source title="Analytics Helpers" path="src/utils/analyticsHelpers.ts" status="complete">
+        validateNavigationState(), getDefaultNavigationState(), getQuarterFromMonth(), getCurrentYear(). Validates state and auto-corrects invalid hierarchies.
+      </source>
+      <source title="TemporalBreadcrumb (Story 7.2)" path="src/components/analytics/TemporalBreadcrumb.tsx" status="complete">
+        Collapsible breadcrumb showing Year/Quarter/Month/Week/Day. Uses Calendar icon, supports keyboard navigation and 44px touch targets.
+      </source>
+      <source title="CategoryBreadcrumb (Story 7.3)" path="src/components/analytics/CategoryBreadcrumb.tsx" status="complete">
+        Collapsible breadcrumb showing All Categories/Category/Group/Subcategory. Uses Tag icon, includes "All Categories" clear option.
+      </source>
+      <source title="ChartModeToggle (Story 7.4)" path="src/components/analytics/ChartModeToggle.tsx" status="complete">
+        Pill-style segmented control. Aggregation (PieChart icon) vs Comparison (BarChart2 icon). Hidden at Day level via supportsComparisonMode().
+      </source>
+      <source title="DrillDownGrid (Story 7.5)" path="src/components/analytics/DrillDownGrid.tsx" status="complete">
+        Container rendering DrillDownCard components. Computes temporal children (quarters/months/weeks/days) and category children. Responsive grid layout.
+      </source>
+      <source title="DrillDownCard" path="src/components/analytics/DrillDownCard.tsx" status="complete">
+        Individual card showing label, total, percentage. 44px touch targets, empty state handling.
+      </source>
+      <source title="TotalDisplay" path="src/components/analytics/TotalDisplay.tsx" status="complete">
+        Displays formatted total amount with period label.
+      </source>
+      <source title="Current TrendsView (to migrate)" path="src/views/TrendsView.tsx" status="needs-refactor">
+        Current implementation with 26 props. Uses local state for navigation. Must migrate to AnalyticsContext and integrate new components. Contains 6+ useState calls and 20+ prop drilling to remove.
+      </source>
+      <source title="Current App.tsx (to modify)" path="src/App.tsx" status="needs-refactor">
+        Must wrap TrendsView with AnalyticsProvider. Currently manages selectedYear, selectedMonth, selectedCategory, selectedGroup, selectedSubcategory, chartType in App state - to be removed.
+      </source>
+    </code>
+
+    <dependencies>
+      <dep name="react" version="^18.3.1">React core library - useReducer, useContext, useMemo, useCallback</dep>
+      <dep name="lucide-react" version="^0.460.0">Icons: Calendar, Tag, ChevronDown, PieChart, BarChart2</dep>
+      <dep name="vitest" version="^4.0.13">Test framework for unit and integration tests</dep>
+      <dep name="@testing-library/react" version="^16.3.0">React testing utilities</dep>
+      <dep name="@playwright/test" version="^1.56.1">E2E testing framework</dep>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint id="NFR1">View transitions must complete in under 300ms</constraint>
+    <constraint id="NFR2">Chart renders must complete in under 500ms after data available</constraint>
+    <constraint id="NFR3">Cumulative Layout Shift (CLS) must be less than 0.1</constraint>
+    <constraint id="FR52">All temporal views must use identical layout structure</constraint>
+    <constraint id="DUAL_AXIS">Temporal changes must preserve category filter and vice versa</constraint>
+    <constraint id="TOUCH">All interactive elements must have 44px minimum touch targets</constraint>
+    <constraint id="A11Y">Full keyboard navigation support with ARIA labels</constraint>
+    <constraint id="I18N">Support English and Spanish (locale prop)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface title="AnalyticsContext value" source="src/contexts/AnalyticsContext.tsx">
+      state: AnalyticsNavigationState (temporal, category, chartMode)
+      dispatch: React.Dispatch&lt;NavigationAction&gt;
+    </interface>
+    <interface title="useAnalyticsNavigation return" source="src/hooks/useAnalyticsNavigation.ts">
+      state, dispatch, temporal, category, chartMode, temporalLevel, categoryLevel, isYearLevel, hasCategoryFilter, isComparisonMode
+    </interface>
+    <interface title="Navigation Actions" source="src/types/analytics.ts">
+      SET_TEMPORAL_LEVEL: { type, payload: TemporalPosition }
+      SET_CATEGORY_FILTER: { type, payload: CategoryPosition }
+      TOGGLE_CHART_MODE: { type }
+      RESET_TO_YEAR: { type, payload: { year: string } }
+      CLEAR_CATEGORY_FILTER: { type }
+    </interface>
+    <interface title="TemporalPosition" source="src/types/analytics.ts">
+      level: 'year' | 'quarter' | 'month' | 'week' | 'day'
+      year: string, quarter?: string, month?: string, week?: number, day?: string
+    </interface>
+    <interface title="CategoryPosition" source="src/types/analytics.ts">
+      level: 'all' | 'category' | 'group' | 'subcategory'
+      category?: string, group?: string, subcategory?: string
+    </interface>
+    <interface title="Component Props">
+      TemporalBreadcrumbProps: { theme?: string, locale?: string }
+      CategoryBreadcrumbProps: { theme?: string, locale?: string }
+      ChartModeToggleProps: { theme?: string, locale?: 'en' | 'es' }
+      DrillDownGridProps: { transactions: Transaction[], theme?: 'light' | 'dark', locale?: string, currency?: string }
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      - Unit tests: src/contexts, src/hooks, src/utils, src/components
+      - Integration tests: Component interactions with context
+      - E2E tests: Full user journeys with Playwright
+      - Test pattern: Use AnalyticsProvider wrapper with custom initialState for isolated tests
+      - Mock pattern: No mocking of AnalyticsContext - test real reducer behavior
+    </standards>
+    <locations>
+      <location path="tests/unit/analytics/">Unit tests for individual components and utilities (10 test files)</location>
+      <location path="tests/integration/analytics/">Integration tests for component interactions (4 test files)</location>
+      <location path="tests/e2e/analytics/" status="to-create">E2E tests for full navigation journeys (Story 7.7 Task 12)</location>
+    </locations>
+    <existingTests>
+      <test path="tests/unit/analytics/analyticsReducer.test.tsx">Reducer action tests</test>
+      <test path="tests/unit/analytics/useAnalyticsNavigation.test.tsx">Hook tests</test>
+      <test path="tests/unit/analytics/validateNavigationState.test.ts">State validation tests</test>
+      <test path="tests/unit/analytics/TemporalBreadcrumb.test.tsx">Temporal breadcrumb component tests</test>
+      <test path="tests/unit/analytics/CategoryBreadcrumb.test.tsx">Category breadcrumb component tests</test>
+      <test path="tests/unit/analytics/ChartModeToggle.test.tsx">Chart mode toggle tests</test>
+      <test path="tests/unit/analytics/DrillDownGrid.test.tsx">Drill-down grid tests</test>
+      <test path="tests/unit/analytics/DrillDownCard.test.tsx">Drill-down card tests</test>
+      <test path="tests/integration/analytics/temporalBreadcrumb.test.tsx">Temporal navigation integration</test>
+      <test path="tests/integration/analytics/categoryBreadcrumb.test.tsx">Category navigation integration</test>
+      <test path="tests/integration/analytics/chartModeToggle.test.tsx">Chart mode integration</test>
+      <test path="tests/integration/analytics/drillDown.test.tsx">Drill-down integration</test>
+    </existingTests>
+    <ideas>
+      <test story="7.7" task="11" desc="Integration tests for TrendsView">
+        - Test Year → Quarter → Month → Week → Day navigation
+        - Test category filter application and preservation
+        - Test dual-axis independence (temporal change preserves category)
+        - Test chart mode switching
+        - Test drill-down card navigation
+      </test>
+      <test story="7.7" task="12" desc="E2E tests for complete user journey">
+        - Full drill-down journey from Year to Day
+        - Breadcrumb jump-back navigation
+        - Combined temporal + category filtering
+        - Empty state handling
+        - Performance assertions (transitions under 300ms)
+      </test>
+    </ideas>
+  </tests>
+</story-context>

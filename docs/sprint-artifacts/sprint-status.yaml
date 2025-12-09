@@ -1,4 +1,4 @@
-# generated: 2025-12-02
+# generated: 2025-12-09
 # project: boletapp
 # project_key: boletapp
 # tracking_system: file-system
@@ -28,13 +28,14 @@
 # - SM typically drafts next story ONLY after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', dev reviews, then Dev moves to 'done'
 
-generated: 2025-12-02
+generated: 2025-12-09
 project: boletapp
 project_key: boletapp
 tracking_system: file-system
 story_location: docs/sprint-artifacts
 
 development_status:
+  # Epic 1: Production Deployment Readiness
   epic-1: contexted
   1-1-refactor-to-modular-architecture: done
   1-2-production-build-configuration: done
@@ -43,6 +44,7 @@ development_status:
   1-5-production-deployment-verification: done
   epic-1-retrospective: completed
 
+  # Epic 2: Testing Infrastructure & Documentation
   epic-2: contexted
   2-1-documentation-epic-evolution: done
   2-2-test-environment-setup: done
@@ -52,6 +54,7 @@ development_status:
   2-6-cicd-pipeline-coverage-baseline: done
   epic-2-retrospective: completed
 
+  # Epic 3: Production-Grade Quality & Testing Completion
   epic-3: contexted
   3-1-process-governance-setup: done
   3-2-e2e-auth-navigation-workflow: done
@@ -76,6 +79,7 @@ development_status:
   4-5-2-cloud-function-image-processing: done  # 5 points - Code Review APPROVED 2025-11-30
   4-5-3-client-updates-ui: done  # 3 points - Code Review APPROVED 2025-12-01
   4-5-4-cascade-delete-documentation: done  # 2 points - Code Review APPROVED 2025-12-01
+  epic-4-5-retrospective: completed  # Completed after 4.5-4
 
   # Epic 5: Data Download & Export
   # Tech-spec completed 2025-12-02, PRD completed 2025-12-02
@@ -91,16 +95,46 @@ development_status:
   # Epic 6: Smart Category Learning
   # Infrastructure pre-requisite: CI/CD Auto-Deploy (from Epic 5 retro)
   # Tech-spec completed 2025-12-03
-  epic-6: contexted  # Starting 2025-12-03
+  epic-6: contexted  # Started 2025-12-03
   6-0-cicd-auto-deploy-firebase: done  # Infrastructure story - Code Review APPROVED 2025-12-03
   6-1-category-mapping-infrastructure: done  # 3 points - Types, Firestore service, security rules - Code Review APPROVED 2025-12-03
   6-2-fuzzy-matching-engine: done  # 3 points - fuse.js integration, matcher logic - Code Review APPROVED 2025-12-03
   6-3-category-learning-prompt: done  # 2 points - UI prompt on category edit - Code Review APPROVED 2025-12-03
   6-4-auto-apply-on-receipt-scan: done  # 3 points - Apply mappings to Gemini results - Code Review APPROVED 2025-12-03
   6-5-mappings-management-ui: done  # 3 points - Settings section for viewing/editing/deleting - Code Review APPROVED 2025-12-03
-  6-6-epic-release-deployment: in-progress  # 1 point - Context generated 2025-12-03, Dev started 2025-12-03
-  epic-6-retrospective: optional  # To be completed after all Epic 6 stories are done
+  6-6-epic-release-deployment: done  # 1 point - Code Review APPROVED 2025-12-04
+  epic-6-retrospective: completed  # Completed 2025-12-04
 
-  # Future Epics (updated in Epic 4 retrospective)
-  epic-7: backlog  # Subscription & Monetization (4-tier model, Mercado Pago)
-  epic-8: backlog  # Mobile App (iOS & Android)
+  # Epic 7: Analytics UX Redesign
+  # PRD and Architecture documents created 2025-12-05
+  # Tech-spec completed 2025-12-05
+  # Dual-axis navigation, Quarter/Week views, Chart dual mode, consistent UI
+  epic-7: contexted  # Tech-spec generated 2025-12-05
+  7-1-analytics-navigation-context: done  # Foundation - AnalyticsContext, useAnalyticsNavigation hook - Code Review APPROVED 2025-12-05
+  7-2-temporal-breadcrumb-component: done  # Collapsible temporal breadcrumb (Year/Quarter/Month/Week/Day) - Code Review APPROVED 2025-12-05
+  7-3-category-breadcrumb-component: done  # Collapsible category breadcrumb - Code Review APPROVED 2025-12-05
+  7-4-chart-mode-toggle-registry: done  # ChartModeToggle, chart registry pattern - Code Review APPROVED 2025-12-07
+  7-5-drill-down-cards-grid: done  # DrillDownCard, DrillDownGrid components - Code Review APPROVED 2025-12-07
+  7-6-quarter-week-date-utilities: done  # getQuartersInYear(), getWeeksInMonth() utilities - Code Review APPROVED 2025-12-07
+  7-7-trendsview-integration: done  # Refactor TrendsView using new components - Code Review APPROVED 2025-12-07
+  7-8-bug-fixes-polish: done  # FR1-4 fixes, visual consistency, i18n - Code Review APPROVED 2025-12-07
+  7-9-ux-breadcrumb-alignment: done  # UX alignment - breadcrumbs, chart toggle - Code Review APPROVED 2025-12-07
+  7-10-ux-cards-visual-alignment: done  # UX alignment - drill-down cards, legend, nav labels - Code Review APPROVED 2025-12-07
+  7-11-floating-download-fab: done  # UX enhancement - floating download button - Code Review APPROVED 2025-12-08
+  7-12-app-wide-theme-consistency: done  # App-wide theme + color theme selector (Default/Ghibli) - Code Review APPROVED 2025-12-08
+  7-13-stacked-bar-chart-comparison: done  # Stacked bars + correct temporal grouping (Q/M/W/D) - Code Review APPROVED 2025-12-08
+  7-14-analytics-header-layout-fixes: done  # Code Review APPROVED 2025-12-08 - AC #1 superseded by design decision to keep back arrow
+  7-15-seamless-chart-background: done  # Remove card background from chart area for seamless look - Code Review APPROVED 2025-12-08
+  7-16-drill-down-section-toggle: done  # Add Temporal/Category toggle for drill-down cards section - Code Review APPROVED 2025-12-08
+  7-17-stacked-bar-tooltip-ux: done  # Fix tooltip readability + renamed themes (Ghibli→Normal, Default→Professional) - Completed 2025-12-08
+  7-18-drilldown-card-progress-bar: done  # Add thin progress bar below label showing percentage visually - Code Review APPROVED 2025-12-09
+  7-99-epic-release-deployment: done  # Deploy, test, document - Code Review APPROVED 2025-12-09, Deployed 2025-12-09
+  epic-7-retrospective: optional  # Ready for retrospective if needed
+
+  # Future Epics (from Epic 6 retrospective)
+  # NOTE: Epic numbering shifted - Subscription moved to Epic 8, Mobile to Epic 9
+  epic-8: backlog  # Subscription & Monetization (4-tier model, Mercado Pago) - moved from original Epic 7
+  epic-8-retrospective: optional
+
+  epic-9: backlog  # Mobile App (iOS & Android) - moved from original Epic 8
+  epic-9-retrospective: optional

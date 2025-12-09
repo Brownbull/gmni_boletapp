@@ -1,0 +1,332 @@
+<story-context id="7-4-chart-mode-toggle-registry" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>4</storyId>
+    <title>Chart Mode Toggle &amp; Registry</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic7/story-7.4-chart-mode-toggle-registry.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user viewing analytics</asA>
+    <iWant>to toggle between category breakdown and time comparison views</iWant>
+    <soThat>I can answer both "what did I spend on?" and "how does spending vary?"</soThat>
+    <tasks>
+      <task n="1">Create ChartModeToggle component with pill-style segmented control</task>
+      <task n="2">Create chart registry pattern in src/config/chartRegistry.ts</task>
+      <task n="3">Create AnalyticsChart wrapper component</task>
+      <task n="4">Implement aggregation mode (Pie/Bar charts)</task>
+      <task n="5">Implement comparison mode (Grouped Bar chart)</task>
+      <task n="6">Hide toggle on Day view (no children to compare)</task>
+      <task n="7">Add smooth crossfade transition &lt;300ms</task>
+      <task n="8">Write unit tests for registry and toggle</task>
+      <task n="9">Write E2E tests for toggle behavior</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">
+      <description>Mode toggle visible on all temporal views except Day</description>
+      <given>I am on any temporal view except Day</given>
+      <when>I view the chart area</when>
+      <then>I see mode toggle: [Aggregation] [Comparison]</then>
+    </criterion>
+    <criterion id="AC2">
+      <description>Toggle switches chart type</description>
+      <given>I am viewing analytics</given>
+      <when>I tap "Comparison"</when>
+      <then>toggle updates to show Comparison selected AND chart switches from pie/bar to grouped bar showing child periods AND transition is smooth crossfade &lt;300ms</then>
+    </criterion>
+    <criterion id="AC3">
+      <description>Day view hides toggle</description>
+      <given>I am on Day view</given>
+      <when>I view the chart area</when>
+      <then>mode toggle is hidden (single day has no children to compare)</then>
+    </criterion>
+    <criterion id="AC4">
+      <description>Chart registry pattern implemented</description>
+      <requirement>chartRegistry maps chart types to components + metadata</requirement>
+      <requirement>getChartsForMode(mode) returns available charts</requirement>
+      <requirement>Future-ready for Sankey, Treemap, Heatmap additions</requirement>
+    </criterion>
+    <criterion id="AC5">
+      <description>Mode persists for session (FR39)</description>
+      <requirement>Mode selection persists for the duration of the user's session</requirement>
+    </criterion>
+    <criterion id="AC6">
+      <description>Touch targets and UX spec compliance</description>
+      <requirement>Pill-style segmented control matches UX spec</requirement>
+      <requirement>Touch targets are 44px minimum</requirement>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc type="prd" path="docs/prd-epic7.md" relevance="high">
+        <excerpt>
+          FR29-FR39: Chart display requirements
+          FR31: Users can toggle between Aggregation and Comparison modes
+          FR32: Aggregation mode shows Pie chart (default) or Vertical Bar
+          FR33: Comparison mode shows Grouped Bar chart
+          FR34: Year view Comparison shows Q1 vs Q2 vs Q3 vs Q4
+          FR35: Quarter view Comparison shows Month1 vs Month2 vs Month3
+          FR36: Month view Comparison shows Week1 vs Week2 vs Week3 vs Week4(+)
+          FR37: Week view Comparison shows Mon vs Tue vs Wed vs Thu vs Fri vs Sat vs Sun
+          FR38: Day view only shows Aggregation mode (no children)
+          FR39: Chart type selection is remembered for the session
+        </excerpt>
+      </doc>
+      <doc type="architecture" path="docs/architecture-epic7.md" relevance="high">
+        <excerpt>
+          ADR-011: Chart Registry Pattern
+          - Registry maps chart types to React components
+          - Supports mode filtering (aggregation vs comparison)
+          - Enables future extensibility for new chart types
+
+          Component patterns:
+          - ChartModeToggle: Pill-style segmented control
+          - AnalyticsChart: Wrapper selecting chart from registry
+
+          State Management:
+          - chartMode stored in AnalyticsContext
+          - TOGGLE_CHART_MODE action toggles between modes
+        </excerpt>
+      </doc>
+      <doc type="ux" path="docs/ux-design-specification.md" relevance="high">
+        <excerpt>
+          Chart Mode Toggle Design:
+          - Pill-style segmented control
+          - Touch targets 44px minimum
+          - Smooth transitions &lt;300ms
+          - Visual states: selected (filled), unselected (outline)
+
+          Comparison mode shows:
+          - Year: Q1 vs Q2 vs Q3 vs Q4
+          - Quarter: 3 months
+          - Month: 4-5 weeks
+          - Week: 7 days (Mon-Sun)
+        </excerpt>
+      </doc>
+      <doc type="epics" path="docs/epics.md" relevance="medium">
+        <excerpt>
+          Story 7.4: Chart Mode Toggle &amp; Registry
+          Dependencies: Story 7.1 (AnalyticsContext)
+          Deliverable: ChartModeToggle, chart registry pattern
+          Covers: FR29-FR39
+        </excerpt>
+      </doc>
+      <doc type="team-standards" path="docs/team-standards.md" relevance="medium">
+        <excerpt>
+          Fast Verification Strategy:
+          - Run targeted tests during development
+          - Full suite before marking "review"
+          - Test file targeting: npm run test:unit -- --run "tests/unit/analytics/*"
+        </excerpt>
+      </doc>
+    </docs>
+    <code>
+      <artifact path="src/contexts/AnalyticsContext.tsx" relevance="high">
+        <description>Analytics navigation context with reducer pattern - provides chartMode state and TOGGLE_CHART_MODE action</description>
+        <exports>
+          - AnalyticsContext
+          - AnalyticsProvider
+          - toggleChartMode() action creator
+        </exports>
+      </artifact>
+      <artifact path="src/hooks/useAnalyticsNavigation.ts" relevance="high">
+        <description>Hook for accessing analytics context - provides chartMode, isComparisonMode, dispatch</description>
+        <exports>
+          - useAnalyticsNavigation()
+          - supportsComparisonMode(level)
+        </exports>
+      </artifact>
+      <artifact path="src/types/analytics.ts" relevance="high">
+        <description>Type definitions for analytics state</description>
+        <types>
+          - ChartMode = 'aggregation' | 'comparison'
+          - TemporalLevel = 'year' | 'quarter' | 'month' | 'week' | 'day'
+          - NavigationAction (includes TOGGLE_CHART_MODE)
+          - ChartData interface
+        </types>
+      </artifact>
+      <artifact path="src/utils/analyticsHelpers.ts" relevance="medium">
+        <description>Analytics helper functions - validation, default state, utilities</description>
+      </artifact>
+      <artifact path="src/components/charts/SimplePieChart.tsx" relevance="high">
+        <description>Existing pie chart component for aggregation mode</description>
+        <interface>
+          Props: data: PieChartData[], onSliceClick?: (label) => void, theme: string
+        </interface>
+      </artifact>
+      <artifact path="src/components/charts/GroupedBarChart.tsx" relevance="high">
+        <description>Existing grouped bar chart component for comparison mode</description>
+        <interface>
+          Props: data: BarChartData[], theme: string, currency: string
+        </interface>
+      </artifact>
+      <artifact path="src/components/analytics/TemporalBreadcrumb.tsx" relevance="medium">
+        <description>Reference implementation for analytics component patterns - uses context, memo, callbacks</description>
+      </artifact>
+      <artifact path="src/utils/translations.ts" relevance="medium">
+        <description>Translation keys for i18n - will need new keys for toggle labels</description>
+        <existingKeys>
+          - showBarChart, showPieChart (existing chart toggles)
+        </existingKeys>
+        <neededKeys>
+          - aggregation: "Aggregation" / "Agregado"
+          - comparison: "Comparison" / "Comparar"
+        </neededKeys>
+      </artifact>
+    </code>
+    <dependencies>
+      <dependency name="lucide-react" version="^0.460.0" usage="Icons for toggle (if needed)"/>
+      <dependency name="react" version="^18.3.1" usage="Core React"/>
+      <dependency name="vitest" version="^4.0.13" usage="Unit testing"/>
+      <dependency name="@testing-library/react" version="^16.3.0" usage="Component testing"/>
+      <dependency name="@playwright/test" version="^1.56.1" usage="E2E testing"/>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">
+      Uses React Context (ADR-010) - consume via useAnalyticsNavigation() hook only
+    </constraint>
+    <constraint type="architecture">
+      Chart Registry Pattern (ADR-011) - registry must support future chart types
+    </constraint>
+    <constraint type="ux">
+      Touch targets minimum 44x44px (FR55)
+    </constraint>
+    <constraint type="ux">
+      Smooth transitions &lt;300ms
+    </constraint>
+    <constraint type="i18n">
+      All labels must have English and Spanish translations
+    </constraint>
+    <constraint type="testing">
+      New code requires ≥80% test coverage
+    </constraint>
+    <constraint type="testing">
+      Fast verification during development - run targeted tests
+    </constraint>
+    <constraint type="dependency">
+      Story 7.1 (AnalyticsContext) must be complete - verified complete
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="ChartModeToggle">
+      <description>Pill-style segmented control for switching chart modes</description>
+      <props>
+        <prop name="theme" type="string" required="false" default="light">Theme for styling</prop>
+        <prop name="locale" type="string" required="false" default="en">Locale for labels (en/es)</prop>
+      </props>
+      <behavior>
+        - Reads chartMode from context via useAnalyticsNavigation()
+        - Dispatches TOGGLE_CHART_MODE on click
+        - Hidden when temporalLevel is 'day'
+      </behavior>
+    </interface>
+    <interface name="chartRegistry">
+      <description>Map of chart types to components and metadata</description>
+      <structure>
+        {
+          [chartType: string]: {
+            component: React.ComponentType,
+            modes: ChartMode[],
+            label: string,
+            icon?: LucideIcon
+          }
+        }
+      </structure>
+      <functions>
+        - getChartsForMode(mode: ChartMode): ChartConfig[]
+        - getDefaultChart(mode: ChartMode): ChartConfig
+      </functions>
+    </interface>
+    <interface name="AnalyticsChart">
+      <description>Wrapper component that renders chart from registry based on current mode</description>
+      <props>
+        <prop name="data" type="ChartData[]" required="true">Chart data</prop>
+        <prop name="theme" type="string" required="true">Theme for styling</prop>
+        <prop name="currency" type="string" required="true">Currency for formatting</prop>
+        <prop name="onSliceClick" type="function" required="false">Click handler for drill-down</prop>
+      </props>
+      <behavior>
+        - Reads chartMode from context
+        - Selects chart from registry based on mode
+        - Renders appropriate chart with crossfade transition
+      </behavior>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <standard>Unit tests with Vitest + @testing-library/react</standard>
+      <standard>E2E tests with Playwright</standard>
+      <standard>Test file naming: tests/unit/analytics/*.test.tsx</standard>
+      <standard>Integration tests: tests/integration/analytics/*.test.tsx</standard>
+      <standard>E2E tests: tests/e2e/*.spec.ts</standard>
+      <standard>Use renderWithProvider() helper pattern (see TemporalBreadcrumb.test.tsx)</standard>
+      <standard>Reset mocks in beforeEach: vi.resetAllMocks()</standard>
+      <standard>Create test states like yearState, monthState, dayState for different scenarios</standard>
+    </standards>
+    <locations>
+      <location>tests/unit/analytics/ChartModeToggle.test.tsx (to create)</location>
+      <location>tests/unit/analytics/chartRegistry.test.ts (to create)</location>
+      <location>tests/unit/analytics/AnalyticsChart.test.tsx (to create)</location>
+      <location>tests/e2e/analytics-chart-mode.spec.ts (to create)</location>
+    </locations>
+    <ideas>
+      <testIdea id="T1" ac="AC1">Test toggle renders on year, quarter, month, week levels</testIdea>
+      <testIdea id="T2" ac="AC1">Test toggle hidden on day level</testIdea>
+      <testIdea id="T3" ac="AC2">Test clicking Comparison switches mode in context</testIdea>
+      <testIdea id="T4" ac="AC2">Test chart type changes when mode changes</testIdea>
+      <testIdea id="T5" ac="AC3">Test day level renders without toggle</testIdea>
+      <testIdea id="T6" ac="AC4">Test getChartsForMode returns correct charts for aggregation</testIdea>
+      <testIdea id="T7" ac="AC4">Test getChartsForMode returns correct charts for comparison</testIdea>
+      <testIdea id="T8" ac="AC4">Test registry includes expected chart types</testIdea>
+      <testIdea id="T9" ac="AC5">Test mode persists across navigation within session</testIdea>
+      <testIdea id="T10" ac="AC6">Test touch targets are at least 44px</testIdea>
+      <testIdea id="T11" ac="AC6">Test ARIA attributes for accessibility</testIdea>
+      <testIdea id="T12">Test supportsComparisonMode utility function</testIdea>
+      <testIdea id="T13">E2E: Navigate year → quarter → month, toggle mode, verify chart type changes</testIdea>
+      <testIdea id="T14">E2E: Navigate to day, verify toggle not present</testIdea>
+    </ideas>
+  </tests>
+
+  <implementationNotes>
+    <note priority="high">
+      The TOGGLE_CHART_MODE action and chartMode state already exist in AnalyticsContext (Story 7.1).
+      This story needs to CREATE the UI toggle and chart registry - not modify the context.
+    </note>
+    <note priority="high">
+      Reference TemporalBreadcrumb.tsx for component patterns:
+      - Use useAnalyticsNavigation() hook for context access
+      - Memoize callbacks with useCallback
+      - Use theme-aware styling with isDark checks
+      - 44px touch targets via min-w-11 min-h-11
+    </note>
+    <note priority="medium">
+      Chart registry should be extensible. Design for future chart types:
+      - Sankey (flow visualization)
+      - Treemap (hierarchical)
+      - Heatmap (time patterns)
+    </note>
+    <note priority="medium">
+      Comparison mode child periods by level:
+      - Year: Q1, Q2, Q3, Q4
+      - Quarter: 3 months
+      - Month: 4-5 weeks (month-aligned chunks per ADR-012)
+      - Week: Mon, Tue, Wed, Thu, Fri, Sat, Sun
+    </note>
+    <note priority="low">
+      Translation keys to add:
+      - aggregation: "Aggregation" / "Agregado"
+      - comparison: "Comparison" / "Comparar"
+      Or could reuse existing: showBarChart, showPieChart with new context
+    </note>
+  </implementationNotes>
+</story-context>
