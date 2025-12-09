@@ -396,18 +396,18 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     );
 
     // Compute chart data
-    // Note: colorTheme is a dependency because getColor() reads CSS variables
-    // which change when colorTheme changes (default vs ghibli)
+    // Note: colorTheme is included as dependency because getColor() reads CSS variables
+    // which change when colorTheme changes (normal vs professional). The linter doesn't
+    // see colorTheme in the function body because it affects getColor() behavior indirectly
+    // through CSS custom properties.
     const pieData = useMemo(
         () => computePieData(filteredTransactions, category),
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [filteredTransactions, category, colorTheme]
+        [filteredTransactions, category, colorTheme] // colorTheme triggers re-render for new colors
     );
 
     const barData = useMemo(
         () => computeBarData(filteredTransactions, temporal, category, locale),
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [filteredTransactions, temporal, category, locale, colorTheme]
+        [filteredTransactions, temporal, category, locale, colorTheme] // colorTheme triggers re-render for new colors
     );
 
     // Compute total based on category level
