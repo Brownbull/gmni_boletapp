@@ -1,0 +1,605 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Story Context: 7.16 - Drill-Down Section Toggle (Temporal vs Category)
+  Generated: 2025-12-08
+
+  This context provides everything needed to add a toggle above the drill-down
+  cards section to switch between Temporal and Category drill-down views.
+-->
+<story-context story="7.16" title="Drill-Down Section Toggle (Temporal vs Category)">
+
+  <!-- ================================================================== -->
+  <!-- STORY SUMMARY -->
+  <!-- ================================================================== -->
+  <summary>
+    <goal>Add toggle to switch between temporal and category drill-down views</goal>
+    <why>Users want to choose whether to explore data by time periods OR by spending categories, not see both at once</why>
+    <scope>
+      - Create DrillDownModeToggle component (similar to ChartModeToggle)
+      - Add drillDownMode state to AnalyticsContext
+      - Update DrillDownGrid to respect mode selection
+      - Add translations for both languages
+    </scope>
+  </summary>
+
+  <!-- ================================================================== -->
+  <!-- ACCEPTANCE CRITERIA REFERENCE -->
+  <!-- ================================================================== -->
+  <acceptance-criteria>
+    <ac id="1">A toggle component appears above the drill-down cards section</ac>
+    <ac id="2">Toggle has two options: "Temporal" and "Category" (or localized equivalents)</ac>
+    <ac id="3">Toggle uses the same styling pattern as the Aggregation/Comparison toggle</ac>
+    <ac id="4">When "Temporal" is selected, drill-down cards show time periods (Q1-Q4, weeks, etc.)</ac>
+    <ac id="5">When "Category" is selected, drill-down cards show spending categories</ac>
+    <ac id="6">Default selection is "Temporal" to maintain current behavior</ac>
+    <ac id="7">Toggle state is independent from the chart mode toggle (Aggregation/Comparison)</ac>
+    <ac id="8">Works correctly in both English and Spanish</ac>
+  </acceptance-criteria>
+
+  <!-- ================================================================== -->
+  <!-- VISUAL LAYOUT -->
+  <!-- ================================================================== -->
+  <visual-layout>
+    <![CDATA[
+┌─────────────────────────────────────────┐
+│              [PIE CHART]                │
+├─────────────────────────────────────────┤
+│ ● Food 35%  ● Transport 20%  ...        │  ← Legend
+├─────────────────────────────────────────┤
+│          Tap to drill down              │
+│ [◯ Temporal          ] [◯ Category    ] │  ← NEW TOGGLE
+├─────────────────────────────────────────┤
+│  TEMPORAL MODE:          CATEGORY MODE: │
+│  ┌───────────────────┐   ┌───────────────────┐
+│  │ ● Q1 2024  $2.8M  │   │ ● Supermarket 73% │
+│  └───────────────────┘   └───────────────────┘
+│  ┌───────────────────┐   ┌───────────────────┐
+│  │ ● Q2 2024  $3.1M  │   │ ● Veterinary 11%  │
+│  └───────────────────┘   └───────────────────┘
+└─────────────────────────────────────────┘
+]]>
+  </visual-layout>
+
+  <!-- ================================================================== -->
+  <!-- CATEGORY CARDS CONTENT EXAMPLE -->
+  <!-- ================================================================== -->
+  <category-cards-example>
+    <description>When in "Category" mode at year level, cards show:</description>
+    <cards>
+      <card>Supermarket - $543,000 - 73%</card>
+      <card>Veterinary - $82,000 - 11%</card>
+      <card>Technology - $22,000 - 3%</card>
+      <card>Butcher - $22,000 - 3%</card>
+      <card>Restaurant - $22,000 - 3%</card>
+      <card>Other - $22,000 - 3%</card>
+      <card>Bakery - $14,000 - 2%</card>
+      <card>Bazaar - $7,000 - 1%</card>
+    </cards>
+    <behavior>Clicking a category card would filter to that category (same as clicking pie slice)</behavior>
+  </category-cards-example>
+
+  <!-- ================================================================== -->
+  <!-- REFERENCE: EXISTING CHART MODE TOGGLE -->
+  <!-- ================================================================== -->
+  <reference-component path="src/components/analytics/ChartModeToggle.tsx">
+    <description>Use this as pattern for DrillDownModeToggle</description>
+    <code><![CDATA[
+/**
+ * ChartModeToggle Component
+ *
+ * Segmented control for toggling between Aggregation and Comparison chart modes.
+ * Matches UX spec: outlined container with secondary border, active button filled with accent color.
+ */
+
+import React, { useCallback, useEffect } from 'react';
+import { PieChart, BarChart2 } from 'lucide-react';
+import { useAnalyticsNavigation, supportsComparisonMode } from '../../hooks/useAnalyticsNavigation';
+import type { ChartMode } from '../../types/analytics';
+import { TRANSLATIONS } from '../../utils/translations';
+
+// Types
+export interface ChartModeToggleProps {
+  theme?: string;
+  locale?: 'en' | 'es';
+}
+
+// Constants
+const MODES: { mode: ChartMode; icon: typeof PieChart; labelKey: 'aggregation' | 'comparison' }[] = [
+  { mode: 'aggregation', icon: PieChart, labelKey: 'aggregation' },
+  { mode: 'comparison', icon: BarChart2, labelKey: 'comparison' },
+];
+
+// Component
+export function ChartModeToggle({ theme = 'light', locale = 'en' }: ChartModeToggleProps): React.ReactElement | null {
+  const { chartMode, temporalLevel, dispatch } = useAnalyticsNavigation();
+  const comparisonAvailable = supportsComparisonMode(temporalLevel);
+
+  const t = TRANSLATIONS[locale] || TRANSLATIONS.en;
+  const labels: Record<'aggregation' | 'comparison', string> = {
+    aggregation: (t as { aggregation?: string }).aggregation || 'Aggregation',
+    comparison: (t as { comparison?: string }).comparison || 'Comparison',
+  };
+
+  const handleToggle = useCallback((mode: ChartMode) => {
+    if (mode !== chartMode) {
+      dispatch({ type: 'TOGGLE_CHART_MODE' });
+    }
+  }, [chartMode, dispatch]);
+
+  // Styling
+  const isDark = theme === 'dark';
+
+  const containerClasses = [
+    'inline-flex rounded-lg p-1',
+    isDark ? 'bg-slate-800' : 'bg-white',
+    isDark ? 'border border-slate-500' : 'border border-slate-300',
+  ].join(' ');
+
+  const getButtonClasses = (isActive: boolean) => {
+    return [
+      'flex items-center gap-2 px-4 py-2 rounded-md',
+      'min-h-11',
+      'transition-all duration-200',
+      isActive
+        ? 'bg-blue-500 text-white font-medium'
+        : isDark
+          ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+          : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50',
+      'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
+    ].join(' ');
+  };
+
+  return (
+    <div role="tablist" aria-label="Chart display mode" className={containerClasses}>
+      {MODES.map(({ mode, icon: Icon, labelKey }) => (
+        <button
+          key={mode}
+          role="tab"
+          aria-selected={chartMode === mode}
+          onClick={() => handleToggle(mode)}
+          className={getButtonClasses(chartMode === mode)}
+        >
+          <Icon size={18} strokeWidth={2} aria-hidden="true" />
+          <span className="text-sm">{labels[labelKey]}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+]]></code>
+  </reference-component>
+
+  <!-- ================================================================== -->
+  <!-- CURRENT DRILLDOWN GRID IMPLEMENTATION -->
+  <!-- ================================================================== -->
+  <current-implementation>
+    <file path="src/components/analytics/DrillDownGrid.tsx" lines="464-596">
+      <description>DrillDownGrid currently shows BOTH temporal and category sections</description>
+      <code><![CDATA[
+export function DrillDownGrid({
+  transactions,
+  theme = 'light',
+  locale = 'en',
+  currency = 'CLP',
+}: DrillDownGridProps): React.ReactElement {
+  const { temporal, category, dispatch } = useAnalyticsNavigation();
+  const isDark = theme === 'dark';
+
+  // Compute temporal children (memoized)
+  const temporalChildren = useMemo(
+    () => getTemporalChildren(temporal, transactions, locale),
+    [temporal, transactions, locale]
+  );
+
+  // Compute category children (memoized)
+  const categoryChildren = useMemo(
+    () => getCategoryChildren(category, transactions, locale),
+    [category, transactions, locale]
+  );
+
+  const hasTemporalChildren = temporalChildren.length > 0;
+  const hasCategoryChildren = categoryChildren.length > 0;
+
+  // ... handlers ...
+
+  return (
+    <div className="space-y-6">
+      {/* Temporal drill-down section - ALWAYS SHOWN IF HAS CHILDREN */}
+      {hasTemporalChildren && (
+        <section aria-label={t('drillDownByTime' as TranslationKey, locale)}>
+          <p className={tapHintClasses}>{t('tapToDrillDown' as TranslationKey, locale)}</p>
+          <h3 className={sectionLabelClasses}>{t('drillDownByTime' as TranslationKey, locale)}</h3>
+          <div className={gridClasses}>
+            {temporalChildren.map((child) => (
+              <DrillDownCard key={`temporal-${child.label}`} ... />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Category drill-down section - ALWAYS SHOWN IF HAS CHILDREN */}
+      {hasCategoryChildren && (
+        <section aria-label={t('drillDownByCategory' as TranslationKey, locale)}>
+          <h3 className={sectionLabelClasses}>{t('drillDownByCategory' as TranslationKey, locale)}</h3>
+          <div className={gridClasses}>
+            {categoryChildren.map((child) => (
+              <DrillDownCard key={`category-${child.label}`} ... />
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+]]></code>
+      <key-change>
+        Need to add drillDownMode check to conditionally render
+        EITHER temporal OR category section based on toggle state.
+      </key-change>
+    </file>
+
+    <file path="src/types/analytics.ts" lines="55-63">
+      <description>Current types - need to add DrillDownMode</description>
+      <code><![CDATA[
+/**
+ * Chart display mode for analytics.
+ * - aggregation: Shows "what" (pie/bar by category)
+ * - comparison: Shows "when" (grouped bar comparing time periods)
+ */
+export type ChartMode = 'aggregation' | 'comparison';
+]]></code>
+    </file>
+
+    <file path="src/contexts/AnalyticsContext.tsx" lines="47-105">
+      <description>Analytics reducer - need to add TOGGLE_DRILLDOWN_MODE action</description>
+      <code><![CDATA[
+function analyticsReducer(
+  state: AnalyticsNavigationState,
+  action: NavigationAction
+): AnalyticsNavigationState {
+  let newState: AnalyticsNavigationState;
+
+  switch (action.type) {
+    case 'SET_TEMPORAL_LEVEL':
+      newState = { ...state, temporal: action.payload };
+      break;
+
+    case 'SET_CATEGORY_FILTER':
+      newState = { ...state, category: action.payload };
+      break;
+
+    case 'TOGGLE_CHART_MODE':
+      newState = {
+        ...state,
+        chartMode: state.chartMode === 'aggregation' ? 'comparison' : 'aggregation',
+      };
+      break;
+
+    // ... other cases ...
+
+    default:
+      const _exhaustiveCheck: never = action;
+      return _exhaustiveCheck;
+  }
+
+  return validateNavigationState(newState);
+}
+]]></code>
+    </file>
+  </current-implementation>
+
+  <!-- ================================================================== -->
+  <!-- IMPLEMENTATION PLAN -->
+  <!-- ================================================================== -->
+  <implementation-plan>
+    <step id="1" description="Add DrillDownMode type">
+      <file>src/types/analytics.ts</file>
+      <code><![CDATA[
+/**
+ * Drill-down display mode for analytics cards.
+ * - temporal: Shows time period cards (Q1-Q4, months, weeks, days)
+ * - category: Shows spending category cards (Supermarket, etc.)
+ */
+export type DrillDownMode = 'temporal' | 'category';
+]]></code>
+    </step>
+
+    <step id="2" description="Add drillDownMode to AnalyticsNavigationState">
+      <file>src/types/analytics.ts</file>
+      <code><![CDATA[
+export interface AnalyticsNavigationState {
+  temporal: TemporalPosition;
+  category: CategoryPosition;
+  chartMode: ChartMode;
+  drillDownMode: DrillDownMode;  // NEW
+}
+]]></code>
+    </step>
+
+    <step id="3" description="Add TOGGLE_DRILLDOWN_MODE action">
+      <file>src/types/analytics.ts</file>
+      <code><![CDATA[
+export type NavigationAction =
+  | { type: 'SET_TEMPORAL_LEVEL'; payload: TemporalPosition }
+  | { type: 'SET_CATEGORY_FILTER'; payload: CategoryPosition }
+  | { type: 'TOGGLE_CHART_MODE' }
+  | { type: 'TOGGLE_DRILLDOWN_MODE' }  // NEW
+  | { type: 'RESET_TO_YEAR'; payload: { year: string } }
+  | { type: 'CLEAR_CATEGORY_FILTER' };
+]]></code>
+    </step>
+
+    <step id="4" description="Update reducer">
+      <file>src/contexts/AnalyticsContext.tsx</file>
+      <code><![CDATA[
+case 'TOGGLE_DRILLDOWN_MODE':
+  newState = {
+    ...state,
+    drillDownMode: state.drillDownMode === 'temporal' ? 'category' : 'temporal',
+  };
+  break;
+]]></code>
+    </step>
+
+    <step id="5" description="Update getDefaultNavigationState">
+      <file>src/utils/analyticsHelpers.ts</file>
+      <code><![CDATA[
+export function getDefaultNavigationState(year: string): AnalyticsNavigationState {
+  return {
+    temporal: { level: 'year', year },
+    category: { level: 'all' },
+    chartMode: 'aggregation',
+    drillDownMode: 'temporal',  // NEW - default to temporal
+  };
+}
+]]></code>
+    </step>
+
+    <step id="6" description="Create DrillDownModeToggle component">
+      <file>src/components/analytics/DrillDownModeToggle.tsx (NEW)</file>
+      <code><![CDATA[
+/**
+ * DrillDownModeToggle Component
+ *
+ * Segmented control for toggling between Temporal and Category drill-down modes.
+ * Uses same styling pattern as ChartModeToggle.
+ */
+
+import React, { useCallback } from 'react';
+import { Clock, Tag } from 'lucide-react';
+import { useAnalyticsNavigation } from '../../hooks/useAnalyticsNavigation';
+import type { DrillDownMode } from '../../types/analytics';
+import { TRANSLATIONS } from '../../utils/translations';
+
+export interface DrillDownModeToggleProps {
+  theme?: string;
+  locale?: 'en' | 'es';
+}
+
+const MODES: { mode: DrillDownMode; icon: typeof Clock; labelKey: 'drillDownTemporal' | 'drillDownCategory' }[] = [
+  { mode: 'temporal', icon: Clock, labelKey: 'drillDownTemporal' },
+  { mode: 'category', icon: Tag, labelKey: 'drillDownCategory' },
+];
+
+export function DrillDownModeToggle({
+  theme = 'light',
+  locale = 'en',
+}: DrillDownModeToggleProps): React.ReactElement {
+  const { drillDownMode, dispatch } = useAnalyticsNavigation();
+
+  const t = TRANSLATIONS[locale] || TRANSLATIONS.en;
+  const labels = {
+    drillDownTemporal: t.drillDownTemporal || 'Temporal',
+    drillDownCategory: t.drillDownCategory || 'Category',
+  };
+
+  const handleToggle = useCallback((mode: DrillDownMode) => {
+    if (mode !== drillDownMode) {
+      dispatch({ type: 'TOGGLE_DRILLDOWN_MODE' });
+    }
+  }, [drillDownMode, dispatch]);
+
+  const isDark = theme === 'dark';
+
+  const containerClasses = [
+    'flex w-full rounded-lg p-1',
+    isDark ? 'bg-slate-800' : 'bg-white',
+    isDark ? 'border border-slate-500' : 'border border-slate-300',
+  ].join(' ');
+
+  const getButtonClasses = (isActive: boolean) => [
+    'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md',
+    'min-h-11 transition-all duration-200',
+    isActive
+      ? 'bg-blue-500 text-white font-medium'
+      : isDark
+        ? 'text-slate-400 hover:bg-slate-700/50'
+        : 'text-slate-500 hover:bg-slate-100/50',
+  ].join(' ');
+
+  return (
+    <div role="tablist" aria-label="Drill-down mode" className={containerClasses}>
+      {MODES.map(({ mode, icon: Icon, labelKey }) => (
+        <button
+          key={mode}
+          role="tab"
+          aria-selected={drillDownMode === mode}
+          onClick={() => handleToggle(mode)}
+          className={getButtonClasses(drillDownMode === mode)}
+        >
+          <Icon size={18} strokeWidth={2} aria-hidden="true" />
+          <span className="text-sm">{labels[labelKey]}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+]]></code>
+    </step>
+
+    <step id="7" description="Update DrillDownGrid to respect mode">
+      <file>src/components/analytics/DrillDownGrid.tsx</file>
+      <code><![CDATA[
+export function DrillDownGrid({ ... }): React.ReactElement {
+  const { temporal, category, drillDownMode, dispatch } = useAnalyticsNavigation();
+
+  // ... existing memoized computations ...
+
+  return (
+    <div className="space-y-6">
+      {/* Temporal drill-down section - only when mode is 'temporal' */}
+      {drillDownMode === 'temporal' && hasTemporalChildren && (
+        <section>
+          {/* temporal cards */}
+        </section>
+      )}
+
+      {/* Category drill-down section - only when mode is 'category' */}
+      {drillDownMode === 'category' && hasCategoryChildren && (
+        <section>
+          {/* category cards */}
+        </section>
+      )}
+    </div>
+  );
+}
+]]></code>
+    </step>
+
+    <step id="8" description="Add toggle to TrendsView">
+      <file>src/views/TrendsView.tsx</file>
+      <code><![CDATA[
+import { DrillDownModeToggle } from '../components/analytics/DrillDownModeToggle';
+
+// In render, above DrillDownGrid:
+{/* Drill-down section with toggle */}
+<div className="space-y-3">
+  <p className={tapHintClasses}>{t('tapToDrillDown')}</p>
+  <DrillDownModeToggle theme={theme} locale={locale as 'en' | 'es'} />
+  <DrillDownGrid
+    transactions={filteredTransactions}
+    theme={theme}
+    locale={locale}
+    currency={currency}
+  />
+</div>
+]]></code>
+    </step>
+
+    <step id="9" description="Add translations">
+      <file>src/utils/translations.ts</file>
+      <code><![CDATA[
+// English
+drillDownTemporal: "Temporal",
+drillDownCategory: "Category",
+
+// Spanish
+drillDownTemporal: "Temporal",
+drillDownCategory: "Categoría",
+]]></code>
+      <note>Translations already exist! Just need to use them.</note>
+    </step>
+  </implementation-plan>
+
+  <!-- ================================================================== -->
+  <!-- HOOK UPDATE -->
+  <!-- ================================================================== -->
+  <hook-update path="src/hooks/useAnalyticsNavigation.ts">
+    <description>Export drillDownMode from hook</description>
+    <code><![CDATA[
+export function useAnalyticsNavigation() {
+  const context = useContext(AnalyticsContext);
+  if (!context) {
+    throw new Error('useAnalyticsNavigation must be used within AnalyticsProvider');
+  }
+
+  const { state, dispatch } = context;
+
+  return {
+    temporal: state.temporal,
+    category: state.category,
+    chartMode: state.chartMode,
+    drillDownMode: state.drillDownMode,  // NEW
+    temporalLevel: state.temporal.level,
+    hasCategoryFilter: state.category.level !== 'all',
+    dispatch,
+  };
+}
+]]></code>
+  </hook-update>
+
+  <!-- ================================================================== -->
+  <!-- INTERACTION WITH EXISTING NAVIGATION -->
+  <!-- ================================================================== -->
+  <navigation-behavior>
+    <scenario mode="temporal">
+      Clicking Q1 navigates to Q1 (current behavior preserved)
+    </scenario>
+    <scenario mode="category">
+      Clicking "Supermarket" filters to Supermarket category (same as pie slice click)
+    </scenario>
+    <note>
+      Both modes work independently from Aggregation/Comparison chart mode (AC #7).
+      Toggle state persists across temporal/category navigation changes.
+    </note>
+  </navigation-behavior>
+
+  <!-- ================================================================== -->
+  <!-- TASKS -->
+  <!-- ================================================================== -->
+  <tasks>
+    <task id="1" description="Create DrillDownModeToggle component (AC #1, #2, #3)">
+      <subtask>Create new component similar to ChartModeToggle</subtask>
+      <subtask>Two options: "Temporal" / "Category"</subtask>
+      <subtask>Same styling pattern (outlined container, accent active state)</subtask>
+    </task>
+
+    <task id="2" description="Add drill-down mode state to AnalyticsContext (AC #6, #7)">
+      <subtask>Add DrillDownMode type to analytics.ts</subtask>
+      <subtask>Add drillDownMode to AnalyticsNavigationState</subtask>
+      <subtask>Add TOGGLE_DRILLDOWN_MODE action</subtask>
+      <subtask>Update reducer with new case</subtask>
+      <subtask>Default value is 'temporal'</subtask>
+    </task>
+
+    <task id="3" description="Update DrillDownGrid to respect mode (AC #4, #5)">
+      <subtask>Get drillDownMode from useAnalyticsNavigation</subtask>
+      <subtask>When mode is 'temporal', show time period cards only</subtask>
+      <subtask>When mode is 'category', show category cards only</subtask>
+    </task>
+
+    <task id="4" description="Integrate toggle into TrendsView (AC #1)">
+      <subtask>Place toggle above DrillDownGrid</subtask>
+      <subtask>Section header: "Tap to drill down" / "Toca para desglosar"</subtask>
+    </task>
+
+    <task id="5" description="Verify translations (AC #8)">
+      <subtask>drillDownTemporal already exists in both languages</subtask>
+      <subtask>drillDownCategory already exists in both languages</subtask>
+    </task>
+
+    <task id="6" description="Run tests and verify (AC: All)">
+      <subtask>npx tsc --noEmit</subtask>
+      <subtask>npm run test:unit</subtask>
+      <subtask>Visual verification of both modes</subtask>
+    </task>
+  </tasks>
+
+  <!-- ================================================================== -->
+  <!-- TESTING COMMANDS -->
+  <!-- ================================================================== -->
+  <testing>
+    <command description="TypeScript check">npx tsc --noEmit</command>
+    <command description="Unit tests">npm run test:unit</command>
+    <command description="All tests">npm run test:all</command>
+    <manual-verification>
+      <check>Toggle between Temporal and Category modes</check>
+      <check>Verify cards change appropriately</check>
+      <check>Test clicking cards in both modes</check>
+      <check>Test all temporal levels (year, quarter, month, week)</check>
+      <check>Test both English and Spanish</check>
+      <check>Verify toggle state persists when navigating</check>
+    </manual-verification>
+  </testing>
+
+</story-context>

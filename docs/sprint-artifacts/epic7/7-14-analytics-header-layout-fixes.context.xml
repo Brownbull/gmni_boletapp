@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Story Context: 7.14 - Analytics Header & Layout Fixes
+  Generated: 2025-12-08
+
+  This context provides everything needed to align the analytics header
+  with the UX mockup: remove back arrow, fix label, full-width toggle, reduce padding.
+-->
+<story-context story="7.14" title="Analytics Header and Layout Fixes">
+
+  <!-- ================================================================== -->
+  <!-- STORY SUMMARY -->
+  <!-- ================================================================== -->
+  <summary>
+    <goal>Align analytics header layout with UX mockup for a polished, professional appearance</goal>
+    <why>Current layout has visual inconsistencies: unnecessary back arrow, wrong label, toggle not full width, excessive padding</why>
+    <scope>
+      - Remove back arrow button (breadcrumbs provide navigation)
+      - Replace period label with "Total Spending" / "Total Gastado"
+      - Make chart mode toggle full width
+      - Reduce vertical spacing for more compact layout
+    </scope>
+  </summary>
+
+  <!-- ================================================================== -->
+  <!-- ACCEPTANCE CRITERIA REFERENCE -->
+  <!-- ================================================================== -->
+  <acceptance-criteria>
+    <ac id="1">Remove the back arrow button from analytics view header (breadcrumbs provide navigation)</ac>
+    <ac id="2">Replace year label (e.g., "2025") with "Total Spending" / "Total Gastado" above the amount</ac>
+    <ac id="3">Chart mode toggle (Aggregation/Comparison) uses full available width of the screen</ac>
+    <ac id="4">Reduce vertical padding/spacing between the total amount and the chart mode toggle</ac>
+    <ac id="5">Layout matches the UX mockup proportions more closely</ac>
+    <ac id="6">All changes work correctly in both English and Spanish</ac>
+  </acceptance-criteria>
+
+  <!-- ================================================================== -->
+  <!-- VISUAL COMPARISON -->
+  <!-- ================================================================== -->
+  <visual-comparison>
+    <current title="Current Layout (Issues)">
+      <![CDATA[
+┌─────────────────────────────────────────┐
+│ [←] [📅 2025 ▼] [🏷️ Todo ▼]            │  ← Back arrow present
+├─────────────────────────────────────────┤
+│         2025                            │  ← Shows year, not "Total Spending"
+│         $744,512                        │
+├─────────────────────────────────────────┤
+│     [Agregado] [Comparar]               │  ← Toggle not full width
+│        ↑ too much padding ↑             │
+├─────────────────────────────────────────┤
+]]>
+    </current>
+    <target title="Target Layout (Mockup)">
+      <![CDATA[
+┌─────────────────────────────────────────┐
+│ [📅 2024 ▼]              [🏷️ All ▼]    │  ← No back arrow
+├─────────────────────────────────────────┤
+│         Total Spending                  │  ← Label instead of year
+│         $12,450,000                     │
+├─────────────────────────────────────────┤
+│ [◐ Aggregation        ] [📊 Comparison] │  ← Full width toggle
+├─────────────────────────────────────────┤
+│                                         │
+│           [PIE/BAR CHART]               │
+│                                         │
+└─────────────────────────────────────────┘
+]]>
+    </target>
+  </visual-comparison>
+
+  <!-- ================================================================== -->
+  <!-- CURRENT IMPLEMENTATION (TO BE MODIFIED) -->
+  <!-- ================================================================== -->
+  <current-implementation>
+    <file path="src/views/TrendsView.tsx" lines="480-518">
+      <description>Header section with back arrow and period label</description>
+      <code><![CDATA[
+return (
+    <div className="flex flex-col h-full space-y-4">
+        {/* Header: Breadcrumbs - Full width layout (Story 7.10, 7.11) */}
+        {/* Story 7.11: Export button removed, breadcrumbs fill full width, FAB added at bottom */}
+        <div className="flex items-center gap-2">
+            {/* AC #1: REMOVE THIS BACK ARROW BUTTON */}
+            <button
+                onClick={handleBack}
+                className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex-shrink-0"
+                aria-label={t('back')}
+            >
+                <ArrowLeft size={20} />
+            </button>
+            {/* Breadcrumbs container - flex-1 to fill available space, gap between them */}
+            <div className="flex-1 flex items-center gap-2">
+                <div className="flex-1">
+                    <TemporalBreadcrumb theme={theme} locale={locale} />
+                </div>
+                <div className="flex-1">
+                    <CategoryBreadcrumb theme={theme} locale={locale} />
+                </div>
+            </div>
+        </div>
+
+        {/* Period Label and Total (Story 7.10 AC #7, #8) */}
+        {/* UX spec: subtitle above total, large font (text-3xl) for amount */}
+        <div className="text-center px-4 py-3">
+            {/* AC #2: CHANGE THIS - show "Total Spending" not periodLabel */}
+            {/* Subtitle - period description (AC #8) */}
+            <div className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                {periodLabel}   {/* <-- CHANGE TO t('totalSpent') */}
+            </div>
+            {/* Total amount - large font (AC #7) */}
+            <div className="text-3xl font-bold">{formatCurrency(total, currency)}</div>
+        </div>
+
+        {/* Chart Mode Toggle (AC #1, #2) - hidden on Day view */}
+        {/* AC #3: MAKE THIS FULL WIDTH */}
+        <div className="flex justify-center">
+            <ChartModeToggle theme={theme} locale={locale as 'en' | 'es'} />
+        </div>
+]]></code>
+    </file>
+
+    <file path="src/components/analytics/ChartModeToggle.tsx" lines="114-148">
+      <description>Toggle styling - needs to support full width</description>
+      <code><![CDATA[
+// Container: outlined style with secondary border per UX spec (AC #9)
+// Note: Using isDark conditional instead of dark: prefix (app uses prop-based theming)
+const containerClasses = [
+    'inline-flex rounded-lg p-1',
+    // Outlined container per UX spec - conditional based on theme prop
+    isDark ? 'bg-slate-800' : 'bg-white',
+    isDark ? 'border border-slate-500' : 'border border-slate-300',
+].join(' ');
+
+// Button styling per UX spec (AC #9, #10)
+const getButtonClasses = (isActive: boolean) => {
+    return [
+        // Base styles
+        'flex items-center gap-2 px-4 py-2 rounded-md',
+        // Touch target
+        'min-h-11',
+        // Transition for smooth feedback
+        'transition-all duration-200',
+        // Active state: accent background with white text (AC #9)
+        isActive
+            ? 'bg-blue-500 text-white font-medium'
+            : isDark
+              ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+              : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50',
+        // Focus styles
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
+        isDark ? 'focus-visible:ring-offset-slate-800' : 'focus-visible:ring-offset-white',
+    ].join(' ');
+};
+]]></code>
+      <key-issue>Container uses inline-flex which constrains width. Need option for full width (w-full flex)</key-issue>
+    </file>
+  </current-implementation>
+
+  <!-- ================================================================== -->
+  <!-- TRANSLATIONS AVAILABLE -->
+  <!-- ================================================================== -->
+  <translations>
+    <file path="src/utils/translations.ts">
+      <available-key key="totalSpent" en="Total Spent" es="Total Gastado" />
+      <note>Translation key already exists - just need to use it instead of periodLabel</note>
+    </file>
+  </translations>
+
+  <!-- ================================================================== -->
+  <!-- IMPLEMENTATION CHANGES -->
+  <!-- ================================================================== -->
+  <implementation-changes>
+    <change id="1" file="src/views/TrendsView.tsx" description="Remove back arrow (AC #1)">
+      <remove lines="485-492">
+        <![CDATA[
+<button
+    onClick={handleBack}
+    className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg flex-shrink-0"
+    aria-label={t('back')}
+>
+    <ArrowLeft size={20} />
+</button>
+]]>
+      </remove>
+      <note>Users navigate via breadcrumbs or bottom nav. No need for back arrow.</note>
+    </change>
+
+    <change id="2" file="src/views/TrendsView.tsx" description="Replace period label (AC #2)">
+      <before>
+        <![CDATA[
+<div className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+    {periodLabel}
+</div>
+]]>
+      </before>
+      <after>
+        <![CDATA[
+<div className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+    {t('totalSpent')}
+</div>
+]]>
+      </after>
+    </change>
+
+    <change id="3" file="src/views/TrendsView.tsx" description="Make toggle full width (AC #3)">
+      <before>
+        <![CDATA[
+<div className="flex justify-center">
+    <ChartModeToggle theme={theme} locale={locale as 'en' | 'es'} />
+</div>
+]]>
+      </before>
+      <after>
+        <![CDATA[
+<div className="px-4">
+    <ChartModeToggle theme={theme} locale={locale as 'en' | 'es'} fullWidth />
+</div>
+]]>
+      </after>
+    </change>
+
+    <change id="4" file="src/components/analytics/ChartModeToggle.tsx" description="Add fullWidth prop (AC #3)">
+      <props-update>
+        <![CDATA[
+export interface ChartModeToggleProps {
+  /** Theme for styling (light/dark) */
+  theme?: string;
+  /** Locale for labels (en/es) */
+  locale?: 'en' | 'es';
+  /** Whether toggle should fill full width (default: false) */
+  fullWidth?: boolean;  // NEW PROP
+}
+]]>
+      </props-update>
+      <container-update>
+        <![CDATA[
+// Container with optional full width
+const containerClasses = [
+    fullWidth ? 'flex w-full' : 'inline-flex',  // UPDATED
+    'rounded-lg p-1',
+    isDark ? 'bg-slate-800' : 'bg-white',
+    isDark ? 'border border-slate-500' : 'border border-slate-300',
+].join(' ');
+
+// Button styling - flex-1 when full width
+const getButtonClasses = (isActive: boolean) => {
+    return [
+        fullWidth ? 'flex-1' : '',  // NEW - distribute space evenly
+        'flex items-center justify-center gap-2 px-4 py-2 rounded-md',
+        // ... rest of classes
+    ].join(' ');
+};
+]]>
+      </container-update>
+    </change>
+
+    <change id="5" file="src/views/TrendsView.tsx" description="Reduce spacing (AC #4)">
+      <before>
+        <![CDATA[
+<div className="flex flex-col h-full space-y-4">
+    ...
+    <div className="text-center px-4 py-3">
+]]>
+      </before>
+      <after>
+        <![CDATA[
+<div className="flex flex-col h-full space-y-2">  {/* Reduced from space-y-4 */}
+    ...
+    <div className="text-center px-4 py-2">       {/* Reduced from py-3 */}
+]]>
+      </after>
+    </change>
+  </implementation-changes>
+
+  <!-- ================================================================== -->
+  <!-- TASKS -->
+  <!-- ================================================================== -->
+  <tasks>
+    <task id="1" description="Remove back arrow from TrendsView header (AC #1)">
+      <subtask>Remove the ArrowLeft button from the header section</subtask>
+      <subtask>Adjust breadcrumbs container to fill full width without the button</subtask>
+      <subtask>Remove ArrowLeft import if no longer used</subtask>
+    </task>
+
+    <task id="2" description="Fix period label to show 'Total Spending' (AC #2)">
+      <subtask>Replace {periodLabel} with {t('totalSpent')}</subtask>
+      <subtask>Period info is already shown in breadcrumbs</subtask>
+    </task>
+
+    <task id="3" description="Make chart mode toggle full width (AC #3)">
+      <subtask>Add fullWidth prop to ChartModeToggle component</subtask>
+      <subtask>Update container to use w-full flex when fullWidth is true</subtask>
+      <subtask>Update buttons to use flex-1 for even distribution</subtask>
+      <subtask>Pass fullWidth prop from TrendsView</subtask>
+    </task>
+
+    <task id="4" description="Reduce vertical spacing in header area (AC #4, #5)">
+      <subtask>Change space-y-4 to space-y-2 on main container</subtask>
+      <subtask>Change py-3 to py-2 on total amount section</subtask>
+      <subtask>Verify layout matches mockup proportions</subtask>
+    </task>
+
+    <task id="5" description="Run tests and verify (AC #6)">
+      <subtask>npx tsc --noEmit</subtask>
+      <subtask>npm run test:unit</subtask>
+      <subtask>Visual verification in both languages</subtask>
+    </task>
+  </tasks>
+
+  <!-- ================================================================== -->
+  <!-- TESTING COMMANDS -->
+  <!-- ================================================================== -->
+  <testing>
+    <command description="TypeScript check">npx tsc --noEmit</command>
+    <command description="Unit tests">npm run test:unit</command>
+    <command description="All tests">npm run test:all</command>
+    <manual-verification>
+      - Navigate to Trends/Analytics view
+      - Verify NO back arrow in header
+      - Verify "Total Spent" / "Total Gastado" label (not year)
+      - Verify toggle spans full width
+      - Verify reduced spacing between elements
+      - Test in both English and Spanish
+      - Compare side-by-side with UX mockup
+    </manual-verification>
+  </testing>
+
+</story-context>

@@ -564,4 +564,84 @@ describe('Category Auto-Apply Integration - Story 6.4', () => {
             expect(result2.transaction.category).toBe('Other');
         });
     });
+
+    describe('categorySource Tracking - Visual Indicator for Learned Categories', () => {
+        it('should set categorySource to "learned" when category is changed by mapping', () => {
+            const geminiTransaction = createMockGeminiTransaction('Store', 'Other', [
+                { name: 'Milk', price: 5 },
+            ]);
+            // Item has no category initially (or 'Other')
+            geminiTransaction.items[0].category = undefined;
+
+            const userMappings = [
+                createMockMapping('milk', 'Bakery'),
+            ];
+
+            const { transaction: result } = applyCategoryMappings(geminiTransaction, userMappings);
+
+            expect(result.items[0].category).toBe('Bakery');
+            expect(result.items[0].categorySource).toBe('learned');
+        });
+
+        it('should NOT set categorySource when learned category matches original scan category', () => {
+            const geminiTransaction = createMockGeminiTransaction('Store', 'Other', [
+                { name: 'Milk', price: 5 },
+            ]);
+            // Item already has the same category that mapping would apply
+            geminiTransaction.items[0].category = 'Bakery';
+
+            const userMappings = [
+                createMockMapping('milk', 'Bakery'),
+            ];
+
+            const { transaction: result } = applyCategoryMappings(geminiTransaction, userMappings);
+
+            expect(result.items[0].category).toBe('Bakery');
+            // Should NOT be marked as 'learned' since category didn't actually change
+            expect(result.items[0].categorySource).toBeUndefined();
+        });
+
+        it('should preserve existing categorySource when no mapping matches', () => {
+            const geminiTransaction = createMockGeminiTransaction('Store', 'Other', [
+                { name: 'Unknown Item', price: 10, category: 'Electronics' },
+            ]);
+
+            const userMappings = [
+                createMockMapping('milk', 'Bakery'),
+            ];
+
+            const { transaction: result } = applyCategoryMappings(geminiTransaction, userMappings);
+
+            // Category unchanged, categorySource should remain undefined
+            expect(result.items[0].category).toBe('Electronics');
+            expect(result.items[0].categorySource).toBeUndefined();
+        });
+
+        it('should set categorySource="learned" only for items whose category was changed', () => {
+            const geminiTransaction = createMockGeminiTransaction('Store', 'Other', [
+                { name: 'Milk', price: 5 },                    // Will be matched → learned
+                { name: 'Bread', price: 3, category: 'Bakery' }, // Will match but same category
+                { name: 'Random', price: 10 },                  // No match → unchanged
+            ]);
+
+            const userMappings = [
+                createMockMapping('milk', 'Bakery'),
+                createMockMapping('bread', 'Bakery'),  // Same as existing
+            ];
+
+            const { transaction: result } = applyCategoryMappings(geminiTransaction, userMappings);
+
+            // Milk: category changed from undefined → Bakery
+            expect(result.items[0].category).toBe('Bakery');
+            expect(result.items[0].categorySource).toBe('learned');
+
+            // Bread: category was already Bakery, no change
+            expect(result.items[1].category).toBe('Bakery');
+            expect(result.items[1].categorySource).toBeUndefined();
+
+            // Random: no mapping match
+            expect(result.items[2].category).toBeUndefined();
+            expect(result.items[2].categorySource).toBeUndefined();
+        });
+    });
 });

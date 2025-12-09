@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Story Context: 7.15 - Seamless Chart Background
+  Generated: 2025-12-08
+
+  This context provides everything needed to remove the card styling
+  from the chart area so it blends seamlessly with the screen background.
+-->
+<story-context story="7.15" title="Seamless Chart Background">
+
+  <!-- ================================================================== -->
+  <!-- STORY SUMMARY -->
+  <!-- ================================================================== -->
+  <summary>
+    <goal>Make chart area background seamless with the main screen instead of inside a visible card</goal>
+    <why>UX mockup shows chart integrated into interface without a separate card border/background</why>
+    <scope>
+      - Remove card border from chart container
+      - Remove distinct background color from chart area
+      - Maintain proper padding and alignment
+      - Ensure works in all theme combinations
+    </scope>
+  </summary>
+
+  <!-- ================================================================== -->
+  <!-- ACCEPTANCE CRITERIA REFERENCE -->
+  <!-- ================================================================== -->
+  <acceptance-criteria>
+    <ac id="1">Chart container removes the visible card border and distinct background color</ac>
+    <ac id="2">Chart area uses the same background color as the main screen (var(--bg))</ac>
+    <ac id="3">Chart still maintains proper padding and alignment</ac>
+    <ac id="4">Works correctly in both light and dark mode</ac>
+    <ac id="5">Works correctly in both Default and Ghibli color themes</ac>
+    <ac id="6">Category legend below chart also uses seamless background</ac>
+  </acceptance-criteria>
+
+  <!-- ================================================================== -->
+  <!-- VISUAL COMPARISON -->
+  <!-- ================================================================== -->
+  <visual-comparison>
+    <current title="Current (with card)">
+      <![CDATA[
+┌─────────────────────────────────────────┐
+│ ┌─────────────────────────────────────┐ │
+│ │                                     │ │  ← Visible card border
+│ │        [PIE CHART]                  │ │  ← Card background (white/slate-900)
+│ │                                     │ │
+│ └─────────────────────────────────────┘ │
+└─────────────────────────────────────────┘
+]]>
+    </current>
+    <target title="Target (seamless)">
+      <![CDATA[
+┌─────────────────────────────────────────┐
+│                                         │
+│            [PIE CHART]                  │  ← No card, same background as screen
+│                                         │
+└─────────────────────────────────────────┘
+]]>
+    </target>
+  </visual-comparison>
+
+  <!-- ================================================================== -->
+  <!-- CURRENT IMPLEMENTATION (TO BE MODIFIED) -->
+  <!-- ================================================================== -->
+  <current-implementation>
+    <file path="src/views/TrendsView.tsx" lines="310-311">
+      <description>Theme styling variables</description>
+      <code><![CDATA[
+// Theme styling
+const isDark = theme === 'dark';
+const card = isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100';
+]]></code>
+      <note>The `card` variable adds card styling - will no longer be needed for chart</note>
+    </file>
+
+    <file path="src/views/TrendsView.tsx" lines="519-544">
+      <description>Chart container with card styling</description>
+      <code><![CDATA[
+{/* Chart (AC #1, #2) */}
+<div className={`p-4 rounded-2xl border ${card}`}>  {/* <-- REMOVE card styling */}
+    <div className="h-60 flex items-center justify-center">
+        {chartMode === 'aggregation' ? (
+            pieData.length > 0 ? (
+                <SimplePieChart
+                    data={pieData}
+                    theme={theme}
+                    onSliceClick={handleSliceClick}
+                />
+            ) : (
+                <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {t('noData')}
+                </p>
+            )
+        ) : (
+            barData.length > 0 ? (
+                <GroupedBarChart data={barData} theme={theme} currency={currency} />
+            ) : (
+                <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {t('noData')}
+                </p>
+            )
+        )}
+    </div>
+</div>
+]]></code>
+    </file>
+
+    <file path="src/components/analytics/CategoryLegend.tsx" lines="70-94">
+      <description>Legend component - already seamless, just verify</description>
+      <code><![CDATA[
+return (
+    <div className="px-4 mb-4">
+        <div className="flex flex-wrap gap-3 justify-center">
+            {items.map((item) => {
+                const color = item.color || getColor(item.label);
+                const percentage = total > 0 ? (item.value / total) * 100 : 0;
+
+                return (
+                    <div key={item.label} className="flex items-center gap-1">
+                        {/* Colored square (AC #5) - w-3 h-3 rounded-sm per UX spec */}
+                        <div
+                            className="w-3 h-3 rounded-sm flex-shrink-0"
+                            style={{ backgroundColor: color }}
+                            aria-hidden="true"
+                        />
+                        {/* Label and percentage (AC #5) */}
+                        <span className={`text-xs ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                            {item.label} {percentage.toFixed(0)}%
+                        </span>
+                    </div>
+                );
+            })}
+        </div>
+    </div>
+);
+]]></code>
+      <note>CategoryLegend already has no background - seamless by default</note>
+    </file>
+  </current-implementation>
+
+  <!-- ================================================================== -->
+  <!-- CSS THEME VARIABLES (FOR REFERENCE) -->
+  <!-- ================================================================== -->
+  <theme-variables source="index.html">
+    <default-light>
+      --bg: #f8fafc;         /* Light gray background */
+      --surface: #ffffff;    /* White card surface */
+    </default-light>
+    <default-dark>
+      --bg: #0f172a;         /* Dark blue background */
+      --surface: #1e293b;    /* Slightly lighter surface */
+    </default-dark>
+    <ghibli-light>
+      --bg: #f5f0e8;         /* Warm cream background */
+      --surface: #ffffff;    /* White surface */
+    </ghibli-light>
+    <ghibli-dark>
+      --bg: #2d3a4a;         /* Night blue background */
+      --surface: #3d4a5a;    /* Lighter surface */
+    </ghibli-dark>
+    <note>
+      Chart will now use --bg (inherit from parent) instead of --surface.
+      This makes it seamless with the main screen background.
+    </note>
+  </theme-variables>
+
+  <!-- ================================================================== -->
+  <!-- IMPLEMENTATION CHANGES -->
+  <!-- ================================================================== -->
+  <implementation-changes>
+    <change id="1" file="src/views/TrendsView.tsx" description="Remove card styling from chart (AC #1, #2)">
+      <before>
+        <![CDATA[
+{/* Chart (AC #1, #2) */}
+<div className={`p-4 rounded-2xl border ${card}`}>
+    <div className="h-60 flex items-center justify-center">
+        {/* Chart content */}
+    </div>
+</div>
+]]>
+      </before>
+      <after>
+        <![CDATA[
+{/* Chart - seamless background (Story 7.15) */}
+<div className="p-4">
+    <div className="h-60 flex items-center justify-center">
+        {/* Chart content */}
+    </div>
+</div>
+]]>
+      </after>
+      <note>
+        Simply remove: rounded-2xl, border, and ${card} classes.
+        Keep p-4 for proper spacing (AC #3).
+        Background will inherit from parent (--bg via App.tsx).
+      </note>
+    </change>
+
+    <change id="2" description="Verify CategoryLegend is seamless (AC #6)">
+      <note>
+        CategoryLegend already has no background styling.
+        Just verify it renders correctly on seamless background.
+        No code changes needed.
+      </note>
+    </change>
+  </implementation-changes>
+
+  <!-- ================================================================== -->
+  <!-- TASKS -->
+  <!-- ================================================================== -->
+  <tasks>
+    <task id="1" description="Remove card styling from chart container (AC #1, #2)">
+      <subtask>Remove `rounded-2xl border ${card}` from chart wrapper div</subtask>
+      <subtask>Keep `p-4` for proper spacing</subtask>
+      <subtask>Background inherits from parent (var(--bg))</subtask>
+    </task>
+
+    <task id="2" description="Update chart area background (AC #2, #4, #5)">
+      <subtask>Chart container uses transparent/inherited background</subtask>
+      <subtask>Verify chart is visible on seamless background</subtask>
+      <subtask>Test all 4 theme combinations</subtask>
+    </task>
+
+    <task id="3" description="Verify category legend styling (AC #6)">
+      <subtask>Confirm legend uses seamless background</subtask>
+      <subtask>Verify legend items remain readable in all themes</subtask>
+    </task>
+
+    <task id="4" description="Run tests and verify (AC: All)">
+      <subtask>npx tsc --noEmit</subtask>
+      <subtask>npm run test:unit</subtask>
+      <subtask>Visual verification in all 4 themes</subtask>
+    </task>
+  </tasks>
+
+  <!-- ================================================================== -->
+  <!-- TESTING COMMANDS -->
+  <!-- ================================================================== -->
+  <testing>
+    <command description="TypeScript check">npx tsc --noEmit</command>
+    <command description="Unit tests">npm run test:unit</command>
+    <command description="All tests">npm run test:all</command>
+    <manual-verification>
+      <check>Navigate to Trends/Analytics view</check>
+      <check>Verify NO visible border around chart area</check>
+      <check>Verify chart background matches main screen background</check>
+      <check>Verify chart content (pie/bar) is still visible</check>
+      <check>Verify legend below chart has no separate background</check>
+      <check>Test all 4 theme combinations:
+        - Default Light
+        - Default Dark
+        - Ghibli Light
+        - Ghibli Dark
+      </check>
+    </manual-verification>
+  </testing>
+
+  <!-- ================================================================== -->
+  <!-- SIMPLICITY NOTE -->
+  <!-- ================================================================== -->
+  <simplicity-note>
+    This is a simple story - essentially just removing CSS classes.
+    The key change is one line:
+
+    FROM: className={`p-4 rounded-2xl border ${card}`}
+    TO:   className="p-4"
+
+    Everything else (legend, chart components) should work automatically
+    since they inherit background from the parent container.
+  </simplicity-note>
+
+</story-context>

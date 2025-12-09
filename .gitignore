@@ -58,3 +58,6 @@ bin/
 
 # Security scan reports (may contain sensitive paths)
 secrets-report.json
+
+# Tailwind templates
+docs/design-references/tailwind_templates
