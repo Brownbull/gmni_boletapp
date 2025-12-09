@@ -1,0 +1,178 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>9</storyId>
+    <title>Epic Release & Deployment</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic7/story-7.9-epic-release-deployment.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>product owner</asA>
+    <iWant>Epic 7 deployed to production with all tests passing</iWant>
+    <soThat>users can benefit from the improved analytics experience</soThat>
+    <tasks>
+      <task id="1" title="Pre-deployment verification" acs="#1, #2, #3">
+        <subtask>Run TypeScript compilation: npx tsc --noEmit</subtask>
+        <subtask>Run unit tests: npm run test:unit</subtask>
+        <subtask>Run integration tests: npm run test:integration</subtask>
+        <subtask>Run E2E tests: npm run test:e2e or npm run test:all</subtask>
+        <subtask>Verify all tests pass with no failures</subtask>
+      </task>
+      <task id="2" title="Verify test coverage" acs="#4">
+        <subtask>Run coverage report: npm run test:coverage</subtask>
+        <subtask>Verify new Epic 7 code has >=80% line coverage</subtask>
+        <subtask>Identify any coverage gaps and document</subtask>
+      </task>
+      <task id="3" title="Production build verification" acs="#5">
+        <subtask>Run production build: npm run build</subtask>
+        <subtask>Verify build completes without errors</subtask>
+        <subtask>Check build output size for regressions</subtask>
+      </task>
+      <task id="4" title="Deploy to Firebase Hosting" acs="#5">
+        <subtask>Run deployment: npm run deploy or firebase deploy</subtask>
+        <subtask>Verify deployment succeeds</subtask>
+        <subtask>Capture deployment URL for verification</subtask>
+      </task>
+      <task id="5" title="Production smoke test" acs="#6, #7">
+        <subtask>Open production app in browser</subtask>
+        <subtask>Verify login works (existing functionality)</subtask>
+        <subtask>Navigate to Analytics/Trends view</subtask>
+        <subtask>Verify temporal breadcrumb displays correctly</subtask>
+        <subtask>Verify category breadcrumb displays correctly</subtask>
+        <subtask>Test drill-down navigation (Year > Quarter > Month > Week > Day)</subtask>
+        <subtask>Test category filtering (All Categories > Category > Group > Subcategory)</subtask>
+        <subtask>Test chart mode toggle (Aggregation/Comparison)</subtask>
+        <subtask>Verify dual-axis independence (category filter preserved when changing temporal)</subtask>
+        <subtask>Test scan functionality (existing functionality)</subtask>
+        <subtask>Test history view (existing functionality)</subtask>
+        <subtask>Test settings (existing functionality)</subtask>
+        <subtask>Test Spanish language mode (labels, date formatting)</subtask>
+      </task>
+      <task id="6" title="Update documentation" acs="#8">
+        <subtask>Read current docs/index.md</subtask>
+        <subtask>Add Epic 7: Analytics UX Redesign section</subtask>
+        <subtask>Document new features: Dual-axis navigation, Quarter/Week views, Chart modes, Drill-down cards, Bug fixes</subtask>
+      </task>
+      <task id="7" title="Update sprint status" acs="#9">
+        <subtask>Load docs/sprint-artifacts/sprint-status.yaml</subtask>
+        <subtask>Verify all Epic 7 stories (7.1-7.8) are marked done</subtask>
+        <subtask>Update this story (7.9) to done after verification</subtask>
+      </task>
+      <task id="8" title="Retrospective preparation" acs="#10">
+        <subtask>Review Epic 7 implementation learnings</subtask>
+        <subtask>Document challenges encountered</subtask>
+        <subtask>Document patterns that worked well</subtask>
+        <subtask>Identify improvements for Epic 8</subtask>
+        <subtask>Schedule or run retrospective workflow</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="1" nfr="NFR15">All unit tests pass (450+ existing + new) with no failures</ac>
+    <ac id="2" nfr="NFR15">All integration tests pass with no failures</ac>
+    <ac id="3" nfr="NFR15">All E2E tests pass with no failures</ac>
+    <ac id="4" nfr="NFR15">New code has >=80% test coverage</ac>
+    <ac id="5">Deployment to Firebase Hosting succeeds without errors</ac>
+    <ac id="6">Production application shows new analytics UI with dual-axis navigation</ac>
+    <ac id="7">No regressions in existing functionality (login, scan, history, settings)</ac>
+    <ac id="8">docs/index.md updated with Epic 7 section documenting new features</ac>
+    <ac id="9">Sprint status updated - all Epic 7 story files set to "done"</ac>
+    <ac id="10">Epic 7 retrospective scheduled or completed</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/prd-epic7.md" title="Epic 7 PRD" section="All" snippet="Dual-axis breadcrumb navigation (temporal + category), Quarter and Week views, Chart dual mode, Bug fixes. Success criteria: natural navigation, consistency builds trust, dual-axis exploration works."/>
+      <doc path="docs/architecture-epic7.md" title="Epic 7 Architecture" section="All" snippet="React Context with useReducer for centralized analytics state. Key ADRs: ADR-010 (Context), ADR-011 (Chart Registry), ADR-012 (Month-aligned weeks), ADR-013 (CSS Variables), ADR-014 (Incremental extraction)."/>
+      <doc path="docs/sprint-artifacts/epic7/tech-spec-epic-7.md" title="Epic 7 Tech Spec" section="All" snippet="Detailed design for AnalyticsContext, breadcrumbs, chart registry, drill-down cards. 58 FRs mapped to 58 ACs. Test strategy: Vitest >=80% coverage, Playwright E2E."/>
+      <doc path="docs/team-standards.md" title="Team Standards" section="Deployment Standards" snippet="Pre-deployment checklist: all tests passing, TypeScript compiles, no secrets, PR approved. Auto-deploy on merge to main via GitHub Actions. Production URL: https://boletapp-d609f.web.app"/>
+      <doc path="docs/team-standards.md" title="Team Standards" section="Testing Commands" snippet="npm run test:all for full suite, npm run test:unit for unit tests, npm run test:coverage for coverage report, npm run deploy for Firebase deployment."/>
+      <doc path="docs/index.md" title="Documentation Index" section="Epic 5 Achievements" snippet="Last updated 2025-12-03. Needs Epic 7 section added to document new analytics features: dual-axis navigation, Quarter/Week views, chart modes."/>
+      <doc path="docs/templates/deployment-story-template.md" title="Deployment Story Template" section="All" snippet="Standard template for final epic story with branch strategy, merge steps, deployment verification checklist."/>
+    </docs>
+    <code>
+      <artifact path="src/contexts/AnalyticsContext.tsx" kind="context" symbol="AnalyticsContext" reason="Core state management for dual-axis navigation - verify working in production"/>
+      <artifact path="src/hooks/useAnalyticsNavigation.ts" kind="hook" symbol="useAnalyticsNavigation" reason="Custom hook for analytics navigation - verify state updates work"/>
+      <artifact path="src/components/analytics/TemporalBreadcrumb.tsx" kind="component" symbol="TemporalBreadcrumb" reason="Temporal navigation UI - verify renders correctly with all 5 levels"/>
+      <artifact path="src/components/analytics/CategoryBreadcrumb.tsx" kind="component" symbol="CategoryBreadcrumb" reason="Category filter UI - verify filter works independently"/>
+      <artifact path="src/components/analytics/ChartModeToggle.tsx" kind="component" symbol="ChartModeToggle" reason="Chart mode toggle - verify aggregation/comparison switch works"/>
+      <artifact path="src/components/analytics/DrillDownCard.tsx" kind="component" symbol="DrillDownCard" reason="Drill-down card component - verify navigation on tap"/>
+      <artifact path="src/components/analytics/DrillDownGrid.tsx" kind="component" symbol="DrillDownGrid" reason="Grid layout for drill-down options - verify renders correctly"/>
+      <artifact path="src/components/analytics/TotalDisplay.tsx" kind="component" symbol="TotalDisplay" reason="Total amount display - verify shows correct filtered totals"/>
+      <artifact path="src/utils/chartModeRegistry.ts" kind="config" symbol="chartRegistry" reason="Chart type registry - verify charts render for each mode"/>
+      <artifact path="src/types/analytics.ts" kind="types" symbol="AnalyticsNavigationState" reason="Type definitions - ensure compile-time safety"/>
+      <artifact path="src/utils/analyticsHelpers.ts" kind="utils" symbol="validateNavigationState" reason="State validation - prevent impossible states"/>
+      <artifact path="src/utils/date.ts" kind="utils" symbol="getWeeksInMonth, getQuartersInYear" reason="Date utilities - verify quarter/week calculations"/>
+      <artifact path="src/utils/translations.ts" kind="utils" symbol="translations" reason="i18n - verify all new keys have Spanish translations"/>
+      <artifact path="src/views/TrendsView.tsx" kind="view" symbol="TrendsView" reason="Main analytics view - verify integration of all new components"/>
+      <artifact path="docs/index.md" kind="documentation" symbol="N/A" reason="Needs Epic 7 section added"/>
+      <artifact path="docs/sprint-artifacts/sprint-status.yaml" kind="config" symbol="N/A" reason="Needs all Epic 7 stories marked done"/>
+    </code>
+    <dependencies>
+      <ecosystem name="node">
+        <package name="react" version="^18.3.1" purpose="UI Framework"/>
+        <package name="react-dom" version="^18.3.1" purpose="React DOM renderer"/>
+        <package name="firebase" version="^10.14.1" purpose="Backend (Auth, Firestore, Hosting)"/>
+        <package name="lucide-react" version="^0.460.0" purpose="Icons (24px, stroke-width 2)"/>
+        <package name="fuse.js" version="^7.1.0" purpose="Fuzzy matching for category learning"/>
+        <package name="typescript" version="^5.3.3" purpose="Type safety"/>
+        <package name="vite" version="^5.4.0" purpose="Build tool"/>
+        <package name="vitest" version="^4.0.13" purpose="Unit/Integration testing"/>
+        <package name="@playwright/test" version="^1.56.1" purpose="E2E testing"/>
+        <package name="@vitest/coverage-v8" version="^4.0.13" purpose="Coverage reporting"/>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="Team Standards">All tests (unit, integration, E2E) must pass before deployment</constraint>
+    <constraint source="Team Standards">No secrets in code - gitleaks pre-commit hook enforced</constraint>
+    <constraint source="Team Standards">Deployment is part of the deliverable - not complete until verified in production</constraint>
+    <constraint source="NFR15">New code must have >=80% line coverage</constraint>
+    <constraint source="Architecture">Navigation state must flow through AnalyticsContext - no component maintains conflicting state</constraint>
+    <constraint source="PRD">All icons 24px with stroke-width 2 from lucide-react</constraint>
+    <constraint source="PRD">All interactive elements minimum 44x44px touch targets</constraint>
+    <constraint source="PRD">Spanish mode must show all labels in Spanish with no English fallbacks</constraint>
+    <constraint source="Team Standards">CI/CD auto-deploys to Firebase on merge to main</constraint>
+    <constraint source="Epic Sequence">Story 7.7 and 7.8 must be done before this story starts</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="Firebase Hosting" kind="deployment" signature="firebase deploy --only hosting" path="firebase.json"/>
+    <interface name="GitHub Actions CI/CD" kind="workflow" signature="Auto-deploy on push to main" path=".github/workflows/ci.yml"/>
+    <interface name="Production URL" kind="endpoint" signature="https://boletapp-d609f.web.app" path="N/A"/>
+    <interface name="Test Commands" kind="npm-script" signature="npm run test:all, npm run test:coverage, npm run build" path="package.json"/>
+    <interface name="Deploy Command" kind="npm-script" signature="npm run deploy" path="package.json"/>
+  </interfaces>
+
+  <tests>
+    <standards>Testing pyramid: Unit (70+) > Integration (48+) > E2E (19+). Vitest for unit/integration, Playwright for E2E. Coverage thresholds: Lines 45%, Branches 30%, Functions 25%, Statements 40%. New code requires >=80% coverage (NFR15). Use targeted testing during development (npm run test:unit -- --run "pattern") to avoid 3+ minute full suite. Run full suite before marking story as "review".</standards>
+    <locations>
+      <location pattern="tests/unit/**/*.test.ts" purpose="Unit tests"/>
+      <location pattern="tests/unit/**/*.test.tsx" purpose="Component unit tests"/>
+      <location pattern="tests/unit/analytics/**" purpose="Analytics-specific unit tests"/>
+      <location pattern="tests/integration/**/*.test.tsx" purpose="Integration tests"/>
+      <location pattern="tests/integration/analytics/**" purpose="Analytics integration tests"/>
+      <location pattern="tests/e2e/**/*.spec.ts" purpose="E2E tests"/>
+      <location pattern="tests/e2e/analytics/**" purpose="Analytics E2E tests"/>
+    </locations>
+    <ideas>
+      <idea ac="1,2,3" description="Run full test suite: npm run test:all - verify all 450+ tests pass"/>
+      <idea ac="4" description="Run coverage report: npm run test:coverage - verify new Epic 7 code has >=80% coverage"/>
+      <idea ac="5" description="Run build and deploy: npm run build and firebase deploy - verify no build errors"/>
+      <idea ac="6" description="Production smoke test: Navigate to https://boletapp-d609f.web.app/trends - verify dual-axis navigation works"/>
+      <idea ac="6" description="Test temporal drill-down: Year > Quarter > Month > Week > Day in production"/>
+      <idea ac="6" description="Test category filter: All Categories > Food > Groceries > Meats in production"/>
+      <idea ac="6" description="Test chart mode toggle: Switch between Aggregation and Comparison modes"/>
+      <idea ac="7" description="Regression test: Login, scan receipt, view history, change settings"/>
+      <idea ac="7" description="Test Spanish mode: Switch to Spanish, verify all new labels translated"/>
+      <idea ac="8" description="Update docs/index.md with Epic 7 section documenting new features"/>
+      <idea ac="9" description="Update sprint-status.yaml: Mark all Epic 7 stories (7.1-7.9) as done"/>
+      <idea ac="10" description="Run retrospective workflow or schedule for later"/>
+    </ideas>
+  </tests>
+</story-context>

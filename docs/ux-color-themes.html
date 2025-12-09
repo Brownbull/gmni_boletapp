@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boletapp - Color Theme Explorer v3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // Ni no Kuni / Studio Ghibli inspired colors
+                        ghibli: {
+                            sky: '#a3c5e0',
+                            cream: '#f1dbb6',
+                            peach: '#e3bba1',
+                            rose: '#f0a3b0',
+                            sage: '#7d9b5f',
+                            forest: '#4a7c59',
+                            ocean: '#5b8fa8',
+                            sunset: '#e8a87c',
+                            cloud: '#f5f0e8',
+                            night: '#2d3a4a',
+                        },
+                        // Cottagecore / Stardew Valley inspired
+                        cottage: {
+                            wheat: '#d4a574',
+                            honey: '#e8b86d',
+                            moss: '#6b7c5e',
+                            bark: '#5c4a3d',
+                            linen: '#f5ebe0',
+                            clay: '#c9a17c',
+                            fern: '#7a9172',
+                            dusk: '#8b7355',
+                        },
+                        // Lavender Dreams (soft purple)
+                        lavender: {
+                            mist: '#e8e0f0',
+                            soft: '#c5b8d9',
+                            medium: '#9d8ec2',
+                            deep: '#7b68a6',
+                            plum: '#5d4e7a',
+                            accent: '#a08cc0',
+                            warm: '#d4c4e8',
+                        },
+                        // Ocean Calm (teal/aqua)
+                        ocean: {
+                            foam: '#e0f4f4',
+                            shallow: '#a8d8d8',
+                            medium: '#6bb8b8',
+                            deep: '#4a9a9a',
+                            abyss: '#2d6b6b',
+                            coral: '#e8a090',
+                            sand: '#f5e6d3',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .theme-card { transition: all 0.3s ease; }
+        .theme-card:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
+        .color-swatch { transition: transform 0.2s; cursor: pointer; }
+        .color-swatch:hover { transform: scale(1.1); }
+        .section-title {
+            background: linear-gradient(90deg, #f1f5f9 0%, transparent 100%);
+            padding: 1rem;
+            margin: 2rem -1.5rem 1.5rem;
+            border-left: 4px solid #3b82f6;
+        }
+        .finalist { border: 3px solid #fbbf24 !important; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="max-w-7xl mx-auto p-6">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Boletapp Color Theme Explorer v3</h1>
+            <p class="text-gray-600">Refined selection: Professional options + Whimsical/Cozy themes</p>
+            <p class="text-sm text-gray-500 mt-1">Target emotion: <strong>Empowered and in control</strong></p>
+            <div class="mt-3 flex items-center gap-2">
+                <span class="w-4 h-4 rounded border-2 border-yellow-400"></span>
+                <span class="text-sm text-gray-600">= Finalist (selected by you)</span>
+            </div>
+        </header>
+
+        <!-- Theme Toggle -->
+        <div class="mb-6 flex gap-4">
+            <button id="lightModeBtn" class="px-4 py-2 bg-white border-2 border-blue-500 text-blue-600 rounded-lg font-medium">Light Mode</button>
+            <button id="darkModeBtn" class="px-4 py-2 bg-gray-800 text-white rounded-lg font-medium border-2 border-transparent">Dark Mode</button>
+        </div>
+
+        <!-- SECTION: Professional -->
+        <div class="section-title">
+            <h2 class="text-lg font-bold text-gray-800">Professional (Low-Risk)</h2>
+            <p class="text-sm text-gray-600">Trustworthy, clean, business-appropriate</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+
+            <!-- Theme 1: Current (Slate Professional) - FINALIST -->
+            <div class="theme-card finalist bg-white rounded-2xl shadow-lg overflow-hidden" data-theme="current">
+                <div class="p-6 border-b">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900">1. Slate Professional</h2>
+                            <p class="text-sm text-gray-500 mt-1">Your existing palette - clean and neutral</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">Current</span>
+                            <span class="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-medium rounded-full">Finalist</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-3"><strong>Personality:</strong> Professional, trustworthy, calm</p>
+                    <p class="text-sm text-gray-600"><strong>Best for:</strong> Users who want a no-nonsense financial tool</p>
+                </div>
+
+                <div class="p-6 bg-slate-50 light-preview">
+                    <h3 class="text-xs font-bold text-slate-500 uppercase mb-3">Light Mode</h3>
+                    <div class="flex gap-2 mb-4">
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-slate-900 flex items-center justify-center text-white text-xs">900</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-slate-700 flex items-center justify-center text-white text-xs">700</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-slate-500 flex items-center justify-center text-white text-xs">500</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-slate-300 flex items-center justify-center text-slate-700 text-xs">300</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-slate-100 border flex items-center justify-center text-slate-700 text-xs">100</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center text-white text-xs">Action</div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 border border-slate-200">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-slate-900 font-bold text-xl">$125,430</span>
+                            <button class="text-blue-600 text-sm font-medium">Export</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="px-2 py-1 bg-slate-100 text-slate-700 text-xs rounded">2024</span>
+                            <span class="px-2 py-1 bg-slate-100 text-slate-700 text-xs rounded">Q4</span>
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded font-medium">October</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 bg-slate-900 dark-preview hidden">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-3">Dark Mode</h3>
+                    <div class="flex gap-2 mb-4">
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-900 text-xs">100</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-slate-300 flex items-center justify-center text-slate-900 text-xs">300</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-slate-500 flex items-center justify-center text-white text-xs">500</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-slate-700 flex items-center justify-center text-white text-xs">700</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-white text-xs">800</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-blue-500 flex items-center justify-center text-white text-xs">Action</div>
+                    </div>
+                    <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-white font-bold text-xl">$125,430</span>
+                            <button class="text-blue-400 text-sm font-medium">Export</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="px-2 py-1 bg-slate-700 text-slate-300 text-xs rounded">2024</span>
+                            <span class="px-2 py-1 bg-slate-700 text-slate-300 text-xs rounded">Q4</span>
+                            <span class="px-2 py-1 bg-blue-900 text-blue-300 text-xs rounded font-medium">October</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Theme 2: Slate Ultra Professional - FINALIST -->
+            <div class="theme-card finalist bg-white rounded-2xl shadow-lg overflow-hidden" data-theme="slate-pro">
+                <div class="p-6 border-b">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900">2. Slate Ultra Professional</h2>
+                            <p class="text-sm text-gray-500 mt-1">Deeper contrasts + indigo accent for premium feel</p>
+                        </div>
+                        <span class="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-medium rounded-full">Finalist</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-3"><strong>Personality:</strong> Executive, sophisticated, authoritative</p>
+                    <p class="text-sm text-gray-600"><strong>Best for:</strong> Users who want a banking-app level of trust</p>
+                </div>
+
+                <div class="p-6 bg-slate-100 light-preview">
+                    <h3 class="text-xs font-bold text-slate-600 uppercase mb-3">Light Mode</h3>
+                    <div class="flex gap-2 mb-4">
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-slate-950 flex items-center justify-center text-white text-xs">950</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center text-white text-xs">800</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-slate-600 flex items-center justify-center text-white text-xs">600</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-slate-400 flex items-center justify-center text-slate-900 text-xs">400</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-slate-200 border flex items-center justify-center text-slate-700 text-xs">200</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-indigo-700 flex items-center justify-center text-white text-xs">Action</div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 border-2 border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-slate-950 font-bold text-xl">$125,430</span>
+                            <button class="text-indigo-700 text-sm font-semibold">Export</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="px-2 py-1 bg-slate-200 text-slate-800 text-xs rounded font-medium">2024</span>
+                            <span class="px-2 py-1 bg-slate-200 text-slate-800 text-xs rounded font-medium">Q4</span>
+                            <span class="px-2 py-1 bg-indigo-700 text-white text-xs rounded font-semibold">October</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 bg-slate-950 dark-preview hidden">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-3">Dark Mode</h3>
+                    <div class="flex gap-2 mb-4">
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-white flex items-center justify-center text-slate-900 text-xs">white</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-slate-200 flex items-center justify-center text-slate-900 text-xs">200</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-slate-400 flex items-center justify-center text-slate-900 text-xs">400</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-slate-600 flex items-center justify-center text-white text-xs">600</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-white text-xs">800</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg bg-indigo-500 flex items-center justify-center text-white text-xs">Action</div>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl p-4 border-2 border-slate-700">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-white font-bold text-xl">$125,430</span>
+                            <button class="text-indigo-400 text-sm font-semibold">Export</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="px-2 py-1 bg-slate-800 text-slate-200 text-xs rounded font-medium">2024</span>
+                            <span class="px-2 py-1 bg-slate-800 text-slate-200 text-xs rounded font-medium">Q4</span>
+                            <span class="px-2 py-1 bg-indigo-600 text-white text-xs rounded font-semibold">October</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: Whimsical / Cozy -->
+        <div class="section-title" style="border-left-color: #7d9b5f;">
+            <h2 class="text-lg font-bold text-gray-800">Whimsical / Cozy (Bold Rebrand)</h2>
+            <p class="text-sm text-gray-600">Warm, nostalgic, makes finances feel less scary</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+
+            <!-- Theme 3: Ni no Kuni / Ghibli - FINALIST -->
+            <div class="theme-card finalist bg-white rounded-2xl shadow-lg overflow-hidden" data-theme="ghibli">
+                <div class="p-6 border-b">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900">3. Ni no Kuni / Ghibli</h2>
+                            <p class="text-sm text-gray-500 mt-1">Soft pastels, warm hues, nostalgic comfort</p>
+                        </div>
+                        <span class="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-medium rounded-full">Finalist</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-3"><strong>Personality:</strong> Warm, nostalgic, comforting, magical</p>
+                    <p class="text-sm text-gray-600"><strong>Best for:</strong> Users who want finances to feel like a cozy adventure</p>
+                    <p class="text-xs mt-2" style="color: #7d9b5f;">Inspired by Studio Ghibli's hand-painted aesthetic</p>
+                </div>
+
+                <div class="p-6 light-preview" style="background: #f5f0e8;">
+                    <h3 class="text-xs font-bold uppercase mb-3" style="color: #7d9b5f;">Light Mode (Primary)</h3>
+                    <div class="flex gap-2 mb-4">
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #a3c5e0;">Sky</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #f1dbb6; color: #5a4a3a;">Cream</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #e3bba1; color: #5a4a3a;">Peach</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #f0a3b0; color: #5a4a3a;">Rose</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #7d9b5f;">Sage</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #4a7c59;">Forest</div>
+                    </div>
+                    <div class="rounded-xl p-4" style="background: white; border: 2px solid #e3bba1;">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-bold text-xl" style="color: #4a7c59;">$125,430</span>
+                            <button class="text-sm font-medium" style="color: #5b8fa8;">Export</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="px-2 py-1 text-xs rounded" style="background: #f1dbb6; color: #5a4a3a;">2024</span>
+                            <span class="px-2 py-1 text-xs rounded" style="background: #f1dbb6; color: #5a4a3a;">Q4</span>
+                            <span class="px-2 py-1 text-xs rounded font-medium" style="background: #7d9b5f; color: white;">October</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 dark-preview hidden" style="background: #2d3a4a;">
+                    <h3 class="text-xs font-bold uppercase mb-3" style="color: #a3c5e0;">Dark Mode (Evening)</h3>
+                    <div class="flex gap-2 mb-4">
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #a3c5e0; color: #2d3a4a;">Sky</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #f1dbb6; color: #2d3a4a;">Cream</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #e8a87c; color: #2d3a4a;">Sunset</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #f0a3b0; color: #2d3a4a;">Rose</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #7d9b5f;">Sage</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #5b8fa8;">Ocean</div>
+                    </div>
+                    <div class="rounded-xl p-4" style="background: #1e2a38; border: 2px solid #3d4a5a;">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-bold text-xl" style="color: #f1dbb6;">$125,430</span>
+                            <button class="text-sm font-medium" style="color: #a3c5e0;">Export</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="px-2 py-1 text-xs rounded" style="background: #3d4a5a; color: #a3c5e0;">2024</span>
+                            <span class="px-2 py-1 text-xs rounded" style="background: #3d4a5a; color: #a3c5e0;">Q4</span>
+                            <span class="px-2 py-1 text-xs rounded font-medium" style="background: #7d9b5f; color: white;">October</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Theme 4: Cottagecore / Stardew -->
+            <div class="theme-card bg-white rounded-2xl shadow-lg overflow-hidden" data-theme="cottage">
+                <div class="p-6 border-b">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900">4. Cottagecore / Stardew</h2>
+                            <p class="text-sm text-gray-500 mt-1">Earthy browns, warm honey, cozy farmhouse feel</p>
+                        </div>
+                        <span class="px-3 py-1 text-xs font-medium rounded-full" style="background: #d4a57420; color: #8b7355;">New</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-3"><strong>Personality:</strong> Rustic, grounded, homey, authentic</p>
+                    <p class="text-sm text-gray-600"><strong>Best for:</strong> Users who want finances to feel natural & down-to-earth</p>
+                    <p class="text-xs mt-2" style="color: #6b7c5e;">Inspired by Stardew Valley's earthy palette</p>
+                </div>
+
+                <div class="p-6 light-preview" style="background: #f5ebe0;">
+                    <h3 class="text-xs font-bold uppercase mb-3" style="color: #6b7c5e;">Light Mode</h3>
+                    <div class="flex gap-2 mb-4">
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #5c4a3d;">Bark</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #d4a574; color: #5c4a3d;">Wheat</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #e8b86d; color: #5c4a3d;">Honey</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #c9a17c; color: #5c4a3d;">Clay</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #6b7c5e;">Moss</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #7a9172;">Fern</div>
+                    </div>
+                    <div class="rounded-xl p-4" style="background: white; border: 2px solid #d4a574;">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-bold text-xl" style="color: #5c4a3d;">$125,430</span>
+                            <button class="text-sm font-medium" style="color: #6b7c5e;">Export</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="px-2 py-1 text-xs rounded" style="background: #f5ebe0; color: #5c4a3d;">2024</span>
+                            <span class="px-2 py-1 text-xs rounded" style="background: #f5ebe0; color: #5c4a3d;">Q4</span>
+                            <span class="px-2 py-1 text-xs rounded font-medium" style="background: #6b7c5e; color: white;">October</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 dark-preview hidden" style="background: #3d3229;">
+                    <h3 class="text-xs font-bold uppercase mb-3" style="color: #d4a574;">Dark Mode (Fireside)</h3>
+                    <div class="flex gap-2 mb-4">
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #f5ebe0; color: #3d3229;">Linen</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #d4a574; color: #3d3229;">Wheat</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #e8b86d; color: #3d3229;">Honey</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #8b7355;">Dusk</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #6b7c5e;">Moss</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #5c4a3d;">Bark</div>
+                    </div>
+                    <div class="rounded-xl p-4" style="background: #2a231d; border: 2px solid #5c4a3d;">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-bold text-xl" style="color: #f5ebe0;">$125,430</span>
+                            <button class="text-sm font-medium" style="color: #d4a574;">Export</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="px-2 py-1 text-xs rounded" style="background: #3d3229; color: #d4a574;">2024</span>
+                            <span class="px-2 py-1 text-xs rounded" style="background: #3d3229; color: #d4a574;">Q4</span>
+                            <span class="px-2 py-1 text-xs rounded font-medium" style="background: #6b7c5e; color: white;">October</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Theme 5: Lavender Dreams -->
+            <div class="theme-card bg-white rounded-2xl shadow-lg overflow-hidden" data-theme="lavender">
+                <div class="p-6 border-b">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900">5. Lavender Dreams</h2>
+                            <p class="text-sm text-gray-500 mt-1">Soft purples, calming, gentle & feminine</p>
+                        </div>
+                        <span class="px-3 py-1 text-xs font-medium rounded-full" style="background: #c5b8d920; color: #7b68a6;">New</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-3"><strong>Personality:</strong> Serene, peaceful, thoughtful, gentle</p>
+                    <p class="text-sm text-gray-600"><strong>Best for:</strong> Users who want a calming, spa-like financial experience</p>
+                    <p class="text-xs mt-2" style="color: #7b68a6;">Soft pastels that reduce financial anxiety</p>
+                </div>
+
+                <div class="p-6 light-preview" style="background: #f5f0f8;">
+                    <h3 class="text-xs font-bold uppercase mb-3" style="color: #7b68a6;">Light Mode</h3>
+                    <div class="flex gap-2 mb-4">
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #5d4e7a;">Plum</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #7b68a6;">Deep</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #9d8ec2;">Medium</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #c5b8d9; color: #5d4e7a;">Soft</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #e8e0f0; color: #5d4e7a;">Mist</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #a08cc0;">Accent</div>
+                    </div>
+                    <div class="rounded-xl p-4" style="background: white; border: 2px solid #c5b8d9;">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-bold text-xl" style="color: #5d4e7a;">$125,430</span>
+                            <button class="text-sm font-medium" style="color: #7b68a6;">Export</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="px-2 py-1 text-xs rounded" style="background: #e8e0f0; color: #5d4e7a;">2024</span>
+                            <span class="px-2 py-1 text-xs rounded" style="background: #e8e0f0; color: #5d4e7a;">Q4</span>
+                            <span class="px-2 py-1 text-xs rounded font-medium" style="background: #7b68a6; color: white;">October</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 dark-preview hidden" style="background: #2a2435;">
+                    <h3 class="text-xs font-bold uppercase mb-3" style="color: #c5b8d9;">Dark Mode (Twilight)</h3>
+                    <div class="flex gap-2 mb-4">
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #e8e0f0; color: #2a2435;">Mist</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #d4c4e8; color: #2a2435;">Warm</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #c5b8d9; color: #2a2435;">Soft</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #9d8ec2;">Medium</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #7b68a6;">Deep</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #5d4e7a;">Plum</div>
+                    </div>
+                    <div class="rounded-xl p-4" style="background: #1e1a28; border: 2px solid #3d3550;">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-bold text-xl" style="color: #e8e0f0;">$125,430</span>
+                            <button class="text-sm font-medium" style="color: #c5b8d9;">Export</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="px-2 py-1 text-xs rounded" style="background: #3d3550; color: #c5b8d9;">2024</span>
+                            <span class="px-2 py-1 text-xs rounded" style="background: #3d3550; color: #c5b8d9;">Q4</span>
+                            <span class="px-2 py-1 text-xs rounded font-medium" style="background: #7b68a6; color: white;">October</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Theme 6: Ocean Calm -->
+            <div class="theme-card bg-white rounded-2xl shadow-lg overflow-hidden" data-theme="ocean">
+                <div class="p-6 border-b">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900">6. Ocean Calm</h2>
+                            <p class="text-sm text-gray-500 mt-1">Teal waters, sandy shores, coastal serenity</p>
+                        </div>
+                        <span class="px-3 py-1 text-xs font-medium rounded-full" style="background: #6bb8b820; color: #4a9a9a;">New</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-3"><strong>Personality:</strong> Refreshing, balanced, clear-headed, tranquil</p>
+                    <p class="text-sm text-gray-600"><strong>Best for:</strong> Users who want clarity and calmness while managing money</p>
+                    <p class="text-xs mt-2" style="color: #4a9a9a;">Beach vacation vibes for your finances</p>
+                </div>
+
+                <div class="p-6 light-preview" style="background: #f0f7f7;">
+                    <h3 class="text-xs font-bold uppercase mb-3" style="color: #4a9a9a;">Light Mode</h3>
+                    <div class="flex gap-2 mb-4">
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #2d6b6b;">Abyss</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #4a9a9a;">Deep</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #6bb8b8;">Medium</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #a8d8d8; color: #2d6b6b;">Shallow</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #f5e6d3; color: #2d6b6b;">Sand</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #e8a090;">Coral</div>
+                    </div>
+                    <div class="rounded-xl p-4" style="background: white; border: 2px solid #a8d8d8;">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-bold text-xl" style="color: #2d6b6b;">$125,430</span>
+                            <button class="text-sm font-medium" style="color: #4a9a9a;">Export</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="px-2 py-1 text-xs rounded" style="background: #e0f4f4; color: #2d6b6b;">2024</span>
+                            <span class="px-2 py-1 text-xs rounded" style="background: #e0f4f4; color: #2d6b6b;">Q4</span>
+                            <span class="px-2 py-1 text-xs rounded font-medium" style="background: #4a9a9a; color: white;">October</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 dark-preview hidden" style="background: #1a3030;">
+                    <h3 class="text-xs font-bold uppercase mb-3" style="color: #a8d8d8;">Dark Mode (Deep Sea)</h3>
+                    <div class="flex gap-2 mb-4">
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #e0f4f4; color: #1a3030;">Foam</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #a8d8d8; color: #1a3030;">Shallow</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #6bb8b8;">Medium</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #4a9a9a;">Deep</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-white text-xs" style="background: #2d6b6b;">Abyss</div>
+                        <div class="color-swatch w-12 h-12 rounded-lg flex items-center justify-center text-xs" style="background: #e8a090; color: #1a3030;">Coral</div>
+                    </div>
+                    <div class="rounded-xl p-4" style="background: #0f2020; border: 2px solid #2d4545;">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-bold text-xl" style="color: #e0f4f4;">$125,430</span>
+                            <button class="text-sm font-medium" style="color: #a8d8d8;">Export</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="px-2 py-1 text-xs rounded" style="background: #2d4545; color: #a8d8d8;">2024</span>
+                            <span class="px-2 py-1 text-xs rounded" style="background: #2d4545; color: #a8d8d8;">Q4</span>
+                            <span class="px-2 py-1 text-xs rounded font-medium" style="background: #4a9a9a; color: white;">October</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="mt-8 bg-white rounded-2xl shadow-lg p-6 overflow-x-auto">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Quick Comparison</h2>
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b">
+                        <th class="text-left py-2 px-3">Theme</th>
+                        <th class="text-left py-2 px-3">Feel</th>
+                        <th class="text-left py-2 px-3">Migration</th>
+                        <th class="text-left py-2 px-3">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-b bg-yellow-50">
+                        <td class="py-2 px-3 font-medium">1. Slate Professional</td>
+                        <td class="py-2 px-3">Professional, calm</td>
+                        <td class="py-2 px-3 text-green-600">None (current)</td>
+                        <td class="py-2 px-3"><span class="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded">Finalist</span></td>
+                    </tr>
+                    <tr class="border-b bg-yellow-50">
+                        <td class="py-2 px-3 font-medium">2. Slate Ultra Pro</td>
+                        <td class="py-2 px-3">Executive, premium</td>
+                        <td class="py-2 px-3 text-yellow-600">Small (deeper tones)</td>
+                        <td class="py-2 px-3"><span class="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded">Finalist</span></td>
+                    </tr>
+                    <tr class="border-b bg-yellow-50">
+                        <td class="py-2 px-3 font-medium">3. Ni no Kuni / Ghibli</td>
+                        <td class="py-2 px-3">Warm, magical, nostalgic</td>
+                        <td class="py-2 px-3 text-red-600">Major (full rebrand)</td>
+                        <td class="py-2 px-3"><span class="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded">Finalist</span></td>
+                    </tr>
+                    <tr class="border-b">
+                        <td class="py-2 px-3 font-medium">4. Cottagecore / Stardew</td>
+                        <td class="py-2 px-3">Earthy, rustic, homey</td>
+                        <td class="py-2 px-3 text-red-600">Major (full rebrand)</td>
+                        <td class="py-2 px-3"><span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">New</span></td>
+                    </tr>
+                    <tr class="border-b">
+                        <td class="py-2 px-3 font-medium">5. Lavender Dreams</td>
+                        <td class="py-2 px-3">Serene, gentle, calming</td>
+                        <td class="py-2 px-3 text-red-600">Major (full rebrand)</td>
+                        <td class="py-2 px-3"><span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">New</span></td>
+                    </tr>
+                    <tr>
+                        <td class="py-2 px-3 font-medium">6. Ocean Calm</td>
+                        <td class="py-2 px-3">Refreshing, tranquil, clear</td>
+                        <td class="py-2 px-3 text-red-600">Major (full rebrand)</td>
+                        <td class="py-2 px-3"><span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">New</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Whimsical Theme Core Principles -->
+        <div class="mt-8 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-xl p-6">
+            <h2 class="text-lg font-bold text-green-900 mb-2">What Makes a "Whimsical/Cozy" Theme Work</h2>
+            <p class="text-green-800 mb-3">All 4 whimsical options (3-6) share these core principles:</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h3 class="font-semibold text-green-800 mb-1">Visual Characteristics</h3>
+                    <ul class="list-disc list-inside text-green-700 text-sm space-y-1">
+                        <li><strong>Muted saturation</strong> - Not bright/harsh, easier on eyes</li>
+                        <li><strong>Warm undertones</strong> - Even cool colors feel approachable</li>
+                        <li><strong>Natural inspiration</strong> - Sky, earth, water, plants</li>
+                        <li><strong>Soft contrasts</strong> - Gentle transitions, not jarring</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-green-800 mb-1">Emotional Impact</h3>
+                    <ul class="list-disc list-inside text-green-700 text-sm space-y-1">
+                        <li><strong>Reduces anxiety</strong> - Finances don't feel scary</li>
+                        <li><strong>Feels personal</strong> - Not corporate or institutional</li>
+                        <li><strong>Invites exploration</strong> - Users want to spend time here</li>
+                        <li><strong>Memorable brand</strong> - Stands out from competitors</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Decision Section -->
+        <div class="mt-8 bg-gray-50 rounded-xl p-6">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">Your Final Choice</h2>
+            <p class="text-gray-600 mb-4">Which theme(s) should move forward to mockups?</p>
+            <div class="flex flex-wrap gap-3">
+                <button class="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 border-2 border-yellow-400">1. Slate Professional</button>
+                <button class="px-4 py-2 bg-indigo-700 text-white rounded-lg hover:bg-indigo-800 border-2 border-yellow-400">2. Ultra Professional</button>
+                <button class="px-4 py-2 rounded-lg border-2 border-yellow-400" style="background: #7d9b5f; color: white;">3. Ni no Kuni</button>
+                <button class="px-4 py-2 rounded-lg" style="background: #6b7c5e; color: white;">4. Cottagecore</button>
+                <button class="px-4 py-2 rounded-lg" style="background: #7b68a6; color: white;">5. Lavender Dreams</button>
+                <button class="px-4 py-2 rounded-lg" style="background: #4a9a9a; color: white;">6. Ocean Calm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const lightBtn = document.getElementById('lightModeBtn');
+        const darkBtn = document.getElementById('darkModeBtn');
+        const lightPreviews = document.querySelectorAll('.light-preview');
+        const darkPreviews = document.querySelectorAll('.dark-preview');
+
+        lightBtn.addEventListener('click', () => {
+            lightPreviews.forEach(el => el.classList.remove('hidden'));
+            darkPreviews.forEach(el => el.classList.add('hidden'));
+            lightBtn.classList.add('border-blue-500', 'text-blue-600');
+            lightBtn.classList.remove('border-transparent');
+            darkBtn.classList.remove('border-blue-500');
+            darkBtn.classList.add('border-transparent');
+        });
+
+        darkBtn.addEventListener('click', () => {
+            darkPreviews.forEach(el => el.classList.remove('hidden'));
+            lightPreviews.forEach(el => el.classList.add('hidden'));
+            darkBtn.classList.add('border-blue-500');
+            darkBtn.classList.remove('border-transparent');
+            lightBtn.classList.remove('border-blue-500', 'text-blue-600');
+            lightBtn.classList.add('border-transparent');
+        });
+    </script>
+</body>
+</html>

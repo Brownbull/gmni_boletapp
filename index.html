@@ -6,6 +6,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Boletapp - Expense Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Story 7.12: App-wide CSS Custom Properties Theme System (AC #6, #7) */
+      /* Story 7.17: Renamed themes - "Normal" (warm) is default, "Professional" (cool) is optional */
+      :root {
+        /* Light mode - Normal theme (warm earth tones, was "ghibli") */
+        --bg: #f5f0e8;         /* warm cream */
+        --surface: #ffffff;     /* white */
+        --primary: #2d3a4a;     /* night blue */
+        --secondary: #5b8fa8;   /* ocean blue */
+        --accent: #4a7c59;      /* forest green */
+        --success: #7d9b5f;     /* sage green */
+        --warning: #e8a87c;     /* sunset orange */
+        --error: #f0a3b0;       /* rose pink */
+        /* Chart colors - warm natural palette */
+        --chart-1: #5b8fa8;     /* ocean */
+        --chart-2: #7d9b5f;     /* sage */
+        --chart-3: #e8a87c;     /* sunset */
+        --chart-4: #f0a3b0;     /* rose */
+        --chart-5: #a3c5e0;     /* sky blue */
+        --chart-6: #e3bba1;     /* peach */
+      }
+
+      .dark {
+        /* Dark mode - Normal theme (warm night palette) */
+        --bg: #2d3a4a;         /* night blue */
+        --surface: #3d4a5a;    /* lighter night */
+        --primary: #f5f0e8;    /* warm cream */
+        --secondary: #a3c5e0;  /* sky blue */
+        --accent: #7d9b5f;     /* sage green */
+        --success: #7d9b5f;    /* sage */
+        --warning: #e8a87c;    /* sunset */
+        --error: #f0a3b0;      /* rose */
+      }
+
+      /* Story 7.17: Professional Color Theme (cool blue/gray, was "default") */
+      [data-theme="professional"] {
+        /* Light mode - Professional cool tones */
+        --bg: #f8fafc;         /* slate-50 */
+        --surface: #ffffff;     /* white */
+        --primary: #0f172a;     /* slate-900 */
+        --secondary: #64748b;   /* slate-500 */
+        --accent: #3b82f6;      /* blue-500 */
+        --success: #22c55e;     /* green-500 */
+        --warning: #f59e0b;     /* amber-500 */
+        --error: #ef4444;       /* red-500 */
+        /* Chart colors - Professional palette */
+        --chart-1: #3b82f6;     /* blue-500 */
+        --chart-2: #22c55e;     /* green-500 */
+        --chart-3: #f59e0b;     /* amber-500 */
+        --chart-4: #ef4444;     /* red-500 */
+        --chart-5: #8b5cf6;     /* violet-500 */
+        --chart-6: #ec4899;     /* pink-500 */
+      }
+
+      [data-theme="professional"].dark {
+        /* Dark mode - Professional cool palette */
+        --bg: #0f172a;         /* slate-900 */
+        --surface: #1e293b;    /* slate-800 */
+        --primary: #f8fafc;    /* slate-50 */
+        --secondary: #94a3b8;  /* slate-400 */
+        --accent: #60a5fa;     /* blue-400 */
+        --success: #4ade80;    /* green-400 */
+        --warning: #fbbf24;    /* amber-400 */
+        --error: #f87171;      /* red-400 */
+      }
+
+      /* Utility classes for theme (AC #6) */
+      .theme-bg { background-color: var(--bg); }
+      .theme-surface { background-color: var(--surface); }
+      .theme-text-primary { color: var(--primary); }
+      .theme-text-secondary { color: var(--secondary); }
+      .theme-accent { color: var(--accent); }
+      .theme-border { border-color: var(--secondary); }
+    </style>
   </head>
   <body>
     <div id="root"></div>

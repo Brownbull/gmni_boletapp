@@ -1,0 +1,214 @@
+<story-context id="epic7/story-7.11-floating-download-fab" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>11</storyId>
+    <title>Floating Download FAB</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic7/story-7.11-floating-download-fab.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>a floating download button in the bottom-right corner of the analytics view</iWant>
+    <soThat>I can quickly export my data without the button interfering with the header layout</soThat>
+    <tasks>
+      <task id="1">Create FloatingDownloadFab component (AC: #1-#6, #9)
+        <subtask>Create new component with fixed positioning</subtask>
+        <subtask>Position: bottom-24 right-4 (above nav bar)</subtask>
+        <subtask>Size: w-12 h-12 (48px)</subtask>
+        <subtask>Styling: rounded-full, accent background, shadow-lg</subtask>
+        <subtask>Add Download/ArrowDown icon from Lucide</subtask>
+        <subtask>Add aria-label for accessibility</subtask>
+      </task>
+      <task id="2">Implement download functionality (AC: #7)
+        <subtask>Connect FAB to existing CSV export function</subtask>
+        <subtask>Pass required data (transactions, period, filters)</subtask>
+        <subtask>Handle loading state during export</subtask>
+        <subtask>Show success/error feedback</subtask>
+      </task>
+      <task id="3">Integrate FAB into TrendsView (AC: #8)
+        <subtask>Add FloatingDownloadFab to TrendsView</subtask>
+        <subtask>Pass export handler and data props</subtask>
+        <subtask>Ensure FAB only renders on analytics view</subtask>
+      </task>
+      <task id="4">Update header area (AC: #10)
+        <subtask>Remove or hide CSV export button from header</subtask>
+        <subtask>Clean up any orphaned styling</subtask>
+        <subtask>Verify header layout is correct</subtask>
+      </task>
+      <task id="5">Add translations (AC: #9)
+        <subtask>Add "downloadAnalytics" key</subtask>
+        <subtask>Spanish: "Descargar Analíticas"</subtask>
+      </task>
+      <task id="6">Run tests and verify (AC: All)
+        <subtask>TypeScript compilation</subtask>
+        <subtask>Unit tests for FAB component</subtask>
+        <subtask>Integration tests for export functionality</subtask>
+        <subtask>Visual verification of positioning</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">Floating Action Button (FAB) positioned in bottom-right corner above navigation bar</criterion>
+    <criterion id="2">FAB has fixed position that doesn't scroll with content</criterion>
+    <criterion id="3">FAB displays Download/Arrow-Down icon</criterion>
+    <criterion id="4">FAB uses accent color background with white icon</criterion>
+    <criterion id="5">FAB has appropriate shadow for floating appearance</criterion>
+    <criterion id="6">FAB size is 48px (12 in Tailwind) with 44px minimum touch target</criterion>
+    <criterion id="7">Tapping FAB triggers same export functionality as existing CSV export</criterion>
+    <criterion id="8">FAB only appears on TrendsView/Analytics screen</criterion>
+    <criterion id="9">FAB has tooltip or aria-label for accessibility: "Download Analytics"</criterion>
+    <criterion id="10">Remove or hide export button from header area to avoid duplication</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture-epic7.md</path>
+        <title>Architecture - Epic 7: Analytics UX Redesign</title>
+        <section>Project Structure, Component Boundaries</section>
+        <snippet>Analytics components live in src/components/analytics/. The architecture defines consistent 24px icons, 44px touch targets, and theme styling via CSS variables.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>Boletapp UX Design Specification</title>
+        <section>Section 4.1 - Design Direction, Bottom Navigation</section>
+        <snippet>Bottom Navigation with center FAB pattern. The scan button uses center FAB with camera icon. This FAB follows same pattern but for download functionality.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Boletapp Epic Breakdown</title>
+        <section>Epic 7: Analytics UX Redesign, FR47-51</section>
+        <snippet>FR47: Download button visible on all temporal views. FR50: Download icon changes based on export type. Export functionality already implemented in Story 5.4/5.5.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <file>
+        <path>src/views/TrendsView.tsx</path>
+        <kind>view</kind>
+        <symbol>TrendsView, handleExport</symbol>
+        <lines>442-464</lines>
+        <reason>Main analytics view component. Contains existing export button in header (lines 496-511) that will be replaced by FAB. handleExport function (lines 442-464) contains the export logic to reuse.</reason>
+      </file>
+      <file>
+        <path>src/utils/csvExport.ts</path>
+        <kind>utility</kind>
+        <symbol>downloadMonthlyTransactions, downloadYearlyStatistics</symbol>
+        <lines>294-345, 460-569</lines>
+        <reason>CSV export utilities already implemented. FAB should call these same functions based on temporal view level.</reason>
+      </file>
+      <file>
+        <path>src/components/analytics/ChartModeToggle.tsx</path>
+        <kind>component</kind>
+        <symbol>ChartModeToggle</symbol>
+        <lines>all</lines>
+        <reason>Reference component in analytics folder. Shows pattern for analytics components with theme prop and locale.</reason>
+      </file>
+      <file>
+        <path>src/hooks/useSubscriptionTier.ts</path>
+        <kind>hook</kind>
+        <symbol>useSubscriptionTier, canAccessPremiumExport</symbol>
+        <lines>all</lines>
+        <reason>Subscription tier check used by existing export. FAB must also check subscription before exporting.</reason>
+      </file>
+      <file>
+        <path>src/components/UpgradePromptModal.tsx</path>
+        <kind>component</kind>
+        <symbol>UpgradePromptModal</symbol>
+        <lines>all</lines>
+        <reason>Modal shown when non-subscriber attempts export. FAB should show this same modal on tap if not subscribed.</reason>
+      </file>
+      <file>
+        <path>src/utils/translations.ts</path>
+        <kind>utility</kind>
+        <symbol>TRANSLATIONS</symbol>
+        <lines>1-50</lines>
+        <reason>Translation keys for i18n. Add "downloadAnalytics" key with English and Spanish values.</reason>
+      </file>
+    </code>
+
+    <dependencies>
+      <ecosystem name="node">
+        <package name="react" version="^18.3.1">UI Framework</package>
+        <package name="lucide-react" version="^0.460.0">Icons - use Download or ArrowDown icon</package>
+        <package name="typescript" version="^5.3.3">Type safety</package>
+      </ecosystem>
+      <devDependencies>
+        <package name="vitest" version="^4.0.13">Unit testing</package>
+        <package name="@testing-library/react" version="^16.3.0">Component testing</package>
+        <package name="@playwright/test" version="^1.56.1">E2E testing</package>
+      </devDependencies>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="docs/architecture-epic7.md">Icons must be 24px with strokeWidth 2 (Lucide standard)</constraint>
+    <constraint source="docs/architecture-epic7.md">Touch targets minimum 44x44px (NFR10)</constraint>
+    <constraint source="docs/ux-design-specification.md">Bottom navigation bar is 90px height, FAB should be positioned above it</constraint>
+    <constraint source="docs/architecture-epic7.md">Use CSS classes from existing theme system (isDark conditional)</constraint>
+    <constraint source="TrendsView.tsx">FAB must respect subscription tier check before triggering export</constraint>
+    <constraint source="docs/architecture-epic7.md">Performance: Export should complete in under 3 seconds</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>FloatingDownloadFab Props</name>
+      <kind>component props</kind>
+      <signature>interface FloatingDownloadFabProps {
+  onExport: () => Promise&lt;void&gt;;
+  exporting: boolean;
+  isStatisticsExport: boolean;
+  canAccess: boolean;
+  onUpgradeRequired: () => void;
+  theme: 'light' | 'dark';
+  t: (key: string) => string;
+}</signature>
+      <path>src/components/analytics/FloatingDownloadFab.tsx</path>
+    </interface>
+    <interface>
+      <name>handleExport</name>
+      <kind>function</kind>
+      <signature>async handleExport(): Promise&lt;void&gt;</signature>
+      <path>src/views/TrendsView.tsx:442-464</path>
+    </interface>
+    <interface>
+      <name>downloadMonthlyTransactions</name>
+      <kind>function</kind>
+      <signature>downloadMonthlyTransactions(transactions: Transaction[], year: string, month: string): void</signature>
+      <path>src/utils/csvExport.ts:294</path>
+    </interface>
+    <interface>
+      <name>downloadYearlyStatistics</name>
+      <kind>function</kind>
+      <signature>downloadYearlyStatistics(transactions: Transaction[], year: string): void</signature>
+      <path>src/utils/csvExport.ts:460</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Unit tests use Vitest with @testing-library/react for component testing. Integration tests verify component interactions. All tests should pass TypeScript compilation first (npm run type-check). New analytics components should have unit tests in tests/unit/analytics/ folder. Follow existing patterns for mocking context and hooks.
+    </standards>
+    <locations>
+      <location>tests/unit/analytics/*.test.tsx</location>
+      <location>tests/integration/*export*.test.tsx</location>
+      <location>tests/integration/trends-export.test.tsx</location>
+    </locations>
+    <ideas>
+      <idea acRef="1,2">Test FAB renders with fixed positioning (bottom-24 right-4)</idea>
+      <idea acRef="3,4,5">Test FAB displays correct icon, background color, and shadow</idea>
+      <idea acRef="6">Test FAB size is 48px (w-12 h-12)</idea>
+      <idea acRef="7">Test clicking FAB triggers export function with correct parameters</idea>
+      <idea acRef="7">Test loading state shows spinner icon during export</idea>
+      <idea acRef="8">Test FAB only renders within TrendsView context</idea>
+      <idea acRef="9">Test FAB has aria-label="Download Analytics"</idea>
+      <idea acRef="10">Test header export button is removed from TrendsView</idea>
+      <idea acRef="7">Test subscription check prevents export for non-subscribers</idea>
+      <idea acRef="7">Test upgrade modal appears when non-subscriber clicks FAB</idea>
+    </ideas>
+  </tests>
+</story-context>

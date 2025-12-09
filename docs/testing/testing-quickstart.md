@@ -1,55 +1,68 @@
 # Testing Framework Quick Start
 
-**Last Updated:** 2025-11-22
-**Status:** Operational (Story 2.3 Complete)
+**Last Updated:** 2025-12-07
+**Status:** Operational (Epic 7 Test Optimization)
 
 Quick reference for running tests in Boletapp using the three-tier testing framework.
 
 ---
 
-## Quick Start (3 Steps)
+## Quick Start - Tiered Testing (Epic 7+)
 
-### 1. Run Unit Tests (Fastest - ~400ms)
+Use the tiered test strategy for optimal development speed:
 
-```bash
-npm run test:unit
-```
-
-**What it does:** Runs all unit tests using Vitest with happy-dom environment.
-
-**Example output:**
-```
-✓ tests/unit/smoke.test.ts (4 tests) 4ms
-  Test Files: 1 passed (1)
-  Tests: 4 passed (4)
-  Duration: 413ms
-```
-
-### 2. Run Integration Tests (~500ms)
+### 1. Quick Tests (Fastest - ~35s) ⚡
 
 ```bash
-npm run test:integration
+npm run test:quick
 ```
 
-**What it does:** Runs React component tests using React Testing Library.
+**What it does:** TypeScript check + parallel unit tests (610+ tests).
 
-**Example output:**
-```
-✓ tests/integration/smoke.test.tsx (3 tests) 26ms
-  Test Files: 1 passed (1)
-  Tests: 3 passed (3)
-  Duration: 499ms
-```
+**Use when:** During development, after each task completion.
 
-### 3. Run E2E Tests (Slowest - ~60s)
+### 2. Story Tests (Medium - ~2min) 📝
 
 ```bash
-npm run test:e2e
+npm run test:story
 ```
 
-**What it does:** Launches Playwright, starts dev server, runs browser tests.
+**What it does:** Quick tests + integration tests (300+ tests).
 
-**Note:** First run takes longer as it starts the Vite dev server.
+**Use when:** Before marking a story as "ready for review".
+
+### 3. Sprint Tests (Comprehensive - ~5min) 🏁
+
+```bash
+npm run test:sprint
+```
+
+**What it does:** Full suite - unit + integration + E2E tests.
+
+**Use when:** End of epic, before deployment.
+
+---
+
+## Individual Test Types
+
+### Unit Tests Only
+
+```bash
+npm run test:unit              # Sequential (~3min)
+npm run test:unit:parallel     # Parallel (~22s) ⚡
+```
+
+### Integration Tests Only
+
+```bash
+npm run test:integration       # ~1min
+```
+
+### E2E Tests Only
+
+```bash
+npm run test:e2e               # ~60s
+```
 
 ---
 
@@ -57,12 +70,14 @@ npm run test:e2e
 
 | Command | Description | Speed | Use When |
 |---------|-------------|-------|----------|
+| `npm run test:quick` | TypeScript + parallel unit tests | **~35s** | After each task ⚡ |
+| `npm run test:story` | Quick + integration tests | **~2min** | Before story review |
+| `npm run test:sprint` | Full suite (all tests) | **~5min** | Before deployment |
 | `npm run test` | Run Vitest in watch mode | Interactive | Developing/debugging |
-| `npm run test:unit` | Unit tests only | Fast (~400ms) | Testing utilities/services |
-| `npm run test:integration` | Integration tests only | Medium (~500ms) | Testing components |
-| `npm run test:e2e` | E2E tests only | Slow (~60s) | Testing user workflows |
-| `npm run test:all` | All tests sequentially | Slow (~90s) | Pre-commit validation |
-| `npm run test:coverage` | Tests + coverage report | Medium (~2s) | Checking code coverage |
+| `npm run test:unit:parallel` | Unit tests (parallel) | Fast (~22s) | Testing utilities |
+| `npm run test:integration` | Integration tests only | Medium (~1min) | Testing components |
+| `npm run test:e2e` | E2E tests only | Slow (~60s) | Testing workflows |
+| `npm run test:coverage` | Tests + coverage report | Medium (~2s) | Checking coverage |
 
 ---
 
@@ -352,4 +367,4 @@ jobs:
 
 ---
 
-**Quick Start Tip:** Run `npm run test:all` before every commit to catch regressions early!
+**Quick Start Tip:** Run `npm run test:quick` during development (~35s) and `npm run test:story` before marking stories for review!

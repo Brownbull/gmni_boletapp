@@ -1,6 +1,6 @@
 # Boletapp Team Standards & Knowledge Base
 
-**Last Updated:** 2025-12-03 (Post-Epic 5 Retrospective)
+**Last Updated:** 2025-12-07 (Epic 7 Test Optimization)
 **Purpose:** Single source of truth for team agreements, workflow standards, and lessons learned
 
 ---
@@ -132,6 +132,35 @@ Agreements made in retrospectives that define how we work as a team.
     - Epic sequence: Security → Export → Category Learning → Subscriptions → Mobile
     - *Source: Epic 3 Retrospective*
 
+### UX & Design (Epic 6)
+
+19. **UX-heavy epics get formal PRD + Tech-Spec treatment**
+    - No shortcuts on design work
+    - Involve UX Designer persona in planning
+    - *Source: Epic 6 Retrospective*
+
+20. **Design references are gitignored but available locally**
+    - Premium templates (Tailwind UI) stay local at `docs/design-references/`
+    - Reference during development, don't commit to repo
+    - *Source: Epic 6 Retrospective*
+
+21. **Production verification is mandatory**
+    - Automated tests necessary but not sufficient
+    - Human verification catches UX issues that tests miss
+    - *Source: Epic 6 Retrospective*
+
+22. **User flow bugs require E2E test coverage**
+    - Unit tests validate logic
+    - Integration tests validate data flow
+    - E2E tests validate user experience timing
+    - All three layers needed for confidence
+    - *Source: Epic 6 Retrospective*
+
+23. **Domain terminology must be precise in stories**
+    - "Item category" vs "transaction category" caused bugs in Epic 6
+    - Clarify terminology before implementation
+    - *Source: Epic 6 Retrospective*
+
 ---
 
 ## Workflow Standards
@@ -236,6 +265,56 @@ npm run test:coverage
 # Reset test data
 npm run test:reset-data
 ```
+
+### Tiered Test Strategy (Epic 7+)
+
+**Problem:** Full test suite (`npm run test:all`) takes 5+ minutes. Running full tests per story wastes developer time.
+
+**Solution:** Tiered test scripts for different validation needs:
+
+| Script | Duration | Use When |
+|--------|----------|----------|
+| `npm run test:quick` | ~35s | During development, per task |
+| `npm run test:story` | ~2min | Before marking story as "review" |
+| `npm run test:sprint` | ~5min | End of epic, before deployment |
+
+**Script Details:**
+
+```bash
+# QUICK: TypeScript + parallel unit tests (fastest)
+npm run test:quick
+# Runs: type-check + unit tests with parallelization
+# Use: After each significant code change
+
+# STORY: Quick + integration tests
+npm run test:story
+# Runs: type-check + unit (parallel) + integration
+# Use: Before marking story ready for review
+
+# SPRINT: Full test suite (comprehensive)
+npm run test:sprint
+# Runs: unit + integration + E2E
+# Use: End of epic, before deployment
+```
+
+**Why it works:**
+- Unit tests run in parallel (6 threads) via `vitest.config.unit.ts`
+- Integration tests run sequentially (Firebase emulator race conditions)
+- E2E tests only needed for epic completion, not per-story
+
+**Manual test targeting (for debugging):**
+```bash
+# Single file
+npm run test:unit -- --run tests/unit/analytics/TemporalBreadcrumb.test.tsx
+
+# Pattern match
+npm run test:unit -- --run "tests/unit/analytics/*"
+
+# Run parallel unit tests only
+npm run test:unit:parallel
+```
+
+*Source: Epic 7 Story 7.7 - Test optimization*
 
 ### Hybrid Testing Strategy
 
@@ -434,6 +513,13 @@ brew install gitleaks  # macOS
 | Epic 4 | 2025-11-29 | `docs/sprint-artifacts/epic4/epic-4-retro-2025-11-29.md` |
 | Epic 4.5 | 2025-12-02 | `docs/sprint-artifacts/epic4-5/epic-4-5-retro-2025-12-02.md` |
 | Epic 5 | 2025-12-03 | `docs/sprint-artifacts/epic5/epic-5-retro-2025-12-03.md` |
+| Epic 6 | 2025-12-04 | `docs/sprint-artifacts/epic6/epic-6-retro-2025-12-04.md` |
+
+### Design References
+
+| Resource | Location | Notes |
+|----------|----------|-------|
+| Tailwind UI Templates | `docs/design-references/tailwind_templates/` | Premium (gitignored) |
 
 ---
 
@@ -485,6 +571,28 @@ Key insights from retrospectives that improved our process.
 10. **Deployment is part of the deliverable** (Epic 4.5)
     - Not complete until deployed and verified
     - Include deployment steps in acceptance criteria
+
+11. **CI/CD auto-deploy enables rapid bug fixing** (Epic 6)
+    - Same-day bug fixes only possible with auto-deploy
+    - Manual deployment would have delayed resolution
+    - Investment in infrastructure pays immediate dividends
+
+12. **User flow bugs need E2E tests** (Epic 6)
+    - Unit tests validate logic
+    - Integration tests validate data flow
+    - E2E tests validate user experience timing
+    - All three layers needed for full confidence
+
+13. **Domain confusion causes bugs** (Epic 6)
+    - "Item category" vs "transaction category" caused 3 bugs
+    - Precise domain language matters
+    - Clarify terminology in stories before implementation
+
+14. **Tiered testing saves significant time** (Epic 7)
+    - Full test suite per story wastes 5+ minutes each time
+    - Parallel unit tests complete in ~35s vs ~3min sequential
+    - Reserve full suite for epic completion, use quick/story tiers during dev
+    - *Source: Epic 7 Story 7.7*
 
 ---
 
@@ -581,6 +689,65 @@ coverage: {
 
 *Source: Epic 3 Story 3.7*
 
+### Category Learning Prompt Timing (Epic 6)
+
+**Problem:** Category learning prompt doesn't appear when expected.
+
+**Symptoms:**
+- User changes category on an item
+- Clicks save
+- Navigates away without seeing prompt
+- Mapping never saved
+
+**Root Cause:** `onSave()` navigated away before modal could render.
+
+**Solution:** Show prompt BEFORE calling save, then call save after user responds:
+```typescript
+// DON'T: Navigate immediately
+const handleSave = () => {
+  saveTransaction();
+  navigate('/history'); // Prompt never shows!
+};
+
+// DO: Wait for user response
+const handleSave = () => {
+  if (hasChanges) {
+    setShowLearningPrompt(true); // Show prompt first
+    // Save happens in prompt callback
+  } else {
+    saveTransaction();
+    navigate('/history');
+  }
+};
+```
+
+*Source: Epic 6 Story 6.6*
+
+### Item Category vs Transaction Category (Epic 6)
+
+**Problem:** Confusion between item-level and transaction-level categories.
+
+**Context:**
+- `transaction.category` - Category for the overall transaction (e.g., "Shopping")
+- `item.category` - Category for each line item (e.g., "Groceries", "Household")
+
+**Symptoms:**
+- Category learning tracked wrong field
+- Mappings saved for transaction category instead of item category
+- Auto-apply didn't work as expected
+
+**Solution:** Be explicit in variable naming and comments:
+```typescript
+// DON'T: Ambiguous naming
+const originalCategory = transaction.category;
+
+// DO: Explicit naming
+const originalItemCategories = transaction.items.map(i => i.category);
+const originalTransactionCategory = transaction.category;
+```
+
+*Source: Epic 6 Story 6.6*
+
 ---
 
 ## Maintenance
@@ -591,4 +758,4 @@ This document should be updated:
 - When standards change
 - When new documentation is created
 
-**Last updated by:** Epic 5 Retrospective (2025-12-03)
+**Last updated by:** Epic 7 Story 7.7 - Test Optimization (2025-12-07)

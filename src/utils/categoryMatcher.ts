@@ -199,9 +199,14 @@ export function applyCategoryMappings(
                     if (itemMatch.mapping.id && !appliedMappingIds.includes(itemMatch.mapping.id)) {
                         appliedMappingIds.push(itemMatch.mapping.id);
                     }
+                    // Only mark as 'learned' if the category actually changed
+                    const newCategory = itemMatch.mapping.targetCategory;
+                    const originalCategory = item.category;
                     return {
                         ...item,
-                        category: itemMatch.mapping.targetCategory,
+                        category: newCategory,
+                        // Mark as 'learned' only if category is different from original
+                        categorySource: newCategory !== originalCategory ? 'learned' as const : item.categorySource,
                     };
                 }
                 return item;

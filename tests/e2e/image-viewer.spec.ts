@@ -48,7 +48,7 @@ test.describe('Image Viewer & Thumbnail E2E Workflows', () => {
     await expect(page.getByText('Expense Tracker')).toBeVisible();
 
     // Verify history button is NOT visible when not authenticated
-    await expect(page.getByRole('button', { name: /History|Historial/i })).not.toBeVisible();
+    await expect(page.getByRole('button', { name: /Receipts|Recibos/i })).not.toBeVisible();
 
     // Verify scan button is NOT visible when not authenticated
     await expect(page.getByRole('button', { name: /Scan|Escanear/i })).not.toBeVisible();
@@ -79,10 +79,10 @@ test.describe('Image Viewer & Thumbnail E2E Workflows', () => {
     await testLoginButton.click();
 
     // Wait for authentication to complete
-    await expect(page.getByRole('button', { name: /History|Historial/i })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('button', { name: /Receipts|Recibos/i })).toBeVisible({ timeout: 15000 });
 
     // Navigate to history
-    await page.getByRole('button', { name: /History|Historial/i }).click();
+    await page.getByRole('button', { name: /Receipts|Recibos/i }).click();
 
     // Verify history view is displayed
     await expect(page.getByText(/history|historial/i).first()).toBeVisible();
@@ -109,10 +109,10 @@ test.describe('Image Viewer & Thumbnail E2E Workflows', () => {
     await testLoginButton.click();
 
     // Wait for authentication
-    await expect(page.getByRole('button', { name: /History|Historial/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('button', { name: /Receipts|Recibos/i })).toBeVisible({ timeout: 10000 });
 
     // Navigate to history
-    await page.getByRole('button', { name: /History|Historial/i }).click();
+    await page.getByRole('button', { name: /Receipts|Recibos/i }).click();
 
     // Verify back button is present (ArrowLeft icon button)
     await expect(page.locator('button').filter({ has: page.locator('svg') }).first()).toBeVisible();
@@ -182,7 +182,7 @@ test.describe('Image Viewer & Thumbnail E2E Workflows', () => {
     await testLoginButton.click();
 
     // Wait for navigation to be visible
-    await expect(page.getByRole('button', { name: /History|Historial/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('button', { name: /Receipts|Recibos/i })).toBeVisible({ timeout: 10000 });
 
     // Verify navigation buttons have proper roles
     const navButtons = page.locator('nav button, button[aria-label]');
@@ -190,7 +190,7 @@ test.describe('Image Viewer & Thumbnail E2E Workflows', () => {
     expect(buttonCount).toBeGreaterThanOrEqual(4); // Home, Scan, Trends, History, Settings
 
     // Verify buttons are keyboard-accessible
-    const historyButton = page.getByRole('button', { name: /History|Historial/i });
+    const historyButton = page.getByRole('button', { name: /Receipts|Recibos/i });
     await historyButton.focus();
 
     const isFocused = await page.evaluate(() => {

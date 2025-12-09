@@ -11,6 +11,11 @@ export default [
   ...tseslint.configs.recommended,
   {
     files: ['src/**/*.{js,ts,jsx,tsx}'],
+    linterOptions: {
+      // Don't error when eslint-disable comments reference rules not in this config
+      // (e.g., react-hooks/exhaustive-deps comments in files also linted by main config)
+      reportUnusedDisableDirectives: 'off'
+    },
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
