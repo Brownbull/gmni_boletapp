@@ -1,6 +1,6 @@
 # Boletapp Documentation Index
 
-**AI-Assisted Development Reference** | **Last Updated:** 2025-12-03 (Post-Epic 5 Complete)
+**AI-Assisted Development Reference** | **Last Updated:** 2025-12-09 (Post-Epic 7 Complete)
 
 This is the primary entry point for AI-assisted development of Boletapp, a Smart Expense Tracker PWA.
 
@@ -301,6 +301,63 @@ Automated project structure analysis (JSON)
 - ✅ **Tests:** 335+ tests (137 unit, 167 integration, 31 E2E)
 - ✅ **Deployed:** 2025-12-03 to https://boletapp-d609f.web.app
 
+### Epic 6: Smart Category Learning (COMPLETE ✅)
+
+**Location:** [`sprint-artifacts/epic6/`](./sprint-artifacts/epic6/)
+
+- **[Epic 6 Retrospective](./sprint-artifacts/epic6/epic-6-retro-2025-12-04.md)** - Lessons learned and action items
+
+**Epic 6 Stories (All Complete):**
+1. [Story 6.1](./sprint-artifacts/epic6/story-6.1-cicd-auto-deploy.md) - CI/CD Auto-Deploy ✅
+2. [Story 6.2](./sprint-artifacts/epic6/story-6.2-category-mapping-infrastructure.md) - Category Mapping Infrastructure ✅
+3. [Story 6.3](./sprint-artifacts/epic6/story-6.3-fuzzy-matching-engine.md) - Fuzzy Matching Engine ✅
+4. [Story 6.4](./sprint-artifacts/epic6/story-6.4-category-learning-prompt.md) - Category Learning Prompt ✅
+5. [Story 6.5](./sprint-artifacts/epic6/story-6.5-auto-apply-on-receipt-scan.md) - Auto-Apply on Receipt Scan ✅
+6. [Story 6.6](./sprint-artifacts/epic6/story-6.6-epic-release-deployment.md) - Epic Release & Deployment ✅
+
+**Epic 6 Achievements:**
+- ✅ **CI/CD Auto-Deploy:** GitHub Actions workflow deploys to Firebase on main branch merge
+- ✅ **Category Mapping Infrastructure:** Firestore collection for user-specific category preferences
+- ✅ **Fuzzy Matching Engine:** Levenshtein distance algorithm with 0.7 threshold for merchant matching
+- ✅ **Category Learning Prompt:** Non-intrusive UI prompt when user changes item category
+- ✅ **Auto-Apply on Receipt Scan:** Learned categories automatically applied to new scans
+- ✅ **Visual Indicator:** Book icon (📖) shows items with learned category applied
+- ✅ **Tests:** 450+ tests (177 unit, 242 integration, 31 E2E)
+- ✅ **Deployed:** 2025-12-04 to https://boletapp-d609f.web.app
+
+### Epic 7: Analytics UX Redesign (COMPLETE ✅)
+
+**Location:** [`sprint-artifacts/epic7/`](./sprint-artifacts/epic7/)
+
+- **[Epic 7 Tech Spec](./sprint-artifacts/epic7/epic-7-tech-spec.md)** - Analytics redesign specification
+
+**Epic 7 Stories (All Complete):**
+1. [Story 7.1](./sprint-artifacts/epic7/story-7.1-chart-mode-registry.md) - Chart Mode Registry ✅
+2. [Story 7.2](./sprint-artifacts/epic7/story-7.2-quarter-week-views.md) - Quarter/Week Temporal Views ✅
+3. [Story 7.3](./sprint-artifacts/epic7/story-7.3-temporal-breadcrumb.md) - Temporal Breadcrumb Navigation ✅
+4. [Story 7.4](./sprint-artifacts/epic7/story-7.4-category-breadcrumb.md) - Category Breadcrumb Navigation ✅
+5. [Story 7.5](./sprint-artifacts/epic7/story-7.5-dual-mode-toggle.md) - Dual Mode Toggle (Aggregation/Comparison) ✅
+6. [Story 7.6](./sprint-artifacts/epic7/story-7.6-drill-down-cards.md) - Drill-Down Detail Cards ✅
+7. [Story 7.7](./sprint-artifacts/epic7/story-7.7-chart-animations.md) - Chart Animations ✅
+8. [Story 7.8](./sprint-artifacts/epic7/story-7.8-export-integration.md) - Export Integration ✅
+9. [Story 7.9](./sprint-artifacts/epic7/story-7.9-breadcrumb-icons.md) - Icon-Only Breadcrumb States ✅
+10. [Story 7.10](./sprint-artifacts/epic7/story-7.10-navigation-labels.md) - Navigation Label Updates ✅
+11. [Story 7.11](./sprint-artifacts/epic7/story-7.11-theme-selector.md) - Theme Selector ✅
+12. [Story 7.12](./sprint-artifacts/epic7/story-7.12-visual-consistency.md) - Visual Consistency ✅
+13. [Story 7.13](./sprint-artifacts/epic7/story-7.13-bug-fixes.md) - Bug Fixes & Stabilization ✅
+14. [Story 7.99](./sprint-artifacts/epic7/story-7.99-epic-release-deployment.md) - Epic Release & Deployment ✅
+
+**Epic 7 Achievements:**
+- ✅ **Chart Mode Registry:** Centralized chart mode management with state persistence
+- ✅ **Temporal Navigation:** Year → Quarter → Month → Week drill-down with icon-only breadcrumbs
+- ✅ **Category Navigation:** All → Category → Merchant drill-down hierarchy
+- ✅ **Dual Mode Toggle:** Switch between Aggregation (total spending) and Comparison (period-over-period) views
+- ✅ **Drill-Down Cards:** Interactive summary cards with tap-to-drill functionality
+- ✅ **Theme Selector:** Light, Dark, and System theme modes in Settings
+- ✅ **Navigation Labels:** Updated "History" → "Receipts", "Trends" → "Analytics"
+- ✅ **Tests:** 977+ tests (677 unit, 300 integration)
+- ✅ **Deployed:** 2025-12-09 to https://boletapp-d609f.web.app
+
 ---
 
 ## Team Standards
@@ -445,6 +502,6 @@ The `.bmad/` directory contains the BMAD (Breakthrough Modern Agile Development)
 
 ---
 
-**Documentation Version:** 7.0
-**Generated:** 2025-12-03 (Post-Epic 5 Complete)
-**Next Update:** After Epic 6 planning
+**Documentation Version:** 9.0
+**Generated:** 2025-12-09 (Post-Epic 7 Complete)
+**Next Update:** After Epic 8 planning

@@ -227,8 +227,8 @@ test.describe('Accessibility: Automated Axe Scans', () => {
     // Authenticate via test login helper
     await authenticateViaTestLogin(page);
 
-    // Navigate to History view
-    await page.getByRole('button', { name: /History|Historial/i }).click();
+    // Navigate to Receipts view (Story 7.10: label renamed from History to Receipts)
+    await page.getByRole('button', { name: /Receipts|Recibos/i }).click();
     await page.waitForLoadState('networkidle');
 
     // Run axe scan on History view

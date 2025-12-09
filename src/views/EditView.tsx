@@ -99,8 +99,21 @@ export const EditView: React.FC<EditViewProps> = ({
         }
     }, [currentTransaction.id, currentTransaction.items]);
 
-    const card = theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100';
-    const input = theme === 'dark' ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200';
+    // Story 7.12: Theme-aware styling using CSS variables (AC #3, #8)
+    const isDark = theme === 'dark';
+
+    // Card styling using CSS variables (AC #3)
+    const cardStyle: React.CSSProperties = {
+        backgroundColor: 'var(--surface)',
+        borderColor: isDark ? '#334155' : '#e2e8f0',
+    };
+
+    // Input styling using CSS variables
+    const inputStyle: React.CSSProperties = {
+        backgroundColor: isDark ? '#1e293b' : '#f8fafc',
+        borderColor: isDark ? '#475569' : '#e2e8f0',
+        color: 'var(--primary)',
+    };
 
     const hasImages = currentTransaction.imageUrls && currentTransaction.imageUrls.length > 0;
 
@@ -208,22 +221,39 @@ export const EditView: React.FC<EditViewProps> = ({
 
     return (
         <div className="pb-24">
-            <div className="flex justify-between mb-6">
-                <button onClick={onBack} aria-label={t('back')}>
-                    <ArrowLeft />
+            {/* Header with consistent styling (AC #8) */}
+            <div className="flex justify-between items-center mb-6">
+                <button
+                    onClick={onBack}
+                    aria-label={t('back')}
+                    className="min-w-11 min-h-11 flex items-center justify-center"
+                    style={{ color: 'var(--primary)' }}
+                >
+                    <ArrowLeft size={24} strokeWidth={2} />
                 </button>
-                <h1 className="font-bold">
+                <h1 className="font-bold text-lg" style={{ color: 'var(--primary)' }}>
                     {currentTransaction.id ? t('editTrans') : t('newTrans')}
                 </h1>
-                {currentTransaction.id && (
-                    <button onClick={() => onDelete(currentTransaction.id!)} className="text-red-500" aria-label={t('delete')}>
-                        <Trash2 />
+                {currentTransaction.id ? (
+                    <button
+                        onClick={() => onDelete(currentTransaction.id!)}
+                        className="min-w-11 min-h-11 flex items-center justify-center"
+                        style={{ color: 'var(--error)' }}
+                        aria-label={t('delete')}
+                    >
+                        <Trash2 size={24} strokeWidth={2} />
                     </button>
+                ) : (
+                    <div className="w-11" /> // Placeholder for alignment
                 )}
             </div>
 
-            <div className="p-6 rounded-2xl mb-4 text-center bg-slate-800 text-white">
-                <div className="text-sm opacity-60">{t('total')}</div>
+            {/* Total amount display with accent gradient */}
+            <div
+                className="p-6 rounded-xl mb-4 text-center text-white"
+                style={{ background: 'linear-gradient(135deg, var(--accent), #6366f1)' }}
+            >
+                <div className="text-sm opacity-80">{t('total')}</div>
                 <input
                     type="number"
                     value={currentTransaction.total}
@@ -231,13 +261,13 @@ export const EditView: React.FC<EditViewProps> = ({
                         ...currentTransaction,
                         total: parseStrictNumber(e.target.value)
                     })}
-                    className="bg-transparent text-3xl font-bold text-center w-full outline-none"
+                    className="bg-transparent text-3xl font-bold text-center w-full outline-none text-white"
                 />
             </div>
 
             {/* Receipt Image Thumbnail */}
             {(currentTransaction.thumbnailUrl || hasImages) && (
-                <div className={`p-4 rounded-xl border mb-4 ${card}`}>
+                <div className="p-4 rounded-xl border mb-4" style={cardStyle}>
                     <button
                         onClick={() => setShowImageViewer(true)}
                         className="block mx-auto"
@@ -246,7 +276,10 @@ export const EditView: React.FC<EditViewProps> = ({
                         <img
                             src={currentTransaction.thumbnailUrl || currentTransaction.imageUrls?.[0]}
                             alt="Receipt thumbnail"
-                            className="w-20 h-24 object-cover rounded-lg border-2 border-slate-200 dark:border-slate-700 hover:border-blue-500 transition-colors cursor-pointer"
+                            className="w-20 h-24 object-cover rounded-lg border-2 transition-colors cursor-pointer"
+                            style={{ borderColor: isDark ? '#475569' : '#e2e8f0' }}
+                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = isDark ? '#475569' : '#e2e8f0'; }}
                         />
                     </button>
                 </div>
@@ -261,15 +294,18 @@ export const EditView: React.FC<EditViewProps> = ({
                 />
             )}
 
-            <div className={`p-4 rounded-xl border space-y-3 mb-4 ${card}`}>
+            {/* Form fields card (AC #3) */}
+            <div className="p-4 rounded-xl border space-y-3 mb-4" style={cardStyle}>
                 <input
-                    className={`w-full p-2 border rounded ${input}`}
+                    className="w-full p-2 border rounded-lg"
+                    style={inputStyle}
                     value={currentTransaction.merchant}
                     onChange={e => onUpdateTransaction({ ...currentTransaction, merchant: e.target.value })}
                     placeholder={t('merchant')}
                 />
                 <input
-                    className={`w-full p-2 border rounded ${input}`}
+                    className="w-full p-2 border rounded-lg"
+                    style={inputStyle}
                     placeholder={t('alias')}
                     list="alias-list"
                     value={currentTransaction.alias || ''}
@@ -282,12 +318,14 @@ export const EditView: React.FC<EditViewProps> = ({
                 </datalist>
                 <input
                     type="date"
-                    className={`w-full p-2 border rounded ${input}`}
+                    className="w-full p-2 border rounded-lg"
+                    style={inputStyle}
                     value={currentTransaction.date}
                     onChange={e => onUpdateTransaction({ ...currentTransaction, date: e.target.value })}
                 />
                 <select
-                    className={`w-full p-2 border rounded ${input}`}
+                    className="w-full p-2 border rounded-lg"
+                    style={inputStyle}
                     value={currentTransaction.category}
                     onChange={e => onUpdateTransaction({ ...currentTransaction, category: e.target.value })}
                 >
@@ -297,24 +335,34 @@ export const EditView: React.FC<EditViewProps> = ({
                 </select>
             </div>
 
-            <div className={`p-4 rounded-xl border mb-4 ${card}`}>
-                <div className="flex justify-between mb-2">
-                    <h3 className="font-bold">{t('items')}</h3>
+            {/* Items card with consistent styling (AC #3) */}
+            <div className="p-4 rounded-xl border mb-4" style={cardStyle}>
+                <div className="flex justify-between items-center mb-3">
+                    <h3 className="font-bold" style={{ color: 'var(--primary)' }}>{t('items')}</h3>
                     <button
                         onClick={handleAddItem}
-                        className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded"
+                        className="min-w-11 min-h-11 px-3 py-2 rounded-lg flex items-center justify-center"
+                        style={{
+                            backgroundColor: isDark ? 'rgba(96, 165, 250, 0.2)' : 'rgba(59, 130, 246, 0.1)',
+                            color: 'var(--accent)',
+                        }}
                         aria-label={t('addItem')}
                     >
-                        <Plus size={12} />
+                        <Plus size={20} strokeWidth={2} />
                     </button>
                 </div>
                 <div className="space-y-3">
                     {currentTransaction.items.map((item, i) => (
-                        <div key={i} className="border-b pb-2 last:border-0">
+                        <div
+                            key={i}
+                            className="border-b pb-2 last:border-0"
+                            style={{ borderColor: isDark ? '#334155' : '#e2e8f0' }}
+                        >
                             {editingItemIndex === i ? (
                                 <div className="space-y-2">
                                     <input
-                                        className={`w-full p-1 border rounded text-sm ${input}`}
+                                        className="w-full p-2 border rounded-lg text-sm"
+                                        style={inputStyle}
                                         value={item.name}
                                         onChange={e => handleUpdateItem(i, 'name', e.target.value)}
                                         placeholder={t('itemName')}
@@ -322,12 +370,14 @@ export const EditView: React.FC<EditViewProps> = ({
                                     <div className="flex gap-2">
                                         <input
                                             type="number"
-                                            className={`w-20 p-1 border rounded text-sm ${input}`}
+                                            className="w-24 p-2 border rounded-lg text-sm"
+                                            style={inputStyle}
                                             value={item.price}
                                             onChange={e => handleUpdateItem(i, 'price', e.target.value)}
                                         />
                                         <input
-                                            className={`flex-1 p-1 border rounded text-sm ${input}`}
+                                            className="flex-1 p-2 border rounded-lg text-sm"
+                                            style={inputStyle}
                                             value={item.category || ''}
                                             onChange={e => handleUpdateItem(i, 'category', e.target.value)}
                                             placeholder={t('itemCat')}
@@ -336,34 +386,42 @@ export const EditView: React.FC<EditViewProps> = ({
                                     <div className="flex justify-end gap-2">
                                         <button
                                             onClick={() => handleDeleteItem(i)}
-                                            className="text-red-500"
+                                            className="min-w-11 min-h-11 p-2 rounded-lg flex items-center justify-center transition-colors"
+                                            style={{
+                                                color: 'var(--error)',
+                                                backgroundColor: isDark ? 'rgba(248, 113, 113, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                            }}
                                             aria-label={t('deleteItem')}
                                         >
-                                            <Trash2 size={16} />
+                                            <Trash2 size={20} strokeWidth={2} />
                                         </button>
                                         <button
                                             onClick={() => onSetEditingItemIndex(null)}
-                                            className="text-blue-600"
+                                            className="min-w-11 min-h-11 p-2 rounded-lg flex items-center justify-center transition-colors"
+                                            style={{
+                                                color: 'var(--accent)',
+                                                backgroundColor: isDark ? 'rgba(96, 165, 250, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+                                            }}
                                             aria-label={t('confirmItem')}
                                         >
-                                            <Check size={16} />
+                                            <Check size={20} strokeWidth={2} />
                                         </button>
                                     </div>
                                 </div>
                             ) : (
                                 <div
                                     onClick={() => onSetEditingItemIndex(i)}
-                                    className="flex justify-between items-start"
+                                    className="flex justify-between items-start cursor-pointer py-1"
                                 >
                                     <div>
-                                        <div className="font-medium text-sm">{item.name}</div>
+                                        <div className="font-medium text-sm" style={{ color: 'var(--primary)' }}>{item.name}</div>
                                         <CategoryBadge
                                             category={item.category || 'Other'}
                                             subcategory={item.subcategory}
                                             categorySource={item.categorySource}
                                         />
                                     </div>
-                                    <div className="font-mono text-sm">
+                                    <div className="font-mono text-sm" style={{ color: 'var(--primary)' }}>
                                         {formatCurrency(item.price, currency)}
                                     </div>
                                 </div>
@@ -373,9 +431,11 @@ export const EditView: React.FC<EditViewProps> = ({
                 </div>
             </div>
 
+            {/* Save button with accent color */}
             <button
                 onClick={handleSaveWithLearning}
-                className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg"
+                className="w-full py-3 rounded-xl font-bold shadow-lg text-white transition-transform hover:scale-[1.01] active:scale-[0.99]"
+                style={{ backgroundColor: 'var(--accent)' }}
             >
                 {t('save')}
             </button>

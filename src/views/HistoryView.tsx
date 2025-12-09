@@ -113,7 +113,23 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
     onEditTransaction,
 }) => {
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-    const card = theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100';
+
+    // Story 7.12: Theme-aware styling using CSS variables (AC #8)
+    const isDark = theme === 'dark';
+
+    // Card styling using CSS variables
+    const cardStyle: React.CSSProperties = {
+        backgroundColor: 'var(--surface)',
+        borderColor: isDark ? '#334155' : '#e2e8f0',
+        transition: 'border-color 0.15s ease',
+    };
+
+    // Pagination button styling
+    const paginationButtonStyle: React.CSSProperties = {
+        backgroundColor: 'var(--surface)',
+        borderColor: isDark ? '#334155' : '#e2e8f0',
+        color: 'var(--primary)',
+    };
 
     const handleThumbnailClick = (transaction: Transaction) => {
         setSelectedTransaction(transaction);
@@ -125,16 +141,27 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
 
     return (
         <div className="pb-24">
-            <button onClick={onBack} className="mb-4" aria-label={t('back')}>
-                <ArrowLeft />
+            {/* Header with consistent styling (AC #8) */}
+            <button
+                onClick={onBack}
+                className="mb-4 min-w-11 min-h-11 flex items-center justify-center"
+                style={{ color: 'var(--primary)' }}
+                aria-label={t('back')}
+            >
+                <ArrowLeft size={24} strokeWidth={2} />
             </button>
-            <h1 className="text-2xl font-bold mb-4">{t('history')}</h1>
+            <h1 className="text-2xl font-bold mb-4" style={{ color: 'var(--primary)' }}>{t('history')}</h1>
+
+            {/* Transaction list with hover states */}
             <div className="space-y-3">
                 {historyTrans.map(tx => (
                     <div
                         key={tx.id}
                         onClick={() => onEditTransaction(tx)}
-                        className={`p-4 rounded-xl border flex gap-3 cursor-pointer ${card}`}
+                        className="p-4 rounded-xl border flex gap-3 cursor-pointer"
+                        style={cardStyle}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = isDark ? '#334155' : '#e2e8f0'; }}
                     >
                         {/* Thumbnail column - only if thumbnailUrl exists */}
                         <TransactionThumbnail
@@ -145,33 +172,37 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                         {/* Transaction details */}
                         <div className="flex-1 flex justify-between">
                             <div>
-                                <div className="font-bold">{tx.alias || tx.merchant}</div>
-                                <div className="text-xs opacity-60">{tx.merchant}</div>
+                                <div className="font-medium" style={{ color: 'var(--primary)' }}>{tx.alias || tx.merchant}</div>
+                                <div className="text-xs" style={{ color: 'var(--secondary)' }}>{tx.merchant}</div>
                                 <CategoryBadge category={tx.category} mini />
-                                <div className="text-xs opacity-60 mt-1">
+                                <div className="text-xs mt-1" style={{ color: 'var(--secondary)' }}>
                                     {formatDate(tx.date, dateFormat)}
                                 </div>
                             </div>
-                            <div className="font-bold">{formatCurrency(tx.total, currency)}</div>
+                            <div className="font-bold" style={{ color: 'var(--primary)' }}>{formatCurrency(tx.total, currency)}</div>
                         </div>
                     </div>
                 ))}
             </div>
-            <div className="flex justify-center gap-4 mt-6">
+
+            {/* Pagination controls */}
+            <div className="flex justify-center items-center gap-4 mt-6">
                 <button
                     disabled={historyPage === 1}
                     onClick={() => onSetHistoryPage(p => p - 1)}
-                    className={`px-4 py-2 border rounded disabled:opacity-50 ${card}`}
+                    className="px-4 py-2 border rounded-lg disabled:opacity-50 font-medium"
+                    style={paginationButtonStyle}
                 >
                     {t('prev')}
                 </button>
-                <span className="py-2">
+                <span className="py-2" style={{ color: 'var(--secondary)' }}>
                     {t('page')} {historyPage}
                 </span>
                 <button
                     disabled={historyPage >= totalHistoryPages}
                     onClick={() => onSetHistoryPage(p => p + 1)}
-                    className={`px-4 py-2 border rounded disabled:opacity-50 ${card}`}
+                    className="px-4 py-2 border rounded-lg disabled:opacity-50 font-medium"
+                    style={paginationButtonStyle}
                 >
                     {t('next')}
                 </button>

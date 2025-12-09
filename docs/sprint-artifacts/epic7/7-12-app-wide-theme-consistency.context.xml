@@ -1,0 +1,266 @@
+<story-context id="epic7/story-7.12-app-wide-theme-consistency" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>12</storyId>
+    <title>App-Wide Theme &amp; Visual Consistency</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic7/story-7.12-app-wide-theme-consistency.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>the entire app to have a cohesive visual design that matches the new analytics theme</iWant>
+    <soThat>the app feels polished and professional throughout, not just in the analytics section</soThat>
+    <tasks>
+      <task id="1">Implement CSS custom properties theme system (AC: #6, #7)
+        <subtask>Add CSS variables to index.css or App.tsx</subtask>
+        <subtask>Define light mode variables (--bg, --surface, --primary, --secondary, --accent)</subtask>
+        <subtask>Define dark mode variables</subtask>
+        <subtask>Update Tailwind config if needed for theme colors</subtask>
+      </task>
+      <task id="2">Update DashboardView styling (AC: #1, #2, #8)
+        <subtask>Update main container to use theme background</subtask>
+        <subtask>Update transaction cards to use surface color with subtle borders</subtask>
+        <subtask>Add hover states to transaction cards (border-accent on hover)</subtask>
+        <subtask>Update header (greeting, date) to use theme typography</subtask>
+        <subtask>Update empty state styling</subtask>
+      </task>
+      <task id="3">Update EditView styling (AC: #3, #8)
+        <subtask>Update form container to use theme surface</subtask>
+        <subtask>Update input fields to use consistent styling</subtask>
+        <subtask>Update item cards to match analytics drill-down cards</subtask>
+        <subtask>Update action buttons to use accent color</subtask>
+        <subtask>Update header styling for consistency</subtask>
+      </task>
+      <task id="4">Update SettingsView styling (AC: #4, #8)
+        <subtask>Update toggle buttons to match chart mode toggle style</subtask>
+        <subtask>Update card containers to use theme surface</subtask>
+        <subtask>Update action buttons to use theme colors</subtask>
+        <subtask>Ensure consistent spacing and typography</subtask>
+      </task>
+      <task id="5">Update LoginScreen styling (AC: #5)
+        <subtask>Update background to use theme --bg color</subtask>
+        <subtask>Update sign-in button to use accent gradient</subtask>
+        <subtask>Update text colors to use theme variables</subtask>
+        <subtask>Ensure dark mode compatibility</subtask>
+      </task>
+      <task id="6">Update modal dialogs (AC: #10)
+        <subtask>Update CategoryLearningPrompt to use theme surface and styling</subtask>
+        <subtask>Update any confirmation dialogs</subtask>
+        <subtask>Ensure modals have consistent backdrop and shadow</subtask>
+      </task>
+      <task id="7">Update empty states across views (AC: #9)
+        <subtask>Standardize empty state icon sizes (32px decorative)</subtask>
+        <subtask>Use consistent text hierarchy</subtask>
+        <subtask>Add consistent spacing</subtask>
+      </task>
+      <task id="8">Verify Nav component integration (AC: All)
+        <subtask>Ensure Nav uses theme surface color</subtask>
+        <subtask>Verify scan button gradient matches theme accent</subtask>
+        <subtask>Check active/inactive states use theme colors</subtask>
+      </task>
+      <task id="9">Run tests and verify (AC: All)
+        <subtask>TypeScript compilation</subtask>
+        <subtask>Visual verification in light mode</subtask>
+        <subtask>Visual verification in dark mode</subtask>
+        <subtask>Test all views for theme consistency</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">Dashboard view uses the same card styling as analytics (rounded-xl, surface color, subtle borders)</criterion>
+    <criterion id="2">Transaction list items use consistent card styling with hover states</criterion>
+    <criterion id="3">Edit view uses the same form input styling and card layouts</criterion>
+    <criterion id="4">Settings view uses the same toggle button styling as chart mode toggle</criterion>
+    <criterion id="5">Login screen uses the theme's accent colors and surface styling</criterion>
+    <criterion id="6">All views use CSS custom properties for theming (--bg, --surface, --primary, --secondary, --accent)</criterion>
+    <criterion id="7">Dark mode works consistently across all views using the theme system</criterion>
+    <criterion id="8">Header areas across views have consistent styling (font sizes, spacing, alignment)</criterion>
+    <criterion id="9">Empty states use consistent styling (icon size, text hierarchy, spacing)</criterion>
+    <criterion id="10">Modal dialogs use the new theme styling (CategoryLearningPrompt, confirmations)</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>Boletapp UX Design Specification</title>
+        <section>Section 3: Visual Foundation - Color System, Typography, Spacing</section>
+        <snippet>CSS Variables approach with :root and [data-theme="ghibli"] selectors. Light mode: --bg: slate-50, --surface: white, --primary: slate-900, --accent: blue-500. Dark mode: --bg: slate-900, --surface: slate-800.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture-epic7.md</path>
+        <title>Architecture - Epic 7: Analytics UX Redesign</title>
+        <section>ADR-013: Theme System - CSS Variables with data attributes</section>
+        <snippet>Theme implementation uses CSS variables with Tailwind utilities. Theme preference stored in localStorage. Apply via data-theme attribute on html element.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Boletapp Epic Breakdown</title>
+        <section>Epic 7: Analytics UX Redesign, FR52-55</section>
+        <snippet>FR52: All temporal views use identical layout structure. FR53: All icons 24px with stroke-width 2. FR54: All spacing follows 8px grid. FR55: All interactive elements 44x44px minimum.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <file>
+        <path>src/views/DashboardView.tsx</path>
+        <kind>view</kind>
+        <symbol>DashboardView</symbol>
+        <lines>1-127</lines>
+        <reason>Main dashboard component. Uses hardcoded theme classes (bg-slate-900, bg-white). Needs to use CSS variables. Transaction cards need hover states.</reason>
+      </file>
+      <file>
+        <path>src/views/SettingsView.tsx</path>
+        <kind>view</kind>
+        <symbol>SettingsView</symbol>
+        <lines>1-204</lines>
+        <reason>Settings page with toggle buttons. Current toggle styling (lines 48-49) differs from ChartModeToggle. Needs unified toggle pattern.</reason>
+      </file>
+      <file>
+        <path>src/views/LoginScreen.tsx</path>
+        <kind>view</kind>
+        <symbol>LoginScreen</symbol>
+        <lines>1-40</lines>
+        <reason>Login page with hardcoded dark theme (bg-slate-900). Should respect user's theme preference and use CSS variables.</reason>
+      </file>
+      <file>
+        <path>src/views/EditView.tsx</path>
+        <kind>view</kind>
+        <symbol>EditView</symbol>
+        <lines>1-100</lines>
+        <reason>Transaction editing view. Form inputs and item cards need consistent styling with analytics drill-down cards.</reason>
+      </file>
+      <file>
+        <path>src/components/Nav.tsx</path>
+        <kind>component</kind>
+        <symbol>Nav</symbol>
+        <lines>1-63</lines>
+        <reason>Bottom navigation bar. Already uses theme conditional (line 16). Verify scan button matches gradient pattern from UX spec.</reason>
+      </file>
+      <file>
+        <path>src/components/analytics/ChartModeToggle.tsx</path>
+        <kind>component</kind>
+        <symbol>ChartModeToggle</symbol>
+        <lines>all</lines>
+        <reason>Reference component for toggle button styling. SettingsView toggles should match this pattern.</reason>
+      </file>
+      <file>
+        <path>src/components/analytics/DrillDownCard.tsx</path>
+        <kind>component</kind>
+        <symbol>DrillDownCard</symbol>
+        <lines>all</lines>
+        <reason>Reference component for card styling with hover states. Dashboard and EditView cards should match.</reason>
+      </file>
+      <file>
+        <path>src/components/CategoryLearningPrompt.tsx</path>
+        <kind>component</kind>
+        <symbol>CategoryLearningPrompt</symbol>
+        <lines>all</lines>
+        <reason>Modal dialog for category learning. Needs theme-consistent styling (surface color, shadows, buttons).</reason>
+      </file>
+      <file>
+        <path>src/index.css</path>
+        <kind>stylesheet</kind>
+        <symbol>:root CSS variables</symbol>
+        <lines>all</lines>
+        <reason>Main CSS file. Add CSS custom properties for theme here. Define :root and .dark selectors.</reason>
+      </file>
+    </code>
+
+    <dependencies>
+      <ecosystem name="node">
+        <package name="react" version="^18.3.1">UI Framework</package>
+        <package name="lucide-react" version="^0.460.0">Icons - 24px consistent sizing</package>
+        <package name="typescript" version="^5.3.3">Type safety</package>
+      </ecosystem>
+      <devDependencies>
+        <package name="vitest" version="^4.0.13">Unit testing</package>
+        <package name="@testing-library/react" version="^16.3.0">Component testing</package>
+        <package name="@playwright/test" version="^1.56.1">E2E testing</package>
+      </devDependencies>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="docs/ux-design-specification.md">Use CSS variables for theming: --bg, --surface, --primary, --secondary, --accent</constraint>
+    <constraint source="docs/ux-design-specification.md">Light mode colors: slate-50 (bg), white (surface), slate-900 (primary), slate-500 (secondary), blue-500 (accent)</constraint>
+    <constraint source="docs/ux-design-specification.md">Dark mode colors: slate-900 (bg), slate-800 (surface), slate-50 (primary), slate-400 (secondary), blue-400 (accent)</constraint>
+    <constraint source="docs/architecture-epic7.md">All icons must be 24px with strokeWidth 2</constraint>
+    <constraint source="docs/architecture-epic7.md">All spacing follows 8px grid system</constraint>
+    <constraint source="docs/architecture-epic7.md">All interactive elements have minimum 44x44px touch targets</constraint>
+    <constraint source="docs/ux-design-specification.md">Cards use rounded-xl (12px border-radius)</constraint>
+    <constraint source="docs/ux-design-specification.md">Typography: H1=24px/text-2xl, Body=14px/text-sm, Amounts=28px/text-3xl font-bold</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>CSS Theme Variables</name>
+      <kind>css</kind>
+      <signature>:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --primary: #0f172a;
+  --secondary: #64748b;
+  --accent: #3b82f6;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
+}
+.dark {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --primary: #f8fafc;
+  --secondary: #94a3b8;
+  --accent: #60a5fa;
+}</signature>
+      <path>src/index.css</path>
+    </interface>
+    <interface>
+      <name>Card Pattern</name>
+      <kind>component pattern</kind>
+      <signature>const card = theme === 'dark' ? 'bg-[var(--surface)] border-slate-700' : 'bg-[var(--surface)] border-slate-100';
+// With hover: hover:border-[var(--accent)] transition-all</signature>
+      <path>shared pattern across views</path>
+    </interface>
+    <interface>
+      <name>Toggle Pattern</name>
+      <kind>component pattern</kind>
+      <signature>// Pill-style segmented control matching ChartModeToggle
+&lt;div className="flex bg-[var(--surface)] rounded-lg p-1 border"&gt;
+  &lt;button className={active ? 'bg-[var(--accent)] text-white' : 'text-[var(--secondary)]'}&gt;
+    Option
+  &lt;/button&gt;
+&lt;/div&gt;</signature>
+      <path>src/components/analytics/ChartModeToggle.tsx</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Unit tests use Vitest with @testing-library/react. Visual testing requires manual verification in light and dark modes. All tests should pass TypeScript compilation first (npm run type-check). Theme consistency testing involves checking all views render correctly in both modes.
+    </standards>
+    <locations>
+      <location>tests/unit/*.test.tsx</location>
+      <location>tests/integration/*.test.tsx</location>
+      <location>tests/e2e/*.spec.ts</location>
+    </locations>
+    <ideas>
+      <idea acRef="1">Test DashboardView renders with rounded-xl cards and surface color</idea>
+      <idea acRef="2">Test transaction cards have hover:border-accent class</idea>
+      <idea acRef="3">Test EditView form inputs have consistent styling</idea>
+      <idea acRef="4">Test SettingsView toggles match ChartModeToggle pattern</idea>
+      <idea acRef="5">Test LoginScreen respects theme preference from localStorage</idea>
+      <idea acRef="6">Test CSS variables are defined in :root and applied to components</idea>
+      <idea acRef="7">Test dark mode class (.dark) changes CSS variable values</idea>
+      <idea acRef="8">Test all view headers use text-2xl font-bold</idea>
+      <idea acRef="9">Test empty states use consistent 32px icon size</idea>
+      <idea acRef="10">Test CategoryLearningPrompt uses theme surface and accent colors</idea>
+      <idea>Visual regression test: Compare screenshots before/after in light mode</idea>
+      <idea>Visual regression test: Compare screenshots before/after in dark mode</idea>
+    </ideas>
+  </tests>
+</story-context>

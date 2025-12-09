@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Story Context: 7.13 - Stacked Bar Chart for Comparison Mode
+  Generated: 2025-12-08
+
+  This context provides everything needed to implement stacked bars
+  in Comparison mode (currently showing grouped bars side-by-side).
+-->
+<story-context story="7.13" title="Stacked Bar Chart for Comparison Mode">
+
+  <!-- ================================================================== -->
+  <!-- STORY SUMMARY -->
+  <!-- ================================================================== -->
+  <summary>
+    <goal>Change Comparison mode from grouped bars (side-by-side segments) to stacked bars (vertically stacked segments within each bar)</goal>
+    <why>UX mockup shows stacked bars to display both total spending per period AND category breakdown in a single visual</why>
+    <scope>
+      - Refactor GroupedBarChart to stack segments vertically
+      - Dynamic bar width based on data count
+      - Preserve tooltip functionality
+      - No changes to data flow or aggregation logic
+    </scope>
+  </summary>
+
+  <!-- ================================================================== -->
+  <!-- ACCEPTANCE CRITERIA REFERENCE -->
+  <!-- ================================================================== -->
+  <acceptance-criteria>
+    <ac id="1">Comparison mode displays stacked bars (categories vertically stacked) instead of grouped bars</ac>
+    <ac id="2">Each bar shows the total height representing total spending for that period</ac>
+    <ac id="3">Bars are segmented by category with consistent colors matching the legend</ac>
+    <ac id="4">Hovering/tapping a segment shows tooltip with category name and amount</ac>
+    <ac id="5">Bar widths adjust dynamically based on number of time periods (w-10 few, w-6 many)</ac>
+    <ac id="6">Chart maintains consistent gap-2 spacing between bars</ac>
+    <ac id="7">All existing unit tests pass after refactoring</ac>
+  </acceptance-criteria>
+
+  <!-- ================================================================== -->
+  <!-- CURRENT IMPLEMENTATION (TO BE MODIFIED) -->
+  <!-- ================================================================== -->
+  <current-implementation>
+    <file path="src/components/charts/GroupedBarChart.tsx">
+      <description>Current implementation with GROUPED (side-by-side) bars</description>
+      <code><![CDATA[
+import React from 'react';
+import { formatCurrency } from '../../utils/currency';
+
+export interface BarSegment {
+    label: string;
+    value: number;
+    color: string;
+}
+
+export interface BarChartData {
+    label: string;
+    total: number;
+    segments: BarSegment[];
+}
+
+interface GroupedBarChartProps {
+    data: BarChartData[];
+    theme: string;
+    currency: string;
+}
+
+export const GroupedBarChart: React.FC<GroupedBarChartProps> = ({ data, theme, currency }) => {
+    const allValues = data.flatMap(d => d.segments.map(s => s.value));
+    const max = Math.max(...allValues, 1);
+
+    if (data.length === 0) {
+        return <div className="h-40 flex items-center justify-center opacity-50">No Data</div>;
+    }
+
+    return (
+        <div className="h-60 pt-6 pb-8 px-2 overflow-x-auto w-full">
+            <div className="h-full flex items-end gap-4 min-w-max px-2">
+                {data.map((d, i) => (
+                    <div key={i} className="flex flex-col items-center group h-full justify-end">
+                        {/* CURRENT: Segments side-by-side with gap-1 */}
+                        <div className="flex items-end gap-1 h-full">
+                            {d.segments.map((seg, j) => (
+                                <div
+                                    key={j}
+                                    className="w-3 sm:w-4 rounded-t transition-all duration-300 relative hover:opacity-80"
+                                    style={{
+                                        height: `${(seg.value / max) * 100}%`,
+                                        backgroundColor: seg.color,
+                                        minHeight: seg.value > 0 ? '4px' : '0'
+                                    }}
+                                >
+                                    <div
+                                        className={`hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-1 text-[8px] p-1 rounded whitespace-nowrap z-50 shadow-sm border pointer-events-none ${theme === 'dark' ? 'bg-black text-white border-gray-700' : 'bg-white text-black border-gray-200'}`}
+                                    >
+                                        {seg.label}: {formatCurrency(seg.value, currency)}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className={`text-[10px] mt-2 font-medium ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                            {d.label}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+]]></code>
+      <key-issue>
+        Lines 35-51: Segments render SIDE-BY-SIDE with `flex items-end gap-1`.
+        Should be STACKED VERTICALLY with `flex flex-col-reverse`.
+      </key-issue>
+    </file>
+  </current-implementation>
+
+  <!-- ================================================================== -->
+  <!-- TARGET IMPLEMENTATION PATTERN -->
+  <!-- ================================================================== -->
+  <target-implementation>
+    <visual-comparison>
+      <current>
+        Grouped (WRONG):
+          █ █ █   █ █ █   █ █ █
+          A B C   A B C   A B C
+          Jan     Feb     Mar
+      </current>
+      <target>
+        Stacked (CORRECT):
+            █       █       █
+            █       █       █
+            █       █       █
+           Jan     Feb     Mar
+      </target>
+    </visual-comparison>
+
+    <code-pattern><![CDATA[
+// TARGET: Stack segments vertically within each bar
+// Key changes:
+// 1. Use flex-col-reverse to stack from bottom
+// 2. Height proportional to segment value / total
+// 3. Scale max based on bar totals, not segment values
+// 4. Dynamic width based on bar count
+
+export const StackedBarChart: React.FC<StackedBarChartProps> = ({ data, theme, currency }) => {
+    // Scale based on TOTAL bar heights, not individual segments
+    const maxTotal = Math.max(...data.map(d => d.total), 1);
+
+    // Dynamic bar width based on count (AC #5)
+    const getBarWidth = () => {
+        if (data.length <= 6) return 'w-10';      // 40px for few bars
+        if (data.length <= 12) return 'w-8';     // 32px for medium
+        return 'w-6';                            // 24px for many
+    };
+
+    const barWidth = getBarWidth();
+
+    return (
+        <div className="h-60 pt-6 pb-8 px-2 overflow-x-auto w-full">
+            <div className="h-full flex items-end gap-2 min-w-max px-2 justify-center">
+                {data.map((d, i) => (
+                    <div key={i} className="flex flex-col items-center group h-full justify-end">
+                        {/* STACKED: Single column with segments stacked vertically */}
+                        <div className={`flex flex-col-reverse ${barWidth} h-full`}>
+                            {d.segments.map((seg, j) => {
+                                // Height proportional to segment value within this bar's total
+                                const segmentHeight = d.total > 0
+                                    ? (seg.value / maxTotal) * 100
+                                    : 0;
+
+                                return (
+                                    <div
+                                        key={j}
+                                        className="relative hover:opacity-80 transition-opacity first:rounded-t"
+                                        style={{
+                                            height: `${segmentHeight}%`,
+                                            backgroundColor: seg.color,
+                                            minHeight: seg.value > 0 ? '2px' : '0'
+                                        }}
+                                    >
+                                        {/* Tooltip (AC #4) */}
+                                        <div className={`tooltip...`}>
+                                            {seg.label}: {formatCurrency(seg.value, currency)}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        {/* Period label */}
+                        <div className="text-[10px] mt-2 font-medium">
+                            {d.label}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+]]></code-pattern>
+  </target-implementation>
+
+  <!-- ================================================================== -->
+  <!-- DATA FLOW CONTEXT -->
+  <!-- ================================================================== -->
+  <data-flow>
+    <file path="src/views/TrendsView.tsx" lines="195-235">
+      <description>Bar data computation - NO CHANGES NEEDED</description>
+      <code><![CDATA[
+/**
+ * Compute bar chart data from filtered transactions for comparison view.
+ */
+function computeBarData(
+    transactions: Transaction[],
+    temporal: { level: string; month?: string },
+    locale: string
+): BarData[] {
+    const barMap: Record<string, { total: number; segments: Record<string, number> }> = {};
+
+    transactions.forEach(tx => {
+        // Group by day for month view, by month for year view
+        const key = temporal.month
+            ? tx.date.split('-')[2] // Day of month
+            : tx.date.split('-')[1]; // Month
+
+        if (!key) return;
+
+        if (!barMap[key]) {
+            barMap[key] = { total: 0, segments: {} };
+        }
+
+        barMap[key].total += tx.total;
+
+        const segmentKey = tx.category || 'Other';
+        barMap[key].segments[segmentKey] = (barMap[key].segments[segmentKey] || 0) + tx.total;
+    });
+
+    return Object.keys(barMap)
+        .sort()
+        .map(key => {
+            const label = temporal.month
+                ? key // Day number
+                : new Date(`2000-${key}-02`).toLocaleString(locale === 'es' ? 'es-ES' : 'en-US', { month: 'short' });
+
+            const segments = Object.entries(barMap[key].segments).map(([segLabel, value]) => ({
+                label: segLabel,
+                value,
+                color: getColor(segLabel),
+            }));
+
+            return { label, total: barMap[key].total, segments };
+        });
+}
+]]></code>
+      <note>Data structure already includes `total` field needed for stacked bar scaling</note>
+    </file>
+
+    <file path="src/views/TrendsView.tsx" lines="534-537">
+      <description>Chart rendering location - update import if component renamed</description>
+      <code><![CDATA[
+{chartMode === 'comparison' && barData.length > 0 ? (
+    <GroupedBarChart data={barData} theme={theme} currency={currency} />
+) : (
+    // ... no data message
+)}
+]]></code>
+    </file>
+  </data-flow>
+
+  <!-- ================================================================== -->
+  <!-- TYPE DEFINITIONS -->
+  <!-- ================================================================== -->
+  <types>
+    <file path="src/components/charts/GroupedBarChart.tsx" lines="1-14">
+      <description>Existing types - keep as-is, they work for stacked bars too</description>
+      <code><![CDATA[
+export interface BarSegment {
+    label: string;
+    value: number;
+    color: string;
+}
+
+export interface BarChartData {
+    label: string;
+    total: number;        // <-- Already has total for scaling!
+    segments: BarSegment[];
+}
+]]></code>
+    </file>
+  </types>
+
+  <!-- ================================================================== -->
+  <!-- IMPLEMENTATION TASKS -->
+  <!-- ================================================================== -->
+  <tasks>
+    <task id="1" description="Refactor GroupedBarChart to StackedBarChart">
+      <subtask>Change segment layout from horizontal (flex items-end gap-1) to vertical (flex flex-col-reverse)</subtask>
+      <subtask>Scale bar heights based on maxTotal (sum of segments) not max segment value</subtask>
+      <subtask>Each segment height = (segment.value / maxTotal) * 100%</subtask>
+      <subtask>Apply first:rounded-t to first segment (top of stack)</subtask>
+    </task>
+
+    <task id="2" description="Dynamic bar width (AC #5)">
+      <subtask>1-6 bars: w-10 (40px)</subtask>
+      <subtask>7-12 bars: w-8 (32px)</subtask>
+      <subtask>13+ bars: w-6 (24px)</subtask>
+      <subtask>Container uses gap-2 for consistent spacing (AC #6)</subtask>
+    </task>
+
+    <task id="3" description="Preserve tooltip functionality (AC #4)">
+      <subtask>Keep hover state showing segment label and formatted value</subtask>
+      <subtask>Adjust tooltip positioning for vertical segments</subtask>
+    </task>
+
+    <task id="4" description="Update imports if component renamed">
+      <subtask>If renaming to StackedBarChart, update TrendsView.tsx import</subtask>
+      <subtask>Option: Keep name as GroupedBarChart but change implementation</subtask>
+    </task>
+
+    <task id="5" description="Testing (AC #7)">
+      <subtask>npx tsc --noEmit</subtask>
+      <subtask>npm run test:unit</subtask>
+      <subtask>Visual verification in browser</subtask>
+    </task>
+  </tasks>
+
+  <!-- ================================================================== -->
+  <!-- UX SPEC REFERENCE -->
+  <!-- ================================================================== -->
+  <ux-reference source="docs/ux-design-specification.md">
+    <section title="6.2 StackedBarChart">
+      Props:
+      - data: { label: string, total: number, segments: { value: number, color: number }[] }[]
+
+      Behavior:
+      - Bars scale to max total
+      - Each bar divided by category colors
+      - Dynamic width based on bar count (w-10, w-8, w-6)
+      - Always has gap-2 between bars
+    </section>
+
+    <user-journey title="Journey 3: Compare Spending Over Time">
+      "Chart switches to stacked bars showing weeks"
+      "Key insight: Bars show both total AND category breakdown"
+    </user-journey>
+  </ux-reference>
+
+  <!-- ================================================================== -->
+  <!-- TESTING COMMANDS -->
+  <!-- ================================================================== -->
+  <testing>
+    <command description="TypeScript check">npx tsc --noEmit</command>
+    <command description="Unit tests">npm run test:unit</command>
+    <command description="All tests">npm run test:all</command>
+    <manual-verification>
+      - Navigate to Trends/Analytics view
+      - Click "Comparison" toggle
+      - Verify bars are stacked vertically (not side-by-side)
+      - Hover over segments to verify tooltips
+      - Test with different data volumes (few vs many periods)
+    </manual-verification>
+  </testing>
+
+</story-context>
