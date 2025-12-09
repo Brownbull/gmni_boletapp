@@ -10,6 +10,7 @@ import { TrendsView } from './views/TrendsView';
 import { HistoryView } from './views/HistoryView';
 import { SettingsView } from './views/SettingsView';
 import { Nav } from './components/Nav';
+import { AnalyticsProvider } from './contexts/AnalyticsContext';
 import { analyzeReceipt } from './services/gemini';
 import {
     addTransaction as firestoreAddTransaction,
@@ -18,34 +19,17 @@ import {
     wipeAllTransactions
 } from './services/firestore';
 import { Transaction } from './types/transaction';
-import { Language, Currency, Theme } from './types/settings';
+import { Language, Currency, Theme, ColorTheme } from './types/settings';
 import { formatCurrency } from './utils/currency';
 import { formatDate } from './utils/date';
 import { getSafeDate, parseStrictNumber } from './utils/validation';
 import { downloadBasicData } from './utils/csvExport';
-import { getColor } from './utils/colors';
 import { TRANSLATIONS } from './utils/translations';
 import { ITEMS_PER_PAGE, STORE_CATEGORIES } from './config/constants';
 import { applyCategoryMappings } from './utils/categoryMatcher';
 import { incrementMappingUsage } from './services/categoryMappingService';
 
 type View = 'dashboard' | 'scan' | 'edit' | 'trends' | 'list' | 'settings';
-
-interface PieData {
-    label: string;
-    value: number;
-    color: string;
-}
-
-interface BarData {
-    label: string;
-    total: number;
-    segments: Array<{
-        label: string;
-        value: number;
-        color: string;
-    }>;
-}
 
 function App() {
     const { user, services, initError, signIn, signInWithTestCredentials, signOut } = useAuth();
@@ -65,17 +49,17 @@ function App() {
     const [currency, setCurrency] = useState<Currency>('CLP');
     const [theme, setTheme] = useState<Theme>('light');
     const [dateFormat, setDateFormat] = useState<'LatAm' | 'US'>('LatAm');
+    // Story 7.12 AC#11: Color theme selector (Story 7.17: 'normal' is default, was 'ghibli')
+    const [colorTheme, setColorTheme] = useState<ColorTheme>(() => {
+        const saved = localStorage.getItem('colorTheme');
+        // Migration: treat old 'ghibli' as new 'normal', old 'default' as new 'professional'
+        if (saved === 'ghibli' || saved === 'normal') return 'normal';
+        if (saved === 'default' || saved === 'professional') return 'professional';
+        return 'normal'; // Default to 'normal' (warm colors)
+    });
     const [wiping, setWiping] = useState(false);
     const [exporting, setExporting] = useState(false);
     const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' } | null>(null);
-
-    // Analytics State
-    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
-    const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
-    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-    const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
-    const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
-    const [chartType, setChartType] = useState<'pie' | 'bar'>('pie');
 
     // Pagination State
     const [historyPage, setHistoryPage] = useState(1);
@@ -100,6 +84,14 @@ function App() {
             return () => clearTimeout(timer);
         }
     }, [toastMessage]);
+
+    // Story 7.12 AC#11: Persist color theme to localStorage
+    useEffect(() => {
+        localStorage.setItem('colorTheme', colorTheme);
+    }, [colorTheme]);
+
+    // Note: Theme is applied synchronously during render (before JSX return)
+    // to ensure CSS variables are available when children compute memoized data
 
     // Scan Handlers
     const triggerScan = () => {
@@ -250,117 +242,31 @@ function App() {
         }
     };
 
-    // Analytics Computation
-    const getTrendsData = (): {
-        pieData: PieData[];
-        barData: BarData[];
-        total: number;
-        filteredTrans: Transaction[];
-    } => {
-        const filtered = transactions.filter(t => {
-            if (selectedMonth && !t.date.startsWith(selectedMonth)) return false;
-            if (!selectedMonth && !t.date.startsWith(selectedYear)) return false;
-            if (selectedCategory && t.category !== selectedCategory) return false;
-            if (selectedGroup && !t.items.some(i => i.category === selectedGroup)) return false;
-            if (selectedSubcategory && !t.items.some(i => i.subcategory === selectedSubcategory))
-                return false;
-            return true;
-        });
+    // Story 7.12: Theme setup using CSS custom properties (AC #6, #7, #11)
+    // Story 7.17: Renamed themes - 'normal' (warm, was ghibli) is default, 'professional' (cool, was default)
+    // The 'dark' class activates CSS variable overrides defined in index.html
+    // The data-theme attribute activates color theme variations (normal or professional)
+    const isDark = theme === 'dark';
+    const themeClass = isDark ? 'dark' : '';
+    const dataTheme = colorTheme === 'professional' ? 'professional' : undefined;
 
-        const pieMap: Record<string, number> = {};
-        const barMap: Record<
-            string,
-            { total: number; segments: Record<string, number> }
-        > = {};
-
-        filtered.forEach(t => {
-            let key = 'Other';
-            if (!selectedCategory) {
-                key = t.category || 'Other';
-            } else if (!selectedGroup) {
-                if (t.items?.length) {
-                    t.items.forEach(i => {
-                        pieMap[i.category || 'Grp'] = (pieMap[i.category || 'Grp'] || 0) + i.price;
-                    });
-                } else {
-                    pieMap['General'] = (pieMap['General'] || 0) + t.total;
-                }
-            } else if (!selectedSubcategory) {
-                if (t.items?.length) {
-                    t.items.forEach(i => {
-                        if (i.category === selectedGroup)
-                            pieMap[i.subcategory || 'Itm'] =
-                                (pieMap[i.subcategory || 'Itm'] || 0) + i.price;
-                    });
-                }
-            } else {
-                if (t.items?.length) {
-                    t.items.forEach(i => {
-                        if (i.subcategory === selectedSubcategory)
-                            pieMap[i.name || 'Itm'] = (pieMap[i.name || 'Itm'] || 0) + i.price;
-                    });
-                }
-            }
-            if (!selectedCategory || (!selectedGroup && !t.items?.length)) pieMap[key] = (pieMap[key] || 0) + t.total;
-
-            const k = selectedMonth ? t.date.split('-')[2] : t.date.split('-')[1];
-            const safeK = k || '00';
-            if (!barMap[safeK]) barMap[safeK] = { total: 0, segments: {} };
-            const addSeg = (l: string, v: number) => {
-                barMap[safeK].segments[l] = (barMap[safeK].segments[l] || 0) + v;
-                barMap[safeK].total += v;
-            };
-
-            if (!selectedCategory) {
-                addSeg(t.category || 'Other', t.total);
-            } else if (!selectedGroup) {
-                if (t.items?.length) t.items.forEach(i => addSeg(i.category || 'G', i.price));
-                else addSeg('G', t.total);
-            } else if (!selectedSubcategory) {
-                if (t.items?.length)
-                    t.items.forEach(i => {
-                        if (i.category === selectedGroup) addSeg(i.subcategory || 'I', i.price);
-                    });
-            } else {
-                if (t.items?.length)
-                    t.items.forEach(i => {
-                        if (i.subcategory === selectedSubcategory) addSeg(i.name || 'N', i.price);
-                    });
-            }
-        });
-
-        const pieData = Object.entries(pieMap).map(([l, v]) => ({
-            label: l,
-            value: v,
-            color: getColor(l)
-        }));
-
-        const barData = Object.keys(barMap)
-            .sort()
-            .map(k => {
-                const label = selectedMonth
-                    ? k
-                    : new Date(selectedYear + '-' + k + '-02').toLocaleString(lang, {
-                          month: 'short'
-                      });
-                const segments = Object.entries(barMap[k].segments).map(([l, v]) => ({
-                    label: l,
-                    value: v,
-                    color: getColor(l)
-                }));
-                return { label, total: barMap[k].total, segments };
-            });
-
-        return {
-            pieData,
-            barData,
-            total: filtered.reduce((a, b) => a + b.total, 0),
-            filteredTrans: filtered
-        };
-    };
-
-    // Theme classes
-    const bg = theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900';
+    // Synchronously update document.documentElement during render
+    // This ensures CSS variables are available before children read them
+    // Note: This is intentionally NOT in useEffect to avoid timing issues with useMemo
+    if (typeof document !== 'undefined') {
+        const html = document.documentElement;
+        if (isDark) {
+            html.classList.add('dark');
+        } else {
+            html.classList.remove('dark');
+        }
+        // 'normal' theme (warm colors) is base CSS, 'professional' is the override
+        if (colorTheme === 'professional') {
+            html.setAttribute('data-theme', 'professional');
+        } else {
+            html.removeAttribute('data-theme');
+        }
+    }
 
     if (initError) {
         return <div className="p-10 text-center text-red-500 font-bold">Error: {initError}</div>;
@@ -370,31 +276,22 @@ function App() {
         return <LoginScreen onSignIn={signIn} onTestSignIn={() => signInWithTestCredentials()} t={t} />;
     }
 
-    // Compute analytics data
-    const { pieData, barData, total, filteredTrans } = getTrendsData();
-    const years = Array.from(new Set(transactions.map(t => t.date.substring(0, 4))))
-        .sort()
-        .reverse();
+    // Compute pagination data for history view
     const totalHistoryPages = Math.ceil(transactions.length / ITEMS_PER_PAGE);
     const historyTrans = transactions.slice(
         (historyPage - 1) * ITEMS_PER_PAGE,
         historyPage * ITEMS_PER_PAGE
     );
-    const yearMonths = Array.from(
-        new Set(
-            transactions
-                .filter(t => t.date.startsWith(selectedYear))
-                .map(t => t.date.slice(0, 7))
-        )
-    )
-        .sort()
-        .reverse();
 
     return (
         <div
-            className={`min-h-screen max-w-md mx-auto shadow-xl border-x relative ${bg} ${
-                theme === 'dark' ? 'border-slate-800' : 'border-slate-200'
-            }`}
+            className={`min-h-screen max-w-md mx-auto shadow-xl border-x relative ${themeClass}`}
+            data-theme={dataTheme}
+            style={{
+                backgroundColor: 'var(--bg)',
+                color: 'var(--primary)',
+                borderColor: isDark ? '#1e293b' : '#e2e8f0',
+            }}
         >
             <input
                 type="file"
@@ -426,11 +323,9 @@ function App() {
                             });
                             setView('edit');
                         }}
-                        onViewTrends={(month: string | null) => {
-                            setSelectedMonth(month);
-                            setSelectedCategory(null);
-                            setSelectedGroup(null);
-                            setSelectedSubcategory(null);
+                        onViewTrends={(_month: string | null) => {
+                            // Navigation state is now managed by AnalyticsContext
+                            // TODO: If month is provided, we could set initial context state
                             setView('trends');
                         }}
                         onEditTransaction={(transaction: any) => {
@@ -476,49 +371,25 @@ function App() {
                 )}
 
                 {view === 'trends' && (
-                    <TrendsView
-                        selectedYear={selectedYear}
-                        selectedMonth={selectedMonth}
-                        selectedCategory={selectedCategory}
-                        selectedGroup={selectedGroup}
-                        selectedSubcategory={selectedSubcategory}
-                        chartType={chartType}
-                        pieData={pieData}
-                        barData={barData}
-                        total={total}
-                        filteredTrans={filteredTrans as any}
-                        yearMonths={yearMonths}
-                        years={years}
-                        theme={theme}
-                        currency={currency}
-                        lang={lang}
-                        t={t}
-                        formatCurrency={formatCurrency}
-                        onBack={() => {
-                            if (selectedSubcategory) setSelectedSubcategory(null);
-                            else if (selectedGroup) setSelectedGroup(null);
-                            else if (selectedCategory) setSelectedCategory(null);
-                            else if (selectedMonth) setSelectedMonth(null);
-                            else setView('dashboard');
-                        }}
-                        onSetSelectedYear={setSelectedYear}
-                        onSetSelectedMonth={setSelectedMonth}
-                        onSetSelectedCategory={setSelectedCategory}
-                        onSetSelectedGroup={setSelectedGroup}
-                        onSetSelectedSubcategory={setSelectedSubcategory}
-                        onSetChartType={(type: string) => setChartType(type as 'pie' | 'bar')}
-                        onEditTransaction={(transaction: any) => {
-                            setCurrentTransaction(transaction);
-                            setView('edit');
-                        }}
-                        // Story 5.4: Premium transaction export props
-                        exporting={exporting}
-                        onExporting={setExporting}
-                        onUpgradeRequired={() => {
-                            // Story 5.5 placeholder: Show upgrade prompt
-                            setToastMessage({ text: t('upgradeRequired'), type: 'info' });
-                        }}
-                    />
+                    <AnalyticsProvider>
+                        <TrendsView
+                            transactions={transactions}
+                            theme={theme as 'light' | 'dark'}
+                            colorTheme={colorTheme}
+                            currency={currency}
+                            locale={lang}
+                            t={t}
+                            onEditTransaction={(transaction) => {
+                                setCurrentTransaction(transaction);
+                                setView('edit');
+                            }}
+                            exporting={exporting}
+                            onExporting={setExporting}
+                            onUpgradeRequired={() => {
+                                setToastMessage({ text: t('upgradeRequired'), type: 'info' });
+                            }}
+                        />
+                    </AnalyticsProvider>
                 )}
 
                 {view === 'list' && (
@@ -561,6 +432,9 @@ function App() {
                         mappings={mappings}
                         mappingsLoading={mappingsLoading}
                         onDeleteMapping={deleteMapping}
+                        // Story 7.12 AC#11: Color theme selector
+                        colorTheme={colorTheme}
+                        onSetColorTheme={(ct: string) => setColorTheme(ct as ColorTheme)}
                     />
                 )}
             </main>
@@ -570,10 +444,8 @@ function App() {
                 setView={(v: string) => setView(v as View)}
                 onScanClick={triggerScan}
                 onTrendsClick={() => {
-                    setSelectedMonth(null);
-                    setSelectedCategory(null);
-                    setSelectedGroup(null);
-                    setSelectedSubcategory(null);
+                    // Navigation state is now managed by AnalyticsContext
+                    // Context resets to year level when mounted
                 }}
                 theme={theme}
                 t={t}

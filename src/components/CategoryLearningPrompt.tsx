@@ -10,7 +10,14 @@
 
 import React, { useEffect, useRef, useCallback } from 'react'
 import { X, BookMarked } from 'lucide-react'
-import { StoreCategory } from '../types/transaction'
+
+/**
+ * Item to learn mapping
+ */
+export interface ItemToLearn {
+  itemName: string
+  newGroup: string
+}
 
 /**
  * Props for the CategoryLearningPrompt component
@@ -18,10 +25,8 @@ import { StoreCategory } from '../types/transaction'
 export interface CategoryLearningPromptProps {
   /** Whether the modal is currently open */
   isOpen: boolean
-  /** Item name to learn (e.g., "UBER EATS") */
-  itemName: string
-  /** Target category to save */
-  category: StoreCategory
+  /** Items to learn (array of item name → group mappings) */
+  items: ItemToLearn[]
   /** Callback when user clicks "Yes, Remember" */
   onConfirm: () => void
   /** Callback when user dismisses the modal */
@@ -60,8 +65,7 @@ export interface CategoryLearningPromptProps {
  */
 export const CategoryLearningPrompt: React.FC<CategoryLearningPromptProps> = ({
   isOpen,
-  itemName,
-  category,
+  items,
   onConfirm,
   onClose,
   t,
@@ -151,19 +155,20 @@ export const CategoryLearningPrompt: React.FC<CategoryLearningPromptProps> = ({
     }
   }, [isOpen])
 
-  if (!isOpen) return null
+  if (!isOpen || items.length === 0) return null
 
-  // Theme-aware styling
-  const cardBg = theme === 'dark' ? 'bg-slate-800' : 'bg-white'
-  const textColor = theme === 'dark' ? 'text-white' : 'text-slate-900'
-  const secondaryText = theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
-  const borderColor = theme === 'dark' ? 'border-slate-700' : 'border-slate-200'
+  // Story 7.12: Theme-aware styling using CSS variables
+  const isDark = theme === 'dark'
 
-  // Format message with item name and category
-  const formatMessage = (template: string): string => {
-    return template
-      .replace('{item}', itemName)
-      .replace('{category}', category)
+  // Modal card styling using CSS variables
+  const modalStyle: React.CSSProperties = {
+    backgroundColor: 'var(--surface)',
+    color: 'var(--primary)',
+  }
+
+  // Item list styling
+  const itemStyle: React.CSSProperties = {
+    backgroundColor: isDark ? '#334155' : '#f1f5f9',
   }
 
   return (
@@ -175,21 +180,26 @@ export const CategoryLearningPrompt: React.FC<CategoryLearningPromptProps> = ({
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
 
-      {/* Modal */}
+      {/* Modal with CSS variable styling */}
       <div
         ref={modalRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="learn-modal-title"
         aria-describedby="learn-modal-description"
-        className={`relative w-full max-w-sm rounded-2xl ${cardBg} ${textColor} shadow-xl`}
+        className="relative w-full max-w-sm rounded-2xl shadow-xl"
+        style={modalStyle}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
         <button
           ref={closeButtonRef}
           onClick={handleClose}
-          className={`absolute right-4 top-4 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${secondaryText}`}
+          className="absolute right-4 top-4 p-2 rounded-full transition-colors"
+          style={{
+            color: 'var(--secondary)',
+            backgroundColor: isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(100, 116, 139, 0.1)',
+          }}
           aria-label={t('close') || 'Close'}
         >
           <X size={20} aria-hidden="true" />
@@ -197,8 +207,11 @@ export const CategoryLearningPrompt: React.FC<CategoryLearningPromptProps> = ({
 
         {/* Content */}
         <div className="p-6 text-center">
-          {/* Icon */}
-          <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center">
+          {/* Icon with gradient accent */}
+          <div
+            className="mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, var(--accent), #6366f1)' }}
+          >
             <BookMarked size={32} className="text-white" aria-hidden="true" />
           </div>
 
@@ -206,30 +219,51 @@ export const CategoryLearningPrompt: React.FC<CategoryLearningPromptProps> = ({
           <h2
             id="learn-modal-title"
             className="text-xl font-bold mb-2"
+            style={{ color: 'var(--primary)' }}
           >
             {t('learnCategoryTitle')}
           </h2>
 
-          {/* Description */}
-          <p
+          {/* Description - show list of items to learn */}
+          <div
             id="learn-modal-description"
-            className={`mb-6 ${secondaryText}`}
+            className="mb-6"
+            style={{ color: 'var(--secondary)' }}
           >
-            {formatMessage(t('learnCategoryMessage'))}
-          </p>
+            <p className="mb-3">{t('learnCategoryMessage')}</p>
+            <ul className="text-left space-y-2">
+              {items.map((item, index) => (
+                <li
+                  key={index}
+                  className="px-3 py-2 rounded-lg text-sm"
+                  style={itemStyle}
+                >
+                  <span className="font-medium" style={{ color: 'var(--primary)' }}>{item.itemName}</span>
+                  <span style={{ color: 'var(--secondary)' }}> → </span>
+                  <span className="font-semibold" style={{ color: 'var(--accent)' }}>{item.newGroup}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           {/* Action buttons */}
           <div className="flex flex-col gap-3">
             <button
               onClick={onConfirm}
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md"
+              className="w-full py-3 px-4 rounded-xl text-white font-semibold shadow-md transition-transform hover:scale-[1.01] active:scale-[0.99]"
+              style={{ background: 'linear-gradient(135deg, var(--accent), #6366f1)' }}
             >
               {t('learnCategoryConfirm')}
             </button>
 
             <button
               onClick={handleClose}
-              className={`w-full py-3 px-4 rounded-xl border ${borderColor} ${textColor} font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors`}
+              className="w-full py-3 px-4 rounded-xl border font-medium transition-colors"
+              style={{
+                borderColor: isDark ? '#475569' : '#e2e8f0',
+                color: 'var(--primary)',
+                backgroundColor: 'transparent',
+              }}
             >
               {t('learnCategorySkip')}
             </button>

@@ -1,0 +1,268 @@
+<story-context id="7-10-ux-cards-visual-alignment" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>10</storyId>
+    <title>UX Cards &amp; Visual Elements Alignment</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic7/story-7.10-ux-cards-visual-alignment.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>the drill-down cards and visual elements to match the approved UX design</iWant>
+    <soThat>I have a cohesive, polished analytics experience that clearly indicates interactive elements</soThat>
+    <tasks>
+      <task id="1" ac="1,3,4">
+        Update DrillDownCard component
+        <subtasks>
+          <subtask>Replace icon with colored dot (w-3 h-3 rounded-full)</subtask>
+          <subtask>Apply category color to dot based on index</subtask>
+          <subtask>Update border styling: transparent default, accent on hover</subtask>
+          <subtask>Verify amount and percentage alignment</subtask>
+        </subtasks>
+      </task>
+      <task id="2" ac="2">
+        Update DrillDownGrid component
+        <subtasks>
+          <subtask>Add "Tap to drill down" label above card list</subtask>
+          <subtask>Style label as secondary text (text-sm text-secondary)</subtask>
+          <subtask>Add translation key for Spanish: "Toca para desglosar"</subtask>
+        </subtasks>
+      </task>
+      <task id="3" ac="5,6">
+        Create CategoryLegend component
+        <subtasks>
+          <subtask>Create inline legend layout (flex-wrap)</subtask>
+          <subtask>Display colored squares (w-3 h-3 rounded-sm)</subtask>
+          <subtask>Show category label and percentage</subtask>
+          <subtask>Use consistent color assignment from chart</subtask>
+        </subtasks>
+      </task>
+      <task id="4" ac="7,8">
+        Update chart header in TrendsView
+        <subtasks>
+          <subtask>Add subtitle above total (period description)</subtask>
+          <subtask>Increase total amount font size to text-3xl</subtask>
+          <subtask>Center align header content</subtask>
+          <subtask>Style subtitle as text-sm text-secondary</subtask>
+        </subtasks>
+      </task>
+      <task id="5" ac="9">
+        Update Nav component labels
+        <subtasks>
+          <subtask>Update navigation labels: "Home", "Receipts", "Analytics", "Settings"</subtask>
+          <subtask>Add translation keys for Spanish equivalents</subtask>
+          <subtask>Verify touch targets maintained</subtask>
+        </subtasks>
+      </task>
+      <task id="6" ac="10">
+        Verify center scan button styling
+        <subtasks>
+          <subtask>Confirm FAB styling with gradient background</subtask>
+          <subtask>Verify raised position and shadow</subtask>
+          <subtask>Check camera icon size and visibility</subtask>
+        </subtasks>
+      </task>
+      <task id="7" ac="all">
+        Run tests and verify
+        <subtasks>
+          <subtask>TypeScript compilation (npx tsc --noEmit)</subtask>
+          <subtask>Unit tests for updated components</subtask>
+          <subtask>Integration tests</subtask>
+          <subtask>Visual verification against UX spec</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">Drill-down cards display colored dots matching category colors (not icons)</criterion>
+    <criterion id="2">Drill-down cards show "Tap to drill down" label above the card list</criterion>
+    <criterion id="3">Drill-down cards have subtle border that highlights to accent color on hover</criterion>
+    <criterion id="4">Card layout shows: colored dot + label (left), amount + percentage (right)</criterion>
+    <criterion id="5">Category legend appears below chart with colored squares and percentage values</criterion>
+    <criterion id="6">Legend items display inline (horizontal wrap) with consistent spacing</criterion>
+    <criterion id="7">Total amount displays centered above chart with large font (text-3xl)</criterion>
+    <criterion id="8">Subtitle (period description) displays above total in secondary color</criterion>
+    <criterion id="9">Bottom navigation labels match UX spec: "Home", "Receipts", "Analytics", "Settings"</criterion>
+    <criterion id="10">Center scan button maintains prominent FAB styling per UX spec</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Section 4 - Design Direction</section>
+        <snippet>Analytics screen layout shows breadcrumbs, stat display, mode toggle, chart, category legend, and drill cards. Bottom nav with center FAB pattern.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-directions.html</path>
+        <title>UX Design Directions (Interactive)</title>
+        <section>Drill-Down Card Design</section>
+        <snippet>HTML mockups showing colored dot instead of icon, transparent border with accent on hover, flex layout with amount/percentage on right.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd-epic7.md</path>
+        <title>Epic 7 PRD</title>
+        <section>Visual Consistency Rules</section>
+        <snippet>Icons 24px, stroke-width 2, fonts system stack 400/600/700, spacing 8px grid, corners 8px cards/4px buttons, touch targets 44px minimum.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture-epic7.md</path>
+        <title>Epic 7 Architecture</title>
+        <section>Pattern 4: Drill-Down Card Pattern</section>
+        <snippet>DrillDownCard is pure/presentational with callbacks. Uses React.memo, 44px touch target, colorKey for consistent color assignment.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic7/tech-spec-epic-7.md</path>
+        <title>Epic 7 Tech Spec</title>
+        <section>Detailed Design - Components</section>
+        <snippet>DrillDownCard shows label, amount, percentage, color indicator. DrillDownGrid consumes context, computes children, responsive grid layout.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <file>
+        <path>src/components/analytics/DrillDownCard.tsx</path>
+        <kind>component</kind>
+        <symbol>DrillDownCard</symbol>
+        <lines>1-226</lines>
+        <reason>Primary component to modify - currently uses border-l-4 for color, need to change to colored dot pattern per UX spec</reason>
+      </file>
+      <file>
+        <path>src/components/analytics/DrillDownGrid.tsx</path>
+        <kind>component</kind>
+        <symbol>DrillDownGrid</symbol>
+        <lines>1-597</lines>
+        <reason>Container component - need to add "Tap to drill down" label above card sections</reason>
+      </file>
+      <file>
+        <path>src/views/TrendsView.tsx</path>
+        <kind>view</kind>
+        <symbol>TrendsView</symbol>
+        <lines>1-593</lines>
+        <reason>Orchestration component - need to add CategoryLegend below chart, adjust header layout with subtitle</reason>
+      </file>
+      <file>
+        <path>src/components/Nav.tsx</path>
+        <kind>component</kind>
+        <symbol>Nav</symbol>
+        <lines>1-63</lines>
+        <reason>Bottom navigation - need to update labels: trends→analytics, history→receipts. Verify FAB styling.</reason>
+      </file>
+      <file>
+        <path>src/utils/translations.ts</path>
+        <kind>utility</kind>
+        <symbol>TRANSLATIONS</symbol>
+        <lines>1-140</lines>
+        <reason>Need to add translation keys: tapToDrillDown, receipts, analytics</reason>
+      </file>
+      <file>
+        <path>src/utils/colors.ts</path>
+        <kind>utility</kind>
+        <symbol>getColor</symbol>
+        <lines>1-36</lines>
+        <reason>Color assignment utility - use for consistent colored dots/squares in cards and legend</reason>
+      </file>
+    </code>
+
+    <dependencies>
+      <node>
+        <package>react</package>
+        <version>^18.3.1</version>
+      </node>
+      <node>
+        <package>react-dom</package>
+        <version>^18.3.1</version>
+      </node>
+      <node>
+        <package>lucide-react</package>
+        <version>^0.460.0</version>
+        <note>Icons: 24px size, stroke-width 2</note>
+      </node>
+      <node>
+        <package>typescript</package>
+        <version>^5.3.3</version>
+      </node>
+      <node>
+        <package>vitest</package>
+        <version>^4.0.13</version>
+      </node>
+      <node>
+        <package>@testing-library/react</package>
+        <version>^16.3.0</version>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="PRD FR52-55">All temporal views use identical layout structure (breadcrumbs, chart, drill-downs)</constraint>
+    <constraint source="PRD FR53">All icons use 24px size with stroke-width 2 from lucide-react</constraint>
+    <constraint source="PRD FR54">All spacing follows 8px grid system (8, 16, 24, 32px)</constraint>
+    <constraint source="PRD FR55">All interactive elements have minimum 44x44px touch targets (min-h-11)</constraint>
+    <constraint source="Architecture ADR-014">Incremental extraction - modify one component at a time to reduce regression risk</constraint>
+    <constraint source="UX Spec">Cards use transparent border by default, accent color border on hover</constraint>
+    <constraint source="UX Spec">Colored indicators use w-3 h-3 (12px) size - dots (rounded-full) for cards, squares (rounded-sm) for legend</constraint>
+    <constraint source="Story Dependency">This story depends on Story 7.9 (UX Breadcrumb Alignment) being complete</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>DrillDownCardProps</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface DrillDownCardProps { label: string; value: number; percentage?: number; onClick: () => void; colorKey?: string; isEmpty?: boolean; emptyMessage?: string; theme?: 'light' | 'dark'; locale?: string; currency?: string; }</signature>
+      <path>src/components/analytics/DrillDownCard.tsx</path>
+    </interface>
+    <interface>
+      <name>DrillDownGridProps</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface DrillDownGridProps { transactions: Transaction[]; theme?: 'light' | 'dark'; locale?: string; currency?: string; }</signature>
+      <path>src/components/analytics/DrillDownGrid.tsx</path>
+    </interface>
+    <interface>
+      <name>NavProps</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface NavProps { view: string; setView: (view: string) => void; onScanClick: () => void; onTrendsClick?: () => void; theme: string; t: (key: string) => string; }</signature>
+      <path>src/components/Nav.tsx</path>
+    </interface>
+    <interface>
+      <name>getColor</name>
+      <kind>Function</kind>
+      <signature>function getColor(key: string): string</signature>
+      <path>src/utils/colors.ts</path>
+    </interface>
+    <interface>
+      <name>TRANSLATIONS</name>
+      <kind>Object</kind>
+      <signature>{ en: Record&lt;TranslationKey, string&gt;; es: Record&lt;TranslationKey, string&gt;; }</signature>
+      <path>src/utils/translations.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing follows three-tier strategy: Quick tests (~35s) for development using `npm run test:quick` (TypeScript + parallel unit tests), Story tests (~2min) using `npm run test:story` (Quick + integration tests) before review, Sprint tests (~5min) using `npm run test:sprint` (full suite including E2E) before deployment. Coverage targets: 80% for critical paths, 70% for business logic, 60% for UI components. Testing stack: Vitest 4.0.13 for unit/integration tests, React Testing Library 16.3.0 for component tests, Playwright 1.56.1 for E2E tests.
+    </standards>
+    <locations>
+      <location>tests/unit/analytics/</location>
+      <location>tests/integration/analytics/</location>
+      <location>tests/e2e/</location>
+    </locations>
+    <ideas>
+      <idea ac="1,4">Test DrillDownCard renders colored dot with correct color from colorKey prop</idea>
+      <idea ac="1,4">Test DrillDownCard layout: dot+label on left, amount+percentage on right</idea>
+      <idea ac="3">Test DrillDownCard hover state applies accent border color</idea>
+      <idea ac="2">Test DrillDownGrid renders "Tap to drill down" label above temporal section</idea>
+      <idea ac="2">Test DrillDownGrid uses correct translation key for Spanish locale</idea>
+      <idea ac="5,6">Test CategoryLegend renders colored squares with correct colors</idea>
+      <idea ac="5,6">Test CategoryLegend displays inline with flex-wrap layout</idea>
+      <idea ac="7,8">Test TrendsView header has subtitle above total amount</idea>
+      <idea ac="7">Test TrendsView total uses text-3xl font size</idea>
+      <idea ac="9">Test Nav uses correct label translations: analytics, receipts</idea>
+      <idea ac="10">Test Nav center FAB has gradient background and elevated position</idea>
+    </ideas>
+  </tests>
+</story-context>

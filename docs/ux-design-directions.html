@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boletapp - Analytics UX Design Direction v2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        ghibli: {
+                            sky: '#a3c5e0',
+                            cream: '#f1dbb6',
+                            peach: '#e3bba1',
+                            rose: '#f0a3b0',
+                            sage: '#7d9b5f',
+                            forest: '#4a7c59',
+                            ocean: '#5b8fa8',
+                            sunset: '#e8a87c',
+                            cloud: '#f5f0e8',
+                            night: '#2d3a4a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Theme CSS Variables */
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --primary: #0f172a;
+            --secondary: #64748b;
+            --accent: #3b82f6;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --chart-1: #3b82f6;
+            --chart-2: #22c55e;
+            --chart-3: #f59e0b;
+            --chart-4: #ef4444;
+            --chart-5: #8b5cf6;
+            --chart-6: #ec4899;
+        }
+
+        .dark {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --primary: #f8fafc;
+            --secondary: #94a3b8;
+            --accent: #60a5fa;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --error: #f87171;
+        }
+
+        [data-theme="ghibli"] {
+            --bg: #f5f0e8;
+            --surface: #ffffff;
+            --primary: #2d3a4a;
+            --secondary: #5b8fa8;
+            --accent: #4a7c59;
+            --success: #7d9b5f;
+            --warning: #e8a87c;
+            --error: #f0a3b0;
+            --chart-1: #5b8fa8;
+            --chart-2: #7d9b5f;
+            --chart-3: #e8a87c;
+            --chart-4: #f0a3b0;
+            --chart-5: #a3c5e0;
+            --chart-6: #e3bba1;
+        }
+
+        [data-theme="ghibli"].dark {
+            --bg: #2d3a4a;
+            --surface: #3d4a5a;
+            --primary: #f5f0e8;
+            --secondary: #a3c5e0;
+            --accent: #7d9b5f;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--primary);
+            transition: all 0.3s ease;
+        }
+
+        .surface {
+            background-color: var(--surface);
+        }
+
+        .text-primary { color: var(--primary); }
+        .text-secondary { color: var(--secondary); }
+        .text-accent { color: var(--accent); }
+        .bg-accent { background-color: var(--accent); }
+        .border-accent { border-color: var(--accent); }
+
+        /* Phone mockup */
+        .phone-frame {
+            width: 375px;
+            height: 812px;
+            border-radius: 40px;
+            border: 8px solid #1f2937;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            position: relative;
+        }
+
+        .phone-notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 30px;
+            background: #1f2937;
+            border-radius: 0 0 20px 20px;
+            z-index: 10;
+        }
+
+        .phone-content {
+            height: 100%;
+            overflow-y: auto;
+            padding-top: 44px;
+            padding-bottom: 90px;
+            background-color: var(--bg);
+        }
+
+        /* Collapsed breadcrumb button */
+        .breadcrumb-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            background-color: var(--surface);
+            border: 1px solid var(--secondary);
+            opacity: 0.8;
+        }
+
+        .breadcrumb-button:hover {
+            border-color: var(--accent);
+            opacity: 1;
+        }
+
+        /* Expanded breadcrumb dropdown */
+        .breadcrumb-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            padding: 8px;
+            z-index: 20;
+            display: none;
+        }
+
+        .breadcrumb-dropdown.open {
+            display: block;
+        }
+
+        .breadcrumb-item {
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .breadcrumb-item:hover {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .breadcrumb-item.active {
+            background-color: var(--accent);
+            color: white;
+            font-weight: 600;
+        }
+
+        .breadcrumb-item .level-indicator {
+            font-size: 11px;
+            opacity: 0.7;
+            min-width: 20px;
+        }
+
+        /* Bottom nav with center scan button */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 90px;
+            background-color: var(--surface);
+            border-top: 1px solid var(--secondary);
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start;
+            padding-top: 8px;
+            padding-bottom: 24px;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--secondary);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover {
+            color: var(--accent);
+        }
+
+        .nav-item.active {
+            color: var(--accent);
+        }
+
+        /* Center scan button - prominent! */
+        .scan-button {
+            position: relative;
+            top: -20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--success));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .scan-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .scan-button svg {
+            color: white;
+            width: 28px;
+            height: 28px;
+        }
+
+        /* Screen selector */
+        .screen-tab {
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .screen-tab:hover {
+            background-color: var(--surface);
+        }
+
+        .screen-tab.active {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        /* Stacked bar segment */
+        .bar-segment {
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <!-- Header Controls -->
+    <div class="max-w-7xl mx-auto mb-8">
+        <h1 class="text-3xl font-bold mb-2">Boletapp Analytics - UX Design Direction v2</h1>
+        <p class="text-secondary mb-6">Epic 7: Dual-Axis Breadcrumb Navigation with Receipt Scanning CTA</p>
+
+        <!-- Theme & Mode Controls -->
+        <div class="flex flex-wrap gap-4 items-center mb-6">
+            <div class="flex items-center gap-2">
+                <span class="text-sm font-medium">Theme:</span>
+                <select id="themeSelect" class="surface border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    <option value="slate">Slate Professional (Default)</option>
+                    <option value="ghibli">Ni no Kuni / Ghibli</option>
+                </select>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span class="text-sm font-medium">Mode:</span>
+                <button id="lightMode" class="px-3 py-2 rounded-lg bg-accent text-white text-sm">Light</button>
+                <button id="darkMode" class="px-3 py-2 rounded-lg surface text-sm">Dark</button>
+            </div>
+        </div>
+
+        <!-- Screen Tabs -->
+        <div class="flex flex-wrap gap-2 mb-6">
+            <button class="screen-tab active" data-screen="year">Year View</button>
+            <button class="screen-tab" data-screen="quarter">Quarter View</button>
+            <button class="screen-tab" data-screen="month">Month View</button>
+            <button class="screen-tab" data-screen="week">Week View</button>
+            <button class="screen-tab" data-screen="day">Day View</button>
+            <button class="screen-tab" data-screen="category">Category Drill</button>
+        </div>
+    </div>
+
+    <!-- Main Content: Phone Mockups -->
+    <div class="max-w-7xl mx-auto">
+        <div class="flex flex-wrap gap-8 justify-center">
+
+            <!-- Aggregation Mode (Pie Chart) -->
+            <div>
+                <h3 class="text-lg font-semibold mb-4 text-center">Aggregation Mode</h3>
+                <div class="phone-frame">
+                    <div class="phone-notch"></div>
+                    <div class="phone-content" id="aggregationScreen">
+                        <!-- Dynamic content loaded here -->
+                    </div>
+                    <!-- Bottom nav with SCAN button -->
+                    <div class="bottom-nav">
+                        <div class="nav-item">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                            </svg>
+                            <span>Home</span>
+                        </div>
+                        <div class="nav-item">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                            <span>Receipts</span>
+                        </div>
+                        <!-- CENTER SCAN BUTTON - Always visible! Camera icon -->
+                        <div class="scan-button" title="Scan Receipt">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </div>
+                        <div class="nav-item active">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                            <span>Analytics</span>
+                        </div>
+                        <div class="nav-item">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <span>Settings</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparison Mode (Stacked Bar Chart) -->
+            <div>
+                <h3 class="text-lg font-semibold mb-4 text-center">Comparison Mode</h3>
+                <div class="phone-frame">
+                    <div class="phone-notch"></div>
+                    <div class="phone-content" id="comparisonScreen">
+                        <!-- Dynamic content loaded here -->
+                    </div>
+                    <!-- Bottom nav with SCAN button -->
+                    <div class="bottom-nav">
+                        <div class="nav-item">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                            </svg>
+                            <span>Home</span>
+                        </div>
+                        <div class="nav-item">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                            <span>Receipts</span>
+                        </div>
+                        <!-- CENTER SCAN BUTTON - Always visible! Camera icon -->
+                        <div class="scan-button" title="Scan Receipt">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </div>
+                        <div class="nav-item active">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                            <span>Analytics</span>
+                        </div>
+                        <div class="nav-item">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <span>Settings</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Design Notes Section -->
+    <div class="max-w-7xl mx-auto mt-12">
+        <div class="surface rounded-xl p-6">
+            <h2 class="text-xl font-bold mb-4">Design Direction v2 - Key Changes</h2>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-semibold mb-2 text-accent">1. Always-Visible Scan Button</h3>
+                    <ul class="text-sm text-secondary space-y-1">
+                        <li>- Center FAB (Floating Action Button) in bottom nav</li>
+                        <li>- Document + scan icon (receipt scanning)</li>
+                        <li>- Gradient accent color to stand out</li>
+                        <li>- Critical differentiator from budgeting-only apps</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold mb-2 text-accent">2. Collapsible Breadcrumbs</h3>
+                    <ul class="text-sm text-secondary space-y-1">
+                        <li>- Two compact buttons side-by-side (When | What)</li>
+                        <li>- Shows current level only (e.g., "November" or "Groceries")</li>
+                        <li>- Tap to expand full navigation dropdown</li>
+                        <li>- All ancestor levels visible and tappable when expanded</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold mb-2 text-accent">3. Real Pie Chart</h3>
+                    <ul class="text-sm text-secondary space-y-1">
+                        <li>- Actual pie segments with real percentages</li>
+                        <li>- Each segment colored by category</li>
+                        <li>- SVG-based for crisp rendering</li>
+                        <li>- Category legend below chart</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold mb-2 text-accent">4. Stacked Bar Chart</h3>
+                    <ul class="text-sm text-secondary space-y-1">
+                        <li>- Each bar shows total for that period</li>
+                        <li>- Stacked segments show category breakdown</li>
+                        <li>- Same colors as pie chart for consistency</li>
+                        <li>- Category legend shown in both views</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Screen data configurations
+        const screens = {
+            year: {
+                temporal: [
+                    { label: '2024', level: 'Year', active: true }
+                ],
+                category: [
+                    { label: 'All Categories', level: 'Root', active: true }
+                ],
+                currentTemporal: '2024',
+                currentCategory: 'All',
+                title: '2024',
+                total: '$12,450,000',
+                subtitle: 'Total Spending',
+                categories: [
+                    { label: 'Food', value: 35, color: 1 },
+                    { label: 'Transport', value: 20, color: 2 },
+                    { label: 'Housing', value: 25, color: 3 },
+                    { label: 'Entertainment', value: 12, color: 4 },
+                    { label: 'Other', value: 8, color: 5 }
+                ],
+                barData: [
+                    { label: 'Q1', total: 85, segments: [{v:30,c:1},{v:17,c:2},{v:21,c:3},{v:10,c:4},{v:7,c:5}] },
+                    { label: 'Q2', total: 92, segments: [{v:32,c:1},{v:18,c:2},{v:23,c:3},{v:12,c:4},{v:7,c:5}] },
+                    { label: 'Q3', total: 78, segments: [{v:27,c:1},{v:16,c:2},{v:20,c:3},{v:9,c:4},{v:6,c:5}] },
+                    { label: 'Q4', total: 100, segments: [{v:38,c:1},{v:20,c:2},{v:22,c:3},{v:14,c:4},{v:6,c:5}] }
+                ],
+                drillCards: [
+                    { label: 'Q1 2024', amount: '$2,890,000', percent: '23%' },
+                    { label: 'Q2 2024', amount: '$3,120,000', percent: '25%' },
+                    { label: 'Q3 2024', amount: '$2,650,000', percent: '21%' },
+                    { label: 'Q4 2024', amount: '$3,790,000', percent: '31%' }
+                ]
+            },
+            quarter: {
+                temporal: [
+                    { label: '2024', level: 'Year', active: false },
+                    { label: 'Q4', level: 'Quarter', active: true }
+                ],
+                category: [
+                    { label: 'All Categories', level: 'Root', active: true }
+                ],
+                currentTemporal: 'Q4',
+                currentCategory: 'All',
+                title: 'Q4 2024',
+                total: '$3,790,000',
+                subtitle: 'Oct - Dec',
+                categories: [
+                    { label: 'Food', value: 38, color: 1 },
+                    { label: 'Transport', value: 18, color: 2 },
+                    { label: 'Housing', value: 22, color: 3 },
+                    { label: 'Entertainment', value: 15, color: 4 },
+                    { label: 'Other', value: 7, color: 5 }
+                ],
+                barData: [
+                    { label: 'Oct', total: 88, segments: [{v:33,c:1},{v:16,c:2},{v:19,c:3},{v:13,c:4},{v:7,c:5}] },
+                    { label: 'Nov', total: 100, segments: [{v:40,c:1},{v:18,c:2},{v:22,c:3},{v:14,c:4},{v:6,c:5}] },
+                    { label: 'Dec', total: 95, segments: [{v:36,c:1},{v:17,c:2},{v:21,c:3},{v:15,c:4},{v:6,c:5}] }
+                ],
+                drillCards: [
+                    { label: 'October', amount: '$1,180,000', percent: '31%' },
+                    { label: 'November', amount: '$1,340,000', percent: '35%' },
+                    { label: 'December', amount: '$1,270,000', percent: '34%' }
+                ]
+            },
+            month: {
+                temporal: [
+                    { label: '2024', level: 'Year', active: false },
+                    { label: 'Q4', level: 'Quarter', active: false },
+                    { label: 'November', level: 'Month', active: true }
+                ],
+                category: [
+                    { label: 'All Categories', level: 'Root', active: true }
+                ],
+                currentTemporal: 'November',
+                currentCategory: 'All',
+                title: 'November 2024',
+                total: '$1,340,000',
+                subtitle: '30 days',
+                categories: [
+                    { label: 'Food', value: 42, color: 1 },
+                    { label: 'Transport', value: 15, color: 2 },
+                    { label: 'Housing', value: 20, color: 3 },
+                    { label: 'Entertainment', value: 18, color: 4 },
+                    { label: 'Other', value: 5, color: 5 }
+                ],
+                barData: [
+                    { label: 'W1', total: 75, segments: [{v:31,c:1},{v:11,c:2},{v:15,c:3},{v:13,c:4},{v:5,c:5}] },
+                    { label: 'W2', total: 90, segments: [{v:38,c:1},{v:14,c:2},{v:18,c:3},{v:16,c:4},{v:4,c:5}] },
+                    { label: 'W3', total: 100, segments: [{v:44,c:1},{v:15,c:2},{v:20,c:3},{v:17,c:4},{v:4,c:5}] },
+                    { label: 'W4', total: 85, segments: [{v:36,c:1},{v:13,c:2},{v:17,c:3},{v:15,c:4},{v:4,c:5}] }
+                ],
+                drillCards: [
+                    { label: 'Week 1', amount: '$280,000', percent: '21%' },
+                    { label: 'Week 2', amount: '$340,000', percent: '25%' },
+                    { label: 'Week 3', amount: '$380,000', percent: '29%' },
+                    { label: 'Week 4', amount: '$320,000', percent: '24%' }
+                ]
+            },
+            week: {
+                temporal: [
+                    { label: '2024', level: 'Year', active: false },
+                    { label: 'Q4', level: 'Quarter', active: false },
+                    { label: 'November', level: 'Month', active: false },
+                    { label: 'Week 3', level: 'Week', active: true }
+                ],
+                category: [
+                    { label: 'All Categories', level: 'Root', active: true }
+                ],
+                currentTemporal: 'Week 3',
+                currentCategory: 'All',
+                title: 'Week 3',
+                total: '$380,000',
+                subtitle: 'Nov 11-17',
+                categories: [
+                    { label: 'Food', value: 45, color: 1 },
+                    { label: 'Transport', value: 12, color: 2 },
+                    { label: 'Housing', value: 18, color: 3 },
+                    { label: 'Entertainment', value: 20, color: 4 },
+                    { label: 'Other', value: 5, color: 5 }
+                ],
+                barData: [
+                    { label: 'Mon', total: 60, segments: [{v:27,c:1},{v:7,c:2},{v:11,c:3},{v:12,c:4},{v:3,c:5}] },
+                    { label: 'Tue', total: 45, segments: [{v:20,c:1},{v:5,c:2},{v:8,c:3},{v:9,c:4},{v:3,c:5}] },
+                    { label: 'Wed', total: 80, segments: [{v:36,c:1},{v:10,c:2},{v:14,c:3},{v:16,c:4},{v:4,c:5}] },
+                    { label: 'Thu', total: 55, segments: [{v:25,c:1},{v:7,c:2},{v:10,c:3},{v:11,c:4},{v:2,c:5}] },
+                    { label: 'Fri', total: 100, segments: [{v:45,c:1},{v:12,c:2},{v:18,c:3},{v:20,c:4},{v:5,c:5}] },
+                    { label: 'Sat', total: 95, segments: [{v:43,c:1},{v:11,c:2},{v:17,c:3},{v:19,c:4},{v:5,c:5}] },
+                    { label: 'Sun', total: 70, segments: [{v:32,c:1},{v:8,c:2},{v:13,c:3},{v:14,c:4},{v:3,c:5}] }
+                ],
+                drillCards: [
+                    { label: 'Friday', amount: '$75,000', percent: '20%' },
+                    { label: 'Saturday', amount: '$72,000', percent: '19%' },
+                    { label: 'Wednesday', amount: '$60,000', percent: '16%' },
+                    { label: 'Sunday', amount: '$52,000', percent: '14%' }
+                ]
+            },
+            day: {
+                temporal: [
+                    { label: '2024', level: 'Year', active: false },
+                    { label: 'Q4', level: 'Quarter', active: false },
+                    { label: 'November', level: 'Month', active: false },
+                    { label: 'Week 3', level: 'Week', active: false },
+                    { label: 'Friday', level: 'Day', active: true }
+                ],
+                category: [
+                    { label: 'All Categories', level: 'Root', active: true }
+                ],
+                currentTemporal: 'Friday',
+                currentCategory: 'All',
+                title: 'Friday, Nov 15',
+                total: '$75,000',
+                subtitle: '8 transactions',
+                categories: [
+                    { label: 'Food', value: 55, color: 1 },
+                    { label: 'Transport', value: 8, color: 2 },
+                    { label: 'Entertainment', value: 30, color: 4 },
+                    { label: 'Other', value: 7, color: 5 }
+                ],
+                barData: [], // No comparison for day view
+                drillCards: [
+                    { label: 'Supermercado Lider', amount: '$28,500', percent: '38%' },
+                    { label: 'Restaurant El Gaucho', amount: '$18,000', percent: '24%' },
+                    { label: 'Cinema Hoyts', amount: '$12,000', percent: '16%' },
+                    { label: 'Uber', amount: '$6,000', percent: '8%' }
+                ]
+            },
+            category: {
+                temporal: [
+                    { label: '2024', level: 'Year', active: false },
+                    { label: 'Q4', level: 'Quarter', active: false },
+                    { label: 'November', level: 'Month', active: true }
+                ],
+                category: [
+                    { label: 'Food', level: 'Category', active: false },
+                    { label: 'Groceries', level: 'Subcategory', active: true }
+                ],
+                currentTemporal: 'November',
+                currentCategory: 'Groceries',
+                title: 'Groceries',
+                total: '$420,000',
+                subtitle: 'November 2024',
+                categories: [
+                    { label: 'Lider', value: 45, color: 1 },
+                    { label: 'Jumbo', value: 30, color: 2 },
+                    { label: 'Santa Isabel', value: 15, color: 3 },
+                    { label: 'Other', value: 10, color: 5 }
+                ],
+                barData: [
+                    { label: 'W1', total: 80, segments: [{v:36,c:1},{v:24,c:2},{v:12,c:3},{v:8,c:5}] },
+                    { label: 'W2', total: 100, segments: [{v:45,c:1},{v:30,c:2},{v:15,c:3},{v:10,c:5}] },
+                    { label: 'W3', total: 90, segments: [{v:40,c:1},{v:27,c:2},{v:14,c:3},{v:9,c:5}] },
+                    { label: 'W4', total: 85, segments: [{v:38,c:1},{v:26,c:2},{v:13,c:3},{v:8,c:5}] }
+                ],
+                drillCards: [
+                    { label: 'Supermercado Lider', amount: '$189,000', percent: '45%' },
+                    { label: 'Jumbo', amount: '$126,000', percent: '30%' },
+                    { label: 'Santa Isabel', amount: '$63,000', percent: '15%' },
+                    { label: 'Other stores', amount: '$42,000', percent: '10%' }
+                ]
+            }
+        };
+
+        let currentScreen = 'year';
+        let temporalOpen = false;
+        let categoryOpen = false;
+
+        function getChartColor(colorIndex) {
+            return `var(--chart-${colorIndex})`;
+        }
+
+        function renderCollapsedBreadcrumbs(temporal, category, currentTemporal, currentCategory) {
+            return `
+                <div class="px-4 py-3 flex gap-3 relative">
+                    <!-- Temporal Button -->
+                    <div class="relative flex-1">
+                        <button class="breadcrumb-button w-full justify-between" onclick="toggleTemporal()">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4" style="color: var(--accent)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                <span>${currentTemporal}</span>
+                            </div>
+                            <svg class="w-4 h-4 transition-transform ${temporalOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div class="breadcrumb-dropdown ${temporalOpen ? 'open' : ''}" id="temporalDropdown">
+                            <div class="text-xs text-secondary px-3 py-1 uppercase tracking-wide">When</div>
+                            ${temporal.map(item => `
+                                <div class="breadcrumb-item ${item.active ? 'active' : ''}">
+                                    <span class="level-indicator">${item.level}</span>
+                                    <span>${item.label}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Category Button -->
+                    <div class="relative flex-1">
+                        <button class="breadcrumb-button w-full justify-between" onclick="toggleCategory()">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4" style="color: var(--accent)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                                </svg>
+                                <span>${currentCategory}</span>
+                            </div>
+                            <svg class="w-4 h-4 transition-transform ${categoryOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div class="breadcrumb-dropdown ${categoryOpen ? 'open' : ''}" id="categoryDropdown">
+                            <div class="text-xs text-secondary px-3 py-1 uppercase tracking-wide">What</div>
+                            ${category.map(item => `
+                                <div class="breadcrumb-item ${item.active ? 'active' : ''}">
+                                    <span class="level-indicator">${item.level}</span>
+                                    <span>${item.label}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPieChart(categories) {
+            // Calculate pie segments
+            let startAngle = 0;
+            const segments = categories.map(cat => {
+                const angle = (cat.value / 100) * 360;
+                const segment = {
+                    ...cat,
+                    startAngle,
+                    endAngle: startAngle + angle
+                };
+                startAngle += angle;
+                return segment;
+            });
+
+            // Create SVG pie chart
+            const size = 160;
+            const center = size / 2;
+            const radius = 70;
+
+            function polarToCartesian(cx, cy, r, angle) {
+                const rad = (angle - 90) * Math.PI / 180;
+                return {
+                    x: cx + r * Math.cos(rad),
+                    y: cy + r * Math.sin(rad)
+                };
+            }
+
+            function describeArc(cx, cy, r, startAngle, endAngle) {
+                const start = polarToCartesian(cx, cy, r, endAngle);
+                const end = polarToCartesian(cx, cy, r, startAngle);
+                const largeArc = endAngle - startAngle <= 180 ? 0 : 1;
+                return `M ${cx} ${cy} L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 0 ${end.x} ${end.y} Z`;
+            }
+
+            const paths = segments.map(seg =>
+                `<path d="${describeArc(center, center, radius, seg.startAngle, seg.endAngle)}" fill="${getChartColor(seg.color)}" />`
+            ).join('');
+
+            return `
+                <div class="flex flex-col items-center">
+                    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+                        ${paths}
+                        <circle cx="${center}" cy="${center}" r="40" fill="var(--surface)" />
+                    </svg>
+                </div>
+            `;
+        }
+
+        function renderStackedBarChart(barData, categories) {
+            if (!barData || barData.length === 0) {
+                return `<div class="text-center text-secondary py-8">No comparison data for day view</div>`;
+            }
+
+            const maxTotal = Math.max(...barData.map(b => b.total));
+            const barHeight = 120;
+
+            // Calculate bar width based on number of bars (ensure gaps)
+            const numBars = barData.length;
+            const barWidth = numBars <= 4 ? 'w-10' : numBars <= 5 ? 'w-8' : 'w-6';
+
+            const barsHtml = barData.map(bar => {
+                const heightPercent = (bar.total / maxTotal) * barHeight;
+                let segmentsHtml = '';
+
+                bar.segments.forEach(seg => {
+                    const segHeight = (seg.v / bar.total) * heightPercent;
+                    segmentsHtml += `<div class="bar-segment w-full" style="height: ${segHeight}px; background-color: ${getChartColor(seg.c)};"></div>`;
+                });
+
+                return `
+                    <div class="flex flex-col items-center gap-1">
+                        <div class="${barWidth} flex flex-col justify-end" style="height: ${barHeight}px;">
+                            <div class="w-full rounded-t overflow-hidden flex flex-col" style="height: ${heightPercent}px;">
+                                ${segmentsHtml}
+                            </div>
+                        </div>
+                        <span class="text-xs text-secondary">${bar.label}</span>
+                    </div>
+                `;
+            }).join('');
+
+            return `<div class="flex justify-between items-end px-6 gap-2">${barsHtml}</div>`;
+        }
+
+        function renderCategoryLegend(categories) {
+            return `
+                <div class="px-4 mb-4">
+                    <div class="flex flex-wrap gap-3 justify-center">
+                        ${categories.map(cat => `
+                            <div class="flex items-center gap-1">
+                                <div class="w-3 h-3 rounded-sm" style="background-color: ${getChartColor(cat.color)}"></div>
+                                <span class="text-xs">${cat.label} ${cat.value}%</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDrillCards(cards) {
+            return cards.map((card, i) => `
+                <div class="surface rounded-xl p-4 flex justify-between items-center cursor-pointer hover:shadow-md transition-all" style="border: 1px solid transparent;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='transparent'">
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 rounded-full" style="background-color: var(--chart-${(i % 5) + 1})"></div>
+                        <span class="font-medium text-sm">${card.label}</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-semibold">${card.amount}</div>
+                        <div class="text-xs text-secondary">${card.percent}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderAggregationScreen(data) {
+            return `
+                ${renderCollapsedBreadcrumbs(data.temporal, data.category, data.currentTemporal, data.currentCategory)}
+
+                <!-- Header with total -->
+                <div class="px-4 py-3 text-center">
+                    <div class="text-sm text-secondary">${data.subtitle}</div>
+                    <div class="text-3xl font-bold">${data.total}</div>
+                </div>
+
+                <!-- Mode Toggle -->
+                <div class="px-4 mb-4">
+                    <div class="flex surface rounded-lg p-1" style="border: 1px solid var(--secondary); opacity: 0.5;">
+                        <button class="flex-1 py-2 rounded-md text-sm font-medium" style="background-color: var(--accent); color: white;">
+                            <span class="flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
+                                </svg>
+                                Aggregation
+                            </span>
+                        </button>
+                        <button class="flex-1 py-2 rounded-md text-sm text-secondary">
+                            <span class="flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                </svg>
+                                Comparison
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pie Chart -->
+                <div class="px-4 mb-4">
+                    ${renderPieChart(data.categories)}
+                </div>
+
+                <!-- Category Legend -->
+                ${renderCategoryLegend(data.categories)}
+
+                <!-- Drill-down cards -->
+                <div class="px-4 space-y-2 pb-4">
+                    <div class="text-sm font-medium text-secondary mb-2">Tap to drill down</div>
+                    ${renderDrillCards(data.drillCards)}
+                </div>
+            `;
+        }
+
+        function renderComparisonScreen(data) {
+            return `
+                ${renderCollapsedBreadcrumbs(data.temporal, data.category, data.currentTemporal, data.currentCategory)}
+
+                <!-- Header with total -->
+                <div class="px-4 py-3 text-center">
+                    <div class="text-sm text-secondary">${data.subtitle}</div>
+                    <div class="text-3xl font-bold">${data.total}</div>
+                </div>
+
+                <!-- Mode Toggle -->
+                <div class="px-4 mb-4">
+                    <div class="flex surface rounded-lg p-1" style="border: 1px solid var(--secondary); opacity: 0.5;">
+                        <button class="flex-1 py-2 rounded-md text-sm text-secondary">
+                            <span class="flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
+                                </svg>
+                                Aggregation
+                            </span>
+                        </button>
+                        <button class="flex-1 py-2 rounded-md text-sm font-medium" style="background-color: var(--accent); color: white;">
+                            <span class="flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                </svg>
+                                Comparison
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stacked Bar Chart -->
+                <div class="px-4 mb-4" style="min-height: 150px;">
+                    ${renderStackedBarChart(data.barData, data.categories)}
+                </div>
+
+                <!-- Category Legend (same as pie chart) -->
+                ${renderCategoryLegend(data.categories)}
+
+                <!-- Drill-down cards -->
+                <div class="px-4 space-y-2 pb-4">
+                    <div class="text-sm font-medium text-secondary mb-2">Tap to drill down</div>
+                    ${renderDrillCards(data.drillCards)}
+                </div>
+            `;
+        }
+
+        function updateScreens() {
+            const data = screens[currentScreen];
+            document.getElementById('aggregationScreen').innerHTML = renderAggregationScreen(data);
+            document.getElementById('comparisonScreen').innerHTML = renderComparisonScreen(data);
+        }
+
+        function toggleTemporal() {
+            temporalOpen = !temporalOpen;
+            categoryOpen = false;
+            updateScreens();
+        }
+
+        function toggleCategory() {
+            categoryOpen = !categoryOpen;
+            temporalOpen = false;
+            updateScreens();
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.breadcrumb-button') && !e.target.closest('.breadcrumb-dropdown')) {
+                if (temporalOpen || categoryOpen) {
+                    temporalOpen = false;
+                    categoryOpen = false;
+                    updateScreens();
+                }
+            }
+        });
+
+        // Theme controls
+        document.getElementById('themeSelect').addEventListener('change', (e) => {
+            const theme = e.target.value;
+            if (theme === 'slate') {
+                document.documentElement.removeAttribute('data-theme');
+            } else {
+                document.documentElement.setAttribute('data-theme', theme);
+            }
+        });
+
+        document.getElementById('lightMode').addEventListener('click', () => {
+            document.documentElement.classList.remove('dark');
+            document.getElementById('lightMode').classList.add('bg-accent', 'text-white');
+            document.getElementById('lightMode').classList.remove('surface');
+            document.getElementById('darkMode').classList.remove('bg-accent', 'text-white');
+            document.getElementById('darkMode').classList.add('surface');
+        });
+
+        document.getElementById('darkMode').addEventListener('click', () => {
+            document.documentElement.classList.add('dark');
+            document.getElementById('darkMode').classList.add('bg-accent', 'text-white');
+            document.getElementById('darkMode').classList.remove('surface');
+            document.getElementById('lightMode').classList.remove('bg-accent', 'text-white');
+            document.getElementById('lightMode').classList.add('surface');
+        });
+
+        // Screen tabs
+        document.querySelectorAll('.screen-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.screen-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentScreen = tab.dataset.screen;
+                temporalOpen = false;
+                categoryOpen = false;
+                updateScreens();
+            });
+        });
+
+        // Initial render
+        updateScreens();
+    </script>
+</body>
+</html>

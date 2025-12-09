@@ -1,0 +1,229 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>8</storyId>
+    <title>Bug Fixes &amp; Polish</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-07</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic7/story-7.8-bug-fixes-polish.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>the analytics view to be consistent, bug-free, and fully localized</iWant>
+    <soThat>I can trust the interface and focus on understanding my spending without confusion</soThat>
+    <tasks>
+      <task id="1">Fix month selector off-by-one bug (AC: #1)</task>
+      <task id="2">Audit and fix icon sizes (AC: #2, #5)</task>
+      <task id="3">Verify bottom navigation fixed position (AC: #3)</task>
+      <task id="4">Complete Spanish translations (AC: #4, #8)</task>
+      <task id="5">Verify spacing follows 8px grid (AC: #6)</task>
+      <task id="6">Verify touch targets are 44px minimum (AC: #7)</task>
+      <task id="7">Implement locale-aware date formatting (AC: #9)</task>
+      <task id="8">Verify currency formatting (AC: #10)</task>
+      <task id="9">Run TypeScript and tests (AC: All)</task>
+      <task id="10">E2E verification (AC: All)</task>
+      <task id="11">Documentation and story completion (AC: All)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="1" fr="FR1">When I select October in the month picker, October data displays (not November - fix off-by-one bug)</ac>
+    <ac id="2" fr="FR2">All icons in the analytics view render at 24px with stroke-width 2 (Lucide standard)</ac>
+    <ac id="3" fr="FR3">The bottom navigation bar stays fixed during scroll and navigation - no layout shifts</ac>
+    <ac id="4" fr="FR4">When language is set to Spanish, all analytics labels display in Spanish with no English fallbacks</ac>
+    <ac id="5" fr="FR53">All icons across all analytics components use size={24} strokeWidth={2}</ac>
+    <ac id="6" fr="FR54">All spacing follows 8px grid system (8, 16, 24, 32px)</ac>
+    <ac id="7" fr="FR55">All interactive elements have minimum 44x44px touch targets</ac>
+    <ac id="8" fr="FR56">All new labels introduced in Epic 7 have English and Spanish translations</ac>
+    <ac id="9" fr="FR57">Date formatting uses Spanish locale when language is Spanish (e.g., "octubre" not "October")</ac>
+    <ac id="10" fr="FR58">Currency formatting respects user's currency/locale setting</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/prd-epic7.md</path>
+        <title>Epic 7 PRD - Analytics UX Redesign</title>
+        <section>Bug Fixes (FR1-FR4), Visual Consistency (FR52-FR58)</section>
+        <snippet>FR1: Month selector fix, FR2: Icon consistency 24px, FR3: Fixed bottom nav, FR4: Spanish translations. FR53-55: 24px icons, 8px grid, 44px touch targets. FR56-58: i18n labels, locale date/currency.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture-epic7.md</path>
+        <title>Epic 7 Architecture</title>
+        <section>Cross-Cutting Concerns - Internationalization, Visual Consistency</section>
+        <snippet>New translation keys required for temporal (year/quarter/month/week/day), category (allCategories, category, group, subcategory), chart modes (aggregation/comparison), empty states. Date formatting uses Intl.DateTimeFormat with locale.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic7/tech-spec-epic-7.md</path>
+        <title>Epic 7 Tech Spec</title>
+        <section>Acceptance Criteria AC1-AC4, AC52-AC58</section>
+        <snippet>AC1: Month selector correct month, AC2: Icons 24px/stroke-width 2, AC3: Bottom nav fixed, AC4: Spanish mode complete. AC53-58: icon sizes, spacing grid, touch targets, translations, locale formatting.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Visual Consistency Rules, Accessibility Requirements</section>
+        <snippet>Icons: 24px, stroke-width 2 from lucide-react. Spacing: 8px grid (8,16,24,32px). Touch targets: 44px minimum. WCAG 2.1 AA compliance. Color contrast 4.5:1.</snippet>
+      </doc>
+      <doc>
+        <path>docs/team-standards.md</path>
+        <title>Team Standards</title>
+        <section>Testing Standards - Fast Verification Strategy</section>
+        <snippet>Use targeted testing during development: npx tsc --noEmit, then npm run test:unit -- --run "tests/unit/*". Full suite (npm run test:all) only before marking story as review.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>src/utils/translations.ts</path>
+        <kind>utility</kind>
+        <symbol>TRANSLATIONS</symbol>
+        <lines>1-140</lines>
+        <reason>Contains all i18n keys. Story 7.8 needs to add missing Epic 7 keys for temporal levels (year/quarter/month/week/day in Spanish) and verify all Epic 7 labels have Spanish translations. Currently has some keys from Stories 7.3-7.5.</reason>
+      </file>
+      <file>
+        <path>src/utils/date.ts</path>
+        <kind>utility</kind>
+        <symbol>formatWeekLabel, getWeeksInMonth</symbol>
+        <lines>138-207</lines>
+        <reason>Date utilities for locale-aware week/month formatting. Story 7.8 needs to verify locale parameter is correctly passed and Spanish formatting works (AC#9). Already uses Intl.DateTimeFormat.</reason>
+      </file>
+      <file>
+        <path>src/utils/currency.ts</path>
+        <kind>utility</kind>
+        <symbol>formatCurrency</symbol>
+        <lines>1-7</lines>
+        <reason>Currency formatting utility. Uses Intl.NumberFormat with locale based on currency. Verify CLP uses es-CL locale correctly (AC#10).</reason>
+      </file>
+      <file>
+        <path>src/components/Nav.tsx</path>
+        <kind>component</kind>
+        <symbol>Nav</symbol>
+        <lines>1-63</lines>
+        <reason>Bottom navigation bar. Verify fixed position (AC#3), check icon sizes are 24px (AC#2). Currently uses size={24} which is correct.</reason>
+      </file>
+      <file>
+        <path>src/views/TrendsView.tsx</path>
+        <kind>view</kind>
+        <symbol>TrendsView</symbol>
+        <lines>1-100+</lines>
+        <reason>Main analytics view. Check for month selector bug (AC#1 - off-by-one), verify all analytics icons use size={24} strokeWidth={2}.</reason>
+      </file>
+      <file>
+        <path>src/components/analytics/TemporalBreadcrumb.tsx</path>
+        <kind>component</kind>
+        <symbol>TemporalBreadcrumb</symbol>
+        <reason>Audit for icon sizes, spacing, touch targets, translation key usage.</reason>
+      </file>
+      <file>
+        <path>src/components/analytics/CategoryBreadcrumb.tsx</path>
+        <kind>component</kind>
+        <symbol>CategoryBreadcrumb</symbol>
+        <reason>Audit for icon sizes, spacing, touch targets, translation key usage.</reason>
+      </file>
+      <file>
+        <path>src/components/analytics/ChartModeToggle.tsx</path>
+        <kind>component</kind>
+        <symbol>ChartModeToggle</symbol>
+        <reason>Audit for icon sizes, spacing, touch targets, translation key usage.</reason>
+      </file>
+      <file>
+        <path>src/components/analytics/DrillDownCard.tsx</path>
+        <kind>component</kind>
+        <symbol>DrillDownCard</symbol>
+        <reason>Audit for touch targets (44px min), spacing (8px grid).</reason>
+      </file>
+      <file>
+        <path>src/components/analytics/DrillDownGrid.tsx</path>
+        <kind>component</kind>
+        <symbol>DrillDownGrid</symbol>
+        <reason>Audit for spacing, translation key usage for empty states.</reason>
+      </file>
+    </code>
+    <dependencies>
+      <node>
+        <package>react</package>
+        <version>^18.3.1</version>
+      </node>
+      <node>
+        <package>lucide-react</package>
+        <version>^0.460.0</version>
+        <note>Icon library - ensure all icons use size={24} strokeWidth={2}</note>
+      </node>
+      <node>
+        <package>vitest</package>
+        <version>^4.0.13</version>
+        <note>Testing framework</note>
+      </node>
+      <node>
+        <package>@playwright/test</package>
+        <version>^1.56.1</version>
+        <note>E2E testing framework</note>
+      </node>
+      <node>
+        <package>typescript</package>
+        <version>^5.3.3</version>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="architecture">All icons must use size={24} strokeWidth={2} from lucide-react (FR2, FR53)</constraint>
+    <constraint source="architecture">All spacing must follow 8px grid system: 8, 16, 24, 32px (FR54)</constraint>
+    <constraint source="architecture">All interactive elements must have minimum 44x44px touch targets (FR55)</constraint>
+    <constraint source="architecture">All new UI labels must have both English and Spanish translations (FR56)</constraint>
+    <constraint source="architecture">Date formatting must use Intl.DateTimeFormat with user locale (FR57)</constraint>
+    <constraint source="architecture">Currency formatting must respect user currency/locale setting (FR58)</constraint>
+    <constraint source="team-standards">Use targeted testing during development: npx tsc --noEmit first, then run specific test files</constraint>
+    <constraint source="team-standards">Run full test suite (npm run test:all) only before marking story as review</constraint>
+    <constraint source="team-standards">This is a polish story - modifications only, no new files expected</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>TRANSLATIONS object</name>
+      <kind>translation dictionary</kind>
+      <signature>TRANSLATIONS: { en: Record&lt;string, string&gt;, es: Record&lt;string, string&gt; }</signature>
+      <path>src/utils/translations.ts</path>
+    </interface>
+    <interface>
+      <name>formatWeekLabel</name>
+      <kind>function</kind>
+      <signature>formatWeekLabel(start: string, end: string, locale: string = 'en'): string</signature>
+      <path>src/utils/date.ts</path>
+    </interface>
+    <interface>
+      <name>formatCurrency</name>
+      <kind>function</kind>
+      <signature>formatCurrency(amount: number, currency: string): string</signature>
+      <path>src/utils/currency.ts</path>
+    </interface>
+    <interface>
+      <name>Lucide Icon Props</name>
+      <kind>component props</kind>
+      <signature>&lt;IconName size={24} strokeWidth={2} /&gt;</signature>
+      <path>lucide-react</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Testing follows the pyramid pattern with unit tests at the base. Use Vitest for unit/integration tests, Playwright for E2E. Fast verification strategy: run TypeScript check first (npx tsc --noEmit), then targeted unit tests. Full suite only before review. Test coverage thresholds: Lines 45%, Branches 30%, Functions 25%, Statements 40%.</standards>
+    <locations>
+      <location>tests/unit/*.test.ts</location>
+      <location>tests/unit/analytics/*.test.tsx</location>
+      <location>tests/integration/*.test.tsx</location>
+      <location>tests/e2e/*.spec.ts</location>
+    </locations>
+    <ideas>
+      <idea ac="1">Unit test for month selector: selecting October displays October data, not November (test the date picker index calculation)</idea>
+      <idea ac="2,5">Visual audit: grep all analytics components for Lucide icons, verify size={24} strokeWidth={2}</idea>
+      <idea ac="3">E2E test: scroll analytics view, verify Nav stays fixed at bottom with no layout shift</idea>
+      <idea ac="4,8">Unit test for translations: verify all Epic 7 keys exist in both en and es objects</idea>
+      <idea ac="6">Visual audit: check Tailwind classes in analytics components use grid-aligned values (p-2, p-4, p-6, p-8, gap-2, gap-4)</idea>
+      <idea ac="7">Visual audit: check interactive elements have min-h-11 or equivalent for 44px touch targets</idea>
+      <idea ac="9">Unit test: formatWeekLabel('2024-10-01', '2024-10-07', 'es') returns Spanish month abbreviation</idea>
+      <idea ac="10">Unit test: formatCurrency(1000, 'CLP') uses es-CL locale formatting</idea>
+    </ideas>
+  </tests>
+</story-context>

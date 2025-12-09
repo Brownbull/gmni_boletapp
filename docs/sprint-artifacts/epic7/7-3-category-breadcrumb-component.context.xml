@@ -1,0 +1,239 @@
+<story-context id="bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>3</storyId>
+    <title>Category Breadcrumb Component</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2025-12-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic7/story-7.3-category-breadcrumb-component.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user filtering analytics by category</asA>
+    <iWant>a collapsible breadcrumb showing my current category filter</iWant>
+    <soThat>I can see what's filtered and jump back to broader categories</soThat>
+    <tasks>
+      <task id="1">Create CategoryBreadcrumb component shell (AC: #1, #2)</task>
+      <task id="2">Implement dropdown state and rendering (AC: #3, #4, #5)</task>
+      <task id="3">Implement outside click and escape key handlers (AC: #9, #10)</task>
+      <task id="4">Implement navigation dispatch (AC: #7, #8, #11)</task>
+      <task id="5">Implement visual styling (AC: #6, #13)</task>
+      <task id="6">Implement keyboard accessibility (AC: #12)</task>
+      <task id="7">Implement ARIA attributes (AC: #14)</task>
+      <task id="8">Add i18n support (AC: #1)</task>
+      <task id="9">Write unit tests (AC: All)</task>
+      <task id="10">Write integration test (AC: #7, #8, #11)</task>
+      <task id="11">Verify and document (AC: All)</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">When no category filter is active, the category breadcrumb shows a collapsed button displaying "All Categories" (or localized equivalent)</criterion>
+    <criterion id="2">When a category filter is active (e.g., Food > Groceries > Meats), the collapsed button shows the deepest level (e.g., "Meats")</criterion>
+    <criterion id="3">When tapping the breadcrumb button, dropdown expands showing full filter path (e.g., All Categories > Food > Groceries > Meats)</criterion>
+    <criterion id="4">"All Categories" option is always available at the top of the dropdown</criterion>
+    <criterion id="5">Each level in the dropdown is tappable to navigate to that filter level</criterion>
+    <criterion id="6">Current level is highlighted with accent color and/or bold styling</criterion>
+    <criterion id="7">Tapping "All Categories" clears the category filter, showing all data for current temporal level</criterion>
+    <criterion id="8">Tapping an ancestor (e.g., "Groceries" when at "Meats") updates the filter to show Groceries level, preserving temporal position</criterion>
+    <criterion id="9">Tapping outside the dropdown closes it</criterion>
+    <criterion id="10">Pressing Escape key closes the dropdown</criterion>
+    <criterion id="11">Breadcrumb updates immediately when user selects a category filter (within same render cycle)</criterion>
+    <criterion id="12">Component is keyboard accessible: Tab to focus, Enter to expand, Arrow keys to navigate options, Escape to close</criterion>
+    <criterion id="13">All interactive elements have minimum 44x44px touch targets</criterion>
+    <criterion id="14">ARIA attributes present: aria-expanded, aria-haspopup="listbox", role="navigation", aria-label="Category filter"</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture-epic7.md</path>
+        <title>Epic 7 Architecture - Analytics UX Redesign</title>
+        <section>Component Boundaries, Pattern 3: Breadcrumb Dropdown Pattern</section>
+        <snippet>CategoryBreadcrumb reads `category` from context, writes via `SET_CATEGORY_FILTER` and `CLEAR_CATEGORY_FILTER` dispatch only. Implements collapsible dropdown with outside click/escape handlers.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd-epic7.md</path>
+        <title>Epic 7 PRD - Analytics UX Redesign</title>
+        <section>FR20-FR24: Category Breadcrumb Requirements</section>
+        <snippet>FR20: Navigate back to any previous category level via breadcrumb. FR21: Category breadcrumb displays current filter. FR22: Each segment is tappable. FR23: Shows "All Categories" when no filter active. FR24: Updates immediately on filter change.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Section 4.4 Breadcrumb Expansion Behavior, Section 7 Component Library</section>
+        <snippet>Collapsed state shows Tag icon + currentLabel + chevron. Expanded dropdown shows all ancestor levels. Current level highlighted with accent color. Tap outside closes dropdown. Uses CollapsibleBreadcrumb pattern.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic7/story-7.1-analytics-navigation-context.md</path>
+        <title>Story 7.1 - Analytics Navigation Context (DONE)</title>
+        <section>Dev Agent Record - Completion Notes</section>
+        <snippet>Foundation story completed. Provides AnalyticsContext, useAnalyticsNavigation hook, SET_CATEGORY_FILTER and CLEAR_CATEGORY_FILTER actions, CategoryPosition and CategoryLevel types. 65 analytics unit tests, all passing.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic7/story-7.2-temporal-breadcrumb-component.md</path>
+        <title>Story 7.2 - Temporal Breadcrumb Component (Reference)</title>
+        <section>Dev Notes, Tasks</section>
+        <snippet>Reference implementation for breadcrumb pattern. TemporalBreadcrumb.tsx demonstrates dropdown pattern, outside click/escape handlers, keyboard accessibility, ARIA attributes, and dual-axis independence.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/components/analytics/TemporalBreadcrumb.tsx</path>
+        <kind>component</kind>
+        <symbol>TemporalBreadcrumb</symbol>
+        <lines>1-413</lines>
+        <reason>Reference implementation for CategoryBreadcrumb. Contains complete dropdown pattern: isOpen state, outside click handler, escape handler, keyboard navigation, ARIA attributes, focus management, styling patterns.</reason>
+      </artifact>
+      <artifact>
+        <path>src/types/analytics.ts</path>
+        <kind>type-definitions</kind>
+        <symbol>CategoryPosition, CategoryLevel, NavigationAction</symbol>
+        <lines>36-52, 101-106</lines>
+        <reason>Required types: CategoryLevel ('all'|'category'|'group'|'subcategory'), CategoryPosition interface, SET_CATEGORY_FILTER and CLEAR_CATEGORY_FILTER action types.</reason>
+      </artifact>
+      <artifact>
+        <path>src/contexts/AnalyticsContext.tsx</path>
+        <kind>context</kind>
+        <symbol>AnalyticsProvider, setCategoryFilter, clearCategoryFilter</symbol>
+        <lines>62-68, 89-95, 187-219</lines>
+        <reason>Category filter reducer actions. SET_CATEGORY_FILTER preserves temporal (dual-axis independence). CLEAR_CATEGORY_FILTER sets category to { level: 'all' }. Action creators provided.</reason>
+      </artifact>
+      <artifact>
+        <path>src/hooks/useAnalyticsNavigation.ts</path>
+        <kind>hook</kind>
+        <symbol>useAnalyticsNavigation, getParentCategoryLevel, getChildCategoryLevel</symbol>
+        <lines>74-106, 162-194</lines>
+        <reason>Context consumer hook with category, categoryLevel, hasCategoryFilter selectors. Helper functions for category level navigation (getParentCategoryLevel, getChildCategoryLevel).</reason>
+      </artifact>
+      <artifact>
+        <path>src/utils/analyticsHelpers.ts</path>
+        <kind>utility</kind>
+        <symbol>validateCategoryPosition</symbol>
+        <lines>135-163</lines>
+        <reason>Category validation logic. Catches invalid states: subcategory without group, group without category. Auto-corrects by clearing filter to 'all'.</reason>
+      </artifact>
+      <artifact>
+        <path>src/utils/translations.ts</path>
+        <kind>utility</kind>
+        <symbol>TRANSLATIONS</symbol>
+        <lines>1-112</lines>
+        <reason>Translation system. Needs new keys: allCategories, category (breadcrumb context), group, subcategory. Pattern: { en: 'English', es: 'Spanish' }.</reason>
+      </artifact>
+      <artifact>
+        <path>tests/unit/analytics/TemporalBreadcrumb.test.tsx</path>
+        <kind>test</kind>
+        <symbol>Test patterns</symbol>
+        <lines>1-100</lines>
+        <reason>Reference test patterns: createWrapper helper, renderWithProvider, state factories for different levels, AC-organized test structure.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package>react</package>
+        <version>^18.3.1</version>
+        <usage>Core framework, useState, useRef, useEffect, useCallback</usage>
+      </node>
+      <package>lucide-react</package>
+      <version>^0.460.0</version>
+      <usage>Tag icon (24px), ChevronDown icon (16px) for breadcrumb</usage>
+      <package>@testing-library/react</package>
+      <version>^16.3.0</version>
+      <usage>render, screen, fireEvent for unit tests</usage>
+      <package>@testing-library/user-event</package>
+      <version>^14.6.1</version>
+      <usage>userEvent for keyboard navigation tests</usage>
+      <package>vitest</package>
+      <version>^4.0.13</version>
+      <usage>Test runner, describe, it, expect, vi</usage>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Pattern 1: Context Consumer Pattern - Use useAnalyticsNavigation() hook, NOT direct useContext(AnalyticsContext)</constraint>
+    <constraint>Pattern 3: Breadcrumb Dropdown Pattern - Follow TemporalBreadcrumb implementation for dropdown behavior</constraint>
+    <constraint>Component Boundary: CategoryBreadcrumb reads `category` from context, writes via SET_CATEGORY_FILTER or CLEAR_CATEGORY_FILTER only</constraint>
+    <constraint>Dual-axis independence: Category changes must NOT modify temporal position (preserve ...state.temporal)</constraint>
+    <constraint>44px touch targets: All interactive elements must have min-h-11 min-w-11 (Tailwind 11 = 44px)</constraint>
+    <constraint>Icon specs: Tag icon 24px stroke-width 2, ChevronDown 16px stroke-width 2</constraint>
+    <constraint>Styling consistency: Use same Tailwind patterns as TemporalBreadcrumb (slate colors, focus rings, transitions)</constraint>
+    <constraint>i18n: Use existing TRANSLATIONS pattern from src/utils/translations.ts</constraint>
+    <constraint>No new dependencies: Use existing React, lucide-react, Tailwind</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>useAnalyticsNavigation</name>
+      <kind>hook</kind>
+      <signature>function useAnalyticsNavigation(): UseAnalyticsNavigationReturn</signature>
+      <path>src/hooks/useAnalyticsNavigation.ts</path>
+      <usage>const { category, categoryLevel, hasCategoryFilter, dispatch } = useAnalyticsNavigation();</usage>
+    </interface>
+    <interface>
+      <name>SET_CATEGORY_FILTER action</name>
+      <kind>reducer-action</kind>
+      <signature>dispatch({ type: 'SET_CATEGORY_FILTER', payload: CategoryPosition })</signature>
+      <path>src/contexts/AnalyticsContext.tsx</path>
+      <usage>dispatch({ type: 'SET_CATEGORY_FILTER', payload: { level: 'category', category: 'Food' } })</usage>
+    </interface>
+    <interface>
+      <name>CLEAR_CATEGORY_FILTER action</name>
+      <kind>reducer-action</kind>
+      <signature>dispatch({ type: 'CLEAR_CATEGORY_FILTER' })</signature>
+      <path>src/contexts/AnalyticsContext.tsx</path>
+      <usage>dispatch({ type: 'CLEAR_CATEGORY_FILTER' }) // Sets category to { level: 'all' }</usage>
+    </interface>
+    <interface>
+      <name>CategoryPosition</name>
+      <kind>type</kind>
+      <signature>interface CategoryPosition { level: CategoryLevel; category?: string; group?: string; subcategory?: string; }</signature>
+      <path>src/types/analytics.ts</path>
+    </interface>
+    <interface>
+      <name>CategoryLevel</name>
+      <kind>type</kind>
+      <signature>type CategoryLevel = 'all' | 'category' | 'group' | 'subcategory';</signature>
+      <path>src/types/analytics.ts</path>
+    </interface>
+    <interface>
+      <name>setCategoryFilter (action creator)</name>
+      <kind>function</kind>
+      <signature>function setCategoryFilter(payload: CategoryPosition): NavigationAction</signature>
+      <path>src/contexts/AnalyticsContext.tsx</path>
+    </interface>
+    <interface>
+      <name>clearCategoryFilter (action creator)</name>
+      <kind>function</kind>
+      <signature>function clearCategoryFilter(): NavigationAction</signature>
+      <path>src/contexts/AnalyticsContext.tsx</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <paragraph>Use Vitest + @testing-library/react + @testing-library/user-event. Tests organized by Acceptance Criteria (describe blocks per AC). Minimum 80% coverage on new files. Use createWrapper/renderWithProvider pattern from TemporalBreadcrumb.test.tsx. Mock context state using AnalyticsProvider initialState prop. Test files in tests/unit/analytics/ and tests/integration/analytics/.</paragraph>
+    </standards>
+    <locations>
+      <location>tests/unit/analytics/CategoryBreadcrumb.test.tsx</location>
+      <location>tests/integration/analytics/categoryBreadcrumb.test.tsx</location>
+    </locations>
+    <ideas>
+      <idea ac="1">Test collapsed state with no filter renders "All Categories" text</idea>
+      <idea ac="2">Test collapsed state with { level: 'subcategory', category: 'Food', group: 'Groceries', subcategory: 'Meats' } renders "Meats"</idea>
+      <idea ac="3">Test dropdown opens on click, shows full path: All Categories > Food > Groceries > Meats</idea>
+      <idea ac="4">Test "All Categories" always appears at top of dropdown list</idea>
+      <idea ac="5">Test each dropdown option is clickable and calls dispatch</idea>
+      <idea ac="6">Test current level has distinct styling (font-bold, text-blue-*)</idea>
+      <idea ac="7">Test clicking "All Categories" dispatches CLEAR_CATEGORY_FILTER</idea>
+      <idea ac="8">Test clicking ancestor dispatches SET_CATEGORY_FILTER with correct payload, verify temporal NOT changed</idea>
+      <idea ac="9">Test dropdown closes on mousedown outside container</idea>
+      <idea ac="10">Test dropdown closes on Escape keydown</idea>
+      <idea ac="11">Test breadcrumb re-renders immediately when context state changes</idea>
+      <idea ac="12">Test keyboard: Tab focuses button, Enter opens dropdown, Arrow keys navigate, Enter selects</idea>
+      <idea ac="13">Test all buttons have min-h-11 min-w-11 classes (or computed 44px height)</idea>
+      <idea ac="14">Test ARIA attributes: aria-expanded, aria-haspopup="listbox", role="navigation", aria-label="Category filter"</idea>
+      <idea ac="integration">Test with AnalyticsContext - verify temporal preserved when category changes</idea>
+    </ideas>
+  </tests>
+</story-context>

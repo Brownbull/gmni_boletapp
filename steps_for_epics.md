@@ -1,6 +1,6 @@
 # Boletapp Epic Workflow Guide
 
-**Last Updated:** 2025-12-03 (Post-Epic 5 Retrospective)
+**Last Updated:** 2025-12-04 (Post-Epic 6 Retrospective)
 **Framework:** BMad Method Module (BMM)
 
 ---
@@ -14,31 +14,29 @@
 - Epic 4: Security Hardening ✅
 - Epic 4.5: Receipt Image Storage ✅
 - Epic 5: Data Download & Export ✅
+- Epic 6: Smart Category Learning ✅
 
-### NEXT: Epic 6 Preparation (Action Items)
+### NEXT: Epic 7 - Analytics UX Redesign
 
-Before starting Epic 6, complete these action items from the Epic 5 retrospective:
+**Scope Change:** Original Epic 7 (Subscription & Monetization) moved to Epic 8. New Epic 7 focuses on UX polish before monetization.
 
-| Priority | Action Item | Owner | Status |
-|----------|-------------|-------|--------|
-| HIGH | Create `docs/team-standards.md` | Bob (SM) | DONE |
-| HIGH | Create `docs/templates/deployment-story-template.md` | Bob (SM) | DONE |
-| MEDIUM | Document Vitest module state gotcha | Charlie (Dev) | DONE (in team-standards.md) |
-| LOW | Document Gemini API quirks | Charlie (Dev) | TODO (optional) |
+**Planning Approach:** Full PRD + Tech-Spec (Option A - formal planning for UX-heavy epic)
 
-**Run these commands to complete action items:**
+**Key Documents for Epic 7 Planning:**
+| Document | Location | Purpose |
+|----------|----------|---------|
+| Epic 6 Retro | `docs/sprint-artifacts/epic6/epic-6-retro-2025-12-04.md` | UX issues identified |
+| Tailwind Templates | `docs/design-references/tailwind_templates/` | Premium UI components (gitignored) |
+| Team Standards | `docs/team-standards.md` | Agreements and patterns |
+| Existing Analytics | `src/views/TrendsView.tsx` | Current implementation |
 
-```bash
-# 1. Create Team Standards Document
-# Manual: Create docs/team-standards.md with:
-# - Team Agreements (compiled from all retrospectives)
-# - Workflow Standards (branching, PRs, deployment, testing)
-# - Document Index (links to all key project docs)
-# - Lessons Learned (patterns and anti-patterns)
-
-# 2. Create Deployment Story Template
-# Manual: Create docs/templates/deployment-story-template.md
-```
+**Epic 7 Scope Summary:**
+- Fix bugs: Month selection off-by-one, icon inconsistencies, translation gaps
+- Add views: Quarter view, Week view in Month
+- UX Architecture: Dual-axis navigation (Temporal + Category on every view)
+- Consistent top bar: Period selector, back navigation, graph type selector
+- Category-specific download: Yearly summary for single category
+- New graph types: Modern visualizations with Settings toggles
 
 ---
 
@@ -172,33 +170,87 @@ product-brief → research → prd → create-ux-design → architecture → tec
 
 ---
 
-### PLANNED: Epic 6 - Smart Category Learning (Complex Feature Epic)
+### COMPLETED: Epic 6 - Smart Category Learning ✅
 
 **Type:** Feature + AI/ML (complex backend + UX)
-**Prerequisites:** Complete Epic 6 Preparation action items first
+**Duration:** 2 days (2025-12-03 to 2025-12-04)
+**Stories:** 7 stories, 450+ tests
+**Deployed:** 2025-12-04 via CI/CD auto-deploy
 
-| Step | Command | Output | Special Focus |
-|------|---------|--------|---------------|
-| 1 | **FIRST STORY: CI/CD Auto-Deploy** | GitHub Actions deploys to Firebase | Infrastructure story |
-| 2 | `/bmad:bmm:workflows:product-brief` | Product vision | AI/ML behavior definition |
-| 3 | `/bmad:bmm:workflows:domain-research` | Research | AI/ML best practices |
-| 4 | `/bmad:bmm:workflows:prd` | PRD | User preference storage |
-| 5 | `/bmad:bmm:workflows:create-ux-design` | UX specs | Category override UX, learned categories |
-| 6 | `/bmad:bmm:workflows:architecture` | Architecture | New Firestore collection, fuzzy matching |
-| 7 | `/bmad:bmm:workflows:tech-spec` | Tech spec | Gemini integration changes |
-| 8+ | Story cycle | Per story | |
-| N-1 | **FINAL STORY: Deployment & Release** | Use deployment template | Release story |
-| N | `/bmad:bmm:workflows:retrospective` | Retrospective | |
+| Step | Command | Status |
+|------|---------|--------|
+| 1 | `/bmad:bmm:workflows:tech-spec` | ✅ Done 2025-12-03 |
+| 2-6 | Story cycle (7 stories) | ✅ All done |
+| 7 | `/bmad:bmm:workflows:retrospective` | ✅ Completed 2025-12-04 |
 
-**Epic 6 Story Requirements (from Epic 5 Retro):**
-1. **Story 1:** CI/CD Auto-Deploy to Firebase (add deploy step to GitHub Actions)
-2. **Final Story:** Use new deployment template for release process
+**Key Deliverables:**
+- CI/CD auto-deploy to Firebase (Story 6.0)
+- Category mapping infrastructure (Firestore service, types, security rules)
+- Fuzzy matching engine (fuse.js integration)
+- Category learning prompt (UI on category edit)
+- Auto-apply on receipt scan
+- Mappings management UI in Settings
+- Visual indicator (📖) for learned categories
+
+**Bugs Fixed During Deploy:**
+1. Category learning prompt timing
+2. Item group tracking vs transaction category
+3. Multi-item learning support
 
 ---
 
-### PLANNED: Epic 7 - Subscription & Monetization (Business-Critical Epic)
+### PLANNED: Epic 7 - Analytics UX Redesign (UX-Heavy Epic)
+
+**Type:** UX Redesign (major UI/navigation changes)
+**Planning:** Full PRD + Tech-Spec (formal planning required)
+**Estimated:** ~31 story points
+
+| Step | Command | Output | Special Focus |
+|------|---------|--------|---------------|
+| 1 | `/bmad:bmm:workflows:product-brief` | Product vision | UX architecture definition |
+| 2 | `/bmad:bmm:workflows:prd` | PRD | Detailed UX requirements |
+| 3 | `/bmad:bmm:workflows:create-ux-design` | UX specs | Dual-axis navigation, consistent top bar |
+| 4 | `/bmad:bmm:workflows:architecture` | Architecture | Component structure, state management |
+| 5 | `/bmad:bmm:workflows:tech-spec` | Tech spec | Stories with ACs |
+| 6+ | Story cycle | Per story | |
+| N-1 | **FINAL STORY: Deployment & Release** | Use deployment template | Release story |
+| N | `/bmad:bmm:workflows:retrospective` | Retrospective | |
+
+**Epic 7 Scope (from Epic 6 Retro):**
+
+**Bugs to Fix:**
+- Month selection off-by-one (select October, get November)
+- Icon size inconsistency between views
+- Bottom bar layout shifts
+- Spanish interface showing English labels
+
+**Features to Add:**
+- Quarter view (Year → Quarter → Month)
+- Week view in Month (Month → Week → Day)
+- Category-specific yearly summary download
+
+**UX Architecture (Major):**
+- Dual-axis navigation model (Temporal + Category on every view)
+- Consistent top bar pattern (period selector, back nav, graph selector)
+- Same fonts, icons, positions across all temporal levels
+- Graph type selector with Settings toggles
+
+**Download Behavior:**
+| View Level | Download Content |
+|------------|------------------|
+| Year, Quarter | Yearly summary |
+| Month, Week, Day | Full transactions for month |
+
+**Design Reference:** `docs/design-references/tailwind_templates/` (gitignored - premium content)
+
+**Priority:** UX/Navigation first, new graph types second (can split into 7A/7B if needed)
+
+---
+
+### PLANNED: Epic 8 - Subscription & Monetization (Business-Critical Epic)
 
 **Type:** Feature + Business (payment integration, security-critical)
+**Moved from:** Original Epic 7 (deferred for UX polish in new Epic 7)
 
 | Step | Command | Output | Special Focus |
 |------|---------|--------|---------------|
@@ -214,7 +266,7 @@ product-brief → research → prd → create-ux-design → architecture → tec
 
 **Integration with Epic 5:**
 - Epic 5 created `useSubscriptionTier()` hook with mock returning `true`
-- Epic 7 will replace mock with actual Firestore subscription check
+- Epic 8 will replace mock with actual Firestore subscription check
 - Single-file change in `src/hooks/useSubscriptionTier.ts`
 
 **Pricing (from Epic 4 Retro):**
@@ -225,9 +277,10 @@ product-brief → research → prd → create-ux-design → architecture → tec
 
 ---
 
-### PLANNED: Epic 8 - Mobile App (Platform Epic)
+### PLANNED: Epic 9 - Mobile App (Platform Epic)
 
 **Type:** Platform expansion (major architecture, new deployments)
+**Moved from:** Original Epic 8
 
 | Step | Command | Output | Special Focus |
 |------|---------|--------|---------------|
@@ -304,6 +357,13 @@ product-brief → research → prd → create-ux-design → architecture → tec
 10. Update team-standards.md after each retrospective
 11. Testing patterns and gotchas are documented
 
+### From Epic 6 Retrospective
+12. UX-heavy epics get formal PRD + Tech-Spec treatment
+13. Design references (like Tailwind UI) are gitignored but available locally
+14. Production verification is mandatory before marking epic complete
+15. User flow bugs require E2E test coverage, not just unit tests
+16. Domain terminology must be precise in stories ("item category" vs "transaction category")
+
 ---
 
 ## Decision Tree: Which Workflows to Use?
@@ -364,8 +424,12 @@ Is this a user-facing feature?
 - [Epic 4 Retro](docs/sprint-artifacts/epic4/epic-4-retro-2025-11-29.md)
 - [Epic 4.5 Retro](docs/sprint-artifacts/epic4-5/epic-4-5-retro-2025-12-02.md)
 - [Epic 5 Retro](docs/sprint-artifacts/epic5/epic-5-retro-2025-12-03.md)
+- [Epic 6 Retro](docs/sprint-artifacts/epic6/epic-6-retro-2025-12-04.md)
+
+### Design References
+- [Tailwind UI Templates](docs/design-references/tailwind_templates/) - Premium components (gitignored)
 
 ---
 
-**Version:** 3.0
-**Updated:** 2025-12-03
+**Version:** 4.0
+**Updated:** 2025-12-04

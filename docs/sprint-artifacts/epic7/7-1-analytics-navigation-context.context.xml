@@ -1,0 +1,273 @@
+<story-context id="7-1-analytics-navigation-context" v="1.0">
+  <metadata>
+    <epicId>7</epicId>
+    <storyId>1</storyId>
+    <title>Analytics Navigation Context</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-05</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic7/story-7.1-analytics-navigation-context.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>centralized analytics navigation state with typed actions</iWant>
+    <soThat>all analytics components share a single source of truth</soThat>
+    <tasks>
+      <task id="1" title="Create TypeScript type definitions" ac="#2">
+        <subtask>Create `src/types/analytics.ts` with TemporalLevel, TemporalPosition, CategoryLevel, CategoryPosition, ChartMode, AnalyticsNavigationState, NavigationAction types</subtask>
+        <subtask>Export all types for use by other components</subtask>
+      </task>
+      <task id="2" title="Create AnalyticsContext with useReducer" ac="#1, #2, #3">
+        <subtask>Create `src/contexts/AnalyticsContext.tsx`</subtask>
+        <subtask>Implement reducer function handling all 5 action types</subtask>
+        <subtask>Initialize state with current year, 'all' category level, 'aggregation' chart mode</subtask>
+        <subtask>Create context provider component</subtask>
+        <subtask>Wrap reducer dispatch to include state validation</subtask>
+      </task>
+      <task id="3" title="Implement state validation function" ac="#4">
+        <subtask>Create `validateNavigationState()` in `src/utils/analyticsHelpers.ts`</subtask>
+        <subtask>Check temporal hierarchy consistency (day requires month, week requires month, etc.)</subtask>
+        <subtask>Auto-derive quarter from month if missing</subtask>
+        <subtask>Check category hierarchy consistency (subcategory requires group, group requires category)</subtask>
+        <subtask>Log warnings for auto-corrections (console.warn)</subtask>
+        <subtask>Return validated/corrected state</subtask>
+      </task>
+      <task id="4" title="Create useAnalyticsNavigation hook" ac="#5">
+        <subtask>Create `src/hooks/useAnalyticsNavigation.ts`</subtask>
+        <subtask>Provide typed access to context state and dispatch</subtask>
+        <subtask>Add memoized selectors for commonly accessed values</subtask>
+        <subtask>Throw helpful error if used outside AnalyticsContext.Provider</subtask>
+      </task>
+      <task id="5" title="Implement dual-axis independence logic" ac="#6">
+        <subtask>SET_TEMPORAL_LEVEL action preserves current category filter</subtask>
+        <subtask>SET_CATEGORY_FILTER action preserves current temporal position</subtask>
+        <subtask>RESET_TO_YEAR resets temporal but preserves category</subtask>
+        <subtask>CLEAR_CATEGORY_FILTER clears category but preserves temporal</subtask>
+      </task>
+      <task id="6" title="Write unit tests" ac="#7">
+        <subtask>Create `tests/unit/analytics/analyticsReducer.test.ts`</subtask>
+        <subtask>Test each action type</subtask>
+        <subtask>Test validation catches impossible states</subtask>
+        <subtask>Test dual-axis independence</subtask>
+        <subtask>Test edge cases: year boundary, quarter derivation, full category chain</subtask>
+        <subtask>Verify ≥80% coverage on new files</subtask>
+      </task>
+      <task id="7" title="Verify and document" ac="All">
+        <subtask>Run full test suite (`npm run test:all`)</subtask>
+        <subtask>Verify types compile without errors</subtask>
+        <subtask>Update any necessary imports in existing files</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="1">When the analytics view loads, the AnalyticsContext provider initializes navigation state with current year, "all categories", and aggregation mode</ac>
+    <ac id="2">State includes `temporal: { level, year, quarter?, month?, week?, day? }`, `category: { level, category?, group?, subcategory? }`, and `chartMode: 'aggregation' | 'comparison'`</ac>
+    <ac id="3">Actions available via `dispatch()`: SET_TEMPORAL_LEVEL, SET_CATEGORY_FILTER, TOGGLE_CHART_MODE, RESET_TO_YEAR, CLEAR_CATEGORY_FILTER</ac>
+    <ac id="4">`validateNavigationState()` function catches impossible states (e.g., week without month) and auto-corrects to safe defaults</ac>
+    <ac id="5">`useAnalyticsNavigation()` hook provides typed access to context state and dispatch</ac>
+    <ac id="6">Temporal and category filters work independently - changing one preserves the other (dual-axis independence)</ac>
+    <ac id="7">Unit tests cover reducer logic, validation function, and state transitions with ≥80% coverage on new code</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture-epic7.md</path>
+        <title>Architecture - Epic 7: Analytics UX Redesign</title>
+        <section>ADR-010: React Context for Analytics State Management</section>
+        <snippet>Use React Context API with useReducer for centralized analytics navigation state. Single source of truth prevents state sync bugs. No new dependencies.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture-epic7.md</path>
+        <title>Architecture - Epic 7</title>
+        <section>Novel Pattern: Dual-Axis Navigation Architecture</section>
+        <snippet>Navigation state types (TemporalLevel, TemporalPosition, CategoryPosition, ChartMode, AnalyticsNavigationState, NavigationAction) defined with full TypeScript definitions.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture-epic7.md</path>
+        <title>Architecture - Epic 7</title>
+        <section>State Validation Function</section>
+        <snippet>validateNavigationState() catches impossible states like week without month. Auto-corrects and logs warnings. Returns validated state.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture-epic7.md</path>
+        <title>Architecture - Epic 7</title>
+        <section>Pattern 1: Context Consumer Pattern</section>
+        <snippet>All analytics components consume context via useAnalyticsNavigation() hook, not useContext directly. Enables consistent access patterns.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic7/tech-spec-epic-7.md</path>
+        <title>Epic Technical Specification: Analytics UX Redesign</title>
+        <section>Data Models and Contracts</section>
+        <snippet>Defines TemporalLevel, TemporalPosition (year, quarter?, month?, week?, day?), CategoryLevel, CategoryPosition, ChartMode, AnalyticsNavigationState, and NavigationAction types.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/epic7/tech-spec-epic-7.md</path>
+        <title>Tech Spec Epic 7</title>
+        <section>Critical Constraint</section>
+        <snippet>State Management Chaos is #1 failure mode. All navigation state MUST flow through AnalyticsContext - no component should maintain its own navigation state.</snippet>
+      </doc>
+      <doc>
+        <path>docs/prd-epic7.md</path>
+        <title>Boletapp Epic 7 - PRD</title>
+        <section>Dual-Axis Navigation (FR25-FR28)</section>
+        <snippet>FR25: Temporal and category filters work independently. FR26: Changing temporal preserves category. FR27: Changing category preserves temporal. FR28: Users can view any combination.</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>Boletapp UX Design Specification</title>
+        <section>Novel UX Patterns: Dual-Axis Breadcrumb Navigation</section>
+        <snippet>Two independent breadcrumb rows (temporal + category). Changing temporal position preserves category filter. Changing category filter preserves temporal position.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <file>
+        <path>src/types/transaction.ts</path>
+        <kind>types</kind>
+        <symbol>Transaction, TransactionItem, StoreCategory, CategorySource</symbol>
+        <lines>1-51</lines>
+        <reason>Reference for existing type patterns. Transaction has category:StoreCategory, items have category?, subcategory? fields used for filtering.</reason>
+      </file>
+      <file>
+        <path>src/hooks/useTransactions.ts</path>
+        <kind>hook</kind>
+        <symbol>useTransactions</symbol>
+        <lines>1-45</lines>
+        <reason>Pattern reference for custom hooks. Returns Transaction[] from Firestore subscription. AnalyticsContext will consume this data.</reason>
+      </file>
+      <file>
+        <path>src/views/TrendsView.tsx</path>
+        <kind>view</kind>
+        <symbol>TrendsView, TrendsViewProps</symbol>
+        <lines>26-58</lines>
+        <reason>Shows current prop-drilling pattern (20+ props) that AnalyticsContext will replace. Note selectedYear, selectedMonth, selectedCategory, selectedGroup, selectedSubcategory state management.</reason>
+      </file>
+      <file>
+        <path>src/utils/date.ts</path>
+        <kind>utils</kind>
+        <symbol>formatDate</symbol>
+        <lines>1-7</lines>
+        <reason>Minimal date utilities exist. Story 7.6 will extend with quarter/week functions. analyticsHelpers.ts is NEW file for this story.</reason>
+      </file>
+      <file>
+        <path>src/utils/categoryMatcher.ts</path>
+        <kind>utils</kind>
+        <symbol>normalizeItemName, createMatcher, findCategoryMatch, applyCategoryMappings</symbol>
+        <reason>Pattern reference for utility functions with validation. Similar approach needed for validateNavigationState().</reason>
+      </file>
+    </code>
+
+    <dependencies>
+      <node>
+        <package>react</package>
+        <version>^18.3.1</version>
+        <usage>useReducer, useContext, createContext, useMemo for state management</usage>
+      </node>
+      <node>
+        <package>typescript</package>
+        <version>^5.3.3</version>
+        <usage>Type definitions for navigation state and actions</usage>
+      </node>
+      <node>
+        <package>vitest</package>
+        <version>^4.0.13</version>
+        <usage>Unit testing framework - use describe/it/expect pattern</usage>
+      </node>
+      <node>
+        <package>@testing-library/react</package>
+        <version>^16.3.0</version>
+        <usage>renderHook for testing useAnalyticsNavigation hook</usage>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">
+      <rule>ADR-010: Use React Context API with useReducer - NO external state libraries (Zustand, Redux, etc.)</rule>
+    </constraint>
+    <constraint type="architecture">
+      <rule>ADR-014: Incremental extraction - this story creates foundation, TrendsView integration is Story 7.7</rule>
+    </constraint>
+    <constraint type="pattern">
+      <rule>Pattern 1: All components must use useAnalyticsNavigation() hook, not useContext(AnalyticsContext) directly</rule>
+    </constraint>
+    <constraint type="pattern">
+      <rule>Pattern 2: Use useMemo for derived state to prevent unnecessary recalculations</rule>
+    </constraint>
+    <constraint type="critical">
+      <rule>State Management Chaos Prevention: All navigation state MUST flow through AnalyticsContext</rule>
+    </constraint>
+    <constraint type="performance">
+      <rule>NFR16: Navigation state management must be centralized (single source of truth)</rule>
+    </constraint>
+    <constraint type="testing">
+      <rule>NFR15: New components must have unit test coverage ≥80%</rule>
+    </constraint>
+    <constraint type="naming">
+      <rule>Components: PascalCase (AnalyticsContext.tsx). Hooks: camelCase with 'use' prefix (useAnalyticsNavigation.ts). Types: PascalCase. Utils: camelCase.</rule>
+    </constraint>
+    <constraint type="logging">
+      <rule>console.warn for invalid state auto-corrections. No logging for normal operations.</rule>
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>AnalyticsNavigationState</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface AnalyticsNavigationState { temporal: TemporalPosition; category: CategoryPosition; chartMode: ChartMode; }</signature>
+      <path>src/types/analytics.ts (NEW)</path>
+    </interface>
+    <interface>
+      <name>NavigationAction</name>
+      <kind>TypeScript union type</kind>
+      <signature>type NavigationAction = { type: 'SET_TEMPORAL_LEVEL'; payload: TemporalPosition } | { type: 'SET_CATEGORY_FILTER'; payload: CategoryPosition } | { type: 'TOGGLE_CHART_MODE' } | { type: 'RESET_TO_YEAR'; payload: { year: string } } | { type: 'CLEAR_CATEGORY_FILTER' };</signature>
+      <path>src/types/analytics.ts (NEW)</path>
+    </interface>
+    <interface>
+      <name>useAnalyticsNavigation</name>
+      <kind>React hook</kind>
+      <signature>function useAnalyticsNavigation(): { state: AnalyticsNavigationState; dispatch: React.Dispatch&lt;NavigationAction&gt;; }</signature>
+      <path>src/hooks/useAnalyticsNavigation.ts (NEW)</path>
+    </interface>
+    <interface>
+      <name>validateNavigationState</name>
+      <kind>Utility function</kind>
+      <signature>function validateNavigationState(state: AnalyticsNavigationState): AnalyticsNavigationState</signature>
+      <path>src/utils/analyticsHelpers.ts (NEW)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing follows Vitest framework with describe/it/expect pattern. Unit tests in tests/unit/, integration tests in tests/integration/. Use @testing-library/react for component/hook testing. Each test file imports from vitest: describe, it, expect, vi (for mocking). Tests should be pure and not require emulators for unit tests. Coverage target: ≥80% on new code. Run with `npm run test:unit` or `npm run test:coverage`.
+    </standards>
+    <locations>
+      <location>tests/unit/analytics/analyticsReducer.test.ts (NEW)</location>
+      <location>tests/unit/analytics/validateNavigationState.test.ts (NEW)</location>
+      <location>tests/unit/analytics/ (directory to create)</location>
+    </locations>
+    <ideas>
+      <idea ac="#1">Test initial state has current year, level 'all', chartMode 'aggregation'</idea>
+      <idea ac="#2">Test state shape matches AnalyticsNavigationState interface</idea>
+      <idea ac="#3">Test SET_TEMPORAL_LEVEL updates temporal while preserving category</idea>
+      <idea ac="#3">Test SET_CATEGORY_FILTER updates category while preserving temporal</idea>
+      <idea ac="#3">Test TOGGLE_CHART_MODE flips between 'aggregation' and 'comparison'</idea>
+      <idea ac="#3">Test RESET_TO_YEAR sets year level but preserves category filter</idea>
+      <idea ac="#3">Test CLEAR_CATEGORY_FILTER resets category to level 'all' but preserves temporal</idea>
+      <idea ac="#4">Test validateNavigationState corrects week without month to year view</idea>
+      <idea ac="#4">Test validateNavigationState corrects day without month to year view</idea>
+      <idea ac="#4">Test validateNavigationState auto-derives quarter from month</idea>
+      <idea ac="#4">Test validateNavigationState corrects subcategory without group</idea>
+      <idea ac="#4">Test validateNavigationState logs warning on correction</idea>
+      <idea ac="#5">Test useAnalyticsNavigation throws error when used outside provider</idea>
+      <idea ac="#5">Test useAnalyticsNavigation returns typed state and dispatch</idea>
+      <idea ac="#6">Test changing temporal level does NOT reset category filter</idea>
+      <idea ac="#6">Test changing category filter does NOT reset temporal position</idea>
+      <idea ac="#7">Test all edge cases: year boundary, empty state, full hierarchy</idea>
+    </ideas>
+  </tests>
+</story-context>
