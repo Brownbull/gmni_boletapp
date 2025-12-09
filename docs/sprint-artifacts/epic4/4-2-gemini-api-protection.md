@@ -117,7 +117,7 @@ All 5 acceptance criteria are IMPLEMENTED ✅, and all 6 code review action item
 - [ ] [functions/package.json](../../../functions/package.json) - Dependencies are appropriate
 
 **Security Verification**
-- [ ] Run: `grep -r "AIzaSyAjHtmVTjujwkj768aToOloDzukBfIMpSQ" dist/`
+- [ ] Run: `grep -r "AIzaSy" dist/` (search for any Google API key pattern)
   - Expected: No matches (0)
 - [ ] Run: `grep -r "VITE_GEMINI" dist/`
   - Expected: No matches (0)
