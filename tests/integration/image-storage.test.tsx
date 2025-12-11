@@ -128,7 +128,9 @@ describe('Image Storage Integration', () => {
       const content = readFileSync(join(functionsLibPath, 'analyzeReceipt.js'), 'utf-8')
 
       expect(content).toContain('imageProcessing')
-      expect(content).toContain('processReceiptImages')
+      // Uses individual functions for optimized pre-processing pipeline
+      expect(content).toContain('resizeAndCompress')
+      expect(content).toContain('generateThumbnail')
     })
 
     it('should import storageService module', () => {
