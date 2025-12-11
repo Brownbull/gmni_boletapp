@@ -3,7 +3,7 @@ import * as admin from 'firebase-admin'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { base64ToBuffer, resizeAndCompress, generateThumbnail } from './imageProcessing'
 import { uploadReceiptImages } from './storageService'
-import { ACTIVE_PROMPT, replacePromptVariables } from '../../shared/prompts'
+import { ACTIVE_PROMPT, replacePromptVariables } from './prompts'
 
 // Initialize Firebase Admin if not already initialized
 if (!admin.apps.length) {
