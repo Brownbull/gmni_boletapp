@@ -78,10 +78,12 @@ jobs:
           done
 
       # Step 9: Run unit tests
+      # Note: Some unit tests (categoryMappingService) use Firebase emulator
       - name: Run unit tests
         run: npm run test:unit
         continue-on-error: false
         env:
+          FIRESTORE_EMULATOR_HOST: localhost:8080
           # Required for config/gemini.ts initialization
           VITE_GEMINI_API_KEY: test-gemini-key
           VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
