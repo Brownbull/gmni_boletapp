@@ -66,14 +66,19 @@ jobs:
       - name: Start Firebase emulators
         run: |
           firebase emulators:start --only auth,firestore,storage --project boletapp-d609f &
-          # Wait for emulators to be ready (max 30s)
+          # Wait for emulators to be ready (max 60s)
+          # Check both Emulator Hub (4000) AND Firestore (8080) for full readiness
           echo "Waiting for Firebase emulators to start..."
-          for i in {1..30}; do
-            if curl -s http://localhost:4000 > /dev/null; then
-              echo "Firebase emulators ready!"
+          for i in {1..60}; do
+            HUB_READY=$(curl -s http://localhost:4000 > /dev/null && echo "yes" || echo "no")
+            FIRESTORE_READY=$(curl -s http://localhost:8080 > /dev/null && echo "yes" || echo "no")
+            if [ "$HUB_READY" = "yes" ] && [ "$FIRESTORE_READY" = "yes" ]; then
+              echo "Firebase emulators ready! (Hub: $HUB_READY, Firestore: $FIRESTORE_READY)"
+              # Additional wait for emulator stability
+              sleep 3
               break
             fi
-            echo "Waiting... ($i/30)"
+            echo "Waiting... ($i/60) Hub: $HUB_READY, Firestore: $FIRESTORE_READY"
             sleep 1
           done
 
