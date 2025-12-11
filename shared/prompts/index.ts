@@ -36,12 +36,7 @@ export {
 
 // Import all prompt versions
 import { PROMPT_V1 } from './v1-original';
-import {
-  PROMPT_V2,
-  getCurrencyContext,
-  getReceiptTypeDescription,
-  buildCompleteV2Prompt,
-} from './v2-multi-currency-receipt-types';
+import { PROMPT_V2 } from './v2-multi-currency-receipt-types';
 import type { PromptConfig } from './types';
 
 /**
