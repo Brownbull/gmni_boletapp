@@ -17,7 +17,7 @@ import {
 import { setLogLevel } from 'firebase/firestore';
 
 // Emulator configuration
-const PROJECT_ID = 'boletapp-test';
+const PROJECT_ID = 'boletapp-d609f';
 const FIRESTORE_HOST = 'localhost';
 const FIRESTORE_PORT = 8080;
 const AUTH_HOST = 'localhost';
