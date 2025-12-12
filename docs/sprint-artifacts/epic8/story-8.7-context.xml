@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="8.7" title="A/B Prompt Comparison & Analysis" generated="2025-12-11">
+
+  <summary>
+    Implement the analyze command for failure pattern detection and A/B comparison mode
+    for testing prompt improvements side-by-side.
+  </summary>
+
+  <objectives>
+    <objective>Create analyze command (test:scan:analyze)</objective>
+    <objective>Generate structured analysis JSON with patterns</objective>
+    <objective>By-field and by-store-type failure breakdowns</objective>
+    <objective>Implement --prompt flag for specific prompt selection</objective>
+    <objective>Implement --compare flag for A/B testing</objective>
+    <objective>Side-by-side metrics display for prompt comparison</objective>
+  </objectives>
+
+  <source-files>
+    <file path="scripts/scan-test/lib/result-writer.ts" relevance="high">
+      <description>From Story 8.5 - results file structure</description>
+    </file>
+
+    <file path="shared/prompts/index.ts" relevance="high">
+      <description>From Story 8.1 - getPrompt(), listPrompts()</description>
+    </file>
+
+    <file path="scripts/scan-test/commands/run.ts" relevance="high">
+      <description>From Story 8.3 - needs --prompt and --compare flags</description>
+    </file>
+  </source-files>
+
+  <target-files>
+    <file path="scripts/scan-test/commands/analyze.ts" action="create">
+      <description>Analyze command for failure pattern detection</description>
+      <template><![CDATA[
+import * as fs from 'fs';
+import * as path from 'path';
+import { glob } from 'glob';
+import { TestResult } from '../types';
+import { log } from '../lib/reporter';
+import { CONFIG } from '../config';
+
+interface AnalysisReport {
+  generatedAt: string;
+  sourceFile: string;
+  promptVersion: string;
+  promptFile: string;
+  summary: {
+    totalTests: number;
+    failedTests: number;
+    overallAccuracy: number;
+  };
+  byField: {
+    [field: string]: {
+      failureCount: number;
+      failureRate: number;
+      affectedTests: string[];
+      patterns: FailurePattern[];
+    };
+  };
+  byStoreType: {
+    [storeType: string]: {
+      failureCount: number;
+      tests: number;
+      failureRate: number;
+    };
+  };
+  failures: TestResult[];
+  _meta: {
+    usage: {
+      manual: string;
+      withLLM: {
+        instructions: string;
+        suggestedPrompt: string;
+      };
+    };
+  };
+}
+
+interface FailurePattern {
+  description: string;
+  occurrences: number;
+  examples: Array<{ testId: string; expected: unknown; actual: unknown }>;
+}
+
+interface AnalyzeOptions {
+  result?: string;
+}
+
+export async function analyzeCommand(options: AnalyzeOptions) {
+  // Find results file
+  let resultsFile: string;
+
+  if (options.result) {
+    resultsFile = options.result;
+  } else {
+    // Find most recent results file
+    const pattern = path.join(CONFIG.resultsDir, '*.json');
+    const files = await glob(pattern);
+    if (files.length === 0) {
+      log.fail('No results files found. Run tests first.');
+      process.exit(2);
+    }
+    // Sort by modification time, get most recent
+    files.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+    resultsFile = files[0];
+  }
+
+  log.header('Analyzing Test Results');
+  log.info(`Source: ${resultsFile}`);
+
+  // Load results
+  const data = JSON.parse(fs.readFileSync(resultsFile, 'utf-8'));
+  const results: TestResult[] = data.results;
+
+  // Analyze
+  const analysis = analyzeResults(results, data.metadata, resultsFile);
+
+  // Save analysis
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const analysisPath = path.join(CONFIG.resultsDir, `analysis-${timestamp}.json`);
+  fs.writeFileSync(analysisPath, JSON.stringify(analysis, null, 2));
+
+  // Display summary
+  displayAnalysis(analysis);
+
+  log.success(`Analysis saved: ${analysisPath}`);
+}
+
+function analyzeResults(
+  results: TestResult[],
+  metadata: { promptId: string; promptVersion: string },
+  sourceFile: string
+): AnalysisReport {
+  const failures = results.filter(r => !r.passed);
+
+  // Analyze by field
+  const byField = analyzeByField(results);
+
+  // Analyze by store type (need to get from metadata)
+  const byStoreType = analyzeByStoreType(results);
+
+  return {
+    generatedAt: new Date().toISOString(),
+    sourceFile,
+    promptVersion: metadata.promptId,
+    promptFile: `shared/prompts/${metadata.promptId}.ts`,
+    summary: {
+      totalTests: results.length,
+      failedTests: failures.length,
+      overallAccuracy: Math.round((1 - failures.length / results.length) * 100),
+    },
+    byField,
+    byStoreType,
+    failures,
+    _meta: {
+      usage: {
+        manual: "Review 'byField' and 'patterns' to identify prompt improvements",
+        withLLM: {
+          instructions: "Use this file as context along with the prompt file",
+          suggestedPrompt: "I need help improving my receipt scanning prompt. Here's my failure analysis...",
+        },
+      },
+    },
+  };
+}
+      ]]></template>
+    </file>
+
+    <file path="scripts/scan-test/lib/analyzer.ts" action="create">
+      <description>Pattern detection and grouping logic</description>
+      <functions>
+        <function name="analyzeByField">Group failures by field with pattern detection</function>
+        <function name="analyzeByStoreType">Group results by store type</function>
+        <function name="detectPatterns">Identify common failure patterns</function>
+      </functions>
+    </file>
+
+    <file path="scripts/scan-test/commands/run.ts" action="modify">
+      <description>Add --prompt and --compare flags</description>
+      <new-options>
+        <option name="--prompt">Use specific prompt version by ID</option>
+        <option name="--compare">A/B comparison mode (e.g., --compare=v1,v2)</option>
+      </new-options>
+    </file>
+
+    <file path="scripts/scan-test/index.ts" action="modify">
+      <description>Register analyze command</description>
+      <add-command name="analyze">
+        <option>--result &lt;path&gt;</option>
+        <action>analyzeCommand</action>
+      </add-command>
+    </file>
+
+    <file path="package.json" action="modify">
+      <description>Add analyze npm script</description>
+      <add-script name="test:scan:analyze">tsx scripts/scan-test/index.ts analyze</add-script>
+    </file>
+  </target-files>
+
+  <dependencies>
+    <dependency type="story">Story 8.1 - Shared Prompts (getPrompt, listPrompts)</dependency>
+    <dependency type="story">Story 8.3 - CLI Core</dependency>
+    <dependency type="story">Story 8.5 - Results file format</dependency>
+  </dependencies>
+
+  <analysis-report-structure><![CDATA[
+{
+  "generatedAt": "2025-12-11T10:30:45Z",
+  "sourceFile": "test-results/2025-12-11_103000_v1-original.json",
+  "promptVersion": "v1-original",
+  "promptFile": "shared/prompts/v1-original.ts",
+
+  "summary": {
+    "totalTests": 20,
+    "failedTests": 5,
+    "overallAccuracy": 75
+  },
+
+  "byField": {
+    "total": {
+      "failureCount": 2,
+      "failureRate": 0.10,
+      "affectedTests": ["cruz-verde-001", "copec-001"],
+      "patterns": [
+        {
+          "description": "AI picked subtotal instead of final total",
+          "occurrences": 2,
+          "examples": [
+            { "testId": "cruz-verde-001", "expected": 15990, "actual": 13440 }
+          ]
+        }
+      ]
+    },
+    "merchant": { ... },
+    "date": { ... }
+  },
+
+  "byStoreType": {
+    "pharmacy": { "failureCount": 3, "tests": 4, "failureRate": 0.75 },
+    "supermarket": { "failureCount": 1, "tests": 10, "failureRate": 0.10 }
+  },
+
+  "_meta": {
+    "usage": {
+      "manual": "Review 'byField' and 'patterns' to identify prompt improvements",
+      "withLLM": {
+        "instructions": "Use this file as context along with the prompt file",
+        "suggestedPrompt": "I need help improving my receipt scanning prompt..."
+      }
+    }
+  }
+}
+  ]]></analysis-report-structure>
+
+  <ab-comparison-output><![CDATA[
+📊 A/B Prompt Comparison
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Comparing: v1-original vs v2-few-shot
+Tests run: 20 per prompt
+
+Overall Accuracy:
+  v1-original:  75% (15/20)
+  v2-few-shot:  85% (17/20)  ⬆ +10%
+
+By Field:
+                    v1-original    v2-few-shot
+  total:            95%            98%         ⬆
+  date:             90%            95%         ⬆
+  merchant:         80%            85%         ⬆
+  itemsCount:       85%            85%         =
+  itemPrices:       80%            85%         ⬆
+
+By Store Type:
+                    v1-original    v2-few-shot
+  supermarket:      90%            95%         ⬆
+  pharmacy:         60%            80%         ⬆
+  restaurant:       70%            75%         ⬆
+
+Winner: v2-few-shot (+10% overall)
+  ]]></ab-comparison-output>
+
+  <prompt-improvement-workflow>
+    <step n="1">Run: npm run test:scan -- --limit=all</step>
+    <step n="2">Review failures in console output</step>
+    <step n="3">Run: npm run test:scan:analyze</step>
+    <step n="4">Review analysis report (patterns, byField, byStoreType)</step>
+    <step n="5">Create new prompt version in shared/prompts/v{N}.ts</step>
+    <step n="6">A/B test: npm run test:scan -- --compare=v1-original,v2-new</step>
+    <step n="7">If improved, update shared/prompts/index.ts: export ACTIVE_PROMPT</step>
+    <step n="8">Deploy: firebase deploy --only functions</step>
+  </prompt-improvement-workflow>
+
+  <testing-requirements>
+    <unit-tests location="scripts/scan-test/__tests__/analyzer.test.ts">
+      <test>By-field grouping</test>
+      <test>By-store-type grouping</test>
+      <test>Pattern detection identifies common issues</test>
+    </unit-tests>
+    <integration-tests>
+      <test>Analyze command generates valid JSON</test>
+      <test>--compare runs both prompts and compares</test>
+    </integration-tests>
+  </testing-requirements>
+
+  <implementation-notes>
+    <note priority="high">
+      For A/B comparison, run the full test suite twice (once per prompt).
+      This doubles API costs, so warn the user.
+    </note>
+    <note priority="medium">
+      Pattern detection is heuristic - start simple (e.g., "subtotal vs total")
+      and expand based on real failure data.
+    </note>
+    <note priority="medium">
+      The analysis file is meant to be used both by humans and as LLM context
+      for prompt improvement suggestions.
+    </note>
+  </implementation-notes>
+
+</story-context>
