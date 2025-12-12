@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="8.3" title="Test Harness Core CLI" generated="2025-12-11">
+
+  <summary>
+    Create the CLI scaffold using Commander with the run command that executes scan tests
+    against the Cloud Function. Implements filtering, limits, dry-run mode, and proper exit codes.
+  </summary>
+
+  <objectives>
+    <objective>Create CLI entry point with Commander</objective>
+    <objective>Implement run command with flags (--image, --type, --limit, --verbose, --dry-run)</objective>
+    <objective>Connect to Cloud Function for scanning</objective>
+    <objective>Implement default limit of 5 tests (ADR-012)</objective>
+    <objective>Add npm scripts to package.json</objective>
+  </objectives>
+
+  <source-files>
+    <file path="package.json" relevance="high">
+      <description>Add npm scripts and possibly commander dependency</description>
+      <existing-scripts>
+        <script name="test:scan">Does not exist - needs to be added</script>
+      </existing-scripts>
+      <has-tsx>true - tsx is in devDependencies</has-tsx>
+    </file>
+
+    <file path="functions/src/analyzeReceipt.ts" relevance="high">
+      <description>Cloud Function endpoint that CLI will call</description>
+      <endpoint-info>
+        <type>Firebase Callable Function (onCall)</type>
+        <request>{ images: string[], currency: string }</request>
+        <response>{ merchant, date, total, category, items[], transactionId, imageUrls?, thumbnailUrl? }</response>
+        <authentication>Required - Firebase Auth token</authentication>
+      </endpoint-info>
+    </file>
+
+    <file path="scripts/scan-test/lib/schema.ts" relevance="high">
+      <description>From Story 8.2 - TestCaseFile schema for loading test cases</description>
+    </file>
+  </source-files>
+
+  <target-files>
+    <file path="scripts/scan-test/index.ts" action="create">
+      <description>CLI entry point with Commander setup</description>
+      <template><![CDATA[
+#!/usr/bin/env node
+import { Command } from 'commander';
+import { runCommand } from './commands/run';
+
+const program = new Command();
+
+program
+  .name('scan-test')
+  .description('Receipt scan testing harness')
+  .version('1.0.0');
+
+program
+  .command('run')
+  .description('Run scan tests against Cloud Function')
+  .option('--image <filename>', 'Run single test by image filename')
+  .option('--type <storetype>', 'Filter by store type')
+  .option('--limit <n>', 'Maximum tests to run (default: 5, use "all" for no limit)')
+  .option('--verbose', 'Show detailed per-test output')
+  .option('--dry-run', 'Show what would run without calling API')
+  .option('--folder <path>', 'Custom test data folder')
+  .action(runCommand);
+
+program.parse();
+      ]]></template>
+    </file>
+
+    <file path="scripts/scan-test/commands/run.ts" action="create">
+      <description>Run command implementation</description>
+      <responsibilities>
+        <item>Parse options and validate</item>
+        <item>Discover test cases from test-data/receipts/</item>
+        <item>Apply filters (--image, --type)</item>
+        <item>Apply limit (default 5)</item>
+        <item>Execute tests or show dry-run plan</item>
+        <item>Report results and set exit code</item>
+      </responsibilities>
+    </file>
+
+    <file path="scripts/scan-test/config.ts" action="create">
+      <description>Configuration constants</description>
+      <template><![CDATA[
+export const CONFIG = {
+  testDataDir: 'test-data/receipts',
+  resultsDir: 'test-results',
+  promptsDir: 'shared/prompts',
+
+  defaultLimit: 5,
+  defaultPrompt: 'ACTIVE_PROMPT',
+
+  cloudFunctionUrl: process.env.CLOUD_FUNCTION_URL || 'auto-detect',
+
+  thresholds: {
+    total: { target: 0.98, weight: 0.25 },
+    date: { target: 0.95, weight: 0.15 },
+    merchant: { target: 0.90, weight: 0.20, fuzzyThreshold: 0.8 },
+    itemsCount: { target: 0.85, weight: 0.15, tolerance: 1 },
+    itemPrices: { target: 0.90, weight: 0.25 },
+  },
+
+  estimatedCostPerScan: 0.01,
+};
+      ]]></template>
+    </file>
+
+    <file path="scripts/scan-test/lib/scanner.ts" action="create">
+      <description>Cloud Function caller</description>
+      <template><![CDATA[
+import { initializeApp } from 'firebase/app';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+
+export interface ScanResult {
+  merchant: string;
+  date: string;
+  total: number;
+  category: string;
+  items: Array<{ name: string; price: number; category?: string }>;
+}
+
+export async function scanReceipt(imageBase64: string): Promise<ScanResult> {
+  // Initialize Firebase (get config from firebase.json or env)
+  // Get auth token
+  // Call analyzeReceipt callable function
+  // Return parsed result
+}
+      ]]></template>
+    </file>
+
+    <file path="scripts/scan-test/lib/discovery.ts" action="create">
+      <description>Test case discovery</description>
+      <template><![CDATA[
+import * as fs from 'fs';
+import * as path from 'path';
+import { CONFIG } from '../config';
+
+export interface TestCase {
+  imagePath: string;
+  expectedPath: string;
+  testId: string;
+  storeType: string;
+}
+
+export function discoverTestCases(options: {
+  image?: string;
+  type?: string;
+  folder?: string;
+}): TestCase[] {
+  // Scan test-data/receipts/ for image + expected.json pairs
+  // Apply filters
+  // Return array of test cases
+}
+      ]]></template>
+    </file>
+
+    <file path="scripts/scan-test/lib/reporter.ts" action="create">
+      <description>Basic console output (expanded in Story 8.5)</description>
+      <template><![CDATA[
+import chalk from 'chalk';
+
+export const log = {
+  success: (msg: string) => console.log(chalk.green('✓'), msg),
+  fail: (msg: string) => console.log(chalk.red('✗'), msg),
+  warn: (msg: string) => console.log(chalk.yellow('⚠'), msg),
+  info: (msg: string) => console.log(chalk.blue('●'), msg),
+  header: (msg: string) => {
+    console.log(chalk.bold(`\n${msg}`));
+    console.log('━'.repeat(40));
+  },
+};
+
+export function reportProgress(current: number, total: number, testId: string) {
+  log.info(`[${current}/${total}] ${testId}`);
+}
+      ]]></template>
+    </file>
+
+    <file path="package.json" action="modify">
+      <description>Add npm scripts</description>
+      <add-scripts>
+        <script name="test:scan">tsx scripts/scan-test/index.ts run</script>
+      </add-scripts>
+      <add-dependencies>
+        <dep name="commander" version="latest">CLI argument parsing</dep>
+        <dep name="chalk" version="^5.x">Colored console output</dep>
+      </add-dependencies>
+    </file>
+  </target-files>
+
+  <dependencies>
+    <dependency type="story">Story 8.2 - Test Data Schema & Structure (for schema.ts)</dependency>
+    <dependency type="story">Story 8.1 - Shared Prompts Library (for prompt ID tracking)</dependency>
+    <dependency type="npm">commander - CLI framework</dependency>
+    <dependency type="npm">chalk - Console colors</dependency>
+  </dependencies>
+
+  <architectural-decisions>
+    <adr id="ADR-012" title="Default Test Limit of 5">
+      <context>Each test costs ~$0.01 API call; prevent accidental cost spikes</context>
+      <decision>CLI defaults to running maximum 5 tests per invocation</decision>
+      <consequences>
+        <positive>Safe default prevents runaway costs</positive>
+        <positive>Override available with --limit=N or --limit=all</positive>
+        <negative>Full suite requires explicit --limit=all</negative>
+      </consequences>
+    </adr>
+  </architectural-decisions>
+
+  <testing-requirements>
+    <unit-tests location="scripts/scan-test/__tests__/cli.test.ts">
+      <test>--dry-run mode produces expected output</test>
+      <test>--limit flag is respected</test>
+      <test>--type filter works correctly</test>
+      <test>Exit code 2 for invalid arguments</test>
+    </unit-tests>
+  </testing-requirements>
+
+  <exit-codes>
+    <code value="0">All tests passed</code>
+    <code value="1">One or more test failures</code>
+    <code value="2">Error (invalid args, API error, etc.)</code>
+  </exit-codes>
+
+  <authentication-flow><![CDATA[
+async function getAuthToken(): Promise<string> {
+  // Try service account first (CI)
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    return getServiceAccountToken();
+  }
+  // Fall back to user token (local dev via firebase login)
+  return getUserToken();
+}
+  ]]></authentication-flow>
+
+  <console-output-example><![CDATA[
+🔬 Scan Test Harness
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Running 5 tests (limit: 5, type: all)
+
+● [1/5] supermarket/jumbo-001.jpg
+● [2/5] supermarket/lider-001.jpg
+✓ [3/5] pharmacy/cruz-verde-001.jpg
+✗ [4/5] restaurant/dominos-001.jpg
+● [5/5] gas-station/copec-001.jpg
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Summary: 4/5 passed (80%)
+  ]]></console-output-example>
+
+  <implementation-notes>
+    <note priority="high">
+      Firebase callable functions require authentication. The scanner.ts module
+      needs to handle both local dev (firebase login) and CI (service account).
+    </note>
+    <note priority="high">
+      Use tsx to run TypeScript directly - it's already in devDependencies.
+    </note>
+    <note priority="medium">
+      The reporter module is basic in this story - full implementation in Story 8.5.
+    </note>
+  </implementation-notes>
+
+</story-context>
