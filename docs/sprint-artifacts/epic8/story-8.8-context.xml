@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="8.8" title="Starter Test Data & Documentation" generated="2025-12-11">
+
+  <summary>
+    Collect 10+ annotated receipt images across store types, create comprehensive
+    README documentation, and verify the end-to-end workflow.
+  </summary>
+
+  <objectives>
+    <objective>Collect 10+ test images with store type coverage</objective>
+    <objective>Generate and validate expected.json for all images</objective>
+    <objective>Add human corrections to 3+ test cases as examples</objective>
+    <objective>Create scan-test README with all commands</objective>
+    <objective>Create test-data README with schema and workflow</objective>
+    <objective>Verify end-to-end workflow works</objective>
+  </objectives>
+
+  <source-files>
+    <file path="scripts/scan-test/**/*.ts" relevance="high">
+      <description>All CLI code from previous stories</description>
+    </file>
+
+    <file path="shared/prompts/**/*.ts" relevance="medium">
+      <description>Prompt library from Story 8.1</description>
+    </file>
+  </source-files>
+
+  <target-files>
+    <directory path="test-data/receipts/" action="populate">
+      <minimum-images>10</minimum-images>
+      <coverage-requirements>
+        <store-type name="supermarket" minimum="4">Jumbo, Lider, Santa Isabel, Unimarc</store-type>
+        <store-type name="pharmacy" minimum="2">Cruz Verde, Salcobrand</store-type>
+        <store-type name="restaurant" minimum="2">Fast food, casual dining</store-type>
+        <store-type name="other" minimum="2">Gas station, convenience</store-type>
+      </coverage-requirements>
+    </directory>
+
+    <file path="scripts/scan-test/README.md" action="create">
+      <description>Test harness documentation</description>
+      <sections>
+        <section name="Quick Start">Prerequisites, installation, first test</section>
+        <section name="CLI Commands">All npm run test:scan:* commands with examples</section>
+        <section name="Adding Test Cases">Step-by-step workflow</section>
+        <section name="Improving Prompts">A/B testing workflow</section>
+        <section name="Troubleshooting">Common errors and solutions</section>
+      </sections>
+    </file>
+
+    <file path="test-data/receipts/README.md" action="create">
+      <description>Test data documentation</description>
+      <sections>
+        <section name="Directory Structure">Store type subdirectories</section>
+        <section name="Expected.json Schema">Full schema with examples</section>
+        <section name="Adding New Test Cases">Workflow</section>
+        <section name="Corrections Workflow">How to add corrections</section>
+        <section name="Difficulty Guidelines">Easy/medium/hard criteria</section>
+      </sections>
+    </file>
+  </target-files>
+
+  <dependencies>
+    <dependency type="story">All previous Epic 8 stories (8.1-8.7)</dependency>
+    <dependency type="external">Receipt images - collected manually</dependency>
+  </dependencies>
+
+  <test-image-guidelines>
+    <guideline priority="must">Clear, well-lit photos</guideline>
+    <guideline priority="must">Full receipt visible (header to footer)</guideline>
+    <guideline priority="must">Readable text (no blur)</guideline>
+    <guideline priority="must">Chilean receipts (RUT, boleta electrónica)</guideline>
+    <guideline priority="should">Variety of receipt formats</guideline>
+    <guideline priority="should">Mix of easy/medium/hard cases</guideline>
+  </test-image-guidelines>
+
+  <difficulty-classifications>
+    <difficulty level="easy">
+      <criteria>Clear print, standard format, common store</criteria>
+      <examples>Jumbo with clean thermal print, typical supermarket layout</examples>
+    </difficulty>
+    <difficulty level="medium">
+      <criteria>Slightly faded, unusual format, or complex items</criteria>
+      <examples>Pharmacy with many line items, restaurant with tips</examples>
+    </difficulty>
+    <difficulty level="hard">
+      <criteria>Poor quality, handwritten elements, unusual layout</criteria>
+      <examples>Faded gas station receipt, street vendor with manual entries</examples>
+    </difficulty>
+  </difficulty-classifications>
+
+  <sample-correction-example><![CDATA[
+{
+  "metadata": {
+    "testId": "cruz-verde-001",
+    "storeType": "pharmacy",
+    "difficulty": "medium",
+    "region": "CL",
+    "source": "manual-collection",
+    "addedAt": "2025-12-11T10:00:00Z",
+    "notes": "Receipt has both subtotal and final total - AI picked wrong one"
+  },
+  "aiExtraction": {
+    "merchant": "CRUZ VERDE",
+    "date": "2025-12-10",
+    "total": 13440,
+    "category": "Pharmacy",
+    "items": [
+      { "name": "Paracetamol 500mg", "price": 2990 },
+      { "name": "Vitamina C", "price": 5990 },
+      { "name": "Alcohol Gel", "price": 4460 }
+    ],
+    "model": "gemini-2.0-flash",
+    "modelVersion": "latest",
+    "extractedAt": "2025-12-11T10:05:00Z"
+  },
+  "corrections": {
+    "total": 15990,
+    "correctedAt": "2025-12-11T10:15:00Z",
+    "correctedBy": "Gabe",
+    "reviewNotes": "AI picked subtotal line (13440) instead of final total (15990) which includes IVA"
+  }
+}
+  ]]></sample-correction-example>
+
+  <readme-templates>
+    <template name="scan-test-readme"><![CDATA[
+# Scan Test Harness
+
+CLI tool for testing receipt scanning accuracy.
+
+## Quick Start
+
+### Prerequisites
+- Node.js 20+
+- Firebase CLI (`firebase login`)
+- tsx installed (`npm install -g tsx`)
+
+### Installation
+```bash
+npm install
+```
+
+### Running Your First Test
+```bash
+# Validate existing test data
+npm run test:scan:validate
+
+# Run tests (default: 5 tests)
+npm run test:scan
+
+# Run with verbose output
+npm run test:scan -- --verbose
+```
+
+## CLI Commands
+
+### Run Tests
+```bash
+npm run test:scan                           # Default: 5 tests
+npm run test:scan -- --image=jumbo-001.jpg  # Single test
+npm run test:scan -- --type=supermarket     # Filter by store
+npm run test:scan -- --limit=20             # More tests
+npm run test:scan -- --limit=all            # All tests
+npm run test:scan -- --verbose              # Detailed output
+npm run test:scan -- --dry-run              # No API calls
+```
+
+### Generate Expected.json
+```bash
+npm run test:scan:generate -- --image=test-data/receipts/supermarket/jumbo-002.jpg
+```
+
+### Validate Test Data
+```bash
+npm run test:scan:validate
+```
+
+### Analyze Failures
+```bash
+npm run test:scan:analyze
+npm run test:scan:analyze -- --result=path/to/results.json
+```
+
+### A/B Test Prompts
+```bash
+npm run test:scan -- --compare=v1-original,v2-few-shot
+```
+
+## Adding Test Cases
+
+1. Add image to `test-data/receipts/{store-type}/`
+2. Run: `npm run test:scan:generate -- --image={path}`
+3. Review generated expected.json
+4. Add corrections if AI made mistakes
+5. Run: `npm run test:scan:validate`
+6. Run: `npm run test:scan -- --image={filename}`
+
+## Improving Prompts
+
+1. Run all tests: `npm run test:scan -- --limit=all`
+2. Analyze failures: `npm run test:scan:analyze`
+3. Create new prompt: `shared/prompts/v2-new.ts`
+4. A/B test: `npm run test:scan -- --compare=v1-original,v2-new`
+5. If improved, update `shared/prompts/index.ts`
+6. Deploy: `firebase deploy --only functions`
+
+## Troubleshooting
+
+### "Must be logged in"
+Run `firebase login` first.
+
+### "Rate limit exceeded"
+Wait a minute, or reduce --limit.
+
+### "No test images found"
+Check test-data/receipts/ has images with .expected.json files.
+    ]]></template>
+
+    <template name="test-data-readme"><![CDATA[
+# Test Data: Receipt Images
+
+Annotated receipt images for scan accuracy testing.
+
+## Directory Structure
+
+```
+test-data/receipts/
+├── supermarket/     # Jumbo, Lider, Santa Isabel
+├── pharmacy/        # Cruz Verde, Salcobrand
+├── restaurant/      # Fast food, casual dining
+├── gas-station/     # Copec, Shell
+├── convenience/     # OK Market, Big John
+└── other/           # Miscellaneous
+```
+
+## Expected.json Schema
+
+Each image needs a corresponding `.expected.json`:
+- `jumbo-001.jpg` → `jumbo-001.expected.json`
+
+### Schema Structure
+
+```json
+{
+  "metadata": {
+    "testId": "jumbo-001",           // Required: matches filename
+    "storeType": "supermarket",       // Required: enum
+    "difficulty": "easy",             // Required: easy|medium|hard
+    "region": "CL",                   // Default: CL
+    "source": "manual-collection",    // Required: how image was obtained
+    "addedAt": "2025-12-11T10:00:00Z" // Required: ISO date
+  },
+  "aiExtraction": {
+    // Auto-populated by generate command
+  },
+  "corrections": {
+    // Human corrections go here
+  }
+}
+```
+
+## Adding New Test Cases
+
+1. Take photo of receipt (clear, full receipt visible)
+2. Save as `{store}-{number}.jpg` in appropriate folder
+3. Run: `npm run test:scan:generate -- --image={path}`
+4. Review and correct if needed
+
+## Corrections Workflow
+
+Only correct what the AI got wrong:
+
+```json
+"corrections": {
+  "total": 15990,  // Only if AI total was wrong
+  "correctedBy": "Gabe",
+  "reviewNotes": "AI picked subtotal instead of total with IVA"
+}
+```
+
+## Difficulty Guidelines
+
+- **Easy**: Clear print, standard format, common store
+- **Medium**: Slightly faded, unusual format, complex items
+- **Hard**: Poor quality, handwritten, unusual layout
+    ]]></template>
+  </readme-templates>
+
+  <verification-checklist>
+    <check>All 10+ images have valid expected.json</check>
+    <check>npm run test:scan:validate passes with 0 errors</check>
+    <check>npm run test:scan runs successfully</check>
+    <check>At least 3 test cases have human corrections</check>
+    <check>READMEs are complete and accurate</check>
+    <check>End-to-end workflow verified (add image → generate → validate → test)</check>
+  </verification-checklist>
+
+  <implementation-notes>
+    <note priority="high">
+      Receipt images should be collected from personal receipts or with consent.
+      Do NOT use production user receipts without explicit consent.
+    </note>
+    <note priority="medium">
+      Start with easy test cases to verify the harness works, then add
+      harder cases to stress-test the prompt.
+    </note>
+    <note priority="medium">
+      The corrections examples are important documentation - they show
+      future developers how to use the corrections workflow.
+    </note>
+  </implementation-notes>
+
+</story-context>
