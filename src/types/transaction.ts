@@ -28,14 +28,6 @@ export type StoreCategory =
  */
 export type CategorySource = 'scan' | 'learned' | 'user';
 
-/**
- * Source of the category assignment for an item.
- * - 'scan': Category came from Gemini AI scan
- * - 'learned': Category was auto-applied from a learned mapping
- * - 'user': Category was manually set by the user
- */
-export type CategorySource = 'scan' | 'learned' | 'user';
-
 export interface TransactionItem {
     name: string;
     qty?: number;
