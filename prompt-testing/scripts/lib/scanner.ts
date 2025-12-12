@@ -59,17 +59,42 @@ export interface ScanError {
 // ============================================================================
 
 /**
- * Firebase configuration for the boletapp project.
- * This is public web app configuration (not sensitive).
+ * Firebase configuration loaded from environment variables.
+ * Uses the same VITE_FIREBASE_* variables as the main app.
+ *
+ * For test harness, set these in your shell or .env file:
+ * - VITE_FIREBASE_API_KEY
+ * - VITE_FIREBASE_AUTH_DOMAIN
+ * - VITE_FIREBASE_PROJECT_ID
+ * - VITE_FIREBASE_STORAGE_BUCKET
+ * - VITE_FIREBASE_MESSAGING_SENDER_ID
+ * - VITE_FIREBASE_APP_ID
  */
-const FIREBASE_CONFIG = {
-  apiKey: 'AIzaSyBUUpxkirRMB12prvYTAVTczRk667lg0M0',
-  authDomain: 'boletapp-d609f.firebaseapp.com',
-  projectId: 'boletapp-d609f',
-  storageBucket: 'boletapp-d609f.firebasestorage.app',
-  messagingSenderId: '171460588224',
-  appId: '1:171460588224:web:69e7552f8fa95297603325',
-};
+function getFirebaseConfig() {
+  const apiKey = process.env.VITE_FIREBASE_API_KEY;
+  const authDomain = process.env.VITE_FIREBASE_AUTH_DOMAIN;
+  const projectId = process.env.VITE_FIREBASE_PROJECT_ID;
+  const storageBucket = process.env.VITE_FIREBASE_STORAGE_BUCKET;
+  const messagingSenderId = process.env.VITE_FIREBASE_MESSAGING_SENDER_ID;
+  const appId = process.env.VITE_FIREBASE_APP_ID;
+
+  if (!apiKey || !authDomain || !projectId) {
+    throw new Error(
+      'Firebase configuration not found in environment variables.\n' +
+      'Ensure VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, and VITE_FIREBASE_PROJECT_ID are set.\n' +
+      'You can source your .env file: export $(cat .env | xargs)'
+    );
+  }
+
+  return {
+    apiKey,
+    authDomain,
+    projectId,
+    storageBucket: storageBucket || `${projectId}.firebasestorage.app`,
+    messagingSenderId: messagingSenderId || '',
+    appId: appId || '',
+  };
+}
 
 /**
  * Region where Cloud Functions are deployed.
@@ -93,7 +118,7 @@ function getFirebaseApp(): FirebaseApp {
     if (existingApps.length > 0) {
       firebaseApp = existingApps[0];
     } else {
-      firebaseApp = initializeApp(FIREBASE_CONFIG);
+      firebaseApp = initializeApp(getFirebaseConfig());
     }
   }
   return firebaseApp;
