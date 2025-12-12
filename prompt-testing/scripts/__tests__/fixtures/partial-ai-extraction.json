@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "testId": "pharmacy-001",
+    "storeType": "pharmacy",
+    "difficulty": "hard",
+    "region": "CL",
+    "source": "manual-collection",
+    "addedAt": "2025-12-11"
+  },
+  "aiExtraction": {
+    "merchant": "CRUZ VERDE",
+    "date": "2025-12-08",
+    "total": 15990,
+    "category": "Health",
+    "items": [
+      { "name": "Ibuprofeno 400mg", "price": 5990 },
+      { "name": "Vitamina C 1000mg", "price": 9990 }
+    ],
+    "model": "gemini-1.5-flash",
+    "modelVersion": "1.5-flash-latest",
+    "extractedAt": "2025-12-11T12:00:00Z"
+  },
+  "corrections": {
+    "total": 15980,
+    "items": {
+      "0": { "price": 5980, "name": "Ibuprofeno 400mg x 20" }
+    },
+    "addItems": [
+      { "name": "Bolsa Plastica", "price": 100 }
+    ],
+    "correctedAt": "2025-12-11T12:30:00Z"
+  }
+}

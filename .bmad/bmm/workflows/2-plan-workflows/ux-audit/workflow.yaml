@@ -1,0 +1,64 @@
+# UX Audit Workflow Configuration
+name: ux-audit
+description: "Collaborative UX audit workflow that uses Party Mode to 'roast' existing mockups or applications. Multiple agents provide critical feedback from different perspectives (UX, PM, Architecture, Testing, Business), then compile findings into a structured audit document that can feed into PRD, architecture, and epic planning."
+author: "BMad"
+
+# Critical variables from config
+config_source: "{project-root}/.bmad/bmm/config.yaml"
+output_folder: "{config_source}:output_folder"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+document_output_language: "{config_source}:document_output_language"
+user_skill_level: "{config_source}:user_skill_level"
+date: system-generated
+
+# Input file patterns - what we're auditing
+input_file_patterns:
+  mockups:
+    description: "HTML mockups or screenshots to audit"
+    patterns:
+      - "{project-root}/docs/ux-mockups/**/*.html"
+      - "{project-root}/docs/ux-mockups/**/*.png"
+      - "{project-root}/docs/ux-mockups/**/*.jpg"
+    load_strategy: "USER_PROVIDED"
+
+  existing_prd:
+    description: "Existing PRD for context (optional)"
+    whole: "{output_folder}/*prd*.md"
+    sharded: "{output_folder}/*prd*/index.md"
+    load_strategy: "FULL_LOAD"
+
+  existing_architecture:
+    description: "Existing architecture doc for context (optional)"
+    whole: "{output_folder}/*architecture*.md"
+    sharded: "{output_folder}/*architecture*/index.md"
+    load_strategy: "FULL_LOAD"
+
+# Module path and component files
+installed_path: "{project-root}/.bmad/bmm/workflows/2-plan-workflows/ux-audit"
+instructions: "{installed_path}/instructions.md"
+validation: "{installed_path}/checklist.md"
+template: "{installed_path}/audit-template.md"
+
+# Output configuration
+default_output_folder: "{output_folder}/ux-audit"
+audit_output_pattern: "{default_output_folder}/{flow_name}-audit.md"
+
+# Workflow requires party mode for multi-agent roast
+requires_party_mode: true
+party_mode_agents:
+  - ux-designer      # Sally - UX patterns, accessibility, visual hierarchy
+  - pm               # John - WHY, user value, business model
+  - architect        # Winston - Technical feasibility, integration concerns
+  - analyst          # Mary - Data, metrics, business logic
+  - dev              # Amelia - Implementation complexity
+  - scrum-master     # Bob - Story readiness, acceptance criteria gaps
+  - test-architect   # Murat - Edge cases, error states, testability
+  - brainstormer     # Carson - Future features, innovation opportunities
+  - problem-solver   # Dr. Quinn - Root cause analysis of UX issues
+  - innovation       # Victor - Competitive moat, differentiation
+  - design-thinking  # Maya - Empathy, user emotions, journey
+  - storyteller      # Sophia - Narrative consistency, messaging
+  - presentation     # Caravaggio - Visual hierarchy, CTAs
+
+standalone: true
