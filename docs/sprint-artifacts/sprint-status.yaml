@@ -129,12 +129,32 @@ development_status:
   7-17-stacked-bar-tooltip-ux: done  # Fix tooltip readability + renamed themes (Ghibli→Normal, Default→Professional) - Completed 2025-12-08
   7-18-drilldown-card-progress-bar: done  # Add thin progress bar below label showing percentage visually - Code Review APPROVED 2025-12-09
   7-99-epic-release-deployment: done  # Deploy, test, document - Code Review APPROVED 2025-12-09, Deployed 2025-12-09
-  epic-7-retrospective: optional  # Ready for retrospective if needed
+  epic-7-retrospective: completed  # Completed 2025-12-10
 
-  # Future Epics (from Epic 6 retrospective)
-  # NOTE: Epic numbering shifted - Subscription moved to Epic 8, Mobile to Epic 9
-  epic-8: backlog  # Subscription & Monetization (4-tier model, Mercado Pago) - moved from original Epic 7
+  # Epic 8: Scan Testing & Tuning Infrastructure
+  # PRD: docs/sprint-artifacts/epic8/prd-epic8-scan-testing.md
+  # Purpose: Developer testing infrastructure to evaluate, tune, and improve scan accuracy
+  epic-8: contexted  # Tech-spec completed 2025-12-10
+  8-1-shared-prompts-library: done  # Shared prompts + image pre-processing optimization - Deployed 2025-12-11, Code Review APPROVED 2025-12-11
+  8-2-test-data-schema-structure: done  # Test data JSON schema and directory structure - Code Review APPROVED 2025-12-11
+  8-3-test-harness-core-cli: done  # CLI framework for running scan tests - Code Review APPROVED 2025-12-11
+  8-4-result-comparison-engine: done  # Compare actual vs expected results - Code Review APPROVED 2025-12-11
+  8-5-accuracy-reporting: done  # Generate accuracy metrics and reports - Code Review APPROVED 2025-12-11
+  8-6-generate-validate-commands: done  # CLI commands for test data generation/validation - Code Review APPROVED 2025-12-12
+  8-7-ab-prompt-comparison-analysis: done  # Compare prompt versions side-by-side - Code Review APPROVED 2025-12-12
+  8-8-starter-test-data-documentation: review  # Initial test dataset + documentation - Completed 2025-12-12
   epic-8-retrospective: optional
 
-  epic-9: backlog  # Mobile App (iOS & Android) - moved from original Epic 8
+  # Future Epics (from Epic 7 retrospective - roadmap revised 2025-12-10)
+  # See docs/planning/epics.md for full epic definitions
+  epic-9: backlog  # UX Redesign - Design system and visual consistency
   epic-9-retrospective: optional
+
+  epic-10: backlog  # Application Refactoring - Performance and architecture
+  epic-10-retrospective: optional
+
+  epic-11: backlog  # Subscription & Monetization - 4-tier model, Mercado Pago
+  epic-11-retrospective: optional
+
+  epic-12: backlog  # Mobile App (iOS & Android)
+  epic-12-retrospective: optional

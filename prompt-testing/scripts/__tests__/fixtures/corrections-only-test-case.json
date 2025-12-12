@@ -1,0 +1,19 @@
+{
+  "metadata": {
+    "testId": "lider-001",
+    "storeType": "supermarket",
+    "difficulty": "medium",
+    "region": "CL",
+    "source": "production-failure",
+    "addedAt": "2025-12-11"
+  },
+  "corrections": {
+    "merchant": "LIDER",
+    "date": "2025-12-09",
+    "total": 32500,
+    "category": "Groceries",
+    "correctedAt": "2025-12-11T11:00:00Z",
+    "correctedBy": "human-reviewer",
+    "reviewNotes": "AI extraction was unavailable, manually entered ground truth"
+  }
+}

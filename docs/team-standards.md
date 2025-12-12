@@ -161,6 +161,24 @@ Agreements made in retrospectives that define how we work as a team.
     - Clarify terminology before implementation
     - *Source: Epic 6 Retrospective*
 
+24. **Test Cloud Functions build locally before pushing**
+    - Run `cd functions && npm run build && ls lib/` before CI
+    - Catches TypeScript output structure issues immediately
+    - Saves ~10 min per failed CI run
+    - *Source: Epic 8 Story 8.1 Deployment*
+
+25. **Integration tests that assert on compiled output are fragile**
+    - Tests checking `content.toContain('functionName')` break on refactors
+    - Update these tests whenever renaming/restructuring functions
+    - Consider testing behavior instead of implementation details
+    - *Source: Epic 8 Story 8.1 Deployment*
+
+26. **TypeScript include paths affect output directory structure**
+    - Adding external dirs (e.g., `../shared`) to tsconfig `include` creates nested output
+    - Use prebuild copy scripts instead: `cp -r ../shared/x src/x`
+    - Add copied dirs to `.gitignore` (they're build artifacts)
+    - *Source: Epic 8 Story 8.1 Deployment*
+
 ---
 
 ## Workflow Standards
@@ -758,4 +776,4 @@ This document should be updated:
 - When standards change
 - When new documentation is created
 
-**Last updated by:** Epic 7 Story 7.7 - Test Optimization (2025-12-07)
+**Last updated by:** Epic 8 Story 8.1 - Deployment Lessons (2025-12-11)
