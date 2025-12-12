@@ -1,6 +1,6 @@
 # Story 8.8: Starter Test Data & Documentation
 
-Status: review
+Status: done
 
 ## Story
 
@@ -142,6 +142,8 @@ The entire prompt testing workflow was validated through actual use:
 |------|--------|--------|
 | 2025-12-11 | Story drafted from Epic 8 tech spec | SM Agent |
 | 2025-12-12 | Story completed - comprehensive docs created | Dev Agent |
+| 2025-12-12 | Epic 8 merged to develop (PR #44) | Dev Agent |
+| 2025-12-12 | Security fix: removed hardcoded API keys, updated Firebase config | Dev Agent |
 
 ## Dev Agent Record
 
@@ -163,6 +165,61 @@ Implementation validated through actual use of the scan test harness during Epic
 - This approach provides better discoverability and maintainability
 - Entire workflow validated through actual prompt improvement cycle (v2.0.0 → v2.6.0)
 - Test data includes international receipts (Paris, London) demonstrating multi-currency support
+
+### Session Learnings & Retrospective Notes
+
+#### Security Incident: API Key Leak (2025-12-12)
+
+**What happened:**
+- During Epic 8 development, a Firebase API key was accidentally hardcoded in `prompt-testing/scripts/lib/scanner.ts`
+- Google detected the leak and sent an automated security notification
+- The key was found in git history even after the file was modified
+
+**Resolution:**
+1. User regenerated the Firebase API key in Google Cloud Console (old key decommissioned)
+2. Updated `scanner.ts` to load Firebase config from environment variables (`VITE_FIREBASE_*`)
+3. Closed PR #43 (had leaked key in git history)
+4. Created new clean branch `feature/epic8-complete` from develop
+5. Created new PR #44 without the compromised git history
+6. All CI checks passed (GitGuardian, tests)
+
+**Additional fix needed:**
+- The Gemini API key in Firebase Functions config was also outdated/expired
+- Updated via `firebase functions:config:set gemini.api_key="..."`
+- Redeployed functions with `npm run deploy` in functions directory
+
+#### Environment Setup for Test Harness
+
+**Problem:** Test harness requires environment variables that need to be set each session.
+
+**Solution:** Added auto-loading to `~/.bashrc`:
+```bash
+# Boletapp Firebase Configuration (loaded from project .env)
+if [ -f "$HOME/projects/bmad/boletapp/.env" ]; then
+  export $(grep -E '^VITE_FIREBASE_|^VITE_GEMINI_' "$HOME/projects/bmad/boletapp/.env" | xargs)
+fi
+```
+
+**Note:** After modifying `.bashrc`, run `source ~/.bashrc` or open a new terminal.
+
+#### Key Locations for API Keys
+
+| Key | Local Storage | Server Storage |
+|-----|---------------|----------------|
+| Firebase Web API Key | `.env` (VITE_FIREBASE_API_KEY) | N/A (public, embedded in client) |
+| Gemini API Key (client) | `.env` (VITE_GEMINI_API_KEY) | N/A |
+| Gemini API Key (functions) | N/A | `firebase functions:config` |
+
+**Important:**
+- `.env` is gitignored - never commit it
+- Firebase Runtime Config is stored on Google servers (encrypted), not in code
+- When rotating Gemini key, update BOTH `.env` (for local dev) AND `firebase functions:config` (for production)
+
+#### Git Workflow Lessons
+
+1. **GitGuardian catches keys in history** - Even if you remove a key from a file, the old commit still contains it
+2. **Clean branch strategy** - When a key leaks, create a fresh branch from the target (develop) rather than trying to rewrite history
+3. **PR #43 → closed, PR #44 → merged** - Sometimes it's cleaner to start fresh
 
 ### File List
 
