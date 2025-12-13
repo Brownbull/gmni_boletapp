@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="8.2" title="Test Data Schema & Structure" generated="2025-12-11">
+
+  <summary>
+    Create the test data directory structure and Zod schemas for validating test case files.
+    This establishes the foundation for storing receipt images and their expected extraction results.
+  </summary>
+
+  <objectives>
+    <objective>Create test-data/receipts/ directory with store type subdirectories</objective>
+    <objective>Define TestCaseFile Zod schema with metadata, aiExtraction, corrections</objective>
+    <objective>Export TypeScript types from schema</objective>
+    <objective>Implement validateTestCase() function</objective>
+    <objective>Create scripts/scan-test/ scaffold</objective>
+  </objectives>
+
+  <source-files>
+    <file path="package.json" relevance="medium">
+      <description>Root package.json - already has zod via other dependencies or needs adding</description>
+      <note>Check if zod is already a dependency, add if not</note>
+    </file>
+  </source-files>
+
+  <target-files>
+    <directory path="test-data/receipts/" action="create">
+      <subdirectories>
+        <dir>supermarket/.gitkeep</dir>
+        <dir>pharmacy/.gitkeep</dir>
+        <dir>restaurant/.gitkeep</dir>
+        <dir>gas-station/.gitkeep</dir>
+        <dir>convenience/.gitkeep</dir>
+        <dir>other/.gitkeep</dir>
+      </subdirectories>
+    </directory>
+
+    <directory path="scripts/scan-test/" action="create">
+      <description>CLI tool directory scaffold</description>
+      <files>
+        <file>index.ts - placeholder for CLI entry</file>
+        <file>types.ts - TestResult, ItemComparison interfaces</file>
+        <file>lib/schema.ts - Zod schemas</file>
+      </files>
+    </directory>
+
+    <file path="scripts/scan-test/lib/schema.ts" action="create">
+      <description>Zod schema definitions for test case files</description>
+      <schema-spec><![CDATA[
+import { z } from 'zod';
+
+const MetadataSchema = z.object({
+  testId: z.string(),
+  storeType: z.enum(['supermarket', 'pharmacy', 'restaurant', 'gas_station', 'convenience', 'other']),
+  difficulty: z.enum(['easy', 'medium', 'hard']),
+  region: z.enum(['CL', 'CO', 'MX', 'AR']).default('CL'),
+  source: z.enum(['production-failure', 'manual-collection', 'user-provided']),
+  addedAt: z.string(),
+  addedBy: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+const AIExtractionSchema = z.object({
+  merchant: z.string(),
+  date: z.string(),
+  total: z.number(),
+  category: z.string(),
+  items: z.array(z.object({
+    name: z.string(),
+    price: z.number(),
+    category: z.string().optional(),
+  })),
+  model: z.string(),
+  modelVersion: z.string(),
+  extractedAt: z.string(),
+  confidence: z.object({
+    overall: z.number().optional(),
+    merchant: z.number().optional(),
+    date: z.number().optional(),
+    total: z.number().optional(),
+  }).optional(),
+});
+
+const CorrectionsSchema = z.object({
+  merchant: z.string().optional(),
+  date: z.string().optional(),
+  total: z.number().optional(),
+  category: z.string().optional(),
+  items: z.record(z.string(), z.object({
+    name: z.string().optional(),
+    price: z.number().optional(),
+    category: z.string().optional(),
+    delete: z.boolean().optional(),
+  })).optional(),
+  addItems: z.array(z.object({
+    name: z.string(),
+    price: z.number(),
+    category: z.string().optional(),
+  })).optional(),
+  correctedAt: z.string().optional(),
+  correctedBy: z.string().optional(),
+  reviewNotes: z.string().optional(),
+});
+
+const ThresholdsSchema = z.object({
+  merchantSimilarity: z.number().default(0.8),
+  totalTolerance: z.number().default(0),
+  dateTolerance: z.enum(['exact', 'day', 'month']).default('exact'),
+});
+
+export const TestCaseFileSchema = z.object({
+  metadata: MetadataSchema,
+  aiExtraction: AIExtractionSchema.optional(),
+  corrections: CorrectionsSchema.optional(),
+  thresholds: ThresholdsSchema.optional(),
+});
+
+export type TestCaseFile = z.infer<typeof TestCaseFileSchema>;
+export type Metadata = z.infer<typeof MetadataSchema>;
+export type AIExtraction = z.infer<typeof AIExtractionSchema>;
+export type Corrections = z.infer<typeof CorrectionsSchema>;
+
+export function validateTestCase(data: unknown): TestCaseFile {
+  return TestCaseFileSchema.parse(data);
+}
+      ]]></schema-spec>
+    </file>
+
+    <file path="scripts/scan-test/types.ts" action="create">
+      <description>Test harness type definitions</description>
+      <types-spec><![CDATA[
+export interface TestResult {
+  testId: string;
+  passed: boolean;
+  score: number;  // 0-100
+  fields: {
+    total: FieldComparison;
+    date: FieldComparison;
+    merchant: FieldComparison & { similarity: number };
+    itemsCount: FieldComparison;
+    itemPrices: { accuracy: number; details: ItemComparison[] };
+  };
+  apiCost: number;
+  duration: number;
+  error?: string;
+}
+
+export interface FieldComparison {
+  expected: unknown;
+  actual: unknown;
+  match: boolean;
+}
+
+export interface ItemComparison {
+  index: number;
+  expectedPrice: number;
+  actualPrice: number;
+  match: boolean;
+  nameMatch?: boolean;
+}
+      ]]></types-spec>
+    </file>
+
+    <file path=".gitignore" action="modify">
+      <description>Add test-results/ to gitignore</description>
+      <add-line>test-results/</add-line>
+      <add-line>!test-results/.gitkeep</add-line>
+    </file>
+  </target-files>
+
+  <dependencies>
+    <dependency type="npm">zod - may need to add to package.json if not present</dependency>
+  </dependencies>
+
+  <architectural-decisions>
+    <adr id="ADR-011" title="Corrections-Based Ground Truth">
+      <context>Reduce human effort in creating test cases</context>
+      <decision>Expected.json uses AI extraction + corrections, not full rewrite</decision>
+      <consequences>
+        <positive>Humans only correct mistakes, not rewrite everything</positive>
+        <positive>Aligns with ML training schema</positive>
+        <positive>Can track what AI got wrong vs right</positive>
+        <negative>More complex merge logic</negative>
+      </consequences>
+    </adr>
+  </architectural-decisions>
+
+  <testing-requirements>
+    <unit-tests location="scripts/scan-test/__tests__/schema.test.ts">
+      <test>Valid TestCaseFile passes validation</test>
+      <test>Missing required metadata fields fail</test>
+      <test>Invalid storeType enum value fails</test>
+      <test>Partial aiExtraction is accepted</test>
+      <test>Corrections-only (no aiExtraction) is valid</test>
+    </unit-tests>
+  </testing-requirements>
+
+  <implementation-notes>
+    <note priority="high">
+      Store type enum uses underscore for gas_station to match JSON conventions.
+      Directory uses hyphen (gas-station/) for filesystem friendliness.
+    </note>
+    <note priority="medium">
+      Test fixtures go in scripts/scan-test/__tests__/fixtures/
+    </note>
+  </implementation-notes>
+
+  <example-test-case><![CDATA[
+{
+  "metadata": {
+    "testId": "jumbo-001",
+    "storeType": "supermarket",
+    "difficulty": "easy",
+    "region": "CL",
+    "source": "manual-collection",
+    "addedAt": "2025-12-11T10:00:00Z"
+  },
+  "aiExtraction": {
+    "merchant": "JUMBO",
+    "date": "2025-12-10",
+    "total": 45990,
+    "category": "Supermarket",
+    "items": [
+      { "name": "Leche Colun 1L", "price": 1290, "category": "Fresh Food" }
+    ],
+    "model": "gemini-2.0-flash",
+    "modelVersion": "latest",
+    "extractedAt": "2025-12-11T10:05:00Z"
+  },
+  "corrections": {}
+}
+  ]]></example-test-case>
+
+</story-context>

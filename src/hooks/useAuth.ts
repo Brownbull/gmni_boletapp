@@ -81,6 +81,8 @@ export function useAuth(): UseAuthReturn {
         if (!services) return;
         try {
             const provider = new GoogleAuthProvider();
+            // Always show account picker, even if user is already signed into Google
+            provider.setCustomParameters({ prompt: 'select_account' });
             await signInWithPopup(services.auth, provider);
         } catch (e: any) {
             alert("Login Failed: " + e.message);
