@@ -1,14 +1,28 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Trash2, Plus, Check } from 'lucide-react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { ArrowLeft, Trash2, Plus, Check, ChevronDown, ChevronUp, BookMarked, X, Camera, Loader2 } from 'lucide-react';
 import { CategoryBadge } from '../components/CategoryBadge';
 import { ImageViewer } from '../components/ImageViewer';
 import { CategoryLearningPrompt } from '../components/CategoryLearningPrompt';
-import { StoreCategory, CategorySource } from '../types/transaction';
+import { LearnMerchantDialog } from '../components/dialogs/LearnMerchantDialog';
+import { LocationSelect } from '../components/LocationSelect';
+import { StoreTypeSelector } from '../components/StoreTypeSelector';
+import { AdvancedScanOptions } from '../components/AdvancedScanOptions';
+import { celebrateSuccess } from '../utils/confetti';
+import { StoreCategory, CategorySource, ItemCategory, MerchantSource } from '../types/transaction';
+import { ReceiptType } from '../services/gemini';
+import { SupportedCurrency } from '../services/userPreferencesService';
+// Story 9.10: Pending scan types for visual indicator
+import { PendingScan, UserCredits } from '../types/scan';
 
+/**
+ * Local TransactionItem interface for EditView.
+ * Story 9.2: Updated to use ItemCategory type for proper typing.
+ */
 interface TransactionItem {
     name: string;
     price: number;
-    category?: string;
+    /** Story 9.2: Item category using ItemCategory type */
+    category?: ItemCategory | string;
     subcategory?: string;
     categorySource?: CategorySource;
 }
@@ -23,6 +37,21 @@ interface Transaction {
     items: TransactionItem[];
     imageUrls?: string[];
     thumbnailUrl?: string;
+    // Story 9.3: New v2.6.0 fields for display
+    /** Purchase time in HH:mm format (e.g., "15:01") */
+    time?: string;
+    /** Country name from receipt */
+    country?: string;
+    /** City name from receipt */
+    city?: string;
+    /** ISO 4217 currency code (e.g., "GBP") */
+    currency?: string;
+    /** Document type: "receipt" | "invoice" | "ticket" */
+    receiptType?: string;
+    /** Version of prompt used for AI extraction */
+    promptVersion?: string;
+    /** Source of the merchant name (scan, learned, user) */
+    merchantSource?: MerchantSource;
 }
 
 interface EditViewProps {
@@ -42,8 +71,28 @@ interface EditViewProps {
     onSetEditingItemIndex: (index: number | null) => void;
     /** Optional: Save category mapping function from useCategoryMappings hook */
     onSaveMapping?: (item: string, category: StoreCategory, source?: 'user' | 'ai') => Promise<string>;
+    /** Story 9.6: Optional save merchant mapping function from useMerchantMappings hook */
+    onSaveMerchantMapping?: (originalMerchant: string, targetMerchant: string) => Promise<string>;
     /** Optional: Show toast notification */
     onShowToast?: (text: string) => void;
+    /** Story 9.9: Optional cancel handler for new transactions */
+    onCancel?: () => void;
+    /** Story 9.9: Scan-related props for unified transaction flow */
+    scanImages?: string[];
+    onAddPhoto?: () => void;
+    onRemovePhoto?: (index: number) => void;
+    onProcessScan?: () => Promise<void>;
+    isAnalyzing?: boolean;
+    scanError?: string | null;
+    /** Story 9.8: Scan options - store type and currency */
+    scanStoreType?: ReceiptType;
+    onSetScanStoreType?: (type: ReceiptType) => void;
+    scanCurrency?: SupportedCurrency;
+    onSetScanCurrency?: (currency: SupportedCurrency) => void;
+    /** Story 9.10: Pending scan for visual indicator (AC #5) */
+    pendingScan?: PendingScan | null;
+    /** Story 9.10: User credits for display and blocking (AC #6, #7) */
+    userCredits?: UserCredits;
 }
 
 export const EditView: React.FC<EditViewProps> = ({
@@ -62,13 +111,39 @@ export const EditView: React.FC<EditViewProps> = ({
     onUpdateTransaction,
     onSetEditingItemIndex,
     onSaveMapping,
+    onSaveMerchantMapping,
     onShowToast,
+    onCancel,
+    // Story 9.9: Scan-related props
+    scanImages,
+    onAddPhoto,
+    onRemovePhoto,
+    onProcessScan,
+    isAnalyzing,
+    scanError,
+    // Story 9.8: Scan options
+    scanStoreType,
+    onSetScanStoreType,
+    scanCurrency,
+    onSetScanCurrency,
+    // Story 9.10: Pending scan and credits
+    pendingScan,
+    userCredits,
 }) => {
     const [showImageViewer, setShowImageViewer] = useState(false);
+    // Story 9.3: Debug info section state (AC #5)
+    const [showDebugInfo, setShowDebugInfo] = useState(false);
+    // Story 9.9: Cancel confirmation dialog state
+    const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
     // Story 6.3: Category learning prompt state
     const [showLearningPrompt, setShowLearningPrompt] = useState(false);
     const [itemsToLearn, setItemsToLearn] = useState<Array<{ itemName: string; newGroup: string }>>([]);
+
+    // Story 9.6: Merchant learning prompt state
+    const [showMerchantLearningPrompt, setShowMerchantLearningPrompt] = useState(false);
+    // Track original alias on mount for detecting changes
+    const originalAliasRef = useRef<string | null>(null);
 
     // Track original item groups on mount for detecting changes
     // We learn: item name → item group (category field on item)
@@ -99,8 +174,71 @@ export const EditView: React.FC<EditViewProps> = ({
         }
     }, [currentTransaction.id, currentTransaction.items]);
 
+    // Story 9.6: Capture original alias ONCE when transaction data first becomes available
+    useEffect(() => {
+        const hasData = currentTransaction.merchant || currentTransaction.alias;
+        // Only capture ONCE when ref is null and we have data
+        if (hasData && originalAliasRef.current === null) {
+            originalAliasRef.current = currentTransaction.alias || '';
+        }
+    }, [currentTransaction.merchant, currentTransaction.alias]);
+
+    // Story 9.9: Track initial transaction state for cancel confirmation
+    const initialTransactionRef = useRef<Transaction | null>(null);
+    useEffect(() => {
+        // Capture initial state ONCE when component mounts or transaction ID changes
+        const transactionKey = currentTransaction.id || 'new';
+        if (!initialTransactionRef.current ||
+            (initialTransactionRef.current.id || 'new') !== transactionKey) {
+            initialTransactionRef.current = JSON.parse(JSON.stringify(currentTransaction));
+        }
+    }, [currentTransaction.id]);
+
+    // Story 9.9: Check if transaction has changes from initial state
+    const hasUnsavedChanges = useMemo(() => {
+        if (!initialTransactionRef.current) return false;
+        const initial = initialTransactionRef.current;
+        const current = currentTransaction;
+
+        // Compare key fields
+        return (
+            initial.merchant !== current.merchant ||
+            initial.alias !== current.alias ||
+            initial.total !== current.total ||
+            initial.date !== current.date ||
+            initial.time !== current.time ||
+            initial.category !== current.category ||
+            initial.country !== current.country ||
+            initial.city !== current.city ||
+            JSON.stringify(initial.items) !== JSON.stringify(current.items)
+        );
+    }, [currentTransaction]);
+
+    // Story 9.9: Handle cancel button click
+    // Story 9.10: Also show confirmation if a scan was processed (credit consumed)
+    const handleCancelClick = () => {
+        // Show confirmation if: has changes OR scan was processed (credit already used)
+        const scanWasProcessed = pendingScan?.status === 'analyzed' || pendingScan?.status === 'error';
+        if (hasUnsavedChanges || scanWasProcessed) {
+            setShowCancelConfirm(true);
+        } else {
+            onCancel?.();
+        }
+    };
+
+    // Story 9.9: Confirm cancel and discard changes
+    const handleConfirmCancel = () => {
+        setShowCancelConfirm(false);
+        onCancel?.();
+    };
+
     // Story 7.12: Theme-aware styling using CSS variables (AC #3, #8)
     const isDark = theme === 'dark';
+
+    // Story 9.10 AC#5: Check if this is a returning pending scan with analyzed data
+    const isReturningPendingScan = pendingScan?.status === 'analyzed' && pendingScan?.analyzedTransaction;
+    // Story 9.10 AC#6, #7: Check if user has credits for scanning
+    const hasCredits = (userCredits?.remaining ?? 0) > 0;
 
     // Card styling using CSS variables (AC #3)
     const cardStyle: React.CSSProperties = {
@@ -170,6 +308,27 @@ export const EditView: React.FC<EditViewProps> = ({
         return changedItems;
     };
 
+    // Story 9.6: Check if merchant alias was changed
+    const hasMerchantAliasChanged = (): boolean => {
+        // We need a merchant name (from scan) and an alias change to trigger learning
+        if (!currentTransaction.merchant) return false;
+        const currentAlias = currentTransaction.alias || '';
+        const originalAlias = originalAliasRef.current || '';
+        // Only show prompt if alias changed AND is not empty
+        return currentAlias !== originalAlias && currentAlias.length > 0;
+    };
+
+    // Story 9.6: Proceed to merchant learning check or save directly
+    const proceedToMerchantLearningOrSave = async () => {
+        // Check if merchant alias was changed
+        if (hasMerchantAliasChanged() && onSaveMerchantMapping) {
+            setShowMerchantLearningPrompt(true);
+        } else {
+            // No merchant changes, save directly
+            await onSave();
+        }
+    };
+
     // Story 6.3: Handle save with category learning prompt
     // Shows prompt BEFORE saving if item groups changed, because onSave navigates away
     const handleSaveWithLearning = async () => {
@@ -184,8 +343,8 @@ export const EditView: React.FC<EditViewProps> = ({
             setItemsToLearn(changedItems);
             setShowLearningPrompt(true);
         } else {
-            // No changes to learn, just save directly
-            await onSave();
+            // No category changes, proceed to merchant learning check
+            await proceedToMerchantLearningOrSave();
         }
     };
 
@@ -207,14 +366,45 @@ export const EditView: React.FC<EditViewProps> = ({
         }
         setShowLearningPrompt(false);
         setItemsToLearn([]);
-        // Now save the transaction after user confirmed learning
-        await onSave();
+        // After category learning, proceed to merchant learning check
+        await proceedToMerchantLearningOrSave();
     };
 
     // Story 6.3: Handle learning prompt dismiss
     const handleLearnDismiss = async () => {
         setShowLearningPrompt(false);
         setItemsToLearn([]);
+        // After category dialog dismissed, proceed to merchant learning check
+        await proceedToMerchantLearningOrSave();
+    };
+
+    // Story 9.6: Handle merchant learning prompt confirmation (AC#3)
+    const handleLearnMerchantConfirm = async () => {
+        if (onSaveMerchantMapping && currentTransaction.merchant) {
+            try {
+                // Save merchant mapping: original merchant → alias
+                await onSaveMerchantMapping(
+                    currentTransaction.merchant, // original merchant name from scan
+                    currentTransaction.alias || '' // user's correction (alias)
+                );
+                // Celebrate with confetti! 🎉
+                celebrateSuccess();
+                // Show success toast
+                if (onShowToast) {
+                    onShowToast(t('learnMerchantSuccess'));
+                }
+            } catch (error) {
+                console.error('Failed to save merchant mapping:', error);
+            }
+        }
+        setShowMerchantLearningPrompt(false);
+        // Now save the transaction
+        await onSave();
+    };
+
+    // Story 9.6: Handle merchant learning prompt dismiss (AC#4)
+    const handleLearnMerchantDismiss = async () => {
+        setShowMerchantLearningPrompt(false);
         // Still save the transaction even if user skipped learning
         await onSave();
     };
@@ -243,26 +433,195 @@ export const EditView: React.FC<EditViewProps> = ({
                     >
                         <Trash2 size={24} strokeWidth={2} />
                     </button>
+                ) : onCancel ? (
+                    // Story 9.9: Cancel button for new transactions
+                    <button
+                        onClick={handleCancelClick}
+                        className="min-w-11 min-h-11 flex items-center justify-center"
+                        style={{ color: 'var(--secondary)' }}
+                        aria-label={t('cancel')}
+                    >
+                        <X size={24} strokeWidth={2} />
+                    </button>
                 ) : (
-                    <div className="w-11" /> // Placeholder for alignment
+                    <div className="w-11" /> // Placeholder for alignment when no cancel handler
                 )}
             </div>
 
-            {/* Total amount display with accent gradient */}
+            {/* Story 9.10 AC#5: Visual indicator for returning to pending scan */}
+            {isReturningPendingScan && !currentTransaction.id && (
+                <div
+                    className="p-3 rounded-lg mb-4 flex items-center gap-2"
+                    style={{
+                        backgroundColor: isDark ? 'rgba(96, 165, 250, 0.15)' : 'rgba(59, 130, 246, 0.1)',
+                        borderLeft: '4px solid var(--accent)',
+                    }}
+                >
+                    <Camera size={18} style={{ color: 'var(--accent)' }} />
+                    <span className="text-sm font-medium" style={{ color: 'var(--accent)' }}>
+                        {t('returningToPendingScan')}
+                    </span>
+                </div>
+            )}
+
+            {/* Story 9.10 AC#6: Credit display for new transactions */}
+            {!currentTransaction.id && userCredits && (
+                <div
+                    className="flex items-center justify-end gap-2 mb-2 text-xs"
+                    style={{ color: hasCredits ? 'var(--secondary)' : 'var(--error)' }}
+                >
+                    <span>
+                        {t('creditsRemaining')}: {userCredits.remaining}
+                    </span>
+                </div>
+            )}
+
+            {/* Story 9.9: Scan Section - Only for new transactions without photos */}
+            {!currentTransaction.id && onAddPhoto && (
+                <div className="mb-4">
+                    {/* Show "Scan Receipt" button only when no photos exist */}
+                    {!hasImages && (!scanImages || scanImages.length === 0) && (
+                        <button
+                            onClick={onAddPhoto}
+                            className="w-full p-6 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-colors"
+                            style={{
+                                borderColor: 'var(--accent)',
+                                backgroundColor: isDark ? 'rgba(96, 165, 250, 0.05)' : 'rgba(59, 130, 246, 0.05)',
+                                color: 'var(--accent)',
+                            }}
+                            aria-label={t('scanReceipt')}
+                        >
+                            <Camera size={32} strokeWidth={1.5} />
+                            <span className="font-bold">{t('scanReceipt')}</span>
+                            <span className="text-sm opacity-70" style={{ color: 'var(--secondary)' }}>
+                                {t('tapToScan')}
+                            </span>
+                        </button>
+                    )}
+
+                    {/* Show scan images grid when photos have been added */}
+                    {scanImages && scanImages.length > 0 && (
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-2">
+                                {scanImages.map((img, i) => (
+                                    <div key={i} className="relative">
+                                        <img
+                                            src={img}
+                                            alt={`Scan ${i + 1}`}
+                                            className="w-full h-24 object-cover rounded-lg"
+                                        />
+                                        {onRemovePhoto && (
+                                            <button
+                                                onClick={() => onRemovePhoto(i)}
+                                                className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center bg-red-500 text-white"
+                                                aria-label={`Remove photo ${i + 1}`}
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Add Photo button */}
+                            <button
+                                onClick={onAddPhoto}
+                                className="w-full py-2 border-2 rounded-lg font-medium flex items-center justify-center gap-2"
+                                style={{
+                                    borderColor: 'var(--accent)',
+                                    color: 'var(--accent)',
+                                    backgroundColor: 'transparent',
+                                }}
+                            >
+                                <Plus size={18} />
+                                {t('addPhoto')}
+                            </button>
+
+                            {/* Story 9.8 AC#1: Store Type Quick-Select Labels */}
+                            {onSetScanStoreType && (
+                                <StoreTypeSelector
+                                    selected={scanStoreType || 'auto'}
+                                    onSelect={onSetScanStoreType}
+                                    t={t}
+                                    theme={theme as 'light' | 'dark'}
+                                />
+                            )}
+
+                            {/* Story 9.8 AC#2: Advanced Options with Currency Dropdown */}
+                            {onSetScanCurrency && scanCurrency && (
+                                <AdvancedScanOptions
+                                    currency={scanCurrency}
+                                    onCurrencyChange={onSetScanCurrency}
+                                    t={t}
+                                    theme={theme as 'light' | 'dark'}
+                                />
+                            )}
+
+                            {/* Process Scan button - Story 9.10 AC#7: Disabled when no credits */}
+                            {onProcessScan && (
+                                <button
+                                    onClick={onProcessScan}
+                                    disabled={isAnalyzing || !hasCredits}
+                                    className="w-full py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-opacity"
+                                    style={{
+                                        backgroundColor: hasCredits ? 'var(--accent)' : 'var(--secondary)',
+                                        opacity: (isAnalyzing || !hasCredits) ? 0.7 : 1,
+                                        cursor: hasCredits ? 'pointer' : 'not-allowed',
+                                    }}
+                                    title={!hasCredits ? t('noCreditsMessage') : undefined}
+                                >
+                                    {isAnalyzing ? (
+                                        <>
+                                            <Loader2 size={20} className="animate-spin" />
+                                            Processing...
+                                        </>
+                                    ) : !hasCredits ? (
+                                        <>
+                                            <Camera size={20} />
+                                            {t('noCreditsButton')}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Camera size={20} />
+                                            {t('processScan')}
+                                        </>
+                                    )}
+                                </button>
+                            )}
+
+                            {/* Scan error message */}
+                            {scanError && (
+                                <div className="text-center text-sm" style={{ color: 'var(--error)' }}>
+                                    {scanError}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Total amount display with accent gradient (Story 9.3: AC #3 - currency prefix) */}
             <div
                 className="p-6 rounded-xl mb-4 text-center text-white"
                 style={{ background: 'linear-gradient(135deg, var(--accent), #6366f1)' }}
             >
                 <div className="text-sm opacity-80">{t('total')}</div>
-                <input
-                    type="number"
-                    value={currentTransaction.total}
-                    onChange={e => onUpdateTransaction({
-                        ...currentTransaction,
-                        total: parseStrictNumber(e.target.value)
-                    })}
-                    className="bg-transparent text-3xl font-bold text-center w-full outline-none text-white"
-                />
+                <div className="flex items-center justify-center gap-2">
+                    {/* Story 9.3 AC #3: Show currency code if available */}
+                    {currentTransaction.currency && (
+                        <span className="text-2xl font-bold opacity-90">{currentTransaction.currency}</span>
+                    )}
+                    <input
+                        type="number"
+                        value={currentTransaction.total}
+                        onChange={e => onUpdateTransaction({
+                            ...currentTransaction,
+                            total: parseStrictNumber(e.target.value)
+                        })}
+                        className="bg-transparent text-3xl font-bold text-center outline-none text-white"
+                        style={{ width: 'auto', minWidth: '80px', maxWidth: '200px' }}
+                    />
+                </div>
             </div>
 
             {/* Receipt Image Thumbnail */}
@@ -296,33 +655,98 @@ export const EditView: React.FC<EditViewProps> = ({
 
             {/* Form fields card (AC #3) */}
             <div className="p-4 rounded-xl border space-y-3 mb-4" style={cardStyle}>
-                <input
-                    className="w-full p-2 border rounded-lg"
-                    style={inputStyle}
-                    value={currentTransaction.merchant}
-                    onChange={e => onUpdateTransaction({ ...currentTransaction, merchant: e.target.value })}
-                    placeholder={t('merchant')}
-                />
-                <input
-                    className="w-full p-2 border rounded-lg"
-                    style={inputStyle}
-                    placeholder={t('alias')}
-                    list="alias-list"
-                    value={currentTransaction.alias || ''}
-                    onChange={e => onUpdateTransaction({ ...currentTransaction, alias: e.target.value })}
-                />
+                {/* Story 9.9: Merchant - Read-only field showing raw AI extraction with label */}
+                <div>
+                    <label
+                        className="block text-xs font-medium mb-1"
+                        style={{ color: 'var(--secondary)' }}
+                    >
+                        {t('merchantFromScan')}
+                    </label>
+                    <div
+                        className="w-full p-2 border rounded-lg text-sm truncate"
+                        style={{
+                            backgroundColor: isDark ? '#0f172a' : '#f1f5f9',
+                            borderColor: isDark ? '#334155' : '#e2e8f0',
+                            color: 'var(--secondary)',
+                        }}
+                        title={currentTransaction.merchant}
+                    >
+                        {currentTransaction.merchant || '—'}
+                    </div>
+                </div>
+                {/* Story 9.9: Alias - Editable field for user-friendly name with label */}
+                <div>
+                    <label
+                        className="block text-xs font-medium mb-1"
+                        style={{ color: 'var(--secondary)' }}
+                    >
+                        {t('displayName')}
+                    </label>
+                    <div className="relative">
+                        <input
+                            className="w-full p-2 border rounded-lg pr-20"
+                            style={inputStyle}
+                            placeholder={t('alias')}
+                            list="alias-list"
+                            value={currentTransaction.alias || ''}
+                            onChange={e => onUpdateTransaction({ ...currentTransaction, alias: e.target.value })}
+                        />
+                        {currentTransaction.merchantSource === 'learned' && (
+                            <span
+                                className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 border border-blue-200 text-xs"
+                                title={t('learnedMerchantTooltip')}
+                                aria-label={t('learnedMerchantTooltip')}
+                            >
+                                <BookMarked size={12} />
+                                {t('learnedMerchant')}
+                            </span>
+                        )}
+                    </div>
+                </div>
                 <datalist id="alias-list">
                     {distinctAliases.map((a, i) => (
                         <option key={i} value={a} />
                     ))}
                 </datalist>
-                <input
-                    type="date"
-                    className="w-full p-2 border rounded-lg"
-                    style={inputStyle}
-                    value={currentTransaction.date}
-                    onChange={e => onUpdateTransaction({ ...currentTransaction, date: e.target.value })}
+
+                {/* Story 9.3 AC #1: Date and time - stacked on mobile for better fit */}
+                <div className="flex flex-wrap items-center gap-2">
+                    <input
+                        type="date"
+                        className="flex-1 min-w-[140px] p-2 border rounded-lg"
+                        style={inputStyle}
+                        value={currentTransaction.date}
+                        onChange={e => onUpdateTransaction({ ...currentTransaction, date: e.target.value })}
+                    />
+                    {/* Editable time input (AC #1) */}
+                    <input
+                        type="time"
+                        className="w-[100px] p-2 border rounded-lg text-sm"
+                        style={inputStyle}
+                        value={currentTransaction.time || ''}
+                        onChange={e => onUpdateTransaction({ ...currentTransaction, time: e.target.value })}
+                    />
+                    {/* Story 9.3 AC #4: Receipt type badge (only for non-receipt types) */}
+                    {currentTransaction.receiptType && currentTransaction.receiptType !== 'receipt' && (
+                        <span
+                            className="text-xs px-2 py-1 rounded-md bg-amber-100 text-amber-700 border border-amber-200 uppercase font-medium flex-shrink-0"
+                            aria-label={`Document type: ${currentTransaction.receiptType}`}
+                        >
+                            {currentTransaction.receiptType}
+                        </span>
+                    )}
+                </div>
+
+                {/* Story 9.3 AC #2: Location dropdowns (City, Country) */}
+                <LocationSelect
+                    country={currentTransaction.country || ''}
+                    city={currentTransaction.city || ''}
+                    onCountryChange={country => onUpdateTransaction({ ...currentTransaction, country })}
+                    onCityChange={city => onUpdateTransaction({ ...currentTransaction, city })}
+                    inputStyle={inputStyle}
                 />
+
                 <select
                     className="w-full p-2 border rounded-lg"
                     style={inputStyle}
@@ -431,6 +855,57 @@ export const EditView: React.FC<EditViewProps> = ({
                 </div>
             </div>
 
+            {/* Story 9.3 AC #5: Collapsible Debug Info section */}
+            {(currentTransaction.promptVersion || currentTransaction.id) && (
+                <div className="p-4 rounded-xl border mb-4" style={cardStyle}>
+                    <button
+                        onClick={() => setShowDebugInfo(!showDebugInfo)}
+                        className="w-full flex items-center justify-between text-sm"
+                        style={{ color: 'var(--secondary)' }}
+                        aria-expanded={showDebugInfo}
+                        aria-controls="debug-info-content"
+                    >
+                        <span className="font-medium">{t('debugInfo')}</span>
+                        {showDebugInfo ? (
+                            <ChevronUp size={18} />
+                        ) : (
+                            <ChevronDown size={18} />
+                        )}
+                    </button>
+                    {showDebugInfo && (
+                        <div
+                            id="debug-info-content"
+                            className="mt-3 pt-3 border-t space-y-1 text-xs font-mono"
+                            style={{
+                                borderColor: isDark ? '#334155' : '#e2e8f0',
+                                color: 'var(--secondary)',
+                            }}
+                        >
+                            {currentTransaction.promptVersion && (
+                                <div className="flex justify-between">
+                                    <span>Prompt Version:</span>
+                                    <span>{currentTransaction.promptVersion}</span>
+                                </div>
+                            )}
+                            {currentTransaction.id && (
+                                <div className="flex justify-between">
+                                    <span>Transaction ID:</span>
+                                    <span className="truncate max-w-[150px]" title={currentTransaction.id}>
+                                        {currentTransaction.id}
+                                    </span>
+                                </div>
+                            )}
+                            {currentTransaction.merchantSource && (
+                                <div className="flex justify-between">
+                                    <span>Merchant Source:</span>
+                                    <span>{currentTransaction.merchantSource}</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Save button with accent color */}
             <button
                 onClick={handleSaveWithLearning}
@@ -449,6 +924,84 @@ export const EditView: React.FC<EditViewProps> = ({
                 t={t}
                 theme={theme as 'light' | 'dark'}
             />
+
+            {/* Story 9.6: Merchant Learning Prompt Modal */}
+            <LearnMerchantDialog
+                isOpen={showMerchantLearningPrompt}
+                originalMerchant={currentTransaction.merchant}
+                correctedMerchant={currentTransaction.alias || ''}
+                onConfirm={handleLearnMerchantConfirm}
+                onClose={handleLearnMerchantDismiss}
+                t={t}
+                theme={theme as 'light' | 'dark'}
+            />
+
+            {/* Story 9.9: Cancel Confirmation Dialog */}
+            {/* Story 9.10: Enhanced with credit warning when scan was processed */}
+            {showCancelConfirm && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                    onClick={() => setShowCancelConfirm(false)}
+                >
+                    <div
+                        className="mx-4 p-6 rounded-xl shadow-xl max-w-sm w-full"
+                        style={{ backgroundColor: 'var(--surface)' }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <h2
+                            className="text-lg font-bold mb-2"
+                            style={{ color: 'var(--primary)' }}
+                        >
+                            {t('discardChanges')}
+                        </h2>
+                        {/* Story 9.10: Credit warning when scan was processed */}
+                        {(pendingScan?.status === 'analyzed' || pendingScan?.status === 'error') && (
+                            <div
+                                className="p-3 rounded-lg mb-4 flex items-start gap-2"
+                                style={{
+                                    backgroundColor: isDark ? 'rgba(251, 191, 36, 0.15)' : 'rgba(251, 191, 36, 0.1)',
+                                    border: '1px solid',
+                                    borderColor: isDark ? 'rgba(251, 191, 36, 0.4)' : 'rgba(251, 191, 36, 0.5)',
+                                }}
+                            >
+                                <span className="text-amber-500 text-lg">⚠️</span>
+                                <span
+                                    className="text-sm font-medium"
+                                    style={{ color: isDark ? '#fbbf24' : '#d97706' }}
+                                >
+                                    {t('creditAlreadyUsed')}
+                                </span>
+                            </div>
+                        )}
+                        <p
+                            className="text-sm mb-6"
+                            style={{ color: 'var(--secondary)' }}
+                        >
+                            {t('discardChangesMessage')}
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowCancelConfirm(false)}
+                                className="flex-1 py-2 px-4 rounded-lg border font-medium"
+                                style={{
+                                    borderColor: isDark ? '#475569' : '#e2e8f0',
+                                    color: 'var(--primary)',
+                                    backgroundColor: 'transparent',
+                                }}
+                            >
+                                {t('back')}
+                            </button>
+                            <button
+                                onClick={handleConfirmCancel}
+                                className="flex-1 py-2 px-4 rounded-lg font-medium text-white"
+                                style={{ backgroundColor: 'var(--error)' }}
+                            >
+                                {t('confirm')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

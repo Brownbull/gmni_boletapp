@@ -952,53 +952,198 @@ Comprehensive analytics UX redesign with dual-axis breadcrumb navigation, Quarte
 
 ---
 
-## Epic 8: Architecture & Data Collection
+## Epic 8: Scan Testing & Tuning Infrastructure (COMPLETED)
 
-**Slug:** architecture-data-collection
+**Slug:** scan-testing-infrastructure
+**Status:** ✅ COMPLETED (2025-12-12)
 
 ### Goal
 
-Redesign application architecture to capture user corrections (category changes, item edits) for building a training dataset. Enable future custom model training once reaching ~10,000 transactions threshold.
+Developer testing infrastructure to evaluate, tune, and improve receipt scan accuracy. Enable systematic prompt testing and A/B comparison.
+
+### Delivered
+
+- **9 stories completed** (8.1-8.9)
+- **~25 story points**
+- **CI/CD optimized** from ~11 min to ~4 min (63% faster)
+
+### Key Features Delivered
+
+- Shared prompts library (`functions/src/prompts/`)
+- Test harness CLI with 6 commands (run, generate, validate, analyze, compare)
+- 38+ test images across multiple store types
+- Prompt v2.6.0 with multi-currency, receipt types, location extraction
+- CI/CD parallelization with Playwright/Firebase CLI caching
+- Comprehensive documentation (QUICKSTART, ARCHITECTURE, TOKEN-ANALYSIS)
+
+### References
+
+- [PRD: docs/sprint-artifacts/epic8/prd-epic8-scan-testing.md](docs/sprint-artifacts/epic8/prd-epic8-scan-testing.md)
+- [Tech Spec: docs/sprint-artifacts/epic8/tech-spec-epic-8.md](docs/sprint-artifacts/epic8/tech-spec-epic-8.md)
+- [Retrospective: docs/sprint-artifacts/epic8/epic-8-retrospective.md](docs/sprint-artifacts/epic8/epic-8-retrospective.md)
+
+---
+
+## Epic 9: Scan Enhancement & Merchant Learning
+
+**Slug:** scan-enhancement-merchant-learning
+
+### Goal
+
+Integrate the enhanced fields from prompt v2.6.0 into the Transaction type and UI, and implement merchant name learning following the same pattern as category learning. This epic bridges the gap between AI extraction capabilities and the application's data model.
 
 ### Scope
 
 **In Scope:**
 
-**Data Capture Requirements:**
-- Track user corrections to AI-extracted data
-- Store original Gemini output vs user-corrected values
-- Capture item name corrections, category changes, price edits
-- Design schema for training data extraction
+**Transaction Field Integration:**
+- Add `time` (hour) field to Transaction type
+- Add `country` and `city` fields to Transaction type
+- Add `currency` field to Transaction type
+- Add `receiptType` field to Transaction type
+- Add `promptVersion` field for tracking/display
+- Update TransactionItem with `category` and `subcategory` (already partially exists)
 
-**Technical Components:**
-- New Firestore collection for correction data (`user_corrections`)
-- Event tracking for category changes and item edits
-- Data export format for model training
-- Privacy-preserving data aggregation patterns
+**Merchant Name Learning:**
+- New Firestore collection for merchant mappings (`merchant_mappings`)
+- Fuzzy matching for merchant similarity (same pattern as categoryMappingService)
+- Merchant learning prompt when user edits merchant name
+- Auto-apply learned merchant names on subsequent scans
+- Merchant mappings management UI (view, edit, delete)
+
+**Minimal UI Updates:**
+- Display new fields in Edit view (country, city, currency, time)
+- Show prompt version in receipt detail view
+- Merchant learning dialog (like category learning)
+- Merchant mappings section in Settings
 
 **Out of Scope:**
-- Actual model training (future epic)
-- Cross-user data aggregation (privacy concern)
-- Real-time model updates
-- External ML service integration
+- Full UX redesign (Epic 10)
+- Analytics based on new fields (future enhancement)
+- Cross-user merchant learning
+- Currency conversion features
+- Location-based features beyond display
 
 ### Success Criteria
 
-1. User corrections captured with original vs corrected values
-2. Data schema supports future model training extraction
-3. Privacy preserved (per-user data isolation maintained)
-4. ~10,000 transactions threshold documented as training trigger
-5. Correction patterns analyzed and documented
+1. Transaction type includes all v2.6.0 fields (time, country, city, currency, receiptType, promptVersion)
+2. Items have category and subcategory properly stored and displayed
+3. Merchant name corrections persist in Firestore
+4. Subsequent receipts from same merchant receive learned name
+5. Users can view and manage merchant name mappings
+6. Prompt version displayed in receipt detail view
+7. All existing tests pass with new fields
+8. All displayed text respects user's language preference
 
 ### Dependencies
 
 **Internal:**
-- Epic 7 completed ✅ (analytics foundation)
-- Existing category learning from Epic 6
+- Epic 8 completed ✅ (prompt v2.6.0 with enhanced fields)
+- Epic 6 category learning infrastructure (pattern to follow)
 
 ---
 
-## Epic 9: UX Redesign
+## Story Map - Epic 9 (Extended)
+
+```
+Epic 9: Scan Enhancement & Merchant Learning (~37 points)
+│
+├── Story 9.1-9.7: Core Implementation (18 points) ✅ DONE
+│
+├── Story 9.8: Scan Advanced Options (5 points) ✅ DONE
+│   Deliverable: Pre-scan currency and store type selection
+│
+├── Story 9.9: Unified Transaction Flow (5 points)
+│   Deliverable: Combined scan+new transaction, cancel, merchant/alias labels
+│
+├── Story 9.10: Persistent Scan State (3 points)
+│   Deliverable: Scan state persists across navigation
+│
+├── Story 9.11: Transaction Card Unification (5 points)
+│   Deliverable: Unified card display, duplicate detection
+│
+├── Story 9.12: UI Content Translation (2 points) ← NEW
+│   Dependencies: None
+│   Deliverable: All user-visible text respects language setting
+│
+└── Story 9.99: Epic Release Deployment (2 points)
+    Deliverable: Production deployment, E2E verification
+```
+
+---
+
+## Story 9.12: UI Content Translation
+
+**As a user,**
+I want all displayed text to appear in my selected language,
+So that categories, subcategories, and other AI-extracted content are understandable in my preferred language.
+
+**Background:**
+
+Currently, some content extracted by the AI (categories, subcategories, item groups) is stored in English and displayed as-is, regardless of the user's language preference in Settings. This creates a mixed-language experience where the UI labels are in Spanish but the data content is in English.
+
+**Acceptance Criteria:**
+
+- [ ] AC #1: Store categories displayed in user's selected language (e.g., "Supermercado" when language is ES)
+- [ ] AC #2: Item categories/groups displayed in user's selected language
+- [ ] AC #3: Subcategories displayed in user's selected language
+- [ ] AC #4: Transaction list shows translated categories
+- [ ] AC #5: Edit view displays translated categories in dropdowns
+- [ ] AC #6: Analytics/Trends view displays translated category labels
+- [ ] AC #7: Translation maps maintained in `translations.ts` or dedicated file
+- [ ] AC #8: Prompt behavior unchanged (AI continues extracting in English for consistency)
+- [ ] AC #9: Data storage unchanged (store in English for data integrity)
+- [ ] AC #10: Existing tests pass
+
+**Technical Notes:**
+
+Implementation approach:
+1. Create translation maps for categories, subcategories, and item groups
+2. Create a `translateCategory(key: string, lang: Language)` utility function
+3. Apply translation at display time (UI layer only)
+4. Do NOT modify prompts or AI extraction behavior
+5. Do NOT modify how data is stored in Firestore
+
+```typescript
+// src/utils/categoryTranslations.ts
+
+const CATEGORY_TRANSLATIONS: Record<string, { en: string; es: string }> = {
+  'Supermarket': { en: 'Supermarket', es: 'Supermercado' },
+  'Restaurant': { en: 'Restaurant', es: 'Restaurant' },
+  'Gas Station': { en: 'Gas Station', es: 'Bencinera' },
+  'Pharmacy': { en: 'Pharmacy', es: 'Farmacia' },
+  'Entertainment': { en: 'Entertainment', es: 'Entretenimiento' },
+  // ... all store categories
+};
+
+const ITEM_CATEGORY_TRANSLATIONS: Record<string, { en: string; es: string }> = {
+  'Food & Groceries': { en: 'Food & Groceries', es: 'Alimentos y Abarrotes' },
+  'Beverages': { en: 'Beverages', es: 'Bebidas' },
+  'Household': { en: 'Household', es: 'Hogar' },
+  // ... all item categories
+};
+
+export function translateCategory(
+  category: string,
+  lang: 'en' | 'es',
+  type: 'store' | 'item' = 'store'
+): string {
+  const map = type === 'store' ? CATEGORY_TRANSLATIONS : ITEM_CATEGORY_TRANSLATIONS;
+  return map[category]?.[lang] ?? category; // Fallback to original if not found
+}
+```
+
+**Story Points:** 2
+
+**Out of Scope:**
+- Modifying AI prompts to extract in different languages
+- Storing data in multiple languages
+- User-contributed translations
+- Right-to-left language support
+
+---
+
+## Epic 10: UX Redesign
 
 **Slug:** ux-redesign
 
@@ -1023,7 +1168,7 @@ Comprehensive UX redesign using mockups-first approach. Focus on receipt scannin
 - Component library updates
 
 **Out of Scope:**
-- Code refactoring (deferred to Epic 10)
+- Code refactoring (deferred to Epic 11)
 - Performance optimizations
 - New features beyond UX improvements
 
@@ -1038,12 +1183,12 @@ Comprehensive UX redesign using mockups-first approach. Focus on receipt scannin
 ### Dependencies
 
 **Internal:**
-- Epic 8 completed (architecture in place)
+- Epic 9 completed (all v2.6.0 fields integrated, merchant learning)
 - Epic 7 analytics UX as reference
 
 ---
 
-## Epic 10: Application Refactoring
+## Epic 11: Application Refactoring
 
 **Slug:** application-refactoring
 
@@ -1069,7 +1214,7 @@ Apply single responsibility principle and decompose complex components for maint
 
 **Out of Scope:**
 - New features
-- UX changes (completed in Epic 9)
+- UX changes (completed in Epic 10)
 - Performance optimizations beyond code cleanup
 
 ### Success Criteria
@@ -1083,12 +1228,12 @@ Apply single responsibility principle and decompose complex components for maint
 ### Dependencies
 
 **Internal:**
-- Epic 9 completed (UX redesign informs refactoring)
+- Epic 10 completed (UX redesign informs refactoring)
 - Epic 7 retro action item: EditView.tsx refactoring
 
 ---
 
-## Epic 11: Subscription & Monetization
+## Epic 12: Subscription & Monetization
 
 **Slug:** subscription-monetization
 
@@ -1140,11 +1285,11 @@ Implement subscription tiers and payment integration to monetize the application
 - Mercado Pago SDK for Chile
 
 **Internal:**
-- Epic 10 completed (clean codebase for payment integration)
+- Epic 11 completed (clean codebase for payment integration)
 
 ---
 
-## Epic 12: Mobile App
+## Epic 13: Mobile App
 
 **Slug:** mobile-app
 
@@ -1196,7 +1341,7 @@ Deliver native mobile applications for iOS (App Store) and Android (Play Store) 
 - App Store/Play Store billing integration (if required)
 
 **Internal:**
-- Epic 11 completed (subscription system operational)
+- Epic 12 completed (subscription system operational)
 - May need dual payment integration (Mercado Pago web + Store billing mobile)
 
 ### Considerations
@@ -1227,24 +1372,28 @@ Epic 5: Data Export    Epic 6: Category   Epic 7: Analytics UX ✅
         └──────────────────┴──────────────────┘
                            │
                            ▼
-              Epic 8: Architecture & Data Collection
+       Epic 8: Scan Testing & Tuning ✅ (prompt v2.6.0)
                            │
                            ▼
-                   Epic 9: UX Redesign
+       Epic 9: Scan Enhancement & Merchant Learning (NEW)
+                  (v2.6.0 fields + merchant learning)
                            │
                            ▼
-               Epic 10: Application Refactoring
+                   Epic 10: UX Redesign
                            │
                            ▼
-              Epic 11: Subscription & Monetization
+              Epic 11: Application Refactoring
                            │
                            ▼
-                   Epic 12: Mobile App
+              Epic 12: Subscription & Monetization
+                           │
+                           ▼
+                   Epic 13: Mobile App
 ```
 
 ---
 
-*Updated with Epic 7 completion and revised roadmap from Epic 7 Retrospective (2025-12-10)*
-*Total Epics: 12*
-*Completed Epics: 7 (Epic 1-7)*
-*Remaining Epics: 5 (Epic 8-12)*
+*Updated with Epic 8 completion and Epic 9 insertion (2025-12-12)*
+*Total Epics: 13*
+*Completed Epics: 8 (Epic 1-8)*
+*Remaining Epics: 5 (Epic 9-13)*

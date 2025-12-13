@@ -5,10 +5,30 @@ import { Transaction } from '../types/transaction';
 // Initialize Firebase Functions
 const functions = getFunctions(app);
 
+/**
+ * Receipt/store types supported by the Cloud Function
+ * Story 9.8: Matches ReceiptType from functions/src/prompts/input-hints.ts
+ */
+export type ReceiptType =
+    | 'auto'
+    | 'supermarket'
+    | 'restaurant'
+    | 'gas_station'
+    | 'pharmacy'
+    | 'parking'
+    | 'convenience_store'
+    | 'department_store'
+    | 'electronics'
+    | 'clothing'
+    | 'hardware'
+    | 'other';
+
 // Type definition for Cloud Function request
 interface AnalyzeReceiptRequest {
     images: string[];
     currency: string;
+    /** Story 9.8: Optional hint for store/receipt type (defaults to 'auto') */
+    receiptType?: ReceiptType;
 }
 
 /**
@@ -17,12 +37,14 @@ interface AnalyzeReceiptRequest {
  *
  * @param images - Array of base64 encoded images
  * @param currency - Currency code (e.g., "CLP")
+ * @param receiptType - Story 9.8: Optional hint for store type (defaults to 'auto')
  * @returns Promise<Transaction> - Parsed transaction data
  * @throws Error if analysis fails or user is not authenticated
  */
 export async function analyzeReceipt(
     images: string[],
-    currency: string
+    currency: string,
+    receiptType?: ReceiptType
 ): Promise<Transaction> {
     try {
         // Call the Cloud Function
@@ -31,7 +53,13 @@ export async function analyzeReceipt(
             'analyzeReceipt'
         );
 
-        const result = await analyzeReceiptFn({ images, currency });
+        // Build request with optional receiptType (Story 9.8)
+        const request: AnalyzeReceiptRequest = { images, currency };
+        if (receiptType && receiptType !== 'auto') {
+            request.receiptType = receiptType;
+        }
+
+        const result = await analyzeReceiptFn(request);
 
         return result.data;
     } catch (error: unknown) {
