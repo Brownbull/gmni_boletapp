@@ -1,0 +1,203 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>3</storyId>
+    <title>Edit View Field Display</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic9/story-9.3-edit-view-field-display.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to see the time, location, and currency of my receipt</iWant>
+    <soThat>I have complete context about my purchase</soThat>
+    <tasks>
+      <task id="1" ac="1">Add time display to metadata section</task>
+      <task id="2" ac="2">Add location display (City, Country format)</task>
+      <task id="3" ac="3">Add currency display near total</task>
+      <task id="4" ac="4">Add receipt type badge for non-receipt types</task>
+      <task id="5" ac="5">Add collapsible Debug Info section with promptVersion</task>
+      <task id="6" ac="6">Add "Learned" badge when merchantSource === 'learned'</task>
+      <task id="7" ac="7">Implement graceful hiding for missing fields</task>
+      <task id="8" ac="8">Update existing Edit view tests</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">Time displayed in receipt header or metadata section</criterion>
+    <criterion id="2">Country and city displayed together (e.g., "London, United Kingdom")</criterion>
+    <criterion id="3">Currency code displayed near total (e.g., "GBP 29.97")</criterion>
+    <criterion id="4">Receipt type shown as a badge/label if not "receipt"</criterion>
+    <criterion id="5">Prompt version shown in collapsible "Debug Info" section</criterion>
+    <criterion id="6">"Learned" badge shown when `merchantSource === 'learned'`</criterion>
+    <criterion id="7">Fields gracefully hidden when not available (no "N/A" spam)</criterion>
+    <criterion id="8">Existing Edit view tests pass</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/epic9/architecture-epic9.md" relevance="primary">
+        Architecture with ADR-5: Source Tracking for Transparency - "Learned" badge requirement
+      </doc>
+      <doc path="docs/sprint-artifacts/epic9/tech-spec-epic-9.md" relevance="high">
+        UI display requirements for new fields
+      </doc>
+    </docs>
+    <code>
+      <file path="src/views/EditView.tsx" action="MODIFY" relevance="critical">
+        Main target file for all UI changes
+        Current structure: header with merchant/date, total section, items list
+        Lines 16-26: Local Transaction interface - needs new fields
+        Lines 66-100: Component state and refs
+        Add: time display, location, currency, receipt type badge, learned badge, debug section
+      </file>
+      <file path="src/components/CategoryBadge.tsx" action="REFERENCE" relevance="high">
+        Existing badge component - pattern for receipt type badge and learned badge
+      </file>
+      <file path="src/utils/translations.ts" action="MODIFY" relevance="medium">
+        Add translations for new UI elements (location label, debug info, learned indicator)
+      </file>
+      <file path="src/types/transaction.ts" action="REFERENCE" relevance="high">
+        Transaction type with new fields from Story 9.1
+        merchantSource: 'scan' | 'learned' | 'user'
+      </file>
+    </code>
+    <dependencies>
+      <dependency name="lucide-react" version="^0.460.0" status="installed">
+        Icon library - for debug info expand/collapse, learned indicator
+      </dependency>
+      <dependency name="react" version="18.3.1" status="installed">
+        UI framework
+      </dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="ux">
+      No "N/A" or "Unknown" text for missing fields
+      Fields should be completely hidden when not available
+      Debug section hidden by default (expandable)
+      "Learned" badge should be subtle but visible
+    </constraint>
+    <constraint type="accessibility">
+      New UI elements must have proper aria-labels
+      Collapsible debug section must be keyboard accessible
+    </constraint>
+    <constraint type="i18n">
+      All user-facing text must use translation keys
+      Support English and Spanish
+    </constraint>
+    <constraint type="code-style">
+      TypeScript strict mode
+      Single quotes, no semicolons
+      Follow existing EditView patterns
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="EditView Transaction Props">
+      <prop name="time" type="string" optional="true">Display with date: "Dec 12 at 3:01 PM"</prop>
+      <prop name="country" type="string" optional="true">Part of location display</prop>
+      <prop name="city" type="string" optional="true">Part of location display</prop>
+      <prop name="currency" type="string" optional="true">Prefix for total: "GBP 29.97"</prop>
+      <prop name="receiptType" type="string" optional="true">Badge for invoice/ticket</prop>
+      <prop name="promptVersion" type="string" optional="true">Debug info section</prop>
+      <prop name="merchantSource" type="MerchantSource" optional="true">Show "Learned" badge if 'learned'</prop>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <standard>Vitest for unit tests</standard>
+      <standard>@testing-library/react for component testing</standard>
+    </standards>
+    <ideas>
+      <test name="time-displays-with-date">
+        When transaction has time, it displays alongside date
+      </test>
+      <test name="location-displays-correctly">
+        When city and country present, shows "City, Country" format
+      </test>
+      <test name="currency-prefixes-total">
+        When currency present, total shows as "GBP 29.97"
+      </test>
+      <test name="receipt-type-badge-shows">
+        When receiptType is "invoice", shows Invoice badge
+      </test>
+      <test name="learned-badge-shows">
+        When merchantSource is "learned", shows Learned badge near merchant name
+      </test>
+      <test name="missing-fields-hidden">
+        When fields are undefined, no UI elements render for them
+      </test>
+      <test name="debug-section-expands">
+        Debug Info section can be expanded to show promptVersion
+      </test>
+    </ideas>
+  </tests>
+
+  <implementationGuide>
+    <step order="1">
+      Update EditView Transaction interface (lines 16-26)
+      Add: time?, country?, city?, currency?, receiptType?, promptVersion?, merchantSource?
+    </step>
+    <step order="2" task="1">
+      Add time display
+      - Find date display location
+      - Add time after date: "Dec 12, 2025 at 3:01 PM"
+      - Only show if transaction.time exists
+    </step>
+    <step order="3" task="2">
+      Add location display
+      - Create helper: formatLocation(city, country) => "City, Country" or just one if other missing
+      - Add below merchant name or in metadata section
+      - Hide entirely if both missing
+    </step>
+    <step order="4" task="3">
+      Add currency display
+      - Modify total display to include currency prefix
+      - formatCurrency might need update or use separate display
+      - "GBP 29.97" format
+    </step>
+    <step order="5" task="4">
+      Add receipt type badge
+      - Small badge/pill next to date or merchant
+      - Only show for "invoice" or "ticket" (not for "receipt")
+      - Follow CategoryBadge styling pattern
+    </step>
+    <step order="6" task="6">
+      Add "Learned" badge
+      - Small badge/icon next to merchant name
+      - Show only when merchantSource === 'learned'
+      - Tooltip: "Merchant name was auto-corrected based on your preferences"
+      - Subtle styling (blue dot or small text badge)
+    </step>
+    <step order="7" task="5">
+      Add Debug Info section
+      - Collapsible section at bottom
+      - Hidden by default
+      - Contains: promptVersion, transaction.id
+      - Use ChevronDown/ChevronUp for expand/collapse
+    </step>
+    <step order="8" task="7,8">
+      Verify and test
+      - Ensure all conditional rendering works (no N/A)
+      - Run existing EditView tests
+      - Add new tests for new UI elements
+    </step>
+  </implementationGuide>
+
+  <previousStoryLearnings>
+    <story id="9.1" title="Transaction Type Extension">
+      <learning>Transaction type now includes time, country, city, currency, receiptType, promptVersion, merchantSource</learning>
+      <learning>All fields are optional for backward compatibility</learning>
+      <learning>MerchantSource type: 'scan' | 'learned' | 'user'</learning>
+    </story>
+    <story id="9.2" title="Transaction Item Category Fields">
+      <learning>TransactionItem.category properly typed</learning>
+      <learning>Item categories displayed in Edit view</learning>
+    </story>
+  </previousStoryLearnings>
+</story-context>

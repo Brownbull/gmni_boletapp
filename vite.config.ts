@@ -24,6 +24,9 @@ export default defineConfig({
       '**/.{idea,git,cache,output,temp}/**',
       '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',
       '**/tests/e2e/**', // Exclude Playwright E2E tests (use Playwright runner instead)
+      // Exclude Cloud Functions tests - they use Jest syntax and firebase-functions-test
+      'functions/src/__tests__/**',
+      'functions/lib/**', // Compiled JS shouldn't be run as tests
     ],
     coverage: {
       provider: 'v8',
