@@ -143,7 +143,7 @@ development_status:
   8-6-generate-validate-commands: done  # CLI commands for test data generation/validation - Code Review APPROVED 2025-12-12
   8-7-ab-prompt-comparison-analysis: done  # Compare prompt versions side-by-side - Code Review APPROVED 2025-12-12
   8-8-starter-test-data-documentation: done  # Initial test dataset + documentation - Merged to develop (PR #44) 2025-12-12
-  8-9-cicd-pipeline-optimization: review  # Parallelize CI jobs, cache browsers/CLI, optimize Lighthouse - ~4 min savings
+  8-9-cicd-pipeline-optimization: done  # Parallelize CI jobs, cache browsers/CLI, optimize Lighthouse - PR #51 MERGED 2025-12-12
   epic-8-retrospective: optional  # Security incident documented in story 8.8 as retrospective notes
 
   # Future Epics (from Epic 7 retrospective - roadmap revised 2025-12-10)
