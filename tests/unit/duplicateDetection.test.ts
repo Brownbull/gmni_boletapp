@@ -2,10 +2,15 @@
  * Unit tests for Duplicate Detection Service
  * Story 9.11: AC #4, #5, #6, #7
  *
- * Updated criteria:
- * - Same date, merchant, amount, city, country
- * - Time within 1 hour proximity
- * - Alias is NOT considered (users may change it)
+ * Core matching criteria (required - all must match):
+ * - Same date, merchant, amount
+ *
+ * Optional refinement criteria (only compared if BOTH have values):
+ * - Time: within 1 hour proximity (if both have time)
+ * - City: must match (if both have city)
+ * - Country: must match (if both have country)
+ *
+ * Alias is NOT considered (users may change it)
  */
 
 import { describe, it, expect } from 'vitest';
@@ -17,6 +22,7 @@ import {
   getDuplicateIds,
   parseTimeToMinutes,
   areTimesWithinProximity,
+  areLocationsMatching,
   TIME_PROXIMITY_MINUTES,
 } from '../../src/services/duplicateDetectionService';
 import { Transaction } from '../../src/types/transaction';
@@ -83,6 +89,68 @@ describe('duplicateDetectionService', () => {
     });
   });
 
+  describe('areLocationsMatching', () => {
+    it('returns true when both city and country match', () => {
+      const tx1 = createTransaction({ id: '1', city: 'Santiago', country: 'Chile' });
+      const tx2 = createTransaction({ id: '2', city: 'Santiago', country: 'Chile' });
+      expect(areLocationsMatching(tx1, tx2)).toBe(true);
+    });
+
+    it('returns true when both city and country match (case insensitive)', () => {
+      const tx1 = createTransaction({ id: '1', city: 'SANTIAGO', country: 'CHILE' });
+      const tx2 = createTransaction({ id: '2', city: 'santiago', country: 'chile' });
+      expect(areLocationsMatching(tx1, tx2)).toBe(true);
+    });
+
+    it('returns false when cities differ (both have values)', () => {
+      const tx1 = createTransaction({ id: '1', city: 'Santiago', country: 'Chile' });
+      const tx2 = createTransaction({ id: '2', city: 'Valparaiso', country: 'Chile' });
+      expect(areLocationsMatching(tx1, tx2)).toBe(false);
+    });
+
+    it('returns false when countries differ (both have values)', () => {
+      const tx1 = createTransaction({ id: '1', city: 'Santiago', country: 'Chile' });
+      const tx2 = createTransaction({ id: '2', city: 'Santiago', country: 'Argentina' });
+      expect(areLocationsMatching(tx1, tx2)).toBe(false);
+    });
+
+    it('returns true when tx1 has city but tx2 does not', () => {
+      const tx1 = createTransaction({ id: '1', city: 'Santiago', country: 'Chile' });
+      const tx2 = createTransaction({ id: '2', city: '', country: 'Chile' });
+      expect(areLocationsMatching(tx1, tx2)).toBe(true);
+    });
+
+    it('returns true when tx2 has city but tx1 does not', () => {
+      const tx1 = createTransaction({ id: '1', city: '', country: 'Chile' });
+      const tx2 = createTransaction({ id: '2', city: 'Santiago', country: 'Chile' });
+      expect(areLocationsMatching(tx1, tx2)).toBe(true);
+    });
+
+    it('returns true when neither has city', () => {
+      const tx1 = createTransaction({ id: '1', city: '', country: 'Chile' });
+      const tx2 = createTransaction({ id: '2', city: '', country: 'Chile' });
+      expect(areLocationsMatching(tx1, tx2)).toBe(true);
+    });
+
+    it('returns true when tx1 has country but tx2 does not', () => {
+      const tx1 = createTransaction({ id: '1', city: 'Santiago', country: 'Chile' });
+      const tx2 = createTransaction({ id: '2', city: 'Santiago', country: '' });
+      expect(areLocationsMatching(tx1, tx2)).toBe(true);
+    });
+
+    it('returns true when neither has any location data', () => {
+      const tx1 = createTransaction({ id: '1', city: undefined, country: undefined });
+      const tx2 = createTransaction({ id: '2', city: undefined, country: undefined });
+      expect(areLocationsMatching(tx1, tx2)).toBe(true);
+    });
+
+    it('returns true when one has location and other has none (legacy data)', () => {
+      const tx1 = createTransaction({ id: '1', city: 'Villarrica', country: 'Chile' });
+      const tx2 = createTransaction({ id: '2', city: undefined, country: undefined });
+      expect(areLocationsMatching(tx1, tx2)).toBe(true);
+    });
+  });
+
   describe('getBaseGroupKey', () => {
     it('generates key WITHOUT alias (alias should not affect duplicate detection)', () => {
       const tx1 = createTransaction({ id: '1', alias: 'Alias A' });
@@ -100,12 +168,12 @@ describe('duplicateDetectionService', () => {
       expect(getBaseGroupKey(tx1)).toBe(getBaseGroupKey(tx2));
     });
 
-    it('generates consistent key from transaction fields', () => {
+    it('generates consistent key from CORE transaction fields (date, merchant, amount)', () => {
       const tx = createTransaction({ id: '1' });
       const key = getBaseGroupKey(tx);
 
-      // Key should include: date|merchant|total|city|country
-      expect(key).toBe('2025-12-13|test merchant|100|santiago|chile');
+      // Key should include ONLY: date|merchant|total (city/country are optional refinements)
+      expect(key).toBe('2025-12-13|test merchant|100');
     });
 
     it('normalizes values to lowercase and trimmed', () => {
@@ -117,7 +185,8 @@ describe('duplicateDetectionService', () => {
       });
       const key = getBaseGroupKey(tx);
 
-      expect(key).toBe('2025-12-13|test merchant|100|santiago|chile');
+      // City/country are NOT in the key - they are checked separately as optional refinements
+      expect(key).toBe('2025-12-13|test merchant|100');
     });
 
     it('handles missing optional fields gracefully', () => {
@@ -131,7 +200,8 @@ describe('duplicateDetectionService', () => {
       };
       const key = getBaseGroupKey(tx);
 
-      expect(key).toBe('2025-12-13|test|50||');
+      // Key only has core fields: date|merchant|total
+      expect(key).toBe('2025-12-13|test|50');
     });
 
     it('generates different keys for different core fields', () => {
@@ -253,29 +323,103 @@ describe('duplicateDetectionService', () => {
       expect(duplicates.has('3')).toBe(false);
     });
 
-    it('matches based on all core criteria except alias and time (AC #4)', () => {
+    it('matches based on CORE criteria (date, merchant, amount) - AC #4', () => {
       const baseTransaction = createTransaction({ id: '1', time: '14:00' });
 
       // Each of these has ONE different CORE field - should NOT be a duplicate
       const differentDate = createTransaction({ id: '2', date: '2025-12-14', time: '14:00' });
       const differentMerchant = createTransaction({ id: '3', merchant: 'Different', time: '14:00' });
       const differentAmount = createTransaction({ id: '4', total: 999, time: '14:00' });
-      const differentCity = createTransaction({ id: '5', city: 'Other City', time: '14:00' });
-      const differentCountry = createTransaction({ id: '6', country: 'Other Country', time: '14:00' });
 
       const transactions = [
         baseTransaction,
         differentDate,
         differentMerchant,
         differentAmount,
-        differentCity,
-        differentCountry,
       ];
 
       const duplicates = findDuplicates(transactions);
 
-      // None should be duplicates since each differs by at least one core field
+      // None should be duplicates since each differs by at least one CORE field (date, merchant, amount)
       expect(duplicates.size).toBe(0);
+    });
+
+    it('does NOT mark as duplicates if BOTH have city and cities differ', () => {
+      const transactions = [
+        createTransaction({ id: '1', city: 'Santiago', country: 'Chile', time: '14:00' }),
+        createTransaction({ id: '2', city: 'Valparaiso', country: 'Chile', time: '14:00' }),
+      ];
+
+      const duplicates = findDuplicates(transactions);
+
+      // NOT duplicates because both have city and they differ
+      expect(duplicates.size).toBe(0);
+    });
+
+    it('does NOT mark as duplicates if BOTH have country and countries differ', () => {
+      const transactions = [
+        createTransaction({ id: '1', city: 'Santiago', country: 'Chile', time: '14:00' }),
+        createTransaction({ id: '2', city: 'Santiago', country: 'Argentina', time: '14:00' }),
+      ];
+
+      const duplicates = findDuplicates(transactions);
+
+      // NOT duplicates because both have country and they differ
+      expect(duplicates.size).toBe(0);
+    });
+
+    it('marks as duplicates if one has city/country but other does not (legacy data)', () => {
+      const transactions = [
+        createTransaction({ id: '1', city: 'Villarrica', country: 'Chile', time: '14:00' }),
+        createTransaction({ id: '2', city: '', country: '', time: '14:00' }),
+      ];
+
+      const duplicates = findDuplicates(transactions);
+
+      // Should be duplicates because missing location doesn't exclude
+      expect(duplicates.size).toBe(2);
+      expect(duplicates.get('1')).toEqual(['2']);
+      expect(duplicates.get('2')).toEqual(['1']);
+    });
+
+    it('marks as duplicates if both have no city/country', () => {
+      const transactions = [
+        createTransaction({ id: '1', city: undefined, country: undefined, time: '14:00' }),
+        createTransaction({ id: '2', city: undefined, country: undefined, time: '14:30' }),
+      ];
+
+      const duplicates = findDuplicates(transactions);
+
+      // Should be duplicates - missing location is skipped
+      expect(duplicates.size).toBe(2);
+    });
+
+    it('marks as duplicates when time is null but location matches', () => {
+      // This is the exact case from production: same date, merchant, amount, city, country
+      // but time is null/undefined
+      const transactions = [
+        createTransaction({ id: '1', time: undefined, city: 'Villarrica', country: 'Chile' }),
+        createTransaction({ id: '2', time: undefined, city: 'Villarrica', country: 'Chile' }),
+      ];
+
+      const duplicates = findDuplicates(transactions);
+
+      // Should be duplicates - time being null doesn't exclude, location matches
+      expect(duplicates.size).toBe(2);
+      expect(duplicates.get('1')).toEqual(['2']);
+    });
+
+    it('marks as duplicates when time is null and location is also null/empty (legacy data)', () => {
+      // Legacy transactions with no time and no location
+      const transactions = [
+        createTransaction({ id: '1', time: undefined, city: '', country: '' }),
+        createTransaction({ id: '2', time: undefined, city: '', country: '' }),
+      ];
+
+      const duplicates = findDuplicates(transactions);
+
+      // Should be duplicates - core fields match, optional fields are missing so skipped
+      expect(duplicates.size).toBe(2);
     });
 
     it('handles empty transaction list', () => {
