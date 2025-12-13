@@ -1,0 +1,64 @@
+{
+  "metadata": {
+    "testId": "british_museum_1",
+    "storeType": "other",
+    "difficulty": "medium",
+    "region": "CL",
+    "source": "manual-collection",
+    "addedAt": "2025-12-12T20:51:28.530Z"
+  },
+  "input": {
+    "currency": "CLP",
+    "receiptType": "auto"
+  },
+  "aiExtraction": {
+    "merchant": "The British Museum",
+    "date": "2025-05-23",
+    "time": "15:01",
+    "total": 2997,
+    "currency": "GBP",
+    "category": "BooksMedia",
+    "country": "United Kingdom",
+    "city": "London",
+    "items": [
+      {
+        "name": "MASTERPIECES OF THE eac",
+        "price": 1899,
+        "quantity": 1,
+        "category": "BooksMedia",
+        "subcategory": null
+      },
+      {
+        "name": "The Cat in Ancient E eac",
+        "price": 500,
+        "quantity": 1,
+        "category": "BooksMedia",
+        "subcategory": null
+      },
+      {
+        "name": "T/CARD HOLDER: ROSETT eac",
+        "price": 299,
+        "quantity": 1,
+        "category": "Other",
+        "subcategory": null
+      },
+      {
+        "name": "K/RING:ROSETTA STONE eac",
+        "price": 299,
+        "quantity": 1,
+        "category": "Jewelry",
+        "subcategory": null
+      }
+    ],
+    "aiMetadata": {
+      "receiptType": "receipt",
+      "confidence": 0.95
+    },
+    "model": "gemini-2.0-flash",
+    "modelVersion": "latest",
+    "promptId": "v2-multi-currency-types",
+    "promptVersion": "2.6.0",
+    "extractedAt": "2025-12-12T20:51:28.530Z"
+  },
+  "corrections": {}
+}

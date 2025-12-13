@@ -44,9 +44,15 @@ firebase-debug.log
 # Test coverage and reports
 coverage/
 playwright-report/
-test-results/
 lighthouse-reports/
 .lighthouseci/
+
+# Prompt testing results (keep structure, ignore generated files)
+prompt-testing/results/*
+!prompt-testing/results/.gitkeep
+
+# Legacy test-results (deprecated - use prompt-testing/results/)
+test-results/
 
 # Backup files
 *.backup
@@ -61,3 +67,6 @@ secrets-report.json
 
 # Tailwind templates
 docs/design-references/tailwind_templates
+
+# Windows file system alternate data streams
+*:Zone.Identifier
