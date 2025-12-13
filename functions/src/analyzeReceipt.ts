@@ -3,7 +3,8 @@ import * as admin from 'firebase-admin'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { base64ToBuffer, resizeAndCompress, generateThumbnail } from './imageProcessing'
 import { uploadReceiptImages } from './storageService'
-import { ACTIVE_PROMPT, replacePromptVariables } from './prompts'
+import { buildPrompt } from './prompts'
+import type { ReceiptType } from './prompts'
 
 // Initialize Firebase Admin if not already initialized
 if (!admin.apps.length) {
@@ -117,6 +118,8 @@ function extractMimeType(b64: string): string {
 interface AnalyzeReceiptRequest {
   images: string[]
   currency: string
+  receiptType?: ReceiptType  // Optional hint for document type (defaults to 'auto')
+  promptContext?: 'production' | 'development'  // Prompt selection context (defaults to 'production')
 }
 
 /**
@@ -248,10 +251,14 @@ export const analyzeReceipt = functions.https.onCall(
       }))
 
       // Build prompt from shared prompts library (single source of truth)
-      const todayStr = new Date().toISOString().split('T')[0]
-      const prompt = replacePromptVariables(ACTIVE_PROMPT.prompt, {
+      // Uses PRODUCTION_PROMPT or DEV_PROMPT based on context parameter
+      // - Mobile app: omits context → uses PRODUCTION_PROMPT (default)
+      // - Test harness: sends context='development' → uses DEV_PROMPT
+      const prompt = buildPrompt({
         currency: data.currency,
-        date: todayStr,
+        receiptType: data.receiptType,  // Defaults to 'auto' if not provided
+        context: data.promptContext,    // 'production' (default) or 'development'
+        // date is auto-generated to today's date
       })
 
       // Call Gemini API with optimized images
