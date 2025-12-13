@@ -135,10 +135,12 @@ describe('HistoryView Thumbnail Display', () => {
         />
       )
 
-      // Merchant appears twice (as alias fallback and as merchant display)
+      // Merchant appears at least once (as alias fallback or merchant display)
       const merchantElements = screen.getAllByText(transactionWithoutImages.merchant)
       expect(merchantElements.length).toBeGreaterThanOrEqual(1)
-      expect(screen.getByText('$10.00')).toBeInTheDocument()
+      // Story 9.11: Unified card now shows "Currency Amount" format (e.g., "USD 10.00")
+      // The formatCurrency returns "$10.00" and we strip the $ prefix and show currency separately
+      expect(screen.getByText(/10\.00/)).toBeInTheDocument()
     })
 
     it('should render mixed transactions (with and without thumbnails)', () => {

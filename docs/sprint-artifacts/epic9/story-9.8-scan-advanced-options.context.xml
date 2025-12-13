@@ -1,0 +1,306 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>8</storyId>
+    <title>Scan Advanced Options (Currency &amp; Store Type)</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic9/story-9.8-scan-advanced-options.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to select the store type and currency before scanning</iWant>
+    <soThat>the AI can better understand my receipt and parse amounts correctly</soThat>
+    <tasks>
+      <task id="1" ac="3">Create src/services/userPreferencesService.ts
+        <subtask>getUserPreferences() function</subtask>
+        <subtask>saveUserPreferences() function</subtask>
+        <subtask>Firestore path: artifacts/{appId}/users/{userId}/preferences/settings</subtask>
+      </task>
+      <task id="2" ac="3,5">Add Default Currency to SettingsView
+        <subtask>Currency Preferences section</subtask>
+        <subtask>Currency dropdown with CLP, USD, EUR</subtask>
+        <subtask>Save to Firestore</subtask>
+      </task>
+      <task id="3" ac="4">Update gemini.ts Interface
+        <subtask>Add receiptType parameter</subtask>
+        <subtask>Pass to Cloud Function</subtask>
+      </task>
+      <task id="4" ac="1,5,6">Add Store Type Labels to ScanView
+        <subtask>Create StoreTypeSelector component</subtask>
+        <subtask>Horizontal scrollable labels</subtask>
+        <subtask>Auto, Supermarket, Restaurant, Gas Station, Pharmacy, Parking</subtask>
+      </task>
+      <task id="5" ac="2">Add Advanced Options Section to ScanView
+        <subtask>Collapsible section with ChevronDown/Up</subtask>
+        <subtask>Currency dropdown</subtask>
+      </task>
+      <task id="6" ac="4">Wire Up ScanView to Pass Options
+        <subtask>State for selected store type and currency</subtask>
+        <subtask>Pass to onProcessScan callback</subtask>
+      </task>
+      <task id="7">Add unit tests</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">ScanView displays store type quick-select labels (Auto default)</criterion>
+    <criterion id="2">Advanced Options section with currency dropdown</criterion>
+    <criterion id="3">SettingsView has Currency Preferences section</criterion>
+    <criterion id="4">Options passed to Cloud Function via gemini.ts</criterion>
+    <criterion id="5">All UI elements have EN/ES translations</criterion>
+    <criterion id="6">Store type labels and dropdown are accessible</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/epic9/architecture-epic9.md" relevance="primary">
+        ADR-6: Pre-Scan Options Architecture
+        Story 9.8 details with UI mockups and data flow
+      </doc>
+      <doc path="prompt-testing/QUICKSTART.md" relevance="high">
+        Input hints documentation: currency and receiptType
+      </doc>
+    </docs>
+    <code>
+      <file path="src/views/ScanView.tsx" action="MODIFY" relevance="critical">
+        Add store type labels and advanced options section
+        Current: simple view with image preview and buttons
+        Lines 1-68: Full component
+      </file>
+      <file path="src/services/gemini.ts" action="MODIFY" relevance="critical">
+        Add receiptType parameter to analyzeReceipt()
+        Lines 9-12: AnalyzeReceiptRequest interface
+        Lines 23-26: Function signature
+      </file>
+      <file path="src/views/SettingsView.tsx" action="MODIFY" relevance="high">
+        Add Currency Preferences section
+        Add dropdown for default currency selection
+      </file>
+      <file path="functions/src/prompts/input-hints.ts" action="REFERENCE" relevance="critical">
+        SUPPORTED_CURRENCIES = ['CLP', 'USD', 'EUR']
+        CURRENCY_INFO with display names and symbols
+        Already exists - use for UI
+      </file>
+      <file path="functions/src/analyzeReceipt.ts" action="REFERENCE" relevance="high">
+        Already accepts currency and receiptType
+        Lines 118-123: AnalyzeReceiptRequest interface
+      </file>
+      <file path="src/services/userPreferencesService.ts" action="CREATE" relevance="high">
+        New service for user preferences
+        getUserPreferences(), saveUserPreferences()
+      </file>
+      <file path="src/utils/translations.ts" action="MODIFY" relevance="medium">
+        Add translations for store types and currency labels
+      </file>
+    </code>
+    <dependencies>
+      <dependency name="react" version="18.3.1" status="installed">
+        UI framework
+      </dependency>
+      <dependency name="lucide-react" version="^0.460.0" status="installed">
+        ChevronDown, ChevronUp icons for collapsible section
+      </dependency>
+      <dependency name="firebase" version="^10.14.1" status="installed">
+        Firestore for user preferences
+      </dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="ux">
+      Store type labels should be horizontally scrollable
+      Auto is default and must be pre-selected
+      Advanced Options collapsed by default
+      Currency dropdown shows code + name (e.g., "CLP - Chilean Peso")
+    </constraint>
+    <constraint type="accessibility">
+      Labels keyboard navigable with arrow keys
+      Dropdown accessible with standard keyboard interactions
+      Proper aria-labels on all interactive elements
+    </constraint>
+    <constraint type="i18n">
+      All store type labels translated (EN/ES)
+      Currency names translated
+      "Advanced Options" label translated
+    </constraint>
+    <constraint type="code-style">
+      TypeScript strict mode
+      Single quotes, no semicolons
+      Follow existing ScanView patterns
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="UserPreferences">
+      <prop name="defaultCurrency" type="SupportedCurrency">Default currency for scanning</prop>
+    </interface>
+    <interface name="ScanViewProps (updated)">
+      <prop name="onProcessScan" type="(currency: string, receiptType: string) => Promise&lt;void&gt;">Updated callback with options</prop>
+    </interface>
+    <interface name="StoreTypeSelectorProps">
+      <prop name="selected" type="string">Currently selected store type</prop>
+      <prop name="onSelect" type="(type: string) => void">Selection callback</prop>
+      <prop name="t" type="(key: string) => string">Translation function</prop>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <standard>Vitest for unit tests</standard>
+      <standard>@testing-library/react for component testing</standard>
+    </standards>
+    <locations>
+      <location path="tests/unit/userPreferencesService.test.ts" action="CREATE">
+        Unit tests for preferences service
+      </location>
+      <location path="tests/unit/StoreTypeSelector.test.tsx" action="CREATE">
+        Component tests for store type selector
+      </location>
+    </locations>
+    <ideas>
+      <test name="store-type-renders-all-options">
+        All quick-select labels render correctly
+      </test>
+      <test name="auto-selected-by-default">
+        Auto is selected when component mounts
+      </test>
+      <test name="selection-updates-on-click">
+        Clicking a label updates the selected state
+      </test>
+      <test name="advanced-options-toggles">
+        Clicking Advanced Options expands/collapses section
+      </test>
+      <test name="currency-dropdown-shows-options">
+        Dropdown shows CLP, USD, EUR with names
+      </test>
+      <test name="preferences-saved-to-firestore">
+        Saving currency preference writes to Firestore
+      </test>
+      <test name="gemini-receives-options">
+        analyzeReceipt receives currency and receiptType
+      </test>
+    </ideas>
+  </tests>
+
+  <implementationGuide>
+    <step order="1" task="1">
+      Create src/services/userPreferencesService.ts
+      - Define UserPreferences interface
+      - Implement getUserPreferences() with Firestore read
+      - Implement saveUserPreferences() with Firestore write
+      - Path: artifacts/{appId}/users/{userId}/preferences/settings
+    </step>
+    <step order="2" task="2">
+      Add Currency Preferences to SettingsView
+      - Import userPreferencesService
+      - Add useState for default currency
+      - Load preferences on mount
+      - Add dropdown with CLP, USD, EUR options
+      - Save on change
+      - Add translations
+    </step>
+    <step order="3" task="3">
+      Update src/services/gemini.ts
+      - Add receiptType?: string to AnalyzeReceiptRequest
+      - Update analyzeReceipt() signature: (images, currency, receiptType?)
+      - Pass receiptType to Cloud Function
+    </step>
+    <step order="4" task="4">
+      Create StoreTypeSelector component
+      - Horizontal scrollable container (overflow-x-auto)
+      - Map QUICK_STORE_TYPES to buttons
+      - Visual highlight for selected (bg-blue-600, text-white)
+      - Emoji icons with labels
+    </step>
+    <step order="5" task="5">
+      Add Advanced Options to ScanView
+      - Collapsible section state (useState)
+      - ChevronDown/Up icon toggle
+      - Currency dropdown inside
+      - Default from user preferences
+    </step>
+    <step order="6" task="6">
+      Wire up ScanView
+      - Add state: selectedStoreType, selectedCurrency
+      - Load default currency from preferences on mount
+      - Update onProcessScan callback to include options
+      - Update App.tsx to pass options to analyzeReceipt()
+    </step>
+    <step order="7" task="7">
+      Add unit tests
+      - userPreferencesService tests
+      - StoreTypeSelector component tests
+      - Updated gemini.ts tests
+    </step>
+  </implementationGuide>
+
+  <codeSnippets>
+    <snippet name="quick-store-types" language="typescript">
+// Store type options for quick selection
+const QUICK_STORE_TYPES = [
+  { id: 'auto', icon: '✓', labelKey: 'storeTypeAuto' },
+  { id: 'supermarket', icon: '🛒', labelKey: 'storeTypeSupermarket' },
+  { id: 'restaurant', icon: '🍽️', labelKey: 'storeTypeRestaurant' },
+  { id: 'gas_station', icon: '⛽', labelKey: 'storeTypeGasStation' },
+  { id: 'pharmacy', icon: '🏥', labelKey: 'storeTypePharmacy' },
+  { id: 'parking', icon: '🅿️', labelKey: 'storeTypeParking' },
+] as const;
+    </snippet>
+    <snippet name="store-type-selector" language="typescript">
+// StoreTypeSelector component
+function StoreTypeSelector({ selected, onSelect, t }: StoreTypeSelectorProps) {
+  return (
+    &lt;div className="flex gap-2 overflow-x-auto pb-2"&gt;
+      {QUICK_STORE_TYPES.map(type =&gt; (
+        &lt;button
+          key={type.id}
+          onClick={() =&gt; onSelect(type.id)}
+          className={`
+            flex items-center gap-1 px-3 py-2 rounded-full text-sm whitespace-nowrap
+            ${selected === type.id
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-gray-300'}
+          `}
+          aria-pressed={selected === type.id}
+        &gt;
+          &lt;span&gt;{type.icon}&lt;/span&gt;
+          &lt;span&gt;{t(type.labelKey)}&lt;/span&gt;
+        &lt;/button&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}
+    </snippet>
+    <snippet name="currency-dropdown" language="typescript">
+// Currency options from input-hints.ts
+const CURRENCIES = [
+  { code: 'CLP', name: 'Chilean Peso', symbol: '$' },
+  { code: 'USD', name: 'US Dollar', symbol: '$' },
+  { code: 'EUR', name: 'Euro', symbol: '€' },
+];
+
+// Dropdown display
+&lt;select value={currency} onChange={e =&gt; setCurrency(e.target.value)}&gt;
+  {CURRENCIES.map(c =&gt; (
+    &lt;option key={c.code} value={c.code}&gt;
+      {c.code} - {t(`currency${c.code}`)}
+    &lt;/option&gt;
+  ))}
+&lt;/select&gt;
+    </snippet>
+  </codeSnippets>
+
+  <previousStoryLearnings>
+    <story id="9.1" title="Transaction Type Extension">
+      <learning>Transaction type extended with currency, receiptType fields</learning>
+      <learning>All new fields optional for backward compatibility</learning>
+    </story>
+    <story id="8.1" title="Shared Prompts Library">
+      <learning>input-hints.ts defines SUPPORTED_CURRENCIES and CURRENCY_INFO</learning>
+      <learning>buildPrompt() accepts currency and receiptType parameters</learning>
+    </story>
+  </previousStoryLearnings>
+</story-context>
