@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="8.5" title="Accuracy Reporting" generated="2025-12-11">
+
+  <summary>
+    Enhance the reporter module with colorized console output, per-field and per-store-type
+    breakdowns, JSON results file export, and multiple output modes (verbose, quiet, json).
+  </summary>
+
+  <objectives>
+    <objective>Colorized console output with chalk</objective>
+    <objective>Per-field accuracy breakdown in summary</objective>
+    <objective>Per-store-type accuracy breakdown</objective>
+    <objective>Save JSON results to test-results/</objective>
+    <objective>Support output modes: default, verbose, quiet, json</objective>
+    <objective>Progress indicator during test execution</objective>
+  </objectives>
+
+  <source-files>
+    <file path="scripts/scan-test/lib/reporter.ts" relevance="high">
+      <description>Basic reporter from Story 8.3 - needs enhancement</description>
+    </file>
+
+    <file path="scripts/scan-test/types.ts" relevance="high">
+      <description>TestResult type definition</description>
+    </file>
+
+    <file path="scripts/scan-test/config.ts" relevance="medium">
+      <description>resultsDir configuration</description>
+    </file>
+  </source-files>
+
+  <target-files>
+    <file path="scripts/scan-test/lib/reporter.ts" action="modify">
+      <description>Enhanced reporter with full functionality</description>
+      <new-functions>
+        <function name="reportProgress">Display progress during test run [current/total]</function>
+        <function name="reportTestResult">Display single test result (pass/fail with details)</function>
+        <function name="reportSummary">Display final summary with field and store-type breakdowns</function>
+        <function name="reportVerboseDetails">Display detailed field comparisons for failed tests</function>
+      </new-functions>
+    </file>
+
+    <file path="scripts/scan-test/lib/result-writer.ts" action="create">
+      <description>JSON results file writer</description>
+      <template><![CDATA[
+import * as fs from 'fs';
+import * as path from 'path';
+import { TestResult } from '../types';
+import { CONFIG } from '../config';
+
+interface ResultsFile {
+  metadata: {
+    runAt: string;
+    promptId: string;
+    promptVersion: string;
+    totalTests: number;
+    passedTests: number;
+    overallAccuracy: number;
+  };
+  byField: {
+    [field: string]: { passed: number; total: number; accuracy: number };
+  };
+  byStoreType: {
+    [storeType: string]: { passed: number; total: number; accuracy: number };
+  };
+  results: TestResult[];
+}
+
+export function saveResults(
+  results: TestResult[],
+  promptId: string,
+  promptVersion: string
+): string {
+  // Ensure results directory exists
+  if (!fs.existsSync(CONFIG.resultsDir)) {
+    fs.mkdirSync(CONFIG.resultsDir, { recursive: true });
+  }
+
+  // Generate filename with timestamp
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const filename = `${timestamp}_${promptId}.json`;
+  const filepath = path.join(CONFIG.resultsDir, filename);
+
+  // Build results file structure
+  const resultsFile: ResultsFile = {
+    metadata: {
+      runAt: new Date().toISOString(),
+      promptId,
+      promptVersion,
+      totalTests: results.length,
+      passedTests: results.filter(r => r.passed).length,
+      overallAccuracy: calculateOverallAccuracy(results),
+    },
+    byField: calculateByField(results),
+    byStoreType: calculateByStoreType(results),
+    results,
+  };
+
+  fs.writeFileSync(filepath, JSON.stringify(resultsFile, null, 2));
+  return filepath;
+}
+      ]]></template>
+    </file>
+
+    <file path="test-results/.gitkeep" action="create">
+      <description>Placeholder to create test-results directory</description>
+    </file>
+
+    <file path=".gitignore" action="modify">
+      <description>Ensure test-results is ignored except .gitkeep</description>
+      <add-lines>
+        <line>test-results/*</line>
+        <line>!test-results/.gitkeep</line>
+      </add-lines>
+    </file>
+  </target-files>
+
+  <dependencies>
+    <dependency type="story">Story 8.3 - CLI Core (basic reporter)</dependency>
+    <dependency type="story">Story 8.4 - Comparison Engine (TestResult)</dependency>
+    <dependency type="npm">chalk - already added in Story 8.3</dependency>
+  </dependencies>
+
+  <output-modes>
+    <mode name="default">
+      <description>Progress + summary + failed tests</description>
+      <shows>Progress bar, summary stats, failures with brief details</shows>
+    </mode>
+    <mode name="verbose" flag="--verbose">
+      <description>All details including per-test field comparisons</description>
+      <shows>Everything in default + per-test field comparisons, diffs</shows>
+    </mode>
+    <mode name="quiet" flag="--quiet">
+      <description>Only final pass/fail</description>
+      <shows>Single line: "4/5 passed" or exit code only</shows>
+    </mode>
+    <mode name="json" flag="--json">
+      <description>Machine-readable JSON to stdout</description>
+      <shows>Full results JSON, no colors, no progress</shows>
+    </mode>
+  </output-modes>
+
+  <console-output-examples>
+    <example name="Default Mode"><![CDATA[
+🔬 Scan Test Harness
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Running 5 tests (limit: 5, type: all)
+
+● [1/5] supermarket/jumbo-001.jpg
+✓ [2/5] supermarket/lider-001.jpg
+✓ [3/5] pharmacy/cruz-verde-001.jpg
+✗ [4/5] restaurant/dominos-001.jpg
+✓ [5/5] gas-station/copec-001.jpg
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Summary: 4/5 passed (80%)
+
+By Field:
+  total:      5/5 (100%) ✓
+  date:       5/5 (100%) ✓
+  merchant:   4/5 (80%)  ⚠
+  itemsCount: 5/5 (100%) ✓
+  itemPrices: 4/5 (80%)  ⚠
+
+By Store Type:
+  supermarket: 2/2 (100%)
+  pharmacy:    1/1 (100%)
+  restaurant:  0/1 (0%)   ← focus here
+  gas_station: 1/1 (100%)
+
+Failed tests:
+  ✗ restaurant/dominos-001.jpg
+    - total: expected 15990, got 13440
+    - merchant: "Dominos" vs "DOMINO'S PIZZA" (similarity: 0.65)
+
+Results saved: test-results/2025-12-11_143022_v1-original.json
+    ]]></example>
+
+    <example name="Verbose Mode (additional)"><![CDATA[
+Test: restaurant/dominos-001.jpg
+  Score: 45/100 ✗
+  Fields:
+    total:      15990 vs 13440 ✗
+    date:       2025-12-10 vs 2025-12-10 ✓
+    merchant:   "Dominos" vs "DOMINO'S PIZZA" (0.65) ✗
+    itemsCount: 5 vs 5 ✓
+    itemPrices: 80% (4/5 match)
+      [0] "Pizza Grande" 8990 vs 8990 ✓
+      [1] "Bebida 2L" 2990 vs 2990 ✓
+      [2] "Combo Alitas" 4990 vs 3990 ✗
+      [3] "Extra Queso" 990 vs 990 ✓
+      [4] "Propina" 1030 vs 1030 ✓
+    ]]></example>
+  </console-output-examples>
+
+  <json-results-structure><![CDATA[
+{
+  "metadata": {
+    "runAt": "2025-12-11T14:30:22Z",
+    "promptId": "v1-original",
+    "promptVersion": "1.0.0",
+    "totalTests": 5,
+    "passedTests": 4,
+    "overallAccuracy": 80
+  },
+  "byField": {
+    "total": { "passed": 5, "total": 5, "accuracy": 100 },
+    "date": { "passed": 5, "total": 5, "accuracy": 100 },
+    "merchant": { "passed": 4, "total": 5, "accuracy": 80 },
+    "itemsCount": { "passed": 5, "total": 5, "accuracy": 100 },
+    "itemPrices": { "passed": 4, "total": 5, "accuracy": 80 }
+  },
+  "byStoreType": {
+    "supermarket": { "passed": 2, "total": 2, "accuracy": 100 },
+    "pharmacy": { "passed": 1, "total": 1, "accuracy": 100 },
+    "restaurant": { "passed": 0, "total": 1, "accuracy": 0 },
+    "gas_station": { "passed": 1, "total": 1, "accuracy": 100 }
+  },
+  "results": [
+    { /* individual TestResult objects */ }
+  ]
+}
+  ]]></json-results-structure>
+
+  <testing-requirements>
+    <unit-tests location="scripts/scan-test/__tests__/reporter.test.ts">
+      <test>Summary calculation with mixed results</test>
+      <test>Per-store-type grouping</test>
+      <test>JSON output format matches schema</test>
+    </unit-tests>
+  </testing-requirements>
+
+  <implementation-notes>
+    <note priority="high">
+      The run command needs to be updated to use the enhanced reporter
+      and pass the output mode flags.
+    </note>
+    <note priority="medium">
+      Use chalk's color functions: chalk.green, chalk.red, chalk.yellow, chalk.blue
+    </note>
+  </implementation-notes>
+
+</story-context>

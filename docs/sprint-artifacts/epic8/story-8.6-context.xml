@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="8.6" title="Generate & Validate Commands" generated="2025-12-11">
+
+  <summary>
+    Implement CLI commands to generate expected.json files from Cloud Function responses
+    and validate existing test case files against the Zod schema.
+  </summary>
+
+  <objectives>
+    <objective>Create generate command (test:scan:generate)</objective>
+    <objective>Auto-populate aiExtraction from Cloud Function</objective>
+    <objective>Auto-fill metadata from context (testId, storeType, etc.)</objective>
+    <objective>Create validate command (test:scan:validate)</objective>
+    <objective>Report validation errors with file/field details</objective>
+    <objective>Support --folder mode for batch generation</objective>
+  </objectives>
+
+  <source-files>
+    <file path="scripts/scan-test/lib/scanner.ts" relevance="high">
+      <description>From Story 8.3 - Cloud Function caller</description>
+    </file>
+
+    <file path="scripts/scan-test/lib/schema.ts" relevance="high">
+      <description>From Story 8.2 - TestCaseFileSchema for validation</description>
+    </file>
+
+    <file path="scripts/scan-test/index.ts" relevance="high">
+      <description>CLI entry - needs new command registration</description>
+    </file>
+  </source-files>
+
+  <target-files>
+    <file path="scripts/scan-test/commands/generate.ts" action="create">
+      <description>Generate expected.json from Cloud Function</description>
+      <template><![CDATA[
+import * as fs from 'fs';
+import * as path from 'path';
+import { scanReceipt } from '../lib/scanner';
+import { log } from '../lib/reporter';
+import { TestCaseFile } from '../lib/schema';
+
+interface GenerateOptions {
+  image?: string;
+  folder?: string;
+}
+
+export async function generateCommand(options: GenerateOptions) {
+  if (options.image) {
+    await generateForImage(options.image);
+  } else if (options.folder) {
+    await generateForFolder(options.folder);
+  } else {
+    console.error('Error: Provide --image=filename or --folder=/path');
+    process.exit(2);
+  }
+}
+
+async function generateForImage(imagePath: string) {
+  // 1. Find the image file
+  // 2. Check if expected.json already exists
+  // 3. Read image as base64
+  // 4. Call Cloud Function
+  // 5. Create TestCaseFile structure
+  // 6. Write expected.json
+
+  const expectedPath = imagePath.replace(/\.(jpg|jpeg|png)$/i, '.expected.json');
+
+  if (fs.existsSync(expectedPath)) {
+    log.warn(`${expectedPath} already exists. Skipping. Use --force to overwrite.`);
+    return;
+  }
+
+  // Determine store type from parent directory
+  const storeType = path.basename(path.dirname(imagePath));
+  const testId = path.basename(imagePath).replace(/\.(jpg|jpeg|png)$/i, '');
+
+  // Read image
+  const imageBuffer = fs.readFileSync(imagePath);
+  const imageBase64 = `data:image/jpeg;base64,${imageBuffer.toString('base64')}`;
+
+  // Call Cloud Function
+  log.info(`Generating expected.json for ${testId}...`);
+  const result = await scanReceipt(imageBase64);
+
+  // Build test case file
+  const testCase: TestCaseFile = {
+    metadata: {
+      testId,
+      storeType: mapStoreType(storeType),
+      difficulty: 'medium',  // Default, human can adjust
+      region: 'CL',
+      source: 'manual-collection',
+      addedAt: new Date().toISOString(),
+    },
+    aiExtraction: {
+      ...result,
+      model: 'gemini-2.0-flash',
+      modelVersion: 'latest',
+      extractedAt: new Date().toISOString(),
+    },
+    corrections: {},  // Empty - human fills if needed
+  };
+
+  // Write file
+  fs.writeFileSync(expectedPath, JSON.stringify(testCase, null, 2));
+  log.success(`Created ${expectedPath}`);
+}
+
+function mapStoreType(dir: string): TestCaseFile['metadata']['storeType'] {
+  const mapping: Record<string, TestCaseFile['metadata']['storeType']> = {
+    'supermarket': 'supermarket',
+    'pharmacy': 'pharmacy',
+    'restaurant': 'restaurant',
+    'gas-station': 'gas_station',
+    'convenience': 'convenience',
+    'other': 'other',
+  };
+  return mapping[dir] || 'other';
+}
+      ]]></template>
+    </file>
+
+    <file path="scripts/scan-test/commands/validate.ts" action="create">
+      <description>Validate all expected.json files</description>
+      <template><![CDATA[
+import * as fs from 'fs';
+import * as path from 'path';
+import { glob } from 'glob';
+import { TestCaseFileSchema } from '../lib/schema';
+import { log } from '../lib/reporter';
+import { CONFIG } from '../config';
+import { ZodError } from 'zod';
+
+export async function validateCommand() {
+  log.header('Validating Test Case Files');
+
+  // Find all expected.json files
+  const pattern = path.join(CONFIG.testDataDir, '**/*.expected.json');
+  const files = await glob(pattern);
+
+  if (files.length === 0) {
+    log.warn('No expected.json files found');
+    process.exit(0);
+  }
+
+  log.info(`Found ${files.length} expected.json files`);
+
+  let validCount = 0;
+  let invalidCount = 0;
+  const errors: Array<{ file: string; errors: string[] }> = [];
+
+  for (const file of files) {
+    try {
+      const content = JSON.parse(fs.readFileSync(file, 'utf-8'));
+      TestCaseFileSchema.parse(content);
+      log.success(path.relative(CONFIG.testDataDir, file));
+      validCount++;
+    } catch (error) {
+      invalidCount++;
+      if (error instanceof ZodError) {
+        const fileErrors = error.errors.map(e =>
+          `${e.path.join('.')}: ${e.message}`
+        );
+        errors.push({ file: path.relative(CONFIG.testDataDir, file), errors: fileErrors });
+        log.fail(path.relative(CONFIG.testDataDir, file));
+      } else {
+        errors.push({ file, errors: [(error as Error).message] });
+        log.fail(file);
+      }
+    }
+  }
+
+  // Summary
+  log.header('Validation Summary');
+  console.log(`  Valid:   ${validCount}`);
+  console.log(`  Invalid: ${invalidCount}`);
+
+  // Show errors
+  if (errors.length > 0) {
+    log.header('Validation Errors');
+    for (const { file, errors: fileErrors } of errors) {
+      console.log(`\n${file}:`);
+      for (const err of fileErrors) {
+        console.log(`  ✗ ${err}`);
+      }
+    }
+    process.exit(1);
+  }
+
+  process.exit(0);
+}
+      ]]></template>
+    </file>
+
+    <file path="scripts/scan-test/index.ts" action="modify">
+      <description>Register new commands</description>
+      <add-commands>
+        <command name="generate">
+          <option>--image &lt;filename&gt;</option>
+          <option>--folder &lt;path&gt;</option>
+          <option>--force</option>
+          <action>generateCommand</action>
+        </command>
+        <command name="validate">
+          <action>validateCommand</action>
+        </command>
+      </add-commands>
+    </file>
+
+    <file path="package.json" action="modify">
+      <description>Add npm scripts</description>
+      <add-scripts>
+        <script name="test:scan:generate">tsx scripts/scan-test/index.ts generate</script>
+        <script name="test:scan:validate">tsx scripts/scan-test/index.ts validate</script>
+      </add-scripts>
+    </file>
+  </target-files>
+
+  <dependencies>
+    <dependency type="story">Story 8.2 - Schema (for validation)</dependency>
+    <dependency type="story">Story 8.3 - CLI + Scanner</dependency>
+    <dependency type="npm">glob - for finding expected.json files (may need to add)</dependency>
+  </dependencies>
+
+  <cli-commands>
+    <command name="generate">
+      <usage>npm run test:scan:generate -- --image=jumbo-001.jpg</usage>
+      <usage>npm run test:scan:generate -- --folder=test-data/receipts/supermarket/</usage>
+      <description>Generate expected.json from Cloud Function response</description>
+    </command>
+    <command name="validate">
+      <usage>npm run test:scan:validate</usage>
+      <description>Validate all expected.json files against schema</description>
+    </command>
+  </cli-commands>
+
+  <generated-file-structure><![CDATA[
+{
+  "metadata": {
+    "testId": "jumbo-001",
+    "storeType": "supermarket",
+    "difficulty": "medium",        // Default, human adjusts
+    "region": "CL",
+    "source": "manual-collection",
+    "addedAt": "2025-12-11T10:00:00Z"
+  },
+  "aiExtraction": {
+    "merchant": "JUMBO",
+    "date": "2025-12-10",
+    "total": 45990,
+    "category": "Supermarket",
+    "items": [...],
+    "model": "gemini-2.0-flash",
+    "modelVersion": "latest",
+    "extractedAt": "2025-12-11T10:05:00Z"
+  },
+  "corrections": {}              // Empty - human fills if needed
+}
+  ]]></generated-file-structure>
+
+  <validation-error-example><![CDATA[
+❌ Validation Errors Found
+
+supermarket/jumbo-001.expected.json:
+  ✗ metadata.storeType: Invalid enum value. Expected 'supermarket' | 'pharmacy' | ..., received 'grocery'
+  ✗ aiExtraction.total: Expected number, received string
+
+pharmacy/cruz-verde-001.expected.json:
+  ✗ metadata.testId: Required field missing
+
+Summary: 2/15 files invalid
+  ]]></validation-error-example>
+
+  <testing-requirements>
+    <integration-tests>
+      <test>Generate creates valid expected.json for image</test>
+      <test>Validate catches schema violations</test>
+      <test>Validate passes for valid files</test>
+      <test>Generate skips if expected.json already exists</test>
+      <test>Generate with --force overwrites existing</test>
+    </integration-tests>
+  </testing-requirements>
+
+  <implementation-notes>
+    <note priority="high">
+      The generate command needs real Firebase authentication to call the Cloud Function.
+      Make sure scanner.ts authentication is working from Story 8.3.
+    </note>
+    <note priority="medium">
+      Use glob package to find all *.expected.json files recursively.
+    </note>
+    <note priority="medium">
+      Map directory names (with hyphens) to enum values (with underscores):
+      gas-station -> gas_station
+    </note>
+  </implementation-notes>
+
+</story-context>

@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="8.4" title="Result Comparison Engine" generated="2025-12-11">
+
+  <summary>
+    Implement the comparison engine that evaluates scan results against expected values
+    with fuzzy matching for merchant names, weighted scoring, and ground truth computation.
+  </summary>
+
+  <objectives>
+    <objective>Implement field-level comparators (total, date, merchant, items)</objective>
+    <objective>Implement fuzzy string matching for merchant names</objective>
+    <objective>Implement ground truth computation (aiExtraction + corrections)</objective>
+    <objective>Calculate weighted composite score per PRD thresholds</objective>
+    <objective>Return detailed TestResult with all field comparisons</objective>
+  </objectives>
+
+  <source-files>
+    <file path="scripts/scan-test/lib/schema.ts" relevance="high">
+      <description>From Story 8.2 - TestCaseFile, AIExtraction, Corrections types</description>
+    </file>
+
+    <file path="scripts/scan-test/types.ts" relevance="high">
+      <description>From Story 8.2 - TestResult, FieldComparison, ItemComparison types</description>
+    </file>
+
+    <file path="scripts/scan-test/config.ts" relevance="high">
+      <description>From Story 8.3 - Threshold weights and targets</description>
+    </file>
+  </source-files>
+
+  <target-files>
+    <file path="scripts/scan-test/lib/comparator.ts" action="create">
+      <description>Main comparison logic</description>
+      <template><![CDATA[
+import { FieldComparison, ItemComparison, TestResult } from '../types';
+import { stringSimilarity, MERCHANT_SIMILARITY_THRESHOLD } from './fuzzy';
+import { CONFIG } from '../config';
+
+export function compareTotal(expected: number, actual: number): FieldComparison {
+  return {
+    expected,
+    actual,
+    match: expected === actual,
+  };
+}
+
+export function compareDate(
+  expected: string,
+  actual: string,
+  tolerance: 'exact' | 'day' | 'month' = 'exact'
+): FieldComparison {
+  // For MVP, use exact match
+  return {
+    expected,
+    actual,
+    match: expected === actual,
+  };
+}
+
+export function compareMerchant(expected: string, actual: string): FieldComparison & { similarity: number } {
+  const similarity = stringSimilarity(expected, actual);
+  return {
+    expected,
+    actual,
+    similarity,
+    match: similarity >= MERCHANT_SIMILARITY_THRESHOLD,
+  };
+}
+
+export function compareItemsCount(expected: number, actual: number): FieldComparison {
+  const tolerance = CONFIG.thresholds.itemsCount.tolerance;
+  return {
+    expected,
+    actual,
+    match: Math.abs(expected - actual) <= tolerance,
+  };
+}
+
+export function compareItemPrices(
+  expectedItems: Array<{ name: string; price: number }>,
+  actualItems: Array<{ name: string; price: number }>
+): { accuracy: number; details: ItemComparison[] } {
+  // Match items by position (simple) or fuzzy name match (advanced)
+  // Calculate accuracy as % of items with matching prices
+}
+
+export function compare(expected: GroundTruth, actual: ScanResult): TestResult {
+  const totalResult = compareTotal(expected.total, actual.total);
+  const dateResult = compareDate(expected.date, actual.date);
+  const merchantResult = compareMerchant(expected.merchant, actual.merchant);
+  const itemsCountResult = compareItemsCount(expected.items.length, actual.items.length);
+  const itemPricesResult = compareItemPrices(expected.items, actual.items);
+
+  const score = calculateCompositeScore({
+    total: totalResult.match,
+    date: dateResult.match,
+    merchant: merchantResult.match,
+    itemsCount: itemsCountResult.match,
+    itemPricesAccuracy: itemPricesResult.accuracy,
+  });
+
+  return {
+    testId: expected.testId,
+    passed: score >= 80, // 80% threshold for pass
+    score,
+    fields: {
+      total: totalResult,
+      date: dateResult,
+      merchant: merchantResult,
+      itemsCount: itemsCountResult,
+      itemPrices: itemPricesResult,
+    },
+    apiCost: CONFIG.estimatedCostPerScan,
+    duration: 0, // Set by caller
+  };
+}
+      ]]></template>
+    </file>
+
+    <file path="scripts/scan-test/lib/fuzzy.ts" action="create">
+      <description>Fuzzy string matching utilities</description>
+      <template><![CDATA[
+import { compareTwoStrings } from 'string-similarity';
+
+export const MERCHANT_SIMILARITY_THRESHOLD = 0.8;
+
+/**
+ * Normalize string for comparison
+ * - lowercase
+ * - trim whitespace
+ * - collapse multiple spaces
+ * - remove common suffixes (S.A., Ltda., etc.)
+ */
+export function normalizeString(str: string): string {
+  return str
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/\s*(s\.?a\.?|ltda\.?|spa\.?|e\.?i\.?r\.?l\.?)$/i, '');
+}
+
+/**
+ * Calculate similarity between two strings (0-1)
+ */
+export function stringSimilarity(str1: string, str2: string): number {
+  const norm1 = normalizeString(str1);
+  const norm2 = normalizeString(str2);
+  return compareTwoStrings(norm1, norm2);
+}
+      ]]></template>
+    </file>
+
+    <file path="scripts/scan-test/lib/ground-truth.ts" action="create">
+      <description>Merge AI extraction with human corrections</description>
+      <template><![CDATA[
+import { TestCaseFile, AIExtraction, Corrections } from './schema';
+
+export interface GroundTruth {
+  testId: string;
+  merchant: string;
+  date: string;
+  total: number;
+  category: string;
+  items: Array<{ name: string; price: number; category?: string }>;
+}
+
+/**
+ * Compute ground truth by merging AI extraction with corrections
+ * Rule: corrections.field ?? aiExtraction.field
+ */
+export function computeGroundTruth(testCase: TestCaseFile): GroundTruth {
+  const ai = testCase.aiExtraction;
+  const corrections = testCase.corrections || {};
+
+  if (!ai) {
+    throw new Error(`Test case ${testCase.metadata.testId} has no aiExtraction`);
+  }
+
+  // Start with AI extraction
+  let items = [...ai.items];
+
+  // Apply item corrections
+  if (corrections.items) {
+    items = items.map((item, index) => {
+      const correction = corrections.items?.[index.toString()];
+      if (!correction) return item;
+      if (correction.delete) return null; // Mark for deletion
+      return {
+        name: correction.name ?? item.name,
+        price: correction.price ?? item.price,
+        category: correction.category ?? item.category,
+      };
+    }).filter((item): item is NonNullable<typeof item> => item !== null);
+  }
+
+  // Add new items from corrections
+  if (corrections.addItems) {
+    items.push(...corrections.addItems);
+  }
+
+  return {
+    testId: testCase.metadata.testId,
+    merchant: corrections.merchant ?? ai.merchant,
+    date: corrections.date ?? ai.date,
+    total: corrections.total ?? ai.total,
+    category: corrections.category ?? ai.category,
+    items,
+  };
+}
+      ]]></template>
+    </file>
+  </target-files>
+
+  <dependencies>
+    <dependency type="story">Story 8.2 - Test Data Schema (types)</dependency>
+    <dependency type="story">Story 8.3 - CLI Core (config)</dependency>
+    <dependency type="npm">string-similarity - Dice coefficient for fuzzy matching</dependency>
+  </dependencies>
+
+  <accuracy-calculation>
+    <field name="total" target="98%" weight="25%">Exact match</field>
+    <field name="date" target="95%" weight="15%">Exact match</field>
+    <field name="merchant" target="90%" weight="20%">Fuzzy similarity >= 0.8</field>
+    <field name="itemsCount" target="85%" weight="15%">Within ±1 tolerance</field>
+    <field name="itemPrices" target="90%" weight="25%">Per-item exact match</field>
+
+    <formula><![CDATA[
+testScore = (
+  (totalCorrect ? 1 : 0) * 0.25 +
+  (dateCorrect ? 1 : 0) * 0.15 +
+  (merchantSimilarity >= 0.8 ? 1 : 0) * 0.20 +
+  (itemsCountCorrect ? 1 : 0) * 0.15 +
+  itemPricesAccuracy * 0.25
+) * 100
+    ]]></formula>
+  </accuracy-calculation>
+
+  <testing-requirements>
+    <unit-tests location="scripts/scan-test/__tests__/comparator.test.ts">
+      <test>Exact total match passes</test>
+      <test>Total mismatch fails</test>
+      <test>Date exact match</test>
+      <test>Merchant fuzzy match (similarity >= 0.8 passes)</test>
+      <test>Merchant fuzzy miss (similarity &lt; 0.8 fails)</test>
+      <test>Items count within tolerance</test>
+      <test>Items count outside tolerance</test>
+      <test>Weighted score calculation</test>
+    </unit-tests>
+
+    <unit-tests location="scripts/scan-test/__tests__/ground-truth.test.ts">
+      <test>aiExtraction only (no corrections)</test>
+      <test>Corrections override aiExtraction fields</test>
+      <test>Item deletion via corrections</test>
+      <test>addItems in corrections</test>
+    </unit-tests>
+
+    <unit-tests location="scripts/scan-test/__tests__/fuzzy.test.ts">
+      <test>Identical strings return 1.0</test>
+      <test>Completely different strings return ~0</test>
+      <test>"JUMBO" vs "Jumbo Av. Las Condes" returns high similarity</test>
+      <test>Normalization works correctly</test>
+    </unit-tests>
+  </testing-requirements>
+
+  <implementation-notes>
+    <note priority="high">
+      Add string-similarity to package.json devDependencies
+    </note>
+    <note priority="medium">
+      Item matching can be simple (by position) for MVP. More sophisticated
+      fuzzy item matching (by name similarity) can be added later.
+    </note>
+    <note priority="medium">
+      Chilean merchant names often have suffixes like "S.A.", "Ltda.", "SpA"
+      that should be stripped during normalization.
+    </note>
+  </implementation-notes>
+
+</story-context>
