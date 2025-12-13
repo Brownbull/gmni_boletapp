@@ -538,11 +538,32 @@ jobs:
           retention-days: 90
 
   # ============================================================================
+  # TEST SUMMARY JOB - Required for branch protection compatibility
+  # This job aggregates all test results into a single status check named "test"
+  # ============================================================================
+  test:
+    name: test
+    needs: [test-unit, test-integration, test-e2e, security]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check all test results
+        run: |
+          if [ "${{ needs.test-unit.result }}" != "success" ] || \
+             [ "${{ needs.test-integration.result }}" != "success" ] || \
+             [ "${{ needs.test-e2e.result }}" != "success" ] || \
+             [ "${{ needs.security.result }}" != "success" ]; then
+            echo "One or more test jobs failed"
+            exit 1
+          fi
+          echo "All test jobs passed successfully"
+
+  # ============================================================================
   # DEPLOYMENT JOB - Story 6.0: CI/CD Auto-Deploy to Firebase
   # ============================================================================
   deploy:
     name: Deploy to Firebase Hosting
-    needs: [test-unit, test-integration, test-e2e, security]
+    needs: [test]
     runs-on: ubuntu-latest
     # Deploy on push to main OR manual workflow_dispatch
     if: |
