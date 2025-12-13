@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<story-context story-id="8.1" title="Shared Prompts Library" generated="2025-12-11">
+
+  <summary>
+    Extract the hardcoded Gemini prompt from analyzeReceipt.ts into a shared prompts library
+    that can be used by both the Cloud Function and the test harness. Create versioning
+    support and helper functions for A/B testing.
+  </summary>
+
+  <objectives>
+    <objective>Create shared/prompts/ directory structure</objective>
+    <objective>Extract current prompt from analyzeReceipt.ts</objective>
+    <objective>Export ACTIVE_PROMPT as single source of truth</objective>
+    <objective>Implement getPrompt() and listPrompts() helpers</objective>
+    <objective>Update Cloud Function to import from shared library</objective>
+  </objectives>
+
+  <source-files>
+    <file path="functions/src/analyzeReceipt.ts" relevance="critical">
+      <description>Cloud Function that contains the hardcoded prompt to extract</description>
+      <lines-of-interest>
+        <line number="228">Current prompt definition - needs to be extracted</line>
+        <line number="206-234">Gemini API call section that uses the prompt</line>
+      </lines-of-interest>
+      <current-prompt><![CDATA[
+const prompt = `Analyze receipt. Context: ${data.currency}. Today: ${todayStr}. Strict JSON output. Return 'total' and 'price' as INTEGERS (no dots/commas). Extract: merchant (store name), date (YYYY-MM-DD), total, category (one of: Supermarket, Restaurant, Bakery, Butcher, Bazaar, Veterinary, PetShop, Medical, Pharmacy, Technology, StreetVendor, Transport, Services, Other). Items: name, price, category (Fresh Food, Pantry, Drinks, Household, Personal Care, Pets, Electronics, Apparel, Other), subcategory. If multiple dates, choose closest to today.`
+      ]]></current-prompt>
+    </file>
+
+    <file path="functions/tsconfig.json" relevance="high">
+      <description>TypeScript config - may need update for shared imports</description>
+      <note>Currently includes only "src" - may need to add "../shared" or update paths</note>
+    </file>
+
+    <file path="functions/package.json" relevance="medium">
+      <description>Cloud Functions dependencies</description>
+      <note>No zod dependency yet - may be needed for prompt validation</note>
+    </file>
+  </source-files>
+
+  <target-files>
+    <file path="shared/prompts/index.ts" action="create">
+      <description>Main export file - exports ACTIVE_PROMPT and helpers</description>
+      <template><![CDATA[
+export { PROMPT_V1 } from './v1-original';
+// export { PROMPT_V2 } from './v2-few-shot';  // Future
+
+// THE ACTIVE PROMPT - change this one line to switch production
+export { PROMPT_V1 as ACTIVE_PROMPT } from './v1-original';
+
+// Helpers for test harness
+export function getPrompt(versionId: string): PromptConfig { ... }
+export function listPrompts(): PromptConfig[] { ... }
+      ]]></template>
+    </file>
+
+    <file path="shared/prompts/types.ts" action="create">
+      <description>TypeScript interfaces for prompts</description>
+      <interface-spec><![CDATA[
+export interface PromptConfig {
+  id: string;                    // "v1-original"
+  name: string;                  // "Original Chilean"
+  description: string;           // "Initial production prompt"
+  version: string;               // "1.0.0"
+  createdAt: string;             // "2025-12-11"
+  prompt: string;                // The actual prompt text
+  fewShotExamples?: string[];    // Optional examples to append
+}
+      ]]></interface-spec>
+    </file>
+
+    <file path="shared/prompts/base.ts" action="create">
+      <description>Shared prompt components (categories, format instructions)</description>
+      <content-outline>
+        - STORE_CATEGORIES: list of store categories
+        - ITEM_CATEGORIES: list of item categories
+        - FORMAT_INSTRUCTIONS: JSON output format rules
+      </content-outline>
+    </file>
+
+    <file path="shared/prompts/v1-original.ts" action="create">
+      <description>Current production prompt wrapped in PromptConfig</description>
+    </file>
+
+    <file path="functions/src/analyzeReceipt.ts" action="modify">
+      <description>Update to import ACTIVE_PROMPT from shared library</description>
+      <change-pattern>
+        <before>const prompt = `Analyze receipt...`</before>
+        <after>
+          import { ACTIVE_PROMPT } from '../../shared/prompts';
+          ...
+          const prompt = ACTIVE_PROMPT.prompt
+            .replace('{{currency}}', data.currency)
+            .replace('{{today}}', todayStr);
+        </after>
+      </change-pattern>
+    </file>
+  </target-files>
+
+  <dependencies>
+    <dependency type="none">This is a foundation story with no prior dependencies</dependency>
+  </dependencies>
+
+  <architectural-decisions>
+    <adr id="ADR-010" title="Shared Prompts Library">
+      <context>Need single source of truth for prompts used by production and test harness</context>
+      <decision>Extract prompts to shared/ directory imported by both</decision>
+      <consequences>
+        <positive>Test harness tests exact production prompts</positive>
+        <positive>Easy A/B testing between prompt versions</positive>
+        <positive>One-line change to promote new prompt</positive>
+        <positive>Full git history for prompt evolution</positive>
+        <negative>Requires rebuild/redeploy to change active prompt</negative>
+      </consequences>
+    </adr>
+  </architectural-decisions>
+
+  <testing-requirements>
+    <unit-tests>
+      <test>getPrompt('v1-original') returns correct config</test>
+      <test>getPrompt('invalid') throws or returns undefined</test>
+      <test>listPrompts() includes PROMPT_V1</test>
+      <test>ACTIVE_PROMPT has required fields (id, name, prompt)</test>
+    </unit-tests>
+    <integration-tests>
+      <test>Cloud Function deploys successfully with shared prompt</test>
+      <test>Scan produces same results as before refactor</test>
+    </integration-tests>
+  </testing-requirements>
+
+  <implementation-notes>
+    <note priority="high">
+      The functions/tsconfig.json currently only includes "src" directory.
+      You'll need to either:
+      1. Add "../shared" to the include array, OR
+      2. Use a tsconfig paths alias
+      Test compilation with `npx tsc` in functions/ after changes.
+    </note>
+    <note priority="medium">
+      The prompt contains template variables (currency, date) that get replaced at runtime.
+      The shared prompt should use placeholders like {{currency}} and {{today}} that
+      get replaced in analyzeReceipt.ts.
+    </note>
+    <note priority="medium">
+      Test file location: shared/prompts/__tests__/index.test.ts
+      Use Vitest (project standard).
+    </note>
+  </implementation-notes>
+
+</story-context>

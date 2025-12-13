@@ -1,0 +1,38 @@
+{
+  "metadata": {
+    "testId": "jumbo-001",
+    "storeType": "supermarket",
+    "difficulty": "easy",
+    "region": "CL",
+    "source": "manual-collection",
+    "addedAt": "2025-12-11",
+    "addedBy": "test-fixture",
+    "notes": "Sample supermarket receipt from Jumbo Chile"
+  },
+  "aiExtraction": {
+    "merchant": "JUMBO",
+    "date": "2025-12-10",
+    "total": 45990,
+    "category": "Groceries",
+    "items": [
+      { "name": "Leche Colun 1L", "price": 1290, "category": "Groceries" },
+      { "name": "Pan de Molde", "price": 2490, "category": "Groceries" },
+      { "name": "Coca Cola 2L", "price": 1990, "category": "Groceries" }
+    ],
+    "model": "gemini-1.5-flash",
+    "modelVersion": "1.5-flash-latest",
+    "extractedAt": "2025-12-11T10:30:00Z",
+    "confidence": {
+      "overall": 0.95,
+      "merchant": 0.98,
+      "date": 0.92,
+      "total": 0.99
+    }
+  },
+  "corrections": {},
+  "thresholds": {
+    "merchantSimilarity": 0.8,
+    "totalTolerance": 0,
+    "dateTolerance": "exact"
+  }
+}
