@@ -910,7 +910,185 @@ Implement AI-assisted category learning that remembers user category corrections
 
 ---
 
-## Epic 7: Subscription & Monetization
+## Epic 7: Analytics UX Redesign (COMPLETED)
+
+**Slug:** analytics-ux-redesign
+**Status:** ✅ COMPLETED (2025-12-09)
+
+### Goal
+
+Comprehensive analytics UX redesign with dual-axis breadcrumb navigation, Quarter/Week temporal views, Chart dual mode, and visual consistency improvements.
+
+### Delivered
+
+- **19 stories completed** (7.1-7.18 + 7.99)
+- **977 tests passing** (677 unit + 300 integration)
+- **84.25% test coverage**
+- **Production URL:** https://boletapp-d609f.web.app
+
+### Key Features Delivered
+
+- Dual-axis breadcrumb navigation (Temporal + Category)
+- Quarter and Week temporal views
+- Chart dual mode (Aggregation vs Comparison)
+- Stacked bar charts with tooltips
+- Drill-down cards with progress bars
+- App-wide theme system (Light/Dark/System, Normal/Professional colors)
+- Floating download FAB
+- Navigation label updates (History → Receipts, Trends → Analytics)
+
+### Architecture Decisions
+
+- **ADR-010:** React Context for Analytics State
+- **ADR-011:** Chart Registry Pattern
+- **ADR-012:** Month-Aligned Weeks
+
+### References
+
+- [PRD: docs/prd-epic7.md](docs/prd-epic7.md)
+- [Architecture: docs/architecture-epic7.md](docs/architecture-epic7.md)
+- [Tech Spec: docs/sprint-artifacts/epic7/tech-spec-epic-7.md](docs/sprint-artifacts/epic7/tech-spec-epic-7.md)
+- [Retrospective: docs/sprint-artifacts/epic7/epic-7-retro-2025-12-10.md](docs/sprint-artifacts/epic7/epic-7-retro-2025-12-10.md)
+
+---
+
+## Epic 8: Architecture & Data Collection
+
+**Slug:** architecture-data-collection
+
+### Goal
+
+Redesign application architecture to capture user corrections (category changes, item edits) for building a training dataset. Enable future custom model training once reaching ~10,000 transactions threshold.
+
+### Scope
+
+**In Scope:**
+
+**Data Capture Requirements:**
+- Track user corrections to AI-extracted data
+- Store original Gemini output vs user-corrected values
+- Capture item name corrections, category changes, price edits
+- Design schema for training data extraction
+
+**Technical Components:**
+- New Firestore collection for correction data (`user_corrections`)
+- Event tracking for category changes and item edits
+- Data export format for model training
+- Privacy-preserving data aggregation patterns
+
+**Out of Scope:**
+- Actual model training (future epic)
+- Cross-user data aggregation (privacy concern)
+- Real-time model updates
+- External ML service integration
+
+### Success Criteria
+
+1. User corrections captured with original vs corrected values
+2. Data schema supports future model training extraction
+3. Privacy preserved (per-user data isolation maintained)
+4. ~10,000 transactions threshold documented as training trigger
+5. Correction patterns analyzed and documented
+
+### Dependencies
+
+**Internal:**
+- Epic 7 completed ✅ (analytics foundation)
+- Existing category learning from Epic 6
+
+---
+
+## Epic 9: UX Redesign
+
+**Slug:** ux-redesign
+
+### Goal
+
+Comprehensive UX redesign using mockups-first approach. Focus on receipt scanning and editing flows to improve user experience and reduce friction.
+
+### Scope
+
+**In Scope:**
+
+**Design Process:**
+- Mockups workflow before any implementation
+- Receipt scanning flow redesign
+- EditView.tsx UX improvements
+- Onboarding flow for new users
+
+**Technical Components:**
+- Design artifacts (wireframes, mockups)
+- User flow documentation
+- UX testing plan
+- Component library updates
+
+**Out of Scope:**
+- Code refactoring (deferred to Epic 10)
+- Performance optimizations
+- New features beyond UX improvements
+
+### Success Criteria
+
+1. Mockups approved before implementation begins
+2. Receipt scanning flow simplified
+3. Edit flow UX improved
+4. User testing validates improvements
+5. Design system documented
+
+### Dependencies
+
+**Internal:**
+- Epic 8 completed (architecture in place)
+- Epic 7 analytics UX as reference
+
+---
+
+## Epic 10: Application Refactoring
+
+**Slug:** application-refactoring
+
+### Goal
+
+Apply single responsibility principle and decompose complex components for maintainability. Address technical debt accumulated in previous epics.
+
+### Scope
+
+**In Scope:**
+
+**Refactoring Targets:**
+- EditView.tsx decomposition (high complexity)
+- Component single responsibility cleanup
+- Code quality improvements
+- Test coverage for refactored code
+
+**Technical Components:**
+- Extract sub-components from large files
+- Improve separation of concerns
+- Update tests for refactored components
+- Document architectural improvements
+
+**Out of Scope:**
+- New features
+- UX changes (completed in Epic 9)
+- Performance optimizations beyond code cleanup
+
+### Success Criteria
+
+1. EditView.tsx decomposed into smaller components
+2. All refactored code has test coverage
+3. No regressions in existing functionality
+4. Code complexity metrics improved
+5. Documentation updated
+
+### Dependencies
+
+**Internal:**
+- Epic 9 completed (UX redesign informs refactoring)
+- Epic 7 retro action item: EditView.tsx refactoring
+
+---
+
+## Epic 11: Subscription & Monetization
 
 **Slug:** subscription-monetization
 
@@ -947,13 +1125,13 @@ Implement subscription tiers and payment integration to monetize the application
 
 ### Success Criteria
 
-1. ✅ Three subscription tiers operational (Free, Pro, Max)
-2. ✅ Usage tracking accurately counts scans and items
-3. ✅ Rate limiting enforces tier limits correctly
-4. ✅ Mercado Pago payment flow completes successfully
-5. ✅ Users can upgrade/downgrade subscription tiers
-6. ✅ Free tier users see upgrade prompts when approaching limits
-7. ✅ Payment webhook handles subscription changes reliably
+1. Three subscription tiers operational (Free, Pro, Max)
+2. Usage tracking accurately counts scans and items
+3. Rate limiting enforces tier limits correctly
+4. Mercado Pago payment flow completes successfully
+5. Users can upgrade/downgrade subscription tiers
+6. Free tier users see upgrade prompts when approaching limits
+7. Payment webhook handles subscription changes reliably
 
 ### Dependencies
 
@@ -962,11 +1140,11 @@ Implement subscription tiers and payment integration to monetize the application
 - Mercado Pago SDK for Chile
 
 **Internal:**
-- Epic 4 completed (security hardened before handling payments)
+- Epic 10 completed (clean codebase for payment integration)
 
 ---
 
-## Epic 8: Mobile App
+## Epic 12: Mobile App
 
 **Slug:** mobile-app
 
@@ -1002,13 +1180,13 @@ Deliver native mobile applications for iOS (App Store) and Android (Play Store) 
 
 ### Success Criteria
 
-1. ✅ Android app published on Google Play Store
-2. ✅ iOS app published on Apple App Store
-3. ✅ Native camera integration works for receipt scanning
-4. ✅ All core features functional on mobile
-5. ✅ App store billing integrated (if required by store policies)
-6. ✅ Mobile-specific UI optimizations implemented
-7. ✅ Push notifications operational
+1. Android app published on Google Play Store
+2. iOS app published on Apple App Store
+3. Native camera integration works for receipt scanning
+4. All core features functional on mobile
+5. App store billing integrated (if required by store policies)
+6. Mobile-specific UI optimizations implemented
+7. Push notifications operational
 
 ### Dependencies
 
@@ -1018,7 +1196,7 @@ Deliver native mobile applications for iOS (App Store) and Android (Play Store) 
 - App Store/Play Store billing integration (if required)
 
 **Internal:**
-- Epic 7 completed (subscription system operational)
+- Epic 11 completed (subscription system operational)
 - May need dual payment integration (Mercado Pago web + Store billing mobile)
 
 ### Considerations
@@ -1043,17 +1221,30 @@ Epic 4: Security Hardening ◄────────────────�
         │
         ├──────────────────┬─────────────────┐
         ▼                  ▼                 ▼
-Epic 5: Data Export    Epic 6: Category   Epic 7: Subscription
+Epic 5: Data Export    Epic 6: Category   Epic 7: Analytics UX ✅
         │              Learning               │
         │                  │                  │
-        └──────────────────┼──────────────────┘
+        └──────────────────┴──────────────────┘
                            │
                            ▼
-                    Epic 8: Mobile App
+              Epic 8: Architecture & Data Collection
+                           │
+                           ▼
+                   Epic 9: UX Redesign
+                           │
+                           ▼
+               Epic 10: Application Refactoring
+                           │
+                           ▼
+              Epic 11: Subscription & Monetization
+                           │
+                           ▼
+                   Epic 12: Mobile App
 ```
 
 ---
 
-*Updated with Epics 4-8 from Epic 3 Retrospective (2025-11-26)*
-*Total Epics: 8*
-*Total Stories: 18 (Epics 1-3), TBD (Epics 4-8)*
+*Updated with Epic 7 completion and revised roadmap from Epic 7 Retrospective (2025-12-10)*
+*Total Epics: 12*
+*Completed Epics: 7 (Epic 1-7)*
+*Remaining Epics: 5 (Epic 8-12)*
