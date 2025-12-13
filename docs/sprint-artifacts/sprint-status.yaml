@@ -144,7 +144,7 @@ development_status:
   8-7-ab-prompt-comparison-analysis: done  # Compare prompt versions side-by-side - Code Review APPROVED 2025-12-12
   8-8-starter-test-data-documentation: done  # Initial test dataset + documentation - Merged to develop (PR #44) 2025-12-12
   8-9-cicd-pipeline-optimization: done  # Parallelize CI jobs, cache browsers/CLI, optimize Lighthouse - PR #51 MERGED 2025-12-12
-  epic-8-retrospective: optional  # Security incident documented in story 8.8 as retrospective notes
+  epic-8-retrospective: completed  # Comprehensive retro: CI/CD standards, security lessons, test harness outcomes
 
   # Future Epics (from Epic 7 retrospective - roadmap revised 2025-12-10)
   # See docs/planning/epics.md for full epic definitions
