@@ -1,6 +1,6 @@
 # Boletapp Team Standards & Knowledge Base
 
-**Last Updated:** 2025-12-07 (Epic 7 Test Optimization)
+**Last Updated:** 2025-12-13 (Epic 9 Branch Sync Lesson)
 **Purpose:** Single source of truth for team agreements, workflow standards, and lessons learned
 
 ---
@@ -178,6 +178,13 @@ Agreements made in retrospectives that define how we work as a team.
     - Use prebuild copy scripts instead: `cp -r ../shared/x src/x`
     - Add copied dirs to `.gitignore` (they're build artifacts)
     - *Source: Epic 8 Story 8.1 Deployment*
+
+27. **Never switch to main before merging a feature branch PR**
+    - Wait for PR to be merged before checking out main locally
+    - Switching to main and deleting the feature branch loses all local changes
+    - Proper flow: Create PR → Wait for merge → Fetch/pull main → Delete local feature branch
+    - If PR is blocked, keep working on the feature branch until it's merged
+    - *Source: Epic 9 Story 9.11 Deployment*
 
 ---
 
@@ -612,6 +619,13 @@ Key insights from retrospectives that improved our process.
     - Reserve full suite for epic completion, use quick/story tiers during dev
     - *Source: Epic 7 Story 7.7*
 
+15. **Keep local branch in sync during PR deployment** (Epic 9)
+    - When deploying a feature branch via PR, don't switch to main locally
+    - Switching branches before merge loses all uncommitted/unpushed work
+    - Correct flow: push feature branch → create PR → wait for merge → fetch main → delete local feature branch
+    - This ensures local state matches deployed state
+    - *Source: Epic 9 Story 9.11*
+
 ---
 
 ## Known Gotchas
@@ -776,4 +790,4 @@ This document should be updated:
 - When standards change
 - When new documentation is created
 
-**Last updated by:** Epic 8 Story 8.1 - Deployment Lessons (2025-12-11)
+**Last updated by:** Epic 9 Story 9.11 - Branch Sync During PR Deployment (2025-12-13)
