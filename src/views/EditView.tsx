@@ -13,6 +13,9 @@ import { ReceiptType } from '../services/gemini';
 import { SupportedCurrency } from '../services/userPreferencesService';
 // Story 9.10: Pending scan types for visual indicator
 import { PendingScan, UserCredits } from '../types/scan';
+// Story 9.12: Category translations (AC #6)
+import { translateStoreCategory } from '../utils/categoryTranslations';
+import type { Language } from '../utils/translations';
 
 /**
  * Local TransactionItem interface for EditView.
@@ -93,6 +96,8 @@ interface EditViewProps {
     pendingScan?: PendingScan | null;
     /** Story 9.10: User credits for display and blocking (AC #6, #7) */
     userCredits?: UserCredits;
+    /** Story 9.12: Language for category translations (AC #6) */
+    lang?: Language;
 }
 
 export const EditView: React.FC<EditViewProps> = ({
@@ -129,6 +134,8 @@ export const EditView: React.FC<EditViewProps> = ({
     // Story 9.10: Pending scan and credits
     pendingScan,
     userCredits,
+    // Story 9.12: Language for translations
+    lang = 'en',
 }) => {
     const [showImageViewer, setShowImageViewer] = useState(false);
     // Story 9.3: Debug info section state (AC #5)
@@ -747,6 +754,7 @@ export const EditView: React.FC<EditViewProps> = ({
                     inputStyle={inputStyle}
                 />
 
+                {/* Story 9.12 AC #6: Translated category dropdown - shows translated, stores English */}
                 <select
                     className="w-full p-2 border rounded-lg"
                     style={inputStyle}
@@ -754,7 +762,7 @@ export const EditView: React.FC<EditViewProps> = ({
                     onChange={e => onUpdateTransaction({ ...currentTransaction, category: e.target.value })}
                 >
                     {storeCategories.map(c => (
-                        <option key={c} value={c}>{c}</option>
+                        <option key={c} value={c}>{translateStoreCategory(c, lang)}</option>
                     ))}
                 </select>
             </div>
@@ -843,6 +851,7 @@ export const EditView: React.FC<EditViewProps> = ({
                                             category={item.category || 'Other'}
                                             subcategory={item.subcategory}
                                             categorySource={item.categorySource}
+                                            lang={lang}
                                         />
                                     </div>
                                     <div className="font-mono text-sm" style={{ color: 'var(--primary)' }}>

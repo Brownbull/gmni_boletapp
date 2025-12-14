@@ -575,6 +575,8 @@ function App() {
                         onTriggerScan={triggerScan}
                         // Story 9.11: Pass all transactions for total/month calculations
                         allTransactions={transactions as any}
+                        // Story 9.12: Language for category translations
+                        lang={lang}
                     />
                 )}
 
@@ -630,6 +632,8 @@ function App() {
                         pendingScan={!currentTransaction.id ? pendingScan : undefined}
                         // Story 9.10: Credits for display and scan blocking (AC #6, #7)
                         userCredits={userCredits}
+                        // Story 9.12: Language for category translations (AC #6)
+                        lang={lang}
                     />
                 )}
 
@@ -676,6 +680,8 @@ function App() {
                         allTransactions={transactions as any}
                         defaultCity={defaultCity}
                         defaultCountry={defaultCountry}
+                        // Story 9.12: Language for category translations (AC #1, #2)
+                        lang={lang}
                     />
                 )}
 

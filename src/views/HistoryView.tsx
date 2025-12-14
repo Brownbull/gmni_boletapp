@@ -4,6 +4,8 @@ import { CategoryBadge } from '../components/CategoryBadge';
 import { ImageViewer } from '../components/ImageViewer';
 import { getDuplicateIds } from '../services/duplicateDetectionService';
 import { normalizeTransaction } from '../utils/transactionNormalizer';
+// Story 9.12: Category translations (AC #1, #2)
+import type { Language } from '../utils/translations';
 
 // Story 9.11: Extended transaction interface with v2.6.0 fields for unified display
 interface Transaction {
@@ -48,6 +50,8 @@ interface HistoryViewProps {
     defaultCity?: string;
     /** User's default country for legacy transactions (AC #2) */
     defaultCountry?: string;
+    /** Story 9.12: Language for category translations (AC #1, #2) */
+    lang?: Language;
 }
 
 interface ThumbnailProps {
@@ -130,6 +134,8 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
     allTransactions = [],
     defaultCity = '',
     defaultCountry = '',
+    // Story 9.12: Language for translations
+    lang = 'en',
 }) => {
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
@@ -253,9 +259,9 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                                     </div>
                                 </div>
 
-                                {/* ROW 3: Category + Location */}
+                                {/* ROW 3: Category + Location - Story 9.12 AC #1: Translated category */}
                                 <div className="flex justify-between items-center gap-2 mt-1">
-                                    <CategoryBadge category={tx.category} mini />
+                                    <CategoryBadge category={tx.category} mini lang={lang} />
                                     {location && (
                                         <div className="text-xs whitespace-nowrap flex-shrink-0" style={{ color: 'var(--secondary)' }}>
                                             {location}
