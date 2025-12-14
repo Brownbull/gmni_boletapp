@@ -166,9 +166,12 @@ development_status:
   9-8-scan-advanced-options: done  # 5 points - Pre-scan options (currency, store type) - Code Review APPROVED 2025-12-13
   9-9-unified-transaction-flow: done  # 5 points - Unified scan+new transaction, cancel button, merchant/alias labels - Code Review APPROVED 2025-12-13
   9-10-persistent-scan-state: done  # 3 points - Persistent scan state across navigation, credit placeholder (900) - Code Review APPROVED 2025-12-13
-  9-11-transaction-card-unification: review  # 5 points - Unified card display, duplicate detection, legacy defaults - Completed 2025-12-13
-  9-12-ui-content-translation: backlog  # 2 points - Translate categories/subcategories to user's language - NEW 2025-12-13
-  9-99-epic-release-deployment: drafted  # 2 points - Production deployment, E2E verification - Context created 2025-12-13
+  9-11-transaction-card-unification: done  # 5 points - Unified card display, duplicate detection, legacy defaults - Code Review APPROVED 2025-12-13
+  9-12-ui-content-translation: done  # 2 points - Translate categories/subcategories to user's language - Code Review APPROVED 2025-12-14
+  9-13-drilldown-analytics-validation: ready-for-dev  # 3 points - Fix drill-down totals and stop at correct level - Story created 2025-12-13
+  9-14-pwa-installation-support: ready-for-dev  # 3 points - PWA support for mobile installation - Story created 2025-12-13
+  9-15-subcategory-learning-and-management: ready-for-dev  # 5 points - Subcategory learning, editing, and Settings UI - Story created 2025-12-13
+  9-99-epic-release-deployment: ready-for-dev  # 2 points - Production deployment, E2E verification - Story created 2025-12-13
   epic-9-retrospective: optional
 
   # Former Epic 9 → Epic 10: UX Redesign

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Plus, Camera, Receipt, Image as ImageIcon } from 'lucide-react';
 import { CategoryBadge } from '../components/CategoryBadge';
 import { ImageViewer } from '../components/ImageViewer';
+// Story 9.12: Category translations
+import type { Language } from '../utils/translations';
 
 // Story 9.11: Extended transaction interface with v2.6.0 fields for unified display
 interface Transaction {
@@ -42,6 +44,8 @@ interface DashboardViewProps {
     onTriggerScan: () => void;
     /** Story 9.11: All transactions for total/month calculations */
     allTransactions?: Transaction[];
+    /** Story 9.12: Language for category translations */
+    lang?: Language;
 }
 
 // Story 9.11: Thumbnail component matching HistoryView style
@@ -121,6 +125,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     onEditTransaction,
     onTriggerScan,
     allTransactions = [],
+    // Story 9.12: Language for translations
+    lang = 'en',
 }) => {
     // Story 7.12: Theme-aware styling using CSS variables (AC #1, #2, #8)
     const isDark = theme === 'dark';
@@ -269,9 +275,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     </div>
                                 </div>
 
-                                {/* ROW 3: Category + Location */}
+                                {/* ROW 3: Category + Location - Story 9.12: Translated category */}
                                 <div className="flex justify-between items-center gap-2 mt-1">
-                                    <CategoryBadge category={tx.category} mini />
+                                    <CategoryBadge category={tx.category} mini lang={lang} />
                                     {location && (
                                         <div className="text-xs whitespace-nowrap flex-shrink-0" style={{ color: 'var(--secondary)' }}>
                                             {location}
