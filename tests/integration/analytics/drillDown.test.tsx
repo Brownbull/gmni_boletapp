@@ -212,7 +212,7 @@ describe('Drill-Down Integration - Temporal Navigation Flow', () => {
 // ============================================================================
 
 describe('Drill-Down Integration - Category Navigation Flow', () => {
-  it('navigates from All → Category → Group → Subcategory', async () => {
+  it('navigates from All → Category → Group and stops (Story 9.13)', async () => {
     const user = userEvent.setup();
 
     // Story 7.16: drillDownMode='category' to show category section
@@ -250,15 +250,26 @@ describe('Drill-Down Integration - Category Navigation Flow', () => {
       expect(screen.getByText('Produce')).toBeInTheDocument();
     });
 
-    // Step 4: Click Dairy to drill to subcategory level
+    // Story 9.13 AC #1: At group level, cards (showing subcategories) should NOT be clickable
     const dairyCard = screen.getByText('Dairy').closest('button')!;
+
+    // Card should be disabled (not clickable)
+    expect(dairyCard).toBeDisabled();
+
+    // Card should not have cursor-pointer class (visual feedback per AC #4)
+    expect(dairyCard).toHaveClass('cursor-default');
+    expect(dairyCard).not.toHaveClass('cursor-pointer');
+
+    // Story 9.13 AC #4: Should show "No further breakdown available" message
+    expect(screen.getByText('No further breakdown available')).toBeInTheDocument();
+
+    // Clicking the card should NOT navigate (card is disabled)
     await user.click(dairyCard);
 
-    // At subcategory level, no more category children should appear
-    await waitFor(() => {
-      // The category section should not have any drill options
-      expect(screen.queryByText('Drill down by category')).not.toBeInTheDocument();
-    });
+    // Category section should still be visible (we didn't navigate away)
+    expect(screen.getByText('Drill down by category')).toBeInTheDocument();
+    // And we should still see the subcategories (not navigated to subcategory level)
+    expect(screen.getByText('Dairy')).toBeInTheDocument();
   });
 });
 
