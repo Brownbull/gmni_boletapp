@@ -1,0 +1,274 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>4</storyId>
+    <title>Merchant Mapping Infrastructure</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic9/story-9.4-merchant-mapping-infrastructure.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>merchant mapping types and Firestore service</iWant>
+    <soThat>merchant name corrections can be stored and retrieved</soThat>
+    <tasks>
+      <task id="1" ac="1">Create src/types/merchantMapping.ts with MerchantMapping interface</task>
+      <task id="2" ac="2,4,5">Create src/services/merchantMappingService.ts
+        <subtask>normalizeMerchantName() function</subtask>
+        <subtask>saveMerchantMapping() with upsert behavior</subtask>
+        <subtask>getMerchantMappings()</subtask>
+        <subtask>subscribeTOMerchantMappings()</subtask>
+        <subtask>deleteMerchantMapping()</subtask>
+        <subtask>incrementMappingUsage()</subtask>
+      </task>
+      <task id="3" ac="3">Update firestore.rules with merchant_mappings rules</task>
+      <task id="4">Create src/hooks/useMerchantMappings.ts hook</task>
+      <task id="5" ac="6">Create tests/unit/merchantMappingService.test.ts</task>
+      <task id="6" ac="7">Create tests/integration/merchantMapping.test.ts</task>
+      <task id="7">Run all tests and verify passing</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">`MerchantMapping` interface defined in `src/types/merchantMapping.ts`</criterion>
+    <criterion id="2">`merchantMappingService.ts` created following categoryMappingService pattern</criterion>
+    <criterion id="3">Firestore security rules added for `merchant_mappings` collection</criterion>
+    <criterion id="4">`normalizeMerchantName()` function normalizes merchant names for matching</criterion>
+    <criterion id="5">Upsert behavior prevents duplicate mappings for same normalizedMerchant</criterion>
+    <criterion id="6">Unit tests for merchantMappingService</criterion>
+    <criterion id="7">Integration tests for Firestore operations</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/epic9/architecture-epic9.md" relevance="primary">
+        ADR-1: Simplified MerchantMapping Model (no merchantPattern field)
+        Collection path, type definitions, upsert pattern
+      </doc>
+      <doc path="docs/sprint-artifacts/epic9/tech-spec-epic-9.md" relevance="high">
+        Technical specification with service function signatures
+      </doc>
+      <doc path="docs/sprint-artifacts/epic6/story-6.1-category-mapping-infrastructure.md" relevance="high">
+        Reference implementation - follow this pattern closely
+      </doc>
+    </docs>
+    <code>
+      <file path="src/types/categoryMapping.ts" action="REFERENCE" relevance="critical">
+        Pattern to follow for MerchantMapping type
+        Key difference: NO merchantPattern field in MerchantMapping
+        Fields to include: originalMerchant, normalizedMerchant, targetMerchant, confidence, source, usageCount
+      </file>
+      <file path="src/services/categoryMappingService.ts" action="REFERENCE" relevance="critical">
+        Pattern to follow exactly for service functions
+        Lines 31-37: normalizeItemName() - copy pattern for normalizeMerchantName()
+        Lines 43-73: saveCategoryMapping() - copy for saveMerchantMapping() with upsert
+        Lines 78-91: getCategoryMappings() - copy for getMerchantMappings()
+        Lines 96-112: subscribeToCategoryMappings() - copy for subscribeToMerchantMappings()
+        Lines 117-126: deleteCategoryMapping() - copy for deleteMerchantMapping()
+        Lines 131-143: incrementMappingUsage() - copy for incrementMappingUsage()
+      </file>
+      <file path="src/hooks/useCategoryMappings.ts" action="REFERENCE" relevance="critical">
+        Pattern for React hook
+        Copy structure: useState, useEffect subscription, useCallback for save/delete
+        Lines 32-158: Full hook implementation
+      </file>
+      <file path="firestore.rules" action="MODIFY" relevance="high">
+        Add merchant_mappings rules
+        May already be covered by wildcard rule - verify
+      </file>
+      <file path="tests/unit/categoryMappingService.test.ts" action="REFERENCE" relevance="high">
+        Pattern for unit tests
+      </file>
+      <file path="src/types/merchantMapping.ts" action="CREATE" relevance="critical">
+        New file - MerchantMapping, NewMerchantMapping, MerchantMatchResult types
+      </file>
+      <file path="src/services/merchantMappingService.ts" action="CREATE" relevance="critical">
+        New file - CRUD operations for merchant mappings
+      </file>
+      <file path="src/hooks/useMerchantMappings.ts" action="CREATE" relevance="high">
+        New file - React hook for merchant mappings
+      </file>
+      <file path="tests/unit/merchantMappingService.test.ts" action="CREATE" relevance="high">
+        New file - Unit tests
+      </file>
+      <file path="tests/integration/merchantMapping.test.ts" action="CREATE" relevance="high">
+        New file - Integration tests
+      </file>
+    </code>
+    <dependencies>
+      <dependency name="firebase" version="^10.14.1" status="installed">
+        Firestore for merchant mapping storage
+      </dependency>
+      <dependency name="vitest" version="^2.1.9" status="installed">
+        Testing framework
+      </dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">
+      Simplified model: NO merchantPattern field (ADR-1)
+      source field always 'user' for MVP (no AI suggestions)
+      confidence always 1.0 for user-created mappings
+    </constraint>
+    <constraint type="security">
+      User-scoped: artifacts/{appId}/users/{userId}/merchant_mappings/{mappingId}
+      Only authenticated user can access their own mappings
+    </constraint>
+    <constraint type="code-style">
+      TypeScript strict mode
+      Single quotes, no semicolons
+      Follow existing service patterns exactly
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="MerchantMapping">
+      <prop name="id" type="string" optional="true">Firestore document ID</prop>
+      <prop name="originalMerchant" type="string">Original merchant name from AI (for dialog display)</prop>
+      <prop name="normalizedMerchant" type="string">Normalized for fuzzy matching</prop>
+      <prop name="targetMerchant" type="string">User's preferred merchant name</prop>
+      <prop name="confidence" type="number">Always 1.0 for user-set mappings</prop>
+      <prop name="source" type="'user'">'user' only for MVP</prop>
+      <prop name="createdAt" type="Timestamp">Creation timestamp</prop>
+      <prop name="updatedAt" type="Timestamp">Last update timestamp</prop>
+      <prop name="usageCount" type="number">Times auto-applied</prop>
+    </interface>
+    <interface name="NewMerchantMapping">
+      <definition>Omit&lt;MerchantMapping, 'id' | 'createdAt' | 'updatedAt'&gt;</definition>
+    </interface>
+    <interface name="MerchantMatchResult">
+      <prop name="mapping" type="MerchantMapping">The matched mapping</prop>
+      <prop name="score" type="number">Fuse.js score (0 = perfect)</prop>
+      <prop name="confidence" type="number">1 - score</prop>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <standard>Vitest for unit/integration tests</standard>
+      <standard>Firebase emulator for Firestore tests</standard>
+      <standard>Test file naming: *.test.ts</standard>
+    </standards>
+    <locations>
+      <location path="tests/unit/merchantMappingService.test.ts" action="CREATE">
+        Unit tests for service functions
+      </location>
+      <location path="tests/integration/merchantMapping.test.ts" action="CREATE">
+        Integration tests with Firestore emulator
+      </location>
+    </locations>
+    <ideas>
+      <test name="normalizeMerchantName-lowercase">
+        normalizeItemName("UBER EATS") returns "uber eats"
+      </test>
+      <test name="normalizeMerchantName-special-chars">
+        normalizeMerchantName("SUPER-MERC #123") returns "supermerc 123"
+      </test>
+      <test name="saveMerchantMapping-creates-new">
+        saveMerchantMapping creates new document for new normalized name
+      </test>
+      <test name="saveMerchantMapping-updates-existing">
+        saveMerchantMapping updates existing document for same normalized name (upsert)
+      </test>
+      <test name="getMerchantMappings-returns-all">
+        getMerchantMappings returns all mappings for user
+      </test>
+      <test name="deleteMerchantMapping-removes">
+        deleteMerchantMapping removes the document
+      </test>
+      <test name="incrementMappingUsage-increments">
+        incrementMappingUsage increases usageCount by 1
+      </test>
+      <test name="user-isolation-blocked">
+        User cannot access another user's mappings
+      </test>
+    </ideas>
+  </tests>
+
+  <implementationGuide>
+    <step order="1" task="1">
+      Create src/types/merchantMapping.ts
+      - Copy from categoryMapping.ts as starting point
+      - REMOVE merchantPattern field
+      - Rename: originalItem → originalMerchant, normalizedItem → normalizedMerchant
+      - Add targetMerchant field
+      - source type: 'user' only
+      - Export: MerchantMapping, NewMerchantMapping, MerchantMatchResult
+    </step>
+    <step order="2" task="2">
+      Create src/services/merchantMappingService.ts
+      - Copy from categoryMappingService.ts
+      - Update collection path to merchant_mappings
+      - Rename functions: saveCategoryMapping → saveMerchantMapping, etc.
+      - Update normalization function name: normalizeMerchantName
+      - Update query field: normalizedItem → normalizedMerchant
+    </step>
+    <step order="3" task="3">
+      Update firestore.rules
+      - Check if wildcard rule already covers merchant_mappings
+      - If not, add explicit rule for merchant_mappings collection
+    </step>
+    <step order="4" task="4">
+      Create src/hooks/useMerchantMappings.ts
+      - Copy from useCategoryMappings.ts
+      - Update imports and function names
+      - Remove category-specific logic (targetCategory → targetMerchant)
+    </step>
+    <step order="5" task="5,6">
+      Create tests
+      - Unit tests: tests/unit/merchantMappingService.test.ts
+      - Integration tests: tests/integration/merchantMapping.test.ts
+      - Follow categoryMappingService.test.ts patterns
+    </step>
+    <step order="6" task="7">
+      Run all tests: npm run test
+      Verify all existing tests still pass
+    </step>
+  </implementationGuide>
+
+  <codeSnippets>
+    <snippet name="type-definition" language="typescript">
+// src/types/merchantMapping.ts
+import { Timestamp } from 'firebase/firestore';
+
+export interface MerchantMapping {
+  id?: string;
+  originalMerchant: string;      // For dialog display
+  normalizedMerchant: string;    // For fuzzy matching
+  targetMerchant: string;        // User's preferred name
+  confidence: number;            // Always 1.0 for user
+  source: 'user';                // Always 'user' for MVP
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  usageCount: number;
+}
+
+export type NewMerchantMapping = Omit&lt;MerchantMapping, 'id' | 'createdAt' | 'updatedAt'&gt;;
+
+export interface MerchantMatchResult {
+  mapping: MerchantMapping;
+  score: number;
+  confidence: number;
+}
+    </snippet>
+    <snippet name="collection-path" language="typescript">
+// Collection path for merchant mappings
+function getMappingsCollectionPath(appId: string, userId: string): string {
+    return `artifacts/${appId}/users/${userId}/merchant_mappings`;
+}
+    </snippet>
+  </codeSnippets>
+
+  <previousStoryLearnings>
+    <story id="6.1" title="Category Mapping Infrastructure">
+      <learning>categoryMappingService.ts pattern established and working</learning>
+      <learning>useCategoryMappings hook pattern with real-time subscription</learning>
+      <learning>17 unit tests covering all service functions</learning>
+      <learning>Firestore wildcard rule covers subcollections</learning>
+      <learning>Upsert pattern: query for existing, update or create</learning>
+    </story>
+  </previousStoryLearnings>
+</story-context>

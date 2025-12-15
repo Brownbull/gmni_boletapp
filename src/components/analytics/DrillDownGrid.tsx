@@ -16,6 +16,7 @@ import { getQuarterFromMonth } from '../../utils/analyticsHelpers';
 import type { Transaction } from '../../types/transaction';
 import type { TemporalPosition, CategoryPosition } from '../../types/analytics';
 import { TRANSLATIONS, TranslationKey, Language } from '../../utils/translations';
+import { translateCategory } from '../../utils/categoryTranslations';
 
 // ============================================================================
 // Types
@@ -549,9 +550,15 @@ export function DrillDownGrid({
   };
 
   // Handle category card click - dispatch SET_CATEGORY_FILTER
+  // Story 9.13: Only allow clicks if not at the last navigable level
   const handleCategoryClick = (position: CategoryPosition) => {
     dispatch({ type: 'SET_CATEGORY_FILTER', payload: position });
   };
+
+  // Story 9.13: Determine if category cards are clickable
+  // At 'group' level, the cards represent subcategories which are the lowest level
+  // Per AC #1: When viewing at group level, cards should NOT be clickable
+  const isCategoryCardClickable = category.level !== 'group';
 
   // Get empty message based on locale
   const getEmptyMessage = (label: string) => {
@@ -653,25 +660,39 @@ export function DrillDownGrid({
             {t('drillDownByCategory' as TranslationKey, locale)}
           </h3>
 
-          {/* Items with data */}
+          {/* Items with data - Story 9.12: Translate category labels (AC #4) */}
+          {/* Story 9.13: Cards at group level (showing subcategories) are not clickable (AC #1, #4) */}
           {categoryWithData.length > 0 && (
-            <div className={gridClasses}>
-              {categoryWithData.map((child) => (
-                <DrillDownCard
-                  key={`category-${child.label}`}
-                  label={child.label}
-                  value={child.total}
-                  percentage={child.percentage}
-                  onClick={() => handleCategoryClick(child.position)}
-                  colorKey={child.colorKey}
-                  isEmpty={child.isEmpty}
-                  emptyMessage={getEmptyMessage(child.label)}
-                  theme={theme}
-                  locale={locale}
-                  currency={currency}
-                />
-              ))}
-            </div>
+            <>
+              <div className={gridClasses}>
+                {categoryWithData.map((child) => {
+                  const lang = (locale === 'es' ? 'es' : 'en') as Language;
+                  const translatedLabel = translateCategory(child.label, lang);
+                  return (
+                    <DrillDownCard
+                      key={`category-${child.label}`}
+                      label={translatedLabel}
+                      value={child.total}
+                      percentage={child.percentage}
+                      onClick={isCategoryCardClickable ? () => handleCategoryClick(child.position) : undefined}
+                      colorKey={child.colorKey}
+                      isEmpty={child.isEmpty}
+                      emptyMessage={getEmptyMessage(translatedLabel)}
+                      theme={theme}
+                      locale={locale}
+                      currency={currency}
+                      isClickable={isCategoryCardClickable}
+                    />
+                  );
+                })}
+              </div>
+              {/* Story 9.13: Show "No further breakdown" message at lowest level (AC #4) */}
+              {!isCategoryCardClickable && (
+                <p className={`text-sm italic mt-2 text-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                  {locale === 'es' ? 'No hay más desglose disponible' : 'No further breakdown available'}
+                </p>
+              )}
+            </>
           )}
 
           {/* Collapsible empty items section */}
@@ -701,21 +722,26 @@ export function DrillDownGrid({
 
               {showEmptyCategory && (
                 <div className={`${gridClasses} mt-2`}>
-                  {categoryEmpty.map((child) => (
-                    <DrillDownCard
-                      key={`category-${child.label}`}
-                      label={child.label}
-                      value={child.total}
-                      percentage={child.percentage}
-                      onClick={() => handleCategoryClick(child.position)}
-                      colorKey={child.colorKey}
-                      isEmpty={child.isEmpty}
-                      emptyMessage={getEmptyMessage(child.label)}
-                      theme={theme}
-                      locale={locale}
-                      currency={currency}
-                    />
-                  ))}
+                  {categoryEmpty.map((child) => {
+                    const lang = (locale === 'es' ? 'es' : 'en') as Language;
+                    const translatedLabel = translateCategory(child.label, lang);
+                    return (
+                      <DrillDownCard
+                        key={`category-${child.label}`}
+                        label={translatedLabel}
+                        value={child.total}
+                        percentage={child.percentage}
+                        onClick={isCategoryCardClickable ? () => handleCategoryClick(child.position) : undefined}
+                        colorKey={child.colorKey}
+                        isEmpty={child.isEmpty}
+                        emptyMessage={getEmptyMessage(translatedLabel)}
+                        theme={theme}
+                        locale={locale}
+                        currency={currency}
+                        isClickable={isCategoryCardClickable}
+                      />
+                    );
+                  })}
                 </div>
               )}
             </div>

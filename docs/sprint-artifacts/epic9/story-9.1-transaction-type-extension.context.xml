@@ -1,0 +1,217 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>1</storyId>
+    <title>Transaction Type Extension</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic9/story-9.1-transaction-type-extension.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>the Transaction type extended with v2.6.0 prompt fields</iWant>
+    <soThat>all AI-extracted data is stored in Firestore for future features</soThat>
+    <tasks>
+      <task id="1" ac="1,2,3,4,5,6,7,8">Update src/types/transaction.ts
+        <subtask>Add time?: string (HH:mm format)</subtask>
+        <subtask>Add country?: string</subtask>
+        <subtask>Add city?: string</subtask>
+        <subtask>Add currency?: string (ISO 4217)</subtask>
+        <subtask>Add receiptType?: string</subtask>
+        <subtask>Add promptVersion?: string</subtask>
+        <subtask>Add MerchantSource type definition</subtask>
+        <subtask>Add merchantSource?: MerchantSource field</subtask>
+      </task>
+      <task id="2" ac="9">Update scanner service to pass new fields from AI extraction</task>
+      <task id="3" ac="11">Update test fixtures with new fields where appropriate</task>
+      <task id="4" ac="10">Run all tests to verify backward compatibility</task>
+      <task id="5">Run build to verify no TypeScript errors</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">Transaction interface includes `time?: string` (HH:mm format)</criterion>
+    <criterion id="2">Transaction interface includes `country?: string`</criterion>
+    <criterion id="3">Transaction interface includes `city?: string`</criterion>
+    <criterion id="4">Transaction interface includes `currency?: string` (ISO 4217)</criterion>
+    <criterion id="5">Transaction interface includes `receiptType?: string`</criterion>
+    <criterion id="6">Transaction interface includes `promptVersion?: string`</criterion>
+    <criterion id="7">Transaction interface includes `merchantSource?: MerchantSource` type</criterion>
+    <criterion id="8">`MerchantSource` type defined as `'scan' | 'learned' | 'user'`</criterion>
+    <criterion id="9">Scanner service passes new fields from AI extraction to transaction</criterion>
+    <criterion id="10">Existing tests pass (all fields are optional for backward compatibility)</criterion>
+    <criterion id="11">Test fixtures updated to include new fields where appropriate</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/epic9/architecture-epic9.md" relevance="primary">
+        Epic 9 Architecture with ADR-5: Source Tracking for Transparency
+      </doc>
+      <doc path="docs/sprint-artifacts/epic9/tech-spec-epic-9.md" relevance="high">
+        Technical specification with field definitions
+      </doc>
+      <doc path="docs/sprint-artifacts/epic9/prd-epic9-scan-enhancement.md" relevance="high">
+        Product requirements with v2.6.0 field details
+      </doc>
+      <doc path="prompt-testing/prompts/output-schema.ts" relevance="high">
+        AI extraction output schema with v2.6.0 fields
+      </doc>
+    </docs>
+    <code>
+      <file path="src/types/transaction.ts" action="MODIFY" relevance="critical">
+        Main target file - add new fields and MerchantSource type
+        Current fields: id, date, merchant, alias, category, total, items, imageUrls, thumbnailUrl, createdAt, updatedAt
+        Existing pattern: CategorySource type (line 29) - follow this for MerchantSource
+      </file>
+      <file path="src/services/scannerService.ts" action="MODIFY" relevance="high">
+        Scanner service - map AI extraction fields to transaction
+        Note: Actual file name may vary - search for scanner/scan related service
+      </file>
+      <file path="prompt-testing/prompts/output-schema.ts" action="REFERENCE" relevance="high">
+        Reference for v2.6.0 output structure
+        Fields: time, country, city, currency, receiptType, promptVersion
+      </file>
+      <file path="src/types/categoryMapping.ts" action="REFERENCE" relevance="medium">
+        Pattern reference for type definitions
+      </file>
+      <file path="tests/unit/*.test.ts" action="MODIFY" relevance="medium">
+        Update test fixtures to include new fields
+      </file>
+      <file path="tests/integration/*.test.ts" action="MODIFY" relevance="medium">
+        Update integration test fixtures
+      </file>
+    </code>
+    <dependencies>
+      <dependency name="firebase" version="^10.14.1" status="installed">
+        Firestore for storing transactions
+      </dependency>
+      <dependency name="typescript" version="^5.x" status="installed">
+        TypeScript for type definitions
+      </dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="backward-compatibility">
+      ALL new fields MUST be optional (field?: type)
+      Existing transactions without new fields must continue to work
+      No breaking changes to existing Transaction interface consumers
+    </constraint>
+    <constraint type="architecture">
+      MerchantSource type must mirror CategorySource pattern
+      Default merchantSource for new scans: 'scan'
+      promptVersion should reflect actual prompt version used
+    </constraint>
+    <constraint type="code-style">
+      TypeScript strict mode
+      Single quotes for strings
+      No semicolons
+      2-space indentation
+      Named exports pattern
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="MerchantSource">
+      <definition>type MerchantSource = 'scan' | 'learned' | 'user'</definition>
+      <description>Source of merchant name: AI scan, learned mapping, or user edit</description>
+    </interface>
+    <interface name="Transaction (extended)">
+      <prop name="time" type="string" optional="true">Purchase time in HH:mm format (e.g., "15:01")</prop>
+      <prop name="country" type="string" optional="true">Country name (e.g., "United Kingdom")</prop>
+      <prop name="city" type="string" optional="true">City name (e.g., "London")</prop>
+      <prop name="currency" type="string" optional="true">ISO 4217 currency code (e.g., "GBP", "CLP")</prop>
+      <prop name="receiptType" type="string" optional="true">Document type: "receipt" | "invoice" | "ticket"</prop>
+      <prop name="promptVersion" type="string" optional="true">Version of prompt used (e.g., "2.6.0")</prop>
+      <prop name="merchantSource" type="MerchantSource" optional="true">Source of merchant name</prop>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <standard>Vitest for unit tests</standard>
+      <standard>Test file naming: *.test.ts</standard>
+      <standard>Coverage thresholds: 45% lines, 30% branches</standard>
+    </standards>
+    <locations>
+      <location path="tests/unit/" pattern="*.test.ts">
+        Unit tests location
+      </location>
+      <location path="tests/integration/" pattern="*.test.ts">
+        Integration tests location
+      </location>
+    </locations>
+    <ideas>
+      <test name="backward-compat-old-transaction">
+        Transaction without new fields saves and loads successfully
+      </test>
+      <test name="backward-compat-new-transaction">
+        Transaction with all new fields saves and loads successfully
+      </test>
+      <test name="merchantSource-defaults-to-scan">
+        New scanned transactions have merchantSource: 'scan'
+      </test>
+      <test name="type-guards-work-with-new-fields">
+        hasTransactionImages and hasTransactionThumbnail still work
+      </test>
+    </ideas>
+  </tests>
+
+  <implementationGuide>
+    <step order="1" task="1">
+      Update src/types/transaction.ts with new type and fields
+      1. Add MerchantSource type after CategorySource (line ~29)
+      2. Add new optional fields to Transaction interface
+      3. Ensure all fields are optional for backward compatibility
+    </step>
+    <step order="2" task="2">
+      Find and update scanner service
+      1. Locate scanner/scan service (may be in src/services/ or src/utils/)
+      2. Map AI extraction fields to new Transaction fields
+      3. Set merchantSource: 'scan' as default
+      4. Set promptVersion from current prompt version constant
+    </step>
+    <step order="3" task="3">
+      Update test fixtures
+      1. Add new fields to transaction fixtures where appropriate
+      2. Keep some fixtures without new fields to test backward compatibility
+    </step>
+    <step order="4" task="4,5">
+      Verify changes
+      1. Run npm run test to verify all tests pass
+      2. Run npm run build to verify TypeScript compilation
+    </step>
+  </implementationGuide>
+
+  <codeSnippets>
+    <snippet name="type-definition" language="typescript">
+// Add after CategorySource type (around line 29)
+/**
+ * Source of the merchant name.
+ * - 'scan': Merchant name came from Gemini AI scan
+ * - 'learned': Merchant name was auto-applied from a learned mapping
+ * - 'user': Merchant name was manually set by the user
+ */
+export type MerchantSource = 'scan' | 'learned' | 'user';
+
+// Add to Transaction interface
+export interface Transaction {
+    // ... existing fields
+
+    // NEW: v2.6.0 fields (all optional for backward compatibility)
+    time?: string;           // "15:01" format
+    country?: string;        // "United Kingdom"
+    city?: string;           // "London"
+    currency?: string;       // "GBP" (ISO 4217)
+    receiptType?: string;    // "receipt" | "invoice" | "ticket"
+    promptVersion?: string;  // "2.6.0"
+
+    // NEW: Source tracking
+    merchantSource?: MerchantSource;
+}
+    </snippet>
+  </codeSnippets>
+</story-context>
