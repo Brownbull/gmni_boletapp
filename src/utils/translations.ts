@@ -146,6 +146,24 @@ export const TRANSLATIONS = {
         creditAlreadyUsed: "1 credit was already used for this scan",
         // Story 9.11: Transaction card unification & duplicate detection
         potentialDuplicate: "Potential duplicate",
+        // Story 9.14: PWA update notification
+        pwaUpdateAvailable: "New version available!",
+        pwaOfflineReady: "App ready for offline use",
+        pwaUpdate: "Update",
+        // Story 9.14: PWA settings section
+        pwaSettings: "App Installation",
+        installApp: "Install App",
+        installAppHint: "Add to home screen for quick access",
+        installNotAvailable: "Open in browser to install",
+        appAlreadyInstalled: "App is installed on your device",
+        installed: "Installed",
+        installing: "Installing...",
+        install: "Install",
+        updateApp: "Check for Updates",
+        updateAvailable: "New version ready to install",
+        appUpToDate: "You have the latest version",
+        checkingForUpdates: "Checking for updates...",
+        upToDate: "Up to date",
     },
     es: {
         overview: "Resumen", welcome: "Rastreo Inteligente", totalSpent: "Total Gastado",
@@ -294,6 +312,24 @@ export const TRANSLATIONS = {
         creditAlreadyUsed: "Ya usaste 1 crédito en este escaneo",
         // Story 9.11: Transaction card unification & duplicate detection
         potentialDuplicate: "Posible duplicado",
+        // Story 9.14: PWA update notification
+        pwaUpdateAvailable: "¡Nueva versión disponible!",
+        pwaOfflineReady: "App lista para usar sin conexión",
+        pwaUpdate: "Actualizar",
+        // Story 9.14: PWA settings section
+        pwaSettings: "Instalación de App",
+        installApp: "Instalar App",
+        installAppHint: "Agregar a pantalla de inicio para acceso rápido",
+        installNotAvailable: "Abre en navegador para instalar",
+        appAlreadyInstalled: "La app está instalada en tu dispositivo",
+        installed: "Instalada",
+        installing: "Instalando...",
+        install: "Instalar",
+        updateApp: "Buscar Actualizaciones",
+        updateAvailable: "Nueva versión lista para instalar",
+        appUpToDate: "Tienes la última versión",
+        checkingForUpdates: "Buscando actualizaciones...",
+        upToDate: "Actualizada",
     }
 };
 
