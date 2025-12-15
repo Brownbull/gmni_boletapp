@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background circle with night blue -->
+  <circle cx="256" cy="256" r="240" fill="#2d3a4a"/>
+
+  <!-- Receipt paper shape -->
+  <path d="M160 96 L352 96 L352 416 L336 400 L320 416 L304 400 L288 416 L272 400 L256 416 L240 400 L224 416 L208 400 L192 416 L176 400 L160 416 Z"
+        fill="#f5f0e8"
+        stroke="#5b8fa8"
+        stroke-width="4"/>
+
+  <!-- Receipt lines -->
+  <rect x="192" y="144" width="128" height="16" rx="4" fill="#5b8fa8"/>
+  <rect x="192" y="184" width="96" height="12" rx="4" fill="#a3c5e0"/>
+  <rect x="192" y="216" width="112" height="12" rx="4" fill="#a3c5e0"/>
+  <rect x="192" y="248" width="80" height="12" rx="4" fill="#a3c5e0"/>
+
+  <!-- Divider line -->
+  <line x1="192" y1="288" x2="320" y2="288" stroke="#7d9b5f" stroke-width="4" stroke-dasharray="8,4"/>
+
+  <!-- Total amount -->
+  <rect x="192" y="312" width="64" height="16" rx="4" fill="#7d9b5f"/>
+  <rect x="272" y="312" width="48" height="16" rx="4" fill="#e8a87c"/>
+
+  <!-- Scan indicator / checkmark -->
+  <circle cx="352" cy="352" r="48" fill="#7d9b5f"/>
+  <path d="M328 352 L344 368 L376 336"
+        stroke="#f5f0e8"
+        stroke-width="8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        fill="none"/>
+</svg>

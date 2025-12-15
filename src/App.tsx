@@ -13,6 +13,7 @@ import { TrendsView } from './views/TrendsView';
 import { HistoryView } from './views/HistoryView';
 import { SettingsView } from './views/SettingsView';
 import { Nav } from './components/Nav';
+import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
 import { AnalyticsProvider } from './contexts/AnalyticsContext';
 import { analyzeReceipt, ReceiptType } from './services/gemini';
 import { SupportedCurrency } from './services/userPreferencesService';
@@ -753,6 +754,9 @@ function App() {
                     {toastMessage.text}
                 </div>
             )}
+
+            {/* Story 9.14: PWA update notification */}
+            <PWAUpdatePrompt />
         </div>
     );
 }
