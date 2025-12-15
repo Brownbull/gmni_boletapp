@@ -1,0 +1,187 @@
+<story-context id="epic9/story-9.14" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>9.14</storyId>
+    <title>PWA Installation Support</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic9/story-9.14-pwa-installation-support.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>mobile user</asA>
+    <iWant>to install Boletapp on my phone's home screen</iWant>
+    <soThat>I can access it like a native app without opening a browser</soThat>
+    <tasks>
+      - Install vite-plugin-pwa dependency
+      - Configure VitePWA plugin in vite.config.ts
+      - Create PWA icons (192x192, 512x512)
+      - Create Apple touch icon
+      - Create maskable icon variant
+      - Configure web manifest with app metadata
+      - Test service worker registration
+      - Test offline functionality
+      - (Optional) Add update notification hook and UI
+      - Test installation on Android device
+      - Test installation on iOS device
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="1" title="Service Worker Registration">
+      - Service worker is registered on app load
+      - Service worker caches static assets (JS, CSS, images)
+      - App works offline for previously loaded pages
+      - Service worker updates automatically when new version is deployed
+    </ac>
+    <ac id="2" title="Web App Manifest">
+      - manifest.webmanifest is generated with proper metadata
+      - App name: "Boletapp"
+      - Short name: "Boletapp"
+      - Theme color matches app theme
+      - Background color for splash screen
+      - Display mode: "standalone" (hides browser UI)
+      - Start URL: "/" (root of app)
+    </ac>
+    <ac id="3" title="App Icons">
+      - Icons provided in multiple sizes: 192x192, 512x512 (minimum required)
+      - Icons are properly referenced in manifest
+      - Maskable icon variant for Android adaptive icons
+      - Apple touch icon for iOS
+    </ac>
+    <ac id="4" title="Install Prompt">
+      - On mobile, browser shows native "Add to Home Screen" prompt
+      - No custom install banner needed (browser handles it)
+      - After installation, app opens in standalone mode
+    </ac>
+    <ac id="5" title="Update Notification">
+      - When new version is available, user is notified
+      - User can refresh to get the latest version
+      - Updates happen automatically on next app load
+    </ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="https://vite-pwa-org.netlify.app/">Vite PWA Plugin Documentation</doc>
+    </docs>
+    <code>
+      <file path="vite.config.ts" purpose="Add VitePWA plugin configuration">
+        Main build configuration. Add VitePWA() to plugins array.
+      </file>
+      <file path="package.json" purpose="Add vite-plugin-pwa dependency">
+        Add: "vite-plugin-pwa": "^0.17.x" to devDependencies
+      </file>
+      <file path="public/favicon.ico" purpose="Existing favicon - reference for icon design">
+        Use as basis for PWA icons, or create new ones.
+      </file>
+      <file path="index.html" purpose="May need apple-touch-icon link">
+        Add: link rel="apple-touch-icon" href="/apple-touch-icon.png"
+      </file>
+    </code>
+    <dependencies>
+      <dep name="vite-plugin-pwa" version="^0.17.x">PWA plugin for Vite</dep>
+      <dep name="workbox" note="Included with vite-plugin-pwa">Service worker library</dep>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="icons">Must provide at minimum 192x192 and 512x512 PNG icons</constraint>
+    <constraint type="manifest">Display mode must be "standalone" for app-like experience</constraint>
+    <constraint type="caching">Don't cache API calls - only static assets</constraint>
+    <constraint type="firebase">Be careful with Firebase caching - Firestore should use network-first</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="VitePWA Configuration">
+      <structure>
+        VitePWA({
+          registerType: 'autoUpdate',
+          manifest: { name, short_name, theme_color, icons, ... },
+          workbox: { globPatterns, runtimeCaching }
+        })
+      </structure>
+    </interface>
+    <interface name="usePWAUpdate hook (optional)">
+      <signature>const { needRefresh, update, close } = usePWAUpdate()</signature>
+      <purpose>Hook for showing update notification to user</purpose>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      - Manual testing on Android and iOS devices
+      - Verify service worker registers in DevTools
+      - Verify offline functionality
+      - Verify installation creates home screen icon
+    </standards>
+    <locations>
+      - Chrome DevTools > Application > Service Workers
+      - Chrome DevTools > Application > Manifest
+      - Lighthouse PWA audit
+    </locations>
+    <ideas>
+      - Use Lighthouse to verify PWA criteria
+      - Test: Install on Android, verify standalone mode
+      - Test: Install on iOS Safari, verify Add to Home Screen
+      - Test: Offline mode - load app, go offline, verify cached pages work
+    </ideas>
+  </tests>
+
+  <viteConfigExample>
+    <![CDATA[
+// vite.config.ts
+import { VitePWA } from 'vite-plugin-pwa';
+
+export default defineConfig({
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
+      manifest: {
+        name: 'Boletapp',
+        short_name: 'Boletapp',
+        description: 'Smart expense tracking with AI receipt scanning',
+        theme_color: '#4F46E5',
+        background_color: '#ffffff',
+        display: 'standalone',
+        icons: [
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
+          }
+        ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Don't cache API calls - only static assets
+        runtimeCaching: []
+      }
+    })
+  ]
+});
+    ]]>
+  </viteConfigExample>
+
+  <iconRequirements>
+    <icon size="192x192" path="public/pwa-192x192.png" purpose="Standard PWA icon"/>
+    <icon size="512x512" path="public/pwa-512x512.png" purpose="Large PWA icon"/>
+    <icon size="512x512" path="public/pwa-512x512.png" purpose="maskable" note="Can reuse 512 with safe zone"/>
+    <icon size="180x180" path="public/apple-touch-icon.png" purpose="iOS home screen"/>
+    <note>Use pwa-asset-generator to create all sizes from single source image</note>
+  </iconRequirements>
+</story-context>

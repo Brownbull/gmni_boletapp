@@ -2,6 +2,7 @@ import React from 'react';
 import { Globe, DollarSign, Calendar, Moon, Palette, Download, Trash2, ArrowRightLeft, Loader2, BookMarked, MapPin, Store, Receipt } from 'lucide-react';
 import { CategoryMappingsList } from '../components/CategoryMappingsList';
 import { MerchantMappingsList } from '../components/MerchantMappingsList';
+import { PWASettingsSection } from '../components/PWASettingsSection';
 import { CategoryMapping } from '../types/categoryMapping';
 import { MerchantMapping } from '../types/merchantMapping';
 import { LocationSelect } from '../components/LocationSelect';
@@ -315,6 +316,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     />
                 )}
             </div>
+
+            {/* Story 9.14: PWA Installation Section */}
+            <PWASettingsSection t={t} theme={theme as 'light' | 'dark'} />
 
             {/* Download data action button */}
             <div className="p-4 rounded-xl border flex justify-between items-center" style={cardStyle}>
