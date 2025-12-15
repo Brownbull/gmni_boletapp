@@ -2,31 +2,38 @@
   <!-- Background circle with night blue -->
   <circle cx="256" cy="256" r="240" fill="#2d3a4a"/>
 
-  <!-- Receipt paper shape -->
-  <path d="M160 96 L352 96 L352 416 L336 400 L320 416 L304 400 L288 416 L272 400 L256 416 L240 400 L224 416 L208 400 L192 416 L176 400 L160 416 Z"
+  <!-- Receipt paper shape with torn bottom edge -->
+  <path d="M144 80 L368 80 L368 400 L352 384 L336 400 L320 384 L304 400 L288 384 L272 400 L256 384 L240 400 L224 384 L208 400 L192 384 L176 400 L160 384 L144 400 Z"
         fill="#f5f0e8"
         stroke="#5b8fa8"
-        stroke-width="4"/>
+        stroke-width="3"/>
 
-  <!-- Receipt lines -->
-  <rect x="192" y="144" width="128" height="16" rx="4" fill="#5b8fa8"/>
-  <rect x="192" y="184" width="96" height="12" rx="4" fill="#a3c5e0"/>
-  <rect x="192" y="216" width="112" height="12" rx="4" fill="#a3c5e0"/>
-  <rect x="192" y="248" width="80" height="12" rx="4" fill="#a3c5e0"/>
+  <!-- Receipt header/store name line -->
+  <rect x="176" y="112" width="160" height="20" rx="4" fill="#5b8fa8"/>
+
+  <!-- Receipt detail lines -->
+  <rect x="176" y="152" width="120" height="12" rx="3" fill="#a3c5e0"/>
+  <rect x="176" y="176" width="140" height="12" rx="3" fill="#a3c5e0"/>
+  <rect x="176" y="200" width="100" height="12" rx="3" fill="#a3c5e0"/>
 
   <!-- Divider line -->
-  <line x1="192" y1="288" x2="320" y2="288" stroke="#7d9b5f" stroke-width="4" stroke-dasharray="8,4"/>
+  <line x1="176" y1="232" x2="336" y2="232" stroke="#7d9b5f" stroke-width="3" stroke-dasharray="8,4"/>
 
-  <!-- Total amount -->
-  <rect x="192" y="312" width="64" height="16" rx="4" fill="#7d9b5f"/>
-  <rect x="272" y="312" width="48" height="16" rx="4" fill="#e8a87c"/>
+  <!-- Total line -->
+  <rect x="176" y="252" width="72" height="16" rx="4" fill="#7d9b5f"/>
+  <rect x="280" y="252" width="56" height="16" rx="4" fill="#e8a87c"/>
 
-  <!-- Scan indicator / checkmark -->
-  <circle cx="352" cy="352" r="48" fill="#7d9b5f"/>
-  <path d="M328 352 L344 368 L376 336"
-        stroke="#f5f0e8"
-        stroke-width="8"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        fill="none"/>
+  <!-- Dollar sign / money symbol -->
+  <circle cx="256" cy="320" r="32" fill="#7d9b5f" opacity="0.3"/>
+  <text x="256" y="332" text-anchor="middle" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="#7d9b5f">$</text>
+
+  <!-- Camera lens overlay (bottom right) - representing photo capture -->
+  <circle cx="380" cy="380" r="64" fill="#5b8fa8"/>
+  <circle cx="380" cy="380" r="48" fill="#2d3a4a"/>
+  <circle cx="380" cy="380" r="32" fill="#5b8fa8"/>
+  <circle cx="380" cy="380" r="20" fill="#f5f0e8"/>
+  <!-- Camera lens highlight -->
+  <circle cx="372" cy="372" r="6" fill="white" opacity="0.7"/>
+  <!-- Camera body hint -->
+  <rect x="340" y="320" width="80" height="16" rx="4" fill="#5b8fa8"/>
 </svg>

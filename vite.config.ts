@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Boletapp',
-        short_name: 'Boletapp',
+        name: 'Castify',
+        short_name: 'Castify',
         description: 'Smart expense tracking with AI receipt scanning',
         theme_color: '#2d3a4a', // Night blue - matches Normal theme primary
         background_color: '#f5f0e8', // Warm cream - matches Normal theme bg
