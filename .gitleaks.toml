@@ -61,6 +61,9 @@ paths = [
   '''\.github/workflows/.*\.yml$''',
   # BMAD config files (contain file paths, not secrets)
   '''\.bmad/_cfg/.*\.csv$''',
+  # Firebase messaging service worker (requires client-side Firebase config)
+  # Firebase API keys are protected by security rules, not secrecy
+  '''public/firebase-messaging-sw\.js$''',
 ]
 
 # Regex patterns for content to ignore (placeholder values)
