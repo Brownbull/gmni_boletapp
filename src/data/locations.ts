@@ -210,17 +210,35 @@ export const CITIES_BY_COUNTRY: Record<string, string[]> = {
 };
 
 /**
- * Get cities for a given country
+ * Get cities for a given country, sorted alphabetically
  * Returns empty array if country not found
+ * Story 9.17: Ensures cities are always displayed in alphabetical order
  */
 export function getCitiesForCountry(country: string): string[] {
-    return CITIES_BY_COUNTRY[country] || [];
+    const cities = CITIES_BY_COUNTRY[country] || [];
+    return [...cities].sort((a, b) => a.localeCompare(b));
 }
 
 /**
  * Check if a city exists in a country
  */
 export function isCityInCountry(city: string, country: string): boolean {
-    const cities = getCitiesForCountry(country);
+    const cities = CITIES_BY_COUNTRY[country] || [];
     return cities.includes(city);
+}
+
+/**
+ * Find a city with normalized case (case-insensitive matching)
+ * Useful for AI-scanned locations where OCR might return "VILLARRICA" instead of "Villarrica"
+ * Story 9.17: AC #8 - Case-insensitive city matching
+ *
+ * @param country - The country to search in
+ * @param cityInput - The city name to find (case-insensitive)
+ * @returns The properly-cased city name if found, or null if not found
+ */
+export function findCityWithNormalizedCase(country: string, cityInput: string): string | null {
+    const cities = CITIES_BY_COUNTRY[country];
+    if (!cities) return null;
+    const normalized = cityInput.toLowerCase().trim();
+    return cities.find(c => c.toLowerCase() === normalized) || null;
 }
