@@ -9,7 +9,7 @@
  */
 
 import React, { useEffect, useRef, useCallback } from 'react'
-import { X, BookMarked } from 'lucide-react'
+import { X, BookMarked, Loader2 } from 'lucide-react'
 
 /**
  * Item to learn mapping
@@ -35,6 +35,8 @@ export interface CategoryLearningPromptProps {
   t: (key: string) => string
   /** Current theme for styling */
   theme?: 'light' | 'dark'
+  /** Story 9.16: Loading state during async save operation */
+  isLoading?: boolean
 }
 
 /**
@@ -70,6 +72,7 @@ export const CategoryLearningPrompt: React.FC<CategoryLearningPromptProps> = ({
   onClose,
   t,
   theme = 'light',
+  isLoading = false,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
@@ -248,17 +251,28 @@ export const CategoryLearningPrompt: React.FC<CategoryLearningPromptProps> = ({
 
           {/* Action buttons */}
           <div className="flex flex-col gap-3">
+            {/* Story 9.16: Confirm button with loading state (AC #1, #2, #3) */}
             <button
               onClick={onConfirm}
-              className="w-full py-3 px-4 rounded-xl text-white font-semibold shadow-md transition-transform hover:scale-[1.01] active:scale-[0.99]"
+              disabled={isLoading}
+              className="w-full py-3 px-4 rounded-xl text-white font-semibold shadow-md transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
               style={{ background: 'linear-gradient(135deg, var(--accent), #6366f1)' }}
             >
-              {t('learnCategoryConfirm')}
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 size={20} className="animate-spin" />
+                  {t('savingPreference')}
+                </span>
+              ) : (
+                t('learnCategoryConfirm')
+              )}
             </button>
 
+            {/* Story 9.16: Skip button disabled during loading (AC #2) */}
             <button
               onClick={handleClose}
-              className="w-full py-3 px-4 rounded-xl border font-medium transition-colors"
+              disabled={isLoading}
+              className="w-full py-3 px-4 rounded-xl border font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               style={{
                 borderColor: isDark ? '#475569' : '#e2e8f0',
                 color: 'var(--primary)',
