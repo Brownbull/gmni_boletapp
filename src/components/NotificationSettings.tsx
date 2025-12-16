@@ -31,6 +31,8 @@ export function NotificationSettings({
   appId,
   onShowToast
 }: NotificationSettingsProps) {
+  const [isSendingTest, setIsSendingTest] = useState(false);
+
   const {
     isSupported,
     permission,
@@ -87,21 +89,35 @@ export function NotificationSettings({
     return null;
   }
 
-  const [isSendingTest, setIsSendingTest] = useState(false);
-
   const isEnabled = permission === 'granted' && token;
   const isDenied = permission === 'denied';
 
   const handleTestNotification = async () => {
     setIsSendingTest(true);
     try {
-      // Show a local notification directly (doesn't require server)
-      if ('Notification' in window && Notification.permission === 'granted') {
+      // Use unique tag with timestamp so each test shows a new notification
+      const uniqueTag = `gastify-test-${Date.now()}`;
+
+      // Use Service Worker for notifications (required on Android)
+      // The Notification constructor doesn't work on Android PWAs
+      if ('serviceWorker' in navigator && Notification.permission === 'granted') {
+        const registration = await navigator.serviceWorker.ready;
+        await registration.showNotification(t('testNotificationTitle'), {
+          body: t('testNotificationBody'),
+          icon: '/pwa-192x192.png',
+          badge: '/pwa-192x192.png',
+          tag: uniqueTag
+        } as NotificationOptions);
+        if (onShowToast) {
+          onShowToast(t('testNotificationSent'));
+        }
+      } else if ('Notification' in window && Notification.permission === 'granted') {
+        // Fallback for desktop browsers without service worker
         new Notification(t('testNotificationTitle'), {
           body: t('testNotificationBody'),
           icon: '/pwa-192x192.png',
           badge: '/pwa-192x192.png',
-          tag: 'gastify-test-notification'
+          tag: uniqueTag
         });
         if (onShowToast) {
           onShowToast(t('testNotificationSent'));
