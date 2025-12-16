@@ -16,6 +16,7 @@ import { getQuarterFromMonth } from '../../utils/analyticsHelpers';
 import type { Transaction } from '../../types/transaction';
 import type { TemporalPosition, CategoryPosition } from '../../types/analytics';
 import { TRANSLATIONS, TranslationKey, Language } from '../../utils/translations';
+import { translateCategory } from '../../utils/categoryTranslations';
 
 // ============================================================================
 // Types
@@ -653,24 +654,28 @@ export function DrillDownGrid({
             {t('drillDownByCategory' as TranslationKey, locale)}
           </h3>
 
-          {/* Items with data */}
+          {/* Items with data - Story 9.12: Translate category labels (AC #4) */}
           {categoryWithData.length > 0 && (
             <div className={gridClasses}>
-              {categoryWithData.map((child) => (
-                <DrillDownCard
-                  key={`category-${child.label}`}
-                  label={child.label}
-                  value={child.total}
-                  percentage={child.percentage}
-                  onClick={() => handleCategoryClick(child.position)}
-                  colorKey={child.colorKey}
-                  isEmpty={child.isEmpty}
-                  emptyMessage={getEmptyMessage(child.label)}
-                  theme={theme}
-                  locale={locale}
-                  currency={currency}
-                />
-              ))}
+              {categoryWithData.map((child) => {
+                const lang = (locale === 'es' ? 'es' : 'en') as Language;
+                const translatedLabel = translateCategory(child.label, lang);
+                return (
+                  <DrillDownCard
+                    key={`category-${child.label}`}
+                    label={translatedLabel}
+                    value={child.total}
+                    percentage={child.percentage}
+                    onClick={() => handleCategoryClick(child.position)}
+                    colorKey={child.colorKey}
+                    isEmpty={child.isEmpty}
+                    emptyMessage={getEmptyMessage(translatedLabel)}
+                    theme={theme}
+                    locale={locale}
+                    currency={currency}
+                  />
+                );
+              })}
             </div>
           )}
 
@@ -701,21 +706,25 @@ export function DrillDownGrid({
 
               {showEmptyCategory && (
                 <div className={`${gridClasses} mt-2`}>
-                  {categoryEmpty.map((child) => (
-                    <DrillDownCard
-                      key={`category-${child.label}`}
-                      label={child.label}
-                      value={child.total}
-                      percentage={child.percentage}
-                      onClick={() => handleCategoryClick(child.position)}
-                      colorKey={child.colorKey}
-                      isEmpty={child.isEmpty}
-                      emptyMessage={getEmptyMessage(child.label)}
-                      theme={theme}
-                      locale={locale}
-                      currency={currency}
-                    />
-                  ))}
+                  {categoryEmpty.map((child) => {
+                    const lang = (locale === 'es' ? 'es' : 'en') as Language;
+                    const translatedLabel = translateCategory(child.label, lang);
+                    return (
+                      <DrillDownCard
+                        key={`category-${child.label}`}
+                        label={translatedLabel}
+                        value={child.total}
+                        percentage={child.percentage}
+                        onClick={() => handleCategoryClick(child.position)}
+                        colorKey={child.colorKey}
+                        isEmpty={child.isEmpty}
+                        emptyMessage={getEmptyMessage(translatedLabel)}
+                        theme={theme}
+                        locale={locale}
+                        currency={currency}
+                      />
+                    );
+                  })}
                 </div>
               )}
             </div>

@@ -141,3 +141,22 @@ export async function incrementMappingUsage(
         updatedAt: serverTimestamp()
     });
 }
+
+/**
+ * Update a category mapping's target category
+ * Story 9.7 enhancement: Edit functionality for Settings UI
+ */
+export async function updateCategoryMappingTarget(
+    db: Firestore,
+    userId: string,
+    appId: string,
+    mappingId: string,
+    newTargetCategory: string
+): Promise<void> {
+    const collectionPath = getMappingsCollectionPath(appId, userId);
+    const docRef = doc(db, collectionPath, mappingId);
+    return updateDoc(docRef, {
+        targetCategory: newTargetCategory,
+        updatedAt: serverTimestamp()
+    });
+}

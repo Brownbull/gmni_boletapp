@@ -1,0 +1,151 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>2</storyId>
+    <title>Transaction Item Category Fields</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic9/story-9.2-transaction-item-category-fields.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>TransactionItem category and subcategory fields properly typed</iWant>
+    <soThat>item-level categorization is stored and displayed correctly</soThat>
+    <tasks>
+      <task id="1" ac="1">Review output-schema.ts for ItemCategory type definition</task>
+      <task id="2" ac="1,2">Update TransactionItem interface with proper typing</task>
+      <task id="3" ac="3">Update scanner to map item categories from AI extraction</task>
+      <task id="4" ac="4">Display item categories in Edit view</task>
+      <task id="5" ac="5">Run all tests to verify no regressions</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">TransactionItem `category` field uses ItemCategory type from output-schema</criterion>
+    <criterion id="2">TransactionItem `subcategory` remains as optional string</criterion>
+    <criterion id="3">Scanner passes item category/subcategory from AI extraction</criterion>
+    <criterion id="4">Edit view displays item categories (read-only initially)</criterion>
+    <criterion id="5">Existing item tests pass</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/epic9/tech-spec-epic-9.md" relevance="primary">
+        Technical specification for item category fields
+      </doc>
+      <doc path="docs/sprint-artifacts/epic9/architecture-epic9.md" relevance="high">
+        Architecture document with field definitions
+      </doc>
+      <doc path="prompt-testing/prompts/output-schema.ts" relevance="critical">
+        ItemCategory type definition from AI extraction
+      </doc>
+    </docs>
+    <code>
+      <file path="src/types/transaction.ts" action="MODIFY" relevance="critical">
+        TransactionItem interface - add proper category typing
+        Current: category?: string; subcategory?: string;
+        Target: category?: ItemCategory; subcategory?: string;
+      </file>
+      <file path="prompt-testing/prompts/output-schema.ts" action="REFERENCE" relevance="critical">
+        Source of ItemCategory type definition
+        May need to export or copy type to src/types/
+      </file>
+      <file path="src/views/EditView.tsx" action="MODIFY" relevance="high">
+        Display item categories in item list
+        Lines 8-14: TransactionItem interface (local copy - sync with types)
+        Show category next to item name
+      </file>
+      <file path="src/services/scannerService.ts" action="MODIFY" relevance="high">
+        Map AI extraction item categories to TransactionItem
+      </file>
+    </code>
+    <dependencies>
+      <dependency name="typescript" version="^5.x" status="installed">
+        TypeScript for type definitions
+      </dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="backward-compatibility">
+      category field should remain optional
+      Existing items without category should continue to work
+    </constraint>
+    <constraint type="type-safety">
+      ItemCategory type should be shared between prompt-testing and src/
+      Avoid duplicate type definitions where possible
+    </constraint>
+    <constraint type="code-style">
+      TypeScript strict mode
+      Single quotes for strings
+      No semicolons
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="TransactionItem (updated)">
+      <prop name="name" type="string">Item name from receipt</prop>
+      <prop name="qty" type="number" optional="true">Quantity</prop>
+      <prop name="price" type="number">Item price</prop>
+      <prop name="category" type="ItemCategory | string" optional="true">Item category from AI or user</prop>
+      <prop name="subcategory" type="string" optional="true">Sub-category (free-form text)</prop>
+      <prop name="categorySource" type="CategorySource" optional="true">Source of category assignment</prop>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <standard>Vitest for unit tests</standard>
+      <standard>Coverage thresholds: 45% lines, 30% branches</standard>
+    </standards>
+    <ideas>
+      <test name="item-with-category-saves">
+        TransactionItem with category field saves to Firestore correctly
+      </test>
+      <test name="item-without-category-works">
+        TransactionItem without category continues to work (backward compat)
+      </test>
+      <test name="category-displays-in-edit-view">
+        Item category is visible in Edit view item list
+      </test>
+    </ideas>
+  </tests>
+
+  <implementationGuide>
+    <step order="1" task="1">
+      Review prompt-testing/prompts/output-schema.ts
+      1. Find ItemCategory type or ITEM_CATEGORIES constant
+      2. Understand the category values used by AI extraction
+    </step>
+    <step order="2" task="2">
+      Update TransactionItem in src/types/transaction.ts
+      1. Import or define ItemCategory type
+      2. Update category field typing (may keep as string for flexibility)
+      3. Ensure subcategory stays as optional string
+    </step>
+    <step order="3" task="3">
+      Update scanner service
+      1. Map items[].category from AI extraction to TransactionItem.category
+      2. Map items[].subcategory if present
+    </step>
+    <step order="4" task="4">
+      Update EditView.tsx
+      1. Sync local TransactionItem interface with src/types/
+      2. Display category in item list (small badge or text)
+      3. Show subcategory if present
+    </step>
+    <step order="5" task="5">
+      Run tests: npm run test
+    </step>
+  </implementationGuide>
+
+  <previousStoryLearnings>
+    <story id="9.1" title="Transaction Type Extension">
+      <learning>MerchantSource type added following CategorySource pattern</learning>
+      <learning>All new fields are optional for backward compatibility</learning>
+      <learning>Transaction interface extended with time, country, city, currency, receiptType, promptVersion</learning>
+    </story>
+  </previousStoryLearnings>
+</story-context>

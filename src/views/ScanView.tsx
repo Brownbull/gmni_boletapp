@@ -1,3 +1,8 @@
+/**
+ * @deprecated Story 9.9: ScanView is deprecated in favor of unified transaction flow in EditView.
+ * The scan functionality has been integrated directly into EditView for new transactions.
+ * This file is kept for backward compatibility during transition and may be removed in a future release.
+ */
 import React from 'react';
 import { ArrowLeft, Loader2, Tag } from 'lucide-react';
 

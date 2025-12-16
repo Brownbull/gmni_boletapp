@@ -1,0 +1,254 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>5</storyId>
+    <title>Merchant Fuzzy Matching</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic9/story-9.5-merchant-fuzzy-matching.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>fuzzy matching for merchant names</iWant>
+    <soThat>similar merchant names are recognized and corrected automatically</soThat>
+    <tasks>
+      <task id="1" ac="1,2,3">Create src/services/merchantMatcherService.ts
+        <subtask>Configure Fuse.js with threshold 0.3 (configurable)</subtask>
+        <subtask>Implement minimum 3-char normalized length guard</subtask>
+        <subtask>Implement findMerchantMatch() function</subtask>
+      </task>
+      <task id="2" ac="4,5,6">Integrate with scanner service
+        <subtask>Call findMerchantMatch() after AI extraction</subtask>
+        <subtask>Apply matched merchant name to transaction</subtask>
+        <subtask>Set merchantSource: 'learned' when matched</subtask>
+      </task>
+      <task id="3" ac="7">Increment mapping usage count on auto-apply</task>
+      <task id="4" ac="8">Create tests/unit/merchantMatcherService.test.ts
+        <subtask>Test threshold boundary (0.3 exactly, 0.31 rejects)</subtask>
+        <subtask>Test minimum length guard</subtask>
+        <subtask>Test exact and fuzzy matches</subtask>
+      </task>
+      <task id="5">Run all tests and verify passing</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">Fuse.js configured for merchant matching (default threshold: 0.3, configurable)</criterion>
+    <criterion id="2">`findMerchantMatch()` returns best matching mapping or null</criterion>
+    <criterion id="3">Minimum 3-character normalized length guard to prevent false matches</criterion>
+    <criterion id="4">Scanner checks for merchant match after AI extraction</criterion>
+    <criterion id="5">Matched merchant name applied to transaction</criterion>
+    <criterion id="6">Transaction marked with `merchantSource: 'learned'`</criterion>
+    <criterion id="7">Mapping usage count incremented on auto-apply</criterion>
+    <criterion id="8">Unit tests for fuzzy matching logic including threshold boundary tests</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/epic9/architecture-epic9.md" relevance="primary">
+        ADR-2: Configurable Fuzzy Threshold
+        ADR-3: Minimum Normalized Length Guard
+        Implementation patterns and code snippets
+      </doc>
+      <doc path="docs/sprint-artifacts/epic9/tech-spec-epic-9.md" relevance="high">
+        Technical specification with matching logic
+      </doc>
+      <doc path="docs/sprint-artifacts/epic6/story-6.2-fuzzy-matching-engine.md" relevance="high">
+        Reference implementation from category matching
+      </doc>
+    </docs>
+    <code>
+      <file path="src/utils/categoryMatcher.ts" action="REFERENCE" relevance="critical">
+        Pattern to follow for Fuse.js configuration
+        Lines 26-34: fuseOptions with threshold, keys, weights
+        Lines 49-60: normalizeItemName() function
+        Difference: merchant matching uses threshold 0.3 (stricter) and only normalizedMerchant key
+      </file>
+      <file path="src/services/merchantMappingService.ts" action="USE" relevance="high">
+        normalizeMerchantName() function from Story 9.4
+        incrementMappingUsage() for usage tracking
+      </file>
+      <file path="src/types/merchantMapping.ts" action="USE" relevance="high">
+        MerchantMapping, MerchantMatchResult types from Story 9.4
+      </file>
+      <file path="src/services/merchantMatcherService.ts" action="CREATE" relevance="critical">
+        New file - Fuse.js matching logic for merchants
+      </file>
+      <file path="tests/unit/merchantMatcherService.test.ts" action="CREATE" relevance="high">
+        New file - Unit tests for matching logic
+      </file>
+    </code>
+    <dependencies>
+      <dependency name="fuse.js" version="^7.1.0" status="installed">
+        Fuzzy matching library (already installed from Epic 6)
+      </dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="matching">
+      Default threshold: 0.3 (stricter than category's 0.6)
+      Threshold should be a parameter for configurability
+      Minimum normalized length: 3 characters
+    </constraint>
+    <constraint type="architecture">
+      Scanner calls matcher after AI extraction
+      Matcher returns result, scanner applies to transaction
+      Fire-and-forget pattern for incrementMappingUsage()
+    </constraint>
+    <constraint type="code-style">
+      TypeScript strict mode
+      Single quotes, no semicolons
+      Follow existing categoryMatcher patterns
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="findMerchantMatch">
+      <signature>findMerchantMatch(merchantName: string, mappings: MerchantMapping[], threshold?: number): MerchantMatchResult | null</signature>
+      <param name="merchantName">Merchant name from AI extraction to match</param>
+      <param name="mappings">User's merchant mappings to search</param>
+      <param name="threshold">Optional threshold override (default 0.3)</param>
+      <returns>MerchantMatchResult if match found within threshold, null otherwise</returns>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <standard>Vitest for unit tests</standard>
+      <standard>Test threshold boundary conditions precisely</standard>
+    </standards>
+    <locations>
+      <location path="tests/unit/merchantMatcherService.test.ts" action="CREATE">
+        Unit tests for matching logic
+      </location>
+    </locations>
+    <ideas>
+      <test name="threshold-boundary-exact">
+        Match with score exactly 0.3 should be accepted
+      </test>
+      <test name="threshold-boundary-reject">
+        Match with score 0.31 should be rejected (returns null)
+      </test>
+      <test name="min-length-guard-rejects-short">
+        Normalized name under 3 chars returns null without searching
+      </test>
+      <test name="min-length-guard-accepts-3plus">
+        Normalized name with 3+ chars proceeds to search
+      </test>
+      <test name="exact-match-returns-perfect-score">
+        Exact match returns score: 0, confidence: 1
+      </test>
+      <test name="fuzzy-match-similar-names">
+        "SUPERMERC JUMBO" matches "supermerc jumbo 123" with good score
+      </test>
+      <test name="no-match-returns-null">
+        Completely different name returns null
+      </test>
+      <test name="empty-mappings-returns-null">
+        Empty mappings array returns null immediately
+      </test>
+      <test name="configurable-threshold">
+        Custom threshold parameter overrides default 0.3
+      </test>
+    </ideas>
+  </tests>
+
+  <implementationGuide>
+    <step order="1" task="1">
+      Create src/services/merchantMatcherService.ts
+      1. Import Fuse from 'fuse.js'
+      2. Import MerchantMapping, MerchantMatchResult from types
+      3. Import normalizeMerchantName from merchantMappingService
+      4. Define constants: DEFAULT_THRESHOLD = 0.3, MIN_NORMALIZED_LENGTH = 3
+      5. Define fuseOptions with threshold, includeScore, keys: ['normalizedMerchant']
+      6. Implement findMerchantMatch() with length guard and Fuse.js search
+    </step>
+    <step order="2" task="2">
+      Integrate with scanner service
+      1. Locate scanner service (src/services/ or src/utils/)
+      2. After AI extraction, get user's merchant mappings
+      3. Call findMerchantMatch(aiMerchant, mappings)
+      4. If match found:
+         - transaction.merchant = match.mapping.targetMerchant
+         - transaction.merchantSource = 'learned'
+    </step>
+    <step order="3" task="3">
+      Add usage tracking
+      - Call incrementMappingUsage() when match is applied
+      - Fire-and-forget (don't await, don't block)
+    </step>
+    <step order="4" task="4">
+      Create tests/unit/merchantMatcherService.test.ts
+      - Follow categoryMatcher.test.ts patterns
+      - Test all threshold boundary conditions
+      - Test min length guard
+      - Test various match scenarios
+    </step>
+    <step order="5" task="5">
+      Run tests: npm run test
+    </step>
+  </implementationGuide>
+
+  <codeSnippets>
+    <snippet name="matcher-implementation" language="typescript">
+// src/services/merchantMatcherService.ts
+import Fuse from 'fuse.js';
+import { MerchantMapping, MerchantMatchResult } from '../types/merchantMapping';
+import { normalizeMerchantName } from './merchantMappingService';
+
+const DEFAULT_THRESHOLD = 0.3;
+const MIN_NORMALIZED_LENGTH = 3;
+
+const fuseOptions: Fuse.IFuseOptions&lt;MerchantMapping&gt; = {
+  includeScore: true,
+  threshold: DEFAULT_THRESHOLD,
+  keys: ['normalizedMerchant']
+};
+
+export function findMerchantMatch(
+  merchantName: string,
+  mappings: MerchantMapping[],
+  threshold: number = DEFAULT_THRESHOLD
+): MerchantMatchResult | null {
+  const normalized = normalizeMerchantName(merchantName);
+
+  // Guard: minimum length to prevent short string false matches
+  if (normalized.length &lt; MIN_NORMALIZED_LENGTH) {
+    return null;
+  }
+
+  if (mappings.length === 0) {
+    return null;
+  }
+
+  const fuse = new Fuse(mappings, { ...fuseOptions, threshold });
+  const results = fuse.search(normalized);
+
+  if (results.length > 0 &amp;&amp; results[0].score !== undefined &amp;&amp; results[0].score &lt;= threshold) {
+    return {
+      mapping: results[0].item,
+      score: results[0].score,
+      confidence: 1 - results[0].score
+    };
+  }
+  return null;
+}
+    </snippet>
+  </codeSnippets>
+
+  <previousStoryLearnings>
+    <story id="9.4" title="Merchant Mapping Infrastructure">
+      <learning>MerchantMapping type created (simplified, no merchantPattern)</learning>
+      <learning>normalizeMerchantName() function available in merchantMappingService</learning>
+      <learning>incrementMappingUsage() available for usage tracking</learning>
+    </story>
+    <story id="6.2" title="Fuzzy Matching Engine">
+      <learning>Fuse.js v7.1.0 installed and working</learning>
+      <learning>Category matcher uses threshold 0.6, merchant uses stricter 0.3</learning>
+      <learning>30 unit tests covering matching scenarios</learning>
+    </story>
+  </previousStoryLearnings>
+</story-context>
