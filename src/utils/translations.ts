@@ -172,6 +172,21 @@ export const TRANSLATIONS = {
         appUpToDate: "You have the latest version",
         checkingForUpdates: "Checking for updates...",
         upToDate: "Up to date",
+        // Story 9.15: Subcategory learning & management
+        itemSubcat: "Subcategory",
+        learnSubcategoryTitle: "Learn These Subcategories?",
+        learnSubcategoryMessage: "Remember these subcategories for future receipts?",
+        learnSubcategoryConfirm: "Yes, Remember All",
+        learnSubcategorySkip: "Not Now",
+        learnSubcategorySuccess: "Got it! I'll remember these subcategories.",
+        learnedSubcategories: "Learned Subcategories",
+        learnedSubcategoriesEmpty: "No learned subcategories yet",
+        learnedSubcategoriesHint: "Edit an item's subcategory to start learning",
+        deleteSubcategoryMappingConfirm: "Remove this learned subcategory?",
+        editSubcategoryMapping: "Edit Subcategory",
+        editMapping: "Edit",
+        subcategory: "Subcategory",
+        enterSubcategory: "Enter subcategory"
     },
     es: {
         overview: "Resumen", welcome: "Rastreo Inteligente", totalSpent: "Total Gastado",
@@ -346,6 +361,21 @@ export const TRANSLATIONS = {
         appUpToDate: "Tienes la última versión",
         checkingForUpdates: "Buscando actualizaciones...",
         upToDate: "Actualizada",
+        // Story 9.15: Subcategory learning & management
+        itemSubcat: "Subcategoría",
+        learnSubcategoryTitle: "¿Aprender Estas Subcategorías?",
+        learnSubcategoryMessage: "¿Recordar estas subcategorías para futuras boletas?",
+        learnSubcategoryConfirm: "Sí, Recordar Todas",
+        learnSubcategorySkip: "Ahora No",
+        learnSubcategorySuccess: "¡Entendido! Recordaré estas subcategorías.",
+        learnedSubcategories: "Subcategorías Aprendidas",
+        learnedSubcategoriesEmpty: "Aún no hay subcategorías aprendidas",
+        learnedSubcategoriesHint: "Edita la subcategoría de un item para empezar a aprender",
+        deleteSubcategoryMappingConfirm: "¿Eliminar esta subcategoría aprendida?",
+        editSubcategoryMapping: "Editar Subcategoría",
+        editMapping: "Editar",
+        subcategory: "Subcategoría",
+        enterSubcategory: "Ingresa subcategoría"
     }
 };
 
