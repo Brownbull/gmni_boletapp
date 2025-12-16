@@ -5,6 +5,7 @@
  * Shows manual install instructions when automatic install isn't available.
  */
 
+import { useState } from 'react';
 import { Smartphone, RefreshCw, Check, Download, MoreVertical, Share } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { usePWAUpdate } from '../hooks/usePWAUpdate';
@@ -12,6 +13,8 @@ import { usePWAUpdate } from '../hooks/usePWAUpdate';
 interface PWASettingsSectionProps {
   t: (key: string) => string;
   theme: 'light' | 'dark';
+  /** Optional callback to show toast messages */
+  onShowToast?: (message: string) => void;
 }
 
 // Detect browser and platform for install instructions
@@ -63,9 +66,12 @@ function getInstallInstructions(t: (key: string) => string): { steps: string[]; 
 /**
  * PWA Settings Section - Install and Update buttons for Settings view
  */
-export function PWASettingsSection({ t, theme }: PWASettingsSectionProps) {
+export function PWASettingsSection({ t, theme, onShowToast }: PWASettingsSectionProps) {
   const { canInstall, isInstalled, isInstalling, install } = usePWAInstall();
   const { needRefresh, offlineReady, checking, update, checkForUpdates } = usePWAUpdate();
+
+  // State for showing "up to date" feedback temporarily after check
+  const [justChecked, setJustChecked] = useState(false);
 
   const isDark = theme === 'dark';
 
@@ -187,21 +193,35 @@ export function PWASettingsSection({ t, theme }: PWASettingsSectionProps) {
             <p className="text-sm font-medium" style={{ color: 'var(--primary)' }}>
               {t('updateApp')}
             </p>
-            <p className="text-xs" style={{ color: 'var(--secondary)' }}>
+            <p className="text-xs" style={{ color: justChecked ? 'var(--success)' : 'var(--secondary)' }}>
               {checking
                 ? t('checkingForUpdates')
                 : needRefresh
                   ? t('updateAvailable')
-                  : offlineReady
-                    ? t('appUpToDate')
-                    : t('tapToCheckUpdates')}
+                  : justChecked
+                    ? t('noUpdatesFound')
+                    : offlineReady
+                      ? t('appUpToDate')
+                      : t('tapToCheckUpdates')}
             </p>
           </div>
           <div className="flex items-center gap-2">
             {/* Check for Updates button - always visible when not checking and no update ready */}
             {!needRefresh && (
               <button
-                onClick={checkForUpdates}
+                onClick={async () => {
+                  setJustChecked(false);
+                  const foundUpdate = await checkForUpdates();
+                  if (!foundUpdate) {
+                    // No update found - show feedback
+                    setJustChecked(true);
+                    if (onShowToast) {
+                      onShowToast(t('noUpdatesFound'));
+                    }
+                    // Clear the "just checked" state after 5 seconds
+                    setTimeout(() => setJustChecked(false), 5000);
+                  }
+                }}
                 disabled={checking}
                 className="min-h-11 px-4 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors"
                 style={getButtonStyle('primary')}
