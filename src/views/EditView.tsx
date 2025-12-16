@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ArrowLeft, Trash2, Plus, Check, ChevronDown, ChevronUp, BookMarked, X, Camera, Loader2 } from 'lucide-react';
 import { CategoryBadge } from '../components/CategoryBadge';
+import { CategoryCombobox } from '../components/CategoryCombobox';
 import { ImageViewer } from '../components/ImageViewer';
 import { CategoryLearningPrompt } from '../components/CategoryLearningPrompt';
 import { SubcategoryLearningPrompt } from '../components/SubcategoryLearningPrompt';
@@ -66,6 +67,8 @@ interface EditViewProps {
     distinctAliases: string[];
     theme: string;
     currency: string;
+    /** Current language for translations (Story 9.15: category combobox) */
+    language: Language;
     t: (key: string) => string;
     storeCategories: string[];
     formatCurrency: (amount: number, currency: string) => string;
@@ -111,6 +114,7 @@ export const EditView: React.FC<EditViewProps> = ({
     distinctAliases,
     theme,
     currency,
+    language,
     t,
     storeCategories,
     formatCurrency,
@@ -885,22 +889,31 @@ export const EditView: React.FC<EditViewProps> = ({
                                         onChange={e => handleUpdateItem(i, 'name', e.target.value)}
                                         placeholder={t('itemName')}
                                     />
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="number"
-                                            className="w-24 p-2 border rounded-lg text-sm"
-                                            style={inputStyle}
-                                            value={item.price}
-                                            onChange={e => handleUpdateItem(i, 'price', e.target.value)}
-                                        />
-                                        <input
-                                            className="flex-1 p-2 border rounded-lg text-sm"
-                                            style={inputStyle}
-                                            value={item.category || ''}
-                                            onChange={e => handleUpdateItem(i, 'category', e.target.value)}
-                                            placeholder={t('itemCat')}
-                                        />
-                                    </div>
+                                    <input
+                                        type="number"
+                                        className="w-full p-2 border rounded-lg text-sm"
+                                        style={inputStyle}
+                                        value={item.price}
+                                        onChange={e => handleUpdateItem(i, 'price', e.target.value)}
+                                        placeholder={t('price')}
+                                    />
+                                    {/* Story 9.15: Searchable category combobox (AC #2.1) */}
+                                    <CategoryCombobox
+                                        value={item.category || ''}
+                                        onChange={(value) => handleUpdateItem(i, 'category', value)}
+                                        language={language}
+                                        theme={theme as 'light' | 'dark'}
+                                        placeholder={t('itemCat')}
+                                        ariaLabel={t('itemCat')}
+                                    />
+                                    {/* Story 9.15: Subcategory input field (AC #2) */}
+                                    <input
+                                        className="w-full p-2 border rounded-lg text-sm"
+                                        style={inputStyle}
+                                        value={item.subcategory || ''}
+                                        onChange={e => handleUpdateItem(i, 'subcategory', e.target.value)}
+                                        placeholder={t('itemSubcat')}
+                                    />
                                     <div className="flex justify-end gap-2">
                                         <button
                                             onClick={() => handleDeleteItem(i)}

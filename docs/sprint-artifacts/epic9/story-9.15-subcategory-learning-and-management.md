@@ -31,8 +31,9 @@ This story adds the full subcategory lifecycle: display → edit → learn → a
 
 ## Acceptance Criteria
 
-- [ ] **AC #1:** Subcategory displayed alongside category in EditView item list
-- [ ] **AC #2:** Subcategory editable when editing an item (free-form text input)
+- [x] **AC #1:** Subcategory displayed alongside category in EditView item list
+- [x] **AC #2:** Subcategory editable when editing an item (free-form text input)
+- [x] **AC #2.1:** Category (item group) editable via searchable combobox dropdown with all 31 ITEM_CATEGORIES, sorted alphabetically
 - [ ] **AC #3:** Subcategory changes tracked with `subcategorySource` field (scan | learned | user)
 - [ ] **AC #4:** Learning prompt asks to remember subcategory when user changes it
 - [ ] **AC #5:** Learned subcategories auto-apply on subsequent scans (same item name)
@@ -59,10 +60,17 @@ This story adds the full subcategory lifecycle: display → edit → learn → a
 - [ ] Create `src/hooks/useSubcategoryMappings.ts` hook
 
 ### Phase 2: EditView Integration
-- [ ] Add subcategory display in EditView item cards (AC: #1)
-- [ ] Add subcategory input field in item edit form (AC: #2)
-- [ ] Track subcategory changes for learning prompt
-- [ ] Update CategoryBadge to show subcategorySource indicator
+- [x] Add subcategory display in EditView item cards (AC: #1)
+- [x] Add subcategory input field in item edit form (AC: #2)
+- [x] Create searchable category combobox component (AC: #2.1)
+  - [x] Import ITEM_CATEGORIES from categoryTranslations (src-local source)
+  - [x] Sort categories alphabetically
+  - [x] Support type-to-search filtering
+  - [x] Theme-aware styling (light/dark)
+  - [x] Mobile-friendly touch targets (44px min)
+- [x] Replace text input with category combobox in EditView item edit form
+- [x] Track subcategory changes for learning prompt
+- [x] Update CategoryBadge to show subcategorySource indicator
 
 ### Phase 3: Learning Prompt
 - [ ] Extend CategoryLearningPrompt to handle subcategories (AC: #4)
@@ -134,10 +142,10 @@ interface TransactionItem {
 **EditView Item Edit Form:**
 ```
 ┌─────────────────────────────────────────────────┐
-│ Name:     [LECHE ENTERA               ]        │
-│ Price:    [$1,290                     ]        │
-│ Category: [Dairy & Eggs          ▼   ]        │
-│ Subcategory: [Dairy              ▼   ]  ← NEW │
+│ Name:        [LECHE ENTERA               ]     │
+│ Price:       [$1,290                     ]     │
+│ Category:    [🔍 Dairy & Eggs        ▼  ]     │  ← Searchable combobox (31 categories, alphabetical)
+│ Subcategory: [Dairy                     ]     │  ← Free-form text input
 └─────────────────────────────────────────────────┘
 ```
 
@@ -251,3 +259,4 @@ This follows the hierarchy: Store Category → Item Category → Subcategory →
 |------|---------|-------------|
 | 2025-12-13 | 1.0 | Story drafted |
 | 2025-12-13 | 1.1 | Renumbered from 9.12 to 9.15 |
+| 2025-12-16 | 1.2 | Added AC #2.1: Searchable category combobox (alphabetical) per user feedback |
