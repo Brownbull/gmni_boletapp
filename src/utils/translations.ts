@@ -192,7 +192,31 @@ export const TRANSLATIONS = {
         subcategory: "Subcategory",
         enterSubcategory: "Enter subcategory",
         // Story 9.16: Loading state for learning prompts
-        savingPreference: "Saving..."
+        savingPreference: "Saving...",
+        // Story 9.18: Push notifications
+        notifications: "Notifications",
+        pushNotifications: "Push Notifications",
+        notificationsHint: "Get alerts about spending, budgets, and reminders",
+        notificationsEnabledHint: "You'll receive notifications from Gastify",
+        notificationsDeniedHint: "Notifications are blocked. Enable in browser settings.",
+        notificationsEnabled: "Notifications enabled!",
+        notificationsDisabled: "Notifications disabled",
+        enableNotifications: "Enable Notifications",
+        disableNotifications: "Disable Notifications",
+        notificationsDenied: "Blocked",
+        notificationsDeniedTitle: "Notifications Blocked",
+        notificationsDeniedInstructions: "To enable notifications, go to your browser settings and allow notifications for this site.",
+        enabled: "Enabled",
+        enable: "Enable",
+        loading: "Loading...",
+        testNotification: "Test Notification",
+        testNotificationHint: "Send a test notification to verify setup",
+        testNotificationTitle: "Test from Gastify",
+        testNotificationBody: "Notifications are working correctly!",
+        testNotificationSent: "Test notification sent!",
+        testNotificationFailed: "Failed to send test notification",
+        sending: "Sending...",
+        test: "Test"
     },
     es: {
         overview: "Resumen", welcome: "Rastreo Inteligente", totalSpent: "Total Gastado",
@@ -387,7 +411,31 @@ export const TRANSLATIONS = {
         subcategory: "Subcategoría",
         enterSubcategory: "Ingresa subcategoría",
         // Story 9.16: Loading state for learning prompts
-        savingPreference: "Guardando..."
+        savingPreference: "Guardando...",
+        // Story 9.18: Push notifications
+        notifications: "Notificaciones",
+        pushNotifications: "Notificaciones Push",
+        notificationsHint: "Recibe alertas sobre gastos, presupuestos y recordatorios",
+        notificationsEnabledHint: "Recibirás notificaciones de Gastify",
+        notificationsDeniedHint: "Las notificaciones están bloqueadas. Actívalas en ajustes del navegador.",
+        notificationsEnabled: "¡Notificaciones activadas!",
+        notificationsDisabled: "Notificaciones desactivadas",
+        enableNotifications: "Activar Notificaciones",
+        disableNotifications: "Desactivar Notificaciones",
+        notificationsDenied: "Bloqueado",
+        notificationsDeniedTitle: "Notificaciones Bloqueadas",
+        notificationsDeniedInstructions: "Para activar las notificaciones, ve a los ajustes de tu navegador y permite las notificaciones para este sitio.",
+        enabled: "Activadas",
+        enable: "Activar",
+        loading: "Cargando...",
+        testNotification: "Probar Notificación",
+        testNotificationHint: "Envía una notificación de prueba para verificar",
+        testNotificationTitle: "Prueba de Gastify",
+        testNotificationBody: "¡Las notificaciones funcionan correctamente!",
+        testNotificationSent: "¡Notificación de prueba enviada!",
+        testNotificationFailed: "Error al enviar notificación de prueba",
+        sending: "Enviando...",
+        test: "Probar"
     }
 };
 
