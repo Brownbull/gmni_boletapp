@@ -4,11 +4,13 @@ import { CategoryMappingsList } from '../components/CategoryMappingsList';
 import { MerchantMappingsList } from '../components/MerchantMappingsList';
 import { SubcategoryMappingsList } from '../components/SubcategoryMappingsList';
 import { PWASettingsSection } from '../components/PWASettingsSection';
+import { NotificationSettings } from '../components/NotificationSettings';
 import { CategoryMapping } from '../types/categoryMapping';
 import { MerchantMapping } from '../types/merchantMapping';
 import { SubcategoryMapping } from '../types/subcategoryMapping';
 import { LocationSelect } from '../components/LocationSelect';
 import { SupportedCurrency, SUPPORTED_CURRENCIES } from '../services/userPreferencesService';
+import { Firestore } from 'firebase/firestore';
 
 interface SettingsViewProps {
     lang: string;
@@ -52,6 +54,11 @@ interface SettingsViewProps {
     subcategoryMappingsLoading?: boolean;
     onDeleteSubcategoryMapping?: (mappingId: string) => Promise<void>;
     onUpdateSubcategoryMapping?: (mappingId: string, newSubcategory: string) => Promise<void>;
+    // Story 9.18: Push notifications settings
+    db?: Firestore | null;
+    userId?: string | null;
+    appId?: string | null;
+    onShowToast?: (message: string) => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -96,6 +103,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     subcategoryMappingsLoading = false,
     onDeleteSubcategoryMapping,
     onUpdateSubcategoryMapping,
+    // Story 9.18: Push notifications settings
+    db = null,
+    userId = null,
+    appId = null,
+    onShowToast,
 }) => {
     // Story 7.12: Theme-aware styling using CSS variables (AC #4, #8)
     const isDark = theme === 'dark';
@@ -349,6 +361,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
             {/* Story 9.14: PWA Installation Section */}
             <PWASettingsSection t={t} theme={theme as 'light' | 'dark'} />
+
+            {/* Story 9.18: Push Notifications Settings */}
+            <NotificationSettings
+                t={t}
+                theme={theme as 'light' | 'dark'}
+                db={db}
+                userId={userId}
+                appId={appId}
+                onShowToast={onShowToast}
+            />
 
             {/* Download data action button */}
             <div className="p-4 rounded-xl border flex justify-between items-center" style={cardStyle}>

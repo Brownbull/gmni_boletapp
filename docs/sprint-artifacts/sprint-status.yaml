@@ -173,7 +173,7 @@ development_status:
   9-15-subcategory-learning-and-management: done  # 5 points - Subcategory learning, editing, and Settings UI - Code Review APPROVED 2025-12-16
   9-16-learning-prompt-loading-state: done  # 1 point - Bug fix: prevent duplicate transactions from double-clicking - Code Review APPROVED 2025-12-16
   9-17-location-select-alphabetical-cities: done  # 0.5 points - Code Review APPROVED 2025-12-16
-  9-18-pwa-push-notifications: ready-for-dev  # 5 points - PWA push notifications with Firebase Cloud Messaging - Context ready 2025-12-16
+  9-18-pwa-push-notifications: done  # 5 points - PWA push notifications with Firebase Cloud Messaging - Completed 2025-12-16
   9-19-history-transaction-filters: ready-for-dev  # 5 points - Temporal, category, and location filters for History view - Context ready 2025-12-16
   9-99-epic-release-deployment: ready-for-dev  # 2 points - Production deployment, E2E verification - Story created 2025-12-13
   epic-9-retrospective: optional
