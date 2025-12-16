@@ -1,0 +1,143 @@
+<story-context id="epic9/story-9.13" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>9.13</storyId>
+    <title>Drill-Down Analytics Validation and Fix</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic9/story-9.13-drilldown-analytics-validation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user viewing analytics</asA>
+    <iWant>the drill-down navigation to stop at the correct level and show accurate totals</iWant>
+    <soThat>I can trust the analytics data and not see incorrect calculations</soThat>
+    <tasks>
+      - Investigate current drill-down behavior in DrillDownGrid.tsx
+      - Identify root cause of incorrect totals
+      - Fix aggregation logic if needed
+      - Implement drill-down level limiting
+      - Add visual feedback for non-clickable levels
+      - Add/update unit tests for aggregation logic
+      - Manual testing and verification
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="1" title="Stop Drill-Down at Subcategory Level">
+      - When viewing at group level, cards should NOT be clickable for further drill-down
+      - When viewing at subcategory level, there should be no further drill-down available
+      - The drill-down cards at the lowest level should display as non-clickable (visual indicator)
+    </ac>
+    <ac id="2" title="Correct Totals at Each Level">
+      - Total displayed in header must match sum of all visible cards
+      - When drilling into a group, the total should equal the sum of subcategories within that group
+      - When drilling into a subcategory, the total should equal the sum of items with that subcategory
+    </ac>
+    <ac id="3" title="Validate Aggregation Logic">
+      - Add validation that group total = sum of subcategory totals
+      - Add validation that category total = sum of group totals
+      - If totals don't match, investigate and fix the calculation logic
+    </ac>
+    <ac id="4" title="Visual Feedback for Non-Clickable Levels">
+      - At the lowest drill-down level, cards should not have hover effects
+      - At the lowest level, cursor should not show pointer
+      - Optionally show "No further breakdown available" message
+    </ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/epic7/tech-spec-epic-7.md">Epic 7 Tech Spec - Analytics navigation architecture</doc>
+      <doc path="docs/sprint-artifacts/epic7/architecture-epic7.md">Epic 7 Architecture - AnalyticsContext patterns</doc>
+    </docs>
+    <code>
+      <file path="src/hooks/useAnalyticsNavigation.ts" purpose="Navigation state management - check drill-down logic">
+        Hook that manages analytics navigation state. Check how category drill-down levels are handled.
+        Key functions: setTemporalLevel, setCategoryFilter
+      </file>
+      <file path="src/components/analytics/DrillDownGrid.tsx" purpose="Card rendering and click handlers - main focus">
+        Renders drill-down cards. Check:
+        - onClick handler - should it be disabled at lowest level?
+        - How it determines clickability
+        - Card styling for clickable vs non-clickable
+      </file>
+      <file path="src/components/analytics/DrillDownCard.tsx" purpose="Individual card component">
+        Card component receiving onClick. May need isClickable prop for styling.
+      </file>
+      <file path="src/contexts/AnalyticsContext.tsx" purpose="Central state management">
+        Contains CategoryLevel type and navigation state. Check what levels are defined.
+      </file>
+      <file path="src/types/analytics.ts" purpose="Type definitions">
+        CategoryLevel = 'all' | 'category' | 'group' | 'subcategory'
+        Check hierarchy definition.
+      </file>
+      <file path="src/views/TrendsView.tsx" purpose="Main analytics view">
+        Uses DrillDownGrid. Check how totals are calculated and passed.
+      </file>
+    </code>
+    <dependencies>
+      <dep name="None">Standalone bug fix - no story dependencies</dep>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="hierarchy">
+      Category hierarchy (drilling down):
+      1. All Categories (root)
+      2. Category (transaction-level: Supermarket, Restaurant)
+      3. Group (item-level: Dairy and Eggs, Produce)
+      4. Subcategory (item-level: Dairy, Cheese, Milk) - LOWEST LEVEL
+    </constraint>
+    <constraint type="behavior">Drill-down should STOP at subcategory level</constraint>
+    <constraint type="math">Totals must be mathematically consistent across all levels</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="CategoryLevel">
+      <definition>type CategoryLevel = 'all' | 'category' | 'group' | 'subcategory'</definition>
+      <purpose>Defines the drill-down hierarchy levels</purpose>
+    </interface>
+    <interface name="DrillDownCard props">
+      <structure>{ label, amount, onClick?, isClickable? }</structure>
+      <purpose>Card needs to know if it should be clickable</purpose>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      - Unit tests for aggregation logic
+      - Test totals match at each hierarchy level
+      - Test drill-down stops at subcategory
+    </standards>
+    <locations>
+      - tests/unit/analytics/DrillDownGrid.test.tsx (existing - may need updates)
+      - tests/unit/analytics/analyticsReducer.test.tsx (existing)
+    </locations>
+    <ideas>
+      - Test: At subcategory level, onClick is not called
+      - Test: Sum of group totals equals category total
+      - Test: Sum of subcategory totals equals group total
+      - Test: Cards at lowest level have non-clickable styling
+    </ideas>
+  </tests>
+
+  <bugDescription>
+    <currentBehavior>
+      When drilling down to the group level (e.g., "Condiments" showing $23,980),
+      clicking on it navigates to another level showing a completely different
+      total (e.g., $83,212).
+    </currentBehavior>
+    <expectedBehavior>
+      Either:
+      1. Group level should be the last clickable level, OR
+      2. Clicking on a group should show subcategories with totals that sum to the group total
+    </expectedBehavior>
+    <rootCauseHypotheses>
+      1. Click handler allows drill-down beyond subcategory level
+      2. Aggregation function calculates wrong totals for nested levels
+      3. Orphan items without proper group/subcategory assignments
+    </rootCauseHypotheses>
+  </bugDescription>
+</story-context>

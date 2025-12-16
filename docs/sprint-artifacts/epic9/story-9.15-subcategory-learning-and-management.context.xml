@@ -1,0 +1,187 @@
+<story-context id="epic9/story-9.15" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>9.15</storyId>
+    <title>Subcategory Learning and Management</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic9/story-9.15-subcategory-learning-and-management.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to view, edit, and learn item subcategories during receipt scanning</iWant>
+    <soThat>future scans automatically apply my preferred subcategory classifications</soThat>
+    <tasks>
+      <!-- Phase 1: Data Model -->
+      - Add subcategorySource to TransactionItem type
+      - Create src/types/subcategoryMapping.ts with SubcategoryMapping interface
+      - Create src/services/subcategoryMappingService.ts with CRUD operations
+      - Create src/hooks/useSubcategoryMappings.ts hook
+
+      <!-- Phase 2: EditView Integration -->
+      - Add subcategory display in EditView item cards
+      - Add subcategory input field in item edit form
+      - Track subcategory changes for learning prompt
+      - Update CategoryBadge to show subcategorySource indicator
+
+      <!-- Phase 3: Learning Prompt -->
+      - Extend learning system to handle subcategories
+      - Save subcategory mappings when user confirms learning
+      - Auto-apply learned subcategories during scan processing
+
+      <!-- Phase 4: Settings UI -->
+      - Create SubcategoryMappingsList.tsx component
+      - Add "Learned Subcategories" section to SettingsView
+      - Wire up through App.tsx
+
+      <!-- Phase 5: Testing -->
+      - Add EN/ES translations
+      - Create unit tests for services and components
+      - Run full test suite
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="1">Subcategory displayed alongside category in EditView item list</ac>
+    <ac id="2">Subcategory editable when editing an item (free-form text input)</ac>
+    <ac id="3">Subcategory changes tracked with subcategorySource field (scan | learned | user)</ac>
+    <ac id="4">Learning prompt asks to remember subcategory when user changes it</ac>
+    <ac id="5">Learned subcategories auto-apply on subsequent scans (same item name)</ac>
+    <ac id="6">"Learned Subcategories" section added to Settings</ac>
+    <ac id="7">Settings UI allows view, edit, and delete of subcategory mappings</ac>
+    <ac id="8">Subcategory mappings show usage count</ac>
+    <ac id="9">Theme-aware styling (light/dark modes)</ac>
+    <ac id="10">WCAG 2.1 Level AA accessibility compliance</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/epic9/tech-spec-epic-9.md">Epic 9 Tech Spec - Transaction types and patterns</doc>
+      <doc path="docs/sprint-artifacts/epic9/architecture-epic9.md">Epic 9 Architecture - Learning pattern details</doc>
+    </docs>
+    <code>
+      <!-- Existing patterns to follow -->
+      <file path="src/types/categoryMapping.ts" purpose="PATTERN: Data model pattern to follow">
+        CategoryMapping interface structure. Follow this for SubcategoryMapping.
+      </file>
+      <file path="src/services/categoryMappingService.ts" purpose="PATTERN: Service layer pattern">
+        CRUD operations for category mappings. Follow for subcategory mappings.
+      </file>
+      <file path="src/hooks/useCategoryMappings.ts" purpose="PATTERN: Hook pattern">
+        Real-time subscription hook. Follow for useSubcategoryMappings.
+      </file>
+      <file path="src/components/CategoryMappingsList.tsx" purpose="PATTERN: Settings UI pattern">
+        List component with edit/delete. Follow for SubcategoryMappingsList.
+      </file>
+      <file path="src/components/MerchantMappingsList.tsx" purpose="PATTERN: Updated pattern with edit">
+        Latest pattern with edit dialog. This is the most current pattern to follow.
+      </file>
+      <file path="src/components/CategoryLearningPrompt.tsx" purpose="PATTERN: Learning prompt">
+        Dialog for learning category. May extend for subcategory or create separate.
+      </file>
+
+      <!-- Files to modify -->
+      <file path="src/types/transaction.ts" purpose="Add subcategorySource to TransactionItem">
+        interface TransactionItem {
+          category?: ItemCategory | string;
+          subcategory?: string;
+          categorySource?: CategorySource;
+          subcategorySource?: CategorySource; // ADD THIS
+        }
+      </file>
+      <file path="src/views/EditView.tsx" purpose="Add subcategory edit field and display">
+        Item editing form. Add subcategory input field.
+      </file>
+      <file path="src/views/SettingsView.tsx" purpose="Add Learned Subcategories section">
+        Add new section between Learned Groups and Learned Merchants.
+      </file>
+      <file path="src/App.tsx" purpose="Wire up subcategory mappings">
+        Subscribe to subcategory mappings, pass to views.
+      </file>
+      <file path="src/components/CategoryBadge.tsx" purpose="Show subcategorySource indicator">
+        Add visual indicator for learned subcategories.
+      </file>
+    </code>
+    <dependencies>
+      <dep name="Story 6.5">Category Mappings UI (pattern to follow)</dep>
+      <dep name="Story 9.7">Merchant Mappings UI (latest pattern)</dep>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="pattern">Follow existing category/merchant mapping patterns</constraint>
+    <constraint type="learning">Learn subcategory separately from category</constraint>
+    <constraint type="input">Subcategory should be free-form with suggestions</constraint>
+    <constraint type="order">Settings layout: Learned Groups, Learned Subcategories, Learned Merchants</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="SubcategoryMapping">
+      <![CDATA[
+interface SubcategoryMapping {
+  id: string;
+  originalItem: string;      // e.g., "LECHE ENTERA"
+  normalizedItem: string;    // e.g., "leche entera"
+  targetSubcategory: string; // e.g., "Dairy"
+  confidence: number;        // 1.0 for user
+  source: 'user' | 'ai';
+  usageCount: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+      ]]>
+    </interface>
+    <interface name="Firestore Path">
+      <path>artifacts/{appId}/users/{userId}/subcategory_mappings/{mappingId}</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      - Unit tests for subcategoryMappingService.ts
+      - Unit tests for useSubcategoryMappings.ts hook
+      - Unit tests for SubcategoryMappingsList.tsx
+      - Update EditView tests for subcategory editing
+      - Integration tests for full learning flow
+    </standards>
+    <locations>
+      - tests/unit/subcategoryMappingService.test.ts (NEW)
+      - tests/unit/components/SubcategoryMappingsList.test.tsx (NEW)
+      - tests/unit/hooks/useSubcategoryMappings.test.ts (NEW)
+    </locations>
+    <ideas>
+      - Test: Saving subcategory mapping creates Firestore document
+      - Test: Auto-apply finds matching item and applies subcategory
+      - Test: Settings list shows all mappings with usage counts
+      - Test: Edit dialog updates targetSubcategory
+      - Test: Delete removes mapping from Firestore
+    </ideas>
+  </tests>
+
+  <uiLayouts>
+    <layout name="EditView Item Card">
+      <![CDATA[
+┌─────────────────────────────────────────────────┐
+│ LECHE ENTERA                          $1,290   │
+│ [Dairy & Eggs] [Dairy] [Learned ✓]             │
+│   ↑ category     ↑ subcategory   ↑ indicator   │
+└─────────────────────────────────────────────────┘
+      ]]>
+    </layout>
+    <layout name="Settings - Learned Subcategories">
+      <![CDATA[
+┌─────────────────────────────────────────────────┐
+│ 📑 Learned Subcategories                        │
+├─────────────────────────────────────────────────┤
+│ "LECHE ENTERA" → Dairy              (5x)       │
+│                              [Edit] [Delete]    │
+├─────────────────────────────────────────────────┤
+│ "MANZANAS" → Produce                (3x)       │
+│                              [Edit] [Delete]    │
+└─────────────────────────────────────────────────┘
+      ]]>
+    </layout>
+  </uiLayouts>
+</story-context>
