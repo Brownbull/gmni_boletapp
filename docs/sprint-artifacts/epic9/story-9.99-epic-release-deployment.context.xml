@@ -1,0 +1,177 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>99</storyId>
+    <title>Epic Release &amp; Deployment</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic9/story-9.99-epic-release-deployment.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>product owner</asA>
+    <iWant>Epic 9 deployed to production with all tests passing</iWant>
+    <soThat>users can benefit from enhanced scan options and merchant learning</soThat>
+    <tasks>
+      <task id="1" ac="1,2,3">Pre-deployment verification
+        <subtask>Run TypeScript compilation</subtask>
+        <subtask>Run unit tests</subtask>
+        <subtask>Run integration tests</subtask>
+        <subtask>Run E2E tests</subtask>
+      </task>
+      <task id="2" ac="4">Verify test coverage >=80%</task>
+      <task id="3" ac="5">Production build verification</task>
+      <task id="4" ac="10">Git workflow (PR, merge)</task>
+      <task id="5" ac="5">Deploy to Firebase</task>
+      <task id="6" ac="6,7">Production E2E verification with test user</task>
+      <task id="7" ac="8">Update documentation</task>
+      <task id="8" ac="9">Update sprint status</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">All unit tests pass with no failures</criterion>
+    <criterion id="2">All integration tests pass with no failures</criterion>
+    <criterion id="3">All E2E tests pass with no failures</criterion>
+    <criterion id="4">New code has >=80% test coverage</criterion>
+    <criterion id="5">Deployment to Firebase succeeds</criterion>
+    <criterion id="6">Production verified with test user (khujta@gmail.com)</criterion>
+    <criterion id="7">No regressions in existing functionality</criterion>
+    <criterion id="8">docs/index.md updated with Epic 9 section</criterion>
+    <criterion id="9">Sprint status updated - all stories done</criterion>
+    <criterion id="10">Git conventions followed (PR, merge)</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/epic9/architecture-epic9.md" relevance="high">
+        Full architecture reference
+      </doc>
+      <doc path="docs/team-standards.md" relevance="high">
+        Git conventions and deployment procedures
+      </doc>
+      <doc path="docs/index.md" relevance="primary">
+        Main documentation to update with Epic 9 features
+      </doc>
+    </docs>
+    <code>
+      <file path="docs/sprint-artifacts/sprint-status.yaml" action="MODIFY" relevance="critical">
+        Update all Epic 9 stories to done
+      </file>
+      <file path="docs/index.md" action="MODIFY" relevance="high">
+        Add Epic 9 documentation section
+      </file>
+    </code>
+  </artifacts>
+
+  <constraints>
+    <constraint type="testing">
+      All tests must pass before deployment
+      Coverage must be >=80% on new code
+      E2E tests run against production after deployment
+    </constraint>
+    <constraint type="git">
+      Feature branch for Epic 9 changes
+      PR to main with proper description
+      Squash and merge strategy
+    </constraint>
+    <constraint type="verification">
+      Test user: khujta@gmail.com (email-only auth)
+      Must verify all new Epic 9 features
+      Must verify no regressions
+    </constraint>
+  </constraints>
+
+  <tests>
+    <standards>
+      <standard>All existing tests must pass</standard>
+      <standard>Manual E2E verification with test user</standard>
+    </standards>
+    <ideas>
+      <test name="scan-options-work">
+        Verify store type and currency selection in ScanView
+      </test>
+      <test name="merchant-learning-works">
+        Verify merchant name learning and auto-correction
+      </test>
+      <test name="settings-work">
+        Verify merchant mappings and currency preferences in Settings
+      </test>
+      <test name="no-regressions">
+        Verify login, history, analytics, export still work
+      </test>
+    </ideas>
+  </tests>
+
+  <implementationGuide>
+    <step order="1" task="1">
+      Pre-deployment verification
+      - npx tsc --noEmit
+      - npm run test:unit
+      - npm run test:integration
+      - npm run test:e2e
+    </step>
+    <step order="2" task="2">
+      Verify coverage
+      - npm run test:coverage
+      - Check new Epic 9 files have >=80%
+    </step>
+    <step order="3" task="3">
+      Build verification
+      - npm run build
+      - Check for errors
+    </step>
+    <step order="4" task="4">
+      Git workflow
+      - git checkout -b feature/epic9-release (if not already)
+      - git push origin feature/epic9-release
+      - Create PR to main
+      - Squash and merge
+    </step>
+    <step order="5" task="5">
+      Deploy
+      - cd functions &amp;&amp; npm run prebuild &amp;&amp; npm run build
+      - firebase deploy --only functions
+      - firebase deploy --only hosting
+    </step>
+    <step order="6" task="6">
+      Production E2E with test user
+      - Open https://boletapp-d609f.web.app
+      - Log in as khujta@gmail.com
+      - Test scan with store type selection
+      - Test scan with currency override
+      - Test merchant learning flow
+      - Test Settings preferences
+      - Verify no regressions
+    </step>
+    <step order="7" task="7">
+      Update docs/index.md
+      - Add Epic 9 section
+      - Document new features
+    </step>
+    <step order="8" task="8">
+      Update sprint-status.yaml
+      - Mark all 9.x stories as done
+      - Mark epic-9-retrospective as completed
+    </step>
+  </implementationGuide>
+
+  <testUserInfo>
+    <email>khujta@gmail.com</email>
+    <authMethod>Email-only (no Google sign-in)</authMethod>
+    <purpose>Production E2E verification</purpose>
+  </testUserInfo>
+
+  <previousStoryLearnings>
+    <story id="7.99" title="Epic 7 Release Deployment">
+      <learning>Deployment URL: https://boletapp-d609f.web.app</learning>
+      <learning>Use firebase deploy --only functions/hosting for targeted deploys</learning>
+      <learning>Test user khujta@gmail.com for manual E2E verification</learning>
+    </story>
+    <story id="8.9" title="CI/CD Pipeline Optimization">
+      <learning>Parallel test jobs reduce CI time</learning>
+      <learning>Cache Playwright browsers and Firebase CLI</learning>
+    </story>
+  </previousStoryLearnings>
+</story-context>

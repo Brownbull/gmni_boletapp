@@ -14,6 +14,9 @@ import { Tag } from 'lucide-react';
 import { useAnalyticsNavigation } from '../../hooks/useAnalyticsNavigation';
 import type { CategoryPosition, CategoryLevel } from '../../types/analytics';
 import { TRANSLATIONS } from '../../utils/translations';
+// Story 9.12: Category translations
+import { translateCategory } from '../../utils/categoryTranslations';
+import type { Language } from '../../utils/translations';
 
 // ============================================================================
 // Types
@@ -55,9 +58,11 @@ function getLevelLabel(level: CategoryLevel, locale: string = 'en'): string {
 /**
  * Builds the category breadcrumb path from the current category position.
  * Returns an array of items from "All Categories" down to the current level.
+ * Story 9.12: Labels are now translated using translateCategory.
  */
 function buildCategoryPath(category: CategoryPosition, language: string = 'en'): BreadcrumbItem[] {
   const path: BreadcrumbItem[] = [];
+  const lang = (language === 'es' ? 'es' : 'en') as Language;
 
   // "All Categories" is always first
   path.push({
@@ -67,21 +72,21 @@ function buildCategoryPath(category: CategoryPosition, language: string = 'en'):
     position: { level: 'all' },
   });
 
-  // Category (if filtering by category or deeper)
+  // Category (if filtering by category or deeper) - Story 9.12: Translate label
   if (category.category) {
     path.push({
       level: 'category',
-      label: category.category,
+      label: translateCategory(category.category, lang),
       levelLabel: getLevelLabel('category', language),
       position: { level: 'category', category: category.category },
     });
   }
 
-  // Group (if filtering by group or deeper)
+  // Group (if filtering by group or deeper) - Story 9.12: Translate label
   if (category.group) {
     path.push({
       level: 'group',
-      label: category.group,
+      label: translateCategory(category.group, lang),
       levelLabel: getLevelLabel('group', language),
       position: {
         level: 'group',
@@ -91,11 +96,11 @@ function buildCategoryPath(category: CategoryPosition, language: string = 'en'):
     });
   }
 
-  // Subcategory (if filtering by subcategory)
+  // Subcategory (if filtering by subcategory) - Story 9.12: Translate label
   if (category.subcategory) {
     path.push({
       level: 'subcategory',
-      label: category.subcategory,
+      label: translateCategory(category.subcategory, lang),
       levelLabel: getLevelLabel('subcategory', language),
       position: category,
     });
@@ -108,18 +113,20 @@ function buildCategoryPath(category: CategoryPosition, language: string = 'en'):
  * Gets the display label for the collapsed breadcrumb button.
  * Shows short "All" when no filter, or the deepest level when filtering.
  * Story 7.10: Changed from "All Categories" to "All" for consistent breadcrumb height.
+ * Story 9.12: Labels are now translated.
  */
 function getCurrentLabel(category: CategoryPosition, language: string = 'en'): string {
+  const lang = (language === 'es' ? 'es' : 'en') as Language;
   switch (category.level) {
     case 'all':
       // Use short label to match temporal breadcrumb height
       return t('levelAll', language);
     case 'category':
-      return category.category || '';
+      return category.category ? translateCategory(category.category, lang) : '';
     case 'group':
-      return category.group || '';
+      return category.group ? translateCategory(category.group, lang) : '';
     case 'subcategory':
-      return category.subcategory || '';
+      return category.subcategory ? translateCategory(category.subcategory, lang) : '';
     default:
       return t('levelAll', language);
   }

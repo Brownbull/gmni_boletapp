@@ -1,0 +1,268 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>6</storyId>
+    <title>Merchant Learning Prompt</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic9/story-9.6-merchant-learning-prompt.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to be prompted to remember my merchant name correction</iWant>
+    <soThat>future receipts from the same store are corrected automatically</soThat>
+    <tasks>
+      <task id="1" ac="1,2,5">Create src/components/dialogs/LearnMerchantDialog.tsx
+        <subtask>Follow LearnCategoryDialog pattern</subtask>
+        <subtask>Show original vs corrected merchant name</subtask>
+        <subtask>Accessible modal with focus management</subtask>
+      </task>
+      <task id="2" ac="1">Integrate dialog into EditView save flow
+        <subtask>Track original merchant name on load</subtask>
+        <subtask>Detect if merchant was changed on save</subtask>
+        <subtask>Show dialog when merchant changed</subtask>
+      </task>
+      <task id="3" ac="3">Implement "Remember" action
+        <subtask>Call saveMerchantMapping() with correct values</subtask>
+      </task>
+      <task id="4" ac="4">Implement "Don't remember" action
+        <subtask>Close dialog without saving mapping</subtask>
+      </task>
+      <task id="5" ac="6">Handle re-correction scenario
+        <subtask>Editing "learned" merchant creates new mapping</subtask>
+      </task>
+      <task id="6">Add unit tests for dialog behavior</task>
+      <task id="7">Run all tests and verify passing</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">Dialog appears when merchant name is changed and saved</criterion>
+    <criterion id="2">Dialog shows original vs corrected merchant name clearly</criterion>
+    <criterion id="3">"Remember" button creates merchant mapping</criterion>
+    <criterion id="4">"Don't remember" dismisses dialog without saving mapping</criterion>
+    <criterion id="5">Dialog follows same UX pattern as category learning prompt</criterion>
+    <criterion id="6">User can still edit after learning (correction creates new mapping)</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/epic9/architecture-epic9.md" relevance="primary">
+        Journey Mapping section - learning dialog trigger flow
+        Pattern 5: Learning Dialog Trigger
+      </doc>
+      <doc path="docs/sprint-artifacts/epic9/tech-spec-epic-9.md" relevance="high">
+        Technical specification with dialog requirements
+      </doc>
+      <doc path="docs/sprint-artifacts/epic6/story-6.3-category-learning-prompt.md" relevance="critical">
+        Reference implementation - follow this pattern
+      </doc>
+    </docs>
+    <code>
+      <file path="src/components/CategoryLearningPrompt.tsx" action="REFERENCE" relevance="critical">
+        Pattern to follow for LearnMerchantDialog
+        Lines 1-242: Full modal implementation with accessibility
+        Key patterns: focus trap, Escape key handling, aria attributes
+      </file>
+      <file path="src/views/EditView.tsx" action="MODIFY" relevance="critical">
+        Integration point for learning prompt
+        Lines 70-82: Existing category learning state (showLearningPrompt, itemsToLearn)
+        Need similar pattern for merchant: track original merchant, detect change, show dialog
+        Lines 100-: onSave handler to trigger dialog
+      </file>
+      <file path="src/services/merchantMappingService.ts" action="USE" relevance="high">
+        saveMerchantMapping() function from Story 9.4
+        normalizeMerchantName() for normalizing original merchant
+      </file>
+      <file path="src/hooks/useMerchantMappings.ts" action="USE" relevance="high">
+        Hook with saveMapping function (from Story 9.4)
+      </file>
+      <file path="src/utils/translations.ts" action="MODIFY" relevance="medium">
+        Add translations for dialog text (EN/ES)
+      </file>
+      <file path="src/components/dialogs/LearnMerchantDialog.tsx" action="CREATE" relevance="critical">
+        New file - merchant learning dialog
+      </file>
+    </code>
+    <dependencies>
+      <dependency name="react" version="18.3.1" status="installed">
+        UI framework - useState, useEffect, useRef
+      </dependency>
+      <dependency name="lucide-react" version="^0.460.0" status="installed">
+        Icon library - X icon for close
+      </dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="ux">
+      Non-blocking prompt - user can dismiss without saving
+      Transaction is already saved before dialog appears
+      Dialog should be quick to dismiss (keyboard support)
+    </constraint>
+    <constraint type="accessibility">
+      WCAG 2.1 Level AA compliance
+      Focus trap within modal
+      Escape key closes modal
+      aria-modal="true", role="dialog"
+      Focus returns to trigger element after close
+    </constraint>
+    <constraint type="i18n">
+      All user-facing text must use translation keys
+      Support English and Spanish
+    </constraint>
+    <constraint type="code-style">
+      TypeScript strict mode
+      Single quotes, no semicolons
+      Follow CategoryLearningPrompt patterns
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="LearnMerchantDialogProps">
+      <prop name="isOpen" type="boolean">Whether dialog is visible</prop>
+      <prop name="originalMerchant" type="string">Original merchant name from AI/previous</prop>
+      <prop name="correctedMerchant" type="string">User's corrected merchant name</prop>
+      <prop name="onConfirm" type="() => void">Called when user clicks "Remember"</prop>
+      <prop name="onClose" type="() => void">Called when user dismisses</prop>
+      <prop name="t" type="(key: string) => string">Translation function</prop>
+      <prop name="theme" type="'light' | 'dark'" optional="true">Current theme</prop>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <standard>Vitest for unit tests</standard>
+      <standard>@testing-library/react for component testing</standard>
+    </standards>
+    <locations>
+      <location path="tests/unit/LearnMerchantDialog.test.tsx" action="CREATE">
+        Unit tests for dialog component
+      </location>
+    </locations>
+    <ideas>
+      <test name="dialog-renders-on-merchant-change">
+        When user changes merchant and saves, dialog appears
+      </test>
+      <test name="dialog-shows-original-and-corrected">
+        Dialog displays both original and corrected merchant names
+      </test>
+      <test name="confirm-saves-mapping">
+        Clicking "Remember" calls saveMerchantMapping with correct parameters
+      </test>
+      <test name="dismiss-closes-without-saving">
+        Clicking "Don't remember" closes dialog without calling saveMerchantMapping
+      </test>
+      <test name="escape-key-closes-dialog">
+        Pressing Escape key dismisses the dialog
+      </test>
+      <test name="focus-trap-works">
+        Tab navigation stays within dialog while open
+      </test>
+      <test name="no-dialog-when-merchant-unchanged">
+        If merchant is not changed, no dialog appears on save
+      </test>
+    </ideas>
+  </tests>
+
+  <implementationGuide>
+    <step order="1">
+      Add translation keys to src/utils/translations.ts
+      Keys: learnMerchantTitle, learnMerchantMessage, learnMerchantConfirm, learnMerchantSkip
+      EN: "Remember this merchant?", "Do you want to remember...", "Yes, Remember", "Just this time"
+      ES: Corresponding Spanish translations
+    </step>
+    <step order="2" task="1">
+      Create src/components/dialogs/LearnMerchantDialog.tsx
+      - Copy from CategoryLearningPrompt.tsx as starting point
+      - Update props: itemName/category → originalMerchant/correctedMerchant
+      - Update display text to show merchant name change
+      - Keep all accessibility patterns (focus trap, Escape, aria)
+    </step>
+    <step order="3" task="2">
+      Modify src/views/EditView.tsx
+      - Add state: originalMerchantRef (useRef), showMerchantLearningPrompt
+      - Capture original merchant on mount (similar to originalItemGroupsRef pattern on line 75)
+      - In save handler: check if currentTransaction.merchant !== originalMerchantRef.current
+      - If changed: setShowMerchantLearningPrompt(true)
+    </step>
+    <step order="4" task="3,4">
+      Implement dialog handlers
+      - onConfirm: call saveMerchantMapping() then close
+      - onClose: just close dialog
+      - Both should clear the dialog state
+    </step>
+    <step order="5" task="5">
+      Handle re-correction
+      - Upsert behavior in merchantMappingService handles this automatically
+      - New correction for same normalized merchant updates existing mapping
+    </step>
+    <step order="6" task="6,7">
+      Create tests and verify
+      - tests/unit/LearnMerchantDialog.test.tsx
+      - Run npm run test
+    </step>
+  </implementationGuide>
+
+  <codeSnippets>
+    <snippet name="editview-integration" language="typescript">
+// In EditView.tsx
+
+// Add state for merchant learning
+const [showMerchantLearningPrompt, setShowMerchantLearningPrompt] = useState(false);
+const originalMerchantRef = useRef&lt;string | null&gt;(null);
+
+// Capture original merchant on mount
+useEffect(() => {
+  if (currentTransaction.merchant &amp;&amp; originalMerchantRef.current === null) {
+    originalMerchantRef.current = currentTransaction.merchant;
+  }
+}, [currentTransaction.merchant]);
+
+// In save handler (after transaction is saved)
+const handleSave = async () => {
+  await onSave();
+
+  // Check if merchant was changed
+  if (originalMerchantRef.current &amp;&amp;
+      currentTransaction.merchant !== originalMerchantRef.current) {
+    setShowMerchantLearningPrompt(true);
+  }
+};
+
+// Dialog handlers
+const handleLearnMerchant = async () => {
+  if (onSaveMerchantMapping &amp;&amp; originalMerchantRef.current) {
+    await onSaveMerchantMapping(
+      originalMerchantRef.current,  // original
+      currentTransaction.merchant    // target
+    );
+  }
+  setShowMerchantLearningPrompt(false);
+};
+
+const handleSkipMerchantLearning = () => {
+  setShowMerchantLearningPrompt(false);
+};
+    </snippet>
+  </codeSnippets>
+
+  <previousStoryLearnings>
+    <story id="9.4" title="Merchant Mapping Infrastructure">
+      <learning>saveMerchantMapping() available in merchantMappingService</learning>
+      <learning>normalizeMerchantName() available for normalizing merchant names</learning>
+      <learning>Upsert behavior handles same normalized merchant updates</learning>
+    </story>
+    <story id="9.5" title="Merchant Fuzzy Matching">
+      <learning>findMerchantMatch() available for future matching</learning>
+      <learning>merchantSource: 'learned' set when match applied</learning>
+    </story>
+    <story id="6.3" title="Category Learning Prompt">
+      <learning>CategoryLearningPrompt.tsx pattern established</learning>
+      <learning>Focus trap and accessibility patterns implemented</learning>
+      <learning>EditView integration pattern with originalItemGroupsRef</learning>
+    </story>
+  </previousStoryLearnings>
+</story-context>
