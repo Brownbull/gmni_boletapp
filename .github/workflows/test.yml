@@ -20,6 +20,7 @@ on:
       - '.github/workflows/**'
       - 'playwright.config.ts'
       - 'eslint.config*.mjs'
+      - '.gitleaks.toml'  # Security config changes should trigger CI
   pull_request:
     branches: [ main, staging, develop ]
     # Same path filtering for PRs
@@ -39,6 +40,7 @@ on:
       - '.github/workflows/**'
       - 'playwright.config.ts'
       - 'eslint.config*.mjs'
+      - '.gitleaks.toml'  # Security config changes should trigger CI
   # Story 8.9 AC4: Manual workflow dispatch for redeployments without empty commits
   workflow_dispatch:
     inputs:
