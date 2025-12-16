@@ -174,6 +174,7 @@ export const TRANSLATIONS = {
         tapToCheckUpdates: "Tap to check for updates",
         checkUpdates: "Check",
         checking: "Checking...",
+        noUpdatesFound: "✓ You're up to date!",
         upToDate: "Up to date",
         // Story 9.15: Subcategory learning & management
         itemSubcat: "Subcategory",
@@ -366,6 +367,7 @@ export const TRANSLATIONS = {
         tapToCheckUpdates: "Toca para buscar actualizaciones",
         checkUpdates: "Buscar",
         checking: "Buscando...",
+        noUpdatesFound: "✓ ¡Ya tienes la última versión!",
         upToDate: "Actualizada",
         // Story 9.15: Subcategory learning & management
         itemSubcat: "Subcategoría",
