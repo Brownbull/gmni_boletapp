@@ -741,6 +741,11 @@ function App() {
                         subcategoryMappingsLoading={subcategoryMappingsLoading}
                         onDeleteSubcategoryMapping={deleteSubcategoryMapping}
                         onUpdateSubcategoryMapping={updateSubcategoryMapping}
+                        // Story 9.18: Push notifications settings
+                        db={services?.db || null}
+                        userId={user?.uid || null}
+                        appId={services?.appId || null}
+                        onShowToast={(text: string) => setToastMessage({ text, type: 'success' })}
                     />
                 )}
             </main>
