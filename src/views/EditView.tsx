@@ -161,6 +161,9 @@ export const EditView: React.FC<EditViewProps> = ({
     const [showSubcategoryLearningPrompt, setShowSubcategoryLearningPrompt] = useState(false);
     const [subcategoriesToLearn, setSubcategoriesToLearn] = useState<Array<{ itemName: string; newSubcategory: string }>>([]);
 
+    // Story 9.16: Loading state for learning prompts to prevent duplicate saves (AC #1, #2)
+    const [savingMappings, setSavingMappings] = useState(false);
+
     // Story 9.6: Merchant learning prompt state
     const [showMerchantLearningPrompt, setShowMerchantLearningPrompt] = useState(false);
     // Track original alias on mount for detecting changes
@@ -416,8 +419,10 @@ export const EditView: React.FC<EditViewProps> = ({
     };
 
     // Story 6.3: Handle learning prompt confirmation
+    // Story 9.16: Added loading state to prevent duplicate saves (AC #1, #2)
     const handleLearnConfirm = async () => {
         if (onSaveMapping && itemsToLearn.length > 0) {
+            setSavingMappings(true);
             try {
                 // Save mappings for ALL changed items
                 for (const item of itemsToLearn) {
@@ -429,6 +434,8 @@ export const EditView: React.FC<EditViewProps> = ({
                 }
             } catch (error) {
                 console.error('Failed to save category mappings:', error);
+            } finally {
+                setSavingMappings(false);
             }
         }
         setShowLearningPrompt(false);
@@ -446,8 +453,10 @@ export const EditView: React.FC<EditViewProps> = ({
     };
 
     // Story 9.15: Handle subcategory learning prompt confirmation
+    // Story 9.16: Added loading state to prevent duplicate saves (AC #1, #2)
     const handleSubcategoryLearnConfirm = async () => {
         if (onSaveSubcategoryMapping && subcategoriesToLearn.length > 0) {
+            setSavingMappings(true);
             try {
                 // Save subcategory mappings for ALL changed items
                 for (const item of subcategoriesToLearn) {
@@ -459,6 +468,8 @@ export const EditView: React.FC<EditViewProps> = ({
                 }
             } catch (error) {
                 console.error('Failed to save subcategory mappings:', error);
+            } finally {
+                setSavingMappings(false);
             }
         }
         setShowSubcategoryLearningPrompt(false);
@@ -1024,6 +1035,7 @@ export const EditView: React.FC<EditViewProps> = ({
             </button>
 
             {/* Story 6.3: Category Learning Prompt Modal */}
+            {/* Story 9.16: Added isLoading prop to prevent duplicate saves (AC #1, #2, #4) */}
             <CategoryLearningPrompt
                 isOpen={showLearningPrompt}
                 items={itemsToLearn}
@@ -1031,9 +1043,11 @@ export const EditView: React.FC<EditViewProps> = ({
                 onClose={handleLearnDismiss}
                 t={t}
                 theme={theme as 'light' | 'dark'}
+                isLoading={savingMappings}
             />
 
             {/* Story 9.15: Subcategory Learning Prompt Modal */}
+            {/* Story 9.16: Added isLoading prop to prevent duplicate saves (AC #1, #2, #4) */}
             <SubcategoryLearningPrompt
                 isOpen={showSubcategoryLearningPrompt}
                 items={subcategoriesToLearn}
@@ -1041,6 +1055,7 @@ export const EditView: React.FC<EditViewProps> = ({
                 onClose={handleSubcategoryLearnDismiss}
                 t={t}
                 theme={theme as 'light' | 'dark'}
+                isLoading={savingMappings}
             />
 
             {/* Story 9.6: Merchant Learning Prompt Modal */}
