@@ -3,6 +3,7 @@ import { ArrowLeft, Trash2, Plus, Check, ChevronDown, ChevronUp, BookMarked, X, 
 import { CategoryBadge } from '../components/CategoryBadge';
 import { ImageViewer } from '../components/ImageViewer';
 import { CategoryLearningPrompt } from '../components/CategoryLearningPrompt';
+import { SubcategoryLearningPrompt } from '../components/SubcategoryLearningPrompt';
 import { LearnMerchantDialog } from '../components/dialogs/LearnMerchantDialog';
 import { LocationSelect } from '../components/LocationSelect';
 import { StoreTypeSelector } from '../components/StoreTypeSelector';
@@ -28,6 +29,8 @@ interface TransactionItem {
     category?: ItemCategory | string;
     subcategory?: string;
     categorySource?: CategorySource;
+    /** Story 9.15: Source of subcategory assignment */
+    subcategorySource?: CategorySource;
 }
 
 interface Transaction {
@@ -76,6 +79,8 @@ interface EditViewProps {
     onSaveMapping?: (item: string, category: StoreCategory, source?: 'user' | 'ai') => Promise<string>;
     /** Story 9.6: Optional save merchant mapping function from useMerchantMappings hook */
     onSaveMerchantMapping?: (originalMerchant: string, targetMerchant: string) => Promise<string>;
+    /** Story 9.15: Optional save subcategory mapping function from useSubcategoryMappings hook */
+    onSaveSubcategoryMapping?: (item: string, subcategory: string, source?: 'user' | 'ai') => Promise<string>;
     /** Optional: Show toast notification */
     onShowToast?: (text: string) => void;
     /** Story 9.9: Optional cancel handler for new transactions */
@@ -117,6 +122,7 @@ export const EditView: React.FC<EditViewProps> = ({
     onSetEditingItemIndex,
     onSaveMapping,
     onSaveMerchantMapping,
+    onSaveSubcategoryMapping,
     onShowToast,
     onCancel,
     // Story 9.9: Scan-related props
@@ -147,15 +153,19 @@ export const EditView: React.FC<EditViewProps> = ({
     const [showLearningPrompt, setShowLearningPrompt] = useState(false);
     const [itemsToLearn, setItemsToLearn] = useState<Array<{ itemName: string; newGroup: string }>>([]);
 
+    // Story 9.15: Subcategory learning prompt state
+    const [showSubcategoryLearningPrompt, setShowSubcategoryLearningPrompt] = useState(false);
+    const [subcategoriesToLearn, setSubcategoriesToLearn] = useState<Array<{ itemName: string; newSubcategory: string }>>([]);
+
     // Story 9.6: Merchant learning prompt state
     const [showMerchantLearningPrompt, setShowMerchantLearningPrompt] = useState(false);
     // Track original alias on mount for detecting changes
     const originalAliasRef = useRef<string | null>(null);
 
-    // Track original item groups on mount for detecting changes
-    // We learn: item name → item group (category field on item)
+    // Track original item groups and subcategories on mount for detecting changes
+    // We learn: item name → item group (category field on item) AND item name → subcategory
     const originalItemGroupsRef = useRef<{
-        items: Array<{ name: string; category: string }>; // name and group for each item
+        items: Array<{ name: string; category: string; subcategory: string }>; // name, group, and subcategory for each item
         capturedForTransactionKey: string | null; // null = not captured yet
     }>({
         items: [],
@@ -174,7 +184,8 @@ export const EditView: React.FC<EditViewProps> = ({
             originalItemGroupsRef.current = {
                 items: currentTransaction.items.map(item => ({
                     name: item.name,
-                    category: item.category || ''
+                    category: item.category || '',
+                    subcategory: item.subcategory || ''
                 })),
                 capturedForTransactionKey: transactionKey,
             };
@@ -315,6 +326,39 @@ export const EditView: React.FC<EditViewProps> = ({
         return changedItems;
     };
 
+    // Story 9.15: Find ALL items whose subcategory has changed
+    // Returns array of { itemName, newSubcategory } for all changed items
+    const findAllChangedSubcategories = (): Array<{ itemName: string; newSubcategory: string }> => {
+        const originalItems = originalItemGroupsRef.current.items;
+        const currentItems = currentTransaction.items;
+        const changedItems: Array<{ itemName: string; newSubcategory: string }> = [];
+
+        // Check each item to see if its subcategory changed
+        for (let i = 0; i < currentItems.length; i++) {
+            const currentItem = currentItems[i];
+            const originalItem = originalItems[i];
+
+            // Skip if no original item to compare (new item added)
+            if (!originalItem) continue;
+
+            // Skip if item has no name
+            if (!currentItem.name) continue;
+
+            // Check if subcategory changed (and new subcategory is not empty)
+            const currentSubcategory = currentItem.subcategory || '';
+            const originalSubcategory = originalItem.subcategory || '';
+
+            if (currentSubcategory && currentSubcategory !== originalSubcategory) {
+                changedItems.push({
+                    itemName: currentItem.name,
+                    newSubcategory: currentSubcategory
+                });
+            }
+        }
+
+        return changedItems;
+    };
+
     // Story 9.6: Check if merchant alias was changed
     const hasMerchantAliasChanged = (): boolean => {
         // We need a merchant name (from scan) and an alias change to trigger learning
@@ -336,22 +380,34 @@ export const EditView: React.FC<EditViewProps> = ({
         }
     };
 
-    // Story 6.3: Handle save with category learning prompt
-    // Shows prompt BEFORE saving if item groups changed, because onSave navigates away
+    // Story 9.15: Proceed to subcategory learning check, then merchant learning, then save
+    const proceedToSubcategoryLearningOrNext = async () => {
+        const changedSubcategories = findAllChangedSubcategories();
+        if (changedSubcategories.length > 0 && onSaveSubcategoryMapping) {
+            setSubcategoriesToLearn(changedSubcategories);
+            setShowSubcategoryLearningPrompt(true);
+        } else {
+            // No subcategory changes, proceed to merchant learning check
+            await proceedToMerchantLearningOrSave();
+        }
+    };
+
+    // Story 6.3 & 9.15: Handle save with category and subcategory learning prompts
+    // Shows prompts BEFORE saving if changes detected, because onSave navigates away
     const handleSaveWithLearning = async () => {
         // Check if any item's group was changed
         const changedItems = findAllChangedItemGroups();
 
-        // Only show prompt if:
+        // Only show category prompt if:
         // 1. At least one item's group was changed
         // 2. onSaveMapping function is available
         if (changedItems.length > 0 && onSaveMapping) {
-            // Show prompt first - onSave will be called after user responds
+            // Show category prompt first - subcategory prompt will follow after confirmation
             setItemsToLearn(changedItems);
             setShowLearningPrompt(true);
         } else {
-            // No category changes, proceed to merchant learning check
-            await proceedToMerchantLearningOrSave();
+            // No category changes, proceed to subcategory learning check
+            await proceedToSubcategoryLearningOrNext();
         }
     };
 
@@ -373,15 +429,45 @@ export const EditView: React.FC<EditViewProps> = ({
         }
         setShowLearningPrompt(false);
         setItemsToLearn([]);
-        // After category learning, proceed to merchant learning check
-        await proceedToMerchantLearningOrSave();
+        // After category learning, chain to subcategory learning check
+        await proceedToSubcategoryLearningOrNext();
     };
 
     // Story 6.3: Handle learning prompt dismiss
     const handleLearnDismiss = async () => {
         setShowLearningPrompt(false);
         setItemsToLearn([]);
-        // After category dialog dismissed, proceed to merchant learning check
+        // After category dialog dismissed, chain to subcategory learning check
+        await proceedToSubcategoryLearningOrNext();
+    };
+
+    // Story 9.15: Handle subcategory learning prompt confirmation
+    const handleSubcategoryLearnConfirm = async () => {
+        if (onSaveSubcategoryMapping && subcategoriesToLearn.length > 0) {
+            try {
+                // Save subcategory mappings for ALL changed items
+                for (const item of subcategoriesToLearn) {
+                    await onSaveSubcategoryMapping(item.itemName, item.newSubcategory, 'user');
+                }
+                // Show success toast
+                if (onShowToast) {
+                    onShowToast(t('learnSubcategorySuccess'));
+                }
+            } catch (error) {
+                console.error('Failed to save subcategory mappings:', error);
+            }
+        }
+        setShowSubcategoryLearningPrompt(false);
+        setSubcategoriesToLearn([]);
+        // After subcategory learning, proceed to merchant learning check
+        await proceedToMerchantLearningOrSave();
+    };
+
+    // Story 9.15: Handle subcategory learning prompt dismiss
+    const handleSubcategoryLearnDismiss = async () => {
+        setShowSubcategoryLearningPrompt(false);
+        setSubcategoriesToLearn([]);
+        // After subcategory dialog dismissed, proceed to merchant learning check
         await proceedToMerchantLearningOrSave();
     };
 
@@ -930,6 +1016,16 @@ export const EditView: React.FC<EditViewProps> = ({
                 items={itemsToLearn}
                 onConfirm={handleLearnConfirm}
                 onClose={handleLearnDismiss}
+                t={t}
+                theme={theme as 'light' | 'dark'}
+            />
+
+            {/* Story 9.15: Subcategory Learning Prompt Modal */}
+            <SubcategoryLearningPrompt
+                isOpen={showSubcategoryLearningPrompt}
+                items={subcategoriesToLearn}
+                onConfirm={handleSubcategoryLearnConfirm}
+                onClose={handleSubcategoryLearnDismiss}
                 t={t}
                 theme={theme as 'light' | 'dark'}
             />
