@@ -1,10 +1,12 @@
 import React from 'react';
-import { Globe, DollarSign, Calendar, Moon, Palette, Download, Trash2, ArrowRightLeft, Loader2, BookMarked, MapPin, Store, Receipt } from 'lucide-react';
+import { Globe, DollarSign, Calendar, Moon, Palette, Download, Trash2, ArrowRightLeft, Loader2, BookMarked, MapPin, Store, Receipt, Tag } from 'lucide-react';
 import { CategoryMappingsList } from '../components/CategoryMappingsList';
 import { MerchantMappingsList } from '../components/MerchantMappingsList';
+import { SubcategoryMappingsList } from '../components/SubcategoryMappingsList';
 import { PWASettingsSection } from '../components/PWASettingsSection';
 import { CategoryMapping } from '../types/categoryMapping';
 import { MerchantMapping } from '../types/merchantMapping';
+import { SubcategoryMapping } from '../types/subcategoryMapping';
 import { LocationSelect } from '../components/LocationSelect';
 import { SupportedCurrency, SUPPORTED_CURRENCIES } from '../services/userPreferencesService';
 
@@ -45,6 +47,11 @@ interface SettingsViewProps {
     // Story 9.8: Default scan currency setting
     defaultScanCurrency?: SupportedCurrency;
     onSetDefaultScanCurrency?: (currency: SupportedCurrency) => void;
+    // Story 9.15: Subcategory mappings management
+    subcategoryMappings?: SubcategoryMapping[];
+    subcategoryMappingsLoading?: boolean;
+    onDeleteSubcategoryMapping?: (mappingId: string) => Promise<void>;
+    onUpdateSubcategoryMapping?: (mappingId: string, newSubcategory: string) => Promise<void>;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -84,6 +91,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     // Story 9.8: Default scan currency setting
     defaultScanCurrency = 'CLP',
     onSetDefaultScanCurrency,
+    // Story 9.15: Subcategory mappings management
+    subcategoryMappings = [],
+    subcategoryMappingsLoading = false,
+    onDeleteSubcategoryMapping,
+    onUpdateSubcategoryMapping,
 }) => {
     // Story 7.12: Theme-aware styling using CSS variables (AC #4, #8)
     const isDark = theme === 'dark';
@@ -311,6 +323,24 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         loading={merchantMappingsLoading}
                         onDeleteMapping={onDeleteMerchantMapping}
                         onEditMapping={onEditMerchantMapping}
+                        t={t}
+                        theme={theme as 'light' | 'dark'}
+                    />
+                )}
+            </div>
+
+            {/* Story 9.15: Learned Subcategories Section */}
+            <div className="p-4 rounded-xl border" style={cardStyle}>
+                <div className="flex gap-2 items-center mb-4">
+                    <Tag size={24} strokeWidth={2} style={{ color: '#10b981' }} />
+                    <span className="font-medium" style={{ color: 'var(--primary)' }}>{t('learnedSubcategories')}</span>
+                </div>
+                {onDeleteSubcategoryMapping && onUpdateSubcategoryMapping && (
+                    <SubcategoryMappingsList
+                        mappings={subcategoryMappings}
+                        loading={subcategoryMappingsLoading}
+                        onDeleteMapping={onDeleteSubcategoryMapping}
+                        onUpdateMapping={onUpdateSubcategoryMapping}
                         t={t}
                         theme={theme as 'light' | 'dark'}
                     />

@@ -73,6 +73,8 @@ export interface TransactionItem {
     subcategory?: string;
     /** Source of the category assignment (scan, learned, or user) */
     categorySource?: CategorySource;
+    /** Source of the subcategory assignment (scan, learned, or user) */
+    subcategorySource?: CategorySource;
 }
 
 export interface Transaction {
