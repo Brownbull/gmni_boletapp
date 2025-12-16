@@ -16,6 +16,8 @@ import { SettingsView } from './views/SettingsView';
 import { Nav } from './components/Nav';
 import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
 import { AnalyticsProvider } from './contexts/AnalyticsContext';
+import { HistoryFiltersProvider, type HistoryFilterState, getDefaultFilterState } from './contexts/HistoryFiltersContext';
+import type { HistoryNavigationPayload } from './views/TrendsView';
 import { analyzeReceipt, ReceiptType } from './services/gemini';
 import { SupportedCurrency } from './services/userPreferencesService';
 import {
@@ -110,6 +112,11 @@ function App() {
     const [historyPage, setHistoryPage] = useState(1);
     const [distinctAliases, setDistinctAliases] = useState<string[]>([]);
 
+    // Story 9.20: Pending filters for navigation from Analytics to History
+    // When user clicks a badge in Analytics, we store the filters here,
+    // then pass them as initialState to HistoryFiltersProvider
+    const [pendingHistoryFilters, setPendingHistoryFilters] = useState<HistoryFilterState | null>(null);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
     const t = (k: string) => (TRANSLATIONS[lang] as any)[k] || k;
 
@@ -150,6 +157,16 @@ function App() {
             setScanCurrency(userPreferences.defaultCurrency);
         }
     }, [userPreferences.defaultCurrency]);
+
+    // Story 9.20: Clear pending history filters when navigating AWAY from list view
+    // This ensures filters are applied when entering list view, but cleared when leaving
+    // so that returning to list view normally shows unfiltered transactions
+    useEffect(() => {
+        // Clear filters when navigating away from list view (not when entering it)
+        if (view !== 'list' && pendingHistoryFilters) {
+            setPendingHistoryFilters(null);
+        }
+    }, [view]); // Only depend on view, not pendingHistoryFilters
 
     // Note: Theme is applied synchronously during render (before JSX return)
     // to ensure CSS variables are available when children compute memoized data
@@ -482,6 +499,26 @@ function App() {
         }
     };
 
+    // Story 9.20: Handler for navigating from Analytics to History with pre-applied filters (AC #4)
+    // This is called when user clicks a transaction count badge on a drill-down card
+    const handleNavigateToHistory = (payload: HistoryNavigationPayload) => {
+        // Create a complete filter state from the navigation payload
+        const filterState: HistoryFilterState = {
+            temporal: payload.temporal,
+            category: payload.category,
+            location: {}, // Location filter not set from analytics navigation
+        };
+
+        // Store the filters to be applied when HistoryView mounts
+        setPendingHistoryFilters(filterState);
+
+        // Reset pagination to page 1 for new filter results
+        setHistoryPage(1);
+
+        // Navigate to history view
+        setView('list');
+    };
+
     // Story 7.12: Theme setup using CSS custom properties (AC #6, #7, #11)
     // Story 7.17: Renamed themes - 'normal' (warm, was ghibli) is default, 'professional' (cool, was default)
     // The 'dark' class activates CSS variable overrides defined in index.html
@@ -668,34 +705,43 @@ function App() {
                             onUpgradeRequired={() => {
                                 setToastMessage({ text: t('upgradeRequired'), type: 'info' });
                             }}
+                            // Story 9.20: Navigation from analytics badge to filtered History (AC #3)
+                            onNavigateToHistory={handleNavigateToHistory}
                         />
                     </AnalyticsProvider>
                 )}
 
                 {view === 'list' && (
-                    <HistoryView
-                        historyTrans={historyTrans as any}
-                        historyPage={historyPage}
-                        totalHistoryPages={totalHistoryPages}
-                        theme={theme}
-                        currency={currency}
-                        dateFormat={dateFormat}
-                        t={t}
-                        formatCurrency={formatCurrency}
-                        formatDate={formatDate as any}
-                        onBack={() => setView('dashboard')}
-                        onEditTransaction={(transaction: any) => {
-                            setCurrentTransaction(transaction);
-                            setView('edit');
-                        }}
-                        onSetHistoryPage={setHistoryPage}
-                        // Story 9.11: Duplicate detection and normalization props (AC #1-7)
-                        allTransactions={transactions as any}
-                        defaultCity={defaultCity}
-                        defaultCountry={defaultCountry}
-                        // Story 9.12: Language for category translations (AC #1, #2)
-                        lang={lang}
-                    />
+                    // Story 9.19: Wrap HistoryView with filter context provider
+                    // Story 9.20: Pass pending filters as initialState for analytics→history navigation (AC #4)
+                    <HistoryFiltersProvider
+                        key={pendingHistoryFilters ? JSON.stringify(pendingHistoryFilters) : 'default'}
+                        initialState={pendingHistoryFilters ?? getDefaultFilterState()}
+                    >
+                        <HistoryView
+                            historyTrans={historyTrans as any}
+                            historyPage={historyPage}
+                            totalHistoryPages={totalHistoryPages}
+                            theme={theme}
+                            currency={currency}
+                            dateFormat={dateFormat}
+                            t={t}
+                            formatCurrency={formatCurrency}
+                            formatDate={formatDate as any}
+                            onBack={() => setView('dashboard')}
+                            onEditTransaction={(transaction: any) => {
+                                setCurrentTransaction(transaction);
+                                setView('edit');
+                            }}
+                            onSetHistoryPage={setHistoryPage}
+                            // Story 9.11: Duplicate detection and normalization props (AC #1-7)
+                            allTransactions={transactions as any}
+                            defaultCity={defaultCity}
+                            defaultCountry={defaultCountry}
+                            // Story 9.12: Language for category translations (AC #1, #2)
+                            lang={lang}
+                        />
+                    </HistoryFiltersProvider>
                 )}
 
                 {view === 'settings' && (

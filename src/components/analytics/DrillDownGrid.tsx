@@ -17,6 +17,11 @@ import type { Transaction } from '../../types/transaction';
 import type { TemporalPosition, CategoryPosition } from '../../types/analytics';
 import { TRANSLATIONS, TranslationKey, Language } from '../../utils/translations';
 import { translateCategory } from '../../utils/categoryTranslations';
+import {
+  createTemporalNavigationPayload,
+  createCategoryNavigationPayload,
+  type HistoryNavigationPayload,
+} from '../../utils/analyticsToHistoryFilters';
 
 // ============================================================================
 // Types
@@ -31,6 +36,12 @@ export interface DrillDownGridProps {
   locale?: string;
   /** Currency code for formatting */
   currency?: string;
+  /**
+   * Story 9.20: Callback for navigating to History view with pre-applied filters.
+   * Called when user clicks the transaction count badge on a drill-down card.
+   * If not provided, badges will not be shown (AC #6).
+   */
+  onNavigateToHistory?: (payload: HistoryNavigationPayload) => void;
 }
 
 interface TemporalChildData {
@@ -487,6 +498,7 @@ export function DrillDownGrid({
   theme = 'light',
   locale = 'en',
   currency = 'CLP',
+  onNavigateToHistory,
 }: DrillDownGridProps): React.ReactElement {
   // Story 7.16: Get drillDownMode to control which section to show
   const { temporal, category, drillDownMode, dispatch } = useAnalyticsNavigation();
@@ -555,6 +567,22 @@ export function DrillDownGrid({
     dispatch({ type: 'SET_CATEGORY_FILTER', payload: position });
   };
 
+  // Story 9.20: Handle temporal card badge click - navigate to History with temporal filter (AC #3, #4)
+  const handleTemporalBadgeClick = onNavigateToHistory
+    ? (position: TemporalPosition) => {
+        const payload = createTemporalNavigationPayload(position);
+        onNavigateToHistory(payload);
+      }
+    : undefined;
+
+  // Story 9.20: Handle category card badge click - navigate to History with both filters (AC #3, #4)
+  const handleCategoryBadgeClick = onNavigateToHistory
+    ? (position: CategoryPosition) => {
+        const payload = createCategoryNavigationPayload(position, temporal);
+        onNavigateToHistory(payload);
+      }
+    : undefined;
+
   // Story 9.13: Determine if category cards are clickable
   // At 'group' level, the cards represent subcategories which are the lowest level
   // Per AC #1: When viewing at group level, cards should NOT be clickable
@@ -583,7 +611,7 @@ export function DrillDownGrid({
             {t('drillDownByTime' as TranslationKey, locale)}
           </h3>
 
-          {/* Items with data */}
+          {/* Items with data - Story 9.20: Add transactionCount and onBadgeClick (AC #1, #3) */}
           {temporalWithData.length > 0 && (
             <div className={gridClasses}>
               {temporalWithData.map((child) => (
@@ -599,6 +627,8 @@ export function DrillDownGrid({
                   theme={theme}
                   locale={locale}
                   currency={currency}
+                  transactionCount={child.transactionCount}
+                  onBadgeClick={handleTemporalBadgeClick ? () => handleTemporalBadgeClick(child.position) : undefined}
                 />
               ))}
             </div>
@@ -644,6 +674,8 @@ export function DrillDownGrid({
                       theme={theme}
                       locale={locale}
                       currency={currency}
+                      transactionCount={child.transactionCount}
+                      onBadgeClick={handleTemporalBadgeClick ? () => handleTemporalBadgeClick(child.position) : undefined}
                     />
                   ))}
                 </div>
@@ -662,6 +694,7 @@ export function DrillDownGrid({
 
           {/* Items with data - Story 9.12: Translate category labels (AC #4) */}
           {/* Story 9.13: Cards at group level (showing subcategories) are not clickable (AC #1, #4) */}
+          {/* Story 9.20: Add transactionCount and onBadgeClick (AC #1, #3) */}
           {categoryWithData.length > 0 && (
             <>
               <div className={gridClasses}>
@@ -682,6 +715,8 @@ export function DrillDownGrid({
                       locale={locale}
                       currency={currency}
                       isClickable={isCategoryCardClickable}
+                      transactionCount={child.transactionCount}
+                      onBadgeClick={handleCategoryBadgeClick ? () => handleCategoryBadgeClick(child.position) : undefined}
                     />
                   );
                 })}
@@ -739,6 +774,8 @@ export function DrillDownGrid({
                         locale={locale}
                         currency={currency}
                         isClickable={isCategoryCardClickable}
+                        transactionCount={child.transactionCount}
+                        onBadgeClick={handleCategoryBadgeClick ? () => handleCategoryBadgeClick(child.position) : undefined}
                       />
                     );
                   })}
@@ -763,5 +800,8 @@ export function DrillDownGrid({
 
 // Export helper functions for testing
 export { getTemporalChildren, getCategoryChildren };
+
+// Story 9.20: Re-export HistoryNavigationPayload for consumers
+export type { HistoryNavigationPayload } from '../../utils/analyticsToHistoryFilters';
 
 export default DrillDownGrid;

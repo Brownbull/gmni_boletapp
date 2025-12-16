@@ -50,6 +50,7 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({
                 value={city}
                 onChange={e => onCityChange(e.target.value)}
                 disabled={!country}
+                aria-label={cityPlaceholder}
             >
                 <option value="">{cityPlaceholder}</option>
                 {cities.map(c => (
@@ -61,6 +62,7 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({
                 style={inputStyle}
                 value={country}
                 onChange={e => handleCountryChange(e.target.value)}
+                aria-label={countryPlaceholder}
             >
                 <option value="">{countryPlaceholder}</option>
                 {COUNTRIES.map(c => (
