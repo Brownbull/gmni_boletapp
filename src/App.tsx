@@ -3,6 +3,7 @@ import { useAuth } from './hooks/useAuth';
 import { useTransactions } from './hooks/useTransactions';
 import { useCategoryMappings } from './hooks/useCategoryMappings';
 import { useMerchantMappings } from './hooks/useMerchantMappings';
+import { useSubcategoryMappings } from './hooks/useSubcategoryMappings';
 import { useUserPreferences } from './hooks/useUserPreferences';
 import { LoginScreen } from './views/LoginScreen';
 import { DashboardView } from './views/DashboardView';
@@ -56,6 +57,14 @@ function App() {
         deleteMapping: deleteMerchantMapping,
         updateMapping: updateMerchantMapping
     } = useMerchantMappings(user, services);
+    // Story 9.15: Subcategory mappings for learning and management
+    const {
+        mappings: subcategoryMappings,
+        loading: subcategoryMappingsLoading,
+        saveMapping: saveSubcategoryMapping,
+        deleteMapping: deleteSubcategoryMapping,
+        updateMappingTarget: updateSubcategoryMapping
+    } = useSubcategoryMappings(user, services);
     // Story 9.8: User preferences for default scan currency
     const {
         preferences: userPreferences,
@@ -614,6 +623,8 @@ function App() {
                         onSetEditingItemIndex={setEditingItemIndex}
                         onSaveMapping={saveMapping}
                         onSaveMerchantMapping={saveMerchantMapping}
+                        // Story 9.15: Subcategory learning prompt
+                        onSaveSubcategoryMapping={saveSubcategoryMapping}
                         onShowToast={(text: string) => setToastMessage({ text, type: 'success' })}
                         // Story 9.9: Cancel handler for new transactions
                         onCancel={!currentTransaction.id ? handleCancelNewTransaction : undefined}
@@ -724,6 +735,11 @@ function App() {
                         // Story 9.8: Default scan currency setting
                         defaultScanCurrency={userPreferences.defaultCurrency}
                         onSetDefaultScanCurrency={setDefaultScanCurrencyPref}
+                        // Story 9.15: Subcategory mappings management
+                        subcategoryMappings={subcategoryMappings}
+                        subcategoryMappingsLoading={subcategoryMappingsLoading}
+                        onDeleteSubcategoryMapping={deleteSubcategoryMapping}
+                        onUpdateSubcategoryMapping={updateSubcategoryMapping}
                     />
                 )}
             </main>
