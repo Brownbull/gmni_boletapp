@@ -1,6 +1,6 @@
 # Boletapp Team Standards & Knowledge Base
 
-**Last Updated:** 2025-12-13 (Epic 9 Branch Sync Lesson)
+**Last Updated:** 2025-12-15 (Epic 9 Story 9.15 Branch Sync Strategy)
 **Purpose:** Single source of truth for team agreements, workflow standards, and lessons learned
 
 ---
@@ -214,6 +214,33 @@ feature/* (feature branches)
 - All three branches (main, staging, develop) are protected
 - Require PR + passing CI before merge
 - No direct pushes allowed
+
+**Branch Sync Strategy (Epic 9 Lesson Learned):**
+
+When `main` gets ahead of `develop`/`staging` (e.g., hotfixes, urgent PRs merged directly), you must sync before deploying new features:
+
+```
+Scenario: main has PRs #60-62, develop is behind
+Problem: feature → develop → staging → main will have conflicts
+
+Solution:
+1. Create sync PR: main → develop (resolve conflicts, accept main's version)
+2. Merge sync PR to develop
+3. Create feature branch from synced develop
+4. Normal flow: feature → develop → staging → main
+```
+
+**Prevention:**
+- Prefer merging through full flow (feature → develop → staging → main)
+- If hotfixes go directly to main, immediately create sync PR to develop
+- Check branch divergence before starting new feature: `git fetch && git log develop..main`
+
+**Why this matters:**
+- Protected branches prevent force pushes
+- Diverged branches cause complex merge conflicts
+- Sync PRs are simpler than rebasing feature branches
+
+*Source: Epic 9 Story 9.15 Deployment*
 
 See: [docs/branching-strategy.md](branching-strategy.md)
 
@@ -626,6 +653,14 @@ Key insights from retrospectives that improved our process.
     - This ensures local state matches deployed state
     - *Source: Epic 9 Story 9.11*
 
+16. **Sync branches when main gets ahead** (Epic 9)
+    - If PRs are merged directly to main (hotfixes, urgent changes), develop/staging get out of sync
+    - Before deploying new features, create sync PR: main → develop
+    - Then create feature branch from synced develop
+    - Prevention: always prefer the full flow (feature → develop → staging → main)
+    - Check divergence before starting: `git fetch && git log develop..main`
+    - *Source: Epic 9 Story 9.15 Deployment*
+
 ---
 
 ## Known Gotchas
@@ -790,4 +825,4 @@ This document should be updated:
 - When standards change
 - When new documentation is created
 
-**Last updated by:** Epic 9 Story 9.11 - Branch Sync During PR Deployment (2025-12-13)
+**Last updated by:** Epic 9 Story 9.15 - Branch Sync Strategy Documentation (2025-12-15)
