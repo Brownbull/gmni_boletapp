@@ -5,7 +5,7 @@
         "content": {
           "parts": [
             {
-              "text": "```json\n{\n  \"merchant\": \"Whole Foods Market\",\n  \"date\": \"2025-11-23\",\n  \"total\": 8743,\n  \"category\": \"Supermarket\",\n  \"items\": [\n    {\n      \"name\": \"Organic Milk\",\n      \"price\": 699,\n      \"category\": \"Fresh Food\",\n      \"subcategory\": \"Dairy\"\n    },\n    {\n      \"name\": \"Fresh Vegetables\",\n      \"price\": 1250,\n      \"category\": \"Fresh Food\",\n      \"subcategory\": \"Produce\"\n    },\n    {\n      \"name\": \"Chicken Breast\",\n      \"price\": 1599,\n      \"category\": \"Fresh Food\",\n      \"subcategory\": \"Meat\"\n    }\n  ]\n}\n```"
+              "text": "```json\n{\n  \"merchant\": \"Whole Foods Market\",\n  \"date\": \"2025-11-23\",\n  \"time\": \"14:35\",\n  \"country\": \"United States\",\n  \"city\": \"Austin\",\n  \"currency\": \"USD\",\n  \"total\": 8743,\n  \"category\": \"Supermarket\",\n  \"items\": [\n    {\n      \"name\": \"Organic Milk\",\n      \"price\": 699,\n      \"category\": \"Fresh Food\",\n      \"subcategory\": \"Dairy\"\n    },\n    {\n      \"name\": \"Fresh Vegetables\",\n      \"price\": 1250,\n      \"category\": \"Fresh Food\",\n      \"subcategory\": \"Produce\"\n    },\n    {\n      \"name\": \"Chicken Breast\",\n      \"price\": 1599,\n      \"category\": \"Fresh Food\",\n      \"subcategory\": \"Meat\"\n    }\n  ],\n  \"metadata\": {\n    \"receiptType\": \"supermarket\",\n    \"confidence\": 0.98\n  }\n}\n```"
             }
           ]
         },
@@ -19,7 +19,7 @@
         "content": {
           "parts": [
             {
-              "text": "{\"merchant\":\"Pizza Palace\",\"date\":\"2025-11-22\",\"total\":4200,\"category\":\"Restaurant\",\"items\":[{\"name\":\"Large Pepperoni Pizza\",\"price\":1899,\"category\":\"Food\"},{\"name\":\"Caesar Salad\",\"price\":899,\"category\":\"Food\"},{\"name\":\"Garlic Bread\",\"price\":650,\"category\":\"Food\"}]}"
+              "text": "{\"merchant\":\"Pizza Palace\",\"date\":\"2025-11-22\",\"time\":\"19:30\",\"country\":\"United States\",\"city\":\"New York\",\"currency\":\"USD\",\"total\":4200,\"category\":\"Restaurant\",\"items\":[{\"name\":\"Large Pepperoni Pizza\",\"price\":1899,\"category\":\"Food\"},{\"name\":\"Caesar Salad\",\"price\":899,\"category\":\"Food\"},{\"name\":\"Garlic Bread\",\"price\":650,\"category\":\"Food\"}],\"metadata\":{\"receiptType\":\"restaurant\",\"confidence\":0.95}}"
             }
           ]
         },
