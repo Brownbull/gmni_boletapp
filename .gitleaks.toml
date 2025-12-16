@@ -59,6 +59,8 @@ paths = [
   '''sprint-artifacts/.*\.md$''',
   # CI workflow files (contain test placeholder keys)
   '''\.github/workflows/.*\.yml$''',
+  # BMAD config files (contain file paths, not secrets)
+  '''\.bmad/_cfg/.*\.csv$''',
 ]
 
 # Regex patterns for content to ignore (placeholder values)
