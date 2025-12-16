@@ -1,0 +1,138 @@
+<story-context id="epic9/story-9.12" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>9.12</storyId>
+    <title>UI Content Translation</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-13</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic9/story-9.12-ui-content-translation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user who prefers Spanish (or another language)</asA>
+    <iWant>categories, subcategories, and other AI-extracted content to be displayed in my preferred language</iWant>
+    <soThat>I can understand my expense data without needing to translate English terms</soThat>
+    <tasks>
+      - Create src/utils/categoryTranslations.ts with EN→ES mappings
+      - Create translateCategory(key, lang) function
+      - Update CategoryBadge.tsx to use translated names
+      - Update DrillDownCard.tsx to use translated category names
+      - Update EditView.tsx dropdowns to show translated options
+      - Update HistoryView.tsx category display
+      - Add unit tests for translation function
+      - Test with Spanish language setting
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="1">Store categories (Supermarket, Restaurant, etc.) displayed in user's language</ac>
+    <ac id="2">Item groups (Dairy and Eggs, Produce, etc.) displayed in user's language</ac>
+    <ac id="3">Item subcategories displayed in user's language when available</ac>
+    <ac id="4">Analytics drill-down cards show translated category names</ac>
+    <ac id="5">Category badges show translated names</ac>
+    <ac id="6">Edit view dropdowns show translated category options</ac>
+    <ac id="7">Data is still stored in English (canonical form)</ac>
+    <ac id="8">Translation gracefully falls back to English if no translation exists</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/epic9/tech-spec-epic-9.md">Epic 9 Tech Spec - Transaction and category types</doc>
+      <doc path="docs/sprint-artifacts/epic9/architecture-epic9.md">Epic 9 Architecture - Data model patterns</doc>
+    </docs>
+    <code>
+      <file path="src/utils/translations.ts" purpose="Existing UI translation pattern - follow this for category translations">
+        Contains t() function and Language type. App supports 'en' and 'es' languages.
+      </file>
+      <file path="src/types/transaction.ts" purpose="StoreCategory and ItemCategory types">
+        - StoreCategory: 'Supermarket' | 'Restaurant' | 'Pharmacy' | 'Gas Station' | etc.
+        - Transaction.category: StoreCategory
+        - TransactionItem.category: ItemCategory | string
+      </file>
+      <file path="src/config/constants.ts" purpose="STORE_CATEGORIES and ITEM_CATEGORIES arrays">
+        Arrays containing all valid category values in English.
+      </file>
+      <file path="src/components/CategoryBadge.tsx" purpose="Displays category name - needs translation">
+        Component that renders category as a badge. Update to use translateCategory().
+      </file>
+      <file path="src/components/analytics/DrillDownCard.tsx" purpose="Analytics card - needs label translation">
+        Displays category/group/subcategory labels in drill-down. Update to translate.
+      </file>
+      <file path="src/components/analytics/DrillDownGrid.tsx" purpose="Renders DrillDownCards">
+        May need to pass language prop to child components.
+      </file>
+      <file path="src/views/EditView.tsx" purpose="Category dropdown - needs translated options">
+        Category dropdown shows English values. Update to show translated while storing English.
+      </file>
+      <file path="src/views/HistoryView.tsx" purpose="Transaction list - category display">
+        Shows category in transaction cards. Update to use translation.
+      </file>
+      <file path="src/App.tsx" purpose="Language state management">
+        Stores current language in state. Provides language context to views.
+      </file>
+    </code>
+    <dependencies>
+      <dep name="None">Standalone enhancement - no story dependencies</dep>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="data">Store data in English canonical form - translate only on display</constraint>
+    <constraint type="fallback">Unknown categories must fallback to English gracefully</constraint>
+    <constraint type="languages">Support EN and ES initially (existing app languages)</constraint>
+    <constraint type="pattern">Follow existing translations.ts pattern for consistency</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="translateCategory">
+      <signature>translateCategory(key: string, lang: Language): string</signature>
+      <purpose>Translate a category/group/subcategory key to user's language</purpose>
+      <behavior>Returns translated string or original key if no translation exists</behavior>
+    </interface>
+    <interface name="categoryTranslations">
+      <structure>Record&lt;string, Record&lt;Language, string&gt;&gt;</structure>
+      <purpose>Mapping of English category keys to translations</purpose>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      - Unit tests for translateCategory() function
+      - Test all StoreCategory values have ES translations
+      - Test fallback behavior for unknown categories
+      - Test case-insensitive lookup
+    </standards>
+    <locations>
+      - tests/unit/categoryTranslations.test.ts (NEW)
+    </locations>
+    <ideas>
+      - Test: translateCategory('Supermarket', 'es') returns 'Supermercado'
+      - Test: translateCategory('UnknownCategory', 'es') returns 'UnknownCategory'
+      - Test: translateCategory('Dairy and Eggs', 'es') returns 'Lacteos y Huevos'
+      - Test: Component integration - CategoryBadge renders translated text
+    </ideas>
+  </tests>
+
+  <spanishTranslationReference>
+    <!-- Common store categories -->
+    <translation en="Supermarket" es="Supermercado"/>
+    <translation en="Restaurant" es="Restaurante"/>
+    <translation en="Pharmacy" es="Farmacia"/>
+    <translation en="Gas Station" es="Bencinera"/>
+    <translation en="Parking" es="Estacionamiento"/>
+    <translation en="Other" es="Otro"/>
+
+    <!-- Common item groups -->
+    <translation en="Dairy and Eggs" es="Lacteos y Huevos"/>
+    <translation en="Produce" es="Frutas y Verduras"/>
+    <translation en="Beverages" es="Bebidas"/>
+    <translation en="Snacks" es="Snacks"/>
+    <translation en="Condiments" es="Condimentos"/>
+    <translation en="Meat and Seafood" es="Carnes y Mariscos"/>
+    <translation en="Bakery" es="Panaderia"/>
+    <translation en="Frozen Foods" es="Congelados"/>
+    <translation en="Household" es="Hogar"/>
+    <translation en="Personal Care" es="Cuidado Personal"/>
+  </spanishTranslationReference>
+</story-context>

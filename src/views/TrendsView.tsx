@@ -147,10 +147,11 @@ function filterTransactionsByNavState(
 
 /**
  * Compute pie chart data from filtered transactions based on current navigation state.
+ * Story 9.13: Ensure pie chart data is consistent with total at each level (AC #2, #3)
  */
 function computePieData(
     transactions: Transaction[],
-    category: { level: string; category?: string; group?: string }
+    category: { level: string; category?: string; group?: string; subcategory?: string }
 ): PieData[] {
     const dataMap: Record<string, number> = {};
 
@@ -168,11 +169,22 @@ function computePieData(
                 dataMap[key] = (dataMap[key] || 0) + item.price;
             });
         });
-    } else {
+    } else if (category.level === 'group' || !category.subcategory) {
         // Show subcategories within the selected group
         transactions.forEach(tx => {
             tx.items
                 .filter(item => item.category === category.group)
+                .forEach(item => {
+                    const key = item.subcategory || 'Other';
+                    dataMap[key] = (dataMap[key] || 0) + item.price;
+                });
+        });
+    } else {
+        // At subcategory level: show individual items (or just one entry for the subcategory)
+        // Since subcategory is the lowest level, just show the total for that subcategory
+        transactions.forEach(tx => {
+            tx.items
+                .filter(item => item.category === category.group && item.subcategory === category.subcategory)
                 .forEach(item => {
                     const key = item.subcategory || 'Other';
                     dataMap[key] = (dataMap[key] || 0) + item.price;
@@ -203,11 +215,12 @@ function computePieData(
  * - category.level='all': Segments by store category (tx.category)
  * - category.level='category': Segments by item group (item.category)
  * - category.level='group': Segments by subcategory (item.subcategory)
+ * - category.level='subcategory': Single segment for the selected subcategory (Story 9.13)
  */
 function computeBarData(
     transactions: Transaction[],
     temporal: { level: string; year: string; quarter?: string; month?: string; week?: number; day?: string },
-    category: { level: string; category?: string; group?: string },
+    category: { level: string; category?: string; group?: string; subcategory?: string },
     locale: string
 ): BarData[] {
     // Day view has no comparison
@@ -251,6 +264,7 @@ function computeBarData(
 
         // Determine segment key AND bar total based on category drill-down level (Story 7.18 extension)
         // Total must match segment sum so bars scale correctly at each level
+        // Story 9.13: Added subcategory level handling (AC #2, #3)
         if (category.level === 'all' || !category.category) {
             // At store level: use full transaction total, segment by store category
             barMap[key].total += tx.total;
@@ -265,7 +279,7 @@ function computeBarData(
                 txItemTotal += item.price;
             });
             barMap[key].total += txItemTotal;
-        } else {
+        } else if (category.level === 'group' || !category.subcategory) {
             // At item group level: total = sum of filtered item prices, segment by subcategories
             let groupTotal = 0;
             tx.items
@@ -276,6 +290,17 @@ function computeBarData(
                     groupTotal += item.price;
                 });
             barMap[key].total += groupTotal;
+        } else {
+            // At subcategory level: total = sum of filtered item prices for that subcategory only
+            let subcategoryTotal = 0;
+            tx.items
+                .filter(item => item.category === category.group && item.subcategory === category.subcategory)
+                .forEach(item => {
+                    const segmentKey = item.subcategory || 'Other';
+                    barMap[key].segments[segmentKey] = (barMap[key].segments[segmentKey] || 0) + item.price;
+                    subcategoryTotal += item.price;
+                });
+            barMap[key].total += subcategoryTotal;
         }
     });
 
@@ -411,23 +436,32 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     );
 
     // Compute total based on category level
+    // Story 9.13: Ensure totals are consistent at each level (AC #2)
     // At store level: sum transaction totals
-    // At category level: sum all item prices
+    // At category level: sum all item prices within the filtered store category
     // At group level: sum item prices for that group only
+    // At subcategory level: sum item prices for that subcategory only
     const total = useMemo(() => {
         if (category.level === 'all' || !category.category) {
             // Store level: sum transaction totals
             return filteredTransactions.reduce((sum, tx) => sum + tx.total, 0);
         } else if (category.level === 'category' || !category.group) {
-            // Category level: sum all item prices
+            // Category level: sum all item prices within the filtered store category
             return filteredTransactions.reduce((sum, tx) => {
                 return sum + tx.items.reduce((itemSum, item) => itemSum + item.price, 0);
             }, 0);
-        } else {
+        } else if (category.level === 'group' || !category.subcategory) {
             // Group level: sum item prices for the selected group only
             return filteredTransactions.reduce((sum, tx) => {
                 return sum + tx.items
                     .filter(item => item.category === category.group)
+                    .reduce((itemSum, item) => itemSum + item.price, 0);
+            }, 0);
+        } else {
+            // Subcategory level: sum item prices for the selected subcategory only
+            return filteredTransactions.reduce((sum, tx) => {
+                return sum + tx.items
+                    .filter(item => item.category === category.group && item.subcategory === category.subcategory)
                     .reduce((itemSum, item) => itemSum + item.price, 0);
             }, 0);
         }

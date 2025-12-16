@@ -101,11 +101,12 @@ export function useAuth(): UseAuthReturn {
             return;
         }
 
-        // Only allow in development/test environments
+        // Allow in dev environments OR when VITE_ENABLE_TEST_LOGIN is set
         const isDev = import.meta.env.DEV || window.location.hostname === 'localhost';
-        console.log('[signInWithTestCredentials] isDev:', isDev);
+        const testLoginEnabled = import.meta.env.VITE_ENABLE_TEST_LOGIN === 'true';
+        console.log('[signInWithTestCredentials] isDev:', isDev, 'testLoginEnabled:', testLoginEnabled);
 
-        if (!isDev) {
+        if (!isDev && !testLoginEnabled) {
             throw new Error('Test authentication is only available in development/test environments');
         }
 
