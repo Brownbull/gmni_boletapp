@@ -65,7 +65,7 @@ function getInstallInstructions(t: (key: string) => string): { steps: string[]; 
  */
 export function PWASettingsSection({ t, theme }: PWASettingsSectionProps) {
   const { canInstall, isInstalled, isInstalling, install } = usePWAInstall();
-  const { needRefresh, offlineReady, update } = usePWAUpdate();
+  const { needRefresh, offlineReady, checking, update, checkForUpdates } = usePWAUpdate();
 
   const isDark = theme === 'dark';
 
@@ -181,39 +181,49 @@ export function PWASettingsSection({ t, theme }: PWASettingsSectionProps) {
           )}
         </div>
 
-        {/* Update App Button */}
+        {/* Update App Section */}
         <div className="flex justify-between items-center">
           <div className="flex-1">
             <p className="text-sm font-medium" style={{ color: 'var(--primary)' }}>
               {t('updateApp')}
             </p>
             <p className="text-xs" style={{ color: 'var(--secondary)' }}>
-              {needRefresh
-                ? t('updateAvailable')
-                : offlineReady
-                  ? t('appUpToDate')
-                  : t('checkingForUpdates')}
+              {checking
+                ? t('checkingForUpdates')
+                : needRefresh
+                  ? t('updateAvailable')
+                  : offlineReady
+                    ? t('appUpToDate')
+                    : t('tapToCheckUpdates')}
             </p>
           </div>
-          <button
-            onClick={update}
-            disabled={!needRefresh}
-            className="min-h-11 px-4 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors"
-            style={needRefresh ? getButtonStyle('primary') : getButtonStyle('secondary')}
-            aria-label={t('updateApp')}
-          >
-            {needRefresh ? (
-              <>
-                <RefreshCw size={18} />
-                {t('pwaUpdate')}
-              </>
-            ) : (
-              <>
-                <Check size={18} />
-                {t('upToDate')}
-              </>
+          <div className="flex items-center gap-2">
+            {/* Check for Updates button - always visible when not checking and no update ready */}
+            {!needRefresh && (
+              <button
+                onClick={checkForUpdates}
+                disabled={checking}
+                className="min-h-11 px-4 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors"
+                style={getButtonStyle('primary')}
+                aria-label={t('checkUpdates')}
+              >
+                <RefreshCw size={18} className={checking ? 'animate-spin' : ''} />
+                {checking ? t('checking') : t('checkUpdates')}
+              </button>
             )}
-          </button>
+            {/* Update Now button - only visible when update is ready */}
+            {needRefresh && (
+              <button
+                onClick={update}
+                className="min-h-11 px-4 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors"
+                style={getButtonStyle('success')}
+                aria-label={t('pwaUpdate')}
+              >
+                <Download size={18} />
+                {t('pwaUpdate')}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
