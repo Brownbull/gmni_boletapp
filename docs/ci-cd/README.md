@@ -27,13 +27,22 @@ If you're new to CI/CD, start here:
 
 ## 🔍 Quick Reference
 
-### Current Workflow Status
+### Current Workflow Status (Story 8.9 - Optimized)
 - **Location:** `.github/workflows/test.yml`
-- **Triggers:** Push to `main`/`develop`/`staging`, all pull requests
-- **Execution Time:** ~7-8 minutes (tests) + ~2 minutes (deploy on main)
+- **Triggers:** Push to `main`/`develop`/`staging`, all pull requests, `workflow_dispatch`
+- **Execution Time:** ~4-5 minutes (PR) / ~7 minutes (main with Lighthouse)
 - **Test Coverage:** ~51% (thresholds: 45% lines, 30% branches, 25% functions, 40% statements)
-- **Test Job Steps:** 22 (updated in Epic 4)
+- **Architecture:** Parallel jobs (setup → test-unit, test-integration, test-e2e, security → deploy)
 - **Deploy Job:** Automatic on merge to `main` (Story 6.0)
+
+### Workflow Structure (Story 8.9)
+```
+setup ─┬─► test-unit ─────────┬─► test ─► deploy (main only)
+       ├─► test-integration ──┤
+       ├─► test-e2e ──────────┤
+       ├─► security ──────────┘
+       └─► lighthouse (main push only, parallel)
+```
 
 ### Test Commands (Epic 7 Tiered Strategy)
 
@@ -102,59 +111,100 @@ When adding new tests or modifying the workflow:
 3. Update this documentation if you change the workflow
 4. Document any new issues in the troubleshooting guide
 
-## 🔧 Workflow Jobs
+## 🔧 Workflow Jobs (Story 8.9 - Parallel Architecture)
 
-### Test Job (22 steps)
+### Setup Job
+Shared setup for all parallel test jobs:
+- Checkout repository, scan for secrets (gitleaks)
+- Setup Node.js 20, cache npm dependencies
+- **Cache Playwright browsers** (~29s saved on cache hit)
+- **Cache Firebase CLI** (~19s saved on cache hit)
+- Build Cloud Functions
+- Save workspace cache for parallel jobs
 
-The test job validates code quality before deployment:
+### Test-Unit Job (parallel)
+- Restore workspace cache
+- Start Firebase emulators (needed for categoryMappingService)
+- Run unit tests with coverage (combined - Story 8.9 AC5)
+- Upload coverage reports, post to PR comments
 
-1. Checkout repository (fetch-depth: 0 for gitleaks)
-2. **Scan for secrets** (gitleaks)
-3. Setup Node.js 20
-4. Cache dependencies
-5. Install dependencies
-6. Install Firebase CLI
-7. Install Playwright browsers
-8. Install and build Cloud Functions
-9. Start Firebase Emulators
-10. Run unit tests
-11. Run integration tests
-12. Create test user (for E2E)
-13. Run E2E tests
-14. Generate coverage with thresholds
-15. Upload coverage report (HTML)
-16. Upload coverage report (lcov)
-17. Display coverage summary
-18. Post coverage report to PR
-19. Run Lighthouse audits
-20. Upload Lighthouse reports
-21. Check bundle size (<700KB)
-22. **Run npm audit** (dependency vulnerabilities)
-23. **Run security lint** (eslint-plugin-security)
+### Test-Integration Job (parallel)
+- Restore workspace cache
+- Start Firebase emulators
+- Run integration tests
 
-### Deploy Job (Story 6.0) - NEW
+### Test-E2E Job (parallel)
+- Restore workspace + Playwright cache
+- Start Firebase emulators, create test user
+- Run E2E tests (Playwright)
 
-The deploy job runs **only on push to `main`** after tests pass:
+### Security Job (parallel)
+- Bundle size check (<700KB threshold)
+- npm audit (HIGH/CRITICAL vulnerabilities)
+- Security lint (eslint-plugin-security)
 
-1. Checkout repository
-2. Setup Node.js 20
-3. Cache dependencies
-4. Install dependencies
-5. Build for production (with secrets)
-6. **Deploy to Firebase Hosting**
-7. Deployment notification
+### Lighthouse Job (main only, parallel)
+- **Only runs on push to main branch** (~4.5 min saved on PRs)
+- Run Lighthouse audits on 6 views
+- Upload Lighthouse reports
 
-**Trigger conditions:**
-- Branch: `main` only
-- Event: `push` only (not PRs)
-- Dependency: `test` job must pass
+### Test Job (aggregator)
+- Aggregates results from test-unit, test-integration, test-e2e, security
+- Provides single "test" status for branch protection compatibility
+
+### Deploy Job
+Runs **only on push to `main`** after `test` job passes:
+- Build for production (with secrets)
+- Deploy to Firebase Hosting
+- Can be triggered manually via `workflow_dispatch`
 
 **Required Secrets:**
 - `FIREBASE_SERVICE_ACCOUNT` - Firebase service account JSON
 - `VITE_FIREBASE_*` - Firebase configuration
 - `VITE_GEMINI_*` - Gemini API configuration
 
+## ⚡ CI/CD Performance Standards (Story 8.9)
+
+When adding new tests or features to CI/CD, follow these guidelines to maintain fast pipeline execution:
+
+### Time Budgets
+| Job | Target | Max Allowed |
+|-----|--------|-------------|
+| setup | ~2 min | 3 min |
+| test-unit | ~2 min | 4 min |
+| test-integration | ~2 min | 4 min |
+| test-e2e | ~2.5 min | 5 min |
+| security | ~2 min | 3 min |
+| **Total PR** | **~4-5 min** | **7 min** |
+
+### Caching Strategy
+- **Always cache** expensive installs (Playwright browsers, Firebase CLI)
+- Use `actions/cache/save` in setup, `actions/cache/restore` in parallel jobs
+- Cache keys should include version or lockfile hash for invalidation
+
+### Parallelization Rules
+1. **Independent tests run in parallel** - unit, integration, e2e, security all run concurrently
+2. **Each parallel job is self-contained** - must start own emulators, restore own caches
+3. **Aggregator job for branch protection** - `test` job collects results from all test jobs
+
+### When Adding New Tests
+- **Small addition (<10 tests):** Add to existing job, verify time budget
+- **Large addition (>50 tests):** Consider new parallel job or optimize existing
+- **Slow tests (>30s each):** Must justify; consider if E2E is appropriate or can be unit/integration
+
+### When Adding New CI Steps
+- **Per-commit checks:** Add to `setup` or `security` job
+- **Test-related:** Add to appropriate test job (unit/integration/e2e)
+- **Main-only (expensive):** Create separate job with `if: github.ref == 'refs/heads/main'`
+
+### Anti-Patterns to Avoid
+- ❌ Running same tests twice (e.g., unit tests + coverage separately)
+- ❌ Sequential steps that could be parallel jobs
+- ❌ Installing tools that aren't cached
+- ❌ Running expensive checks (Lighthouse) on every PR
+- ❌ Blocking deploys on informational checks (use `continue-on-error: true`)
+
 ---
 
-**Last Updated:** 2025-12-07
-**Workflow Version:** 3.1 (22 test steps + 7 deploy steps, auto-deploy on main, tiered local testing)
+**Last Updated:** 2025-12-12
+**Workflow Version:** 4.0 (Parallel architecture - Story 8.9)

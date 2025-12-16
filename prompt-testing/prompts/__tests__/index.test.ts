@@ -186,8 +186,8 @@ describe('Shared Prompts Library', () => {
   });
 
   describe('Category constants', () => {
-    it('should have 14 store categories', () => {
-      expect(STORE_CATEGORIES).toHaveLength(14);
+    it('should have 34 store categories', () => {
+      expect(STORE_CATEGORIES).toHaveLength(34);
     });
 
     it('should include common store types', () => {
@@ -197,14 +197,14 @@ describe('Shared Prompts Library', () => {
       expect(STORE_CATEGORIES).toContain('Other');
     });
 
-    it('should have 9 item categories', () => {
-      expect(ITEM_CATEGORIES).toHaveLength(9);
+    it('should have 32 item categories', () => {
+      expect(ITEM_CATEGORIES).toHaveLength(32);
     });
 
     it('should include common item types', () => {
-      expect(ITEM_CATEGORIES).toContain('Fresh Food');
+      expect(ITEM_CATEGORIES).toContain('Produce');
       expect(ITEM_CATEGORIES).toContain('Pantry');
-      expect(ITEM_CATEGORIES).toContain('Drinks');
+      expect(ITEM_CATEGORIES).toContain('Beverages');
       expect(ITEM_CATEGORIES).toContain('Other');
     });
   });
@@ -214,8 +214,8 @@ describe('Shared Prompts Library', () => {
       expect(PROMPT_V2.id).toBe('v2-multi-currency-types');
     });
 
-    it('should have version "2.1.0"', () => {
-      expect(PROMPT_V2.version).toBe('2.1.0');
+    it('should have version "2.6.0"', () => {
+      expect(PROMPT_V2.version).toBe('2.6.0');
     });
 
     it('should contain {{currency}} placeholder', () => {

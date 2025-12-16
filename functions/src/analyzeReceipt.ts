@@ -3,7 +3,7 @@ import * as admin from 'firebase-admin'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { base64ToBuffer, resizeAndCompress, generateThumbnail } from './imageProcessing'
 import { uploadReceiptImages } from './storageService'
-import { buildPrompt } from './prompts'
+import { buildPrompt, getActivePrompt } from './prompts'
 import type { ReceiptType } from './prompts'
 
 // Initialize Firebase Admin if not already initialized
@@ -124,6 +124,7 @@ interface AnalyzeReceiptRequest {
 
 /**
  * Response from Gemini AI analysis (parsed from receipt)
+ * Includes v2.6.0 fields: time, currency, country, city, metadata
  */
 interface GeminiAnalysisResult {
   merchant: string
@@ -134,17 +135,32 @@ interface GeminiAnalysisResult {
     name: string
     price: number
     category?: string
+    quantity?: number
+    subcategory?: string
   }>
+  // v2.6.0 fields - extracted from receipt by Gemini
+  time?: string           // HH:MM format (e.g., "14:35")
+  currency?: string       // Detected currency code (e.g., "USD", "CLP")
+  country?: string        // Country name or null if not detected
+  city?: string           // City name or null if not detected
+  metadata?: {
+    receiptType?: string  // Detected receipt type (e.g., "receipt", "invoice")
+    confidence?: number   // Confidence score 0.0-1.0
+  }
 }
 
 /**
  * Full response from analyzeReceipt Cloud Function
- * Includes Gemini analysis plus image storage URLs
+ * Includes Gemini analysis plus image storage URLs and tracking fields
  */
 interface AnalyzeReceiptResponse extends GeminiAnalysisResult {
   transactionId: string        // Pre-generated ID for Firestore document
   imageUrls?: string[]         // Full-size image download URLs
   thumbnailUrl?: string        // Thumbnail download URL
+  // Story 9.1: Additional tracking fields
+  promptVersion: string        // Version of prompt used for extraction (e.g., "2.6.0")
+  merchantSource: 'scan'       // Source of merchant name (always 'scan' for new receipts)
+  receiptType?: string         // Flattened from metadata.receiptType for client convenience
 }
 
 /**
@@ -307,12 +323,20 @@ export const analyzeReceipt = functions.https.onCall(
         // Continue without images - transaction data is still valuable
       }
 
-      // Return combined response
+      // Get prompt version for tracking (Story 9.1)
+      const activePrompt = getActivePrompt(data.promptContext)
+
+      // Return combined response with v2.6.0 tracking fields
       return {
         ...parsed,
         transactionId,
         imageUrls,
-        thumbnailUrl
+        thumbnailUrl,
+        // Story 9.1: Add tracking fields for new transaction fields
+        promptVersion: activePrompt.version,
+        merchantSource: 'scan' as const,
+        // Flatten receiptType from metadata for client convenience
+        receiptType: parsed.metadata?.receiptType
       }
     } catch (error) {
       console.error('Error analyzing receipt:', error)

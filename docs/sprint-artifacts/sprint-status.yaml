@@ -143,18 +143,49 @@ development_status:
   8-6-generate-validate-commands: done  # CLI commands for test data generation/validation - Code Review APPROVED 2025-12-12
   8-7-ab-prompt-comparison-analysis: done  # Compare prompt versions side-by-side - Code Review APPROVED 2025-12-12
   8-8-starter-test-data-documentation: done  # Initial test dataset + documentation - Merged to develop (PR #44) 2025-12-12
-  epic-8-retrospective: optional  # Security incident documented in story 8.8 as retrospective notes
+  8-9-cicd-pipeline-optimization: done  # Parallelize CI jobs, cache browsers/CLI, optimize Lighthouse - PR #51 MERGED 2025-12-12
+  epic-8-retrospective: completed  # Comprehensive retro: CI/CD standards, security lessons, test harness outcomes
 
-  # Future Epics (from Epic 7 retrospective - roadmap revised 2025-12-10)
+  # Future Epics (from Epic 7 retrospective - roadmap revised 2025-12-10, Epic 9 inserted 2025-12-12)
   # See docs/planning/epics.md for full epic definitions
-  epic-9: backlog  # UX Redesign - Design system and visual consistency
+
+  # Epic 9: Scan Enhancement & Merchant Learning (NEW - inserted after Epic 8)
+  # - Integrate v2.6.0 prompt fields into Transaction type and UI
+  # - Add merchant name learning (like category learning)
+  # PRD: docs/sprint-artifacts/epic9/prd-epic9-scan-enhancement.md
+  # Tech-Spec: docs/sprint-artifacts/epic9/tech-spec-epic-9.md
+  # Architecture: docs/sprint-artifacts/epic9/architecture-epic9.md
+  epic-9: contexted  # Scan Enhancement & Merchant Learning - Stories drafted 2025-12-12
+  9-1-transaction-type-extension: done  # 3 points - Add v2.6.0 fields to Transaction type - Code Review APPROVED 2025-12-13
+  9-2-transaction-item-category-fields: done  # 2 points - Proper typing for item categories - Code Review APPROVED 2025-12-13
+  9-3-edit-view-field-display: done  # 3 points - Display new fields + "Learned" badge - Code Review APPROVED 2025-12-13
+  9-4-merchant-mapping-infrastructure: done  # 3 points - Types, service, security rules - Code Review APPROVED 2025-12-13
+  9-5-merchant-fuzzy-matching: done  # 3 points - Fuse.js matcher with configurable threshold - Code Review APPROVED 2025-12-13
+  9-6-merchant-learning-prompt: done  # 2 points - Dialog on merchant edit - Code Review APPROVED 2025-12-13
+  9-7-merchant-mappings-management-ui: done  # 2 points - Settings UI for mappings - Code Review APPROVED 2025-12-13
+  9-8-scan-advanced-options: done  # 5 points - Pre-scan options (currency, store type) - Code Review APPROVED 2025-12-13
+  9-9-unified-transaction-flow: done  # 5 points - Unified scan+new transaction, cancel button, merchant/alias labels - Code Review APPROVED 2025-12-13
+  9-10-persistent-scan-state: done  # 3 points - Persistent scan state across navigation, credit placeholder (900) - Code Review APPROVED 2025-12-13
+  9-11-transaction-card-unification: done  # 5 points - Unified card display, duplicate detection, legacy defaults - Code Review APPROVED 2025-12-13
+  9-12-ui-content-translation: done  # 2 points - Translate categories/subcategories to user's language - Code Review APPROVED 2025-12-14
+  9-13-drilldown-analytics-validation: done  # 3 points - Fix drill-down totals and stop at correct level - Code Review APPROVED 2025-12-14
+  9-14-pwa-installation-support: review  # 3 points - PWA support for mobile installation - Implementation complete 2025-12-15
+  9-15-subcategory-learning-and-management: ready-for-dev  # 5 points - Subcategory learning, editing, and Settings UI - Story created 2025-12-13
+  9-99-epic-release-deployment: ready-for-dev  # 2 points - Production deployment, E2E verification - Story created 2025-12-13
   epic-9-retrospective: optional
 
-  epic-10: backlog  # Application Refactoring - Performance and architecture
+  # Former Epic 9 → Epic 10: UX Redesign
+  epic-10: backlog  # UX Redesign - Design system and visual consistency
   epic-10-retrospective: optional
 
-  epic-11: backlog  # Subscription & Monetization - 4-tier model, Mercado Pago
+  # Former Epic 10 → Epic 11: Application Refactoring
+  epic-11: backlog  # Application Refactoring - Performance and architecture
   epic-11-retrospective: optional
 
-  epic-12: backlog  # Mobile App (iOS & Android)
+  # Former Epic 11 → Epic 12: Subscription & Monetization
+  epic-12: backlog  # Subscription & Monetization - 4-tier model, Mercado Pago
   epic-12-retrospective: optional
+
+  # Former Epic 12 → Epic 13: Mobile App
+  epic-13: backlog  # Mobile App (iOS & Android)
+  epic-13-retrospective: optional

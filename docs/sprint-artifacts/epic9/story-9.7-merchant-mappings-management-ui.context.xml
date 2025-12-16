@@ -1,0 +1,326 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context" v="1.0">
+  <metadata>
+    <epicId>9</epicId>
+    <storyId>7</storyId>
+    <title>Merchant Mappings Management UI</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic9/story-9.7-merchant-mappings-management-ui.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to view and manage my merchant name mappings</iWant>
+    <soThat>I can edit or delete incorrect mappings</soThat>
+    <tasks>
+      <task id="1" ac="1,2,3,6,7">Create src/components/settings/MerchantMappingsSettings.tsx
+        <subtask>Follow CategoryMappingsSettings pattern</subtask>
+        <subtask>List all mappings with original → target display</subtask>
+        <subtask>Show usage count for each mapping</subtask>
+        <subtask>Empty state message</subtask>
+      </task>
+      <task id="2" ac="4">Add delete functionality
+        <subtask>Delete button on each mapping</subtask>
+        <subtask>Confirmation dialog before deletion</subtask>
+      </task>
+      <task id="3" ac="5">Add edit functionality
+        <subtask>Edit button or inline edit</subtask>
+        <subtask>Allow changing targetMerchant</subtask>
+      </task>
+      <task id="4" ac="1">Integrate into SettingsView
+        <subtask>Add "Merchant Mappings" section</subtask>
+        <subtask>Position near Category Mappings section</subtask>
+      </task>
+      <task id="5">Add unit tests for component</task>
+      <task id="6">Run all tests and verify passing</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">"Merchant Mappings" section added to Settings view</criterion>
+    <criterion id="2">List shows all merchant mappings (original → corrected)</criterion>
+    <criterion id="3">Each mapping shows usage count</criterion>
+    <criterion id="4">Delete button removes mapping with confirmation</criterion>
+    <criterion id="5">Edit functionality allows updating target merchant name</criterion>
+    <criterion id="6">Empty state message when no mappings exist</criterion>
+    <criterion id="7">Follows Category Mappings UI pattern</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/sprint-artifacts/epic9/architecture-epic9.md" relevance="primary">
+        Architecture with file structure and patterns
+      </doc>
+      <doc path="docs/sprint-artifacts/epic9/tech-spec-epic-9.md" relevance="high">
+        Technical specification for UI requirements
+      </doc>
+      <doc path="docs/sprint-artifacts/epic6/story-6.5-mappings-management-ui.md" relevance="critical">
+        Reference implementation - follow this pattern
+      </doc>
+    </docs>
+    <code>
+      <file path="src/components/CategoryMappingsList.tsx" action="REFERENCE" relevance="critical">
+        Pattern to follow for MerchantMappingsSettings
+        Key patterns: list rendering, delete with confirmation, edit functionality
+        If file doesn't exist, check SettingsView for category mappings section
+      </file>
+      <file path="src/views/SettingsView.tsx" action="MODIFY" relevance="critical">
+        Integration point for Merchant Mappings section
+        Lines 1-177: Current settings structure
+        Add MerchantMappingsSettings component in appropriate location
+      </file>
+      <file path="src/hooks/useMerchantMappings.ts" action="USE" relevance="high">
+        Hook providing mappings, deleteMapping, saveMapping functions
+        From Story 9.4
+      </file>
+      <file path="src/services/merchantMappingService.ts" action="USE" relevance="high">
+        deleteMerchantMapping(), saveMerchantMapping() functions
+      </file>
+      <file path="src/types/merchantMapping.ts" action="USE" relevance="high">
+        MerchantMapping type for component props
+      </file>
+      <file path="src/utils/translations.ts" action="MODIFY" relevance="medium">
+        Add translations for UI elements
+      </file>
+      <file path="src/components/settings/MerchantMappingsSettings.tsx" action="CREATE" relevance="critical">
+        New file - Settings UI for merchant mappings
+      </file>
+    </code>
+    <dependencies>
+      <dependency name="react" version="18.3.1" status="installed">
+        UI framework
+      </dependency>
+      <dependency name="lucide-react" version="^0.460.0" status="installed">
+        Icon library - Trash2, Edit, BookMarked icons
+      </dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="ux">
+      Follow existing Settings card pattern (rounded-xl border)
+      Theme-aware styling (dark/light modes)
+      Delete requires confirmation (prevent accidental deletion)
+      Empty state should be helpful, not just "No items"
+    </constraint>
+    <constraint type="accessibility">
+      List must be keyboard navigable
+      Delete confirmation focus on confirm button
+      Proper aria-labels for actions
+    </constraint>
+    <constraint type="i18n">
+      All user-facing text must use translation keys
+      Support English and Spanish
+    </constraint>
+    <constraint type="code-style">
+      TypeScript strict mode
+      Single quotes, no semicolons
+      Follow existing Settings patterns
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="MerchantMappingsSettingsProps">
+      <prop name="mappings" type="MerchantMapping[]">List of user's merchant mappings</prop>
+      <prop name="loading" type="boolean">Loading state</prop>
+      <prop name="onDelete" type="(mappingId: string) => Promise&lt;void&gt;">Delete mapping handler</prop>
+      <prop name="onEdit" type="(mappingId: string, newTarget: string) => Promise&lt;void&gt;">Edit mapping handler</prop>
+      <prop name="t" type="(key: string) => string">Translation function</prop>
+      <prop name="theme" type="'light' | 'dark'">Current theme</prop>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      <standard>Vitest for unit tests</standard>
+      <standard>@testing-library/react for component testing</standard>
+      <standard>Playwright for E2E tests (if needed)</standard>
+    </standards>
+    <locations>
+      <location path="tests/unit/MerchantMappingsSettings.test.tsx" action="CREATE">
+        Unit tests for component
+      </location>
+      <location path="tests/e2e/merchant-mappings.spec.ts" action="CREATE" optional="true">
+        E2E tests (if needed)
+      </location>
+    </locations>
+    <ideas>
+      <test name="section-renders-in-settings">
+        "Merchant Mappings" section appears in Settings view
+      </test>
+      <test name="mappings-list-displays">
+        All merchant mappings display with original → target format
+      </test>
+      <test name="usage-count-shows">
+        Each mapping shows usage count (e.g., "used 5 times")
+      </test>
+      <test name="delete-shows-confirmation">
+        Click delete button shows confirmation dialog
+      </test>
+      <test name="delete-removes-mapping">
+        Confirming delete removes mapping from list
+      </test>
+      <test name="edit-updates-target">
+        Edit functionality updates target merchant name
+      </test>
+      <test name="empty-state-shows">
+        When no mappings exist, shows helpful empty state message
+      </test>
+      <test name="keyboard-navigation">
+        Can navigate and interact with list using keyboard
+      </test>
+    </ideas>
+  </tests>
+
+  <implementationGuide>
+    <step order="1">
+      Add translation keys to src/utils/translations.ts
+      Keys: merchantMappings, merchantMappingsEmpty, merchantMappingsHint, deleteMapping, editMapping, usedXTimes
+      EN: "Merchant Mappings", "No merchant mappings yet", "Edit a merchant name...", "Delete", "Edit", "used {count} times"
+      ES: Corresponding Spanish translations
+    </step>
+    <step order="2" task="1">
+      Create src/components/settings/MerchantMappingsSettings.tsx
+      - Check if CategoryMappingsList exists, use as pattern
+      - Otherwise follow SettingsView card pattern
+      - List with original → target display
+      - Usage count badge
+      - Delete and Edit buttons per item
+      - Empty state with hint
+    </step>
+    <step order="3" task="2">
+      Add delete functionality
+      - Delete button (Trash2 icon)
+      - Confirmation modal (follow CategoryLearningPrompt modal pattern)
+      - Call deleteMerchantMapping() on confirm
+    </step>
+    <step order="4" task="3">
+      Add edit functionality
+      - Edit button (Edit icon)
+      - Inline edit or modal for editing targetMerchant
+      - Call saveMerchantMapping() with updated target
+    </step>
+    <step order="5" task="4">
+      Integrate into SettingsView
+      - Import MerchantMappingsSettings
+      - Add useMerchantMappings hook
+      - Render section (after or near Category Mappings if exists)
+    </step>
+    <step order="6" task="5,6">
+      Create tests and verify
+      - tests/unit/MerchantMappingsSettings.test.tsx
+      - Run npm run test
+    </step>
+  </implementationGuide>
+
+  <codeSnippets>
+    <snippet name="component-structure" language="typescript">
+// src/components/settings/MerchantMappingsSettings.tsx
+import React, { useState } from 'react';
+import { Trash2, Edit2 } from 'lucide-react';
+import { MerchantMapping } from '../../types/merchantMapping';
+
+interface MerchantMappingsSettingsProps {
+  mappings: MerchantMapping[];
+  loading: boolean;
+  onDelete: (mappingId: string) =&gt; Promise&lt;void&gt;;
+  onEdit: (mappingId: string, newTarget: string) =&gt; Promise&lt;void&gt;;
+  t: (key: string) =&gt; string;
+  theme: 'light' | 'dark';
+}
+
+export function MerchantMappingsSettings({
+  mappings,
+  loading,
+  onDelete,
+  onEdit,
+  t,
+  theme
+}: MerchantMappingsSettingsProps) {
+  const [deleteConfirm, setDeleteConfirm] = useState&lt;string | null&gt;(null);
+
+  if (loading) return &lt;LoadingSpinner /&gt;;
+
+  if (mappings.length === 0) {
+    return (
+      &lt;div className="text-center py-8"&gt;
+        &lt;p className="text-gray-500"&gt;{t('merchantMappingsEmpty')}&lt;/p&gt;
+        &lt;p className="text-sm text-gray-400 mt-2"&gt;{t('merchantMappingsHint')}&lt;/p&gt;
+      &lt;/div&gt;
+    );
+  }
+
+  return (
+    &lt;div className="space-y-2"&gt;
+      {mappings.map(mapping =&gt; (
+        &lt;MappingItem
+          key={mapping.id}
+          mapping={mapping}
+          onDelete={() =&gt; setDeleteConfirm(mapping.id!)}
+          onEdit={(newTarget) =&gt; onEdit(mapping.id!, newTarget)}
+          t={t}
+          theme={theme}
+        /&gt;
+      ))}
+      {deleteConfirm &amp;&amp; (
+        &lt;DeleteConfirmModal
+          onConfirm={() =&gt; { onDelete(deleteConfirm); setDeleteConfirm(null); }}
+          onCancel={() =&gt; setDeleteConfirm(null)}
+          t={t}
+        /&gt;
+      )}
+    &lt;/div&gt;
+  );
+}
+    </snippet>
+    <snippet name="mapping-item" language="typescript">
+// Mapping item component
+function MappingItem({ mapping, onDelete, onEdit, t, theme }) {
+  return (
+    &lt;div className={`
+      p-4 rounded-lg border
+      ${theme === 'dark' ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}
+    `}&gt;
+      &lt;div className="flex justify-between items-center"&gt;
+        &lt;div&gt;
+          &lt;span className="text-sm text-gray-500"&gt;{mapping.originalMerchant}&lt;/span&gt;
+          &lt;span className="mx-2"&gt;→&lt;/span&gt;
+          &lt;span className="font-medium"&gt;{mapping.targetMerchant}&lt;/span&gt;
+        &lt;/div&gt;
+        &lt;div className="flex items-center gap-2"&gt;
+          &lt;span className="text-xs text-gray-400"&gt;
+            {t('usedXTimes').replace('{count}', mapping.usageCount.toString())}
+          &lt;/span&gt;
+          &lt;button onClick={onEdit} aria-label={t('editMapping')}&gt;
+            &lt;Edit2 size={16} /&gt;
+          &lt;/button&gt;
+          &lt;button onClick={onDelete} aria-label={t('deleteMapping')}&gt;
+            &lt;Trash2 size={16} /&gt;
+          &lt;/button&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}
+    </snippet>
+  </codeSnippets>
+
+  <previousStoryLearnings>
+    <story id="9.4" title="Merchant Mapping Infrastructure">
+      <learning>useMerchantMappings hook provides mappings, deleteMapping, saveMapping</learning>
+      <learning>MerchantMapping type includes usageCount field</learning>
+    </story>
+    <story id="9.5" title="Merchant Fuzzy Matching">
+      <learning>Usage count incremented on auto-apply</learning>
+    </story>
+    <story id="9.6" title="Merchant Learning Prompt">
+      <learning>Learning dialog creates mappings with usageCount: 0</learning>
+    </story>
+    <story id="6.5" title="Mappings Management UI">
+      <learning>CategoryMappingsList pattern established</learning>
+      <learning>Delete confirmation modal pattern</learning>
+      <learning>E2E test patterns for settings management</learning>
+    </story>
+  </previousStoryLearnings>
+</story-context>

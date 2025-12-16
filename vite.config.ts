@@ -1,9 +1,49 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
+      manifest: {
+        name: 'Gastify',
+        short_name: 'Gastify',
+        description: 'Smart expense tracking with AI receipt scanning',
+        theme_color: '#2d3a4a', // Night blue - matches Normal theme primary
+        background_color: '#f5f0e8', // Warm cream - matches Normal theme bg
+        display: 'standalone',
+        start_url: '/',
+        icons: [
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
+          }
+        ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Don't cache API calls - only static assets
+        // Firebase SDK handles its own caching
+        runtimeCaching: []
+      }
+    })
+  ],
   server: {
     port: 5174,
   },
@@ -24,6 +64,9 @@ export default defineConfig({
       '**/.{idea,git,cache,output,temp}/**',
       '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',
       '**/tests/e2e/**', // Exclude Playwright E2E tests (use Playwright runner instead)
+      // Exclude Cloud Functions tests - they use Jest syntax and firebase-functions-test
+      'functions/src/__tests__/**',
+      'functions/lib/**', // Compiled JS shouldn't be run as tests
     ],
     coverage: {
       provider: 'v8',

@@ -5,6 +5,7 @@ import {
     subscribeToCategoryMappings,
     saveCategoryMapping,
     deleteCategoryMapping,
+    updateCategoryMappingTarget,
     normalizeItemName
 } from '../services/categoryMappingService';
 import { CategoryMapping, MatchResult, NewCategoryMapping } from '../types/categoryMapping';
@@ -21,6 +22,8 @@ export interface UseCategoryMappingsReturn {
     saveMapping: (item: string, category: StoreCategory, source?: 'user' | 'ai') => Promise<string>;
     /** Delete a category mapping */
     deleteMapping: (mappingId: string) => Promise<void>;
+    /** Update an existing mapping's target category (Story 9.7 enhancement) */
+    updateMapping: (mappingId: string, newCategory: StoreCategory) => Promise<void>;
     /** Find best match for an item name (stub - full implementation in Story 6.2) */
     findMatch: (itemName: string, merchant?: string) => MatchResult | null;
 }
@@ -117,6 +120,30 @@ export function useCategoryMappings(
         [user, services]
     );
 
+    // Update a mapping's target category (Story 9.7 enhancement)
+    const updateMapping = useCallback(
+        async (mappingId: string, newCategory: StoreCategory): Promise<void> => {
+            if (!user || !services) {
+                throw new Error('User must be authenticated to update mappings');
+            }
+
+            try {
+                await updateCategoryMappingTarget(
+                    services.db,
+                    user.uid,
+                    services.appId,
+                    mappingId,
+                    newCategory
+                );
+            } catch (e) {
+                const err = e instanceof Error ? e : new Error('Failed to update mapping');
+                setError(err);
+                throw err;
+            }
+        },
+        [user, services]
+    );
+
     // Find best match for an item name
     // Note: Full fuzzy matching implementation will be added in Story 6.2
     // This is a basic exact-match implementation for now
@@ -151,8 +178,9 @@ export function useCategoryMappings(
             error,
             saveMapping,
             deleteMapping,
+            updateMapping,
             findMatch
         }),
-        [mappings, loading, error, saveMapping, deleteMapping, findMatch]
+        [mappings, loading, error, saveMapping, deleteMapping, updateMapping, findMatch]
     );
 }

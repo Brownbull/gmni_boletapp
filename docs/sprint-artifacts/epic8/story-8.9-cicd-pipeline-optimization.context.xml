@@ -1,0 +1,271 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>8</epicId>
+    <storyId>9</storyId>
+    <title>CI/CD Pipeline Optimization</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-12</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/epic8/story-8.9-cicd-pipeline-optimization.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>faster CI/CD pipeline execution through parallelization and caching</iWant>
+    <soThat>I get faster feedback on PRs and deployments take less time</soThat>
+    <tasks>
+      <task id="1" ac="#4">Add workflow_dispatch trigger
+        <subtask>Add workflow_dispatch to test.yml triggers</subtask>
+        <subtask>Test manual trigger works</subtask>
+      </task>
+      <task id="2" ac="#2">Cache Playwright browsers
+        <subtask>Add cache action for ~/.cache/ms-playwright</subtask>
+        <subtask>Key on playwright version from package-lock.json</subtask>
+        <subtask>Verify cache hit on subsequent runs</subtask>
+      </task>
+      <task id="3" ac="#2">Cache Firebase CLI
+        <subtask>Cache global npm for firebase-tools</subtask>
+        <subtask>Or use actions/setup-firebase (if available)</subtask>
+      </task>
+      <task id="4" ac="#3">Optimize Lighthouse execution
+        <subtask>Move Lighthouse to only run on push to main</subtask>
+        <subtask>Or create separate lighthouse.yml workflow on schedule</subtask>
+        <subtask>Update workflow comments</subtask>
+      </task>
+      <task id="5" ac="#1,#5">Split into parallel jobs
+        <subtask>Create test-unit job</subtask>
+        <subtask>Create test-integration job</subtask>
+        <subtask>Create test-e2e job</subtask>
+        <subtask>All depend on shared setup job</subtask>
+        <subtask>Deploy job depends on all test jobs</subtask>
+      </task>
+      <task id="6" ac="#5">Combine unit tests with coverage
+        <subtask>Remove separate coverage step</subtask>
+        <subtask>Run test:coverage instead of test:unit</subtask>
+        <subtask>Eliminates duplicate test runs</subtask>
+      </task>
+      <task id="7" ac="#5">Measure and document improvements
+        <subtask>Run CI before/after optimization</subtask>
+        <subtask>Document timing improvements</subtask>
+        <subtask>Update this story with results</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <ac id="1">Parallel Test Jobs - Test suite split into parallel jobs:
+      - Job 1: Unit tests + Coverage
+      - Job 2: Integration tests
+      - Job 3: E2E tests
+      - All three run concurrently after setup</ac>
+    <ac id="2">Browser/CLI Caching - Playwright browsers and Firebase CLI cached between runs:
+      - Cache key based on tool versions
+      - ~50s saved per run</ac>
+    <ac id="3">Lighthouse Optimization - Lighthouse runs only on main branch pushes:
+      - Skip on PR checks (keep as informational only)
+      - Or move to separate scheduled workflow
+      - ~4.5 min saved on PR checks</ac>
+    <ac id="4">Workflow Dispatch - Add workflow_dispatch trigger for manual deployments:
+      - No need for empty commits to trigger redeploys
+      - Useful for secret rotation scenarios</ac>
+    <ac id="5">Pipeline Time Target - Total CI time reduced to ~6-7 minutes (from ~11 min)</ac>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/ci-cd/README.md" title="CI/CD Documentation" section="Workflow Jobs">
+        Current workflow has 22 test steps + 7 deploy steps. Documents test commands, tiered testing strategy (quick/story/sprint), and workflow job breakdown.
+      </doc>
+      <doc path="docs/performance/performance-baselines.md" title="Performance Baselines" section="Lighthouse CI">
+        Documents Lighthouse CI configuration and performance targets. Lighthouse tests run on 6 views (Login + 5 authenticated views). Reports saved to lighthouse-reports/.
+      </doc>
+      <doc path="docs/testing/test-strategy.md" title="Test Strategy" section="Test Frameworks">
+        Uses Vitest (unit/integration), React Testing Library (components), Playwright (E2E), @axe-core/playwright (accessibility), playwright-lighthouse (performance).
+      </doc>
+      <doc path="docs/sprint-artifacts/epic8/architecture-epic8.md" title="Epic 8 Architecture" section="npm Scripts">
+        Documents test:scan commands and CLI structure. Uses tsx for TypeScript execution.
+      </doc>
+      <doc path="docs/sprint-artifacts/epic8/tech-spec-epic-8.md" title="Epic 8 Tech Spec" section="Dependencies">
+        Lists commander, tsx, zod, string-similarity, chalk as CLI dependencies. Same packages used by test harness.
+      </doc>
+      <doc path="docs/index.md" title="Documentation Index" section="CI/CD Pipeline">
+        References CI/CD README at docs/ci-cd/README.md. Current execution time ~7-8 minutes (tests) + ~2 minutes (deploy on main).
+      </doc>
+    </docs>
+    <code>
+      <file path=".github/workflows/test.yml" kind="workflow" symbol="Test Suite" lines="1-340" reason="PRIMARY FILE - Main CI/CD workflow to be optimized. Contains 22 sequential steps in test job plus 7 deploy steps.">
+        <currentStructure>
+          <job name="test" steps="22" timeout="25min">Sequential execution of all tests</job>
+          <job name="deploy" steps="7" condition="main branch push only">Firebase deployment</job>
+        </currentStructure>
+        <bottlenecks>
+          <bottleneck step="npm ci" duration="~1.5min">Installing dependencies</bottleneck>
+          <bottleneck step="Install Firebase CLI" duration="~19s">Not cached</bottleneck>
+          <bottleneck step="Install Playwright browsers" duration="~29s">Not cached</bottleneck>
+          <bottleneck step="test:coverage" duration="~44s">Re-runs tests that already ran in test:unit</bottleneck>
+          <bottleneck step="test:lighthouse" duration="~4.5min">BIGGEST BOTTLENECK - 6 Lighthouse audits</bottleneck>
+        </bottlenecks>
+      </file>
+      <file path="package.json" kind="config" symbol="scripts" lines="6-41" reason="Contains npm test scripts - test:unit, test:unit:parallel, test:integration, test:e2e, test:lighthouse, test:coverage, test:all">
+        <relevantScripts>
+          <script name="test:unit">vitest run tests/unit</script>
+          <script name="test:unit:parallel">vitest run --config vitest.config.unit.ts</script>
+          <script name="test:integration">vitest run tests/integration</script>
+          <script name="test:e2e">playwright test --ignore-snapshots tests/e2e --grep-invert lighthouse</script>
+          <script name="test:lighthouse">playwright test tests/e2e/lighthouse.spec.ts</script>
+          <script name="test:coverage">vitest run tests/unit tests/integration --coverage</script>
+        </relevantScripts>
+      </file>
+      <file path="scripts/create-test-user.ts" kind="script" reason="Used in CI Step 11 to create test user for E2E tests. Must be available in setup job for parallel E2E job."/>
+      <file path="scripts/test-local.sh" kind="script" reason="Local test runner with tiered strategy (quick/all/ci). Model for understanding test dependencies."/>
+    </code>
+    <dependencies>
+      <node>
+        <package name="@playwright/test" version="^1.56.1" usage="E2E tests, browser automation"/>
+        <package name="vitest" version="^4.0.13" usage="Unit and integration tests"/>
+        <package name="@vitest/coverage-v8" version="^4.0.13" usage="Code coverage"/>
+        <package name="playwright-lighthouse" version="^4.0.0" usage="Lighthouse performance testing"/>
+        <package name="@lhci/cli" version="^0.15.1" usage="Lighthouse CI automation"/>
+        <package name="firebase-tools" version="global" usage="Firebase CLI (installed via npm install -g)"/>
+        <package name="tsx" version="^4.20.6" usage="TypeScript execution for scripts"/>
+      </node>
+      <githubActions>
+        <action name="actions/checkout@v4" usage="Code checkout"/>
+        <action name="actions/setup-node@v4" usage="Node.js setup"/>
+        <action name="actions/cache@v4" usage="Dependency caching"/>
+        <action name="actions/setup-java@v4" usage="Java for Firebase emulators"/>
+        <action name="actions/upload-artifact@v4" usage="Coverage and Lighthouse reports"/>
+        <action name="gitleaks/gitleaks-action@v2" usage="Secrets scanning"/>
+        <action name="davelosert/vitest-coverage-report-action@v2" usage="PR coverage comments"/>
+        <action name="FirebaseExtended/action-hosting-deploy@v0" usage="Firebase deployment"/>
+      </githubActions>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint category="architecture">GitHub Actions workflow must maintain backward compatibility - all existing checks must still pass</constraint>
+    <constraint category="architecture">Deploy job must remain dependent on ALL test jobs passing (cannot deploy if any test fails)</constraint>
+    <constraint category="architecture">Firebase emulators required for unit tests (categoryMappingService), integration tests, and E2E tests</constraint>
+    <constraint category="testing">Coverage thresholds must be enforced: lines 45%, branches 30%, functions 25%, statements 40%</constraint>
+    <constraint category="testing">E2E tests require test user created via scripts/create-test-user.ts</constraint>
+    <constraint category="security">Secrets scanning (gitleaks) must run on every commit - cannot be parallelized away</constraint>
+    <constraint category="security">Security lint (eslint-plugin-security) must run on every PR</constraint>
+    <constraint category="performance">Total test job time target: ~6-7 minutes (from ~11 minutes)</constraint>
+    <constraint category="performance">Bundle size check must still run (< 700KB threshold)</constraint>
+    <constraint category="cost">GitHub Actions minutes are limited - parallelization trades time for cost</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface name="GitHub Actions Cache" kind="action">
+      <signature>
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm | ~/.cache/ms-playwright
+          key: ${{ runner.os }}-{tool}-${{ hashFiles('pattern') }}
+          restore-keys: |
+            ${{ runner.os }}-{tool}-
+      </signature>
+      <path>.github/workflows/test.yml</path>
+    </interface>
+    <interface name="Workflow Dispatch Trigger" kind="trigger">
+      <signature>
+        on:
+          workflow_dispatch:
+            inputs:
+              deploy_only:
+                description: 'Skip tests and deploy directly'
+                type: boolean
+                default: false
+      </signature>
+      <path>.github/workflows/test.yml</path>
+    </interface>
+    <interface name="Job Dependencies" kind="workflow">
+      <signature>
+        jobs:
+          setup:
+            runs-on: ubuntu-latest
+            outputs:
+              cache-key: ${{ steps.cache.outputs.cache-hit }}
+          test-unit:
+            needs: setup
+          test-integration:
+            needs: setup
+          test-e2e:
+            needs: setup
+          deploy:
+            needs: [test-unit, test-integration, test-e2e]
+      </signature>
+      <path>.github/workflows/test.yml</path>
+    </interface>
+    <interface name="Conditional Lighthouse" kind="workflow">
+      <signature>
+        - name: Run Lighthouse audits
+          if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+          run: npm run test:lighthouse
+      </signature>
+      <path>.github/workflows/test.yml</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      The project uses a tiered testing strategy: test:quick (TypeScript + parallel unit ~35s), test:story (+ integration ~2min), test:sprint (full suite ~5min). CI runs all tests sequentially. Vitest with happy-dom for unit/integration, Playwright with Chromium for E2E. Coverage via @vitest/coverage-v8 with thresholds enforced. Lighthouse via playwright-lighthouse for performance baselines.
+    </standards>
+    <locations>
+      <location>tests/unit/**/*.test.ts</location>
+      <location>tests/integration/**/*.test.ts</location>
+      <location>tests/e2e/**/*.spec.ts</location>
+      <location>tests/e2e/lighthouse.spec.ts</location>
+      <location>.github/workflows/test.yml</location>
+    </locations>
+    <ideas>
+      <idea ac="1,5">Verify parallel job execution by checking workflow run timestamps - all test jobs should start within seconds of each other after setup completes</idea>
+      <idea ac="2">Verify Playwright cache hit by checking "Cache hit for key" in workflow logs, confirm ~29s savings on subsequent runs</idea>
+      <idea ac="2">Verify Firebase CLI cache hit similarly, confirm ~19s savings</idea>
+      <idea ac="3">Verify Lighthouse only runs on main by triggering PR workflow and confirming lighthouse step is skipped</idea>
+      <idea ac="4">Test workflow_dispatch by manually triggering workflow from GitHub Actions UI</idea>
+      <idea ac="5">Measure total CI time before and after changes - run workflow 3 times each to get average</idea>
+      <idea ac="5">Verify coverage still enforced by intentionally reducing coverage and confirming CI fails</idea>
+    </ideas>
+  </tests>
+
+  <technicalNotes>
+    <note title="Current Sequential Structure">
+      Current test.yml runs 22 steps sequentially:
+      1. checkout → 2. secrets scan → 3. node setup → 4. cache deps → 5. npm ci →
+      6. java setup → 7. firebase CLI → 8. playwright → 9. functions build →
+      10. start emulators → 11. unit tests → 12. integration tests →
+      13. create test user → 14. e2e tests → 15. coverage → 16-18. coverage upload →
+      19-20. lighthouse → 21. bundle check → 22. npm audit → 23. security lint
+    </note>
+    <note title="Proposed Parallel Structure">
+      setup job (~2 min): checkout, secrets scan, node setup, cache deps, npm ci, cache playwright, cache firebase CLI
+
+      test-unit job (~1.5 min, depends on setup): unit tests with coverage (eliminates separate coverage step)
+
+      test-integration job (~1.5 min, depends on setup): java setup, start emulators, integration tests
+
+      test-e2e job (~2 min, depends on setup): playwright (cached), start emulators, create test user, e2e tests
+
+      security job (~30s, depends on setup): npm audit, security lint
+
+      lighthouse job (only on main, ~4.5 min, depends on setup): lighthouse audits
+
+      deploy job (~2 min, depends on test-unit, test-integration, test-e2e, security): firebase deploy
+    </note>
+    <note title="Cache Keys">
+      Playwright: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+      Firebase CLI: ${{ runner.os }}-firebase-cli-${{ hashFiles('.firebaserc') }} or version-based
+      npm: Already cached with ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+    </note>
+    <note title="Artifact Sharing">
+      Setup job must upload node_modules or use cache. Test jobs download/restore from cache.
+      Consider using actions/cache with cache-hit output to determine if cache was found.
+    </note>
+    <note title="Emulator Considerations">
+      Both integration and E2E jobs need Firebase emulators.
+      Each parallel job runs on separate runner - emulators must start in each job.
+      Consider if emulator startup can be optimized or shared.
+    </note>
+  </technicalNotes>
+</story-context>
