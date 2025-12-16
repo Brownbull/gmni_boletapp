@@ -190,7 +190,9 @@ export const TRANSLATIONS = {
         editSubcategoryMapping: "Edit Subcategory",
         editMapping: "Edit",
         subcategory: "Subcategory",
-        enterSubcategory: "Enter subcategory"
+        enterSubcategory: "Enter subcategory",
+        // Story 9.16: Loading state for learning prompts
+        savingPreference: "Saving..."
     },
     es: {
         overview: "Resumen", welcome: "Rastreo Inteligente", totalSpent: "Total Gastado",
@@ -383,7 +385,9 @@ export const TRANSLATIONS = {
         editSubcategoryMapping: "Editar Subcategoría",
         editMapping: "Editar",
         subcategory: "Subcategoría",
-        enterSubcategory: "Ingresa subcategoría"
+        enterSubcategory: "Ingresa subcategoría",
+        // Story 9.16: Loading state for learning prompts
+        savingPreference: "Guardando..."
     }
 };
 
