@@ -612,6 +612,7 @@ function App() {
                         distinctAliases={distinctAliases}
                         theme={theme}
                         currency={currency}
+                        language={lang}
                         t={t}
                         storeCategories={STORE_CATEGORIES as unknown as string[]}
                         formatCurrency={formatCurrency}

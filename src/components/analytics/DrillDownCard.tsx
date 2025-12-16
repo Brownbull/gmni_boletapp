@@ -24,7 +24,7 @@ export interface DrillDownCardProps {
   /** Percentage of current view total (0-100), optional */
   percentage?: number;
   /** Click handler for navigation */
-  onClick: () => void;
+  onClick?: () => void;
   /** Key for color lookup (category name or index-based key) */
   colorKey?: string;
   /** Whether this period/category has no transactions */
@@ -37,6 +37,13 @@ export interface DrillDownCardProps {
   locale?: string;
   /** Currency code for formatting */
   currency?: string;
+  /**
+   * Whether this card is clickable for drill-down navigation.
+   * Story 9.13: At the lowest drill-down level (subcategory), cards should not be clickable.
+   * When false, removes hover effects and pointer cursor.
+   * @default true
+   */
+  isClickable?: boolean;
 }
 
 // ============================================================================
@@ -108,12 +115,18 @@ export const DrillDownCard = memo(function DrillDownCard({
   theme = 'light',
   locale = 'en',
   currency = 'CLP',
+  isClickable = true,
 }: DrillDownCardProps): React.ReactElement {
   const isDark = theme === 'dark';
   const color = colorKey ? getColor(colorKey) : '#94a3b8'; // Default to slate-400
 
+  // Story 9.13: Determine if card is actually clickable
+  // Not clickable if: explicitly set to false, or empty with no data
+  const canClick = isClickable && onClick;
+
   // Base button classes - Story 7.10: Updated to use colored dot pattern
   // UX Spec: transparent border by default, accent color on hover
+  // Story 9.13: Remove interactive styles when not clickable (AC #4)
   const buttonClasses = [
     // Layout - flex with justify-between for left/right alignment
     'w-full flex items-center justify-between p-4 rounded-xl',
@@ -121,10 +134,11 @@ export const DrillDownCard = memo(function DrillDownCard({
     'min-h-11',
     // Transitions for hover/tap
     'transition-all duration-150',
-    // Interactive states
-    'cursor-pointer',
-    'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
-    isDark ? 'focus:ring-offset-slate-900' : 'focus:ring-offset-white',
+    // Interactive states - Story 9.13: Only add cursor-pointer when clickable (AC #4)
+    canClick ? 'cursor-pointer' : 'cursor-default',
+    // Focus styles only when clickable
+    canClick && 'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+    canClick && (isDark ? 'focus:ring-offset-slate-900' : 'focus:ring-offset-white'),
     // Background - surface color per UX spec
     isEmpty
       ? (isDark ? 'bg-slate-800/50' : 'bg-slate-50')
@@ -132,8 +146,8 @@ export const DrillDownCard = memo(function DrillDownCard({
     // Border - transparent by default, accent on hover (Story 7.10 AC #3)
     'border',
     isEmpty && 'opacity-60',
-    // Active/tap state - slight scale
-    'active:scale-[0.98]',
+    // Active/tap state - slight scale - Story 9.13: Only when clickable
+    canClick && 'active:scale-[0.98]',
   ].filter(Boolean).join(' ');
 
   // Text classes - increased font sizes to match mockup
@@ -165,18 +179,24 @@ export const DrillDownCard = memo(function DrillDownCard({
   const borderColor = isEmpty ? (isDark ? '#334155' : '#e2e8f0') : 'transparent';
   const accentColor = '#3b82f6'; // blue-500
 
+  // Story 9.13: Handle click only when card is clickable
+  const handleClick = canClick ? onClick : undefined;
+
   return (
     <button
-      onClick={onClick}
+      onClick={handleClick}
       role="button"
+      disabled={!canClick}
       aria-label={
         isEmpty
           ? `${label}: ${emptyMessage || 'No transactions'}`
-          : `View ${label}: ${formatCurrency(value, locale, currency)}${percentage !== undefined ? ` (${formatPercentage(percentage)})` : ''}`
+          : canClick
+            ? `View ${label}: ${formatCurrency(value, locale, currency)}${percentage !== undefined ? ` (${formatPercentage(percentage)})` : ''}`
+            : `${label}: ${formatCurrency(value, locale, currency)}${percentage !== undefined ? ` (${formatPercentage(percentage)})` : ''} - No further breakdown available`
       }
       className={buttonClasses}
       style={{ borderColor }}
-      onMouseEnter={(e) => { if (!isEmpty) e.currentTarget.style.borderColor = accentColor; }}
+      onMouseEnter={(e) => { if (canClick && !isEmpty) e.currentTarget.style.borderColor = accentColor; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = borderColor; }}
     >
       {/* Left side: Label + Progress Bar (Story 7.18) */}

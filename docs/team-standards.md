@@ -1,6 +1,6 @@
 # Boletapp Team Standards & Knowledge Base
 
-**Last Updated:** 2025-12-15 (Epic 9 Story 9.15 Branch Sync Strategy)
+**Last Updated:** 2025-12-16 (Epic 9 - Simplified 2-Branch Strategy)
 **Purpose:** Single source of truth for team agreements, workflow standards, and lessons learned
 
 ---
@@ -45,8 +45,8 @@ Agreements made in retrospectives that define how we work as a team.
 
 4. **Branch strategy must be explicit in stories**
    - Reference `docs/branching-strategy.md` in all stories
-   - Document merge flow: feature → develop → staging → main
-   - *Source: Epic 4.5 Retrospective*
+   - Document merge flow: feature → develop → main (2-branch model)
+   - *Source: Epic 4.5 Retrospective, Updated Epic 9*
 
 5. **Firebase commands in completion criteria**
    - Stories that require deployment must include Firebase commands
@@ -190,57 +190,46 @@ Agreements made in retrospectives that define how we work as a team.
 
 ## Workflow Standards
 
-### Git Branching Strategy
+### Git Branching Strategy (Simplified 2-Branch Model)
 
 ```
 main (production)
   ↑
-staging (pre-production testing)
-  ↑
 develop (integration branch)
   ↑
-feature/* (feature branches)
+feature/* | bugfix/* | chore/* (working branches)
 ```
 
 **Branch Flow:**
-1. Create feature branch from `develop`: `feature/epic-X-description`
+1. Create feature branch from `develop`: `feature/story-X.Y-description`
 2. Develop and test locally
 3. PR to `develop` - requires CI pass
-4. PR from `develop` to `staging` - integration testing
-5. PR from `staging` to `main` - production deployment
-6. Auto-deploy to Firebase on merge to main (Epic 6+)
+4. PR from `develop` to `main` - production deployment
+5. Auto-deploy to Firebase on merge to main
+
+**GitHub Repository Settings:**
+- ✅ **"Automatically delete head branches"** is ENABLED
+  - Feature branches are auto-deleted after PR merge
+  - No manual cleanup needed on GitHub
+  - Clean up local branches with: `git fetch --prune && git branch -d <branch>`
 
 **Branch Protection:**
-- All three branches (main, staging, develop) are protected
+- Both branches (main, develop) are protected
 - Require PR + passing CI before merge
 - No direct pushes allowed
 
-**Branch Sync Strategy (Epic 9 Lesson Learned):**
+**Hotfix Flow:**
+1. Create `hotfix/*` branch from `main`
+2. PR directly to `main` (deploys immediately)
+3. Merge `main` back to `develop` to sync
 
-When `main` gets ahead of `develop`/`staging` (e.g., hotfixes, urgent PRs merged directly), you must sync before deploying new features:
+**Why 2 branches instead of 3?**
+- Eliminates sync branch overhead (no more staging drift)
+- Fewer stale branches accumulating
+- Firebase Preview URLs provide per-PR testing (replaces staging)
+- Feature flags enable production testing without separate branch
 
-```
-Scenario: main has PRs #60-62, develop is behind
-Problem: feature → develop → staging → main will have conflicts
-
-Solution:
-1. Create sync PR: main → develop (resolve conflicts, accept main's version)
-2. Merge sync PR to develop
-3. Create feature branch from synced develop
-4. Normal flow: feature → develop → staging → main
-```
-
-**Prevention:**
-- Prefer merging through full flow (feature → develop → staging → main)
-- If hotfixes go directly to main, immediately create sync PR to develop
-- Check branch divergence before starting new feature: `git fetch && git log develop..main`
-
-**Why this matters:**
-- Protected branches prevent force pushes
-- Diverged branches cause complex merge conflicts
-- Sync PRs are simpler than rebasing feature branches
-
-*Source: Epic 9 Story 9.15 Deployment*
+*Source: Epic 9 - Branching Strategy Simplification (2025-12-16)*
 
 See: [docs/branching-strategy.md](branching-strategy.md)
 
@@ -825,4 +814,4 @@ This document should be updated:
 - When standards change
 - When new documentation is created
 
-**Last updated by:** Epic 9 Story 9.15 - Branch Sync Strategy Documentation (2025-12-15)
+**Last updated by:** Epic 9 - Simplified 2-Branch Strategy & Auto-Delete Branches (2025-12-16)

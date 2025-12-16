@@ -1143,213 +1143,710 @@ export function translateCategory(
 
 ---
 
-## Epic 10: UX Redesign
+## Epic 10: Foundation + Engagement & Insight Engine
 
-**Slug:** ux-redesign
-
-### Goal
-
-Comprehensive UX redesign using mockups-first approach. Focus on receipt scanning and editing flows to improve user experience and reduce friction.
-
-### Scope
-
-**In Scope:**
-
-**Design Process:**
-- Mockups workflow before any implementation
-- Receipt scanning flow redesign
-- EditView.tsx UX improvements
-- Onboarding flow for new users
-
-**Technical Components:**
-- Design artifacts (wireframes, mockups)
-- User flow documentation
-- UX testing plan
-- Component library updates
-
-**Out of Scope:**
-- Code refactoring (deferred to Epic 11)
-- Performance optimizations
-- New features beyond UX improvements
-
-### Success Criteria
-
-1. Mockups approved before implementation begins
-2. Receipt scanning flow simplified
-3. Edit flow UX improved
-4. User testing validates improvements
-5. Design system documented
-
-### Dependencies
-
-**Internal:**
-- Epic 9 completed (all v2.6.0 fields integrated, merchant learning)
-- Epic 7 analytics UX as reference
-
----
-
-## Epic 11: Application Refactoring
-
-**Slug:** application-refactoring
+**Slug:** foundation-engagement-insights
+**Status:** PLANNED
+**Estimated Duration:** 3-4 weeks
 
 ### Goal
 
-Apply single responsibility principle and decompose complex components for maintainability. Address technical debt accumulated in previous epics.
+Transform Boletapp from a "data entry tool" into a "financial awareness companion" through meaningful insights at every touchpoint. This epic includes a foundation sprint to address technical debt that would block feature development, followed by the core Insight Engine implementation.
+
+**This is the differentiator** - without insights, users churn. With insights, they come back.
+
+### Background
+
+User feedback identified critical gaps:
+- App feels reactive/static, lacks engagement
+- Confetti on save is meaningless - no contextual feedback
+- Statistics require analyst skills to understand
+- No achievements, milestones, or pattern recognition
+- No insight into spending patterns (highest receipt, merchant trends, time patterns)
+
+Research documents (habits loops.md, good habits.md, some ui options.md) provide detailed specifications for ethical, habit-forming mechanics.
 
 ### Scope
 
-**In Scope:**
+**PHASE 0: Foundation Sprint (Story 10.0) - ~20 hours**
 
-**Refactoring Targets:**
-- EditView.tsx decomposition (high complexity)
-- Component single responsibility cleanup
-- Code quality improvements
-- Test coverage for refactored code
+Targeted refactoring to unblock feature development:
 
-**Technical Components:**
-- Extract sub-components from large files
-- Improve separation of concerns
-- Update tests for refactored components
-- Document architectural improvements
+| Task | Hours | Unblocks |
+|------|-------|----------|
+| Extract `transactionQuery.ts` service | 3h | Insights, Quick Save, Tags |
+| Split `computeBarData()` into 4 functions | 4h | Insight aggregations |
+| Generalize change detection (EditView) | 2h | Tags/Groups |
+| Extract `useLearningPhases` hook | 3h | Quick Save flow |
+| Refactor App.tsx state management | 6h | Batch Mode, Tags |
+| Test updates | 2h | Maintain coverage |
 
-**Out of Scope:**
-- New features
-- UX changes (completed in Epic 10)
-- Performance optimizations beyond code cleanup
-
-### Success Criteria
-
-1. EditView.tsx decomposed into smaller components
-2. All refactored code has test coverage
-3. No regressions in existing functionality
-4. Code complexity metrics improved
-5. Documentation updated
-
-### Dependencies
-
-**Internal:**
-- Epic 10 completed (UX redesign informs refactoring)
-- Epic 7 retro action item: EditView.tsx refactoring
-
----
-
-## Epic 12: Subscription & Monetization
-
-**Slug:** subscription-monetization
-
-### Goal
-
-Implement subscription tiers and payment integration to monetize the application. Enable sustainable business model with free tier for basic usage and paid tiers for power users.
-
-### Scope
+**PHASE 1: Insight Engine Core (Stories 10.1-10.7)**
 
 **In Scope:**
 
-**Subscription Tiers:**
+**Insight Engine:**
+- Insight generation engine with multiple insight types:
+  - `frequency` ("3ra boleta de restaurante esta semana")
+  - `merchant_concentration` ("40% de tu gasto es en Líder")
+  - `day_pattern` ("Gastas 3x más los fines de semana")
+  - `time_pattern` ("Compras de noche cuestan 25% más")
+  - `category_growth` ("Restaurante subió 40% vs mes pasado")
+  - `improvement` ("¡Gastaste 15% menos en X!")
+  - `milestone` ("¡Primer mes completo!")
+- Insight selection logic with confidence scoring and priority ranking
+- Minimum data point requirements per insight type
 
-| Tier | Scans/Month | Items/Receipt | Insights Access | Price (CLP) |
-|------|-------------|---------------|-----------------|-------------|
-| **Free** | 20 scans (1/day limit) | 200 items max | Basic | $0 |
-| **Pro** | 100 scans | 200 items max | Pro insights | TBD |
-| **Max** | 1,000 scans | 200 items max | Full insights | TBD |
+**Scan Complete Insights:**
+- Replace meaningless confetti with contextual insight
+- Insight toast after every save with one relevant nugget
+- Priority order: new merchant → biggest purchase → repeat category → merchant total
 
-**Technical Components:**
-- User subscription tier tracking (Firestore `user_subscriptions` collection)
-- Usage metering (scans per day/month, items per receipt)
-- Rate limiting enforcement based on tier
-- Mercado Pago integration for Chile market
-- Tier-gated features (enforce limits, show upgrade prompts)
-- Billing management UI (view plan, change plan, payment history)
+**Weekly Summary:**
+- Friday 7pm (configurable) weekly digest view
+- Period comparison, top categories, total spending
+- "Ver más" link to detailed analytics
+- Push notification trigger for weekly digest
+
+**Monthly Summary:**
+- End-of-month celebration + comprehensive breakdown
+- Month-over-month comparison
+- Category highlights (up/down indicators)
+- Confetti for under-budget months (ethical celebration)
+
+**Push Notifications:**
+- Scan complete notification with insight
+- Weekly digest notification (opt-in)
+- Monthly milestone notification
+
+**Basic UI Components:**
+- Scan Complete Toast with insight
+- Insight Cards on Analytics screen
+- Weekly Summary View
+- Monthly Summary View
 
 **Out of Scope:**
-- Multiple currencies (CLP only for MVP)
-- Annual subscription discounts (monthly only initially)
-- Team/organization subscriptions
-- Refund automation (manual process initially)
-- Invoice generation
+- Animated visualizations (Epic 13)
+- Prediction cards (Phase 2 feature)
+- Insight avatars/personalities (future enhancement)
+- Family insights (requires family sharing feature)
 
 ### Success Criteria
 
-1. Three subscription tiers operational (Free, Pro, Max)
-2. Usage tracking accurately counts scans and items
-3. Rate limiting enforces tier limits correctly
-4. Mercado Pago payment flow completes successfully
-5. Users can upgrade/downgrade subscription tiers
-6. Free tier users see upgrade prompts when approaching limits
-7. Payment webhook handles subscription changes reliably
+1. ✅ Foundation refactoring complete - all Tier 1 blockers resolved
+2. ✅ Insight Engine generates 5+ insight types based on user data
+3. ✅ Every scan completion shows contextual insight (not generic confetti)
+4. ✅ Weekly Summary view accessible with period comparison
+5. ✅ Monthly Summary view with celebration for under-budget months
+6. ✅ Push notifications working for scan complete and digests
+7. ✅ Users report increased engagement (qualitative feedback)
+8. ✅ All existing tests pass + new tests for insight engine
 
 ### Dependencies
 
 **External:**
-- Mercado Pago developer account and API keys
-- Mercado Pago SDK for Chile
+- Firebase Cloud Messaging (for push notifications) - PWA support from Epic 9
 
 **Internal:**
-- Epic 11 completed (clean codebase for payment integration)
+- Epic 9 completed (PWA push notification infrastructure)
+- Research docs: habits loops.md, good habits.md, some ui options.md
+
+### Technical References
+
+- [habits loops.md](docs/uxui/research/habits%20loops.md) - Insight Engine specification
+- [good habits.md](docs/uxui/research/good%20habits.md) - Ethical animation patterns
+- [some ui options.md](docs/uxui/research/some%20ui%20options.md) - UI component specifications
 
 ---
 
-## Epic 13: Mobile App
+## Story Map - Epic 10
 
-**Slug:** mobile-app
+```
+Epic 10: Foundation + Engagement & Insight Engine (~35 points)
+│
+├── Story 10.0: Foundation Sprint (8 points) ⭐ PREREQUISITE
+│   Dependencies: None
+│   Deliverable: Refactored analytics, filtering service, App.tsx state cleanup
+│
+├── Story 10.1: Insight Engine Core (5 points)
+│   Dependencies: Story 10.0
+│   Deliverable: Insight generation service with 5+ insight types
+│
+├── Story 10.2: Scan Complete Insights (3 points)
+│   Dependencies: Story 10.1
+│   Deliverable: Contextual insight toast after every save
+│
+├── Story 10.3: Weekly Summary View (5 points)
+│   Dependencies: Story 10.1
+│   Deliverable: In-app weekly digest with comparison data
+│
+├── Story 10.4: Monthly Summary View (5 points)
+│   Dependencies: Story 10.1
+│   Deliverable: Monthly celebration + comprehensive breakdown
+│
+├── Story 10.5: Analytics Insight Cards (3 points)
+│   Dependencies: Story 10.1
+│   Deliverable: Rotating insight cards on Analytics screen
+│
+├── Story 10.6: Push Notification Integration (3 points)
+│   Dependencies: Stories 10.2, 10.3, 10.4 + Epic 9 PWA notifications
+│   Deliverable: Scan complete + digest notifications
+│
+├── Story 10.7: Pattern Detection Engine (3 points)
+│   Dependencies: Story 10.1
+│   Deliverable: Time-of-day, weekend/weekday, velocity patterns
+│
+└── Story 10.99: Epic Release Deployment (2 points)
+    Dependencies: All previous stories
+    Deliverable: Production deployment, E2E verification
+```
+
+---
+
+## Epic 11: Quick Save & Scan Flow Optimization
+
+**Slug:** quick-save-scan-optimization
+**Status:** PLANNED
+**Estimated Duration:** 2 weeks
 
 ### Goal
 
-Deliver native mobile applications for iOS (App Store) and Android (Play Store) to expand reach and improve user experience for mobile-first users. Enable receipt scanning with device camera integration.
+Reduce scan-to-save friction to under 15 seconds for 90% of users. Transform the current 42-74 second flow into a 12-14 second Quick Save flow, while maintaining the option to edit for power users.
+
+### Background
+
+User feedback:
+- 90% of users would use "Accept" vs 10% "Edit"
+- Current edit flow adds unnecessary time for general users
+- One image = one transaction simplification requested
+- Clear scan completion status needed
 
 ### Scope
 
 **In Scope:**
 
-**Platforms:**
-- Android app → Google Play Store deployment
-- iOS app → Apple App Store deployment
+**One Image = One Transaction:**
+- Remove multi-image support complexity
+- Simplify scan flow assumption
+- Clear messaging about single-image requirement
 
-**Core Features:**
-- All existing web app features in mobile format
-- Native camera integration for receipt scanning
-- Push notifications for usage limits and reminders
-- Offline capability for viewing transaction history
+**Quick Save Card:**
+- Summary view after scan completion showing: merchant, total, item count, category
+- Two prominent buttons: "✓ Guardar" (primary) and "Editar →" (secondary)
+- Show Quick Save when AI confidence > 85%
+- Animated item reveal (items appearing one by one)
 
-**Technical Approach (TBD during planning):**
-- Option A: React Native (code sharing with web)
-- Option B: PWA enhancement (minimal native code)
-- Option C: Capacitor/Ionic (hybrid approach)
-- Option D: Native development (maximum platform integration)
+**Trust Merchant System:**
+- Track merchant edit rates per user
+- Suggest auto-save after 3 scans with <10% edit rate
+- "¿Confiar en {merchant}?" prompt
+- Trusted merchants skip to auto-save
+
+**Scan Status Clarity:**
+- Clear states: Uploading → Processing → Ready → Saved
+- Loading skeleton during AI processing
+- Error states with retry option
 
 **Out of Scope:**
-- Tablet-optimized layouts (phone-first)
-- Watch apps (Apple Watch, Wear OS)
-- Widget support (iOS/Android home screen widgets)
-- Background sync (manual sync only)
+- Batch mode (Epic 12)
+- Analytics changes
+- New notification types
 
 ### Success Criteria
 
-1. Android app published on Google Play Store
-2. iOS app published on Apple App Store
-3. Native camera integration works for receipt scanning
-4. All core features functional on mobile
-5. App store billing integrated (if required by store policies)
-6. Mobile-specific UI optimizations implemented
-7. Push notifications operational
+1. ✅ One image = one transaction enforced
+2. ✅ Quick Save Card shows for 85%+ confidence scans
+3. ✅ 90% of scans can complete in <15 seconds
+4. ✅ Trust Merchant prompt appears after 3rd scan from same merchant
+5. ✅ Animated item reveal functional
+6. ✅ Clear scan status progression visible to user
 
 ### Dependencies
 
-**External:**
-- Apple Developer account ($99/year)
-- Google Play Developer account ($25 one-time)
-- App Store/Play Store billing integration (if required)
+**Internal:**
+- Epic 10 completed (Insight Engine provides scan complete insights)
+- Foundation refactoring (useLearningPhases hook)
+
+---
+
+## Story Map - Epic 11
+
+```
+Epic 11: Quick Save & Scan Flow Optimization (~22 points)
+│
+├── Story 11.1: One Image = One Transaction (3 points)
+│   Dependencies: None
+│   Deliverable: Remove multi-image complexity, enforce single image
+│
+├── Story 11.2: Quick Save Card Component (5 points)
+│   Dependencies: Story 11.1
+│   Deliverable: Summary card with Accept/Edit choice
+│
+├── Story 11.3: Animated Item Reveal (3 points)
+│   Dependencies: Story 11.2
+│   Deliverable: Progressive item appearance animation
+│
+├── Story 11.4: Trust Merchant System (5 points)
+│   Dependencies: Story 11.2
+│   Deliverable: Merchant trust tracking + auto-save prompt
+│
+├── Story 11.5: Scan Status Clarity (3 points)
+│   Dependencies: Story 11.1
+│   Deliverable: Clear processing → ready → saved states
+│
+└── Story 11.99: Epic Release Deployment (2 points)
+    Dependencies: All previous stories
+    Deliverable: Production deployment, E2E verification
+```
+
+---
+
+## Epic 12: Batch Mode
+
+**Slug:** batch-mode
+**Status:** PLANNED
+**Estimated Duration:** 2 weeks
+
+### Goal
+
+Enable users who accumulate receipts to upload multiple images in one session, with parallel processing and batch review/save. Address the significant user segment (~50%) who save receipts for later processing.
+
+### Background
+
+User feedback:
+- "For the user that saves all the receipts and has some time at the end of the day or week, going one by one is painful"
+- Batch mode should clearly disclose credit usage before proceeding
+
+### Scope
+
+**In Scope:**
+
+**Batch Capture Mode:**
+- Multi-image capture/upload UI (max 5-10 per batch)
+- Thumbnail preview strip during capture
+- "Capture next" and "Review all" buttons
+
+**Parallel Processing:**
+- Process multiple images simultaneously
+- Individual status per receipt (pending → processing → ready → error)
+- Continue scanning while others process
+
+**Batch Review Queue:**
+- Summary cards for all receipts
+- Individual edit option per receipt
+- Receipts needing review flagged (low confidence, missing fields)
+- Total batch summary (X receipts, $Y total)
+
+**Credit Warning System:**
+- Pre-batch warning: "This batch will use X credits. You have Y remaining."
+- Reject batch if insufficient credits
+- Per-receipt credit deduction on save
+
+**Batch Insights:**
+- Aggregate insight for the batch ("You just logged $X across 5 receipts")
+
+**Out of Scope:**
+- Card statement scanning (n charges → n transactions) - future backlog
+- Batch editing (bulk category assignment)
+- Background processing after app close
+
+### Success Criteria
+
+1. ✅ Users can capture 5+ receipts in one session
+2. ✅ Parallel processing reduces total time vs sequential
+3. ✅ Credit warning shown before batch processing begins
+4. ✅ Individual receipt review/edit available
+5. ✅ "Save All" completes batch in one action
+6. ✅ Batch insight shown after save
+
+### Dependencies
 
 **Internal:**
-- Epic 12 completed (subscription system operational)
-- May need dual payment integration (Mercado Pago web + Store billing mobile)
+- Epic 11 completed (Quick Save Card pattern for batch review)
+- Epic 10 Insight Engine (batch insights)
 
-### Considerations
+---
 
-- App Store / Play Store may require in-app purchase for subscriptions purchased within mobile app
-- Privacy policy and terms of service required for store submissions
-- COPPA compliance review if app could be used by children
-- App signing keys management and secure storage
+## Story Map - Epic 12
+
+```
+Epic 12: Batch Mode (~25 points)
+│
+├── Story 12.1: Batch Capture UI (5 points)
+│   Dependencies: None
+│   Deliverable: Multi-image capture interface with preview strip
+│
+├── Story 12.2: Parallel Processing Service (5 points)
+│   Dependencies: Story 12.1
+│   Deliverable: Concurrent image processing with status tracking
+│
+├── Story 12.3: Batch Review Queue (5 points)
+│   Dependencies: Story 12.2
+│   Deliverable: Summary cards with individual edit option
+│
+├── Story 12.4: Credit Warning System (3 points)
+│   Dependencies: Story 12.1
+│   Deliverable: Pre-batch credit check and warning display
+│
+├── Story 12.5: Batch Save & Insights (3 points)
+│   Dependencies: Stories 12.3, Epic 10 Insight Engine
+│   Deliverable: Save all action + aggregate batch insight
+│
+└── Story 12.99: Epic Release Deployment (2 points)
+    Dependencies: All previous stories
+    Deliverable: Production deployment, E2E verification
+```
+
+---
+
+## Epic 13: Analytics UX Redesign
+
+**Slug:** analytics-ux-enhancement
+**Status:** PLANNED
+**Estimated Duration:** 2 weeks
+
+### Goal
+
+Transform the current "Excel spreadsheet" analytics into engaging, animated visualizations that make spending patterns tangible without requiring analyst skills. Build on the Insight Engine (Epic 10) with enhanced visual presentation.
+
+### Background
+
+User feedback:
+- "Statistics require analyst skills to understand"
+- "There is very little animation and engagement - it's like going through tabs of an Excel spreadsheet"
+- Competitive apps have dynamic, moving visualizations that create engagement
+
+Research documents provide detailed specifications:
+- animated data visualization.md - ECharts, staggered animations, Latin American patterns
+- options for trends.md - Velocity sparklines, inverted colors for spending context
+- some ui options.md - Animation timing specifications
+
+### Scope
+
+**In Scope:**
+
+**Animated Chart Transitions:**
+- Entry animations (staggered element appearance)
+- Transition animations between views (300-400ms, ease-out)
+- Chart morphing when switching aggregation modes
+
+**Velocity Sparklines:**
+- Spending rate visualization (not just totals)
+- Inverted colors: green = spending down, red = spending up
+- Dotted baseline for comparison period
+
+**Before/After Comparison Bars:**
+- Visual period comparison ("Antes" vs "Ahora")
+- Clear directional indicators
+
+**Drill-down Animations:**
+- Smooth extraction animation when clicking into categories
+- Breadcrumb-style navigation with animated transitions
+- Pie slice → subcategories expansion
+
+**Skeleton Loading States:**
+- Perceived performance improvement
+- Content placeholder during data fetch
+
+**Respect Motion Preferences:**
+- Honor `prefers-reduced-motion` media query
+- Settings toggle to disable animations
+
+**Out of Scope:**
+- New chart types (keep existing pie/bar)
+- Prediction cards (future enhancement)
+- Family analytics view
+
+### Success Criteria
+
+1. ✅ All charts have entry animations
+2. ✅ View transitions animated (300-400ms)
+3. ✅ Spending direction indicated by color (green=down, red=up)
+4. ✅ Drill-down animations functional
+5. ✅ Skeleton loading states implemented
+6. ✅ Motion preferences respected
+7. ✅ User feedback indicates improved engagement
+
+### Dependencies
+
+**Internal:**
+- Epic 10 completed (Insight Engine, basic insight UI)
+- Epic 10.0 Foundation (computeBarData refactored)
+
+### Technical References
+
+- [animated data visualization.md](docs/uxui/research/animated%20data%20visualization.md)
+- [options for trends.md](docs/uxui/research/options%20for%20trends.md)
+- [some ui options.md](docs/uxui/research/some%20ui%20options.md)
+
+---
+
+## Story Map - Epic 13
+
+```
+Epic 13: Analytics UX Redesign (~20 points)
+│
+├── Story 13.1: Animation Library Setup (2 points)
+│   Dependencies: None
+│   Deliverable: Animation utilities, timing constants, motion preferences
+│
+├── Story 13.2: Animated Chart Transitions (5 points)
+│   Dependencies: Story 13.1
+│   Deliverable: Entry animations, view transitions, morphing
+│
+├── Story 13.3: Velocity Sparklines (5 points)
+│   Dependencies: Story 13.1, Epic 10.0 (computeBarData refactored)
+│   Deliverable: Spending rate visualization with inverted colors
+│
+├── Story 13.4: Before/After Comparison Bars (3 points)
+│   Dependencies: Story 13.1
+│   Deliverable: Visual period comparison component
+│
+├── Story 13.5: Drill-down Animations (3 points)
+│   Dependencies: Story 13.2
+│   Deliverable: Smooth category expansion animations
+│
+├── Story 13.6: Skeleton Loading States (2 points)
+│   Dependencies: None
+│   Deliverable: Loading placeholders for all data views
+│
+└── Story 13.99: Epic Release Deployment (2 points)
+    Dependencies: All previous stories
+    Deliverable: Production deployment, E2E verification
+```
+
+---
+
+## Epic 14: Onboarding & Progressive Disclosure
+
+**Slug:** onboarding-progressive-disclosure
+**Status:** PLANNED
+**Estimated Duration:** 1-2 weeks
+
+### Goal
+
+Achieve time-to-value under 60 seconds for new users. Guide users through their first scan with demo/mockup walkthrough, then progressively reveal features as they build data.
+
+### Background
+
+Research (reddit_post.md) identified critical onboarding patterns:
+- Time to value <60 seconds is the clearest pattern for successful apps
+- Empty dashboards with no direction cause immediate bounce
+- 15-step product tours don't work - learning by doing is better
+- Checklists outperform tours
+- Progressive disclosure prevents overwhelm
+
+### Scope
+
+**In Scope:**
+
+**Demo Mode / Walkthrough:**
+- Mockup-based introduction to scan → insight flow
+- Show what the app does before requiring action
+- Skip option with persistent "Getting Started" access
+
+**One CTA Per Screen:**
+- Simplify decision points during onboarding
+- Clear primary action on each screen
+
+**Feature Unlocking:**
+- Progressive feature reveal as data grows
+- Gated features: weekly digest (5+ transactions), category insights (15+), predictions (60+)
+- Unlock notifications when features become available
+
+**Smart Defaults:**
+- Pre-filled examples where helpful
+- Sensible initial settings
+- First-run category suggestions
+
+**Onboarding Checklist:**
+- Persistent progress indicator
+- Return-able "Getting Started" section
+- Celebrate completion
+
+**Out of Scope:**
+- Video tutorials
+- In-app chat support
+- Personalization beyond basic preferences
+
+### Success Criteria
+
+1. ✅ New users complete first scan within 60 seconds
+2. ✅ Demo walkthrough available and skippable
+3. ✅ Onboarding checklist visible and completable
+4. ✅ Features unlock progressively with notifications
+5. ✅ Bounce rate for new users reduced (qualitative)
+
+### Dependencies
+
+**Internal:**
+- Epic 10 completed (features to unlock)
+- Epic 11 completed (Quick Save as primary first action)
+
+---
+
+## Epic 15: Tags & Grouping
+
+**Slug:** tags-grouping
+**Status:** PLANNED
+**Estimated Duration:** 2 weeks
+
+### Goal
+
+Enable user-defined tags for transactions to support trip tracking, project expenses, and business expense categorization beyond the AI-detected categories.
+
+### Background
+
+User request: "If you want to group all the transactions for a given trip, it won't be enough to group them by city. You will need to group them by something else that is not detectable by the application."
+
+Use cases:
+- Personal: Trip expenses, event costs, gift tracking
+- Business: Project expenses, client billing, tax categories
+
+### Scope
+
+**In Scope:**
+
+**Tag Data Model:**
+- Firestore schema for user tags
+- Tag CRUD operations
+- Multi-tag per transaction support
+
+**Tag Assignment UI:**
+- Add/remove tags on transactions (Edit view)
+- Quick tag during Quick Save (optional)
+- Tag autocomplete from existing user tags
+
+**Tag-based Filtering:**
+- Filter history by tag
+- Filter analytics by tag
+- Combine with existing filters (date, category)
+
+**Tag Statistics View:**
+- Aggregate spending per tag
+- Tag comparison (Trip A vs Trip B)
+- Tag in insights ("You spent $X on your 'Vacation 2025' tag")
+
+**Out of Scope:**
+- Shared tags (family feature)
+- Tag templates/presets
+- Automatic tag suggestions
+- Tag hierarchies (flat tags only)
+
+### Success Criteria
+
+1. ✅ Users can create and manage custom tags
+2. ✅ Transactions can have multiple tags
+3. ✅ History and Analytics filterable by tag
+4. ✅ Tag statistics view shows per-tag spending
+5. ✅ Quick tag available during scan flow
+
+### Dependencies
+
+**Internal:**
+- Epic 10 completed (Insight Engine can include tag insights)
+- Epic 10.0 Foundation (generalized change detection)
+
+---
+
+## Epic 16: Achievements & Milestones
+
+**Slug:** achievements-milestones
+**Status:** PLANNED
+**Estimated Duration:** 1 week
+
+### Goal
+
+Implement ethical gamification through achievements and milestones that celebrate progress without shame mechanics. Reinforce positive financial habits.
+
+### Background
+
+User feedback: "No track of achievements, milestones, how many things you uploaded, how much time or money you saved."
+
+Research (good habits.md) specifies ethical guardrails:
+- NO streaks that shame users for missing days
+- NO "you're falling behind" messaging
+- NO loss aversion triggers
+- YES: Celebrate savings, consistency, and discovery
+
+### Scope
+
+**In Scope:**
+
+**Milestone System:**
+- First scan ("Primera Boleta")
+- First week complete ("Semana Completa")
+- First month complete ("Mes Completo")
+- 100 receipts ("Club de los 100")
+- First year ("Tracker del Año")
+
+**Achievement Badges:**
+- Visual recognition without streaks
+- Categories: scanning, saving, exploring
+- Non-punitive: badges don't expire or reset
+
+**Investment Visibility:**
+- "You've taught Gastify 47 corrections"
+- "Your data spans 6 months"
+- Show user their accumulated value in the app
+
+**Progress Tracking:**
+- Progress toward next milestone
+- Achievement gallery/history
+- Share achievements (optional)
+
+**Out of Scope:**
+- Leaderboards (comparative/competitive)
+- Streak counters
+- Points/currency systems
+- Premium-gated achievements
+
+### Success Criteria
+
+1. ✅ 5+ milestones implemented
+2. ✅ Achievement badges display without shame mechanics
+3. ✅ Investment visibility shows user's accumulated data value
+4. ✅ No streak or loss-aversion patterns
+5. ✅ User feedback indicates positive motivation
+
+### Dependencies
+
+**Internal:**
+- Epic 10 completed (Insight Engine milestone tracking)
+
+---
+
+## Future Backlog (Post-Launch)
+
+These epics are documented for future planning but not scheduled for the launch backbone:
+
+### Epic F1: Subscription & Monetization
+- 3-tier model (Free/Pro/Max)
+- Mercado Pago integration
+- Usage metering and rate limiting
+- **Timing:** After user base established
+
+### Epic F2: Family Sharing
+- Household combined view
+- Member contribution breakdown
+- Shared expense tracking
+- **Timing:** Requires subscription model
+
+### Epic F3: Card Statement Scanning
+- Upload card statement → n transactions
+- Multi-charge extraction
+- **Timing:** Nice-to-have after core features
+
+### Epic F4: Mobile Native App
+- iOS + Android
+- Native camera integration
+- Push notifications
+- **Timing:** After web MVP proven
+
+### Epic F5: Insight Avatars
+- Personality-based insight delivery
+- Specialized avatars for different insight types
+- **Timing:** Future enhancement
 
 ---
 
@@ -1375,25 +1872,78 @@ Epic 5: Data Export    Epic 6: Category   Epic 7: Analytics UX ✅
        Epic 8: Scan Testing & Tuning ✅ (prompt v2.6.0)
                            │
                            ▼
-       Epic 9: Scan Enhancement & Merchant Learning (NEW)
+       Epic 9: Scan Enhancement & Merchant Learning ✅
                   (v2.6.0 fields + merchant learning)
                            │
                            ▼
-                   Epic 10: UX Redesign
+┌──────────────────────────────────────────────────────────────────┐
+│                    LAUNCH BACKBONE (Epics 10-16)                 │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Epic 10: Foundation + Engagement & Insight Engine               │
+│           ├── 10.0: Foundation Sprint (refactoring)              │
+│           └── 10.1-10.7: Insight Engine + Notifications          │
+│                           │                                      │
+│                           ▼                                      │
+│  Epic 11: Quick Save & Scan Flow Optimization                    │
+│           (One image = one transaction, Trust Merchant)          │
+│                           │                                      │
+│                           ▼                                      │
+│  Epic 12: Batch Mode                                             │
+│           (Multi-image upload, parallel processing)              │
+│                           │                                      │
+│                           ▼                                      │
+│  Epic 13: Analytics UX Redesign                                  │
+│           (Animations, sparklines, drill-down effects)           │
+│                           │                                      │
+│                           ▼                                      │
+│  Epic 14: Onboarding & Progressive Disclosure                    │
+│           (Time to value <60s, feature unlocking)                │
+│                           │                                      │
+│                           ▼                                      │
+│  Epic 15: Tags & Grouping                                        │
+│           (Trip tracking, business expenses)                     │
+│                           │                                      │
+│                           ▼                                      │
+│  Epic 16: Achievements & Milestones                              │
+│           (Ethical gamification, no shame mechanics)             │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
                            │
                            ▼
-              Epic 11: Application Refactoring
+                    🚀 MVP LAUNCH 🚀
                            │
                            ▼
-              Epic 12: Subscription & Monetization
-                           │
-                           ▼
-                   Epic 13: Mobile App
+┌──────────────────────────────────────────────────────────────────┐
+│                    FUTURE BACKLOG                                │
+├──────────────────────────────────────────────────────────────────┤
+│  Epic F1: Subscription & Monetization                            │
+│  Epic F2: Family Sharing                                         │
+│  Epic F3: Card Statement Scanning                                │
+│  Epic F4: Mobile Native App                                      │
+│  Epic F5: Insight Avatars                                        │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-*Updated with Epic 8 completion and Epic 9 insertion (2025-12-12)*
-*Total Epics: 13*
-*Completed Epics: 8 (Epic 1-8)*
-*Remaining Epics: 5 (Epic 9-13)*
+## Summary: Launch Backbone
+
+| Epic | Name | Points | Duration |
+|------|------|--------|----------|
+| 10 | Foundation + Engagement & Insight Engine | ~35 | 3-4 weeks |
+| 11 | Quick Save & Scan Flow Optimization | ~22 | 2 weeks |
+| 12 | Batch Mode | ~25 | 2 weeks |
+| 13 | Analytics UX Redesign | ~20 | 2 weeks |
+| 14 | Onboarding & Progressive Disclosure | ~15 | 1-2 weeks |
+| 15 | Tags & Grouping | ~18 | 2 weeks |
+| 16 | Achievements & Milestones | ~12 | 1 week |
+| **Total** | | **~147** | **~14-17 weeks** |
+
+---
+
+*Updated with Launch Backbone Roadmap (2025-12-16)*
+*Total Epics: 16 (+ 5 Future)*
+*Completed Epics: 9 (Epic 1-9)*
+*Launch Backbone: 7 Epics (Epic 10-16)*
+*Estimated Launch Timeline: ~14-17 weeks from Epic 10 start*
