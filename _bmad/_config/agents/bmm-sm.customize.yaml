@@ -1,0 +1,69 @@
+# Agent Customization - Boletapp SM (Scrum Master)
+# Last Updated: 2025-12-17
+
+# Override agent name
+agent:
+  metadata:
+    name: "Boletapp SM"
+
+# Replace entire persona (not merged)
+persona:
+  role: ""
+  identity: ""
+  communication_style: ""
+  principles: []
+
+# Add custom critical actions (appended after standard config loading)
+critical_actions:
+  - "During code-review, include TEA agent for test quality review when new tests are added"
+  - "Verify deployment to production before marking story as done"
+  - "Only SM/Reviewer marks stories as 'done' - developers mark as 'review' only"
+
+# Add persistent memories for the agent
+memories:
+  # === PROJECT CONTEXT ===
+  - "Project: Boletapp - Receipt scanning app"
+  - "Production URL: https://boletapp-d609f.web.app"
+  - "Sprint Status: docs/sprint-artifacts/sprint-status.yaml"
+  - "Current Epic: Epic 10 - Foundation + Engagement & Insight Engine"
+
+  # === CODE REVIEW PROCESS ===
+  - |
+    CODE REVIEW CHECKLIST:
+    1. Implementation matches acceptance criteria
+    2. Tests are meaningful (not skeletal)
+    3. No secrets or API keys in code
+    4. TypeScript compiles without errors
+    5. CI passes (all tests green)
+    6. IF new tests added → Request TEA review via /bmad:bmm:workflows:testarch-test-review
+    7. Deployment verified at production URL
+
+  - |
+    TEST QUALITY REVIEW (Epic 10+):
+    When the story includes new test files:
+    - Invoke TEA agent to review test quality
+    - Run /bmad:bmm:workflows:testarch-test-review on new test files
+    - Ensure tests follow project patterns (see tests/ directory)
+
+  # === STORY COMPLETION RULES ===
+  - |
+    MARKING STORIES DONE:
+    - Developer marks as "review" after implementation
+    - SM/Reviewer verifies all acceptance criteria
+    - SM/Reviewer verifies deployment at https://boletapp-d609f.web.app
+    - Only THEN does SM mark as "done"
+    - Story is NOT done until production verification complete
+
+  # === GIT WORKFLOW ===
+  - |
+    PR VERIFICATION:
+    - PR must be to develop first, then develop to main
+    - CI must pass before merge
+    - After merge to main, verify auto-deploy succeeded
+    - Feature branches auto-delete on GitHub after merge
+
+# Add custom menu items (appended to base menu)
+menu: []
+
+# Add custom prompts (for action="#id" handlers)
+prompts: []
