@@ -1,39 +1,49 @@
-# Story 10.5 Context: Selection Algorithm + Sprinkle Distribution
+# Story 10.5: Selection Algorithm + Sprinkle Distribution
 
-**Purpose:** Context document for implementing the insight selection algorithm.
-**Architecture:** [architecture-epic10-insight-engine.md](../../planning/architecture-epic10-insight-engine.md)
-**Updated:** 2025-12-17 (Architecture-Aligned)
-
----
-
-## Target Files
-
-| Action | File | Purpose |
-|--------|------|---------|
-| Modify | `src/services/insightEngineService.ts` | Add selection functions |
-| Create | `tests/unit/services/insightSelection.test.ts` | Selection algorithm tests |
+**Epic:** Epic 10 - Foundation + Engagement & Insight Engine
+**Status:** ready-for-dev
+**Story Points:** 3
+**Dependencies:** Stories 10.3 (Transaction-Intrinsic), 10.4 (Pattern Detection)
 
 ---
 
-## Selection Algorithm Overview
+## User Story
 
-```
-Candidates → Filter by cooldown → Get priority order → Group by category → Return top
-```
-
-1. **Filter by cooldown**: Remove insights shown in last 7 days
-2. **Get priority order**: Based on phase + sprinkle counter
-3. **Group by category**: QUIRKY_FIRST, CELEBRATORY, ACTIONABLE
-4. **Return top**: Highest priority from highest-priority category
+As a **user**,
+I want **variety in the insights I see**,
+So that **I don't get bored seeing the same type of insight every time**.
 
 ---
 
-## Priority Order Function (ADR-017)
+## Architecture Reference
+
+**Architecture Document:** [architecture-epic10-insight-engine.md](../../planning/architecture-epic10-insight-engine.md)
+**Key ADRs:** ADR-017 (Phase-Based Priority System)
+
+---
+
+## Acceptance Criteria
+
+- [ ] **AC #1:** `selectInsight()` filters candidates by cooldown (1-week no-repeat)
+- [ ] **AC #2:** Selection respects phase-based priority order
+- [ ] **AC #3:** 33/66 sprinkle distribution works (every 3rd scan gets minority type)
+- [ ] **AC #4:** WEEK_1 phase returns only QUIRKY_FIRST insights
+- [ ] **AC #5:** WEEKS_2_3 phase returns 66% CELEBRATORY / 33% ACTIONABLE
+- [ ] **AC #6:** MATURE weekday returns 66% ACTIONABLE / 33% CELEBRATORY
+- [ ] **AC #7:** MATURE weekend returns 66% CELEBRATORY / 33% ACTIONABLE
+- [ ] **AC #8:** Scan counters reset weekly (localStorage)
+- [ ] **AC #9:** When no candidates pass filters, fallback insight returned
+
+---
+
+## Tasks / Subtasks
+
+### Task 1: Implement Priority Order Function (0.5h)
+
+In `src/services/insightEngineService.ts`:
 
 ```typescript
-// src/services/insightEngineService.ts
-
-import { InsightCategory, UserPhase } from '../types/insight';
+import { InsightCategory, UserPhase, LocalInsightCache } from '../types/insight';
 
 /**
  * Returns insight category priority order based on phase and sprinkle logic.
@@ -83,17 +93,14 @@ export function isWeekend(date: Date = new Date()): boolean {
 }
 ```
 
----
-
-## Selection Algorithm Implementation
+### Task 2: Implement Selection Algorithm (1h)
 
 ```typescript
 import {
   Insight,
   InsightRecord,
   UserInsightProfile,
-  LocalInsightCache,
-  InsightCategory
+  LocalInsightCache
 } from '../types/insight';
 
 const COOLDOWN_DAYS = 7;
@@ -105,7 +112,7 @@ const COOLDOWN_DAYS = 7;
  * 1. Filter out insights on cooldown
  * 2. Get priority order for current phase
  * 3. Group candidates by category
- * 4. Return highest priority candidate, or null for fallback
+ * 4. Return highest priority candidate, or fallback
  */
 export function selectInsight(
   candidates: Insight[],
@@ -168,9 +175,7 @@ export function checkCooldown(
 }
 ```
 
----
-
-## Counter Management
+### Task 3: Implement Counter Management (0.5h)
 
 ```typescript
 /**
@@ -207,69 +212,12 @@ export function incrementScanCounter(cache: LocalInsightCache): LocalInsightCach
 }
 ```
 
----
+### Task 4: Unit Tests (1h)
 
-## Phase-Based Priority Reference Table
-
-| Phase | Weekday Priority | Weekend Priority |
-|-------|------------------|------------------|
-| `WEEK_1` | `[QUIRKY_FIRST]` | `[QUIRKY_FIRST]` |
-| `WEEKS_2_3` (66%) | `[CELEBRATORY, ACTIONABLE, QUIRKY]` | `[CELEBRATORY, ACTIONABLE, QUIRKY]` |
-| `WEEKS_2_3` (33%) | `[ACTIONABLE, CELEBRATORY, QUIRKY]` | `[ACTIONABLE, CELEBRATORY, QUIRKY]` |
-| `MATURE` (66%) | `[ACTIONABLE, CELEBRATORY, QUIRKY]` | `[CELEBRATORY, ACTIONABLE, QUIRKY]` |
-| `MATURE` (33%) | `[CELEBRATORY, ACTIONABLE, QUIRKY]` | `[ACTIONABLE, CELEBRATORY, QUIRKY]` |
-
----
-
-## 33/66 Sprinkle Logic
-
-The "sprinkle" ensures variety:
-
-```
-Scan 1 → 66% (primary)
-Scan 2 → 66% (primary)
-Scan 3 → 33% (minority)  ← sprinkle!
-Scan 4 → 66% (primary)
-Scan 5 → 66% (primary)
-Scan 6 → 33% (minority)  ← sprinkle!
-...
-```
-
-**Formula:** `scanCounter % 3 === 0` triggers the minority type.
-
----
-
-## Cooldown Logic
-
-- **Purpose:** Prevent showing the same insight type repeatedly
-- **Duration:** 7 days
-- **Tracking:** `recentInsights[]` in UserInsightProfile (max 30 entries)
-- **Check:** `insightId` matches AND `shownAt` is within 7 days
-
----
-
-## localStorage Cache Structure
+Create `tests/unit/services/insightSelection.test.ts`:
 
 ```typescript
-interface LocalInsightCache {
-  weekdayScanCount: number;      // For sprinkle calculation
-  weekendScanCount: number;      // Separate counter for weekends
-  lastCounterReset: string;      // ISO date for weekly reset
-  silencedUntil: string | null;  // For batch mode silence
-  precomputedAggregates?: {...}; // Optional performance cache
-}
-```
-
-**Key:** `boletapp_insight_cache`
-
----
-
-## Unit Tests
-
-```typescript
-// tests/unit/services/insightSelection.test.ts
-
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   getInsightPriority,
   selectInsight,
@@ -330,7 +278,7 @@ describe('checkCooldown', () => {
   it('returns true for insight shown within 7 days', () => {
     const recent = [{
       insightId: 'test_insight',
-      shownAt: { toDate: () => new Date() },
+      shownAt: { toDate: () => new Date() }, // Today
     }];
     expect(checkCooldown('test_insight', recent as any)).toBe(true);
   });
@@ -372,12 +320,12 @@ describe('incrementScanCounter', () => {
     const cache = {
       weekdayScanCount: 10,
       weekendScanCount: 5,
-      lastCounterReset: '2025-12-15',
+      lastCounterReset: '2025-12-15', // 10 days ago
       silencedUntil: null,
     };
 
     const result = incrementScanCounter(cache);
-    expect(result.weekdayScanCount).toBe(1);
+    expect(result.weekdayScanCount).toBe(1); // Reset + increment
     expect(result.weekendScanCount).toBe(0);
     expect(result.lastCounterReset).toBe('2025-12-25');
 
@@ -388,42 +336,73 @@ describe('incrementScanCounter', () => {
 
 ---
 
-## Dependencies
+## Technical Summary
 
-**Requires from previous stories:**
-- Story 10.2: `calculateUserPhase()` function
-- Story 10.3: Transaction-intrinsic insight generators (QUIRKY_FIRST)
-- Story 10.4: Pattern detection generators (CELEBRATORY, ACTIONABLE)
+This story implements the **heart of the Insight Engine** - the selection algorithm that determines which insight to show. It's based on ADR-017 Phase-Based Priority System.
 
----
+**Key Concepts:**
 
-## Integration with generateInsightForTransaction
+1. **Phase-Based Priority**: User's phase determines which insight categories are preferred
+2. **33/66 Sprinkle**: Every 3rd scan gets the "minority" type for variety
+3. **Cooldown**: Same insight type can't be shown twice in 7 days
+4. **Weekly Reset**: Scan counters reset every 7 days
 
-```typescript
-export async function generateInsightForTransaction(
-  transaction: Transaction,
-  allTransactions: Transaction[],
-  profile: UserInsightProfile,
-  cache: LocalInsightCache
-): Promise<Insight | null> {
-  // 1. Generate all candidate insights (Stories 10.3, 10.4)
-  const candidates = generateAllCandidates(transaction, allTransactions);
-
-  // 2. Select best insight (THIS STORY)
-  const selected = selectInsight(candidates, profile, cache);
-
-  // 3. Return selected or fallback
-  return selected || getFallbackInsight();
-}
+**Selection Flow:**
+```
+Candidates → Filter by cooldown → Get priority order → Group by category → Return top
 ```
 
 ---
 
-## Key Differences from Old PRD
+## Project Structure Notes
 
-| Old (PRD) | New (Architecture) |
-|-----------|-------------------|
-| Analytics Insight Cards (UI) | Selection Algorithm + Sprinkle (Logic) |
-| Confidence scoring | Phase-based priority |
-| No variety mechanism | 33/66 sprinkle distribution |
-| InsightCardsContainer | Moved to future story |
+**Files to modify:**
+- `src/services/insightEngineService.ts` - Add selection functions
+
+**Files to create:**
+- `tests/unit/services/insightSelection.test.ts`
+
+**Dependencies:**
+- Story 10.3: Transaction-intrinsic generators provide QUIRKY_FIRST candidates
+- Story 10.4: Pattern detection generators provide CELEBRATORY/ACTIONABLE candidates
+
+---
+
+## Definition of Done
+
+- [ ] All 9 acceptance criteria verified
+- [ ] Selection algorithm produces correct results for all phase/counter combinations
+- [ ] Cooldown filtering works correctly
+- [ ] Counter reset works after 7 days
+- [ ] Unit tests passing with >90% coverage
+- [ ] Code review approved
+
+---
+
+## Dev Agent Record
+
+### Agent Model Used
+<!-- Will be populated during dev-story execution -->
+
+### Completion Notes
+<!-- Will be populated during dev-story execution -->
+
+### Files Modified
+<!-- Will be populated during dev-story execution -->
+
+### Test Results
+<!-- Will be populated during dev-story execution -->
+
+---
+
+## Review Notes
+<!-- Will be populated during code review -->
+
+---
+
+### Change Log
+
+| Date | Version | Description |
+|------|---------|-------------|
+| 2025-12-16 | 1.0 | Story drafted as "Analytics Insight Cards" |
+| 2025-12-17 | 2.0 | **Retrofitted** - Renamed to "Selection Algorithm + Sprinkle Distribution" per architecture. Analytics cards moved to future story. |

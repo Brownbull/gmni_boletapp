@@ -1,7 +1,7 @@
 # Story 10.0: Foundation Sprint
 
 **Epic:** Epic 10 - Foundation + Engagement & Insight Engine
-**Status:** Draft
+**Status:** ready-for-dev
 **Story Points:** 8
 **Dependencies:** None (Prerequisite for all other Epic 10 stories)
 
