@@ -1259,7 +1259,10 @@ Targeted refactoring to unblock feature development:
 
 ---
 
-## Story Map - Epic 10
+## Story Map - Epic 10 (Architecture-Aligned)
+
+**Architecture Document:** [architecture-epic10-insight-engine.md](../sprint-artifacts/epic10/architecture-epic10-insight-engine.md)
+**Brainstorming Document:** [epic-10-insight-engine-brainstorm.md](../sprint-artifacts/epic10/epic-10-insight-engine-brainstorm.md)
 
 ```
 Epic 10: Foundation + Engagement & Insight Engine (~35 points)
@@ -1267,39 +1270,94 @@ Epic 10: Foundation + Engagement & Insight Engine (~35 points)
 ├── Story 10.0: Foundation Sprint (8 points) ⭐ PREREQUISITE
 │   Dependencies: None
 │   Deliverable: Refactored analytics, filtering service, App.tsx state cleanup
+│   Files: transactionQuery.ts, computeBarData refactoring
 │
-├── Story 10.1: Insight Engine Core (5 points)
+├── Story 10.1: InsightEngine Service Interface (3 points)
 │   Dependencies: Story 10.0
-│   Deliverable: Insight generation service with 5+ insight types
+│   Deliverable: types/insight.ts, services/insightEngineService.ts core structure
+│   Architecture: ADR-015 Client-Side Engine, ADR-016 Hybrid Storage
 │
-├── Story 10.2: Scan Complete Insights (3 points)
+├── Story 10.2: Phase Detection & User Profile (3 points)
 │   Dependencies: Story 10.1
-│   Deliverable: Contextual insight toast after every save
+│   Deliverable: calculateUserPhase(), UserInsightProfile Firestore doc
+│   Key Logic: Week 1 → Weeks 2-3 → Mature phase calculation
 │
-├── Story 10.3: Weekly Summary View (5 points)
-│   Dependencies: Story 10.1
-│   Deliverable: In-app weekly digest with comparison data
+├── Story 10.3: Transaction-Intrinsic Insights (5 points)
+│   Dependencies: Story 10.2
+│   Deliverable: 7 cold-start insight generators in utils/insightGenerators.ts
+│   Insights: biggest_item, item_count, unusual_hour, weekend_warrior,
+│            new_merchant, new_city, category_variety
 │
-├── Story 10.4: Monthly Summary View (5 points)
-│   Dependencies: Story 10.1
-│   Deliverable: Monthly celebration + comprehensive breakdown
+├── Story 10.4: Pattern Detection Insights (5 points)
+│   Dependencies: Story 10.2
+│   Deliverable: 5 history-based generators + precomputed aggregates
+│   Insights: merchant_frequency, category_trend, day_pattern,
+│            spending_velocity, time_pattern
 │
-├── Story 10.5: Analytics Insight Cards (3 points)
-│   Dependencies: Story 10.1
-│   Deliverable: Rotating insight cards on Analytics screen
+├── Story 10.5: Selection Algorithm + Sprinkle (3 points)
+│   Dependencies: Stories 10.3, 10.4
+│   Deliverable: selectInsight() with phase-based priority + 33/66 distribution
+│   Key Logic: ADR-017 Phase-Based Priority System
 │
-├── Story 10.6: Push Notification Integration (3 points)
-│   Dependencies: Stories 10.2, 10.3, 10.4 + Epic 9 PWA notifications
-│   Deliverable: Scan complete + digest notifications
+├── Story 10.6: Scan Complete Insight Card (3 points)
+│   Dependencies: Story 10.5
+│   Deliverable: InsightCard component, async side-effect after save
+│   UI: InsightCard.tsx, BuildingProfileCard.tsx fallback
 │
-├── Story 10.7: Pattern Detection Engine (3 points)
-│   Dependencies: Story 10.1
-│   Deliverable: Time-of-day, weekend/weekday, velocity patterns
+├── Story 10.7: Batch Mode Summary (3 points)
+│   Dependencies: Story 10.6
+│   Deliverable: BatchSummary.tsx for multi-receipt scanning sessions
+│   Features: "Silenciar 4h", historical comparison, top insight
 │
 └── Story 10.99: Epic Release Deployment (2 points)
     Dependencies: All previous stories
-    Deliverable: Production deployment, E2E verification
+    Deliverable: Production deployment, E2E verification, Firestore rules update
 ```
+
+### Architecture Highlights (from Brainstorming Session)
+
+**Phase-Based Priority System:**
+| Phase | Duration | Distribution |
+|-------|----------|--------------|
+| Phase 1 | Week 1 | 100% Quirky First |
+| Phase 2 | Weeks 2-3 | 66% Celebratory / 33% Actionable |
+| Phase 3 | 3+ weeks | Weekday: 66% Actionable, Weekend: 66% Celebratory |
+
+**33/66 Sprinkle:** Every 3rd scan gets the "minority" insight type for variety.
+
+**Storage Ownership:**
+- **Firestore**: recentInsights[], firstTransactionDate, profile metadata
+- **localStorage**: scanCounters, silencedUntil, precomputedAggregates
+
+**Critical Safeguards:**
+1. Insight generation MUST NOT block transaction save (async side-effect)
+2. Fallback chain: Try insight → "building profile" → Never show nothing
+3. Performance budget: <100ms per insight calculation
+
+### Deferred Features (Intentionally Out of Scope)
+
+The following features from the original PRD-based planning were analyzed during architecture and deferred to future epics:
+
+| Feature | Original Story | Reason for Deferral | Future Epic |
+|---------|---------------|---------------------|-------------|
+| **Weekly Summary View** | 10.3 (archived) | Full Reports UI beyond MVP scope | Analytics Dashboard |
+| **Monthly Summary View** | 10.4 (archived) | Full Reports UI beyond MVP scope | Analytics Dashboard |
+| **Push Notifications** | 10.6 (archived) | Cloud Functions for scheduling beyond ADR-015 | Scheduled Insights |
+| **Scheduled Digests** | 10.6 (archived) | Friday 7pm / 1st of month digests require backend | Scheduled Insights |
+| **Reports Section** | 10.3/10.4 (archived) | Dedicated reports tab deferred | Analytics Dashboard |
+
+**Rationale:**
+- **ADR-015** established client-side insight engine - push notification schedulers require Cloud Functions
+- Architecture prioritizes the "scan → insight" engagement loop over passive summary viewing
+- MVP focuses on cold-start success and real-time engagement rather than digest views
+
+**Archived Files:**
+Original story files preserved in `docs/sprint-artifacts/epic10/_archive/` for future reference:
+- `epic-10-prd.md` - Original PRD (superseded by architecture)
+- `story-10.3-weekly-summary-view.md` - Weekly Summary UI
+- `story-10.4-monthly-summary-view.md` - Monthly Summary UI
+- `story-10.6-push-notification-integration.md` - Push notifications
+- `story-10.7-pattern-detection-engine.md` - Pattern detection (split into Stories 10.4 and 10.7)
 
 ---
 
@@ -1848,6 +1906,40 @@ These epics are documented for future planning but not scheduled for the launch 
 - Specialized avatars for different insight types
 - **Timing:** Future enhancement
 
+### Epic F6: Analytics Dashboard & Scheduled Insights
+**Origin:** Deferred features from Epic 10 architecture session
+
+**Weekly Summary View:**
+- Full Reports Section on home screen
+- Weekly stats UI with period comparison
+- Friday 7pm digest view (configurable)
+- "Ver más" link to detailed analytics
+- Category highlights with up/down indicators
+
+**Monthly Summary View:**
+- End-of-month celebration + comprehensive breakdown
+- Month-over-month comparison visualization
+- Confetti animation for under-budget months (ethical celebration)
+- Category trend arrows
+
+**Scheduled Push Notifications:**
+- Cloud Function schedulers for digests
+- Weekly digest notification (opt-in, Friday 7pm)
+- Monthly milestone notification (1st of month)
+- Notification preferences management UI
+
+**Technical Requirements:**
+- Cloud Functions for scheduled triggers (beyond ADR-015 client-side scope)
+- FCM integration for scheduled pushes
+- Notification queue system
+
+**Archived References:**
+- `docs/sprint-artifacts/epic10/_archive/story-10.3-weekly-summary-view.md`
+- `docs/sprint-artifacts/epic10/_archive/story-10.4-monthly-summary-view.md`
+- `docs/sprint-artifacts/epic10/_archive/story-10.6-push-notification-integration.md`
+
+**Timing:** After Epic 10 proves real-time insight engagement model
+
 ---
 
 ## Epic Dependency Graph
@@ -1922,6 +2014,7 @@ Epic 5: Data Export    Epic 6: Category   Epic 7: Analytics UX ✅
 │  Epic F3: Card Statement Scanning                                │
 │  Epic F4: Mobile Native App                                      │
 │  Epic F5: Insight Avatars                                        │
+│  Epic F6: Analytics Dashboard & Scheduled Insights (from E10)    │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1942,8 +2035,9 @@ Epic 5: Data Export    Epic 6: Category   Epic 7: Analytics UX ✅
 
 ---
 
-*Updated with Launch Backbone Roadmap (2025-12-16)*
-*Total Epics: 16 (+ 5 Future)*
+*Updated with Launch Backbone Roadmap (2025-12-17)*
+*Total Epics: 16 (+ 6 Future)*
 *Completed Epics: 9 (Epic 1-9)*
 *Launch Backbone: 7 Epics (Epic 10-16)*
 *Estimated Launch Timeline: ~14-17 weeks from Epic 10 start*
+*Epic 10 Architecture: [architecture-epic10-insight-engine.md](../sprint-artifacts/epic10/architecture-epic10-insight-engine.md)*
