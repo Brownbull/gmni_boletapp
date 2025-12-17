@@ -1,7 +1,7 @@
 # Story 10.99: Epic Release Deployment
 
 **Epic:** Epic 10 - Foundation + Engagement & Insight Engine
-**Status:** Draft
+**Status:** ready-for-dev
 **Story Points:** 2
 **Dependencies:** All previous Epic 10 stories (10.0 - 10.7)
 

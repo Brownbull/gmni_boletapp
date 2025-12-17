@@ -1,6 +1,8 @@
-# Story 10.7 Context: Pattern Detection Engine
+# Story 10.7 Context: Batch Mode Summary
 
-**Purpose:** This document aggregates all relevant codebase context for implementing the Pattern Detection Engine.
+**Purpose:** Context document for implementing batch scanning mode with summary view.
+**Architecture:** [architecture-epic10-insight-engine.md](./architecture-epic10-insight-engine.md)
+**Updated:** 2025-12-17 (Architecture-Aligned)
 
 ---
 
@@ -8,655 +10,227 @@
 
 | File | Purpose |
 |------|---------|
-| `src/services/patternDetection.ts` | Pattern detection service |
-| `tests/unit/services/patternDetection.test.ts` | Unit tests |
+| `src/hooks/useBatchSession.ts` | Track batch session state |
+| `src/components/insights/BatchSummary.tsx` | Summary card component |
 
----
+## Target Files to Modify
 
-## Files to Modify
-
-| File | Purpose |
+| File | Changes |
 |------|---------|
-| `src/services/insightEngine.ts` | Integrate pattern insights |
-| `src/types/insight.ts` | Add pattern insight types |
-| `src/utils/translations.ts` | Add pattern strings |
+| `src/services/insightEngineService.ts` | Add silence functions, getLastWeekTotal |
+| `src/App.tsx` | Integrate batch mode |
 
 ---
 
-## Transaction Date/Time Fields
+## Dependencies
 
-```
-Location: /home/khujta/projects/bmad/boletapp/src/types/transaction.ts (125 lines)
-
-Transaction interface (lines 80-110):
-
-interface Transaction {
-  id?: string;
-  date: string;           // YYYY-MM-DD (required)
-  time?: string;          // HH:mm (optional, v2.6.0+)
-  merchant: string;
-  alias?: string;
-  category: StoreCategory;
-  total: number;
-  items: TransactionItem[];
-  country?: string;
-  city?: string;
-  currency?: string;
-  receiptType?: string;
-  promptVersion?: string;
-  createdAt?: any;
-}
-
-IMPORTANT: time field is OPTIONAL - pattern detection must handle
-transactions without time values (legacy data).
-```
+**Must exist before this story:**
+- Story 10.6: `InsightCard`, insight state management
+- Story 10.1: `LocalInsightCache` type with `silencedUntil`
 
 ---
 
-## Existing Date Utilities
+## Two User Modes
 
-```
-Location: /home/khujta/projects/bmad/boletapp/src/utils/date.ts (219 lines)
+From brainstorming session:
 
-Available functions:
-  getQuarterFromMonth(month: string): string - Lines 101-108
-  getWeeksInMonth(month, locale) - Lines 138-172
-  getQuartersInYear(year) - Lines 54-62
+1. **Real-Time Scanner:** Scans 1-2 receipts
+   - Shows individual InsightCard after each save
+   - Standard flow from Story 10.6
 
-For pattern detection, need to add:
-  - parseTime(timeStr: string): { hour: number; minute: number }
-  - getTimeOfDay(hour: number): 'morning' | 'afternoon' | 'evening' | 'night'
-  - getDayOfWeek(dateStr: string): number  // 0-6
-  - isWeekend(dateStr: string): boolean
-```
+2. **Batch Scanner:** Scans 3+ receipts in succession
+   - Shows unified BatchSummary instead of individual cards
+   - Includes historical comparison
+   - Option to silence insights
 
 ---
 
-## Pattern Type Definitions
+## Batch Session Hook
 
 ```typescript
-// src/types/insight.ts (add to existing)
-
-export type PatternType = 'time_of_day' | 'day_of_week' | 'velocity';
-
-export interface Pattern {
-  type: PatternType;
-  confidence: number;   // 0-1
-  dataPoints: number;   // Number of transactions analyzed
-  metadata: Record<string, any>;
+interface BatchSession {
+  receipts: Transaction[];
+  insights: Insight[];
+  startedAt: Date;
+  totalAmount: number;
 }
 
-export interface TimeOfDayPattern extends Pattern {
-  type: 'time_of_day';
-  metadata: {
-    peakPeriod: 'morning' | 'afternoon' | 'evening' | 'night';
-    peakAverage: number;
-    offPeakAverage: number;
-    ratio: number;
+interface UseBatchSessionReturn {
+  session: BatchSession | null;
+  addToBatch: (tx: Transaction, insight: Insight | null) => void;
+  clearBatch: () => void;
+  isBatchMode: boolean;  // true when receipts.length >= 3
+}
+```
+
+**Session Rules:**
+- BATCH_THRESHOLD = 3 receipts
+- SESSION_TIMEOUT_MS = 30 minutes
+- Session auto-expires after timeout
+
+---
+
+## Silence Feature
+
+**Purpose:** Let users silence insights during shopping trips
+
+```typescript
+// In LocalInsightCache (from Story 10.1)
+interface LocalInsightCache {
+  // ... other fields
+  silencedUntil: string | null;  // ISO timestamp or null
+}
+
+// Silence functions to add
+const SILENCE_DURATION_MS = 4 * 60 * 60 * 1000; // 4 hours
+
+export function isInsightsSilenced(cache: LocalInsightCache): boolean {
+  if (!cache.silencedUntil) return false;
+  return new Date(cache.silencedUntil) > new Date();
+}
+
+export function silenceInsights(cache: LocalInsightCache): LocalInsightCache {
+  return {
+    ...cache,
+    silencedUntil: new Date(Date.now() + SILENCE_DURATION_MS).toISOString(),
   };
 }
 
-export interface DayOfWeekPattern extends Pattern {
-  type: 'day_of_week';
-  metadata: {
-    weekdayAverage: number;
-    weekendAverage: number;
-    ratio: number;
-  };
-}
-
-export interface VelocityPattern extends Pattern {
-  type: 'velocity';
-  metadata: {
-    currentWeekRate: number;
-    previousWeekRate: number;
-    changePercentage: number;
-    direction: 'accelerating' | 'decelerating' | 'stable';
-  };
+export function unsilenceInsights(cache: LocalInsightCache): LocalInsightCache {
+  return { ...cache, silencedUntil: null };
 }
 ```
 
 ---
 
-## Time Period Classification
+## Historical Comparison
 
 ```typescript
-// Time periods for time-of-day pattern
+// Get last week's total for comparison
+export function getLastWeekTotal(transactions: Transaction[]): number {
+  const now = new Date();
+  const oneWeekAgo = new Date(now);
+  oneWeekAgo.setDate(now.getDate() - 7);
+  const twoWeeksAgo = new Date(now);
+  twoWeeksAgo.setDate(now.getDate() - 14);
 
-const TIME_PERIODS = {
-  morning: { start: 6, end: 12 },    // 6:00 AM - 11:59 AM
-  afternoon: { start: 12, end: 18 }, // 12:00 PM - 5:59 PM
-  evening: { start: 18, end: 21 },   // 6:00 PM - 8:59 PM
-  night: { start: 21, end: 6 }       // 9:00 PM - 5:59 AM (wraps)
+  return transactions
+    .filter(tx => {
+      const txDate = new Date(tx.date);
+      return txDate >= twoWeeksAgo && txDate < oneWeekAgo;
+    })
+    .reduce((sum, tx) => sum + tx.total, 0);
+}
+```
+
+---
+
+## BatchSummary Props
+
+```typescript
+interface BatchSummaryProps {
+  receipts: Transaction[];
+  insights: Insight[];
+  totalAmount: number;
+  lastWeekTotal?: number;
+  onSilence: () => void;
+  onDismiss: () => void;
+  isSilenced: boolean;
+  theme: 'light' | 'dark';
+}
+```
+
+---
+
+## Top Insight Selection
+
+BatchSummary shows the "best" insight from the batch:
+
+```typescript
+const topInsight = insights.length > 0
+  ? insights.reduce((best, current) =>
+      current.priority > best.priority ? current : best
+    )
+  : null;
+```
+
+---
+
+## Integration Flow
+
+```typescript
+// In saveTransaction handler
+const saveTransaction = async (transaction: Transaction) => {
+  const savedId = await addTransaction(...);
+  setShowSavedToast(true);
+  setView('dashboard');
+
+  // Check if silenced
+  if (isInsightsSilenced(localCache)) {
+    addToBatch({ ...transaction, id: savedId }, null);
+    return;
+  }
+
+  // Generate insight
+  generateInsightForTransaction(...)
+    .then(insight => {
+      addToBatch({ ...transaction, id: savedId }, insight);
+
+      // Show batch summary OR individual card
+      if (isBatchMode) {
+        setShowBatchSummary(true);
+        setShowInsightCard(false);
+      } else {
+        setCurrentInsight(insight);
+        setShowInsightCard(true);
+      }
+    });
 };
-
-function getTimeOfDay(hour: number): keyof typeof TIME_PERIODS {
-  if (hour >= 6 && hour < 12) return 'morning';
-  if (hour >= 12 && hour < 18) return 'afternoon';
-  if (hour >= 18 && hour < 21) return 'evening';
-  return 'night';  // 21-5
-}
-
-function parseTime(timeStr: string): number | null {
-  if (!timeStr) return null;
-
-  const [hours, minutes] = timeStr.split(':').map(Number);
-  if (isNaN(hours) || isNaN(minutes)) return null;
-
-  return hours;
-}
 ```
 
 ---
 
-## Pattern Detection Service
+## UI Layout
 
-```typescript
-// src/services/patternDetection.ts
-
-import { Transaction } from '../types/transaction';
-import {
-  Pattern,
-  TimeOfDayPattern,
-  DayOfWeekPattern,
-  VelocityPattern
-} from '../types/insight';
-
-const MIN_DATA_POINTS = 20;
-const TIME_RATIO_THRESHOLD = 1.25;  // 25% higher
-const DAY_RATIO_THRESHOLD = 1.5;    // 50% higher
-const VELOCITY_THRESHOLD = 20;       // 20% change
-
-export class PatternDetectionService {
-
-  detectAllPatterns(transactions: Transaction[]): Pattern[] {
-    const patterns: Pattern[] = [];
-
-    const timePattern = this.detectTimeOfDayPattern(transactions);
-    if (timePattern) patterns.push(timePattern);
-
-    const dayPattern = this.detectDayOfWeekPattern(transactions);
-    if (dayPattern) patterns.push(dayPattern);
-
-    const velocityPattern = this.detectVelocityPattern(transactions);
-    if (velocityPattern) patterns.push(velocityPattern);
-
-    return patterns;
-  }
-
-  detectTimeOfDayPattern(transactions: Transaction[]): TimeOfDayPattern | null {
-    // Filter to transactions with time data
-    const withTime = transactions.filter(t => t.time);
-
-    if (withTime.length < MIN_DATA_POINTS) return null;
-
-    const periods = this.groupByTimeOfDay(withTime);
-    const averages = this.calculatePeriodAverages(periods);
-
-    // Find peak period
-    const peakPeriod = this.findPeakPeriod(averages);
-    const offPeakAverage = this.calculateOffPeakAverage(averages, peakPeriod);
-
-    if (offPeakAverage === 0) return null;
-
-    const ratio = averages[peakPeriod] / offPeakAverage;
-
-    if (ratio < TIME_RATIO_THRESHOLD) return null;
-
-    return {
-      type: 'time_of_day',
-      confidence: Math.min(ratio / 2, 1),
-      dataPoints: withTime.length,
-      metadata: {
-        peakPeriod,
-        peakAverage: averages[peakPeriod],
-        offPeakAverage,
-        ratio: Math.round(ratio * 100) / 100
-      }
-    };
-  }
-
-  detectDayOfWeekPattern(transactions: Transaction[]): DayOfWeekPattern | null {
-    if (transactions.length < MIN_DATA_POINTS) return null;
-
-    const { weekday, weekend } = this.groupByDayType(transactions);
-
-    // Need transactions in both groups
-    if (weekday.length < 5 || weekend.length < 2) return null;
-
-    const weekdayAvg = this.averageDailySpend(weekday, 5);
-    const weekendAvg = this.averageDailySpend(weekend, 2);
-
-    if (weekdayAvg === 0) return null;
-
-    const ratio = weekendAvg / weekdayAvg;
-
-    if (ratio < DAY_RATIO_THRESHOLD) return null;
-
-    return {
-      type: 'day_of_week',
-      confidence: Math.min(ratio / 4, 1),
-      dataPoints: transactions.length,
-      metadata: {
-        weekdayAverage: Math.round(weekdayAvg),
-        weekendAverage: Math.round(weekendAvg),
-        ratio: Math.round(ratio * 10) / 10
-      }
-    };
-  }
-
-  detectVelocityPattern(transactions: Transaction[]): VelocityPattern | null {
-    const thisWeek = this.getTransactionsThisWeek(transactions);
-    const lastWeek = this.getTransactionsLastWeek(transactions);
-
-    if (thisWeek.length < 3 || lastWeek.length < 5) return null;
-
-    const currentRate = this.calculateDailyRate(thisWeek);
-    const previousRate = this.calculateDailyRate(lastWeek);
-
-    if (previousRate === 0) return null;
-
-    const changePercentage = ((currentRate - previousRate) / previousRate) * 100;
-
-    if (Math.abs(changePercentage) < VELOCITY_THRESHOLD) return null;
-
-    return {
-      type: 'velocity',
-      confidence: Math.min(Math.abs(changePercentage) / 100, 1),
-      dataPoints: thisWeek.length + lastWeek.length,
-      metadata: {
-        currentWeekRate: Math.round(currentRate),
-        previousWeekRate: Math.round(previousRate),
-        changePercentage: Math.round(changePercentage),
-        direction: changePercentage > 0 ? 'accelerating' : 'decelerating'
-      }
-    };
-  }
-
-  // Private helper methods...
-
-  private groupByTimeOfDay(transactions: Transaction[]): Record<string, Transaction[]> {
-    const groups: Record<string, Transaction[]> = {
-      morning: [],
-      afternoon: [],
-      evening: [],
-      night: []
-    };
-
-    for (const tx of transactions) {
-      const hour = this.parseTimeHour(tx.time!);
-      if (hour === null) continue;
-
-      const period = this.getTimeOfDay(hour);
-      groups[period].push(tx);
-    }
-
-    return groups;
-  }
-
-  private groupByDayType(transactions: Transaction[]): {
-    weekday: Transaction[];
-    weekend: Transaction[];
-  } {
-    const weekday: Transaction[] = [];
-    const weekend: Transaction[] = [];
-
-    for (const tx of transactions) {
-      const date = new Date(tx.date);
-      const day = date.getDay();
-
-      if (day === 0 || day === 6) {
-        weekend.push(tx);
-      } else {
-        weekday.push(tx);
-      }
-    }
-
-    return { weekday, weekend };
-  }
-
-  private getTransactionsThisWeek(transactions: Transaction[]): Transaction[] {
-    const now = new Date();
-    const weekStart = this.getWeekStart(now);
-
-    return transactions.filter(tx => {
-      const txDate = new Date(tx.date);
-      return txDate >= weekStart && txDate <= now;
-    });
-  }
-
-  private getTransactionsLastWeek(transactions: Transaction[]): Transaction[] {
-    const now = new Date();
-    const thisWeekStart = this.getWeekStart(now);
-    const lastWeekStart = new Date(thisWeekStart);
-    lastWeekStart.setDate(lastWeekStart.getDate() - 7);
-    const lastWeekEnd = new Date(thisWeekStart);
-    lastWeekEnd.setDate(lastWeekEnd.getDate() - 1);
-
-    return transactions.filter(tx => {
-      const txDate = new Date(tx.date);
-      return txDate >= lastWeekStart && txDate <= lastWeekEnd;
-    });
-  }
-
-  private getWeekStart(date: Date): Date {
-    const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-    d.setDate(diff);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }
-
-  private calculateDailyRate(transactions: Transaction[]): number {
-    if (transactions.length === 0) return 0;
-
-    const total = transactions.reduce((sum, tx) => sum + tx.total, 0);
-    const dates = new Set(transactions.map(tx => tx.date));
-    const days = dates.size || 1;
-
-    return total / days;
-  }
-
-  private parseTimeHour(timeStr: string): number | null {
-    if (!timeStr) return null;
-    const [hours] = timeStr.split(':').map(Number);
-    return isNaN(hours) ? null : hours;
-  }
-
-  private getTimeOfDay(hour: number): 'morning' | 'afternoon' | 'evening' | 'night' {
-    if (hour >= 6 && hour < 12) return 'morning';
-    if (hour >= 12 && hour < 18) return 'afternoon';
-    if (hour >= 18 && hour < 21) return 'evening';
-    return 'night';
-  }
-
-  private calculatePeriodAverages(
-    periods: Record<string, Transaction[]>
-  ): Record<string, number> {
-    const averages: Record<string, number> = {};
-
-    for (const [period, txs] of Object.entries(periods)) {
-      if (txs.length === 0) {
-        averages[period] = 0;
-      } else {
-        const total = txs.reduce((sum, tx) => sum + tx.total, 0);
-        averages[period] = total / txs.length;
-      }
-    }
-
-    return averages;
-  }
-
-  private findPeakPeriod(averages: Record<string, number>): string {
-    let peak = 'morning';
-    let maxAvg = 0;
-
-    for (const [period, avg] of Object.entries(averages)) {
-      if (avg > maxAvg) {
-        maxAvg = avg;
-        peak = period;
-      }
-    }
-
-    return peak;
-  }
-
-  private calculateOffPeakAverage(
-    averages: Record<string, number>,
-    peakPeriod: string
-  ): number {
-    const offPeakPeriods = Object.entries(averages)
-      .filter(([period]) => period !== peakPeriod)
-      .filter(([, avg]) => avg > 0);
-
-    if (offPeakPeriods.length === 0) return 0;
-
-    const total = offPeakPeriods.reduce((sum, [, avg]) => sum + avg, 0);
-    return total / offPeakPeriods.length;
-  }
-
-  private averageDailySpend(transactions: Transaction[], expectedDays: number): number {
-    const total = transactions.reduce((sum, tx) => sum + tx.total, 0);
-    return total / expectedDays;
-  }
-}
-
-// Export singleton instance
-export const patternDetectionService = new PatternDetectionService();
+```
+┌──────────────────────────────────────┐
+│  Resumen de escaneo          [Cerrar]│
+│                                      │
+│  ┌────────────┐  ┌────────────┐     │
+│  │Total       │  │Boletas     │     │
+│  │$45,000     │  │ 📄 5       │     │
+│  └────────────┘  └────────────┘     │
+│                                      │
+│  ↘ 15% menos que la semana pasada   │
+│                                      │
+│  ┌──────────────────────────────┐   │
+│  │ 💡 Top insight message       │   │
+│  └──────────────────────────────┘   │
+│                                      │
+│  [ 🔔 Silenciar insights (4h) ]     │
+└──────────────────────────────────────┘
 ```
 
 ---
 
-## Integration with Insight Engine
+## Dark Mode Colors
 
-```typescript
-// src/services/insightEngine.ts (add pattern integration)
-
-import { patternDetectionService } from './patternDetection';
-import { translateStoreCategory } from '../utils/categoryTranslations';
-
-// Add to InsightType
-export type InsightType =
-  | 'frequency'
-  | 'merchant_concentration'
-  | 'category_growth'
-  | 'improvement'
-  | 'milestone'
-  | 'day_pattern'     // NEW
-  | 'time_pattern';   // NEW
-
-// Add pattern insight generators
-function generatePatternInsights(
-  transactions: Transaction[],
-  locale: 'en' | 'es'
-): Insight[] {
-  const patterns = patternDetectionService.detectAllPatterns(transactions);
-  const insights: Insight[] = [];
-
-  for (const pattern of patterns) {
-    const insight = patternToInsight(pattern, locale);
-    if (insight) insights.push(insight);
-  }
-
-  return insights;
-}
-
-function patternToInsight(pattern: Pattern, locale: 'en' | 'es'): Insight | null {
-  switch (pattern.type) {
-    case 'day_of_week':
-      return {
-        type: 'day_pattern',
-        message: locale === 'es'
-          ? `Gastas ${pattern.metadata.ratio}x más los fines de semana`
-          : `You spend ${pattern.metadata.ratio}x more on weekends`,
-        messageKey: 'insightDayPattern',
-        emoji: '📅',
-        confidence: pattern.confidence,
-        priority: 7,
-        dataPoints: pattern.dataPoints,
-        metadata: pattern.metadata
-      };
-
-    case 'time_of_day':
-      const periodName = getPeriodName(pattern.metadata.peakPeriod, locale);
-      const percentage = Math.round((pattern.metadata.ratio - 1) * 100);
-      return {
-        type: 'time_pattern',
-        message: locale === 'es'
-          ? `Tus compras de ${periodName} cuestan ${percentage}% más`
-          : `Your ${periodName} purchases cost ${percentage}% more`,
-        messageKey: 'insightTimePattern',
-        emoji: '🕐',
-        confidence: pattern.confidence,
-        priority: 6,
-        dataPoints: pattern.dataPoints,
-        metadata: pattern.metadata
-      };
-
-    case 'velocity':
-      const dir = pattern.metadata.direction;
-      const change = Math.abs(pattern.metadata.changePercentage);
-      return {
-        type: dir === 'accelerating' ? 'velocity_up' : 'velocity_down',
-        message: locale === 'es'
-          ? `Esta semana estás gastando ${change}% ${dir === 'accelerating' ? 'más' : 'menos'} rápido`
-          : `You're spending ${change}% ${dir === 'accelerating' ? 'faster' : 'slower'} this week`,
-        messageKey: dir === 'accelerating' ? 'insightVelocityUp' : 'insightVelocityDown',
-        emoji: dir === 'accelerating' ? '🚀' : '🐢',
-        confidence: pattern.confidence,
-        priority: 5,
-        dataPoints: pattern.dataPoints,
-        metadata: pattern.metadata
-      };
-
-    default:
-      return null;
-  }
-}
-
-function getPeriodName(period: string, locale: 'en' | 'es'): string {
-  const names = {
-    en: { morning: 'morning', afternoon: 'afternoon', evening: 'evening', night: 'night' },
-    es: { morning: 'mañana', afternoon: 'tarde', evening: 'noche', night: 'noche' }
-  };
-  return names[locale][period] || period;
-}
-```
+| Element | Light | Dark |
+|---------|-------|------|
+| Background | `bg-white` | `bg-gray-800` |
+| Stats card bg | `bg-gray-50` | `bg-gray-700/50` |
+| Comparison (down) | `bg-green-50` | `bg-green-900/30` |
+| Comparison (up) | `bg-orange-50` | `bg-orange-900/30` |
+| Top insight bg | `bg-teal-50` | `bg-teal-900/30` |
+| Silence btn active | `bg-purple-100` | `bg-purple-900/50` |
 
 ---
 
-## Translation Strings to Add
+## Key Behavior Notes
 
-```typescript
-// src/utils/translations.ts
-
-// English
-insightDayPattern: 'You spend {ratio}x more on weekends',
-insightTimePatternMorning: 'Your morning purchases cost {percentage}% more than average',
-insightTimePatternAfternoon: 'Your afternoon purchases cost {percentage}% more than average',
-insightTimePatternEvening: 'Your evening purchases cost {percentage}% more than average',
-insightTimePatternNight: 'Your night purchases cost {percentage}% more than average',
-insightVelocityUp: "You're spending {percentage}% faster this week",
-insightVelocityDown: "You're spending {percentage}% slower this week",
-
-// Spanish
-insightDayPattern: 'Gastas {ratio}x más los fines de semana',
-insightTimePatternMorning: 'Tus compras de mañana cuestan {percentage}% más',
-insightTimePatternAfternoon: 'Tus compras de tarde cuestan {percentage}% más',
-insightTimePatternEvening: 'Tus compras de noche cuestan {percentage}% más',
-insightTimePatternNight: 'Tus compras de noche cuestan {percentage}% más',
-insightVelocityUp: 'Esta semana estás gastando {percentage}% más rápido',
-insightVelocityDown: 'Esta semana estás gastando {percentage}% más lento',
-```
-
----
-
-## Statistical Thresholds
-
-| Pattern | Threshold | Rationale |
-|---------|-----------|-----------|
-| Time-of-Day | 25% higher | Noticeable but not extreme |
-| Day-of-Week | 50% higher | 2x is common weekend behavior |
-| Velocity | 20% change | Significant behavioral shift |
-| Min Data Points | 20 | Statistical reliability |
-
-These can be adjusted based on user feedback.
-
----
-
-## Testing Considerations
-
-```typescript
-// tests/unit/services/patternDetection.test.ts
-
-import { describe, it, expect } from 'vitest';
-import { PatternDetectionService } from '../../../src/services/patternDetection';
-
-describe('PatternDetectionService', () => {
-
-  describe('detectTimeOfDayPattern', () => {
-    it('returns null with insufficient data', () => {
-      const service = new PatternDetectionService();
-      const result = service.detectTimeOfDayPattern([]);
-      expect(result).toBeNull();
-    });
-
-    it('detects evening peak pattern', () => {
-      const service = new PatternDetectionService();
-      const transactions = createMockTransactions({
-        evening: { count: 15, avgAmount: 20000 },
-        morning: { count: 10, avgAmount: 8000 }
-      });
-
-      const result = service.detectTimeOfDayPattern(transactions);
-
-      expect(result).not.toBeNull();
-      expect(result?.metadata.peakPeriod).toBe('evening');
-      expect(result?.metadata.ratio).toBeGreaterThan(1.25);
-    });
-
-    it('handles transactions without time field', () => {
-      const service = new PatternDetectionService();
-      const transactions = [
-        { date: '2025-01-01', total: 10000 }, // No time
-        { date: '2025-01-02', time: '14:00', total: 15000 }
-      ];
-
-      // Should not throw
-      const result = service.detectTimeOfDayPattern(transactions);
-      expect(result).toBeNull(); // Not enough data
-    });
-  });
-
-  describe('detectDayOfWeekPattern', () => {
-    it('detects weekend spending pattern', () => {
-      const service = new PatternDetectionService();
-      const transactions = createWeekendHeavyTransactions();
-
-      const result = service.detectDayOfWeekPattern(transactions);
-
-      expect(result).not.toBeNull();
-      expect(result?.metadata.ratio).toBeGreaterThanOrEqual(1.5);
-    });
-  });
-
-  describe('detectVelocityPattern', () => {
-    it('detects accelerating spending', () => {
-      const service = new PatternDetectionService();
-      const transactions = createAcceleratingTransactions();
-
-      const result = service.detectVelocityPattern(transactions);
-
-      expect(result).not.toBeNull();
-      expect(result?.metadata.direction).toBe('accelerating');
-    });
-
-    it('detects decelerating spending', () => {
-      const service = new PatternDetectionService();
-      const transactions = createDeceleratingTransactions();
-
-      const result = service.detectVelocityPattern(transactions);
-
-      expect(result).not.toBeNull();
-      expect(result?.metadata.direction).toBe('decelerating');
-    });
-  });
-
-});
-
-// Helper functions for test data generation
-function createMockTransactions(config) { ... }
-function createWeekendHeavyTransactions() { ... }
-function createAcceleratingTransactions() { ... }
-function createDeceleratingTransactions() { ... }
-```
-
----
-
-## Performance Target
-
-- Pattern detection: <500ms for 1000 transactions
-- Use early returns when minimum data points not met
-- Cache computed values where appropriate
-- Consider Web Worker for large datasets (future optimization)
+1. **Batch threshold:** 3 receipts triggers batch mode
+2. **Session timeout:** 30 minutes of inactivity clears session
+3. **Silence duration:** 4 hours
+4. **Silence persists:** Stored in localStorage via LocalInsightCache
+5. **When silenced:** Insights tracked but not displayed
+6. **Top insight:** Highest priority insight shown in summary

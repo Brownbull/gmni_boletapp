@@ -4,6 +4,7 @@ on:
   push:
     branches: [ main, staging, develop ]
     # Story 9.15: Path filtering - skip CI for docs-only changes (~5 min saved)
+    # Story 10.0: docs-only.yml provides "test" status for docs-only changes
     paths:
       - 'src/**'
       - 'tests/**'
@@ -18,6 +19,7 @@ on:
       - 'firestore.rules'
       - 'storage.rules'
       - '.github/workflows/**'
+      - '!.github/workflows/docs-only.yml'  # Exclude docs-only workflow
       - 'playwright.config.ts'
       - 'eslint.config*.mjs'
       - '.gitleaks.toml'  # Security config changes should trigger CI
@@ -39,6 +41,7 @@ on:
       - 'firestore.rules'
       - 'storage.rules'
       - '.github/workflows/**'
+      - '!.github/workflows/docs-only.yml'  # Exclude docs-only workflow
       - 'playwright.config.ts'
       - 'eslint.config*.mjs'
       - '.gitleaks.toml'  # Security config changes should trigger CI
