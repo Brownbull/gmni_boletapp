@@ -1,6 +1,6 @@
 # Story 9.99: Epic Release & Deployment
 
-Status: review
+Status: done
 
 ## Story
 
@@ -60,30 +60,30 @@ So that **users can benefit from enhanced scan options and merchant learning**.
 - [x] Capture deployment URL - https://boletapp-d609f.web.app
 
 ### Task 6: Production E2E Verification with Test User (AC: #6, #7)
-- [ ] Log in with test user: **khujta@gmail.com** (email-only auth)
-- [ ] Test new scan options:
-  - [ ] Navigate to Scan view
-  - [ ] Verify store type quick-labels display (Auto, Supermarket, Restaurant, etc.)
-  - [ ] Verify "Advanced Options" expands with currency dropdown
-  - [ ] Scan a receipt with non-default currency selected
-  - [ ] Verify AI extraction uses selected hints
-- [ ] Test merchant learning:
-  - [ ] Edit a receipt's merchant name
-  - [ ] Verify learning dialog appears
-  - [ ] Click "Remember" and verify mapping saved
-  - [ ] Scan another receipt from same merchant
-  - [ ] Verify merchant name is auto-corrected
-  - [ ] Verify "Learned" badge appears in Edit view
-- [ ] Test Settings:
-  - [ ] Navigate to Settings
-  - [ ] Verify default currency preference section
-  - [ ] Verify Merchant Mappings section displays
-  - [ ] Test delete mapping functionality
-- [ ] Test existing functionality (no regressions):
-  - [ ] Login works
-  - [ ] History/Receipts view works
-  - [ ] Analytics view works
-  - [ ] Export functionality works
+- [x] Log in with test user: **khujta@gmail.com** (email-only auth)
+- [x] Test new scan options:
+  - [x] Navigate to Scan view
+  - [x] Verify store type quick-labels display (Auto, Supermarket, Restaurant, etc.)
+  - [x] Verify "Advanced Options" expands with currency dropdown
+  - [x] Scan a receipt with non-default currency selected
+  - [x] Verify AI extraction uses selected hints
+- [x] Test merchant learning:
+  - [x] Edit a receipt's merchant name
+  - [x] Verify learning dialog appears
+  - [x] Click "Remember" and verify mapping saved
+  - [x] Scan another receipt from same merchant
+  - [x] Verify merchant name is auto-corrected
+  - [x] Verify "Learned" badge appears in Edit view
+- [x] Test Settings:
+  - [x] Navigate to Settings
+  - [x] Verify default currency preference section
+  - [x] Verify Merchant Mappings section displays
+  - [x] Test delete mapping functionality
+- [x] Test existing functionality (no regressions):
+  - [x] Login works
+  - [x] History/Receipts view works
+  - [x] Analytics view works
+  - [x] Export functionality works
 
 ### Task 7: Update Documentation (AC: #8)
 - [x] Read current docs/index.md
@@ -196,7 +196,7 @@ This story verifies all FRs from Epic 9 are implemented:
 - [x] All tests passing (unit, integration, E2E)
 - [x] >=80% test coverage on new code
 - [x] Production deployed successfully
-- [ ] E2E verification complete with test user (manual - pending)
+- [x] E2E verification complete with test user
 - [x] No regressions in existing functionality
 - [x] Documentation updated
 - [x] Sprint status updated
@@ -208,3 +208,4 @@ This story verifies all FRs from Epic 9 are implemented:
 |------|--------|--------|
 | 2025-12-13 | Story drafted | SM Agent |
 | 2025-12-16 | Deployed to production, PR #90 merged | Dev Agent |
+| 2025-12-16 | Manual E2E verification passed, story done | User |
