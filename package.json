@@ -53,6 +53,7 @@
     "@firebase/rules-unit-testing": "^3.0.4",
     "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.56.1",
+    "@seontechnologies/playwright-utils": "^3.10.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
