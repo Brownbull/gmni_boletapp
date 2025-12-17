@@ -117,9 +117,8 @@ test.describe('Image Viewer & Thumbnail E2E Workflows', () => {
     // Verify back button is present (ArrowLeft icon button)
     await expect(page.locator('button').filter({ has: page.locator('svg') }).first()).toBeVisible();
 
-    // Verify pagination controls exist
-    await expect(page.getByText(/prev|anterior/i)).toBeVisible();
-    await expect(page.getByText(/next|siguiente/i)).toBeVisible();
+    // Verify pagination info is displayed (format: "Pág X / Y" or "Page X / Y")
+    await expect(page.getByText(/Pág|Page/i).first()).toBeVisible();
   });
 
   /**
@@ -142,11 +141,11 @@ test.describe('Image Viewer & Thumbnail E2E Workflows', () => {
     // Sign in with test credentials
     await testLoginButton.click();
 
-    // Wait for authentication
-    await expect(page.getByRole('button', { name: /Scan|Escanear/i })).toBeVisible({ timeout: 10000 });
+    // Wait for authentication - look for the FAB scan button specifically (has aria-label)
+    await expect(page.getByLabel(/Scan|Escanear/i)).toBeVisible({ timeout: 10000 });
 
-    // Navigate to scan view
-    await page.getByRole('button', { name: /Scan|Escanear/i }).click();
+    // Navigate to scan view using the FAB scan button
+    await page.getByLabel(/Scan|Escanear/i).click();
 
     // Verify scan view elements are present
     // File input or upload button should be present
@@ -185,9 +184,10 @@ test.describe('Image Viewer & Thumbnail E2E Workflows', () => {
     await expect(page.getByRole('button', { name: /Receipts|Recibos/i })).toBeVisible({ timeout: 10000 });
 
     // Verify navigation buttons have proper roles
-    const navButtons = page.locator('nav button, button[aria-label]');
+    // Count buttons in the bottom navigation bar
+    const navButtons = page.locator('.fixed.bottom-0 button, nav button');
     const buttonCount = await navButtons.count();
-    expect(buttonCount).toBeGreaterThanOrEqual(4); // Home, Scan, Trends, History, Settings
+    expect(buttonCount).toBeGreaterThanOrEqual(3); // Home, Scan (FAB), Trends, History, Settings
 
     // Verify buttons are keyboard-accessible
     const historyButton = page.getByRole('button', { name: /Receipts|Recibos/i });

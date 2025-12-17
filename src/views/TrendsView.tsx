@@ -17,7 +17,7 @@ import { TemporalBreadcrumb } from '../components/analytics/TemporalBreadcrumb';
 import { CategoryBreadcrumb } from '../components/analytics/CategoryBreadcrumb';
 import { ChartModeToggle } from '../components/analytics/ChartModeToggle';
 import { DrillDownModeToggle } from '../components/analytics/DrillDownModeToggle';
-import { DrillDownGrid } from '../components/analytics/DrillDownGrid';
+import { DrillDownGrid, type HistoryNavigationPayload } from '../components/analytics/DrillDownGrid';
 import { FloatingDownloadFab } from '../components/analytics/FloatingDownloadFab';
 import { useAnalyticsNavigation, getParentTemporalLevel } from '../hooks/useAnalyticsNavigation';
 import { getQuarterFromMonth } from '../utils/analyticsHelpers';
@@ -69,6 +69,11 @@ export interface TrendsViewProps {
     onExporting?: (value: boolean) => void;
     /** Callback for premium upgrade prompt */
     onUpgradeRequired?: () => void;
+    /**
+     * Story 9.20: Callback for navigating to History view with pre-applied filters.
+     * Called when user clicks the transaction count badge on a drill-down card.
+     */
+    onNavigateToHistory?: (payload: HistoryNavigationPayload) => void;
 }
 
 // ============================================================================
@@ -398,6 +403,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     exporting = false,
     onExporting,
     onUpgradeRequired,
+    onNavigateToHistory,
 }) => {
     // Get navigation state from context
     const { temporal, category, chartMode, temporalLevel, dispatch } = useAnalyticsNavigation();
@@ -665,11 +671,13 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
             <DrillDownModeToggle theme={theme} locale={locale as 'en' | 'es'} />
 
             {/* Drill-down Cards Grid (AC #1, #2, #5-13) */}
+            {/* Story 9.20: Pass onNavigateToHistory to enable badge navigation (AC #3) */}
             <DrillDownGrid
                 transactions={filteredTransactions}
                 theme={theme}
                 locale={locale}
                 currency={currency}
+                onNavigateToHistory={onNavigateToHistory}
             />
 
             {/* Transaction list at subcategory level */}
@@ -711,5 +719,8 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
         </div>
     );
 };
+
+// Story 9.20: Re-export HistoryNavigationPayload for App.tsx
+export type { HistoryNavigationPayload } from '../components/analytics/DrillDownGrid';
 
 export default TrendsView;

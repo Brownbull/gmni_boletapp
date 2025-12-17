@@ -11,6 +11,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '../../setup/test-utils'
 import { HistoryView } from '../../../src/views/HistoryView'
+import { HistoryFiltersProvider } from '../../../src/contexts/HistoryFiltersContext'
+
+// Helper to render HistoryView with required provider
+const renderHistoryView = (props: React.ComponentProps<typeof HistoryView>) => {
+  return render(
+    <HistoryFiltersProvider>
+      <HistoryView {...props} />
+    </HistoryFiltersProvider>
+  )
+}
 
 describe('HistoryView Thumbnail Display', () => {
   const mockProps = {
@@ -66,24 +76,20 @@ describe('HistoryView Thumbnail Display', () => {
 
   describe('Thumbnail Rendering (AC#2)', () => {
     it('should render thumbnail when transaction has thumbnailUrl', () => {
-      render(
-        <HistoryView
-          {...mockProps}
-          historyTrans={[transactionWithThumbnail]}
-        />
-      )
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: [transactionWithThumbnail],
+      })
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
       expect(thumbnail).toBeInTheDocument()
     })
 
     it('should display thumbnail image with correct alt text', () => {
-      render(
-        <HistoryView
-          {...mockProps}
-          historyTrans={[transactionWithThumbnail]}
-        />
-      )
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: [transactionWithThumbnail],
+      })
 
       const img = screen.getByAltText(`Receipt from ${transactionWithThumbnail.alias}`)
       expect(img).toBeInTheDocument()
@@ -91,24 +97,20 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should have proper thumbnail dimensions (40x50px)', () => {
-      render(
-        <HistoryView
-          {...mockProps}
-          historyTrans={[transactionWithThumbnail]}
-        />
-      )
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: [transactionWithThumbnail],
+      })
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
       expect(thumbnail).toHaveClass('w-10', 'h-[50px]')
     })
 
     it('should have accessible aria-label on thumbnail', () => {
-      render(
-        <HistoryView
-          {...mockProps}
-          historyTrans={[transactionWithThumbnail]}
-        />
-      )
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: [transactionWithThumbnail],
+      })
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
       expect(thumbnail).toHaveAttribute('aria-label', `View receipt image from ${transactionWithThumbnail.alias}`)
@@ -117,23 +119,19 @@ describe('HistoryView Thumbnail Display', () => {
 
   describe('Backward Compatibility (AC#4)', () => {
     it('should NOT render thumbnail when transaction has no thumbnailUrl', () => {
-      render(
-        <HistoryView
-          {...mockProps}
-          historyTrans={[transactionWithoutImages]}
-        />
-      )
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: [transactionWithoutImages],
+      })
 
       expect(screen.queryByTestId('transaction-thumbnail')).not.toBeInTheDocument()
     })
 
     it('should render transaction data correctly without thumbnail', () => {
-      render(
-        <HistoryView
-          {...mockProps}
-          historyTrans={[transactionWithoutImages]}
-        />
-      )
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: [transactionWithoutImages],
+      })
 
       // Merchant appears at least once (as alias fallback or merchant display)
       const merchantElements = screen.getAllByText(transactionWithoutImages.merchant)
@@ -144,12 +142,10 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should render mixed transactions (with and without thumbnails)', () => {
-      render(
-        <HistoryView
-          {...mockProps}
-          historyTrans={[transactionWithThumbnail, transactionWithoutImages]}
-        />
-      )
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: [transactionWithThumbnail, transactionWithoutImages],
+      })
 
       // One thumbnail for transaction with image
       const thumbnails = screen.getAllByTestId('transaction-thumbnail')
@@ -164,24 +160,20 @@ describe('HistoryView Thumbnail Display', () => {
 
     it('should not throw errors when rendering transactions without image fields', () => {
       expect(() => {
-        render(
-          <HistoryView
-            {...mockProps}
-            historyTrans={[transactionWithoutImages]}
-          />
-        )
+        renderHistoryView({
+          ...mockProps,
+          historyTrans: [transactionWithoutImages],
+        })
       }).not.toThrow()
     })
   })
 
   describe('Thumbnail Click Behavior', () => {
     it('should open ImageViewer when thumbnail is clicked', () => {
-      render(
-        <HistoryView
-          {...mockProps}
-          historyTrans={[transactionWithThumbnail]}
-        />
-      )
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: [transactionWithThumbnail],
+      })
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
       fireEvent.click(thumbnail)
@@ -191,12 +183,10 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should NOT trigger onEditTransaction when thumbnail is clicked', () => {
-      render(
-        <HistoryView
-          {...mockProps}
-          historyTrans={[transactionWithThumbnail]}
-        />
-      )
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: [transactionWithThumbnail],
+      })
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
       fireEvent.click(thumbnail)
@@ -206,12 +196,10 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should trigger onEditTransaction when clicking on transaction row (not thumbnail)', () => {
-      render(
-        <HistoryView
-          {...mockProps}
-          historyTrans={[transactionWithThumbnail]}
-        />
-      )
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: [transactionWithThumbnail],
+      })
 
       // Click on the merchant name (part of transaction row, not thumbnail)
       fireEvent.click(screen.getByText(transactionWithThumbnail.alias!))
@@ -220,12 +208,10 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should be keyboard accessible (Enter key)', () => {
-      render(
-        <HistoryView
-          {...mockProps}
-          historyTrans={[transactionWithThumbnail]}
-        />
-      )
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: [transactionWithThumbnail],
+      })
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
       fireEvent.keyDown(thumbnail, { key: 'Enter' })
@@ -234,12 +220,10 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should be keyboard accessible (Space key)', () => {
-      render(
-        <HistoryView
-          {...mockProps}
-          historyTrans={[transactionWithThumbnail]}
-        />
-      )
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: [transactionWithThumbnail],
+      })
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
       fireEvent.keyDown(thumbnail, { key: ' ' })
@@ -250,12 +234,10 @@ describe('HistoryView Thumbnail Display', () => {
 
   describe('ImageViewer Integration', () => {
     it('should pass correct images to ImageViewer for multi-image transaction', () => {
-      render(
-        <HistoryView
-          {...mockProps}
-          historyTrans={[transactionWithMultipleImages]}
-        />
-      )
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: [transactionWithMultipleImages],
+      })
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
       fireEvent.click(thumbnail)
@@ -265,12 +247,10 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should close ImageViewer when close button is clicked', () => {
-      render(
-        <HistoryView
-          {...mockProps}
-          historyTrans={[transactionWithThumbnail]}
-        />
-      )
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: [transactionWithThumbnail],
+      })
 
       // Open viewer
       fireEvent.click(screen.getByTestId('transaction-thumbnail'))
@@ -282,12 +262,10 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should pass merchant name to ImageViewer', () => {
-      render(
-        <HistoryView
-          {...mockProps}
-          historyTrans={[transactionWithThumbnail]}
-        />
-      )
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: [transactionWithThumbnail],
+      })
 
       fireEvent.click(screen.getByTestId('transaction-thumbnail'))
 
@@ -298,12 +276,10 @@ describe('HistoryView Thumbnail Display', () => {
 
   describe('Thumbnail Error Handling', () => {
     it('should show placeholder on thumbnail load error', () => {
-      render(
-        <HistoryView
-          {...mockProps}
-          historyTrans={[transactionWithThumbnail]}
-        />
-      )
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: [transactionWithThumbnail],
+      })
 
       const img = screen.getByAltText(`Receipt from ${transactionWithThumbnail.alias}`)
       fireEvent.error(img)
