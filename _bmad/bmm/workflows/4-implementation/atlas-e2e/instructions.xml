@@ -1,0 +1,630 @@
+<workflow>
+  <critical>The workflow execution engine is governed by: {project-root}/_bmad/core/tasks/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} and language MUST be tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+
+  <critical>🧪 ATLAS-ENHANCED E2E TEST GENERATION - Persona-Driven Testing!</critical>
+  <critical>This workflow generates and executes E2E tests that simulate real user behavior</critical>
+  <critical>Tests are driven by: User personas, workflow chains, acceptance criteria, and behavioral patterns</critical>
+  <critical>NOT just functional testing - tests how a REAL USER would interact with the feature</critical>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 0: Atlas Initialization and Context Loading                        -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="0" goal="Initialize Atlas and Load Testing Context">
+    <action>Check if Atlas agent is installed at {atlas_memory}</action>
+
+    <check if="Atlas memory file exists">
+      <action>Load Atlas memory: {atlas_memory}</action>
+      <action>Set {{atlas_enabled}} = true</action>
+      <action>Load key sections for E2E testing:
+        - Section 3: User Personas & Goals (for persona-driven tests)
+        - Section 2: Feature Inventory (for workflow understanding)
+        - Section 5: Testing Patterns & Coverage (for existing patterns)
+        - Section 4: Architectural Decisions (for technical context)
+      </action>
+      <output>🗺️ **Atlas E2E Testing Integration Active**
+
+        Atlas will provide:
+        - **User Personas**: Real user behavior patterns to simulate
+        - **Workflow Chains**: Complete user journeys to test end-to-end
+        - **Testing Patterns**: Existing patterns to follow for consistency
+        - **AC Mapping**: Story acceptance criteria to test case mapping
+      </output>
+    </check>
+
+    <check if="Atlas memory file does NOT exist">
+      <action>Set {{atlas_enabled}} = false</action>
+      <output>ℹ️ Atlas not installed - running standard E2E test generation.
+
+        Without Atlas, tests will be generated from story ACs only.
+        For persona-driven testing, install Atlas at: `_bmad/agents/atlas/`
+      </output>
+    </check>
+
+    <!-- Load testing framework context -->
+    <action>Check testing framework configuration</action>
+    <action>Read playwright.config.ts for project setup</action>
+    <action>Sample existing E2E tests for pattern reference</action>
+    <action>Load test fixtures for available test data</action>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 1: Identify Target Story                                           -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="1" goal="Identify and Load Target Story">
+    <check if="{{story_path}} is provided by user">
+      <action>Load story file from {{story_path}}</action>
+    </check>
+
+    <check if="{{story_path}} is NOT provided">
+      <action>Check {sprint_status} for stories ready for testing</action>
+      <action>Look for stories with status = "in-progress" or "review"</action>
+
+      <output>**Available Stories for E2E Testing:**
+
+        {{#each available_stories}}
+        - **{{story_key}}**: {{story_title}} (Status: {{status}})
+        {{/each}}
+      </output>
+
+      <ask>Which story should I generate E2E tests for?
+
+        Enter story key (e.g., "2-3-request-submission") or full path:</ask>
+    </check>
+
+    <action>Parse story file to extract:
+      - Story title and description
+      - Epic context (Epic number and goals)
+      - User Story format (As a... I want... So that...)
+      - All Acceptance Criteria
+      - Technical Requirements
+      - File List (components/pages being tested)
+    </action>
+
+    <action>Set {{story_key}} = extracted story key</action>
+    <action>Set {{story_title}} = story title</action>
+    <action>Set {{persona}} = extract persona from "As a [persona]..."</action>
+    <action>Set {{acceptance_criteria}} = list of all ACs</action>
+
+    <output>**📋 Story Loaded for E2E Testing**
+
+      **Story:** {{story_key}} - {{story_title}}
+      **Persona:** {{persona}}
+      **Acceptance Criteria:** {{ac_count}} criteria to test
+      **Files to Test:** {{file_count}} components/pages
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 2: Persona and Workflow Chain Analysis                             -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="2" goal="Analyze Persona and Workflow Chains">
+    <critical>🎭 PERSONA-DRIVEN TEST DESIGN - Think like the user!</critical>
+
+    <check if="{{atlas_enabled}} == true">
+      <action>Load persona details from Atlas Section 3:
+        - Persona name and description
+        - Primary goals and motivations
+        - Typical behavior patterns
+        - Pain points and edge cases
+        - Device/browser preferences
+        - Common workflows they perform
+      </action>
+
+      <action>Identify workflow chains this story touches:
+        1. Find all workflows that include this feature
+        2. Trace upstream (what leads to this feature)
+        3. Trace downstream (what happens after)
+        4. Identify integration points
+      </action>
+
+      <action>Extract behavioral patterns:
+        - How does this persona typically complete this task?
+        - What mistakes might they make?
+        - What shortcuts might they try?
+        - What accessibility needs do they have?
+      </action>
+
+      <output>**🎭 Persona Analysis: {{persona}}**
+
+        **Persona Profile:**
+        {{persona_description}}
+
+        **Primary Goals:**
+        {{#each persona_goals}}
+        - {{goal}}
+        {{/each}}
+
+        **Behavioral Patterns:**
+        {{#each behavioral_patterns}}
+        - {{pattern}}
+        {{/each}}
+
+        **Workflow Chains Affected:**
+        {{#each workflow_chains}}
+        - **{{chain_name}}**: {{chain_description}}
+          - Upstream: {{upstream_steps}}
+          - This Story: {{current_step}}
+          - Downstream: {{downstream_steps}}
+        {{/each}}
+      </output>
+    </check>
+
+    <check if="{{atlas_enabled}} == false">
+      <action>Extract persona from story "As a..." statement</action>
+      <action>Infer basic workflow from story context</action>
+      <output>ℹ️ Basic persona analysis from story (Atlas would provide richer context)</output>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 3: AC-to-Test Mapping                                              -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="3" goal="Map Acceptance Criteria to Test Cases">
+    <critical>📋 COMPREHENSIVE AC COVERAGE - Every AC gets tested!</critical>
+
+    <action>For each Acceptance Criterion, generate test scenarios:</action>
+
+    <action>Create test mapping structure:
+      ```
+      AC[X]: [Acceptance Criterion Text]
+        ├── Happy Path Test: [Normal successful flow]
+        ├── Edge Case Tests: [Boundary conditions]
+        ├── Error Case Tests: [Expected failures]
+        ├── Persona Behavior Tests: [How this user would do it]
+        └── Workflow Integration Tests: [End-to-end chain]
+      ```
+    </action>
+
+    <action>For each AC, determine:
+      1. **Happy Path**: The straightforward success scenario
+      2. **Edge Cases**: Boundary values, empty states, max lengths
+      3. **Error Cases**: Invalid input, network failures, auth issues
+      4. **Persona Behaviors**: Realistic user patterns (hesitation, corrections, shortcuts)
+      5. **Workflow Context**: How this fits in the larger user journey
+    </action>
+
+    <output>**📋 Test Case Mapping**
+
+      {{#each acceptance_criteria}}
+      **{{ac_id}}: {{ac_text}}**
+
+      | Test Type | Scenario | Priority |
+      |-----------|----------|----------|
+      | Happy Path | {{happy_path_scenario}} | High |
+      {{#each edge_cases}}
+      | Edge Case | {{scenario}} | {{priority}} |
+      {{/each}}
+      {{#each error_cases}}
+      | Error | {{scenario}} | {{priority}} |
+      {{/each}}
+      {{#each persona_tests}}
+      | Persona | {{scenario}} | {{priority}} |
+      {{/each}}
+
+      {{/each}}
+
+      **Total Test Scenarios:** {{total_scenarios}}
+      - High Priority: {{high_priority_count}}
+      - Medium Priority: {{medium_priority_count}}
+      - Low Priority: {{low_priority_count}}
+    </output>
+
+    <ask>Review the test mapping. Would you like to:
+
+      1. **Generate all tests** - Create all scenarios
+      2. **High priority only** - Just critical path tests
+      3. **Modify mapping** - Add/remove specific scenarios
+
+      Choose [1], [2], or [3]:</ask>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 4: Analyze Existing Tests and Patterns                             -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="4" goal="Analyze Existing Test Patterns">
+    <action>Scan existing E2E tests in tests/e2e/ for patterns:</action>
+
+    <action>Extract patterns from existing tests:
+      - Import structure and test utilities
+      - Test data fixtures usage
+      - Page object patterns (if any)
+      - Helper function patterns
+      - API mocking patterns
+      - Authentication patterns
+      - Data-testid conventions
+      - Assertion patterns
+      - Test grouping (describe blocks)
+    </action>
+
+    <action>Load test fixtures from tests/fixtures/:
+      - Seeded user data
+      - Seeded request/order data
+      - Authentication credentials
+      - API response mocks
+    </action>
+
+    <action>Check for existing tests related to this story:
+      - Tests for same feature area
+      - Tests for related workflows
+      - Tests that might need updating
+    </action>
+
+    <output>**🔍 Existing Test Analysis**
+
+      **Pattern Reference:**
+      - Similar tests found: {{similar_test_count}}
+      - Test utilities available: {{utility_list}}
+      - Fixtures available: {{fixture_list}}
+
+      **Conventions Detected:**
+      - Data-testid pattern: {{testid_pattern}}
+      - API mocking: {{mocking_pattern}}
+      - Auth handling: {{auth_pattern}}
+
+      **Existing Tests That May Need Updates:**
+      {{#each related_tests}}
+      - {{test_file}}: {{reason}}
+      {{/each}}
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 5: Generate E2E Test File                                          -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="5" goal="Generate E2E Test File">
+    <critical>🧪 GENERATE PERSONA-DRIVEN PLAYWRIGHT TESTS</critical>
+
+    <action>Determine test file path:
+      - Pattern: tests/e2e/{{kebab-case-story-name}}.spec.ts
+      - Example: tests/e2e/consumer-request-submission.spec.ts
+    </action>
+
+    <action>Generate test file structure:
+      ```typescript
+      import { test, expect } from "@playwright/test";
+      // Import fixtures if needed
+      // Import helper functions if needed
+
+      // Test data constants
+      const testData = {
+        // Realistic data matching persona
+      };
+
+      // Helper functions for reusable actions
+      async function [helperName](page) {
+        // Common action sequences
+      }
+
+      test.describe("[Story Key] - [Story Title]", () => {
+        test.beforeEach(async ({ page }) => {
+          // Setup: navigate to starting point
+        });
+
+        test.describe("[AC-ID]: [AC Description]", () => {
+          // Tests for this AC
+          test("[happy path description]", async ({ page }) => {
+            // Steps matching persona behavior
+          });
+
+          test("[edge case description]", async ({ page }) => {
+            // Edge case handling
+          });
+
+          test("[error case description]", async ({ page }) => {
+            // Error scenario
+          });
+        });
+
+        // Additional describe blocks for other ACs
+      });
+      ```
+    </action>
+
+    <action>For each test, include:
+      1. **Clear test name** describing the scenario
+      2. **Persona-appropriate test data** (realistic names, addresses, etc.)
+      3. **Natural interaction flow** (type, click, wait in human order)
+      4. **Meaningful assertions** (what the user would verify)
+      5. **Appropriate waits** (for async operations)
+      6. **Error handling** (for network issues, etc.)
+    </action>
+
+    <action>Apply persona behaviors to test implementation:
+      - Use realistic typing speeds and pauses where relevant
+      - Include correction patterns (backspace, clear, retype)
+      - Test tabbing/keyboard navigation for accessibility
+      - Include viewport variations for responsive testing
+    </action>
+
+    <output>**📝 Generated Test File**
+
+      **File:** tests/e2e/{{test_file_name}}
+      **Tests Generated:** {{test_count}}
+      **Coverage:**
+      {{#each acceptance_criteria}}
+      - {{ac_id}}: {{covered_scenarios}} scenarios
+      {{/each}}
+
+      **Test Structure:**
+      ```
+      {{test_structure_preview}}
+      ```
+    </output>
+
+    <action>Write the test file to disk</action>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 6: Generate Test Data Fixtures (if needed)                         -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="6" goal="Generate or Update Test Fixtures">
+    <action>Analyze if new fixtures are needed:
+      - New user types to seed
+      - New data states to create
+      - New API mocks to define
+    </action>
+
+    <check if="new fixtures needed">
+      <action>Generate fixture additions for tests/fixtures/test-data.ts:
+        ```typescript
+        // New fixture data for story {{story_key}}
+        export const [FIXTURE_NAME] = {
+          id: "[deterministic-uuid]",
+          // ...fixture properties
+        };
+        ```
+      </action>
+
+      <action>Generate seeding script updates if needed</action>
+
+      <output>**🔧 Fixture Updates Required**
+
+        **New Fixtures:**
+        {{#each new_fixtures}}
+        - {{fixture_name}}: {{description}}
+        {{/each}}
+
+        **Seeding Required:** Run `npm run seed:test` after fixture update
+      </output>
+    </check>
+
+    <check if="no new fixtures needed">
+      <output>✅ Existing fixtures are sufficient for these tests</output>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 7: Execute Tests                                                   -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="7" goal="Execute Generated Tests">
+    <output>**🚀 Ready to Execute Tests**
+
+      **Test File:** tests/e2e/{{test_file_name}}
+      **Total Tests:** {{test_count}}
+    </output>
+
+    <ask>How would you like to run the tests?
+
+      1. **Run all tests** - Execute full test suite for this story
+      2. **Run single browser** - Chromium only (faster)
+      3. **Run headed** - Watch tests execute in browser
+      4. **Skip execution** - Just generate, run manually later
+
+      Choose [1], [2], [3], or [4]:</ask>
+
+    <check if="user chooses 1">
+      <action>Execute: npx playwright test tests/e2e/{{test_file_name}}</action>
+    </check>
+
+    <check if="user chooses 2">
+      <action>Execute: npx playwright test tests/e2e/{{test_file_name}} --project=chromium</action>
+    </check>
+
+    <check if="user chooses 3">
+      <action>Execute: npx playwright test tests/e2e/{{test_file_name}} --headed --project=chromium</action>
+    </check>
+
+    <check if="user chooses 4">
+      <output>Tests generated but not executed.
+
+        To run later:
+        ```bash
+        npx playwright test tests/e2e/{{test_file_name}}
+        ```
+      </output>
+      <action>Skip to Step 8</action>
+    </check>
+
+    <!-- Capture and analyze results -->
+    <action>Parse test execution results</action>
+    <action>Count passed, failed, skipped tests</action>
+    <action>Extract failure details if any</action>
+
+    <output>**📊 Test Execution Results**
+
+      **Status:** {{overall_status}}
+      - ✅ Passed: {{passed_count}}
+      - ❌ Failed: {{failed_count}}
+      - ⏭️ Skipped: {{skipped_count}}
+
+      {{#if failed_count > 0}}
+      **Failures:**
+      {{#each failures}}
+      - **{{test_name}}**: {{error_message}}
+        - File: {{file}}:{{line}}
+        - Screenshot: {{screenshot_path}}
+      {{/each}}
+      {{/if}}
+
+      **Report:** playwright-report/index.html
+    </output>
+
+    <check if="tests failed">
+      <ask>Tests failed. Would you like to:
+
+        1. **Debug failures** - Analyze and fix failing tests
+        2. **Re-run failed** - Try failed tests again
+        3. **Continue anyway** - Mark as needs-fix and proceed
+
+        Choose [1], [2], or [3]:</ask>
+
+      <check if="user chooses 1">
+        <action>Analyze each failure</action>
+        <action>Suggest fixes based on error type:
+          - Selector issues → Update data-testid
+          - Timing issues → Add appropriate waits
+          - API issues → Update mocks
+          - Logic issues → Fix test assertions
+        </action>
+      </check>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 8: Feed Atlas Memory with Testing Patterns                         -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="8" goal="Feed Atlas Memory with Testing Learnings">
+    <check if="{{atlas_enabled}} == true">
+      <output>
+        **🗺️ Atlas Memory Update**
+
+        Capturing E2E testing patterns for future reference.
+
+        **Nugget to add to Section 5 (Testing Patterns):**
+        ```
+        ### E2E Tests - {{story_key}} - {date}
+
+        **Summary:** E2E tests generated for {{story_title}}
+
+        **Persona Tested:** {{persona}}
+
+        **Test Coverage:**
+        - Acceptance Criteria: {{ac_count}} covered
+        - Test Cases: {{test_count}} total
+        - Passed: {{passed_count}} | Failed: {{failed_count}}
+
+        **Patterns Used:**
+        {{#each patterns_used}}
+        - {{pattern_name}}: {{description}}
+        {{/each}}
+
+        **Fixtures Required:**
+        {{#each fixtures_used}}
+        - {{fixture_name}}
+        {{/each}}
+
+        **Test File:** tests/e2e/{{test_file_name}}
+
+        **Workflow Chain Coverage:**
+        {{workflow_chain_coverage}}
+        ```
+      </output>
+
+      <ask>Update Atlas memory with these testing patterns? [Y/N]</ask>
+
+      <check if="user says Y">
+        <action>Append nugget to Atlas memory Section 5</action>
+        <action>Update Atlas Sync History table</action>
+        <output>✅ Atlas memory updated with {{story_key}} testing patterns</output>
+      </check>
+    </check>
+
+    <check if="{{atlas_enabled}} == false">
+      <note>Atlas not enabled - skip memory feeding</note>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 9: Summary and Next Steps                                          -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="9" goal="Summary and Next Steps">
+    <output>**✅ Atlas E2E Test Generation Complete, {user_name}!**
+
+      **Story:** {{story_key}} - {{story_title}}
+      **Persona:** {{persona}}
+
+      **Generated:**
+      - Test File: tests/e2e/{{test_file_name}}
+      - Test Cases: {{test_count}}
+      - Fixtures Updated: {{fixture_update_count}}
+
+      **Coverage:**
+      {{#each acceptance_criteria}}
+      - {{ac_id}}: {{coverage_status}} ({{scenario_count}} scenarios)
+      {{/each}}
+
+      **Execution Results:**
+      - Passed: {{passed_count}}
+      - Failed: {{failed_count}}
+      - Skipped: {{skipped_count}}
+
+      {{#if atlas_enabled}}
+      **Atlas Integration:**
+      - Testing patterns captured: ✅
+      - Section 5 updated: ✅
+      {{/if}}
+
+      **Next Steps:**
+      1. Review generated tests: `tests/e2e/{{test_file_name}}`
+      2. Run full test suite: `npm run test:e2e`
+      3. View report: `npx playwright show-report`
+      {{#if failed_count > 0}}
+      4. Fix failing tests before code review
+      {{/if}}
+      5. Run `/bmad:bmm:workflows:atlas-code-review` when ready
+
+      **Commands:**
+      ```bash
+      # Run this story's tests
+      npx playwright test tests/e2e/{{test_file_name}}
+
+      # Run with UI mode for debugging
+      npx playwright test tests/e2e/{{test_file_name}} --ui
+
+      # Run headed to watch
+      npx playwright test tests/e2e/{{test_file_name}} --headed
+      ```
+    </output>
+  </step>
+
+</workflow>
+
+<test-generation-guidelines>
+  <guideline>Tests should simulate REAL USER BEHAVIOR, not just verify functions work</guideline>
+  <guideline>Use persona information to create realistic test data (names, addresses, behaviors)</guideline>
+  <guideline>Test complete workflow chains, not isolated features</guideline>
+  <guideline>Every Acceptance Criterion must have at least one test</guideline>
+  <guideline>Include edge cases: empty states, max lengths, special characters</guideline>
+  <guideline>Include error cases: network failures, validation errors, auth issues</guideline>
+  <guideline>Follow existing test patterns for consistency (imports, structure, naming)</guideline>
+  <guideline>Use data-testid attributes for reliable selectors</guideline>
+  <guideline>Include appropriate waits for async operations (never use fixed timeouts)</guideline>
+  <guideline>Mock APIs appropriately for deterministic tests</guideline>
+  <guideline>Generate fixtures for seeded data when needed</guideline>
+  <guideline>Test accessibility: keyboard navigation, screen reader compatibility</guideline>
+  <guideline>Test responsive behavior if applicable to the story</guideline>
+  <guideline>Capture testing patterns in Atlas for future reference</guideline>
+</test-generation-guidelines>
+
+<persona-testing-principles>
+  <principle>Think like the user, not like a developer</principle>
+  <principle>Users make mistakes - test correction flows</principle>
+  <principle>Users don't read instructions - test intuitive paths</principle>
+  <principle>Users have varying technical skills - test obvious paths</principle>
+  <principle>Users get interrupted - test save/resume if applicable</principle>
+  <principle>Users use different devices - test responsive if applicable</principle>
+  <principle>Users have accessibility needs - test keyboard/screen reader</principle>
+</persona-testing-principles>
