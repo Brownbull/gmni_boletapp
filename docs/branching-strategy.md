@@ -36,14 +36,14 @@ This document describes the Git workflow used in Boletapp. Uses the conventional
 
 | Branch | Purpose | Deploys To | Protection Level |
 |--------|---------|------------|------------------|
-| `main` | Production releases | https://nitoagua.vercel.app | **STRICT** |
-| `staging` | Pre-production testing | Vercel staging preview | **STANDARD** |
-| `develop` | Active development & CI | Vercel develop preview | **STANDARD** |
+| `main` | Production releases | https://boletapp-d609f.web.app | **STRICT** |
+| `staging` | Pre-production testing | Firebase preview channel | **STANDARD** |
+| `develop` | Active development & CI | Firebase preview channel | **STANDARD** |
 
 ### main (Production)
 
 - **Purpose:** Contains production-ready code deployed to end users
-- **URL:** https://nitoagua.vercel.app
+- **URL:** https://boletapp-d609f.web.app
 - **Protection:** Strictest - requires PR from staging, all status checks must pass
 - **Merge Source:** Only `staging` branch (or `hotfix/*` for emergencies)
 - **Direct Push:** Blocked
@@ -51,7 +51,7 @@ This document describes the Git workflow used in Boletapp. Uses the conventional
 ### staging (Pre-Production)
 
 - **Purpose:** Pre-production testing environment for final validation
-- **URL:** Vercel staging preview
+- **URL:** Firebase preview channel
 - **Protection:** Standard - requires PR from develop, status checks must pass
 - **Merge Source:** Only `develop` branch
 - **Direct Push:** Blocked
@@ -59,7 +59,7 @@ This document describes the Git workflow used in Boletapp. Uses the conventional
 ### develop (Development & Integration)
 
 - **Purpose:** Integration branch for active development work
-- **URL:** Vercel develop preview
+- **URL:** Firebase preview channel
 - **Protection:** Standard - requires PR, status checks must pass
 - **Merge Sources:** Feature, bugfix, and chore branches via PR
 - **Direct Push:** Blocked
