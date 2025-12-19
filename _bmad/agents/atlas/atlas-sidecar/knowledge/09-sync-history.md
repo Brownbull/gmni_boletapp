@@ -15,6 +15,7 @@
 | 2025-12-18 | 06-lessons | epic-8-retrospective.md, epic-9-retro | Retrospective learnings |
 | 2025-12-18 | 07-process | retrospectives, CI/CD docs, sprint-status.yaml | Process and strategy |
 | 2025-12-18 | 08-workflow-chains | architecture docs, story files | User journeys mapped |
+| 2025-12-18 | 04-architecture | Story 10.3 code review | Added Insight Generation Flow, generator registry pattern |
 
 ## Documents Tracked
 
