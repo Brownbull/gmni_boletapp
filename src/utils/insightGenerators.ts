@@ -12,6 +12,8 @@
 
 import { Transaction } from '../types/transaction';
 import { Insight, InsightGenerator, InsightCategory } from '../types/insight';
+import { DEFAULT_TIME } from './transactionNormalizer';
+import { checkForDuplicates } from '../services/duplicateDetectionService';
 
 // ============================================================================
 // TRANSACTION-INTRINSIC GENERATORS
@@ -65,10 +67,17 @@ const itemCountGenerator: InsightGenerator = {
 
 /**
  * Safely parses hour from time string (HH:mm format).
- * Returns null if time is missing or malformed.
+ * Returns null if time is missing, malformed, or is a default/sentinel value.
+ *
+ * DEFAULT_TIME ("04:04") is used as a sentinel to indicate "time not available"
+ * for legacy transactions or when Gemini couldn't extract the time from receipt.
+ * We skip time-based insights for default times since we can't confirm the
+ * actual purchase time.
  */
 function parseHour(time: string | undefined): number | null {
   if (!time) return null;
+  // Skip default sentinel value - can't trust it for time-based insights
+  if (time === DEFAULT_TIME) return null;
   const match = time.match(/^(\d{1,2}):/);
   if (!match) return null;
   const hour = parseInt(match[1], 10);
@@ -550,14 +559,59 @@ const timePatternGenerator: InsightGenerator = {
 };
 
 // ============================================================================
+// DUPLICATE DETECTION GENERATOR
+// Story 9.11: High-priority warning for potential duplicate transactions
+// ============================================================================
+
+/**
+ * duplicate_detected: Warns about potential duplicate transaction.
+ * HIGH PRIORITY (10) - should override other insights when triggered.
+ * Criteria: Same date, merchant, amount, and country (if both have country).
+ */
+const duplicateDetectedGenerator: InsightGenerator = {
+  id: 'duplicate_detected',
+  category: 'ACTIONABLE',
+  canGenerate: (tx, history) => {
+    // Include current transaction in the check (simulate it being saved)
+    const allTransactions = [...history, tx];
+    const result = checkForDuplicates(tx, allTransactions);
+    return result.isDuplicate;
+  },
+  generate: (tx, history) => {
+    // Get duplicate count for message
+    const allTransactions = [...history, tx];
+    const result = checkForDuplicates(tx, allTransactions);
+    const duplicateCount = result.duplicateIds.length;
+
+    return {
+      id: 'duplicate_detected',
+      category: 'ACTIONABLE',
+      title: 'Posible duplicado',
+      message:
+        duplicateCount === 1
+          ? 'Esta boleta parece ser un duplicado'
+          : `Esta boleta tiene ${duplicateCount} duplicados`,
+      icon: 'AlertTriangle',
+      priority: 10, // Highest priority - overrides other insights
+      transactionId: tx.id,
+    };
+  },
+};
+
+// ============================================================================
 // GENERATOR REGISTRY
 // ============================================================================
 
 /**
  * Registry of all insight generators.
  * Transaction-intrinsic generators (Story 10.3) + Pattern detection (Story 10.4)
+ * + Duplicate detection (Story 9.11)
  */
 export const INSIGHT_GENERATORS: Record<string, InsightGenerator> = {
+  // HIGH PRIORITY - Duplicate Detection (Story 9.11)
+  // Listed first to emphasize importance, but priority value determines actual order
+  duplicate_detected: duplicateDetectedGenerator,
+
   // Transaction-Intrinsic (Story 10.3)
   biggest_item: biggestItemGenerator,
   item_count: itemCountGenerator,
