@@ -14,6 +14,7 @@
 import { Transaction } from '../types/transaction';
 import {
   Insight,
+  InsightCategory,
   InsightRecord,
   UserInsightProfile,
   LocalInsightCache,
@@ -58,7 +59,7 @@ export async function generateInsightForTransaction(
   }
 
   // Story 10.3: Generate all candidates using transaction-intrinsic generators
-  // Story 10.4 will add pattern detection generators
+  // Story 10.4: Pattern detection generators added
   const candidates = generateAllCandidates(transaction, allTransactions);
 
   if (isDebugMode()) {
@@ -68,8 +69,7 @@ export async function generateInsightForTransaction(
     });
   }
 
-  // Story 10.5 will implement full selection algorithm with sprinkle logic
-  // For now, use basic priority-based selection with cooldown filtering
+  // Story 10.5: Full selection algorithm with phase-based priority and sprinkle distribution
   const selected = selectInsight(candidates, profile, cache);
 
   return selected || getFallbackInsight();
@@ -113,12 +113,79 @@ export function calculateUserPhase(profile: UserInsightProfile): UserPhase {
 }
 
 // ============================================================================
-// Selection Algorithm
+// Selection Algorithm (Story 10.5)
 // ============================================================================
 
 /**
+ * Returns insight category priority order based on phase and sprinkle logic.
+ *
+ * ADR-017 Phase-Based Priority System:
+ * - WEEK_1: 100% Quirky First
+ * - WEEKS_2_3: 66% Celebratory / 33% Actionable (same weekday/weekend)
+ * - MATURE Weekday: 66% Actionable / 33% Celebratory
+ * - MATURE Weekend: 66% Celebratory / 33% Actionable
+ *
+ * 33/66 Sprinkle: Every 3rd scan gets the "minority" type.
+ *
+ * Story 10.5, AC #3-7: Phase-based priority with sprinkle distribution.
+ *
+ * @param phase - User's current phase
+ * @param scanCounter - Current scan counter (weekday or weekend)
+ * @param isWeekendDay - Whether today is a weekend
+ * @returns Priority order of insight categories
+ */
+export function getInsightPriority(
+  phase: UserPhase,
+  scanCounter: number,
+  isWeekendDay: boolean
+): InsightCategory[] {
+  // AC #4: WEEK_1 phase returns only QUIRKY_FIRST insights
+  if (phase === 'WEEK_1') {
+    return ['QUIRKY_FIRST'];
+  }
+
+  // AC #5: WEEKS_2_3 phase returns 66% CELEBRATORY / 33% ACTIONABLE
+  // Same pattern weekday and weekend during weeks 2-3
+  if (phase === 'WEEKS_2_3') {
+    // AC #3: Every 3rd scan (scanCounter % 3 === 0) gets minority type
+    return scanCounter % 3 === 0
+      ? ['ACTIONABLE', 'CELEBRATORY', 'QUIRKY_FIRST'] // 33% sprinkle
+      : ['CELEBRATORY', 'ACTIONABLE', 'QUIRKY_FIRST']; // 66% primary
+  }
+
+  // MATURE phase - weekday/weekend differentiation
+  if (isWeekendDay) {
+    // AC #7: MATURE weekend returns 66% CELEBRATORY / 33% ACTIONABLE
+    return scanCounter % 3 === 0
+      ? ['ACTIONABLE', 'CELEBRATORY', 'QUIRKY_FIRST'] // 33% sprinkle
+      : ['CELEBRATORY', 'ACTIONABLE', 'QUIRKY_FIRST']; // 66% primary
+  } else {
+    // AC #6: MATURE weekday returns 66% ACTIONABLE / 33% CELEBRATORY
+    return scanCounter % 3 === 0
+      ? ['CELEBRATORY', 'ACTIONABLE', 'QUIRKY_FIRST'] // 33% sprinkle
+      : ['ACTIONABLE', 'CELEBRATORY', 'QUIRKY_FIRST']; // 66% primary
+  }
+}
+
+/**
+ * Checks if a given date is a weekend (Saturday or Sunday).
+ *
+ * @param date - Date to check (defaults to now)
+ * @returns true if the date is Saturday or Sunday
+ */
+export function isWeekend(date: Date = new Date()): boolean {
+  const day = date.getDay();
+  return day === 0 || day === 6; // Sunday = 0, Saturday = 6
+}
+
+/**
  * Selects the best insight from candidates using phase-based priority.
- * Story 10.5 will implement the full selection algorithm with sprinkle logic.
+ *
+ * Algorithm (Story 10.5):
+ * 1. Filter out insights on cooldown (AC #1)
+ * 2. Get priority order for current phase (AC #2-7)
+ * 3. Group candidates by category
+ * 4. Return highest priority candidate, or null for fallback (AC #9)
  *
  * @param candidates - Available insight candidates
  * @param profile - User's insight profile
@@ -128,29 +195,49 @@ export function calculateUserPhase(profile: UserInsightProfile): UserPhase {
 export function selectInsight(
   candidates: Insight[],
   profile: UserInsightProfile,
-  _cache: LocalInsightCache
+  cache: LocalInsightCache
 ): Insight | null {
-  // Stub implementation - returns first candidate
-  // Story 10.5 will implement full selection with:
-  // - Phase-based priority ordering
-  // - Cooldown filtering
-  // - Sprinkle distribution (33/66 variety)
-
   if (candidates.length === 0) {
-    return null;
+    return null; // AC #9: Caller should use fallback
   }
 
-  // Filter out insights on cooldown
-  const validCandidates = candidates.filter(
-    (candidate) => !checkCooldown(candidate.id, profile.recentInsights)
+  // Step 1: Filter by cooldown (AC #1)
+  const available = candidates.filter(
+    (c) => !checkCooldown(c.id, profile.recentInsights)
   );
 
-  if (validCandidates.length === 0) {
-    return null;
+  if (available.length === 0) {
+    return null; // AC #9: Caller should use fallback
   }
 
-  // For now, just return highest priority
-  return validCandidates.sort((a, b) => b.priority - a.priority)[0];
+  // Step 2: Get priority order (AC #2)
+  const phase = calculateUserPhase(profile);
+  const isWeekendDay = isWeekend(); // Cache result - used twice
+  const scanCounter = isWeekendDay
+    ? cache.weekendScanCount
+    : cache.weekdayScanCount;
+  const priorityOrder = getInsightPriority(phase, scanCounter, isWeekendDay);
+
+  // Step 3: Group by category
+  const byCategory = new Map<InsightCategory, Insight[]>();
+  for (const insight of available) {
+    const existing = byCategory.get(insight.category) || [];
+    existing.push(insight);
+    byCategory.set(insight.category, existing);
+  }
+
+  // Step 4: Return highest priority candidate
+  for (const category of priorityOrder) {
+    const categoryInsights = byCategory.get(category);
+    if (categoryInsights && categoryInsights.length > 0) {
+      // Sort by priority within category (higher = better)
+      categoryInsights.sort((a, b) => b.priority - a.priority);
+      return categoryInsights[0];
+    }
+  }
+
+  // Fallback to any available insight (shouldn't reach here normally)
+  return available[0];
 }
 
 // ============================================================================
@@ -279,9 +366,12 @@ export function getDefaultCache(): LocalInsightCache {
 
 /**
  * Resets scan counters if the last reset was more than a week ago.
+ * Called when retrieving cache to ensure counters stay fresh.
  *
- * @param cache - Current cache
- * @returns Cache with potentially reset counters
+ * Story 10.5, AC #8: Scan counters reset weekly.
+ *
+ * @param cache - Current cache from localStorage
+ * @returns Cache with reset counters if 7+ days since last reset, otherwise unchanged
  */
 function maybeResetCounters(cache: LocalInsightCache): LocalInsightCache {
   const lastReset = new Date(cache.lastCounterReset);
@@ -325,27 +415,41 @@ function isDebugMode(): boolean {
 }
 
 /**
- * Increments the appropriate scan counter based on current day.
+ * Increments the appropriate scan counter and resets if week changed.
+ *
+ * Story 10.5, AC #8: Scan counters reset weekly (localStorage).
  *
  * @param cache - Current local cache
- * @returns Updated cache with incremented counter
+ * @returns Updated cache with incremented counter (and potentially reset)
  */
 export function incrementScanCounter(cache: LocalInsightCache): LocalInsightCache {
-  const isWeekend = isCurrentDayWeekend();
+  const today = getTodayISODate();
+  const lastReset = cache.lastCounterReset;
 
-  return {
-    ...cache,
-    weekdayScanCount: isWeekend ? cache.weekdayScanCount : cache.weekdayScanCount + 1,
-    weekendScanCount: isWeekend ? cache.weekendScanCount + 1 : cache.weekendScanCount,
-  };
-}
+  // Check if we need to reset (new week = 7+ days since last reset)
+  const lastResetDate = new Date(lastReset);
+  const todayDate = new Date(today);
+  const daysSinceReset = Math.floor(
+    (todayDate.getTime() - lastResetDate.getTime()) / (1000 * 60 * 60 * 24)
+  );
 
-/**
- * Checks if the current day is a weekend (Saturday or Sunday).
- */
-function isCurrentDayWeekend(): boolean {
-  const day = new Date().getDay();
-  return day === 0 || day === 6; // Sunday = 0, Saturday = 6
+  let newCache = { ...cache };
+
+  // AC #8: Reset counters after 7 days
+  if (daysSinceReset >= 7) {
+    newCache.weekdayScanCount = 0;
+    newCache.weekendScanCount = 0;
+    newCache.lastCounterReset = today;
+  }
+
+  // Increment appropriate counter based on day type
+  if (isWeekend()) {
+    newCache.weekendScanCount++;
+  } else {
+    newCache.weekdayScanCount++;
+  }
+
+  return newCache;
 }
 
 /**
@@ -493,5 +597,45 @@ export function getCategoryTotal(
   // Fallback to manual sum
   return transactions
     .filter((tx) => tx.category === category)
+    .reduce((sum, tx) => sum + tx.total, 0);
+}
+
+// ============================================================================
+// Historical Comparison (Story 10.7)
+// ============================================================================
+
+/**
+ * Calculates total spending from transactions 8-13 days ago.
+ * Used for week-over-week comparison in batch summary.
+ *
+ * Story 10.7, AC #4: Historical comparison vs last week.
+ *
+ * Window calculation (using ISO date strings to avoid timezone issues):
+ * - "Last week" = transactions where date is 8-13 days before today
+ * - This gives us a 6-day window for meaningful comparison
+ *
+ * @param transactions - All user transactions
+ * @returns Total spending from the previous week window
+ */
+export function getLastWeekTotal(transactions: Transaction[]): number {
+  const now = new Date();
+  // Get today as YYYY-MM-DD string
+  const todayStr = now.toISOString().split('T')[0];
+
+  // Calculate boundary dates
+  const startDate = new Date(todayStr);
+  startDate.setDate(startDate.getDate() - 13); // 13 days ago (inclusive)
+  const startStr = startDate.toISOString().split('T')[0];
+
+  const endDate = new Date(todayStr);
+  endDate.setDate(endDate.getDate() - 8); // 8 days ago (inclusive)
+  const endStr = endDate.toISOString().split('T')[0];
+
+  return transactions
+    .filter((tx) => {
+      // Use string comparison for dates to avoid timezone issues
+      // Include if: startStr <= tx.date <= endStr (8-13 days ago)
+      return tx.date >= startStr && tx.date <= endStr;
+    })
     .reduce((sum, tx) => sum + tx.total, 0);
 }

@@ -12,6 +12,7 @@
 
 import { Transaction } from '../types/transaction';
 import { Insight, InsightGenerator, InsightCategory } from '../types/insight';
+import { DEFAULT_TIME } from './transactionNormalizer';
 
 // ============================================================================
 // TRANSACTION-INTRINSIC GENERATORS
@@ -65,10 +66,17 @@ const itemCountGenerator: InsightGenerator = {
 
 /**
  * Safely parses hour from time string (HH:mm format).
- * Returns null if time is missing or malformed.
+ * Returns null if time is missing, malformed, or is a default/sentinel value.
+ *
+ * DEFAULT_TIME ("04:04") is used as a sentinel to indicate "time not available"
+ * for legacy transactions or when Gemini couldn't extract the time from receipt.
+ * We skip time-based insights for default times since we can't confirm the
+ * actual purchase time.
  */
 function parseHour(time: string | undefined): number | null {
   if (!time) return null;
+  // Skip default sentinel value - can't trust it for time-based insights
+  if (time === DEFAULT_TIME) return null;
   const match = time.match(/^(\d{1,2}):/);
   if (!match) return null;
   const hour = parseInt(match[1], 10);
