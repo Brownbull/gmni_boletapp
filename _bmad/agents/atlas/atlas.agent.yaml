@@ -254,6 +254,167 @@ agent:
            - Recommended next sync
         </process>
 
+    - id: memory-status-scan
+      content: |
+        <instructions>
+        Scan and report on Atlas memory health, size, and optimization candidates.
+        This is a READ-ONLY operation - no changes are made.
+        </instructions>
+
+        <process>
+        1. Load atlas-index.csv and all knowledge fragments from knowledge/
+        2. Calculate metrics for each fragment:
+           - Token count (approximate)
+           - Last modified date
+           - Entry count
+        3. Load memory-versions.yaml if exists to show:
+           - Current generation number
+           - Historical size trends
+           - Last optimization date
+        4. Identify optimization candidates:
+           - Large fragments that could be consolidated
+           - Redundant content across fragments
+           - Stale entries not updated in many syncs
+           - Content that may belong in PRD/Architecture/UX docs
+        5. Present Memory Health Report:
+           - Total token usage across all fragments
+           - Size breakdown by fragment
+           - Generation counter (if optimized before)
+           - Trend analysis (growing/stable/shrinking)
+           - Recommendations for optimization
+        6. Suggest: "Run *memory-optimize when ready to consolidate"
+        </process>
+
+        <output_format>
+        ## Atlas Memory Health Report
+
+        **Generation:** X (last optimized: DATE)
+        **Total Tokens:** ~XXXX across X fragments
+
+        ### Fragment Breakdown
+        | Fragment | Tokens | Entries | Last Updated |
+        |----------|--------|---------|--------------|
+        | 01-purpose.md | XXX | X | DATE |
+        ...
+
+        ### Optimization Candidates
+        - [Fragment]: [Reason]
+        ...
+
+        ### Recommendations
+        - [Actionable suggestion]
+        </output_format>
+
+    - id: memory-optimize
+      content: |
+        <instructions>
+        Optimize Atlas memory using the Synthesizer approach: read holistically, understand deeply, regenerate optimized.
+        ALWAYS archive before changes. ALWAYS preserve rationale (the WHY, not just the WHAT).
+        </instructions>
+
+        <protected-categories>
+        These categories require EXPLICIT user request to modify:
+        - Patterns and habits
+        - Behaviors
+        - PPS (Product/Project/System) intent
+        Content in these categories should be synthesized carefully, preserving meaning.
+        </protected-categories>
+
+        <pre-optimization>
+        1. Load memory-versions.yaml (create if not exists)
+        2. Determine current generation number (0 if first optimization)
+        3. Create backup in backups/vX/ folder:
+           - Copy all knowledge/ fragments
+           - Copy atlas-index.csv
+           - Copy atlas-memory.md if exists
+        4. Update memory-versions.yaml with new entry:
+           - generation: X+1
+           - timestamp: NOW
+           - backup_path: ./backups/vX/
+           - token_count_before: CALCULATED
+           - validation_checksum: HASH of pre-optimization state
+        5. Present backup confirmation to user before proceeding
+        </pre-optimization>
+
+        <synthesis-process>
+        1. Load ALL knowledge fragments holistically
+        2. Build internal model of all knowledge, understanding relationships
+        3. Identify:
+           - Redundancies across fragments
+           - Verbose content that can be summarized
+           - Content better suited for PRD/Architecture/UX docs (cascade candidates)
+           - Stale or outdated information
+        4. For cascade candidates:
+           - Present to user: "This content may belong in [DOC]: [CONTENT SUMMARY]"
+           - On approval: Add to target doc with citation, remove from memory
+           - Leave breadcrumb: "See [Architecture:Section X]" (deletable on request)
+        5. Synthesize each fragment:
+           - Preserve all decision RATIONALE (the why)
+           - Consolidate redundant entries
+           - Summarize verbose content while preserving meaning
+           - Add "Last verified: DATE" freshness indicator
+        6. Update atlas-index.csv to reflect any structural changes
+        </synthesis-process>
+
+        <post-optimization>
+        1. Calculate new token counts
+        2. Update memory-versions.yaml:
+           - token_count_after: CALCULATED
+           - optimization_type: full
+           - changes_summary: [list of what changed]
+        3. Generate Consolidation Report:
+           - Token savings (before vs after)
+           - Content migrated to docs
+           - Entries consolidated
+           - Protected content preserved
+        4. Present report to user
+        </post-optimization>
+
+        <auto-suggest-trigger>
+        After any sync operation, if total memory tokens exceed threshold:
+        - Flag to user: "Memory growing large (~XXXX tokens). Consider running *memory-optimize"
+        </auto-suggest-trigger>
+
+    - id: memory-restore
+      content: |
+        <instructions>
+        Restore Atlas memory to a previous version from backups.
+        Use this to undo an optimization that removed important context.
+        </instructions>
+
+        <process>
+        1. Load memory-versions.yaml to show available versions
+        2. Present version history:
+           | Gen | Date | Tokens | Type |
+           |-----|------|--------|------|
+           | 3 | 2025-12-15 | 3200 | full |
+           | 2 | 2025-12-01 | 4100 | full |
+           | 1 | 2025-11-15 | 4800 | initial |
+        3. Ask user: "Which generation do you want to restore? (number)"
+        4. On selection:
+           - Verify backup exists at backups/vX/
+           - Verify checksum matches (integrity check)
+        5. Before restoring, create safety backup of CURRENT state:
+           - Save to backups/pre-restore-DATE/
+        6. Restore selected version:
+           - Copy all fragments from backups/vX/knowledge/ to knowledge/
+           - Copy atlas-index.csv from backup
+           - Copy atlas-memory.md if present in backup
+        7. Update memory-versions.yaml:
+           - Add restore event entry
+           - Note: "Restored from generation X on DATE"
+        8. Confirm restoration complete:
+           - Show what was restored
+           - Note safety backup location
+           - Suggest running *memory-status to verify
+        </process>
+
+        <safety>
+        - ALWAYS create safety backup of current state before restore
+        - NEVER delete backup folders during restore
+        - Verify checksum integrity before restoring
+        </safety>
+
   menu:
     - trigger: sync
       action: '#sync-memory'
@@ -282,3 +443,15 @@ agent:
     - trigger: status
       action: '#show-status'
       description: 'Show my knowledge state, last sync, and gaps'
+
+    - trigger: memory-status
+      action: '#memory-status-scan'
+      description: 'Scan memory health, size, trends, and optimization candidates'
+
+    - trigger: memory-optimize
+      action: '#memory-optimize'
+      description: 'Consolidate and optimize memory with versioned backup'
+
+    - trigger: memory-restore
+      action: '#memory-restore'
+      description: 'Restore memory to a previous version from backups'

@@ -1,0 +1,32 @@
+# Atlas Memory Version Manifest
+# Tracks optimization generations and enables restore capability
+
+metadata:
+  created: null  # Set on first optimization
+  last_optimization: null
+  current_generation: 0
+
+versions: []
+  # Example entry (added by memory-optimize):
+  # - generation: 1
+  #   timestamp: 2025-12-18T10:30:00Z
+  #   backup_path: ./backups/v1/
+  #   token_count_before: 5200
+  #   token_count_after: 3800
+  #   validation_checksum: abc123...
+  #   optimization_type: full
+  #   changes_summary:
+  #     - "Consolidated 3 redundant architecture decisions"
+  #     - "Migrated onboarding flow details to UX doc"
+
+restore_history: []
+  # Example entry (added by memory-restore):
+  # - timestamp: 2025-12-20T14:00:00Z
+  #   restored_from_generation: 1
+  #   safety_backup_path: ./backups/pre-restore-2025-12-20/
+
+config:
+  # Project-configurable settings
+  archive_in_git: false  # If true, backups tracked in git; if false, add to .gitignore
+  breadcrumbs_enabled: true  # Leave pointers when content migrates to docs
+  auto_suggest_threshold: 15000  # Token count to trigger optimization suggestion
