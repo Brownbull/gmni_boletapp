@@ -57,9 +57,9 @@ git checkout -b feature/epic10-my-feature
 
 The deployment workflow follows: `feature/* → develop → staging → main`
 
-1. **develop**: Integration testing, Vercel preview at develop URL
-2. **staging**: Pre-production validation, Vercel preview at staging URL
-3. **main**: Production deployment at https://nitoagua.vercel.app
+1. **develop**: Integration testing, Firebase preview channel
+2. **staging**: Pre-production validation, Firebase preview channel
+3. **main**: Production deployment at https://boletapp-d609f.web.app
 
 Use the BMAD deploy-story workflow for automated deployment:
 ```bash
