@@ -433,7 +433,7 @@ export function incrementScanCounter(cache: LocalInsightCache): LocalInsightCach
     (todayDate.getTime() - lastResetDate.getTime()) / (1000 * 60 * 60 * 24)
   );
 
-  let newCache = { ...cache };
+  const newCache = { ...cache };
 
   // AC #8: Reset counters after 7 days
   if (daysSinceReset >= 7) {
