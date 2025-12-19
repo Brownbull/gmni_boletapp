@@ -196,10 +196,10 @@ development_status:
   10-2-phase-detection-user-profile: done  # 3 points - calculateUserPhase(), UserInsightProfile Firestore doc - Code Review APPROVED 2025-12-18
   10-3-transaction-intrinsic-insights: done  # 5 points - 7 cold-start insight generators - Code Review APPROVED 2025-12-18
   10-4-pattern-detection-insights: done  # 5 points - 5 history-based generators + precomputed aggregates - Code Review APPROVED 2025-12-18
-  10-5-selection-algorithm-sprinkle: done  # 3 points - selectInsight() with phase-based priority - Code Review APPROVED 2025-12-19
-  10-6-scan-complete-insight-card: done  # 3 points - InsightCard.tsx, BuildingProfileCard.tsx fallback - Completed 2025-12-19
-  10-7-batch-mode-summary: done  # 3 points - BatchSummary.tsx for multi-receipt sessions - Code Review APPROVED 2025-12-19
-  10-99-epic-release-deployment: in-progress  # 2 points - Production deployment, E2E verification
+  10-5-selection-algorithm-sprinkle: done  # 3 points - selectInsight() with phase-based priority - DEPLOYED 2025-12-19 (PR #102)
+  10-6-scan-complete-insight-card: done  # 3 points - InsightCard.tsx, BuildingProfileCard.tsx fallback - DEPLOYED 2025-12-19 (PR #102)
+  10-7-batch-mode-summary: done  # 3 points - BatchSummary.tsx for multi-receipt sessions - DEPLOYED 2025-12-19 (PR #102)
+  10-99-epic-release-deployment: done  # 2 points - Production deployment via PR #102 - DEPLOYED 2025-12-19
   epic-10-retrospective: optional
 
   # Epic 11: Quick Save & Scan Flow Optimization (~22 points, 2 weeks)
