@@ -18,10 +18,12 @@ import {
   UserInsightProfile,
   LocalInsightCache,
   UserPhase,
+  PrecomputedAggregates,
   INSIGHT_CACHE_KEY,
   INSIGHT_COOLDOWN_MS,
   PHASE_THRESHOLDS,
 } from '../types/insight';
+import { generateAllCandidates } from '../utils/insightGenerators';
 
 // ============================================================================
 // Main Entry Point
@@ -44,12 +46,8 @@ export async function generateInsightForTransaction(
   transaction: Transaction,
   allTransactions: Transaction[],
   profile: UserInsightProfile,
-  _cache: LocalInsightCache
+  cache: LocalInsightCache
 ): Promise<Insight | null> {
-  // Stub implementation - returns fallback
-  // Story 10.3/10.4 will implement actual generators
-  // Story 10.5 will implement selection algorithm
-
   // Log for debugging (can be enabled with ?insightDebug=true)
   if (isDebugMode()) {
     console.debug('[InsightEngine] generateInsightForTransaction called', {
@@ -59,7 +57,22 @@ export async function generateInsightForTransaction(
     });
   }
 
-  return getFallbackInsight();
+  // Story 10.3: Generate all candidates using transaction-intrinsic generators
+  // Story 10.4 will add pattern detection generators
+  const candidates = generateAllCandidates(transaction, allTransactions);
+
+  if (isDebugMode()) {
+    console.debug('[InsightEngine] Candidates generated', {
+      count: candidates.length,
+      ids: candidates.map((c) => c.id),
+    });
+  }
+
+  // Story 10.5 will implement full selection algorithm with sprinkle logic
+  // For now, use basic priority-based selection with cooldown filtering
+  const selected = selectInsight(candidates, profile, cache);
+
+  return selected || getFallbackInsight();
 }
 
 // ============================================================================
@@ -378,4 +391,107 @@ export function clearSilence(cache: LocalInsightCache): LocalInsightCache {
     ...cache,
     silencedUntil: null,
   };
+}
+
+// ============================================================================
+// Precomputed Aggregates (Story 10.4)
+// ============================================================================
+
+/**
+ * Precomputes aggregates for faster pattern detection.
+ * Called on app load and after each transaction save.
+ * Performance target: <100ms for 500 transactions.
+ *
+ * Story 10.4, AC #8: Precomputed aggregates optimize performance.
+ *
+ * @param transactions - All user transactions
+ * @returns Precomputed aggregates for pattern detection
+ */
+export function computeAggregates(
+  transactions: Transaction[]
+): PrecomputedAggregates {
+  const merchantVisits: Record<string, number> = {};
+  const categoryTotals: Record<string, number> = {};
+
+  for (const tx of transactions) {
+    // Count merchant visits
+    if (tx.merchant) {
+      merchantVisits[tx.merchant] = (merchantVisits[tx.merchant] || 0) + 1;
+    }
+
+    // Sum category totals
+    if (tx.category) {
+      categoryTotals[tx.category] = (categoryTotals[tx.category] || 0) + tx.total;
+    }
+  }
+
+  return {
+    merchantVisits,
+    categoryTotals,
+    computedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Updates cache with fresh aggregates.
+ * Called after transaction save to keep aggregates up-to-date.
+ *
+ * @param cache - Current local cache
+ * @param transactions - All user transactions
+ * @returns Updated cache with fresh aggregates
+ */
+export function updateCacheAggregates(
+  cache: LocalInsightCache,
+  transactions: Transaction[]
+): LocalInsightCache {
+  return {
+    ...cache,
+    precomputedAggregates: computeAggregates(transactions),
+  };
+}
+
+/**
+ * Gets merchant visit count from aggregates.
+ * Falls back to manual count if aggregates not available.
+ *
+ * @param merchant - Merchant name to look up
+ * @param aggregates - Precomputed aggregates (optional)
+ * @param transactions - All transactions (fallback)
+ * @returns Number of visits to the merchant
+ */
+export function getMerchantVisitCount(
+  merchant: string,
+  aggregates: PrecomputedAggregates | undefined,
+  transactions: Transaction[]
+): number {
+  if (aggregates?.merchantVisits) {
+    return aggregates.merchantVisits[merchant] || 0;
+  }
+
+  // Fallback to manual count
+  return transactions.filter((tx) => tx.merchant === merchant).length;
+}
+
+/**
+ * Gets category total from aggregates.
+ * Falls back to manual sum if aggregates not available.
+ *
+ * @param category - Category to look up
+ * @param aggregates - Precomputed aggregates (optional)
+ * @param transactions - All transactions (fallback)
+ * @returns Total spending in the category
+ */
+export function getCategoryTotal(
+  category: string,
+  aggregates: PrecomputedAggregates | undefined,
+  transactions: Transaction[]
+): number {
+  if (aggregates?.categoryTotals) {
+    return aggregates.categoryTotals[category] || 0;
+  }
+
+  // Fallback to manual sum
+  return transactions
+    .filter((tx) => tx.category === category)
+    .reduce((sum, tx) => sum + tx.total, 0);
 }
