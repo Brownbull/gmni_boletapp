@@ -32,8 +32,10 @@
 ### API Key Security (Epic 8)
 > "When a key leaks in git history, create fresh branch rather than rewriting history. GitGuardian catches keys in git history, not just current files."
 
-### Git Strategy
-> "Pre-flight sync check before epic deployments. Hotfixes backported immediately to all branches. Merge commits for sync PRs (not squash)."
+### Git Strategy - 3-Branch Workflow
+> "We use a **3-branch workflow**: `develop` (integration) → `staging` (pre-prod) → `main` (production). Feature branches from develop, PRs to develop, then promote through staging to main. Pre-flight sync check before epic deployments. Hotfixes backported immediately to all branches. Merge commits for sync PRs (not squash)."
+
+**Deploy workflow:** `feature/* → develop → staging → main`
 
 ### UX Development
 > "Architecture decisions before UX changes. Mockups before implementation for UX work."
