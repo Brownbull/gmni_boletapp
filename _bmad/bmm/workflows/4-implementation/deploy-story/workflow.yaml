@@ -1,7 +1,7 @@
 # Deploy Story Workflow
 name: deploy-story
 description: "Deploy a completed story through the full branch pipeline (feature → develop → staging → main), delete feature branch, and update Atlas memory. Includes safety gates at each promotion step."
-author: "NitoAgua Team"
+author: "Boletapp Team"
 
 # Critical variables from config
 config_source: "{project-root}/_bmad/bmm/config.yaml"
@@ -30,11 +30,11 @@ branching:
   auto_delete_feature: true
   require_confirmation: true
 
-# Deployment URLs (used for verification)
+# Deployment URLs (Firebase Hosting)
 deployment_urls:
-  develop: "https://nitoagua-git-develop-khujtaai.vercel.app"
-  staging: "https://nitoagua-git-staging-khujtaai.vercel.app"
-  production: "https://nitoagua.vercel.app"
+  develop: "Firebase preview channel"
+  staging: "Firebase preview channel"
+  production: "https://boletapp-d609f.web.app"
 
 variables:
   # Project context
