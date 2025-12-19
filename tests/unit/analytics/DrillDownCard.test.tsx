@@ -676,3 +676,196 @@ describe('DrillDownCard - Story 7.18: Progress Bar', () => {
     });
   });
 });
+
+// ============================================================================
+// Story 9.20: Transaction Count Badge
+// AC #1-6: Badge display and navigation
+// ============================================================================
+
+describe('DrillDownCard - Story 9.20: Transaction Count Badge', () => {
+  // AC #1: Badge displays on left of card
+  describe('AC #1: Badge display', () => {
+    it('renders badge when transactionCount > 0 and onBadgeClick is provided', () => {
+      const onBadgeClick = vi.fn();
+      renderCard({ transactionCount: 5, onBadgeClick });
+
+      // Badge should show "5"
+      expect(screen.getByText('5')).toBeInTheDocument();
+    });
+
+    it('does not render badge when transactionCount is 0', () => {
+      const onBadgeClick = vi.fn();
+      renderCard({ transactionCount: 0, onBadgeClick });
+
+      // Badge should not be rendered for 0 transactions
+      // The card label (Q4) should still be there
+      expect(screen.getByText('Q4')).toBeInTheDocument();
+      expect(screen.queryByLabelText(/transactions/i)).not.toBeInTheDocument();
+    });
+
+    it('does not render badge when transactionCount is undefined', () => {
+      const onBadgeClick = vi.fn();
+      renderCard({ transactionCount: undefined, onBadgeClick });
+
+      expect(screen.queryByLabelText(/transactions/i)).not.toBeInTheDocument();
+    });
+
+    it('does not render badge when onBadgeClick is not provided', () => {
+      renderCard({ transactionCount: 5, onBadgeClick: undefined });
+
+      // Badge should not be rendered without click handler
+      expect(screen.queryByLabelText(/transactions/i)).not.toBeInTheDocument();
+    });
+
+    it('does not render badge when isEmpty is true', () => {
+      const onBadgeClick = vi.fn();
+      renderCard({ isEmpty: true, transactionCount: 5, onBadgeClick });
+
+      // Badge aria-label contains "transactions" - check that the badge button is not present
+      // The card itself has aria-label containing "No transactions" so we need to be specific
+      const badge = screen.queryByRole('button', { name: /view \d+ transactions/i });
+      expect(badge).not.toBeInTheDocument();
+    });
+  });
+
+  // AC #2: Badge scales for 3+ digits
+  describe('AC #2: Badge size scaling', () => {
+    it('uses standard size for 1-2 digit counts', () => {
+      const onBadgeClick = vi.fn();
+      const { container } = renderCard({ transactionCount: 5, onBadgeClick });
+
+      const badge = container.querySelector('[aria-label*="transactions"]');
+      expect(badge).toHaveClass('min-w-9', 'min-h-9');
+    });
+
+    it('uses larger size for 3+ digit counts', () => {
+      const onBadgeClick = vi.fn();
+      const { container } = renderCard({ transactionCount: 100, onBadgeClick });
+
+      // "100" triggers 99+ display, which is 3 characters
+      const badge = container.querySelector('[aria-label*="transactions"]');
+      expect(badge).toHaveClass('min-w-10', 'min-h-10', 'px-2');
+    });
+  });
+
+  // AC #3: Badge click navigates to History (stopPropagation)
+  describe('AC #3: Badge click behavior', () => {
+    it('calls onBadgeClick when badge is clicked', async () => {
+      const user = userEvent.setup();
+      const onBadgeClick = vi.fn();
+      const onClick = vi.fn();
+      renderCard({ transactionCount: 5, onBadgeClick, onClick });
+
+      const badge = screen.getByLabelText(/view 5 transactions/i);
+      await user.click(badge);
+
+      expect(onBadgeClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not trigger card onClick when badge is clicked', async () => {
+      const user = userEvent.setup();
+      const onBadgeClick = vi.fn();
+      const onClick = vi.fn();
+      renderCard({ transactionCount: 5, onBadgeClick, onClick });
+
+      const badge = screen.getByLabelText(/view 5 transactions/i);
+      await user.click(badge);
+
+      // Card click should NOT be called (stopPropagation)
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('badge has 44px minimum touch target', () => {
+      const onBadgeClick = vi.fn();
+      const { container } = renderCard({ transactionCount: 5, onBadgeClick });
+
+      // The wrapper div has min-width/min-height style for touch target
+      const touchTarget = container.querySelector('div[style*="min"]');
+      expect(touchTarget).toBeInTheDocument();
+      expect(touchTarget).toHaveStyle({ minWidth: '44px', minHeight: '44px' });
+    });
+
+    it('badge has tap feedback animation', () => {
+      const onBadgeClick = vi.fn();
+      const { container } = renderCard({ transactionCount: 5, onBadgeClick });
+
+      const badge = container.querySelector('[aria-label*="transactions"]');
+      expect(badge).toHaveClass('active:scale-95');
+    });
+  });
+
+  // AC #5: 99+ display for large counts
+  describe('AC #5: 99+ truncation', () => {
+    it('displays count directly for counts < 100', () => {
+      const onBadgeClick = vi.fn();
+      renderCard({ transactionCount: 42, onBadgeClick });
+
+      expect(screen.getByText('42')).toBeInTheDocument();
+    });
+
+    it('displays "99+" for counts >= 100', () => {
+      const onBadgeClick = vi.fn();
+      renderCard({ transactionCount: 100, onBadgeClick });
+
+      expect(screen.getByText('99+')).toBeInTheDocument();
+    });
+
+    it('displays "99+" for very large counts', () => {
+      const onBadgeClick = vi.fn();
+      renderCard({ transactionCount: 999, onBadgeClick });
+
+      expect(screen.getByText('99+')).toBeInTheDocument();
+    });
+  });
+
+  // Accessibility
+  describe('Badge accessibility', () => {
+    it('badge has descriptive aria-label in English', () => {
+      const onBadgeClick = vi.fn();
+      renderCard({ transactionCount: 5, onBadgeClick, locale: 'en' });
+
+      const badge = screen.getByLabelText('View 5 transactions');
+      expect(badge).toBeInTheDocument();
+    });
+
+    it('badge has descriptive aria-label in Spanish', () => {
+      const onBadgeClick = vi.fn();
+      renderCard({ transactionCount: 5, onBadgeClick, locale: 'es' });
+
+      const badge = screen.getByLabelText('Ver 5 transacciones');
+      expect(badge).toBeInTheDocument();
+    });
+
+    it('badge is keyboard accessible (Enter)', async () => {
+      const user = userEvent.setup();
+      const onBadgeClick = vi.fn();
+      renderCard({ transactionCount: 5, onBadgeClick });
+
+      const badge = screen.getByLabelText(/view 5 transactions/i);
+      badge.focus();
+      await user.keyboard('{Enter}');
+
+      expect(onBadgeClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('badge is keyboard accessible (Space)', async () => {
+      const user = userEvent.setup();
+      const onBadgeClick = vi.fn();
+      renderCard({ transactionCount: 5, onBadgeClick });
+
+      const badge = screen.getByLabelText(/view 5 transactions/i);
+      badge.focus();
+      await user.keyboard(' ');
+
+      expect(onBadgeClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('badge has focus ring', () => {
+      const onBadgeClick = vi.fn();
+      const { container } = renderCard({ transactionCount: 5, onBadgeClick });
+
+      const badge = container.querySelector('[aria-label*="transactions"]');
+      expect(badge).toHaveClass('focus:ring-2', 'focus:ring-blue-400');
+    });
+  });
+});

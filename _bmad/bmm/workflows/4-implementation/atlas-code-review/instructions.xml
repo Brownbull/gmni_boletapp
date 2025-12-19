@@ -1,0 +1,509 @@
+<workflow>
+  <critical>The workflow execution engine is governed by: {project-root}/_bmad/core/tasks/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} and language MUST be tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+
+  <critical>🗺️ ATLAS-ENHANCED ADVERSARIAL CODE REVIEW - Validate against project intelligence!</critical>
+  <critical>This workflow extends standard code-review with Atlas validation and memory feeding</critical>
+  <critical>Atlas provides: Architecture validation, Pattern compliance, Workflow chain checking, Push alerts</critical>
+
+  <critical>🔥 YOU ARE AN ADVERSARIAL CODE REVIEWER - Find what's wrong or missing! 🔥</critical>
+  <critical>Your purpose: Validate story file claims against actual implementation</critical>
+  <critical>Challenge everything: Are tasks marked [x] actually done? Are ACs really implemented?</critical>
+  <critical>Find 3-10 specific issues in every review minimum - no lazy "looks good" reviews</critical>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 0: Atlas Initialization                                            -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="0" goal="Initialize Atlas Integration">
+    <action>Check if Atlas agent is installed at {atlas_memory}</action>
+
+    <check if="Atlas memory file exists">
+      <action>Load Atlas memory: {atlas_memory}</action>
+      <action>Set {{atlas_enabled}} = true</action>
+      <action>Load key sections for code review:
+        - Section 4: Architectural Decisions & Patterns
+        - Section 5: Testing Patterns & Coverage
+        - Section 3: User Personas & Goals (workflow chains)
+      </action>
+      <output>🗺️ **Atlas Integration Active**
+
+        Atlas will validate this review against:
+        - Architectural decisions and patterns
+        - Testing standards and coverage requirements
+        - User workflow chains and personas
+      </output>
+    </check>
+
+    <check if="Atlas memory file does NOT exist">
+      <action>Set {{atlas_enabled}} = false</action>
+      <output>ℹ️ Atlas not installed - running standard code-review workflow.
+
+        To enable Atlas validation, install Atlas agent at:
+        `_bmad/agents/atlas/`
+      </output>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 1: Load story and discover changes (inherited from code-review)   -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="1" goal="Load story and discover changes">
+    <action>Use provided {{story_path}} or ask user which story file to review</action>
+    <action>Read COMPLETE story file</action>
+    <action>Set {{story_key}} = extracted key from filename (e.g., "1-2-user-authentication.md" → "1-2-user-authentication") or story
+      metadata</action>
+    <action>Parse sections: Story, Acceptance Criteria, Tasks/Subtasks, Dev Agent Record → File List, Change Log</action>
+
+    <!-- Discover actual changes via git -->
+    <action>Check if git repository detected in current directory</action>
+    <check if="git repository exists">
+      <action>Run `git status --porcelain` to find uncommitted changes</action>
+      <action>Run `git diff --name-only` to see modified files</action>
+      <action>Run `git diff --cached --name-only` to see staged files</action>
+      <action>Compile list of actually changed files from git output</action>
+    </check>
+
+    <!-- Cross-reference story File List vs git reality -->
+    <action>Compare story's Dev Agent Record → File List with actual git changes</action>
+    <action>Note discrepancies:
+      - Files in git but not in story File List
+      - Files in story File List but no git changes
+      - Missing documentation of what was actually changed
+    </action>
+
+    <invoke-protocol name="discover_inputs" />
+    <action>Load {project_context} for coding standards (if exists)</action>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 2: Build review attack plan (inherited + Atlas augmentation)      -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="2" goal="Build review attack plan with Atlas context">
+    <action>Extract ALL Acceptance Criteria from story</action>
+    <action>Extract ALL Tasks/Subtasks with completion status ([x] vs [ ])</action>
+    <action>From Dev Agent Record → File List, compile list of claimed changes</action>
+
+    <action>Create standard review plan:
+      1. **AC Validation**: Verify each AC is actually implemented
+      2. **Task Audit**: Verify each [x] task is really done
+      3. **Code Quality**: Security, performance, maintainability
+      4. **Test Quality**: Real tests vs placeholder bullshit
+    </action>
+
+    <!-- Atlas-Enhanced Review Plan -->
+    <check if="{{atlas_enabled}} == true">
+      <action>Add Atlas validation dimensions to review plan:
+        5. **Architecture Compliance**: Compare against Atlas Section 4 decisions
+        6. **Pattern Compliance**: Validate against Atlas Section 5 patterns
+        7. **Workflow Chain Impact**: Check against Atlas Section 3 user flows
+        8. **Historical Lessons**: Apply learnings from Atlas Section 6
+      </action>
+
+      <action>Extract from Atlas memory:
+        - Relevant architectural decisions for this story's domain
+        - Testing patterns that should be followed
+        - User workflows that this story affects
+        - Historical issues to watch for
+      </action>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 3: Execute adversarial review (inherited from code-review)        -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="3" goal="Execute adversarial review">
+    <critical>VALIDATE EVERY CLAIM - Check git reality vs story claims</critical>
+
+    <!-- Git vs Story Discrepancies -->
+    <action>Review git vs story File List discrepancies:
+      1. **Files changed but not in story File List** → MEDIUM finding (incomplete documentation)
+      2. **Story lists files but no git changes** → HIGH finding (false claims)
+      3. **Uncommitted changes not documented** → MEDIUM finding (transparency issue)
+    </action>
+
+    <!-- Use combined file list: story File List + git discovered files -->
+    <action>Create comprehensive review file list from story File List and git changes</action>
+
+    <!-- AC Validation -->
+    <action>For EACH Acceptance Criterion:
+      1. Read the AC requirement
+      2. Search implementation files for evidence
+      3. Determine: IMPLEMENTED, PARTIAL, or MISSING
+      4. If MISSING/PARTIAL → HIGH SEVERITY finding
+    </action>
+
+    <!-- Task Completion Audit -->
+    <action>For EACH task marked [x]:
+      1. Read the task description
+      2. Search files for evidence it was actually done
+      3. **CRITICAL**: If marked [x] but NOT DONE → CRITICAL finding
+      4. Record specific proof (file:line)
+    </action>
+
+    <!-- Code Quality Deep Dive -->
+    <action>For EACH file in comprehensive review list:
+      1. **Security**: Look for injection risks, missing validation, auth issues
+      2. **Performance**: N+1 queries, inefficient loops, missing caching
+      3. **Error Handling**: Missing try/catch, poor error messages
+      4. **Code Quality**: Complex functions, magic numbers, poor naming
+      5. **Test Quality**: Are tests real assertions or placeholders?
+    </action>
+
+    <check if="total_issues_found lt 3">
+      <critical>NOT LOOKING HARD ENOUGH - Find more problems!</critical>
+      <action>Re-examine code for:
+        - Edge cases and null handling
+        - Architecture violations
+        - Documentation gaps
+        - Integration issues
+        - Dependency problems
+        - Git commit message quality (if applicable)
+      </action>
+      <action>Find at least 3 more specific, actionable issues</action>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 4: ATLAS VALIDATION (NEW!)                                        -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="4" goal="Atlas Architecture and Pattern Validation">
+    <critical>🗺️ ATLAS VALIDATION - Check against accumulated project knowledge!</critical>
+
+    <check if="{{atlas_enabled}} == true">
+      <!-- Architecture Validation -->
+      <action>Compare implementation against Atlas Section 4 architectural decisions:
+        1. Does the code follow documented patterns?
+        2. Are there architectural drift indicators?
+        3. Does it respect system boundaries?
+        4. Does it follow data flow decisions?
+      </action>
+
+      <action>Set {{architecture_violations}} = list of deviations from documented architecture</action>
+
+      <!-- Pattern Compliance -->
+      <action>Validate against Atlas Section 5 testing patterns:
+        1. Are tests following documented patterns?
+        2. Is coverage adequate per standards?
+        3. Are E2E tests aligned with documented scenarios?
+      </action>
+
+      <action>Set {{pattern_violations}} = list of pattern deviations</action>
+
+      <!-- Workflow Chain Validation -->
+      <action>Check against Atlas Section 3 user workflows:
+        1. Does implementation break existing user flows?
+        2. Are new flows properly integrated?
+        3. Are edge cases from personas handled?
+      </action>
+
+      <action>Set {{workflow_impacts}} = list of affected user flows</action>
+
+      <!-- PUSH ALERT for violations -->
+      <check if="{{architecture_violations}} OR {{pattern_violations}} is not empty">
+        <output>
+          ⚠️ **ATLAS PUSH ALERT: Project Knowledge Violations Detected**
+
+          **🏗️ Architecture Violations:**
+          {{#each architecture_violations}}
+          - **{{violation_type}}**: {{description}}
+            - Expected: {{expected_pattern}}
+            - Found: {{actual_implementation}}
+            - Source: Atlas Section 4
+          {{/each}}
+
+          **📋 Pattern Violations:**
+          {{#each pattern_violations}}
+          - **{{pattern_name}}**: {{description}}
+            - Expected: {{expected_pattern}}
+            - Found: {{actual_implementation}}
+            - Source: Atlas Section 5
+          {{/each}}
+
+          **🔄 Workflow Chain Impacts:**
+          {{#each workflow_impacts}}
+          - **{{flow_name}}**: {{impact_description}}
+          {{/each}}
+
+          **Severity Assessment:**
+          - Architecture violations are typically HIGH severity
+          - Pattern violations are typically MEDIUM severity
+          - Workflow impacts require additional test coverage
+        </output>
+
+        <action>Add Atlas violations to review findings list with appropriate severity</action>
+      </check>
+
+      <check if="{{architecture_violations}} AND {{pattern_violations}} is empty">
+        <output>✅ **Atlas Validation Passed**
+
+          Implementation aligns with documented:
+          - Architectural decisions
+          - Testing patterns
+          - User workflow chains
+        </output>
+      </check>
+    </check>
+
+    <check if="{{atlas_enabled}} == false">
+      <note>Atlas not enabled - skip architecture validation</note>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 5: Present findings and fix them (inherited + Atlas context)      -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="5" goal="Present findings and fix them">
+    <action>Categorize findings: HIGH (must fix), MEDIUM (should fix), LOW (nice to fix)</action>
+    <action>Set {{fixed_count}} = 0</action>
+    <action>Set {{action_count}} = 0</action>
+
+    <output>**🔥 ATLAS-ENHANCED CODE REVIEW FINDINGS, {user_name}!**
+
+      **Story:** {{story_file}}
+      **Git vs Story Discrepancies:** {{git_discrepancy_count}} found
+      **Issues Found:** {{high_count}} High, {{medium_count}} Medium, {{low_count}} Low
+      {{#if atlas_enabled}}
+      **Atlas Validations:**
+        - Architecture violations: {{architecture_violation_count}}
+        - Pattern violations: {{pattern_violation_count}}
+        - Workflow impacts: {{workflow_impact_count}}
+      {{/if}}
+
+      ## 🔴 CRITICAL ISSUES
+      - Tasks marked [x] but not actually implemented
+      - Acceptance Criteria not implemented
+      - Story claims files changed but no git evidence
+      - Security vulnerabilities
+      {{#if atlas_enabled}}- Architecture drift from documented decisions{{/if}}
+
+      ## 🟡 MEDIUM ISSUES
+      - Files changed but not documented in story File List
+      - Uncommitted changes not tracked
+      - Performance problems
+      - Poor test coverage/quality
+      - Code maintainability issues
+      {{#if atlas_enabled}}- Pattern deviations from documented standards{{/if}}
+
+      ## 🟢 LOW ISSUES
+      - Code style improvements
+      - Documentation gaps
+      - Git commit message quality
+    </output>
+
+    <ask>What should I do with these issues?
+
+      1. **Fix them automatically** - I'll update the code and tests
+      2. **Create action items** - Add to story Tasks/Subtasks for later
+      3. **Show me details** - Deep dive into specific issues
+
+      Choose [1], [2], or specify which issue to examine:</ask>
+
+    <check if="user chooses 1">
+      <action>Fix all HIGH and MEDIUM issues in the code</action>
+      <action>Add/update tests as needed</action>
+      <action>Update File List in story if files changed</action>
+      <action>Update story Dev Agent Record with fixes applied</action>
+      <action>Set {{fixed_count}} = number of HIGH and MEDIUM issues fixed</action>
+      <action>Set {{action_count}} = 0</action>
+    </check>
+
+    <check if="user chooses 2">
+      <action>Add "Review Follow-ups (AI)" subsection to Tasks/Subtasks</action>
+      <action>For each issue: `- [ ] [AI-Review][Severity] Description [file:line]`</action>
+      <action>Set {{action_count}} = number of action items created</action>
+      <action>Set {{fixed_count}} = 0</action>
+    </check>
+
+    <check if="user chooses 3">
+      <action>Show detailed explanation with code examples</action>
+      <action>Return to fix decision</action>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 6: Update story status and sync sprint tracking                   -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="6" goal="Update story status and sync sprint tracking">
+    <!-- Determine new status based on review outcome -->
+    <check if="all HIGH and MEDIUM issues fixed AND all ACs implemented">
+      <action>Set {{new_status}} = "done"</action>
+      <action>Update story Status field to "done"</action>
+    </check>
+    <check if="HIGH or MEDIUM issues remain OR ACs not fully implemented">
+      <action>Set {{new_status}} = "in-progress"</action>
+      <action>Update story Status field to "in-progress"</action>
+    </check>
+    <action>Save story file</action>
+
+    <!-- Determine sprint tracking status -->
+    <check if="{sprint_status} file exists">
+      <action>Set {{current_sprint_status}} = "enabled"</action>
+    </check>
+    <check if="{sprint_status} file does NOT exist">
+      <action>Set {{current_sprint_status}} = "no-sprint-tracking"</action>
+    </check>
+
+    <!-- Sync sprint-status.yaml when story status changes -->
+    <check if="{{current_sprint_status}} != 'no-sprint-tracking'">
+      <action>Load the FULL file: {sprint_status}</action>
+      <action>Find development_status key matching {{story_key}}</action>
+
+      <check if="{{new_status}} == 'done'">
+        <action>Update development_status[{{story_key}}] = "done"</action>
+        <action>Save file, preserving ALL comments and structure</action>
+        <output>✅ Sprint status synced: {{story_key}} → done</output>
+      </check>
+
+      <check if="{{new_status}} == 'in-progress'">
+        <action>Update development_status[{{story_key}}] = "in-progress"</action>
+        <action>Save file, preserving ALL comments and structure</action>
+        <output>🔄 Sprint status synced: {{story_key}} → in-progress</output>
+      </check>
+
+      <check if="story key not found in sprint status">
+        <output>⚠️ Story file updated, but sprint-status sync failed: {{story_key}} not found in sprint-status.yaml</output>
+      </check>
+    </check>
+
+    <check if="{{current_sprint_status}} == 'no-sprint-tracking'">
+      <output>ℹ️ Story status updated (no sprint tracking configured)</output>
+    </check>
+
+    <output>**✅ Review Complete!**
+
+      **Story Status:** {{new_status}}
+      **Issues Fixed:** {{fixed_count}}
+      **Action Items Created:** {{action_count}}
+
+      {{#if new_status == "done"}}Code review complete!{{else}}Address the action items and continue development.{{/if}}
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 7: Feed Atlas Memory with Review Learnings (NEW!)                 -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="7" goal="Feed Atlas Memory with Review Learnings">
+    <check if="{{atlas_enabled}} == true">
+      <output>
+        **🗺️ Atlas Memory Update**
+
+        Atlas can learn from this code review to improve future validations.
+
+        **Nugget to add to Section 4 (Architectural Decisions):**
+        ```
+        ### Code Review - {{story_key}} - {date}
+
+        **Summary:** Implementation of {{story_title}} reviewed.
+
+        **Patterns Adopted:**
+        {{#each patterns_used}}
+        - {{pattern_name}}: {{usage_description}}
+        {{/each}}
+
+        **Technical Decisions:**
+        {{#each technical_decisions}}
+        - {{decision}}: {{rationale}}
+        {{/each}}
+
+        **Coverage Notes:**
+        - Tests added: {{tests_added}}
+        - Coverage gaps: {{coverage_gaps}}
+
+        **Source:** {{story_file}}
+        ```
+
+        {{#if architecture_violations}}
+        **Nugget to add to Section 6 (Historical Lessons):**
+        ```
+        ### Architecture Drift Detected - {{story_key}} - {date}
+
+        **Violations Found:**
+        {{#each architecture_violations}}
+        - {{violation_type}}: {{description}}
+        {{/each}}
+
+        **Resolution:** {{resolution_summary}}
+
+        **Prevention:** {{prevention_recommendation}}
+        ```
+        {{/if}}
+      </output>
+
+      <ask>Update Atlas memory with this review's learnings? [Y/N]</ask>
+
+      <check if="user says Y">
+        <action>Append code review nugget to Atlas memory Section 4</action>
+        <check if="architecture_violations exist">
+          <action>Append lessons learned nugget to Atlas memory Section 6</action>
+        </check>
+        <action>Update Atlas Sync History table</action>
+        <output>✅ Atlas memory updated with {{story_key}} review learnings</output>
+      </check>
+    </check>
+
+    <check if="{{atlas_enabled}} == false">
+      <note>Atlas not enabled - skip memory feeding</note>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 8: Trigger deployment for completed stories                       -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="8" goal="Trigger deployment for completed stories">
+    <check if="{{new_status}} == 'done'">
+      <output>**Story Ready for Deployment**
+
+        The story has passed code review and is ready to be deployed.
+
+        The deploy-story workflow will:
+        1. Validate with Atlas (architectural alignment)
+        2. Merge through pipeline: feature → develop → staging → main
+        3. Delete feature branch (optional)
+        4. Update Atlas memory with deployment knowledge</output>
+
+      <ask>Deploy this story now? [Y/N]
+
+        - **Y**: Run deploy-story workflow immediately
+        - **N**: Skip deployment (can run `/bmad:bmm:workflows:deploy-story` later)</ask>
+
+      <check if="user says Y">
+        <action>Set {{story_path}} = current story file path</action>
+        <output>Starting deployment workflow...</output>
+        <invoke-workflow path="_bmad/bmm/workflows/4-implementation/deploy-story/workflow.yaml">
+          <param name="story_path">{{story_path}}</param>
+          <param name="story_key">{{story_key}}</param>
+        </invoke-workflow>
+      </check>
+
+      <check if="user says N">
+        <output>Deployment skipped. Run `/bmad:bmm:workflows:deploy-story` when ready.
+
+          **Next Steps:**
+          - Run `/bmad:bmm:workflows:sprint-status` to see sprint progress
+          - Run `/bmad:bmm:workflows:create-story` for the next story
+          - Run `/bmad:bmm:workflows:deploy-story` when ready to deploy</output>
+      </check>
+    </check>
+
+    <check if="{{new_status}} != 'done'">
+      <output>**Next Steps:**
+
+        Story is not yet complete. Address the identified issues:
+        1. Fix remaining issues in the code
+        2. Re-run `/bmad:bmm:workflows:dev-story` if needed
+        3. Re-run `/bmad:bmm:workflows:atlas-code-review` for final approval</output>
+    </check>
+  </step>
+
+</workflow>

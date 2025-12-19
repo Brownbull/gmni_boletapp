@@ -1,0 +1,337 @@
+<workflow>
+  <critical>The workflow execution engine is governed by: {project-root}/_bmad/core/tasks/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} and generate all documents in {document_output_language}</critical>
+
+  <critical>🗺️ ATLAS-ENHANCED STORY CREATION - Workflow Intelligence + Push Alerts!</critical>
+  <critical>This workflow extends standard create-story with Atlas integration for workflow chain analysis</critical>
+  <critical>Atlas provides: Workflow impact analysis, Push alerts, Additional AC suggestions, Memory feeding</critical>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 0: Atlas Initialization                                            -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="0" goal="Initialize Atlas Integration">
+    <action>Check if Atlas agent is installed at {atlas_memory}</action>
+
+    <check if="Atlas memory file exists">
+      <action>Load Atlas memory: {atlas_memory}</action>
+      <action>Set {{atlas_enabled}} = true</action>
+      <output>🗺️ **Atlas Integration Active**
+
+        Atlas will analyze this story for workflow chain impacts and provide push alerts if existing workflows are affected.
+      </output>
+    </check>
+
+    <check if="Atlas memory file does NOT exist">
+      <action>Set {{atlas_enabled}} = false</action>
+      <output>ℹ️ Atlas not installed - running standard create-story workflow.
+
+        To enable Atlas workflow analysis, install Atlas agent at:
+        `_bmad/agents/atlas/`
+      </output>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEPS 1-5: Standard Create-Story Logic (inherited)                      -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="1" goal="Determine target story">
+    <note>This step is identical to standard create-story - see create-story/instructions.xml</note>
+
+    <check if="{{story_path}} is provided by user or user provided the epic and story number">
+      <action>Parse user-provided story path: extract epic_num, story_num, story_title</action>
+      <action>Set {{epic_num}}, {{story_num}}, {{story_key}} from user input</action>
+      <action>GOTO step 2</action>
+    </check>
+
+    <action>Check if {{sprint_status}} file exists for auto discover</action>
+    <check if="sprint status file does NOT exist">
+      <output>🚫 No sprint status file found and no story specified</output>
+      <output>
+        **Required Options:**
+        1. Run `sprint-planning` to initialize sprint tracking (recommended)
+        2. Provide specific epic-story number to create (e.g., "1-2-user-auth")
+      </output>
+      <ask>Choose option [1], provide epic-story number, or [q] to quit:</ask>
+    </check>
+
+    <!-- Auto-discover from sprint status -->
+    <critical>MUST read COMPLETE {sprint_status} file from start to end</critical>
+    <action>Load the FULL file: {{sprint_status}}</action>
+    <action>Find the FIRST story with status = "backlog"</action>
+    <action>Extract epic_num, story_num, story_key</action>
+    <action>Set {{story_id}} = "{{epic_num}}.{{story_num}}"</action>
+
+    <!-- Mark epic as in-progress if first story -->
+    <check if="this is first story in epic {{epic_num}}">
+      <action>Update epic status to "in-progress" if currently "backlog"</action>
+    </check>
+  </step>
+
+  <step n="2" goal="Load and analyze core artifacts">
+    <critical>🔬 EXHAUSTIVE ARTIFACT ANALYSIS</critical>
+
+    <invoke-protocol name="discover_inputs" />
+    <note>Available: {epics_content}, {prd_content}, {architecture_content}, {ux_content}, {project_context}</note>
+
+    <action>From {epics_content}, extract Epic {{epic_num}} complete context</action>
+    <action>Extract our story ({{epic_num}}-{{story_num}}) details</action>
+
+    <check if="story_num > 1">
+      <action>Load previous story file for context continuity</action>
+      <action>Extract learnings, patterns, and review feedback</action>
+    </check>
+
+    <check if="git repository detected">
+      <action>Analyze recent commits for code patterns and conventions</action>
+    </check>
+  </step>
+
+  <step n="3" goal="Architecture analysis for developer guardrails">
+    <critical>🏗️ ARCHITECTURE INTELLIGENCE</critical>
+
+    <action>Analyze architecture content for story-relevant requirements</action>
+    <action>Extract: Technical stack, code structure, API patterns, testing standards</action>
+    <action>Identify architectural decisions the developer MUST follow</action>
+  </step>
+
+  <step n="4" goal="Web research for latest technical specifics">
+    <critical>🌐 ENSURE LATEST TECH KNOWLEDGE</critical>
+
+    <action>Identify technologies requiring latest version knowledge</action>
+    <action>Research latest stable versions and key changes</action>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 5: ATLAS WORKFLOW CHAIN ANALYSIS (NEW!)                            -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="5" goal="Atlas Workflow Chain Analysis">
+    <critical>🗺️ ATLAS INTELLIGENCE - Analyze workflow impacts BEFORE story finalization!</critical>
+
+    <check if="{{atlas_enabled}} == true">
+      <action>Load Atlas memory sections:
+        - Section 2: Feature Inventory
+        - Section 3: User Personas & Goals (workflow chains)
+        - Section 4: Architectural Decisions
+      </action>
+
+      <action>Analyze story requirements against existing workflow chains:</action>
+
+      <!-- Workflow Chain Impact Analysis -->
+      <action>For each acceptance criterion in the story:
+        1. Identify which existing workflows it touches
+        2. Trace upstream dependencies (what must happen before)
+        3. Trace downstream effects (what happens after)
+        4. Identify related test scenarios
+      </action>
+
+      <action>Set {{workflow_impacts}} = list of affected workflows</action>
+      <action>Set {{downstream_effects}} = list of downstream impacts</action>
+      <action>Set {{suggested_acs}} = additional acceptance criteria based on workflow analysis</action>
+
+      <!-- PUSH ALERT if workflows affected -->
+      <check if="{{workflow_impacts}} is not empty">
+        <output>
+          ⚠️ **ATLAS PUSH ALERT: Workflow Impact Detected**
+
+          This story affects the following existing workflows:
+
+          **Affected Workflows:**
+          {{#each workflow_impacts}}
+          - **{{workflow_name}}**: {{impact_description}}
+          {{/each}}
+
+          **Downstream Effects:**
+          {{#each downstream_effects}}
+          - {{effect_description}}
+          {{/each}}
+
+          **Suggested Additional Acceptance Criteria:**
+          {{#each suggested_acs}}
+          - [ ] {{suggested_ac}}
+          {{/each}}
+
+          **Testing Considerations:**
+          - Existing E2E tests that may need updates: {{affected_tests}}
+          - New test scenarios implied: {{new_test_scenarios}}
+        </output>
+
+        <ask>
+          Would you like to:
+          1. **Include** these suggestions in the story
+          2. **Review** each suggestion individually
+          3. **Skip** Atlas suggestions (proceed with standard story)
+
+          Choose [1], [2], or [3]:
+        </ask>
+
+        <check if="user chooses 1">
+          <action>Add all suggested ACs to story acceptance criteria</action>
+          <action>Add workflow impact section to story Dev Context</action>
+          <output>✅ Atlas suggestions included in story</output>
+        </check>
+
+        <check if="user chooses 2">
+          <action>Present each suggestion for individual approval</action>
+          <action>Add approved suggestions to story</action>
+        </check>
+
+        <check if="user chooses 3">
+          <output>ℹ️ Proceeding without Atlas suggestions</output>
+        </check>
+      </check>
+
+      <check if="{{workflow_impacts}} is empty">
+        <output>✅ **Atlas Analysis Complete**
+
+          No existing workflow impacts detected. This story appears to be isolated or introduces new functionality.
+        </output>
+      </check>
+    </check>
+
+    <check if="{{atlas_enabled}} == false">
+      <note>Atlas not enabled - skip workflow analysis</note>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 6: Create Story File (with Atlas enhancements)                     -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="6" goal="Create comprehensive story file">
+    <critical>📝 CREATE ULTIMATE STORY FILE</critical>
+
+    <action>Initialize from template: {default_output_file}</action>
+
+    <!-- Standard story sections -->
+    <template-output file="{default_output_file}">story_header</template-output>
+    <template-output file="{default_output_file}">story_requirements</template-output>
+    <template-output file="{default_output_file}">developer_context_section</template-output>
+    <template-output file="{default_output_file}">technical_requirements</template-output>
+    <template-output file="{default_output_file}">architecture_compliance</template-output>
+    <template-output file="{default_output_file}">testing_requirements</template-output>
+
+    <!-- Atlas-Enhanced Section -->
+    <check if="{{atlas_enabled}} == true AND {{workflow_impacts}} is not empty">
+      <action>Add Atlas Workflow Impact section to story:</action>
+
+      <template-output file="{default_output_file}">
+## Atlas Workflow Analysis
+
+> 🗺️ This section was generated by Atlas workflow chain analysis
+
+### Affected Workflows
+{{#each workflow_impacts}}
+- **{{workflow_name}}**: {{impact_description}}
+{{/each}}
+
+### Downstream Effects to Consider
+{{#each downstream_effects}}
+- {{effect_description}}
+{{/each}}
+
+### Testing Implications
+- **Existing tests to verify:** {{affected_tests}}
+- **New scenarios to add:** {{new_test_scenarios}}
+
+### Workflow Chain Visualization
+```
+{{upstream_chain}} → [THIS STORY] → {{downstream_chain}}
+```
+      </template-output>
+    </check>
+
+    <!-- Previous story intelligence -->
+    <check if="previous story learnings available">
+      <template-output file="{default_output_file}">previous_story_intelligence</template-output>
+    </check>
+
+    <!-- Git intelligence -->
+    <check if="git analysis completed">
+      <template-output file="{default_output_file}">git_intelligence_summary</template-output>
+    </check>
+
+    <!-- Set status -->
+    <action>Set story Status to: "ready-for-dev"</action>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 7: Update Sprint Status and Feed Atlas Memory                      -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="7" goal="Update sprint status and feed Atlas">
+    <invoke-task>Validate against checklist using _bmad/core/tasks/validate-workflow.xml</invoke-task>
+    <action>Save story document</action>
+
+    <!-- Update sprint status -->
+    <check if="sprint status file exists">
+      <action>Update development_status[{{story_key}}] = "ready-for-dev"</action>
+      <action>Save file, preserving all comments and structure</action>
+    </check>
+
+    <!-- ATLAS MEMORY FEEDING -->
+    <check if="{{atlas_enabled}} == true">
+      <output>
+        **🗺️ Atlas Memory Update**
+
+        Atlas can learn from this story creation to improve future workflow analysis.
+
+        **Nugget to add to Section 2 (Feature Inventory):**
+        ```
+        ### Story Created - {{story_key}} - {date}
+
+        **Summary:** {{story_title}} - {{story_summary}}
+
+        **User Value:** {{user_value}}
+
+        **Workflow Touchpoints:**
+        {{#each workflow_impacts}}
+        - {{workflow_name}}
+        {{/each}}
+
+        **Source:** {{story_file}}
+        ```
+      </output>
+
+      <ask>Update Atlas memory with this story's workflow touchpoints? [Y/N]</ask>
+
+      <check if="user says Y">
+        <action>Append nugget to Atlas memory Section 2</action>
+        <action>Update Atlas Sync History table</action>
+        <output>✅ Atlas memory updated with story {{story_key}} workflow touchpoints</output>
+      </check>
+    </check>
+
+    <!-- Final output -->
+    <output>**🎯 ATLAS-ENHANCED STORY CREATED, {user_name}!**
+
+      **Story Details:**
+      - Story ID: {{story_id}}
+      - Story Key: {{story_key}}
+      - File: {{story_file}}
+      - Status: ready-for-dev
+      {{#if atlas_enabled}}
+      - Atlas Analysis: ✅ Complete
+      - Workflow Impacts: {{workflow_impact_count}} detected
+      {{/if}}
+
+      **Next Steps:**
+      1. Review the comprehensive story in {{story_file}}
+      2. Run `atlas-code-review` when implementation complete (includes Atlas validation)
+      3. Run `atlas-retrospective` after epic completion
+
+      **Atlas Enhancements Applied:**
+      {{#if workflow_impacts}}
+      - ⚠️ Workflow impact analysis included
+      - 📋 Additional ACs suggested based on workflow chains
+      - 🧪 Testing implications documented
+      {{else}}
+      - ✅ No workflow conflicts detected
+      {{/if}}
+    </output>
+  </step>
+
+</workflow>

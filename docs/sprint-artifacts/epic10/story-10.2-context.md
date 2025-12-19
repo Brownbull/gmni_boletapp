@@ -1,295 +1,342 @@
-# Story 10.2 Context: Scan Complete Insights
+# Story 10.2 Context: Phase Detection & User Profile
 
-**Purpose:** This document aggregates all relevant codebase context for implementing the Scan Complete Insight Toast.
-
----
-
-## Target Files to Create
-
-| File | Purpose |
-|------|---------|
-| `src/components/ScanCompleteToast.tsx` | Toast component with insight |
-| `src/hooks/useInsightToast.ts` | Toast state management |
+**Purpose:** Context document for implementing phase detection and Firestore user profile.
+**Architecture:** [architecture-epic10-insight-engine.md](../../planning/architecture-epic10-insight-engine.md)
+**Updated:** 2025-12-17 (Architecture-Aligned)
 
 ---
 
-## Current Save Flow
+## Target Files
 
-**Save Handler Location:**
-```
-Location: /home/khujta/projects/bmad/boletapp/src/App.tsx (lines 414-437)
+| Action | File | Purpose |
+|--------|------|---------|
+| Create | `src/services/insightProfileService.ts` | Firestore profile CRUD |
+| Modify | `src/services/insightEngineService.ts` | Implement `calculateUserPhase()` |
+| Modify | `firestore.rules` | Add insightProfile security rules |
+| Create | `tests/unit/services/insightEngineService.phase.test.ts` | Phase calculation tests |
 
-Current flow:
-1. User clicks Save in EditView
-2. saveTransaction() called
-3. Firestore write (optimistic)
-4. Navigate to dashboard
-5. Clear pendingScan state
-6. Show generic toast (optional)
+---
 
-Insert insight generation:
-- After step 2, before step 3
-- Generate insight from InsightEngine
-- Show ScanCompleteToast instead of generic toast
-```
+## Phase Detection Logic (ADR-017)
 
-**Current Toast Implementation:**
 ```typescript
-// App.tsx line 102
-const [toastMessage, setToastMessage] = useState<string | null>(null);
+// src/services/insightEngineService.ts
 
-// Usage pattern
-setToastMessage('Transaction saved');
-setTimeout(() => setToastMessage(null), 3000);
-```
+import { Timestamp } from 'firebase/firestore';
+import { UserInsightProfile, UserPhase } from '../types/insight';
 
----
+/**
+ * Calculates user phase based on days since first transaction.
+ *
+ * Phase definitions (from ADR-017):
+ * - WEEK_1: 0-7 days → 100% Quirky insights
+ * - WEEKS_2_3: 8-21 days → 66% Celebratory / 33% Actionable
+ * - MATURE: 22+ days → Weekday/weekend differentiation
+ *
+ * IMPORTANT: Uses firstTransactionDate, NOT account creation date.
+ */
+export function calculateUserPhase(profile: UserInsightProfile): UserPhase {
+  if (!profile.firstTransactionDate) {
+    return 'WEEK_1'; // New user
+  }
 
-## EditView Save Button Location
+  const now = new Date();
+  const firstDate = profile.firstTransactionDate.toDate();
+  const daysSinceFirst = Math.floor(
+    (now.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24)
+  );
 
-**Save Button:**
-```
-Location: /home/khujta/projects/bmad/boletapp/src/views/EditView.tsx
-
-The save action is triggered from EditView and handled by App.tsx
-via the onSave prop passed to EditView.
-
-Pattern:
-<EditView
-  onSave={(transaction) => saveTransaction(transaction)}
-  ...
-/>
-```
-
----
-
-## Insight Priority for Scan Complete
-
-From habits loops.md research:
-
-| Priority | Condition | Message Template |
-|----------|-----------|------------------|
-| 1 | New merchant (first time) | "Primera boleta de {merchant}. Categorizado como {category}" |
-| 2 | Biggest purchase this week | "Es tu compra más grande de la semana" |
-| 3 | Repeat category same day | "{ordinal} boleta de {category} hoy" |
-| 4 | Known merchant | "Llevas {monthTotal} en {merchant} este mes" |
-| 5 | Default | "Guardado en {category}" |
-
----
-
-## Toast Component Design
-
-**Layout:**
-```
-┌─────────────────────────────────────────┐
-│  ✓ Guardado                      $24.990│
-│                                         │
-│  🔄 3ra boleta de Restaurante esta sem. │
-│                                         │
-│     [Ver más]              [Cerrar]     │
-└─────────────────────────────────────────┘
-```
-
-**Positioning:**
-- Bottom of screen, 16px margin
-- Width: 90% (max 400px)
-- Z-index above other content
-
----
-
-## Existing Component Patterns
-
-**Toast-like Components:**
-```
-Location: Check for existing toast/notification patterns in:
-- src/components/ - Any notification components
-- Tailwind classes for positioning
-
-Common pattern:
-fixed bottom-4 left-1/2 -translate-x-1/2
-bg-white dark:bg-gray-800
-shadow-lg rounded-lg p-4
-```
-
-**Animation Pattern:**
-```css
-/* Enter */
-@keyframes slideUp {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-/* Exit */
-@keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  if (daysSinceFirst <= 7) {
+    return 'WEEK_1';
+  }
+  if (daysSinceFirst <= 21) {
+    return 'WEEKS_2_3';
+  }
+  return 'MATURE';
 }
 ```
 
 ---
 
-## Translation Strings to Add
+## Phase Purpose Table
 
-```typescript
-// src/utils/translations.ts
-
-// English
-scanCompleteSaved: 'Saved',
-scanCompleteViewMore: 'View more',
-scanCompleteClose: 'Close',
-insightNewMerchant: 'First receipt from {merchant}. Categorized as {category}',
-insightBiggestPurchase: 'This is your biggest purchase this week',
-insightRepeatCategory: '{ordinal} {category} receipt today',
-insightMerchantRunningTotal: 'You\'ve spent {total} at {merchant} this month',
-insightDefaultSaved: 'Saved to {category}',
-
-// Spanish
-scanCompleteSaved: 'Guardado',
-scanCompleteViewMore: 'Ver más',
-scanCompleteClose: 'Cerrar',
-insightNewMerchant: 'Primera boleta de {merchant}. Categorizado como {category}',
-insightBiggestPurchase: 'Es tu compra más grande de la semana',
-insightRepeatCategory: '{ordinal} boleta de {category} hoy',
-insightMerchantRunningTotal: 'Llevas {total} en {merchant} este mes',
-insightDefaultSaved: 'Guardado en {category}',
-```
+| Phase | Duration | Insight Focus | Why |
+|-------|----------|---------------|-----|
+| `WEEK_1` | Days 0-7 | 100% Quirky/Delightful | Build engagement, delight users |
+| `WEEKS_2_3` | Days 8-21 | 66% Celebratory / 33% Actionable | Build trust, celebrate wins |
+| `MATURE` | Day 22+ | Weekday: 66% Actionable, Weekend: 66% Celebratory | Provide value, respect context |
 
 ---
 
-## Insight Engine Integration
+## Firestore Profile Service
 
 ```typescript
-// In saveTransaction handler (App.tsx)
+// src/services/insightProfileService.ts
 
-import { selectBestInsight } from './services/insightEngine';
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  serverTimestamp,
+  Firestore,
+  arrayUnion,
+  increment,
+  Timestamp
+} from 'firebase/firestore';
+import { UserInsightProfile, InsightRecord } from '../types/insight';
 
-const saveTransaction = async (transaction: Transaction) => {
-  // Save to Firestore
-  await addTransaction(db, user.uid, appId, transaction);
+const PROFILE_COLLECTION = 'artifacts';
 
-  // Generate insight
-  const insight = selectBestInsight({
-    currentTransaction: transaction,
-    allTransactions: transactions,
-    locale: lang
+/**
+ * Gets the user's insight profile, creating one if it doesn't exist.
+ */
+export async function getOrCreateInsightProfile(
+  db: Firestore,
+  userId: string,
+  appId: string
+): Promise<UserInsightProfile> {
+  const profileRef = doc(
+    db,
+    PROFILE_COLLECTION,
+    appId,
+    'users',
+    userId,
+    'insightProfile',
+    'profile'
+  );
+  const snapshot = await getDoc(profileRef);
+
+  if (snapshot.exists()) {
+    return snapshot.data() as UserInsightProfile;
+  }
+
+  // Create new profile
+  const newProfile: UserInsightProfile = {
+    schemaVersion: 1,
+    firstTransactionDate: serverTimestamp() as unknown as Timestamp,
+    totalTransactions: 0,
+    recentInsights: [],
+  };
+
+  await setDoc(profileRef, newProfile);
+  return newProfile;
+}
+
+/**
+ * Records that an insight was shown to the user.
+ * Also increments totalTransactions.
+ */
+export async function recordInsightShown(
+  db: Firestore,
+  userId: string,
+  appId: string,
+  insightId: string,
+  transactionId?: string
+): Promise<void> {
+  const profileRef = doc(
+    db,
+    PROFILE_COLLECTION,
+    appId,
+    'users',
+    userId,
+    'insightProfile',
+    'profile'
+  );
+
+  const record: InsightRecord = {
+    insightId,
+    shownAt: Timestamp.now(),
+    transactionId,
+  };
+
+  await updateDoc(profileRef, {
+    recentInsights: arrayUnion(record),
+    totalTransactions: increment(1),
   });
 
-  // Show toast with insight
-  showInsightToast({
-    transaction,
-    insight,
-    onViewMore: () => navigateToAnalytics(),
-    onClose: () => hideToast()
+  // Note: Trimming recentInsights to 30 is handled separately if needed
+}
+
+/**
+ * Updates the first transaction date if this is the user's first transaction.
+ */
+export async function ensureFirstTransactionDate(
+  db: Firestore,
+  userId: string,
+  appId: string,
+  transactionDate: Date
+): Promise<void> {
+  const profile = await getOrCreateInsightProfile(db, userId, appId);
+
+  if (!profile.firstTransactionDate) {
+    const profileRef = doc(
+      db,
+      PROFILE_COLLECTION,
+      appId,
+      'users',
+      userId,
+      'insightProfile',
+      'profile'
+    );
+    await updateDoc(profileRef, {
+      firstTransactionDate: Timestamp.fromDate(transactionDate),
+    });
+  }
+}
+```
+
+---
+
+## Firestore Document Structure
+
+**Path:** `artifacts/{appId}/users/{userId}/insightProfile/profile`
+
+```typescript
+{
+  schemaVersion: 1,
+  firstTransactionDate: Timestamp,    // When user scanned first receipt
+  totalTransactions: number,          // Count of insights shown
+  recentInsights: [                   // Last 30 insights (for cooldown)
+    {
+      insightId: "merchant_frequency",
+      shownAt: Timestamp,
+      transactionId: "abc123"
+    },
+    // ... up to 30 entries
+  ]
+}
+```
+
+---
+
+## Firestore Security Rules
+
+Add to `firestore.rules`:
+
+```
+// Insight Profile rules
+match /artifacts/{appId}/users/{userId}/insightProfile/{docId} {
+  allow read, write: if request.auth != null && request.auth.uid == userId;
+}
+```
+
+---
+
+## Existing Firestore Patterns
+
+**Reference:**
+```
+Location: /home/khujta/projects/bmad/boletapp/src/services/firestore.ts
+
+Pattern used:
+- doc(db, 'artifacts', appId, 'users', userId, 'transactions', transactionId)
+- getDoc, setDoc, updateDoc from firebase/firestore
+- serverTimestamp() for timestamps
+- async functions returning Promise<void> or Promise<T>
+```
+
+---
+
+## Unit Tests for Phase Calculation
+
+```typescript
+// tests/unit/services/insightEngineService.phase.test.ts
+
+import { describe, it, expect } from 'vitest';
+import { calculateUserPhase } from '../../../src/services/insightEngineService';
+import { UserInsightProfile } from '../../../src/types/insight';
+import { Timestamp } from 'firebase/firestore';
+
+describe('calculateUserPhase', () => {
+  const createProfile = (daysAgo: number): UserInsightProfile => ({
+    schemaVersion: 1,
+    firstTransactionDate: Timestamp.fromDate(
+      new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000)
+    ),
+    totalTransactions: 10,
+    recentInsights: [],
   });
 
-  // Navigate to dashboard
-  setView('dashboard');
-};
-```
+  it('returns WEEK_1 for new user (no firstTransactionDate)', () => {
+    const profile: UserInsightProfile = {
+      schemaVersion: 1,
+      firstTransactionDate: null as any,
+      totalTransactions: 0,
+      recentInsights: [],
+    };
+    expect(calculateUserPhase(profile)).toBe('WEEK_1');
+  });
 
----
+  it('returns WEEK_1 for user with first transaction today', () => {
+    expect(calculateUserPhase(createProfile(0))).toBe('WEEK_1');
+  });
 
-## Accessibility Requirements
+  it('returns WEEK_1 for user with first transaction 7 days ago', () => {
+    expect(calculateUserPhase(createProfile(7))).toBe('WEEK_1');
+  });
 
-```typescript
-// ScanCompleteToast.tsx
+  it('returns WEEKS_2_3 for user with first transaction 8 days ago', () => {
+    expect(calculateUserPhase(createProfile(8))).toBe('WEEKS_2_3');
+  });
 
-<div
-  role="alert"
-  aria-live="polite"
-  className="..."
->
-  {/* Content */}
-</div>
+  it('returns WEEKS_2_3 for user with first transaction 21 days ago', () => {
+    expect(calculateUserPhase(createProfile(21))).toBe('WEEKS_2_3');
+  });
 
-// Keyboard support
-useEffect(() => {
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose();
-  };
-  window.addEventListener('keydown', handleKeyDown);
-  return () => window.removeEventListener('keydown', handleKeyDown);
-}, [onClose]);
+  it('returns MATURE for user with first transaction 22 days ago', () => {
+    expect(calculateUserPhase(createProfile(22))).toBe('MATURE');
+  });
 
-// Reduced motion
-const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-```
-
----
-
-## State Hook Pattern
-
-```typescript
-// src/hooks/useInsightToast.ts
-
-interface ToastData {
-  transaction: Transaction;
-  insight: Insight | null;
-  amount: number;
-}
-
-interface UseInsightToastReturn {
-  isVisible: boolean;
-  toastData: ToastData | null;
-  showToast: (data: ToastData) => void;
-  hideToast: () => void;
-}
-
-export function useInsightToast(autoDismissMs = 4000): UseInsightToastReturn {
-  const [isVisible, setIsVisible] = useState(false);
-  const [toastData, setToastData] = useState<ToastData | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout>();
-
-  const showToast = (data: ToastData) => {
-    setToastData(data);
-    setIsVisible(true);
-
-    // Auto-dismiss
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => {
-      setIsVisible(false);
-    }, autoDismissMs);
-  };
-
-  const hideToast = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setIsVisible(false);
-  };
-
-  return { isVisible, toastData, showToast, hideToast };
-}
-```
-
----
-
-## Fallback Messages
-
-When no specific insight is available:
-
-```typescript
-const fallbackMessages = [
-  { key: 'insightDefaultSaved', emoji: '✓', params: { category } },
-  { key: 'transactionSaved', emoji: '✓', params: {} },
-];
-
-// Rotate or randomly select for variety
-const fallback = fallbackMessages[Math.floor(Math.random() * fallbackMessages.length)];
-```
-
----
-
-## Testing Considerations
-
-```typescript
-// tests/unit/components/ScanCompleteToast.test.tsx
-
-describe('ScanCompleteToast', () => {
-  it('displays transaction total', () => {...});
-  it('displays insight message when available', () => {...});
-  it('displays fallback when no insight', () => {...});
-  it('auto-dismisses after 4 seconds', () => {...});
-  it('dismisses on close button click', () => {...});
-  it('dismisses on Escape key', () => {...});
-  it('respects prefers-reduced-motion', () => {...});
+  it('returns MATURE for user with first transaction 100 days ago', () => {
+    expect(calculateUserPhase(createProfile(100))).toBe('MATURE');
+  });
 });
 ```
+
+---
+
+## Key Design Decision
+
+**Phase is calculated from `firstTransactionDate`, NOT account creation date.**
+
+Example:
+- User creates account Day 1
+- User scans first receipt Day 30
+- User is in WEEK_1 phase until Day 37
+
+This means a user who returns after being inactive gets a fresh "onboarding" experience.
+
+---
+
+## Integration with Story 10.5
+
+The phase calculated here feeds into the selection algorithm:
+
+```typescript
+// In selectInsight() - Story 10.5
+const phase = calculateUserPhase(profile);
+const priorityOrder = getInsightPriority(phase, scanCounter, isWeekend);
+```
+
+---
+
+## Error Handling
+
+| Scenario | Behavior |
+|----------|----------|
+| Profile doesn't exist | Create new profile on first call |
+| `firstTransactionDate` is null | Return `WEEK_1` phase |
+| Firestore read fails | Let error propagate (handled by caller) |
+| Profile corrupted | Reset to defaults |
+
+---
+
+## Key Differences from Old PRD
+
+| Old (PRD) | New (Architecture) |
+|-----------|-------------------|
+| Scan Complete Insights (UI) | Phase Detection & User Profile (Logic) |
+| Toast component | Firestore profile service |
+| No phase concept | Three phases with clear boundaries |
+| No Firestore storage | insightProfile subcollection |

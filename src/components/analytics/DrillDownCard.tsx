@@ -44,6 +44,18 @@ export interface DrillDownCardProps {
    * @default true
    */
   isClickable?: boolean;
+  /**
+   * Story 9.20: Number of transactions in this period/category.
+   * Displayed as a circular badge on the left side of the card.
+   * No badge shown when undefined, 0, or card isEmpty.
+   */
+  transactionCount?: number;
+  /**
+   * Story 9.20: Click handler for the transaction count badge.
+   * When provided, clicking the badge navigates to History with filters applied.
+   * Badge click prevents card drill-down (stopPropagation).
+   */
+  onBadgeClick?: () => void;
 }
 
 // ============================================================================
@@ -116,6 +128,8 @@ export const DrillDownCard = memo(function DrillDownCard({
   locale = 'en',
   currency = 'CLP',
   isClickable = true,
+  transactionCount,
+  onBadgeClick,
 }: DrillDownCardProps): React.ReactElement {
   const isDark = theme === 'dark';
   const color = colorKey ? getColor(colorKey) : '#94a3b8'; // Default to slate-400
@@ -182,6 +196,26 @@ export const DrillDownCard = memo(function DrillDownCard({
   // Story 9.13: Handle click only when card is clickable
   const handleClick = canClick ? onClick : undefined;
 
+  // Story 9.20: Determine if badge should be shown (AC #1, #6)
+  // Show badge when: transactionCount > 0, not empty, and has onBadgeClick handler
+  const showBadge = !isEmpty && transactionCount !== undefined && transactionCount > 0 && onBadgeClick;
+
+  // Story 9.20: Format badge display (AC #5)
+  // Shows "99+" for counts >= 100
+  const badgeDisplay = transactionCount !== undefined
+    ? (transactionCount >= 100 ? '99+' : transactionCount.toString())
+    : '';
+
+  // Story 9.20: Determine if badge needs larger size for 3+ digits (AC #2)
+  const isLargeBadge = transactionCount !== undefined && (transactionCount >= 100 || transactionCount.toString().length >= 3);
+
+  // Story 9.20: Handle badge click with stopPropagation (AC #3)
+  const handleBadgeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onBadgeClick?.();
+  };
+
   return (
     <button
       onClick={handleClick}
@@ -199,6 +233,42 @@ export const DrillDownCard = memo(function DrillDownCard({
       onMouseEnter={(e) => { if (canClick && !isEmpty) e.currentTarget.style.borderColor = accentColor; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = borderColor; }}
     >
+      {/* Story 9.20: Transaction count badge on left (AC #1) */}
+      {/* Uses div[role=button] to avoid button-inside-button nesting issue */}
+      {showBadge && (
+        <div
+          className="flex items-center justify-center mr-3"
+          style={{ minWidth: '44px', minHeight: '44px' }} // Touch target (AC #3)
+        >
+          <div
+            role="button"
+            onClick={handleBadgeClick}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.stopPropagation();
+                e.preventDefault();
+                onBadgeClick?.();
+              }
+            }}
+            className={[
+              'flex items-center justify-center rounded-full font-bold text-white shadow-sm',
+              'transition-transform duration-100 active:scale-95', // Tap feedback (AC #3)
+              'focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1 cursor-pointer',
+              isLargeBadge ? 'min-w-10 min-h-10 text-sm px-2' : 'min-w-9 min-h-9 text-sm', // AC #2: Size scaling (increased)
+            ].join(' ')}
+            style={{ backgroundColor: color }} // Uses same color as progress bar
+            aria-label={
+              locale === 'es'
+                ? `Ver ${transactionCount} transacciones`
+                : `View ${transactionCount} transactions`
+            }
+            tabIndex={0}
+          >
+            {badgeDisplay}
+          </div>
+        </div>
+      )}
+
       {/* Left side: Label + Progress Bar (Story 7.18) */}
       <div className="flex flex-col gap-1 flex-1 min-w-0 items-start">
         {/* Label - left aligned */}

@@ -216,7 +216,24 @@ export const TRANSLATIONS = {
         testNotificationSent: "Test notification sent!",
         testNotificationFailed: "Failed to send test notification",
         sending: "Sending...",
-        test: "Test"
+        test: "Test",
+        // Story 9.19: History transaction filters
+        allLocations: "All Locations",
+        filterByTime: "Filter by time",
+        filterByCategory: "Filter by category",
+        filterByLocation: "Filter by location",
+        clearFilters: "Clear filters",
+        showingResults: "Showing {count} of {total}",
+        noMatchingTransactions: "No transactions match your filters",
+        tryDifferentFilters: "Try adjusting your filters",
+        activeFilters: "{count} active",
+        selectCategory: "Select",
+        selectGroup: "Select",
+        selectCountry: "Select",
+        selectWeek: "Select week",
+        noLocationData: "No location data available",
+        // Story 9.20: Quarter filter support
+        selectQuarter: "Select quarter"
     },
     es: {
         overview: "Resumen", welcome: "Rastreo Inteligente", totalSpent: "Total Gastado",
@@ -435,7 +452,24 @@ export const TRANSLATIONS = {
         testNotificationSent: "¡Notificación de prueba enviada!",
         testNotificationFailed: "Error al enviar notificación de prueba",
         sending: "Enviando...",
-        test: "Probar"
+        test: "Probar",
+        // Story 9.19: History transaction filters
+        allLocations: "Todas las Ubicaciones",
+        filterByTime: "Filtrar por tiempo",
+        filterByCategory: "Filtrar por categoría",
+        filterByLocation: "Filtrar por ubicación",
+        clearFilters: "Borrar filtros",
+        showingResults: "Mostrando {count} de {total}",
+        noMatchingTransactions: "No hay transacciones que coincidan",
+        tryDifferentFilters: "Intenta ajustar los filtros",
+        activeFilters: "{count} activos",
+        selectCategory: "Seleccionar",
+        selectGroup: "Seleccionar",
+        selectCountry: "Seleccionar",
+        selectWeek: "Seleccionar semana",
+        noLocationData: "No hay datos de ubicación",
+        // Story 9.20: Quarter filter support
+        selectQuarter: "Seleccionar trimestre"
     }
 };
 

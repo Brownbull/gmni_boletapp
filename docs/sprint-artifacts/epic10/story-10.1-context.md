@@ -1,6 +1,8 @@
-# Story 10.1 Context: Insight Engine Core
+# Story 10.1 Context: InsightEngine Service Interface
 
-**Purpose:** This document aggregates all relevant codebase context for implementing the Insight Engine.
+**Purpose:** Context document for implementing the Insight Engine foundation - types and service interface.
+**Architecture:** [architecture-epic10-insight-engine.md](../../planning/architecture-epic10-insight-engine.md)
+**Updated:** 2025-12-17 (Architecture-Aligned)
 
 ---
 
@@ -8,62 +10,197 @@
 
 | File | Purpose |
 |------|---------|
-| `src/services/insightEngine.ts` | Core insight generation service |
-| `src/types/insight.ts` | Insight type definitions |
-| `src/services/insightEngine.test.ts` | Unit tests |
+| `src/types/insight.ts` | All insight-related type definitions |
+| `src/services/insightEngineService.ts` | Functional module with service interface |
+| `tests/unit/services/insightEngineService.test.ts` | Unit tests |
 
 ---
 
-## Type Definitions to Create
+## Type Definitions (from Architecture)
 
 ```typescript
 // src/types/insight.ts
 
-export type InsightType =
-  | 'frequency'           // "3ra boleta de restaurante esta semana"
-  | 'merchant_concentration' // "40% de tu gasto es en Líder"
-  | 'category_growth'     // "Restaurante subió 40% vs mes pasado"
-  | 'improvement'         // "¡Gastaste 15% menos en X!"
-  | 'milestone';          // "¡Primer mes completo!"
+import { Timestamp } from 'firebase/firestore';
+import { Transaction } from './transaction';
 
+// User maturity phases (ADR-017)
+export type UserPhase = 'WEEK_1' | 'WEEKS_2_3' | 'MATURE';
+
+// Insight categories for selection algorithm
+export type InsightCategory = 'QUIRKY_FIRST' | 'CELEBRATORY' | 'ACTIONABLE';
+
+// Core insight interface
 export interface Insight {
-  type: InsightType;
-  message: string;
-  messageKey: string;     // i18n key
-  emoji: string;
-  confidence: number;     // 0-1
-  priority: number;       // Higher = show first
-  dataPoints: number;     // Min data required
-  metadata?: Record<string, any>;
+  id: string;                          // e.g., "merchant_frequency"
+  category: InsightCategory;
+  title: string;                       // e.g., "Visita frecuente"
+  message: string;                     // e.g., "3ra vez en Jumbo este mes"
+  icon?: string;                       // Lucide icon name
+  priority: number;                    // For tie-breaking (higher = better)
+  transactionId?: string;              // Which transaction triggered it
 }
 
-export interface InsightContext {
-  currentTransaction?: Transaction;
-  allTransactions: Transaction[];
-  locale: 'en' | 'es';
+// Generator interface for all insight types
+export interface InsightGenerator {
+  id: string;
+  category: InsightCategory;
+  canGenerate: (tx: Transaction, history: Transaction[]) => boolean;
+  generate: (tx: Transaction, history: Transaction[]) => Insight;
 }
 
-export interface InsightRule {
-  type: InsightType;
-  condition: (ctx: InsightContext) => boolean;
-  generate: (ctx: InsightContext) => Insight;
-  minDataPoints: number;
+// Firestore document: artifacts/{appId}/users/{userId}/insightProfile/profile
+export interface UserInsightProfile {
+  schemaVersion: 1;
+  firstTransactionDate: Timestamp;
+  totalTransactions: number;
+  recentInsights: InsightRecord[];  // Last 30 insights
+}
+
+export interface InsightRecord {
+  insightId: string;
+  shownAt: Timestamp;
+  transactionId?: string;
+}
+
+// localStorage cache: boletapp_insight_cache
+export interface LocalInsightCache {
+  weekdayScanCount: number;
+  weekendScanCount: number;
+  lastCounterReset: string;           // ISO date
+  silencedUntil: string | null;
+  precomputedAggregates?: PrecomputedAggregates;
+}
+
+export interface PrecomputedAggregates {
+  merchantVisits: Record<string, number>;
+  categoryTotals: Record<string, number>;
+  computedAt: string;                 // ISO timestamp
 }
 ```
 
 ---
 
-## Transaction Query Dependencies
+## Service Interface Pattern (ADR-015)
 
-**From Story 10.0 - transactionQuery.ts:**
+**Pattern:** Functional module, NOT class-based
+
 ```typescript
-// Functions the Insight Engine will need:
+// src/services/insightEngineService.ts
 
-getThisWeek(transactions): Transaction[]
-getThisMonth(transactions): Transaction[]
-getLastNDays(transactions, n): Transaction[]
-aggregateByCategory(transactions): CategoryAggregate[]
-aggregateByMerchant(transactions): MerchantAggregate[]
+import { Transaction } from '../types/transaction';
+import {
+  Insight,
+  UserInsightProfile,
+  LocalInsightCache,
+  UserPhase,
+  InsightRecord
+} from '../types/insight';
+
+// ============================================
+// MAIN ENTRY POINT
+// ============================================
+
+/**
+ * Main entry point - generates an insight for a transaction.
+ * CRITICAL: MUST NOT block transaction save (async side-effect pattern).
+ */
+export async function generateInsightForTransaction(
+  transaction: Transaction,
+  allTransactions: Transaction[],
+  profile: UserInsightProfile,
+  cache: LocalInsightCache
+): Promise<Insight | null> {
+  // Stub - returns fallback
+  return getFallbackInsight();
+}
+
+// ============================================
+// PHASE CALCULATION (Story 10.2)
+// ============================================
+
+/**
+ * Calculates user phase based on profile data.
+ */
+export function calculateUserPhase(profile: UserInsightProfile): UserPhase {
+  // Stub - implemented in Story 10.2
+  return 'WEEK_1';
+}
+
+// ============================================
+// SELECTION ALGORITHM (Story 10.5)
+// ============================================
+
+/**
+ * Selects the best insight from candidates using phase-based priority.
+ */
+export function selectInsight(
+  candidates: Insight[],
+  profile: UserInsightProfile,
+  cache: LocalInsightCache
+): Insight | null {
+  // Stub - implemented in Story 10.5
+  return candidates[0] || null;
+}
+
+/**
+ * Checks if an insight is on cooldown (shown recently).
+ */
+export function checkCooldown(
+  insightId: string,
+  recentInsights: InsightRecord[]
+): boolean {
+  // Stub - implemented in Story 10.5
+  return false;
+}
+
+// ============================================
+// CACHE MANAGEMENT
+// ============================================
+
+const CACHE_KEY = 'boletapp_insight_cache';
+
+export function getLocalCache(): LocalInsightCache {
+  const cached = localStorage.getItem(CACHE_KEY);
+  if (cached) {
+    try {
+      return JSON.parse(cached);
+    } catch {
+      // Corrupted cache - reset
+    }
+  }
+  return getDefaultCache();
+}
+
+export function setLocalCache(cache: LocalInsightCache): void {
+  localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+}
+
+export function getDefaultCache(): LocalInsightCache {
+  return {
+    weekdayScanCount: 0,
+    weekendScanCount: 0,
+    lastCounterReset: new Date().toISOString().split('T')[0],
+    silencedUntil: null,
+  };
+}
+
+// ============================================
+// FALLBACK
+// ============================================
+
+/**
+ * Fallback insight when no candidates available.
+ */
+export function getFallbackInsight(): Insight {
+  return {
+    id: 'building_profile',
+    category: 'QUIRKY_FIRST',
+    title: 'Construyendo tu perfil',
+    message: 'Con más datos, te mostraremos insights personalizados.',
+    priority: 0,
+  };
+}
 ```
 
 ---
@@ -74,10 +211,10 @@ aggregateByMerchant(transactions): MerchantAggregate[]
 ```
 Location: /home/khujta/projects/bmad/boletapp/src/App.tsx
 
-Hook: useTransactions (line 46)
+Hook: useTransactions
 Returns: Transaction[] via Firestore subscription
 
-Access pattern in App.tsx:
+Access pattern:
 const { transactions } = useTransactions(user, services);
 ```
 
@@ -93,152 +230,90 @@ interface Transaction {
   category: StoreCategory;
   total: number;
   items: TransactionItem[];
-  time?: string;
+  time?: string;          // HH:mm
   country?: string;
   city?: string;
   currency?: string;
   createdAt?: any;        // Firestore timestamp
+  merchantSource?: MerchantSource;
 }
 ```
 
 ---
 
-## Translation Patterns
+## Firestore Path for Profile
 
-**Adding Insight Strings:**
 ```
-Location: /home/khujta/projects/bmad/boletapp/src/utils/translations.ts
-
-Pattern - add to both en and es objects:
-
-// English (around line 150+)
-insightFrequency: '{ordinal} {category} receipt this week',
-insightMerchantConcentration: '{percentage}% of your spending is at {merchant}',
-insightCategoryGrowth: '{category} increased {percentage}% vs last month',
-insightImprovement: 'You spent {percentage}% less on {category}!',
-insightMilestoneFirstMonth: 'First complete month!',
-
-// Spanish
-insightFrequency: '{ordinal} boleta de {category} esta semana',
-insightMerchantConcentration: 'El {percentage}% de tu gasto es en {merchant}',
-insightCategoryGrowth: '{category} subió {percentage}% vs mes pasado',
-insightImprovement: '¡Gastaste {percentage}% menos en {category}!',
-insightMilestoneFirstMonth: '¡Primer mes completo!',
+artifacts/{appId}/users/{userId}/insightProfile/profile
 ```
 
-**Category Translation Function:**
+**Security Rule to Add:**
 ```
-Location: /home/khujta/projects/bmad/boletapp/src/utils/categoryTranslations.ts
-
-// Use for translating category names in insights
-import { translateStoreCategory } from './categoryTranslations';
-
-const translatedCategory = translateStoreCategory(category, lang);
+match /artifacts/{appId}/users/{userId}/insightProfile/{docId} {
+  allow read, write: if request.auth != null && request.auth.uid == userId;
+}
 ```
 
 ---
 
-## Insight Priority Reference
-
-From habits loops.md research:
-
-| Priority | Type | When to Show |
-|----------|------|--------------|
-| 10 | improvement | Always show wins first |
-| 8 | milestone | Celebrate achievements |
-| 6 | category_growth | Informational |
-| 5 | merchant_concentration | Pattern emerges |
-| 3 | frequency | Regular engagement |
-
----
-
-## Minimum Data Point Requirements
-
-| Insight Type | Min Transactions | Rationale |
-|--------------|------------------|-----------|
-| frequency | 2 | Show on 3rd+ occurrence |
-| merchant_concentration | 10 | Need pattern to emerge |
-| category_growth | 5 per month | Statistical significance |
-| improvement | 5 per month | Need comparison data |
-| milestone | 1 | First scan milestone |
-
----
-
-## Date/Time Utilities Available
+## localStorage Key
 
 ```
-Location: /home/khujta/projects/bmad/boletapp/src/utils/analyticsHelpers.ts
-
-Useful functions:
-- getQuarterFromMonth(monthStr) - "2025-Q1"
-- getCurrentYear() - "2025"
-
-May need to add:
-- getWeekNumber(date)
-- getMonthStart(date)
-- getWeekStart(date)
+Key: boletapp_insight_cache
 ```
 
 ---
 
-## Service Pattern to Follow
+## Service Pattern Reference
 
-**Reference Service:**
+**Existing Service (for pattern):**
 ```
-Location: /home/khujta/projects/bmad/boletapp/src/services/categoryMappingService.ts
+Location: /home/khujta/projects/bmad/boletapp/src/services/firestore.ts
 
-Structure:
+Pattern:
 1. Import types
-2. Export interface (optional)
-3. Export functions
-4. Each function is pure or async
-```
-
-**Insight Engine Structure:**
-```typescript
-// src/services/insightEngine.ts
-
-import { Transaction } from '../types/transaction';
-import { Insight, InsightContext, InsightType } from '../types/insight';
-
-const insightRules: InsightRule[] = [
-  // Define rules for each insight type
-];
-
-export function generateInsights(context: InsightContext): Insight[] {
-  return insightRules
-    .filter(rule => context.allTransactions.length >= rule.minDataPoints)
-    .filter(rule => rule.condition(context))
-    .map(rule => rule.generate(context))
-    .sort((a, b) => b.priority - a.priority);
-}
-
-export function selectBestInsight(context: InsightContext): Insight | null {
-  const insights = generateInsights(context);
-  return insights[0] || null;
-}
+2. Export pure functions (no classes)
+3. Each function handles one operation
+4. Uses db, userId, appId pattern
 ```
 
 ---
 
 ## Testing Pattern
 
-**Reference Test:**
-```
-Location: /home/khujta/projects/bmad/boletapp/tests/unit/
+```typescript
+// tests/unit/services/insightEngineService.test.ts
 
-Pattern:
 import { describe, it, expect } from 'vitest';
-import { generateInsights } from '../../src/services/insightEngine';
+import {
+  getFallbackInsight,
+  getDefaultCache,
+  calculateUserPhase
+} from '../../../src/services/insightEngineService';
 
-describe('InsightEngine', () => {
-  describe('generateInsights', () => {
-    it('should generate frequency insight when 3+ same category this week', () => {
-      const context = createMockContext([...]);
-      const insights = generateInsights(context);
-      expect(insights).toContainEqual(expect.objectContaining({
-        type: 'frequency'
-      }));
+describe('insightEngineService', () => {
+  describe('getFallbackInsight', () => {
+    it('returns valid insight structure', () => {
+      const insight = getFallbackInsight();
+      expect(insight.id).toBe('building_profile');
+      expect(insight.category).toBe('QUIRKY_FIRST');
+      expect(insight.title).toBeDefined();
+      expect(insight.message).toBeDefined();
+    });
+  });
+
+  describe('getDefaultCache', () => {
+    it('returns zeroed counters', () => {
+      const cache = getDefaultCache();
+      expect(cache.weekdayScanCount).toBe(0);
+      expect(cache.weekendScanCount).toBe(0);
+      expect(cache.silencedUntil).toBeNull();
+    });
+  });
+
+  describe('calculateUserPhase', () => {
+    it('returns WEEK_1 for new user', () => {
+      // Stub test - actual implementation in Story 10.2
     });
   });
 });
@@ -246,22 +321,31 @@ describe('InsightEngine', () => {
 
 ---
 
-## Performance Considerations
+## Integration Points
 
-**Target:** <500ms for typical user data
-
-**Optimization Strategies:**
-1. Pre-filter transactions by date range before aggregating
-2. Use Map for O(1) lookups in aggregation
-3. Exit early when minimum data points not met
-4. Cache computed values where appropriate
+**Where insightEngineService will be called:**
+1. After transaction save → Story 10.6 (InsightCard component)
+2. Batch mode summary → Story 10.7
+3. NOT used for weekly/monthly summaries (deferred to future epic)
 
 ---
 
-## Integration Points
+## Performance Requirements
 
-**Where Insight Engine will be called:**
-1. After transaction save → Scan Complete Insight (Story 10.2)
-2. Friday 7pm → Weekly Summary (Story 10.3)
-3. End of month → Monthly Summary (Story 10.4)
-4. Analytics view load → Analytics Cards (Story 10.5)
+From Architecture:
+- **Total insight generation:** <100ms
+- **Phase calculation:** <5ms
+- **Cache operations:** <10ms
+
+---
+
+## Key Differences from Old PRD
+
+| Old (PRD) | New (Architecture) |
+|-----------|-------------------|
+| Class `InsightEngine` | Functional module |
+| 5 insight types | 25+ types in 4 categories |
+| Confidence scoring | Phase-based priority + 33/66 sprinkle |
+| `insightEngine.ts` | `insightEngineService.ts` |
+| No phase concept | WEEK_1 → WEEKS_2_3 → MATURE |
+| No storage design | Hybrid Firestore + localStorage |

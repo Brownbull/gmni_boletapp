@@ -1,496 +1,429 @@
-# Story 10.5 Context: Analytics Insight Cards
+# Story 10.5 Context: Selection Algorithm + Sprinkle Distribution
 
-**Purpose:** This document aggregates all relevant codebase context for implementing Analytics Insight Cards.
-
----
-
-## Target Files to Create
-
-| File | Purpose |
-|------|---------|
-| `src/components/InsightCard.tsx` | Individual insight card |
-| `src/components/InsightCardsContainer.tsx` | Container for cards on Analytics |
+**Purpose:** Context document for implementing the insight selection algorithm.
+**Architecture:** [architecture-epic10-insight-engine.md](../../planning/architecture-epic10-insight-engine.md)
+**Updated:** 2025-12-17 (Architecture-Aligned)
 
 ---
 
-## Files to Modify
+## Target Files
 
-| File | Purpose |
-|------|---------|
-| `src/views/TrendsView.tsx` | Add InsightCardsContainer |
-| `src/services/insightEngine.ts` | Add analytics-specific methods |
-| `src/utils/translations.ts` | Add card strings |
-
----
-
-## TrendsView Structure
-
-```
-Location: /home/khujta/projects/bmad/boletapp/src/views/TrendsView.tsx (~800+ lines)
-
-Props (lines 51-72):
-  transactions: Transaction[]
-  theme: 'light' | 'dark'
-  colorTheme?: 'normal' | 'professional'
-  currency: string
-  locale: string
-  t: (key: string) => string
-  onEditTransaction, exporting, onExporting, onUpgradeRequired
-
-Key functions:
-  getWeekOfMonth(date: string): number - lines 78-85
-  filterTransactionsByNavState() - Core filtering, lines 91-119
-  computeBarData() - Aggregation logic, lines 220-380
-
-Integration point: Add InsightCardsContainer below date filters,
-above chart components.
-```
+| Action | File | Purpose |
+|--------|------|---------|
+| Modify | `src/services/insightEngineService.ts` | Add selection functions |
+| Create | `tests/unit/services/insightSelection.test.ts` | Selection algorithm tests |
 
 ---
 
-## Existing Card Component Pattern
+## Selection Algorithm Overview
 
 ```
-Location: /home/khujta/projects/bmad/boletapp/src/components/analytics/DrillDownCard.tsx
-
-Props (lines 19-47):
-  label: string
-  value: number
-  percentage?: number
-  onClick?: () => void
-  colorKey?: string
-  isEmpty?: boolean
-  isClickable?: boolean
-  theme?: 'light' | 'dark'
-  locale?: string
-  currency?: string
-
-Key features:
-  - Memoized component
-  - 44px min touch target
-  - Currency formatting (CLP no decimals)
-  - Dark mode support
-
-Use similar styling patterns for InsightCard.
+Candidates → Filter by cooldown → Get priority order → Group by category → Return top
 ```
+
+1. **Filter by cooldown**: Remove insights shown in last 7 days
+2. **Get priority order**: Based on phase + sprinkle counter
+3. **Group by category**: QUIRKY_FIRST, CELEBRATORY, ACTIONABLE
+4. **Return top**: Highest priority from highest-priority category
 
 ---
 
-## Analytics Context (Filter State)
-
-```
-Location: /home/khujta/projects/bmad/boletapp/src/contexts/AnalyticsContext.tsx (6,621 bytes)
-
-Uses React Context + useReducer pattern
-
-Actions:
-  SET_TEMPORAL_LEVEL
-  SET_CATEGORY_FILTER
-  TOGGLE_CHART_MODE
-  CLEAR_CATEGORY_FILTER
-
-Hook: useAnalyticsNavigation()
-Location: /home/khujta/projects/bmad/boletapp/src/hooks/useAnalyticsNavigation.ts
-
-Usage:
-  const { navState, navigateTo, goBack } = useAnalyticsNavigation();
-
-NavState includes:
-  temporalLevel: 'year' | 'quarter' | 'month' | 'week'
-  temporalPosition: string
-  categoryFilter?: string
-```
-
----
-
-## InsightCard Component
+## Priority Order Function (ADR-017)
 
 ```typescript
-// src/components/InsightCard.tsx
+// src/services/insightEngineService.ts
 
-interface InsightCardProps {
-  insight: Insight;
-  onDismiss: () => void;
-  onViewMore?: () => void;
-  theme: 'light' | 'dark';
-  locale: 'en' | 'es';
+import { InsightCategory, UserPhase } from '../types/insight';
+
+/**
+ * Returns insight category priority order based on phase and sprinkle logic.
+ *
+ * ADR-017 Phase-Based Priority System:
+ * - WEEK_1: 100% Quirky First
+ * - WEEKS_2_3: 66% Celebratory / 33% Actionable (same weekday/weekend)
+ * - MATURE Weekday: 66% Actionable / 33% Celebratory
+ * - MATURE Weekend: 66% Celebratory / 33% Actionable
+ *
+ * 33/66 Sprinkle: Every 3rd scan gets the "minority" type.
+ */
+export function getInsightPriority(
+  phase: UserPhase,
+  scanCounter: number,
+  isWeekend: boolean
+): InsightCategory[] {
+  if (phase === 'WEEK_1') {
+    return ['QUIRKY_FIRST'];
+  }
+
+  if (phase === 'WEEKS_2_3') {
+    // Same pattern weekday and weekend during weeks 2-3
+    return scanCounter % 3 === 0
+      ? ['ACTIONABLE', 'CELEBRATORY', 'QUIRKY_FIRST']  // 33% sprinkle
+      : ['CELEBRATORY', 'ACTIONABLE', 'QUIRKY_FIRST']; // 66% primary
+  }
+
+  // MATURE phase - weekday/weekend differentiation
+  if (isWeekend) {
+    return scanCounter % 3 === 0
+      ? ['ACTIONABLE', 'CELEBRATORY', 'QUIRKY_FIRST']  // 33% sprinkle
+      : ['CELEBRATORY', 'ACTIONABLE', 'QUIRKY_FIRST']; // 66% primary
+  } else {
+    return scanCounter % 3 === 0
+      ? ['CELEBRATORY', 'ACTIONABLE', 'QUIRKY_FIRST']  // 33% sprinkle
+      : ['ACTIONABLE', 'CELEBRATORY', 'QUIRKY_FIRST']; // 66% primary
+  }
 }
 
-export function InsightCard({
-  insight,
-  onDismiss,
-  onViewMore,
-  theme,
-  locale
-}: InsightCardProps) {
-  return (
-    <div
-      className={`
-        relative p-3 rounded-lg shadow-sm
-        ${theme === 'dark'
-          ? 'bg-teal-900/30 text-gray-200'
-          : 'bg-teal-50 text-gray-700'
-        }
-      `}
-      role="status"
-      aria-live="polite"
-    >
-      {/* Emoji + Message */}
-      <div className="flex items-start gap-2 pr-6">
-        <span className="text-lg">{insight.emoji}</span>
-        <p className="text-sm">{insight.message}</p>
-      </div>
+/**
+ * Checks if today is a weekend (Saturday or Sunday).
+ */
+export function isWeekend(date: Date = new Date()): boolean {
+  const day = date.getDay();
+  return day === 0 || day === 6;
+}
+```
 
-      {/* Dismiss button */}
-      <button
-        onClick={onDismiss}
-        className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
-        aria-label="Dismiss"
-      >
-        <XIcon className="w-4 h-4" />
-      </button>
+---
 
-      {/* Optional action */}
-      {onViewMore && (
-        <button
-          onClick={onViewMore}
-          className="mt-2 text-xs text-teal-600 hover:underline"
-        >
-          Ver más
-        </button>
-      )}
-    </div>
+## Selection Algorithm Implementation
+
+```typescript
+import {
+  Insight,
+  InsightRecord,
+  UserInsightProfile,
+  LocalInsightCache,
+  InsightCategory
+} from '../types/insight';
+
+const COOLDOWN_DAYS = 7;
+
+/**
+ * Selects the best insight from candidates using phase-based priority.
+ *
+ * Algorithm:
+ * 1. Filter out insights on cooldown
+ * 2. Get priority order for current phase
+ * 3. Group candidates by category
+ * 4. Return highest priority candidate, or null for fallback
+ */
+export function selectInsight(
+  candidates: Insight[],
+  profile: UserInsightProfile,
+  cache: LocalInsightCache
+): Insight | null {
+  // Step 1: Filter by cooldown
+  const available = candidates.filter(
+    c => !checkCooldown(c.id, profile.recentInsights)
   );
-}
-```
 
----
+  if (available.length === 0) {
+    return null; // Caller should use fallback
+  }
 
-## InsightCardsContainer Component
+  // Step 2: Get priority order
+  const phase = calculateUserPhase(profile);
+  const scanCounter = isWeekend()
+    ? cache.weekendScanCount
+    : cache.weekdayScanCount;
+  const priorityOrder = getInsightPriority(phase, scanCounter, isWeekend());
 
-```typescript
-// src/components/InsightCardsContainer.tsx
+  // Step 3: Group by category
+  const byCategory = new Map<InsightCategory, Insight[]>();
+  for (const insight of available) {
+    const existing = byCategory.get(insight.category) || [];
+    existing.push(insight);
+    byCategory.set(insight.category, existing);
+  }
 
-interface InsightCardsContainerProps {
-  transactions: Transaction[];
-  dateRange: { start: string; end: string };
-  selectedCategory?: string;
-  theme: 'light' | 'dark';
-  locale: 'en' | 'es';
-  insightEngine: InsightEngine;
-}
+  // Step 4: Return highest priority
+  for (const category of priorityOrder) {
+    const categoryInsights = byCategory.get(category);
+    if (categoryInsights && categoryInsights.length > 0) {
+      // Sort by priority within category (higher = better)
+      categoryInsights.sort((a, b) => b.priority - a.priority);
+      return categoryInsights[0];
+    }
+  }
 
-export function InsightCardsContainer({
-  transactions,
-  dateRange,
-  selectedCategory,
-  theme,
-  locale,
-  insightEngine
-}: InsightCardsContainerProps) {
-  const [dismissedTypes, setDismissedTypes] = useState<Set<InsightType>>(new Set());
-
-  const insights = useMemo(() => {
-    return insightEngine
-      .getAnalyticsInsights({
-        transactions,
-        dateRange,
-        selectedCategory,
-        locale
-      })
-      .filter(i => !dismissedTypes.has(i.type))
-      .slice(0, 2);  // Max 2 cards
-  }, [transactions, dateRange, selectedCategory, dismissedTypes]);
-
-  const handleDismiss = (type: InsightType) => {
-    setDismissedTypes(prev => new Set([...prev, type]));
-  };
-
-  if (insights.length === 0) return null;
-
-  return (
-    <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
-      {insights.map((insight, index) => (
-        <InsightCard
-          key={`${insight.type}-${index}`}
-          insight={insight}
-          onDismiss={() => handleDismiss(insight.type)}
-          theme={theme}
-          locale={locale}
-        />
-      ))}
-    </div>
-  );
-}
-```
-
----
-
-## InsightEngine Analytics Extension
-
-```typescript
-// src/services/insightEngine.ts (add to existing)
-
-interface AnalyticsInsightContext {
-  transactions: Transaction[];
-  dateRange: { start: string; end: string };
-  selectedCategory?: string;
-  locale: 'en' | 'es';
+  // Fallback to any available insight
+  return available[0];
 }
 
-export function getAnalyticsInsights(
-  context: AnalyticsInsightContext
-): Insight[] {
-  const allInsights = generateAllInsights(context);
-
-  // Filter out insights redundant with visible charts
-  return allInsights
-    .filter(i => !isRedundantWithChart(i, context))
-    .sort((a, b) => b.priority - a.priority)
-    .slice(0, 2);
-}
-
-function isRedundantWithChart(
-  insight: Insight,
-  context: AnalyticsInsightContext
+/**
+ * Checks if an insight is on cooldown (shown in last 7 days).
+ */
+export function checkCooldown(
+  insightId: string,
+  recentInsights: InsightRecord[]
 ): boolean {
-  // Don't show "Top category is X" when pie chart shows it
-  if (insight.type === 'frequency' && !context.selectedCategory) {
-    return true;  // Pie chart already shows category distribution
-  }
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - COOLDOWN_DAYS);
 
-  // Don't show total spent insight - bar chart shows it
-  if (insight.message.includes('total')) {
-    return true;
-  }
-
-  return false;
+  return recentInsights.some(
+    record =>
+      record.insightId === insightId &&
+      record.shownAt.toDate() > cutoff
+  );
 }
-
-// Analytics-specific insight types to prioritize:
-// 1. Comparison to previous period (week-over-week, month-over-month)
-// 2. Trend direction (spending velocity)
-// 3. Merchant insights within selected category
-// 4. Pattern insights (if data available)
 ```
 
 ---
 
-## Animation Specifications
+## Counter Management
 
 ```typescript
-// Card entry/exit animations
+/**
+ * Increments the appropriate scan counter and resets if week changed.
+ */
+export function incrementScanCounter(cache: LocalInsightCache): LocalInsightCache {
+  const today = new Date().toISOString().split('T')[0];
+  const lastReset = cache.lastCounterReset;
 
-// CSS Classes (Tailwind)
-const enterAnimation = `
-  animate-in fade-in slide-in-from-bottom-2
-  duration-300
-`;
+  // Check if we need to reset (new week)
+  const lastResetDate = new Date(lastReset);
+  const todayDate = new Date(today);
+  const daysSinceReset = Math.floor(
+    (todayDate.getTime() - lastResetDate.getTime()) / (1000 * 60 * 60 * 24)
+  );
 
-const exitAnimation = `
-  animate-out fade-out slide-out-to-left-4
-  duration-200
-`;
+  let newCache = { ...cache };
 
-// Or use CSS keyframes:
-
-/*
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
+  if (daysSinceReset >= 7) {
+    // Reset counters
+    newCache.weekdayScanCount = 0;
+    newCache.weekendScanCount = 0;
+    newCache.lastCounterReset = today;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  // Increment appropriate counter
+  if (isWeekend()) {
+    newCache.weekendScanCount++;
+  } else {
+    newCache.weekdayScanCount++;
   }
+
+  return newCache;
 }
+```
 
-@keyframes slideOutLeft {
-  from {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
+---
+
+## Phase-Based Priority Reference Table
+
+| Phase | Weekday Priority | Weekend Priority |
+|-------|------------------|------------------|
+| `WEEK_1` | `[QUIRKY_FIRST]` | `[QUIRKY_FIRST]` |
+| `WEEKS_2_3` (66%) | `[CELEBRATORY, ACTIONABLE, QUIRKY]` | `[CELEBRATORY, ACTIONABLE, QUIRKY]` |
+| `WEEKS_2_3` (33%) | `[ACTIONABLE, CELEBRATORY, QUIRKY]` | `[ACTIONABLE, CELEBRATORY, QUIRKY]` |
+| `MATURE` (66%) | `[ACTIONABLE, CELEBRATORY, QUIRKY]` | `[CELEBRATORY, ACTIONABLE, QUIRKY]` |
+| `MATURE` (33%) | `[CELEBRATORY, ACTIONABLE, QUIRKY]` | `[ACTIONABLE, CELEBRATORY, QUIRKY]` |
+
+---
+
+## 33/66 Sprinkle Logic
+
+The "sprinkle" ensures variety:
+
+```
+Scan 1 → 66% (primary)
+Scan 2 → 66% (primary)
+Scan 3 → 33% (minority)  ← sprinkle!
+Scan 4 → 66% (primary)
+Scan 5 → 66% (primary)
+Scan 6 → 33% (minority)  ← sprinkle!
+...
+```
+
+**Formula:** `scanCounter % 3 === 0` triggers the minority type.
+
+---
+
+## Cooldown Logic
+
+- **Purpose:** Prevent showing the same insight type repeatedly
+- **Duration:** 7 days
+- **Tracking:** `recentInsights[]` in UserInsightProfile (max 30 entries)
+- **Check:** `insightId` matches AND `shownAt` is within 7 days
+
+---
+
+## localStorage Cache Structure
+
+```typescript
+interface LocalInsightCache {
+  weekdayScanCount: number;      // For sprinkle calculation
+  weekendScanCount: number;      // Separate counter for weekends
+  lastCounterReset: string;      // ISO date for weekly reset
+  silencedUntil: string | null;  // For batch mode silence
+  precomputedAggregates?: {...}; // Optional performance cache
 }
-*/
-
-// Reduced motion alternative:
-const prefersReducedMotion = useReducedMotion();
-const animationClass = prefersReducedMotion
-  ? ''
-  : 'transition-all duration-300';
 ```
+
+**Key:** `boletapp_insight_cache`
 
 ---
 
-## Integration with TrendsView
+## Unit Tests
 
 ```typescript
-// In TrendsView.tsx, add after date filters
+// tests/unit/services/insightSelection.test.ts
 
-// Import
-import { InsightCardsContainer } from '../components/InsightCardsContainer';
-import { insightEngine } from '../services/insightEngine';
+import { describe, it, expect, vi } from 'vitest';
+import {
+  getInsightPriority,
+  selectInsight,
+  checkCooldown,
+  incrementScanCounter,
+  isWeekend
+} from '../../../src/services/insightEngineService';
 
-// Inside render, after filter controls but before charts:
-{navState && (
-  <InsightCardsContainer
-    transactions={filteredTransactions}
-    dateRange={{
-      start: navState.temporalPosition,
-      end: getEndDate(navState)
-    }}
-    selectedCategory={navState.categoryFilter}
-    theme={theme}
-    locale={locale}
-    insightEngine={insightEngine}
-  />
-)}
-```
+describe('getInsightPriority', () => {
+  describe('WEEK_1 phase', () => {
+    it('always returns QUIRKY_FIRST only', () => {
+      expect(getInsightPriority('WEEK_1', 0, false)).toEqual(['QUIRKY_FIRST']);
+      expect(getInsightPriority('WEEK_1', 1, true)).toEqual(['QUIRKY_FIRST']);
+      expect(getInsightPriority('WEEK_1', 99, false)).toEqual(['QUIRKY_FIRST']);
+    });
+  });
 
----
+  describe('WEEKS_2_3 phase', () => {
+    it('returns CELEBRATORY first on non-sprinkle scans', () => {
+      const result = getInsightPriority('WEEKS_2_3', 1, false);
+      expect(result[0]).toBe('CELEBRATORY');
+    });
 
-## Translation Strings to Add
+    it('returns ACTIONABLE first on sprinkle scans (every 3rd)', () => {
+      const result = getInsightPriority('WEEKS_2_3', 3, false);
+      expect(result[0]).toBe('ACTIONABLE');
+    });
+  });
 
-```typescript
-// src/utils/translations.ts
+  describe('MATURE phase', () => {
+    it('weekday: returns ACTIONABLE first on non-sprinkle', () => {
+      const result = getInsightPriority('MATURE', 1, false);
+      expect(result[0]).toBe('ACTIONABLE');
+    });
 
-// English
-insightDismiss: 'Dismiss',
-insightViewMore: 'View more',
-insightNoData: 'Not enough data for insights',
+    it('weekday: returns CELEBRATORY first on sprinkle (every 3rd)', () => {
+      const result = getInsightPriority('MATURE', 3, false);
+      expect(result[0]).toBe('CELEBRATORY');
+    });
 
-// Spanish
-insightDismiss: 'Descartar',
-insightViewMore: 'Ver más',
-insightNoData: 'No hay suficientes datos para insights',
-```
+    it('weekend: returns CELEBRATORY first on non-sprinkle', () => {
+      const result = getInsightPriority('MATURE', 1, true);
+      expect(result[0]).toBe('CELEBRATORY');
+    });
 
----
-
-## UI Specifications
-
-```
-Card Layout:
-┌─────────────────────────────────────────┐
-│  💡  El 35% de tu gasto este mes es    │
-│      en Supermercado                   │
-│                                    [X] │
-└─────────────────────────────────────────┘
-
-Dimensions:
-- Width: Full width with 16px margins (calc(100% - 32px))
-- Height: Auto (content-driven, typically 60-80px)
-- Border radius: 8px
-- Padding: 12px
-- Shadow: shadow-sm
-
-Colors:
-- Light mode: bg-teal-50, text-gray-700
-- Dark mode: bg-teal-900/30, text-gray-200
-
-Position:
-- Below date filters
-- Above charts
-- Does not scroll with chart content
-- z-index: 10 (above content, below modals)
-```
-
----
-
-## Dismiss State Management
-
-```typescript
-// Session-based dismiss tracking (resets on page refresh)
-
-const [dismissedInsights, setDismissedInsights] = useState<Set<InsightType>>(
-  new Set()
-);
-
-const handleDismiss = (insightType: InsightType) => {
-  setDismissedInsights(prev => new Set([...prev, insightType]));
-};
-
-// Filter insights before rendering
-const visibleInsights = insights.filter(
-  i => !dismissedInsights.has(i.type)
-);
-
-// Note: Dismissed state is NOT persisted across sessions
-// This is intentional - fresh insights each visit
-```
-
----
-
-## Accessibility Requirements
-
-```typescript
-// InsightCard accessibility
-
-<div
-  role="status"
-  aria-live="polite"
-  className="..."
->
-  {/* Screen reader announces insight when it appears */}
-
-  <button
-    onClick={onDismiss}
-    aria-label={t('insightDismiss')}
-    className="..."
-  >
-    <XIcon aria-hidden="true" />
-  </button>
-</div>
-
-// Keyboard support
-// - Tab to focus dismiss button
-// - Enter/Space to activate dismiss
-// - Focus management when card is dismissed
-```
-
----
-
-## Testing Considerations
-
-```typescript
-// tests/unit/components/InsightCard.test.tsx
-
-describe('InsightCard', () => {
-  it('renders emoji and message', () => {...});
-  it('calls onDismiss when X clicked', () => {...});
-  it('renders "View more" when onViewMore provided', () => {...});
-  it('supports dark mode', () => {...});
-  it('has accessible dismiss button', () => {...});
+    it('weekend: returns ACTIONABLE first on sprinkle (every 3rd)', () => {
+      const result = getInsightPriority('MATURE', 3, true);
+      expect(result[0]).toBe('ACTIONABLE');
+    });
+  });
 });
 
-// tests/unit/components/InsightCardsContainer.test.tsx
+describe('checkCooldown', () => {
+  it('returns false for insight not in recent list', () => {
+    expect(checkCooldown('new_insight', [])).toBe(false);
+  });
 
-describe('InsightCardsContainer', () => {
-  it('renders max 2 cards', () => {...});
-  it('filters dismissed insight types', () => {...});
-  it('refreshes insights when filters change', () => {...});
-  it('returns null when no insights', () => {...});
+  it('returns true for insight shown within 7 days', () => {
+    const recent = [{
+      insightId: 'test_insight',
+      shownAt: { toDate: () => new Date() },
+    }];
+    expect(checkCooldown('test_insight', recent as any)).toBe(true);
+  });
+
+  it('returns false for insight shown over 7 days ago', () => {
+    const oldDate = new Date();
+    oldDate.setDate(oldDate.getDate() - 8);
+    const recent = [{
+      insightId: 'test_insight',
+      shownAt: { toDate: () => oldDate },
+    }];
+    expect(checkCooldown('test_insight', recent as any)).toBe(false);
+  });
 });
 
-// tests/unit/services/insightEngine.analytics.test.ts
+describe('incrementScanCounter', () => {
+  it('increments weekday counter on weekday', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2025-12-17')); // Wednesday
 
-describe('getAnalyticsInsights', () => {
-  it('filters redundant insights', () => {...});
-  it('returns max 2 insights', () => {...});
-  it('considers selected category', () => {...});
+    const cache = {
+      weekdayScanCount: 5,
+      weekendScanCount: 2,
+      lastCounterReset: '2025-12-15',
+      silencedUntil: null,
+    };
+
+    const result = incrementScanCounter(cache);
+    expect(result.weekdayScanCount).toBe(6);
+    expect(result.weekendScanCount).toBe(2);
+
+    vi.useRealTimers();
+  });
+
+  it('resets counters after 7 days', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2025-12-25'));
+
+    const cache = {
+      weekdayScanCount: 10,
+      weekendScanCount: 5,
+      lastCounterReset: '2025-12-15',
+      silencedUntil: null,
+    };
+
+    const result = incrementScanCounter(cache);
+    expect(result.weekdayScanCount).toBe(1);
+    expect(result.weekendScanCount).toBe(0);
+    expect(result.lastCounterReset).toBe('2025-12-25');
+
+    vi.useRealTimers();
+  });
 });
 ```
 
 ---
 
-## Performance Notes
+## Dependencies
 
-- Use `useMemo` for insight generation (expensive computation)
-- Memoize InsightCard component with `React.memo`
-- Debounce filter changes if insights flicker
-- Target: <100ms insight generation for typical data
+**Requires from previous stories:**
+- Story 10.2: `calculateUserPhase()` function
+- Story 10.3: Transaction-intrinsic insight generators (QUIRKY_FIRST)
+- Story 10.4: Pattern detection generators (CELEBRATORY, ACTIONABLE)
+
+---
+
+## Integration with generateInsightForTransaction
+
+```typescript
+export async function generateInsightForTransaction(
+  transaction: Transaction,
+  allTransactions: Transaction[],
+  profile: UserInsightProfile,
+  cache: LocalInsightCache
+): Promise<Insight | null> {
+  // 1. Generate all candidate insights (Stories 10.3, 10.4)
+  const candidates = generateAllCandidates(transaction, allTransactions);
+
+  // 2. Select best insight (THIS STORY)
+  const selected = selectInsight(candidates, profile, cache);
+
+  // 3. Return selected or fallback
+  return selected || getFallbackInsight();
+}
+```
+
+---
+
+## Key Differences from Old PRD
+
+| Old (PRD) | New (Architecture) |
+|-----------|-------------------|
+| Analytics Insight Cards (UI) | Selection Algorithm + Sprinkle (Logic) |
+| Confidence scoring | Phase-based priority |
+| No variety mechanism | 33/66 sprinkle distribution |
+| InsightCardsContainer | Moved to future story |

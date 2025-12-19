@@ -728,6 +728,7 @@ export const EditView: React.FC<EditViewProps> = ({
                         })}
                         className="bg-transparent text-3xl font-bold text-center outline-none text-white"
                         style={{ width: 'auto', minWidth: '80px', maxWidth: '200px' }}
+                        aria-label={t('total')}
                     />
                 </div>
             </div>
@@ -826,6 +827,7 @@ export const EditView: React.FC<EditViewProps> = ({
                         style={inputStyle}
                         value={currentTransaction.date}
                         onChange={e => onUpdateTransaction({ ...currentTransaction, date: e.target.value })}
+                        aria-label={t('date')}
                     />
                     {/* Editable time input (AC #1) */}
                     <input
@@ -834,6 +836,7 @@ export const EditView: React.FC<EditViewProps> = ({
                         style={inputStyle}
                         value={currentTransaction.time || ''}
                         onChange={e => onUpdateTransaction({ ...currentTransaction, time: e.target.value })}
+                        aria-label={t('time')}
                     />
                     {/* Story 9.3 AC #4: Receipt type badge (only for non-receipt types) */}
                     {currentTransaction.receiptType && currentTransaction.receiptType !== 'receipt' && (
