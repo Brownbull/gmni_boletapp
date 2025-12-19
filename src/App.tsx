@@ -5,6 +5,10 @@ import { useCategoryMappings } from './hooks/useCategoryMappings';
 import { useMerchantMappings } from './hooks/useMerchantMappings';
 import { useSubcategoryMappings } from './hooks/useSubcategoryMappings';
 import { useUserPreferences } from './hooks/useUserPreferences';
+// Story 10.6: Insight profile hook for insight generation
+import { useInsightProfile } from './hooks/useInsightProfile';
+// Story 10.7: Batch session tracking for multi-receipt scanning
+import { useBatchSession } from './hooks/useBatchSession';
 import { LoginScreen } from './views/LoginScreen';
 import { DashboardView } from './views/DashboardView';
 // Story 9.9: ScanView is deprecated - scan functionality is now in EditView
@@ -15,6 +19,11 @@ import { HistoryView } from './views/HistoryView';
 import { SettingsView } from './views/SettingsView';
 import { Nav } from './components/Nav';
 import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
+// Story 10.6: Insight card components
+import { InsightCard } from './components/insights/InsightCard';
+import { BuildingProfileCard } from './components/insights/BuildingProfileCard';
+// Story 10.7: Batch summary component
+import { BatchSummary } from './components/insights/BatchSummary';
 import { AnalyticsProvider } from './contexts/AnalyticsContext';
 import { HistoryFiltersProvider, type HistoryFilterState, getDefaultFilterState } from './contexts/HistoryFiltersContext';
 import type { HistoryNavigationPayload } from './views/TrendsView';
@@ -26,7 +35,19 @@ import {
     deleteTransaction as firestoreDeleteTransaction,
     wipeAllTransactions
 } from './services/firestore';
+// Story 10.6: Insight generation service
+// Story 10.7: Added silence and historical comparison functions
+import {
+    generateInsightForTransaction,
+    silenceInsights,
+    clearSilence,
+    isInsightsSilenced,
+    getLastWeekTotal,
+    setLocalCache,
+} from './services/insightEngineService';
 import { Transaction, StoreCategory } from './types/transaction';
+// Story 10.6: Insight types
+import { Insight } from './types/insight';
 import { Language, Currency, Theme, ColorTheme } from './types/settings';
 // Story 9.10: Persistent scan state management
 import { PendingScan, UserCredits, DEFAULT_CREDITS, createPendingScan } from './types/scan';
@@ -72,6 +93,21 @@ function App() {
         preferences: userPreferences,
         setDefaultCurrency: setDefaultScanCurrencyPref
     } = useUserPreferences(user, services);
+    // Story 10.6: Insight profile for insight generation
+    const {
+        profile: insightProfile,
+        cache: insightCache,
+        recordShown: recordInsightShown,
+        trackTransaction: trackTransactionForInsight,
+        incrementCounter: incrementInsightCounter,
+    } = useInsightProfile(user, services);
+    // Story 10.7: Batch session tracking for multi-receipt scanning
+    const {
+        session: batchSession,
+        addToBatch,
+        clearBatch,
+        // isBatchMode is exposed by hook but we calculate it inline in JSX
+    } = useBatchSession();
 
     // UI State
     const [view, setView] = useState<View>('dashboard');
@@ -87,6 +123,11 @@ function App() {
     const [pendingScan, setPendingScan] = useState<PendingScan | null>(null);
     // Story 9.10: User credits for scan (MVP placeholder: 900 credits)
     const [userCredits, setUserCredits] = useState<UserCredits>(DEFAULT_CREDITS);
+    // Story 10.6: Insight card state (AC #1, #4)
+    const [currentInsight, setCurrentInsight] = useState<Insight | null>(null);
+    const [showInsightCard, setShowInsightCard] = useState(false);
+    // Story 10.7: Batch summary state (AC #1, #2)
+    const [showBatchSummary, setShowBatchSummary] = useState(false);
 
     // Settings
     const [lang, setLang] = useState<Language>('es');
@@ -437,6 +478,9 @@ function App() {
             total: parseStrictNumber(currentTransaction.total)
         };
 
+        // Story 10.6: Determine if this is a new transaction (for insight generation)
+        const isNewTransaction = !currentTransaction.id;
+
         // Fire the Firestore operation (don't await - it will sync in background)
         if (currentTransaction.id) {
             firestoreUpdateTransaction(db, user.uid, appId, currentTransaction.id, tDoc)
@@ -446,11 +490,93 @@ function App() {
                 .catch(e => console.error('Add failed:', e));
         }
 
-        // Navigate immediately (optimistic UI)
+        // Navigate immediately (optimistic UI) - AC #4: Card appears AFTER save confirmation
         setView('dashboard');
         setCurrentTransaction(null);
         // Story 9.10 AC#4: Clear pending scan on successful save
         setPendingScan(null);
+
+        // Story 10.6: Async side-effect pattern for insight generation (AC #2)
+        // Story 10.7: Extended for batch mode tracking and silence support
+        // Only generate insights for NEW transactions, not updates
+        if (isNewTransaction) {
+            // Increment scan counter for sprinkle distribution
+            incrementInsightCounter();
+
+            // Get profile or use default if not loaded yet
+            const profile = insightProfile || {
+                schemaVersion: 1 as const,
+                firstTransactionDate: null as any,
+                totalTransactions: 0,
+                recentInsights: [],
+            };
+
+            // Story 10.7 AC#7: Check if insights are silenced
+            const silenced = isInsightsSilenced(insightCache);
+
+            // Fire and forget - doesn't block save flow
+            generateInsightForTransaction(
+                { ...tDoc, id: 'temp' } as Transaction,
+                transactions,
+                profile,
+                insightCache
+            )
+                .then(insight => {
+                    // Story 10.7: Add transaction and insight to batch session
+                    const txWithTotal = { ...tDoc, id: 'temp' } as Transaction;
+                    addToBatch(txWithTotal, insight);
+
+                    // Story 10.7 AC#7: If silenced, skip showing individual insight
+                    if (silenced) {
+                        // Still track transaction for stats but don't show card
+                        const txDate = tDoc.date ? new Date(tDoc.date) : new Date();
+                        trackTransactionForInsight(txDate)
+                            .catch(err => console.warn('Failed to track transaction:', err));
+                        return;
+                    }
+
+                    // Story 10.7 AC#1: Show batch summary when 3+ receipts (after adding current)
+                    // Check updated batch session (addToBatch is async state update, so check count + 1)
+                    const willBeBatchMode = (batchSession?.receipts.length ?? 0) + 1 >= 3;
+                    if (willBeBatchMode) {
+                        setShowBatchSummary(true);
+                        // Don't show individual insight card in batch mode
+                    } else {
+                        // Standard insight card flow
+                        setCurrentInsight(insight);
+                        setShowInsightCard(true);
+                    }
+
+                    // AC #9: Record insight shown in UserInsightProfile (if not fallback)
+                    if (insight && insight.id !== 'building_profile') {
+                        recordInsightShown(insight.id, 'temp')
+                            .catch(err => console.warn('Failed to record insight:', err));
+                    }
+
+                    // Track transaction for profile stats (fire-and-forget)
+                    const txDate = tDoc.date ? new Date(tDoc.date) : new Date();
+                    trackTransactionForInsight(txDate)
+                        .catch(err => console.warn('Failed to track transaction:', err));
+                })
+                .catch(err => {
+                    console.warn('Insight generation failed:', err);
+                    // Story 10.7: Still add to batch even if insight generation failed
+                    const txWithTotal = { ...tDoc, id: 'temp' } as Transaction;
+                    addToBatch(txWithTotal, null);
+
+                    // Story 10.7: Show batch summary if in batch mode, otherwise fallback card
+                    if (!silenced) {
+                        const willBeBatchMode = (batchSession?.receipts.length ?? 0) + 1 >= 3;
+                        if (willBeBatchMode) {
+                            setShowBatchSummary(true);
+                        } else {
+                            // Show fallback on error - never show nothing (AC #3)
+                            setCurrentInsight(null);
+                            setShowInsightCard(true);
+                        }
+                    }
+                });
+        }
     };
 
     const deleteTransaction = async (id: string) => {
@@ -825,6 +951,43 @@ function App() {
 
             {/* Story 9.14: PWA update notification */}
             <PWAUpdatePrompt />
+
+            {/* Story 10.6: Insight card after transaction save (AC #1, #3, #4) */}
+            {showInsightCard && (
+                currentInsight && currentInsight.id !== 'building_profile'
+                    ? <InsightCard
+                        insight={currentInsight}
+                        onDismiss={() => setShowInsightCard(false)}
+                        theme={theme as 'light' | 'dark'}
+                      />
+                    : <BuildingProfileCard
+                        onDismiss={() => setShowInsightCard(false)}
+                        theme={theme as 'light' | 'dark'}
+                      />
+            )}
+
+            {/* Story 10.7: Batch summary for multi-receipt sessions (AC #1, #2, #3, #4, #6) */}
+            {showBatchSummary && batchSession && (
+                <BatchSummary
+                    receipts={batchSession.receipts}
+                    insights={batchSession.insights}
+                    totalAmount={batchSession.totalAmount}
+                    lastWeekTotal={getLastWeekTotal(transactions)}
+                    onSilence={() => {
+                        // AC #6: Toggle silence - silence for 4 hours or clear if already silenced
+                        const newCache = isInsightsSilenced(insightCache)
+                            ? clearSilence(insightCache)
+                            : silenceInsights(insightCache, 4);
+                        setLocalCache(newCache);
+                    }}
+                    onDismiss={() => {
+                        setShowBatchSummary(false);
+                        clearBatch();
+                    }}
+                    isSilenced={isInsightsSilenced(insightCache)}
+                    theme={theme as 'light' | 'dark'}
+                />
+            )}
         </div>
     );
 }
