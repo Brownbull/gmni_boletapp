@@ -1,0 +1,56 @@
+# Deploy Story Workflow
+name: deploy-story
+description: "Deploy a completed story through the full branch pipeline (feature → develop → staging → main), delete feature branch, and update Atlas memory. Includes safety gates at each promotion step."
+author: "NitoAgua Team"
+
+# Critical variables from config
+config_source: "{project-root}/_bmad/bmm/config.yaml"
+output_folder: "{config_source}:output_folder"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+user_skill_level: "{config_source}:user_skill_level"
+document_output_language: "{config_source}:document_output_language"
+date: system-generated
+sprint_artifacts: "{config_source}:sprint_artifacts"
+sprint_status: "{sprint_artifacts}/sprint-status.yaml || {output_folder}/sprint-status.yaml"
+
+# Workflow components
+installed_path: "{project-root}/_bmad/bmm/workflows/4-implementation/deploy-story"
+instructions: "{installed_path}/instructions.xml"
+validation: "{installed_path}/checklist.md"
+template: false
+
+# Project-specific branching configuration
+branching:
+  strategy: "feature → develop → staging → main"
+  feature_prefix: "feature/"
+  develop_branch: "develop"
+  staging_branch: "staging"
+  production_branch: "main"
+  auto_delete_feature: true
+  require_confirmation: true
+
+# Deployment URLs (used for verification)
+deployment_urls:
+  develop: "https://nitoagua-git-develop-khujtaai.vercel.app"
+  staging: "https://nitoagua-git-staging-khujtaai.vercel.app"
+  production: "https://nitoagua.vercel.app"
+
+variables:
+  # Project context
+  project_context: "**/project-context.md"
+  story_dir: "{sprint_artifacts}"
+  atlas_memory: "{project-root}/_bmad/agents/atlas/atlas-sidecar/atlas-memory.md"
+
+# Input file patterns
+input_file_patterns:
+  architecture:
+    description: "System architecture for deployment validation"
+    whole: "{output_folder}/*architecture*.md"
+    load_strategy: "SELECTIVE_LOAD"
+  atlas_memory:
+    description: "Atlas memory for feeding deployment knowledge"
+    whole: "{project-root}/_bmad/agents/atlas/atlas-sidecar/atlas-memory.md"
+    load_strategy: "FULL_LOAD"
+
+standalone: true

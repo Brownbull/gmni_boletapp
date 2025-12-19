@@ -1,6 +1,6 @@
 # Branching Strategy
 
-This document describes the simplified Git workflow used in Boletapp. Optimized for small teams and solo development with minimal overhead.
+This document describes the Git workflow used in Boletapp. Uses the conventional 3-branch strategy with develop, staging, and main.
 
 ## Branch Overview
 
@@ -10,51 +10,56 @@ This document describes the simplified Git workflow used in Boletapp. Optimized 
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
 │  feature/*  ──────┐                                                      │
-│  bugfix/*   ──────┼──► develop ──► main                                 │
-│  chore/*    ──────┘       │          │                                  │
-│                           │          │                                  │
-│                     Development   Production                            │
-│                       (CI/CD)     (deployed)                            │
+│  bugfix/*   ──────┼──► develop ──► staging ──► main                     │
+│  chore/*    ──────┘       │           │          │                      │
+│                           │           │          │                      │
+│                     Integration   Pre-Prod    Production                │
+│                       (dev)      (staging)    (deployed)                │
 │                                                                          │
-│  hotfix/*  ─────────────────────► main                                  │
-│                                     │                                   │
-│                            (merge back to develop)                      │
+│  hotfix/*  ─────────────────────────────────► main                      │
+│                                                  │                       │
+│                            (merge back to develop & staging)            │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Why 2 Branches?
+## Why 3 Branches?
 
-**Previous (3-branch) issues:**
-- Sync branches accumulating (`sync/staging-to-main`, etc.)
-- PRs getting stale and redundant
-- Manual promotion overhead between environments
-- Branches drifting out of sync
+**Benefits:**
+- Clear separation between development, testing, and production
+- Staging environment for pre-production validation
+- Controlled deployment pipeline with manual promotion gates
+- Compatible with BMAD deploy-story workflow automation
 
-**Simplified approach benefits:**
-- Less sync overhead
-- Fewer stale branches
-- Clear, linear promotion path
-- Feature flags for staging-like testing
+**Deployment pipeline:** `feature/* → develop → staging → main`
 
 ## Branch Purposes
 
 | Branch | Purpose | Deploys To | Protection Level |
 |--------|---------|------------|------------------|
-| `main` | Production releases | https://boletapp-d609f.web.app | **STRICT** |
-| `develop` | Active development & CI | Firebase Preview URLs | **STANDARD** |
+| `main` | Production releases | https://nitoagua.vercel.app | **STRICT** |
+| `staging` | Pre-production testing | Vercel staging preview | **STANDARD** |
+| `develop` | Active development & CI | Vercel develop preview | **STANDARD** |
 
 ### main (Production)
 
 - **Purpose:** Contains production-ready code deployed to end users
-- **URL:** https://boletapp-d609f.web.app
-- **Protection:** Strictest - requires PR from develop, all status checks must pass
-- **Merge Source:** Only `develop` branch (or `hotfix/*` for emergencies)
+- **URL:** https://nitoagua.vercel.app
+- **Protection:** Strictest - requires PR from staging, all status checks must pass
+- **Merge Source:** Only `staging` branch (or `hotfix/*` for emergencies)
+- **Direct Push:** Blocked
+
+### staging (Pre-Production)
+
+- **Purpose:** Pre-production testing environment for final validation
+- **URL:** Vercel staging preview
+- **Protection:** Standard - requires PR from develop, status checks must pass
+- **Merge Source:** Only `develop` branch
 - **Direct Push:** Blocked
 
 ### develop (Development & Integration)
 
 - **Purpose:** Integration branch for active development work
-- **URL:** Firebase Preview URLs on PRs
+- **URL:** Vercel develop preview
 - **Protection:** Standard - requires PR, status checks must pass
 - **Merge Sources:** Feature, bugfix, and chore branches via PR
 - **Direct Push:** Blocked
@@ -69,13 +74,18 @@ graph LR
         C[chore/*] --> D
     end
 
+    subgraph Staging
+        D --> S[staging]
+    end
+
     subgraph Production
-        D --> M[main]
+        S --> M[main]
     end
 
     subgraph Hotfix
         H[hotfix/*] --> M
-        M -.->|merge back| D
+        M -.->|merge back| S
+        S -.->|merge back| D
     end
 ```
 
@@ -83,7 +93,7 @@ graph LR
 
 | Prefix | Purpose | Example |
 |--------|---------|---------|
-| `feature/` | New features | `feature/story-9.15-subcategory-learning` |
+| `feature/` | New features | `feature/epic10-insight-engine` |
 | `bugfix/` | Bug fixes | `bugfix/fix-date-parsing` |
 | `hotfix/` | Production hotfixes | `hotfix/critical-auth-fix` |
 | `chore/` | Maintenance tasks | `chore/update-dependencies` |
@@ -92,12 +102,13 @@ graph LR
 ### Naming Format
 
 ```
+{type}/epic{N}-{short-description}
+# or without epic reference:
 {type}/{short-description}
-# or with story reference:
-{type}/story-{number}-{description}
 
 Examples:
-- feature/story-9.15-subcategory-learning
+- feature/epic10-insight-engine
+- feature/epic10-foundation-refactor
 - bugfix/transaction-filter-reset
 - hotfix/firebase-auth-error
 - chore/upgrade-react-18
@@ -107,11 +118,11 @@ Examples:
 
 ### Standard Feature Development
 
-1. **Create Feature Branch**
+1. **Create Feature Branch from develop**
    ```bash
    git checkout develop
    git pull origin develop
-   git checkout -b feature/my-feature
+   git checkout -b feature/epic10-my-feature
    ```
 
 2. **Develop & Commit**
@@ -123,33 +134,50 @@ Examples:
 
 3. **Push & Create PR to develop**
    ```bash
-   git push -u origin feature/my-feature
+   git push -u origin feature/epic10-my-feature
    gh pr create --base develop --title "feat: My feature" --body "..."
    ```
 
 4. **CI Validation**
    - GitHub Actions runs all tests
-   - Firebase Preview URL generated for visual testing
    - Must pass before merge is allowed
 
 5. **Merge to Develop**
-   - Squash merge for clean history
+   - Merge after review and CI passes
    - **Delete feature branch immediately after merge**
 
-### Production Release
+### Production Release (deploy-story workflow)
 
-When `develop` is ready for production:
+Use the BMAD deploy-story workflow for automated deployment:
 
-1. **Create PR from develop to main**
+```bash
+/bmad:bmm:workflows:deploy-story
+```
+
+This workflow handles the full pipeline:
+1. **develop → staging**: Promote to pre-production
+2. **staging → main**: Deploy to production
+3. **Cleanup**: Delete feature branch, update Atlas memory
+
+### Manual Promotion
+
+If not using the workflow:
+
+1. **Promote develop to staging**
    ```bash
-   gh pr create --base main --head develop --title "Release: <description>"
+   git checkout staging
+   git pull origin staging
+   git merge develop --no-ff -m "Promote develop to staging: story-10.1"
+   git push origin staging
    ```
 
-2. **Review & Merge**
-   - Verify all CI checks pass
-   - Merge triggers production deployment
-
-3. **No sync branches needed** - develop stays ahead of main naturally
+2. **Promote staging to main**
+   ```bash
+   git checkout main
+   git pull origin main
+   git merge staging --no-ff -m "Release to production: story-10.1"
+   git push origin main
+   ```
 
 ### Hotfix Workflow
 
@@ -176,8 +204,13 @@ For critical production bugs:
 
 4. **Merge to main** (deploys immediately)
 
-5. **Sync back to develop**
+5. **Backport to staging and develop**
    ```bash
+   git checkout staging
+   git pull origin staging
+   git merge main
+   git push origin staging
+
    git checkout develop
    git pull origin develop
    git merge main
@@ -194,6 +227,16 @@ For critical production bugs:
 | Required approvals | 0 (solo) / 1+ (team) |
 | Require status checks | Yes (`test`, `security`) |
 | Require up-to-date branch | Yes |
+| Allow force pushes | No |
+| Allow deletions | No |
+
+### staging (Pre-Production)
+
+| Setting | Value |
+|---------|-------|
+| Require PR | Yes |
+| Required approvals | 0 (solo) / 1 (team) |
+| Require status checks | Yes (`test`) |
 | Allow force pushes | No |
 | Allow deletions | No |
 
@@ -214,17 +257,18 @@ For critical production bugs:
 ```yaml
 on:
   push:
-    branches: [main, develop]
+    branches: [main, staging, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [main, staging, develop]
 ```
 
 ### Deployment Triggers
 
 | Event | Action |
 |-------|--------|
-| PR to `develop` | Run tests + Firebase Preview URL |
-| PR merged to `develop` | Tests only |
+| PR to `develop` | Run tests |
+| PR merged to `develop` | Deploy to develop preview |
+| PR merged to `staging` | Deploy to staging preview |
 | PR merged to `main` | Deploy to production |
 
 ## Quick Reference
@@ -233,33 +277,33 @@ on:
 
 ```bash
 # Start feature
-git checkout develop && git pull && git checkout -b feature/name
+git checkout develop && git pull && git checkout -b feature/epic10-name
 
 # Update feature branch with latest develop
 git fetch origin && git rebase origin/develop
 
 # Push feature
-git push -u origin feature/name
+git push -u origin feature/epic10-name
 
 # After PR merged - clean up
-git checkout develop && git pull && git branch -d feature/name
+git checkout develop && git pull && git branch -d feature/epic10-name
 ```
 
-### Release Commands
+### Deployment Commands
 
 ```bash
-# Create release PR
-gh pr create --base main --head develop --title "Release: vX.Y.Z"
+# Promote to staging
+git checkout staging && git pull && git merge develop --no-ff && git push
 
-# After hotfix merged to main, sync develop
-git checkout develop && git merge main && git push
+# Deploy to production
+git checkout main && git pull && git merge staging --no-ff && git push
 ```
 
 ### Cleanup Commands
 
 ```bash
 # Delete merged local branches
-git branch --merged develop | grep -v "develop\|main" | xargs git branch -d
+git branch --merged develop | grep -v "develop\|staging\|main" | xargs git branch -d
 
 # Prune remote tracking branches
 git fetch --prune
@@ -278,40 +322,14 @@ Before creating a PR:
 
 | Target | Merge Type | Reason |
 |--------|------------|--------|
-| develop | **Squash** | Clean feature commits |
-| main | **Merge commit** | Preserve history trail |
+| develop | **Merge commit** | Preserve feature history |
+| staging | **Merge commit** | Clear promotion record |
+| main | **Merge commit** | Full release history |
 
-## Feature Flags (Staging Alternative)
-
-Instead of a separate staging branch, use feature flags for gradual rollouts:
-
-```typescript
-// src/config/features.ts
-export const FEATURES = {
-  NEW_ANALYTICS: process.env.NODE_ENV === 'development' ||
-                 localStorage.getItem('ff_new_analytics') === 'true',
-};
-```
-
-Enable in production for testing:
-```javascript
-localStorage.setItem('ff_new_analytics', 'true');
-```
+**Important:** Use merge commits (not squash) for promotions between develop/staging/main to maintain clear history and avoid divergence.
 
 ---
 
-## Migration Notes
-
-**Removed:** `staging` branch (archived, not deleted)
-
-**Rationale:**
-- Single developer / small team doesn't need separate QA environment
-- Firebase Preview URLs provide per-PR testing
-- Feature flags enable production testing without separate branch
-- Reduces branch management overhead significantly
-
----
-
-**Document Version:** 2.0
-**Updated:** 2025-12-16
-**Change:** Simplified from 3-branch to 2-branch strategy
+**Document Version:** 3.0
+**Updated:** 2025-12-18
+**Change:** Restored 3-branch strategy (develop → staging → main)

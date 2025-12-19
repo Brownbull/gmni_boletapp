@@ -1,0 +1,38 @@
+name: atlas-story-ready
+description: "Atlas-enhanced story readiness check with pattern pre-validation"
+author: "BMad + Atlas"
+
+# Atlas Integration
+atlas_features:
+  consult_architecture: true    # Pre-check patterns before dev
+  consult_workflow_chains: true # Verify dependencies are met
+
+atlas_knowledge_fragments:
+  required:
+    - "08-workflow-chains.md"   # Dependency check
+  optional:
+    - "04-architecture.md"      # Pattern pre-validation
+
+# Critical variables from config
+config_source: "{project-root}/_bmad/bmm/config.yaml"
+output_folder: "{config_source}:output_folder"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+date: system-generated
+sprint_artifacts: "{config_source}:sprint_artifacts"
+sprint_status: "{sprint_artifacts}/sprint-status.yaml || {output_folder}/sprint-status.yaml"
+
+# Atlas memory paths
+atlas_memory: "{project-root}/_bmad/agents/atlas/atlas-sidecar"
+atlas_index: "{atlas_memory}/atlas-index.csv"
+atlas_knowledge: "{atlas_memory}/knowledge"
+
+# Workflow components
+installed_path: "{project-root}/_bmad/bmm/workflows/4-implementation/atlas-story-ready"
+instructions: "{installed_path}/instructions.md"
+
+# Variables and inputs
+variables:
+  story_dir: "{config_source}:sprint_artifacts"
+
+standalone: true
