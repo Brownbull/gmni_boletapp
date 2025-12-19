@@ -13,11 +13,13 @@ Thank you for your interest in contributing to Boletapp! This document provides 
 
 ### Branch Strategy
 
-We use a **2-branch workflow** for simplicity and reduced merge conflicts:
+We use a **3-branch workflow** with develop, staging, and main branches:
 
 | Branch | Purpose | Lifetime |
 |--------|---------|----------|
 | `main` | Production-ready code, always deployable | Permanent |
+| `develop` | Integration branch for completed features | Permanent |
+| `staging` | Pre-production testing environment | Permanent |
 | `feature/*` | New features, bug fixes, epic work | Temporary (delete after merge) |
 
 **Branch Naming Convention:**
@@ -30,11 +32,11 @@ feature/epic{N}-{short-description}
 - `feature/epic10-foundation-refactor`
 - `feature/fix-bundle-size`
 
-All work should be done in feature branches created from `main`:
+All work should be done in feature branches created from `develop`:
 ```bash
-# Always start from latest main
-git checkout main
-git pull origin main
+# Always start from latest develop
+git checkout develop
+git pull origin develop
 
 # Create feature branch
 git checkout -b feature/epic10-my-feature
@@ -42,22 +44,35 @@ git checkout -b feature/epic10-my-feature
 
 ### Pull Request Process
 
-1. Create your feature branch from `main` (always pull latest first!)
+1. Create your feature branch from `develop` (always pull latest first!)
 2. Write tests for any new functionality
 3. Ensure all tests pass locally: `npm run test:all`
-4. Push your branch and create a PR against `main`
+4. Push your branch and create a PR against `develop`
 5. Wait for CI checks to pass
 6. Request review from maintainers
-7. **Squash and merge** after approval
+7. Merge after approval (merge commit, not squash for sync PRs)
 8. **Delete feature branch** immediately after merge
+
+### Deployment Pipeline
+
+The deployment workflow follows: `feature/* → develop → staging → main`
+
+1. **develop**: Integration testing, Vercel preview at develop URL
+2. **staging**: Pre-production validation, Vercel preview at staging URL
+3. **main**: Production deployment at https://nitoagua.vercel.app
+
+Use the BMAD deploy-story workflow for automated deployment:
+```bash
+/bmad:bmm:workflows:deploy-story
+```
 
 ### Branch Cleanup (IMPORTANT)
 
 After every merged PR:
 - [ ] Feature branch deleted on GitHub (auto or manual)
 - [ ] Local feature branch deleted: `git branch -d feature/...`
-- [ ] Local main updated: `git checkout main && git pull`
-- [ ] No stale branches remain: `git branch` shows only `main`
+- [ ] Local develop updated: `git checkout develop && git pull`
+- [ ] No stale branches remain
 
 **Cleaning up stale branches:**
 ```bash
@@ -67,10 +82,6 @@ git branch -d feature/old-branch
 # Prune remote-tracking branches
 git fetch --prune
 ```
-
-### Future: 3-Branch Strategy
-
-When a staging environment is available, we may adopt `feature/* → develop → main`. This is **deferred** until staging infrastructure exists.
 
 ## Test Coverage Requirements
 
@@ -302,5 +313,5 @@ If you have questions or need help:
 
 ---
 
-**Version:** 1.4
-**Last Updated:** 2025-12-16 (Epic 9 Retrospective - Updated to 2-branch workflow)
+**Version:** 1.5
+**Last Updated:** 2025-12-18 (Restored 3-branch workflow: develop → staging → main)

@@ -1,0 +1,74 @@
+name: atlas-dev-story
+description: "Atlas-enhanced story development with architectural validation, workflow chain awareness, and knowledge feeding"
+author: "BMad + Atlas"
+
+# Atlas Integration
+atlas_features:
+  consult_architecture: true        # Check patterns before implementation
+  consult_testing: true             # Get testing patterns from memory
+  consult_lessons: true             # Avoid repeating past mistakes
+  workflow_chain_awareness: true    # Understand upstream/downstream impacts
+  memory_feeding: true              # Feed lessons learned back to Atlas
+
+atlas_knowledge_fragments:
+  required:
+    - "04-architecture.md"          # Tech patterns and decisions
+    - "05-testing.md"               # Testing patterns
+  optional:
+    - "06-lessons.md"               # Past mistakes to avoid
+    - "08-workflow-chains.md"       # Workflow dependencies
+
+# Critical variables from config
+config_source: "{project-root}/_bmad/bmm/config.yaml"
+output_folder: "{config_source}:output_folder"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+user_skill_level: "{config_source}:user_skill_level"
+document_output_language: "{config_source}:document_output_language"
+story_dir: "{config_source}:sprint_artifacts"
+date: system-generated
+
+story_file: "" # Explicit story path; auto-discovered if empty
+context_file: "{story_dir}/{{story_key}}.context.xml"
+sprint_artifacts: "{config_source}:sprint_artifacts"
+sprint_status: "{sprint_artifacts}/sprint-status.yaml || {output_folder}/sprint-status.yaml"
+
+# Atlas memory paths
+atlas_memory: "{project-root}/_bmad/agents/atlas/atlas-sidecar"
+atlas_index: "{atlas_memory}/atlas-index.csv"
+atlas_knowledge: "{atlas_memory}/knowledge"
+
+# Smart input file references
+input_file_patterns:
+  architecture:
+    description: "System architecture and decisions"
+    whole: "{output_folder}/*architecture*.md"
+    sharded: "{output_folder}/*architecture*/*.md"
+    load_strategy: "FULL_LOAD"
+  tech_spec:
+    description: "Technical specification for this epic"
+    whole: "{output_folder}/tech-spec*.md"
+    sharded: "{sprint_artifacts}/tech-spec-epic-*.md"
+    load_strategy: "SELECTIVE_LOAD"
+  ux_design:
+    description: "UX design specification (if UI)"
+    whole: "{output_folder}/*ux*.md"
+    sharded: "{output_folder}/*ux*/*.md"
+    load_strategy: "FULL_LOAD"
+  epics:
+    description: "Epic containing this story"
+    whole: "{output_folder}/*epic*.md"
+    sharded_index: "{output_folder}/*epic*/index.md"
+    sharded_single: "{output_folder}/*epic*/epic-{{epic_num}}.md"
+    load_strategy: "SELECTIVE_LOAD"
+  document_project:
+    description: "Brownfield project documentation (optional)"
+    sharded: "{output_folder}/index.md"
+    load_strategy: "INDEX_GUIDED"
+
+# Workflow components
+installed_path: "{project-root}/_bmad/bmm/workflows/4-implementation/atlas-dev-story"
+instructions: "{installed_path}/instructions.xml"
+validation: "{installed_path}/checklist.md"
+
+standalone: true

@@ -1,0 +1,56 @@
+name: atlas-sprint-planning
+description: "Atlas-enhanced sprint planning with workflow chain analysis and feature-story mapping"
+author: "BMad + Atlas"
+
+# Atlas Integration
+atlas_features:
+  consult_features: true        # Map features to stories
+  consult_workflow_chains: true # Understand dependencies
+  memory_feeding: true          # Feed sprint structure to Atlas
+
+atlas_knowledge_fragments:
+  required:
+    - "02-features.md"          # Feature inventory
+    - "08-workflow-chains.md"   # Dependencies
+  optional:
+    - "01-purpose.md"           # App purpose for context
+
+# Critical variables from config
+config_source: "{project-root}/_bmad/bmm/config.yaml"
+output_folder: "{config_source}:output_folder"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+date: system-generated
+sprint_artifacts: "{config_source}:sprint_artifacts"
+
+# Atlas memory paths
+atlas_memory: "{project-root}/_bmad/agents/atlas/atlas-sidecar"
+atlas_index: "{atlas_memory}/atlas-index.csv"
+atlas_knowledge: "{atlas_memory}/knowledge"
+
+# Workflow components
+installed_path: "{project-root}/_bmad/bmm/workflows/4-implementation/atlas-sprint-planning"
+instructions: "{installed_path}/instructions.md"
+template: "{installed_path}/sprint-status-template.yaml"
+validation: "{installed_path}/checklist.md"
+
+# Variables and inputs
+variables:
+  project_name: "{config_source}:project_name"
+  tracking_system: "file-system"
+  story_location: "{config_source}:sprint_artifacts"
+  story_location_absolute: "{config_source}:sprint_artifacts"
+  epics_location: "{output_folder}"
+  epics_pattern: "epic*.md"
+  status_file: "{sprint_artifacts}/sprint-status.yaml"
+
+# Smart input file references
+input_file_patterns:
+  epics:
+    description: "All epics with user stories"
+    whole: "{output_folder}/*epic*.md"
+    sharded: "{output_folder}/*epic*/*.md"
+    load_strategy: "FULL_LOAD"
+
+default_output_file: "{status_file}"
+standalone: true

@@ -1,0 +1,74 @@
+name: atlas-epic-tech-context
+description: "Atlas-enhanced technical specification generation with architectural alignment and feature mapping"
+author: "BMad + Atlas"
+
+# Atlas Integration
+atlas_features:
+  consult_architecture: true    # Architectural patterns and ADRs
+  consult_features: true        # Feature inventory for traceability
+  memory_feeding: true          # Feed tech spec decisions to Atlas
+
+atlas_knowledge_fragments:
+  required:
+    - "04-architecture.md"      # Architectural patterns
+    - "02-features.md"          # Feature inventory
+  optional:
+    - "01-purpose.md"           # App purpose for context
+    - "06-lessons.md"           # Past tech spec lessons
+
+# Critical variables
+config_source: "{project-root}/_bmad/bmm/config.yaml"
+output_folder: "{config_source}:output_folder"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+date: system-generated
+sprint_artifacts: "{config_source}:sprint_artifacts"
+sprint_status: "{sprint_artifacts}/sprint-status.yaml || {output_folder}/sprint-status.yaml"
+
+# Atlas memory paths
+atlas_memory: "{project-root}/_bmad/agents/atlas/atlas-sidecar"
+atlas_index: "{atlas_memory}/atlas-index.csv"
+atlas_knowledge: "{atlas_memory}/knowledge"
+
+# Smart input file references
+input_file_patterns:
+  prd:
+    description: "Product requirements (optional)"
+    whole: "{output_folder}/*prd*.md"
+    sharded: "{output_folder}/*prd*/*.md"
+    load_strategy: "FULL_LOAD"
+  gdd:
+    description: "Game Design Document (for game projects)"
+    whole: "{output_folder}/*gdd*.md"
+    sharded: "{output_folder}/*gdd*/*.md"
+    load_strategy: "FULL_LOAD"
+  architecture:
+    description: "System architecture and decisions"
+    whole: "{output_folder}/*architecture*.md"
+    sharded: "{output_folder}/*architecture*/*.md"
+    load_strategy: "FULL_LOAD"
+  ux_design:
+    description: "UX design specification (if UI)"
+    whole: "{output_folder}/*ux*.md"
+    sharded: "{output_folder}/*ux*/*.md"
+    load_strategy: "FULL_LOAD"
+  epics:
+    description: "Specific epic for tech spec generation"
+    whole: "{output_folder}/*epic*.md"
+    sharded_index: "{output_folder}/*epic*/index.md"
+    sharded_single: "{output_folder}/*epic*/epic-{{epic_num}}.md"
+    load_strategy: "SELECTIVE_LOAD"
+  document_project:
+    description: "Brownfield project documentation (optional)"
+    sharded: "{output_folder}/index.md"
+    load_strategy: "INDEX_GUIDED"
+
+# Workflow components
+installed_path: "{project-root}/_bmad/bmm/workflows/4-implementation/atlas-epic-tech-context"
+template: "{installed_path}/template.md"
+instructions: "{installed_path}/instructions.md"
+validation: "{installed_path}/checklist.md"
+
+# Output configuration
+default_output_file: "{sprint_artifacts}/tech-spec-epic-{{epic_id}}.md"
+standalone: true

@@ -1,7 +1,7 @@
 # Story 10.1: InsightEngine Service Interface
 
 **Epic:** Epic 10 - Foundation + Engagement & Insight Engine
-**Status:** ready-for-dev
+**Status:** done
 **Story Points:** 3
 **Dependencies:** Story 10.0 (Foundation Sprint)
 
@@ -24,21 +24,21 @@ So that **all insight-related stories can build on a consistent foundation**.
 
 ## Acceptance Criteria
 
-- [ ] **AC #1:** `types/insight.ts` defines all insight types and interfaces
-- [ ] **AC #2:** `UserPhase` type with 3 phases: `WEEK_1`, `WEEKS_2_3`, `MATURE`
-- [ ] **AC #3:** `InsightCategory` type: `QUIRKY_FIRST`, `CELEBRATORY`, `ACTIONABLE`
-- [ ] **AC #4:** `Insight` interface matches architecture spec
-- [ ] **AC #5:** `InsightGenerator` interface with `canGenerate()` and `generate()` methods
-- [ ] **AC #6:** `UserInsightProfile` interface for Firestore document
-- [ ] **AC #7:** `LocalInsightCache` interface for localStorage
-- [ ] **AC #8:** `insightEngineService.ts` exports main entry point function
-- [ ] **AC #9:** Service follows functional module pattern (not class-based)
+- [x] **AC #1:** `types/insight.ts` defines all insight types and interfaces
+- [x] **AC #2:** `UserPhase` type with 3 phases: `WEEK_1`, `WEEKS_2_3`, `MATURE`
+- [x] **AC #3:** `InsightCategory` type: `QUIRKY_FIRST`, `CELEBRATORY`, `ACTIONABLE`
+- [x] **AC #4:** `Insight` interface matches architecture spec
+- [x] **AC #5:** `InsightGenerator` interface with `canGenerate()` and `generate()` methods
+- [x] **AC #6:** `UserInsightProfile` interface for Firestore document
+- [x] **AC #7:** `LocalInsightCache` interface for localStorage
+- [x] **AC #8:** `insightEngineService.ts` exports main entry point function
+- [x] **AC #9:** Service follows functional module pattern (not class-based)
 
 ---
 
 ## Tasks / Subtasks
 
-### Task 1: Create Type Definitions (1h)
+### Task 1: Create Type Definitions (1h) [x]
 
 Create `src/types/insight.ts`:
 
@@ -98,7 +98,7 @@ export interface PrecomputedAggregates {
 }
 ```
 
-### Task 2: Create Service Skeleton (0.5h)
+### Task 2: Create Service Skeleton (0.5h) [x]
 
 Create `src/services/insightEngineService.ts`:
 
@@ -170,7 +170,7 @@ export function getFallbackInsight(): Insight {
 }
 ```
 
-### Task 3: Create Storage Utilities (0.5h)
+### Task 3: Create Storage Utilities (0.5h) [x]
 
 Create helper functions for profile and cache management:
 
@@ -205,15 +205,15 @@ export function getDefaultCache(): LocalInsightCache {
 }
 ```
 
-### Task 4: Unit Tests (1h)
+### Task 4: Unit Tests (1h) [x]
 
 Create `tests/unit/services/insightEngineService.test.ts`:
 
-- Test type exports are correct
-- Test `calculateUserPhase()` returns valid phases
-- Test `getFallbackInsight()` returns valid insight
-- Test `getLocalCache()` returns default on missing/corrupted
-- Test `checkCooldown()` logic
+- [x] Test type exports are correct
+- [x] Test `calculateUserPhase()` returns valid phases
+- [x] Test `getFallbackInsight()` returns valid insight
+- [x] Test `getLocalCache()` returns default on missing/corrupted
+- [x] Test `checkCooldown()` logic
 
 ---
 
@@ -255,32 +255,67 @@ This story establishes the **foundation** for the Insight Engine. It creates the
 
 ## Definition of Done
 
-- [ ] All 9 acceptance criteria verified
-- [ ] Types compile without errors
-- [ ] Service exports all required functions
-- [ ] Unit tests passing
-- [ ] Code review approved
+- [x] All 9 acceptance criteria verified
+- [x] Types compile without errors
+- [x] Service exports all required functions
+- [x] Unit tests passing (47 new tests, 1057 total)
+- [x] Code review approved
 
 ---
 
 ## Dev Agent Record
 
 ### Agent Model Used
-<!-- Will be populated during dev-story execution -->
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes
-<!-- Will be populated during dev-story execution -->
+- Created `src/types/insight.ts` with all type definitions matching architecture spec
+- Created `src/services/insightEngineService.ts` following functional module pattern
+- Implemented all core functions: `generateInsightForTransaction()`, `calculateUserPhase()`, `selectInsight()`, `checkCooldown()`, `getFallbackInsight()`
+- Added local cache utilities: `getLocalCache()`, `setLocalCache()`, `getDefaultCache()`, `incrementScanCounter()`, `isInsightsSilenced()`, `silenceInsights()`, `clearSilence()`
+- Included constants: `INSIGHT_CACHE_KEY`, `INSIGHT_COOLDOWN_MS`, `MAX_RECENT_INSIGHTS`, `PHASE_THRESHOLDS`
+- Stub implementations return fallback insight - actual generators in Story 10.3/10.4, selection algorithm in Story 10.5
 
 ### Files Modified
-<!-- Will be populated during dev-story execution -->
+**Created:**
+- `src/types/insight.ts` - Core insight type definitions (173 lines)
+- `src/services/insightEngineService.ts` - Insight engine service (381 lines)
+- `tests/unit/services/insightEngineService.test.ts` - Unit tests (645 lines)
+
+**Modified:**
+- `docs/sprint-artifacts/sprint-status.yaml` - Story status: ready-for-dev → in-progress → review
 
 ### Test Results
-<!-- Will be populated during dev-story execution -->
+- **47 new unit tests** added for insightEngineService (includes 4 defensive Timestamp handling tests)
+- All 1057 unit tests passing
+- All 328 integration tests passing
+- TypeScript compiles without errors
 
 ---
 
 ## Review Notes
-<!-- Will be populated during code review -->
+
+**Atlas-Enhanced Code Review: 2025-12-18**
+- **Reviewer:** Claude Opus 4.5 (atlas-code-review workflow)
+- **Verdict:** ✅ APPROVED
+
+**Issues Addressed During Review:**
+1. Added defensive handling for corrupted Firestore Timestamps in `checkCooldown()` - prevents crashes from malformed data
+2. Added 4 new tests covering edge cases: null shownAt, throwing toDate(), null return from toDate(), invalid Date objects
+3. Updated file line counts and test counts in story documentation
+
+**Architecture Compliance:**
+- ADR-015 (Client-Side Engine): ✅ Compliant
+- ADR-016 (Hybrid Storage): ✅ Compliant
+- ADR-017 (Phase-Based Priority): ✅ Compliant
+- Functional module pattern: ✅ Compliant
+- Naming conventions: ✅ Compliant
+
+**Final Metrics:**
+- 47 unit tests, all passing
+- 1057 total unit tests
+- TypeScript: No errors
+- All 9 acceptance criteria verified
 
 ---
 
@@ -290,3 +325,5 @@ This story establishes the **foundation** for the Insight Engine. It creates the
 |------|---------|-------------|
 | 2025-12-16 | 1.0 | Story drafted from Epic 10 PRD |
 | 2025-12-17 | 2.0 | **Retrofitted** to match architecture-epic10-insight-engine.md |
+| 2025-12-18 | 3.0 | **Implementation complete** - All ACs verified, ready for code review |
+| 2025-12-18 | 4.0 | **Code review approved** - Added defensive Timestamp handling, 4 new edge case tests |
