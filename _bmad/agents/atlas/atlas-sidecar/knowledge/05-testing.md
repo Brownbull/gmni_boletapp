@@ -4,13 +4,13 @@
 > Last Sync: 2025-12-18
 > Sources: test-strategy.md, retrospectives, CI/CD docs
 
-## Current Metrics (Post-Epic 9)
+## Current Metrics (Post-Epic 10.1 Code Review)
 
 | Metric | Value |
 |--------|-------|
-| Unit Tests | 891+ passing |
+| Unit Tests | 1057+ passing |
 | Integration Tests | 328+ passing |
-| Total Tests | 1,219+ |
+| Total Tests | 1,385+ |
 | Coverage | 84%+ |
 | E2E Framework | Playwright configured |
 
@@ -94,6 +94,58 @@ tests/
 - Installing tools that aren't cached
 - Running expensive checks (Lighthouse) on every PR
 
+## Mocking Patterns
+
+### localStorage in Vitest (happy-dom)
+The happy-dom environment doesn't fully support `localStorage.clear()`. Use `vi.stubGlobal()` with a mock object:
+
+```typescript
+describe('localStorageTests', () => {
+  let mockStorage: Record<string, string>;
+  let mockLocalStorage: Storage;
+
+  beforeEach(() => {
+    mockStorage = {};
+    mockLocalStorage = {
+      getItem: vi.fn((key: string) => mockStorage[key] || null),
+      setItem: vi.fn((key: string, value: string) => {
+        mockStorage[key] = value;
+      }),
+      removeItem: vi.fn((key: string) => {
+        delete mockStorage[key];
+      }),
+      clear: vi.fn(() => { mockStorage = {}; }),
+      length: 0,
+      key: vi.fn(() => null),
+    };
+    vi.stubGlobal('localStorage', mockLocalStorage);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+});
+```
+
+### Firebase Timestamp Mocking
+For testing code that uses Firestore Timestamps:
+
+```typescript
+function createMockTimestamp(daysAgo: number): Timestamp {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  return {
+    toDate: () => date,
+    seconds: Math.floor(date.getTime() / 1000),
+    nanoseconds: 0,
+    toMillis: () => date.getTime(),
+    isEqual: () => false,
+    valueOf: () => '',
+    toJSON: () => ({ seconds: Math.floor(date.getTime() / 1000), nanoseconds: 0 }),
+  } as unknown as Timestamp;
+}
+```
+
 ## Workflow Validations
 
 ### Critical User Journeys to Test
@@ -102,10 +154,37 @@ tests/
 3. **Learning Flow** - Edit → Prompt → Save mapping → Auto-apply
 4. **Analytics Flow** - Navigate → Drill-down → Filter → View transactions
 
+### Defensive Timestamp Testing (Story 10.1)
+When testing code that reads Firestore Timestamps, add edge case tests for corrupted data:
+
+```typescript
+// Test corrupted Timestamp scenarios
+it('should handle corrupted Timestamp gracefully', () => {
+  const corruptedRecord = {
+    insightId: 'test',
+    shownAt: {
+      toDate: () => { throw new Error('Corrupted'); },
+    } as unknown as Timestamp,
+  };
+  // Should not throw - return safe default
+  expect(checkCooldown('test', [corruptedRecord])).toBe(false);
+});
+
+it('should handle null Timestamp', () => {
+  const nullRecord = {
+    insightId: 'test',
+    shownAt: null as unknown as Timestamp,
+  };
+  expect(checkCooldown('test', [nullRecord])).toBe(false);
+});
+```
+
 ---
 
 ## Sync Notes
 
-- Test metrics from Epic 9 completion
+- Test metrics updated after Story 10.1 code review (1057 unit tests)
+- Mocking patterns added for localStorage and Timestamps
+- Defensive Timestamp testing pattern added (Story 10.1)
 - Scan test harness from Epic 8 fully operational
 - CI/CD optimized to ~4 min for PRs (63% faster after Epic 8)
