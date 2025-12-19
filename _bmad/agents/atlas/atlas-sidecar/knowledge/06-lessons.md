@@ -38,6 +38,12 @@
 ### UX Development
 > "Architecture decisions before UX changes. Mockups before implementation for UX work."
 
+### FCM with PWA (Story 9.18 Hotfix - 2025-12-18)
+> "When using Firebase Cloud Messaging with vite-plugin-pwa, you MUST explicitly register and pass the FCM service worker to `getToken()`. Using `navigator.serviceWorker.ready` returns the PWA service worker (sw.js), not firebase-messaging-sw.js. Fix: Use `navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')` or `navigator.serviceWorker.register('/firebase-messaging-sw.js')` and wait for activation before calling `getToken()`."
+
+### Defensive Firestore Data Handling (Story 10.1 - 2025-12-18)
+> "When reading Firestore Timestamps in service code, always use defensive optional chaining and try/catch. Firestore data can be corrupted or have unexpected shape. Pattern: `try { const time = record?.shownAt?.toDate?.()?.getTime?.(); if (typeof time !== 'number' || isNaN(time)) return defaultValue; } catch { return defaultValue; }` - This prevents crashes from malformed data in production."
+
 ## Patterns to Avoid
 
 1. **Hardcoding API keys** - Always use environment variables
@@ -46,6 +52,7 @@
 4. **Running expensive CI checks on every PR** - Lighthouse on main only
 5. **Sequential CI jobs** when parallel is possible
 6. **Assuming details not in docs** - VERIFY with source documents
+7. **Using `navigator.serviceWorker.ready` with multiple service workers** - Returns first SW, not specific one
 
 ## Patterns to Follow
 
@@ -57,6 +64,8 @@
 6. **Pre-flight sync** before deployments
 7. **Story-driven test coverage** - Each story has tests
 8. **CI/CD time budgets** - Keep PRs under 7 min
+
+9. **Defensive Firestore reads** - Always handle corrupted Timestamps with try/catch
 
 ## Team Agreements
 
@@ -75,3 +84,4 @@
 - API key incident documented as key learning
 - CI/CD optimization standards established in Epic 8
 - Retrospectives reviewed: Epic 3, 7, 8, 9
+- Defensive Firestore pattern added from Story 10.1 code review (2025-12-18)
