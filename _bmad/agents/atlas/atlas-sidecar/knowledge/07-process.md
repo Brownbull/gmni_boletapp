@@ -11,14 +11,18 @@
 3. **Code Review:** Required before merge, adversarial review style
 4. **Deployment:** CI/CD auto-deploys to Firebase Hosting on main merge
 
-## Branching Strategy (Current: 2-Branch)
+## Branching Strategy (Current: 3-Branch)
 
 | Branch | Purpose | Merges To |
 |--------|---------|-----------|
 | `main` | Production | - (auto-deploys) |
-| `feature/*` | Feature branches | `main` |
+| `staging` | Pre-production | `main` via PR |
+| `develop` | Integration | `staging` |
+| `feature/*` | Feature branches | `develop` |
 
-**Hotfix Strategy:** Go directly to main
+**Deploy Pipeline:** `feature/* → develop → staging → main`
+
+**Hotfix Strategy:** Go directly to main, backport to staging and develop
 
 **Sync Rules:**
 - Merge commits for sync PRs (not squash)
@@ -51,7 +55,7 @@ backlog → drafted → ready-for-dev → in-progress → review → done
 
 | Decision | Date | Reason |
 |----------|------|--------|
-| 2-Branch Strategy | Epic 7 | Simplify branching, squash merge issues |
+| 3-Branch Strategy | Epic 10 | Restored conventional workflow (develop → staging → main) |
 | Adversarial Code Review | Epic 7 | Quality gate, find issues early |
 | Context Files per Story | Epic 9 | Accelerate development, preserve knowledge |
 | Parallel CI Jobs | Epic 8 | 63% faster pipelines |
@@ -74,8 +78,17 @@ backlog → drafted → ready-for-dev → in-progress → review → done
 
 ---
 
+## Recent Deployments
+
+| Story | Date | Environment | Notes |
+|-------|------|-------------|-------|
+| 10.1-insight-engine-core | 2025-12-18 | Production | InsightEngine foundation - 47 tests, defensive Timestamp handling |
+| 10.0-foundation-sprint | 2025-12-18 | Production | Analytics refactor, filtering service, App.tsx cleanup |
+
+---
+
 ## Sync Notes
 
-- 2-branch strategy adopted after Epic 7
+- 3-branch strategy restored in Epic 10 (develop → staging → main)
 - CI/CD standards from Epic 8 retrospective
 - Sprint status tracking active since Epic 7

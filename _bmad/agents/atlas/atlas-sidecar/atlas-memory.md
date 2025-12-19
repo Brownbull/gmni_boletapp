@@ -19,7 +19,7 @@ Atlas uses **sharded memory** for context efficiency. Knowledge is stored in sep
 | 04 | [04-architecture.md](knowledge/04-architecture.md) | 2025-12-18 | Tech stack, ADRs, data model, patterns |
 | 05 | [05-testing.md](knowledge/05-testing.md) | 2025-12-18 | Test metrics (1,219+ tests, 84%+ coverage), CI/CD |
 | 06 | [06-lessons.md](knowledge/06-lessons.md) | 2025-12-18 | Retrospective learnings, patterns to follow/avoid |
-| 07 | [07-process.md](knowledge/07-process.md) | 2025-12-18 | 2-branch strategy, deployment, sprint tracking |
+| 07 | [07-process.md](knowledge/07-process.md) | 2025-12-18 | 3-branch strategy, deployment, sprint tracking |
 | 08 | [08-workflow-chains.md](knowledge/08-workflow-chains.md) | 2025-12-18 | 4 critical user journeys, impact matrix |
 | 09 | [09-sync-history.md](knowledge/09-sync-history.md) | 2025-12-18 | Sync log, documents tracked, drift detection |
 
@@ -41,8 +41,8 @@ Atlas uses **sharded memory** for context efficiency. Knowledge is stored in sep
 | Metric | Value |
 |--------|-------|
 | **Current Epic** | Epic 10 (Foundation + Insight Engine) |
-| **Active Story** | 10.0 Foundation Sprint (In Review) |
-| **Test Coverage** | 84%+ (1,219+ tests) |
+| **Last Deployed** | Story 10.1 InsightEngine Service Interface (2025-12-18) |
+| **Test Coverage** | 84%+ (1,057+ unit, 328+ integration) |
 | **Bundle Size** | 948KB (approaching 1MB threshold) |
 
 ---
