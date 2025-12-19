@@ -5,17 +5,17 @@
  * Core matching criteria (required - all must match):
  * - Same date
  * - Same merchant name
- * - Same amount
+ * - Same total amount
  *
- * Optional refinement criteria (only compared if BOTH transactions have values):
- * - Time: If both have time, must be within 1 hour proximity. If either is missing, skip this check.
- * - City: If both have city, must match. If either is missing, skip this check.
- * - Country: If both have country, must match. If either is missing, skip this check.
+ * Optional refinement:
+ * - Country: If BOTH transactions have a non-null/non-default country, they must match.
+ *            If either is missing/default, skip this check.
  *
- * This allows legacy transactions without time/location to still be detected as duplicates
- * based on merchant, date, and amount alone.
- *
- * NOTE: Alias is NOT included because users may update it over time.
+ * NOT used for duplicate detection:
+ * - Time (not reliable from OCR)
+ * - City (can vary due to OCR errors or chain store locations)
+ * - Items (only transaction-level data is compared)
+ * - Alias (user can update it over time)
  */
 
 import { Transaction } from '../types/transaction';
@@ -81,33 +81,27 @@ export function areTimesWithinProximity(
 }
 
 /**
- * Check if two locations match (city and country).
- * If either transaction is missing city or country, returns true to allow matching
- * (we don't want to exclude potential duplicates just because location is missing).
+ * Check if two transactions match on country.
  *
- * Only returns false if BOTH transactions have a value AND they don't match.
+ * Only compares country if BOTH transactions have a non-null/non-empty country.
+ * If either transaction is missing country data, we skip this check (return true).
+ *
+ * City is NOT checked - it can vary due to OCR errors or chain store locations.
  *
  * @param tx1 - First transaction
  * @param tx2 - Second transaction
- * @returns true if locations match or either is missing location data
+ * @returns true if countries match or either is missing country data
  */
 export function areLocationsMatching(tx1: Transaction, tx2: Transaction): boolean {
-  const city1 = (tx1.city || '').toLowerCase().trim();
-  const city2 = (tx2.city || '').toLowerCase().trim();
   const country1 = (tx1.country || '').toLowerCase().trim();
   const country2 = (tx2.country || '').toLowerCase().trim();
 
-  // Check city: only compare if BOTH have a value
-  if (city1 !== '' && city2 !== '') {
-    if (city1 !== city2) return false;
-  }
-
-  // Check country: only compare if BOTH have a value
+  // Only compare if BOTH have a non-empty country value
   if (country1 !== '' && country2 !== '') {
-    if (country1 !== country2) return false;
+    return country1 === country2;
   }
 
-  // Either locations match or one/both are missing - allow matching
+  // Either or both missing country - allow matching
   return true;
 }
 
@@ -143,15 +137,14 @@ export function getDuplicateKey(tx: Transaction): string {
  * Returns a Map where keys are transaction IDs and values are arrays
  * of duplicate transaction IDs.
  *
- * Core matching criteria (required - all must match):
- * - Same date, merchant, amount
+ * Matching criteria:
+ * - Same date (required)
+ * - Same merchant (required)
+ * - Same total amount (required)
+ * - Same country (only if both have non-null/non-empty country)
  *
- * Optional refinement criteria (only compared if BOTH transactions have values):
- * - Time: within 1 hour proximity (if both have time set)
- * - City: must match (if both have city set)
- * - Country: must match (if both have country set)
+ * NOT checked: time, city, items, alias
  *
- * AC #4: Uses matching criteria (date, merchant, amount + optional time/location)
  * AC #6: Works in real-time as user browses history
  * AC #7: Applies to both new and existing transactions
  *
@@ -174,33 +167,27 @@ export function findDuplicates(
     keyToTransactions.set(key, existing);
   }
 
-  // Second pass: Within each group, check optional refinements (time and location)
+  // Second pass: Within each group, check country refinement
   const duplicateMap = new Map<string, string[]>();
 
   for (const [, txGroup] of keyToTransactions) {
     // Skip groups with only one transaction
     if (txGroup.length <= 1) continue;
 
-    // For each pair of transactions in the group, check optional refinements
+    // For each pair of transactions in the group, check country
     for (let i = 0; i < txGroup.length; i++) {
       const tx1 = txGroup[i];
-      const time1 = parseTimeToMinutes(tx1.time);
       const duplicatesForTx1: string[] = [];
 
       for (let j = 0; j < txGroup.length; j++) {
         if (i === j) continue; // Don't compare with self
 
         const tx2 = txGroup[j];
-        const time2 = parseTimeToMinutes(tx2.time);
 
-        // Check optional refinements:
-        // 1. Time proximity (if both have time, must be within 1 hour)
-        // 2. Location match (if both have city/country, they must match)
-        const timesMatch = areTimesWithinProximity(time1, time2);
-        const locationsMatch = areLocationsMatching(tx1, tx2);
+        // Check country match (only if both have country, otherwise allow)
+        const countriesMatch = areLocationsMatching(tx1, tx2);
 
-        // Both optional checks must pass (or be skipped if data is missing)
-        if (timesMatch && locationsMatch) {
+        if (countriesMatch) {
           duplicatesForTx1.push(tx2.id!);
         }
       }

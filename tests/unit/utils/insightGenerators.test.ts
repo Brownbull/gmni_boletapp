@@ -52,9 +52,9 @@ const createItem = (
 // ============================================================================
 
 describe('Generator Registry', () => {
-  it('has exactly 12 generators (7 intrinsic + 5 pattern)', () => {
+  it('has exactly 13 generators (7 intrinsic + 5 pattern + 1 duplicate detection)', () => {
     const generatorIds = Object.keys(INSIGHT_GENERATORS);
-    expect(generatorIds).toHaveLength(12);
+    expect(generatorIds).toHaveLength(13);
   });
 
   it('has all 7 transaction-intrinsic generators', () => {
@@ -73,6 +73,10 @@ describe('Generator Registry', () => {
     expect(INSIGHT_GENERATORS.day_pattern).toBeDefined();
     expect(INSIGHT_GENERATORS.spending_velocity).toBeDefined();
     expect(INSIGHT_GENERATORS.time_pattern).toBeDefined();
+  });
+
+  it('has duplicate detection generator', () => {
+    expect(INSIGHT_GENERATORS.duplicate_detected).toBeDefined();
   });
 
   it('getGenerator returns correct generator', () => {
@@ -263,6 +267,12 @@ describe('Transaction-Intrinsic Generators', () => {
 
     it('does not trigger when time has invalid hour', () => {
       const tx = createTransaction({ time: '25:00' });
+      expect(gen.canGenerate(tx, [])).toBe(false);
+    });
+
+    it('does not trigger for default sentinel time (04:04)', () => {
+      // DEFAULT_TIME is "04:04" - a sentinel value meaning "time not available"
+      const tx = createTransaction({ time: '04:04' });
       expect(gen.canGenerate(tx, [])).toBe(false);
     });
 
@@ -533,14 +543,16 @@ describe('generateAllCandidates', () => {
       items: [], // No items - biggest_item won't trigger
       time: '14:00', // Normal hour
       date: '2025-12-17', // Wednesday
+      total: 50000, // Different amount from history to avoid duplicate detection
     });
     const history = [
-      createTransaction({ merchant: 'Jumbo' }), // Same merchant
+      createTransaction({ merchant: 'Jumbo', total: 25000 }), // Same merchant but different amount
     ];
 
     const candidates = generateAllCandidates(tx, history);
 
     // Only new_city could trigger if city differs, but we're using default (no city)
+    // duplicate_detected won't trigger because amounts differ
     expect(candidates.length).toBe(0);
   });
 
@@ -980,11 +992,12 @@ describe('Pattern Detection Generators', () => {
     });
 
     it('generates insight with correct time of day - early morning', () => {
-      const tx = createTransaction({ time: '04:00' });
+      // Using 03:00 instead of 04:04 to avoid default sentinel time
+      const tx = createTransaction({ time: '03:00' });
       const history = [
+        createTransaction({ time: '02:30' }),
         createTransaction({ time: '03:30' }),
-        createTransaction({ time: '04:30' }),
-        createTransaction({ time: '05:00' }),
+        createTransaction({ time: '04:00' }),
       ];
       const insight = gen.generate(tx, history);
       expect(insight.message).toContain('madrugada');
@@ -1008,6 +1021,29 @@ describe('Pattern Detection Generators', () => {
         createTransaction({ time: undefined }),
         createTransaction({ time: undefined }),
       ];
+      expect(gen.canGenerate(tx, history)).toBe(false);
+    });
+
+    it('does not trigger for default sentinel time (04:04)', () => {
+      // DEFAULT_TIME is "04:04" - a sentinel value meaning "time not available"
+      const tx = createTransaction({ time: '04:04' });
+      const history = [
+        createTransaction({ time: '04:00' }),
+        createTransaction({ time: '05:00' }),
+        createTransaction({ time: '03:30' }),
+      ];
+      // Even though history has valid times in similar range, current tx has default time
+      expect(gen.canGenerate(tx, history)).toBe(false);
+    });
+
+    it('ignores history transactions with default sentinel time', () => {
+      const tx = createTransaction({ time: '04:00' });
+      const history = [
+        createTransaction({ time: '04:04' }), // Default sentinel - should be ignored
+        createTransaction({ time: '04:04' }), // Default sentinel - should be ignored
+        createTransaction({ time: '04:04' }), // Default sentinel - should be ignored
+      ];
+      // Default times in history should not count toward pattern detection
       expect(gen.canGenerate(tx, history)).toBe(false);
     });
   });
@@ -1143,5 +1179,242 @@ describe('Spanish Message Format (Chilean Locale)', () => {
 
     // Should contain Chilean formatted number (with dot separator)
     expect(insight.message).toMatch(/\d{1,3}\.\d{3}/);
+  });
+
+  // --------------------------------------------------------------------------
+  // duplicate_detected (Story 9.11)
+  // --------------------------------------------------------------------------
+  describe('duplicate_detected', () => {
+    const gen = INSIGHT_GENERATORS.duplicate_detected;
+
+    it('triggers when transaction has duplicate in history (same date, merchant, amount, country)', () => {
+      const tx = createTransaction({
+        id: 'new-tx',
+        date: '2025-12-15',
+        merchant: 'H&M',
+        total: 108930,
+        country: 'Chile',
+      });
+      const history = [
+        createTransaction({
+          id: 'existing-tx',
+          date: '2025-12-15',
+          merchant: 'H&M',
+          total: 108930,
+          country: 'Chile',
+        }),
+      ];
+      expect(gen.canGenerate(tx, history)).toBe(true);
+    });
+
+    it('triggers even when cities differ (city is NOT checked)', () => {
+      const tx = createTransaction({
+        id: 'new-tx',
+        date: '2025-12-15',
+        merchant: 'H&M',
+        total: 108930,
+        city: 'Temuco',
+        country: 'Chile',
+      });
+      const history = [
+        createTransaction({
+          id: 'existing-tx',
+          date: '2025-12-15',
+          merchant: 'H&M',
+          total: 108930,
+          city: 'Villarrica', // Different city
+          country: 'Chile',
+        }),
+      ];
+      expect(gen.canGenerate(tx, history)).toBe(true);
+    });
+
+    it('does NOT trigger when dates differ', () => {
+      const tx = createTransaction({
+        id: 'new-tx',
+        date: '2025-12-15',
+        merchant: 'H&M',
+        total: 108930,
+      });
+      const history = [
+        createTransaction({
+          id: 'existing-tx',
+          date: '2025-12-16', // Different date
+          merchant: 'H&M',
+          total: 108930,
+        }),
+      ];
+      expect(gen.canGenerate(tx, history)).toBe(false);
+    });
+
+    it('does NOT trigger when merchants differ', () => {
+      const tx = createTransaction({
+        id: 'new-tx',
+        date: '2025-12-15',
+        merchant: 'H&M',
+        total: 108930,
+      });
+      const history = [
+        createTransaction({
+          id: 'existing-tx',
+          date: '2025-12-15',
+          merchant: 'Zara', // Different merchant
+          total: 108930,
+        }),
+      ];
+      expect(gen.canGenerate(tx, history)).toBe(false);
+    });
+
+    it('does NOT trigger when amounts differ', () => {
+      const tx = createTransaction({
+        id: 'new-tx',
+        date: '2025-12-15',
+        merchant: 'H&M',
+        total: 108930,
+      });
+      const history = [
+        createTransaction({
+          id: 'existing-tx',
+          date: '2025-12-15',
+          merchant: 'H&M',
+          total: 99999, // Different amount
+        }),
+      ];
+      expect(gen.canGenerate(tx, history)).toBe(false);
+    });
+
+    it('does NOT trigger when countries differ (both have country)', () => {
+      const tx = createTransaction({
+        id: 'new-tx',
+        date: '2025-12-15',
+        merchant: 'H&M',
+        total: 108930,
+        country: 'Chile',
+      });
+      const history = [
+        createTransaction({
+          id: 'existing-tx',
+          date: '2025-12-15',
+          merchant: 'H&M',
+          total: 108930,
+          country: 'Argentina', // Different country
+        }),
+      ];
+      expect(gen.canGenerate(tx, history)).toBe(false);
+    });
+
+    it('triggers when one has country and other does not (legacy data)', () => {
+      const tx = createTransaction({
+        id: 'new-tx',
+        date: '2025-12-15',
+        merchant: 'H&M',
+        total: 108930,
+        country: 'Chile',
+      });
+      const history = [
+        createTransaction({
+          id: 'existing-tx',
+          date: '2025-12-15',
+          merchant: 'H&M',
+          total: 108930,
+          country: '', // No country (legacy)
+        }),
+      ];
+      expect(gen.canGenerate(tx, history)).toBe(true);
+    });
+
+    it('does NOT trigger with empty history', () => {
+      const tx = createTransaction({
+        id: 'new-tx',
+        date: '2025-12-15',
+        merchant: 'H&M',
+        total: 108930,
+      });
+      expect(gen.canGenerate(tx, [])).toBe(false);
+    });
+
+    it('generates insight with correct content for single duplicate', () => {
+      const tx = createTransaction({
+        id: 'new-tx',
+        date: '2025-12-15',
+        merchant: 'H&M',
+        total: 108930,
+        country: 'Chile',
+      });
+      const history = [
+        createTransaction({
+          id: 'existing-tx',
+          date: '2025-12-15',
+          merchant: 'H&M',
+          total: 108930,
+          country: 'Chile',
+        }),
+      ];
+      const insight = gen.generate(tx, history);
+
+      expect(insight.id).toBe('duplicate_detected');
+      expect(insight.category).toBe('ACTIONABLE');
+      expect(insight.title).toBe('Posible duplicado');
+      expect(insight.message).toBe('Esta boleta parece ser un duplicado');
+      expect(insight.icon).toBe('AlertTriangle');
+      expect(insight.priority).toBe(10); // High priority
+    });
+
+    it('generates insight with correct message for multiple duplicates', () => {
+      const tx = createTransaction({
+        id: 'new-tx',
+        date: '2025-12-15',
+        merchant: 'H&M',
+        total: 108930,
+        country: 'Chile',
+      });
+      const history = [
+        createTransaction({
+          id: 'dup-1',
+          date: '2025-12-15',
+          merchant: 'H&M',
+          total: 108930,
+          country: 'Chile',
+        }),
+        createTransaction({
+          id: 'dup-2',
+          date: '2025-12-15',
+          merchant: 'H&M',
+          total: 108930,
+          country: 'Chile',
+        }),
+      ];
+      const insight = gen.generate(tx, history);
+
+      expect(insight.message).toBe('Esta boleta tiene 2 duplicados');
+    });
+
+    it('has highest priority (10) to override other insights', () => {
+      const tx = createTransaction({
+        id: 'new-tx',
+        date: '2025-12-15',
+        merchant: 'H&M',
+        total: 108930,
+        country: 'Chile',
+      });
+      const history = [
+        createTransaction({
+          id: 'existing-tx',
+          date: '2025-12-15',
+          merchant: 'H&M',
+          total: 108930,
+          country: 'Chile',
+        }),
+      ];
+      const insight = gen.generate(tx, history);
+
+      // Priority 10 should be higher than all other generators
+      const otherPriorities = [
+        INSIGHT_GENERATORS.biggest_item.generate(tx, []).priority,
+        INSIGHT_GENERATORS.new_merchant.generate(tx, []).priority,
+      ];
+
+      expect(insight.priority).toBeGreaterThan(Math.max(...otherPriorities));
+    });
   });
 });
