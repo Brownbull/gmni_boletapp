@@ -193,9 +193,9 @@ development_status:
   epic-10: contexted  # Architecture complete 2025-12-17, stories drafted and aligned
   10-0-foundation-sprint: done  # 8 points - Refactor analytics, filtering service, App.tsx cleanup - DEPLOYED 2025-12-18
   10-1-insight-engine-service-interface: done  # 3 points - types/insight.ts, services/insightEngineService.ts - DEPLOYED 2025-12-18
-  10-2-phase-detection-user-profile: ready-for-dev  # 3 points - calculateUserPhase(), UserInsightProfile Firestore doc
-  10-3-transaction-intrinsic-insights: ready-for-dev  # 5 points - 7 cold-start insight generators
-  10-4-pattern-detection-insights: ready-for-dev  # 5 points - 5 history-based generators + precomputed aggregates
+  10-2-phase-detection-user-profile: done  # 3 points - calculateUserPhase(), UserInsightProfile Firestore doc - Code Review APPROVED 2025-12-18
+  10-3-transaction-intrinsic-insights: done  # 5 points - 7 cold-start insight generators - Code Review APPROVED 2025-12-18
+  10-4-pattern-detection-insights: done  # 5 points - 5 history-based generators + precomputed aggregates - Code Review APPROVED 2025-12-18
   10-5-selection-algorithm-sprinkle: ready-for-dev  # 3 points - selectInsight() with phase-based priority
   10-6-scan-complete-insight-card: ready-for-dev  # 3 points - InsightCard.tsx, BuildingProfileCard.tsx fallback
   10-7-batch-mode-summary: ready-for-dev  # 3 points - BatchSummary.tsx for multi-receipt sessions

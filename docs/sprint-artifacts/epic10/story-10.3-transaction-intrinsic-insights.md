@@ -1,7 +1,7 @@
 # Story 10.3: Transaction-Intrinsic Insights
 
 **Epic:** Epic 10 - Foundation + Engagement & Insight Engine
-**Status:** ready-for-dev
+**Status:** done
 **Story Points:** 5
 **Dependencies:** Story 10.2 (Phase Detection & User Profile)
 
@@ -24,16 +24,16 @@ So that **I immediately understand the value of the app**.
 
 ## Acceptance Criteria
 
-- [ ] **AC #1:** 7 transaction-intrinsic insight generators implemented
-- [ ] **AC #2:** All generators follow `InsightGenerator` interface pattern
-- [ ] **AC #3:** `biggest_item` insight works with any transaction
-- [ ] **AC #4:** `item_count` triggers when items > 5
-- [ ] **AC #5:** `unusual_hour` triggers for purchases before 6am or after 10pm
-- [ ] **AC #6:** `weekend_warrior` triggers on Saturday/Sunday
-- [ ] **AC #7:** `new_merchant` triggers on first visit to a merchant
-- [ ] **AC #8:** `new_city` triggers when city differs from history
-- [ ] **AC #9:** `category_variety` triggers when receipt has 3+ categories
-- [ ] **AC #10:** All generators have Spanish messages (Chilean locale)
+- [x] **AC #1:** 7 transaction-intrinsic insight generators implemented
+- [x] **AC #2:** All generators follow `InsightGenerator` interface pattern
+- [x] **AC #3:** `biggest_item` insight works with any transaction
+- [x] **AC #4:** `item_count` triggers when items > 5
+- [x] **AC #5:** `unusual_hour` triggers for purchases before 6am or after 10pm
+- [x] **AC #6:** `weekend_warrior` triggers on Saturday/Sunday
+- [x] **AC #7:** `new_merchant` triggers on first visit to a merchant
+- [x] **AC #8:** `new_city` triggers when city differs from history
+- [x] **AC #9:** `category_variety` triggers when receipt has 3+ categories
+- [x] **AC #10:** All generators have Spanish messages (Chilean locale)
 
 ---
 
@@ -508,11 +508,11 @@ Even with 0 transaction history, these insights are available:
 
 ## Definition of Done
 
-- [ ] All 10 acceptance criteria verified
-- [ ] 7 generators implemented and tested
-- [ ] Generators follow `InsightGenerator` interface
-- [ ] All messages in Spanish (Chilean locale)
-- [ ] Unit tests passing
+- [x] All 10 acceptance criteria verified
+- [x] 7 generators implemented and tested
+- [x] Generators follow `InsightGenerator` interface
+- [x] All messages in Spanish (Chilean locale)
+- [x] Unit tests passing (56 tests for generators, 1137 total)
 - [ ] Code review approved
 
 ---
@@ -520,21 +520,77 @@ Even with 0 transaction history, these insights are available:
 ## Dev Agent Record
 
 ### Agent Model Used
-<!-- Will be populated during dev-story execution -->
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes
-<!-- Will be populated during dev-story execution -->
+Implemented 7 transaction-intrinsic insight generators following the architecture from Epic 10. All generators follow the `InsightGenerator` interface pattern established in Story 10.1.
+
+**Key Implementation Details:**
+- Created `src/utils/insightGenerators.ts` with all 7 generators and a registry
+- Fixed timezone issue in `weekend_warrior` by parsing date components individually to avoid UTC conversion
+- Integrated generators with `insightEngineService.ts` - service now calls `generateAllCandidates()` and uses `selectInsight()` for priority-based selection
+- All Spanish messages use Chilean locale formatting (`toLocaleString('es-CL')`)
+- Added helper functions: `getGenerator()`, `getGeneratorsByCategory()` for future pattern detection story
+
+**Cold-Start Guarantee:**
+- `biggest_item` - Always works if transaction has items
+- `new_merchant` - Always triggers on first transaction (empty history)
+- `weekend_warrior` - Works with date only
+- Additional generators activate based on transaction data
 
 ### Files Modified
-<!-- Will be populated during dev-story execution -->
+- `src/utils/insightGenerators.ts` (NEW) - 7 generators + registry + helper functions
+- `tests/unit/utils/insightGenerators.test.ts` (NEW) - 56 comprehensive unit tests
+- `src/services/insightEngineService.ts` - Integrated generators with main entry point
+- `tests/unit/services/insightEngineService.test.ts` - Updated test to expect actual insights
 
 ### Test Results
-<!-- Will be populated during dev-story execution -->
+- **56 new tests** for insightGenerators.ts covering all generators
+- **1137 total tests** pass (no regressions)
+- TypeScript type-check passes
+- All boundary conditions tested (e.g., hour=22 for unusual_hour, day parsing for weekend)
 
 ---
 
 ## Review Notes
-<!-- Will be populated during code review -->
+
+### Atlas-Enhanced Code Review - 2025-12-18
+
+**Reviewer:** Claude Opus 4.5 (Atlas-Enhanced)
+**Verdict:** ✅ **APPROVED with follow-up items**
+
+#### Summary
+- All 10 Acceptance Criteria: ✅ VERIFIED
+- All 4 Tasks: ✅ COMPLETED
+- Git vs Story Claims: ✅ ALIGNED
+- Atlas Architecture Compliance: ✅ PASS (ADR-015, ADR-016, ADR-017)
+- Atlas Pattern Compliance: ✅ PASS
+- Tests: 1137 passing (56 new for generators)
+- TypeScript: No errors
+
+#### What Went Well
+1. **Clean generator pattern** - All 7 generators follow `InsightGenerator` interface consistently
+2. **Timezone-aware date parsing** - `weekend_warrior` correctly handles local dates
+3. **Comprehensive tests** - 56 new tests with boundary condition coverage
+4. **Spanish localization** - All messages in Chilean Spanish with proper formatting
+5. **Cold-start guarantee** - Multiple generators work with zero history
+
+#### Review Follow-ups (AI)
+
+**MEDIUM Priority:**
+- [x] [AI-Review][MEDIUM] ~~Potential crash if `tx.time` format malformed~~ - **FIXED**: Added `parseHour()` helper with regex validation. 3 new edge case tests added. [insightGenerators.ts:70-77]
+- [ ] [AI-Review][MEDIUM] Case-sensitive merchant comparison may cause duplicate insights - "Jumbo" vs "jumbo" treated as different merchants. Test confirms intentional but consider `.toLowerCase()` normalization. [insightGenerators.ts:129]
+- [ ] [AI-Review][MEDIUM] Story 10.2 files uncommitted - `insightProfileService.ts` files appear untracked despite Story 10.2 being "done". Ensure committed before next deployment.
+
+**LOW Priority:**
+- [x] [AI-Review][LOW] ~~`category_variety` may count empty string categories~~ - **FIXED**: Added explicit `String(item.category).trim()` check. [insightGenerators.ts:185]
+- [ ] [AI-Review][LOW] Test uses `Array.fill()` with same object reference - `Array(6).fill(createItem())` creates 6 references to same object. Works because tests don't mutate, but could cause subtle bugs. [insightGenerators.test.ts:168]
+
+#### Atlas Validation Results
+- **Architecture (Section 4):** ✅ Follows ADR-015 (client-side), functional module pattern, correct code organization
+- **Testing (Section 5):** ✅ Test naming, coverage, factory patterns all correct. 56 new tests.
+- **Lessons (Section 6):** ✅ Timezone handling addressed proactively in `weekend_warrior`
+- **Workflow Chains (Section 8):** ℹ️ New "Insight Generation Flow" - integrates with Scan Receipt flow as post-save side effect
 
 ---
 
@@ -543,3 +599,6 @@ Even with 0 transaction history, these insights are available:
 | Date | Version | Description |
 |------|---------|-------------|
 | 2025-12-17 | 1.0 | Story created from architecture (replaces Weekly Summary View) |
+| 2025-12-18 | 1.1 | Implementation complete - all 10 ACs verified, 56 unit tests added |
+| 2025-12-18 | 1.2 | **Code Review** - Atlas-enhanced review APPROVED with 5 follow-up items (3 MEDIUM, 2 LOW). Status → done. |
+| 2025-12-18 | 1.3 | **Fixes Applied** - Fixed M1 (parseHour helper) and L2 (category trim). 1140 tests passing (+3 new edge case tests). |

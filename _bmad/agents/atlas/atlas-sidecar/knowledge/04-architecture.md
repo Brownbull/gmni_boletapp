@@ -108,6 +108,22 @@ Firestore Query → FilteringService → AnalyticsContext →
 Chart Components → User Interaction → Drill-down/Navigation
 ```
 
+### Insight Generation Flow (Epic 10)
+```
+Transaction Save → generateInsightForTransaction() →
+generateAllCandidates() → [12 Generators] → selectInsight() →
+Display InsightCard (or Fallback)
+```
+
+**Generators (Stories 10.3 & 10.4):**
+- Transaction-intrinsic (10.3): `biggest_item`, `item_count`, `unusual_hour`, `weekend_warrior`, `new_merchant`, `new_city`, `category_variety`
+- Pattern detection (10.4): `merchant_frequency`, `category_trend`, `day_pattern`, `spending_velocity`, `time_pattern`
+
+**Precomputed Aggregates (Story 10.4):**
+- `computeAggregates()` - merchantVisits, categoryTotals
+- Stored in LocalInsightCache for O(1) lookups
+- Helpers: `getMerchantVisitCount()`, `getCategoryTotal()`
+
 ---
 
 ## Sync Notes
@@ -115,3 +131,5 @@ Chart Components → User Interaction → Drill-down/Navigation
 - Architecture stable since Epic 7
 - Epic 10 introduces client-side insight engine (ADRs 15-17)
 - Security rules pattern consistently applied
+- Story 10.3 established generator registry pattern with `canGenerate/generate` interface
+- Story 10.4 added 5 pattern detection generators with precomputed aggregates (2025-12-18)

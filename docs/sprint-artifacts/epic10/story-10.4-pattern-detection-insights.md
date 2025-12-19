@@ -1,7 +1,7 @@
 # Story 10.4: Pattern Detection Insights
 
 **Epic:** Epic 10 - Foundation + Engagement & Insight Engine
-**Status:** ready-for-dev
+**Status:** done
 **Story Points:** 5
 **Dependencies:** Story 10.2 (Phase Detection & User Profile)
 
@@ -24,16 +24,16 @@ So that **I discover trends I wouldn't notice on my own**.
 
 ## Acceptance Criteria
 
-- [ ] **AC #1:** 5 pattern detection insight generators implemented
-- [ ] **AC #2:** All generators follow `InsightGenerator` interface pattern
-- [ ] **AC #3:** `merchant_frequency` triggers on 2+ visits to same merchant
-- [ ] **AC #4:** `category_trend` tracks spending changes vs previous period
-- [ ] **AC #5:** `day_pattern` detects consistent shopping day (3+ same weekday)
-- [ ] **AC #6:** `spending_velocity` tracks weekly spending rate
-- [ ] **AC #7:** `time_pattern` detects consistent shopping time
-- [ ] **AC #8:** Precomputed aggregates optimize performance
-- [ ] **AC #9:** All generators have Spanish messages (Chilean locale)
-- [ ] **AC #10:** Minimum data requirements enforced per generator
+- [x] **AC #1:** 5 pattern detection insight generators implemented ✅
+- [x] **AC #2:** All generators follow `InsightGenerator` interface pattern ✅
+- [x] **AC #3:** `merchant_frequency` triggers on 2+ visits to same merchant ✅
+- [x] **AC #4:** `category_trend` tracks spending changes vs previous period ✅
+- [x] **AC #5:** `day_pattern` detects consistent shopping day (3+ same weekday) ✅
+- [x] **AC #6:** `spending_velocity` tracks weekly spending rate ✅
+- [x] **AC #7:** `time_pattern` detects consistent shopping time ✅
+- [x] **AC #8:** Precomputed aggregates optimize performance ✅
+- [x] **AC #9:** All generators have Spanish messages (Chilean locale) ✅
+- [x] **AC #10:** Minimum data requirements enforced per generator ✅
 
 ---
 
@@ -494,34 +494,73 @@ This story implements **pattern detection** - insights that require transaction 
 
 ## Definition of Done
 
-- [ ] All 10 acceptance criteria verified
-- [ ] 5 pattern detection generators implemented
-- [ ] Precomputed aggregates working
-- [ ] All generators have minimum data requirements
-- [ ] All messages in Spanish (Chilean locale)
-- [ ] Unit tests passing
-- [ ] Code review approved
+- [x] All 10 acceptance criteria verified ✅
+- [x] 5 pattern detection generators implemented ✅
+- [x] Precomputed aggregates working ✅
+- [x] All generators have minimum data requirements ✅
+- [x] All messages in Spanish (Chilean locale) ✅
+- [x] Unit tests passing ✅ (2012 tests total, 103 in insightGenerators.test.ts)
+- [x] Code review approved ✅
 
 ---
 
 ## Dev Agent Record
 
 ### Agent Model Used
-<!-- Will be populated during dev-story execution -->
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes
-<!-- Will be populated during dev-story execution -->
+**Date:** 2025-12-18
+
+Implemented all 5 pattern detection insight generators following the existing InsightGenerator interface pattern established in Story 10.3. All generators use Spanish (Chilean locale) messages and enforce minimum data requirements:
+
+1. **merchant_frequency** - Tracks repeat merchant visits (2+ required)
+2. **category_trend** - Compares spending vs previous month (5+ transactions required)
+3. **day_pattern** - Detects favorite shopping day (3+ same weekday required)
+4. **spending_velocity** - Weekly spending comparison (1 week data required)
+5. **time_pattern** - Detects consistent shopping time (3+ same hour range required)
+
+**Key Implementation Decisions:**
+- Used `parseLocalDate()` helper to avoid timezone issues with date parsing
+- Added `parseHour()` reuse from Story 10.3 for safe time handling
+- Spanish helpers: `getOrdinalSpanish()`, `getDayNameSpanish()`, `getTimeOfDaySpanish()`
+- Precomputed aggregates with fallback to manual computation
+- Priority capped at 8 for all generators to prevent runaway values
 
 ### Files Modified
-<!-- Will be populated during dev-story execution -->
+- `src/utils/insightGenerators.ts` - Added 5 pattern detection generators + helper functions
+- `src/services/insightEngineService.ts` - Added precomputed aggregates functions
+- `tests/unit/utils/insightGenerators.test.ts` - Added 47 new tests for pattern generators
+- `tests/unit/services/insightEngineService.test.ts` - Added 12 tests for aggregates
 
 ### Test Results
-<!-- Will be populated during dev-story execution -->
+```
+Test Files: 71 passed (71)
+Tests: 2012 passed (2012)
+- insightGenerators.test.ts: 103 tests (47 new pattern detection tests)
+- insightEngineService.test.ts: 59 tests (12 new aggregate tests)
+```
+
+TypeScript type-check: ✅ Pass
 
 ---
 
 ## Review Notes
-<!-- Will be populated during code review -->
+
+### Atlas-Enhanced Code Review (2025-12-18)
+
+**Reviewer:** Atlas Code Review Workflow
+**Result:** APPROVED with notes
+
+**Issues Found & Resolved:**
+1. ✅ Test count documentation corrected (was 1196, actual 2012)
+2. ✅ merchant_frequency message clarified (changed "este mes" to "en total")
+3. ✅ category_trend priority rounded to integer
+4. ✅ Atlas Section 4 updated to reflect Story 10.4 completion
+
+**Architecture Compliance:** ✅ Follows InsightGenerator pattern (Atlas Section 4)
+**Pattern Compliance:** ✅ Tests follow established patterns (Atlas Section 5)
+**Workflow Impact:** None - extends existing flows without breaking changes
 
 ---
 
