@@ -1,0 +1,87 @@
+# Atlas-Enhanced E2E Test Generation and Execution Workflow
+name: atlas-e2e
+description: "Generate and execute persona-driven E2E tests for a story. Uses Atlas knowledge of user workflows, personas, and acceptance criteria to create tests that simulate real user behavior, not just functional verification."
+author: "BMad"
+
+# Critical variables from config
+config_source: "{project-root}/_bmad/bmm/config.yaml"
+output_folder: "{config_source}:output_folder"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+user_skill_level: "{config_source}:user_skill_level"
+document_output_language: "{config_source}:document_output_language"
+date: system-generated
+sprint_artifacts: "{config_source}:sprint_artifacts"
+sprint_status: "{sprint_artifacts}/sprint-status.yaml || {output_folder}/sprint-status.yaml"
+
+# Workflow components
+installed_path: "{project-root}/_bmad/bmm/workflows/4-implementation/atlas-e2e"
+instructions: "{installed_path}/instructions.xml"
+template: false
+
+# Atlas Integration Configuration
+atlas_enabled: true
+atlas_agent: "{project-root}/_bmad/agents/atlas/atlas.agent.yaml"
+atlas_memory: "{project-root}/_bmad/agents/atlas/atlas-sidecar/atlas-memory.md"
+atlas_instructions: "{project-root}/_bmad/agents/atlas/atlas-sidecar/instructions.md"
+
+# Atlas-specific features enabled for this workflow
+atlas_features:
+  persona_analysis: true           # Use Section 3 personas for realistic test scenarios
+  workflow_chain_testing: true     # Test complete user workflows, not isolated features
+  ac_to_test_mapping: true         # Map acceptance criteria to test cases
+  behavioral_testing: true         # Test user behavior patterns, not just functions
+  memory_feeding: true             # Capture new test patterns for future reference
+
+# Testing framework configuration
+testing:
+  framework: "playwright"                    # Primary E2E framework
+  test_directory: "tests/e2e"               # Where to create/update tests
+  fixtures_directory: "tests/fixtures"       # Test data fixtures location
+  config_file: "playwright.config.ts"       # Framework config
+  run_command: "npx playwright test"        # Command to execute tests
+  supported_browsers: ["chromium", "firefox", "webkit"]
+  default_browser: "chromium"
+
+variables:
+  # Project context
+  project_context: "**/project-context.md"
+  story_dir: "{sprint_artifacts}"
+
+# Smart input file references
+input_file_patterns:
+  architecture:
+    description: "System architecture for test context"
+    whole: "{output_folder}/*architecture*.md"
+    sharded: "{output_folder}/*architecture*/*.md"
+    load_strategy: "FULL_LOAD"
+  ux_design:
+    description: "UX design for user flow understanding"
+    whole: "{output_folder}/*ux*.md"
+    sharded: "{output_folder}/*ux*/*.md"
+    load_strategy: "FULL_LOAD"
+  prd:
+    description: "PRD for feature intent understanding"
+    whole: "{output_folder}/*prd*.md"
+    sharded: "{output_folder}/*prd*/*.md"
+    load_strategy: "FULL_LOAD"
+  epics:
+    description: "Epic containing story being tested"
+    whole: "{output_folder}/*epic*.md"
+    sharded_index: "{output_folder}/*epic*/index.md"
+    sharded_single: "{output_folder}/*epic*/epic-{{epic_num}}.md"
+    load_strategy: "SELECTIVE_LOAD"
+  atlas_memory:
+    description: "Atlas accumulated project knowledge"
+    whole: "{project-root}/_bmad/agents/atlas/atlas-sidecar/atlas-memory.md"
+    load_strategy: "FULL_LOAD"
+  existing_tests:
+    description: "Existing E2E tests for pattern reference"
+    pattern: "tests/e2e/*.spec.ts"
+    load_strategy: "SAMPLE_LOAD"
+  test_fixtures:
+    description: "Existing test fixtures for data reference"
+    pattern: "tests/fixtures/*.ts"
+    load_strategy: "FULL_LOAD"
+
+standalone: true

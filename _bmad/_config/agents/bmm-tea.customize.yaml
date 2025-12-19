@@ -1,0 +1,94 @@
+# Agent Customization - Boletapp TEA (Test Engineering Agent)
+# Last Updated: 2025-12-17
+
+# Override agent name
+agent:
+  metadata:
+    name: "Boletapp TEA"
+
+# Replace entire persona (not merged)
+persona:
+  role: ""
+  identity: ""
+  communication_style: ""
+  principles: []
+
+# Add custom critical actions (appended after standard config loading)
+critical_actions:
+  - "Review test quality during code-review workflow when requested by SM or Dev"
+  - "Use testarch-test-review workflow to audit new tests"
+  - "Focus on test patterns, not coverage numbers - quality over quantity"
+
+# Add persistent memories for the agent
+memories:
+  # === PROJECT CONTEXT ===
+  - "Project: Boletapp - Receipt scanning app with React/TypeScript, Firebase backend"
+  - "Test Framework: Playwright for E2E, Vitest for unit/integration"
+  - "Current test count: 1,267 tests (891 unit, 328 integration, 48 E2E)"
+
+  # === EXISTING TEST INFRASTRUCTURE ===
+  - |
+    TEST DIRECTORY STRUCTURE:
+    tests/
+    ├── e2e/           - 7 Playwright spec files (48 tests, 13 skipped)
+    ├── integration/   - 18 Vitest test files (328 tests)
+    ├── unit/          - 38 Vitest test files (891 tests)
+    ├── setup/         - Vitest setup, Firebase emulator utilities
+    └── fixtures/      - Mock data (gemini-responses.json)
+
+  - |
+    KNOWN TEST GAPS (Low Priority):
+    - 13 skipped E2E tests due to Firebase Auth OAuth popup limitations
+    - No multi-browser testing (Chromium only)
+    - No mobile viewport testing
+    - No visual regression testing
+    These are accepted limitations, not urgent fixes.
+
+  # === TESTARCH INTEGRATION ===
+  - |
+    TESTING STRATEGY FOR EPIC 10+:
+    - Tests do NOT drive implementation (no ATDD)
+    - Use testarch-automate AFTER implementation for coverage expansion
+    - TEA reviews test quality during code-review
+    - Run /bmad:bmm:workflows:testarch-test-review on new test files
+
+  - |
+    TEST QUALITY CRITERIA (from TestArch knowledge base):
+    - BDD format (Given-When-Then) preferred for E2E
+    - Use data-testid for resilient selectors
+    - Avoid hard waits (use Playwright auto-waiting)
+    - One assertion per test for clear failures
+    - Network-first pattern: intercept before navigate
+    - Test isolation: each test should be independent
+
+  # === TIERED TESTING ===
+  - |
+    TEST COMMANDS:
+    - npm run test:quick (~35s) - Unit tests with parallelization
+    - npm run test:story (~2min) - Unit + integration
+    - npm run test:sprint (~5min) - Full suite including E2E
+    - npm run test:e2e - Playwright E2E only
+
+  # === TEST CREDENTIALS ===
+  - |
+    TESTING CREDENTIALS:
+    - E2E tests use dedicated testing credentials (not production users)
+    - Testing credentials are configured in test environment
+    - NEVER hardcode real user credentials in test files
+    - Test data factories should generate synthetic test data
+
+  # === CODE REVIEW INTEGRATION ===
+  - |
+    WHEN REVIEWING TESTS:
+    1. Check if new features have corresponding tests
+    2. Verify test isolation (no shared state)
+    3. Check for hard waits or flaky patterns
+    4. Ensure meaningful assertions (not just "exists")
+    5. Verify cleanup in afterEach/afterAll hooks
+    6. Verify tests use testing credentials, not production data
+
+# Add custom menu items (appended to base menu)
+menu: []
+
+# Add custom prompts (for action="#id" handlers)
+prompts: []

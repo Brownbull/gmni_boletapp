@@ -89,8 +89,47 @@ export async function getFCMToken(): Promise<string | null> {
       return null;
     }
 
-    // Wait for service worker to be ready
-    const registration = await navigator.serviceWorker.ready;
+    // Register the Firebase messaging service worker explicitly
+    // This is required because vite-plugin-pwa creates its own sw.js
+    // and navigator.serviceWorker.ready returns the PWA service worker, not the FCM one
+    let registration: ServiceWorkerRegistration;
+
+    try {
+      // Try to get existing FCM service worker registration
+      const existingRegistration = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+
+      if (existingRegistration) {
+        registration = existingRegistration;
+      } else {
+        // Register the FCM service worker if not already registered
+        registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+          scope: '/'
+        });
+        console.log('[FCM] Service worker registered:', registration.scope);
+      }
+
+      // Wait for the service worker to be active
+      if (registration.installing) {
+        await new Promise<void>((resolve) => {
+          registration.installing!.addEventListener('statechange', (e) => {
+            if ((e.target as ServiceWorker).state === 'activated') {
+              resolve();
+            }
+          });
+        });
+      } else if (registration.waiting) {
+        await new Promise<void>((resolve) => {
+          registration.waiting!.addEventListener('statechange', (e) => {
+            if ((e.target as ServiceWorker).state === 'activated') {
+              resolve();
+            }
+          });
+        });
+      }
+    } catch (swError) {
+      console.error('Failed to register FCM service worker:', swError);
+      return null;
+    }
 
     const token = await getToken(msg, {
       vapidKey,

@@ -1,234 +1,283 @@
-# Story 10.2: Scan Complete Insights
+# Story 10.2: Phase Detection & User Profile
 
 **Epic:** Epic 10 - Foundation + Engagement & Insight Engine
-**Status:** Draft
+**Status:** ready-for-dev
 **Story Points:** 3
-**Dependencies:** Story 10.1 (Insight Engine Core)
+**Dependencies:** Story 10.1 (InsightEngine Service Interface)
 
 ---
 
 ## User Story
 
 As a **user**,
-I want **to see a meaningful insight after every receipt scan**,
-So that **I immediately understand the context of my purchase**.
+I want **the app to understand my journey stage**,
+So that **I receive insights appropriate to my experience level**.
+
+---
+
+## Architecture Reference
+
+**Architecture Document:** [architecture-epic10-insight-engine.md](../../planning/architecture-epic10-insight-engine.md)
+**Key ADRs:** ADR-017 (Phase-Based Priority System)
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] **AC #1:** Contextual insight toast appears after every successful save
-- [ ] **AC #2:** Toast displays: insight message, emoji, total amount saved
-- [ ] **AC #3:** Toast auto-dismisses after 4 seconds
-- [ ] **AC #4:** User can tap toast to dismiss immediately
-- [ ] **AC #5:** User can tap "Ver más" to see insight details (optional expansion)
-- [ ] **AC #6:** Insight priority: new merchant → biggest purchase → repeat category → merchant total
-- [ ] **AC #7:** Graceful fallback to generic positive message if no insight available
-- [ ] **AC #8:** Toast respects `prefers-reduced-motion` for animations
-- [ ] **AC #9:** Toast meets WCAG 2.1 AA contrast requirements
+- [ ] **AC #1:** `calculateUserPhase()` correctly identifies WEEK_1 phase (0-7 days)
+- [ ] **AC #2:** `calculateUserPhase()` correctly identifies WEEKS_2_3 phase (8-21 days)
+- [ ] **AC #3:** `calculateUserPhase()` correctly identifies MATURE phase (22+ days)
+- [ ] **AC #4:** UserInsightProfile Firestore document created on first insight generation
+- [ ] **AC #5:** Profile tracks `firstTransactionDate` accurately
+- [ ] **AC #6:** Profile tracks `totalTransactions` count
+- [ ] **AC #7:** Profile stores `recentInsights` array (max 30 entries)
+- [ ] **AC #8:** Firestore security rules allow user to read/write own profile
+- [ ] **AC #9:** Phase calculation uses `firstTransactionDate`, not account creation
 
 ---
 
 ## Tasks / Subtasks
 
-### Task 1: Create Scan Complete Toast Component (1.5h)
-- [ ] Create `src/components/ScanCompleteToast.tsx`
-- [ ] Design toast layout:
-  ```
-  ┌─────────────────────────────────────────┐
-  │  ✓ Guardado                      $24.990│
-  │                                         │
-  │  🔄 3ra boleta de Restaurante esta sem. │
-  │                                         │
-  │     [Ver más]              [Cerrar]     │
-  └─────────────────────────────────────────┘
-  ```
-- [ ] Use Tailwind for styling (match existing design system)
-- [ ] Support dark mode
-- [ ] Add enter/exit animations (fade + slide up)
+### Task 1: Implement Phase Calculation (0.5h)
 
-### Task 2: Implement Toast State Management (0.5h)
-- [ ] Add toast state to appropriate context (or create ToastContext)
-- [ ] Create `useInsightToast` hook:
-  ```typescript
-  const { showToast, hideToast, isVisible, toastData } = useInsightToast();
-  ```
-- [ ] Auto-dismiss timer (4 seconds default, configurable)
-- [ ] Cancel timer on manual dismiss
+In `src/services/insightEngineService.ts`:
 
-### Task 3: Integrate Insight Engine with Scan Save Flow (1h)
-- [ ] Hook into `handleSave` in scan flow
-- [ ] After successful save:
-  1. Generate insight using InsightEngine
-  2. Show toast with insight
-  3. Log insight shown for analytics
-- [ ] Pass transaction and history context to InsightEngine
+```typescript
+import { Timestamp } from 'firebase/firestore';
+import { UserInsightProfile, UserPhase } from '../types/insight';
 
-### Task 4: Implement Insight Priority Logic (0.5h)
-- [ ] Priority order for Scan Complete context:
-  1. **New merchant** (first time scanning this merchant)
-  2. **Biggest purchase** (largest this week, min 3 purchases)
-  3. **Repeat category** (same category multiple times today)
-  4. **Merchant total** (running total at this merchant this month)
-  5. **Fallback** generic: "Guardado en {category}"
-- [ ] Implement `getScanCompleteInsight(transaction, history)`
+/**
+ * Calculates user phase based on days since first transaction.
+ *
+ * Phase definitions (from ADR-017):
+ * - WEEK_1: 0-7 days → 100% Quirky insights
+ * - WEEKS_2_3: 8-21 days → 66% Celebratory / 33% Actionable
+ * - MATURE: 22+ days → Weekday/weekend differentiation
+ */
+export function calculateUserPhase(profile: UserInsightProfile): UserPhase {
+  if (!profile.firstTransactionDate) {
+    return 'WEEK_1'; // New user
+  }
 
-### Task 5: Create "Ver más" Expansion (Optional) (0.5h)
-- [ ] When user taps "Ver más":
-  - Show additional context (e.g., trend chart snippet)
-  - Or navigate to Analytics with relevant filter
-- [ ] Keep expansion simple for MVP
-- [ ] Can be enhanced in future iterations
+  const now = new Date();
+  const firstDate = profile.firstTransactionDate.toDate();
+  const daysSinceFirst = Math.floor(
+    (now.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24)
+  );
 
-### Task 6: Add Fallback Generic Messages (0.5h)
-- [ ] Create fallback messages when no specific insight available:
-  ```typescript
-  const fallbackMessages = [
-    { message: 'Guardado en {category}', emoji: '✓' },
-    { message: 'Boleta guardada exitosamente', emoji: '✓' },
-    { message: '{category} actualizado', emoji: '📊' }
-  ];
-  ```
-- [ ] Rotate fallback messages for variety
-- [ ] Ensure always positive/neutral tone
+  if (daysSinceFirst <= 7) {
+    return 'WEEK_1';
+  }
+  if (daysSinceFirst <= 21) {
+    return 'WEEKS_2_3';
+  }
+  return 'MATURE';
+}
+```
 
-### Task 7: Accessibility Implementation (0.5h)
-- [ ] Add `role="alert"` for screen reader announcement
-- [ ] Ensure contrast ratio >= 4.5:1 (AA)
-- [ ] Support keyboard dismiss (Escape key)
-- [ ] Respect `prefers-reduced-motion`:
-  - Reduced motion: Instant appear/disappear
-  - Normal: Animated transitions
+### Task 2: Implement Profile Firestore Operations (1h)
 
-### Task 8: Testing (0.5h)
-- [ ] Unit tests for ScanCompleteToast component
-- [ ] Unit tests for insight priority logic
-- [ ] Integration test for full scan → save → toast flow
-- [ ] Accessibility audit with axe
+Create `src/services/insightProfileService.ts`:
+
+```typescript
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  serverTimestamp,
+  Firestore,
+  arrayUnion,
+  Timestamp
+} from 'firebase/firestore';
+import { UserInsightProfile, InsightRecord } from '../types/insight';
+
+const PROFILE_COLLECTION = 'artifacts';
+
+/**
+ * Gets the user's insight profile, creating one if it doesn't exist.
+ */
+export async function getOrCreateInsightProfile(
+  db: Firestore,
+  userId: string,
+  appId: string
+): Promise<UserInsightProfile> {
+  const profileRef = doc(db, PROFILE_COLLECTION, appId, 'users', userId, 'insightProfile', 'profile');
+  const snapshot = await getDoc(profileRef);
+
+  if (snapshot.exists()) {
+    return snapshot.data() as UserInsightProfile;
+  }
+
+  // Create new profile
+  const newProfile: UserInsightProfile = {
+    schemaVersion: 1,
+    firstTransactionDate: serverTimestamp() as unknown as Timestamp,
+    totalTransactions: 0,
+    recentInsights: [],
+  };
+
+  await setDoc(profileRef, newProfile);
+  return newProfile;
+}
+
+/**
+ * Records that an insight was shown to the user.
+ */
+export async function recordInsightShown(
+  db: Firestore,
+  userId: string,
+  appId: string,
+  insightId: string,
+  transactionId?: string
+): Promise<void> {
+  const profileRef = doc(db, PROFILE_COLLECTION, appId, 'users', userId, 'insightProfile', 'profile');
+
+  const record: InsightRecord = {
+    insightId,
+    shownAt: Timestamp.now(),
+    transactionId,
+  };
+
+  await updateDoc(profileRef, {
+    recentInsights: arrayUnion(record),
+    totalTransactions: increment(1),
+  });
+
+  // Trim recentInsights to max 30 (done in a follow-up if needed)
+}
+
+/**
+ * Updates the first transaction date if this is the user's first transaction.
+ */
+export async function ensureFirstTransactionDate(
+  db: Firestore,
+  userId: string,
+  appId: string,
+  transactionDate: Date
+): Promise<void> {
+  const profile = await getOrCreateInsightProfile(db, userId, appId);
+
+  if (!profile.firstTransactionDate) {
+    const profileRef = doc(db, PROFILE_COLLECTION, appId, 'users', userId, 'insightProfile', 'profile');
+    await updateDoc(profileRef, {
+      firstTransactionDate: Timestamp.fromDate(transactionDate),
+    });
+  }
+}
+```
+
+### Task 3: Add Firestore Security Rules (0.5h)
+
+Add to `firestore.rules`:
+
+```
+// Insight Profile rules
+match /artifacts/{appId}/users/{userId}/insightProfile/{docId} {
+  allow read, write: if request.auth != null && request.auth.uid == userId;
+}
+```
+
+### Task 4: Unit Tests for Phase Calculation (1h)
+
+Create `tests/unit/services/insightEngineService.phase.test.ts`:
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { calculateUserPhase } from '../../../src/services/insightEngineService';
+import { UserInsightProfile } from '../../../src/types/insight';
+import { Timestamp } from 'firebase/firestore';
+
+describe('calculateUserPhase', () => {
+  const createProfile = (daysAgo: number): UserInsightProfile => ({
+    schemaVersion: 1,
+    firstTransactionDate: Timestamp.fromDate(
+      new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000)
+    ),
+    totalTransactions: 10,
+    recentInsights: [],
+  });
+
+  it('returns WEEK_1 for new user (no firstTransactionDate)', () => {
+    const profile: UserInsightProfile = {
+      schemaVersion: 1,
+      firstTransactionDate: null as any,
+      totalTransactions: 0,
+      recentInsights: [],
+    };
+    expect(calculateUserPhase(profile)).toBe('WEEK_1');
+  });
+
+  it('returns WEEK_1 for user with first transaction today', () => {
+    expect(calculateUserPhase(createProfile(0))).toBe('WEEK_1');
+  });
+
+  it('returns WEEK_1 for user with first transaction 7 days ago', () => {
+    expect(calculateUserPhase(createProfile(7))).toBe('WEEK_1');
+  });
+
+  it('returns WEEKS_2_3 for user with first transaction 8 days ago', () => {
+    expect(calculateUserPhase(createProfile(8))).toBe('WEEKS_2_3');
+  });
+
+  it('returns WEEKS_2_3 for user with first transaction 21 days ago', () => {
+    expect(calculateUserPhase(createProfile(21))).toBe('WEEKS_2_3');
+  });
+
+  it('returns MATURE for user with first transaction 22 days ago', () => {
+    expect(calculateUserPhase(createProfile(22))).toBe('MATURE');
+  });
+
+  it('returns MATURE for user with first transaction 100 days ago', () => {
+    expect(calculateUserPhase(createProfile(100))).toBe('MATURE');
+  });
+});
+```
 
 ---
 
 ## Technical Summary
 
-This story implements the "Variable Reward" component of the habit loop - the scan complete insight toast that appears after every successful save. The insight provides immediate, contextual feedback that makes expense tracking feel meaningful.
+This story implements **phase detection** - the foundation of the phase-based priority system (ADR-017). The user's phase determines which type of insights they receive.
 
-**Key Design Decisions:**
-1. **Always show something:** Never leave the user with just "Saved" - always provide context
-2. **Prioritize relevance:** New merchant insights are most interesting (novelty)
-3. **Time-boxed:** Auto-dismiss after 4s to not block workflow
-4. **Accessible:** Screen reader friendly, respects motion preferences
+**Phase Purpose:**
+| Phase | Duration | Insight Focus |
+|-------|----------|---------------|
+| WEEK_1 | Days 0-7 | Delight and engagement (100% Quirky) |
+| WEEKS_2_3 | Days 8-21 | Build trust (66% Celebratory) |
+| MATURE | Day 22+ | Provide value (Actionable insights) |
 
-**Toast Lifecycle:**
-```
-Save Receipt → Generate Insight (InsightEngine) → Show Toast →
-Auto-dismiss (4s) OR User tap dismiss → Log analytics
-```
+**Key Design Decision:**
+Phase is calculated from `firstTransactionDate`, NOT account creation date. This means:
+- User creates account Day 1
+- User scans first receipt Day 30
+- User is in WEEK_1 phase until Day 37
 
 ---
 
 ## Project Structure Notes
 
-- **Files to create:**
-  - `src/components/ScanCompleteToast.tsx`
-  - `src/components/ScanCompleteToast.test.tsx`
-  - `src/hooks/useInsightToast.ts` (or integrate with existing toast system)
+**Files to create:**
+- `src/services/insightProfileService.ts`
+- `tests/unit/services/insightEngineService.phase.test.ts`
 
-- **Files to modify:**
-  - `src/App.tsx` or relevant scan flow component
-  - `src/utils/translations.ts` - Add toast strings
+**Files to modify:**
+- `src/services/insightEngineService.ts` - Implement `calculateUserPhase()`
+- `firestore.rules` - Add insightProfile rules
 
-- **Expected test locations:**
-  - `tests/unit/components/ScanCompleteToast.test.tsx`
-
-- **Estimated effort:** 3 story points (~5 hours)
-- **Prerequisites:** Story 10.1 (Insight Engine Core)
-
----
-
-## Key Code References
-
-**From habits loops.md - Notification Logic:**
-```typescript
-// Priority order for Scan Complete insights
-const priorityOrder = [
-  'new_merchant',      // Priority 1: First time
-  'biggest_purchase',  // Priority 2: Largest this week
-  'repeat_category',   // Priority 3: Same day repeat
-  'merchant_total',    // Priority 4: Running total
-  'default'            // Priority 5: Generic fallback
-];
+**Firestore Document Path:**
 ```
-
-**Existing Toast Pattern (if any):**
-```typescript
-// Check existing toast implementation in codebase
-// Reuse pattern if available
+artifacts/{appId}/users/{userId}/insightProfile/profile
 ```
-
-**Insight Interface (from Story 10.1):**
-```typescript
-interface Insight {
-  type: InsightType;
-  message: string;
-  emoji: string;
-  confidence: number;
-  priority: number;
-}
-```
-
----
-
-## UI Specifications
-
-**Toast Dimensions:**
-- Width: 90% of screen (max 400px)
-- Position: Bottom of screen, 16px margin
-- Padding: 16px
-
-**Colors (Light Mode):**
-- Background: `bg-white` with shadow-lg
-- Text: `text-gray-900`
-- Amount: `text-green-600` (for saved amount)
-- Emoji: Native emoji
-
-**Colors (Dark Mode):**
-- Background: `bg-gray-800`
-- Text: `text-white`
-- Amount: `text-green-400`
-
-**Animation:**
-```css
-/* Enter */
-transform: translateY(100%);
-opacity: 0;
-→
-transform: translateY(0);
-opacity: 1;
-transition: 300ms ease-out;
-
-/* Exit */
-opacity: 0;
-transition: 200ms ease-in;
-```
-
----
-
-## Context References
-
-**Tech-Spec:** [tech-spec.md](../../tech-spec.md)
-**PRD:** [epic-10-prd.md](../../planning/epic-10-prd.md) - FR11-FR16
-**Research:** [habits loops.md](../../uxui/research/habits%20loops.md) - Section 1.1 Scan Complete Notification
 
 ---
 
 ## Definition of Done
 
 - [ ] All 9 acceptance criteria verified
-- [ ] Toast appears after every successful save
-- [ ] Auto-dismiss works correctly
-- [ ] Insight priority logic verified
-- [ ] Fallback messages work
-- [ ] Accessibility audit passed
+- [ ] Phase calculation tested for all edge cases
+- [ ] Firestore profile CRUD operations working
+- [ ] Security rules deployed and tested
 - [ ] Unit tests passing
 - [ ] Code review approved
 
@@ -259,4 +308,5 @@ transition: 200ms ease-in;
 
 | Date | Version | Description |
 |------|---------|-------------|
-| 2025-12-16 | 1.0 | Story drafted from Epic 10 PRD |
+| 2025-12-16 | 1.0 | Story drafted as "Scan Complete Insights" |
+| 2025-12-17 | 2.0 | **Retrofitted** - Renamed to "Phase Detection & User Profile" per architecture. Original scan complete UI moved to Story 10.6. |

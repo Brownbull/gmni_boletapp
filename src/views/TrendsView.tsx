@@ -17,10 +17,11 @@ import { TemporalBreadcrumb } from '../components/analytics/TemporalBreadcrumb';
 import { CategoryBreadcrumb } from '../components/analytics/CategoryBreadcrumb';
 import { ChartModeToggle } from '../components/analytics/ChartModeToggle';
 import { DrillDownModeToggle } from '../components/analytics/DrillDownModeToggle';
-import { DrillDownGrid } from '../components/analytics/DrillDownGrid';
+import { DrillDownGrid, type HistoryNavigationPayload } from '../components/analytics/DrillDownGrid';
 import { FloatingDownloadFab } from '../components/analytics/FloatingDownloadFab';
 import { useAnalyticsNavigation, getParentTemporalLevel } from '../hooks/useAnalyticsNavigation';
 import { getQuarterFromMonth } from '../utils/analyticsHelpers';
+import { computeBarDataFromTransactions, type TemporalPosition, type CategoryPosition } from '../utils/chartDataComputation';
 import { getColor } from '../utils/colors';
 import { formatCurrency } from '../utils/currency';
 import { downloadMonthlyTransactions, downloadYearlyStatistics } from '../utils/csvExport';
@@ -38,15 +39,7 @@ interface PieData {
     color: string;
 }
 
-interface BarData {
-    label: string;
-    total: number;
-    segments: Array<{
-        label: string;
-        value: number;
-        color: string;
-    }>;
-}
+// BarData type is now imported from chartDataComputation.ts
 
 export interface TrendsViewProps {
     /** All transactions from the user */
@@ -69,6 +62,11 @@ export interface TrendsViewProps {
     onExporting?: (value: boolean) => void;
     /** Callback for premium upgrade prompt */
     onUpgradeRequired?: () => void;
+    /**
+     * Story 9.20: Callback for navigating to History view with pre-applied filters.
+     * Called when user clicks the transaction count badge on a drill-down card.
+     */
+    onNavigateToHistory?: (payload: HistoryNavigationPayload) => void;
 }
 
 // ============================================================================
@@ -201,182 +199,6 @@ function computePieData(
         .sort((a, b) => b.value - a.value);
 }
 
-/**
- * Compute bar chart data from filtered transactions for comparison view.
- *
- * Grouping logic per UX spec - ALWAYS shows all slots for consistent layout:
- * - Year view: Always 4 bars (Q1, Q2, Q3, Q4) - empty bars for quarters without data
- * - Quarter view: Always 3 bars (months in quarter) - empty bars for months without data
- * - Month view: 4-5 bars (W1-W4 or W1-W5 depending on month) - empty bars for weeks without data
- * - Week view: Always 7 bars (Mon-Sun) - empty bars for days without data
- * - Day view: No comparison mode (returns empty)
- *
- * Segment logic (Story 7.18 extension):
- * - category.level='all': Segments by store category (tx.category)
- * - category.level='category': Segments by item group (item.category)
- * - category.level='group': Segments by subcategory (item.subcategory)
- * - category.level='subcategory': Single segment for the selected subcategory (Story 9.13)
- */
-function computeBarData(
-    transactions: Transaction[],
-    temporal: { level: string; year: string; quarter?: string; month?: string; week?: number; day?: string },
-    category: { level: string; category?: string; group?: string; subcategory?: string },
-    locale: string
-): BarData[] {
-    // Day view has no comparison
-    if (temporal.level === 'day') {
-        return [];
-    }
-
-    const barMap: Record<string, { total: number; segments: Record<string, number> }> = {};
-    const dayNames = locale === 'es'
-        ? ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-        : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-    // Aggregate transactions into barMap
-    transactions.forEach(tx => {
-        let key: string;
-
-        if (temporal.level === 'year') {
-            // Group by quarter (Q1-Q4)
-            const txMonth = tx.date.substring(0, 7); // YYYY-MM
-            key = getQuarterFromMonth(txMonth); // Returns Q1, Q2, Q3, Q4
-        } else if (temporal.level === 'quarter') {
-            // Group by month within quarter (3 months)
-            key = tx.date.substring(0, 7); // YYYY-MM
-        } else if (temporal.level === 'month') {
-            // Group by week (W1-W5)
-            const day = parseInt(tx.date.split('-')[2], 10);
-            const weekNum = Math.ceil(day / 7);
-            key = `W${weekNum}`;
-        } else if (temporal.level === 'week') {
-            // Group by day of week (Mon-Sun)
-            const date = new Date(tx.date + 'T12:00:00'); // Add time to avoid timezone issues
-            const dayOfWeek = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-            key = dayOfWeek.toString();
-        } else {
-            return;
-        }
-
-        if (!barMap[key]) {
-            barMap[key] = { total: 0, segments: {} };
-        }
-
-        // Determine segment key AND bar total based on category drill-down level (Story 7.18 extension)
-        // Total must match segment sum so bars scale correctly at each level
-        // Story 9.13: Added subcategory level handling (AC #2, #3)
-        if (category.level === 'all' || !category.category) {
-            // At store level: use full transaction total, segment by store category
-            barMap[key].total += tx.total;
-            const segmentKey = tx.category || 'Other';
-            barMap[key].segments[segmentKey] = (barMap[key].segments[segmentKey] || 0) + tx.total;
-        } else if (category.level === 'category' || !category.group) {
-            // At store category level: total = sum of item prices, segment by item groups
-            let txItemTotal = 0;
-            tx.items.forEach(item => {
-                const segmentKey = item.category || 'General';
-                barMap[key].segments[segmentKey] = (barMap[key].segments[segmentKey] || 0) + item.price;
-                txItemTotal += item.price;
-            });
-            barMap[key].total += txItemTotal;
-        } else if (category.level === 'group' || !category.subcategory) {
-            // At item group level: total = sum of filtered item prices, segment by subcategories
-            let groupTotal = 0;
-            tx.items
-                .filter(item => item.category === category.group)
-                .forEach(item => {
-                    const segmentKey = item.subcategory || 'Other';
-                    barMap[key].segments[segmentKey] = (barMap[key].segments[segmentKey] || 0) + item.price;
-                    groupTotal += item.price;
-                });
-            barMap[key].total += groupTotal;
-        } else {
-            // At subcategory level: total = sum of filtered item prices for that subcategory only
-            let subcategoryTotal = 0;
-            tx.items
-                .filter(item => item.category === category.group && item.subcategory === category.subcategory)
-                .forEach(item => {
-                    const segmentKey = item.subcategory || 'Other';
-                    barMap[key].segments[segmentKey] = (barMap[key].segments[segmentKey] || 0) + item.price;
-                    subcategoryTotal += item.price;
-                });
-            barMap[key].total += subcategoryTotal;
-        }
-    });
-
-    // Define ALL slots for each temporal level (always show fixed layout)
-    let allSlots: { key: string; label: string }[] = [];
-
-    if (temporal.level === 'year') {
-        // Always show 4 quarters
-        allSlots = [
-            { key: 'Q1', label: 'Q1' },
-            { key: 'Q2', label: 'Q2' },
-            { key: 'Q3', label: 'Q3' },
-            { key: 'Q4', label: 'Q4' },
-        ];
-    } else if (temporal.level === 'quarter') {
-        // Get the 3 months for the current quarter
-        const year = parseInt(temporal.year, 10);
-        const quarter = temporal.quarter || 'Q1';
-        const quarterMonthStart = { Q1: 1, Q2: 4, Q3: 7, Q4: 10 }[quarter] || 1;
-
-        allSlots = [0, 1, 2].map(offset => {
-            const monthNum = quarterMonthStart + offset;
-            const monthKey = `${year}-${monthNum.toString().padStart(2, '0')}`;
-            const date = new Date(year, monthNum - 1, 2);
-            const rawLabel = date.toLocaleString(locale === 'es' ? 'es-ES' : 'en-US', { month: 'short' });
-            // Capitalize first letter (e.g., "oct" → "Oct")
-            const label = rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
-            return { key: monthKey, label };
-        });
-    } else if (temporal.level === 'month') {
-        // Default to 4 weeks per UX mockup
-        // Only show week 5 if there's data in days 29-31
-        allSlots = [
-            { key: 'W1', label: 'W1' },
-            { key: 'W2', label: 'W2' },
-            { key: 'W3', label: 'W3' },
-            { key: 'W4', label: 'W4' },
-        ];
-
-        // Check if there's any data in week 5 (days 29+)
-        const hasWeek5Data = barMap['W5'] && barMap['W5'].total > 0;
-        if (hasWeek5Data) {
-            allSlots.push({ key: 'W5', label: 'W5' });
-        }
-    } else if (temporal.level === 'week') {
-        // Always show 7 days: Mon, Tue, Wed, Thu, Fri, Sat, Sun
-        // Keys are 0-6 (Sun=0), but we display Mon-Sun order
-        allSlots = [
-            { key: '1', label: dayNames[1] }, // Mon
-            { key: '2', label: dayNames[2] }, // Tue
-            { key: '3', label: dayNames[3] }, // Wed
-            { key: '4', label: dayNames[4] }, // Thu
-            { key: '5', label: dayNames[5] }, // Fri
-            { key: '6', label: dayNames[6] }, // Sat
-            { key: '0', label: dayNames[0] }, // Sun
-        ];
-    }
-
-    // Build result with all slots, using empty data where no transactions
-    return allSlots.map(slot => {
-        const data = barMap[slot.key];
-
-        if (data) {
-            const segments = Object.entries(data.segments).map(([segLabel, value]) => ({
-                label: segLabel,
-                value,
-                color: getColor(segLabel),
-            }));
-            return { label: slot.label, total: data.total, segments };
-        } else {
-            // Empty slot - no data for this period
-            return { label: slot.label, total: 0, segments: [] };
-        }
-    });
-}
-
 // ============================================================================
 // Component
 // ============================================================================
@@ -398,6 +220,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     exporting = false,
     onExporting,
     onUpgradeRequired,
+    onNavigateToHistory,
 }) => {
     // Get navigation state from context
     const { temporal, category, chartMode, temporalLevel, dispatch } = useAnalyticsNavigation();
@@ -431,7 +254,12 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     );
 
     const barData = useMemo(
-        () => computeBarData(filteredTransactions, temporal, category, locale),
+        () => computeBarDataFromTransactions(
+            filteredTransactions,
+            temporal as TemporalPosition,
+            category as CategoryPosition,
+            locale
+        ),
         [filteredTransactions, temporal, category, locale, colorTheme] // colorTheme triggers re-render for new colors
     );
 
@@ -665,11 +493,13 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
             <DrillDownModeToggle theme={theme} locale={locale as 'en' | 'es'} />
 
             {/* Drill-down Cards Grid (AC #1, #2, #5-13) */}
+            {/* Story 9.20: Pass onNavigateToHistory to enable badge navigation (AC #3) */}
             <DrillDownGrid
                 transactions={filteredTransactions}
                 theme={theme}
                 locale={locale}
                 currency={currency}
+                onNavigateToHistory={onNavigateToHistory}
             />
 
             {/* Transaction list at subcategory level */}
@@ -711,5 +541,8 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
         </div>
     );
 };
+
+// Story 9.20: Re-export HistoryNavigationPayload for App.tsx
+export type { HistoryNavigationPayload } from '../components/analytics/DrillDownGrid';
 
 export default TrendsView;

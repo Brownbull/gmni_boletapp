@@ -13,26 +13,64 @@ Thank you for your interest in contributing to Boletapp! This document provides 
 
 ### Branch Strategy
 
-We use a three-branch model:
-- `main` - Production code (strictest protection)
-- `staging` - QA/UAT testing
-- `develop` - Active development
+We use a **2-branch workflow** for simplicity and reduced merge conflicts:
 
-All work should be done in feature branches created from `develop`:
+| Branch | Purpose | Lifetime |
+|--------|---------|----------|
+| `main` | Production-ready code, always deployable | Permanent |
+| `feature/*` | New features, bug fixes, epic work | Temporary (delete after merge) |
+
+**Branch Naming Convention:**
+```
+feature/epic{N}-{short-description}
+```
+
+**Examples:**
+- `feature/epic10-insight-engine`
+- `feature/epic10-foundation-refactor`
+- `feature/fix-bundle-size`
+
+All work should be done in feature branches created from `main`:
 ```bash
-git checkout develop
-git pull origin develop
-git checkout -b feature/your-feature-name
+# Always start from latest main
+git checkout main
+git pull origin main
+
+# Create feature branch
+git checkout -b feature/epic10-my-feature
 ```
 
 ### Pull Request Process
 
-1. Create your feature branch from `develop`
+1. Create your feature branch from `main` (always pull latest first!)
 2. Write tests for any new functionality
-3. Ensure all tests pass locally
-4. Push your branch and create a PR against `develop`
+3. Ensure all tests pass locally: `npm run test:all`
+4. Push your branch and create a PR against `main`
 5. Wait for CI checks to pass
 6. Request review from maintainers
+7. **Squash and merge** after approval
+8. **Delete feature branch** immediately after merge
+
+### Branch Cleanup (IMPORTANT)
+
+After every merged PR:
+- [ ] Feature branch deleted on GitHub (auto or manual)
+- [ ] Local feature branch deleted: `git branch -d feature/...`
+- [ ] Local main updated: `git checkout main && git pull`
+- [ ] No stale branches remain: `git branch` shows only `main`
+
+**Cleaning up stale branches:**
+```bash
+# Delete merged local branch
+git branch -d feature/old-branch
+
+# Prune remote-tracking branches
+git fetch --prune
+```
+
+### Future: 3-Branch Strategy
+
+When a staging environment is available, we may adopt `feature/* → develop → main`. This is **deferred** until staging infrastructure exists.
 
 ## Test Coverage Requirements
 
@@ -253,7 +291,7 @@ Use clear, descriptive commit messages:
 - [Testing Guide](docs/testing/testing-guide.md) - Detailed testing patterns and best practices
 - [Test Environment](docs/testing/test-environment.md) - Test user and fixture management
 - [Architecture](docs/architecture/architecture.md) - System architecture documentation
-- [Branching Strategy](docs/branching-strategy.md) - Branch workflow details
+- [Epic Roadmap](docs/planning/epics.md) - Full epic definitions and roadmap
 
 ## Questions?
 
@@ -264,5 +302,5 @@ If you have questions or need help:
 
 ---
 
-**Version:** 1.3
-**Last Updated:** 2025-11-27 (Story 4.4 - Security Documentation complete)
+**Version:** 1.4
+**Last Updated:** 2025-12-16 (Epic 9 Retrospective - Updated to 2-branch workflow)

@@ -1,0 +1,49 @@
+name: Docs Only
+
+# This workflow runs ONLY for docs-only changes (inverse of test.yml paths)
+# It provides a passing "test" status to satisfy branch protection when CI is skipped
+
+on:
+  push:
+    branches: [main, staging, develop]
+    paths:
+      - 'docs/**'
+      - '*.md'
+      - '!docs/team-standards.md'  # team-standards.md should trigger full CI
+      - '.claude/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.vscode/**'
+  pull_request:
+    branches: [main, staging, develop]
+    paths:
+      - 'docs/**'
+      - '*.md'
+      - '!docs/team-standards.md'
+      - '.claude/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.vscode/**'
+
+jobs:
+  # Provide the same "test" job name that branch protection requires
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip CI for docs-only changes
+        run: |
+          echo "=============================================="
+          echo "  Docs-only change detected - CI skipped"
+          echo "=============================================="
+          echo ""
+          echo "This commit only modifies documentation files."
+          echo "Full test suite not required."
+          echo ""
+          echo "Files that trigger this workflow:"
+          echo "  - docs/**"
+          echo "  - *.md (except docs/team-standards.md)"
+          echo "  - .claude/**"
+          echo "  - LICENSE, .gitignore, .vscode/**"
+          echo ""
+          echo "Status: PASSED (no code changes)"

@@ -1,0 +1,346 @@
+<workflow>
+  <critical>The workflow execution engine is governed by: {project-root}/_bmad/core/tasks/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language}</critical>
+  <critical>This workflow deploys a completed story through the full branch pipeline with Atlas validation</critical>
+  <critical>NEVER skip safety confirmations - each merge step requires explicit approval</critical>
+
+  <!-- ATLAS INTEGRATION -->
+  <atlas-integration>
+    This workflow enhances standard deploy-story with:
+    - **Deployment Pattern Validation**: Check against documented deployment strategies
+    - **Infrastructure Pattern Check**: Validate against architecture deployment decisions
+    - **Historical Lesson Consultation**: Learn from past deployment issues
+    - **Memory Feeding**: Capture deployment outcomes for future reference
+  </atlas-integration>
+
+  <step n="0" goal="Atlas initialization - Load deployment context">
+    <action>Check if {atlas_index} exists</action>
+
+    <check if="{atlas_index} exists">
+      <action>Load {atlas_index} to identify relevant fragments</action>
+      <action>Load {atlas_knowledge}/07-process.md for deployment patterns</action>
+      <action>Load {atlas_knowledge}/04-architecture.md for infrastructure patterns (if exists)</action>
+      <action>Load {atlas_knowledge}/06-lessons.md for past deployment issues (if exists)</action>
+      <action>Set {{atlas_enabled}} = true</action>
+
+      <output>**Atlas Knowledge Loaded for Deployment**
+        - Deployment patterns: {{deployment_pattern_count}} documented
+        - Infrastructure patterns: {{infra_pattern_count}} tracked
+        - Historical deployment lessons: {{lesson_count}} available
+      </output>
+    </check>
+
+    <check if="{atlas_index} does NOT exist">
+      <output>Atlas not configured - proceeding with standard deploy-story</output>
+      <action>Set {{atlas_enabled}} = false</action>
+    </check>
+  </step>
+
+  <step n="1" goal="Verify story is ready for deployment">
+    <action>If {{story_path}} not provided, ask user which story to deploy</action>
+    <action>Read COMPLETE story file</action>
+    <action>Extract {{story_key}} from filename</action>
+    <action>Extract story Status field</action>
+
+    <check if="story status != 'done'">
+      <output>**DEPLOYMENT BLOCKED**
+
+        Story status is "{{story_status}}" - must be "done" to deploy.
+
+        Run `code-review` first to complete the story.</output>
+      <action>EXIT workflow</action>
+    </check>
+
+    <action>Run `git status --porcelain` to check for uncommitted changes</action>
+    <check if="uncommitted changes exist">
+      <output>**WARNING: Uncommitted Changes Detected**
+
+        Please commit or stash changes before deployment.</output>
+      <ask>Commit changes now? [Y/N]</ask>
+      <check if="user says Y">
+        <action>Run `git add .`</action>
+        <action>Run `git commit -m "chore: pre-deployment cleanup for {{story_key}}"`</action>
+      </check>
+      <check if="user says N">
+        <output>Deployment cancelled. Commit changes and retry.</output>
+        <action>EXIT workflow</action>
+      </check>
+    </check>
+
+    <action>Detect current branch with `git branch --show-current`</action>
+    <action>Set {{current_branch}} = result</action>
+    <action>Determine if on feature branch, develop, or other</action>
+
+    <output>**Story Ready for Deployment**
+
+      **Story:** {{story_key}}
+      **Current Branch:** {{current_branch}}
+      **Status:** done
+
+      Deployment pipeline: {{current_branch}} -> develop -> staging -> main</output>
+  </step>
+
+  <step n="2" goal="Atlas pre-deployment validation" tag="atlas-validate">
+    <check if="{{atlas_enabled}} == true">
+      <output>**Atlas Pre-Deployment Validation**
+
+        Checking alignment with documented patterns...</output>
+
+      <!-- Atlas Deployment Pattern Check -->
+      <action>Search {{atlas_process}} for deployment patterns</action>
+      <action>Validate story changes against documented deployment checklist</action>
+
+      <check if="deployment pattern violations found">
+        <output>**Atlas Deployment Pattern Alert**
+
+          The following deployment concerns were identified:
+          {{pattern_violations}}
+
+          **Recommendations:**
+          {{atlas_recommendations}}</output>
+        <ask>Proceed with awareness [P], Address concerns [A], or Abort [X]?</ask>
+        <check if="user says X">
+          <action>EXIT workflow</action>
+        </check>
+      </check>
+
+      <!-- Atlas Historical Lesson Check -->
+      <action>Search {{atlas_lessons}} for past deployment issues with similar changes</action>
+      <check if="similar past issue found">
+        <output>**Atlas Historical Context**
+
+          Similar changes had deployment issues previously:
+          - **When:** {{past_issue_date}}
+          - **Issue:** {{past_issue_description}}
+          - **Resolution:** {{past_issue_resolution}}
+          - **Prevention:** {{prevention_notes}}
+
+          Consider these lessons before proceeding.</output>
+      </check>
+
+      <!-- Atlas Infrastructure Alignment -->
+      <action>Check implementation against documented infrastructure patterns</action>
+      <check if="infrastructure concerns found">
+        <output>**Atlas Infrastructure Alert**
+
+          Potential infrastructure concerns:
+          {{infra_concerns}}
+
+          Review before production deployment.</output>
+      </check>
+
+      <output>**Atlas Validation: PASSED**
+
+        Deployment patterns validated
+        Historical lessons reviewed
+        Infrastructure alignment: Confirmed</output>
+    </check>
+
+    <check if="{{atlas_enabled}} == false">
+      <output>Skipping Atlas validation (not configured)</output>
+    </check>
+  </step>
+
+  <step n="3" goal="Merge to develop branch">
+    <action>Run `git fetch origin`</action>
+
+    <check if="{{current_branch}} != 'develop'">
+      <output>**Step 1/3: Merge to develop**
+
+        Merging {{current_branch}} -> develop
+
+        This integrates your feature into the development branch.</output>
+
+      <ask>Proceed with merge to develop? [Y/N]</ask>
+      <check if="user says N">
+        <output>Deployment paused. Resume when ready.</output>
+        <action>EXIT workflow</action>
+      </check>
+
+      <action>Run `git checkout develop`</action>
+      <action>Run `git pull origin develop`</action>
+      <action>Run `git merge {{current_branch}} --no-ff -m "Merge {{current_branch}}: {{story_key}}"`</action>
+
+      <check if="merge conflict">
+        <output>**MERGE CONFLICT DETECTED**
+
+          Resolve conflicts manually and re-run deploy-story.</output>
+        <action>EXIT workflow</action>
+      </check>
+
+      <action>Run `git push origin develop`</action>
+
+      <output>**Merged to develop**
+
+        Waiting for deployment...</output>
+
+      <action>Wait 30 seconds for deployment trigger</action>
+      <ask>Verify develop deployment is working. Continue? [Y/N]</ask>
+      <check if="user says N">
+        <output>Deployment paused at develop. Investigate and resume when ready.</output>
+        <action>EXIT workflow</action>
+      </check>
+    </check>
+
+    <check if="{{current_branch}} == 'develop'">
+      <output>Already on develop branch. Skipping feature merge.</output>
+    </check>
+  </step>
+
+  <step n="4" goal="Promote to staging branch">
+    <output>**Step 2/3: Promote to staging**
+
+      Merging develop -> staging
+
+      This deploys to the pre-production environment for final verification.</output>
+
+    <ask>Proceed with promotion to staging? [Y/N]</ask>
+    <check if="user says N">
+      <output>Deployment paused at develop. Story is integrated but not in staging/production.</output>
+      <action>Set {{final_environment}} = "develop"</action>
+      <action>GOTO step 6</action>
+    </check>
+
+    <action>Run `git checkout staging`</action>
+    <action>Run `git pull origin staging`</action>
+    <action>Run `git merge develop --no-ff -m "Promote develop to staging: {{story_key}}"`</action>
+
+    <check if="merge conflict">
+      <output>**MERGE CONFLICT DETECTED**
+
+        Resolve conflicts manually and re-run deploy-story.</output>
+      <action>EXIT workflow</action>
+    </check>
+
+    <action>Run `git push origin staging`</action>
+
+    <output>**Promoted to staging**
+
+      Waiting for deployment...</output>
+
+    <action>Wait 30 seconds for deployment trigger</action>
+    <ask>Verify staging deployment is working. Continue to production? [Y/N]</ask>
+    <check if="user says N">
+      <output>Deployment paused at staging. Story is in pre-production but not live.</output>
+      <action>Set {{final_environment}} = "staging"</action>
+      <action>GOTO step 6</action>
+    </check>
+  </step>
+
+  <step n="5" goal="Deploy to production">
+    <output>**Step 3/3: Deploy to production**
+
+      Merging staging -> main
+
+      This deploys to PRODUCTION</output>
+
+    <ask>**FINAL CONFIRMATION**: Deploy to production? [Y/N]</ask>
+    <check if="user says N">
+      <output>Deployment paused at staging. Story is in pre-production but not live.</output>
+      <action>Set {{final_environment}} = "staging"</action>
+      <action>GOTO step 6</action>
+    </check>
+
+    <action>Run `git checkout main`</action>
+    <action>Run `git pull origin main`</action>
+    <action>Run `git merge staging --no-ff -m "Release to production: {{story_key}}"`</action>
+
+    <check if="merge conflict">
+      <output>**MERGE CONFLICT DETECTED**
+
+        Resolve conflicts manually and re-run deploy-story.</output>
+      <action>EXIT workflow</action>
+    </check>
+
+    <action>Run `git push origin main`</action>
+    <action>Set {{final_environment}} = "production"</action>
+
+    <output>**Deployed to production**
+
+      Verifying deployment...</output>
+
+    <action>Wait 60 seconds for production deployment</action>
+  </step>
+
+  <step n="6" goal="Clean up feature branch">
+    <check if="{{current_branch}} starts with 'feature/' OR {{current_branch}} contains story key">
+      <output>**Feature Branch Cleanup**
+
+        Branch: {{current_branch}}</output>
+
+      <ask>Delete feature branch {{current_branch}}? [Y/N]</ask>
+      <check if="user says Y">
+        <action>Run `git checkout develop`</action>
+        <action>Run `git branch -d {{current_branch}}`</action>
+        <action>Run `git push origin --delete {{current_branch}}`</action>
+        <output>Feature branch deleted: {{current_branch}}</output>
+      </check>
+      <check if="user says N">
+        <output>Feature branch retained: {{current_branch}}</output>
+      </check>
+    </check>
+
+    <check if="{{current_branch}} == 'develop' OR {{current_branch}} == 'staging' OR {{current_branch}} == 'main'">
+      <output>No feature branch to clean up (was working directly on {{current_branch}}).</output>
+    </check>
+  </step>
+
+  <step n="7" goal="Atlas Memory Feeding - Capture Deployment Lessons" tag="atlas-feed">
+    <check if="{{atlas_enabled}} == true">
+      <action>Prepare deployment knowledge nugget for Atlas memory</action>
+
+      <output>**Atlas Memory Update**
+
+        Preparing to feed deployment lessons to Atlas:
+
+        **Story:** {{story_key}}
+        **Final Environment:** {{final_environment}}
+        **Deployment Path:** {{current_branch}} -> develop -> staging -> main
+        **Issues Encountered:** {{deployment_issues_if_any}}
+        **Key Observations:**
+        {{deployment_observations}}
+
+        Would you like to capture this deployment in Atlas memory?</output>
+
+      <ask>Update Atlas memory? [Y/N]</ask>
+
+      <check if="user confirms">
+        <action>Update {atlas_knowledge}/07-process.md with deployment entry</action>
+        <action>Update {atlas_knowledge}/09-sync-history.md with sync entry</action>
+        <output>Atlas memory updated with deployment knowledge</output>
+      </check>
+    </check>
+
+    <!-- Update sprint status -->
+    <check if="{sprint_status} file exists">
+      <action>Load {sprint_status}</action>
+      <action>Update development_status[{{story_key}}] = "deployed"</action>
+      <action>Save file preserving structure</action>
+      <output>Sprint status updated: {{story_key}} -> deployed ({{final_environment}})</output>
+    </check>
+  </step>
+
+  <step n="8" goal="Deployment summary">
+    <output>**DEPLOYMENT COMPLETE**
+
+      **Story:** {{story_key}}
+      **Final Environment:** {{final_environment}}
+
+      **Pipeline Executed:**
+      - Story status verified (done)
+      {{#if atlas_enabled}}- Atlas pre-deployment validation{{/if}}
+      - Merged to develop
+      {{#if final_environment in ['staging', 'production']}}- Promoted to staging{{else}}- Staging skipped{{/if}}
+      {{#if final_environment == 'production'}}- Deployed to production{{else}}- Production skipped{{/if}}
+      {{#if branch_deleted}}- Feature branch deleted{{else}}- Feature branch retained{{/if}}
+      {{#if atlas_enabled}}- Atlas memory updated{{/if}}
+      - Sprint status synced
+
+      **Next Steps:**
+      - Verify production functionality
+      - Run `atlas-sprint-status` to see sprint progress
+      - Continue with next story via `atlas-create-story`</output>
+  </step>
+
+</workflow>

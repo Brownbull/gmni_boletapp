@@ -173,23 +173,99 @@ development_status:
   9-15-subcategory-learning-and-management: done  # 5 points - Subcategory learning, editing, and Settings UI - Code Review APPROVED 2025-12-16
   9-16-learning-prompt-loading-state: done  # 1 point - Bug fix: prevent duplicate transactions from double-clicking - Code Review APPROVED 2025-12-16
   9-17-location-select-alphabetical-cities: done  # 0.5 points - Code Review APPROVED 2025-12-16
-  9-18-pwa-push-notifications: done  # 5 points - PWA push notifications with Firebase Cloud Messaging - Completed 2025-12-16
-  9-19-history-transaction-filters: ready-for-dev  # 5 points - Temporal, category, and location filters for History view - Context ready 2025-12-16
-  9-99-epic-release-deployment: ready-for-dev  # 2 points - Production deployment, E2E verification - Story created 2025-12-13
-  epic-9-retrospective: optional
+  9-18-pwa-push-notifications: done  # 5 points - PWA push notifications with Firebase Cloud Messaging - Code Review APPROVED 2025-12-16
+  9-19-history-transaction-filters: done  # 5 points - Temporal, category, and location filters for History view - Code Review APPROVED 2025-12-16
+  9-20-analytics-transaction-count-navigation: done  # 3 points - Transaction count badge on analytics cards with navigation to filtered History - Code Review APPROVED 2025-12-16
+  9-99-epic-release-deployment: done  # 2 points - Production deployment, E2E verification - Completed 2025-12-16
+  epic-9-retrospective: done  # Completed 2025-12-16 - docs/sprint-artifacts/epic-9-retro-2025-12-16.md
 
-  # Former Epic 9 → Epic 10: UX Redesign
-  epic-10: backlog  # UX Redesign - Design system and visual consistency
+  # ============================================================================
+  # LAUNCH BACKBONE ROADMAP (Epics 10-16)
+  # Updated: 2025-12-16 per Epic 9 retrospective
+  # Full definitions: docs/planning/epics.md
+  # ============================================================================
+
+  # Epic 10: Foundation + Engagement & Insight Engine (~35 points, 3-4 weeks)
+  # Transform from "data entry tool" to "financial awareness companion"
+  # Architecture: docs/sprint-artifacts/epic10/architecture-epic10-insight-engine.md
+  # Brainstorming: docs/sprint-artifacts/epic10/epic-10-insight-engine-brainstorm.md
+  # Key ADRs: ADR-015 (Client-side engine), ADR-016 (Hybrid storage), ADR-017 (Phase-based priority)
+  epic-10: contexted  # Architecture complete 2025-12-17, stories drafted and aligned
+  10-0-foundation-sprint: done  # 8 points - Refactor analytics, filtering service, App.tsx cleanup - Code Review APPROVED 2025-12-18
+  10-1-insight-engine-service-interface: done  # 3 points - types/insight.ts, services/insightEngineService.ts - Code Review APPROVED 2025-12-18
+  10-2-phase-detection-user-profile: ready-for-dev  # 3 points - calculateUserPhase(), UserInsightProfile Firestore doc
+  10-3-transaction-intrinsic-insights: ready-for-dev  # 5 points - 7 cold-start insight generators
+  10-4-pattern-detection-insights: ready-for-dev  # 5 points - 5 history-based generators + precomputed aggregates
+  10-5-selection-algorithm-sprinkle: ready-for-dev  # 3 points - selectInsight() with phase-based priority
+  10-6-scan-complete-insight-card: ready-for-dev  # 3 points - InsightCard.tsx, BuildingProfileCard.tsx fallback
+  10-7-batch-mode-summary: ready-for-dev  # 3 points - BatchSummary.tsx for multi-receipt sessions
+  10-99-epic-release-deployment: ready-for-dev  # 2 points - Production deployment, E2E verification
   epic-10-retrospective: optional
 
-  # Former Epic 10 → Epic 11: Application Refactoring
-  epic-11: backlog  # Application Refactoring - Performance and architecture
+  # Epic 11: Quick Save & Scan Flow Optimization (~22 points, 2 weeks)
+  # Reduce scan-to-save friction to <15 seconds for 90% of users
+  # Stories: One image = one transaction, Quick Save Card, Trust Merchant
+  epic-11: backlog
   epic-11-retrospective: optional
 
-  # Former Epic 11 → Epic 12: Subscription & Monetization
-  epic-12: backlog  # Subscription & Monetization - 4-tier model, Mercado Pago
+  # Epic 12: Batch Mode (~25 points, 2 weeks)
+  # Multi-image capture with parallel processing and batch review
+  # Stories: Batch Capture UI, Parallel Processing, Batch Review Queue
+  epic-12: backlog
   epic-12-retrospective: optional
 
-  # Former Epic 12 → Epic 13: Mobile App
-  epic-13: backlog  # Mobile App (iOS & Android)
+  # Epic 13: Analytics UX Redesign (~20 points, 2 weeks)
+  # Animated visualizations, sparklines, drill-down animations
+  # Stories: Animation Library, Chart Transitions, Velocity Sparklines
+  epic-13: backlog
   epic-13-retrospective: optional
+
+  # Epic 14: Onboarding & Progressive Disclosure (~15 points, 1-2 weeks)
+  # Time-to-value <60 seconds, demo walkthrough, feature unlocking
+  # Stories: Demo Mode, Feature Unlocking, Onboarding Checklist
+  epic-14: backlog
+  epic-14-retrospective: optional
+
+  # Epic 15: Tags & Grouping (~18 points, 2 weeks)
+  # User-defined tags for trip tracking, project expenses, business categorization
+  # Stories: Tag Data Model, Tag Assignment UI, Tag-based Filtering
+  epic-15: backlog
+  epic-15-retrospective: optional
+
+  # Epic 16: Achievements & Milestones (~12 points, 1 week)
+  # Ethical gamification - celebrate progress without shame mechanics
+  # Stories: Milestone System, Achievement Badges, Investment Visibility
+  epic-16: backlog
+  epic-16-retrospective: optional
+
+  # ============================================================================
+  # FUTURE BACKLOG (Post-Launch)
+  # These epics are deferred until after MVP launch
+  # ============================================================================
+
+  # Epic F1: Subscription & Monetization
+  # 3-tier model (Free/Pro/Max), Mercado Pago integration
+  epic-f1-subscription: future-backlog
+
+  # Epic F2: Family Sharing
+  # Household combined view, member contribution breakdown
+  epic-f2-family-sharing: future-backlog
+
+  # Epic F3: Card Statement Scanning
+  # Upload card statement → extract multiple transactions
+  epic-f3-card-statement: future-backlog
+
+  # Epic F4: Mobile Native App
+  # iOS + Android native apps
+  epic-f4-mobile-native: future-backlog
+
+  # Epic F5: Insight Avatars
+  # Personality-based insight delivery
+  epic-f5-insight-avatars: future-backlog
+
+  # Epic F6: Analytics Dashboard & Scheduled Insights
+  # Deferred features from Epic 10 architecture session (2025-12-17)
+  # Includes: Weekly/Monthly Summary Views, Scheduled Push Notifications, Reports Section
+  # Requires Cloud Functions for scheduling (beyond ADR-015 client-side scope)
+  # Archived references: docs/sprint-artifacts/epic10/_archive/
+  epic-f6-analytics-dashboard-scheduled-insights: future-backlog

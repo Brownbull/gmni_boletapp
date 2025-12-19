@@ -1,0 +1,80 @@
+# Atlas-Enhanced Create Story Workflow
+name: atlas-create-story
+description: "Create stories with Atlas workflow chain analysis - identifies impacts on existing workflows and provides push alerts for downstream effects"
+author: "BMad + Atlas Integration"
+
+# Critical variables from config
+config_source: "{project-root}/_bmad/bmm/config.yaml"
+output_folder: "{config_source}:output_folder"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+date: system-generated
+sprint_artifacts: "{config_source}:sprint_artifacts"
+story_dir: "{sprint_artifacts}"
+
+# Workflow components
+installed_path: "{project-root}/_bmad/bmm/workflows/4-implementation/atlas-create-story"
+template: "{project-root}/_bmad/bmm/workflows/4-implementation/create-story/template.md"
+instructions: "{installed_path}/instructions.xml"
+validation: "{project-root}/_bmad/bmm/workflows/4-implementation/create-story/checklist.md"
+
+# Atlas Integration
+atlas_enabled: true
+atlas_agent: "{project-root}/_bmad/agents/atlas/atlas.agent.yaml"
+atlas_memory: "{project-root}/_bmad/agents/atlas/atlas-sidecar/atlas-memory.md"
+atlas_instructions: "{project-root}/_bmad/agents/atlas/atlas-sidecar/instructions.md"
+
+# Variables and inputs
+variables:
+  sprint_status: "{sprint_artifacts}/sprint-status.yaml || {output_folder}/sprint-status.yaml"
+  epics_file: "{output_folder}/epics.md"
+  prd_file: "{output_folder}/PRD.md"
+  architecture_file: "{output_folder}/architecture.md"
+  ux_file: "{output_folder}/ux.md"
+  story_title: ""
+
+# Project context
+project_context: "**/project-context.md"
+
+default_output_file: "{story_dir}/{{story_key}}.md"
+
+# Smart input file references
+input_file_patterns:
+  prd:
+    description: "PRD (fallback - epics file should have most content)"
+    whole: "{output_folder}/*prd*.md"
+    sharded: "{output_folder}/*prd*/*.md"
+    load_strategy: "SELECTIVE_LOAD"
+  architecture:
+    description: "Architecture (fallback - epics file should have relevant sections)"
+    whole: "{output_folder}/*architecture*.md"
+    sharded: "{output_folder}/*architecture*/*.md"
+    load_strategy: "SELECTIVE_LOAD"
+  ux:
+    description: "UX design (fallback - epics file should have relevant sections)"
+    whole: "{output_folder}/*ux*.md"
+    sharded: "{output_folder}/*ux*/*.md"
+    load_strategy: "SELECTIVE_LOAD"
+  epics:
+    description: "Enhanced epics+stories file with BDD and source hints"
+    whole: "{output_folder}/*epic*.md"
+    sharded: "{output_folder}/*epic*/*.md"
+    load_strategy: "SELECTIVE_LOAD"
+  atlas_memory:
+    description: "Atlas memory for workflow chain analysis"
+    whole: "{project-root}/_bmad/agents/atlas/atlas-sidecar/atlas-memory.md"
+    load_strategy: "FULL_LOAD"
+
+standalone: true
+
+# Atlas Integration Features
+atlas_features:
+  workflow_chain_analysis: true
+  push_alerts: true
+  memory_feeding: true
+
+# What Atlas adds to create-story:
+# 1. Analyzes story requirements against existing workflow chains
+# 2. Provides PUSH ALERTS if story affects existing workflows
+# 3. Suggests additional acceptance criteria based on workflow impact
+# 4. Feeds story intent to Atlas memory after creation

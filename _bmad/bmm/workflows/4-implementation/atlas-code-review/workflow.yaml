@@ -1,0 +1,71 @@
+# Atlas-Enhanced Code Review Workflow
+name: atlas-code-review
+description: "ADVERSARIAL code review with Atlas validation - validates against accumulated project knowledge, architectural decisions, and workflow chains. Feeds learnings back to Atlas memory."
+author: "BMad"
+
+# Critical variables from config
+config_source: "{project-root}/_bmad/bmm/config.yaml"
+output_folder: "{config_source}:output_folder"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+user_skill_level: "{config_source}:user_skill_level"
+document_output_language: "{config_source}:document_output_language"
+date: system-generated
+sprint_artifacts: "{config_source}:sprint_artifacts"
+sprint_status: "{sprint_artifacts}/sprint-status.yaml || {output_folder}/sprint-status.yaml"
+
+# Workflow components
+installed_path: "{project-root}/_bmad/bmm/workflows/4-implementation/atlas-code-review"
+instructions: "{installed_path}/instructions.xml"
+validation: "{installed_path}/checklist.md"
+template: false
+
+# Atlas Integration Configuration
+atlas_enabled: true
+atlas_agent: "{project-root}/_bmad/agents/atlas/atlas.agent.yaml"
+atlas_memory: "{project-root}/_bmad/agents/atlas/atlas-sidecar/atlas-memory.md"
+atlas_instructions: "{project-root}/_bmad/agents/atlas/atlas-sidecar/instructions.md"
+
+# Atlas-specific features enabled for this workflow
+atlas_features:
+  architecture_validation: true    # Validate against Section 4 decisions
+  workflow_chain_validation: true  # Validate against Section 3 user flows
+  pattern_compliance: true         # Validate against Section 5 testing patterns
+  memory_feeding: true             # Feed learnings back to Atlas
+  push_alerts: true                # Alert on architectural drift
+
+variables:
+  # Project context
+  project_context: "**/project-context.md"
+  story_dir: "{sprint_artifacts}"
+
+# Smart input file references - handles both whole docs and sharded docs
+# Priority: Whole document first, then sharded version
+# Strategy: SELECTIVE LOAD - only load the specific epic needed for this story review
+input_file_patterns:
+  architecture:
+    description: "System architecture for review context"
+    whole: "{output_folder}/*architecture*.md"
+    sharded: "{output_folder}/*architecture*/*.md"
+    load_strategy: "FULL_LOAD"
+  ux_design:
+    description: "UX design specification (if UI review)"
+    whole: "{output_folder}/*ux*.md"
+    sharded: "{output_folder}/*ux*/*.md"
+    load_strategy: "FULL_LOAD"
+  epics:
+    description: "Epic containing story being reviewed"
+    whole: "{output_folder}/*epic*.md"
+    sharded_index: "{output_folder}/*epic*/index.md"
+    sharded_single: "{output_folder}/*epic*/epic-{{epic_num}}.md"
+    load_strategy: "SELECTIVE_LOAD"
+  atlas_memory:
+    description: "Atlas accumulated project knowledge"
+    whole: "{project-root}/_bmad/agents/atlas/atlas-sidecar/atlas-memory.md"
+    load_strategy: "FULL_LOAD"
+  document_project:
+    description: "Brownfield project documentation (optional)"
+    sharded: "{output_folder}/index.md"
+    load_strategy: "INDEX_GUIDED"
+
+standalone: true
