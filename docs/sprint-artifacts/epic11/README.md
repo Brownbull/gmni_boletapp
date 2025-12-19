@@ -1,14 +1,14 @@
 # Epic 11: Quick Save & Scan Flow Optimization
 
 **Epic Status:** Planning Complete
-**Total Story Points:** ~22 points
+**Total Story Points:** ~24 points
 **Estimated Duration:** 2 weeks
 
 ---
 
 ## Epic Summary
 
-Epic 11 transforms the scan flow from a 42-74 second process into a 12-14 second Quick Save experience. By enforcing one image = one transaction, introducing a Quick Save Card for high-confidence scans, and implementing a Trust Merchant system, users can save receipts in under 15 seconds.
+Epic 11 transforms the scan flow from a 42-74 second process into a 12-14 second Quick Save experience. By implementing **multi-image = multi-transaction** processing with clear UX feedback, introducing a Quick Save Card for high-confidence scans, and implementing a Trust Merchant system, users can save receipts in under 15 seconds.
 
 **Key Metric:** 90% of scans should complete in <15 seconds with Quick Save.
 
@@ -17,11 +17,13 @@ Epic 11 transforms the scan flow from a 42-74 second process into a 12-14 second
 ## Story Map
 
 ```
-Epic 11: Quick Save & Scan Flow Optimization (~22 points)
+Epic 11: Quick Save & Scan Flow Optimization (~24 points)
 │
-├── Story 11.1: One Image = One Transaction (3 points)
-│   Dependencies: None
-│   Deliverable: Remove multi-image complexity, enforce single image
+├── Story 11.1: One Image = One Transaction (5 points) ← REVISED
+│   Dependencies: Story 10.7 (Batch Mode Summary)
+│   Deliverable: Multi-image detection with "X boletas detectadas" UI,
+│                each image processed as separate transaction,
+│                automatic BatchSummary trigger after processing
 │
 ├── Story 11.2: Quick Save Card Component (5 points)
 │   Dependencies: Story 11.1
@@ -50,7 +52,7 @@ Epic 11: Quick Save & Scan Flow Optimization (~22 points)
 
 | Story | Title | Points | Status | File |
 |-------|-------|--------|--------|------|
-| 11.1 | One Image = One Transaction | 3 | Draft | [story-11.1-one-image-one-transaction.md](./story-11.1-one-image-one-transaction.md) |
+| 11.1 | One Image = One Transaction | 5 | Draft | [story-11.1-one-image-one-transaction.md](./story-11.1-one-image-one-transaction.md) |
 | 11.2 | Quick Save Card Component | 5 | Draft | [story-11.2-quick-save-card.md](./story-11.2-quick-save-card.md) |
 | 11.3 | Animated Item Reveal | 3 | Draft | [story-11.3-animated-item-reveal.md](./story-11.3-animated-item-reveal.md) |
 | 11.4 | Trust Merchant System | 5 | Draft | [story-11.4-trust-merchant-system.md](./story-11.4-trust-merchant-system.md) |
@@ -63,6 +65,7 @@ Epic 11: Quick Save & Scan Flow Optimization (~22 points)
 
 - **Epic 10:** Insight Engine (for scan complete insights in Quick Save flow)
 - **Epic 10.0:** Foundation Sprint (useLearningPhases hook)
+- **Story 10.7:** Batch Mode Summary (BatchSummary component used by Story 11.1)
 
 ---
 

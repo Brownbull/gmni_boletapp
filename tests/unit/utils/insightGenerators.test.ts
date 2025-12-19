@@ -266,6 +266,12 @@ describe('Transaction-Intrinsic Generators', () => {
       expect(gen.canGenerate(tx, [])).toBe(false);
     });
 
+    it('does not trigger for default sentinel time (04:04)', () => {
+      // DEFAULT_TIME is "04:04" - a sentinel value meaning "time not available"
+      const tx = createTransaction({ time: '04:04' });
+      expect(gen.canGenerate(tx, [])).toBe(false);
+    });
+
     it('generates late night insight', () => {
       const tx = createTransaction({ time: '23:45' });
       const insight = gen.generate(tx, []);
@@ -980,11 +986,12 @@ describe('Pattern Detection Generators', () => {
     });
 
     it('generates insight with correct time of day - early morning', () => {
-      const tx = createTransaction({ time: '04:00' });
+      // Using 03:00 instead of 04:04 to avoid default sentinel time
+      const tx = createTransaction({ time: '03:00' });
       const history = [
+        createTransaction({ time: '02:30' }),
         createTransaction({ time: '03:30' }),
-        createTransaction({ time: '04:30' }),
-        createTransaction({ time: '05:00' }),
+        createTransaction({ time: '04:00' }),
       ];
       const insight = gen.generate(tx, history);
       expect(insight.message).toContain('madrugada');
@@ -1008,6 +1015,29 @@ describe('Pattern Detection Generators', () => {
         createTransaction({ time: undefined }),
         createTransaction({ time: undefined }),
       ];
+      expect(gen.canGenerate(tx, history)).toBe(false);
+    });
+
+    it('does not trigger for default sentinel time (04:04)', () => {
+      // DEFAULT_TIME is "04:04" - a sentinel value meaning "time not available"
+      const tx = createTransaction({ time: '04:04' });
+      const history = [
+        createTransaction({ time: '04:00' }),
+        createTransaction({ time: '05:00' }),
+        createTransaction({ time: '03:30' }),
+      ];
+      // Even though history has valid times in similar range, current tx has default time
+      expect(gen.canGenerate(tx, history)).toBe(false);
+    });
+
+    it('ignores history transactions with default sentinel time', () => {
+      const tx = createTransaction({ time: '04:00' });
+      const history = [
+        createTransaction({ time: '04:04' }), // Default sentinel - should be ignored
+        createTransaction({ time: '04:04' }), // Default sentinel - should be ignored
+        createTransaction({ time: '04:04' }), // Default sentinel - should be ignored
+      ];
+      // Default times in history should not count toward pattern detection
       expect(gen.canGenerate(tx, history)).toBe(false);
     });
   });

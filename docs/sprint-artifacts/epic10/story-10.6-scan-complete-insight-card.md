@@ -1,7 +1,7 @@
 # Story 10.6: Scan Complete Insight Card
 
 **Epic:** Epic 10 - Foundation + Engagement & Insight Engine
-**Status:** ready-for-dev
+**Status:** done
 **Story Points:** 3
 **Dependencies:** Story 10.5 (Selection Algorithm + Sprinkle)
 
@@ -24,15 +24,15 @@ So that **I feel rewarded for scanning and learn something about my habits**.
 
 ## Acceptance Criteria
 
-- [ ] **AC #1:** InsightCard component displays insight after transaction save
-- [ ] **AC #2:** Insight generation uses async side-effect pattern (doesn't block save)
-- [ ] **AC #3:** BuildingProfileCard fallback shown when no insight available
-- [ ] **AC #4:** Card appears AFTER save confirmation, not before
-- [ ] **AC #5:** Card auto-dismisses after 5 seconds
-- [ ] **AC #6:** User can manually dismiss card
-- [ ] **AC #7:** Card supports dark mode
-- [ ] **AC #8:** Animation respects `prefers-reduced-motion`
-- [ ] **AC #9:** Insight is recorded in UserInsightProfile
+- [x] **AC #1:** InsightCard component displays insight after transaction save
+- [x] **AC #2:** Insight generation uses async side-effect pattern (doesn't block save)
+- [x] **AC #3:** BuildingProfileCard fallback shown when no insight available
+- [x] **AC #4:** Card appears AFTER save confirmation, not before
+- [x] **AC #5:** Card auto-dismisses after 5 seconds
+- [x] **AC #6:** User can manually dismiss card
+- [x] **AC #7:** Card supports dark mode
+- [x] **AC #8:** Animation respects `prefers-reduced-motion`
+- [x] **AC #9:** Insight is recorded in UserInsightProfile
 
 ---
 
@@ -467,14 +467,14 @@ This story implements the **UI layer** for insights - the InsightCard that appea
 
 ## Definition of Done
 
-- [ ] All 9 acceptance criteria verified
-- [ ] InsightCard renders correctly
-- [ ] BuildingProfileCard fallback works
-- [ ] Async side-effect pattern implemented
-- [ ] Auto-dismiss and manual dismiss work
-- [ ] Dark mode supported
-- [ ] Animations respect reduced motion
-- [ ] Unit tests passing
+- [x] All 9 acceptance criteria verified
+- [x] InsightCard renders correctly
+- [x] BuildingProfileCard fallback works
+- [x] Async side-effect pattern implemented
+- [x] Auto-dismiss and manual dismiss work
+- [x] Dark mode supported
+- [x] Animations respect reduced motion
+- [x] Unit tests passing
 - [ ] Code review approved
 
 ---
@@ -482,16 +482,35 @@ This story implements the **UI layer** for insights - the InsightCard that appea
 ## Dev Agent Record
 
 ### Agent Model Used
-<!-- Will be populated during dev-story execution -->
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes
-<!-- Will be populated during dev-story execution -->
+Implementation completed on 2025-12-19. All acceptance criteria verified and passing.
+
+**Implementation highlights:**
+- InsightCard component with dynamic icon loading from lucide-react
+- BuildingProfileCard fallback for new users without enough data
+- CSS animations (slide-up, fade-out) with prefers-reduced-motion support
+- Async side-effect pattern in App.tsx saveTransaction handler
+- useInsightProfile hook for Firestore profile and local cache management
+- Full dark mode support using Tailwind classes
 
 ### Files Modified
-<!-- Will be populated during dev-story execution -->
+**Created:**
+- `src/components/insights/InsightCard.tsx` - Main insight display component
+- `src/components/insights/BuildingProfileCard.tsx` - Fallback for new users
+- `src/hooks/useInsightProfile.ts` - Hook for insight profile management
+- `tests/unit/components/insights/InsightCard.test.tsx` - Unit tests (18 tests)
+- `tests/unit/hooks/useInsightProfile.test.ts` - Hook unit tests (11 tests)
+
+**Modified:**
+- `src/App.tsx` - Integrated insight cards with save flow
+- `index.html` - Added CSS animations for insight cards
 
 ### Test Results
-<!-- Will be populated during dev-story execution -->
+- **Unit tests:** 1257 tests passing (37 test files)
+- **TypeScript:** No type errors
+- **Build:** Successful (vite build)
 
 ---
 
