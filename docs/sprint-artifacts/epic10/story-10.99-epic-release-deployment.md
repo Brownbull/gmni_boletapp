@@ -1,7 +1,7 @@
 # Story 10.99: Epic Release Deployment
 
 **Epic:** Epic 10 - Foundation + Engagement & Insight Engine
-**Status:** in-progress
+**Status:** done
 **Story Points:** 2
 **Dependencies:** All previous Epic 10 stories (10.0 - 10.7)
 
@@ -18,12 +18,12 @@ So that **users can experience the new Insight Engine features**.
 ## Acceptance Criteria
 
 - [x] **AC #1:** All Epic 10 stories completed and code-reviewed
-- [x] **AC #2:** All unit tests passing (2110 tests passing)
-- [ ] **AC #3:** Build succeeds with no TypeScript errors
-- [ ] **AC #4:** Manual QA verification of Insight Engine features
-- [ ] **AC #5:** Performance benchmark met (insight generation <500ms)
-- [ ] **AC #6:** Production deployment completed via CI/CD auto-deploy
-- [ ] **AC #7:** Post-deployment smoke test passes
+- [x] **AC #2:** All unit tests passing (2111 tests passing)
+- [x] **AC #3:** Build succeeds with no TypeScript errors
+- [x] **AC #4:** Manual QA verification of Insight Engine features
+- [x] **AC #5:** Performance benchmark met (insight generation <500ms)
+- [x] **AC #6:** Production deployment completed via CI/CD auto-deploy (PR #102)
+- [x] **AC #7:** Post-deployment smoke test passes
 
 ---
 
