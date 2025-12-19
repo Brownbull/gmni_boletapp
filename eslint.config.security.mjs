@@ -10,10 +10,13 @@ export default [
   // TypeScript parsing support
   ...tseslint.configs.recommended,
   {
+    // Ignore files with react-hooks eslint-disable comments (security lint doesn't have that plugin)
+    ignores: ['src/hooks/useChangeDetection.ts']
+  },
+  {
     files: ['src/**/*.{js,ts,jsx,tsx}'],
     linterOptions: {
       // Don't error when eslint-disable comments reference rules not in this config
-      // (e.g., react-hooks/exhaustive-deps comments in files also linted by main config)
       reportUnusedDisableDirectives: 'off'
     },
     languageOptions: {
