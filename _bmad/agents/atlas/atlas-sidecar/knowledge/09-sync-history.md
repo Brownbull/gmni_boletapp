@@ -21,6 +21,7 @@
 | 2025-12-19 | 04-architecture | Post-10.6 fix: Default time skip | Time-based insight generators skip DEFAULT_TIME ("04:04") sentinel value |
 | 2025-12-19 | 07-process | Epic 10 deployment complete | PR #102 merged - Full Insight Engine deployed to production |
 | 2025-12-20 | 07-process | v9.1.0 deployment | PR #106 - Duplicate detection fix, new duplicate_detected insight generator |
+| 2025-12-20 | 04-architecture | Story 10a.1 code review | Home Screen Consolidation - HistoryFiltersContext reuse, component sharing pattern |
 
 ## Documents Tracked
 
