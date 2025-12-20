@@ -43,6 +43,12 @@
 ### FCM with PWA (Story 9.18 Hotfix - 2025-12-18)
 > "When using Firebase Cloud Messaging with vite-plugin-pwa, you MUST explicitly register and pass the FCM service worker to `getToken()`. Using `navigator.serviceWorker.ready` returns the PWA service worker (sw.js), not firebase-messaging-sw.js. Fix: Use `navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')` or `navigator.serviceWorker.register('/firebase-messaging-sw.js')` and wait for activation before calling `getToken()`."
 
+### CI/CD Environment Variables Checklist (v9.1.0 Hotfix - 2025-12-20)
+> "When adding new VITE_* environment variables to the app, you MUST also add them to the CI/CD deployment step in `.github/workflows/test.yml` AND add the corresponding secret to GitHub repository settings. Missing env vars cause silent failures in production (e.g., FCM token fails with missing VAPID key). **Checklist when adding new env var:**
+> 1. Add to `.env` and `.env.example`
+> 2. Add to `test.yml` deploy job `env:` section
+> 3. Add secret to GitHub repo → Settings → Secrets → Actions"
+
 ### Defensive Firestore Data Handling (Story 10.1 - 2025-12-18)
 > "When reading Firestore Timestamps in service code, always use defensive optional chaining and try/catch. Firestore data can be corrupted or have unexpected shape. Pattern: `try { const time = record?.shownAt?.toDate?.()?.getTime?.(); if (typeof time !== 'number' || isNaN(time)) return defaultValue; } catch { return defaultValue; }` - This prevents crashes from malformed data in production."
 
@@ -55,6 +61,7 @@
 5. **Sequential CI jobs** when parallel is possible
 6. **Assuming details not in docs** - VERIFY with source documents
 7. **Using `navigator.serviceWorker.ready` with multiple service workers** - Returns first SW, not specific one
+8. **Adding env vars without updating CI/CD** - Causes silent production failures (VAPID key incident 2025-12-20)
 
 ## Patterns to Follow
 
