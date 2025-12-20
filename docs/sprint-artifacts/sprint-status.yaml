@@ -202,6 +202,18 @@ development_status:
   10-99-epic-release-deployment: done  # 2 points - Production deployment via PR #102 - DEPLOYED 2025-12-19
   epic-10-retrospective: optional
 
+  # Epic 10a: UX Consolidation - Home & Insights Tabs (~13 points, 1 week)
+  # Merge Dashboard + History into unified Home, repurpose Receipts tab as Insights History
+  # Architecture: docs/sprint-artifacts/epic10a/tech-context-epic10a.md
+  # Origin: User feedback session 2025-12-20 - insight history feature request
+  epic-10a: contexted  # Tech context complete 2025-12-20
+  10a-1-home-screen-consolidation: done  # 5 points - Merge Dashboard + History views - Code Review APPROVED 2025-12-20
+  10a-2-this-month-fix: ready-for-dev  # 1 point - This Month card navigation fix - Context 2025-12-20
+  10a-3-nav-tab-rename: ready-for-dev  # 1 point - Receipts → Insights tab - Context 2025-12-20
+  10a-4-insights-history-view: ready-for-dev  # 5 points - New InsightsView component - Context 2025-12-20
+  10a-5-insight-record-storage: ready-for-dev  # 1 point - Extend InsightRecord schema - Context 2025-12-20
+  epic-10a-retrospective: optional
+
   # Epic 11: Quick Save & Scan Flow Optimization (~22 points, 2 weeks)
   # Reduce scan-to-save friction to <15 seconds for 90% of users
   # Stories: One image = one transaction, Quick Save Card, Trust Merchant
