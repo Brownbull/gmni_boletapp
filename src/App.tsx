@@ -725,32 +725,35 @@ function App() {
             />
 
             <main className="p-6 pb-24 h-full overflow-y-auto">
+                {/* Story 10a.1: Wrap DashboardView with HistoryFiltersProvider for filter context (AC #2, #6) */}
                 {view === 'dashboard' && (
-                    <DashboardView
-                        transactions={recentlyAddedTransactions as any}
-                        t={t}
-                        currency={currency}
-                        dateFormat={dateFormat}
-                        theme={theme}
-                        formatCurrency={formatCurrency}
-                        formatDate={formatDate as any}
-                        getSafeDate={getSafeDate}
-                        onCreateNew={() => handleNewTransaction(false)}
-                        onViewTrends={(_month: string | null) => {
-                            // Navigation state is now managed by AnalyticsContext
-                            // TODO: If month is provided, we could set initial context state
-                            setView('trends');
-                        }}
-                        onEditTransaction={(transaction: any) => {
-                            setCurrentTransaction(transaction);
-                            setView('edit');
-                        }}
-                        onTriggerScan={triggerScan}
-                        // Story 9.11: Pass all transactions for total/month calculations
-                        allTransactions={transactions as any}
-                        // Story 9.12: Language for category translations
-                        lang={lang}
-                    />
+                    <HistoryFiltersProvider>
+                        <DashboardView
+                            transactions={recentlyAddedTransactions as any}
+                            t={t}
+                            currency={currency}
+                            dateFormat={dateFormat}
+                            theme={theme}
+                            formatCurrency={formatCurrency}
+                            formatDate={formatDate as any}
+                            getSafeDate={getSafeDate}
+                            onCreateNew={() => handleNewTransaction(false)}
+                            onViewTrends={(_month: string | null) => {
+                                // Navigation state is now managed by AnalyticsContext
+                                // TODO: If month is provided, we could set initial context state
+                                setView('trends');
+                            }}
+                            onEditTransaction={(transaction: any) => {
+                                setCurrentTransaction(transaction);
+                                setView('edit');
+                            }}
+                            onTriggerScan={triggerScan}
+                            // Story 10a.1: Pass all transactions for full paginated list (AC #3)
+                            allTransactions={transactions as any}
+                            // Story 9.12: Language for category translations
+                            lang={lang}
+                        />
+                    </HistoryFiltersProvider>
                 )}
 
                 {/* Story 9.9: ScanView is deprecated - scan functionality is now in EditView
