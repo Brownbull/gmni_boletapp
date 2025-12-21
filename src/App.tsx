@@ -143,8 +143,8 @@ function App() {
     const [isBatchProcessing, setIsBatchProcessing] = useState(false);
     const [batchProgress, setBatchProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
     const [batchResults, setBatchResults] = useState<BatchItemResult[]>([]);
-    // Story 11.1: Cancel batch processing state
-    const [batchCancelRequested, setBatchCancelRequested] = useState(false);
+    // Story 11.1: Cancel batch processing state (state for future UI use, ref for loop)
+    const [_batchCancelRequested, setBatchCancelRequested] = useState(false);
     const [showBatchCancelConfirm, setShowBatchCancelConfirm] = useState(false);
     const batchCancelRef = useRef(false); // Ref for immediate access in loop
 
