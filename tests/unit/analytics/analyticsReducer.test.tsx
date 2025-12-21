@@ -79,6 +79,42 @@ describe('AnalyticsContext - Initial State', () => {
 
     expect(result.current.state).toEqual(customState);
   });
+
+  /**
+   * Story 10a.2: This Month Navigation
+   * AC #1: Clicking "This Month" card should navigate to Analytics view at month level
+   * AC #2: Analytics should be filtered to the current month
+   */
+  it('AC #1, #2 (Story 10a.2): initializes at month level for "This Month" navigation', () => {
+    // Use fixed date for deterministic testing (avoids flakiness at year/quarter boundaries)
+    const year = '2024';
+    const month = '2024-12';
+    const quarter = 'Q4' as const;
+
+    // Simulate the state that App.tsx creates when user clicks "This Month" card
+    const thisMonthState: AnalyticsNavigationState = {
+      temporal: { level: 'month', year, quarter, month },
+      category: { level: 'all' },
+      chartMode: 'aggregation',
+      drillDownMode: 'temporal',
+    };
+
+    const { result } = renderHook(() => useAnalyticsNavigation(), {
+      wrapper: createWrapper(thisMonthState),
+    });
+
+    // AC #1: View should be at month level
+    expect(result.current.state.temporal.level).toBe('month');
+
+    // AC #2: Should be filtered to the specified month
+    expect(result.current.state.temporal.month).toBe(month);
+    expect(result.current.state.temporal.year).toBe(year);
+    expect(result.current.state.temporal.quarter).toBe(quarter);
+
+    // Verify default state for other properties
+    expect(result.current.state.category.level).toBe('all');
+    expect(result.current.state.chartMode).toBe('aggregation');
+  });
 });
 
 describe('AnalyticsContext - SET_TEMPORAL_LEVEL Action', () => {

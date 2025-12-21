@@ -1,7 +1,7 @@
 # Story 10.7: Batch Mode Summary
 
 **Epic:** Epic 10 - Foundation + Engagement & Insight Engine
-**Status:** ready-for-dev
+**Status:** done
 **Story Points:** 3
 **Dependencies:** Story 10.6 (Scan Complete Insight Card)
 
@@ -24,15 +24,15 @@ So that **I see the big picture instead of individual insights**.
 
 ## Acceptance Criteria
 
-- [ ] **AC #1:** BatchSummary component shows after 3+ receipts in one session
-- [ ] **AC #2:** Summary shows total amount scanned in session
-- [ ] **AC #3:** Summary shows receipt count
-- [ ] **AC #4:** Historical comparison vs last week shown (if data available)
-- [ ] **AC #5:** Top insight from batch is highlighted
-- [ ] **AC #6:** "Silenciar 4h" option queues insights for later
-- [ ] **AC #7:** When silenced, individual InsightCards don't appear
-- [ ] **AC #8:** Silenced state persists in localStorage
-- [ ] **AC #9:** Summary respects dark mode
+- [x] **AC #1:** BatchSummary component shows after 3+ receipts in one session
+- [x] **AC #2:** Summary shows total amount scanned in session
+- [x] **AC #3:** Summary shows receipt count
+- [x] **AC #4:** Historical comparison vs last week shown (if data available)
+- [x] **AC #5:** Top insight from batch is highlighted
+- [x] **AC #6:** "Silenciar 4h" option queues insights for later
+- [x] **AC #7:** When silenced, individual InsightCards don't appear
+- [x] **AC #8:** Silenced state persists in localStorage
+- [x] **AC #9:** Summary respects dark mode
 
 ---
 
@@ -514,34 +514,70 @@ This story implements **batch mode** - a summary view for users who scan multipl
 
 ## Definition of Done
 
-- [ ] All 9 acceptance criteria verified
-- [ ] BatchSummary shows after 3+ receipts
-- [ ] Historical comparison works
-- [ ] Silence feature persists correctly
-- [ ] Dark mode supported
-- [ ] Unit tests passing
-- [ ] Code review approved
+- [x] All 9 acceptance criteria verified
+- [x] BatchSummary shows after 3+ receipts
+- [x] Historical comparison works
+- [x] Silence feature persists correctly
+- [x] Dark mode supported
+- [x] Unit tests passing (2111 tests, all pass)
+- [x] Code review approved
 
 ---
 
 ## Dev Agent Record
 
 ### Agent Model Used
-<!-- Will be populated during dev-story execution -->
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes
-<!-- Will be populated during dev-story execution -->
+- Implemented useBatchSession hook with 30-minute session timeout and 3+ receipt threshold
+- Created BatchSummary component with total amount, receipt count, historical comparison, top insight, and silence toggle
+- Verified Task 3 (Silence Logic) was already implemented in insightEngineService.ts
+- Implemented getLastWeekTotal() function with 8-13 day window for meaningful comparison
+- Integrated batch mode and silence handling into App.tsx saveTransaction flow
+- All acceptance criteria verified through unit tests and TypeScript compilation
 
 ### Files Modified
-<!-- Will be populated during dev-story execution -->
+- `src/hooks/useBatchSession.ts` (created)
+- `src/components/insights/BatchSummary.tsx` (created)
+- `src/services/insightEngineService.ts` (added getLastWeekTotal)
+- `src/App.tsx` (integrated batch mode)
+- `tests/unit/hooks/useBatchSession.test.ts` (created, 10 tests)
+- `tests/unit/components/insights/BatchSummary.test.tsx` (created, 17 tests)
+- `tests/unit/services/insightEngineService.test.ts` (added 7 tests for getLastWeekTotal)
 
 ### Test Results
-<!-- Will be populated during dev-story execution -->
+- 2111 total tests passing
+- 35 new tests added for this story (including useEffect auto-cleanup test)
+- Build succeeds with no TypeScript errors
 
 ---
 
 ## Review Notes
-<!-- Will be populated during code review -->
+
+### Code Review - 2025-12-19
+**Reviewer:** Claude Opus 4.5 (Adversarial Code Review Workflow)
+**Status:** APPROVED with fixes applied
+
+#### Issues Found & Fixed:
+
+| # | Severity | Issue | Resolution |
+|---|----------|-------|------------|
+| 1 | HIGH | Missing unsilence toggle - App.tsx only silenced, couldn't unsilence | Added `clearSilence` import and toggle logic in `onSilence` handler |
+| 2 | HIGH | Missing useEffect session cleanup - stale sessions persisted in memory | Added useEffect with setTimeout to auto-clear expired sessions |
+| 3 | MED | Test count mismatch (story said 1294, reality 2110+) | Updated to 2111 |
+| 4 | MED | getLastWeekTotal uses 8-13 day window | Documented as intentional (provides meaningful comparison data) |
+| 5 | LOW | Hardcoded Spanish strings in BatchSummary | Accepted - consistent with app's current i18n approach |
+
+#### Files Modified During Review:
+- `src/App.tsx` - Added clearSilence import, fixed toggle logic
+- `src/hooks/useBatchSession.ts` - Added useEffect for auto-cleanup
+- `tests/unit/hooks/useBatchSession.test.ts` - Added auto-cleanup test
+
+#### Verification:
+- All 2111 tests passing
+- Build succeeds
+- TypeScript clean
 
 ---
 
@@ -550,3 +586,5 @@ This story implements **batch mode** - a summary view for users who scan multipl
 | Date | Version | Description |
 |------|---------|-------------|
 | 2025-12-17 | 1.0 | Story created from architecture (replaces Pattern Detection Engine) |
+| 2025-12-19 | 1.1 | dev-complete: All tasks implemented, 34 new tests added |
+| 2025-12-19 | 1.2 | Code review: Fixed unsilence toggle, added useEffect cleanup, 2111 tests pass |
