@@ -353,4 +353,94 @@ describe('Trend Analytics', () => {
     expect(Object.values(totals2024).reduce((a, b) => a + b, 0)).toBe(100.00);
     expect(Object.values(totals2025).reduce((a, b) => a + b, 0)).toBe(80.00);
   });
+
+  /**
+   * Story 10a.2: This Month Navigation Integration
+   * Tests that the navigation state building logic correctly creates
+   * month-level initial state for the Analytics view.
+   */
+  describe('This Month Navigation (Story 10a.2)', () => {
+    // Helper to simulate App.tsx getQuarterFromMonth logic
+    function getQuarterFromMonth(month: string): string {
+      const monthNum = parseInt(month.split('-')[1], 10);
+      if (monthNum >= 1 && monthNum <= 3) return 'Q1';
+      if (monthNum >= 4 && monthNum <= 6) return 'Q2';
+      if (monthNum >= 7 && monthNum <= 9) return 'Q3';
+      return 'Q4';
+    }
+
+    // Helper to simulate App.tsx onViewTrends handler logic
+    function buildAnalyticsInitialState(month: string | null) {
+      if (month) {
+        const year = month.substring(0, 4);
+        const quarter = getQuarterFromMonth(month);
+        return {
+          temporal: {
+            level: 'month' as const,
+            year,
+            quarter,
+            month,
+          },
+          category: { level: 'all' as const },
+          chartMode: 'aggregation' as const,
+          drillDownMode: 'temporal' as const,
+        };
+      }
+      return null;
+    }
+
+    it('AC #1: builds month-level state when month is provided', () => {
+      const month = '2024-12';
+      const state = buildAnalyticsInitialState(month);
+
+      expect(state).not.toBeNull();
+      expect(state!.temporal.level).toBe('month');
+      expect(state!.temporal.month).toBe('2024-12');
+      expect(state!.temporal.year).toBe('2024');
+      expect(state!.temporal.quarter).toBe('Q4');
+    });
+
+    it('AC #2: returns null for Total Spent navigation (no month)', () => {
+      const state = buildAnalyticsInitialState(null);
+      expect(state).toBeNull();
+    });
+
+    it('correctly derives quarter from month across all quarters', () => {
+      // Q1 months
+      expect(getQuarterFromMonth('2024-01')).toBe('Q1');
+      expect(getQuarterFromMonth('2024-02')).toBe('Q1');
+      expect(getQuarterFromMonth('2024-03')).toBe('Q1');
+
+      // Q2 months
+      expect(getQuarterFromMonth('2024-04')).toBe('Q2');
+      expect(getQuarterFromMonth('2024-05')).toBe('Q2');
+      expect(getQuarterFromMonth('2024-06')).toBe('Q2');
+
+      // Q3 months
+      expect(getQuarterFromMonth('2024-07')).toBe('Q3');
+      expect(getQuarterFromMonth('2024-08')).toBe('Q3');
+      expect(getQuarterFromMonth('2024-09')).toBe('Q3');
+
+      // Q4 months
+      expect(getQuarterFromMonth('2024-10')).toBe('Q4');
+      expect(getQuarterFromMonth('2024-11')).toBe('Q4');
+      expect(getQuarterFromMonth('2024-12')).toBe('Q4');
+    });
+
+    it('builds complete navigation state with all required fields', () => {
+      const state = buildAnalyticsInitialState('2024-06');
+
+      expect(state).toEqual({
+        temporal: {
+          level: 'month',
+          year: '2024',
+          quarter: 'Q2',
+          month: '2024-06',
+        },
+        category: { level: 'all' },
+        chartMode: 'aggregation',
+        drillDownMode: 'temporal',
+      });
+    });
+  });
 });

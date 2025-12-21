@@ -15,7 +15,8 @@ import { DashboardView } from './views/DashboardView';
 // import { ScanView } from './views/ScanView';
 import { EditView } from './views/EditView';
 import { TrendsView } from './views/TrendsView';
-import { HistoryView } from './views/HistoryView';
+// Story 10a.4: Insights History View (replaces HistoryView in insights tab)
+import { InsightsView } from './views/InsightsView';
 import { SettingsView } from './views/SettingsView';
 import { Nav } from './components/Nav';
 import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
@@ -25,7 +26,10 @@ import { BuildingProfileCard } from './components/insights/BuildingProfileCard';
 // Story 10.7: Batch summary component
 import { BatchSummary } from './components/insights/BatchSummary';
 import { AnalyticsProvider } from './contexts/AnalyticsContext';
-import { HistoryFiltersProvider, type HistoryFilterState, getDefaultFilterState } from './contexts/HistoryFiltersContext';
+// Story 10a.2: Import for building analytics initial state
+import { getQuarterFromMonth } from './utils/analyticsHelpers';
+import type { AnalyticsNavigationState } from './types/analytics';
+import { HistoryFiltersProvider, type HistoryFilterState } from './contexts/HistoryFiltersContext';
 import type { HistoryNavigationPayload } from './views/TrendsView';
 import { analyzeReceipt, ReceiptType } from './services/gemini';
 import { SupportedCurrency } from './services/userPreferencesService';
@@ -56,13 +60,15 @@ import { formatDate } from './utils/date';
 import { getSafeDate, parseStrictNumber } from './utils/validation';
 import { downloadBasicData } from './utils/csvExport';
 import { TRANSLATIONS } from './utils/translations';
-import { ITEMS_PER_PAGE, STORE_CATEGORIES } from './config/constants';
+// Story 10a.4: ITEMS_PER_PAGE removed - no longer used after HistoryView replaced
+import { STORE_CATEGORIES } from './config/constants';
 import { applyCategoryMappings } from './utils/categoryMatcher';
 import { incrementMappingUsage } from './services/categoryMappingService';
 import { incrementMerchantMappingUsage } from './services/merchantMappingService';
 import { getCitiesForCountry } from './data/locations';
 
-type View = 'dashboard' | 'scan' | 'edit' | 'trends' | 'list' | 'settings';
+// Story 10a.3: Changed 'list' to 'insights' (InsightsView will be added in 10a.4)
+type View = 'dashboard' | 'scan' | 'edit' | 'trends' | 'insights' | 'settings';
 
 function App() {
     const { user, services, initError, signIn, signInWithTestCredentials, signOut } = useAuth();
@@ -149,14 +155,17 @@ function App() {
     const [exporting, setExporting] = useState(false);
     const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' } | null>(null);
 
-    // Pagination State
-    const [historyPage, setHistoryPage] = useState(1);
+    // Story 10a.4: historyPage state removed - HistoryView no longer used in insights tab
     const [distinctAliases, setDistinctAliases] = useState<string[]>([]);
 
     // Story 9.20: Pending filters for navigation from Analytics to History
     // When user clicks a badge in Analytics, we store the filters here,
     // then pass them as initialState to HistoryFiltersProvider
     const [pendingHistoryFilters, setPendingHistoryFilters] = useState<HistoryFilterState | null>(null);
+
+    // Story 10a.2: Initial analytics state for "This Month" navigation
+    // When user clicks "This Month" card, store the month to initialize TrendsView at month level
+    const [analyticsInitialState, setAnalyticsInitialState] = useState<AnalyticsNavigationState | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const t = (k: string) => (TRANSLATIONS[lang] as any)[k] || k;
@@ -199,15 +208,25 @@ function App() {
         }
     }, [userPreferences.defaultCurrency]);
 
-    // Story 9.20: Clear pending history filters when navigating AWAY from list view
-    // This ensures filters are applied when entering list view, but cleared when leaving
-    // so that returning to list view normally shows unfiltered transactions
+    // Story 9.20: Clear pending history filters when navigating AWAY from insights view
+    // Story 10a.3: Renamed 'list' to 'insights'
+    // This ensures filters are applied when entering insights view, but cleared when leaving
+    // so that returning to insights view normally shows unfiltered transactions
     useEffect(() => {
-        // Clear filters when navigating away from list view (not when entering it)
-        if (view !== 'list' && pendingHistoryFilters) {
+        // Clear filters when navigating away from insights view (not when entering it)
+        if (view !== 'insights' && pendingHistoryFilters) {
             setPendingHistoryFilters(null);
         }
     }, [view]); // Only depend on view, not pendingHistoryFilters
+
+    // Story 10a.2: Clear analytics initial state when navigating AWAY from trends view
+    // This ensures initial state is applied when entering trends, but cleared when leaving
+    // so that returning to trends normally shows year-level view
+    useEffect(() => {
+        if (view !== 'trends' && analyticsInitialState) {
+            setAnalyticsInitialState(null);
+        }
+    }, [view]); // Only depend on view, not analyticsInitialState
 
     // Note: Theme is applied synchronously during render (before JSX return)
     // to ensure CSS variables are available when children compute memoized data
@@ -478,28 +497,22 @@ function App() {
             total: parseStrictNumber(currentTransaction.total)
         };
 
-        // Story 10.6: Determine if this is a new transaction (for insight generation)
-        const isNewTransaction = !currentTransaction.id;
-
-        // Fire the Firestore operation (don't await - it will sync in background)
-        if (currentTransaction.id) {
-            firestoreUpdateTransaction(db, user.uid, appId, currentTransaction.id, tDoc)
-                .catch(e => console.error('Update failed:', e));
-        } else {
-            firestoreAddTransaction(db, user.uid, appId, tDoc)
-                .catch(e => console.error('Add failed:', e));
-        }
-
         // Navigate immediately (optimistic UI) - AC #4: Card appears AFTER save confirmation
         setView('dashboard');
         setCurrentTransaction(null);
         // Story 9.10 AC#4: Clear pending scan on successful save
         setPendingScan(null);
 
-        // Story 10.6: Async side-effect pattern for insight generation (AC #2)
-        // Story 10.7: Extended for batch mode tracking and silence support
-        // Only generate insights for NEW transactions, not updates
-        if (isNewTransaction) {
+        // Fire the Firestore operation and chain insight generation for new transactions
+        if (currentTransaction.id) {
+            // Update existing transaction - no insight generation
+            firestoreUpdateTransaction(db, user.uid, appId, currentTransaction.id, tDoc)
+                .catch(e => console.error('Update failed:', e));
+        } else {
+            // Story 10.6: Async side-effect pattern for insight generation (AC #2)
+            // Story 10.7: Extended for batch mode tracking and silence support
+            // Story 10a.4: Chain operations to capture real transaction ID for insight history
+
             // Increment scan counter for sprinkle distribution
             incrementInsightCounter();
 
@@ -514,17 +527,20 @@ function App() {
             // Story 10.7 AC#7: Check if insights are silenced
             const silenced = isInsightsSilenced(insightCache);
 
-            // Fire and forget - doesn't block save flow
-            generateInsightForTransaction(
-                { ...tDoc, id: 'temp' } as Transaction,
-                transactions,
-                profile,
-                insightCache
-            )
-                .then(insight => {
+            // Fire and forget chain: add transaction → generate insight → record with real ID
+            firestoreAddTransaction(db, user.uid, appId, tDoc)
+                .then(async (transactionId) => {
+                    // Generate insight with real transaction ID
+                    const txWithId = { ...tDoc, id: transactionId } as Transaction;
+                    const insight = await generateInsightForTransaction(
+                        txWithId,
+                        transactions,
+                        profile,
+                        insightCache
+                    );
+
                     // Story 10.7: Add transaction and insight to batch session
-                    const txWithTotal = { ...tDoc, id: 'temp' } as Transaction;
-                    addToBatch(txWithTotal, insight);
+                    addToBatch(txWithId, insight);
 
                     // Story 10.7 AC#7: If silenced, skip showing individual insight
                     if (silenced) {
@@ -548,9 +564,14 @@ function App() {
                     }
 
                     // AC #9: Record insight shown in UserInsightProfile (if not fallback)
+                    // Story 10a.4: Pass real transaction ID and full insight content for history
                     if (insight && insight.id !== 'building_profile') {
-                        recordInsightShown(insight.id, 'temp')
-                            .catch(err => console.warn('Failed to record insight:', err));
+                        recordInsightShown(insight.id, transactionId, {
+                            title: insight.title,
+                            message: insight.message,
+                            icon: insight.icon,
+                            category: insight.category,
+                        }).catch(err => console.warn('Failed to record insight:', err));
                     }
 
                     // Track transaction for profile stats (fire-and-forget)
@@ -559,10 +580,10 @@ function App() {
                         .catch(err => console.warn('Failed to track transaction:', err));
                 })
                 .catch(err => {
-                    console.warn('Insight generation failed:', err);
+                    console.warn('Transaction save or insight generation failed:', err);
                     // Story 10.7: Still add to batch even if insight generation failed
-                    const txWithTotal = { ...tDoc, id: 'temp' } as Transaction;
-                    addToBatch(txWithTotal, null);
+                    const txWithTemp = { ...tDoc, id: 'temp' } as Transaction;
+                    addToBatch(txWithTemp, null);
 
                     // Story 10.7: Show batch summary if in batch mode, otherwise fallback card
                     if (!silenced) {
@@ -626,6 +647,7 @@ function App() {
     };
 
     // Story 9.20: Handler for navigating from Analytics to History with pre-applied filters (AC #4)
+    // Story 10a.4: This now navigates to InsightsView (pending filters kept for future use)
     // This is called when user clicks a transaction count badge on a drill-down card
     const handleNavigateToHistory = (payload: HistoryNavigationPayload) => {
         // Create a complete filter state from the navigation payload
@@ -635,14 +657,11 @@ function App() {
             location: {}, // Location filter not set from analytics navigation
         };
 
-        // Store the filters to be applied when HistoryView mounts
+        // Store the filters (kept for potential future use with filtered insights)
         setPendingHistoryFilters(filterState);
 
-        // Reset pagination to page 1 for new filter results
-        setHistoryPage(1);
-
-        // Navigate to history view
-        setView('list');
+        // Navigate to insights view (Story 10a.4: now shows InsightsView)
+        setView('insights');
     };
 
     // Story 7.12: Theme setup using CSS custom properties (AC #6, #7, #11)
@@ -679,12 +698,7 @@ function App() {
         return <LoginScreen onSignIn={signIn} onTestSignIn={() => signInWithTestCredentials()} t={t} />;
     }
 
-    // Compute pagination data for history view
-    const totalHistoryPages = Math.ceil(transactions.length / ITEMS_PER_PAGE);
-    const historyTrans = transactions.slice(
-        (historyPage - 1) * ITEMS_PER_PAGE,
-        historyPage * ITEMS_PER_PAGE
-    );
+    // Story 10a.4: History pagination removed - HistoryView replaced with InsightsView
 
     // Story 9.11: Compute recently added transactions for dashboard
     // Sort by createdAt (descending) to show last 5 ADDED transactions
@@ -738,9 +752,27 @@ function App() {
                             formatDate={formatDate as any}
                             getSafeDate={getSafeDate}
                             onCreateNew={() => handleNewTransaction(false)}
-                            onViewTrends={(_month: string | null) => {
-                                // Navigation state is now managed by AnalyticsContext
-                                // TODO: If month is provided, we could set initial context state
+                            onViewTrends={(month: string | null) => {
+                                // Story 10a.2: Build initial analytics state when month is provided (AC #1, #2)
+                                if (month) {
+                                    // month format is "YYYY-MM" (e.g., "2024-12")
+                                    const year = month.substring(0, 4);
+                                    const quarter = getQuarterFromMonth(month);
+                                    setAnalyticsInitialState({
+                                        temporal: {
+                                            level: 'month',
+                                            year,
+                                            quarter,
+                                            month,
+                                        },
+                                        category: { level: 'all' },
+                                        chartMode: 'aggregation',
+                                        drillDownMode: 'temporal',
+                                    });
+                                } else {
+                                    // Total Spent - default to year view
+                                    setAnalyticsInitialState(null);
+                                }
                                 setView('trends');
                             }}
                             onEditTransaction={(transaction: any) => {
@@ -817,7 +849,12 @@ function App() {
                 )}
 
                 {view === 'trends' && (
-                    <AnalyticsProvider>
+                    // Story 10a.2: Pass initial state to navigate to specific month (AC #1, #2)
+                    // Key forces remount when initial state changes to apply new initial value
+                    <AnalyticsProvider
+                        key={analyticsInitialState ? JSON.stringify(analyticsInitialState.temporal) : 'default'}
+                        initialState={analyticsInitialState ?? undefined}
+                    >
                         <TrendsView
                             transactions={transactions}
                             theme={theme as 'light' | 'dark'}
@@ -840,37 +877,21 @@ function App() {
                     </AnalyticsProvider>
                 )}
 
-                {view === 'list' && (
-                    // Story 9.19: Wrap HistoryView with filter context provider
-                    // Story 9.20: Pass pending filters as initialState for analytics→history navigation (AC #4)
-                    <HistoryFiltersProvider
-                        key={pendingHistoryFilters ? JSON.stringify(pendingHistoryFilters) : 'default'}
-                        initialState={pendingHistoryFilters ?? getDefaultFilterState()}
-                    >
-                        <HistoryView
-                            historyTrans={historyTrans as any}
-                            historyPage={historyPage}
-                            totalHistoryPages={totalHistoryPages}
-                            theme={theme}
-                            currency={currency}
-                            dateFormat={dateFormat}
-                            t={t}
-                            formatCurrency={formatCurrency}
-                            formatDate={formatDate as any}
-                            onBack={() => setView('dashboard')}
-                            onEditTransaction={(transaction: any) => {
-                                setCurrentTransaction(transaction);
+                {/* Story 10a.4: InsightsView - Insight History (AC #1-6) */}
+                {view === 'insights' && (
+                    <InsightsView
+                        onBack={() => setView('dashboard')}
+                        onEditTransaction={(transactionId: string) => {
+                            // AC4: Navigate to transaction by finding it in the list
+                            const tx = transactions.find(t => t.id === transactionId);
+                            if (tx) {
+                                setCurrentTransaction(tx);
                                 setView('edit');
-                            }}
-                            onSetHistoryPage={setHistoryPage}
-                            // Story 9.11: Duplicate detection and normalization props (AC #1-7)
-                            allTransactions={transactions as any}
-                            defaultCity={defaultCity}
-                            defaultCountry={defaultCountry}
-                            // Story 9.12: Language for category translations (AC #1, #2)
-                            lang={lang}
-                        />
-                    </HistoryFiltersProvider>
+                            }
+                        }}
+                        theme={theme}
+                        t={t}
+                    />
                 )}
 
                 {view === 'settings' && (

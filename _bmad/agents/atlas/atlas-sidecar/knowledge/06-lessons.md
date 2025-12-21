@@ -52,6 +52,15 @@
 ### Defensive Firestore Data Handling (Story 10.1 - 2025-12-18)
 > "When reading Firestore Timestamps in service code, always use defensive optional chaining and try/catch. Firestore data can be corrupted or have unexpected shape. Pattern: `try { const time = record?.shownAt?.toDate?.()?.getTime?.(); if (typeof time !== 'number' || isNaN(time)) return defaultValue; } catch { return defaultValue; }` - This prevents crashes from malformed data in production."
 
+### Extract Shared Utilities Early (Story 10a.4 - 2025-12-21)
+> "When multiple components share the same configuration objects or calculation logic (e.g., INSIGHT_TYPE_CONFIG for icons/colors, ISO week calculation), extract to shared utility files BEFORE implementation grows. Story 10a.4 required post-review refactoring to extract 60+ lines of duplicate config into `src/utils/insightTypeConfig.ts` and `src/utils/dateHelpers.ts`. **Pattern:** If >2 components will use the same logic, create a shared utility file upfront. Exports should include both data (INSIGHT_TYPE_CONFIG) and helper functions (getInsightConfig, getIconByName)."
+
+### Type-Safe Dynamic Icon Lookups (Story 10a.4 - 2025-12-21)
+> "When using Lucide icons dynamically by name string, avoid double-casting `(LucideIcons as unknown as Record<string, LucideIcon>)[name]`. Instead, create a helper function that provides proper type safety with explicit fallback: `export function getIconByName(name: string): LucideIcon { const icons = LucideIcons as Record<string, LucideIcon | undefined>; return icons[name] || LucideIcons.Lightbulb; }` This prevents silent failures when icon names are misspelled."
+
+### Keyboard Accessibility for Touch Features (Story 10a.4 - 2025-12-21)
+> "When implementing touch-based features like long-press selection mode, always provide keyboard alternatives. Story 10a.4 review found that long-press was inaccessible to keyboard-only users. **Fix:** Add `onKeyDown` handler with `Shift+Enter` to toggle selection (parallels long-press), `aria-pressed` for selection state, and `aria-label` with full context for screen readers."
+
 ## Patterns to Avoid
 
 1. **Hardcoding API keys** - Always use environment variables
@@ -75,6 +84,9 @@
 8. **CI/CD time budgets** - Keep PRs under 7 min
 
 9. **Defensive Firestore reads** - Always handle corrupted Timestamps with try/catch
+10. **Extract shared utilities early** - If >2 components use same logic, create shared util file
+11. **Type-safe icon lookups** - Use helper functions with explicit fallbacks, not double-casting
+12. **Keyboard alternatives for touch** - Long-press needs Shift+Enter equivalent, aria-pressed state
 
 ## Team Agreements
 
@@ -94,3 +106,4 @@
 - CI/CD optimization standards established in Epic 8
 - Retrospectives reviewed: Epic 3, 7, 8, 9
 - Defensive Firestore pattern added from Story 10.1 code review (2025-12-18)
+- Shared utilities + accessibility patterns added from Story 10a.4 code review (2025-12-21)
