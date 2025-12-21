@@ -25,6 +25,8 @@ import {
   PHASE_THRESHOLDS,
 } from '../types/insight';
 import { generateAllCandidates } from '../utils/insightGenerators';
+// Story 10a.4: Re-export for convenience in InsightsView
+export { getInsightProfile as getUserInsightProfile } from './insightProfileService';
 
 // ============================================================================
 // Main Entry Point
