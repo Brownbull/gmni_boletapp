@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, Home, ListIcon, BarChart3, Settings } from 'lucide-react';
+import { Camera, Home, Lightbulb, BarChart3, Settings } from 'lucide-react';
 
 interface NavProps {
     view: string;
@@ -61,14 +61,14 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onTrendsCl
                     <Camera size={24} strokeWidth={2} />
                 </button>
             </div>
+            {/* Story 10a.3: Renamed from Receipts to Insights (AC #1, #2, #3) */}
             <button
-                onClick={() => setView('list')}
+                onClick={() => setView('insights')}
                 className="min-w-11 min-h-11 flex flex-col items-center justify-center gap-1"
-                style={getNavItemStyle('list')}
+                style={getNavItemStyle('insights')}
             >
-                <ListIcon size={24} strokeWidth={2} />
-                {/* Story 7.10 AC #9: UX spec label is "Receipts" */}
-                <span className="text-[10px] font-medium">{t('receipts')}</span>
+                <Lightbulb size={24} strokeWidth={2} />
+                <span className="text-[10px] font-medium">{t('insights')}</span>
             </button>
             <button
                 onClick={() => setView('settings')}

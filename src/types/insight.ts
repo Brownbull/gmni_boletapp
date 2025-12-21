@@ -109,6 +109,7 @@ export interface UserInsightProfile {
 
 /**
  * Record of a shown insight for cooldown tracking.
+ * Story 10a.4/10a.5: Extended with full insight content for history display.
  */
 export interface InsightRecord {
   /** Insight identifier (e.g., "merchant_frequency") */
@@ -117,6 +118,15 @@ export interface InsightRecord {
   shownAt: Timestamp;
   /** Transaction that triggered this insight */
   transactionId?: string;
+  // Story 10a.5: Full insight content for history (optional for backward compatibility)
+  /** Short title (e.g., "Visita frecuente") */
+  title?: string;
+  /** Detailed message (e.g., "3ra vez en Jumbo este mes") */
+  message?: string;
+  /** Category for display styling */
+  category?: InsightCategory;
+  /** Lucide icon name for display */
+  icon?: string;
 }
 
 // ============================================================================
@@ -163,8 +173,8 @@ export const INSIGHT_CACHE_KEY = 'boletapp_insight_cache';
 /** Cooldown period for insights (1 week in milliseconds) */
 export const INSIGHT_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
-/** Maximum number of recent insights to store in profile */
-export const MAX_RECENT_INSIGHTS = 30;
+/** Maximum number of recent insights to store in profile (Story 10a.5: increased for history) */
+export const MAX_RECENT_INSIGHTS = 50;
 
 /** Phase thresholds in days */
 export const PHASE_THRESHOLDS = {
