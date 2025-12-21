@@ -383,6 +383,89 @@ describe('recordInsightShown', () => {
     // First insight should be dropped (FIFO)
     expect(updateCall[1].recentInsights[0].insightId).toBe('insight_1');
   });
+
+  // Story 10a.5: Test full insight content storage
+  it('should store full insight content (title, message, category, icon)', async () => {
+    const profile = createUserProfile({ recentInsights: [] });
+
+    (getDoc as Mock).mockResolvedValueOnce({
+      exists: () => true,
+      data: () => profile,
+    });
+
+    const db = createMockFirestore();
+    await recordInsightShown(db, 'user123', 'app1', 'merchant_frequency', 'tx123', {
+      title: 'Visita frecuente',
+      message: '3ra vez en Jumbo este mes',
+      category: 'ACTIONABLE',
+      icon: 'Repeat',
+    });
+
+    const updateCall = (updateDoc as Mock).mock.calls[0];
+    const storedRecord = updateCall[1].recentInsights[0];
+    expect(storedRecord.insightId).toBe('merchant_frequency');
+    expect(storedRecord.transactionId).toBe('tx123');
+    expect(storedRecord.title).toBe('Visita frecuente');
+    expect(storedRecord.message).toBe('3ra vez en Jumbo este mes');
+    expect(storedRecord.category).toBe('ACTIONABLE');
+    expect(storedRecord.icon).toBe('Repeat');
+  });
+
+  // Story 10a.5 AC2: Backward compatibility - old records without new fields
+  it('should not error when reading old records without new fields', async () => {
+    // Simulate old InsightRecord format (only insightId, shownAt, transactionId)
+    const oldStyleRecord: InsightRecord = {
+      insightId: 'old_insight',
+      shownAt: createMockTimestamp(1),
+      transactionId: 'old_tx',
+      // No title, message, category, icon - simulating old data
+    };
+
+    const profile = createUserProfile({ recentInsights: [oldStyleRecord] });
+
+    (getDoc as Mock).mockResolvedValueOnce({
+      exists: () => true,
+      data: () => profile,
+    });
+
+    const db = createMockFirestore();
+    // Adding a new insight should not error even with old records present
+    await recordInsightShown(db, 'user123', 'app1', 'new_insight', 'tx_new', {
+      title: 'New Title',
+      message: 'New Message',
+    });
+
+    const updateCall = (updateDoc as Mock).mock.calls[0];
+    // Should have both old and new records
+    expect(updateCall[1].recentInsights).toHaveLength(2);
+    // Old record should be preserved without new fields
+    expect(updateCall[1].recentInsights[0].title).toBeUndefined();
+    // New record should have the new fields
+    expect(updateCall[1].recentInsights[1].title).toBe('New Title');
+  });
+
+  it('should handle partial fullInsight object (only some fields provided)', async () => {
+    const profile = createUserProfile({ recentInsights: [] });
+
+    (getDoc as Mock).mockResolvedValueOnce({
+      exists: () => true,
+      data: () => profile,
+    });
+
+    const db = createMockFirestore();
+    // Only provide title and message, no category or icon
+    await recordInsightShown(db, 'user123', 'app1', 'test_insight', undefined, {
+      title: 'Test Title',
+      message: 'Test Message',
+    });
+
+    const updateCall = (updateDoc as Mock).mock.calls[0];
+    const storedRecord = updateCall[1].recentInsights[0];
+    expect(storedRecord.title).toBe('Test Title');
+    expect(storedRecord.message).toBe('Test Message');
+    expect(storedRecord.category).toBeUndefined();
+    expect(storedRecord.icon).toBeUndefined();
+  });
 });
 
 // ============================================================================
@@ -548,9 +631,9 @@ describe('Story 10.2 Acceptance Criteria', () => {
     expect(updateCall[1].totalTransactions).toEqual({ __increment: 1 });
   });
 
-  it('AC #7: Profile stores recentInsights array (max 30 entries)', async () => {
+  it('AC #7: Profile stores recentInsights array (max 50 entries per Story 10a.5)', async () => {
     // Create profile at max capacity
-    const existingInsights = Array.from({ length: 30 }, (_, i) =>
+    const existingInsights = Array.from({ length: MAX_RECENT_INSIGHTS }, (_, i) =>
       createInsightRecord(`insight_${i}`, i)
     );
 
@@ -565,6 +648,6 @@ describe('Story 10.2 Acceptance Criteria', () => {
     await recordInsightShown(db, 'user123', 'app1', 'new_insight');
 
     const updateCall = (updateDoc as Mock).mock.calls[0];
-    expect(updateCall[1].recentInsights).toHaveLength(30);
+    expect(updateCall[1].recentInsights).toHaveLength(MAX_RECENT_INSIGHTS);
   });
 });

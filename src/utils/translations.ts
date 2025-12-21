@@ -82,6 +82,8 @@ export const TRANSLATIONS = {
         tapToDrillDown: "Tap to drill down",
         receipts: "Receipts",
         analytics: "Analytics",
+        // Story 10a.3: Insights tab label (AC #2)
+        insights: "Insights",
         // Story 7.11: Floating Download FAB
         downloadAnalytics: "Download Analytics",
         // Story 7.12 AC#11: Color theme selector (Story 7.17: renamed themes)
@@ -233,7 +235,31 @@ export const TRANSLATIONS = {
         selectWeek: "Select week",
         noLocationData: "No location data available",
         // Story 9.20: Quarter filter support
-        selectQuarter: "Select quarter"
+        selectQuarter: "Select quarter",
+        // Story 10a.4: Insights History View
+        noInsightsYet: "No insights yet",
+        scanMoreReceipts: "Scan more receipts to see insights here",
+        thisWeek: "This Week",
+        lastWeek: "Last Week",
+        earlier: "Earlier",
+        // Story 10a.4 Enhancement: Temporal filters + Detail modal
+        noInsightsForPeriod: "No insights for this period",
+        tryDifferentFilter: "Try selecting a different time period",
+        viewTransaction: "View Transaction",
+        noMessageAvailable: "No additional details available",
+        transactionUnavailable: "Transaction details unavailable",
+        oldInsightData: "This insight was recorded before detailed tracking",
+        insight: "insight",
+        insightsCount: "insights",
+        clearFilter: "Clear filter",
+        week: "Week",
+        // Story 10a.4: Delete insights
+        deleteInsight: "Delete Insight",
+        deleting: "Deleting...",
+        deleteSelected: "Delete Selected",
+        selected: "selected",
+        selectAll: "Select All",
+        deselectAll: "Deselect All"
     },
     es: {
         overview: "Resumen", welcome: "Rastreo Inteligente", totalSpent: "Total Gastado",
@@ -318,6 +344,8 @@ export const TRANSLATIONS = {
         tapToDrillDown: "Toca para desglosar",
         receipts: "Recibos",
         analytics: "Analíticas",
+        // Story 10a.3: Insights tab label (AC #2)
+        insights: "Ideas",
         // Story 7.11: Floating Download FAB
         downloadAnalytics: "Descargar Analíticas",
         // Story 7.12 AC#11: Color theme selector (Story 7.17: renamed themes)
@@ -469,7 +497,31 @@ export const TRANSLATIONS = {
         selectWeek: "Seleccionar semana",
         noLocationData: "No hay datos de ubicación",
         // Story 9.20: Quarter filter support
-        selectQuarter: "Seleccionar trimestre"
+        selectQuarter: "Seleccionar trimestre",
+        // Story 10a.4: Insights History View
+        noInsightsYet: "Sin ideas todavía",
+        scanMoreReceipts: "Escanea más boletas para ver ideas aquí",
+        thisWeek: "Esta Semana",
+        lastWeek: "Semana Pasada",
+        earlier: "Anteriores",
+        // Story 10a.4 Enhancement: Temporal filters + Detail modal
+        noInsightsForPeriod: "Sin ideas para este período",
+        tryDifferentFilter: "Intenta seleccionar otro período de tiempo",
+        viewTransaction: "Ver Transacción",
+        noMessageAvailable: "Sin detalles adicionales disponibles",
+        transactionUnavailable: "Detalles de transacción no disponibles",
+        oldInsightData: "Esta idea fue registrada antes del seguimiento detallado",
+        insight: "idea",
+        insightsCount: "ideas",
+        clearFilter: "Borrar filtro",
+        week: "Semana",
+        // Story 10a.4: Delete insights
+        deleteInsight: "Eliminar Idea",
+        deleting: "Eliminando...",
+        deleteSelected: "Eliminar Seleccionados",
+        selected: "seleccionados",
+        selectAll: "Seleccionar Todo",
+        deselectAll: "Deseleccionar Todo"
     }
 };
 

@@ -82,6 +82,8 @@ backlog → drafted → ready-for-dev → in-progress → review → done
 
 | Story | Date | Environment | Notes |
 |-------|------|-------------|-------|
+| **Epic 10 Complete** | 2025-12-19 | Production | PR #102 - Full Insight Engine: 12 generators, phase-based selection, batch mode |
+| 10.5-selection-algorithm | 2025-12-19 | Production | ADR-017 phase-based priority, 33/66 sprinkle, WARNING category |
 | 10.1-insight-engine-core | 2025-12-18 | Production | InsightEngine foundation - 47 tests, defensive Timestamp handling |
 | 10.0-foundation-sprint | 2025-12-18 | Production | Analytics refactor, filtering service, App.tsx cleanup |
 

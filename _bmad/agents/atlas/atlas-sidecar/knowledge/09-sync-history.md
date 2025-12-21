@@ -19,6 +19,7 @@
 | 2025-12-19 | 04-architecture | Story 10.5 code review | Added Selection Algorithm details, ADR-017 implementation, ADR status → Active |
 | 2025-12-19 | 04-architecture | Story 10.6 implementation | Added InsightCard UI layer, async side-effect pattern in save flow |
 | 2025-12-19 | 04-architecture | Post-10.6 fix: Default time skip | Time-based insight generators skip DEFAULT_TIME ("04:04") sentinel value |
+| 2025-12-19 | 07-process | Epic 10 deployment complete | PR #102 merged - Full Insight Engine deployed to production |
 
 ## Documents Tracked
 
