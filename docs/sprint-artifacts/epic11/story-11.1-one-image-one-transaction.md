@@ -1,9 +1,11 @@
 # Story 11.1: One Image = One Transaction (Multi-Image Detection)
 
 **Epic:** Epic 11 - Quick Save & Scan Flow Optimization
-**Status:** Draft
+**Status:** Ready for Dev
 **Story Points:** 5
-**Dependencies:** Story 10.7 (Batch Mode Summary)
+**Dependencies:** None (Foundation story)
+**Parallel With:** Story 11.5 (Scan Status Clarity)
+**Tech Context:** [tech-context-epic11.md](./tech-context-epic11.md)
 
 ---
 

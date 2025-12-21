@@ -16,6 +16,8 @@ import {
   getOrCreateInsightProfile,
   recordInsightShown,
   trackTransactionForProfile,
+  deleteInsight,
+  deleteInsights,
 } from '../services/insightProfileService';
 import {
   getLocalCache,
@@ -23,16 +25,28 @@ import {
   incrementScanCounter,
 } from '../services/insightEngineService';
 
+/** Full insight content for storage */
+interface FullInsightContent {
+  title?: string;
+  message?: string;
+  icon?: string;
+  category?: string;
+}
+
 interface UseInsightProfileResult {
   profile: UserInsightProfile | null;
   cache: LocalInsightCache;
   loading: boolean;
-  /** Record that an insight was shown */
-  recordShown: (insightId: string, transactionId?: string) => Promise<void>;
+  /** Record that an insight was shown with full content for history */
+  recordShown: (insightId: string, transactionId?: string, fullInsight?: FullInsightContent) => Promise<void>;
   /** Track a new transaction for profile stats */
   trackTransaction: (transactionDate: Date) => Promise<void>;
   /** Increment scan counter and update cache */
   incrementCounter: () => void;
+  /** Delete a single insight */
+  removeInsight: (insightId: string, shownAtSeconds: number) => Promise<void>;
+  /** Delete multiple insights */
+  removeInsights: (insights: Array<{ insightId: string; shownAtSeconds: number }>) => Promise<void>;
 }
 
 export function useInsightProfile(
@@ -65,9 +79,9 @@ export function useInsightProfile(
       });
   }, [user, services]);
 
-  // Record that an insight was shown
+  // Record that an insight was shown with full content for history
   const recordShown = useCallback(
-    async (insightId: string, transactionId?: string) => {
+    async (insightId: string, transactionId?: string, fullInsight?: FullInsightContent) => {
       if (!user || !services) return;
       try {
         await recordInsightShown(
@@ -75,7 +89,8 @@ export function useInsightProfile(
           user.uid,
           services.appId,
           insightId,
-          transactionId
+          transactionId,
+          fullInsight
         );
         // Refresh profile to get updated recentInsights
         const updated = await getOrCreateInsightProfile(
@@ -123,6 +138,57 @@ export function useInsightProfile(
     setLocalCache(newCache);
   }, [cache]);
 
+  // Delete a single insight
+  const removeInsight = useCallback(
+    async (insightId: string, shownAtSeconds: number) => {
+      if (!user || !services) return;
+      try {
+        await deleteInsight(
+          services.db,
+          user.uid,
+          services.appId,
+          insightId,
+          shownAtSeconds
+        );
+        // Refresh profile to get updated recentInsights
+        const updated = await getOrCreateInsightProfile(
+          services.db,
+          user.uid,
+          services.appId
+        );
+        setProfile(updated);
+      } catch (err) {
+        console.error('Failed to delete insight:', err);
+      }
+    },
+    [user, services]
+  );
+
+  // Delete multiple insights
+  const removeInsights = useCallback(
+    async (insights: Array<{ insightId: string; shownAtSeconds: number }>) => {
+      if (!user || !services) return;
+      try {
+        await deleteInsights(
+          services.db,
+          user.uid,
+          services.appId,
+          insights
+        );
+        // Refresh profile to get updated recentInsights
+        const updated = await getOrCreateInsightProfile(
+          services.db,
+          user.uid,
+          services.appId
+        );
+        setProfile(updated);
+      } catch (err) {
+        console.error('Failed to delete insights:', err);
+      }
+    },
+    [user, services]
+  );
+
   return {
     profile,
     cache,
@@ -130,5 +196,7 @@ export function useInsightProfile(
     recordShown,
     trackTransaction,
     incrementCounter,
+    removeInsight,
+    removeInsights,
   };
 }
