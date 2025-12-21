@@ -87,6 +87,7 @@
 10. **Extract shared utilities early** - If >2 components use same logic, create shared util file
 11. **Type-safe icon lookups** - Use helper functions with explicit fallbacks, not double-casting
 12. **Keyboard alternatives for touch** - Long-press needs Shift+Enter equivalent, aria-pressed state
+13. **Credit/resource deduction after success** - Deduct user credits AFTER operation succeeds, not before (prevents lost credits on failure)
 
 ## Team Agreements
 
@@ -108,3 +109,4 @@
 - Defensive Firestore pattern added from Story 10.1 code review (2025-12-18)
 - Shared utilities + accessibility patterns added from Story 10a.4 code review (2025-12-21)
 - Epic 10a deployed to production (v9.3.0) - 2025-12-21
+- Credit deduction timing pattern added from Story 11.1 code review (2025-12-21)
