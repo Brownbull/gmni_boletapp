@@ -107,3 +107,4 @@
 - Retrospectives reviewed: Epic 3, 7, 8, 9
 - Defensive Firestore pattern added from Story 10.1 code review (2025-12-18)
 - Shared utilities + accessibility patterns added from Story 10a.4 code review (2025-12-21)
+- Epic 10a deployed to production (v9.3.0) - 2025-12-21
