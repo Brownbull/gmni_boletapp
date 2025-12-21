@@ -147,6 +147,22 @@ Display InsightCard (or BuildingProfileCard Fallback)
 
 ---
 
+## Code Review Learnings
+
+### Story 10a.1 - Home Screen Consolidation (2025-12-20)
+
+**Pattern Adoption:**
+- HistoryFiltersContext reuse: Same filter context for HistoryView and DashboardView
+- Component sharing: HistoryFilterBar, TransactionThumbnail, ImageViewer across views
+- Service reuse: getDuplicateIds(), filterTransactionsByHistoryFilters()
+
+**Technical Decisions:**
+- Session-scoped filter state (filters reset when view unmounts - intentional)
+- Page size 10 hardcoded in DashboardView (could use ITEMS_PER_PAGE constant)
+- Backward compatibility: onTriggerScan prop kept but unused (prefixed with _)
+
+---
+
 ## Sync Notes
 
 - Architecture stable since Epic 7
@@ -156,3 +172,4 @@ Display InsightCard (or BuildingProfileCard Fallback)
 - Story 10.4 added 5 pattern detection generators with precomputed aggregates (2025-12-18)
 - Story 10.5 implemented full selection algorithm with phase-based priority and sprinkle distribution (2025-12-19)
 - Story 10.6 added InsightCard UI layer with async side-effect pattern in App.tsx save flow (2025-12-19)
+- Story 10a.1 unified Dashboard+History into consolidated Home view with shared filter context (2025-12-20)
