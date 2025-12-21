@@ -61,6 +61,12 @@
 ### Keyboard Accessibility for Touch Features (Story 10a.4 - 2025-12-21)
 > "When implementing touch-based features like long-press selection mode, always provide keyboard alternatives. Story 10a.4 review found that long-press was inaccessible to keyboard-only users. **Fix:** Add `onKeyDown` handler with `Shift+Enter` to toggle selection (parallels long-press), `aria-pressed` for selection state, and `aria-label` with full context for screen readers."
 
+### Unused State Variables with Refs (Story 11.1 - 2025-12-21)
+> "When using useState alongside useRef for async loop cancellation, the state setter is needed for reactivity but the getter may be unused (only the ref is checked in the loop). Prefix unused state with underscore (e.g., `_batchCancelRequested`) to satisfy TypeScript's unused variable check while retaining the setter for state updates."
+
+### ESLint prefer-const in Async Loops (Story 11.1 - 2025-12-21)
+> "Always use `const` for variables that are assigned once, even if they come from conditional expressions like `result.country || defaultCountry || ''`. The CI security lint enforces `prefer-const` which catches these in the pipeline."
+
 ## Patterns to Avoid
 
 1. **Hardcoding API keys** - Always use environment variables
