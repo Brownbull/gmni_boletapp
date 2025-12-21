@@ -573,7 +573,7 @@ function App() {
                 const finalTotal = parseStrictNumber(result.total);
 
                 // Apply location logic
-                let finalCountry = result.country || defaultCountry || '';
+                const finalCountry = result.country || defaultCountry || '';
                 let finalCity = result.city || '';
                 if (finalCountry && finalCity) {
                     const availableCities = getCitiesForCountry(finalCountry);
