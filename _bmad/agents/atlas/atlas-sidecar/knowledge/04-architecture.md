@@ -161,6 +161,22 @@ Display InsightCard (or BuildingProfileCard Fallback)
 - Page size 10 hardcoded in DashboardView (could use ITEMS_PER_PAGE constant)
 - Backward compatibility: onTriggerScan prop kept but unused (prefixed with _)
 
+### Story 11.1 - One Image = One Transaction (2025-12-21)
+
+**Pattern Adoption:**
+- Sequential API calls: Process each image individually to maintain 1:1 image-to-transaction mapping
+- Modal overlay pattern: BatchUploadPreview and BatchProcessingProgress use fixed modal overlays
+- Fire-and-forget for mapping updates: incrementMappingUsage calls are non-blocking
+
+**Technical Decisions:**
+- Credit deduction after save: Credits deducted only after successful Firestore save (prevents lost credits on API failure)
+- Batch complete delay: 500ms delay before showing BatchSummary (BATCH_COMPLETE_DELAY_MS constant)
+- Image removal UX: When removing images leaves 1, automatically switch to single-image flow
+
+**Coverage Notes:**
+- Tests added: 30 tests across BatchUploadPreview.test.tsx (16) and BatchProcessingProgress.test.tsx (14)
+- Coverage gap: Missing integration test for full processBatchImages flow
+
 ---
 
 ## Sync Notes
@@ -173,3 +189,4 @@ Display InsightCard (or BuildingProfileCard Fallback)
 - Story 10.5 implemented full selection algorithm with phase-based priority and sprinkle distribution (2025-12-19)
 - Story 10.6 added InsightCard UI layer with async side-effect pattern in App.tsx save flow (2025-12-19)
 - Story 10a.1 unified Dashboard+History into consolidated Home view with shared filter context (2025-12-20)
+- Story 11.1 added batch image processing with sequential API calls and credit-after-save pattern (2025-12-21)

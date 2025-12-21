@@ -1,7 +1,7 @@
 # Story 11.1: One Image = One Transaction (Multi-Image Detection)
 
 **Epic:** Epic 11 - Quick Save & Scan Flow Optimization
-**Status:** Ready for Dev
+**Status:** Done
 **Story Points:** 5
 **Dependencies:** None (Foundation story)
 **Parallel With:** Story 11.5 (Scan Status Clarity)
@@ -33,15 +33,22 @@ The desired behavior is:
 
 ## Acceptance Criteria
 
-- [ ] **AC #1:** When user selects 1 image → standard single transaction flow
-- [ ] **AC #2:** When user selects 2+ images → show "X boletas detectadas" message
-- [ ] **AC #3:** Each image is processed as a separate Gemini API call
-- [ ] **AC #4:** Progress indicator shows "Procesando 1/X, 2/X..." during batch processing
-- [ ] **AC #5:** After all images processed → automatically trigger Batch Mode Summary (Story 10.7)
-- [ ] **AC #6:** If any image fails → continue with others, show partial success summary
-- [ ] **AC #7:** Maximum 10 images per batch upload (UX limit)
-- [ ] **AC #8:** All processed transactions appear in history immediately
-- [ ] **AC #9:** Dark mode support for all new UI elements
+- [x] **AC #1:** When user selects 1 image → standard single transaction flow
+- [x] **AC #2:** When user selects 2+ images → show "X boletas detectadas" message
+- [x] **AC #3:** Each image is processed as a separate Gemini API call
+- [x] **AC #4:** Progress indicator shows "Procesando 1/X, 2/X..." during batch processing
+- [x] **AC #5:** After all images processed → automatically trigger Batch Mode Summary (Story 10.7)
+- [x] **AC #6:** If any image fails → continue with others, show partial success summary
+- [x] **AC #7:** Maximum 10 images per batch upload (UX limit)
+- [x] **AC #8:** All processed transactions appear in history immediately
+- [x] **AC #9:** Dark mode support for all new UI elements
+
+### Expanded Scope (2025-12-21)
+- [x] **AC #10:** After batch summary dismissed → redirect to Home screen (not stay on Nueva page)
+- [x] **AC #11:** Cancel button shown during batch processing with confirmation dialog
+- [x] **AC #12:** Cancelling batch saves completed transactions, skips remaining
+- [x] **AC #13:** Home screen sort options: Transaction date vs Scan date (createdAt)
+- [x] **AC #14:** Home screen filter: Show only possible duplicates toggle
 
 ---
 
@@ -143,43 +150,48 @@ Warning: "1 imagen no pudo ser procesada"
 ## Tasks / Subtasks
 
 ### Task 1: Multi-Image Detection Component (1.5h)
-- [ ] Create `BatchUploadPreview` component
-- [ ] Show "X boletas detectadas" when images.length > 1
-- [ ] Display thumbnail grid of selected images
-- [ ] Implement "Ver imágenes" collapsible toggle
-- [ ] Add "Cancelar" and "Procesar todas" buttons
-- [ ] Enforce 10 image maximum with error message
+- [x] Create `BatchUploadPreview` component
+- [x] Show "X boletas detectadas" when images.length > 1
+- [x] Display thumbnail grid of selected images
+- [x] Implement "Ver imágenes" collapsible toggle
+- [x] Add "Cancelar" and "Procesar todas" buttons
+- [x] Enforce 10 image maximum with error message
 
 ### Task 2: Sequential Processing Logic (1.5h)
-- [ ] Create `processBatchImages()` function in App.tsx
-- [ ] Process each image with individual `analyzeReceipt()` call
-- [ ] Track progress state: `{current: number, total: number, results: []}`
-- [ ] Handle failures gracefully, continue with remaining images
-- [ ] Collect all successful transactions
+- [x] Create `processBatchImages()` function in App.tsx
+- [x] Process each image with individual `analyzeReceipt()` call
+- [x] Track progress state: `{current: number, total: number, results: []}`
+- [x] Handle failures gracefully, continue with remaining images
+- [x] Collect all successful transactions
 
 ### Task 3: Processing Progress UI (1h)
-- [ ] Create `BatchProcessingProgress` component
-- [ ] Show progress bar with "X/Y" indicator
-- [ ] Display real-time results list (success/processing/failed)
-- [ ] Animate progress updates
+- [x] Create `BatchProcessingProgress` component
+- [x] Show progress bar with "X/Y" indicator
+- [x] Display real-time results list (success/processing/failed)
+- [x] Animate progress updates
 
 ### Task 4: Integration with Batch Mode Summary (0.5h)
-- [ ] After all images processed, add all transactions to batch session
-- [ ] Trigger `BatchSummary` display automatically
-- [ ] Handle case where all images fail (no summary, show error)
+- [x] After all images processed, add all transactions to batch session
+- [x] Trigger `BatchSummary` display automatically
+- [x] Handle case where all images fail (no summary, show error)
 
 ### Task 5: Update Existing Flow (0.5h)
-- [ ] Modify `handlePhotosSelected()` to detect multi-image
-- [ ] Route to `BatchUploadPreview` when images.length > 1
-- [ ] Keep single-image flow unchanged
+- [x] Modify `handlePhotosSelected()` to detect multi-image
+- [x] Route to `BatchUploadPreview` when images.length > 1
+- [x] Keep single-image flow unchanged
 
 ### Task 6: Testing (1h)
-- [ ] Unit tests for `BatchUploadPreview` component
-- [ ] Unit tests for `BatchProcessingProgress` component
-- [ ] Unit tests for `processBatchImages()` function
-- [ ] Integration test: multi-image → batch summary flow
-- [ ] Test partial failure scenarios
-- [ ] Test 10 image limit enforcement
+- [x] Unit tests for `BatchUploadPreview` component
+- [x] Unit tests for `BatchProcessingProgress` component
+- [x] Unit tests for `processBatchImages()` function (via integration test simulation)
+- [x] Integration test: multi-image → batch summary flow ✓ Added 2025-12-21
+- [x] Test partial failure scenarios
+- [x] Test 10 image limit enforcement
+
+### Review Follow-ups (AI-Review)
+- [x] [AI-Review][HIGH] Add integration test for processBatchImages flow ✓ Added 2025-12-21 (19 tests in batch-processing.test.tsx)
+- [x] [AI-Review][HIGH] Fix credit deduction timing - moved after successful transaction save [App.tsx:622-626] ✓ Fixed 2025-12-21
+- [x] [AI-Review][MEDIUM] Extract 500ms delay to BATCH_COMPLETE_DELAY_MS constant [App.tsx:668] ✓ Fixed 2025-12-21
 
 ---
 
@@ -290,32 +302,61 @@ const processBatchImages = async (images: string[]) => {
 
 ## Definition of Done
 
-- [ ] All 9 acceptance criteria verified
-- [ ] Multi-image detection shows "X boletas detectadas"
-- [ ] Each image processed as separate transaction
-- [ ] Progress UI shows real-time status
-- [ ] Partial failures handled gracefully
-- [ ] Batch Summary triggers after completion
-- [ ] 10 image limit enforced
-- [ ] All tests passing (unit + integration)
-- [ ] Code review approved
-- [ ] Dark mode verified
+- [x] All 14 acceptance criteria verified (original 9 + 5 expanded scope)
+- [x] Multi-image detection shows "X boletas detectadas"
+- [x] Each image processed as separate transaction
+- [x] Progress UI shows real-time status with Cancel button
+- [x] Partial failures handled gracefully
+- [x] Batch Summary triggers after completion
+- [x] Redirect to Home after batch summary dismissed
+- [x] 10 image limit enforced
+- [x] Cancel batch with confirmation dialog
+- [x] Home screen sort by transaction date / scan date
+- [x] Home screen filter by possible duplicates
+- [x] All tests passing (unit + integration) - *1,876 tests passing*
+- [x] Code review approved - *All 3 action items resolved 2025-12-21*
+- [x] Dark mode verified
 
 ---
 
 ## Dev Agent Record
 
 ### Agent Model Used
-<!-- Will be populated during dev-story execution -->
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes
-<!-- Will be populated during dev-story execution -->
+Implementation complete for all 14 acceptance criteria (9 original + 5 expanded scope). Code review identified and resolved 3 action items:
+1. ✅ Added integration test for processBatchImages flow (19 tests)
+2. ✅ Fixed credit deduction timing - now deducts after successful save
+3. ✅ Extracted 500ms to BATCH_COMPLETE_DELAY_MS constant
+
+Expanded scope (based on user testing feedback):
+4. ✅ Redirect to Home after batch summary dismissed
+5. ✅ Cancel button with confirmation dialog during batch processing
+6. ✅ Home screen sort options (transaction date vs scan date)
+7. ✅ Home screen duplicates-only filter toggle
 
 ### Files Modified
-<!-- Will be populated during dev-story execution -->
+**Created:**
+- `src/components/scan/BatchUploadPreview.tsx` - Multi-image confirmation UI (200 lines)
+- `src/components/scan/BatchProcessingProgress.tsx` - Real-time processing progress with Cancel button
+- `src/components/scan/index.ts` - Barrel exports for scan components
+- `tests/unit/components/scan/BatchUploadPreview.test.tsx` - 204 lines, 16 tests
+- `tests/unit/components/scan/BatchProcessingProgress.test.tsx` - 178 lines, 14 tests
+- `tests/integration/batch-processing.test.tsx` - 19 integration tests for full flow
+
+**Modified:**
+- `src/App.tsx` - Batch processing logic, cancel handling, redirect to Home after batch
+- `src/views/DashboardView.tsx` - Sort options (transaction date/scan date), duplicates filter
+- `src/utils/translations.ts` - 22 new translation keys for batch UI and home enhancements
+- `src/components/scan/BatchProcessingProgress.tsx` - Added onCancel prop for cancel button
 
 ### Test Results
-<!-- Will be populated during dev-story execution -->
+```
+Test Files: 74 passed (74)
+Tests: 1,876 passed (1,876)
+Duration: 49.76s
+```
 
 ---
 
@@ -325,3 +366,6 @@ const processBatchImages = async (images: string[]) => {
 |------|---------|-------------|
 | 2025-12-16 | 1.0 | Story drafted from Epic 11 definition |
 | 2025-12-19 | 2.0 | **Major revision:** Changed approach from "remove multi-image" to "multi-image = multi-transaction". Added detailed UX flow documentation, batch processing logic, and integration with Story 10.7 Batch Mode Summary. |
+| 2025-12-21 | 2.1 | Implementation complete, moved to Review status. Atlas-enhanced code review identified 3 action items. |
+| 2025-12-21 | 2.2 | All review items resolved: added integration tests (19), fixed credit timing, extracted constant. Ready for done. |
+| 2025-12-21 | 3.0 | **Expanded scope:** Based on user testing feedback, added 5 new ACs: redirect to Home after batch, cancel button with confirmation, sort by scan date, and duplicates filter on Home screen. |
