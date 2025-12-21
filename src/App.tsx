@@ -739,6 +739,7 @@ function App() {
             />
 
             <main className="p-6 pb-24 h-full overflow-y-auto">
+                {/* Story 10a.1: Wrap DashboardView with HistoryFiltersProvider for filter context (AC #2, #6) */}
                 {view === 'dashboard' && (
                     <HistoryFiltersProvider>
                         <DashboardView

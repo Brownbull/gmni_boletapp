@@ -320,6 +320,8 @@ function isLastMonth(dateStr: string): boolean {
  * merchant_frequency: Tracks repeat visits to the same merchant.
  * Triggers when 2+ previous visits to the same merchant.
  * AC #3: Minimum 2+ visits required.
+ *
+ * v9.1.0: Added time context (this month, this year, all-time) for meaningful messages.
  */
 const merchantFrequencyGenerator: InsightGenerator = {
   id: 'merchant_frequency',
@@ -329,16 +331,51 @@ const merchantFrequencyGenerator: InsightGenerator = {
     return visits >= 2;
   },
   generate: (tx, history) => {
-    const visits = history.filter((h) => h.merchant === tx.merchant).length + 1;
-    const ordinal = getOrdinalSpanish(visits);
+    const merchantHistory = history.filter((h) => h.merchant === tx.merchant);
+    const totalVisits = merchantHistory.length + 1;
+
+    // Count visits this month
+    const thisMonthVisits = merchantHistory.filter((h) => isThisMonth(h.date)).length + 1;
+
+    // Count visits this year
+    const currentYear = new Date().getFullYear();
+    const thisYearVisits =
+      merchantHistory.filter((h) => {
+        const { year } = parseLocalDate(h.date);
+        return year === currentYear;
+      }).length + 1;
+
+    // Determine the most meaningful time frame
+    // Priority: this month > this year > all-time
+    let timeFrame: string;
+    let displayVisits: number;
+
+    if (thisMonthVisits >= 2) {
+      // If 2+ visits this month, show monthly context
+      timeFrame = 'este mes';
+      displayVisits = thisMonthVisits;
+    } else if (thisYearVisits >= 2 && thisYearVisits < totalVisits) {
+      // If 2+ visits this year (but not all from this month), show yearly
+      timeFrame = 'este año';
+      displayVisits = thisYearVisits;
+    } else {
+      // Fall back to all-time count (no suffix for all-time)
+      timeFrame = '';
+      displayVisits = totalVisits;
+    }
+
+    const ordinal = getOrdinalSpanish(displayVisits);
+    const message = timeFrame
+      ? `${ordinal} vez en ${tx.merchant} ${timeFrame}`
+      : `${ordinal} vez en ${tx.merchant}`;
 
     return {
       id: 'merchant_frequency',
       category: 'ACTIONABLE',
       title: 'Visita frecuente',
-      message: `${ordinal} vez en ${tx.merchant}`,
+      message,
       icon: 'Repeat',
-      priority: Math.min(visits, 8), // More visits = higher priority, capped at 8
+      priority: Math.min(totalVisits, 8), // More visits = higher priority, capped at 8
       transactionId: tx.id,
     };
   },

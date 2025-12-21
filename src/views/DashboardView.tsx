@@ -1,9 +1,19 @@
-import React, { useState } from 'react';
-import { Plus, Camera, Receipt, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Plus, Image as ImageIcon, AlertTriangle, Inbox } from 'lucide-react';
 import { CategoryBadge } from '../components/CategoryBadge';
 import { ImageViewer } from '../components/ImageViewer';
+// Story 10a.1: Filter bar for consolidated home view (AC #2)
+import { HistoryFilterBar } from '../components/history/HistoryFilterBar';
 // Story 9.12: Category translations
 import type { Language } from '../utils/translations';
+// Story 10a.1: Filter and duplicate detection utilities (AC #2, #4)
+import { useHistoryFilters } from '../hooks/useHistoryFilters';
+import { getDuplicateIds } from '../services/duplicateDetectionService';
+import {
+    extractAvailableFilters,
+    filterTransactionsByHistoryFilters,
+} from '../utils/historyFilterUtils';
+import type { Transaction as TransactionType } from '../types/transaction';
 
 // Story 9.11: Extended transaction interface with v2.6.0 fields for unified display
 interface Transaction {
@@ -29,7 +39,7 @@ interface Transaction {
 }
 
 interface DashboardViewProps {
-    /** Recently added transactions (sorted by createdAt, last 5) for display */
+    /** Story 10a.1: Used as fallback when allTransactions is empty */
     transactions: Transaction[];
     t: (key: string) => string;
     currency: string;
@@ -41,8 +51,9 @@ interface DashboardViewProps {
     onCreateNew: () => void;
     onViewTrends: (month: string | null) => void;
     onEditTransaction: (transaction: Transaction) => void;
-    onTriggerScan: () => void;
-    /** Story 9.11: All transactions for total/month calculations */
+    /** Story 10a.1: Scan CTA removed - prop kept for backward compatibility but unused */
+    onTriggerScan?: () => void;
+    /** Story 10a.1: All transactions for display (now used for full paginated list) */
     allTransactions?: Transaction[];
     /** Story 9.12: Language for category translations */
     lang?: Language;
@@ -123,7 +134,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     onCreateNew,
     onViewTrends,
     onEditTransaction,
-    onTriggerScan,
+    // Story 10a.1: Scan CTA removed - prop kept for backward compatibility (AC #1)
+    onTriggerScan: _onTriggerScan,
     allTransactions = [],
     // Story 9.12: Language for translations
     lang = 'en',
@@ -134,14 +146,47 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     // Story 9.11: State for ImageViewer modal
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
-    // Story 9.11: Use allTransactions for totals calculation
-    // (transactions is now only the 5 most recently ADDED, not all)
+    // Story 10a.1: Pagination state (AC #3)
+    const [historyPage, setHistoryPage] = useState(1);
+    const pageSize = 10;
+
+    // Story 10a.1: Access filter state from context (AC #2, #6)
+    const { state: filterState, hasActiveFilters } = useHistoryFilters();
+
+    // Story 10a.1: Use allTransactions for display (AC #3)
     const allTx = allTransactions.length > 0 ? allTransactions : transactions;
     const currentMonth = new Date().toISOString().slice(0, 7);
     const totalSpent = allTx.reduce((a, b) => a + b.total, 0);
     const monthSpent = allTx
-        .filter(t => t.date.startsWith(currentMonth))
+        .filter(tx => tx.date.startsWith(currentMonth))
         .reduce((a, b) => a + b.total, 0);
+
+    // Story 10a.1: Extract available filters from transactions (AC #2)
+    const availableFilters = useMemo(() => {
+        return extractAvailableFilters(allTx as unknown as TransactionType[]);
+    }, [allTx]);
+
+    // Story 10a.1: Apply filters to transactions (AC #2)
+    const filteredTransactions = useMemo(() => {
+        return filterTransactionsByHistoryFilters(allTx as unknown as TransactionType[], filterState);
+    }, [allTx, filterState]);
+
+    // Story 10a.1: Paginate filtered results (AC #3)
+    const totalPages = Math.ceil(filteredTransactions.length / pageSize);
+    const paginatedTransactions = useMemo(() => {
+        const startIndex = (historyPage - 1) * pageSize;
+        return filteredTransactions.slice(startIndex, startIndex + pageSize);
+    }, [filteredTransactions, historyPage, pageSize]);
+
+    // Story 10a.1: Duplicate detection (AC #4)
+    const duplicateIds = useMemo(() => {
+        return getDuplicateIds(allTx as unknown as TransactionType[]);
+    }, [allTx]);
+
+    // Story 10a.1: Reset to page 1 when filters change
+    useEffect(() => {
+        setHistoryPage(1);
+    }, [filterState]);
 
     // Card styling using CSS variables (AC #1)
     const cardStyle: React.CSSProperties = {
@@ -211,84 +256,129 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
             </div>
 
-            {/* Scan CTA with gradient accent */}
-            <div
-                className="p-6 rounded-xl relative overflow-hidden text-white"
-                style={{ background: `linear-gradient(135deg, var(--accent), #6366f1)` }}
-            >
-                <h3 className="font-bold z-10 relative">{t('scanTitle')}</h3>
-                <button
-                    onClick={onTriggerScan}
-                    className="mt-3 min-h-11 px-4 py-2 rounded-lg font-bold flex items-center gap-2 z-10 relative"
-                    style={{
-                        backgroundColor: 'var(--surface)',
-                        color: 'var(--accent)',
-                    }}
-                >
-                    <Camera size={20} strokeWidth={2} /> {t('scanBtn')}
-                </button>
-                <Receipt className="absolute -right-4 -bottom-4 w-32 h-32 opacity-20 rotate-12" />
-            </div>
+            {/* Story 10a.1: Filter bar below summary cards (AC #2) */}
+            <HistoryFilterBar
+                availableFilters={availableFilters}
+                theme={theme}
+                locale={lang}
+                t={t}
+                totalCount={allTx.length}
+                filteredCount={filteredTransactions.length}
+            />
 
-            {/* Story 9.11: Transaction list with unified card format (matching HistoryView) */}
-            <div className="space-y-3">
-                {transactions.map(tx => {
-                    // Use transaction's currency if available, else fall back to app currency
-                    const displayCurrency = tx.currency || currency;
-                    const location = formatLocation(tx.city, tx.country);
+            {/* Story 10a.1: Transaction list with filters, pagination, and duplicate detection */}
+            {filteredTransactions.length === 0 && hasActiveFilters ? (
+                /* Story 10a.1: Empty state when filters match nothing */
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <Inbox size={48} className="mb-4 opacity-50" style={{ color: 'var(--secondary)' }} />
+                    <p className="text-lg font-medium mb-2" style={{ color: 'var(--primary)' }}>{t('noMatchingTransactions')}</p>
+                    <p className="text-sm opacity-75" style={{ color: 'var(--secondary)' }}>{t('tryDifferentFilters')}</p>
+                </div>
+            ) : (
+                <>
+                    <div className="space-y-3">
+                        {paginatedTransactions.map(tx => {
+                            // Use transaction's currency if available, else fall back to app currency
+                            const displayCurrency = tx.currency || currency;
+                            const location = formatLocation(tx.city, tx.country);
+                            // Story 10a.1: Check if transaction is a duplicate (AC #4)
+                            const isDuplicate = tx.id ? duplicateIds.has(tx.id) : false;
 
-                    return (
-                        <div
-                            key={tx.id}
-                            onClick={() => onEditTransaction(tx)}
-                            className="p-4 rounded-xl border flex gap-3 cursor-pointer"
-                            style={getTransactionCardStyle()}
-                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = isDark ? '#334155' : '#e2e8f0'; }}
-                            data-testid="transaction-card"
-                        >
-                            {/* Thumbnail column - only if thumbnailUrl exists */}
-                            <TransactionThumbnail
-                                transaction={tx}
-                                onThumbnailClick={handleThumbnailClick}
-                            />
+                            return (
+                                <div
+                                    key={tx.id}
+                                    onClick={() => onEditTransaction(tx as Transaction)}
+                                    className={`p-4 rounded-xl border flex gap-3 cursor-pointer ${isDuplicate ? 'border-amber-400' : ''}`}
+                                    style={isDuplicate ? { ...getTransactionCardStyle(), borderColor: '#fbbf24' } : getTransactionCardStyle()}
+                                    onMouseEnter={(e) => { if (!isDuplicate) e.currentTarget.style.borderColor = 'var(--accent)'; }}
+                                    onMouseLeave={(e) => { if (!isDuplicate) e.currentTarget.style.borderColor = isDark ? '#334155' : '#e2e8f0'; }}
+                                    data-testid="transaction-card"
+                                >
+                                    {/* Thumbnail column - only if thumbnailUrl exists */}
+                                    <TransactionThumbnail
+                                        transaction={tx as Transaction}
+                                        onThumbnailClick={handleThumbnailClick}
+                                    />
 
-                            {/* Transaction details - Row-aligned layout */}
-                            <div className="flex-1 min-w-0">
-                                {/* ROW 1: Alias + Currency/Amount */}
-                                <div className="flex justify-between items-start gap-2">
-                                    <div className="font-semibold truncate" style={{ color: 'var(--primary)' }}>
-                                        {tx.alias || tx.merchant}
-                                    </div>
-                                    <div className="font-bold whitespace-nowrap flex-shrink-0" style={{ color: 'var(--primary)' }}>
-                                        {displayCurrency} {formatCurrency(tx.total, displayCurrency).replace(/^[A-Z$€£¥]+\s?/, '')}
-                                    </div>
-                                </div>
-
-                                {/* ROW 2: Merchant + Date */}
-                                <div className="flex justify-between items-start gap-2">
-                                    <div className="text-xs" style={{ color: 'var(--secondary)' }}>
-                                        {tx.merchant.length > 20 ? `${tx.merchant.substring(0, 20)}...` : tx.merchant}
-                                    </div>
-                                    <div className="text-xs whitespace-nowrap flex-shrink-0" style={{ color: 'var(--secondary)' }}>
-                                        {formatDate(tx.date, dateFormat)}
-                                    </div>
-                                </div>
-
-                                {/* ROW 3: Category + Location - Story 9.12: Translated category */}
-                                <div className="flex justify-between items-center gap-2 mt-1">
-                                    <CategoryBadge category={tx.category} mini lang={lang} />
-                                    {location && (
-                                        <div className="text-xs whitespace-nowrap flex-shrink-0" style={{ color: 'var(--secondary)' }}>
-                                            {location}
+                                    {/* Transaction details - Row-aligned layout */}
+                                    <div className="flex-1 min-w-0">
+                                        {/* ROW 1: Alias + Currency/Amount */}
+                                        <div className="flex justify-between items-start gap-2">
+                                            <div className="font-semibold truncate" style={{ color: 'var(--primary)' }}>
+                                                {tx.alias || tx.merchant}
+                                            </div>
+                                            <div className="font-bold whitespace-nowrap flex-shrink-0" style={{ color: 'var(--primary)' }}>
+                                                {displayCurrency} {formatCurrency(tx.total, displayCurrency).replace(/^[A-Z$€£¥]+\s?/, '')}
+                                            </div>
                                         </div>
-                                    )}
+
+                                        {/* ROW 2: Merchant + Date */}
+                                        <div className="flex justify-between items-start gap-2">
+                                            <div className="text-xs" style={{ color: 'var(--secondary)' }}>
+                                                {tx.merchant.length > 20 ? `${tx.merchant.substring(0, 20)}...` : tx.merchant}
+                                            </div>
+                                            <div className="text-xs whitespace-nowrap flex-shrink-0" style={{ color: 'var(--secondary)' }}>
+                                                {formatDate(tx.date, dateFormat)}
+                                            </div>
+                                        </div>
+
+                                        {/* ROW 3: Category + Location - Story 9.12: Translated category */}
+                                        <div className="flex justify-between items-center gap-2 mt-1">
+                                            <CategoryBadge category={tx.category} mini lang={lang} />
+                                            {location && (
+                                                <div className="text-xs whitespace-nowrap flex-shrink-0" style={{ color: 'var(--secondary)' }}>
+                                                    {location}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Story 10a.1: Duplicate badge (AC #4) */}
+                                        {isDuplicate && (
+                                            <div className="flex items-center gap-1 text-xs mt-1.5 text-amber-600 dark:text-amber-400">
+                                                <AlertTriangle size={12} className="flex-shrink-0" />
+                                                <span className="font-medium">{t('potentialDuplicate')}</span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Story 10a.1: Pagination controls (AC #3) */}
+                    {totalPages > 1 && (
+                        <div className="flex justify-center items-center gap-4 mt-6">
+                            <button
+                                disabled={historyPage === 1}
+                                onClick={() => setHistoryPage(p => p - 1)}
+                                className="px-4 py-2 border rounded-lg disabled:opacity-50 min-h-11"
+                                style={{
+                                    borderColor: isDark ? '#334155' : '#e2e8f0',
+                                    backgroundColor: 'var(--surface)',
+                                    color: 'var(--primary)',
+                                }}
+                            >
+                                {t('prev')}
+                            </button>
+                            <span style={{ color: 'var(--secondary)' }}>
+                                {t('page')} {historyPage} / {totalPages}
+                            </span>
+                            <button
+                                disabled={historyPage >= totalPages}
+                                onClick={() => setHistoryPage(p => p + 1)}
+                                className="px-4 py-2 border rounded-lg disabled:opacity-50 min-h-11"
+                                style={{
+                                    borderColor: isDark ? '#334155' : '#e2e8f0',
+                                    backgroundColor: 'var(--surface)',
+                                    color: 'var(--primary)',
+                                }}
+                            >
+                                {t('next')}
+                            </button>
                         </div>
-                    );
-                })}
-            </div>
+                    )}
+                </>
+            )}
 
             {/* Story 9.11: Image Viewer Modal */}
             {selectedTransaction && selectedTransaction.imageUrls && selectedTransaction.imageUrls.length > 0 && (
