@@ -130,7 +130,52 @@ describe('useInsightProfile', () => {
         mockUser.uid,
         mockServices.appId,
         'test_insight',
-        'tx_123'
+        'tx_123',
+        undefined  // fullInsight parameter is optional
+      );
+    });
+
+    // Story 10a.5: Verify full insight content is passed through to service
+    it('passes full insight content to service for history storage', async () => {
+      const updatedProfile = {
+        ...mockProfile,
+        recentInsights: [{
+          insightId: 'merchant_frequency',
+          shownAt: {} as any,
+          title: 'Visita frecuente',
+          message: '3ra vez en Jumbo este mes',
+          icon: 'Repeat',
+          category: 'ACTIONABLE',
+        }],
+      };
+      (insightProfileService.getOrCreateInsightProfile as any)
+        .mockResolvedValueOnce(mockProfile)
+        .mockResolvedValueOnce(updatedProfile);
+
+      const { result } = renderHook(() => useInsightProfile(mockUser, mockServices));
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      const fullInsight = {
+        title: 'Visita frecuente',
+        message: '3ra vez en Jumbo este mes',
+        icon: 'Repeat',
+        category: 'ACTIONABLE',
+      };
+
+      await act(async () => {
+        await result.current.recordShown('merchant_frequency', 'tx_456', fullInsight);
+      });
+
+      expect(insightProfileService.recordInsightShown).toHaveBeenCalledWith(
+        mockServices.db,
+        mockUser.uid,
+        mockServices.appId,
+        'merchant_frequency',
+        'tx_456',
+        fullInsight
       );
     });
 
