@@ -25,6 +25,9 @@ import { InsightCard } from './components/insights/InsightCard';
 import { BuildingProfileCard } from './components/insights/BuildingProfileCard';
 // Story 10.7: Batch summary component
 import { BatchSummary } from './components/insights/BatchSummary';
+// Story 11.1: Batch upload components for multi-image processing
+import { BatchUploadPreview, BatchProcessingProgress, MAX_BATCH_IMAGES } from './components/scan';
+import type { BatchItemResult } from './components/scan';
 import { AnalyticsProvider } from './contexts/AnalyticsContext';
 // Story 10a.2: Import for building analytics initial state
 import { getQuarterFromMonth } from './utils/analyticsHelpers';
@@ -134,6 +137,16 @@ function App() {
     const [showInsightCard, setShowInsightCard] = useState(false);
     // Story 10.7: Batch summary state (AC #1, #2)
     const [showBatchSummary, setShowBatchSummary] = useState(false);
+    // Story 11.1: Batch upload state for multi-image processing (AC #1-9)
+    const [batchImages, setBatchImages] = useState<string[]>([]);
+    const [showBatchPreview, setShowBatchPreview] = useState(false);
+    const [isBatchProcessing, setIsBatchProcessing] = useState(false);
+    const [batchProgress, setBatchProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
+    const [batchResults, setBatchResults] = useState<BatchItemResult[]>([]);
+    // Story 11.1: Cancel batch processing state (state for future UI use, ref for loop)
+    const [_batchCancelRequested, setBatchCancelRequested] = useState(false);
+    const [showBatchCancelConfirm, setShowBatchCancelConfirm] = useState(false);
+    const batchCancelRef = useRef(false); // Ref for immediate access in loop
 
     // Settings
     const [lang, setLang] = useState<Language>('es');
@@ -323,6 +336,23 @@ function App() {
                     })
             )
         );
+
+        // Story 11.1: Detect multi-image upload (AC #2, #7)
+        if (newImages.length > 1) {
+            // Check max limit (AC #7)
+            if (newImages.length > MAX_BATCH_IMAGES) {
+                setToastMessage({ text: t('batchMaxLimitError'), type: 'info' });
+                if (fileInputRef.current) fileInputRef.current.value = '';
+                return;
+            }
+            // Show batch preview (AC #2)
+            setBatchImages(newImages);
+            setShowBatchPreview(true);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            return;
+        }
+
+        // Single image - standard flow (AC #1)
         setScanImages(p => {
             const updatedImages = [...p, ...newImages];
             // Story 9.10 AC#3: Update pending scan with new images
@@ -482,6 +512,241 @@ function App() {
         } finally {
             setIsAnalyzing(false);
         }
+    };
+
+    // Story 11.1: Batch image processing (AC #3, #4, #5, #6)
+    // Process each image separately and create individual transactions
+    const processBatchImages = async () => {
+        if (!services || !user) return;
+        if (userCredits.remaining < batchImages.length) {
+            setToastMessage({ text: t('noCreditsMessage'), type: 'info' });
+            return;
+        }
+
+        setShowBatchPreview(false);
+        setIsBatchProcessing(true);
+        setBatchProgress({ current: 0, total: batchImages.length });
+        // Reset cancel state
+        setBatchCancelRequested(false);
+        setShowBatchCancelConfirm(false);
+        batchCancelRef.current = false;
+
+        // Initialize results with pending status
+        const initialResults: BatchItemResult[] = batchImages.map((_, index) => ({
+            index,
+            status: 'pending' as const,
+        }));
+        setBatchResults(initialResults);
+
+        const results: BatchItemResult[] = [...initialResults];
+        const { db, appId } = services;
+
+        // Process each image sequentially (AC #3)
+        for (let i = 0; i < batchImages.length; i++) {
+            // Check for cancel request before processing next image
+            if (batchCancelRef.current) {
+                // Mark remaining items as cancelled (not processed)
+                for (let j = i; j < batchImages.length; j++) {
+                    results[j] = { ...results[j], status: 'pending' };
+                }
+                setBatchResults([...results]);
+                break;
+            }
+
+            // Update current item to processing
+            results[i] = { ...results[i], status: 'processing' };
+            setBatchResults([...results]);
+            setBatchProgress({ current: i + 1, total: batchImages.length });
+
+            try {
+                // Process single image (credit deducted after successful save)
+                const result = await analyzeReceipt(
+                    [batchImages[i]],
+                    scanCurrency,
+                    scanStoreType !== 'auto' ? scanStoreType : undefined
+                );
+
+                let d = getSafeDate(result.date);
+                if (new Date(d).getFullYear() > new Date().getFullYear())
+                    d = new Date().toISOString().split('T')[0];
+                const merchant = result.merchant || 'Unknown';
+                const finalTotal = parseStrictNumber(result.total);
+
+                // Apply location logic
+                const finalCountry = result.country || defaultCountry || '';
+                let finalCity = result.city || '';
+                if (finalCountry && finalCity) {
+                    const availableCities = getCitiesForCountry(finalCountry);
+                    const matchedCity = availableCities.find(c => c.toLowerCase() === finalCity.toLowerCase());
+                    finalCity = matchedCity || '';
+                }
+                if (!finalCity && defaultCountry === finalCountry && defaultCity) {
+                    finalCity = defaultCity;
+                }
+
+                // Build transaction
+                const transaction: Transaction = {
+                    merchant: merchant,
+                    date: d,
+                    total: finalTotal,
+                    category: result.category || 'Other',
+                    alias: merchant,
+                    items: (result.items || []).map(item => ({
+                        ...item,
+                        price: parseStrictNumber(item.price)
+                    })),
+                    imageUrls: result.imageUrls,
+                    thumbnailUrl: result.thumbnailUrl,
+                    time: result.time,
+                    country: finalCountry,
+                    city: finalCity,
+                    currency: result.currency,
+                    receiptType: result.receiptType,
+                    promptVersion: result.promptVersion,
+                    merchantSource: result.merchantSource
+                };
+
+                // Apply category mappings
+                const { transaction: categorizedTx, appliedMappingIds } =
+                    applyCategoryMappings(transaction, mappings);
+
+                // Increment mapping usage (fire-and-forget)
+                if (appliedMappingIds.length > 0) {
+                    appliedMappingIds.forEach(mappingId => {
+                        incrementMappingUsage(db, user.uid, appId, mappingId)
+                            .catch(err => console.error('Failed to increment mapping usage:', err));
+                    });
+                }
+
+                // Apply merchant mappings
+                let finalTx = categorizedTx;
+                const merchantMatch = findMerchantMatch(categorizedTx.merchant);
+                if (merchantMatch && merchantMatch.confidence > 0.7) {
+                    finalTx = {
+                        ...finalTx,
+                        alias: merchantMatch.mapping.targetMerchant,
+                        merchantSource: 'learned' as const
+                    };
+                    if (merchantMatch.mapping.id) {
+                        incrementMerchantMappingUsage(db, user.uid, appId, merchantMatch.mapping.id)
+                            .catch(err => console.error('Failed to increment merchant mapping usage:', err));
+                    }
+                }
+
+                // Save transaction (AC #8)
+                const transactionId = await firestoreAddTransaction(db, user.uid, appId, finalTx);
+                const txWithId = { ...finalTx, id: transactionId };
+
+                // Deduct credit AFTER successful save (prevents credit loss on API failure)
+                setUserCredits(prev => ({
+                    remaining: prev.remaining - 1,
+                    used: prev.used + 1
+                }));
+
+                // Add to batch session for summary
+                const insight = await generateInsightForTransaction(
+                    txWithId,
+                    transactions,
+                    insightProfile || { schemaVersion: 1, firstTransactionDate: null as any, totalTransactions: 0, recentInsights: [] },
+                    insightCache
+                );
+                addToBatch(txWithId, insight);
+
+                // Update result to success
+                results[i] = {
+                    index: i,
+                    status: 'success',
+                    merchant: finalTx.alias || finalTx.merchant,
+                    total: finalTx.total,
+                };
+                setBatchResults([...results]);
+
+            } catch (error: any) {
+                // AC #6: Continue with remaining images on failure
+                console.error(`Batch image ${i + 1} failed:`, error);
+                results[i] = {
+                    index: i,
+                    status: 'failed',
+                    error: error.message || 'Unknown error',
+                };
+                setBatchResults([...results]);
+            }
+        }
+
+        // Processing complete
+        setIsBatchProcessing(false);
+
+        // Count successes
+        const successCount = results.filter(r => r.status === 'success').length;
+        const failCount = results.filter(r => r.status === 'failed').length;
+
+        // AC #5: Show batch summary after all processed
+        if (successCount > 0) {
+            // Short delay to show completion state (matches READY_DISPLAY_MS from useScanState)
+            const BATCH_COMPLETE_DELAY_MS = 500;
+            setTimeout(() => {
+                setShowBatchSummary(true);
+                setBatchImages([]);
+                setBatchResults([]);
+            }, BATCH_COMPLETE_DELAY_MS);
+        } else {
+            // All failed - show error
+            setToastMessage({ text: t('scanFailed'), type: 'info' });
+            setBatchImages([]);
+            setBatchResults([]);
+        }
+
+        // Show partial failure warning (AC #6)
+        if (failCount > 0 && successCount > 0) {
+            setToastMessage({
+                text: t('batchPartialWarning').replace('{count}', String(failCount)),
+                type: 'info'
+            });
+        }
+    };
+
+    // Story 11.1: Cancel batch preview
+    const handleCancelBatchPreview = () => {
+        setShowBatchPreview(false);
+        setBatchImages([]);
+    };
+
+    // Story 11.1: Handle cancel request during batch processing
+    const handleBatchCancelRequest = () => {
+        // Show confirmation dialog
+        setShowBatchCancelConfirm(true);
+    };
+
+    // Story 11.1: Confirm batch cancellation
+    const handleBatchCancelConfirm = () => {
+        batchCancelRef.current = true;
+        setBatchCancelRequested(true);
+        setShowBatchCancelConfirm(false);
+    };
+
+    // Story 11.1: Dismiss cancel confirmation (continue processing)
+    const handleBatchCancelDismiss = () => {
+        setShowBatchCancelConfirm(false);
+    };
+
+    // Story 11.1: Remove image from batch
+    const handleRemoveBatchImage = (index: number) => {
+        setBatchImages(prev => {
+            const updated = prev.filter((_, i) => i !== index);
+            // If only 1 image left, switch to single image flow
+            if (updated.length === 1) {
+                setShowBatchPreview(false);
+                setScanImages(updated);
+                // Initialize pending scan for single image
+                if (!pendingScan) {
+                    setPendingScan(createPendingScan());
+                }
+                setPendingScan(prev => prev ? { ...prev, images: updated, status: 'images_added' } : null);
+                setView('edit');
+                return [];
+            }
+            return updated;
+        });
     };
 
     // Transaction Handlers
@@ -990,6 +1255,88 @@ function App() {
                       />
             )}
 
+            {/* Story 11.1: Batch upload preview for multi-image selection (AC #2) */}
+            {showBatchPreview && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <BatchUploadPreview
+                        images={batchImages}
+                        theme={theme as 'light' | 'dark'}
+                        t={t}
+                        onConfirm={processBatchImages}
+                        onCancel={handleCancelBatchPreview}
+                        onRemoveImage={handleRemoveBatchImage}
+                    />
+                </div>
+            )}
+
+            {/* Story 11.1: Batch processing progress (AC #4) */}
+            {isBatchProcessing && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <BatchProcessingProgress
+                        current={batchProgress.current}
+                        total={batchProgress.total}
+                        results={batchResults}
+                        theme={theme as 'light' | 'dark'}
+                        currency={currency}
+                        t={t}
+                        onCancel={handleBatchCancelRequest}
+                    />
+                </div>
+            )}
+
+            {/* Story 11.1: Batch cancel confirmation dialog */}
+            {showBatchCancelConfirm && (
+                <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4">
+                    <div
+                        className="rounded-xl p-6 max-w-sm w-full shadow-xl"
+                        style={{
+                            backgroundColor: 'var(--surface)',
+                            border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                        }}
+                        role="alertdialog"
+                        aria-labelledby="cancel-dialog-title"
+                        aria-describedby="cancel-dialog-desc"
+                    >
+                        <h3
+                            id="cancel-dialog-title"
+                            className="text-lg font-bold mb-2"
+                            style={{ color: 'var(--primary)' }}
+                        >
+                            {t('batchCancelConfirmTitle')}
+                        </h3>
+                        <p
+                            id="cancel-dialog-desc"
+                            className="text-sm mb-6"
+                            style={{ color: 'var(--secondary)' }}
+                        >
+                            {t('batchCancelConfirmMessage').replace(
+                                '{count}',
+                                String(batchResults.filter(r => r.status === 'success').length)
+                            )}
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleBatchCancelConfirm}
+                                className="flex-1 py-2.5 px-4 rounded-lg font-medium text-white transition-colors"
+                                style={{ backgroundColor: '#ef4444' }}
+                            >
+                                {t('batchCancelConfirmYes')}
+                            </button>
+                            <button
+                                onClick={handleBatchCancelDismiss}
+                                className="flex-1 py-2.5 px-4 rounded-lg font-medium transition-colors"
+                                style={{
+                                    backgroundColor: isDark ? 'rgba(100, 116, 139, 0.2)' : 'rgba(100, 116, 139, 0.1)',
+                                    color: 'var(--secondary)',
+                                }}
+                            >
+                                {t('batchCancelConfirmNo')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Story 10.7: Batch summary for multi-receipt sessions (AC #1, #2, #3, #4, #6) */}
             {showBatchSummary && batchSession && (
                 <BatchSummary
@@ -1007,6 +1354,8 @@ function App() {
                     onDismiss={() => {
                         setShowBatchSummary(false);
                         clearBatch();
+                        // Story 11.1: Redirect to Home after batch processing completes
+                        setView('dashboard');
                     }}
                     isSilenced={isInsightsSilenced(insightCache)}
                     theme={theme as 'light' | 'dark'}

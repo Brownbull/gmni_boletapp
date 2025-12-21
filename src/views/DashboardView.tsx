@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Plus, Image as ImageIcon, AlertTriangle, Inbox } from 'lucide-react';
+import { Plus, Image as ImageIcon, AlertTriangle, Inbox, ArrowUpDown, Filter } from 'lucide-react';
 import { CategoryBadge } from '../components/CategoryBadge';
 import { ImageViewer } from '../components/ImageViewer';
 // Story 10a.1: Filter bar for consolidated home view (AC #2)
@@ -14,6 +14,9 @@ import {
     filterTransactionsByHistoryFilters,
 } from '../utils/historyFilterUtils';
 import type { Transaction as TransactionType } from '../types/transaction';
+
+// Story 11.1: Sort type for dashboard transactions
+type SortType = 'transactionDate' | 'scanDate';
 
 // Story 9.11: Extended transaction interface with v2.6.0 fields for unified display
 interface Transaction {
@@ -36,6 +39,8 @@ interface Transaction {
     city?: string;
     country?: string;
     currency?: string;
+    // Story 11.1: createdAt for sort by scan date
+    createdAt?: any; // Firestore Timestamp or Date
 }
 
 interface DashboardViewProps {
@@ -150,6 +155,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     const [historyPage, setHistoryPage] = useState(1);
     const pageSize = 10;
 
+    // Story 11.1: Sort preference (transactionDate = by receipt date, scanDate = by createdAt)
+    const [sortType, setSortType] = useState<SortType>('transactionDate');
+    // Story 11.1: Show only possible duplicates filter
+    const [showDuplicatesOnly, setShowDuplicatesOnly] = useState(false);
+
     // Story 10a.1: Access filter state from context (AC #2, #6)
     const { state: filterState, hasActiveFilters } = useHistoryFilters();
 
@@ -166,10 +176,41 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         return extractAvailableFilters(allTx as unknown as TransactionType[]);
     }, [allTx]);
 
+    // Story 10a.1: Duplicate detection (AC #4) - moved before filtering for duplicatesOnly filter
+    const duplicateIds = useMemo(() => {
+        return getDuplicateIds(allTx as unknown as TransactionType[]);
+    }, [allTx]);
+
     // Story 10a.1: Apply filters to transactions (AC #2)
+    // Story 11.1: Extended to support duplicates-only filter and sort by createdAt
     const filteredTransactions = useMemo(() => {
-        return filterTransactionsByHistoryFilters(allTx as unknown as TransactionType[], filterState);
-    }, [allTx, filterState]);
+        let result = filterTransactionsByHistoryFilters(allTx as unknown as TransactionType[], filterState);
+
+        // Story 11.1: Apply duplicates-only filter
+        if (showDuplicatesOnly) {
+            result = result.filter(tx => tx.id && duplicateIds.has(tx.id));
+        }
+
+        // Story 11.1: Sort by selected sort type
+        return [...result].sort((a, b) => {
+            if (sortType === 'scanDate') {
+                // Sort by createdAt (scan date) - newest first
+                const getCreatedTime = (tx: any): number => {
+                    if (!tx.createdAt) return 0;
+                    // Firestore Timestamp has toDate() method
+                    if (typeof tx.createdAt.toDate === 'function') {
+                        return tx.createdAt.toDate().getTime();
+                    }
+                    // Fallback to Date parsing
+                    return new Date(tx.createdAt).getTime();
+                };
+                return getCreatedTime(b) - getCreatedTime(a);
+            } else {
+                // Sort by transaction date - newest first
+                return new Date(b.date).getTime() - new Date(a.date).getTime();
+            }
+        });
+    }, [allTx, filterState, showDuplicatesOnly, duplicateIds, sortType]);
 
     // Story 10a.1: Paginate filtered results (AC #3)
     const totalPages = Math.ceil(filteredTransactions.length / pageSize);
@@ -178,15 +219,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         return filteredTransactions.slice(startIndex, startIndex + pageSize);
     }, [filteredTransactions, historyPage, pageSize]);
 
-    // Story 10a.1: Duplicate detection (AC #4)
-    const duplicateIds = useMemo(() => {
-        return getDuplicateIds(allTx as unknown as TransactionType[]);
-    }, [allTx]);
-
     // Story 10a.1: Reset to page 1 when filters change
+    // Story 11.1: Also reset when sort type or duplicates filter changes
     useEffect(() => {
         setHistoryPage(1);
-    }, [filterState]);
+    }, [filterState, sortType, showDuplicatesOnly]);
 
     // Card styling using CSS variables (AC #1)
     const cardStyle: React.CSSProperties = {
@@ -265,6 +302,57 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 totalCount={allTx.length}
                 filteredCount={filteredTransactions.length}
             />
+
+            {/* Story 11.1: Sort and duplicates filter controls */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+                {/* Sort dropdown */}
+                <div className="flex items-center gap-1.5">
+                    <ArrowUpDown size={14} style={{ color: 'var(--secondary)' }} />
+                    <select
+                        value={sortType}
+                        onChange={(e) => setSortType(e.target.value as SortType)}
+                        className="text-sm py-1.5 px-2 rounded-lg border min-h-[36px] cursor-pointer"
+                        style={{
+                            backgroundColor: 'var(--surface)',
+                            borderColor: isDark ? '#334155' : '#e2e8f0',
+                            color: 'var(--primary)',
+                        }}
+                        aria-label={t('sortBy')}
+                    >
+                        <option value="transactionDate">{t('sortByTransactionDate')}</option>
+                        <option value="scanDate">{t('sortByScanDate')}</option>
+                    </select>
+                </div>
+
+                {/* Duplicates filter toggle */}
+                {duplicateIds.size > 0 && (
+                    <button
+                        onClick={() => setShowDuplicatesOnly(!showDuplicatesOnly)}
+                        className={`flex items-center gap-1.5 text-sm py-1.5 px-3 rounded-lg border min-h-[36px] transition-colors ${
+                            showDuplicatesOnly
+                                ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/30'
+                                : ''
+                        }`}
+                        style={{
+                            backgroundColor: showDuplicatesOnly
+                                ? undefined
+                                : 'var(--surface)',
+                            borderColor: showDuplicatesOnly
+                                ? '#fbbf24'
+                                : isDark ? '#334155' : '#e2e8f0',
+                            color: showDuplicatesOnly
+                                ? isDark ? '#fbbf24' : '#d97706'
+                                : 'var(--secondary)',
+                        }}
+                        aria-pressed={showDuplicatesOnly}
+                        aria-label={t('filterDuplicates')}
+                    >
+                        <Filter size={14} />
+                        <span>{t('filterDuplicates')}</span>
+                        <span className="font-semibold">({duplicateIds.size})</span>
+                    </button>
+                )}
+            </div>
 
             {/* Story 10a.1: Transaction list with filters, pagination, and duplicate detection */}
             {filteredTransactions.length === 0 && hasActiveFilters ? (
