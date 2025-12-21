@@ -1,9 +1,11 @@
 # Story 11.5: Scan Status Clarity
 
 **Epic:** Epic 11 - Quick Save & Scan Flow Optimization
-**Status:** Draft
+**Status:** Ready for Dev
 **Story Points:** 3
-**Dependencies:** Story 11.1 (One Image = One Transaction)
+**Dependencies:** None (Parallel with Story 11.1)
+**Parallel With:** Story 11.1 (One Image One Transaction)
+**Tech Context:** [tech-context-epic11.md](./tech-context-epic11.md)
 
 ---
 

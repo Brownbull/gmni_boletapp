@@ -1,9 +1,10 @@
 # Story 11.99: Epic Release Deployment
 
 **Epic:** Epic 11 - Quick Save & Scan Flow Optimization
-**Status:** Draft
+**Status:** Backlog
 **Story Points:** 2
 **Dependencies:** All previous Epic 11 stories (11.1 - 11.5)
+**Tech Context:** [tech-context-epic11.md](./tech-context-epic11.md)
 
 ---
 

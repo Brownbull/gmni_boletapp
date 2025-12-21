@@ -1,9 +1,11 @@
 # Story 11.4: Trust Merchant System
 
 **Epic:** Epic 11 - Quick Save & Scan Flow Optimization
-**Status:** Draft
+**Status:** Ready for Dev
 **Story Points:** 5
 **Dependencies:** Story 11.2 (Quick Save Card Component)
+**Parallel With:** Story 11.3 (Animated Item Reveal)
+**Tech Context:** [tech-context-epic11.md](./tech-context-epic11.md)
 
 ---
 

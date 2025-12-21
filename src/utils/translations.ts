@@ -82,6 +82,8 @@ export const TRANSLATIONS = {
         tapToDrillDown: "Tap to drill down",
         receipts: "Receipts",
         analytics: "Analytics",
+        // Story 10a.3: Insights tab label (AC #2)
+        insights: "Insights",
         // Story 7.11: Floating Download FAB
         downloadAnalytics: "Download Analytics",
         // Story 7.12 AC#11: Color theme selector (Story 7.17: renamed themes)
@@ -233,7 +235,68 @@ export const TRANSLATIONS = {
         selectWeek: "Select week",
         noLocationData: "No location data available",
         // Story 9.20: Quarter filter support
-        selectQuarter: "Select quarter"
+        selectQuarter: "Select quarter",
+        // Story 10a.4: Insights History View
+        noInsightsYet: "No insights yet",
+        scanMoreReceipts: "Scan more receipts to see insights here",
+        thisWeek: "This Week",
+        lastWeek: "Last Week",
+        earlier: "Earlier",
+        // Story 10a.4 Enhancement: Temporal filters + Detail modal
+        noInsightsForPeriod: "No insights for this period",
+        tryDifferentFilter: "Try selecting a different time period",
+        viewTransaction: "View Transaction",
+        noMessageAvailable: "No additional details available",
+        transactionUnavailable: "Transaction details unavailable",
+        oldInsightData: "This insight was recorded before detailed tracking",
+        insight: "insight",
+        insightsCount: "insights",
+        clearFilter: "Clear filter",
+        week: "Week",
+        // Story 10a.4: Delete insights
+        deleteInsight: "Delete Insight",
+        deleting: "Deleting...",
+        deleteSelected: "Delete Selected",
+        selected: "selected",
+        selectAll: "Select All",
+        deselectAll: "Deselect All",
+        // Story 11.5: Scan Status Clarity
+        scanUploading: "Uploading...",
+        scanProcessing: "Processing receipt...",
+        scanReady: "Ready!",
+        scanErrorTitle: "Something went wrong",
+        scanErrorMessage: "We couldn't process the image. Try with another photo.",
+        scanErrorNetwork: "Check your internet connection and try again.",
+        scanErrorTimeout: "Processing took too long. Please try again.",
+        scanErrorApi: "Server error. Please try again in a moment.",
+        scanRetry: "Retry",
+        seconds: "seconds",
+        // Story 11.1: One Image = One Transaction (Batch Processing)
+        batchReceiptsDetected: "receipts detected",
+        batchExplanation: "Each image will become a separate transaction.",
+        batchMaxLimitError: "Maximum 10 images per batch",
+        viewImages: "View images",
+        hideImages: "Hide images",
+        batchImageList: "Selected images",
+        removeImage: "Remove image",
+        processAll: "Process All",
+        batchProcessingTitle: "Processing receipts...",
+        batchResultsList: "Processing results",
+        batchItemFailed: "Could not read the image",
+        batchItemProcessing: "Processing...",
+        batchItemPending: "Waiting...",
+        batchPartialWarning: "{count} image(s) could not be processed",
+        receipt: "Receipt",
+        batchCancelProcessing: "Cancel",
+        batchCancelConfirmTitle: "Cancel batch processing?",
+        batchCancelConfirmMessage: "Only {count} completed transaction(s) will be saved.",
+        batchCancelConfirmYes: "Yes, cancel",
+        batchCancelConfirmNo: "Continue processing",
+        // Story 11.1: Home screen enhancements
+        sortBy: "Sort by",
+        sortByScanDate: "Scan date",
+        sortByTransactionDate: "Transaction date",
+        filterDuplicates: "Possible duplicates"
     },
     es: {
         overview: "Resumen", welcome: "Rastreo Inteligente", totalSpent: "Total Gastado",
@@ -318,6 +381,8 @@ export const TRANSLATIONS = {
         tapToDrillDown: "Toca para desglosar",
         receipts: "Recibos",
         analytics: "Analíticas",
+        // Story 10a.3: Insights tab label (AC #2)
+        insights: "Ideas",
         // Story 7.11: Floating Download FAB
         downloadAnalytics: "Descargar Analíticas",
         // Story 7.12 AC#11: Color theme selector (Story 7.17: renamed themes)
@@ -469,7 +534,68 @@ export const TRANSLATIONS = {
         selectWeek: "Seleccionar semana",
         noLocationData: "No hay datos de ubicación",
         // Story 9.20: Quarter filter support
-        selectQuarter: "Seleccionar trimestre"
+        selectQuarter: "Seleccionar trimestre",
+        // Story 10a.4: Insights History View
+        noInsightsYet: "Sin ideas todavía",
+        scanMoreReceipts: "Escanea más boletas para ver ideas aquí",
+        thisWeek: "Esta Semana",
+        lastWeek: "Semana Pasada",
+        earlier: "Anteriores",
+        // Story 10a.4 Enhancement: Temporal filters + Detail modal
+        noInsightsForPeriod: "Sin ideas para este período",
+        tryDifferentFilter: "Intenta seleccionar otro período de tiempo",
+        viewTransaction: "Ver Transacción",
+        noMessageAvailable: "Sin detalles adicionales disponibles",
+        transactionUnavailable: "Detalles de transacción no disponibles",
+        oldInsightData: "Esta idea fue registrada antes del seguimiento detallado",
+        insight: "idea",
+        insightsCount: "ideas",
+        clearFilter: "Borrar filtro",
+        week: "Semana",
+        // Story 10a.4: Delete insights
+        deleteInsight: "Eliminar Idea",
+        deleting: "Eliminando...",
+        deleteSelected: "Eliminar Seleccionados",
+        selected: "seleccionados",
+        selectAll: "Seleccionar Todo",
+        deselectAll: "Deseleccionar Todo",
+        // Story 11.5: Scan Status Clarity
+        scanUploading: "Subiendo...",
+        scanProcessing: "Procesando recibo...",
+        scanReady: "¡Listo!",
+        scanErrorTitle: "Algo salió mal",
+        scanErrorMessage: "No pudimos procesar la imagen. Intenta con otra foto.",
+        scanErrorNetwork: "Revisa tu conexión a internet e intenta de nuevo.",
+        scanErrorTimeout: "El proceso tardó demasiado. Por favor intenta de nuevo.",
+        scanErrorApi: "Error del servidor. Por favor intenta en un momento.",
+        scanRetry: "Reintentar",
+        seconds: "segundos",
+        // Story 11.1: One Image = One Transaction (Batch Processing)
+        batchReceiptsDetected: "boletas detectadas",
+        batchExplanation: "Cada imagen será una transacción separada.",
+        batchMaxLimitError: "Máximo 10 imágenes por vez",
+        viewImages: "Ver imágenes",
+        hideImages: "Ocultar imágenes",
+        batchImageList: "Imágenes seleccionadas",
+        removeImage: "Quitar imagen",
+        processAll: "Procesar todas",
+        batchProcessingTitle: "Procesando boletas...",
+        batchResultsList: "Resultados del procesamiento",
+        batchItemFailed: "No se pudo leer la imagen",
+        batchItemProcessing: "Procesando...",
+        batchItemPending: "Esperando...",
+        batchPartialWarning: "{count} imagen(es) no pudo(ieron) ser procesada(s)",
+        receipt: "Boleta",
+        batchCancelProcessing: "Cancelar",
+        batchCancelConfirmTitle: "¿Cancelar procesamiento?",
+        batchCancelConfirmMessage: "Solo se guardarán {count} transacción(es) completada(s).",
+        batchCancelConfirmYes: "Sí, cancelar",
+        batchCancelConfirmNo: "Continuar procesando",
+        // Story 11.1: Home screen enhancements
+        sortBy: "Ordenar por",
+        sortByScanDate: "Fecha de escaneo",
+        sortByTransactionDate: "Fecha de transacción",
+        filterDuplicates: "Posibles duplicados"
     }
 };
 
