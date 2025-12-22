@@ -242,7 +242,7 @@ development_status:
   11-4-trust-merchant-system: done  # 5 pts - PARALLEL with 11.3, depends on 11.2 - Code Review APPROVED 2025-12-22
   11-5-scan-status-clarity: done  # 3 pts - PARALLEL with 11.1 - Code Review APPROVED 2025-12-22, reduced motion fixes
   11-6-responsive-viewport-adaptation: done  # 3 pts - Code Review APPROVED 2025-12-22
-  11-99-epic-release-deployment: backlog  # 2 pts - Final, depends on all
+  11-99-epic-release-deployment: done  # 2 pts - DEPLOYED 2025-12-22, PRs #119→#120→#121, v9.5.0
   epic-11-retrospective: optional
 
   # Epic 12: Batch Mode (~25 points, 2 weeks)
