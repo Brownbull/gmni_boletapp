@@ -106,10 +106,21 @@ export function PWASettingsSection({ t, theme, onShowToast }: PWASettingsSection
 
   return (
     <div className="p-4 rounded-xl border" style={cardStyle}>
-      <div className="flex gap-2 items-center mb-4">
-        <Smartphone size={24} strokeWidth={2} style={{ color: 'var(--accent)' }} />
-        <span className="font-medium" style={{ color: 'var(--primary)' }}>
-          {t('pwaSettings')}
+      <div className="flex gap-2 items-center mb-4 justify-between">
+        <div className="flex gap-2 items-center">
+          <Smartphone size={24} strokeWidth={2} style={{ color: 'var(--accent)' }} />
+          <span className="font-medium" style={{ color: 'var(--primary)' }}>
+            {t('pwaSettings')}
+          </span>
+        </div>
+        <span
+          className="text-xs font-mono px-2 py-0.5 rounded"
+          style={{
+            backgroundColor: isDark ? 'rgba(148, 163, 184, 0.15)' : 'rgba(100, 116, 139, 0.1)',
+            color: 'var(--secondary)',
+          }}
+        >
+          v{__APP_VERSION__}
         </span>
       </div>
 

@@ -16,6 +16,13 @@
 | 2025-12-18 | 07-process | retrospectives, CI/CD docs, sprint-status.yaml | Process and strategy |
 | 2025-12-18 | 08-workflow-chains | architecture docs, story files | User journeys mapped |
 | 2025-12-18 | 04-architecture | Story 10.3 code review | Added Insight Generation Flow, generator registry pattern |
+| 2025-12-19 | 04-architecture | Story 10.5 code review | Added Selection Algorithm details, ADR-017 implementation, ADR status → Active |
+| 2025-12-19 | 04-architecture | Story 10.6 implementation | Added InsightCard UI layer, async side-effect pattern in save flow |
+| 2025-12-19 | 04-architecture | Post-10.6 fix: Default time skip | Time-based insight generators skip DEFAULT_TIME ("04:04") sentinel value |
+| 2025-12-19 | 07-process | Epic 10 deployment complete | PR #102 merged - Full Insight Engine deployed to production |
+| 2025-12-20 | 07-process | v9.1.0 deployment | PR #106 - Duplicate detection fix, new duplicate_detected insight generator |
+| 2025-12-20 | 04-architecture | Story 10a.1 code review | Home Screen Consolidation - HistoryFiltersContext reuse, component sharing pattern |
+| 2025-12-20 | 07-process | Story 10a.1 deployment | PR #110 created - v9.2.0 Home Screen Consolidation |
 
 ## Documents Tracked
 

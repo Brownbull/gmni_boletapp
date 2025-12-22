@@ -82,6 +82,10 @@ backlog → drafted → ready-for-dev → in-progress → review → done
 
 | Story | Date | Environment | Notes |
 |-------|------|-------------|-------|
+| **Story 11.1** | 2025-12-21 | Production | v9.4.0 - Batch processing, 49 new tests, PR #116→#117→#118 |
+| **v9.1.0 Duplicate Fix** | 2025-12-20 | Production | PR #106 - Simplified duplicate detection (date/merchant/amount/country), new duplicate_detected insight |
+| **Epic 10 Complete** | 2025-12-19 | Production | PR #102 - Full Insight Engine: 12 generators, phase-based selection, batch mode |
+| 10.5-selection-algorithm | 2025-12-19 | Production | ADR-017 phase-based priority, 33/66 sprinkle, WARNING category |
 | 10.1-insight-engine-core | 2025-12-18 | Production | InsightEngine foundation - 47 tests, defensive Timestamp handling |
 | 10.0-foundation-sprint | 2025-12-18 | Production | Analytics refactor, filtering service, App.tsx cleanup |
 

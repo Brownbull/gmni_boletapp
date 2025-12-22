@@ -191,20 +191,28 @@ export async function setFirstTransactionDate(
 
 /**
  * Records that an insight was shown to the user.
- * Maintains a maximum of MAX_RECENT_INSIGHTS (30) entries for cooldown checking.
+ * Maintains a maximum of MAX_RECENT_INSIGHTS (50) entries for cooldown checking and history display.
+ *
+ * Story 10a.5: Stores full insight content for history display.
  *
  * @param db - Firestore instance
  * @param userId - User's auth UID
  * @param appId - Application ID
  * @param insightId - The insight identifier that was shown
  * @param transactionId - Optional: The transaction that triggered this insight
+ * @param fullInsight - Optional: Full insight content for history display
+ *   - title: Short insight title (e.g., "Visita frecuente")
+ *   - message: Detailed message (e.g., "3ra vez en Jumbo este mes")
+ *   - icon: Lucide icon name (e.g., "Repeat")
+ *   - category: InsightCategory for styling (QUIRKY_FIRST | CELEBRATORY | ACTIONABLE)
  */
 export async function recordInsightShown(
   db: Firestore,
   userId: string,
   appId: string,
   insightId: string,
-  transactionId?: string
+  transactionId?: string,
+  fullInsight?: { title?: string; message?: string; icon?: string; category?: string }
 ): Promise<void> {
   const profile = await getOrCreateInsightProfile(db, userId, appId);
   const profileRef = doc(
@@ -217,15 +225,97 @@ export async function recordInsightShown(
     PROFILE_DOC_ID
   );
 
-  // Create new insight record
+  // Create new insight record with full content (Story 10a.5)
   const newRecord: InsightRecord = {
     insightId,
     shownAt: Timestamp.now(),
     ...(transactionId && { transactionId }),
+    ...(fullInsight?.title && { title: fullInsight.title }),
+    ...(fullInsight?.message && { message: fullInsight.message }),
+    ...(fullInsight?.icon && { icon: fullInsight.icon }),
+    ...(fullInsight?.category && { category: fullInsight.category as InsightRecord['category'] }),
   };
 
   // Add new record and trim to MAX_RECENT_INSIGHTS
   const updatedInsights = [...profile.recentInsights, newRecord].slice(-MAX_RECENT_INSIGHTS);
+
+  await updateDoc(profileRef, {
+    recentInsights: updatedInsights,
+  });
+}
+
+/**
+ * Deletes a specific insight from the user's recent insights.
+ *
+ * @param db - Firestore instance
+ * @param userId - User's auth UID
+ * @param appId - Application ID
+ * @param insightId - The insight identifier to delete
+ * @param shownAtSeconds - The shownAt timestamp seconds to uniquely identify the insight
+ */
+export async function deleteInsight(
+  db: Firestore,
+  userId: string,
+  appId: string,
+  insightId: string,
+  shownAtSeconds: number
+): Promise<void> {
+  const profile = await getOrCreateInsightProfile(db, userId, appId);
+  const profileRef = doc(
+    db,
+    'artifacts',
+    appId,
+    'users',
+    userId,
+    'insightProfile',
+    PROFILE_DOC_ID
+  );
+
+  // Filter out the insight matching both insightId and shownAt timestamp
+  const updatedInsights = profile.recentInsights.filter(
+    (insight) =>
+      !(insight.insightId === insightId && insight.shownAt.seconds === shownAtSeconds)
+  );
+
+  await updateDoc(profileRef, {
+    recentInsights: updatedInsights,
+  });
+}
+
+/**
+ * Deletes multiple insights from the user's recent insights.
+ *
+ * @param db - Firestore instance
+ * @param userId - User's auth UID
+ * @param appId - Application ID
+ * @param insightsToDelete - Array of {insightId, shownAtSeconds} to delete
+ */
+export async function deleteInsights(
+  db: Firestore,
+  userId: string,
+  appId: string,
+  insightsToDelete: Array<{ insightId: string; shownAtSeconds: number }>
+): Promise<void> {
+  const profile = await getOrCreateInsightProfile(db, userId, appId);
+  const profileRef = doc(
+    db,
+    'artifacts',
+    appId,
+    'users',
+    userId,
+    'insightProfile',
+    PROFILE_DOC_ID
+  );
+
+  // Create a Set for fast lookup
+  const deleteSet = new Set(
+    insightsToDelete.map((i) => `${i.insightId}:${i.shownAtSeconds}`)
+  );
+
+  // Filter out all matching insights
+  const updatedInsights = profile.recentInsights.filter(
+    (insight) => !deleteSet.has(`${insight.insightId}:${insight.shownAt.seconds}`)
+  );
 
   await updateDoc(profileRef, {
     recentInsights: updatedInsights,
