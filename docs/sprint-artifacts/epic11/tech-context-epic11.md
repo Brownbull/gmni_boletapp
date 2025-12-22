@@ -301,6 +301,29 @@ interface Transaction {
 - Integrate with existing ScanView loading states
 - Use consistent icon set (Lucide)
 
+### Story 11.6: Responsive Viewport Adaptation (3 points)
+
+**Goal:** Fix PWA viewport issues on mobile devices
+
+**Problem:** Views fit in Chrome DevTools but get trimmed on real Android/iOS PWA installations due to:
+- `100vh` not accounting for browser chrome/navigation bars
+- Different aspect ratios between devices
+- Fixed pixel values not adapting
+
+**Acceptance Criteria:**
+- [ ] Views use `dvh` (dynamic viewport height) instead of `vh`
+- [ ] Flex-based layout with proper scroll containment
+- [ ] Safe area insets for bottom navigation
+- [ ] Primary views fit without scrolling (Dashboard, History header, Insights, Trends)
+- [ ] Scrollable views scroll correctly within content area
+- [ ] No content hidden behind bottom navigation
+
+**Implementation Notes:**
+- Add CSS custom properties: `--safe-top`, `--safe-bottom` using `env(safe-area-inset-*)`
+- Update App.tsx to use `h-[100dvh]` with flex column layout
+- Apply `padding-bottom: var(--safe-bottom)` to Nav component
+- Research reference: `docs/uxui/research/screen adapt.md`
+
 ### Story 11.99: Epic Release Deployment (2 points)
 
 **Goal:** Production deployment and verification
@@ -410,16 +433,18 @@ interface Transaction {
 
 ## Implementation Order
 
-1. **Story 11.1** (3 pts) - One Image = One Transaction (foundation)
-2. **Story 11.5** (3 pts) - Scan Status Clarity (can parallel with 11.1)
-3. **Story 11.2** (5 pts) - Quick Save Card (main component)
-4. **Story 11.3** (3 pts) - Animated Item Reveal (depends on 11.2)
-5. **Story 11.4** (5 pts) - Trust Merchant System (depends on 11.2)
-6. **Story 11.99** (2 pts) - Epic Release Deployment
+1. **Story 11.1** (3 pts) - One Image = One Transaction (foundation) ✅ DONE
+2. **Story 11.5** (3 pts) - Scan Status Clarity (can parallel with 11.1) 🔄 IN PROGRESS
+3. **Story 11.2** (5 pts) - Quick Save Card (main component) ✅ DONE
+4. **Story 11.3** (3 pts) - Animated Item Reveal (depends on 11.2) ✅ DONE
+5. **Story 11.4** (5 pts) - Trust Merchant System (depends on 11.2) ✅ DEV COMPLETE
+6. **Story 11.6** (3 pts) - Responsive Viewport Adaptation (independent, pre-deployment)
+7. **Story 11.99** (2 pts) - Epic Release Deployment
 
 **Suggested Parallelization:**
 - Stories 11.1 + 11.5 can run in parallel (different focus areas)
 - Stories 11.3 + 11.4 can run in parallel (both depend on 11.2)
+- Story 11.6 can run in parallel with any story (independent viewport fixes)
 
 ---
 

@@ -79,10 +79,11 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
       aria-modal="true"
       aria-label={`Receipt image viewer for ${merchantName}`}
     >
-      {/* Close button */}
+      {/* Close button - Story 11.6: Account for safe area (AC #3) */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+        className="absolute right-4 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+        style={{ top: 'calc(1rem + var(--safe-top, 0px))' }}
         aria-label="Close image viewer"
         data-testid="image-viewer-close"
       >

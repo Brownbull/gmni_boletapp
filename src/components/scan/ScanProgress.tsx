@@ -8,6 +8,7 @@
  */
 import React from 'react';
 import { Upload, X } from 'lucide-react';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 export interface ScanProgressProps {
   /** Upload progress percentage (0-100) */
@@ -41,6 +42,7 @@ export const ScanProgress: React.FC<ScanProgressProps> = ({
   t,
 }) => {
   const isDark = theme === 'dark';
+  const prefersReducedMotion = useReducedMotion();
 
   // Clamp progress between 0 and 100
   const clampedProgress = Math.min(100, Math.max(0, progress));
@@ -56,9 +58,9 @@ export const ScanProgress: React.FC<ScanProgressProps> = ({
       aria-label={t('scanUploading')}
       aria-live="polite"
     >
-      {/* Upload icon with animation */}
+      {/* Upload icon with animation (respects reduced motion preference) */}
       <div
-        className="w-12 h-12 rounded-full flex items-center justify-center mb-4 animate-pulse"
+        className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${prefersReducedMotion ? '' : 'animate-pulse'}`}
         style={{
           backgroundColor: isDark ? 'rgba(96, 165, 250, 0.2)' : 'rgba(59, 130, 246, 0.1)',
         }}
