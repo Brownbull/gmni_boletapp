@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { ArrowLeft, Trash2, Plus, Check, ChevronDown, ChevronUp, BookMarked, X, Camera, Loader2 } from 'lucide-react';
+import { ArrowLeft, Trash2, Plus, Check, ChevronDown, ChevronUp, BookMarked, X, Camera } from 'lucide-react';
 import { CategoryBadge } from '../components/CategoryBadge';
 import { CategoryCombobox } from '../components/CategoryCombobox';
 import { ImageViewer } from '../components/ImageViewer';
@@ -18,6 +18,12 @@ import { PendingScan, UserCredits } from '../types/scan';
 // Story 9.12: Category translations (AC #6)
 import { translateStoreCategory } from '../utils/categoryTranslations';
 import type { Language } from '../utils/translations';
+// Story 11.3: Animated item reveal
+import { useStaggeredReveal } from '../hooks/useStaggeredReveal';
+import { AnimatedItem } from '../components/AnimatedItem';
+// Story 11.5: Scan status indicator for clear visual feedback
+import { ScanStatusIndicator } from '../components/scan/ScanStatusIndicator';
+import { useScanState, type ScanErrorType } from '../hooks/useScanState';
 
 /**
  * Local TransactionItem interface for EditView.
@@ -106,6 +112,8 @@ interface EditViewProps {
     userCredits?: UserCredits;
     /** Story 9.12: Language for category translations (AC #6) */
     lang?: Language;
+    /** Story 11.3: Animate items on initial load */
+    animateItems?: boolean;
 }
 
 export const EditView: React.FC<EditViewProps> = ({
@@ -146,6 +154,8 @@ export const EditView: React.FC<EditViewProps> = ({
     userCredits,
     // Story 9.12: Language for translations
     lang = 'en',
+    // Story 11.3: Animate items on initial load
+    animateItems = false,
 }) => {
     const [showImageViewer, setShowImageViewer] = useState(false);
     // Story 9.3: Debug info section state (AC #5)
@@ -163,6 +173,74 @@ export const EditView: React.FC<EditViewProps> = ({
 
     // Story 9.16: Loading state for learning prompts to prevent duplicate saves (AC #1, #2)
     const [savingMappings, setSavingMappings] = useState(false);
+
+    // Story 11.5: Scan state machine for visual feedback (AC #1-8)
+    // This hook manages the scan status UI states: idle → processing → ready/error
+    // NOTE: The 'uploading' state with progress tracking is available but not used in current flow.
+    // Current implementation: API call is atomic (no separate upload phase), so we go directly
+    // from idle → processing → ready/error. The uploading state is available for future use
+    // if we implement chunked uploads or separate upload tracking.
+    const scanStateHook = useScanState();
+    const {
+        state: scanStatus,
+        error: scanStateError,
+        estimatedTime,
+        startProcessing: startScanProcessing,
+        setReady: setScanReady,
+        setError: setScanError,
+        reset: resetScanState,
+    } = scanStateHook;
+
+    // Story 11.5: Sync scan state with props from App.tsx
+    // When isAnalyzing changes, update the scan state machine
+    const prevIsAnalyzingRef = useRef(isAnalyzing);
+    useEffect(() => {
+        // Transition to processing when analyzing starts
+        if (isAnalyzing && !prevIsAnalyzingRef.current) {
+            startScanProcessing();
+        }
+        // Transition to ready or error when analyzing finishes
+        if (!isAnalyzing && prevIsAnalyzingRef.current) {
+            if (scanError) {
+                // Map error string to error type and set error state
+                const errorType: ScanErrorType = scanError.includes('timeout')
+                    ? 'timeout'
+                    : scanError.includes('network') || scanError.includes('fetch')
+                    ? 'network'
+                    : scanError.includes('invalid')
+                    ? 'invalid'
+                    : 'api';
+                setScanError(errorType, scanError);
+            } else {
+                // No error means success - show ready state
+                setScanReady();
+            }
+        }
+        prevIsAnalyzingRef.current = isAnalyzing;
+    }, [isAnalyzing, scanError, startScanProcessing, setScanReady, setScanError]);
+
+    // Story 11.5: Handle scan cancel from status indicator
+    // LIMITATION: This only resets the UI state. The actual API call continues in background
+    // because Cloud Functions don't support cancellation. The credit deduction happens after
+    // successful save (per credit-after-save pattern), so cancelling before save won't lose credits.
+    // Future enhancement: If we add AbortController support to the scan API, wire it up here.
+    const handleScanCancel = () => {
+        resetScanState();
+    };
+
+    // Story 11.5: Handle retry from error state
+    const handleScanRetry = () => {
+        resetScanState();
+        // Trigger new scan if onProcessScan is available
+        if (onProcessScan) {
+            onProcessScan();
+        }
+    };
+
+    // Story 11.5: Handle ready state completion
+    const handleReadyComplete = () => {
+        resetScanState();
+    };
 
     // Story 9.6: Merchant learning prompt state
     const [showMerchantLearningPrompt, setShowMerchantLearningPrompt] = useState(false);
@@ -264,6 +342,26 @@ export const EditView: React.FC<EditViewProps> = ({
     const isReturningPendingScan = pendingScan?.status === 'analyzed' && pendingScan?.analyzedTransaction;
     // Story 9.10 AC#6, #7: Check if user has credits for scanning
     const hasCredits = (userCredits?.remaining ?? 0) > 0;
+
+    // Story 11.3: Staggered reveal for items (AC #1, #2, #5)
+    // Track if animation has already played to prevent re-animation on edits
+    const animationPlayedRef = useRef(false);
+    const shouldAnimate = animateItems && !animationPlayedRef.current;
+    const { visibleItems: animatedItems, isComplete: animationComplete } = useStaggeredReveal(
+        shouldAnimate ? currentTransaction.items : [],
+        {
+            staggerMs: 100,      // AC #2: 100ms stagger between items
+            initialDelayMs: 300, // AC #4: Header appears first
+            maxDurationMs: 2500, // AC #5: Complete within ~2.5 seconds
+        }
+    );
+
+    // Mark animation as played once complete
+    useEffect(() => {
+        if (animationComplete && shouldAnimate) {
+            animationPlayedRef.current = true;
+        }
+    }, [animationComplete, shouldAnimate]);
 
     // Card styling using CSS variables (AC #3)
     const cardStyle: React.CSSProperties = {
@@ -665,25 +763,35 @@ export const EditView: React.FC<EditViewProps> = ({
                                 />
                             )}
 
+                            {/* Story 11.5: Scan Status Indicator - Shows progress, skeleton, ready, or error states */}
+                            {scanStatus !== 'idle' && (
+                                <ScanStatusIndicator
+                                    status={scanStatus}
+                                    error={scanStateError}
+                                    estimatedTime={estimatedTime}
+                                    onCancel={handleScanCancel}
+                                    onRetry={handleScanRetry}
+                                    onReadyComplete={handleReadyComplete}
+                                    theme={theme as 'light' | 'dark'}
+                                    t={t}
+                                />
+                            )}
+
                             {/* Process Scan button - Story 9.10 AC#7: Disabled when no credits */}
-                            {onProcessScan && (
+                            {/* Story 11.5: Hide button when scan is in progress (non-idle state) */}
+                            {onProcessScan && scanStatus === 'idle' && (
                                 <button
                                     onClick={onProcessScan}
-                                    disabled={isAnalyzing || !hasCredits}
+                                    disabled={!hasCredits}
                                     className="w-full py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-opacity"
                                     style={{
                                         backgroundColor: hasCredits ? 'var(--accent)' : 'var(--secondary)',
-                                        opacity: (isAnalyzing || !hasCredits) ? 0.7 : 1,
+                                        opacity: !hasCredits ? 0.7 : 1,
                                         cursor: hasCredits ? 'pointer' : 'not-allowed',
                                     }}
                                     title={!hasCredits ? t('noCreditsMessage') : undefined}
                                 >
-                                    {isAnalyzing ? (
-                                        <>
-                                            <Loader2 size={20} className="animate-spin" />
-                                            Processing...
-                                        </>
-                                    ) : !hasCredits ? (
+                                    {!hasCredits ? (
                                         <>
                                             <Camera size={20} />
                                             {t('noCreditsButton')}
@@ -695,13 +803,6 @@ export const EditView: React.FC<EditViewProps> = ({
                                         </>
                                     )}
                                 </button>
-                            )}
-
-                            {/* Scan error message */}
-                            {scanError && (
-                                <div className="text-center text-sm" style={{ color: 'var(--error)' }}>
-                                    {scanError}
-                                </div>
                             )}
                         </div>
                     )}
@@ -887,93 +988,112 @@ export const EditView: React.FC<EditViewProps> = ({
                         <Plus size={20} strokeWidth={2} />
                     </button>
                 </div>
+                {/* Story 11.3: Items with optional staggered animation (AC #1, #3, #7, #8) */}
                 <div className="space-y-3">
-                    {currentTransaction.items.map((item, i) => (
-                        <div
-                            key={i}
-                            className="border-b pb-2 last:border-0"
-                            style={{ borderColor: isDark ? '#334155' : '#e2e8f0' }}
-                        >
-                            {editingItemIndex === i ? (
-                                <div className="space-y-2">
-                                    <input
-                                        className="w-full p-2 border rounded-lg text-sm"
-                                        style={inputStyle}
-                                        value={item.name}
-                                        onChange={e => handleUpdateItem(i, 'name', e.target.value)}
-                                        placeholder={t('itemName')}
-                                    />
-                                    <input
-                                        type="number"
-                                        className="w-full p-2 border rounded-lg text-sm"
-                                        style={inputStyle}
-                                        value={item.price}
-                                        onChange={e => handleUpdateItem(i, 'price', e.target.value)}
-                                        placeholder={t('price')}
-                                    />
-                                    {/* Story 9.15: Searchable category combobox (AC #2.1) */}
-                                    <CategoryCombobox
-                                        value={item.category || ''}
-                                        onChange={(value) => handleUpdateItem(i, 'category', value)}
-                                        language={language}
-                                        theme={theme as 'light' | 'dark'}
-                                        placeholder={t('itemCat')}
-                                        ariaLabel={t('itemCat')}
-                                    />
-                                    {/* Story 9.15: Subcategory input field (AC #2) */}
-                                    <input
-                                        className="w-full p-2 border rounded-lg text-sm"
-                                        style={inputStyle}
-                                        value={item.subcategory || ''}
-                                        onChange={e => handleUpdateItem(i, 'subcategory', e.target.value)}
-                                        placeholder={t('itemSubcat')}
-                                    />
-                                    <div className="flex justify-end gap-2">
-                                        <button
-                                            onClick={() => handleDeleteItem(i)}
-                                            className="min-w-11 min-h-11 p-2 rounded-lg flex items-center justify-center transition-colors"
-                                            style={{
-                                                color: 'var(--error)',
-                                                backgroundColor: isDark ? 'rgba(248, 113, 113, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                                            }}
-                                            aria-label={t('deleteItem')}
-                                        >
-                                            <Trash2 size={20} strokeWidth={2} />
-                                        </button>
-                                        <button
-                                            onClick={() => onSetEditingItemIndex(null)}
-                                            className="min-w-11 min-h-11 p-2 rounded-lg flex items-center justify-center transition-colors"
-                                            style={{
-                                                color: 'var(--accent)',
-                                                backgroundColor: isDark ? 'rgba(96, 165, 250, 0.1)' : 'rgba(59, 130, 246, 0.1)',
-                                            }}
-                                            aria-label={t('confirmItem')}
-                                        >
-                                            <Check size={20} strokeWidth={2} />
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
+                    {currentTransaction.items.map((item, i) => {
+                        // Story 11.3: Determine if this item should be visible during animation
+                        const isVisible = !shouldAnimate || i < animatedItems.length;
+
+                        // Story 11.3: Calculate animation delay for staggered effect
+                        const animationDelay = shouldAnimate ? i * 100 : 0;
+
+                        // Item container with animation wrapper
+                        const ItemContainer = shouldAnimate && !animationPlayedRef.current ? AnimatedItem : React.Fragment;
+                        const containerProps = shouldAnimate && !animationPlayedRef.current
+                            ? { delay: animationDelay, index: i, testId: `edit-view-item-${i}` }
+                            : {};
+
+                        // Don't render items that aren't visible yet during animation
+                        if (!isVisible) return null;
+
+                        return (
+                            <ItemContainer key={i} {...containerProps}>
                                 <div
-                                    onClick={() => onSetEditingItemIndex(i)}
-                                    className="flex justify-between items-start cursor-pointer py-1"
+                                    className="border-b pb-2 last:border-0"
+                                    style={{ borderColor: isDark ? '#334155' : '#e2e8f0' }}
                                 >
-                                    <div>
-                                        <div className="font-medium text-sm" style={{ color: 'var(--primary)' }}>{item.name}</div>
-                                        <CategoryBadge
-                                            category={item.category || 'Other'}
-                                            subcategory={item.subcategory}
-                                            categorySource={item.categorySource}
-                                            lang={lang}
-                                        />
-                                    </div>
-                                    <div className="font-mono text-sm" style={{ color: 'var(--primary)' }}>
-                                        {formatCurrency(item.price, currency)}
-                                    </div>
+                                    {editingItemIndex === i ? (
+                                        <div className="space-y-2">
+                                            <input
+                                                className="w-full p-2 border rounded-lg text-sm"
+                                                style={inputStyle}
+                                                value={item.name}
+                                                onChange={e => handleUpdateItem(i, 'name', e.target.value)}
+                                                placeholder={t('itemName')}
+                                            />
+                                            <input
+                                                type="number"
+                                                className="w-full p-2 border rounded-lg text-sm"
+                                                style={inputStyle}
+                                                value={item.price}
+                                                onChange={e => handleUpdateItem(i, 'price', e.target.value)}
+                                                placeholder={t('price')}
+                                            />
+                                            {/* Story 9.15: Searchable category combobox (AC #2.1) */}
+                                            <CategoryCombobox
+                                                value={item.category || ''}
+                                                onChange={(value) => handleUpdateItem(i, 'category', value)}
+                                                language={language}
+                                                theme={theme as 'light' | 'dark'}
+                                                placeholder={t('itemCat')}
+                                                ariaLabel={t('itemCat')}
+                                            />
+                                            {/* Story 9.15: Subcategory input field (AC #2) */}
+                                            <input
+                                                className="w-full p-2 border rounded-lg text-sm"
+                                                style={inputStyle}
+                                                value={item.subcategory || ''}
+                                                onChange={e => handleUpdateItem(i, 'subcategory', e.target.value)}
+                                                placeholder={t('itemSubcat')}
+                                            />
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => handleDeleteItem(i)}
+                                                    className="min-w-11 min-h-11 p-2 rounded-lg flex items-center justify-center transition-colors"
+                                                    style={{
+                                                        color: 'var(--error)',
+                                                        backgroundColor: isDark ? 'rgba(248, 113, 113, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                                    }}
+                                                    aria-label={t('deleteItem')}
+                                                >
+                                                    <Trash2 size={20} strokeWidth={2} />
+                                                </button>
+                                                <button
+                                                    onClick={() => onSetEditingItemIndex(null)}
+                                                    className="min-w-11 min-h-11 p-2 rounded-lg flex items-center justify-center transition-colors"
+                                                    style={{
+                                                        color: 'var(--accent)',
+                                                        backgroundColor: isDark ? 'rgba(96, 165, 250, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+                                                    }}
+                                                    aria-label={t('confirmItem')}
+                                                >
+                                                    <Check size={20} strokeWidth={2} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div
+                                            onClick={() => onSetEditingItemIndex(i)}
+                                            className="flex justify-between items-start cursor-pointer py-1"
+                                        >
+                                            <div>
+                                                <div className="font-medium text-sm" style={{ color: 'var(--primary)' }}>{item.name}</div>
+                                                <CategoryBadge
+                                                    category={item.category || 'Other'}
+                                                    subcategory={item.subcategory}
+                                                    categorySource={item.categorySource}
+                                                    lang={lang}
+                                                />
+                                            </div>
+                                            <div className="font-mono text-sm" style={{ color: 'var(--primary)' }}>
+                                                {formatCurrency(item.price, currency)}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
-                    ))}
+                            </ItemContainer>
+                        );
+                    })}
                 </div>
             </div>
 

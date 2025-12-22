@@ -177,6 +177,38 @@ Display InsightCard (or BuildingProfileCard Fallback)
 - Tests added: 30 tests across BatchUploadPreview.test.tsx (16) and BatchProcessingProgress.test.tsx (14)
 - Coverage gap: Missing integration test for full processBatchImages flow
 
+### Story 11.2 - Quick Save Card Component (2025-12-21)
+
+**Pattern Adoption:**
+- Modal overlay pattern: QuickSaveCard uses fixed modal with dialog role and aria-modal
+- Weighted confidence scoring: Field completeness heuristic (merchant 20%, total 25%, date 15%, category 15%, items 25%)
+- Shared utility extraction: categoryEmoji.ts extracted for reuse across components
+
+**Technical Decisions:**
+- 85% confidence threshold: Balances speed vs accuracy for quick save eligibility
+- Pre-applied mappings: Category and merchant mappings applied before Quick Save Card, not re-applied on save
+- Fire-and-forget insight recording: Non-blocking recordInsightShown and trackTransactionForInsight calls
+
+**Coverage Notes:**
+- Tests added: 80 tests (30 QuickSaveCard, 24 confidenceCheck, 26 categoryEmoji)
+- Coverage gaps: None identified - comprehensive component and logic testing
+
+### Story 11.3 - Animated Item Reveal (2025-12-21)
+
+**Pattern Adoption:**
+- Staggered reveal animation: CSS keyframes with `will-change`, wrapped in AnimatedItem component, maxDurationMs caps total time
+- Reduced motion preference: `useReducedMotion` hook subscribes to media query changes, skips animation when true
+- Component integration: Optional `animateItems` prop with parent state tracking for one-time animation
+
+**Technical Decisions:**
+- Animation state in App.tsx: Single `animateEditViewItems` state controls animation for fresh scan results
+- Animation timing: 100ms stagger, 300ms initial delay, 2500ms max duration (adjusts stagger for long lists)
+- CSS-only implementation: GPU-accelerated transforms/opacity, no JavaScript animation libraries
+
+**Coverage Notes:**
+- Tests added: 34 (7 + 12 + 15 across 3 test files)
+- Test patterns: Fake timers for animation hooks, mocked useReducedMotion
+
 ---
 
 ## Sync Notes
@@ -190,3 +222,6 @@ Display InsightCard (or BuildingProfileCard Fallback)
 - Story 10.6 added InsightCard UI layer with async side-effect pattern in App.tsx save flow (2025-12-19)
 - Story 10a.1 unified Dashboard+History into consolidated Home view with shared filter context (2025-12-20)
 - Story 11.1 added batch image processing with sequential API calls and credit-after-save pattern (2025-12-21)
+- Story 11.2 added Quick Save Card with weighted confidence scoring and 85% threshold (2025-12-21)
+- Story 11.3 added animated item reveal with staggered timing, reduced motion support, and App.tsx integration (2025-12-21)
+- Story 11.5 added scan status clarity with state machine hook, status components, and reduced motion support (2025-12-22)

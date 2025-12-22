@@ -1,7 +1,8 @@
 /**
- * Scan Components - Stories 11.1 & 11.5
+ * Scan Components - Stories 11.1, 11.2 & 11.5
  *
  * @see docs/sprint-artifacts/epic11/story-11.1-one-image-one-transaction.md
+ * @see docs/sprint-artifacts/epic11/story-11.2-quick-save-card.md
  * @see docs/sprint-artifacts/epic11/story-11.5-scan-status-clarity.md
  */
 
@@ -31,6 +32,10 @@ export type {
   BatchItemResult,
   BatchItemStatus,
 } from './BatchProcessingProgress';
+
+// Story 11.2: Quick Save Card component
+export { QuickSaveCard } from './QuickSaveCard';
+export type { QuickSaveCardProps } from './QuickSaveCard';
 
 // Default export
 export { ScanStatusIndicator as default } from './ScanStatusIndicator';

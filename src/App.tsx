@@ -4,6 +4,8 @@ import { useTransactions } from './hooks/useTransactions';
 import { useCategoryMappings } from './hooks/useCategoryMappings';
 import { useMerchantMappings } from './hooks/useMerchantMappings';
 import { useSubcategoryMappings } from './hooks/useSubcategoryMappings';
+// Story 11.4: Trusted merchants for auto-save
+import { useTrustedMerchants } from './hooks/useTrustedMerchants';
 import { useUserPreferences } from './hooks/useUserPreferences';
 // Story 10.6: Insight profile hook for insight generation
 import { useInsightProfile } from './hooks/useInsightProfile';
@@ -26,8 +28,14 @@ import { BuildingProfileCard } from './components/insights/BuildingProfileCard';
 // Story 10.7: Batch summary component
 import { BatchSummary } from './components/insights/BatchSummary';
 // Story 11.1: Batch upload components for multi-image processing
-import { BatchUploadPreview, BatchProcessingProgress, MAX_BATCH_IMAGES } from './components/scan';
+// Story 11.2: Quick Save Card for high-confidence scans
+import { BatchUploadPreview, BatchProcessingProgress, MAX_BATCH_IMAGES, QuickSaveCard } from './components/scan';
 import type { BatchItemResult } from './components/scan';
+// Story 11.2: Confidence check for Quick Save eligibility
+import { shouldShowQuickSave, calculateConfidence } from './utils/confidenceCheck';
+// Story 11.4: Trust Merchant Prompt component
+import { TrustMerchantPrompt } from './components/TrustMerchantPrompt';
+import type { TrustPromptEligibility } from './types/trust';
 import { AnalyticsProvider } from './contexts/AnalyticsContext';
 // Story 10a.2: Import for building analytics initial state
 import { getQuarterFromMonth } from './utils/analyticsHelpers';
@@ -117,6 +125,16 @@ function App() {
         clearBatch,
         // isBatchMode is exposed by hook but we calculate it inline in JSX
     } = useBatchSession();
+    // Story 11.4: Trusted merchants for auto-save (AC #1-8)
+    const {
+        recordMerchantScan,
+        checkTrusted,
+        acceptTrust,
+        declinePrompt,
+        removeTrust,
+        trustedMerchants,
+        loading: trustedMerchantsLoading,
+    } = useTrustedMerchants(user, services);
 
     // UI State
     const [view, setView] = useState<View>('dashboard');
@@ -147,6 +165,16 @@ function App() {
     const [_batchCancelRequested, setBatchCancelRequested] = useState(false);
     const [showBatchCancelConfirm, setShowBatchCancelConfirm] = useState(false);
     const batchCancelRef = useRef(false); // Ref for immediate access in loop
+    // Story 11.2: Quick Save Card state (AC #1, #5, #6)
+    const [showQuickSaveCard, setShowQuickSaveCard] = useState(false);
+    const [quickSaveTransaction, setQuickSaveTransaction] = useState<Transaction | null>(null);
+    const [quickSaveConfidence, setQuickSaveConfidence] = useState(0);
+    const [isQuickSaving, setIsQuickSaving] = useState(false);
+    // Story 11.3: Track when EditView should animate items (fresh scan result)
+    const [animateEditViewItems, setAnimateEditViewItems] = useState(false);
+    // Story 11.4: Trust Merchant Prompt state (AC #2, #3, #4)
+    const [showTrustPrompt, setShowTrustPrompt] = useState(false);
+    const [trustPromptData, setTrustPromptData] = useState<TrustPromptEligibility | null>(null);
 
     // Settings
     const [lang, setLang] = useState<Language>('es');
@@ -496,7 +524,72 @@ function App() {
             }
             // Clear local scan images since they're now stored in transaction
             setScanImages([]);
-            setView('edit');
+
+            // Story 11.4: Check if merchant is trusted for auto-save (AC #5)
+            const merchantAlias = finalTransaction.alias || finalTransaction.merchant;
+            const isTrusted = merchantAlias ? await checkTrusted(merchantAlias) : false;
+
+            if (isTrusted && services && user) {
+                // Story 11.4 AC #5: Auto-save for trusted merchants
+                // Skip Quick Save Card entirely
+                try {
+                    const transactionId = await firestoreAddTransaction(services.db, user.uid, services.appId, finalTransaction);
+                    const txWithId = { ...finalTransaction, id: transactionId } as Transaction;
+
+                    // Generate insight
+                    const insight = await generateInsightForTransaction(
+                        txWithId,
+                        transactions,
+                        insightProfile || { schemaVersion: 1, firstTransactionDate: null as any, totalTransactions: 0, recentInsights: [] },
+                        insightCache
+                    );
+
+                    addToBatch(txWithId, insight);
+
+                    // Record scan (not edited since it was auto-saved)
+                    await recordMerchantScan(merchantAlias, false).catch(err =>
+                        console.warn('Failed to record merchant scan:', err)
+                    );
+
+                    // Clear pending scan and show toast
+                    setPendingScan(null);
+                    setCurrentTransaction(null);
+                    setToastMessage({ text: t('autoSaved'), type: 'success' });
+                    setView('dashboard');
+
+                    // Show insight or batch summary
+                    const silenced = isInsightsSilenced(insightCache);
+                    if (!silenced) {
+                        const willBeBatchMode = (batchSession?.receipts.length ?? 0) + 1 >= 3;
+                        if (willBeBatchMode) {
+                            setShowBatchSummary(true);
+                        } else {
+                            setCurrentInsight(insight);
+                            setShowInsightCard(true);
+                        }
+                    }
+                } catch (autoSaveErr) {
+                    console.error('Auto-save failed:', autoSaveErr);
+                    // Fall back to Quick Save Card on error
+                    setQuickSaveTransaction(finalTransaction);
+                    setQuickSaveConfidence(calculateConfidence(finalTransaction));
+                    setShowQuickSaveCard(true);
+                }
+            } else {
+                // Story 11.2: Check confidence for Quick Save eligibility (AC #5, #6)
+                const confidence = calculateConfidence(finalTransaction);
+                if (shouldShowQuickSave(finalTransaction)) {
+                    // High confidence: Show Quick Save Card (AC #1)
+                    setQuickSaveTransaction(finalTransaction);
+                    setQuickSaveConfidence(confidence);
+                    setShowQuickSaveCard(true);
+                } else {
+                    // Low confidence: Go to EditView (AC #6)
+                    // Story 11.3: Enable item animation for fresh scan results
+                    setAnimateEditViewItems(true);
+                    setView('edit');
+                }
+            }
         } catch (e: any) {
             const errorMessage = 'Failed: ' + e.message;
             setScanError(errorMessage);
@@ -749,6 +842,150 @@ function App() {
         });
     };
 
+    // Story 11.2: Quick Save Card handlers (AC #3, #4, #7)
+    const handleQuickSave = async () => {
+        if (!services || !user || !quickSaveTransaction || isQuickSaving) return;
+        const { db, appId } = services;
+
+        setIsQuickSaving(true);
+
+        const tDoc = {
+            ...quickSaveTransaction,
+            total: parseStrictNumber(quickSaveTransaction.total)
+        };
+
+        try {
+            // Story 10.6: Async side-effect pattern for insight generation
+            incrementInsightCounter();
+
+            const profile = insightProfile || {
+                schemaVersion: 1 as const,
+                firstTransactionDate: null as any,
+                totalTransactions: 0,
+                recentInsights: [],
+            };
+
+            const silenced = isInsightsSilenced(insightCache);
+
+            // Save transaction and generate insight
+            const transactionId = await firestoreAddTransaction(db, user.uid, appId, tDoc);
+            const txWithId = { ...tDoc, id: transactionId } as Transaction;
+
+            const insight = await generateInsightForTransaction(
+                txWithId,
+                transactions,
+                profile,
+                insightCache
+            );
+
+            // Add to batch session
+            addToBatch(txWithId, insight);
+
+            // Story 11.2: Close Quick Save Card and navigate to dashboard
+            setShowQuickSaveCard(false);
+            setQuickSaveTransaction(null);
+            setPendingScan(null);
+            setView('dashboard');
+
+            // Show insight card (unless silenced or in batch mode)
+            if (!silenced) {
+                const willBeBatchMode = (batchSession?.receipts.length ?? 0) + 1 >= 3;
+                if (willBeBatchMode) {
+                    setShowBatchSummary(true);
+                } else {
+                    setCurrentInsight(insight);
+                    setShowInsightCard(true);
+                }
+            }
+
+            // Record insight shown (if applicable)
+            if (insight && insight.id !== 'building_profile') {
+                recordInsightShown(insight.id, transactionId, {
+                    title: insight.title,
+                    message: insight.message,
+                    icon: insight.icon,
+                    category: insight.category,
+                }).catch(err => console.warn('Failed to record insight:', err));
+            }
+
+            // Track transaction for profile stats
+            const txDate = tDoc.date ? new Date(tDoc.date) : new Date();
+            trackTransactionForInsight(txDate)
+                .catch(err => console.warn('Failed to track transaction:', err));
+
+            // Story 11.4: Record scan for trust tracking (AC #1, #2)
+            // Quick Save = not edited, so wasEdited = false
+            const merchantAlias = tDoc.alias || tDoc.merchant;
+            if (merchantAlias) {
+                try {
+                    const eligibility = await recordMerchantScan(merchantAlias, false);
+                    // AC #3: Show trust prompt if eligible
+                    if (eligibility.shouldShowPrompt) {
+                        setTrustPromptData(eligibility);
+                        setShowTrustPrompt(true);
+                    }
+                } catch (err) {
+                    console.warn('Failed to record merchant scan:', err);
+                }
+            }
+
+        } catch (error) {
+            console.error('Quick save failed:', error);
+            setToastMessage({ text: t('scanFailed'), type: 'info' });
+        } finally {
+            setIsQuickSaving(false);
+        }
+    };
+
+    // Story 11.2: Handle "Editar" from Quick Save Card (AC #4)
+    const handleQuickSaveEdit = () => {
+        if (quickSaveTransaction) {
+            setCurrentTransaction(quickSaveTransaction);
+        }
+        setShowQuickSaveCard(false);
+        setQuickSaveTransaction(null);
+        // Story 11.3: Enable item animation when editing from Quick Save
+        setAnimateEditViewItems(true);
+        setView('edit');
+    };
+
+    // Story 11.2: Handle "Cancelar" from Quick Save Card (AC #7)
+    const handleQuickSaveCancel = () => {
+        setShowQuickSaveCard(false);
+        setQuickSaveTransaction(null);
+        setCurrentTransaction(null);
+        setPendingScan(null);
+        setView('dashboard');
+    };
+
+    // Story 11.4: Trust Prompt handlers (AC #4)
+    const handleAcceptTrust = async () => {
+        if (!trustPromptData?.merchant) return;
+        const merchantName = trustPromptData.merchant.merchantName;
+        try {
+            await acceptTrust(merchantName);
+            setToastMessage({ text: t('trustMerchantConfirm'), type: 'success' });
+        } catch (err) {
+            console.warn('Failed to accept trust:', err);
+        } finally {
+            setShowTrustPrompt(false);
+            setTrustPromptData(null);
+        }
+    };
+
+    const handleDeclineTrust = async () => {
+        if (!trustPromptData?.merchant) return;
+        const merchantName = trustPromptData.merchant.merchantName;
+        try {
+            await declinePrompt(merchantName);
+        } catch (err) {
+            console.warn('Failed to decline trust:', err);
+        } finally {
+            setShowTrustPrompt(false);
+            setTrustPromptData(null);
+        }
+    };
+
     // Transaction Handlers
     // Note: We use fire-and-forget pattern because Firestore's offline persistence
     // means addDoc/updateDoc/deleteDoc may not resolve until server confirms,
@@ -985,8 +1222,10 @@ function App() {
         .slice(0, 5);
 
     return (
+        // Story 11.6: Use dvh (dynamic viewport height) for proper PWA sizing (AC #1, #2)
+        // h-screen provides fallback for Safari < 15.4 and older browsers without dvh support
         <div
-            className={`min-h-screen max-w-md mx-auto shadow-xl border-x relative ${themeClass}`}
+            className={`h-screen h-[100dvh] max-w-md mx-auto shadow-xl border-x flex flex-col overflow-hidden ${themeClass}`}
             data-theme={dataTheme}
             style={{
                 backgroundColor: 'var(--bg)',
@@ -1003,7 +1242,12 @@ function App() {
                 onChange={handleFileSelect}
             />
 
-            <main className="p-6 pb-24 h-full overflow-y-auto">
+            {/* Story 11.6: Main content area with flex-1 and overflow (AC #2, #4, #5) */}
+            {/* pb-24 (96px) accounts for nav bar (~70px) + safe area bottom */}
+            <main
+                className="flex-1 overflow-y-auto p-6"
+                style={{ paddingBottom: 'calc(6rem + var(--safe-bottom, 0px))' }}
+            >
                 {/* Story 10a.1: Wrap DashboardView with HistoryFiltersProvider for filter context (AC #2, #6) */}
                 {view === 'dashboard' && (
                     <HistoryFiltersProvider>
@@ -1080,7 +1324,13 @@ function App() {
                         storeCategories={STORE_CATEGORIES as unknown as string[]}
                         formatCurrency={formatCurrency}
                         parseStrictNumber={parseStrictNumber}
-                        onBack={() => setView('dashboard')}
+                        onBack={() => {
+                            // Story 11.3: Reset animation state when leaving EditView
+                            setAnimateEditViewItems(false);
+                            setView('dashboard');
+                        }}
+                        // Story 11.3: Animate items for fresh scan results (AC #1-5)
+                        animateItems={animateEditViewItems}
                         onSave={saveTransaction}
                         onDelete={deleteTransaction}
                         onUpdateTransaction={setCurrentTransaction as any}
@@ -1207,6 +1457,10 @@ function App() {
                         userId={user?.uid || null}
                         appId={services?.appId || null}
                         onShowToast={(text: string) => setToastMessage({ text, type: 'success' })}
+                        // Story 11.4: Trusted merchants management (AC #6, #7)
+                        trustedMerchants={trustedMerchants}
+                        trustedMerchantsLoading={trustedMerchantsLoading}
+                        onRevokeTrust={removeTrust}
                     />
                 )}
             </main>
@@ -1255,9 +1509,29 @@ function App() {
                       />
             )}
 
+            {/* Story 11.2: Quick Save Card for high-confidence scans (AC #1-9) */}
+            {showQuickSaveCard && quickSaveTransaction && (
+                <QuickSaveCard
+                    transaction={quickSaveTransaction}
+                    confidence={quickSaveConfidence}
+                    onSave={handleQuickSave}
+                    onEdit={handleQuickSaveEdit}
+                    onCancel={handleQuickSaveCancel}
+                    theme={theme as 'light' | 'dark'}
+                    t={t}
+                    formatCurrency={formatCurrency}
+                    currency={currency}
+                    isSaving={isQuickSaving}
+                />
+            )}
+
             {/* Story 11.1: Batch upload preview for multi-image selection (AC #2) */}
+            {/* Story 11.6: Modal with safe area padding (AC #3) */}
             {showBatchPreview && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                <div
+                    className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
+                    style={{ padding: 'calc(1rem + var(--safe-top, 0px)) calc(1rem + var(--safe-right, 0px)) calc(1rem + var(--safe-bottom, 0px)) calc(1rem + var(--safe-left, 0px))' }}
+                >
                     <BatchUploadPreview
                         images={batchImages}
                         theme={theme as 'light' | 'dark'}
@@ -1270,8 +1544,12 @@ function App() {
             )}
 
             {/* Story 11.1: Batch processing progress (AC #4) */}
+            {/* Story 11.6: Modal with safe area padding (AC #3) */}
             {isBatchProcessing && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                <div
+                    className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
+                    style={{ padding: 'calc(1rem + var(--safe-top, 0px)) calc(1rem + var(--safe-right, 0px)) calc(1rem + var(--safe-bottom, 0px)) calc(1rem + var(--safe-left, 0px))' }}
+                >
                     <BatchProcessingProgress
                         current={batchProgress.current}
                         total={batchProgress.total}
@@ -1285,8 +1563,12 @@ function App() {
             )}
 
             {/* Story 11.1: Batch cancel confirmation dialog */}
+            {/* Story 11.6: Modal with safe area padding (AC #3) */}
             {showBatchCancelConfirm && (
-                <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4">
+                <div
+                    className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center"
+                    style={{ padding: 'calc(1rem + var(--safe-top, 0px)) calc(1rem + var(--safe-right, 0px)) calc(1rem + var(--safe-bottom, 0px)) calc(1rem + var(--safe-left, 0px))' }}
+                >
                     <div
                         className="rounded-xl p-6 max-w-sm w-full shadow-xl"
                         style={{
@@ -1359,6 +1641,18 @@ function App() {
                     }}
                     isSilenced={isInsightsSilenced(insightCache)}
                     theme={theme as 'light' | 'dark'}
+                />
+            )}
+
+            {/* Story 11.4: Trust Merchant Prompt (AC #2, #3, #4) */}
+            {showTrustPrompt && trustPromptData?.merchant && (
+                <TrustMerchantPrompt
+                    merchantName={trustPromptData.merchant.merchantName}
+                    scanCount={trustPromptData.merchant.scanCount}
+                    onAccept={handleAcceptTrust}
+                    onDecline={handleDeclineTrust}
+                    theme={theme as 'light' | 'dark'}
+                    t={t}
                 />
             )}
         </div>

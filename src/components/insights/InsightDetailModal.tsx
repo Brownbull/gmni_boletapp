@@ -93,9 +93,13 @@ export const InsightDetailModal: React.FC<InsightDetailModalProps> = ({
   // If we have a temp ID but need context, show that transaction is unavailable
   const transactionUnavailable = needsContext && insight.transactionId === 'temp';
 
+  // Story 11.6: Modal with safe area padding (AC #3, #6)
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{
+        padding: 'calc(1rem + var(--safe-top, 0px)) calc(1rem + var(--safe-right, 0px)) calc(1rem + var(--safe-bottom, 0px)) calc(1rem + var(--safe-left, 0px))',
+      }}
       onClick={onClose}
     >
       {/* Backdrop */}
