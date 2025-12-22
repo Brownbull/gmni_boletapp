@@ -268,12 +268,12 @@ development_status:
   # └─────────────────────────────────────────────────────────────────┘
   #
   epic-12: contexted  # Tech context created 2025-12-22
-  12-1-batch-capture-ui: backlog  # 5 pts - PARALLEL with 12.4 - Camera + preview strip
-  12-2-parallel-processing-service: backlog  # 5 pts - Depends on 12.1 - Concurrent API calls
-  12-3-batch-review-queue: backlog  # 5 pts - Depends on 12.2 - Summary cards + edit capability
-  12-4-credit-warning-system: backlog  # 3 pts - PARALLEL with 12.1 - Pre-batch credit check
-  12-5-batch-save-and-insights: backlog  # 3 pts - Depends on 12.3 - Save all + aggregate insight
-  12-99-epic-release-deployment: backlog  # 2 pts - Production deployment
+  12-1-batch-capture-ui: ready-for-dev  # 5 pts - PARALLEL with 12.4 - Camera + preview strip
+  12-2-parallel-processing-service: ready-for-dev  # 5 pts - Depends on 12.1 - Concurrent API calls
+  12-3-batch-review-queue: ready-for-dev  # 5 pts - Depends on 12.2 - Summary cards + edit capability
+  12-4-credit-warning-system: ready-for-dev  # 3 pts - PARALLEL with 12.1 - Pre-batch credit check
+  12-5-batch-save-and-insights: ready-for-dev  # 3 pts - Depends on 12.3 - Save all + aggregate insight
+  12-99-epic-release-deployment: ready-for-dev  # 2 pts - Production deployment
   epic-12-retrospective: optional
 
   # Epic 13: Analytics UX Redesign (~20 points, 2 weeks)
