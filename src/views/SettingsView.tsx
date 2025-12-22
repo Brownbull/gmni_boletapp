@@ -1,13 +1,17 @@
 import React from 'react';
-import { Globe, DollarSign, Calendar, Moon, Palette, Download, Trash2, ArrowRightLeft, Loader2, BookMarked, MapPin, Store, Receipt, Tag } from 'lucide-react';
+import { Globe, DollarSign, Calendar, Moon, Palette, Download, Trash2, ArrowRightLeft, Loader2, BookMarked, MapPin, Store, Receipt, Tag, Handshake } from 'lucide-react';
 import { CategoryMappingsList } from '../components/CategoryMappingsList';
 import { MerchantMappingsList } from '../components/MerchantMappingsList';
 import { SubcategoryMappingsList } from '../components/SubcategoryMappingsList';
+// Story 11.4: Trusted Merchants list component
+import { TrustedMerchantsList } from '../components/TrustedMerchantsList';
 import { PWASettingsSection } from '../components/PWASettingsSection';
 import { NotificationSettings } from '../components/NotificationSettings';
 import { CategoryMapping } from '../types/categoryMapping';
 import { MerchantMapping } from '../types/merchantMapping';
 import { SubcategoryMapping } from '../types/subcategoryMapping';
+// Story 11.4: Trusted merchant type
+import { TrustedMerchant } from '../types/trust';
 import { LocationSelect } from '../components/LocationSelect';
 import { SupportedCurrency, SUPPORTED_CURRENCIES } from '../services/userPreferencesService';
 import { Firestore } from 'firebase/firestore';
@@ -59,6 +63,10 @@ interface SettingsViewProps {
     userId?: string | null;
     appId?: string | null;
     onShowToast?: (message: string) => void;
+    // Story 11.4: Trusted merchants management (AC #6, #7)
+    trustedMerchants?: TrustedMerchant[];
+    trustedMerchantsLoading?: boolean;
+    onRevokeTrust?: (merchantName: string) => Promise<void>;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -108,6 +116,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     userId = null,
     appId = null,
     onShowToast,
+    // Story 11.4: Trusted merchants management (AC #6, #7)
+    trustedMerchants = [],
+    trustedMerchantsLoading = false,
+    onRevokeTrust,
 }) => {
     // Story 7.12: Theme-aware styling using CSS variables (AC #4, #8)
     const isDark = theme === 'dark';
@@ -353,6 +365,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         loading={subcategoryMappingsLoading}
                         onDeleteMapping={onDeleteSubcategoryMapping}
                         onUpdateMapping={onUpdateSubcategoryMapping}
+                        t={t}
+                        theme={theme as 'light' | 'dark'}
+                    />
+                )}
+            </div>
+
+            {/* Story 11.4: Trusted Merchants Section (AC #6, #7) */}
+            <div className="p-4 rounded-xl border" style={cardStyle}>
+                <div className="flex gap-2 items-center mb-4">
+                    <Handshake size={24} strokeWidth={2} style={{ color: 'var(--accent)' }} />
+                    <span className="font-medium" style={{ color: 'var(--primary)' }}>{t('trustedMerchants')}</span>
+                </div>
+                {onRevokeTrust && (
+                    <TrustedMerchantsList
+                        merchants={trustedMerchants}
+                        loading={trustedMerchantsLoading}
+                        onRevokeTrust={onRevokeTrust}
                         t={t}
                         theme={theme as 'light' | 'dark'}
                     />
