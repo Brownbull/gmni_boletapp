@@ -247,8 +247,33 @@ development_status:
 
   # Epic 12: Batch Mode (~25 points, 2 weeks)
   # Multi-image capture with parallel processing and batch review
-  # Stories: Batch Capture UI, Parallel Processing, Batch Review Queue
-  epic-12: backlog
+  # Tech Context: docs/sprint-artifacts/epic12/tech-context-epic12.md
+  #
+  # PARALLEL WORK LANES:
+  # ┌─────────────────────────────────────────────────────────────────┐
+  # │  Lane A: 12.1 (5pts) ─────┐                                     │
+  # │                           │                                     │
+  # │  Lane B: 12.4 (3pts) ─────┤                                     │
+  # │                           ▼                                     │
+  # │                      12.2 (5pts)                                │
+  # │                           │                                     │
+  # │                           ▼                                     │
+  # │                      12.3 (5pts)                                │
+  # │                           │                                     │
+  # │                           ▼                                     │
+  # │                      12.5 (3pts)                                │
+  # │                           │                                     │
+  # │                           ▼                                     │
+  # │                      12.99 (2pts)                               │
+  # └─────────────────────────────────────────────────────────────────┘
+  #
+  epic-12: contexted  # Tech context created 2025-12-22
+  12-1-batch-capture-ui: backlog  # 5 pts - PARALLEL with 12.4 - Camera + preview strip
+  12-2-parallel-processing-service: backlog  # 5 pts - Depends on 12.1 - Concurrent API calls
+  12-3-batch-review-queue: backlog  # 5 pts - Depends on 12.2 - Summary cards + edit capability
+  12-4-credit-warning-system: backlog  # 3 pts - PARALLEL with 12.1 - Pre-batch credit check
+  12-5-batch-save-and-insights: backlog  # 3 pts - Depends on 12.3 - Save all + aggregate insight
+  12-99-epic-release-deployment: backlog  # 2 pts - Production deployment
   epic-12-retrospective: optional
 
   # Epic 13: Analytics UX Redesign (~20 points, 2 weeks)
