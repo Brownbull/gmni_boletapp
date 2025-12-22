@@ -296,7 +296,25 @@ export const TRANSLATIONS = {
         sortBy: "Sort by",
         sortByScanDate: "Scan date",
         sortByTransactionDate: "Transaction date",
-        filterDuplicates: "Possible duplicates"
+        filterDuplicates: "Possible duplicates",
+        // Story 11.2: Quick Save Card
+        quickSave: "Save",
+        quickSaveCard: "Quick Save",
+        confidence: "confidence",
+        saving: "Saving...",
+        // Story 11.4: Trust Merchant System
+        trustMerchantTitle: "Trust {merchant}?",
+        trustMerchantMessage: "You've scanned {count} receipts from {merchant} without editing. Future receipts will be auto-saved.",
+        trustMerchantConfirm: "Yes, trust",
+        trustMerchantDecline: "Not now",
+        trustedMerchants: "Trusted Merchants",
+        trustedMerchantsEmpty: "No trusted merchants yet",
+        trustedMerchantsHint: "Merchants you trust will auto-save on scan",
+        removeTrust: "Remove Trust",
+        removeTrustConfirm: "Stop auto-saving for this merchant?",
+        autoSaved: "Auto-saved",
+        scansFromMerchant: "{count} scans",
+        andXMore: "...and {count} more"
     },
     es: {
         overview: "Resumen", welcome: "Rastreo Inteligente", totalSpent: "Total Gastado",
@@ -595,7 +613,25 @@ export const TRANSLATIONS = {
         sortBy: "Ordenar por",
         sortByScanDate: "Fecha de escaneo",
         sortByTransactionDate: "Fecha de transacción",
-        filterDuplicates: "Posibles duplicados"
+        filterDuplicates: "Posibles duplicados",
+        // Story 11.2: Quick Save Card
+        quickSave: "Guardar",
+        quickSaveCard: "Guardado Rápido",
+        confidence: "confianza",
+        saving: "Guardando...",
+        // Story 11.4: Trust Merchant System
+        trustMerchantTitle: "¿Confiar en {merchant}?",
+        trustMerchantMessage: "Has escaneado {count} boletas de {merchant} sin editar. Las próximas boletas se guardarán automáticamente.",
+        trustMerchantConfirm: "Sí, confiar",
+        trustMerchantDecline: "No ahora",
+        trustedMerchants: "Comercios de Confianza",
+        trustedMerchantsEmpty: "Aún no hay comercios de confianza",
+        trustedMerchantsHint: "Los comercios de confianza se guardan automáticamente al escanear",
+        removeTrust: "Quitar Confianza",
+        removeTrustConfirm: "¿Dejar de guardar automáticamente para este comercio?",
+        autoSaved: "Guardado automático",
+        scansFromMerchant: "{count} escaneos",
+        andXMore: "...y {count} más"
     }
 };
 
