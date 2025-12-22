@@ -9,6 +9,7 @@
 import React from 'react';
 import { AlertTriangle, RefreshCw, X, WifiOff, Clock, AlertCircle } from 'lucide-react';
 import type { ScanErrorType } from '../../hooks/useScanState';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 export interface ScanErrorProps {
   /** Error type for icon selection */
@@ -68,7 +69,13 @@ export const ScanError: React.FC<ScanErrorProps> = ({
   t,
 }) => {
   const isDark = theme === 'dark';
+  const prefersReducedMotion = useReducedMotion();
   const ErrorIcon = getErrorIcon(errorType);
+
+  // Button transition styles (respects reduced motion preference)
+  const buttonTransition = prefersReducedMotion
+    ? ''
+    : 'transition-transform hover:scale-[1.02] active:scale-[0.98]';
 
   return (
     <div
@@ -115,7 +122,7 @@ export const ScanError: React.FC<ScanErrorProps> = ({
         {/* Retry button (primary) */}
         <button
           onClick={onRetry}
-          className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-white transition-transform hover:scale-[1.02] active:scale-[0.98]"
+          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-white ${buttonTransition}`}
           style={{ backgroundColor: 'var(--accent)' }}
           aria-label={t('scanRetry')}
         >
@@ -126,7 +133,7 @@ export const ScanError: React.FC<ScanErrorProps> = ({
         {/* Cancel button (secondary) */}
         <button
           onClick={onCancel}
-          className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold transition-transform hover:scale-[1.02] active:scale-[0.98]"
+          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold ${buttonTransition}`}
           style={{
             backgroundColor: isDark ? 'rgba(100, 116, 139, 0.2)' : 'rgba(100, 116, 139, 0.1)',
             color: 'var(--secondary)',
