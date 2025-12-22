@@ -369,13 +369,15 @@ export const InsightsView: React.FC<InsightsViewProps> = ({
       </div>
 
       {/* Selection Mode Toolbar */}
+      {/* Story 11.6: Position above nav bar accounting for safe area (AC #3) */}
       {selectionMode && (
         <div
-          className="fixed bottom-20 left-4 right-4 z-40 p-3 rounded-xl shadow-lg flex items-center justify-between"
+          className="fixed left-4 right-4 z-40 p-3 rounded-xl shadow-lg flex items-center justify-between"
           style={{
             backgroundColor: theme === 'dark' ? '#1e293b' : 'white',
             borderColor: theme === 'dark' ? '#334155' : '#e2e8f0',
             borderWidth: 1,
+            bottom: 'calc(5rem + var(--safe-bottom, 0px))',
           }}
         >
           <div className="flex items-center gap-3">

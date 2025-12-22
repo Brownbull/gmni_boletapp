@@ -237,10 +237,11 @@ development_status:
   #
   epic-11: contexted  # Tech context created 2025-12-21
   11-1-one-image-one-transaction: done  # 3 pts - PARALLEL with 11.5 - Code Review APPROVED 2025-12-21, v9.4.0
-  11-2-quick-save-card: ready-for-dev  # 5 pts - Depends on 11.1 + 11.5
-  11-3-animated-item-reveal: ready-for-dev  # 3 pts - PARALLEL with 11.4, depends on 11.2
-  11-4-trust-merchant-system: ready-for-dev  # 5 pts - PARALLEL with 11.3, depends on 11.2
-  11-5-scan-status-clarity: in-progress  # 3 pts - PARALLEL with 11.1 - Components created, tests passing
+  11-2-quick-save-card: done  # 5 pts - Depends on 11.1 + 11.5 - Code Review APPROVED 2025-12-21
+  11-3-animated-item-reveal: done  # 3 pts - PARALLEL with 11.4, depends on 11.2 - Code Review APPROVED 2025-12-21
+  11-4-trust-merchant-system: done  # 5 pts - PARALLEL with 11.3, depends on 11.2 - Code Review APPROVED 2025-12-22
+  11-5-scan-status-clarity: done  # 3 pts - PARALLEL with 11.1 - Code Review APPROVED 2025-12-22, reduced motion fixes
+  11-6-responsive-viewport-adaptation: done  # 3 pts - Code Review APPROVED 2025-12-22
   11-99-epic-release-deployment: backlog  # 2 pts - Final, depends on all
   epic-11-retrospective: optional
 

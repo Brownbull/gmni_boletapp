@@ -26,9 +26,13 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onTrendsCl
     };
 
     return (
+        // Story 11.6: Fixed nav with safe area bottom padding (AC #3, #6)
         <div
-            className="fixed bottom-0 left-0 right-0 border-t px-6 py-3 flex justify-between items-center z-50"
-            style={navStyle}
+            className="fixed bottom-0 left-0 right-0 border-t px-6 py-3 flex justify-between items-center z-50 flex-shrink-0"
+            style={{
+                ...navStyle,
+                paddingBottom: 'calc(0.75rem + var(--safe-bottom, 0px))',
+            }}
         >
             <button
                 onClick={() => setView('dashboard')}
