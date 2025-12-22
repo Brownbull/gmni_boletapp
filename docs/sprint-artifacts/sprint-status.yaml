@@ -200,7 +200,7 @@ development_status:
   10-6-scan-complete-insight-card: done  # 3 points - InsightCard.tsx, BuildingProfileCard.tsx fallback - DEPLOYED 2025-12-19 (PR #102)
   10-7-batch-mode-summary: done  # 3 points - BatchSummary.tsx for multi-receipt sessions - DEPLOYED 2025-12-19 (PR #102)
   10-99-epic-release-deployment: done  # 2 points - Production deployment via PR #102 - DEPLOYED 2025-12-19
-  epic-10-retrospective: optional
+  epic-10-retrospective: completed  # Combined retro 2025-12-22
 
   # Epic 10a: UX Consolidation - Home & Insights Tabs (~13 points, 1 week)
   # Merge Dashboard + History into unified Home, repurpose Receipts tab as Insights History
@@ -212,7 +212,7 @@ development_status:
   10a-3-nav-tab-rename: done  # 1 point - Receipts → Insights tab - Code Review APPROVED 2025-12-21
   10a-4-insights-history-view: done  # 5 points - New InsightsView component - Code Review APPROVED 2025-12-21 (5 MEDIUM issues fixed)
   10a-5-insight-record-storage: done  # 1 point - Extend InsightRecord schema - Code Review APPROVED 2025-12-21
-  epic-10a-retrospective: optional
+  epic-10a-retrospective: completed  # Combined retro 2025-12-22
 
   # Epic 11: Quick Save & Scan Flow Optimization (~22 points, 2 weeks)
   # Reduce scan-to-save friction to <15 seconds for 90% of users
@@ -243,7 +243,7 @@ development_status:
   11-5-scan-status-clarity: done  # 3 pts - PARALLEL with 11.1 - Code Review APPROVED 2025-12-22, reduced motion fixes
   11-6-responsive-viewport-adaptation: done  # 3 pts - Code Review APPROVED 2025-12-22
   11-99-epic-release-deployment: done  # 2 pts - DEPLOYED 2025-12-22, PRs #119→#120→#121, v9.5.0
-  epic-11-retrospective: optional
+  epic-11-retrospective: completed  # Combined retro 2025-12-22
 
   # Epic 12: Batch Mode (~25 points, 2 weeks)
   # Multi-image capture with parallel processing and batch review
