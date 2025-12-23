@@ -35,6 +35,8 @@ import { InsightCard } from './components/insights/InsightCard';
 import { BuildingProfileCard } from './components/insights/BuildingProfileCard';
 // Story 10.7: Batch summary component
 import { BatchSummary } from './components/insights/BatchSummary';
+// Story 12.5: Batch Insight component (shown after batch save)
+import { BatchInsight, type BatchSaveResult } from './components/BatchInsight';
 // Story 11.1: Batch upload components for multi-image processing
 // Story 11.2: Quick Save Card for high-confidence scans
 import { BatchUploadPreview, BatchProcessingProgress, MAX_BATCH_IMAGES, QuickSaveCard } from './components/scan';
@@ -197,6 +199,8 @@ function App() {
     const batchProcessing = useBatchProcessing(3); // Max 3 concurrent API calls
     const [batchReviewResults, setBatchReviewResults] = useState<typeof batchProcessing.results>([]);
     const [batchEditingReceipt, setBatchEditingReceipt] = useState<{ receipt: BatchReceipt; index: number; total: number } | null>(null);
+    // Story 12.5: Batch insight state (shown after batch save)
+    const [batchSaveResult, setBatchSaveResult] = useState<BatchSaveResult | null>(null);
 
     // Settings
     const [lang, setLang] = useState<Language>('es');
@@ -924,7 +928,12 @@ function App() {
     };
 
     // Handle save all complete from batch review
-    const handleBatchSaveComplete = async (savedTransactionIds: string[]) => {
+    // Story 12.5: Show BatchInsight dialog with aggregate data
+    const handleBatchSaveComplete = async (
+        savedTransactionIds: string[],
+        savedTransactions: Transaction[],
+        failedCount: number
+    ) => {
         // Deduct credits for saved transactions
         setUserCredits(prev => ({
             remaining: prev.remaining - savedTransactionIds.length,
@@ -936,12 +945,31 @@ function App() {
         setBatchImages([]);
         batchProcessing.reset();
 
-        // Show success and return to dashboard
-        setToastMessage({
-            text: t('batchSaveSuccess').replace('{count}', String(savedTransactionIds.length)),
-            type: 'info'
+        // Calculate total amount for batch insight
+        const totalAmount = savedTransactions.reduce((sum, tx) => sum + (tx.total || 0), 0);
+
+        // Show batch insight dialog (AC #3, AC #4)
+        setBatchSaveResult({
+            transactions: savedTransactions,
+            totalAmount,
+            failedCount
         });
+
+        // Navigate to dashboard (insight dialog will overlay)
         setView('dashboard');
+    };
+
+    // Story 12.5: Handle batch insight continue (AC #8)
+    const handleBatchInsightContinue = () => {
+        setBatchSaveResult(null);
+        // Already on dashboard, just dismiss the dialog
+    };
+
+    // Story 12.5: Handle batch insight view receipts (AC #6)
+    const handleBatchInsightViewReceipts = () => {
+        setBatchSaveResult(null);
+        // Navigate to insights view (which shows today's receipts)
+        setView('insights');
     };
 
     // Handle save transaction for batch review (AC #6)
@@ -1921,6 +1949,18 @@ function App() {
                     onDecline={handleDeclineTrust}
                     theme={theme as 'light' | 'dark'}
                     t={t}
+                />
+            )}
+
+            {/* Story 12.5: Batch Save Insight Dialog (AC #3, #4, #6, #7, #8) */}
+            {batchSaveResult && (
+                <BatchInsight
+                    saveResult={batchSaveResult}
+                    theme={theme as 'light' | 'dark'}
+                    currency={currency}
+                    t={t}
+                    onContinue={handleBatchInsightContinue}
+                    onViewReceipts={handleBatchInsightViewReceipts}
                 />
             )}
         </div>

@@ -244,7 +244,7 @@ describe('useBatchReview', () => {
   });
 
   describe('saveAll', () => {
-    it('should save all valid receipts', async () => {
+    it('should save all valid receipts and return savedTransactions', async () => {
       const results = createMockResults();
       const { result } = renderHook(() => useBatchReview(results));
 
@@ -252,7 +252,8 @@ describe('useBatchReview', () => {
         .mockResolvedValueOnce('tx-id-1')
         .mockResolvedValueOnce('tx-id-2');
 
-      let saveResult: { saved: string[]; failed: string[] } | undefined;
+      // Story 12.5: Updated type to include savedTransactions
+      let saveResult: { saved: string[]; failed: string[]; savedTransactions: Transaction[] } | undefined;
 
       await act(async () => {
         saveResult = await result.current.saveAll(mockSaveTransaction);
@@ -262,9 +263,13 @@ describe('useBatchReview', () => {
       expect(mockSaveTransaction).toHaveBeenCalledTimes(2);
       expect(saveResult?.saved).toEqual(['tx-id-1', 'tx-id-2']);
       expect(saveResult?.failed).toEqual([]);
+      // Story 12.5: Should return the saved transactions
+      expect(saveResult?.savedTransactions).toHaveLength(2);
+      expect(saveResult?.savedTransactions[0].merchant).toBe('Store A');
+      expect(saveResult?.savedTransactions[1].merchant).toBe('Store B');
     });
 
-    it('should track failed saves', async () => {
+    it('should track failed saves and only include successful in savedTransactions', async () => {
       const results = createMockResults();
       const { result } = renderHook(() => useBatchReview(results));
 
@@ -272,7 +277,8 @@ describe('useBatchReview', () => {
         .mockResolvedValueOnce('tx-id-1')
         .mockRejectedValueOnce(new Error('Save failed'));
 
-      let saveResult: { saved: string[]; failed: string[] } | undefined;
+      // Story 12.5: Updated type to include savedTransactions
+      let saveResult: { saved: string[]; failed: string[]; savedTransactions: Transaction[] } | undefined;
 
       await act(async () => {
         saveResult = await result.current.saveAll(mockSaveTransaction);
@@ -280,6 +286,9 @@ describe('useBatchReview', () => {
 
       expect(saveResult?.saved).toEqual(['tx-id-1']);
       expect(saveResult?.failed).toEqual(['result-2']);
+      // Story 12.5: Only successfully saved transactions should be returned
+      expect(saveResult?.savedTransactions).toHaveLength(1);
+      expect(saveResult?.savedTransactions[0].merchant).toBe('Store A');
     });
 
     it('should update saving state and progress', async () => {
@@ -318,14 +327,15 @@ describe('useBatchReview', () => {
 
       const mockSaveTransaction = vi.fn();
 
-      let saveResult: { saved: string[]; failed: string[] } | undefined;
+      // Story 12.5: Updated type to include savedTransactions
+      let saveResult: { saved: string[]; failed: string[]; savedTransactions: Transaction[] } | undefined;
 
       await act(async () => {
         saveResult = await result.current.saveAll(mockSaveTransaction);
       });
 
       expect(mockSaveTransaction).not.toHaveBeenCalled();
-      expect(saveResult).toEqual({ saved: [], failed: [] });
+      expect(saveResult).toEqual({ saved: [], failed: [], savedTransactions: [] });
     });
   });
 

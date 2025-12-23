@@ -375,7 +375,14 @@ export const TRANSLATIONS = {
         batchDiscardConfirmTitle: "Discard this receipt?",
         batchDiscardConfirmMessage: "This receipt has high confidence and will not be saved.",
         batchDiscardConfirmYes: "Discard",
-        batchSaveSuccess: "{count} receipt(s) saved successfully"
+        batchSaveSuccess: "{count} receipt(s) saved successfully",
+        // Story 12.5: Batch Save & Insights
+        batchInsightTitle: "{count} receipts saved!",
+        batchInsightTopCategory: "Top category",
+        batchInsightTip: "Check your weekly summary to see trends.",
+        batchInsightContinue: "Continue",
+        batchInsightViewReceipts: "View saved receipts",
+        batchInsightFailed: "{count} receipt(s) failed to save"
     },
     es: {
         overview: "Resumen", welcome: "Rastreo Inteligente", totalSpent: "Total Gastado",
@@ -753,7 +760,14 @@ export const TRANSLATIONS = {
         batchDiscardConfirmTitle: "¿Descartar esta boleta?",
         batchDiscardConfirmMessage: "Esta boleta tiene alta confianza y no será guardada.",
         batchDiscardConfirmYes: "Descartar",
-        batchSaveSuccess: "{count} boleta(s) guardada(s) exitosamente"
+        batchSaveSuccess: "{count} boleta(s) guardada(s) exitosamente",
+        // Story 12.5: Batch Save & Insights
+        batchInsightTitle: "¡{count} boletas guardadas!",
+        batchInsightTopCategory: "Tu categoría top",
+        batchInsightTip: "Revisa tu resumen semanal para ver tendencias.",
+        batchInsightContinue: "Continuar",
+        batchInsightViewReceipts: "Ver boletas guardadas",
+        batchInsightFailed: "{count} boleta(s) no se pudieron guardar"
     }
 };
 

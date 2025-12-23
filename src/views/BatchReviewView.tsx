@@ -58,8 +58,10 @@ export interface BatchReviewViewProps {
   onReceiptUpdated?: (receiptId: string, transaction: Transaction) => void;
   /** Called when user cancels and returns to batch capture */
   onBack: () => void;
-  /** Called when all receipts are saved successfully */
-  onSaveComplete: (savedTransactionIds: string[]) => void;
+  /** Called when all receipts are saved successfully
+   * Story 12.5: Now includes saved transactions for batch insight display
+   */
+  onSaveComplete: (savedTransactionIds: string[], savedTransactions: Transaction[], failedCount: number) => void;
   /** Function to save a transaction to Firestore */
   saveTransaction: (transaction: Transaction) => Promise<string>;
   /** Called when user wants to retry a failed receipt */
@@ -151,10 +153,11 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
   }, []);
 
   // Handle save all
+  // Story 12.5: Pass saved transactions and failed count for batch insight
   const handleSaveAll = useCallback(async () => {
     const result = await saveAll(saveTransaction);
     if (result.saved.length > 0) {
-      onSaveComplete(result.saved);
+      onSaveComplete(result.saved, result.savedTransactions, result.failed.length);
     }
   }, [saveAll, saveTransaction, onSaveComplete]);
 
