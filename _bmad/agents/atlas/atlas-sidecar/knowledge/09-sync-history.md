@@ -16,6 +16,24 @@
 | 2025-12-18 | 07-process | retrospectives, CI/CD docs, sprint-status.yaml | Process and strategy |
 | 2025-12-18 | 08-workflow-chains | architecture docs, story files | User journeys mapped |
 | 2025-12-18 | 04-architecture | Story 10.3 code review | Added Insight Generation Flow, generator registry pattern |
+| 2025-12-19 | 04-architecture | Story 10.5 code review | Added Selection Algorithm details, ADR-017 implementation, ADR status → Active |
+| 2025-12-19 | 04-architecture | Story 10.6 implementation | Added InsightCard UI layer, async side-effect pattern in save flow |
+| 2025-12-19 | 04-architecture | Post-10.6 fix: Default time skip | Time-based insight generators skip DEFAULT_TIME ("04:04") sentinel value |
+| 2025-12-19 | 07-process | Epic 10 deployment complete | PR #102 merged - Full Insight Engine deployed to production |
+| 2025-12-20 | 07-process | v9.1.0 deployment | PR #106 - Duplicate detection fix, new duplicate_detected insight generator |
+| 2025-12-20 | 04-architecture | Story 10a.1 code review | Home Screen Consolidation - HistoryFiltersContext reuse, component sharing pattern |
+| 2025-12-20 | 07-process | Story 10a.1 deployment | PR #110 created - v9.2.0 Home Screen Consolidation |
+| 2025-12-19 | 02-features | Epic 10 completion | InsightEngine with 12 generators, ADRs 015-017, v9.3.0 deployed |
+| 2025-12-21 | 02-features | Epic 10a completion | UX Consolidation - Home+History merged, Insights tab, v9.3.0 |
+| 2025-12-21 | 04-architecture | Story 11.1 code review | Batch processing - sequential API calls, credit-after-save pattern |
+| 2025-12-21 | 04-architecture | Story 11.2 code review | QuickSaveCard - weighted confidence scoring, 85% threshold |
+| 2025-12-21 | 04-architecture | Story 11.3 code review | Animated item reveal - staggered CSS animations, useReducedMotion |
+| 2025-12-21 | 04-architecture | Story 11.4 code review | Trust Merchant System - auto-save for frequent merchants |
+| 2025-12-22 | 04-architecture | Story 11.5 code review | Scan Status Clarity - state machine hook, status components |
+| 2025-12-22 | 04-architecture | Story 11.6 code review | PWA Viewport - dynamic viewport units (dvh), safe area CSS |
+| 2025-12-22 | 02-features | Epic 11 completion | Quick Save Optimization - 7 stories, ~24 pts, v9.4.0/v9.5.0 |
+| 2025-12-22 | 08-workflow-chains | Epic 10/10a/11 workflows | Added Insight Generation, Quick Save, Trust Merchant, Insight History flows |
+| 2025-12-22 | ALL | Combined retrospective | Epics 10, 10a, 11 complete - ~72 pts in ~6 days (~12 pts/day velocity) |
 
 ## Documents Tracked
 
@@ -25,15 +43,20 @@
 | Architecture | docs/architecture/architecture.md | 2025-12-18 |
 | UX Design | docs/ux-design-specification.md | 2025-12-18 |
 | Pricing Model | docs/business/pricing-model.md | 2025-12-18 |
-| Sprint Status | docs/sprint-artifacts/sprint-status.yaml | 2025-12-18 |
+| Sprint Status | docs/sprint-artifacts/sprint-status.yaml | 2025-12-22 |
 | Epic 8 Retro | docs/sprint-artifacts/epic8/epic-8-retrospective.md | 2025-12-18 |
 | Epic 9 Retro | docs/sprint-artifacts/epic9/epic-9-retro-2025-12-16.md | 2025-12-18 |
+| Epic 10-11 Retro | docs/sprint-artifacts/epic10-11-retro-2025-12-22.md | 2025-12-22 |
+| Epic 10 Architecture | docs/sprint-artifacts/epic10/architecture-epic10-insight-engine.md | 2025-12-22 |
+| Epic 10a Tech Context | docs/sprint-artifacts/epic10a/tech-context-epic10a.md | 2025-12-22 |
+| Epic 11 Tech Context | docs/sprint-artifacts/epic11/tech-context-epic11.md | 2025-12-22 |
 
 ## Drift Detection
 
 | Document | Changed | Section Affected | Synced |
 |----------|---------|------------------|--------|
-| sprint-status.yaml | Story 10.0 in review | 02-features | ✅ |
+| sprint-status.yaml | Epics 10, 10a, 11 complete | 02-features | ✅ |
+| sprint-status.yaml | Epic 12 next development | 02-features | ✅ |
 
 ## Push Alert Triggers
 
@@ -42,8 +65,8 @@ Active monitoring for:
 - Code review findings without test coverage
 - Architecture conflicts with documented patterns
 - Strategy/process references needing alignment check
-- Bundle size approaching 1MB threshold (currently 948KB)
-- Test coverage dropping below 80% (currently 84%+)
+- Bundle size approaching 1MB threshold (currently ~948KB)
+- Test coverage dropping below 80% (currently 84%+, 2534+ tests)
 
 ## Verification Checklist
 
@@ -59,12 +82,25 @@ Critical facts verified with user confirmation on 2025-12-18:
 ## Next Sync Recommended
 
 - [x] Section 1 (Purpose) - synced 2025-12-18
-- [x] Section 2 (Features) - synced 2025-12-18
+- [x] Section 2 (Features) - synced 2025-12-22 (Epic 10/10a/11 completion)
 - [x] Section 3 (Personas) - synced 2025-12-18
-- [x] Section 4 (Architecture) - synced 2025-12-18
+- [x] Section 4 (Architecture) - synced 2025-12-22 (Epic 10/10a/11 patterns)
 - [x] Section 5 (Testing) - synced 2025-12-18
-- [x] Section 6 (Lessons) - synced 2025-12-18
+- [x] Section 6 (Lessons) - synced 2025-12-22 (12 new patterns added)
 - [x] Section 7 (Process) - synced 2025-12-18
-- [x] Section 8 (Workflow Chains) - synced 2025-12-18
+- [x] Section 8 (Workflow Chains) - synced 2025-12-22 (4 new workflow chains)
 
-**All sections synced. Next sync recommended after Epic 10 completion or major document updates.**
+**All sections synced. Next sync recommended after Epic 12 completion or major document updates.**
+
+## Epic Completion Summary (2025-12-22)
+
+| Epic | Stories | Points | Deployed | Key Features |
+|------|---------|--------|----------|--------------|
+| Epic 10 | 9 | ~35 | 2025-12-19 | InsightEngine, 12 generators, ADRs 015-017 |
+| Epic 10a | 5 | ~13 | 2025-12-21 | Home+History merged, Insights tab |
+| Epic 11 | 7 | ~24 | 2025-12-22 | QuickSaveCard, trust merchants, viewport |
+| **TOTAL** | **21** | **~72** | **~6 days** | **~12 pts/day velocity** |
+
+**Versions Deployed:** v9.3.0, v9.4.0, v9.5.0
+**Test Count:** 2534+ unit tests
+**Retrospective:** docs/sprint-artifacts/epic10-11-retro-2025-12-22.md
