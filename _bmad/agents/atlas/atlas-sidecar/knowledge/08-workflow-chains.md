@@ -116,6 +116,26 @@ Click Insight → InsightDetailModal →
 **Features Touched:** InsightsView, InsightDetailModal, InsightRecord, EditView
 **Risk Level:** LOW - Read-only browsing
 
+### 9. Batch Processing Flow (Epic 12)
+
+```
+BatchCaptureUI → Capture/Select multiple images (max 10) →
+  "Procesar lote" button →
+BatchProcessingView →
+  Process images in parallel (max 3 concurrent) →
+  Track individual statuses (pending → processing → ready/error) →
+  Error isolation (one failure doesn't block others) →
+  Cancel available (stops pending, completes in-progress) →
+  Retry available for failed images →
+  Collect all results →
+Batch Review Queue (Story 12.3)
+```
+
+**Features Touched:** BatchCaptureUI, BatchProcessingView, batchProcessingService, useBatchProcessing
+**Risk Level:** MEDIUM - Extends core scan flow with parallel capability
+**Key Constraint:** Background processing continues even if app loses focus (implicit via async/await)
+**Performance:** 5 images sequential ~25s → parallel ~10s (2 batches of 3, 2)
+
 ## Workflow Dependencies
 
 | Workflow | Depends On | Enables |
@@ -129,6 +149,7 @@ Click Insight → InsightDetailModal →
 | Quick Save | Scan Receipt, Mappings | Faster Saves |
 | Trust Merchant | Quick Save (prompt) | Future Auto-Saves |
 | Insight History | Insight Generation | Insight Browse |
+| Batch Processing | Auth, Gemini API, Credits | Batch Review Queue, Analytics |
 
 ## Critical Paths
 
@@ -143,7 +164,7 @@ Click Insight → InsightDetailModal →
 
 | Feature Changed | Affects Workflows |
 |-----------------|-------------------|
-| Gemini Prompt | Scan Receipt, Learning |
+| Gemini Prompt | Scan Receipt, Learning, Batch Processing |
 | Transaction Type | All workflows |
 | FilteringService | Analytics, History |
 | EditView | Scan Receipt, Learning, Quick Save |
@@ -153,6 +174,9 @@ Click Insight → InsightDetailModal →
 | QuickSaveCard | Quick Save, Trust Merchant |
 | merchantTrustService | Trust Merchant, Quick Save |
 | Confidence Scoring | Quick Save eligibility |
+| batchProcessingService | Batch Processing |
+| useBatchProcessing | Batch Processing |
+| creditService | Batch Processing (Story 12.4) |
 
 ## Edge Cases by Workflow
 
@@ -191,6 +215,14 @@ Click Insight → InsightDetailModal →
 - Time-based insights with DEFAULT_TIME sentinel
 - Duplicate transaction detected
 
+### Batch Processing (Epic 12)
+- All images fail processing (batch with only errors)
+- User cancels mid-batch (some complete, some pending)
+- Retry fails multiple times
+- Network disconnection during parallel processing
+- Browser throttles background tab (processing continues but slower)
+- Insufficient credits for full batch (handled by Story 12.4)
+
 ---
 
 ## Sync Notes
@@ -202,3 +234,4 @@ Click Insight → InsightDetailModal →
 - Epic 10a added Insight History flow with modal navigation
 - Epic 11 added Quick Save and Trust Merchant flows
 - Combined retrospective: docs/sprint-artifacts/epic10-11-retro-2025-12-22.md
+- Epic 12 Story 12.2 added Batch Processing Flow with parallel execution (2025-12-22)

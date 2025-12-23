@@ -85,15 +85,43 @@
 - Sequential API calls with credit-after-save pattern
 - Ready for multi-image capture UI
 
-## Future Roadmap (Epics 13-16)
+## Future Roadmap (Epics 13-18) - REVISED 2025-12-22
 
-| Epic | Name | Focus |
-|------|------|-------|
-| 12 | Batch Mode | Multi-receipt capture with parallel processing |
-| 13 | Analytics UX Redesign | Animated visualizations, sparklines, interactive charts |
-| 14 | Onboarding | <60 second time-to-value, progressive disclosure |
-| 15 | Tags & Grouping | User-defined tags for project/trip tracking |
-| 16 | Achievements | Ethical gamification, milestone celebration |
+<!-- Source: brainstorming-session-2025-12-22.md, epics.md -->
+
+**Vision:** Transform from "reactive data entry tool" to "alive financial awareness companion"
+
+| Epic | Name | Focus | Points |
+|------|------|-------|--------|
+| 12 | Batch Mode | Multi-receipt capture with parallel processing | ~25 |
+| 13 | **UX Design & Mockups** | Mockup-first workflow, voice guidelines, motion system | ~34 |
+| 14 | **Core Implementation** | Animation framework, polygon, celebrations | ~48 |
+| 15 | **Advanced Features** | Goals/GPS, learned thresholds, Sankey/Treemap | ~46 |
+| 16 | Onboarding | <60 second time-to-value, progressive disclosure | ~15 |
+| 17 | Tags & Grouping | User-defined tags for project/trip tracking | ~18 |
+| 18 | Achievements | Ethical gamification, milestone celebration | ~12 |
+
+### Key Design Innovations (Epics 13-15)
+
+| Innovation | Description | Epic |
+|------------|-------------|------|
+| **Dynamic Spending Polygon** | 3-6 sided shape based on trending categories | 14 |
+| **Expanding Lava Metaphor** | Inner polygon = spending, outer = budget | 14 |
+| **Savings GPS** | Goal tracking with ETA, alternate routes | 15 |
+| **Emotional Airlock** | Curiosity → Playfulness → Reveal for difficult insights | 15 |
+| **"Intentional or Accidental?"** | Non-judgmental spending awareness prompts | 14 |
+| **"Everything Breathes"** | Motion design system with subtle animations | 13, 14 |
+
+### Critical Use Cases (E2E Testing - Epic 13.1)
+
+| ID | Use Case | Persona | Key Flow |
+|----|----------|---------|----------|
+| UC1 | First Scan Experience | New user | Scan → Progressive reveal → Quick Save → Celebration |
+| UC2 | Weekly Health Check | María | Breathing polygon → Swipe story → "Intentional?" prompt |
+| UC3 | Goal Progress | Diego | Check GPS → "3 days closer" → Trade-off insight |
+| UC4 | Simple Summary | Rosa | Arrows ↑↓→ → "Carnes subió harto" → Confirm |
+| UC5 | Out-of-Character Alert | Tomás | Airlock → Curiosity → Reveal → Response |
+| UC6 | Batch Scan Session | Power user | Scan 5 → Batch summary → Quick Save all → Aggregate insight |
 
 ## Feature Dependencies
 
@@ -140,3 +168,9 @@ Transactions → FilteringService → AnalyticsContext → Charts/Cards
 - Test count now at 2534+ unit tests
 - Versions v9.3.0, v9.4.0, v9.5.0 deployed to production
 - Combined retrospective: docs/sprint-artifacts/epic10-11-retro-2025-12-22.md
+- **Brainstorming session 2025-12-22:** Epic 13-15 restructured (~128 points total)
+  - Epic 13: UX Design & Mockups (mockup-first workflow)
+  - Epic 14: Core Implementation (animation framework, polygon, celebrations)
+  - Epic 15: Advanced Features (goals, GPS, learned thresholds)
+  - Original Epics 14-16 renumbered to 16-18
+  - Reference: docs/analysis/brainstorming-session-2025-12-22.md

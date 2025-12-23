@@ -268,37 +268,96 @@ development_status:
   # └─────────────────────────────────────────────────────────────────┘
   #
   epic-12: contexted  # Tech context created 2025-12-22
-  12-1-batch-capture-ui: ready-for-dev  # 5 pts - PARALLEL with 12.4 - Camera + preview strip
-  12-2-parallel-processing-service: ready-for-dev  # 5 pts - Depends on 12.1 - Concurrent API calls
-  12-3-batch-review-queue: ready-for-dev  # 5 pts - Depends on 12.2 - Summary cards + edit capability
-  12-4-credit-warning-system: ready-for-dev  # 3 pts - PARALLEL with 12.1 - Pre-batch credit check
+  12-1-batch-capture-ui: done  # 5 pts - PARALLEL with 12.4 - Camera + preview strip - Code Review APPROVED 2025-12-22
+  12-2-parallel-processing-service: done  # 5 pts - Depends on 12.1 - Concurrent API calls - Code Review APPROVED 2025-12-22
+  12-3-batch-review-queue: review  # 5 pts - Depends on 12.2 - Summary cards + edit capability - IMPLEMENTED 2025-12-22
+  12-4-credit-warning-system: review  # 3 pts - PARALLEL with 12.1 - Pre-batch credit check
   12-5-batch-save-and-insights: ready-for-dev  # 3 pts - Depends on 12.3 - Save all + aggregate insight
   12-99-epic-release-deployment: ready-for-dev  # 2 pts - Production deployment
   epic-12-retrospective: optional
 
-  # Epic 13: Analytics UX Redesign (~20 points, 2 weeks)
-  # Animated visualizations, sparklines, drill-down animations
-  # Stories: Animation Library, Chart Transitions, Velocity Sparklines
+  # ============================================================================
+  # REVISED EPIC 13-15 ROADMAP (from Brainstorming Session 2025-12-22)
+  # Full Application UX Redesign: "From Reactive to Alive"
+  # Brainstorming doc: docs/analysis/brainstorming-session-2025-12-22.md
+  # Total scope: ~128 points across 3 epics
+  # ============================================================================
+
+  # Epic 13: UX Design & Mockups (~34 points)
+  # Mockup-first workflow before implementation
+  # Key deliverables: Voice guidelines, Motion system, All screen mockups
+  # Personas: María (parent), Diego (young pro), Rosa (abuelita), Tomás (drifter)
   epic-13: backlog
+  13-1-critical-use-cases-document: backlog  # 3 pts - E2E scenarios for Chrome extension testing
+  13-2-voice-tone-guidelines: backlog  # 2 pts - Non-judgmental, playful, celebratory voice
+  13-3-motion-design-system-spec: backlog  # 3 pts - "Everything Breathes" animation system
+  13-4-mockup-home-dashboard: backlog  # 3 pts - Breathing polygon, visual health
+  13-5-mockup-analytics: backlog  # 5 pts - Sankey, Treemap exploration
+  13-6-mockup-transaction-list: backlog  # 3 pts - Filters + swipe time navigation
+  13-7-mockup-scan-overlay-flow: backlog  # 3 pts - Overlay processing, progressive reveal
+  13-8-mockup-goals-savings-gps: backlog  # 3 pts - Goal tracking visualization
+  13-9-mockup-reports: backlog  # 3 pts - Story format (swipeable cards)
+  13-10-mockup-insights-redesign: backlog  # 3 pts - Carousel, Emotional Airlock
+  13-11-mockup-settings: backlog  # 2 pts - Progressive disclosure
+  13-12-design-review-approval-gate: backlog  # 1 pt - Final approval before implementation
   epic-13-retrospective: optional
 
-  # Epic 14: Onboarding & Progressive Disclosure (~15 points, 1-2 weeks)
-  # Time-to-value <60 seconds, demo walkthrough, feature unlocking
-  # Stories: Demo Mode, Feature Unlocking, Onboarding Checklist
+  # Epic 14: Core Implementation (~48 points)
+  # Implement approved mockups with animation framework
+  # Key features: Polygon, Scan flow, Reports, Celebrations
   epic-14: backlog
+  14-1-animation-framework: backlog  # 5 pts - Core animation utilities
+  14-2-screen-transition-system: backlog  # 3 pts - Staggered entry, breathing
+  14-3-scan-overlay-flow: backlog  # 5 pts - Non-blocking overlay processing
+  14-4-quick-save-path: backlog  # 3 pts - Progressive item reveal
+  14-5-dynamic-polygon-component: backlog  # 5 pts - 3-6 sided spending shape
+  14-6-polygon-dual-mode: backlog  # 3 pts - Merchant categories + item groups
+  14-7-expanding-lava-visual: backlog  # 3 pts - Inverted metaphor
+  14-8-enhanced-existing-charts: backlog  # 3 pts - Pie, Bar, Stacked improvements
+  14-9-swipe-time-navigation: backlog  # 3 pts - Left/right for week/month
+  14-10-weekly-report-story-format: backlog  # 5 pts - Instagram-style cards
+  14-11-intentional-or-accidental-pattern: backlog  # 2 pts - Non-judgmental prompts
+  14-12-celebration-system: backlog  # 3 pts - Confetti, haptics, sounds
+  14-13-personal-records-detection: backlog  # 3 pts - "Lowest restaurant week!"
+  14-14-session-completion-messaging: backlog  # 2 pts - "Great check-in today"
   epic-14-retrospective: optional
 
-  # Epic 15: Tags & Grouping (~18 points, 2 weeks)
-  # User-defined tags for trip tracking, project expenses, business categorization
-  # Stories: Tag Data Model, Tag Assignment UI, Tag-based Filtering
+  # Epic 15: Advanced Features (~46 points)
+  # Goals system, learned thresholds, out-of-character detection
+  # Key features: Savings GPS, Emotional Airlock, Advanced charts
   epic-15: backlog
+  15-1-custom-goals-crud: backlog  # 3 pts - Name, emoji, amount, currency
+  15-2-savings-gps-visualization: backlog  # 5 pts - ETA, alternate routes
+  15-3-hybrid-income-mode: backlog  # 3 pts - Smart + Precision modes
+  15-4-goal-connected-insights: backlog  # 3 pts - "Coffee = 1 day from Tokyo"
+  15-5-learned-budget-thresholds: backlog  # 3 pts - App suggests limits
+  15-6-threshold-proximity-alerts: backlog  # 2 pts - 75%, 90%, 100% warnings
+  15-7-out-of-character-detection: backlog  # 5 pts - Pattern deviation
+  15-8-emotional-airlock-flow: backlog  # 3 pts - Curiosity → Playful → Reveal
+  15-9-sankey-diagram-implementation: backlog  # 5 pts - Flow visualization
+  15-10-treemap-implementation: backlog  # 5 pts - Proportional breakdown
+  15-11-monthly-milestone-view: backlog  # 3 pts - Progress celebrations
+  15-12-shareable-spending-personality: backlog  # 3 pts - Generate image
+  15-13-themeable-skins-infrastructure: backlog  # 3 pts - Cats/dogs themes
   epic-15-retrospective: optional
 
-  # Epic 16: Achievements & Milestones (~12 points, 1 week)
-  # Ethical gamification - celebrate progress without shame mechanics
-  # Stories: Milestone System, Achievement Badges, Investment Visibility
+  # Epic 16: Onboarding & Progressive Disclosure (~15 points)
+  # Time-to-value <60 seconds, demo walkthrough, feature unlocking
+  # (Formerly Epic 14, renumbered after brainstorming expansion)
   epic-16: backlog
   epic-16-retrospective: optional
+
+  # Epic 17: Tags & Grouping (~18 points)
+  # User-defined tags for trip tracking, project expenses
+  # (Formerly Epic 15, renumbered after brainstorming expansion)
+  epic-17: backlog
+  epic-17-retrospective: optional
+
+  # Epic 18: Achievements & Milestones (~12 points)
+  # Ethical gamification - celebrate progress without shame
+  # (Formerly Epic 16, renumbered after brainstorming expansion)
+  epic-18: backlog
+  epic-18-retrospective: optional
 
   # ============================================================================
   # FUTURE BACKLOG (Post-Launch)
