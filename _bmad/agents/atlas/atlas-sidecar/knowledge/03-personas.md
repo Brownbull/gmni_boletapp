@@ -1,8 +1,8 @@
 # User Personas & Goals
 
 > Section 3 of Atlas Memory
-> Last Sync: 2025-12-18
-> Sources: ux-design-specification.md, PRD documents
+> Last Sync: 2025-12-22
+> Sources: ux-design-specification.md, PRD documents, brainstorming-session-2025-12-22.md
 
 ## Primary Persona: Chilean Family
 
@@ -39,22 +39,56 @@
 - **Goals:** Quick categorization, export capability for accountant handoff
 - **Need:** CSV export, receipt images stored
 
+## Detailed Personas (Epic 13+ Brainstorming Session)
+
+<!-- Synced from: brainstorming-session-2025-12-22.md Phase 1 -->
+
+### María - The Overwhelmed Parent (38, Santiago)
+- **Profile:** Part-time worker, manages household budget
+- **Question:** "¿Dónde se fue la plata?"
+- **Key Discovery:** "Intentional or Accidental?" framework
+- **Design Need:** Non-judgmental awareness - app observes without judging
+- **Quote:** "Restaurants up 23% - birthday dinner?"
+
+### Diego - The Young Professional (26, Santiago)
+- **Profile:** Software developer, earns well but doesn't save
+- **Goal:** Save for Japan trip
+- **Key Discovery:** Savings GPS concept - "Arriving at your goal by [date]"
+- **Design Need:** Trade-off visibility - "This week's coffee: $13,500 = 1 day further from Tokyo"
+
+### Rosa - Abuelita (62, Valparaíso)
+- **Profile:** Household guardian, 40 years of paper records
+- **Context:** Grandson taught her the app
+- **Key Discovery:** Simple visual language - arrows ↑↓→, "Subió harto" not "Incrementó 27%"
+- **Design Need:** Validate her wisdom - "Tu instinto tiene razón - todo está más caro"
+
+### Tomás - The "Out of Character" Spender (34, Concepción)
+- **Profile:** Disciplined accountant, 8 months of history, drifting without realizing
+- **Key Discovery:** Emotional Airlock pattern for uncomfortable insights
+- **Design Need:** Curiosity → Playfulness → Reveal sequence to prepare emotionally
+
 ## Persona-Feature Mapping
 
 | Persona | Primary Features | Secondary Features |
 |---------|-----------------|-------------------|
 | Chilean Family | Receipt Scanning, Analytics, Learning | History Filters, Export |
 | Small Business | Receipt Scanning, Export, Categories | Analytics |
+| María | Dynamic Polygon, Budget Alerts | Category Trends |
+| Diego | Savings GPS, Goal Tracking | Trade-off Insights |
+| Rosa | Simple Arrows, Weekly Summary | Plain Language |
+| Tomás | Out-of-Character Detection | Emotional Airlock |
 
 ## User Goals Matrix
 
 | User Goal | Supporting Features |
 |-----------|---------------------|
-| "I want to capture receipts quickly" | Scan flow, batch mode (future) |
+| "I want to capture receipts quickly" | Scan flow, batch mode, quick save |
 | "I want to understand my spending" | Analytics, category drill-down, insights |
 | "I want to find past transactions" | History filters (time, category, location) |
 | "I want my data to be portable" | CSV export (Premium) |
 | "I want the app to learn my habits" | Merchant/category/subcategory learning |
+| "I want to save toward a goal" | Savings GPS, goal-connected insights (Epic 15) |
+| "I want to know if I'm drifting" | Out-of-character detection (Epic 15) |
 
 ## Behavioral Patterns
 
@@ -67,6 +101,19 @@ Source: ux-design-specification.md:126
 - **Proactive scanning** - Users scan receipts right after purchase
 - **End-of-month review** - Analytics exploration to understand spending
 - **Search for specific transaction** - History filters to find past purchases
+- **Weekly batch scanning** - ~50% of users save receipts and scan later (Epic 12)
+
+## The Boletapp Voice Principles
+
+<!-- Synced from: brainstorming-session-2025-12-22.md -->
+
+| Principle | Description | Example |
+|-----------|-------------|---------|
+| **Observes without judging** | State facts, not judgments | "Restaurants up 23%" not "You overspent" |
+| **Reveals opportunity** | Show trade-offs | "This affects your Japan trip" |
+| **Invites experimentation** | Suggest, don't command | "What if you tried...?" |
+| **Celebrates progress** | Personal records, milestones | "Your lowest restaurant week!" |
+| **Normalizes setbacks** | Playful, not punitive | "La vida es rara. Los datos también." |
 
 ---
 
@@ -75,3 +122,5 @@ Source: ux-design-specification.md:126
 - Primary persona well-documented in UX docs
 - "Abuelita Test" is key UX principle for ethical design
 - Secondary persona less detailed - primarily driven by export need
+- 4 detailed personas added from brainstorming session (2025-12-22)
+- Voice Principles guide all user-facing messaging (Epics 13-15)

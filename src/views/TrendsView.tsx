@@ -407,7 +407,14 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
         <div className="space-y-1">
             {/* Fixed Header: Back button + Logo + Breadcrumbs - stays visible when scrolling (Story 7.14) */}
             {/* Uses var(--bg) CSS variable for seamless theme integration (Story 7.15) */}
-            <div className="fixed top-0 left-0 right-0 z-20 px-3 pt-3 pb-1" style={{ backgroundColor: 'var(--bg)' }}>
+            {/* Story 11.6: Safe area top padding for PWA (AC #3) */}
+            <div
+                className="fixed top-0 left-0 right-0 z-20 px-3 pb-1"
+                style={{
+                    backgroundColor: 'var(--bg)',
+                    paddingTop: 'calc(0.75rem + var(--safe-top, 0px))',
+                }}
+            >
                 <div className="flex items-center justify-between">
                     {/* Left: Back button - fixed width to balance with right icons */}
                     <div className="w-20 flex justify-start">
