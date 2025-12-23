@@ -312,7 +312,16 @@ describe('BatchReviewView', () => {
 
   describe('save all (AC #6)', () => {
     it('should call saveAll and onSaveComplete on success', async () => {
-      const mockSaveAll = vi.fn().mockResolvedValue({ saved: ['tx-1', 'tx-2'], failed: [] });
+      // Story 12.5: Updated to include savedTransactions in return value
+      const mockTransactions = [
+        { merchant: 'Store 1', total: 100, date: '2024-01-01', category: 'Supermarket' as const, items: [] },
+        { merchant: 'Store 2', total: 200, date: '2024-01-01', category: 'Restaurant' as const, items: [] },
+      ];
+      const mockSaveAll = vi.fn().mockResolvedValue({
+        saved: ['tx-1', 'tx-2'],
+        failed: [],
+        savedTransactions: mockTransactions
+      });
       const onSaveComplete = vi.fn();
 
       vi.mocked(useBatchReview).mockReturnValue(
@@ -325,7 +334,8 @@ describe('BatchReviewView', () => {
 
       await waitFor(() => {
         expect(mockSaveAll).toHaveBeenCalledWith(defaultProps.saveTransaction);
-        expect(onSaveComplete).toHaveBeenCalledWith(['tx-1', 'tx-2']);
+        // Story 12.5: onSaveComplete now receives (savedIds, savedTransactions, failedCount)
+        expect(onSaveComplete).toHaveBeenCalledWith(['tx-1', 'tx-2'], mockTransactions, 0);
       });
     });
 
@@ -366,7 +376,12 @@ describe('BatchReviewView', () => {
     });
 
     it('should not call onSaveComplete if no receipts saved', async () => {
-      const mockSaveAll = vi.fn().mockResolvedValue({ saved: [], failed: ['result-1'] });
+      // Story 12.5: Updated to include savedTransactions in return value
+      const mockSaveAll = vi.fn().mockResolvedValue({
+        saved: [],
+        failed: ['result-1'],
+        savedTransactions: []
+      });
       const onSaveComplete = vi.fn();
 
       vi.mocked(useBatchReview).mockReturnValue(

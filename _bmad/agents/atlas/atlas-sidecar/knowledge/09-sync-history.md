@@ -34,6 +34,14 @@
 | 2025-12-22 | 02-features | Epic 11 completion | Quick Save Optimization - 7 stories, ~24 pts, v9.4.0/v9.5.0 |
 | 2025-12-22 | 08-workflow-chains | Epic 10/10a/11 workflows | Added Insight Generation, Quick Save, Trust Merchant, Insight History flows |
 | 2025-12-22 | ALL | Combined retrospective | Epics 10, 10a, 11 complete - ~72 pts in ~6 days (~12 pts/day velocity) |
+| 2025-12-22 | 04-architecture | Story 12.1 code review | BatchCaptureUI - long-press selection, thumbnail strip |
+| 2025-12-22 | 04-architecture | Story 12.2 code review | Parallel Processing - worker pattern, AbortController |
+| 2025-12-22 | 04-architecture | Story 12.3 code review | Batch Review Queue - summary cards, confidence status |
+| 2025-12-22 | 04-architecture | Story 12.4 code review | Credit Warning - styled dialog, pre-batch validation |
+| 2025-12-22 | 07-process | Epic 12 Stories 12.1-12.4 | PR #127 - Batch Mode v9.6.0 deployed |
+| 2025-12-22 | 02-features | Epic 12 partial | 4 stories (18 pts) deployed, 12.5 + 12.99 remaining |
+| 2025-12-23 | 04-architecture | Story 12.5 code review | BatchInsight - local aggregation pattern, celebrateBig confetti, reduced motion support |
+| 2025-12-23 | 07-process | Epic 12 deployment | Story 12.99 - Production deployment complete, 2799 tests, v9.7.0 |
 
 ## Documents Tracked
 
@@ -99,8 +107,9 @@ Critical facts verified with user confirmation on 2025-12-18:
 | Epic 10 | 9 | ~35 | 2025-12-19 | InsightEngine, 12 generators, ADRs 015-017 |
 | Epic 10a | 5 | ~13 | 2025-12-21 | Home+History merged, Insights tab |
 | Epic 11 | 7 | ~24 | 2025-12-22 | QuickSaveCard, trust merchants, viewport |
-| **TOTAL** | **21** | **~72** | **~6 days** | **~12 pts/day velocity** |
+| Epic 12 | 6 | ~25 | 2025-12-23 | Batch capture, parallel processing, review queue, credit warning, batch insights |
+| **TOTAL** | **27** | **~97** | **~7 days** | **~14 pts/day velocity** |
 
-**Versions Deployed:** v9.3.0, v9.4.0, v9.5.0
-**Test Count:** 2534+ unit tests
+**Versions Deployed:** v9.3.0, v9.4.0, v9.5.0, v9.6.0, v9.7.0
+**Test Count:** 2799 unit tests
 **Retrospective:** docs/sprint-artifacts/epic10-11-retro-2025-12-22.md

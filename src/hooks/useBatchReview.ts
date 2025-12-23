@@ -67,7 +67,7 @@ export interface UseBatchReviewReturn {
   /** Save all valid receipts to Firestore */
   saveAll: (
     saveTransaction: (transaction: Transaction) => Promise<string>
-  ) => Promise<{ saved: string[]; failed: string[] }>;
+  ) => Promise<{ saved: string[]; failed: string[]; savedTransactions: Transaction[] }>;
   /** Get a receipt by ID for editing */
   getReceipt: (id: string) => BatchReceipt | undefined;
   /** Check if batch is empty (all discarded) */
@@ -193,16 +193,17 @@ export function useBatchReview(
 
   /**
    * Save all valid receipts to Firestore.
+   * Story 12.5: Returns savedTransactions for batch insight display.
    */
   const saveAll = useCallback(
     async (
       saveTransaction: (transaction: Transaction) => Promise<string>
-    ): Promise<{ saved: string[]; failed: string[] }> => {
+    ): Promise<{ saved: string[]; failed: string[]; savedTransactions: Transaction[] }> => {
       // Get valid receipts (non-error)
       const validReceipts = receipts.filter((r) => r.status !== 'error');
 
       if (validReceipts.length === 0) {
-        return { saved: [], failed: [] };
+        return { saved: [], failed: [], savedTransactions: [] };
       }
 
       setIsSaving(true);
@@ -210,6 +211,7 @@ export function useBatchReview(
 
       const saved: string[] = [];
       const failed: string[] = [];
+      const savedTransactions: Transaction[] = [];
 
       // Save each receipt sequentially
       for (let i = 0; i < validReceipts.length; i++) {
@@ -218,6 +220,7 @@ export function useBatchReview(
         try {
           const transactionId = await saveTransaction(receipt.transaction);
           saved.push(transactionId);
+          savedTransactions.push(receipt.transaction);
         } catch (error) {
           console.error(`Failed to save receipt ${receipt.id}:`, error);
           failed.push(receipt.id);
@@ -227,7 +230,7 @@ export function useBatchReview(
       }
 
       setIsSaving(false);
-      return { saved, failed };
+      return { saved, failed, savedTransactions };
     },
     [receipts]
   );
