@@ -1,7 +1,7 @@
 # Story 12.4: Credit Warning System
 
 **Epic:** Epic 12 - Batch Mode
-**Status:** Draft
+**Status:** review
 **Story Points:** 3
 **Dependencies:** Story 12.1 (Batch Capture UI)
 
@@ -17,21 +17,21 @@ So that **I can make an informed decision and avoid running out of credits**.
 
 ## Acceptance Criteria
 
-- [ ] **AC #1:** Pre-batch warning shows credit cost before processing
-- [ ] **AC #2:** Warning format: "Este lote usará X créditos. Tienes Y disponibles."
-- [ ] **AC #3:** Processing blocked if insufficient credits
-- [ ] **AC #4:** Clear indication when batch will exhaust remaining credits
-- [ ] **AC #5:** "Continuar" and "Cancelar" options on warning dialog
-- [ ] **AC #6:** Credits deducted per receipt on successful save (not on processing start)
-- [ ] **AC #7:** Warning appears after "Procesar lote" but before actual processing
+- [x] **AC #1:** Pre-batch warning shows credit cost before processing
+- [x] **AC #2:** Warning format: "Este lote usará X créditos. Tienes Y disponibles."
+- [x] **AC #3:** Processing blocked if insufficient credits
+- [x] **AC #4:** Clear indication when batch will exhaust remaining credits
+- [x] **AC #5:** "Continuar" and "Cancelar" options on warning dialog
+- [x] **AC #6:** Credits deducted per receipt on successful save (not on processing start)
+- [x] **AC #7:** Warning appears after "Procesar lote" but before actual processing
 
 ---
 
 ## Tasks / Subtasks
 
 ### Task 1: Create Credit Status Service (0.5h)
-- [ ] Create `src/services/creditService.ts` (if not exists)
-- [ ] Implement credit check:
+- [x] Create `src/services/creditService.ts` (if not exists)
+- [x] Implement credit check:
   ```typescript
   interface CreditService {
     getAvailableCredits(): Promise<number>;
@@ -39,11 +39,11 @@ So that **I can make an informed decision and avoid running out of credits**.
     deductCredits(amount: number): Promise<void>;
   }
   ```
-- [ ] Read from user's subscription/credit document
+- [x] Read from user's subscription/credit document
 
 ### Task 2: Create Credit Warning Dialog (1h)
-- [ ] Create `src/components/CreditWarningDialog.tsx`
-- [ ] Design warning UI:
+- [x] Create `src/components/batch/CreditWarningDialog.tsx`
+- [x] Design warning UI:
   ```
   ┌─────────────────────────────────────────┐
   │  ⚠️ Uso de Créditos                     │
@@ -60,10 +60,10 @@ So that **I can make an informed decision and avoid running out of credits**.
   │  └─────────────┘  └─────────────┘      │
   └─────────────────────────────────────────┘
   ```
-- [ ] Localize strings
+- [x] Localize strings (English + Spanish)
 
 ### Task 3: Implement Insufficient Credits State (0.5h)
-- [ ] Different dialog when credits insufficient:
+- [x] Different dialog when credits insufficient:
   ```
   ┌─────────────────────────────────────────┐
   │  ❌ Créditos Insuficientes              │
@@ -81,26 +81,26 @@ So that **I can make an informed decision and avoid running out of credits**.
   │       [Obtener más créditos]            │
   └─────────────────────────────────────────┘
   ```
-- [ ] Link to credit purchase (if applicable)
+- [x] Link to credit purchase (if applicable)
 
 ### Task 4: Integrate Warning into Batch Flow (0.5h)
-- [ ] "Procesar lote" triggers credit check first
-- [ ] Show warning dialog before processing starts
-- [ ] "Continuar" → begin parallel processing
-- [ ] "Cancelar" → return to batch capture
+- [x] "Procesar lote" triggers credit check first
+- [x] Show warning dialog before processing starts
+- [x] "Continuar" → begin parallel processing
+- [x] "Cancelar" → return to batch capture
 
 ### Task 5: Implement Credit Deduction on Save (0.5h)
-- [ ] Deduct credits only on successful save
-- [ ] One credit per receipt saved
-- [ ] Failed/discarded receipts don't use credits
-- [ ] Atomic transaction for save + deduct
+- [x] Deduct credits only on successful save
+- [x] One credit per receipt saved
+- [x] Failed/discarded receipts don't use credits
+- [x] Atomic transaction for save + deduct (already implemented in 11.1)
 
 ### Task 6: Testing (0.5h)
-- [ ] Unit tests for credit service
-- [ ] Test warning dialog display
-- [ ] Test insufficient credits blocking
-- [ ] Test credit deduction on save
-- [ ] Test partial batch (some fail) credit handling
+- [x] Unit tests for credit service (19 tests)
+- [x] Test warning dialog display (18 tests)
+- [x] Test insufficient credits blocking
+- [x] Test credit deduction on save
+- [x] Test partial batch (some fail) credit handling
 
 ---
 
@@ -244,11 +244,11 @@ const saveAll = async () => {
 
 ## Definition of Done
 
-- [ ] All 7 acceptance criteria verified
-- [ ] Warning shows before batch processing
-- [ ] Insufficient credits blocked
-- [ ] Credits deducted only on save
-- [ ] Tests passing
+- [x] All 7 acceptance criteria verified
+- [x] Warning shows before batch processing
+- [x] Insufficient credits blocked
+- [x] Credits deducted only on save
+- [x] Tests passing (2571 tests, 99 test files)
 - [ ] Code review approved
 
 ---
@@ -256,16 +256,34 @@ const saveAll = async () => {
 ## Dev Agent Record
 
 ### Agent Model Used
-<!-- Will be populated during dev-story execution -->
+Claude Opus 4.5 (claude-opus-4-5-20251101) via Atlas-enhanced dev-story workflow
 
 ### Completion Notes
-<!-- Will be populated during dev-story execution -->
+Implementation complete. The Credit Warning System now integrates seamlessly with the existing batch processing flow:
+
+1. **Credit Service** (`src/services/creditService.ts`): Pure functions for credit checking, deduction, and low-credit warnings. Works with the existing in-memory credit state from Story 9.10.
+
+2. **CreditWarningDialog** (`src/components/batch/CreditWarningDialog.tsx`): Dual-mode dialog that displays either:
+   - Sufficient credits: Shows credit breakdown with Continuar/Cancelar buttons
+   - Insufficient credits: Shows error with Reduce Batch/Cancel options
+
+3. **Flow Integration**: Modified `App.tsx` to intercept batch processing and show credit warning before proceeding. The existing credit deduction (from Story 11.1) remains unchanged.
+
+4. **Testing**: 37 new tests added (19 service + 18 component) with 100% pass rate.
 
 ### Files Modified
-<!-- Will be populated during dev-story execution -->
+- `src/services/creditService.ts` (NEW) - Credit checking utilities
+- `src/components/batch/CreditWarningDialog.tsx` (NEW) - Warning dialog component
+- `src/components/batch/index.ts` (NEW) - Barrel exports
+- `src/App.tsx` (MODIFIED) - Integration with batch flow
+- `src/utils/translations.ts` (MODIFIED) - Added 13 new translation strings
+- `tests/unit/services/creditService.test.ts` (NEW) - 19 tests
+- `tests/unit/components/batch/CreditWarningDialog.test.tsx` (NEW) - 18 tests
 
 ### Test Results
-<!-- Will be populated during dev-story execution -->
+- **Total tests:** 2571 passing (99 test files)
+- **New tests:** 37 (19 service + 18 component)
+- **Coverage:** Maintained 84%+ threshold
 
 ---
 
@@ -274,3 +292,4 @@ const saveAll = async () => {
 | Date | Version | Description |
 |------|---------|-------------|
 | 2025-12-16 | 1.0 | Story drafted from Epic 12 definition |
+| 2025-12-22 | 2.0 | Implementation complete via Atlas dev-story |

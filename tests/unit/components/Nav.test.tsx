@@ -8,16 +8,20 @@
  *   - AC#1: Lightbulb icon displayed for Insights tab
  *   - AC#2: Correct label in EN ('Insights') and ES ('Ideas')
  *   - AC#3: Tab navigates to 'insights' view
+ * - Story 12.1: Long-press detection for batch mode
+ *   - AC#1: Long press (500ms) triggers batch mode
+ *   - Short press triggers regular scan
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '../../setup/test-utils'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, act } from '../../setup/test-utils'
 import { Nav } from '../../../src/components/Nav'
 
 describe('Nav Component', () => {
   const mockSetView = vi.fn()
   const mockOnScanClick = vi.fn()
   const mockOnTrendsClick = vi.fn()
+  const mockOnBatchClick = vi.fn()
 
   const defaultProps = {
     view: 'dashboard',
@@ -39,6 +43,11 @@ describe('Nav Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   describe('Basic Rendering', () => {
@@ -146,7 +155,9 @@ describe('Nav Component', () => {
       render(<Nav {...defaultProps} />)
 
       const scanButton = screen.getByRole('button', { name: 'Scan' })
-      fireEvent.click(scanButton)
+      // Story 12.1: Scan button uses pointer events for long-press detection
+      fireEvent.pointerDown(scanButton)
+      fireEvent.pointerUp(scanButton)
 
       expect(mockOnScanClick).toHaveBeenCalled()
     })
@@ -173,6 +184,136 @@ describe('Nav Component', () => {
       const activeButton = screen.getByText(label).closest('button')
       // Active buttons have --accent color in their inline style
       expect(activeButton).toHaveAttribute('style', expect.stringContaining('--accent'))
+    })
+  })
+
+  describe('Story 12.1: Long-Press Detection for Batch Mode', () => {
+    const LONG_PRESS_DURATION = 500 // matches Nav component constant
+
+    it('AC#1: should trigger batch mode on long press (500ms)', () => {
+      render(<Nav {...defaultProps} onBatchClick={mockOnBatchClick} />)
+
+      const scanButton = screen.getByRole('button', { name: 'Scan' })
+
+      // Start long press
+      fireEvent.pointerDown(scanButton)
+
+      // Advance past long press threshold
+      act(() => {
+        vi.advanceTimersByTime(LONG_PRESS_DURATION)
+      })
+
+      // onBatchClick should be called
+      expect(mockOnBatchClick).toHaveBeenCalledTimes(1)
+      // onScanClick should NOT be called yet (pointer still down)
+      expect(mockOnScanClick).not.toHaveBeenCalled()
+    })
+
+    it('should call onScanClick on short press (under 500ms)', () => {
+      render(<Nav {...defaultProps} onBatchClick={mockOnBatchClick} />)
+
+      const scanButton = screen.getByRole('button', { name: 'Scan' })
+
+      // Short press - pointer down then immediately up
+      fireEvent.pointerDown(scanButton)
+
+      // Release before threshold
+      act(() => {
+        vi.advanceTimersByTime(200) // 200ms < 500ms threshold
+      })
+
+      fireEvent.pointerUp(scanButton)
+
+      // onScanClick should be called for short tap
+      expect(mockOnScanClick).toHaveBeenCalledTimes(1)
+      // onBatchClick should NOT be called
+      expect(mockOnBatchClick).not.toHaveBeenCalled()
+    })
+
+    it('should NOT call onScanClick after long press completes', () => {
+      render(<Nav {...defaultProps} onBatchClick={mockOnBatchClick} />)
+
+      const scanButton = screen.getByRole('button', { name: 'Scan' })
+
+      // Long press sequence
+      fireEvent.pointerDown(scanButton)
+
+      act(() => {
+        vi.advanceTimersByTime(LONG_PRESS_DURATION)
+      })
+
+      // Release after long press triggered
+      fireEvent.pointerUp(scanButton)
+
+      // Only batch click should have been called
+      expect(mockOnBatchClick).toHaveBeenCalledTimes(1)
+      expect(mockOnScanClick).not.toHaveBeenCalled()
+    })
+
+    it('should cancel long press timer on pointer leave', () => {
+      render(<Nav {...defaultProps} onBatchClick={mockOnBatchClick} />)
+
+      const scanButton = screen.getByRole('button', { name: 'Scan' })
+
+      // Start press
+      fireEvent.pointerDown(scanButton)
+
+      // Move away before threshold
+      act(() => {
+        vi.advanceTimersByTime(200)
+      })
+
+      fireEvent.pointerLeave(scanButton)
+
+      // Advance past where timer would have fired
+      act(() => {
+        vi.advanceTimersByTime(400)
+      })
+
+      // Neither callback should be called
+      expect(mockOnBatchClick).not.toHaveBeenCalled()
+      expect(mockOnScanClick).not.toHaveBeenCalled()
+    })
+
+    it('should cancel long press timer on pointer cancel', () => {
+      render(<Nav {...defaultProps} onBatchClick={mockOnBatchClick} />)
+
+      const scanButton = screen.getByRole('button', { name: 'Scan' })
+
+      // Start press
+      fireEvent.pointerDown(scanButton)
+
+      // Cancel (e.g., system interrupt)
+      fireEvent.pointerCancel(scanButton)
+
+      // Advance past threshold
+      act(() => {
+        vi.advanceTimersByTime(600)
+      })
+
+      // Neither callback should be called
+      expect(mockOnBatchClick).not.toHaveBeenCalled()
+      expect(mockOnScanClick).not.toHaveBeenCalled()
+    })
+
+    it('should work without onBatchClick callback (graceful degradation)', () => {
+      // Render without onBatchClick
+      render(<Nav {...defaultProps} />)
+
+      const scanButton = screen.getByRole('button', { name: 'Scan' })
+
+      // Long press
+      fireEvent.pointerDown(scanButton)
+
+      act(() => {
+        vi.advanceTimersByTime(LONG_PRESS_DURATION)
+      })
+
+      // Should not throw, just no batch mode triggered
+      fireEvent.pointerUp(scanButton)
+
+      // onScanClick should NOT be called (it was a long press)
+      expect(mockOnScanClick).not.toHaveBeenCalled()
     })
   })
 })

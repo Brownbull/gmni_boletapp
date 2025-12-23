@@ -11,6 +11,10 @@ import { useUserPreferences } from './hooks/useUserPreferences';
 import { useInsightProfile } from './hooks/useInsightProfile';
 // Story 10.7: Batch session tracking for multi-receipt scanning
 import { useBatchSession } from './hooks/useBatchSession';
+// Story 12.2: Parallel batch processing hook
+import { useBatchProcessing } from './hooks/useBatchProcessing';
+// Story 12.3: Batch review type for edit flow
+import type { BatchReceipt } from './hooks/useBatchReview';
 import { LoginScreen } from './views/LoginScreen';
 import { DashboardView } from './views/DashboardView';
 // Story 9.9: ScanView is deprecated - scan functionality is now in EditView
@@ -19,8 +23,12 @@ import { EditView } from './views/EditView';
 import { TrendsView } from './views/TrendsView';
 // Story 10a.4: Insights History View (replaces HistoryView in insights tab)
 import { InsightsView } from './views/InsightsView';
+// Story 12.1: Batch Capture UI - dedicated view for batch mode scanning
+import { BatchCaptureView } from './views/BatchCaptureView';
+// Story 12.3: Batch Review Queue - review processed receipts before saving
+import { BatchReviewView } from './views/BatchReviewView';
 import { SettingsView } from './views/SettingsView';
-import { Nav } from './components/Nav';
+import { Nav, ScanStatus } from './components/Nav';
 import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
 // Story 10.6: Insight card components
 import { InsightCard } from './components/insights/InsightCard';
@@ -35,6 +43,9 @@ import type { BatchItemResult } from './components/scan';
 import { shouldShowQuickSave, calculateConfidence } from './utils/confidenceCheck';
 // Story 11.4: Trust Merchant Prompt component
 import { TrustMerchantPrompt } from './components/TrustMerchantPrompt';
+// Story 12.4: Credit Warning System
+import { CreditWarningDialog } from './components/batch';
+import { checkCreditSufficiency, type CreditCheckResult } from './services/creditService';
 import type { TrustPromptEligibility } from './types/trust';
 import { AnalyticsProvider } from './contexts/AnalyticsContext';
 // Story 10a.2: Import for building analytics initial state
@@ -79,7 +90,9 @@ import { incrementMerchantMappingUsage } from './services/merchantMappingService
 import { getCitiesForCountry } from './data/locations';
 
 // Story 10a.3: Changed 'list' to 'insights' (InsightsView will be added in 10a.4)
-type View = 'dashboard' | 'scan' | 'edit' | 'trends' | 'insights' | 'settings';
+// Story 12.1: Added 'batch-capture' view for batch mode scanning
+// Story 12.3: Added 'batch-review' view for reviewing processed receipts before saving
+type View = 'dashboard' | 'scan' | 'edit' | 'trends' | 'insights' | 'settings' | 'batch-capture' | 'batch-review';
 
 function App() {
     const { user, services, initError, signIn, signInWithTestCredentials, signOut } = useAuth();
@@ -175,6 +188,15 @@ function App() {
     // Story 11.4: Trust Merchant Prompt state (AC #2, #3, #4)
     const [showTrustPrompt, setShowTrustPrompt] = useState(false);
     const [trustPromptData, setTrustPromptData] = useState<TrustPromptEligibility | null>(null);
+    // Story 12.4: Credit Warning Dialog state (AC #1, #5, #7)
+    const [showCreditWarning, setShowCreditWarning] = useState(false);
+    const [creditCheckResult, setCreditCheckResult] = useState<CreditCheckResult | null>(null);
+    // Story 12.1: Batch Capture Mode state (AC #1)
+    const [isBatchCaptureMode, setIsBatchCaptureMode] = useState(false);
+    // Story 12.2 & 12.3: Batch processing and review state
+    const batchProcessing = useBatchProcessing(3); // Max 3 concurrent API calls
+    const [batchReviewResults, setBatchReviewResults] = useState<typeof batchProcessing.results>([]);
+    const [batchEditingReceipt, setBatchEditingReceipt] = useState<{ receipt: BatchReceipt; index: number; total: number } | null>(null);
 
     // Settings
     const [lang, setLang] = useState<Language>('es');
@@ -277,6 +299,12 @@ function App() {
     // Both "+" button and camera button now go to EditView
     // Camera button also auto-opens the file picker
     const handleNewTransaction = (autoOpenFilePicker: boolean) => {
+        // Story 12.3: If batch review is active, show that instead of new transaction
+        if (batchReviewResults.length > 0) {
+            setView('batch-review');
+            return;
+        }
+
         // Story 9.10 AC#2: Check for existing pending scan
         if (pendingScan) {
             // Restore pending scan state
@@ -608,8 +636,11 @@ function App() {
     };
 
     // Story 11.1: Batch image processing (AC #3, #4, #5, #6)
-    // Process each image separately and create individual transactions
-    const processBatchImages = async () => {
+    // Story 12.2/12.3: DEPRECATED - replaced by useBatchProcessing hook + BatchReviewView
+    // Kept for reference during transition; will be removed in future cleanup
+    // @ts-expect-error - Deprecated function kept for reference
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _processBatchImages_DEPRECATED = async () => {
         if (!services || !user) return;
         if (userCredits.remaining < batchImages.length) {
             setToastMessage({ text: t('noCreditsMessage'), type: 'info' });
@@ -820,6 +851,133 @@ function App() {
     // Story 11.1: Dismiss cancel confirmation (continue processing)
     const handleBatchCancelDismiss = () => {
         setShowBatchCancelConfirm(false);
+    };
+
+    // Story 12.4: Credit Warning System handlers (AC #1, #5, #7)
+    // Called when user clicks "Procesar todas" in BatchUploadPreview
+    const handleBatchConfirmWithCreditCheck = () => {
+        // AC #1: Pre-batch warning shows credit cost before processing
+        const result = checkCreditSufficiency(userCredits, batchImages.length);
+        setCreditCheckResult(result);
+        setShowCreditWarning(true);
+    };
+
+    // Called when user confirms credit warning dialog
+    // Story 12.2 & 12.3: Now uses parallel processing and navigates to batch review
+    const handleCreditWarningConfirm = async () => {
+        // AC #5: "Continuar" → begin processing
+        setShowCreditWarning(false);
+        setCreditCheckResult(null);
+        setShowBatchPreview(false);
+
+        // Story 12.3: Navigate to batch-review IMMEDIATELY to show processing progress
+        // Users can navigate away and return to see progress
+        setView('batch-review');
+
+        // Story 12.2: Use parallel processing instead of sequential
+        const results = await batchProcessing.startProcessing(
+            batchImages,
+            scanCurrency,
+            scanStoreType !== 'auto' ? scanStoreType : undefined
+        );
+
+        // Story 12.3: Store results for review after processing completes
+        setBatchReviewResults(results);
+    };
+
+    // Called when user cancels credit warning dialog
+    const handleCreditWarningCancel = () => {
+        // AC #5: "Cancelar" → return to batch capture
+        setShowCreditWarning(false);
+        setCreditCheckResult(null);
+    };
+
+    // Called when user wants to reduce batch to available credits
+    const handleReduceBatch = () => {
+        if (!creditCheckResult) return;
+        // Reduce batch to maxProcessable images
+        const maxProcessable = creditCheckResult.maxProcessable;
+        setBatchImages(prev => prev.slice(0, maxProcessable));
+        setShowCreditWarning(false);
+        // Re-check credits with reduced batch
+        const newResult = checkCreditSufficiency(userCredits, maxProcessable);
+        setCreditCheckResult(newResult);
+        setShowCreditWarning(true);
+    };
+
+    // Story 12.3: Batch Review handlers (AC #4, #6, #7)
+    // Handle edit receipt from batch review
+    const handleBatchEditReceipt = (receipt: BatchReceipt, batchIndex: number, batchTotal: number) => {
+        setBatchEditingReceipt({ receipt, index: batchIndex, total: batchTotal });
+        // Set up edit view with the receipt's transaction
+        setCurrentTransaction(receipt.transaction);
+        setScanImages(receipt.imageUrl ? [receipt.imageUrl] : []);
+        setView('edit');
+    };
+
+    // Handle back from batch review (return to dashboard, discard batch)
+    const handleBatchReviewBack = () => {
+        setBatchReviewResults([]);
+        setBatchImages([]);
+        batchProcessing.reset();
+        setView('dashboard');
+    };
+
+    // Handle save all complete from batch review
+    const handleBatchSaveComplete = async (savedTransactionIds: string[]) => {
+        // Deduct credits for saved transactions
+        setUserCredits(prev => ({
+            remaining: prev.remaining - savedTransactionIds.length,
+            used: prev.used + savedTransactionIds.length
+        }));
+
+        // Clear batch state
+        setBatchReviewResults([]);
+        setBatchImages([]);
+        batchProcessing.reset();
+
+        // Show success and return to dashboard
+        setToastMessage({
+            text: t('batchSaveSuccess').replace('{count}', String(savedTransactionIds.length)),
+            type: 'info'
+        });
+        setView('dashboard');
+    };
+
+    // Handle save transaction for batch review (AC #6)
+    const handleBatchSaveTransaction = async (transaction: Transaction): Promise<string> => {
+        if (!services || !user) throw new Error('Not authenticated');
+        const { db, appId } = services;
+
+        // Apply category mappings
+        const { transaction: categorizedTx, appliedMappingIds } = applyCategoryMappings(transaction, mappings);
+
+        // Increment mapping usage (fire-and-forget)
+        if (appliedMappingIds.length > 0) {
+            appliedMappingIds.forEach(mappingId => {
+                incrementMappingUsage(db, user.uid, appId, mappingId)
+                    .catch(err => console.error('Failed to increment mapping usage:', err));
+            });
+        }
+
+        // Apply merchant mappings
+        let finalTx = categorizedTx;
+        const merchantMatch = findMerchantMatch(categorizedTx.merchant);
+        if (merchantMatch && merchantMatch.confidence > 0.7) {
+            finalTx = {
+                ...finalTx,
+                alias: merchantMatch.mapping.targetMerchant,
+                merchantSource: 'learned' as const
+            };
+            if (merchantMatch.mapping.id) {
+                incrementMerchantMappingUsage(db, user.uid, appId, merchantMatch.mapping.id)
+                    .catch(err => console.error('Failed to increment merchant mapping usage:', err));
+            }
+        }
+
+        // Save transaction
+        const transactionId = await firestoreAddTransaction(db, user.uid, appId, finalTx);
+        return transactionId;
     };
 
     // Story 11.1: Remove image from batch
@@ -1174,6 +1332,19 @@ function App() {
     const themeClass = isDark ? 'dark' : '';
     const dataTheme = colorTheme === 'professional' ? 'professional' : undefined;
 
+    // Story 12.3: Compute scan status for Nav icon indicator (AC #3)
+    // - 'processing': batch or single scan processing is in progress
+    // - 'ready': batch review results are available
+    // - 'idle': default state
+    // Note: Also includes single scan 'analyzing' state for consistent UX
+    const scanStatus: ScanStatus = batchProcessing.isProcessing
+        ? 'processing'
+        : pendingScan?.status === 'analyzing'
+            ? 'processing'
+            : batchReviewResults.length > 0
+                ? 'ready'
+                : 'idle';
+
     // Synchronously update document.documentElement during render
     // This ensures CSS variables are available before children read them
     // Note: This is intentionally NOT in useEffect to avoid timing issues with useMemo
@@ -1327,7 +1498,13 @@ function App() {
                         onBack={() => {
                             // Story 11.3: Reset animation state when leaving EditView
                             setAnimateEditViewItems(false);
-                            setView('dashboard');
+                            // Story 12.3: If editing from batch, return to batch review
+                            if (batchEditingReceipt) {
+                                setBatchEditingReceipt(null);
+                                setView('batch-review');
+                            } else {
+                                setView('dashboard');
+                            }
                         }}
                         // Story 11.3: Animate items for fresh scan results (AC #1-5)
                         animateItems={animateEditViewItems}
@@ -1341,7 +1518,12 @@ function App() {
                         onSaveSubcategoryMapping={saveSubcategoryMapping}
                         onShowToast={(text: string) => setToastMessage({ text, type: 'success' })}
                         // Story 9.9: Cancel handler for new transactions
-                        onCancel={!currentTransaction.id ? handleCancelNewTransaction : undefined}
+                        // Story 12.3: If in batch context, return to batch review instead
+                        onCancel={!currentTransaction.id ? (batchEditingReceipt ? () => {
+                            setBatchEditingReceipt(null);
+                            setCurrentTransaction(null);
+                            setView('batch-review');
+                        } : handleCancelNewTransaction) : undefined}
                         // Story 9.9: Scan-related props for unified transaction flow (only for new transactions)
                         scanImages={!currentTransaction.id ? scanImages : undefined}
                         onAddPhoto={!currentTransaction.id ? () => fileInputRef.current?.click() : undefined}
@@ -1360,6 +1542,8 @@ function App() {
                         userCredits={userCredits}
                         // Story 9.12: Language for category translations (AC #6)
                         lang={lang}
+                        // Story 12.3: Batch context for editing from batch review (AC #4)
+                        batchContext={batchEditingReceipt ? { index: batchEditingReceipt.index, total: batchEditingReceipt.total } : null}
                     />
                 )}
 
@@ -1406,6 +1590,60 @@ function App() {
                         }}
                         theme={theme}
                         t={t}
+                    />
+                )}
+
+                {/* Story 12.1: Batch Capture UI - dedicated batch mode view (AC #1-9) */}
+                {view === 'batch-capture' && (
+                    <BatchCaptureView
+                        isBatchMode={isBatchCaptureMode}
+                        onToggleMode={(batchMode) => {
+                            setIsBatchCaptureMode(batchMode);
+                            if (!batchMode) {
+                                // Switch to individual mode - go to edit view
+                                handleNewTransaction(false);
+                            }
+                        }}
+                        onProcessBatch={(images) => {
+                            // Set batch images and show batch preview (reuse existing 11.1 flow)
+                            setBatchImages(images);
+                            setShowBatchPreview(true);
+                            setView('dashboard');
+                        }}
+                        onSwitchToIndividual={() => {
+                            setIsBatchCaptureMode(false);
+                            handleNewTransaction(false);
+                        }}
+                        onBack={() => {
+                            setIsBatchCaptureMode(false);
+                            setView('dashboard');
+                        }}
+                        isProcessing={isBatchProcessing}
+                        theme={theme as 'light' | 'dark'}
+                        t={t}
+                    />
+                )}
+
+                {/* Story 12.3: Batch Review Queue - review processed receipts before saving (AC #1-8) */}
+                {/* Also shows processing progress when navigating back during batch processing */}
+                {view === 'batch-review' && (
+                    <BatchReviewView
+                        processingResults={batchReviewResults}
+                        imageDataUrls={batchImages}
+                        theme={theme as 'light' | 'dark'}
+                        currency={currency}
+                        t={t}
+                        onEditReceipt={handleBatchEditReceipt}
+                        onBack={handleBatchReviewBack}
+                        onSaveComplete={handleBatchSaveComplete}
+                        saveTransaction={handleBatchSaveTransaction}
+                        // Story 12.3: Pass processing state for inline progress display
+                        processingState={batchProcessing.isProcessing ? {
+                            isProcessing: true,
+                            progress: batchProcessing.progress,
+                            states: batchProcessing.states,
+                            onCancelProcessing: batchProcessing.cancel,
+                        } : undefined}
                     />
                 )}
 
@@ -1468,13 +1706,28 @@ function App() {
             <Nav
                 view={view}
                 setView={(v: string) => setView(v as View)}
-                onScanClick={triggerScan}
+                onScanClick={() => {
+                    // Story 12.3: If processing, go to batch-review to show progress
+                    // If ready, go to batch-review to show results
+                    if (scanStatus === 'processing' || scanStatus === 'ready') {
+                        setView('batch-review');
+                    } else {
+                        triggerScan();
+                    }
+                }}
+                // Story 12.1: Long-press on camera FAB opens batch capture mode (AC #1)
+                onBatchClick={() => {
+                    setIsBatchCaptureMode(true);
+                    setView('batch-capture');
+                }}
                 onTrendsClick={() => {
                     // Navigation state is now managed by AnalyticsContext
                     // Context resets to year level when mounted
                 }}
                 theme={theme}
                 t={t}
+                // Story 12.3: Pass scan status for NAV icon indicator (AC #3)
+                scanStatus={scanStatus}
             />
 
             {/* Toast notification for feedback (AC#6, AC#7) */}
@@ -1536,15 +1789,30 @@ function App() {
                         images={batchImages}
                         theme={theme as 'light' | 'dark'}
                         t={t}
-                        onConfirm={processBatchImages}
+                        onConfirm={handleBatchConfirmWithCreditCheck}
                         onCancel={handleCancelBatchPreview}
                         onRemoveImage={handleRemoveBatchImage}
                     />
                 </div>
             )}
 
-            {/* Story 11.1: Batch processing progress (AC #4) */}
+            {/* Story 12.4: Credit Warning Dialog (AC #1, #2, #5, #7) */}
+            {showCreditWarning && creditCheckResult && (
+                <CreditWarningDialog
+                    creditCheck={creditCheckResult}
+                    receiptCount={batchImages.length}
+                    theme={theme as 'light' | 'dark'}
+                    t={t}
+                    onConfirm={handleCreditWarningConfirm}
+                    onCancel={handleCreditWarningCancel}
+                    onReduceBatch={creditCheckResult.maxProcessable > 0 ? handleReduceBatch : undefined}
+                />
+            )}
+
+            {/* Story 11.1: Batch processing progress (AC #4) - Legacy sequential processing only */}
             {/* Story 11.6: Modal with safe area padding (AC #3) */}
+            {/* Story 12.3: Parallel processing (batchProcessing) now shows inline in BatchReviewView */}
+            {/* This modal is only for legacy isBatchProcessing (sequential) which is deprecated */}
             {isBatchProcessing && (
                 <div
                     className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"

@@ -1,8 +1,8 @@
 # Historical Lessons (Retrospectives)
 
 > Section 6 of Atlas Memory
-> Last Sync: 2025-12-18
-> Sources: epic-8-retrospective.md, epic-9-retro-2025-12-16.md
+> Last Sync: 2025-12-22
+> Sources: epic-8-retrospective.md, epic-9-retro-2025-12-16.md, brainstorming-session-2025-12-22.md
 
 ## What Worked Well
 
@@ -16,6 +16,9 @@
 | **Shared Prompts Architecture** | Centralized Gemini prompts enable A/B testing | Epic 8 |
 | **Parallel CI Jobs** | 63% faster pipeline after Epic 8 optimization | Epic 8 |
 | **Context Files** | Story context XML/MD files accelerate development | Epic 9 |
+| **Structured Brainstorming** | Progressive Flow (Role Playing → Mind Mapping → SCAMPER → Action Planning) for major UX redesigns | Epic 13 Prep |
+| **Persona-Driven Design** | Detailed personas (María, Diego, Rosa, Tomás) with specific journeys inform all design decisions | Brainstorming 2025-12-22 |
+| **Mockup-First Workflow** | Design all mockups before implementation for UX work | Epic 13 Planning |
 
 ## What Failed / What to Avoid
 
@@ -116,6 +119,13 @@
 18. **State machine sync via useRef** - When syncing internal hook state with parent props, use `useRef` to track previous values and `useEffect` to detect transitions (e.g., `prevIsAnalyzingRef.current` pattern)
 19. **Document unused-by-design states** - If a state machine has states intentionally unused in current flow (e.g., `uploading` when API is atomic), add comment explaining design decision and future use case
 20. **PWA viewport with dvh and safe areas** - Use `h-screen h-[100dvh]` (fallback first, then dvh) instead of `min-h-screen` or `100vh` for PWA compatibility. **Critical:** `min-h-dvh` sets MINIMUM height and won't prevent scrolling - use `h-[100dvh]` for fixed viewport. Add `viewport-fit=cover` meta tag and CSS custom properties for safe areas: `--safe-top: env(safe-area-inset-top, 0px)`. Use flex column layout with `flex-1 overflow-y-auto` for scrollable content and `calc()` for bottom padding: `calc(6rem + var(--safe-bottom))`. **Warning:** `flex-1` without flex parent does nothing - ensure parent has `display: flex`
+21. **Styled dialogs over window.confirm** - Never use native `window.confirm()` for confirmations as it breaks: (1) theme consistency (native dialogs ignore dark mode), (2) mobile UX (look different across platforms), (3) accessibility patterns (project uses custom modals). Create reusable `ConfirmationDialog` component matching existing dialog patterns like `CreditWarningDialog`
+22. **Long-press detection with pointer events** - Use `onPointerDown`, `onPointerUp`, `onPointerLeave`, and `onPointerCancel` for cross-platform touch support. Store timeout in `useRef`, track long-press state in `useRef<boolean>`, and clear timeout on all release/cancel events. Test with fake timers using `vi.useFakeTimers()` and `vi.advanceTimersByTime()`
+23. **Test new components during code review** - Every new component file (`.tsx`) must have a corresponding test file. During code review, verify test coverage exists for all new files - missing tests is a blocking issue
+24. **Worker pattern for concurrent queues** - When implementing parallel processing with concurrency limits, use a worker pattern instead of `Promise.allSettled` to maintain FIFO order. Create N workers that pull from a shared queue until empty. Pattern: `const workers = Array(limit).fill(null).map(() => worker(queue)); await Promise.all(workers);` Each worker runs `while (queue.length > 0) { const item = queue.shift(); await process(item); }`. This ensures first-in-first-out and controlled concurrency.
+25. **AbortController for cancellation** - Use `AbortController` with `AbortSignal` for cancellation in async operations. Can't abort in-flight API calls, but can stop pending queue items. Pass `abortSignal` to processing function and check `abortSignal?.aborted` before starting each new item. Pattern: `abortControllerRef.current = new AbortController(); // on cancel: abortControllerRef.current.abort();`
+26. **Hook wrapper for service state** - Wrap complex service modules with React hooks to manage state. Service handles pure logic (processImagesInParallel), hook handles React state (useState, useMemo, useCallback). Hook exposes both state (states, isProcessing) and actions (startProcessing, cancel, retry). This separation enables testing service logic in isolation.
+27. **Verify App.tsx integration for new views** - When reviewing stories that add new views/features, verify that: (1) View type is added to `type View = ...`, (2) Component is imported, (3) Component is rendered in the main JSX with proper routing, (4) Navigation handlers are wired. Components can exist and have tests but still be unreachable if not integrated. This is a common gap between "components created" and "feature usable".
 
 ## Team Agreements
 
@@ -125,6 +135,27 @@
 - Architecture decisions before UX changes
 - Mockups before implementation for UX work
 - Every epic ends with deployment story
+- **Brainstorming before major UX redesigns** - Use structured brainstorming (Progressive Flow) with detailed personas before significant UX work (added 2025-12-22)
+
+## UX Design Principles (Epic 13-15)
+
+<!-- Source: brainstorming-session-2025-12-22.md -->
+
+### The Boletapp Voice
+| Principle | Description |
+|-----------|-------------|
+| **Observes without judging** | "Restaurants up 23%" not "You overspent" |
+| **Reveals opportunity** | Trade-off visibility without guilt |
+| **Invites experimentation** | "What if you tried...?" |
+| **Celebrates progress** | Personal records, milestones |
+| **Normalizes setbacks** | "La vida es rara. Los datos también." |
+
+### Key Design Patterns
+- **"Intentional or Accidental?"** - Non-judgmental spending awareness prompts
+- **Emotional Airlock** - Curiosity → Playfulness → Reveal for difficult insights
+- **Dynamic Polygon** - 3-6 sided spending visualization
+- **Expanding Lava Metaphor** - Inner polygon = spending, outer = budget (inverted)
+- **"Everything Breathes"** - Motion design system with subtle animations
 
 ---
 
@@ -143,3 +174,15 @@
 - serverTimestamp() type safety pattern added from Story 11.4 code review (2025-12-22)
 - Scan state machine integration pattern added from Story 11.5 (2025-12-22)
 - PWA viewport with dvh and safe areas pattern added from Story 11.6 (2025-12-22)
+- Styled dialogs pattern added from Story 12.1 code review (2025-12-22)
+- Long-press detection pattern added from Story 12.1 code review (2025-12-22)
+- Test new components rule enforced from Story 12.1 code review (2025-12-22)
+- Parallel processing patterns (worker queue, AbortController, hook wrapper) added from Story 12.2 (2025-12-22)
+- Story 12.2 code review: Background processing is implicit via async/await - no explicit visibilitychange handling needed (browser doesn't pause JS execution on blur)
+- **Story 12.3 (2025-12-22):** Batch review queue with summary cards, edit/discard actions, and save-all. Key pattern: useBatchReview hook manages receipt state, confidence scoring determines status (ready/review/edited/error). Parent components integrate via callbacks (onEditReceipt, onRetryReceipt).
+- **Story 12.3 Code Review (2025-12-22):** CRITICAL FINDING - Components (BatchReviewView, useBatchReview, BatchSummaryCard) were created but NOT integrated into App.tsx. Code review discovered the integration gap and completed wiring: added useBatchProcessing integration, BatchReviewView rendering, batch context support in EditView. **Lesson: "Done" story status requires verification of App.tsx integration for new views/features, not just component creation.**
+- **Brainstorming session 2025-12-22:** Full UX redesign planned for Epics 13-15 (~128 points)
+  - Reference: docs/analysis/brainstorming-session-2025-12-22.md
+  - Key innovations: Dynamic Polygon, Savings GPS, Emotional Airlock
+  - Personas: María (parent), Diego (young pro), Rosa (abuelita), Tomás (drifter)
+  - Voice Principles: Observes without judging, Celebrates progress, Normalizes setbacks
