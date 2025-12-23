@@ -638,7 +638,7 @@ function App() {
     // Story 11.1: Batch image processing (AC #3, #4, #5, #6)
     // Story 12.2/12.3: DEPRECATED - replaced by useBatchProcessing hook + BatchReviewView
     // Kept for reference during transition; will be removed in future cleanup
-    // @ts-ignore - Deprecated function kept for reference
+    // @ts-expect-error - Deprecated function kept for reference
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const _processBatchImages_DEPRECATED = async () => {
         if (!services || !user) return;
