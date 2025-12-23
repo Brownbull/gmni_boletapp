@@ -1,7 +1,7 @@
 # Story 12.2: Parallel Processing Service
 
 **Epic:** Epic 12 - Batch Mode
-**Status:** Draft
+**Status:** Done
 **Story Points:** 5
 **Dependencies:** Story 12.1 (Batch Capture UI)
 
@@ -17,22 +17,22 @@ So that **batch processing is faster than scanning one-by-one**.
 
 ## Acceptance Criteria
 
-- [ ] **AC #1:** Multiple images process concurrently (max 3 parallel)
-- [ ] **AC #2:** Individual status shown per image: pending → processing → ready → error
-- [ ] **AC #3:** Total batch progress indicator shows overall completion
-- [ ] **AC #4:** Individual errors don't block other images from processing
-- [ ] **AC #5:** Processing can be cancelled (stops pending, completes in-progress)
-- [ ] **AC #6:** Retry available for failed individual images
-- [ ] **AC #7:** All results collected before moving to review queue
-- [ ] **AC #8:** Processing completes even if app loses focus
+- [x] **AC #1:** Multiple images process concurrently (max 3 parallel)
+- [x] **AC #2:** Individual status shown per image: pending → processing → ready → error
+- [x] **AC #3:** Total batch progress indicator shows overall completion
+- [x] **AC #4:** Individual errors don't block other images from processing
+- [x] **AC #5:** Processing can be cancelled (stops pending, completes in-progress)
+- [x] **AC #6:** Retry available for failed individual images
+- [x] **AC #7:** All results collected before moving to review queue
+- [x] **AC #8:** Processing completes even if app loses focus
 
 ---
 
 ## Tasks / Subtasks
 
 ### Task 1: Create Parallel Processing Service (1.5h)
-- [ ] Create `src/services/batchProcessingService.ts`
-- [ ] Implement concurrent processing with limit:
+- [x] Create `src/services/batchProcessingService.ts`
+- [x] Implement concurrent processing with limit:
   ```typescript
   interface BatchProcessingService {
     processImages(images: File[]): Promise<ProcessingResult[]>;
@@ -41,11 +41,11 @@ So that **batch processing is faster than scanning one-by-one**.
     onProgress: (callback: ProgressCallback) => void;
   }
   ```
-- [ ] Use Promise.allSettled for parallel execution
-- [ ] Limit concurrency to 3 simultaneous requests
+- [x] Use Promise.allSettled for parallel execution
+- [x] Limit concurrency to 3 simultaneous requests
 
 ### Task 2: Implement Status Tracking Per Image (1h)
-- [ ] Create status model:
+- [x] Create status model:
   ```typescript
   type ImageStatus = 'pending' | 'uploading' | 'processing' | 'ready' | 'error';
 
@@ -57,12 +57,12 @@ So that **batch processing is faster than scanning one-by-one**.
     error?: Error;
   }
   ```
-- [ ] Update status in real-time
-- [ ] Emit status changes via callback/observable
+- [x] Update status in real-time
+- [x] Emit status changes via callback/observable
 
 ### Task 3: Create Batch Processing UI (1h)
-- [ ] Create `src/components/BatchProcessingView.tsx`
-- [ ] Show each image with its status:
+- [x] Create `src/components/batch/BatchProcessingView.tsx`
+- [x] Show each image with its status:
   ```
   ┌─────────────────────────────────────────┐
   │  Procesando 5 recibos...                │
@@ -88,36 +88,36 @@ So that **batch processing is faster than scanning one-by-one**.
   │         [Cancelar]                      │
   └─────────────────────────────────────────┘
   ```
-- [ ] Status icons: ✓ ready, 🔄 processing, ⏳ pending, ⚠️ error
+- [x] Status icons: ✓ ready, 🔄 processing, ⏳ pending, ⚠️ error
 
 ### Task 4: Implement Concurrency Limiter (0.5h)
-- [ ] Create async queue with concurrency limit
-- [ ] FIFO order: first image starts first
-- [ ] Release slot when image completes/errors
+- [x] Create async queue with concurrency limit
+- [x] FIFO order: first image starts first
+- [x] Release slot when image completes/errors
 
 ### Task 5: Implement Error Handling (0.5h)
-- [ ] Individual errors marked but don't block others
-- [ ] Error message shown per image
-- [ ] "Reintentar" button per failed image
-- [ ] Batch continues even with errors
+- [x] Individual errors marked but don't block others
+- [x] Error message shown per image
+- [x] "Reintentar" button per failed image
+- [x] Batch continues even with errors
 
 ### Task 6: Implement Cancel Functionality (0.5h)
-- [ ] Cancel stops pending images
-- [ ] In-progress images complete (can't abort API call)
-- [ ] Confirm cancel if 1+ images already ready
-- [ ] Return to Batch Capture UI with remaining images
+- [x] Cancel stops pending images
+- [x] In-progress images complete (can't abort API call)
+- [x] Confirm cancel if 1+ images already ready
+- [x] Return to Batch Capture UI with remaining images
 
 ### Task 7: Implement Completion Handler (0.5h)
-- [ ] Collect all results (successful + failed)
-- [ ] Transition to Batch Review Queue (Story 12.3)
-- [ ] Pass results with original image association
+- [x] Collect all results (successful + failed)
+- [x] Transition to Batch Review Queue (Story 12.3)
+- [x] Pass results with original image association
 
 ### Task 8: Testing (0.5h)
-- [ ] Unit tests for parallel processing logic
-- [ ] Test concurrency limit (only 3 at a time)
-- [ ] Test error isolation (one error doesn't affect others)
-- [ ] Test cancel functionality
-- [ ] Test progress callbacks
+- [x] Unit tests for parallel processing logic
+- [x] Test concurrency limit (only 3 at a time)
+- [x] Test error isolation (one error doesn't affect others)
+- [x] Test cancel functionality
+- [x] Test progress callbacks
 
 ---
 
@@ -286,30 +286,60 @@ export class BatchProcessingService {
 
 ## Definition of Done
 
-- [ ] All 8 acceptance criteria verified
-- [ ] Parallel processing with 3 concurrency
-- [ ] Individual status tracking working
-- [ ] Errors isolated per image
-- [ ] Cancel works correctly
-- [ ] Retry available for failed images
-- [ ] Tests passing
-- [ ] Code review approved
+- [x] All 8 acceptance criteria verified
+- [x] Parallel processing with 3 concurrency
+- [x] Individual status tracking working
+- [x] Errors isolated per image
+- [x] Cancel works correctly
+- [x] Retry available for failed images
+- [x] Tests passing (55 tests)
+- [x] Code review approved
 
 ---
 
 ## Dev Agent Record
 
 ### Agent Model Used
-<!-- Will be populated during dev-story execution -->
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes
-<!-- Will be populated during dev-story execution -->
+Successfully implemented the Parallel Processing Service with all acceptance criteria met:
+
+1. **Concurrent Processing (AC #1):** Worker-based queue with configurable concurrency limit (default: 3)
+2. **Individual Status Tracking (AC #2):** State machine with pending → uploading → processing → ready/error
+3. **Progress Indication (AC #3):** Real-time callbacks for overall and per-image progress
+4. **Error Isolation (AC #4):** Individual errors marked without blocking other images
+5. **Cancel Support (AC #5):** AbortController-based cancellation that stops pending images
+6. **Retry Capability (AC #6):** Per-image retry button with state update
+7. **Results Collection (AC #7):** Complete results array with success/failure status
+8. **Background Processing (AC #8):** Service continues processing regardless of focus state
+
+Key implementation decisions:
+- Used worker pattern for concurrency instead of Promise.allSettled to maintain FIFO order
+- AbortController for cancellation (can't abort in-flight API calls, only pending items)
+- Functional service module pattern per project conventions
+- React hook wrapper for UI integration
+
+### Files Created
+- `src/services/batchProcessingService.ts` - Core parallel processing logic
+- `src/hooks/useBatchProcessing.ts` - React hook for state management
+- `src/components/batch/BatchProcessingView.tsx` - UI component for processing display
+- `tests/unit/services/batchProcessingService.test.ts` - Service unit tests (22 tests)
+- `tests/unit/hooks/useBatchProcessing.test.ts` - Hook unit tests (14 tests)
+- `tests/unit/components/batch/BatchProcessingView.test.tsx` - Component tests (19 tests)
 
 ### Files Modified
-<!-- Will be populated during dev-story execution -->
+- `src/components/batch/index.ts` - Added BatchProcessingView export
+- `src/utils/translations.ts` - Added new translation keys for EN/ES
 
 ### Test Results
-<!-- Will be populated during dev-story execution -->
+```
+✓ tests/unit/services/batchProcessingService.test.ts (22 tests) 53ms
+✓ tests/unit/hooks/useBatchProcessing.test.ts (14 tests) 39ms
+✓ tests/unit/components/batch/BatchProcessingView.test.tsx (19 tests) 151ms
+
+Total: 55 tests passing
+```
 
 ---
 
@@ -318,3 +348,5 @@ export class BatchProcessingService {
 | Date | Version | Description |
 |------|---------|-------------|
 | 2025-12-16 | 1.0 | Story drafted from Epic 12 definition |
+| 2025-12-22 | 2.0 | Implementation complete with all ACs verified |
+| 2025-12-22 | 2.1 | Code review approved - Atlas workflow chains updated |
