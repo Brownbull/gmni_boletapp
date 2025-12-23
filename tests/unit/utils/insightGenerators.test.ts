@@ -858,11 +858,21 @@ describe('Pattern Detection Generators', () => {
     const gen = INSIGHT_GENERATORS.spending_velocity;
 
     it('requires at least 1 week of data', () => {
-      const tx = createTransaction({ date: '2025-12-18' });
-      // All transactions are recent
+      // Use dates relative to today to avoid date-sensitivity
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      const twoDaysAgo = new Date(today);
+      twoDaysAgo.setDate(today.getDate() - 2);
+      const twoDaysAgoStr = twoDaysAgo.toISOString().split('T')[0];
+
+      const tx = createTransaction({ date: todayStr });
+      // All transactions are recent (within 7 days)
       const recentHistory = [
-        createTransaction({ date: '2025-12-17' }),
-        createTransaction({ date: '2025-12-16' }),
+        createTransaction({ date: yesterdayStr }),
+        createTransaction({ date: twoDaysAgoStr }),
       ];
       expect(gen.canGenerate(tx, recentHistory)).toBe(false);
     });

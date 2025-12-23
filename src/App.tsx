@@ -4,11 +4,17 @@ import { useTransactions } from './hooks/useTransactions';
 import { useCategoryMappings } from './hooks/useCategoryMappings';
 import { useMerchantMappings } from './hooks/useMerchantMappings';
 import { useSubcategoryMappings } from './hooks/useSubcategoryMappings';
+// Story 11.4: Trusted merchants for auto-save
+import { useTrustedMerchants } from './hooks/useTrustedMerchants';
 import { useUserPreferences } from './hooks/useUserPreferences';
 // Story 10.6: Insight profile hook for insight generation
 import { useInsightProfile } from './hooks/useInsightProfile';
 // Story 10.7: Batch session tracking for multi-receipt scanning
 import { useBatchSession } from './hooks/useBatchSession';
+// Story 12.2: Parallel batch processing hook
+import { useBatchProcessing } from './hooks/useBatchProcessing';
+// Story 12.3: Batch review type for edit flow
+import type { BatchReceipt } from './hooks/useBatchReview';
 import { LoginScreen } from './views/LoginScreen';
 import { DashboardView } from './views/DashboardView';
 // Story 9.9: ScanView is deprecated - scan functionality is now in EditView
@@ -17,8 +23,12 @@ import { EditView } from './views/EditView';
 import { TrendsView } from './views/TrendsView';
 // Story 10a.4: Insights History View (replaces HistoryView in insights tab)
 import { InsightsView } from './views/InsightsView';
+// Story 12.1: Batch Capture UI - dedicated view for batch mode scanning
+import { BatchCaptureView } from './views/BatchCaptureView';
+// Story 12.3: Batch Review Queue - review processed receipts before saving
+import { BatchReviewView } from './views/BatchReviewView';
 import { SettingsView } from './views/SettingsView';
-import { Nav } from './components/Nav';
+import { Nav, ScanStatus } from './components/Nav';
 import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
 // Story 10.6: Insight card components
 import { InsightCard } from './components/insights/InsightCard';
@@ -26,8 +36,17 @@ import { BuildingProfileCard } from './components/insights/BuildingProfileCard';
 // Story 10.7: Batch summary component
 import { BatchSummary } from './components/insights/BatchSummary';
 // Story 11.1: Batch upload components for multi-image processing
-import { BatchUploadPreview, BatchProcessingProgress, MAX_BATCH_IMAGES } from './components/scan';
+// Story 11.2: Quick Save Card for high-confidence scans
+import { BatchUploadPreview, BatchProcessingProgress, MAX_BATCH_IMAGES, QuickSaveCard } from './components/scan';
 import type { BatchItemResult } from './components/scan';
+// Story 11.2: Confidence check for Quick Save eligibility
+import { shouldShowQuickSave, calculateConfidence } from './utils/confidenceCheck';
+// Story 11.4: Trust Merchant Prompt component
+import { TrustMerchantPrompt } from './components/TrustMerchantPrompt';
+// Story 12.4: Credit Warning System
+import { CreditWarningDialog } from './components/batch';
+import { checkCreditSufficiency, type CreditCheckResult } from './services/creditService';
+import type { TrustPromptEligibility } from './types/trust';
 import { AnalyticsProvider } from './contexts/AnalyticsContext';
 // Story 10a.2: Import for building analytics initial state
 import { getQuarterFromMonth } from './utils/analyticsHelpers';
@@ -71,7 +90,9 @@ import { incrementMerchantMappingUsage } from './services/merchantMappingService
 import { getCitiesForCountry } from './data/locations';
 
 // Story 10a.3: Changed 'list' to 'insights' (InsightsView will be added in 10a.4)
-type View = 'dashboard' | 'scan' | 'edit' | 'trends' | 'insights' | 'settings';
+// Story 12.1: Added 'batch-capture' view for batch mode scanning
+// Story 12.3: Added 'batch-review' view for reviewing processed receipts before saving
+type View = 'dashboard' | 'scan' | 'edit' | 'trends' | 'insights' | 'settings' | 'batch-capture' | 'batch-review';
 
 function App() {
     const { user, services, initError, signIn, signInWithTestCredentials, signOut } = useAuth();
@@ -117,6 +138,16 @@ function App() {
         clearBatch,
         // isBatchMode is exposed by hook but we calculate it inline in JSX
     } = useBatchSession();
+    // Story 11.4: Trusted merchants for auto-save (AC #1-8)
+    const {
+        recordMerchantScan,
+        checkTrusted,
+        acceptTrust,
+        declinePrompt,
+        removeTrust,
+        trustedMerchants,
+        loading: trustedMerchantsLoading,
+    } = useTrustedMerchants(user, services);
 
     // UI State
     const [view, setView] = useState<View>('dashboard');
@@ -147,6 +178,25 @@ function App() {
     const [_batchCancelRequested, setBatchCancelRequested] = useState(false);
     const [showBatchCancelConfirm, setShowBatchCancelConfirm] = useState(false);
     const batchCancelRef = useRef(false); // Ref for immediate access in loop
+    // Story 11.2: Quick Save Card state (AC #1, #5, #6)
+    const [showQuickSaveCard, setShowQuickSaveCard] = useState(false);
+    const [quickSaveTransaction, setQuickSaveTransaction] = useState<Transaction | null>(null);
+    const [quickSaveConfidence, setQuickSaveConfidence] = useState(0);
+    const [isQuickSaving, setIsQuickSaving] = useState(false);
+    // Story 11.3: Track when EditView should animate items (fresh scan result)
+    const [animateEditViewItems, setAnimateEditViewItems] = useState(false);
+    // Story 11.4: Trust Merchant Prompt state (AC #2, #3, #4)
+    const [showTrustPrompt, setShowTrustPrompt] = useState(false);
+    const [trustPromptData, setTrustPromptData] = useState<TrustPromptEligibility | null>(null);
+    // Story 12.4: Credit Warning Dialog state (AC #1, #5, #7)
+    const [showCreditWarning, setShowCreditWarning] = useState(false);
+    const [creditCheckResult, setCreditCheckResult] = useState<CreditCheckResult | null>(null);
+    // Story 12.1: Batch Capture Mode state (AC #1)
+    const [isBatchCaptureMode, setIsBatchCaptureMode] = useState(false);
+    // Story 12.2 & 12.3: Batch processing and review state
+    const batchProcessing = useBatchProcessing(3); // Max 3 concurrent API calls
+    const [batchReviewResults, setBatchReviewResults] = useState<typeof batchProcessing.results>([]);
+    const [batchEditingReceipt, setBatchEditingReceipt] = useState<{ receipt: BatchReceipt; index: number; total: number } | null>(null);
 
     // Settings
     const [lang, setLang] = useState<Language>('es');
@@ -249,6 +299,12 @@ function App() {
     // Both "+" button and camera button now go to EditView
     // Camera button also auto-opens the file picker
     const handleNewTransaction = (autoOpenFilePicker: boolean) => {
+        // Story 12.3: If batch review is active, show that instead of new transaction
+        if (batchReviewResults.length > 0) {
+            setView('batch-review');
+            return;
+        }
+
         // Story 9.10 AC#2: Check for existing pending scan
         if (pendingScan) {
             // Restore pending scan state
@@ -496,7 +552,72 @@ function App() {
             }
             // Clear local scan images since they're now stored in transaction
             setScanImages([]);
-            setView('edit');
+
+            // Story 11.4: Check if merchant is trusted for auto-save (AC #5)
+            const merchantAlias = finalTransaction.alias || finalTransaction.merchant;
+            const isTrusted = merchantAlias ? await checkTrusted(merchantAlias) : false;
+
+            if (isTrusted && services && user) {
+                // Story 11.4 AC #5: Auto-save for trusted merchants
+                // Skip Quick Save Card entirely
+                try {
+                    const transactionId = await firestoreAddTransaction(services.db, user.uid, services.appId, finalTransaction);
+                    const txWithId = { ...finalTransaction, id: transactionId } as Transaction;
+
+                    // Generate insight
+                    const insight = await generateInsightForTransaction(
+                        txWithId,
+                        transactions,
+                        insightProfile || { schemaVersion: 1, firstTransactionDate: null as any, totalTransactions: 0, recentInsights: [] },
+                        insightCache
+                    );
+
+                    addToBatch(txWithId, insight);
+
+                    // Record scan (not edited since it was auto-saved)
+                    await recordMerchantScan(merchantAlias, false).catch(err =>
+                        console.warn('Failed to record merchant scan:', err)
+                    );
+
+                    // Clear pending scan and show toast
+                    setPendingScan(null);
+                    setCurrentTransaction(null);
+                    setToastMessage({ text: t('autoSaved'), type: 'success' });
+                    setView('dashboard');
+
+                    // Show insight or batch summary
+                    const silenced = isInsightsSilenced(insightCache);
+                    if (!silenced) {
+                        const willBeBatchMode = (batchSession?.receipts.length ?? 0) + 1 >= 3;
+                        if (willBeBatchMode) {
+                            setShowBatchSummary(true);
+                        } else {
+                            setCurrentInsight(insight);
+                            setShowInsightCard(true);
+                        }
+                    }
+                } catch (autoSaveErr) {
+                    console.error('Auto-save failed:', autoSaveErr);
+                    // Fall back to Quick Save Card on error
+                    setQuickSaveTransaction(finalTransaction);
+                    setQuickSaveConfidence(calculateConfidence(finalTransaction));
+                    setShowQuickSaveCard(true);
+                }
+            } else {
+                // Story 11.2: Check confidence for Quick Save eligibility (AC #5, #6)
+                const confidence = calculateConfidence(finalTransaction);
+                if (shouldShowQuickSave(finalTransaction)) {
+                    // High confidence: Show Quick Save Card (AC #1)
+                    setQuickSaveTransaction(finalTransaction);
+                    setQuickSaveConfidence(confidence);
+                    setShowQuickSaveCard(true);
+                } else {
+                    // Low confidence: Go to EditView (AC #6)
+                    // Story 11.3: Enable item animation for fresh scan results
+                    setAnimateEditViewItems(true);
+                    setView('edit');
+                }
+            }
         } catch (e: any) {
             const errorMessage = 'Failed: ' + e.message;
             setScanError(errorMessage);
@@ -515,8 +636,11 @@ function App() {
     };
 
     // Story 11.1: Batch image processing (AC #3, #4, #5, #6)
-    // Process each image separately and create individual transactions
-    const processBatchImages = async () => {
+    // Story 12.2/12.3: DEPRECATED - replaced by useBatchProcessing hook + BatchReviewView
+    // Kept for reference during transition; will be removed in future cleanup
+    // @ts-expect-error - Deprecated function kept for reference
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _processBatchImages_DEPRECATED = async () => {
         if (!services || !user) return;
         if (userCredits.remaining < batchImages.length) {
             setToastMessage({ text: t('noCreditsMessage'), type: 'info' });
@@ -729,6 +853,133 @@ function App() {
         setShowBatchCancelConfirm(false);
     };
 
+    // Story 12.4: Credit Warning System handlers (AC #1, #5, #7)
+    // Called when user clicks "Procesar todas" in BatchUploadPreview
+    const handleBatchConfirmWithCreditCheck = () => {
+        // AC #1: Pre-batch warning shows credit cost before processing
+        const result = checkCreditSufficiency(userCredits, batchImages.length);
+        setCreditCheckResult(result);
+        setShowCreditWarning(true);
+    };
+
+    // Called when user confirms credit warning dialog
+    // Story 12.2 & 12.3: Now uses parallel processing and navigates to batch review
+    const handleCreditWarningConfirm = async () => {
+        // AC #5: "Continuar" → begin processing
+        setShowCreditWarning(false);
+        setCreditCheckResult(null);
+        setShowBatchPreview(false);
+
+        // Story 12.3: Navigate to batch-review IMMEDIATELY to show processing progress
+        // Users can navigate away and return to see progress
+        setView('batch-review');
+
+        // Story 12.2: Use parallel processing instead of sequential
+        const results = await batchProcessing.startProcessing(
+            batchImages,
+            scanCurrency,
+            scanStoreType !== 'auto' ? scanStoreType : undefined
+        );
+
+        // Story 12.3: Store results for review after processing completes
+        setBatchReviewResults(results);
+    };
+
+    // Called when user cancels credit warning dialog
+    const handleCreditWarningCancel = () => {
+        // AC #5: "Cancelar" → return to batch capture
+        setShowCreditWarning(false);
+        setCreditCheckResult(null);
+    };
+
+    // Called when user wants to reduce batch to available credits
+    const handleReduceBatch = () => {
+        if (!creditCheckResult) return;
+        // Reduce batch to maxProcessable images
+        const maxProcessable = creditCheckResult.maxProcessable;
+        setBatchImages(prev => prev.slice(0, maxProcessable));
+        setShowCreditWarning(false);
+        // Re-check credits with reduced batch
+        const newResult = checkCreditSufficiency(userCredits, maxProcessable);
+        setCreditCheckResult(newResult);
+        setShowCreditWarning(true);
+    };
+
+    // Story 12.3: Batch Review handlers (AC #4, #6, #7)
+    // Handle edit receipt from batch review
+    const handleBatchEditReceipt = (receipt: BatchReceipt, batchIndex: number, batchTotal: number) => {
+        setBatchEditingReceipt({ receipt, index: batchIndex, total: batchTotal });
+        // Set up edit view with the receipt's transaction
+        setCurrentTransaction(receipt.transaction);
+        setScanImages(receipt.imageUrl ? [receipt.imageUrl] : []);
+        setView('edit');
+    };
+
+    // Handle back from batch review (return to dashboard, discard batch)
+    const handleBatchReviewBack = () => {
+        setBatchReviewResults([]);
+        setBatchImages([]);
+        batchProcessing.reset();
+        setView('dashboard');
+    };
+
+    // Handle save all complete from batch review
+    const handleBatchSaveComplete = async (savedTransactionIds: string[]) => {
+        // Deduct credits for saved transactions
+        setUserCredits(prev => ({
+            remaining: prev.remaining - savedTransactionIds.length,
+            used: prev.used + savedTransactionIds.length
+        }));
+
+        // Clear batch state
+        setBatchReviewResults([]);
+        setBatchImages([]);
+        batchProcessing.reset();
+
+        // Show success and return to dashboard
+        setToastMessage({
+            text: t('batchSaveSuccess').replace('{count}', String(savedTransactionIds.length)),
+            type: 'info'
+        });
+        setView('dashboard');
+    };
+
+    // Handle save transaction for batch review (AC #6)
+    const handleBatchSaveTransaction = async (transaction: Transaction): Promise<string> => {
+        if (!services || !user) throw new Error('Not authenticated');
+        const { db, appId } = services;
+
+        // Apply category mappings
+        const { transaction: categorizedTx, appliedMappingIds } = applyCategoryMappings(transaction, mappings);
+
+        // Increment mapping usage (fire-and-forget)
+        if (appliedMappingIds.length > 0) {
+            appliedMappingIds.forEach(mappingId => {
+                incrementMappingUsage(db, user.uid, appId, mappingId)
+                    .catch(err => console.error('Failed to increment mapping usage:', err));
+            });
+        }
+
+        // Apply merchant mappings
+        let finalTx = categorizedTx;
+        const merchantMatch = findMerchantMatch(categorizedTx.merchant);
+        if (merchantMatch && merchantMatch.confidence > 0.7) {
+            finalTx = {
+                ...finalTx,
+                alias: merchantMatch.mapping.targetMerchant,
+                merchantSource: 'learned' as const
+            };
+            if (merchantMatch.mapping.id) {
+                incrementMerchantMappingUsage(db, user.uid, appId, merchantMatch.mapping.id)
+                    .catch(err => console.error('Failed to increment merchant mapping usage:', err));
+            }
+        }
+
+        // Save transaction
+        const transactionId = await firestoreAddTransaction(db, user.uid, appId, finalTx);
+        return transactionId;
+    };
+
     // Story 11.1: Remove image from batch
     const handleRemoveBatchImage = (index: number) => {
         setBatchImages(prev => {
@@ -747,6 +998,150 @@ function App() {
             }
             return updated;
         });
+    };
+
+    // Story 11.2: Quick Save Card handlers (AC #3, #4, #7)
+    const handleQuickSave = async () => {
+        if (!services || !user || !quickSaveTransaction || isQuickSaving) return;
+        const { db, appId } = services;
+
+        setIsQuickSaving(true);
+
+        const tDoc = {
+            ...quickSaveTransaction,
+            total: parseStrictNumber(quickSaveTransaction.total)
+        };
+
+        try {
+            // Story 10.6: Async side-effect pattern for insight generation
+            incrementInsightCounter();
+
+            const profile = insightProfile || {
+                schemaVersion: 1 as const,
+                firstTransactionDate: null as any,
+                totalTransactions: 0,
+                recentInsights: [],
+            };
+
+            const silenced = isInsightsSilenced(insightCache);
+
+            // Save transaction and generate insight
+            const transactionId = await firestoreAddTransaction(db, user.uid, appId, tDoc);
+            const txWithId = { ...tDoc, id: transactionId } as Transaction;
+
+            const insight = await generateInsightForTransaction(
+                txWithId,
+                transactions,
+                profile,
+                insightCache
+            );
+
+            // Add to batch session
+            addToBatch(txWithId, insight);
+
+            // Story 11.2: Close Quick Save Card and navigate to dashboard
+            setShowQuickSaveCard(false);
+            setQuickSaveTransaction(null);
+            setPendingScan(null);
+            setView('dashboard');
+
+            // Show insight card (unless silenced or in batch mode)
+            if (!silenced) {
+                const willBeBatchMode = (batchSession?.receipts.length ?? 0) + 1 >= 3;
+                if (willBeBatchMode) {
+                    setShowBatchSummary(true);
+                } else {
+                    setCurrentInsight(insight);
+                    setShowInsightCard(true);
+                }
+            }
+
+            // Record insight shown (if applicable)
+            if (insight && insight.id !== 'building_profile') {
+                recordInsightShown(insight.id, transactionId, {
+                    title: insight.title,
+                    message: insight.message,
+                    icon: insight.icon,
+                    category: insight.category,
+                }).catch(err => console.warn('Failed to record insight:', err));
+            }
+
+            // Track transaction for profile stats
+            const txDate = tDoc.date ? new Date(tDoc.date) : new Date();
+            trackTransactionForInsight(txDate)
+                .catch(err => console.warn('Failed to track transaction:', err));
+
+            // Story 11.4: Record scan for trust tracking (AC #1, #2)
+            // Quick Save = not edited, so wasEdited = false
+            const merchantAlias = tDoc.alias || tDoc.merchant;
+            if (merchantAlias) {
+                try {
+                    const eligibility = await recordMerchantScan(merchantAlias, false);
+                    // AC #3: Show trust prompt if eligible
+                    if (eligibility.shouldShowPrompt) {
+                        setTrustPromptData(eligibility);
+                        setShowTrustPrompt(true);
+                    }
+                } catch (err) {
+                    console.warn('Failed to record merchant scan:', err);
+                }
+            }
+
+        } catch (error) {
+            console.error('Quick save failed:', error);
+            setToastMessage({ text: t('scanFailed'), type: 'info' });
+        } finally {
+            setIsQuickSaving(false);
+        }
+    };
+
+    // Story 11.2: Handle "Editar" from Quick Save Card (AC #4)
+    const handleQuickSaveEdit = () => {
+        if (quickSaveTransaction) {
+            setCurrentTransaction(quickSaveTransaction);
+        }
+        setShowQuickSaveCard(false);
+        setQuickSaveTransaction(null);
+        // Story 11.3: Enable item animation when editing from Quick Save
+        setAnimateEditViewItems(true);
+        setView('edit');
+    };
+
+    // Story 11.2: Handle "Cancelar" from Quick Save Card (AC #7)
+    const handleQuickSaveCancel = () => {
+        setShowQuickSaveCard(false);
+        setQuickSaveTransaction(null);
+        setCurrentTransaction(null);
+        setPendingScan(null);
+        setView('dashboard');
+    };
+
+    // Story 11.4: Trust Prompt handlers (AC #4)
+    const handleAcceptTrust = async () => {
+        if (!trustPromptData?.merchant) return;
+        const merchantName = trustPromptData.merchant.merchantName;
+        try {
+            await acceptTrust(merchantName);
+            setToastMessage({ text: t('trustMerchantConfirm'), type: 'success' });
+        } catch (err) {
+            console.warn('Failed to accept trust:', err);
+        } finally {
+            setShowTrustPrompt(false);
+            setTrustPromptData(null);
+        }
+    };
+
+    const handleDeclineTrust = async () => {
+        if (!trustPromptData?.merchant) return;
+        const merchantName = trustPromptData.merchant.merchantName;
+        try {
+            await declinePrompt(merchantName);
+        } catch (err) {
+            console.warn('Failed to decline trust:', err);
+        } finally {
+            setShowTrustPrompt(false);
+            setTrustPromptData(null);
+        }
     };
 
     // Transaction Handlers
@@ -937,6 +1332,19 @@ function App() {
     const themeClass = isDark ? 'dark' : '';
     const dataTheme = colorTheme === 'professional' ? 'professional' : undefined;
 
+    // Story 12.3: Compute scan status for Nav icon indicator (AC #3)
+    // - 'processing': batch or single scan processing is in progress
+    // - 'ready': batch review results are available
+    // - 'idle': default state
+    // Note: Also includes single scan 'analyzing' state for consistent UX
+    const scanStatus: ScanStatus = batchProcessing.isProcessing
+        ? 'processing'
+        : pendingScan?.status === 'analyzing'
+            ? 'processing'
+            : batchReviewResults.length > 0
+                ? 'ready'
+                : 'idle';
+
     // Synchronously update document.documentElement during render
     // This ensures CSS variables are available before children read them
     // Note: This is intentionally NOT in useEffect to avoid timing issues with useMemo
@@ -985,8 +1393,10 @@ function App() {
         .slice(0, 5);
 
     return (
+        // Story 11.6: Use dvh (dynamic viewport height) for proper PWA sizing (AC #1, #2)
+        // h-screen provides fallback for Safari < 15.4 and older browsers without dvh support
         <div
-            className={`min-h-screen max-w-md mx-auto shadow-xl border-x relative ${themeClass}`}
+            className={`h-screen h-[100dvh] max-w-md mx-auto shadow-xl border-x flex flex-col overflow-hidden ${themeClass}`}
             data-theme={dataTheme}
             style={{
                 backgroundColor: 'var(--bg)',
@@ -1003,7 +1413,12 @@ function App() {
                 onChange={handleFileSelect}
             />
 
-            <main className="p-6 pb-24 h-full overflow-y-auto">
+            {/* Story 11.6: Main content area with flex-1 and overflow (AC #2, #4, #5) */}
+            {/* pb-24 (96px) accounts for nav bar (~70px) + safe area bottom */}
+            <main
+                className="flex-1 overflow-y-auto p-6"
+                style={{ paddingBottom: 'calc(6rem + var(--safe-bottom, 0px))' }}
+            >
                 {/* Story 10a.1: Wrap DashboardView with HistoryFiltersProvider for filter context (AC #2, #6) */}
                 {view === 'dashboard' && (
                     <HistoryFiltersProvider>
@@ -1080,7 +1495,19 @@ function App() {
                         storeCategories={STORE_CATEGORIES as unknown as string[]}
                         formatCurrency={formatCurrency}
                         parseStrictNumber={parseStrictNumber}
-                        onBack={() => setView('dashboard')}
+                        onBack={() => {
+                            // Story 11.3: Reset animation state when leaving EditView
+                            setAnimateEditViewItems(false);
+                            // Story 12.3: If editing from batch, return to batch review
+                            if (batchEditingReceipt) {
+                                setBatchEditingReceipt(null);
+                                setView('batch-review');
+                            } else {
+                                setView('dashboard');
+                            }
+                        }}
+                        // Story 11.3: Animate items for fresh scan results (AC #1-5)
+                        animateItems={animateEditViewItems}
                         onSave={saveTransaction}
                         onDelete={deleteTransaction}
                         onUpdateTransaction={setCurrentTransaction as any}
@@ -1091,7 +1518,12 @@ function App() {
                         onSaveSubcategoryMapping={saveSubcategoryMapping}
                         onShowToast={(text: string) => setToastMessage({ text, type: 'success' })}
                         // Story 9.9: Cancel handler for new transactions
-                        onCancel={!currentTransaction.id ? handleCancelNewTransaction : undefined}
+                        // Story 12.3: If in batch context, return to batch review instead
+                        onCancel={!currentTransaction.id ? (batchEditingReceipt ? () => {
+                            setBatchEditingReceipt(null);
+                            setCurrentTransaction(null);
+                            setView('batch-review');
+                        } : handleCancelNewTransaction) : undefined}
                         // Story 9.9: Scan-related props for unified transaction flow (only for new transactions)
                         scanImages={!currentTransaction.id ? scanImages : undefined}
                         onAddPhoto={!currentTransaction.id ? () => fileInputRef.current?.click() : undefined}
@@ -1110,6 +1542,8 @@ function App() {
                         userCredits={userCredits}
                         // Story 9.12: Language for category translations (AC #6)
                         lang={lang}
+                        // Story 12.3: Batch context for editing from batch review (AC #4)
+                        batchContext={batchEditingReceipt ? { index: batchEditingReceipt.index, total: batchEditingReceipt.total } : null}
                     />
                 )}
 
@@ -1156,6 +1590,60 @@ function App() {
                         }}
                         theme={theme}
                         t={t}
+                    />
+                )}
+
+                {/* Story 12.1: Batch Capture UI - dedicated batch mode view (AC #1-9) */}
+                {view === 'batch-capture' && (
+                    <BatchCaptureView
+                        isBatchMode={isBatchCaptureMode}
+                        onToggleMode={(batchMode) => {
+                            setIsBatchCaptureMode(batchMode);
+                            if (!batchMode) {
+                                // Switch to individual mode - go to edit view
+                                handleNewTransaction(false);
+                            }
+                        }}
+                        onProcessBatch={(images) => {
+                            // Set batch images and show batch preview (reuse existing 11.1 flow)
+                            setBatchImages(images);
+                            setShowBatchPreview(true);
+                            setView('dashboard');
+                        }}
+                        onSwitchToIndividual={() => {
+                            setIsBatchCaptureMode(false);
+                            handleNewTransaction(false);
+                        }}
+                        onBack={() => {
+                            setIsBatchCaptureMode(false);
+                            setView('dashboard');
+                        }}
+                        isProcessing={isBatchProcessing}
+                        theme={theme as 'light' | 'dark'}
+                        t={t}
+                    />
+                )}
+
+                {/* Story 12.3: Batch Review Queue - review processed receipts before saving (AC #1-8) */}
+                {/* Also shows processing progress when navigating back during batch processing */}
+                {view === 'batch-review' && (
+                    <BatchReviewView
+                        processingResults={batchReviewResults}
+                        imageDataUrls={batchImages}
+                        theme={theme as 'light' | 'dark'}
+                        currency={currency}
+                        t={t}
+                        onEditReceipt={handleBatchEditReceipt}
+                        onBack={handleBatchReviewBack}
+                        onSaveComplete={handleBatchSaveComplete}
+                        saveTransaction={handleBatchSaveTransaction}
+                        // Story 12.3: Pass processing state for inline progress display
+                        processingState={batchProcessing.isProcessing ? {
+                            isProcessing: true,
+                            progress: batchProcessing.progress,
+                            states: batchProcessing.states,
+                            onCancelProcessing: batchProcessing.cancel,
+                        } : undefined}
                     />
                 )}
 
@@ -1207,6 +1695,10 @@ function App() {
                         userId={user?.uid || null}
                         appId={services?.appId || null}
                         onShowToast={(text: string) => setToastMessage({ text, type: 'success' })}
+                        // Story 11.4: Trusted merchants management (AC #6, #7)
+                        trustedMerchants={trustedMerchants}
+                        trustedMerchantsLoading={trustedMerchantsLoading}
+                        onRevokeTrust={removeTrust}
                     />
                 )}
             </main>
@@ -1214,13 +1706,28 @@ function App() {
             <Nav
                 view={view}
                 setView={(v: string) => setView(v as View)}
-                onScanClick={triggerScan}
+                onScanClick={() => {
+                    // Story 12.3: If processing, go to batch-review to show progress
+                    // If ready, go to batch-review to show results
+                    if (scanStatus === 'processing' || scanStatus === 'ready') {
+                        setView('batch-review');
+                    } else {
+                        triggerScan();
+                    }
+                }}
+                // Story 12.1: Long-press on camera FAB opens batch capture mode (AC #1)
+                onBatchClick={() => {
+                    setIsBatchCaptureMode(true);
+                    setView('batch-capture');
+                }}
                 onTrendsClick={() => {
                     // Navigation state is now managed by AnalyticsContext
                     // Context resets to year level when mounted
                 }}
                 theme={theme}
                 t={t}
+                // Story 12.3: Pass scan status for NAV icon indicator (AC #3)
+                scanStatus={scanStatus}
             />
 
             {/* Toast notification for feedback (AC#6, AC#7) */}
@@ -1255,23 +1762,62 @@ function App() {
                       />
             )}
 
+            {/* Story 11.2: Quick Save Card for high-confidence scans (AC #1-9) */}
+            {showQuickSaveCard && quickSaveTransaction && (
+                <QuickSaveCard
+                    transaction={quickSaveTransaction}
+                    confidence={quickSaveConfidence}
+                    onSave={handleQuickSave}
+                    onEdit={handleQuickSaveEdit}
+                    onCancel={handleQuickSaveCancel}
+                    theme={theme as 'light' | 'dark'}
+                    t={t}
+                    formatCurrency={formatCurrency}
+                    currency={currency}
+                    isSaving={isQuickSaving}
+                />
+            )}
+
             {/* Story 11.1: Batch upload preview for multi-image selection (AC #2) */}
+            {/* Story 11.6: Modal with safe area padding (AC #3) */}
             {showBatchPreview && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                <div
+                    className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
+                    style={{ padding: 'calc(1rem + var(--safe-top, 0px)) calc(1rem + var(--safe-right, 0px)) calc(1rem + var(--safe-bottom, 0px)) calc(1rem + var(--safe-left, 0px))' }}
+                >
                     <BatchUploadPreview
                         images={batchImages}
                         theme={theme as 'light' | 'dark'}
                         t={t}
-                        onConfirm={processBatchImages}
+                        onConfirm={handleBatchConfirmWithCreditCheck}
                         onCancel={handleCancelBatchPreview}
                         onRemoveImage={handleRemoveBatchImage}
                     />
                 </div>
             )}
 
-            {/* Story 11.1: Batch processing progress (AC #4) */}
+            {/* Story 12.4: Credit Warning Dialog (AC #1, #2, #5, #7) */}
+            {showCreditWarning && creditCheckResult && (
+                <CreditWarningDialog
+                    creditCheck={creditCheckResult}
+                    receiptCount={batchImages.length}
+                    theme={theme as 'light' | 'dark'}
+                    t={t}
+                    onConfirm={handleCreditWarningConfirm}
+                    onCancel={handleCreditWarningCancel}
+                    onReduceBatch={creditCheckResult.maxProcessable > 0 ? handleReduceBatch : undefined}
+                />
+            )}
+
+            {/* Story 11.1: Batch processing progress (AC #4) - Legacy sequential processing only */}
+            {/* Story 11.6: Modal with safe area padding (AC #3) */}
+            {/* Story 12.3: Parallel processing (batchProcessing) now shows inline in BatchReviewView */}
+            {/* This modal is only for legacy isBatchProcessing (sequential) which is deprecated */}
             {isBatchProcessing && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                <div
+                    className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
+                    style={{ padding: 'calc(1rem + var(--safe-top, 0px)) calc(1rem + var(--safe-right, 0px)) calc(1rem + var(--safe-bottom, 0px)) calc(1rem + var(--safe-left, 0px))' }}
+                >
                     <BatchProcessingProgress
                         current={batchProgress.current}
                         total={batchProgress.total}
@@ -1285,8 +1831,12 @@ function App() {
             )}
 
             {/* Story 11.1: Batch cancel confirmation dialog */}
+            {/* Story 11.6: Modal with safe area padding (AC #3) */}
             {showBatchCancelConfirm && (
-                <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4">
+                <div
+                    className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center"
+                    style={{ padding: 'calc(1rem + var(--safe-top, 0px)) calc(1rem + var(--safe-right, 0px)) calc(1rem + var(--safe-bottom, 0px)) calc(1rem + var(--safe-left, 0px))' }}
+                >
                     <div
                         className="rounded-xl p-6 max-w-sm w-full shadow-xl"
                         style={{
@@ -1359,6 +1909,18 @@ function App() {
                     }}
                     isSilenced={isInsightsSilenced(insightCache)}
                     theme={theme as 'light' | 'dark'}
+                />
+            )}
+
+            {/* Story 11.4: Trust Merchant Prompt (AC #2, #3, #4) */}
+            {showTrustPrompt && trustPromptData?.merchant && (
+                <TrustMerchantPrompt
+                    merchantName={trustPromptData.merchant.merchantName}
+                    scanCount={trustPromptData.merchant.scanCount}
+                    onAccept={handleAcceptTrust}
+                    onDecline={handleDeclineTrust}
+                    theme={theme as 'light' | 'dark'}
+                    t={t}
                 />
             )}
         </div>

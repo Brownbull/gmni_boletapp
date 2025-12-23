@@ -150,9 +150,13 @@ export const UpgradePromptModal: React.FC<UpgradePromptModalProps> = ({
   const secondaryText = theme === 'dark' ? 'text-slate-300' : 'text-slate-600';
   const borderColor = theme === 'dark' ? 'border-slate-700' : 'border-slate-200';
 
+  // Story 11.6: Modal with safe area padding (AC #3, #6)
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{
+        padding: 'calc(1rem + var(--safe-top, 0px)) calc(1rem + var(--safe-right, 0px)) calc(1rem + var(--safe-bottom, 0px)) calc(1rem + var(--safe-left, 0px))',
+      }}
       onClick={handleClose}
       role="presentation"
     >
