@@ -1,0 +1,4999 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="mono" data-font="outfit" data-mode="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gastify - Analytics Polygon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Baloo+2:wght@700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       DESIGN TOKENS FROM REFERENCE
+       ============================================ */
+    :root {
+      /* Primary Palette */
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --primary-dark: #1e40af;
+      /* Secondary */
+      --secondary: #64748b;
+      --secondary-light: #f1f5f9;
+      --accent: #0ea5e9;
+      /* Backgrounds */
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --bg-inverse: #0f172a;
+      /* Text */
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --text-inverse: #f8fafc;
+      /* Borders */
+      --border-light: #e2e8f0;
+      --border-medium: #cbd5e1;
+      --border-dark: #94a3b8;
+      /* Semantic */
+      --success: #22c55e;
+      --success-light: #dcfce7;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --error: #ef4444;
+      --error-light: #fee2e2;
+      /* Category Colors */
+      --cat-groceries: #22c55e;
+      --cat-restaurant: #ef4444;
+      --cat-transport: #3b82f6;
+      --cat-entertainment: #8b5cf6;
+      --cat-utilities: #f59e0b;
+      --cat-other: #6b7280;
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      /* Spacing */
+      --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+      --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+      /* Radii */
+      --radius-sm: 6px; --radius-md: 10px; --radius-lg: 12px;
+      --radius-xl: 16px; --radius-2xl: 20px; --radius-full: 9999px;
+      /* Typography */
+      --font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+      --transition-fast: 150ms ease;
+      --transition-normal: 200ms ease;
+      --transition-slow: 300ms ease;
+    }
+
+    /* THEME 1: Professional Blue */
+    [data-theme="professional"] {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --primary-dark: #1e40af;
+      --secondary: #64748b;
+      --secondary-light: #f1f5f9;
+      --accent: #0ea5e9;
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --bg-inverse: #0f172a;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --border-light: #e2e8f0;
+      --border-medium: #cbd5e1;
+    }
+
+    /* THEME 2: Monochrome Minimal (Default) */
+    [data-theme="mono"] {
+      --primary: #18181b;
+      --primary-hover: #27272a;
+      --primary-light: #f4f4f5;
+      --primary-dark: #09090b;
+      --secondary: #52525b;
+      --secondary-light: #e4e4e7;
+      --accent: #3b82f6;
+      --bg-primary: #fafafa;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f4f4f5;
+      --bg-inverse: #18181b;
+      --text-primary: #18181b;
+      --text-secondary: #52525b;
+      --text-tertiary: #a1a1aa;
+      --border-light: #e4e4e7;
+      --border-medium: #d4d4d8;
+    }
+
+    /* THEME 3: Ni No Kuni / Studio Ghibli */
+    [data-theme="ninokuni"] {
+      --primary: #4a7c59;
+      --primary-hover: #3d6b4a;
+      --primary-light: #d4e5d9;
+      --primary-dark: #2d5438;
+      --secondary: #5b8fa8;
+      --secondary-light: #d5e8f0;
+      --accent: #e8a87c;
+      --bg-primary: #f5f0e8;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1dbb6;
+      --bg-inverse: #2d3a4a;
+      --text-primary: #2d3a4a;
+      --text-secondary: #4a5568;
+      --text-tertiary: #7d9b5f;
+      --border-light: #e3bba1;
+      --border-medium: #d4a574;
+      --success: #7d9b5f;
+      --success-light: #d4e5d9;
+    }
+
+    /* ============================================
+       DARK MODE VARIANTS
+       ============================================ */
+
+    /* Professional Blue - Dark Mode */
+    [data-theme="professional"][data-mode="dark"] {
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --primary-light: #1e3a5f;
+      --primary-dark: #60a5fa;
+      --secondary: #94a3b8;
+      --secondary-light: #334155;
+      --accent: #38bdf8;
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --bg-inverse: #f8fafc;
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-tertiary: #64748b;
+      --text-inverse: #0f172a;
+      --border-light: #334155;
+      --border-medium: #475569;
+      --border-dark: #64748b;
+    }
+
+    /* Mono - Dark Mode */
+    [data-theme="mono"][data-mode="dark"] {
+      --primary: #a1a1aa;
+      --primary-hover: #d4d4d8;
+      --primary-light: #27272a;
+      --primary-dark: #e4e4e7;
+      --secondary: #71717a;
+      --secondary-light: #3f3f46;
+      --accent: #60a5fa;
+      --bg-primary: #09090b;
+      --bg-secondary: #18181b;
+      --bg-tertiary: #27272a;
+      --bg-inverse: #fafafa;
+      --text-primary: #fafafa;
+      --text-secondary: #d4d4d8;
+      --text-tertiary: #71717a;
+      --text-inverse: #09090b;
+      --border-light: #27272a;
+      --border-medium: #3f3f46;
+    }
+
+    /* Ni No Kuni - Dark Mode */
+    [data-theme="ninokuni"][data-mode="dark"] {
+      --primary: #6b9e7a;
+      --primary-hover: #5a8a68;
+      --primary-light: #2d3d32;
+      --primary-dark: #8fbf9c;
+      --secondary: #7ba8be;
+      --secondary-light: #2d3d4a;
+      --accent: #d4a574;
+      --bg-primary: #1a2420;
+      --bg-secondary: #243028;
+      --bg-tertiary: #2d3d32;
+      --bg-inverse: #f5f0e8;
+      --text-primary: #e8e4dc;
+      --text-secondary: #b8c4a8;
+      --text-tertiary: #6b8b5f;
+      --text-inverse: #2d3a4a;
+      --border-light: #3d4d42;
+      --border-medium: #4d5d52;
+      --success: #8fbf9c;
+      --success-light: #2d3d32;
+    }
+
+    /* Font Definitions */
+    body[data-font="outfit"] { --font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif; }
+    body[data-font="space"] { --font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; }
+
+    /* Logo Style Definitions - Paired with themes */
+    body[data-theme="professional"] .g-logo-circle { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important; }
+    body[data-theme="mono"] .g-logo-circle { background: linear-gradient(135deg, #18181b 0%, #3f3f46 100%) !important; }
+    body[data-theme="ninokuni"] .g-logo-circle { background: linear-gradient(135deg, #4a7c59 0%, #5b8fa8 100%) !important; }
+
+    /* Logo Style Definitions - Dark Mode Variants */
+    body[data-theme="professional"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important; }
+    body[data-theme="mono"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #a1a1aa 0%, #71717a 100%) !important; }
+    body[data-theme="ninokuni"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #6b9e7a 0%, #7ba8be 100%) !important; }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-family);
+      background: #1a1a2e;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+      gap: 24px;
+    }
+
+    /* Page Layout */
+    .page-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* Global Controls Panel */
+    .global-controls {
+      background: rgba(30, 41, 59, 0.95);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      padding: 12px 20px;
+      display: flex;
+      flex-direction: row;
+      gap: 24px;
+      border: 1px solid rgba(255,255,255,0.1);
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .control-group { display: flex; align-items: center; gap: 10px; }
+    .control-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      white-space: nowrap;
+    }
+    .control-options { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* Theme Swatches */
+    .theme-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 150ms ease;
+    }
+    .theme-swatch:hover { transform: scale(1.1); }
+    .theme-swatch.active {
+      border-color: white;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+    }
+    .theme-swatch[data-theme="professional"] { background: linear-gradient(135deg, #2563eb 50%, #64748b 50%); }
+    .theme-swatch[data-theme="mono"] { background: linear-gradient(135deg, #18181b 50%, #52525b 50%); }
+    .theme-swatch[data-theme="ninokuni"] { background: linear-gradient(135deg, #4a7c59 50%, #5b8fa8 50%); }
+
+    /* Font Pills */
+    .font-pill {
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: #94a3b8;
+      transition: all 150ms ease;
+    }
+    .font-pill:hover { background: rgba(255,255,255,0.1); }
+    .font-pill.active {
+      background: white;
+      color: #0f172a;
+      border-color: white;
+    }
+
+    /* Mode Toggle */
+    .mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: #94a3b8;
+      transition: all 150ms ease;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .mode-toggle:hover { background: rgba(255,255,255,0.1); }
+    .mode-toggle.active {
+      background: #1e293b;
+      border-color: #3b82f6;
+      color: #f1f5f9;
+    }
+    .mode-toggle svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    /* Phone Frame */
+    .phone-frame {
+      width: 375px;
+      min-height: 812px;
+      background: #1e293b;
+      border-radius: 54px;
+      padding: 14px;
+      box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25),
+        inset 0 0 0 2px #334155, inset 0 0 0 4px #475569;
+    }
+    .phone-screen {
+      width: 100%;
+      height: 784px;
+      background: var(--bg-primary);
+      border-radius: 44px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px 8px;
+      background: var(--bg-primary);
+    }
+    .status-time { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .status-icons { display: flex; gap: 4px; align-items: center; }
+    .status-icons svg { width: 16px; height: 16px; fill: var(--text-primary); }
+
+    /* Header Bar - Explorer Pattern */
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px 12px;
+      background: var(--bg-primary);
+    }
+    .header-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+    }
+
+    /* Filter Icon Buttons */
+    .filter-icon-btn {
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      position: relative;
+    }
+    .filter-icon-btn:hover {
+      background: var(--bg-tertiary);
+    }
+    .filter-icon-btn.active {
+      background: var(--primary-light);
+    }
+    .filter-icon-btn.active svg {
+      stroke: var(--primary);
+    }
+    .filter-icon-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--text-secondary);
+      fill: none;
+      stroke-width: 1.8;
+    }
+
+    /* Filter Dropdown Menu */
+    .filter-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      min-width: 220px;
+      max-height: 400px;
+      overflow-y: auto;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-light);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-8px);
+      transition: all var(--transition-fast);
+      z-index: 100;
+      font-family: var(--font-family);
+    }
+    .filter-dropdown::-webkit-scrollbar {
+      width: 6px;
+    }
+    .filter-dropdown::-webkit-scrollbar-track {
+      background: var(--bg-tertiary);
+      border-radius: 3px;
+    }
+    .filter-dropdown::-webkit-scrollbar-thumb {
+      background: var(--border-medium);
+      border-radius: 3px;
+    }
+    .filter-dropdown.open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    .filter-dropdown-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-light);
+      font-family: var(--font-family);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-tertiary);
+    }
+    .filter-dropdown-section {
+      padding: 0;
+    }
+    .filter-dropdown-label {
+      padding: 6px 16px;
+      font-family: var(--font-family);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .filter-dropdown-label.collapsible {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      padding: 8px 16px;
+      background: var(--bg-tertiary);
+      transition: background var(--transition-fast);
+    }
+    .filter-dropdown-label.collapsible:hover {
+      background: var(--border-light);
+    }
+    .section-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-toggle-btn {
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--border-medium);
+      border-radius: 4px;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .section-toggle-btn:hover {
+      border-color: var(--primary);
+    }
+    .section-toggle-btn.all-selected {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+    .section-toggle-btn.some-selected {
+      background: var(--primary-light);
+      border-color: var(--primary);
+    }
+    .section-toggle-btn .toggle-check {
+      width: 14px;
+      height: 14px;
+      stroke: transparent;
+      fill: none;
+      stroke-width: 3;
+      transition: stroke var(--transition-fast);
+    }
+    .section-toggle-btn.all-selected .toggle-check {
+      stroke: white;
+    }
+    .section-toggle-btn.some-selected .toggle-check {
+      stroke: var(--primary);
+    }
+    .filter-dropdown-label .collapse-icon {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-tertiary);
+      fill: none;
+      stroke-width: 2;
+      transition: transform var(--transition-fast);
+      cursor: pointer;
+    }
+    .filter-dropdown-label.collapsed .collapse-icon {
+      transform: rotate(-90deg);
+    }
+    .filter-dropdown-items {
+      max-height: 500px;
+      overflow: hidden;
+      transition: max-height var(--transition-normal);
+    }
+    .filter-dropdown-items.collapsed {
+      max-height: 0;
+    }
+    .filter-dropdown-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      font-family: var(--font-family);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    /* Zebra striping for dropdown items */
+    .filter-dropdown-item:nth-child(odd) {
+      background: var(--bg-secondary);
+    }
+    .filter-dropdown-item:nth-child(even) {
+      background: var(--bg-tertiary);
+    }
+    .filter-dropdown-item:hover {
+      background: var(--border-light);
+    }
+    .filter-dropdown-item.selected {
+      background: var(--primary-light) !important;
+      color: var(--primary);
+    }
+    .filter-dropdown-item.selected::after {
+      content: '✓';
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    /* Multi-select checkbox style */
+    .filter-checkbox {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border-medium);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-right: 10px;
+      transition: all var(--transition-fast);
+    }
+    .filter-dropdown-item.selected .filter-checkbox {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+    .filter-checkbox svg {
+      width: 12px;
+      height: 12px;
+      stroke: white;
+      stroke-width: 3;
+      fill: none;
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+    }
+    .filter-dropdown-item.selected .filter-checkbox svg {
+      opacity: 1;
+    }
+    .filter-item-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+    .filter-dropdown-value {
+      font-family: var(--font-family);
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+    .filter-dropdown-empty {
+      padding: 16px;
+      text-align: center;
+      font-family: var(--font-family);
+      font-size: 13px;
+      font-style: italic;
+      color: var(--text-tertiary);
+    }
+
+    /* Time Filter Slider Row */
+    .time-slider-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      gap: 8px;
+      background: var(--bg-secondary);
+    }
+    .time-slider-row:nth-child(odd) {
+      background: var(--bg-tertiary);
+    }
+    .time-slider-label {
+      font-family: var(--font-family);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      min-width: 65px;
+      cursor: pointer;
+      padding: 4px 8px;
+      margin: -4px -8px;
+      border-radius: var(--radius-md);
+      transition: all var(--transition-fast);
+    }
+    .time-slider-label:hover {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+    }
+    .time-slider-label.active {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .time-slider-control {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+      justify-content: flex-end;
+    }
+    .time-slider-btn {
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: transparent;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      color: var(--text-tertiary);
+    }
+    .time-slider-btn:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+    .time-slider-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    .time-slider-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+    .time-slider-value {
+      font-family: var(--font-family);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      min-width: 80px;
+      text-align: center;
+      padding: 4px 8px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+    }
+    .time-slider-value.selected {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* Breadcrumb Row - contains breadcrumb title and view toggle */
+    .breadcrumb-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 32px;
+    }
+
+    /* Time Selector Component */
+    .time-selector-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+    .time-selector-pills {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.06);
+      border-radius: 20px;
+      padding: 4px;
+      gap: 4px;
+    }
+    [data-theme="dark"] .time-selector-pills,
+    .dark .time-selector-pills {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .time-pill {
+      padding: 8px 14px;
+      font-family: var(--font-family);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      white-space: nowrap;
+    }
+    .time-pill:hover:not(.active) {
+      color: var(--text-primary);
+      background: rgba(0, 0, 0, 0.05);
+    }
+    [data-theme="dark"] .time-pill:hover:not(.active),
+    .dark .time-pill:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .time-pill.active {
+      background: var(--primary);
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .period-navigator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .period-nav-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid var(--border-light);
+      background: var(--bg-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .period-nav-btn:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--border-medium);
+    }
+    .period-nav-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--text-secondary);
+      stroke-width: 2;
+      fill: none;
+    }
+    .period-label {
+      font-family: var(--font-family);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      min-width: 120px;
+      text-align: center;
+    }
+
+    /* Analytics Carousel Card */
+    .analytics-card {
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      overflow: hidden;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+    }
+    .analytics-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      position: relative;
+    }
+    .analytics-card-title {
+      font-family: var(--font-family);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .analytics-card-nav {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: auto;
+    }
+    .analytics-nav-btn {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      color: var(--text-secondary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .analytics-nav-btn:hover {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+    .analytics-nav-btn:active {
+      transform: scale(0.95);
+    }
+    .analytics-nav-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+    /* View Toggle Button (for Distribución slide) - Single circular morphing button */
+    .view-toggle-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: var(--bg-tertiary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition-normal);
+      color: var(--text-secondary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-left: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .view-toggle-btn:hover {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      transform: scale(1.05);
+    }
+    .view-toggle-btn:active {
+      transform: scale(0.95);
+    }
+    /* Icon states - primary is darker, secondary is lighter */
+    .view-toggle-btn[data-current="primary"] {
+      background: var(--text-tertiary);
+      color: white;
+    }
+    .view-toggle-btn[data-current="secondary"] {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+    }
+    /* SVG icon container for morphing */
+    .view-toggle-btn .icon-morph {
+      position: relative;
+      width: 16px;
+      height: 16px;
+    }
+    .view-toggle-btn .icon-morph svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .view-toggle-btn .icon-primary {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+    }
+    .view-toggle-btn .icon-secondary {
+      opacity: 0;
+      transform: scale(0.5) rotate(-90deg);
+    }
+    .view-toggle-btn[data-current="secondary"] .icon-primary {
+      opacity: 0;
+      transform: scale(0.5) rotate(90deg);
+    }
+    .view-toggle-btn[data-current="secondary"] .icon-secondary {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+    }
+    /* Distribution view containers */
+    .distribution-views {
+      position: relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      box-shadow: none;
+      border: none;
+    }
+    .distribution-view {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition-normal);
+      box-shadow: none;
+      border: none;
+    }
+    .distribution-view.active {
+      position: relative;
+      opacity: 1;
+      pointer-events: auto;
+    }
+    /* Tendencia view containers */
+    .tendencia-views {
+      position: relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      box-shadow: none;
+      border: none;
+    }
+    .tendencia-view {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition-normal);
+      box-shadow: none;
+      border: none;
+    }
+    .tendencia-view.active {
+      position: relative;
+      opacity: 1;
+      pointer-events: auto;
+    }
+    /* Carousel Container */
+    .analytics-carousel {
+      position: relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .analytics-carousel-viewport {
+      flex: 1;
+      overflow: hidden;
+    }
+    .analytics-carousel-track {
+      display: flex;
+      height: 100%;
+      transition: transform var(--transition-slow);
+    }
+    .analytics-carousel-slide {
+      min-width: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Carousel Indicator Bar */
+    .analytics-indicator-bar {
+      display: flex;
+      height: 5px;
+      background: var(--border-light);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    .analytics-indicator-segment {
+      flex: 1;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      position: relative;
+      transition: background var(--transition-fast);
+    }
+    .analytics-indicator-segment::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      width: 1px;
+      background: var(--bg-tertiary);
+      opacity: 0.5;
+    }
+    .analytics-indicator-segment:last-child::after { display: none; }
+    .analytics-indicator-segment:hover { background: rgba(0,0,0,0.05); }
+    .analytics-indicator-segment.active {
+      background: var(--primary);
+    }
+    .analytics-indicator-segment.active::after { display: none; }
+
+    /* Balance Layout */
+    .balance-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+
+    /* Row 1: Total Gastado + Transacciones */
+    .balance-row-top {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Hero Card (Total Gastado) - Blue gradient with 3D effect */
+    .hero-stat-card {
+      flex: 1.2;
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      color: white;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3), 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .hero-stat-label {
+      font-family: var(--font-family);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      opacity: 0.85;
+    }
+    .hero-stat-value {
+      font-family: var(--font-family);
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 2px 0;
+    }
+    .hero-stat-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 600;
+      width: fit-content;
+    }
+    .hero-stat-badge svg {
+      width: 11px;
+      height: 11px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.5;
+    }
+
+    /* Transactions Card - White/Light with 3D effect */
+    .transactions-stat-card {
+      flex: 0.8;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .transactions-stat-label {
+      font-family: var(--font-family);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .transactions-stat-value {
+      font-family: var(--font-family);
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .transactions-stat-change {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .transactions-stat-change.positive {
+      background: var(--success-light);
+      color: var(--success);
+    }
+    .transactions-stat-change.negative {
+      background: var(--error-light);
+      color: var(--error);
+    }
+    .transactions-stat-change svg {
+      width: 11px;
+      height: 11px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.5;
+    }
+
+    /* Row 2: Promedio por Compra with sparkline */
+    .average-stat-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .average-stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .average-stat-label {
+      font-family: var(--font-family);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+    }
+    .average-stat-badge {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .average-stat-badge.positive {
+      background: var(--success-light);
+      color: var(--success);
+    }
+    .average-stat-badge.negative {
+      background: var(--error-light);
+      color: var(--error);
+    }
+    .average-stat-badge svg {
+      width: 10px;
+      height: 10px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.5;
+    }
+    .average-stat-value {
+      font-family: var(--font-family);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .average-sparkline {
+      height: 44px;
+      margin-top: 2px;
+    }
+    .average-sparkline svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Row 3: Month-over-Month Comparisons */
+    .comparison-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .comparison-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .comparison-card-left {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .comparison-card-label {
+      font-family: var(--font-family);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+    }
+    .comparison-card-value {
+      font-family: var(--font-family);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .comparison-card-value.positive { color: var(--error); }
+    .comparison-card-value.negative { color: var(--success); }
+    .comparison-card-badge {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      padding: 5px 10px;
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .comparison-card-badge.positive {
+      background: var(--error-light);
+      color: var(--error);
+    }
+    .comparison-card-badge.negative {
+      background: var(--success-light);
+      color: var(--success);
+    }
+    .comparison-card-badge svg {
+      width: 11px;
+      height: 11px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.5;
+    }
+
+    /* Balance Views Container (for toggle between stats and donut) */
+    .balance-views {
+      position: relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      box-shadow: none;
+      border: none;
+    }
+    .balance-view {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition-normal);
+      box-shadow: none;
+      border: none;
+    }
+    .balance-view.active {
+      position: relative;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Balance Charts Layout (View 2) */
+    .balance-charts-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      height: 100%;
+    }
+    .chart-section-title {
+      font-family: var(--font-family);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Weekly Bar Chart */
+    .weekly-bar-chart {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .weekly-bars {
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-end;
+      height: 100px;
+      gap: 8px;
+    }
+    .week-bar-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+    }
+    .week-bar-container {
+      width: 100%;
+      height: 80px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .week-bar {
+      width: 100%;
+      max-width: 40px;
+      background: var(--primary-light);
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+      transition: all var(--transition-fast);
+      position: relative;
+    }
+    .week-bar::after {
+      content: attr(data-value);
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+    }
+    .week-bar-item:hover .week-bar::after,
+    .week-bar-item.active .week-bar::after {
+      opacity: 1;
+    }
+    .week-bar-item.active .week-bar {
+      background: var(--primary-color);
+    }
+    .week-bar-item:hover .week-bar {
+      background: var(--primary-color);
+      opacity: 0.8;
+    }
+    .week-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+    }
+    .week-bar-item.active .week-label {
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+
+    /* Category Comparison Horizontal Bars */
+    .category-comparison {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      flex: 1;
+    }
+    .stacked-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .stacked-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .stacked-bar-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 100px;
+    }
+    .stacked-bar-icon {
+      font-size: 14px;
+    }
+    .stacked-bar-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .stacked-bar-track {
+      flex: 1;
+      height: 16px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .stacked-bar-fill {
+      height: 100%;
+      border-radius: 8px;
+      transition: width var(--transition-normal);
+    }
+    .stacked-bar-fill.groceries { background: var(--success); }
+    .stacked-bar-fill.restaurant { background: var(--warning); }
+    .stacked-bar-fill.transport { background: var(--primary-color); }
+    .stacked-bar-fill.other { background: var(--text-tertiary); }
+    .stacked-bar-value {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      min-width: 40px;
+      text-align: right;
+    }
+
+    /* Category Donut Chart */
+    .donut-chart-layout {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      gap: 8px;
+      padding: 0;
+    }
+    .donut-chart-header {
+      text-align: center;
+      padding: 4px 0;
+    }
+    .donut-chart-title {
+      font-family: var(--font-family);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: block;
+    }
+    .donut-chart-total {
+      font-family: var(--font-family);
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: block;
+      margin-top: 2px;
+    }
+    .donut-chart-container {
+      position: relative;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 8px 0;
+    }
+    .donut-chart-svg {
+      width: 140px;
+      height: 140px;
+      transform: rotate(-90deg);
+    }
+    .donut-segment {
+      fill: none;
+      stroke-width: 14;
+      cursor: pointer;
+      transition: opacity 0.2s ease, stroke-width 0.2s ease;
+    }
+    .donut-segment:hover,
+    .donut-segment.active {
+      stroke-width: 16;
+    }
+    .donut-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+    }
+    .donut-center-value {
+      font-family: var(--font-family);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: block;
+    }
+    .donut-center-label {
+      font-family: var(--font-family);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      display: block;
+      margin-top: 2px;
+    }
+    .donut-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 0 4px;
+    }
+    .donut-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-family);
+      cursor: pointer;
+      padding: 6px 8px;
+      border-radius: var(--radius-md);
+      transition: background 0.2s ease;
+    }
+    .donut-legend-item:hover {
+      background: var(--bg-tertiary);
+    }
+    .donut-legend-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 16px;
+    }
+    .donut-legend-icon.groceries { background: var(--success-light); }
+    .donut-legend-icon.restaurant { background: #fef3c7; }
+    .donut-legend-icon.transport { background: var(--primary-light); }
+    .donut-legend-icon.entertainment { background: #ede9fe; }
+    .donut-legend-icon.health { background: #fce7f3; }
+    .donut-legend-icon.utilities { background: #cffafe; }
+    .donut-legend-icon.education { background: #ccfbf1; }
+    .donut-legend-icon.other { background: var(--bg-tertiary); }
+    .donut-legend-info {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      gap: 0;
+    }
+    .donut-legend-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+    .donut-legend-details {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      line-height: 1.3;
+    }
+    .donut-legend-percent {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      min-width: 36px;
+      text-align: right;
+    }
+    /* Right side actions container */
+    .donut-legend-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+    }
+    /* Circular Add/Remove buttons - visible with background */
+    .donut-category-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .donut-category-btn svg {
+      width: 12px;
+      height: 12px;
+      stroke-width: 2.5;
+      fill: none;
+    }
+    .donut-category-btn.add {
+      background: var(--primary-color);
+    }
+    .donut-category-btn.add svg {
+      stroke: white;
+    }
+    .donut-category-btn.add:hover {
+      background: var(--primary-dark);
+      transform: scale(1.1);
+    }
+    .donut-category-btn.remove {
+      background: var(--border-medium, #d1d5db);
+    }
+    .donut-category-btn.remove svg {
+      stroke: var(--text-primary);
+    }
+    .donut-category-btn.remove:hover {
+      background: var(--danger-light);
+      transform: scale(1.1);
+    }
+    .donut-category-btn.remove:hover svg {
+      stroke: var(--danger-color);
+    }
+    /* Drill-down chevron */
+    .donut-drilldown-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .donut-drilldown-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--text-tertiary);
+      stroke-width: 2;
+      fill: none;
+    }
+    .donut-drilldown-btn:hover {
+      background: var(--bg-tertiary);
+    }
+    .donut-drilldown-btn:hover svg {
+      stroke: var(--text-primary);
+    }
+    /* Inactive category (greyed out, waiting to be added) */
+    .donut-legend-item.inactive {
+      border: 1px dashed var(--border-color);
+      background: var(--bg-secondary);
+    }
+    .donut-legend-item.inactive .donut-legend-icon,
+    .donut-legend-item.inactive .donut-legend-info {
+      opacity: 0.5;
+    }
+    .donut-legend-item.inactive:hover .donut-legend-icon,
+    .donut-legend-item.inactive:hover .donut-legend-info {
+      opacity: 0.7;
+    }
+    .donut-legend-item.inactive:hover {
+      background: var(--bg-tertiary);
+    }
+    /* Keep buttons fully visible in inactive items */
+    .donut-legend-item.inactive .donut-category-btn {
+      opacity: 1;
+    }
+
+    /* Trend List Layout (Third Carousel Slide) */
+    .trend-list-layout {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+    .trend-list-scroll {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-right: 4px;
+    }
+    .trend-list-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+    .trend-list-scroll::-webkit-scrollbar-track {
+      background: var(--bg-tertiary);
+      border-radius: 2px;
+    }
+    .trend-list-scroll::-webkit-scrollbar-thumb {
+      background: var(--border-medium);
+      border-radius: 2px;
+    }
+    .trend-list-item {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.08);
+      flex-shrink: 0;
+    }
+    .trend-item-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .trend-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .trend-item-name {
+      font-family: var(--font-family);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .trend-item-count {
+      font-family: var(--font-family);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-top: 1px;
+    }
+    .trend-item-sparkline {
+      width: 48px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+    .trend-item-sparkline svg {
+      width: 100%;
+      height: 100%;
+    }
+    .trend-item-stats {
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .trend-item-value {
+      font-family: var(--font-family);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .trend-item-change {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      font-family: var(--font-family);
+      font-size: 10px;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .trend-item-change.positive {
+      color: var(--error);
+    }
+    .trend-item-change.negative {
+      color: var(--success);
+    }
+    .trend-item-change.neutral {
+      color: var(--text-tertiary);
+    }
+    .trend-item-change svg {
+      width: 10px;
+      height: 10px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.5;
+    }
+    .trend-item-chevron {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      margin-left: 4px;
+    }
+    .trend-item-chevron svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-tertiary);
+      stroke-width: 2;
+      fill: none;
+    }
+    .trend-list-item:hover .trend-item-chevron svg {
+      stroke: var(--text-secondary);
+    }
+    .trend-list-item {
+      cursor: pointer;
+    }
+    .trend-list-footer {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+    .trend-footer-stat {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-family: var(--font-family);
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+    .trend-footer-stat .count {
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .trend-footer-stat.up .count { color: var(--error); }
+    .trend-footer-stat.down .count { color: var(--success); }
+    .trend-footer-stat.stable .count { color: var(--text-tertiary); }
+
+    /* Category Breakdown List */
+    .breakdown-list-layout {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+      box-shadow: none;
+      border: none;
+    }
+    .breakdown-list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .breakdown-list-title {
+      font-family: var(--font-family);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .breakdown-list-period {
+      font-family: var(--font-family);
+      font-size: 12px;
+      color: var(--primary);
+      font-weight: 500;
+    }
+    .breakdown-list-scroll {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      /* Hide scrollbar but keep functionality */
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE/Edge */
+    }
+    .breakdown-list-scroll::-webkit-scrollbar {
+      display: none; /* Chrome/Safari/Opera */
+    }
+    .breakdown-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .breakdown-item-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .breakdown-item-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: none;
+      border: none;
+      outline: none;
+      transform: translateZ(0);
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+    }
+    .breakdown-item-icon svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+    .breakdown-item-icon.groceries {
+      background: var(--success-light);
+      color: var(--success);
+    }
+    .breakdown-item-icon.restaurant {
+      background: #fef3c7;
+      color: #d97706;
+    }
+    .breakdown-item-icon.transport {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+    .breakdown-item-icon.services {
+      background: #fce7f3;
+      color: #db2777;
+    }
+    .breakdown-item-icon.other {
+      background: var(--bg-tertiary);
+      color: var(--text-tertiary);
+    }
+    .breakdown-item-icon.entertainment {
+      background: #ede9fe;
+      color: #7c3aed;
+    }
+    .breakdown-item-icon.health {
+      background: #d1fae5;
+      color: #059669;
+    }
+    .breakdown-item-name {
+      flex: 1;
+      font-family: var(--font-family);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .breakdown-item-amount {
+      font-family: var(--font-family);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .breakdown-item-bar {
+      height: 4px;
+      background: var(--bg-tertiary);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .breakdown-item-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width var(--transition-normal);
+    }
+    .breakdown-item-bar-fill.groceries { background: linear-gradient(90deg, #10b981, #34d399); }
+    .breakdown-item-bar-fill.restaurant { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .breakdown-item-bar-fill.transport { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+    .breakdown-item-bar-fill.services { background: linear-gradient(90deg, #ec4899, #f472b6); }
+    .breakdown-item-bar-fill.other { background: linear-gradient(90deg, #6b7280, #9ca3af); }
+    .breakdown-item-bar-fill.entertainment { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+    .breakdown-item-bar-fill.health { background: linear-gradient(90deg, #10b981, #34d399); }
+    .breakdown-item-meta {
+      display: flex;
+      justify-content: space-between;
+    }
+    .breakdown-item-count {
+      font-family: var(--font-family);
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+    .breakdown-item-percent {
+      font-family: var(--font-family);
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+    .breakdown-item-chevron {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      margin-left: 4px;
+    }
+    .breakdown-item-chevron svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-tertiary);
+      stroke-width: 2;
+      fill: none;
+    }
+    .breakdown-item.has-drilldown {
+      cursor: pointer;
+    }
+    .breakdown-item.has-drilldown:hover {
+      background: var(--bg-tertiary);
+    }
+    .breakdown-item.has-drilldown:hover .breakdown-item-chevron svg {
+      stroke: var(--text-secondary);
+    }
+
+    /* Sankey Diagram */
+    .sankey-container {
+      flex: 1;
+      position: relative;
+      min-height: 320px;
+    }
+    .sankey-svg {
+      width: 100%;
+      height: 100%;
+    }
+    .sankey-node {
+      cursor: pointer;
+      transition: opacity var(--transition-fast);
+    }
+    .sankey-node:hover { opacity: 0.8; }
+    .sankey-node-label {
+      font-size: 11px;
+      font-weight: 500;
+      fill: var(--text-primary);
+    }
+    .sankey-node-value {
+      font-size: 10px;
+      fill: var(--text-tertiary);
+    }
+    .sankey-link {
+      fill: none;
+      stroke-opacity: 0.3;
+      transition: stroke-opacity var(--transition-fast);
+    }
+    .sankey-link:hover { stroke-opacity: 0.5; }
+
+    /* Treemap */
+    .treemap-container {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: repeat(3, 1fr);
+      gap: 4px;
+      min-height: 320px;
+    }
+    .treemap-cell {
+      border-radius: var(--radius-md);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      position: relative;
+      overflow: hidden;
+    }
+    .treemap-cell:hover { transform: scale(0.98); }
+    .treemap-cell.large {
+      grid-row: span 3;
+    }
+    .treemap-cell.medium {
+      grid-row: span 2;
+    }
+    .treemap-cell-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: white;
+    }
+    .treemap-cell-count {
+      font-size: 10px;
+      color: rgba(255,255,255,0.8);
+      margin-top: 2px;
+    }
+    .treemap-cell-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+    }
+    .treemap-cell-percent {
+      font-size: 11px;
+      color: rgba(255,255,255,0.8);
+    }
+    /* Category colors */
+    .treemap-cell.groceries { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); }
+    .treemap-cell.restaurant { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); }
+    .treemap-cell.transport { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+    .treemap-cell.entertainment { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+    .treemap-cell.utilities { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+    .treemap-cell.health { background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); }
+    .treemap-cell.education { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); }
+    .treemap-cell.other { background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); }
+
+    /* Treemap inactive cell */
+    .treemap-cell.inactive {
+      background: var(--bg-tertiary) !important;
+      border: 2px dashed var(--border-medium);
+    }
+    .treemap-cell.inactive .treemap-cell-label,
+    .treemap-cell.inactive .treemap-cell-value,
+    .treemap-cell.inactive .treemap-cell-percent,
+    .treemap-cell.inactive .treemap-cell-count {
+      color: var(--text-tertiary);
+    }
+
+    /* Treemap action buttons */
+    .treemap-cell-actions {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: flex;
+      gap: 4px;
+    }
+    .treemap-action-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-fast);
+    }
+    .treemap-action-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke-width: 2.5;
+      fill: none;
+      stroke: currentColor;
+    }
+    .treemap-action-btn.add {
+      background: var(--primary);
+      color: white;
+    }
+    .treemap-action-btn.add:hover {
+      background: var(--primary-dark);
+      transform: scale(1.1);
+    }
+    .treemap-action-btn.remove {
+      background: var(--border-medium, #d1d5db);
+      color: var(--text-secondary);
+    }
+    .treemap-action-btn.remove:hover {
+      background: var(--error);
+      color: white;
+      transform: scale(1.1);
+    }
+
+    /* Chart Legend */
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-light);
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    /* Bottom Nav - Matches Home Dashboard */
+    .bottom-nav {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      padding: 8px 12px 24px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-light);
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    .nav-item svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--text-tertiary);
+      fill: none;
+      stroke-width: 1.8;
+    }
+    .nav-item span {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+    }
+    .nav-item.active svg { stroke: var(--primary); }
+    .nav-item.active span { color: var(--primary); font-weight: 600; }
+    .scan-center { margin-top: -56px; padding: 0; }
+    .scan-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      cursor: pointer;
+      transition: background 300ms ease;
+    }
+    .scan-btn svg {
+      width: 24px;
+      height: 24px;
+      stroke: white;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* Drill-down Panel */
+    .drilldown-panel {
+      position: absolute;
+      bottom: 60px; /* Above bottom nav */
+      left: 0;
+      right: 0;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+      padding: 16px;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height var(--transition-slow), opacity var(--transition-fast), padding var(--transition-fast);
+      z-index: 50;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+    .drilldown-panel.open {
+      max-height: 350px;
+      opacity: 1;
+      padding: 16px;
+    }
+    .drilldown-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .drilldown-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .drilldown-close {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .drilldown-close svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-secondary);
+      fill: none;
+      stroke-width: 2;
+    }
+    .drilldown-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 280px;
+      overflow-y: auto;
+      padding: 0 4px;
+    }
+    .drilldown-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .drilldown-item:hover {
+      background: var(--border-light);
+    }
+    .drilldown-item.back-item {
+      background: var(--bg-tertiary);
+      margin-bottom: 4px;
+    }
+    .drilldown-item.back-item:hover {
+      background: var(--border-light);
+    }
+    .drilldown-item-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .drilldown-item-info {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      gap: 0;
+    }
+    .drilldown-item-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+    .drilldown-item-details {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      line-height: 1.3;
+    }
+    .drilldown-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+    }
+    .drilldown-item-percent {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      min-width: 36px;
+      text-align: right;
+    }
+    .drilldown-item-chevron {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--bg-secondary);
+      transition: background 0.2s ease;
+    }
+    .drilldown-item-chevron:hover {
+      background: var(--primary-light);
+    }
+    .drilldown-item-chevron svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--text-secondary);
+      stroke-width: 2;
+      fill: none;
+    }
+    .drilldown-item.back-item .drilldown-item-chevron {
+      background: transparent;
+    }
+    .drilldown-item.back-item .drilldown-item-chevron svg {
+      transform: rotate(180deg);
+    }
+
+    /* Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body data-theme="mono" data-font="outfit">
+  <div class="page-wrapper">
+    <div class="phone-frame">
+      <div class="phone-screen">
+        <!-- Status Bar -->
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icons">
+            <svg viewBox="0 0 24 24"><path d="M18 10a6 6 0 0 0-12 0c0 7 6 13 6 13s6-6 6-13z"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+            <svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 11v2"/></svg>
+          </div>
+        </div>
+
+        <!-- Header Bar - Explorer Pattern -->
+        <div class="header-bar">
+          <span class="header-title">Explora</span>
+          <div class="header-actions">
+            <!-- Time Filter (Calendar Icon) -->
+            <button class="filter-icon-btn active" id="time-filter-btn" onclick="toggleDropdown('time', event)">
+              <svg viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </button>
+
+            <!-- Category Filter (Tag Icon) -->
+            <button class="filter-icon-btn" id="category-filter-btn" onclick="toggleDropdown('category', event)">
+              <svg viewBox="0 0 24 24">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                <line x1="7" y1="7" x2="7.01" y2="7"/>
+              </svg>
+            </button>
+
+            <!-- Custom Groups Filter (Layers Icon) - Future -->
+            <button class="filter-icon-btn" id="custom-filter-btn" onclick="toggleDropdown('custom', event)">
+              <svg viewBox="0 0 24 24">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                <polyline points="2 17 12 22 22 17"/>
+                <polyline points="2 12 12 17 22 12"/>
+              </svg>
+            </button>
+
+            <!-- DROPDOWNS (positioned absolutely from header-actions) -->
+            <!-- Time Dropdown with Sliders -->
+            <div class="filter-dropdown" id="time-dropdown">
+              <!-- Year Slider -->
+              <div class="time-slider-row">
+                <span class="time-slider-label" data-level="year" onclick="selectTimeDimension('year', event)">Año</span>
+                <div class="time-slider-control">
+                  <button class="time-slider-btn" onclick="slideTime('year', -1, event)">
+                    <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+                  </button>
+                  <span class="time-slider-value selected" id="time-year">2025</span>
+                  <button class="time-slider-btn" onclick="slideTime('year', 1, event)" disabled>
+                    <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                  </button>
+                </div>
+              </div>
+              <!-- Quarter Slider -->
+              <div class="time-slider-row">
+                <span class="time-slider-label" data-level="quarter" onclick="selectTimeDimension('quarter', event)">Trimestre</span>
+                <div class="time-slider-control">
+                  <button class="time-slider-btn" onclick="slideTime('quarter', -1, event)">
+                    <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+                  </button>
+                  <span class="time-slider-value selected" id="time-quarter">Q4</span>
+                  <button class="time-slider-btn" onclick="slideTime('quarter', 1, event)" disabled>
+                    <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                  </button>
+                </div>
+              </div>
+              <!-- Month Slider -->
+              <div class="time-slider-row">
+                <span class="time-slider-label active" data-level="month" onclick="selectTimeDimension('month', event)">Mes</span>
+                <div class="time-slider-control">
+                  <button class="time-slider-btn" onclick="slideTime('month', -1, event)">
+                    <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+                  </button>
+                  <span class="time-slider-value selected" id="time-month">diciembre</span>
+                  <button class="time-slider-btn" onclick="slideTime('month', 1, event)" disabled>
+                    <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                  </button>
+                </div>
+              </div>
+              <!-- Week Slider -->
+              <div class="time-slider-row">
+                <span class="time-slider-label" data-level="week" onclick="selectTimeDimension('week', event)">Semana</span>
+                <div class="time-slider-control">
+                  <button class="time-slider-btn" onclick="slideTime('week', -1, event)">
+                    <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+                  </button>
+                  <span class="time-slider-value selected" id="time-week">dic 23-29</span>
+                  <button class="time-slider-btn" onclick="slideTime('week', 1, event)" disabled>
+                    <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Category Dropdown -->
+            <div class="filter-dropdown" id="category-dropdown">
+              <!-- Transaction Categories Section (Collapsible) -->
+              <div class="filter-dropdown-section">
+                <div class="filter-dropdown-label collapsible">
+                  <span onclick="toggleSection('category-items', this.parentElement, event)">Transacciones</span>
+                  <div class="section-header-actions">
+                    <button class="section-toggle-btn all-selected" data-section="category" onclick="toggleSectionAll('category', event)" title="Marcar/Desmarcar todas">
+                      <svg class="toggle-check" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>
+                    </button>
+                    <svg class="collapse-icon" viewBox="0 0 24 24" onclick="toggleSection('category-items', this.closest('.collapsible'), event)"><path d="M6 9l6 6 6-6"/></svg>
+                  </div>
+                </div>
+                <div class="filter-dropdown-items" id="category-items">
+                  <div class="filter-dropdown-item selected" data-type="category" data-value="Supermercado" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">🛒 Supermercado</span>
+                  </div>
+                  <div class="filter-dropdown-item selected" data-type="category" data-value="Restaurantes" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">🍽️ Restaurantes</span>
+                  </div>
+                  <div class="filter-dropdown-item selected" data-type="category" data-value="Transporte" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">🚗 Transporte</span>
+                  </div>
+                  <div class="filter-dropdown-item selected" data-type="category" data-value="Entretención" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">🎬 Entretención</span>
+                  </div>
+                  <div class="filter-dropdown-item selected" data-type="category" data-value="Servicios" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">💡 Servicios</span>
+                  </div>
+                  <div class="filter-dropdown-item selected" data-type="category" data-value="Salud" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">💊 Salud</span>
+                  </div>
+                  <div class="filter-dropdown-item selected" data-type="category" data-value="Educación" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">📚 Educación</span>
+                  </div>
+                  <div class="filter-dropdown-item selected" data-type="category" data-value="Vestuario" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">👕 Vestuario</span>
+                  </div>
+                  <div class="filter-dropdown-item selected" data-type="category" data-value="Hogar" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">🏠 Hogar</span>
+                  </div>
+                  <div class="filter-dropdown-item selected" data-type="category" data-value="Tecnología" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">💻 Tecnología</span>
+                  </div>
+                  <div class="filter-dropdown-item selected" data-type="category" data-value="Mascotas" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">🐾 Mascotas</span>
+                  </div>
+                  <div class="filter-dropdown-item selected" data-type="category" data-value="Otros" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">📦 Otros</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Item Groups Section (Collapsible) -->
+              <div class="filter-dropdown-section">
+                <div class="filter-dropdown-label collapsible">
+                  <span onclick="toggleSection('group-items', this.parentElement, event)">Ítems</span>
+                  <div class="section-header-actions">
+                    <button class="section-toggle-btn" data-section="group" onclick="toggleSectionAll('group', event)" title="Marcar/Desmarcar todos">
+                      <svg class="toggle-check" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>
+                    </button>
+                    <svg class="collapse-icon" viewBox="0 0 24 24" onclick="toggleSection('group-items', this.closest('.collapsible'), event)"><path d="M6 9l6 6 6-6"/></svg>
+                  </div>
+                </div>
+                <div class="filter-dropdown-items" id="group-items">
+                  <div class="filter-dropdown-item" data-type="group" data-value="Carnes y Mariscos" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">Carnes y Mariscos</span>
+                  </div>
+                  <div class="filter-dropdown-item" data-type="group" data-value="Lácteos" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">Lácteos</span>
+                  </div>
+                  <div class="filter-dropdown-item" data-type="group" data-value="Panadería" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">Panadería</span>
+                  </div>
+                  <div class="filter-dropdown-item" data-type="group" data-value="Frutas y Verduras" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">Frutas y Verduras</span>
+                  </div>
+                  <div class="filter-dropdown-item" data-type="group" data-value="Bebidas" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">Bebidas</span>
+                  </div>
+                  <div class="filter-dropdown-item" data-type="group" data-value="Congelados" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">Congelados</span>
+                  </div>
+                  <div class="filter-dropdown-item" data-type="group" data-value="Limpieza" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">Limpieza</span>
+                  </div>
+                  <div class="filter-dropdown-item" data-type="group" data-value="Aseo Personal" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">Aseo Personal</span>
+                  </div>
+                  <div class="filter-dropdown-item" data-type="group" data-value="Snacks" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">Snacks</span>
+                  </div>
+                  <div class="filter-dropdown-item" data-type="group" data-value="Abarrotes" onclick="toggleFilterItem(this, event)">
+                    <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                    <span class="filter-item-content">Abarrotes</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Custom Groups Dropdown -->
+            <div class="filter-dropdown" id="custom-dropdown">
+              <div class="filter-dropdown-section">
+                <div class="filter-dropdown-label">Grupos Personalizados</div>
+                <div class="filter-dropdown-empty">
+                  <svg viewBox="0 0 24 24" style="width: 32px; height: 32px; stroke: var(--text-tertiary); fill: none; stroke-width: 1.5; margin: 0 auto 8px; display: block;">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                    <polyline points="2 17 12 22 22 17"/>
+                    <polyline points="2 12 12 17 22 12"/>
+                  </svg>
+                  <div style="font-weight: 500; color: var(--text-secondary); margin-bottom: 4px;">Próximamente</div>
+                  <div style="font-size: 12px;">Crea grupos personalizados para organizar tus gastos a tu manera</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+          <!-- Time Selector Row - contains time pills, period nav, and view toggle -->
+          <div class="breadcrumb-row">
+            <!-- Time Selector -->
+            <div class="time-selector-container">
+              <div class="time-selector-pills">
+                <button class="time-pill" data-period="week" onclick="selectTimePeriod('week')">Semana</button>
+                <button class="time-pill active" data-period="month" onclick="selectTimePeriod('month')">Mes</button>
+                <button class="time-pill" data-period="quarter" onclick="selectTimePeriod('quarter')">Trimestre</button>
+                <button class="time-pill" data-period="year" onclick="selectTimePeriod('year')">Año</button>
+              </div>
+              <div class="period-navigator">
+                <button class="period-nav-btn" onclick="navigatePeriod(-1)" title="Anterior">
+                  <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <span class="period-label" id="period-label">Diciembre 2024</span>
+                <button class="period-nav-btn" onclick="navigatePeriod(1)" title="Siguiente">
+                  <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Analytics Carousel Card -->
+          <div class="analytics-card">
+            <!-- Card Header with View Toggle, Title and Nav Buttons -->
+            <div class="analytics-card-header">
+              <!-- View Toggle Button (left of title) -->
+              <button class="view-toggle-btn" id="view-toggle-btn" data-current="primary" onclick="toggleSlideView()" title="Cambiar vista">
+                <div class="icon-morph">
+                  <!-- Primary view icon: Lucide chart-pie -->
+                  <svg class="icon-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z"/>
+                    <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+                  </svg>
+                  <!-- Secondary view icon: Stats/cards -->
+                  <svg class="icon-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="9" rx="1"/>
+                    <rect x="14" y="3" width="7" height="5" rx="1"/>
+                    <rect x="14" y="12" width="7" height="9" rx="1"/>
+                    <rect x="3" y="16" width="7" height="5" rx="1"/>
+                  </svg>
+                </div>
+              </button>
+              <span class="analytics-card-title" id="analytics-card-title">Distribución</span>
+              <div class="analytics-card-nav">
+                <button class="analytics-nav-btn" onclick="navigateAnalyticsCarousel(-1)">
+                  <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <button class="analytics-nav-btn" onclick="navigateAnalyticsCarousel(1)">
+                  <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Carousel -->
+            <div class="analytics-carousel">
+              <div class="analytics-carousel-viewport">
+                <div class="analytics-carousel-track" id="analytics-carousel-track">
+                  <!-- Slide 1: Distribución (Treemap + Donut toggle) -->
+                  <div class="analytics-carousel-slide" data-title="Distribución">
+                    <div class="distribution-views">
+                      <!-- View 1: Treemap (default) - dynamically rendered -->
+                      <div class="distribution-view active" data-view="treemap">
+                        <div class="treemap-container" id="treemap-container">
+                          <!-- Treemap cells rendered dynamically by renderTreemap() -->
+                        </div>
+                      </div>
+
+                      <!-- View 2: Category Donut Chart (dynamically rendered) -->
+                      <div class="distribution-view" data-view="donut">
+                        <div class="donut-chart-layout">
+                          <!-- Header with total -->
+                          <div class="donut-chart-header">
+                            <span class="donut-chart-title">Gastos en Diciembre</span>
+                            <span class="donut-chart-total">$542.000</span>
+                          </div>
+
+                          <!-- Donut Chart (full width) - populated by renderDonutChart() -->
+                          <div class="donut-chart-container">
+                            <svg class="donut-chart-svg" viewBox="0 0 120 120">
+                              <!-- Segments rendered dynamically -->
+                            </svg>
+                            <div class="donut-center" id="donut-center">
+                              <span class="donut-center-value" id="donut-center-value">$542k</span>
+                              <span class="donut-center-label" id="donut-center-label">Total</span>
+                            </div>
+                          </div>
+
+                          <!-- Legend below the donut - populated by renderDonutChart() -->
+                          <div class="donut-legend">
+                            <!-- Legend items rendered dynamically -->
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Slide 2: Tendencia (Trend List + Breakdown List toggle) -->
+                  <div class="analytics-carousel-slide" data-title="Tendencia">
+                    <div class="tendencia-views">
+                      <!-- View 1: Trend List (default) -->
+                      <div class="tendencia-view active" data-view="trends">
+                        <div class="trend-list-layout">
+                          <div class="trend-list-scroll">
+                            <!-- Item 1: Supermercado -->
+                            <div class="trend-list-item" onclick="openDrilldown('groceries')" data-category="supermercado">
+                              <div class="trend-item-icon" style="background: var(--success-light);">
+                                <span>🛒</span>
+                              </div>
+                              <div class="trend-item-info">
+                                <div class="trend-item-name">Supermercado</div>
+                                <div class="trend-item-count">18 compras</div>
+                              </div>
+                              <div class="trend-item-sparkline">
+                                <svg viewBox="0 0 48 24" preserveAspectRatio="none">
+                                  <path d="M0 18 L8 15 L16 17 L24 12 L32 10 L40 8 L48 6" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              </div>
+                              <div class="trend-item-stats">
+                                <div class="trend-item-value">$420k</div>
+                                <div class="trend-item-change negative">
+                                  <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+                                  -8%
+                                </div>
+                              </div>
+                              <div class="trend-item-chevron">
+                                <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                              </div>
+                            </div>
+
+                            <!-- Item 2: Restaurantes -->
+                            <div class="trend-list-item" onclick="openDrilldown('restaurant')" data-category="restaurantes">
+                              <div class="trend-item-icon" style="background: var(--error-light);">
+                                <span>🍽️</span>
+                              </div>
+                              <div class="trend-item-info">
+                                <div class="trend-item-name">Restaurantes</div>
+                                <div class="trend-item-count">12 visitas</div>
+                              </div>
+                              <div class="trend-item-sparkline">
+                                <svg viewBox="0 0 48 24" preserveAspectRatio="none">
+                                  <path d="M0 16 L8 14 L16 18 L24 12 L32 8 L40 10 L48 4" fill="none" stroke="var(--error)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              </div>
+                              <div class="trend-item-stats">
+                                <div class="trend-item-value">$315k</div>
+                                <div class="trend-item-change positive">
+                                  <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                                  +12%
+                                </div>
+                              </div>
+                              <div class="trend-item-chevron">
+                                <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                              </div>
+                            </div>
+
+                            <!-- Item 3: Transporte -->
+                            <div class="trend-list-item" onclick="openDrilldown('transport')" data-category="transporte">
+                              <div class="trend-item-icon" style="background: var(--primary-light);">
+                                <span>🚗</span>
+                              </div>
+                              <div class="trend-item-info">
+                                <div class="trend-item-name">Transporte</div>
+                                <div class="trend-item-count">8 pagos</div>
+                              </div>
+                              <div class="trend-item-sparkline">
+                                <svg viewBox="0 0 48 24" preserveAspectRatio="none">
+                                  <path d="M0 12 L8 11 L16 13 L24 12 L32 11 L40 12 L48 11" fill="none" stroke="var(--text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              </div>
+                              <div class="trend-item-stats">
+                                <div class="trend-item-value">$210k</div>
+                                <div class="trend-item-change neutral">
+                                  <span>=</span>
+                                  0%
+                                </div>
+                              </div>
+                              <div class="trend-item-chevron">
+                                <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                              </div>
+                            </div>
+
+                            <!-- Item 4: Entretención -->
+                            <div class="trend-list-item" onclick="openDrilldown('entertainment')" data-category="entretencion">
+                              <div class="trend-item-icon" style="background: #ede9fe;">
+                                <span>🎬</span>
+                              </div>
+                              <div class="trend-item-info">
+                                <div class="trend-item-name">Entretención</div>
+                                <div class="trend-item-count">6 compras</div>
+                              </div>
+                              <div class="trend-item-sparkline">
+                                <svg viewBox="0 0 48 24" preserveAspectRatio="none">
+                                  <path d="M0 8 L8 10 L16 6 L24 12 L32 14 L40 18 L48 20" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              </div>
+                              <div class="trend-item-stats">
+                                <div class="trend-item-value">$157k</div>
+                                <div class="trend-item-change negative">
+                                  <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+                                  -15%
+                                </div>
+                              </div>
+                              <div class="trend-item-chevron">
+                                <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                              </div>
+                            </div>
+
+                            <!-- Item 5: Servicios -->
+                            <div class="trend-list-item" onclick="openDrilldown('utilities')" data-category="servicios">
+                              <div class="trend-item-icon" style="background: var(--warning-light);">
+                                <span>💡</span>
+                              </div>
+                              <div class="trend-item-info">
+                                <div class="trend-item-name">Servicios</div>
+                                <div class="trend-item-count">4 pagos</div>
+                              </div>
+                              <div class="trend-item-sparkline">
+                                <svg viewBox="0 0 48 24" preserveAspectRatio="none">
+                                  <path d="M0 14 L8 12 L16 16 L24 10 L32 8 L40 6 L48 4" fill="none" stroke="var(--error)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              </div>
+                              <div class="trend-item-stats">
+                                <div class="trend-item-value">$126k</div>
+                                <div class="trend-item-change positive">
+                                  <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                                  +5%
+                                </div>
+                              </div>
+                              <div class="trend-item-chevron">
+                                <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                              </div>
+                            </div>
+
+                            <!-- Item 6: Salud -->
+                            <div class="trend-list-item" onclick="openDrilldown('other')" data-category="salud">
+                              <div class="trend-item-icon" style="background: #fce7f3;">
+                                <span>💊</span>
+                              </div>
+                              <div class="trend-item-info">
+                                <div class="trend-item-name">Salud</div>
+                                <div class="trend-item-count">3 compras</div>
+                              </div>
+                              <div class="trend-item-sparkline">
+                                <svg viewBox="0 0 48 24" preserveAspectRatio="none">
+                                  <path d="M0 10 L8 14 L16 8 L24 16 L32 12 L40 18 L48 14" fill="none" stroke="var(--error)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              </div>
+                              <div class="trend-item-stats">
+                                <div class="trend-item-value">$85k</div>
+                                <div class="trend-item-change positive">
+                                  <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                                  +22%
+                                </div>
+                              </div>
+                              <div class="trend-item-chevron">
+                                <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                              </div>
+                            </div>
+
+                            <!-- Item 7: Educación -->
+                            <div class="trend-list-item" onclick="openDrilldown('other')" data-category="educacion">
+                              <div class="trend-item-icon" style="background: var(--bg-tertiary);">
+                                <span>📚</span>
+                              </div>
+                              <div class="trend-item-info">
+                                <div class="trend-item-name">Educación</div>
+                                <div class="trend-item-count">2 compras</div>
+                              </div>
+                              <div class="trend-item-sparkline">
+                                <svg viewBox="0 0 48 24" preserveAspectRatio="none">
+                                  <path d="M0 12 L8 10 L16 14 L24 8 L32 16 L40 12 L48 10" fill="none" stroke="var(--text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              </div>
+                              <div class="trend-item-stats">
+                                <div class="trend-item-value">$5.4k</div>
+                                <div class="trend-item-change neutral">
+                                  <span>=</span>
+                                  0%
+                                </div>
+                              </div>
+                              <div class="trend-item-chevron">
+                                <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Footer Summary -->
+                          <div class="trend-list-footer">
+                            <div class="trend-footer-stat down">
+                              <span class="count">2</span>
+                              <span>bajaron</span>
+                            </div>
+                            <div class="trend-footer-stat up">
+                              <span class="count">3</span>
+                              <span>subieron</span>
+                            </div>
+                            <div class="trend-footer-stat stable">
+                              <span class="count">2</span>
+                              <span>estables</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- View 2: Breakdown List -->
+                      <div class="tendencia-view" data-view="list">
+                        <div class="breakdown-list-layout">
+                          <div class="breakdown-list-scroll">
+                            <!-- Supermercado (has subcategories) -->
+                            <div class="breakdown-item has-drilldown" onclick="openDrilldown('groceries')">
+                              <div class="breakdown-item-row">
+                                <div class="breakdown-item-icon groceries">
+                                  <span style="font-size: 18px;">🛒</span>
+                                </div>
+                                <span class="breakdown-item-name">Supermercado</span>
+                                <span class="breakdown-item-amount">$189.700</span>
+                                <div class="breakdown-item-chevron">
+                                  <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                                </div>
+                              </div>
+                              <div class="breakdown-item-bar">
+                                <div class="breakdown-item-bar-fill groceries" style="width: 100%;"></div>
+                              </div>
+                              <div class="breakdown-item-meta">
+                                <span class="breakdown-item-count">18 transacciones</span>
+                                <span class="breakdown-item-percent">35% del total</span>
+                              </div>
+                            </div>
+
+                            <!-- Restaurantes (has subcategories) -->
+                            <div class="breakdown-item has-drilldown" onclick="openDrilldown('restaurant')">
+                              <div class="breakdown-item-row">
+                                <div class="breakdown-item-icon restaurant">
+                                  <span style="font-size: 18px;">🍽️</span>
+                                </div>
+                                <span class="breakdown-item-name">Restaurantes</span>
+                                <span class="breakdown-item-amount">$135.500</span>
+                                <div class="breakdown-item-chevron">
+                                  <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                                </div>
+                              </div>
+                              <div class="breakdown-item-bar">
+                                <div class="breakdown-item-bar-fill restaurant" style="width: 71%;"></div>
+                              </div>
+                              <div class="breakdown-item-meta">
+                                <span class="breakdown-item-count">12 transacciones</span>
+                                <span class="breakdown-item-percent">25% del total</span>
+                              </div>
+                            </div>
+
+                            <!-- Transporte (has subcategories) -->
+                            <div class="breakdown-item has-drilldown" onclick="openDrilldown('transport')">
+                              <div class="breakdown-item-row">
+                                <div class="breakdown-item-icon transport">
+                                  <span style="font-size: 18px;">🚗</span>
+                                </div>
+                                <span class="breakdown-item-name">Transporte</span>
+                                <span class="breakdown-item-amount">$108.400</span>
+                                <div class="breakdown-item-chevron">
+                                  <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                                </div>
+                              </div>
+                              <div class="breakdown-item-bar">
+                                <div class="breakdown-item-bar-fill transport" style="width: 57%;"></div>
+                              </div>
+                              <div class="breakdown-item-meta">
+                                <span class="breakdown-item-count">9 transacciones</span>
+                                <span class="breakdown-item-percent">20% del total</span>
+                              </div>
+                            </div>
+
+                            <!-- Servicios (has subcategories) -->
+                            <div class="breakdown-item has-drilldown" onclick="openDrilldown('utilities')">
+                              <div class="breakdown-item-row">
+                                <div class="breakdown-item-icon services">
+                                  <span style="font-size: 18px;">🔧</span>
+                                </div>
+                                <span class="breakdown-item-name">Servicios</span>
+                                <span class="breakdown-item-amount">$65.100</span>
+                                <div class="breakdown-item-chevron">
+                                  <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                                </div>
+                              </div>
+                              <div class="breakdown-item-bar">
+                                <div class="breakdown-item-bar-fill services" style="width: 34%;"></div>
+                              </div>
+                              <div class="breakdown-item-meta">
+                                <span class="breakdown-item-count">5 transacciones</span>
+                                <span class="breakdown-item-percent">12% del total</span>
+                              </div>
+                            </div>
+
+                            <!-- Otro (has subcategories) -->
+                            <div class="breakdown-item has-drilldown" onclick="openDrilldown('other')">
+                              <div class="breakdown-item-row">
+                                <div class="breakdown-item-icon other">
+                                  <span style="font-size: 18px;">📦</span>
+                                </div>
+                                <span class="breakdown-item-name">Otro</span>
+                                <span class="breakdown-item-amount">$43.400</span>
+                                <div class="breakdown-item-chevron">
+                                  <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                                </div>
+                              </div>
+                              <div class="breakdown-item-bar">
+                                <div class="breakdown-item-bar-fill other" style="width: 23%;"></div>
+                              </div>
+                              <div class="breakdown-item-meta">
+                                <span class="breakdown-item-count">4 transacciones</span>
+                                <span class="breakdown-item-percent">8% del total</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- Carousel Indicator Bar -->
+              <div class="analytics-indicator-bar">
+                <button class="analytics-indicator-segment active" data-slide="0" onclick="goToAnalyticsSlide(0)"></button>
+                <button class="analytics-indicator-segment" data-slide="1" onclick="goToAnalyticsSlide(1)"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Nav -->
+        <nav class="bottom-nav" role="navigation" aria-label="Navegación principal">
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Inicio</span>
+          </div>
+          <div class="nav-item active">
+            <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            <span>Analíticas</span>
+          </div>
+          <div class="scan-center">
+            <div class="scan-btn">
+              <svg viewBox="0 0 24 24">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                <circle cx="12" cy="13" r="3"/>
+              </svg>
+            </div>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <span>Ideas</span>
+          </div>
+          <div class="nav-item" style="position: relative;">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <!-- Notification badge -->
+            <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+            <span>Alertas</span>
+          </div>
+        </nav>
+
+        <!-- Drill-down Panel -->
+        <div class="drilldown-panel" id="drilldown-panel">
+          <div class="drilldown-header">
+            <span class="drilldown-title" id="drilldown-title">Supermercado</span>
+            <button class="drilldown-close" onclick="closeDrilldown()">
+              <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="drilldown-list" id="drilldown-list">
+            <!-- Dynamic content -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Global Controls Panel -->
+    <div class="global-controls">
+      <div class="control-group">
+        <div class="control-label">Theme</div>
+        <div class="control-options">
+          <div class="theme-swatch" data-theme="professional" title="Professional Blue" onclick="setTheme('professional', this)"></div>
+          <div class="theme-swatch active" data-theme="mono" title="Mono" onclick="setTheme('mono', this)"></div>
+          <div class="theme-swatch" data-theme="ninokuni" title="Ni No Kuni" onclick="setTheme('ninokuni', this)"></div>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="control-label">Mode</div>
+        <div class="control-options">
+          <button class="mode-toggle" id="darkModeToggle" onclick="toggleDarkMode(this)">
+            <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            Dark
+          </button>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="control-label">Font</div>
+        <div class="control-options">
+          <div class="font-pill active" data-font="outfit" onclick="setFont('outfit', this)">Outfit</div>
+          <div class="font-pill" data-font="space" onclick="setFont('space', this)">Space</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // ANALYTICS CAROUSEL
+    // ============================================
+    let analyticsCurrentSlide = 0;
+    const analyticsSlideTitles = ['Distribución', 'Tendencia'];
+
+    function goToAnalyticsSlide(index) {
+      analyticsCurrentSlide = index;
+      const track = document.getElementById('analytics-carousel-track');
+      track.style.transform = `translateX(-${index * 100}%)`;
+
+      // Update indicator segments
+      document.querySelectorAll('.analytics-indicator-segment').forEach((seg, i) => {
+        seg.classList.toggle('active', i === index);
+      });
+
+      // Update dynamic title
+      document.getElementById('analytics-card-title').textContent = analyticsSlideTitles[index];
+
+      // Reset view toggle to primary view when changing slides
+      const viewToggle = document.getElementById('view-toggle-btn');
+      if (viewToggle) {
+        viewToggle.dataset.current = 'primary';
+        // Show toggle on all slides (all have secondary views now)
+        viewToggle.style.display = 'flex';
+        // Reset the distribution views to treemap (slide 0)
+        document.querySelectorAll('.distribution-view').forEach(view => {
+          view.classList.toggle('active', view.dataset.view === 'treemap');
+        });
+        // Reset the tendencia views to trends (slide 1)
+        document.querySelectorAll('.tendencia-view').forEach(view => {
+          view.classList.toggle('active', view.dataset.view === 'trends');
+        });
+      }
+    }
+
+    // Toggle between primary and secondary views for current slide
+    function toggleSlideView() {
+      const toggleBtn = document.getElementById('view-toggle-btn');
+
+      // Get current state and toggle to opposite
+      const currentView = toggleBtn.dataset.current;
+      const newView = currentView === 'primary' ? 'secondary' : 'primary';
+
+      // Update button state (triggers CSS morph animation)
+      toggleBtn.dataset.current = newView;
+
+      // Handle view toggle based on current slide
+      if (analyticsCurrentSlide === 0) {
+        // Distribución slide: toggle between treemap and donut
+        const views = document.querySelectorAll('.distribution-view');
+        views.forEach(view => {
+          const isPrimary = view.dataset.view === 'treemap';
+          view.classList.toggle('active', newView === 'primary' ? isPrimary : !isPrimary);
+        });
+        // Render donut chart when switching to secondary view
+        if (newView === 'secondary') {
+          renderDonutChart();
+        }
+      } else if (analyticsCurrentSlide === 1) {
+        // Tendencia slide: toggle between trends and list
+        const views = document.querySelectorAll('.tendencia-view');
+        views.forEach(view => {
+          const isPrimary = view.dataset.view === 'trends';
+          view.classList.toggle('active', newView === 'primary' ? isPrimary : !isPrimary);
+        });
+      }
+    }
+
+    // Donut chart category data with expandable "Otro" sub-categories
+    // Core categories (always shown, cannot be removed)
+    const coreCategories = ['supermercado', 'restaurantes', 'transporte'];
+
+    // All category definitions with subcategories
+    const allCategories = {
+      supermercado: {
+        name: 'Supermercado', value: 216800, icon: '🛒', iconClass: 'groceries', color: '#22c55e',
+        subcategories: ['carnes', 'lacteos', 'panaderia', 'frutas', 'bebidas', 'congelados', 'limpieza', 'aseo', 'snacks', 'abarrotes']
+      },
+      restaurantes: {
+        name: 'Restaurantes', value: 162600, icon: '🍽️', iconClass: 'restaurant', color: '#f59e0b',
+        subcategories: ['comida_rapida', 'casual', 'fine_dining', 'cafeteria', 'delivery']
+      },
+      transporte: {
+        name: 'Transporte', value: 108400, icon: '🚗', iconClass: 'transport', color: '#3b82f6',
+        subcategories: ['combustible', 'estacionamiento', 'peajes', 'transporte_publico', 'taxi_uber']
+      },
+      entretencion: {
+        name: 'Entretención', value: 21700, icon: '🎬', iconClass: 'entertainment', color: '#8b5cf6',
+        subcategories: ['cine', 'streaming', 'juegos', 'eventos', 'deportes']
+      },
+      salud: {
+        name: 'Salud', value: 16300, icon: '💊', iconClass: 'health', color: '#ec4899',
+        subcategories: ['farmacia', 'consultas', 'examenes', 'seguro_salud']
+      },
+      servicios: {
+        name: 'Servicios', value: 10800, icon: '💡', iconClass: 'utilities', color: '#06b6d4',
+        subcategories: ['luz', 'agua', 'gas', 'internet', 'telefono']
+      },
+      educacion: {
+        name: 'Educación', value: 5400, icon: '📚', iconClass: 'education', color: '#14b8a6',
+        subcategories: ['cursos', 'libros', 'materiales', 'matricula']
+      }
+    };
+
+    // Item Groups (Level 2) - with their item subcategories (Level 3)
+    const allGroups = {
+      // Supermercado groups
+      carnes: { name: 'Carnes y Mariscos', value: 45000, icon: '🥩',
+        items: ['ground_beef', 'chicken_breast', 'beef_ribs', 'pork_loin', 'ham', 'salmon', 'shrimp']
+      },
+      lacteos: { name: 'Lácteos', value: 28000, icon: '🥛',
+        items: ['milk', 'cheese', 'yogurt', 'butter', 'cream']
+      },
+      panaderia: { name: 'Panadería', value: 18000, icon: '🍞',
+        items: ['bread', 'croissant', 'bagel', 'tortilla']
+      },
+      frutas: { name: 'Frutas y Verduras', value: 32000, icon: '🍎',
+        items: ['apple', 'banana', 'tomato', 'lettuce', 'onion', 'potato']
+      },
+      bebidas: { name: 'Bebidas', value: 22000, icon: '🥤',
+        items: ['water', 'soda', 'juice', 'beer', 'wine']
+      },
+      congelados: { name: 'Congelados', value: 15000, icon: '🧊',
+        items: ['ice_cream', 'frozen_pizza', 'frozen_veggies']
+      },
+      limpieza: { name: 'Limpieza', value: 18000, icon: '🧹',
+        items: ['detergent', 'bleach', 'sponges', 'trash_bags']
+      },
+      aseo: { name: 'Aseo Personal', value: 12000, icon: '🧴',
+        items: ['shampoo', 'soap', 'toothpaste', 'deodorant']
+      },
+      snacks: { name: 'Snacks', value: 14800, icon: '🍿',
+        items: ['chips', 'cookies', 'chocolate', 'nuts']
+      },
+      abarrotes: { name: 'Abarrotes', value: 12000, icon: '🥫',
+        items: ['rice', 'pasta', 'canned_beans', 'oil', 'sugar']
+      },
+      // Restaurantes groups
+      comida_rapida: { name: 'Comida Rápida', value: 48000, icon: '🍔', items: [] },
+      casual: { name: 'Casual Dining', value: 52000, icon: '🍽️', items: [] },
+      fine_dining: { name: 'Fine Dining', value: 28000, icon: '🥂', items: [] },
+      cafeteria: { name: 'Cafetería', value: 18600, icon: '☕', items: [] },
+      delivery: { name: 'Delivery', value: 16000, icon: '📦', items: [] },
+      // Transporte groups
+      combustible: { name: 'Combustible', value: 52000, icon: '⛽', items: [] },
+      estacionamiento: { name: 'Estacionamiento', value: 18000, icon: '🅿️', items: [] },
+      peajes: { name: 'Peajes', value: 12000, icon: '🛣️', items: [] },
+      transporte_publico: { name: 'Transporte Público', value: 14400, icon: '🚌', items: [] },
+      taxi_uber: { name: 'Taxi/Uber', value: 12000, icon: '🚕', items: [] },
+      // Entretención groups
+      cine: { name: 'Cine', value: 6000, icon: '🎬', items: [] },
+      streaming: { name: 'Streaming', value: 4500, icon: '📺', items: [] },
+      juegos: { name: 'Juegos', value: 5200, icon: '🎮', items: [] },
+      eventos: { name: 'Eventos', value: 3500, icon: '🎫', items: [] },
+      deportes: { name: 'Deportes', value: 2500, icon: '⚽', items: [] },
+      // Salud groups
+      farmacia: { name: 'Farmacia', value: 8000, icon: '💊', items: [] },
+      consultas: { name: 'Consultas', value: 4500, icon: '🩺', items: [] },
+      examenes: { name: 'Exámenes', value: 2300, icon: '🔬', items: [] },
+      seguro_salud: { name: 'Seguro Salud', value: 1500, icon: '🏥', items: [] },
+      // Servicios groups
+      luz: { name: 'Electricidad', value: 3200, icon: '💡', items: [] },
+      agua: { name: 'Agua', value: 1800, icon: '💧', items: [] },
+      gas: { name: 'Gas', value: 2000, icon: '🔥', items: [] },
+      internet: { name: 'Internet', value: 2500, icon: '📡', items: [] },
+      telefono: { name: 'Teléfono', value: 1300, icon: '📱', items: [] },
+      // Educación groups
+      cursos: { name: 'Cursos', value: 2500, icon: '🎓', items: [] },
+      libros: { name: 'Libros', value: 1200, icon: '📖', items: [] },
+      materiales: { name: 'Materiales', value: 900, icon: '✏️', items: [] },
+      matricula: { name: 'Matrícula', value: 800, icon: '📋', items: [] }
+    };
+
+    // Item Subcategories (Level 3) - final drill-down level
+    const allItems = {
+      // Carnes y Mariscos
+      ground_beef: { name: 'Ground Beef', value: 21114, icon: '🥩', count: 3 },
+      chicken_breast: { name: 'Chicken Breast', value: 10843, icon: '🍗', count: 1 },
+      beef_ribs: { name: 'Beef Ribs', value: 9433, icon: '🥩', count: 1 },
+      pork_loin: { name: 'Pork Loin', value: 9053, icon: '🥓', count: 2 },
+      ham: { name: 'Ham', value: 7689, icon: '🍖', count: 2 },
+      salmon: { name: 'Salmon', value: 5200, icon: '🐟', count: 1 },
+      shrimp: { name: 'Shrimp', value: 4200, icon: '🦐', count: 1 },
+      // Lácteos
+      milk: { name: 'Milk', value: 8500, icon: '🥛', count: 4 },
+      cheese: { name: 'Cheese', value: 9200, icon: '🧀', count: 3 },
+      yogurt: { name: 'Yogurt', value: 5300, icon: '🥛', count: 2 },
+      butter: { name: 'Butter', value: 3200, icon: '🧈', count: 2 },
+      cream: { name: 'Cream', value: 1800, icon: '🥛', count: 1 },
+      // Panadería
+      bread: { name: 'Bread', value: 8000, icon: '🍞', count: 5 },
+      croissant: { name: 'Croissant', value: 4500, icon: '🥐', count: 3 },
+      bagel: { name: 'Bagel', value: 3200, icon: '🥯', count: 2 },
+      tortilla: { name: 'Tortilla', value: 2300, icon: '🫓', count: 2 },
+      // Frutas y Verduras
+      apple: { name: 'Apple', value: 6500, icon: '🍎', count: 3 },
+      banana: { name: 'Banana', value: 5800, icon: '🍌', count: 4 },
+      tomato: { name: 'Tomato', value: 7200, icon: '🍅', count: 3 },
+      lettuce: { name: 'Lettuce', value: 4500, icon: '🥬', count: 2 },
+      onion: { name: 'Onion', value: 4200, icon: '🧅', count: 3 },
+      potato: { name: 'Potato', value: 3800, icon: '🥔', count: 2 },
+      // Bebidas
+      water: { name: 'Water', value: 4500, icon: '💧', count: 6 },
+      soda: { name: 'Soda', value: 5200, icon: '🥤', count: 4 },
+      juice: { name: 'Juice', value: 4800, icon: '🧃', count: 3 },
+      beer: { name: 'Beer', value: 4500, icon: '🍺', count: 2 },
+      wine: { name: 'Wine', value: 3000, icon: '🍷', count: 1 },
+      // Congelados
+      ice_cream: { name: 'Ice Cream', value: 6500, icon: '🍦', count: 3 },
+      frozen_pizza: { name: 'Frozen Pizza', value: 5200, icon: '🍕', count: 2 },
+      frozen_veggies: { name: 'Frozen Veggies', value: 3300, icon: '🥦', count: 2 },
+      // Limpieza
+      detergent: { name: 'Detergent', value: 7500, icon: '🧴', count: 2 },
+      bleach: { name: 'Bleach', value: 4200, icon: '🧪', count: 1 },
+      sponges: { name: 'Sponges', value: 3800, icon: '🧽', count: 2 },
+      trash_bags: { name: 'Trash Bags', value: 2500, icon: '🗑️', count: 1 },
+      // Aseo Personal
+      shampoo: { name: 'Shampoo', value: 4200, icon: '🧴', count: 2 },
+      soap: { name: 'Soap', value: 2800, icon: '🧼', count: 2 },
+      toothpaste: { name: 'Toothpaste', value: 3200, icon: '🪥', count: 2 },
+      deodorant: { name: 'Deodorant', value: 1800, icon: '🧴', count: 1 },
+      // Snacks
+      chips: { name: 'Chips', value: 4800, icon: '🍟', count: 3 },
+      cookies: { name: 'Cookies', value: 3800, icon: '🍪', count: 2 },
+      chocolate: { name: 'Chocolate', value: 4200, icon: '🍫', count: 3 },
+      nuts: { name: 'Nuts', value: 2000, icon: '🥜', count: 1 },
+      // Abarrotes
+      rice: { name: 'Rice', value: 3200, icon: '🍚', count: 2 },
+      pasta: { name: 'Pasta', value: 2800, icon: '🍝', count: 2 },
+      canned_beans: { name: 'Canned Beans', value: 2500, icon: '🥫', count: 2 },
+      oil: { name: 'Oil', value: 2000, icon: '🫒', count: 1 },
+      sugar: { name: 'Sugar', value: 1500, icon: '🧂', count: 1 }
+    };
+
+    // Categories currently in "Otro" (can be popped out)
+    let otroSubCategories = ['entretencion', 'salud', 'servicios', 'educacion'];
+
+    // Currently active/visible categories (starts with core + otro)
+    let activeCategories = ['supermercado', 'restaurantes', 'transporte'];
+
+    // Calculate "Otro" value (sum of all sub-categories still in otro)
+    function getOtroValue() {
+      return otroSubCategories.reduce((sum, cat) => sum + allCategories[cat].value, 0);
+    }
+
+    // Get total value of all categories
+    function getTotalValue() {
+      return Object.values(allCategories).reduce((sum, cat) => sum + cat.value, 0);
+    }
+
+    // Format currency
+    function formatCurrency(value) {
+      if (value >= 1000) {
+        return '$' + value.toLocaleString('es-CL');
+      }
+      return '$' + value;
+    }
+
+    // Format short currency (for center)
+    function formatShortCurrency(value) {
+      if (value >= 1000000) {
+        return '$' + (value / 1000000).toFixed(1) + 'M';
+      }
+      if (value >= 1000) {
+        return '$' + Math.round(value / 1000) + 'k';
+      }
+      return '$' + value;
+    }
+
+    // Calculate percentage
+    function getPercent(value) {
+      const total = getTotalValue();
+      return Math.round((value / total) * 100) + '%';
+    }
+
+    // Legacy compatibility object (dynamically computed)
+    function getDonutCategories() {
+      const cats = {};
+      activeCategories.forEach(key => {
+        const cat = allCategories[key];
+        cats[key] = {
+          name: cat.name,
+          value: formatCurrency(cat.value),
+          percent: getPercent(cat.value),
+          color: cat.color
+        };
+      });
+      // Add "otro" if there are still sub-categories in it
+      if (otroSubCategories.length > 0) {
+        const otroVal = getOtroValue();
+        cats.otro = {
+          name: 'Otro',
+          value: formatCurrency(otroVal),
+          percent: getPercent(otroVal),
+          color: '#6b7280'
+        };
+      }
+      return cats;
+    }
+
+    // Add a category from "Otro"
+    function addCategoryFromOtro(categoryKey) {
+      if (otroSubCategories.includes(categoryKey)) {
+        // Remove from otro
+        otroSubCategories = otroSubCategories.filter(c => c !== categoryKey);
+        // Add to active
+        activeCategories.push(categoryKey);
+        // Re-render both charts to keep them in sync
+        renderDonutChart();
+        renderTreemap();
+      }
+    }
+
+    // Remove a category back to "Otro"
+    function removeCategoryToOtro(categoryKey) {
+      if (!coreCategories.includes(categoryKey) && activeCategories.includes(categoryKey)) {
+        // Remove from active
+        activeCategories = activeCategories.filter(c => c !== categoryKey);
+        // Add back to otro (at the beginning so it appears as next available)
+        otroSubCategories.unshift(categoryKey);
+        // Re-render both charts to keep them in sync
+        renderDonutChart();
+        renderTreemap();
+      }
+    }
+
+    // Render the entire donut chart (SVG + legend)
+    function renderDonutChart() {
+      const donutCategories = getDonutCategories();
+      const categoryKeys = Object.keys(donutCategories);
+      const total = getTotalValue();
+      const circumference = 2 * Math.PI * 52; // ~326.73
+
+      // Update SVG by creating proper SVG namespace elements
+      const svgContainer = document.querySelector('.donut-chart-svg');
+      if (svgContainer) {
+        // Clear existing circles
+        svgContainer.querySelectorAll('.donut-segment').forEach(el => el.remove());
+
+        let currentOffset = 0;
+
+        categoryKeys.forEach(key => {
+          const cat = key === 'otro' ? { color: '#6b7280' } : allCategories[key];
+          const value = key === 'otro' ? getOtroValue() : cat.value;
+          const percent = value / total;
+          const segmentLength = percent * circumference - 3; // -3 for gap
+          const dashArray = segmentLength + ' ' + (circumference - segmentLength);
+
+          // Create circle with SVG namespace
+          const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          circle.setAttribute('class', 'donut-segment');
+          circle.setAttribute('cx', '60');
+          circle.setAttribute('cy', '60');
+          circle.setAttribute('r', '52');
+          circle.setAttribute('stroke', cat.color);
+          circle.setAttribute('stroke-dasharray', dashArray);
+          circle.setAttribute('stroke-dashoffset', String(-currentOffset));
+          circle.setAttribute('data-category', key);
+          circle.onclick = function() { selectDonutSegment(this); };
+
+          svgContainer.appendChild(circle);
+
+          currentOffset += percent * circumference;
+        });
+      }
+
+      // Build legend HTML
+      let legendHtml = '';
+
+      // SVG icons for buttons
+      const plusIcon = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
+      const minusIcon = '<svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg>';
+      const chevronIcon = '<svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>';
+
+      // Active categories (including otro if it has sub-categories)
+      categoryKeys.forEach(key => {
+        const cat = key === 'otro'
+          ? { name: 'Otro', icon: '📦', iconClass: 'other', value: getOtroValue(), color: '#6b7280', subcategories: [] }
+          : allCategories[key];
+        const value = key === 'otro' ? getOtroValue() : cat.value;
+        const isRemovable = !coreCategories.includes(key) && key !== 'otro';
+        const hasSubcategories = cat.subcategories && cat.subcategories.length > 0;
+
+        legendHtml += `
+          <div class="donut-legend-item" onclick="selectDonutCategory('${key}')">
+            <div class="donut-legend-icon ${cat.iconClass}">${cat.icon}</div>
+            <div class="donut-legend-info">
+              <span class="donut-legend-name">${cat.name}</span>
+              <span class="donut-legend-details">${formatCurrency(value)}</span>
+            </div>
+            <div class="donut-legend-actions">
+              <span class="donut-legend-percent">${getPercent(value)}</span>
+              ${isRemovable
+                ? `<button class="donut-category-btn remove" onclick="event.stopPropagation(); removeCategoryToOtro('${key}')" title="Quitar">${minusIcon}</button>`
+                : ''}
+              ${hasSubcategories
+                ? `<button class="donut-drilldown-btn" onclick="event.stopPropagation(); drillDownCategory('${key}')" title="Ver subcategorías">${chevronIcon}</button>`
+                : ''}
+            </div>
+          </div>
+        `;
+      });
+
+      // Show next available category from otro (greyed out with Add button)
+      if (otroSubCategories.length > 0) {
+        const nextCatKey = otroSubCategories[0];
+        const nextCat = allCategories[nextCatKey];
+        const hasSubcategories = nextCat.subcategories && nextCat.subcategories.length > 0;
+
+        legendHtml += `
+          <div class="donut-legend-item inactive">
+            <div class="donut-legend-icon ${nextCat.iconClass}">${nextCat.icon}</div>
+            <div class="donut-legend-info">
+              <span class="donut-legend-name">${nextCat.name}</span>
+              <span class="donut-legend-details">${formatCurrency(nextCat.value)}</span>
+            </div>
+            <div class="donut-legend-actions">
+              <span class="donut-legend-percent">${getPercent(nextCat.value)}</span>
+              <button class="donut-category-btn add" onclick="event.stopPropagation(); addCategoryFromOtro('${nextCatKey}')" title="Agregar">${plusIcon}</button>
+              ${hasSubcategories
+                ? `<button class="donut-drilldown-btn" onclick="event.stopPropagation(); drillDownCategory('${nextCatKey}')" title="Ver subcategorías">${chevronIcon}</button>`
+                : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      // Update legend
+      const legendContainer = document.querySelector('.donut-legend');
+      if (legendContainer) {
+        legendContainer.innerHTML = legendHtml;
+      }
+
+      // Update header total
+      const totalEl = document.querySelector('.donut-chart-total');
+      if (totalEl) {
+        totalEl.textContent = formatCurrency(total);
+      }
+
+      // Reset center to total
+      resetDonutChart();
+    }
+
+    // Select donut segment when clicked
+    function selectDonutSegment(element) {
+      const category = element.dataset.category;
+      updateDonutCenter(category);
+      highlightDonutSegment(category);
+    }
+
+    // Select category from legend
+    function selectDonutCategory(category) {
+      updateDonutCenter(category);
+      highlightDonutSegment(category);
+    }
+
+    // Update the center of the donut with selected category info
+    function updateDonutCenter(category) {
+      const centerValue = document.getElementById('donut-center-value');
+      const centerLabel = document.getElementById('donut-center-label');
+
+      if (category === 'otro') {
+        // Special handling for "Otro" category
+        centerValue.textContent = formatShortCurrency(getOtroValue());
+        centerLabel.textContent = 'Otro';
+      } else if (category && allCategories[category]) {
+        const cat = allCategories[category];
+        centerValue.textContent = formatShortCurrency(cat.value);
+        centerLabel.textContent = cat.name;
+      } else {
+        // Reset to total
+        centerValue.textContent = formatShortCurrency(getTotalValue());
+        centerLabel.textContent = 'Total';
+      }
+    }
+
+    // Highlight the selected segment
+    function highlightDonutSegment(category) {
+      const segments = document.querySelectorAll('.donut-segment');
+      segments.forEach(seg => {
+        if (seg.dataset.category === category) {
+          seg.classList.add('active');
+        } else {
+          seg.classList.remove('active');
+        }
+      });
+    }
+
+    // Reset donut to default state
+    function resetDonutChart() {
+      updateDonutCenter(null);
+      highlightDonutSegment(null);
+    }
+
+    // Current drill-down state
+    let currentDrillDown = null; // null = top level, or category key
+
+    // Drill down into a category to see subcategories
+    function drillDownCategory(categoryKey) {
+      const cat = allCategories[categoryKey];
+      if (!cat || !cat.subcategories || cat.subcategories.length === 0) return;
+
+      currentDrillDown = categoryKey;
+      renderSubcategoryDonut(categoryKey);
+    }
+
+    // Go back to main category view
+    function drillUpCategory() {
+      currentDrillDown = null;
+      renderDonutChart();
+    }
+
+    // Color palette for drill-down levels (different colors for each segment)
+    const drillDownColors = [
+      '#22c55e', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899',
+      '#06b6d4', '#14b8a6', '#f97316', '#ef4444', '#84cc16',
+      '#6366f1', '#d946ef', '#0ea5e9', '#10b981', '#f43f5e'
+    ];
+
+    // Get color for index (cycles through palette)
+    function getSegmentColor(index) {
+      return drillDownColors[index % drillDownColors.length];
+    }
+
+    // Render Group donut chart (Level 2)
+    function renderSubcategoryDonut(categoryKey) {
+      const cat = allCategories[categoryKey];
+      const groupKeys = cat.subcategories; // These are actually group keys
+      const total = cat.value;
+      const circumference = 2 * Math.PI * 52;
+
+      // Update SVG
+      const svgContainer = document.querySelector('.donut-chart-svg');
+      if (svgContainer) {
+        svgContainer.querySelectorAll('.donut-segment').forEach(el => el.remove());
+
+        let currentOffset = 0;
+
+        groupKeys.forEach((key, index) => {
+          const group = allGroups[key];
+          if (!group) return;
+
+          const percent = group.value / total;
+          const segmentLength = percent * circumference - 2;
+          const dashArray = segmentLength + ' ' + (circumference - segmentLength);
+          const segmentColor = getSegmentColor(index);
+
+          const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          circle.setAttribute('class', 'donut-segment');
+          circle.setAttribute('cx', '60');
+          circle.setAttribute('cy', '60');
+          circle.setAttribute('r', '52');
+          circle.setAttribute('stroke', segmentColor);
+          circle.setAttribute('stroke-dasharray', dashArray);
+          circle.setAttribute('stroke-dashoffset', String(-currentOffset));
+          circle.setAttribute('data-category', key);
+          circle.setAttribute('data-color', segmentColor);
+          circle.onclick = function() { selectGroup(key, categoryKey); };
+
+          svgContainer.appendChild(circle);
+          currentOffset += percent * circumference;
+        });
+      }
+
+      // Update center
+      const centerValue = document.getElementById('donut-center-value');
+      const centerLabel = document.getElementById('donut-center-label');
+      if (centerValue && centerLabel) {
+        centerValue.textContent = formatShortCurrency(total);
+        centerLabel.textContent = cat.name;
+      }
+
+      // Build group legend
+      let legendHtml = '';
+      const backIcon = '<svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>';
+      const chevronIcon = '<svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>';
+
+      // Back button
+      legendHtml += `
+        <div class="donut-legend-item" onclick="drillUpCategory()" style="background: var(--bg-tertiary);">
+          <button class="donut-drilldown-btn" style="transform: rotate(0);">${backIcon}</button>
+          <div class="donut-legend-info">
+            <span class="donut-legend-name">← Volver</span>
+            <span class="donut-legend-details">Ver todas las categorías</span>
+          </div>
+        </div>
+      `;
+
+      // Group items
+      groupKeys.forEach((key, index) => {
+        const group = allGroups[key];
+        if (!group) return;
+
+        const percent = Math.round((group.value / total) * 100);
+        const hasItems = group.items && group.items.length > 0;
+        const segmentColor = getSegmentColor(index);
+
+        legendHtml += `
+          <div class="donut-legend-item" onclick="selectGroup('${key}', '${categoryKey}')">
+            <div class="donut-legend-icon" style="background: ${segmentColor}20;">${group.icon}</div>
+            <div class="donut-legend-info">
+              <span class="donut-legend-name">${group.name}</span>
+              <span class="donut-legend-details">${formatCurrency(group.value)}</span>
+            </div>
+            <div class="donut-legend-actions">
+              <span class="donut-legend-percent">${percent}%</span>
+              ${hasItems
+                ? `<button class="donut-drilldown-btn" onclick="event.stopPropagation(); drillDownGroup('${key}', '${categoryKey}')" title="Ver items">${chevronIcon}</button>`
+                : ''}
+            </div>
+          </div>
+        `;
+      });
+
+      const legendContainer = document.querySelector('.donut-legend');
+      if (legendContainer) {
+        legendContainer.innerHTML = legendHtml;
+      }
+
+      // Update header
+      const titleEl = document.querySelector('.donut-chart-title');
+      if (titleEl) {
+        titleEl.textContent = cat.name + ' en Diciembre';
+      }
+
+      const totalEl = document.querySelector('.donut-chart-total');
+      if (totalEl) {
+        totalEl.textContent = formatCurrency(total);
+      }
+    }
+
+    // Select a group (Level 2)
+    function selectGroup(groupKey, categoryKey) {
+      const group = allGroups[groupKey];
+      const parent = allCategories[categoryKey];
+      if (!group) return;
+
+      const centerValue = document.getElementById('donut-center-value');
+      const centerLabel = document.getElementById('donut-center-label');
+      if (centerValue && centerLabel) {
+        centerValue.textContent = formatShortCurrency(group.value);
+        centerLabel.textContent = group.name;
+      }
+
+      // Highlight segment
+      document.querySelectorAll('.donut-segment').forEach(seg => {
+        seg.style.opacity = seg.dataset.category === groupKey ? '1' : '0.4';
+      });
+    }
+
+    // Current group drill-down state
+    let currentGroupDrillDown = null;
+
+    // Drill down into a group to see items (Level 3)
+    function drillDownGroup(groupKey, categoryKey) {
+      const group = allGroups[groupKey];
+      if (!group || !group.items || group.items.length === 0) return;
+
+      currentGroupDrillDown = { group: groupKey, category: categoryKey };
+      renderItemsDonut(groupKey, categoryKey);
+    }
+
+    // Go back from items to groups
+    function drillUpGroup() {
+      if (currentGroupDrillDown) {
+        const categoryKey = currentGroupDrillDown.category;
+        currentGroupDrillDown = null;
+        renderSubcategoryDonut(categoryKey);
+      }
+    }
+
+    // Render Items donut chart (Level 3 - final)
+    function renderItemsDonut(groupKey, categoryKey) {
+      const group = allGroups[groupKey];
+      const cat = allCategories[categoryKey];
+      const itemKeys = group.items;
+      const total = group.value;
+      const circumference = 2 * Math.PI * 52;
+
+      // Update SVG
+      const svgContainer = document.querySelector('.donut-chart-svg');
+      if (svgContainer) {
+        svgContainer.querySelectorAll('.donut-segment').forEach(el => el.remove());
+
+        let currentOffset = 0;
+
+        itemKeys.forEach((key, index) => {
+          const item = allItems[key];
+          if (!item) return;
+
+          const percent = item.value / total;
+          const segmentLength = percent * circumference - 2;
+          const dashArray = segmentLength + ' ' + (circumference - segmentLength);
+          const segmentColor = getSegmentColor(index);
+
+          const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          circle.setAttribute('class', 'donut-segment');
+          circle.setAttribute('cx', '60');
+          circle.setAttribute('cy', '60');
+          circle.setAttribute('r', '52');
+          circle.setAttribute('stroke', segmentColor);
+          circle.setAttribute('stroke-dasharray', dashArray);
+          circle.setAttribute('stroke-dashoffset', String(-currentOffset));
+          circle.setAttribute('data-category', key);
+          circle.setAttribute('data-color', segmentColor);
+          circle.onclick = function() { selectItem(key, groupKey); };
+
+          svgContainer.appendChild(circle);
+          currentOffset += percent * circumference;
+        });
+      }
+
+      // Update center
+      const centerValue = document.getElementById('donut-center-value');
+      const centerLabel = document.getElementById('donut-center-label');
+      if (centerValue && centerLabel) {
+        centerValue.textContent = formatShortCurrency(total);
+        centerLabel.textContent = group.name;
+      }
+
+      // Build items legend
+      let legendHtml = '';
+      const backIcon = '<svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>';
+
+      // Back button
+      legendHtml += `
+        <div class="donut-legend-item" onclick="drillUpGroup()" style="background: var(--bg-tertiary);">
+          <button class="donut-drilldown-btn" style="transform: rotate(0);">${backIcon}</button>
+          <div class="donut-legend-info">
+            <span class="donut-legend-name">← Volver</span>
+            <span class="donut-legend-details">Ver ${cat.name}</span>
+          </div>
+        </div>
+      `;
+
+      // Item entries
+      itemKeys.forEach((key, index) => {
+        const item = allItems[key];
+        if (!item) return;
+
+        const percent = Math.round((item.value / total) * 100);
+        const segmentColor = getSegmentColor(index);
+
+        legendHtml += `
+          <div class="donut-legend-item" onclick="selectItem('${key}', '${groupKey}')">
+            <div class="donut-legend-icon" style="background: ${segmentColor}20;">${item.icon}</div>
+            <div class="donut-legend-info">
+              <span class="donut-legend-name">${item.name}</span>
+              <span class="donut-legend-details">${formatCurrency(item.value)} · ${item.count} compra${item.count > 1 ? 's' : ''}</span>
+            </div>
+            <div class="donut-legend-actions">
+              <span class="donut-legend-percent">${percent}%</span>
+            </div>
+          </div>
+        `;
+      });
+
+      const legendContainer = document.querySelector('.donut-legend');
+      if (legendContainer) {
+        legendContainer.innerHTML = legendHtml;
+      }
+
+      // Update header
+      const titleEl = document.querySelector('.donut-chart-title');
+      if (titleEl) {
+        titleEl.textContent = group.name + ' en Diciembre';
+      }
+
+      const totalEl = document.querySelector('.donut-chart-total');
+      if (totalEl) {
+        totalEl.textContent = formatCurrency(total);
+      }
+    }
+
+    // Select an item (Level 3)
+    function selectItem(itemKey, groupKey) {
+      const item = allItems[itemKey];
+      if (!item) return;
+
+      const centerValue = document.getElementById('donut-center-value');
+      const centerLabel = document.getElementById('donut-center-label');
+      if (centerValue && centerLabel) {
+        centerValue.textContent = formatShortCurrency(item.value);
+        centerLabel.textContent = item.name;
+      }
+
+      // Highlight segment
+      document.querySelectorAll('.donut-segment').forEach(seg => {
+        seg.style.opacity = seg.dataset.category === itemKey ? '1' : '0.4';
+      });
+    }
+
+    // Navigate with cycling (left/right buttons)
+    function navigateAnalyticsCarousel(direction) {
+      const totalSlides = analyticsSlideTitles.length;
+      let newIndex = analyticsCurrentSlide + direction;
+
+      // Cycle: if we go past the end, wrap to beginning; if before beginning, wrap to end
+      if (newIndex < 0) {
+        newIndex = totalSlides - 1;
+      } else if (newIndex >= totalSlides) {
+        newIndex = 0;
+      }
+
+      goToAnalyticsSlide(newIndex);
+    }
+
+    // Swipe support for analytics carousel
+    (function initAnalyticsCarouselSwipe() {
+      const viewport = document.querySelector('.analytics-carousel-viewport');
+      if (!viewport) return;
+
+      let startX = 0;
+      let isDragging = false;
+
+      viewport.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        isDragging = true;
+      });
+
+      viewport.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+      });
+
+      viewport.addEventListener('touchend', (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        const endX = e.changedTouches[0].clientX;
+        const diff = startX - endX;
+
+        if (Math.abs(diff) > 50) {
+          if (diff > 0 && analyticsCurrentSlide < analyticsSlideTitles.length - 1) {
+            goToAnalyticsSlide(analyticsCurrentSlide + 1);
+          } else if (diff < 0 && analyticsCurrentSlide > 0) {
+            goToAnalyticsSlide(analyticsCurrentSlide - 1);
+          }
+        }
+      });
+    })();
+
+    // ============================================
+    // TREEMAP
+    // ============================================
+
+    // Treemap category mapping (using same data as donut)
+    const treemapCategoryMapping = {
+      supermercado: { iconClass: 'groceries', count: '24 compras' },
+      restaurantes: { iconClass: 'restaurant', count: '18 visitas' },
+      transporte: { iconClass: 'transport', count: '8 pagos' },
+      entretencion: { iconClass: 'entertainment', count: '6 compras' },
+      servicios: { iconClass: 'utilities', count: '4 pagos' },
+      salud: { iconClass: 'health', count: '3 compras' },
+      educacion: { iconClass: 'education', count: '2 compras' }
+    };
+
+    // Render the treemap dynamically
+    function renderTreemap() {
+      const container = document.getElementById('treemap-container');
+      if (!container) {
+        console.warn('Treemap container not found');
+        return;
+      }
+      if (!allCategories || !activeCategories) {
+        console.warn('Treemap data not available');
+        return;
+      }
+
+      const total = getTotalValue();
+      let html = '';
+
+      // SVG icons for buttons
+      const plusIcon = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
+      const minusIcon = '<svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg>';
+
+      // Calculate sizes based on number of active categories
+      const numActive = activeCategories.length + (otroSubCategories.length > 0 ? 1 : 0);
+
+      // Render active categories
+      activeCategories.forEach((key, index) => {
+        const cat = allCategories[key];
+        const mapping = treemapCategoryMapping[key] || { iconClass: 'other', count: '' };
+        const isCore = coreCategories.includes(key);
+        const value = cat.value;
+        const percent = Math.round((value / total) * 100);
+
+        // First category is large if we have 5+ items
+        const sizeClass = index === 0 && numActive >= 5 ? 'large' : '';
+
+        html += `
+          <div class="treemap-cell ${mapping.iconClass} ${sizeClass}" onclick="openDrilldown('${mapping.iconClass}')">
+            <div>
+              <div class="treemap-cell-label">${cat.name}</div>
+              ${mapping.count ? `<div class="treemap-cell-count">${mapping.count}</div>` : ''}
+            </div>
+            <div>
+              <div class="treemap-cell-value">${formatShortCurrency(value)}</div>
+              <div class="treemap-cell-percent">${percent}%</div>
+            </div>
+            ${!isCore ? `
+              <div class="treemap-cell-actions">
+                <button class="treemap-action-btn remove" onclick="event.stopPropagation(); removeTreemapCategory('${key}')" title="Quitar">
+                  ${minusIcon}
+                </button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      });
+
+      // Render "Otro" cell if there are still sub-categories in it
+      if (otroSubCategories.length > 0) {
+        const otroValue = getOtroValue();
+        const otroPercent = Math.round((otroValue / total) * 100);
+
+        html += `
+          <div class="treemap-cell other" onclick="openDrilldown('other')">
+            <div>
+              <div class="treemap-cell-label">Otros</div>
+              <div class="treemap-cell-count">${otroSubCategories.length} categorías</div>
+            </div>
+            <div>
+              <div class="treemap-cell-value">${formatShortCurrency(otroValue)}</div>
+              <div class="treemap-cell-percent">${otroPercent}%</div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Show next available category from otro (greyed out with Add button)
+      if (otroSubCategories.length > 0) {
+        const nextCatKey = otroSubCategories[0];
+        const nextCat = allCategories[nextCatKey];
+        const mapping = treemapCategoryMapping[nextCatKey] || { iconClass: 'other', count: '' };
+        const percent = Math.round((nextCat.value / total) * 100);
+
+        html += `
+          <div class="treemap-cell inactive">
+            <div>
+              <div class="treemap-cell-label">${nextCat.name}</div>
+              ${mapping.count ? `<div class="treemap-cell-count">${mapping.count}</div>` : ''}
+            </div>
+            <div>
+              <div class="treemap-cell-value">${formatShortCurrency(nextCat.value)}</div>
+              <div class="treemap-cell-percent">${percent}%</div>
+            </div>
+            <div class="treemap-cell-actions">
+              <button class="treemap-action-btn add" onclick="event.stopPropagation(); addTreemapCategory('${nextCatKey}')" title="Agregar">
+                ${plusIcon}
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    // Add category to treemap (synced with donut)
+    function addTreemapCategory(categoryKey) {
+      // addCategoryFromOtro already calls renderTreemap()
+      addCategoryFromOtro(categoryKey);
+    }
+
+    // Remove category from treemap (synced with donut)
+    function removeTreemapCategory(categoryKey) {
+      // removeCategoryToOtro already calls renderTreemap()
+      removeCategoryToOtro(categoryKey);
+    }
+
+    // ============================================
+    // TIME SELECTOR (pill-style period selector)
+    // ============================================
+    const monthsFull = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const monthsShortCap = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    let activeTimePeriod = 'month'; // Default: Mes
+
+    function selectTimePeriod(period) {
+      activeTimePeriod = period;
+      // Update pill active state
+      document.querySelectorAll('.time-pill').forEach(pill => {
+        pill.classList.toggle('active', pill.dataset.period === period);
+      });
+      // Update period label based on selection
+      updatePeriodLabel();
+    }
+
+    function navigatePeriod(direction) {
+      // Navigate forward or backward based on active period type
+      if (activeTimePeriod === 'week') {
+        timeState.week += direction;
+        const weeksInMonth = Math.ceil(new Date(timeState.year, timeState.month, 0).getDate() / 7);
+        if (timeState.week < 1) {
+          timeState.month--;
+          if (timeState.month < 1) { timeState.month = 12; timeState.year--; }
+          timeState.week = Math.ceil(new Date(timeState.year, timeState.month, 0).getDate() / 7);
+        } else if (timeState.week > weeksInMonth) {
+          timeState.week = 1;
+          timeState.month++;
+          if (timeState.month > 12) { timeState.month = 1; timeState.year++; }
+        }
+      } else if (activeTimePeriod === 'month') {
+        timeState.month += direction;
+        if (timeState.month < 1) { timeState.month = 12; timeState.year--; }
+        else if (timeState.month > 12) { timeState.month = 1; timeState.year++; }
+        timeState.quarter = Math.ceil(timeState.month / 3);
+      } else if (activeTimePeriod === 'quarter') {
+        timeState.quarter += direction;
+        if (timeState.quarter < 1) { timeState.quarter = 4; timeState.year--; }
+        else if (timeState.quarter > 4) { timeState.quarter = 1; timeState.year++; }
+        timeState.month = (timeState.quarter - 1) * 3 + 1;
+      } else if (activeTimePeriod === 'year') {
+        timeState.year += direction;
+      }
+      updatePeriodLabel();
+    }
+
+    function updatePeriodLabel() {
+      const label = document.getElementById('period-label');
+      if (!label) return;
+
+      if (activeTimePeriod === 'week') {
+        const firstDay = (timeState.week - 1) * 7 + 1;
+        const lastDay = Math.min(firstDay + 6, new Date(timeState.year, timeState.month, 0).getDate());
+        label.textContent = `${firstDay}-${lastDay} ${monthsShortCap[timeState.month - 1]} ${timeState.year}`;
+      } else if (activeTimePeriod === 'month') {
+        label.textContent = `${monthsFull[timeState.month - 1]} ${timeState.year}`;
+      } else if (activeTimePeriod === 'quarter') {
+        label.textContent = `Q${timeState.quarter} ${timeState.year}`;
+      } else if (activeTimePeriod === 'year') {
+        label.textContent = `${timeState.year}`;
+      }
+    }
+
+    // Legacy function for dropdown compatibility
+    function selectTimeDimension(level, e) {
+      if (e) e.stopPropagation();
+      selectTimePeriod(level);
+      document.getElementById('time-dropdown')?.classList.remove('open');
+      activeDropdown = null;
+    }
+
+    // Legacy function - keep for compatibility
+    function selectTimeLevel(level) {
+      selectTimePeriod(level);
+    }
+
+    function updateBreadcrumbDisplay() {
+      // Hierarchy order: year > quarter > month > week > day
+      const levelOrder = ['year', 'quarter', 'month', 'week'];
+      const activeLevelIndex = levelOrder.indexOf(activeTimePeriod);
+
+      // Update values
+      const yearItem = document.querySelector('.breadcrumb-item[data-level="year"]');
+      const quarterItem = document.querySelector('.breadcrumb-item[data-level="quarter"]');
+      const monthItem = document.querySelector('.breadcrumb-item[data-level="month"]');
+      const weekItem = document.querySelector('.breadcrumb-item[data-level="week"]');
+
+      if (yearItem) yearItem.textContent = timeState.year;
+      if (quarterItem) quarterItem.textContent = 'Q' + timeState.quarter;
+      if (monthItem) monthItem.textContent = monthsShortCap[timeState.month - 1];
+
+      // Week: show day range
+      const firstDayOfWeek = (timeState.week - 1) * 7 + 1;
+      const daysInMonth = new Date(timeState.year, timeState.month, 0).getDate();
+      const lastDayOfWeek = Math.min(firstDayOfWeek + 6, daysInMonth);
+      if (weekItem) weekItem.textContent = `${firstDayOfWeek}-${lastDayOfWeek}`;
+
+      // Show/hide breadcrumb items and separators based on active level
+      const breadcrumbContainer = document.getElementById('breadcrumb-title');
+      if (!breadcrumbContainer) return;
+      const allItems = breadcrumbContainer.querySelectorAll('.breadcrumb-item, .breadcrumb-separator');
+
+      allItems.forEach(el => {
+        if (el.classList.contains('breadcrumb-item')) {
+          const itemLevel = el.dataset.level;
+          const itemLevelIndex = levelOrder.indexOf(itemLevel);
+
+          // Show items up to and including active level
+          if (itemLevelIndex <= activeLevelIndex) {
+            el.style.display = 'inline-flex';
+            // Update active state
+            el.classList.remove('active');
+            if (itemLevel === activeTimePeriod) {
+              el.classList.add('active');
+            }
+          } else {
+            el.style.display = 'none';
+          }
+        } else if (el.classList.contains('breadcrumb-separator')) {
+          // Get the next sibling breadcrumb-item to determine if separator should show
+          const nextItem = el.nextElementSibling;
+          if (nextItem && nextItem.classList.contains('breadcrumb-item')) {
+            const nextLevel = nextItem.dataset.level;
+            const nextLevelIndex = levelOrder.indexOf(nextLevel);
+            el.style.display = nextLevelIndex <= activeLevelIndex ? 'inline' : 'none';
+          }
+        }
+      });
+    }
+
+    function updatePeriodDisplay() {
+      updateBreadcrumbDisplay();
+    }
+
+    // ============================================
+    // TENDENCIA DRILL-DOWN PANEL (Hierarchical)
+    // ============================================
+
+    // Hierarchical data: Category -> Subcategories -> Items
+    const tendenciaDrilldownData = {
+      groceries: {
+        title: 'Supermercado',
+        icon: '🛒',
+        total: 420000,
+        subcategories: {
+          carnes: {
+            name: 'Carnes y Mariscos',
+            icon: '🥩',
+            value: 88200,
+            items: [
+              { icon: '🥩', name: 'Carne de res', value: 42000 },
+              { icon: '🍗', name: 'Pollo', value: 28000 },
+              { icon: '🦐', name: 'Mariscos', value: 18200 }
+            ]
+          },
+          lacteos: {
+            name: 'Lácteos',
+            icon: '🥛',
+            value: 54600,
+            items: [
+              { icon: '🥛', name: 'Leche', value: 18000 },
+              { icon: '🧀', name: 'Quesos', value: 22000 },
+              { icon: '🍦', name: 'Yogurt', value: 14600 }
+            ]
+          },
+          panaderia: {
+            name: 'Panadería',
+            icon: '🍞',
+            value: 33600,
+            items: [
+              { icon: '🍞', name: 'Pan', value: 21000 },
+              { icon: '🥐', name: 'Pasteles', value: 12600 }
+            ]
+          },
+          frutas: {
+            name: 'Frutas y Verduras',
+            icon: '🥬',
+            value: 75600,
+            items: [
+              { icon: '🍎', name: 'Frutas', value: 38000 },
+              { icon: '🥬', name: 'Verduras', value: 37600 }
+            ]
+          },
+          bebidas: {
+            name: 'Bebidas',
+            icon: '🥤',
+            value: 46200,
+            items: [
+              { icon: '🥤', name: 'Gaseosas', value: 18000 },
+              { icon: '🧃', name: 'Jugos', value: 15200 },
+              { icon: '💧', name: 'Agua', value: 13000 }
+            ]
+          },
+          otros: {
+            name: 'Otros',
+            icon: '📦',
+            value: 121800,
+            items: [
+              { icon: '🧴', name: 'Limpieza', value: 42000 },
+              { icon: '🧻', name: 'Aseo Personal', value: 38000 },
+              { icon: '🍫', name: 'Snacks', value: 25800 },
+              { icon: '🥫', name: 'Abarrotes', value: 16000 }
+            ]
+          }
+        }
+      },
+      restaurant: {
+        title: 'Restaurantes',
+        icon: '🍽️',
+        total: 255000,
+        subcategories: {
+          fastfood: {
+            name: 'Comida Rápida',
+            icon: '🍔',
+            value: 127500,
+            items: [
+              { icon: '🍔', name: 'McDonald\'s', value: 55000 },
+              { icon: '🍕', name: 'Papa John\'s', value: 42000 },
+              { icon: '🌮', name: 'Taco Bell', value: 30500 }
+            ]
+          },
+          casual: {
+            name: 'Restaurantes Casuales',
+            icon: '🍝',
+            value: 76500,
+            items: [
+              { icon: '🍣', name: 'Sakura Sushi', value: 48000 },
+              { icon: '🍝', name: 'Olive Garden', value: 28500 }
+            ]
+          },
+          cafes: {
+            name: 'Cafeterías',
+            icon: '☕',
+            value: 51000,
+            items: [
+              { icon: '☕', name: 'Starbucks', value: 32000 },
+              { icon: '🧁', name: 'Juan Valdez', value: 19000 }
+            ]
+          }
+        }
+      },
+      transport: {
+        title: 'Transporte',
+        icon: '🚗',
+        total: 210000,
+        subcategories: {
+          combustible: {
+            name: 'Combustible',
+            icon: '⛽',
+            value: 126000,
+            items: [
+              { icon: '⛽', name: 'Copec', value: 84000 },
+              { icon: '⛽', name: 'Shell', value: 42000 }
+            ]
+          },
+          viajes: {
+            name: 'Viajes',
+            icon: '🚕',
+            value: 63000,
+            items: [
+              { icon: '🚗', name: 'Uber', value: 38000 },
+              { icon: '🚕', name: 'Cabify', value: 25000 }
+            ]
+          },
+          publico: {
+            name: 'Transporte Público',
+            icon: '🚌',
+            value: 21000,
+            items: [
+              { icon: '🚇', name: 'Metro', value: 14000 },
+              { icon: '🚌', name: 'RED', value: 7000 }
+            ]
+          }
+        }
+      },
+      entertainment: {
+        title: 'Entretención',
+        icon: '🎮',
+        total: 96000,
+        subcategories: {
+          streaming: {
+            name: 'Streaming',
+            icon: '📺',
+            value: 38400,
+            items: [
+              { icon: '📺', name: 'Netflix', value: 15990 },
+              { icon: '🎵', name: 'Spotify', value: 6990 },
+              { icon: '🎬', name: 'Disney+', value: 8990 },
+              { icon: '📺', name: 'HBO Max', value: 6430 }
+            ]
+          },
+          juegos: {
+            name: 'Videojuegos',
+            icon: '🎮',
+            value: 28800,
+            items: [
+              { icon: '🎮', name: 'Steam', value: 18800 },
+              { icon: '🎮', name: 'PlayStation Store', value: 10000 }
+            ]
+          },
+          cine: {
+            name: 'Cine y Eventos',
+            icon: '🎬',
+            value: 28800,
+            items: [
+              { icon: '🎬', name: 'Cine Hoyts', value: 22000 },
+              { icon: '🎭', name: 'Teatro', value: 6800 }
+            ]
+          }
+        }
+      },
+      utilities: {
+        title: 'Servicios',
+        icon: '💡',
+        total: 126000,
+        subcategories: {
+          energia: {
+            name: 'Energía',
+            icon: '💡',
+            value: 50400,
+            items: [
+              { icon: '💡', name: 'Enel', value: 38000 },
+              { icon: '🔥', name: 'Gas', value: 12400 }
+            ]
+          },
+          agua: {
+            name: 'Agua',
+            icon: '💧',
+            value: 25200,
+            items: [
+              { icon: '💧', name: 'Aguas Andinas', value: 25200 }
+            ]
+          },
+          telecomunicaciones: {
+            name: 'Telecomunicaciones',
+            icon: '📶',
+            value: 50400,
+            items: [
+              { icon: '📶', name: 'Entel', value: 28990 },
+              { icon: '🌐', name: 'VTR Internet', value: 21410 }
+            ]
+          }
+        }
+      },
+      other: {
+        title: 'Otros',
+        icon: '📦',
+        total: 105000,
+        subcategories: {
+          salud: {
+            name: 'Salud',
+            icon: '💊',
+            value: 42000,
+            items: [
+              { icon: '💊', name: 'Farmacias Cruz Verde', value: 25000 },
+              { icon: '🏥', name: 'Consultas médicas', value: 17000 }
+            ]
+          },
+          ropa: {
+            name: 'Vestuario',
+            icon: '👕',
+            value: 42000,
+            items: [
+              { icon: '👕', name: 'Falabella', value: 28000 },
+              { icon: '👟', name: 'Paris', value: 14000 }
+            ]
+          },
+          regalos: {
+            name: 'Regalos',
+            icon: '🎁',
+            value: 21000,
+            items: [
+              { icon: '🎁', name: 'Regalos varios', value: 21000 }
+            ]
+          }
+        }
+      }
+    };
+
+    // Drill-down navigation state
+    let drilldownState = {
+      level: 0,        // 0: closed, 1: subcategories, 2: items
+      category: null,  // current category key
+      subcategory: null // current subcategory key
+    };
+
+    function formatDrilldownCurrency(value) {
+      return '$' + value.toLocaleString('es-CL');
+    }
+
+    function openDrilldown(category) {
+      const panel = document.getElementById('drilldown-panel');
+      const data = tendenciaDrilldownData[category];
+      if (!data) return;
+
+      drilldownState = { level: 1, category: category, subcategory: null };
+      renderDrilldownSubcategories(category);
+      panel.classList.add('open');
+    }
+
+    function renderDrilldownSubcategories(categoryKey) {
+      const data = tendenciaDrilldownData[categoryKey];
+      if (!data) return;
+
+      document.getElementById('drilldown-title').textContent = data.title;
+
+      const chevronIcon = '<svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>';
+      const backIcon = '<svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>';
+
+      let listHtml = '';
+
+      // Back button
+      listHtml += `
+        <div class="drilldown-item back-item" onclick="closeDrilldown()">
+          <div class="drilldown-item-chevron">${backIcon}</div>
+          <div class="drilldown-item-info">
+            <span class="drilldown-item-name">← Volver</span>
+            <span class="drilldown-item-details">Ver todas las categorías</span>
+          </div>
+        </div>
+      `;
+
+      // Subcategory items
+      Object.keys(data.subcategories).forEach(subKey => {
+        const sub = data.subcategories[subKey];
+        const percent = Math.round((sub.value / data.total) * 100);
+        const hasItems = sub.items && sub.items.length > 0;
+
+        listHtml += `
+          <div class="drilldown-item" onclick="drilldownToItems('${categoryKey}', '${subKey}')">
+            <div class="drilldown-item-icon" style="background: var(--bg-tertiary);">${sub.icon}</div>
+            <div class="drilldown-item-info">
+              <span class="drilldown-item-name">${sub.name}</span>
+              <span class="drilldown-item-details">${formatDrilldownCurrency(sub.value)}</span>
+            </div>
+            <div class="drilldown-item-actions">
+              <span class="drilldown-item-percent">${percent}%</span>
+              ${hasItems ? `<div class="drilldown-item-chevron">${chevronIcon}</div>` : ''}
+            </div>
+          </div>
+        `;
+      });
+
+      document.getElementById('drilldown-list').innerHTML = listHtml;
+    }
+
+    function drilldownToItems(categoryKey, subcategoryKey) {
+      const data = tendenciaDrilldownData[categoryKey];
+      if (!data || !data.subcategories[subcategoryKey]) return;
+
+      drilldownState = { level: 2, category: categoryKey, subcategory: subcategoryKey };
+      renderDrilldownItems(categoryKey, subcategoryKey);
+    }
+
+    function renderDrilldownItems(categoryKey, subcategoryKey) {
+      const data = tendenciaDrilldownData[categoryKey];
+      const sub = data.subcategories[subcategoryKey];
+      if (!sub) return;
+
+      document.getElementById('drilldown-title').textContent = sub.name;
+
+      const backIcon = '<svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>';
+
+      let listHtml = '';
+
+      // Back button
+      listHtml += `
+        <div class="drilldown-item back-item" onclick="drilldownBack()">
+          <div class="drilldown-item-chevron">${backIcon}</div>
+          <div class="drilldown-item-info">
+            <span class="drilldown-item-name">← Volver</span>
+            <span class="drilldown-item-details">Ver ${data.title}</span>
+          </div>
+        </div>
+      `;
+
+      // Item rows
+      sub.items.forEach(item => {
+        const percent = Math.round((item.value / sub.value) * 100);
+
+        listHtml += `
+          <div class="drilldown-item" style="cursor: default;">
+            <div class="drilldown-item-icon" style="background: var(--bg-tertiary);">${item.icon}</div>
+            <div class="drilldown-item-info">
+              <span class="drilldown-item-name">${item.name}</span>
+              <span class="drilldown-item-details">${formatDrilldownCurrency(item.value)}</span>
+            </div>
+            <div class="drilldown-item-actions">
+              <span class="drilldown-item-percent">${percent}%</span>
+            </div>
+          </div>
+        `;
+      });
+
+      document.getElementById('drilldown-list').innerHTML = listHtml;
+    }
+
+    function drilldownBack() {
+      if (drilldownState.level === 2) {
+        // Go back from items to subcategories
+        drilldownState.level = 1;
+        drilldownState.subcategory = null;
+        renderDrilldownSubcategories(drilldownState.category);
+      } else if (drilldownState.level === 1) {
+        closeDrilldown();
+      }
+    }
+
+    function closeDrilldown() {
+      document.getElementById('drilldown-panel').classList.remove('open');
+      drilldownState = { level: 0, category: null, subcategory: null };
+    }
+
+    // ============================================
+    // FILTER DROPDOWNS
+    // ============================================
+    let activeDropdown = null;
+
+    function toggleDropdown(type, e) {
+      if (e) e.stopPropagation();
+
+      const dropdown = document.getElementById(type + '-dropdown');
+      const btn = document.getElementById(type + '-filter-btn');
+
+      // Close other dropdowns
+      document.querySelectorAll('.filter-dropdown.open').forEach(d => {
+        if (d.id !== type + '-dropdown') d.classList.remove('open');
+      });
+
+      // Toggle this dropdown
+      if (dropdown.classList.contains('open')) {
+        dropdown.classList.remove('open');
+        activeDropdown = null;
+      } else {
+        dropdown.classList.add('open');
+        activeDropdown = type;
+      }
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.filter-icon-btn') && !e.target.closest('.filter-dropdown')) {
+        document.querySelectorAll('.filter-dropdown.open').forEach(d => d.classList.remove('open'));
+        activeDropdown = null;
+      }
+    });
+
+    // ============================================
+    // CASCADING TIME SLIDER
+    // ============================================
+    const timeState = {
+      year: 2025,
+      quarter: 4,  // 1-4
+      month: 12,   // 1-12
+      week: 5,     // 1-5 (weeks in month)
+      day: 7       // 1-7 (day in week)
+    };
+
+    const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                       'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    const monthNamesShort = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+    // Quarters to months mapping
+    const quarterMonths = {
+      1: [1, 2, 3],     // Q1: Jan, Feb, Mar
+      2: [4, 5, 6],     // Q2: Apr, May, Jun
+      3: [7, 8, 9],     // Q3: Jul, Aug, Sep
+      4: [10, 11, 12]   // Q4: Oct, Nov, Dec
+    };
+
+    // Get weeks in a month (simplified: 4-5 weeks)
+    function getWeeksInMonth(year, month) {
+      const daysInMonth = new Date(year, month, 0).getDate();
+      return Math.ceil(daysInMonth / 7);
+    }
+
+    // Get week date range
+    function getWeekDateRange(year, month, weekNum) {
+      const firstDay = (weekNum - 1) * 7 + 1;
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const lastDay = Math.min(firstDay + 6, daysInMonth);
+      const monthShort = monthNamesShort[month - 1];
+      return `${monthShort} ${firstDay}-${lastDay}`;
+    }
+
+    // Get day label
+    function getDayLabel(year, month, weekNum, dayNum) {
+      const firstDayOfWeek = (weekNum - 1) * 7 + 1;
+      const day = firstDayOfWeek + (dayNum - 1);
+      const daysInMonth = new Date(year, month, 0).getDate();
+      if (day > daysInMonth) return null;
+      const monthShort = monthNamesShort[month - 1];
+      return `${day} ${monthShort}`;
+    }
+
+    function slideTime(dimension, direction, e) {
+      e.stopPropagation();
+
+      switch(dimension) {
+        case 'year':
+          const newYear = timeState.year + direction;
+          if (newYear >= 2020 && newYear <= 2025) {
+            timeState.year = newYear;
+            // Reset downstream if going to future year
+            if (newYear === 2025) {
+              timeState.quarter = Math.min(timeState.quarter, 4);
+            }
+          }
+          break;
+
+        case 'quarter':
+          const newQuarter = timeState.quarter + direction;
+          if (newQuarter >= 1 && newQuarter <= 4) {
+            timeState.quarter = newQuarter;
+            // Reset month to first of quarter
+            timeState.month = quarterMonths[newQuarter][0];
+            timeState.week = 1;
+            timeState.day = 1;
+          }
+          break;
+
+        case 'month':
+          const monthsInQuarter = quarterMonths[timeState.quarter];
+          const currentMonthIdx = monthsInQuarter.indexOf(timeState.month);
+          const newMonthIdx = currentMonthIdx + direction;
+          if (newMonthIdx >= 0 && newMonthIdx < monthsInQuarter.length) {
+            timeState.month = monthsInQuarter[newMonthIdx];
+            timeState.week = 1;
+            timeState.day = 1;
+          }
+          break;
+
+        case 'week':
+          const maxWeeks = getWeeksInMonth(timeState.year, timeState.month);
+          const newWeek = timeState.week + direction;
+          if (newWeek >= 1 && newWeek <= maxWeeks) {
+            timeState.week = newWeek;
+          }
+          break;
+      }
+
+      updateTimeSliderUI();
+      updatePeriodDisplay();
+    }
+
+    function updateTimeSliderUI() {
+      // Update year
+      document.getElementById('time-year').textContent = timeState.year;
+
+      // Update quarter
+      document.getElementById('time-quarter').textContent = 'Q' + timeState.quarter;
+
+      // Update month
+      document.getElementById('time-month').textContent = monthNames[timeState.month - 1];
+
+      // Update week
+      document.getElementById('time-week').textContent = getWeekDateRange(timeState.year, timeState.month, timeState.week);
+
+      // Update button states
+      updateSliderButtons();
+
+      // Update main period display
+      currentYear = timeState.year;
+      currentMonth = timeState.month - 1; // 0-indexed for main display
+    }
+
+    function updateSliderButtons() {
+      const rows = document.querySelectorAll('.time-slider-row');
+
+      // Year buttons
+      const yearBtns = rows[0].querySelectorAll('.time-slider-btn');
+      yearBtns[0].disabled = timeState.year <= 2020;
+      yearBtns[1].disabled = timeState.year >= 2025;
+
+      // Quarter buttons
+      const quarterBtns = rows[1].querySelectorAll('.time-slider-btn');
+      quarterBtns[0].disabled = timeState.quarter <= 1;
+      quarterBtns[1].disabled = timeState.quarter >= 4;
+
+      // Month buttons
+      const monthsInQuarter = quarterMonths[timeState.quarter];
+      const monthIdx = monthsInQuarter.indexOf(timeState.month);
+      const monthBtns = rows[2].querySelectorAll('.time-slider-btn');
+      monthBtns[0].disabled = monthIdx <= 0;
+      monthBtns[1].disabled = monthIdx >= monthsInQuarter.length - 1;
+
+      // Week buttons
+      const maxWeeks = getWeeksInMonth(timeState.year, timeState.month);
+      const weekBtns = rows[3].querySelectorAll('.time-slider-btn');
+      weekBtns[0].disabled = timeState.week <= 1;
+      weekBtns[1].disabled = timeState.week >= maxWeeks;
+    }
+
+    // Initialize slider UI
+    setTimeout(updateTimeSliderUI, 100);
+
+    // Toggle collapsible section
+    function toggleSection(sectionId, labelEl, e) {
+      if (e) e.stopPropagation();
+
+      const section = document.getElementById(sectionId);
+      section.classList.toggle('collapsed');
+      labelEl.classList.toggle('collapsed');
+    }
+
+    // Multi-select filter state - starts with all categories selected (Transaction mode by default)
+    const allFilterCategories = ['Supermercado', 'Restaurantes', 'Transporte', 'Entretención', 'Servicios', 'Salud', 'Educación', 'Vestuario', 'Hogar', 'Tecnología', 'Mascotas', 'Otros'];
+    const allFilterGroups = ['Carnes y Mariscos', 'Lácteos', 'Panadería', 'Frutas y Verduras', 'Bebidas', 'Congelados', 'Limpieza', 'Aseo Personal', 'Snacks', 'Abarrotes'];
+
+    const filterState = {
+      categories: [...allFilterCategories],  // Start with all categories selected
+      groups: []                        // Groups start empty (mutually exclusive)
+    };
+
+    // Clear the other section when selecting from one section (mutually exclusive)
+    function clearOtherSection(activeSection) {
+      if (activeSection === 'category') {
+        // Clear all groups
+        filterState.groups = [];
+        document.querySelectorAll('#group-items .filter-dropdown-item').forEach(item => {
+          item.classList.remove('selected');
+        });
+        updateSectionToggleState('group');
+      } else {
+        // Clear all categories
+        filterState.categories = [];
+        document.querySelectorAll('#category-items .filter-dropdown-item').forEach(item => {
+          item.classList.remove('selected');
+        });
+        updateSectionToggleState('category');
+      }
+    }
+
+    // Toggle individual filter item (multi-select within section, exclusive between sections)
+    function toggleFilterItem(el, e) {
+      if (e) e.stopPropagation();
+
+      const type = el.dataset.type;
+      const value = el.dataset.value;
+      const isSelected = el.classList.contains('selected');
+
+      // If selecting (not deselecting), clear the other section first
+      if (!isSelected) {
+        clearOtherSection(type);
+      }
+
+      // Toggle selection
+      if (isSelected) {
+        el.classList.remove('selected');
+        // Remove from state
+        if (type === 'category') {
+          filterState.categories = filterState.categories.filter(v => v !== value);
+        } else if (type === 'group') {
+          filterState.groups = filterState.groups.filter(v => v !== value);
+        }
+      } else {
+        el.classList.add('selected');
+        // Add to state
+        if (type === 'category') {
+          filterState.categories.push(value);
+        } else if (type === 'group') {
+          filterState.groups.push(value);
+        }
+      }
+
+      // Update section toggle button state
+      updateSectionToggleState(type);
+
+      // Update filter button active state
+      updateCategoryFilterButton();
+    }
+
+    // Toggle all items in a section (category or group)
+    function toggleSectionAll(section, e) {
+      if (e) e.stopPropagation();
+
+      const containerId = section === 'category' ? 'category-items' : 'group-items';
+      const items = document.querySelectorAll(`#${containerId} .filter-dropdown-item`);
+      const toggleBtn = document.querySelector(`.section-toggle-btn[data-section="${section}"]`);
+      const allList = section === 'category' ? allFilterCategories : allFilterGroups;
+
+      // Check current state
+      const isAllSelected = toggleBtn.classList.contains('all-selected');
+      const isSomeSelected = toggleBtn.classList.contains('some-selected');
+
+      if (isAllSelected) {
+        // Deselect all in this section
+        items.forEach(item => item.classList.remove('selected'));
+        if (section === 'category') {
+          filterState.categories = [];
+        } else {
+          filterState.groups = [];
+        }
+        toggleBtn.classList.remove('all-selected', 'some-selected');
+      } else {
+        // Clear the other section first (mutually exclusive)
+        clearOtherSection(section);
+
+        // Select all in this section
+        items.forEach(item => item.classList.add('selected'));
+        if (section === 'category') {
+          filterState.categories = [...allList];
+        } else {
+          filterState.groups = [...allList];
+        }
+        toggleBtn.classList.remove('some-selected');
+        toggleBtn.classList.add('all-selected');
+      }
+
+      updateCategoryFilterButton();
+    }
+
+    // Update section toggle button state based on selections
+    function updateSectionToggleState(section) {
+      const toggleBtn = document.querySelector(`.section-toggle-btn[data-section="${section}"]`);
+      const allList = section === 'category' ? allFilterCategories : allFilterGroups;
+      const selectedList = section === 'category' ? filterState.categories : filterState.groups;
+
+      toggleBtn.classList.remove('all-selected', 'some-selected');
+
+      if (selectedList.length === allList.length) {
+        toggleBtn.classList.add('all-selected');
+      } else if (selectedList.length > 0) {
+        toggleBtn.classList.add('some-selected');
+      }
+    }
+
+    // Update filter button active state (shows when filtering is active)
+    function updateCategoryFilterButton() {
+      const btn = document.getElementById('category-filter-btn');
+      const hasAnySelection = filterState.categories.length > 0 || filterState.groups.length > 0;
+      const allCategoriesSelected = filterState.categories.length === allFilterCategories.length;
+
+      // Button is active when not showing all categories (filtering)
+      if (hasAnySelection && !allCategoriesSelected) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    }
+
+    // Initialize the UI to match the default state (all categories selected, no groups)
+    function initializeFilterUI() {
+      // Categories are already marked as selected in HTML
+      // Remove selected from groups to match default state
+      document.querySelectorAll('#group-items .filter-dropdown-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      // Update the group toggle button
+      const groupToggleBtn = document.querySelector('.section-toggle-btn[data-section="group"]');
+      groupToggleBtn.classList.remove('all-selected', 'some-selected');
+    }
+
+    // ============================================
+    // THEME & FONT SWITCHERS
+    // ============================================
+    function setTheme(theme, el) {
+      document.body.setAttribute('data-theme', theme);
+      document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function setFont(font, el) {
+      document.body.setAttribute('data-font', font);
+      document.querySelectorAll('.font-pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function toggleDarkMode(el) {
+      var isDark = document.body.getAttribute('data-mode') === 'dark';
+      var newMode = isDark ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-mode', newMode);
+      document.body.setAttribute('data-mode', newMode);
+      if (newMode === 'dark') {
+        el.classList.add('active');
+        el.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2m11-11h-2M3 12H1m17.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m12.73 0l-1.41-1.41M6.34 6.34L4.93 4.93"/></svg> Light';
+      } else {
+        el.classList.remove('active');
+        el.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Dark';
+      }
+    }
+
+    // Initialize breadcrumb and period display on load
+    setTimeout(() => {
+      // Initialize each component separately to avoid one failure blocking others
+      try { updateTimeSliderUI(); } catch (e) { console.error('updateTimeSliderUI error:', e); }
+      try { updateBreadcrumbDisplay(); } catch (e) { console.error('updateBreadcrumbDisplay error:', e); }
+      try { updatePeriodLabel(); } catch (e) { console.error('updatePeriodLabel error:', e); }
+      try { initializeFilterUI(); } catch (e) { console.error('initializeFilterUI error:', e); }
+      try { renderTreemap(); } catch (e) { console.error('renderTreemap error:', e); }
+      try { renderDonutChart(); } catch (e) { console.error('renderDonutChart error:', e); }
+      try { goToAnalyticsSlide(0); } catch (e) { console.error('goToAnalyticsSlide error:', e); }
+    }, 100);
+  </script>
+</body>
+</html>

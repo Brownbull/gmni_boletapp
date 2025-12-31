@@ -1,0 +1,2865 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="mono" data-font="outfit" data-mode="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gastify - Settings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Baloo+2:wght@700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       DESIGN TOKENS FROM REFERENCE
+       ============================================ */
+    :root {
+      /* Primary Palette */
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --primary-dark: #1e40af;
+      /* Secondary */
+      --secondary: #64748b;
+      --secondary-light: #f1f5f9;
+      --accent: #0ea5e9;
+      /* Backgrounds */
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --bg-inverse: #0f172a;
+      /* Text */
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --text-inverse: #f8fafc;
+      /* Borders */
+      --border-light: #e2e8f0;
+      --border-medium: #cbd5e1;
+      --border-dark: #94a3b8;
+      /* Semantic */
+      --success: #22c55e;
+      --success-light: #dcfce7;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --error: #ef4444;
+      --error-light: #fee2e2;
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      /* Spacing */
+      --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+      --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+      /* Radii */
+      --radius-sm: 6px; --radius-md: 10px; --radius-lg: 12px;
+      --radius-xl: 16px; --radius-2xl: 20px; --radius-full: 9999px;
+      /* Typography */
+      --font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+      --transition-fast: 150ms ease;
+      --transition-normal: 200ms ease;
+      --transition-slow: 300ms ease;
+    }
+
+    /* THEME 1: Professional Blue (Default) */
+    [data-theme="professional"] {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --primary-dark: #1e40af;
+      --secondary: #64748b;
+      --secondary-light: #f1f5f9;
+      --accent: #0ea5e9;
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --bg-inverse: #0f172a;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --border-light: #e2e8f0;
+      --border-medium: #cbd5e1;
+    }
+
+    /* THEME 2: Monochrome Minimal */
+    [data-theme="mono"] {
+      --primary: #18181b;
+      --primary-hover: #27272a;
+      --primary-light: #f4f4f5;
+      --primary-dark: #09090b;
+      --secondary: #52525b;
+      --secondary-light: #e4e4e7;
+      --accent: #3b82f6;
+      --bg-primary: #fafafa;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f4f4f5;
+      --bg-inverse: #18181b;
+      --text-primary: #18181b;
+      --text-secondary: #52525b;
+      --text-tertiary: #a1a1aa;
+      --border-light: #e4e4e7;
+      --border-medium: #d4d4d8;
+    }
+
+    /* THEME 3: Ni No Kuni / Studio Ghibli */
+    [data-theme="ninokuni"] {
+      --primary: #4a7c59;
+      --primary-hover: #3d6b4a;
+      --primary-light: #d4e5d9;
+      --primary-dark: #2d5438;
+      --secondary: #5b8fa8;
+      --secondary-light: #d5e8f0;
+      --accent: #e8a87c;
+      --bg-primary: #f5f0e8;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1dbb6;
+      --bg-inverse: #2d3a4a;
+      --text-primary: #2d3a4a;
+      --text-secondary: #4a5568;
+      --text-tertiary: #7d9b5f;
+      --border-light: #e3bba1;
+      --border-medium: #d4a574;
+      --success: #7d9b5f;
+      --success-light: #d4e5d9;
+    }
+
+    /* ============================================
+       DARK MODE VARIANTS (data-mode="dark")
+       ============================================ */
+
+    /* Professional Blue - Dark Mode */
+    [data-theme="professional"][data-mode="dark"] {
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --primary-light: #1e3a5f;
+      --primary-dark: #1d4ed8;
+      --secondary: #94a3b8;
+      --secondary-light: #334155;
+      --accent: #22d3ee;
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --bg-inverse: #f8fafc;
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-tertiary: #64748b;
+      --border-light: #334155;
+      --border-medium: #475569;
+      --success: #22c55e;
+      --success-light: #14532d;
+      --warning: #f59e0b;
+      --warning-light: #78350f;
+      --error: #ef4444;
+      --error-light: #7f1d1d;
+    }
+
+    /* Mono - Dark Mode */
+    [data-theme="mono"][data-mode="dark"] {
+      --primary: #a1a1aa;
+      --primary-hover: #d4d4d8;
+      --primary-light: #27272a;
+      --primary-dark: #e4e4e7;
+      --secondary: #71717a;
+      --secondary-light: #3f3f46;
+      --accent: #60a5fa;
+      --bg-primary: #09090b;
+      --bg-secondary: #18181b;
+      --bg-tertiary: #27272a;
+      --bg-inverse: #fafafa;
+      --text-primary: #fafafa;
+      --text-secondary: #a1a1aa;
+      --text-tertiary: #52525b;
+      --border-light: #27272a;
+      --border-medium: #3f3f46;
+      --success: #22c55e;
+      --success-light: #14532d;
+      --warning: #f59e0b;
+      --warning-light: #78350f;
+      --error: #ef4444;
+      --error-light: #7f1d1d;
+    }
+
+    /* Ni No Kuni - Dark Mode */
+    [data-theme="ninokuni"][data-mode="dark"] {
+      --primary: #6b9e7a;
+      --primary-hover: #5a8a68;
+      --primary-light: #2d4a36;
+      --primary-dark: #8ab896;
+      --secondary: #7ba8be;
+      --secondary-light: #2d4a5a;
+      --accent: #e8a87c;
+      --bg-primary: #1a2420;
+      --bg-secondary: #243028;
+      --bg-tertiary: #2e3d32;
+      --bg-inverse: #f5f0e8;
+      --text-primary: #e8e4dc;
+      --text-secondary: #b8b4ac;
+      --text-tertiary: #6b8b5f;
+      --border-light: #3d4a3f;
+      --border-medium: #4d5a4f;
+      --success: #7d9b5f;
+      --success-light: #2d4a36;
+      --warning: #e8a87c;
+      --warning-light: #4a3628;
+      --error: #e87c7c;
+      --error-light: #4a2828;
+    }
+
+    /* Font Definitions */
+    body[data-font="outfit"] { --font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif; }
+    body[data-font="space"] { --font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; }
+
+    /* Logo Style Definitions - Paired with themes */
+    body[data-theme="professional"] .g-logo-circle { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important; }
+    body[data-theme="mono"] .g-logo-circle { background: linear-gradient(135deg, #18181b 0%, #3f3f46 100%) !important; }
+    body[data-theme="ninokuni"] .g-logo-circle { background: linear-gradient(135deg, #4a7c59 0%, #5b8fa8 100%) !important; }
+    /* Dark mode logo variants */
+    body[data-theme="professional"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important; }
+    body[data-theme="mono"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #a1a1aa 0%, #71717a 100%) !important; }
+    body[data-theme="ninokuni"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #6b9e7a 0%, #7ba8be 100%) !important; }
+
+    /* Reset */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-family);
+      background: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    /* Page Layout */
+    .page-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+    }
+
+    /* Phone Frame */
+    .phone-frame {
+      width: 375px;
+      min-height: 812px;
+      background: #1e293b;
+      border-radius: 54px;
+      padding: 14px;
+      box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25),
+        inset 0 0 0 2px #334155, inset 0 0 0 4px #475569;
+    }
+    .phone-screen {
+      width: 100%;
+      height: 784px;
+      background: var(--bg-primary);
+      border-radius: 44px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px 8px;
+      background: var(--bg-primary);
+      flex-shrink: 0;
+    }
+    .status-time { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .status-icons { display: flex; gap: 4px; align-items: center; }
+
+    /* Views Container */
+    .views-container {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      min-height: 0;
+    }
+    .view {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow-y: auto;
+      padding: 16px;
+      padding-bottom: 24px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      background: var(--bg-primary);
+      -webkit-overflow-scrolling: touch;
+    }
+    .view.active { display: flex; }
+    .view::after {
+      content: '';
+      display: block;
+      height: 1px;
+      flex-shrink: 0;
+    }
+
+    /* Page Title */
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 16px;
+      font-family: inherit;
+    }
+
+    /* Back Header */
+    .back-header {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .back-btn {
+      cursor: pointer;
+      padding: 4px;
+      border-radius: var(--radius-sm);
+      transition: background var(--transition-fast);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .back-btn:hover { background: var(--bg-tertiary); }
+    .back-btn svg {
+      display: block;
+    }
+    .back-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+      font-family: inherit;
+      line-height: 1;
+    }
+
+    /* Settings Menu Item */
+    .settings-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      border: 1px solid var(--border-light);
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    .settings-menu-item:hover {
+      background: var(--bg-tertiary);
+    }
+    .settings-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .settings-info { flex: 1; }
+    .settings-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+    .settings-subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      font-family: inherit;
+    }
+    .settings-chevron { flex-shrink: 0; }
+
+    /* Settings Row */
+    .settings-row {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      border: 1px solid var(--border-light);
+    }
+    .settings-row-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .settings-row-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .settings-row-text {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+    .settings-row-desc {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      font-family: inherit;
+    }
+
+    /* Expandable Sections */
+    .expandable-section {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      overflow: hidden;
+    }
+    .expandable-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    .expandable-header:hover {
+      background: var(--bg-tertiary);
+    }
+    .expandable-chevron {
+      transition: transform var(--transition-fast);
+    }
+    .expandable-section.open .expandable-chevron {
+      transform: rotate(180deg);
+    }
+    .expandable-content {
+      display: none;
+      border-top: 1px solid var(--border-light);
+      padding: 12px 16px;
+      background: var(--bg-primary);
+    }
+    .expandable-section.open .expandable-content {
+      display: block;
+    }
+
+    /* Learned Items */
+    .learned-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .learned-item:last-of-type {
+      border-bottom: none;
+    }
+    .learned-item-info {
+      flex: 1;
+    }
+    .learned-item-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+    .learned-item-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .category-tag {
+      font-size: 10px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-family: inherit;
+    }
+    .learned-item-count {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      font-family: inherit;
+    }
+    .learned-item-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .icon-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background var(--transition-fast);
+    }
+    .icon-btn:hover {
+      background: var(--bg-tertiary);
+    }
+    .expandable-footer {
+      padding-top: 12px;
+      text-align: center;
+    }
+    .view-all-link {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--primary);
+      text-decoration: none;
+      font-family: inherit;
+    }
+    .view-all-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Limit Card */
+    .limit-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      border: 1px solid var(--border-light);
+    }
+    .limit-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .limit-card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+    .limit-amount {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+    .limit-currency {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-family: inherit;
+    }
+    .limit-input {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      background: transparent;
+      border: none;
+      outline: none;
+      width: 160px;
+      font-family: inherit;
+    }
+    .limit-progress {
+      height: 8px;
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .limit-progress-bar {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 4px;
+      transition: width var(--transition-fast);
+    }
+    .limit-stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-family: inherit;
+    }
+    .limit-edit-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+    .limit-edit-row label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-family: inherit;
+    }
+    .limit-amount-small {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      background: var(--bg-secondary);
+      padding: 6px 10px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+    }
+    .limit-input-small {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      background: transparent;
+      border: none;
+      outline: none;
+      width: 80px;
+      text-align: right;
+      font-family: inherit;
+    }
+    .btn-danger-text {
+      font-size: 12px;
+      font-weight: 500;
+      color: #ef4444;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-danger-text:hover {
+      text-decoration: underline;
+    }
+
+    /* Add Limit Button */
+    .add-limit-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-full);
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .add-limit-btn:hover {
+      background: var(--primary-hover);
+      transform: scale(1.02);
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 120px;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all var(--transition-fast);
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal-content {
+      background: var(--bg-primary);
+      border-radius: var(--radius-xl);
+      width: 320px;
+      max-height: calc(100vh - 160px);
+      overflow: hidden;
+      transform: scale(0.95) translateY(-20px);
+      transition: transform var(--transition-fast);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    .modal-overlay.open .modal-content {
+      transform: scale(1) translateY(0);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background var(--transition-fast);
+    }
+    .modal-close:hover {
+      background: var(--border-light);
+    }
+    .modal-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .modal-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      gap: 12px;
+    }
+    .modal-footer .btn-secondary {
+      flex: 1;
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all var(--transition-fast);
+    }
+    .modal-footer .btn-secondary:hover {
+      background: var(--border-light);
+    }
+    .modal-footer .btn-primary {
+      flex: 1;
+      padding: 12px;
+      background: var(--primary);
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all var(--transition-fast);
+    }
+    .modal-footer .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      width: 48px;
+      height: 28px;
+      border-radius: 14px;
+      position: relative;
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    .toggle-switch.on {
+      background: var(--primary);
+    }
+    .toggle-switch.off {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-light);
+    }
+    .toggle-switch .toggle-knob {
+      width: 22px;
+      height: 22px;
+      background: white;
+      border-radius: 50%;
+      position: absolute;
+      top: 3px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      transition: left var(--transition-fast), right var(--transition-fast);
+    }
+    .toggle-switch.on .toggle-knob { right: 3px; left: auto; }
+    .toggle-switch.off .toggle-knob { left: 3px; right: auto; top: 2px; }
+
+    /* Segmented Control */
+    .segmented-control {
+      display: flex;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      padding: 3px;
+      border: 1px solid var(--border-light);
+    }
+    .segmented-btn {
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: inherit;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .segmented-btn.active {
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+    }
+
+    /* Form Field with Overlapping Label */
+    .form-field {
+      position: relative;
+    }
+    .form-field label {
+      position: absolute;
+      top: -8px;
+      left: 10px;
+      background: var(--bg-primary);
+      padding: 0 4px;
+      font-size: 11px;
+      color: var(--primary);
+      font-weight: 500;
+      z-index: 1;
+    }
+    .form-field input,
+    .form-field select {
+      width: 100%;
+      padding: 14px 12px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text-primary);
+      background: var(--bg-primary);
+      box-sizing: border-box;
+    }
+    .form-field select {
+      appearance: none;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%236b7280" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+    }
+
+    /* Primary Button */
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    .btn-primary:hover { background: var(--primary-hover); }
+
+    /* Secondary Button */
+    .btn-secondary {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: inherit;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      background: var(--bg-tertiary);
+      color: var(--primary);
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    .btn-secondary:hover { background: var(--bg-secondary); }
+
+    /* Destructive Row */
+    .settings-row.destructive {
+      border-color: #fecaca;
+    }
+    .settings-row.destructive .settings-row-text { color: #ef4444; }
+    .settings-row.destructive .settings-row-desc { color: #f87171; }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: var(--border-light);
+      margin: 8px 0;
+    }
+
+    /* Custom Select Dropdown */
+    .custom-select {
+      position: relative;
+      width: 100%;
+    }
+    .custom-select-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .custom-select-trigger:hover {
+      border-color: var(--border-medium);
+    }
+    .custom-select.open .custom-select-trigger {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+    .custom-select-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 4px;
+    }
+    .custom-select-value {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .custom-select-icon {
+      width: 20px;
+      height: 20px;
+      stroke: var(--text-tertiary);
+      fill: none;
+      stroke-width: 2;
+      transition: transform var(--transition-fast);
+      flex-shrink: 0;
+    }
+    .custom-select.open .custom-select-icon {
+      transform: rotate(180deg);
+    }
+    .custom-select-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-8px);
+      transition: all var(--transition-fast);
+      z-index: 100;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    .custom-select.open .custom-select-dropdown {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    .custom-select-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    .custom-select-option:first-child {
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+    .custom-select-option:last-child {
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    }
+    .custom-select-option:hover {
+      background: var(--bg-tertiary);
+    }
+    .custom-select-option.selected {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+    .custom-select-option.selected::after {
+      content: '✓';
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      padding: 8px 12px 12px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-light);
+      flex-shrink: 0;
+      position: relative;
+      z-index: 10;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    .nav-item svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--text-tertiary);
+      fill: none;
+      stroke-width: 1.8;
+    }
+    .nav-item span {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+    }
+    .nav-item.active svg { stroke: var(--primary); }
+    .nav-item.active span { color: var(--primary); font-weight: 600; }
+
+    /* CRITICAL: Scan center button position */
+    .scan-center { margin-top: -56px; padding: 0; }
+    .scan-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    .scan-btn svg {
+      width: 24px;
+      height: 24px;
+      stroke: white;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* Global Controls Panel */
+    .global-controls {
+      background: rgba(30, 41, 59, 0.95);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      padding: 12px 20px;
+      display: flex;
+      gap: 24px;
+      border: 1px solid rgba(255,255,255,0.1);
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .control-group { display: flex; align-items: center; gap: 10px; }
+    .control-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      white-space: nowrap;
+    }
+    .control-options { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* Theme Swatches */
+    .theme-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 150ms ease;
+    }
+    .theme-swatch:hover { transform: scale(1.1); }
+    .theme-swatch.active {
+      border-color: white;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+    }
+    .theme-swatch[data-theme="professional"] { background: linear-gradient(135deg, #2563eb 50%, #64748b 50%); }
+    .theme-swatch[data-theme="mono"] { background: linear-gradient(135deg, #18181b 50%, #52525b 50%); }
+    .theme-swatch[data-theme="ninokuni"] { background: linear-gradient(135deg, #4a7c59 50%, #5b8fa8 50%); }
+
+    /* Dark Mode Toggle Button */
+    .mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: #94a3b8;
+      transition: all 150ms ease;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .mode-toggle:hover { background: rgba(255,255,255,0.1); }
+    .mode-toggle.active {
+      background: #1e293b;
+      border-color: #3b82f6;
+      color: #f1f5f9;
+    }
+    .mode-toggle svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* Font Pills */
+    .font-pill {
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: #94a3b8;
+      transition: all 150ms ease;
+    }
+    .font-pill:hover { background: rgba(255,255,255,0.1); }
+    .font-pill.active {
+      background: white;
+      color: #0f172a;
+      border-color: white;
+    }
+
+    /* Profile Photo */
+    .profile-photo {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+    .profile-photo-wrapper {
+      position: relative;
+    }
+    .profile-avatar {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-light), var(--primary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid var(--bg-primary);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .profile-avatar span {
+      font-size: 36px;
+      color: white;
+      font-weight: 600;
+    }
+    .profile-edit-btn {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: 2px solid var(--bg-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    /* Storage Progress Bar */
+    .storage-bar {
+      height: 6px;
+      background: var(--bg-tertiary);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .storage-bar-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 3px;
+    }
+
+    /* Plan Card */
+    .plan-card {
+      background: var(--primary);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      color: white;
+    }
+    .plan-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .plan-card-label {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      opacity: 0.9;
+      letter-spacing: 0.5px;
+    }
+    .plan-card-name {
+      font-size: 24px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+    .plan-card-badge {
+      background: rgba(255,255,255,0.2);
+      padding: 6px 12px;
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* Credits Progress */
+    .credits-progress {
+      height: 8px;
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .credits-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary) 0%, #22c55e 100%);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <div class="phone-frame">
+      <div class="phone-screen">
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icons">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2">
+              <path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 20V4"/>
+            </svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2">
+              <path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/>
+            </svg>
+            <svg width="24" height="12" viewBox="0 0 24 12" fill="none">
+              <rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="var(--text-primary)"/>
+              <rect x="2" y="2" width="18" height="8" rx="1" fill="var(--text-primary)"/>
+              <path d="M23 4v4a2 2 0 0 0 0-4z" fill="var(--text-primary)"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Views Container -->
+        <div class="views-container">
+
+          <!-- ========== VIEW: MAIN SETTINGS ========== -->
+          <div id="view-main" class="view active">
+            <h2 class="page-title">Ajustes</h2>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <!-- 1. Limites -->
+              <div class="settings-menu-item" onclick="showView('limites')">
+                <div class="settings-icon" style="background: #fef2f2;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 8v4M12 16h.01"/>
+                  </svg>
+                </div>
+                <div class="settings-info">
+                  <div class="settings-title">Limites de Gasto</div>
+                  <div class="settings-subtitle">Limites mensuales por categoria</div>
+                </div>
+                <svg class="settings-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </div>
+
+              <!-- 2. Perfil -->
+              <div class="settings-menu-item" onclick="showView('perfil')">
+                <div class="settings-icon" style="background: var(--primary-light);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                </div>
+                <div class="settings-info">
+                  <div class="settings-title">Perfil</div>
+                  <div class="settings-subtitle">Foto, nombre, email, telefono</div>
+                </div>
+                <svg class="settings-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </div>
+
+              <!-- 3. Preferencias -->
+              <div class="settings-menu-item" onclick="showView('preferencias')">
+                <div class="settings-icon" style="background: #e0e7ff;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                  </svg>
+                </div>
+                <div class="settings-info">
+                  <div class="settings-title">Preferencias</div>
+                  <div class="settings-subtitle">Idioma, fecha, tema</div>
+                </div>
+                <svg class="settings-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </div>
+
+              <!-- 3. Escaneo -->
+              <div class="settings-menu-item" onclick="showView('escaneo')">
+                <div class="settings-icon" style="background: #dbeafe;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                </div>
+                <div class="settings-info">
+                  <div class="settings-title">Escaneo</div>
+                  <div class="settings-subtitle">Moneda y ubicacion por defecto</div>
+                </div>
+                <svg class="settings-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </div>
+
+              <!-- 4. Suscripcion -->
+              <div class="settings-menu-item" onclick="showView('suscripcion')">
+                <div class="settings-icon" style="background: #dcfce7;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                    <line x1="1" y1="10" x2="23" y2="10"/>
+                  </svg>
+                </div>
+                <div class="settings-info">
+                  <div class="settings-title">Suscripcion</div>
+                  <div class="settings-subtitle">Plan actual, creditos de escaneo</div>
+                </div>
+                <svg class="settings-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </div>
+
+              <!-- 5. Datos Aprendidos -->
+              <div class="settings-menu-item" onclick="showView('datos-aprendidos')">
+                <div class="settings-icon" style="background: #fef3c7;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                  </svg>
+                </div>
+                <div class="settings-info">
+                  <div class="settings-title">Datos Aprendidos</div>
+                  <div class="settings-subtitle">Grupos, comercios, subcategorias</div>
+                </div>
+                <svg class="settings-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </div>
+
+              <!-- 6. App -->
+              <div class="settings-menu-item" onclick="showView('app')">
+                <div class="settings-icon" style="background: #f3e8ff;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                    <line x1="12" y1="18" x2="12.01" y2="18"/>
+                  </svg>
+                </div>
+                <div class="settings-info">
+                  <div class="settings-title">App</div>
+                  <div class="settings-subtitle">Instalacion PWA, notificaciones</div>
+                </div>
+                <svg class="settings-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </div>
+
+              <!-- 7. Datos y Cuenta -->
+              <div class="settings-menu-item" onclick="showView('datos-cuenta')">
+                <div class="settings-icon" style="background: #fce7f3;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2">
+                    <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                  </svg>
+                </div>
+                <div class="settings-info">
+                  <div class="settings-title">Datos y Cuenta</div>
+                  <div class="settings-subtitle">Exportar, restablecer, cerrar sesion</div>
+                </div>
+                <svg class="settings-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- ========== VIEW: LIMITES ========== -->
+          <div id="view-limites" class="view">
+            <div class="back-header">
+              <div class="back-btn" onclick="showView('main')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2">
+                  <path d="M15 18l-6-6 6-6"/>
+                </svg>
+              </div>
+              <h2>Limites de Gasto</h2>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <!-- Global Monthly Limit -->
+              <div class="limit-card">
+                <div class="limit-card-header">
+                  <div class="limit-card-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="M12 6v6l4 2"/>
+                    </svg>
+                    <span>Limite Mensual Global</span>
+                  </div>
+                  <div class="toggle-switch on" onclick="toggleSwitch(this)">
+                    <div class="toggle-knob"></div>
+                  </div>
+                </div>
+                <div class="limit-amount">
+                  <span class="limit-currency">$</span>
+                  <input type="text" class="limit-input" value="500.000">
+                </div>
+                <div class="limit-progress">
+                  <div class="limit-progress-bar" style="width: 65%;"></div>
+                </div>
+                <div class="limit-stats">
+                  <span>Gastado: $325.000</span>
+                  <span>Disponible: $175.000</span>
+                </div>
+              </div>
+
+              <!-- Category Limits Section -->
+              <div style="margin-top: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                  <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-family: inherit;">Limites por Categoria</label>
+                  <button class="add-limit-btn" onclick="openAddLimitModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="M12 8v8M8 12h8"/>
+                    </svg>
+                    <span>Agregar</span>
+                  </button>
+                </div>
+
+                <!-- Category: Alimentacion -->
+                <div class="expandable-section" id="limit-alimentacion">
+                  <div class="expandable-header" onclick="toggleExpandable('limit-alimentacion')">
+                    <div class="settings-row-left">
+                      <div style="width: 32px; height: 32px; border-radius: var(--radius-md); background: #dcfce7; display: flex; align-items: center; justify-content: center;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
+                          <path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <span class="settings-row-text">Alimentacion</span>
+                        <div class="settings-row-desc">$120.000 / $150.000</div>
+                      </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <div style="width: 40px; height: 4px; background: var(--bg-tertiary); border-radius: 2px; overflow: hidden;">
+                        <div style="width: 80%; height: 100%; background: #f59e0b; border-radius: 2px;"></div>
+                      </div>
+                      <svg class="expandable-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                        <path d="M6 9l6 6 6-6"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="expandable-content">
+                    <div class="limit-edit-row">
+                      <label>Limite mensual</label>
+                      <div class="limit-amount-small">
+                        <span class="limit-currency">$</span>
+                        <input type="text" class="limit-input-small" value="150.000">
+                      </div>
+                    </div>
+                    <div class="limit-edit-row">
+                      <span style="font-size: 12px; color: var(--text-secondary);">80% del limite alcanzado</span>
+                      <button class="btn-danger-text">Eliminar limite</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Category: Transporte -->
+                <div class="expandable-section" id="limit-transporte" style="margin-top: 8px;">
+                  <div class="expandable-header" onclick="toggleExpandable('limit-transporte')">
+                    <div class="settings-row-left">
+                      <div style="width: 32px; height: 32px; border-radius: var(--radius-md); background: #dbeafe; display: flex; align-items: center; justify-content: center;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+                          <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9L18 10l-1.4-3.5A2 2 0 0 0 14.8 5H9.2a2 2 0 0 0-1.8 1.1L6 10l-2.5 1.1C2.7 11.3 2 12.1 2 13v3c0 .6.4 1 1 1h2"/>
+                          <circle cx="7" cy="17" r="2"/>
+                          <circle cx="17" cy="17" r="2"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <span class="settings-row-text">Transporte</span>
+                        <div class="settings-row-desc">$45.000 / $80.000</div>
+                      </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <div style="width: 40px; height: 4px; background: var(--bg-tertiary); border-radius: 2px; overflow: hidden;">
+                        <div style="width: 56%; height: 100%; background: var(--primary); border-radius: 2px;"></div>
+                      </div>
+                      <svg class="expandable-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                        <path d="M6 9l6 6 6-6"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="expandable-content">
+                    <div class="limit-edit-row">
+                      <label>Limite mensual</label>
+                      <div class="limit-amount-small">
+                        <span class="limit-currency">$</span>
+                        <input type="text" class="limit-input-small" value="80.000">
+                      </div>
+                    </div>
+                    <div class="limit-edit-row">
+                      <span style="font-size: 12px; color: var(--text-secondary);">56% del limite alcanzado</span>
+                      <button class="btn-danger-text">Eliminar limite</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Category: Entretenimiento -->
+                <div class="expandable-section" id="limit-entretenimiento" style="margin-top: 8px;">
+                  <div class="expandable-header" onclick="toggleExpandable('limit-entretenimiento')">
+                    <div class="settings-row-left">
+                      <div style="width: 32px; height: 32px; border-radius: var(--radius-md); background: #fce7f3; display: flex; align-items: center; justify-content: center;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2">
+                          <rect x="2" y="7" width="20" height="15" rx="2" ry="2"/>
+                          <polyline points="17,2 12,7 7,2"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <span class="settings-row-text">Entretenimiento</span>
+                        <div class="settings-row-desc">$28.000 / $50.000</div>
+                      </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <div style="width: 40px; height: 4px; background: var(--bg-tertiary); border-radius: 2px; overflow: hidden;">
+                        <div style="width: 56%; height: 100%; background: var(--primary); border-radius: 2px;"></div>
+                      </div>
+                      <svg class="expandable-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                        <path d="M6 9l6 6 6-6"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="expandable-content">
+                    <div class="limit-edit-row">
+                      <label>Limite mensual</label>
+                      <div class="limit-amount-small">
+                        <span class="limit-currency">$</span>
+                        <input type="text" class="limit-input-small" value="50.000">
+                      </div>
+                    </div>
+                    <div class="limit-edit-row">
+                      <span style="font-size: 12px; color: var(--text-secondary);">56% del limite alcanzado</span>
+                      <button class="btn-danger-text">Eliminar limite</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Notifications Toggle -->
+              <div class="settings-row" style="margin-top: 8px;">
+                <div class="settings-row-content">
+                  <div class="settings-row-left">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                    <div>
+                      <span class="settings-row-text">Alertas de Limite</span>
+                      <div class="settings-row-desc">Notificar al 80% del limite</div>
+                    </div>
+                  </div>
+                  <div class="toggle-switch on" onclick="toggleSwitch(this)">
+                    <div class="toggle-knob"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Add Limit Modal -->
+            <div class="modal-overlay" id="add-limit-modal" onclick="closeAddLimitModal(event)">
+              <div class="modal-content" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                  <span class="modal-title">Agregar Limite</span>
+                  <button class="modal-close" onclick="closeAddLimitModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
+                      <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <!-- Category Selection -->
+                  <div class="custom-select" id="modal-select-category" onclick="toggleCustomSelect('modal-select-category')">
+                    <div class="custom-select-trigger">
+                      <div>
+                        <div class="custom-select-label">Categoria</div>
+                        <div class="custom-select-value" data-value="">Seleccionar categoria...</div>
+                      </div>
+                      <svg class="custom-select-icon" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                    </div>
+                    <div class="custom-select-dropdown">
+                      <div class="custom-select-option" data-value="salud" onclick="selectCustomOption('modal-select-category', 'salud', 'Salud', event)">
+                        <span style="display: inline-flex; align-items: center; gap: 10px;">
+                          <span style="width: 28px; height: 28px; border-radius: 50%; background: #fee2e2; display: flex; align-items: center; justify-content: center;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                          </span>
+                          Salud
+                        </span>
+                      </div>
+                      <div class="custom-select-option" data-value="hogar" onclick="selectCustomOption('modal-select-category', 'hogar', 'Hogar', event)">
+                        <span style="display: inline-flex; align-items: center; gap: 10px;">
+                          <span style="width: 28px; height: 28px; border-radius: 50%; background: #ede9fe; display: flex; align-items: center; justify-content: center;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                          </span>
+                          Hogar
+                        </span>
+                      </div>
+                      <div class="custom-select-option" data-value="educacion" onclick="selectCustomOption('modal-select-category', 'educacion', 'Educacion', event)">
+                        <span style="display: inline-flex; align-items: center; gap: 10px;">
+                          <span style="width: 28px; height: 28px; border-radius: 50%; background: #dbeafe; display: flex; align-items: center; justify-content: center;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                          </span>
+                          Educacion
+                        </span>
+                      </div>
+                      <div class="custom-select-option" data-value="servicios" onclick="selectCustomOption('modal-select-category', 'servicios', 'Servicios', event)">
+                        <span style="display: inline-flex; align-items: center; gap: 10px;">
+                          <span style="width: 28px; height: 28px; border-radius: 50%; background: #cffafe; display: flex; align-items: center; justify-content: center;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+                          </span>
+                          Servicios
+                        </span>
+                      </div>
+                      <div class="custom-select-option" data-value="compras" onclick="selectCustomOption('modal-select-category', 'compras', 'Compras', event)">
+                        <span style="display: inline-flex; align-items: center; gap: 10px;">
+                          <span style="width: 28px; height: 28px; border-radius: 50%; background: #fef3c7; display: flex; align-items: center; justify-content: center;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+                          </span>
+                          Compras
+                        </span>
+                      </div>
+                      <div class="custom-select-option" data-value="mascotas" onclick="selectCustomOption('modal-select-category', 'mascotas', 'Mascotas', event)">
+                        <span style="display: inline-flex; align-items: center; gap: 10px;">
+                          <span style="width: 28px; height: 28px; border-radius: 50%; background: #ecfccb; display: flex; align-items: center; justify-content: center;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#84cc16" stroke-width="2.5"><path d="M12 2a4 4 0 014 4c0 1.95-2 5-4 5s-4-3.05-4-5a4 4 0 014-4z"/><path d="M12 11c-4 0-7 2-7 5 0 2.76 3.13 5 7 5s7-2.24 7-5c0-3-3-5-7-5z"/></svg>
+                          </span>
+                          Mascotas
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Amount Input -->
+                  <div class="form-field">
+                    <label style="font-family: inherit;">Monto del Limite</label>
+                    <div style="display: flex; gap: 8px;">
+                      <!-- Currency Dropdown -->
+                      <div class="custom-select" id="modal-select-currency" onclick="toggleCustomSelect('modal-select-currency')" style="width: 100px; flex-shrink: 0;">
+                        <div class="custom-select-trigger" style="padding: 12px;">
+                          <div class="custom-select-value" data-value="clp" style="font-size: 14px; font-weight: 600;">CLP</div>
+                          <svg class="custom-select-icon" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                        <div class="custom-select-dropdown">
+                          <div class="custom-select-option selected" data-value="clp" onclick="selectCustomOption('modal-select-currency', 'clp', 'CLP', event)">CLP</div>
+                          <div class="custom-select-option" data-value="usd" onclick="selectCustomOption('modal-select-currency', 'usd', 'USD', event)">USD</div>
+                          <div class="custom-select-option" data-value="eur" onclick="selectCustomOption('modal-select-currency', 'eur', 'EUR', event)">EUR</div>
+                        </div>
+                      </div>
+                      <!-- Amount Input -->
+                      <input type="text" class="modal-amount-input" placeholder="100.000" style="flex: 1; padding: 12px 14px; border: 1px solid var(--border-light); border-radius: var(--radius-md); font-size: 16px; font-weight: 600; font-family: inherit; color: var(--text-primary); background: var(--bg-secondary);">
+                    </div>
+                  </div>
+
+                  <!-- Info Text -->
+                  <div style="display: flex; align-items: flex-start; gap: 8px; padding: 12px; background: var(--bg-tertiary); border-radius: var(--radius-md);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;">
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="M12 16v-4M12 8h.01"/>
+                    </svg>
+                    <span style="font-size: 12px; color: var(--text-secondary); font-family: inherit; line-height: 1.4;">
+                      Recibiras una alerta cuando alcances el 80% del limite establecido.
+                    </span>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button class="btn-secondary" onclick="closeAddLimitModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                    Cancelar
+                  </button>
+                  <button class="btn-primary" onclick="closeAddLimitModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                    Guardar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ========== VIEW: PERFIL ========== -->
+          <div id="view-perfil" class="view">
+            <div class="back-header">
+              <div class="back-btn" onclick="showView('main')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2">
+                  <path d="M15 18l-6-6 6-6"/>
+                </svg>
+              </div>
+              <h2>Perfil</h2>
+            </div>
+
+            <!-- Profile Photo -->
+            <div class="profile-photo">
+              <div class="profile-photo-wrapper">
+                <div class="profile-avatar">
+                  <span>MR</span>
+                </div>
+                <button class="profile-edit-btn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Profile Fields -->
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <!-- Name - Editable (white background) -->
+              <div class="form-field">
+                <label>Nombre Completo</label>
+                <input type="text" value="Maria Rodriguez" style="background: #ffffff; border: 1px solid var(--border-light);">
+              </div>
+
+              <!-- Email - Read-only (grey background with Google icon) -->
+              <div class="form-field">
+                <label>Correo Electronico</label>
+                <div style="position: relative;">
+                  <input type="email" value="maria@gmail.com" readonly style="padding-left: 44px; padding-right: 80px; background: var(--bg-tertiary); color: var(--text-secondary); cursor: not-allowed;">
+                  <!-- Google Icon -->
+                  <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); display: flex; align-items: center;">
+                    <svg width="18" height="18" viewBox="0 0 24 24">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                  </span>
+                  <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-tertiary); font-weight: 500;">
+                    Vinculado
+                  </span>
+                </div>
+              </div>
+
+              <!-- Phone - Editable (white background) -->
+              <div class="form-field">
+                <label>Telefono</label>
+                <div style="display: flex; gap: 8px;">
+                  <div style="display: flex; align-items: center; gap: 4px; padding: 14px 10px; border: 1px solid var(--border-light); border-radius: var(--radius-md); background: #ffffff; cursor: pointer; min-width: 80px;">
+                    <span style="font-size: 16px;">&#127464;&#127473;</span>
+                    <span style="font-size: 13px; color: var(--text-secondary);">+56</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                      <path d="M6 9l6 6 6-6"/>
+                    </svg>
+                  </div>
+                  <input type="tel" value="9 1234 5678" style="flex: 1; padding: 14px 12px; border: 1px solid var(--border-light); border-radius: var(--radius-md); font-size: 14px; font-family: inherit; color: var(--text-primary); background: #ffffff;">
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label style="color: var(--text-tertiary);">Fecha de Nacimiento (opcional)</label>
+                <input type="text" placeholder="DD/MM/AAAA" style="background: #ffffff; border: 1px solid var(--border-light);">
+              </div>
+            </div>
+
+            <div class="divider" style="margin: 16px 0;"></div>
+
+            <!-- Linked Account - Google Card -->
+            <div style="margin-bottom: 16px;">
+              <label style="font-size: 12px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: block;">Cuenta Vinculada</label>
+              <div style="display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: var(--radius-lg);">
+                <!-- Google Icon -->
+                <div style="width: 40px; height: 40px; border-radius: var(--radius-md); background: #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm);">
+                  <svg width="20" height="20" viewBox="0 0 24 24">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  </svg>
+                </div>
+                <div style="flex: 1;">
+                  <div style="font-weight: 500; color: var(--text-primary); font-size: 14px;">Google</div>
+                  <div style="font-size: 12px; color: var(--text-secondary);">maria@gmail.com</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--success-light, rgba(34, 197, 94, 0.1)); border-radius: var(--radius-full); font-size: 11px; font-weight: 500; color: var(--success, #22c55e);">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <path d="M20 6L9 17l-5-5"/>
+                  </svg>
+                  Conectado
+                </div>
+              </div>
+            </div>
+
+            <button class="btn-primary" style="margin-top: 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 6L9 17l-5-5"/>
+              </svg>
+              Guardar Cambios
+            </button>
+          </div>
+
+          <!-- ========== VIEW: PREFERENCIAS ========== -->
+          <div id="view-preferencias" class="view">
+            <div class="back-header">
+              <div class="back-btn" onclick="showView('main')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2">
+                  <path d="M15 18l-6-6 6-6"/>
+                </svg>
+              </div>
+              <h2>Preferencias</h2>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <!-- Language -->
+              <div class="custom-select" id="select-language" onclick="toggleCustomSelect('select-language')">
+                <div class="custom-select-trigger">
+                  <div>
+                    <div class="custom-select-label">Idioma</div>
+                    <div class="custom-select-value" data-value="es">Espanol</div>
+                  </div>
+                  <svg class="custom-select-icon" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+                <div class="custom-select-dropdown">
+                  <div class="custom-select-option" data-value="en" onclick="selectCustomOption('select-language', 'en', 'English', event)">English</div>
+                  <div class="custom-select-option selected" data-value="es" onclick="selectCustomOption('select-language', 'es', 'Espanol', event)">Espanol</div>
+                </div>
+              </div>
+
+              <!-- Date Format -->
+              <div class="custom-select" id="select-dateformat" onclick="toggleCustomSelect('select-dateformat')">
+                <div class="custom-select-trigger">
+                  <div>
+                    <div class="custom-select-label">Formato de Fecha</div>
+                    <div class="custom-select-value" data-value="dmy">DD/MM/AAAA</div>
+                  </div>
+                  <svg class="custom-select-icon" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+                <div class="custom-select-dropdown">
+                  <div class="custom-select-option selected" data-value="dmy" onclick="selectCustomOption('select-dateformat', 'dmy', 'DD/MM/AAAA', event)">DD/MM/AAAA</div>
+                  <div class="custom-select-option" data-value="mdy" onclick="selectCustomOption('select-dateformat', 'mdy', 'MM/DD/AAAA', event)">MM/DD/AAAA</div>
+                </div>
+              </div>
+
+              <!-- Theme Mode -->
+              <div class="custom-select" id="select-mode" onclick="toggleCustomSelect('select-mode')">
+                <div class="custom-select-trigger">
+                  <div>
+                    <div class="custom-select-label">Modo</div>
+                    <div class="custom-select-value" data-value="light">Claro</div>
+                  </div>
+                  <svg class="custom-select-icon" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+                <div class="custom-select-dropdown">
+                  <div class="custom-select-option selected" data-value="light" onclick="selectModeOption('light', 'Claro', event)">Claro</div>
+                  <div class="custom-select-option" data-value="dark" onclick="selectModeOption('dark', 'Oscuro', event)">Oscuro</div>
+                </div>
+              </div>
+
+              <!-- Color Palette -->
+              <div class="custom-select" id="select-palette" onclick="toggleCustomSelect('select-palette')">
+                <div class="custom-select-trigger">
+                  <div>
+                    <div class="custom-select-label">Paleta de Color</div>
+                    <div class="custom-select-value" data-value="professional">Professional Blue</div>
+                  </div>
+                  <svg class="custom-select-icon" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+                <div class="custom-select-dropdown">
+                  <div class="custom-select-option selected" data-value="professional" onclick="selectThemeOption('professional', 'Professional Blue', event)">Professional Blue</div>
+                  <div class="custom-select-option" data-value="mono" onclick="selectThemeOption('mono', 'Mono', event)">Mono</div>
+                  <div class="custom-select-option" data-value="ninokuni" onclick="selectThemeOption('ninokuni', 'Ni No Kuni', event)">Ni No Kuni</div>
+                </div>
+              </div>
+
+              <!-- Font -->
+              <div class="custom-select" id="select-font" onclick="toggleCustomSelect('select-font')">
+                <div class="custom-select-trigger">
+                  <div>
+                    <div class="custom-select-label">Tipografia</div>
+                    <div class="custom-select-value" data-value="outfit">Outfit</div>
+                  </div>
+                  <svg class="custom-select-icon" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+                <div class="custom-select-dropdown">
+                  <div class="custom-select-option selected" data-value="outfit" onclick="selectFontOption('outfit', 'Outfit', event)">Outfit</div>
+                  <div class="custom-select-option" data-value="space" onclick="selectFontOption('space', 'Space Grotesk', event)">Space Grotesk</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ========== VIEW: ESCANEO ========== -->
+          <div id="view-escaneo" class="view">
+            <div class="back-header">
+              <div class="back-btn" onclick="showView('main')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2">
+                  <path d="M15 18l-6-6 6-6"/>
+                </svg>
+              </div>
+              <h2>Escaneo</h2>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <!-- Default Currency -->
+              <div class="custom-select" id="select-currency" onclick="toggleCustomSelect('select-currency')">
+                <div class="custom-select-trigger">
+                  <div>
+                    <div class="custom-select-label">Moneda por Defecto</div>
+                    <div class="custom-select-value" data-value="clp">CLP - Peso Chileno</div>
+                  </div>
+                  <svg class="custom-select-icon" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+                <div class="custom-select-dropdown">
+                  <div class="custom-select-option selected" data-value="clp" onclick="selectCustomOption('select-currency', 'clp', 'CLP - Peso Chileno', event)">CLP - Peso Chileno</div>
+                  <div class="custom-select-option" data-value="usd" onclick="selectCustomOption('select-currency', 'usd', 'USD - Dolar Estadounidense', event)">USD - Dolar Estadounidense</div>
+                  <div class="custom-select-option" data-value="eur" onclick="selectCustomOption('select-currency', 'eur', 'EUR - Euro', event)">EUR - Euro</div>
+                  <div class="custom-select-option" data-value="ars" onclick="selectCustomOption('select-currency', 'ars', 'ARS - Peso Argentino', event)">ARS - Peso Argentino</div>
+                </div>
+              </div>
+
+              <!-- Ciudad -->
+              <div class="custom-select" id="select-city" onclick="toggleCustomSelect('select-city')">
+                <div class="custom-select-trigger">
+                  <div>
+                    <div class="custom-select-label">Ciudad</div>
+                    <div class="custom-select-value" data-value="villarrica">Villarrica, Chile</div>
+                  </div>
+                  <svg class="custom-select-icon" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+                <div class="custom-select-dropdown">
+                  <div class="custom-select-option selected" data-value="villarrica" onclick="selectCustomOption('select-city', 'villarrica', 'Villarrica, Chile', event)">Villarrica, Chile</div>
+                  <div class="custom-select-option" data-value="santiago" onclick="selectCustomOption('select-city', 'santiago', 'Santiago, Chile', event)">Santiago, Chile</div>
+                  <div class="custom-select-option" data-value="valparaiso" onclick="selectCustomOption('select-city', 'valparaiso', 'Valparaiso, Chile', event)">Valparaiso, Chile</div>
+                  <div class="custom-select-option" data-value="concepcion" onclick="selectCustomOption('select-city', 'concepcion', 'Concepcion, Chile', event)">Concepcion, Chile</div>
+                </div>
+              </div>
+
+              <!-- Quick Scan Mode -->
+              <div class="settings-row" style="margin-top: 4px;">
+                <div class="settings-row-content">
+                  <div class="settings-row-left">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                    </svg>
+                    <div>
+                      <span class="settings-row-text">Modo Escaneo Rapido</span>
+                      <div class="settings-row-desc">Guardar automaticamente sin revisar</div>
+                    </div>
+                  </div>
+                  <div class="toggle-switch off" onclick="toggleSwitch(this)">
+                    <div class="toggle-knob"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ========== VIEW: SUSCRIPCION ========== -->
+          <div id="view-suscripcion" class="view">
+            <div class="back-header">
+              <div class="back-btn" onclick="showView('main')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2">
+                  <path d="M15 18l-6-6 6-6"/>
+                </svg>
+              </div>
+              <h2>Suscripcion</h2>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <!-- Current Plan Card -->
+              <div class="plan-card">
+                <div class="plan-card-header">
+                  <div>
+                    <div class="plan-card-label">Plan Actual</div>
+                    <div class="plan-card-name">Freemium</div>
+                  </div>
+                  <div class="plan-card-badge">ACTIVO</div>
+                </div>
+                <div style="font-size: 13px; opacity: 0.9;">Acceso basico con limite mensual de escaneos</div>
+              </div>
+
+              <!-- Scan Credits -->
+              <div class="settings-row">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                      <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                    <span class="settings-row-text">Creditos de Escaneo</span>
+                  </div>
+                  <span style="font-size: 13px; color: var(--text-secondary);">Reinicia en 15 dias</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+                  <div>
+                    <span style="font-size: 28px; font-weight: 700; color: var(--primary);">187</span>
+                    <span style="font-size: 14px; color: var(--text-secondary);"> / 300</span>
+                  </div>
+                  <span style="font-size: 12px; color: var(--text-secondary);">disponibles este mes</span>
+                </div>
+                <div class="credits-progress">
+                  <div class="credits-progress-fill" style="width: 62%;"></div>
+                </div>
+              </div>
+
+              <!-- Plan Options Label -->
+              <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 8px;">Planes Disponibles</div>
+
+              <!-- Freemium Plan (Current) -->
+              <div class="settings-row" style="border: 2px solid var(--primary);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                  <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                      <span style="font-size: 16px; font-weight: 600; color: var(--text-primary);">Freemium</span>
+                      <span style="background: var(--primary-light); color: var(--primary); padding: 2px 8px; border-radius: var(--radius-full); font-size: 10px; font-weight: 600;">ACTUAL</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">300 escaneos/mes</div>
+                    <div style="font-size: 20px; font-weight: 700; color: var(--text-primary);">$0<span style="font-size: 12px; font-weight: 400; color: var(--text-secondary);">/mes</span></div>
+                  </div>
+                  <div style="width: 24px; height: 24px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pro Plan -->
+              <div class="settings-row" style="cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                  <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                      <span style="font-size: 16px; font-weight: 600; color: var(--text-primary);">Pro</span>
+                      <span style="background: #fef3c7; color: #f59e0b; padding: 2px 8px; border-radius: var(--radius-full); font-size: 10px; font-weight: 600;">POPULAR</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">1,500 escaneos/mes + reportes avanzados</div>
+                    <div style="font-size: 20px; font-weight: 700; color: var(--text-primary);">$4.990<span style="font-size: 12px; font-weight: 400; color: var(--text-secondary);">/mes</span></div>
+                  </div>
+                  <div style="width: 24px; height: 24px; border: 2px solid var(--border-medium); border-radius: 50%;"></div>
+                </div>
+              </div>
+
+              <!-- Business Plan -->
+              <div class="settings-row" style="cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                  <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                      <span style="font-size: 16px; font-weight: 600; color: var(--text-primary);">Business</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Escaneos ilimitados + API + soporte prioritario</div>
+                    <div style="font-size: 20px; font-weight: 700; color: var(--text-primary);">$14.990<span style="font-size: 12px; font-weight: 400; color: var(--text-secondary);">/mes</span></div>
+                  </div>
+                  <div style="width: 24px; height: 24px; border: 2px solid var(--border-medium); border-radius: 50%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ========== VIEW: DATOS APRENDIDOS ========== -->
+          <div id="view-datos-aprendidos" class="view">
+            <div class="back-header">
+              <div class="back-btn" onclick="showView('main')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2">
+                  <path d="M15 18l-6-6 6-6"/>
+                </svg>
+              </div>
+              <h2>Datos Aprendidos</h2>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <!-- Learned Groups - Expandable -->
+              <div class="expandable-section" id="section-grupos">
+                <div class="expandable-header" onclick="toggleExpandable('section-grupos')">
+                  <div class="settings-row-left">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
+                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    </svg>
+                    <div>
+                      <span class="settings-row-text">Grupos Aprendidos</span>
+                      <div class="settings-row-desc">12 items guardados</div>
+                    </div>
+                  </div>
+                  <svg class="expandable-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                    <path d="M6 9l6 6 6-6"/>
+                  </svg>
+                </div>
+                <div class="expandable-content">
+                  <!-- Item 1 -->
+                  <div class="learned-item">
+                    <div class="learned-item-info">
+                      <div class="learned-item-name">"LAMINA HIDROGEL"</div>
+                      <div class="learned-item-meta">
+                        <span class="category-tag" style="background: #dbeafe; color: #2563eb;">Electronics</span>
+                        <span class="learned-item-count">30x</span>
+                      </div>
+                    </div>
+                    <div class="learned-item-actions">
+                      <button class="icon-btn" title="Editar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button class="icon-btn" title="Eliminar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                          <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <!-- Item 2 -->
+                  <div class="learned-item">
+                    <div class="learned-item-info">
+                      <div class="learned-item-name">"ANTI BRAVECTO"</div>
+                      <div class="learned-item-meta">
+                        <span class="category-tag" style="background: #dcfce7; color: #16a34a;">Mascotas</span>
+                        <span class="learned-item-count">4x</span>
+                      </div>
+                    </div>
+                    <div class="learned-item-actions">
+                      <button class="icon-btn" title="Editar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button class="icon-btn" title="Eliminar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                          <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="expandable-footer">
+                    <a href="#" class="view-all-link">Ver todos (12)</a>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Learned Merchants - Expandable -->
+              <div class="expandable-section" id="section-comercios">
+                <div class="expandable-header" onclick="toggleExpandable('section-comercios')">
+                  <div class="settings-row-left">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2">
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                      <polyline points="9,22 9,12 15,12 15,22"/>
+                    </svg>
+                    <div>
+                      <span class="settings-row-text">Comercios Aprendidos</span>
+                      <div class="settings-row-desc">8 comercios guardados</div>
+                    </div>
+                  </div>
+                  <svg class="expandable-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                    <path d="M6 9l6 6 6-6"/>
+                  </svg>
+                </div>
+                <div class="expandable-content">
+                  <div class="learned-item">
+                    <div class="learned-item-info">
+                      <div class="learned-item-name">"JUMBO"</div>
+                      <div class="learned-item-meta">
+                        <span class="category-tag" style="background: #fef3c7; color: #d97706;">Supermercado</span>
+                        <span class="learned-item-count">45x</span>
+                      </div>
+                    </div>
+                    <div class="learned-item-actions">
+                      <button class="icon-btn" title="Editar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button class="icon-btn" title="Eliminar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                          <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="learned-item">
+                    <div class="learned-item-info">
+                      <div class="learned-item-name">"LIDER EXPRESS"</div>
+                      <div class="learned-item-meta">
+                        <span class="category-tag" style="background: #fef3c7; color: #d97706;">Supermercado</span>
+                        <span class="learned-item-count">23x</span>
+                      </div>
+                    </div>
+                    <div class="learned-item-actions">
+                      <button class="icon-btn" title="Editar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button class="icon-btn" title="Eliminar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                          <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="expandable-footer">
+                    <a href="#" class="view-all-link">Ver todos (8)</a>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Learned Subcategories - Expandable -->
+              <div class="expandable-section" id="section-subcategorias">
+                <div class="expandable-header" onclick="toggleExpandable('section-subcategorias')">
+                  <div class="settings-row-left">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                      <line x1="7" y1="7" x2="7.01" y2="7"/>
+                    </svg>
+                    <div>
+                      <span class="settings-row-text">Subcategorias Aprendidas</span>
+                      <div class="settings-row-desc">5 subcategorias guardadas</div>
+                    </div>
+                  </div>
+                  <svg class="expandable-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                    <path d="M6 9l6 6 6-6"/>
+                  </svg>
+                </div>
+                <div class="expandable-content">
+                  <div class="learned-item">
+                    <div class="learned-item-info">
+                      <div class="learned-item-name">"Snacks"</div>
+                      <div class="learned-item-meta">
+                        <span class="category-tag" style="background: #fce7f3; color: #db2777;">Alimentacion</span>
+                        <span class="learned-item-count">18x</span>
+                      </div>
+                    </div>
+                    <div class="learned-item-actions">
+                      <button class="icon-btn" title="Editar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button class="icon-btn" title="Eliminar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                          <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="expandable-footer">
+                    <a href="#" class="view-all-link">Ver todos (5)</a>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Trusted Merchants - Expandable -->
+              <div class="expandable-section" id="section-confianza">
+                <div class="expandable-header" onclick="toggleExpandable('section-confianza')">
+                  <div class="settings-row-left">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                      <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+                      <path d="m9 12 2 2 4-4"/>
+                    </svg>
+                    <div>
+                      <span class="settings-row-text">Comercios de Confianza</span>
+                      <div class="settings-row-desc">3 comercios de confianza</div>
+                    </div>
+                  </div>
+                  <svg class="expandable-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                    <path d="M6 9l6 6 6-6"/>
+                  </svg>
+                </div>
+                <div class="expandable-content">
+                  <div class="learned-item">
+                    <div class="learned-item-info">
+                      <div class="learned-item-name">"COPEC"</div>
+                      <div class="learned-item-meta">
+                        <span class="category-tag" style="background: #e0e7ff; color: #4f46e5;">Combustible</span>
+                        <span class="learned-item-count">12x</span>
+                      </div>
+                    </div>
+                    <div class="learned-item-actions">
+                      <button class="icon-btn" title="Editar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button class="icon-btn" title="Eliminar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                          <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="expandable-footer">
+                    <a href="#" class="view-all-link">Ver todos (3)</a>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Clear All Data - Destructive -->
+              <div class="settings-row destructive" style="margin-top: 8px; cursor: pointer;">
+                <div class="settings-row-content">
+                  <div class="settings-row-left">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                      <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                    <div>
+                      <span class="settings-row-text">Borrar Todos los Datos</span>
+                      <div class="settings-row-desc">Elimina todos los datos aprendidos</div>
+                    </div>
+                  </div>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" stroke-width="2">
+                    <path d="M9 18l6-6-6-6"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ========== VIEW: APP ========== -->
+          <div id="view-app" class="view">
+            <div class="back-header">
+              <div class="back-btn" onclick="showView('main')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2">
+                  <path d="M15 18l-6-6 6-6"/>
+                </svg>
+              </div>
+              <h2>App</h2>
+              <span style="margin-left: auto; font-size: 11px; color: var(--text-secondary); background: var(--bg-tertiary); padding: 4px 10px; border-radius: var(--radius-full);">v9.5.0</span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <!-- App Installation -->
+              <div class="settings-row">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                    <line x1="12" y1="18" x2="12.01" y2="18"/>
+                  </svg>
+                  <span class="settings-row-text">Instalacion de App</span>
+                </div>
+                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px;">Instala Gastify como app nativa en tu dispositivo</div>
+
+                <div style="background: var(--bg-tertiary); border-radius: var(--radius-md); padding: 10px 12px; margin-bottom: 12px; border-left: 3px solid var(--primary);">
+                  <div style="font-size: 12px; font-weight: 500; color: var(--text-primary); margin-bottom: 6px;">Como instalar:</div>
+                  <ol style="font-size: 11px; color: var(--text-secondary); margin: 0; padding-left: 16px; line-height: 1.6;">
+                    <li>Toca el menu arriba a la derecha</li>
+                    <li>Selecciona "Instalar Gastify"</li>
+                  </ol>
+                </div>
+
+                <button class="btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                  Instalar App
+                </button>
+              </div>
+
+              <!-- Updates -->
+              <div class="settings-row">
+                <div class="settings-row-content">
+                  <div class="settings-row-left">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
+                      <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                    </svg>
+                    <div>
+                      <span class="settings-row-text">Actualizaciones</span>
+                      <div class="settings-row-desc">Ultima actualizacion: hace 2 dias</div>
+                    </div>
+                  </div>
+                  <button class="btn-secondary">Buscar</button>
+                </div>
+              </div>
+
+              <!-- Push Notifications -->
+              <div class="settings-row">
+                <div class="settings-row-content">
+                  <div class="settings-row-left">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                    <div>
+                      <span class="settings-row-text">Notificaciones Push</span>
+                      <div class="settings-row-desc">Recibir alertas y recordatorios</div>
+                    </div>
+                  </div>
+                  <div class="toggle-switch on" onclick="toggleSwitch(this)">
+                    <div class="toggle-knob"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Spending Reminders -->
+              <div class="settings-row">
+                <div class="settings-row-content">
+                  <div class="settings-row-left">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="M12 6v6l4 2"/>
+                    </svg>
+                    <div>
+                      <span class="settings-row-text">Recordatorios de Gasto</span>
+                      <div class="settings-row-desc">Alertas semanales de resumen</div>
+                    </div>
+                  </div>
+                  <div class="toggle-switch off" onclick="toggleSwitch(this)">
+                    <div class="toggle-knob"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Test Notification -->
+              <div class="settings-row">
+                <div class="settings-row-content">
+                  <div class="settings-row-left">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
+                      <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                    </svg>
+                    <div>
+                      <span class="settings-row-text">Probar Notificacion</span>
+                      <div class="settings-row-desc">Verificar que funcionan</div>
+                    </div>
+                  </div>
+                  <button class="btn-secondary">Enviar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ========== VIEW: DATOS Y CUENTA ========== -->
+          <div id="view-datos-cuenta" class="view">
+            <div class="back-header">
+              <div class="back-btn" onclick="showView('main')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2">
+                  <path d="M15 18l-6-6 6-6"/>
+                </svg>
+              </div>
+              <h2>Datos y Cuenta</h2>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <!-- User Profile Info -->
+              <div class="settings-row">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <div style="width: 48px; height: 48px; background: var(--primary-light); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                      <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                  </div>
+                  <div style="flex: 1;">
+                    <div style="font-size: 15px; font-weight: 600; color: var(--text-primary);">Usuario Local</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">Datos guardados en este dispositivo</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Storage Info -->
+              <div class="settings-row">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
+                    <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                  </svg>
+                  <span class="settings-row-text">Uso de Almacenamiento</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span style="font-size: 12px; color: var(--text-secondary);">245 boletas guardadas</span>
+                  <span style="font-size: 12px; color: var(--text-secondary);">12.4 MB</span>
+                </div>
+                <div class="storage-bar">
+                  <div class="storage-bar-fill" style="width: 35%;"></div>
+                </div>
+              </div>
+
+              <!-- Export Data -->
+              <div class="settings-row">
+                <div class="settings-row-content">
+                  <div class="settings-row-left">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                    <div>
+                      <span class="settings-row-text">Exportar Datos</span>
+                      <div class="settings-row-desc">Descargar todos tus datos</div>
+                    </div>
+                  </div>
+                  <button class="btn-secondary">CSV</button>
+                </div>
+              </div>
+
+              <!-- Import Data -->
+              <div class="settings-row">
+                <div class="settings-row-content">
+                  <div class="settings-row-left">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                    </svg>
+                    <div>
+                      <span class="settings-row-text">Importar Datos</span>
+                      <div class="settings-row-desc">Restaurar desde archivo CSV</div>
+                    </div>
+                  </div>
+                  <button class="btn-secondary">Seleccionar</button>
+                </div>
+              </div>
+
+              <!-- Sync Status (Future Feature) -->
+              <div class="settings-row" style="opacity: 0.6;">
+                <div class="settings-row-content">
+                  <div class="settings-row-left">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
+                      <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                    </svg>
+                    <div>
+                      <span class="settings-row-text">Sincronizacion Cloud</span>
+                      <div class="settings-row-desc">Proximamente disponible</div>
+                    </div>
+                  </div>
+                  <span style="font-size: 10px; color: var(--text-tertiary); background: var(--bg-tertiary); padding: 3px 8px; border-radius: var(--radius-full);">PRONTO</span>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <!-- Factory Reset - Destructive -->
+              <div class="settings-row destructive">
+                <div class="settings-row-content">
+                  <div class="settings-row-left">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                      <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      <line x1="10" y1="11" x2="10" y2="17"/>
+                      <line x1="14" y1="11" x2="14" y2="17"/>
+                    </svg>
+                    <div>
+                      <span class="settings-row-text">Restablecer Todo</span>
+                      <div class="settings-row-desc">Elimina todos los datos permanentemente</div>
+                    </div>
+                  </div>
+                  <button style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 13px; font-weight: 500; font-family: inherit; border: 1px solid #fecaca; border-radius: var(--radius-md); background: #fef2f2; color: #ef4444; cursor: pointer;">Borrar</button>
+                </div>
+              </div>
+
+              <!-- Sign Out -->
+              <div class="settings-row">
+                <div class="settings-row-content">
+                  <div class="settings-row-left">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+                    </svg>
+                    <div>
+                      <span class="settings-row-text">Cerrar Sesion</span>
+                      <div class="settings-row-desc">Cerrar sesion de este dispositivo</div>
+                    </div>
+                  </div>
+                  <button class="btn-secondary" style="color: var(--text-primary);">Salir</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- views-container -->
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Inicio</span>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            <span>Analíticas</span>
+          </div>
+          <div class="scan-center">
+            <div class="scan-btn">
+              <!-- CAMERA ICON (NOT scan) -->
+              <svg viewBox="0 0 24 24">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                <circle cx="12" cy="13" r="3"/>
+              </svg>
+            </div>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <span>Ideas</span>
+          </div>
+          <div class="nav-item" style="position: relative;">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <!-- Notification badge -->
+            <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+            <span>Alertas</span>
+          </div>
+        </nav>
+
+      </div><!-- phone-screen -->
+    </div><!-- phone-frame -->
+
+    <!-- Global Controls Panel - Below Phone -->
+    <div class="global-controls">
+      <div class="control-group">
+        <div class="control-label">Theme</div>
+        <div class="control-options">
+          <div class="theme-swatch" data-theme="professional" title="Professional Blue" onclick="setTheme('professional', this)"></div>
+          <div class="theme-swatch active" data-theme="mono" title="Mono" onclick="setTheme('mono', this)"></div>
+          <div class="theme-swatch" data-theme="ninokuni" title="Ni No Kuni" onclick="setTheme('ninokuni', this)"></div>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="control-label">Mode</div>
+        <div class="control-options">
+          <button class="mode-toggle" id="darkModeToggle" onclick="toggleDarkMode(this)">
+            <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            Dark
+          </button>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="control-label">Font</div>
+        <div class="control-options">
+          <div class="font-pill active" data-font="outfit" onclick="setFont('outfit', this)">Outfit</div>
+          <div class="font-pill" data-font="space" onclick="setFont('space', this)">Space</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- page-wrapper -->
+
+  <script>
+    // View Navigation
+    function showView(viewId) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById('view-' + viewId).classList.add('active');
+    }
+
+    // Theme Switcher - set on both html and body for CSS compatibility
+    function setTheme(theme, el) {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.body.setAttribute('data-theme', theme);
+      document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+      el.classList.add('active');
+      // Sync with select dropdown if it exists
+      var themeSelect = document.getElementById('theme-select');
+      if (themeSelect) themeSelect.value = theme;
+    }
+
+    // Dark Mode Toggle - works independently of theme selection
+    function toggleDarkMode(el) {
+      var isDark = document.body.getAttribute('data-mode') === 'dark';
+      var newMode = isDark ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-mode', newMode);
+      document.body.setAttribute('data-mode', newMode);
+
+      if (newMode === 'dark') {
+        el.classList.add('active');
+        el.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2m11-11h-2M3 12H1m17.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m12.73 0l-1.41-1.41M6.34 6.34L4.93 4.93"/></svg> Light';
+      } else {
+        el.classList.remove('active');
+        el.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Dark';
+      }
+    }
+
+    // Font Switcher - set on both html and body for CSS compatibility
+    function setFont(font, el) {
+      document.documentElement.setAttribute('data-font', font);
+      document.body.setAttribute('data-font', font);
+      document.querySelectorAll('.font-pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      // Sync with select dropdown if it exists
+      var fontSelect = document.getElementById('font-select');
+      if (fontSelect) fontSelect.value = font;
+    }
+
+    // Theme/Font from Select dropdowns (in Preferencias)
+    function setThemeFromSelect(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.body.setAttribute('data-theme', theme);
+      // Sync with theme swatches in global controls
+      document.querySelectorAll('.theme-swatch').forEach(s => {
+        s.classList.toggle('active', s.getAttribute('data-theme') === theme);
+      });
+    }
+
+    function setFontFromSelect(font) {
+      document.documentElement.setAttribute('data-font', font);
+      document.body.setAttribute('data-font', font);
+      // Sync with font pills in global controls
+      document.querySelectorAll('.font-pill').forEach(p => {
+        p.classList.toggle('active', p.getAttribute('data-font') === font);
+      });
+    }
+
+    // Toggle Switch
+    function toggleSwitch(el) {
+      if (el.classList.contains('on')) {
+        el.classList.remove('on');
+        el.classList.add('off');
+      } else {
+        el.classList.remove('off');
+        el.classList.add('on');
+      }
+    }
+
+    // Toggle Expandable Section
+    function toggleExpandable(sectionId) {
+      var section = document.getElementById(sectionId);
+      section.classList.toggle('open');
+    }
+
+    // Modal Functions
+    function openAddLimitModal() {
+      document.getElementById('add-limit-modal').classList.add('open');
+    }
+
+    function closeAddLimitModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('add-limit-modal').classList.remove('open');
+      // Reset form
+      var categorySelect = document.querySelector('#modal-select-category .custom-select-value');
+      categorySelect.textContent = 'Seleccionar categoria...';
+      categorySelect.setAttribute('data-value', '');
+      document.querySelectorAll('#modal-select-category .custom-select-option').forEach(function(opt) {
+        opt.classList.remove('selected');
+      });
+    }
+
+    // Custom Select Dropdown Functions
+    var activeCustomSelect = null;
+
+    function toggleCustomSelect(selectId) {
+      var select = document.getElementById(selectId);
+      var isOpen = select.classList.contains('open');
+
+      // Close all other dropdowns
+      document.querySelectorAll('.custom-select.open').forEach(function(s) {
+        s.classList.remove('open');
+      });
+
+      // Toggle this one
+      if (!isOpen) {
+        select.classList.add('open');
+        activeCustomSelect = selectId;
+      } else {
+        activeCustomSelect = null;
+      }
+    }
+
+    function selectCustomOption(selectId, value, label, e) {
+      e.stopPropagation();
+      var select = document.getElementById(selectId);
+      var valueEl = select.querySelector('.custom-select-value');
+      valueEl.textContent = label;
+      valueEl.setAttribute('data-value', value);
+
+      // Update selected state
+      select.querySelectorAll('.custom-select-option').forEach(function(opt) {
+        opt.classList.toggle('selected', opt.getAttribute('data-value') === value);
+      });
+
+      // Close dropdown
+      select.classList.remove('open');
+      activeCustomSelect = null;
+    }
+
+    function selectThemeOption(theme, label, e) {
+      e.stopPropagation();
+      selectCustomOption('select-palette', theme, label, e);
+      setThemeFromSelect(theme);
+    }
+
+    function selectFontOption(font, label, e) {
+      e.stopPropagation();
+      selectCustomOption('select-font', font, label, e);
+      setFontFromSelect(font);
+    }
+
+    function selectModeOption(mode, label, e) {
+      e.stopPropagation();
+      selectCustomOption('select-mode', mode, label, e);
+      // Apply mode
+      document.documentElement.setAttribute('data-mode', mode);
+      document.body.setAttribute('data-mode', mode);
+      // Sync with dark mode toggle in global controls
+      var toggleBtn = document.getElementById('darkModeToggle');
+      if (toggleBtn) {
+        if (mode === 'dark') {
+          toggleBtn.classList.add('active');
+          toggleBtn.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2m11-11h-2M3 12H1m17.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m12.73 0l-1.41-1.41M6.34 6.34L4.93 4.93"/></svg> Light';
+        } else {
+          toggleBtn.classList.remove('active');
+          toggleBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Dark';
+        }
+      }
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (activeCustomSelect && !e.target.closest('.custom-select')) {
+        document.querySelectorAll('.custom-select.open').forEach(function(s) {
+          s.classList.remove('open');
+        });
+        activeCustomSelect = null;
+      }
+    });
+
+    // Initialize theme/font/mode on body from html attributes
+    document.addEventListener('DOMContentLoaded', function() {
+      var theme = document.documentElement.getAttribute('data-theme') || 'professional';
+      var font = document.documentElement.getAttribute('data-font') || 'outfit';
+      var mode = document.documentElement.getAttribute('data-mode') || 'light';
+      document.body.setAttribute('data-theme', theme);
+      document.body.setAttribute('data-font', font);
+      document.body.setAttribute('data-mode', mode);
+
+      // Update dark mode toggle button state
+      var toggleBtn = document.getElementById('darkModeToggle');
+      if (mode === 'dark' && toggleBtn) {
+        toggleBtn.classList.add('active');
+        toggleBtn.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2m11-11h-2M3 12H1m17.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m12.73 0l-1.41-1.41M6.34 6.34L4.93 4.93"/></svg> Light';
+      }
+    });
+  </script>
+</body>
+</html>
