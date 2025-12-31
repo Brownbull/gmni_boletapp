@@ -1,8 +1,8 @@
 # Architectural Decisions & Patterns
 
 > Section 4 of Atlas Memory
-> Last Sync: 2025-12-22
-> Sources: architecture.md, ADRs, tech-spec documents
+> Last Sync: 2025-12-31
+> Sources: architecture.md, ADRs, tech-spec documents, tech-context-epic14.md
 
 ## Tech Stack
 
@@ -376,12 +376,78 @@ useEffect(() => {
 
 ---
 
+---
+
+## Epic 14 Architecture Preview
+
+### Animation Framework (Story 14.1)
+
+```typescript
+// AnimationContext Provider
+interface AnimationContextValue {
+  breathingPhase: number; // 0-1 for 3s cycle
+  isReducedMotion: boolean;
+  getStaggerDelay: (index: number) => number;
+}
+
+// Constants from motion-design-system.md
+const ANIMATION_CONSTANTS = {
+  breathingCycleDuration: 3000, // ms
+  breathingScaleRange: { min: 1, max: 1.02 },
+  breathingOpacityRange: { min: 0.9, max: 1.0 },
+  staggerDelayMs: 100,
+  celebrationSpringConfig: { tension: 180, friction: 12 },
+};
+```
+
+### Dynamic Polygon (Stories 14.5-14.7)
+
+```typescript
+// Polygon modes
+type PolygonMode = 'breathing' | 'interactive';
+
+// Data structure for category-based vertices
+interface PolygonVertex {
+  category: string;
+  value: number; // spending amount
+  angle: number; // calculated from category count
+}
+
+// Dual-mode: inner = spending, outer = budget threshold
+interface DualPolygonConfig {
+  innerData: PolygonVertex[]; // actual spending
+  outerData: PolygonVertex[]; // budget limits
+}
+```
+
+### Celebration System (Story 14.12)
+
+```typescript
+interface CelebrationConfig {
+  type: 'small' | 'big';
+  confetti?: boolean;
+  haptic?: boolean;
+  sound?: boolean;
+}
+
+const CELEBRATION_PRESETS = {
+  milestone: { type: 'big', confetti: true, haptic: true, sound: true },
+  personalRecord: { type: 'big', confetti: true, haptic: true, sound: true },
+  quickSave: { type: 'small', confetti: true, haptic: true, sound: false },
+};
+```
+
+---
+
 ## Sync Notes
 
 - Architecture stable since Epic 7
 - Epic 10 COMPLETE: Client-side insight engine with 12 generators (ADRs 015-017)
 - Epic 10a COMPLETE: UX Consolidation with Home+History merge, Insights tab
 - Epic 11 COMPLETE: Quick Save optimization with confidence scoring, trust merchants, PWA viewport
+- Epic 12 COMPLETE: Batch mode with parallel processing, credit validation
+- Epic 13 COMPLETE: UX Design with 10 HTML mockups, motion design system
+- **Epic 14 READY-FOR-DEV**: Animation framework, dynamic polygon, celebrations (14 stories, ~48 pts)
 - Security rules pattern consistently applied
 - Story 10.3 established generator registry pattern with `canGenerate/generate` interface
 - Story 10.4 added 5 pattern detection generators with precomputed aggregates (2025-12-18)

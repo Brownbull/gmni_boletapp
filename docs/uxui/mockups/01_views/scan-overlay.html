@@ -1,0 +1,3272 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="mono" data-font="outfit" data-mode="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gastify - Scan Overlay Flow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Baloo+2:wght@700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       DESIGN TOKENS FROM REFERENCE
+       ============================================ */
+    :root {
+      /* Primary Palette */
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --primary-dark: #1e40af;
+      /* Secondary */
+      --secondary: #64748b;
+      --secondary-light: #f1f5f9;
+      --accent: #0ea5e9;
+      /* Backgrounds */
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --bg-inverse: #0f172a;
+      /* Text */
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --text-inverse: #f8fafc;
+      /* Borders */
+      --border-light: #e2e8f0;
+      --border-medium: #cbd5e1;
+      --border-dark: #94a3b8;
+      /* Semantic */
+      --success: #22c55e;
+      --success-light: #dcfce7;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --error: #ef4444;
+      --error-light: #fee2e2;
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+      /* Spacing */
+      --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+      --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+      /* Radii */
+      --radius-sm: 6px; --radius-md: 10px; --radius-lg: 12px;
+      --radius-xl: 16px; --radius-2xl: 20px; --radius-full: 9999px;
+      /* Typography */
+      --font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+      --transition-fast: 150ms ease;
+      --transition-normal: 200ms ease;
+      --transition-slow: 300ms ease;
+      --transition-spring: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* THEME 1: Professional Blue (Default) */
+    [data-theme="professional"] {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --primary-dark: #1e40af;
+    }
+
+    /* THEME 2: Monochrome Minimal */
+    [data-theme="mono"] {
+      --primary: #18181b;
+      --primary-hover: #27272a;
+      --primary-light: #f4f4f5;
+      --primary-dark: #09090b;
+      --bg-primary: #fafafa;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f4f4f5;
+      --text-primary: #18181b;
+      --text-secondary: #52525b;
+      --text-tertiary: #a1a1aa;
+      --border-light: #e4e4e7;
+    }
+
+    /* THEME 3: Ni No Kuni / Studio Ghibli */
+    [data-theme="ninokuni"] {
+      --primary: #4a7c59;
+      --primary-hover: #3d6b4a;
+      --primary-light: #d4e5d9;
+      --bg-primary: #f5f0e8;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1dbb6;
+      --text-primary: #2d3a4a;
+      --text-secondary: #4a5568;
+      --border-light: #e3bba1;
+      --success: #7d9b5f;
+    }
+
+    /* Dark Mode */
+    [data-mode="dark"] {
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --primary-light: #1e3a5f;
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-tertiary: #64748b;
+      --border-light: #334155;
+      --border-medium: #475569;
+      --success-light: #14532d;
+      --warning-light: #713f12;
+      --error-light: #7f1d1d;
+    }
+
+    /* Font Selection */
+    [data-font="outfit"] { --font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif; }
+    [data-font="space"] { --font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; }
+
+    /* ============================================
+       LOGO STYLE DEFINITIONS - Paired with themes
+       ============================================ */
+    /* Professional Blue theme -> Blue/Dark Blue gradient logo */
+    [data-theme="professional"] .g-logo-circle { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important; }
+    /* Mono theme -> Mono logo (black/gray) */
+    [data-theme="mono"] .g-logo-circle { background: linear-gradient(135deg, #18181b 0%, #3f3f46 100%) !important; }
+    /* Ni No Kuni theme -> Ghibli logo (green/blue) */
+    [data-theme="ninokuni"] .g-logo-circle { background: linear-gradient(135deg, #4a7c59 0%, #5b8fa8 100%) !important; }
+
+    /* Logo Style Definitions - Dark Mode Variants */
+    [data-theme="professional"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important; }
+    [data-theme="mono"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #a1a1aa 0%, #71717a 100%) !important; }
+    [data-theme="ninokuni"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #6b9e7a 0%, #7ba8be 100%) !important; }
+
+    /* ============================================
+       BASE STYLES
+       ============================================ */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-family);
+      background: #1a1a2e;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    /* Page Title */
+    .page-title {
+      color: white;
+      font-size: 24px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .page-subtitle {
+      color: #94a3b8;
+      font-size: 14px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    /* States Grid */
+    .states-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(375px, 1fr));
+      gap: 40px;
+      max-width: 1600px;
+      width: 100%;
+    }
+
+    /* State Container */
+    .state-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .state-label {
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      background: var(--primary);
+      padding: 6px 16px;
+      border-radius: var(--radius-full);
+    }
+    .state-description {
+      color: #94a3b8;
+      font-size: 12px;
+      text-align: center;
+      max-width: 300px;
+    }
+
+    /* ============================================
+       PHONE FRAME
+       ============================================ */
+    .phone-frame {
+      width: 460px;
+      min-height: 996px;
+      background: #1e293b;
+      border-radius: 62px;
+      padding: 18px;
+      box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25),
+        inset 0 0 0 2px #334155, inset 0 0 0 4px #475569;
+    }
+    .phone-screen {
+      width: 100%;
+      height: 960px;
+      background: var(--bg-primary);
+      border-radius: 44px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* ============================================
+       STATUS BAR
+       ============================================ */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px 8px;
+      background: var(--bg-primary);
+      flex-shrink: 0;
+    }
+    .status-time {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .status-icons {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .status-icons svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-primary);
+      fill: none;
+      stroke-width: 1.5;
+    }
+
+    /* ============================================
+       HEADER BAR
+       ============================================ */
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px 12px;
+      background: var(--bg-primary);
+      flex-shrink: 0;
+    }
+    .g-logo-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4a9e7e 0%, #3d8b6e 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .g-logo-letter {
+      color: white;
+      font-weight: 700;
+      font-size: 16px;
+      font-family: 'Baloo 2', sans-serif;
+    }
+    .header-wordmark {
+      font-family: 'Baloo 2', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .header-menu {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ============================================
+       CONTENT AREA
+       ============================================ */
+    .content-area {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* ============================================
+       EDIT VIEW (Background during processing)
+       ============================================ */
+    .edit-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .edit-view.grayed-out {
+      opacity: 0.4;
+      pointer-events: none;
+      filter: grayscale(30%);
+    }
+
+    /* Merchant Header */
+    .merchant-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+    }
+    .merchant-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--primary-light);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+    .merchant-info {
+      flex: 1;
+    }
+    .merchant-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .merchant-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    .merchant-total {
+      text-align: right;
+    }
+    .merchant-total-label {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+    }
+    .merchant-total-amount {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* Transaction Items */
+    .transaction-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .transaction-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+    }
+    .transaction-thumb {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .receipt-icon {
+      width: 40px;
+      height: 46px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #fafaf8 0%, #f0ede4 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-light);
+    }
+    .receipt-icon svg {
+      width: 18px;
+      height: 22px;
+      stroke: #9ca3af;
+      fill: none;
+      stroke-width: 1.2;
+      opacity: 0.7;
+    }
+    .category-badge-icon {
+      position: absolute;
+      bottom: -3px;
+      right: -3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      border: 2px solid var(--bg-secondary);
+    }
+    .category-badge-icon.groceries { background: var(--success-light); }
+    .category-badge-icon.restaurant { background: var(--error-light); }
+    .category-badge-icon.transport { background: var(--primary-light); }
+    .transaction-content { flex: 1; }
+    .transaction-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 4px;
+    }
+    .transaction-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .transaction-amount {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .transaction-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .meta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 6px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-full);
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+    .category-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .category-badge.groceries { background: var(--success-light); color: var(--success); }
+
+    /* Skeleton Items for Progressive Reveal */
+    .skeleton-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+    }
+    .skeleton-thumb {
+      width: 40px;
+      height: 46px;
+      border-radius: 6px;
+      background: var(--bg-tertiary);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    .skeleton-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .skeleton-line {
+      height: 14px;
+      border-radius: 4px;
+      background: var(--bg-tertiary);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    .skeleton-line.short { width: 60%; }
+    .skeleton-line.medium { width: 80%; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.7; }
+    }
+
+    /* ============================================
+       PROCESSING OVERLAY
+       ============================================ */
+    .processing-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      z-index: 100;
+      border-radius: 44px;
+    }
+
+    /* Progress Indicator */
+    .progress-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 32px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-2xl);
+      box-shadow: var(--shadow-xl);
+    }
+
+    /* Circular Progress */
+    .circular-progress {
+      position: relative;
+      width: 80px;
+      height: 80px;
+    }
+    .circular-progress svg {
+      transform: rotate(-90deg);
+    }
+    .progress-track {
+      fill: none;
+      stroke: var(--bg-tertiary);
+      stroke-width: 6;
+    }
+    .progress-fill {
+      fill: none;
+      stroke: var(--primary);
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-dasharray: 226;
+      stroke-dashoffset: 113; /* 50% progress */
+      transition: stroke-dashoffset 0.3s ease;
+    }
+    .progress-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 32px;
+      height: 32px;
+      color: var(--primary);
+      animation: scan-pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes scan-pulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+      50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+    }
+
+    .progress-text {
+      text-align: center;
+    }
+    .progress-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .progress-eta {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* Tip Text */
+    .processing-tip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: var(--radius-full);
+      box-shadow: var(--shadow-md);
+    }
+    .processing-tip svg {
+      width: 16px;
+      height: 16px;
+      color: var(--text-tertiary);
+    }
+    .processing-tip span {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* ============================================
+       QUICK SAVE OVERLAY (Modal with Backdrop)
+       ============================================ */
+    .quick-save-overlay {
+      position: absolute;
+      top: 90px; /* Below header */
+      left: 0;
+      right: 0;
+      bottom: 64px; /* Above bottom nav */
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 40;
+      animation: fadeIn 200ms ease-out forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .quick-save-card {
+      background: var(--bg-secondary);
+      border-radius: 24px;
+      padding: 20px;
+      margin: 8px;
+      box-shadow: var(--shadow-xl);
+      border: 1px solid var(--border-light);
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100% - 16px);
+      overflow-y: auto;
+      animation: scaleIn 300ms cubic-bezier(0, 0, 0.2, 1) forwards;
+    }
+    @keyframes scaleIn {
+      from {
+        transform: scale(0.95);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* Header: Metadata Left + Thumbnail Right */
+    .quick-save-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .quick-save-metadata {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .quick-save-merchant {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .quick-save-category {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .quick-save-location {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .quick-save-location svg {
+      width: 12px;
+      height: 12px;
+    }
+    .quick-save-datetime {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .quick-save-datetime span {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .quick-save-datetime svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    /* Thumbnail with green border */
+    .quick-save-thumbnail {
+      position: relative;
+      width: 72px;
+      height: 90px;
+      flex-shrink: 0;
+    }
+    .quick-save-thumbnail-img {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 2px solid var(--success);
+      padding: 8px;
+      opacity: 0.5;
+    }
+    .quick-save-thumbnail-line {
+      height: 4px;
+      background: var(--border-light);
+      border-radius: 1px;
+      margin-bottom: 3px;
+    }
+    .quick-save-thumbnail-line.header {
+      height: 6px;
+      background: var(--border-medium);
+      margin-bottom: 4px;
+      width: 70%;
+    }
+    .quick-save-category-badge {
+      position: absolute;
+      bottom: -4px;
+      right: -4px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--success-light);
+      border: 2px solid var(--bg-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .quick-save-category-badge svg {
+      width: 11px;
+      height: 11px;
+      stroke: var(--success);
+      stroke-width: 2.5;
+    }
+
+    /* Total Highlight Card */
+    .quick-save-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      background: var(--primary-light);
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    .quick-save-total-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    .quick-save-total-label svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--primary);
+    }
+    .quick-save-total-amount {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    /* Items List */
+    .quick-save-items {
+      flex: 1;
+      margin-bottom: 16px;
+    }
+    .quick-save-items-header {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+    .quick-save-items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .quick-save-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+    }
+    .quick-save-item-name {
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    .quick-save-item-price {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .quick-save-more-items {
+      font-size: 13px;
+      color: var(--primary);
+      font-weight: 500;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    /* Staggered Animation Classes */
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .anim-slide {
+      animation: slideInUp 300ms cubic-bezier(0, 0, 0.2, 1) forwards;
+    }
+    .d1 { animation-delay: 0.05s; opacity: 0; }
+    .d2 { animation-delay: 0.1s; opacity: 0; }
+    .d3 { animation-delay: 0.15s; opacity: 0; }
+    .d4 { animation-delay: 0.2s; opacity: 0; }
+    .d5 { animation-delay: 0.25s; opacity: 0; }
+    .d6 { animation-delay: 0.3s; opacity: 0; }
+    .d7 { animation-delay: 0.35s; opacity: 0; }
+    .d8 { animation-delay: 0.4s; opacity: 0; }
+
+    .quick-save-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      border: none;
+      transition: all var(--transition-fast);
+    }
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-light);
+    }
+    .btn-secondary:hover {
+      background: var(--border-light);
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+    .btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* ============================================
+       ERROR STATE
+       ============================================ */
+    .error-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      z-index: 100;
+      border-radius: 44px;
+    }
+    .error-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 32px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-2xl);
+      box-shadow: var(--shadow-xl);
+      max-width: 280px;
+      text-align: center;
+    }
+    .error-icon {
+      width: 64px;
+      height: 64px;
+      background: var(--error-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .error-icon svg {
+      width: 32px;
+      height: 32px;
+      color: var(--error);
+    }
+    .error-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .error-message {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .error-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      margin-top: 8px;
+    }
+    .btn-error {
+      background: var(--error);
+      color: white;
+    }
+    .btn-error:hover {
+      background: #dc2626;
+    }
+
+    /* ============================================
+       EDIT TRANSACTION SCREEN
+       ============================================ */
+    .edit-screen {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .edit-nav-header {
+      padding: 6px 12px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .edit-nav-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .edit-nav-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-primary);
+    }
+    .edit-nav-title {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    /* Metadata Section with Pills */
+    .edit-metadata {
+      padding: 14px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .edit-metadata-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .edit-metadata-left {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .edit-merchant-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .edit-pills-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .edit-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-full);
+      font-size: 10px;
+    }
+    .edit-pill svg {
+      width: 10px;
+      height: 10px;
+    }
+
+    /* Items Table */
+    .edit-items-section {
+      flex: 1;
+      padding: 10px 12px 0;
+      overflow-y: auto;
+    }
+    .edit-items-table {
+      width: 100%;
+      font-size: 11px;
+      border-collapse: collapse;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    .edit-items-table thead tr {
+      background: var(--bg-tertiary);
+    }
+    .edit-items-table th {
+      text-align: left;
+      padding: 8px;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .edit-items-table th:last-child {
+      text-align: right;
+    }
+    .edit-item-row {
+      border-bottom: 1px solid var(--border-light);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .edit-item-row:hover {
+      background: var(--bg-tertiary);
+    }
+    .edit-item-row.selected {
+      background: var(--primary-light);
+    }
+    .edit-item-cell {
+      padding: 8px;
+    }
+    .edit-item-name {
+      font-weight: 500;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+    }
+    .edit-item-name svg {
+      width: 10px;
+      height: 10px;
+      stroke: var(--text-tertiary);
+      opacity: 0.5;
+    }
+    .edit-item-row.selected .edit-item-name svg {
+      stroke: var(--primary);
+      opacity: 1;
+    }
+    .edit-item-badges {
+      display: flex;
+      gap: 4px;
+    }
+    .edit-item-badge {
+      padding: 2px 6px;
+      border-radius: var(--radius-full);
+      font-size: 8px;
+    }
+    .edit-item-badge.subcategory {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+    }
+    .edit-item-price {
+      text-align: right;
+      padding: 8px;
+      font-weight: 600;
+      vertical-align: top;
+      font-size: 12px;
+    }
+    .edit-item-row.selected .edit-item-price {
+      color: var(--primary);
+    }
+
+    /* Add Item Button */
+    .edit-add-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      background: var(--bg-secondary);
+      border: 2px dashed var(--border-medium);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .edit-add-item svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--primary);
+    }
+    .edit-add-item span {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    /* Total Row */
+    .edit-total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    /* Save Button */
+    .edit-save-section {
+      padding: 12px;
+    }
+    .edit-save-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      border: none;
+      border-radius: var(--radius-lg);
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-family: inherit;
+    }
+    .edit-save-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* ============================================
+       SUCCESS STATE
+       ============================================ */
+    .success-overlay {
+      position: absolute;
+      top: 90px;
+      left: 0;
+      right: 0;
+      bottom: 64px;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 40;
+      animation: fadeIn 200ms ease-out forwards;
+    }
+    .success-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 32px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-2xl);
+      box-shadow: var(--shadow-xl);
+      max-width: 280px;
+      text-align: center;
+      animation: bounceIn 400ms cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    }
+    @keyframes bounceIn {
+      from {
+        transform: scale(0.8);
+        opacity: 0;
+      }
+      50% {
+        transform: scale(1.05);
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+    .success-icon {
+      width: 72px;
+      height: 72px;
+      background: var(--success-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pulse 1s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    .success-icon svg {
+      width: 36px;
+      height: 36px;
+      color: var(--success);
+    }
+    .success-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .success-message {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .success-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      margin-top: 8px;
+    }
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+    .btn-success:hover {
+      background: #16a34a;
+    }
+
+    /* ============================================
+       STAGGER ANIMATION (Progressive Reveal)
+       ============================================ */
+    @keyframes staggerReveal {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .stagger-item {
+      opacity: 0;
+      animation: staggerReveal 200ms cubic-bezier(0, 0, 0.2, 1) forwards;
+    }
+    .stagger-item:nth-child(1) { animation-delay: 0ms; }
+    .stagger-item:nth-child(2) { animation-delay: 100ms; }
+    .stagger-item:nth-child(3) { animation-delay: 200ms; }
+    .stagger-item:nth-child(4) { animation-delay: 300ms; }
+    .stagger-item:nth-child(5) { animation-delay: 400ms; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .stagger-item {
+        animation: none;
+        opacity: 1;
+        transform: none;
+      }
+      .progress-icon {
+        animation: none;
+      }
+      .skeleton-thumb, .skeleton-line {
+        animation: none;
+        opacity: 0.5;
+      }
+    }
+
+    /* ============================================
+       BOTTOM NAVIGATION
+       ============================================ */
+    .bottom-nav {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      padding: 8px 12px 12px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-light);
+      flex-shrink: 0;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    .nav-item svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--text-tertiary);
+      fill: none;
+      stroke-width: 1.8;
+    }
+    .nav-item span {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+    }
+    .nav-item.active svg { stroke: var(--primary); }
+    .nav-item.active span { color: var(--primary); font-weight: 600; }
+
+    /* Scan Center Button */
+    .scan-center {
+      margin-top: -56px;
+      padding: 0;
+    }
+    .scan-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, #3d8b6e 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(74, 158, 126, 0.4);
+      cursor: pointer;
+      border: none;
+    }
+    .scan-btn svg {
+      width: 24px;
+      height: 24px;
+      stroke: white;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* ============================================
+       GLOBAL CONTROLS
+       ============================================ */
+    .global-controls {
+      background: rgba(30, 41, 59, 0.95);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      padding: 12px 20px;
+      display: flex;
+      gap: 24px;
+      border: 1px solid rgba(255,255,255,0.1);
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .control-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      white-space: nowrap;
+    }
+    .control-options {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .theme-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 150ms ease;
+    }
+    .theme-swatch:hover { transform: scale(1.1); }
+    .theme-swatch.active {
+      border-color: white;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+    }
+    .theme-swatch[data-theme="professional"] { background: linear-gradient(135deg, #2563eb 50%, #64748b 50%); }
+    .theme-swatch[data-theme="mono"] { background: linear-gradient(135deg, #18181b 50%, #52525b 50%); }
+    .theme-swatch[data-theme="ninokuni"] { background: linear-gradient(135deg, #4a7c59 50%, #5b8fa8 50%); }
+    .font-pill {
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: #94a3b8;
+      transition: all 150ms ease;
+    }
+    .font-pill:hover { background: rgba(255,255,255,0.1); }
+    .font-pill.active {
+      background: white;
+      color: #0f172a;
+      border-color: white;
+    }
+    .mode-toggle {
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: #94a3b8;
+      transition: all 150ms ease;
+    }
+    .mode-toggle.active {
+      background: white;
+      color: #0f172a;
+      border-color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1 class="page-title">Scan Overlay Flow</h1>
+  <p class="page-subtitle">Story 13.9: Non-blocking processing with progressive reveal</p>
+
+  <div class="states-grid">
+    <!-- ========== STATE 0: LOAD (Select Image) ========== -->
+    <div class="state-container">
+      <div class="state-label">0. Load</div>
+      <div class="state-description">Initial screen to select image and start scanning</div>
+
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 20V4" stroke-linecap="round"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0114.08 0M1.42 9a16 16 0 0121.16 0M8.53 16.11a6 6 0 016.95 0M12 20h.01"/></svg>
+              <svg viewBox="0 0 24 12"><rect x="0" y="0" width="22" height="12" rx="2" stroke="currentColor" fill="none"/><rect x="23" y="3" width="1" height="6" rx="0.5" fill="currentColor"/><rect x="2" y="2" width="16" height="8" rx="1" fill="currentColor"/></svg>
+            </div>
+          </div>
+
+          <!-- Scan Navigation Header -->
+          <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary);">
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <span style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Escanea</span>
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Content Area -->
+          <div class="content-area" style="padding: 16px;">
+            <!-- Compact Empty Card -->
+            <div style="background: var(--bg-secondary); border-radius: var(--radius-xl); padding: 16px; box-shadow: var(--shadow-md); border: 1px solid var(--border-light);">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+                <!-- Left: 3-Row Metadata (Empty) -->
+                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px;">
+                  <!-- Row 1: Title -->
+                  <div style="font-size: 18px; font-weight: 700; color: var(--text-primary);">Nueva Boleta</div>
+                  <!-- Row 2: Date + Hour + Currency -->
+                  <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px; background: var(--bg-tertiary); border-radius: var(--radius-full); font-size: 11px; color: var(--text-secondary);">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                      Hoy
+                    </span>
+                    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px; background: var(--bg-tertiary); border-radius: var(--radius-full); font-size: 11px; color: var(--text-tertiary);">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                      --:--
+                    </span>
+                    <span style="display: inline-flex; align-items: center; padding: 5px 8px; background: var(--bg-tertiary); border-radius: var(--radius-full); font-size: 11px; font-weight: 600; color: var(--text-secondary);">$</span>
+                  </div>
+                  <!-- Row 3: Location + Category -->
+                  <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px; background: var(--bg-tertiary); border-radius: var(--radius-full); font-size: 11px; color: var(--text-tertiary);">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                      --
+                    </span>
+                    <span style="padding: 4px 8px; background: var(--bg-tertiary); border-radius: var(--radius-full); font-size: 10px; color: var(--text-tertiary);">--</span>
+                  </div>
+                </div>
+                <!-- Right: Scan Thumbnail (Empty/Dashed) -->
+                <div style="position: relative; width: 64px; height: 80px; flex-shrink: 0;">
+                  <div style="width: 100%; height: 100%; background: var(--bg-tertiary); border: 2px dashed var(--primary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                    <button style="display: inline-flex; align-items: center; gap: 3px; padding: 6px 8px; background: var(--primary); border: none; border-radius: var(--radius-full); color: white; font-size: 9px; font-weight: 600; cursor: pointer; font-family: inherit;">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+                      Scan
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Helper Text -->
+            <div style="text-align: center; margin-top: 24px; padding: 0 20px;">
+              <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.5;">Toca el botón <strong>Scan</strong> para tomar una foto o seleccionar una imagen de tu galería.</p>
+            </div>
+
+            <!-- Alternative Actions -->
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+              <button class="btn btn-secondary" style="flex: 1;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="9" cy="9" r="2"/>
+                  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                </svg>
+                Galería
+              </button>
+              <button class="btn btn-primary" style="flex: 1;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+                Cámara
+              </button>
+            </div>
+          </div>
+
+          <!-- Bottom Nav -->
+          <div class="bottom-nav">
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="scan-center">
+              <button class="scan-btn active">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+              </button>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+            <div class="nav-item" style="position: relative;">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <!-- Notification badge -->
+              <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+              <span>Alertas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== STATE 0.5a: SINGLE IMAGE READY ========== -->
+    <div class="state-container">
+      <div class="state-label">0.5a. Single Ready</div>
+      <div class="state-description">Single image selected and ready to be scanned</div>
+
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 20V4" stroke-linecap="round"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0114.08 0M1.42 9a16 16 0 0121.16 0M8.53 16.11a6 6 0 016.95 0M12 20h.01"/></svg>
+              <svg viewBox="0 0 24 12"><rect x="0" y="0" width="22" height="12" rx="2" stroke="currentColor" fill="none"/><rect x="23" y="3" width="1" height="6" rx="0.5" fill="currentColor"/><rect x="2" y="2" width="16" height="8" rx="1" fill="currentColor"/></svg>
+            </div>
+          </div>
+
+          <!-- Scan Navigation Header -->
+          <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary);">
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <span style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Escanea</span>
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Content Area -->
+          <div class="content-area" style="padding: 16px;">
+            <!-- Compact Loaded Card -->
+            <div style="background: var(--bg-secondary); border-radius: var(--radius-xl); padding: 16px; box-shadow: var(--shadow-md); border: 1px solid var(--border-light);">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+                <!-- Left: 3-Row Metadata (Detected/Estimated) -->
+                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px;">
+                  <!-- Row 1: Title -->
+                  <div style="font-size: 18px; font-weight: 700; color: var(--text-primary);">Supermercado Lider</div>
+                  <!-- Row 2: Date + Hour + Currency -->
+                  <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px; background: var(--bg-tertiary); border-radius: var(--radius-full); font-size: 11px; color: var(--text-secondary);">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                      23 Dic
+                    </span>
+                    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px; background: var(--bg-tertiary); border-radius: var(--radius-full); font-size: 11px; color: var(--text-secondary);">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                      14:30
+                    </span>
+                    <span style="display: inline-flex; align-items: center; padding: 5px 8px; background: var(--bg-tertiary); border-radius: var(--radius-full); font-size: 11px; font-weight: 600; color: var(--text-secondary);">$</span>
+                  </div>
+                  <!-- Row 3: Location + Category -->
+                  <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px; background: var(--bg-tertiary); border-radius: var(--radius-full); font-size: 11px; color: var(--text-secondary);">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                      Las Condes
+                    </span>
+                    <span class="category-badge groceries" style="font-size: 10px; padding: 4px 8px;">Supermercado</span>
+                  </div>
+                </div>
+                <!-- Right: Loaded Thumbnail with Green Border -->
+                <div style="position: relative; width: 64px; height: 80px; flex-shrink: 0;">
+                  <div style="width: 100%; height: 100%; background: var(--bg-tertiary); border-radius: var(--radius-md); overflow: hidden; border: 2px solid var(--success);">
+                    <div style="padding: 6px; opacity: 0.5;">
+                      <div style="height: 5px; background: var(--border-medium); border-radius: 1px; margin-bottom: 3px; width: 70%;"></div>
+                      <div style="height: 3px; background: var(--border-light); border-radius: 1px; margin-bottom: 2px; width: 90%;"></div>
+                      <div style="height: 3px; background: var(--border-light); border-radius: 1px; margin-bottom: 2px; width: 80%;"></div>
+                      <div style="height: 3px; background: var(--border-light); border-radius: 1px; width: 60%;"></div>
+                    </div>
+                  </div>
+                  <!-- OK Button Overlay -->
+                  <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;">
+                    <button style="display: inline-flex; align-items: center; gap: 3px; padding: 6px 8px; background: var(--success); border: none; border-radius: var(--radius-full); color: white; font-size: 9px; font-weight: 600; cursor: pointer; font-family: inherit;">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                      OK
+                    </button>
+                  </div>
+                  <!-- Checkmark Badge -->
+                  <div style="position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; background: var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--bg-secondary);">
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Detected Info -->
+            <div style="margin-top: 16px; padding: 12px 16px; background: var(--success-light); border-radius: var(--radius-lg); display: flex; align-items: center; gap: 10px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+              <div>
+                <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">Boleta detectada</div>
+                <div style="font-size: 11px; color: var(--text-secondary);">Toca OK para procesar o selecciona otra imagen</div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+              <button class="btn btn-secondary" style="flex: 1;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                  <path d="M3 6h18"/>
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                </svg>
+                Descartar
+              </button>
+              <button class="btn btn-primary" style="flex: 1; background: var(--success);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Procesar
+              </button>
+            </div>
+          </div>
+
+          <!-- Bottom Nav -->
+          <div class="bottom-nav">
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="scan-center">
+              <button class="scan-btn">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+              </button>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+            <div class="nav-item" style="position: relative;">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <!-- Notification badge -->
+              <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+              <span>Alertas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== STATE 0.5b: BATCH LOAD ========== -->
+    <div class="state-container">
+      <div class="state-label">0.5b. Batch Load</div>
+      <div class="state-description">Multiple images selected - Batch Scan Confirmation Modal</div>
+
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 20V4" stroke-linecap="round"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0114.08 0M1.42 9a16 16 0 0121.16 0M8.53 16.11a6 6 0 016.95 0M12 20h.01"/></svg>
+              <svg viewBox="0 0 24 12"><rect x="0" y="0" width="22" height="12" rx="2" stroke="currentColor" fill="none"/><rect x="23" y="3" width="1" height="6" rx="0.5" fill="currentColor"/><rect x="2" y="2" width="16" height="8" rx="1" fill="currentColor"/></svg>
+            </div>
+          </div>
+
+          <!-- Scan Navigation Header -->
+          <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary);">
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <span style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Escanea</span>
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Content Area with Modal Overlay -->
+          <div class="content-area" style="padding: 16px; position: relative;">
+            <!-- Grayed background content (same as State 0 Load) -->
+            <div style="opacity: 0.3; pointer-events: none;">
+              <div style="background: var(--bg-secondary); border-radius: var(--radius-xl); padding: 16px; box-shadow: var(--shadow-md); border: 1px solid var(--border-light);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+                  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px;">
+                    <div style="font-size: 18px; font-weight: 700; color: var(--text-primary);">Nueva Boleta</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                      <span style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px; background: var(--bg-tertiary); border-radius: var(--radius-full); font-size: 11px; color: var(--text-tertiary);">--</span>
+                      <span style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px; background: var(--bg-tertiary); border-radius: var(--radius-full); font-size: 11px; color: var(--text-tertiary);">--</span>
+                      <span style="display: inline-flex; align-items: center; padding: 5px 8px; background: var(--bg-tertiary); border-radius: var(--radius-full); font-size: 11px; font-weight: 600; color: var(--text-tertiary);">--</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal Backdrop -->
+            <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; padding: 16px;">
+              <!-- Batch Scan Confirmation Modal -->
+              <div style="width: 100%; max-width: 320px; background: var(--bg-secondary); border-radius: var(--radius-xl); box-shadow: 0 20px 40px rgba(0,0,0,0.15); overflow: hidden;">
+                <!-- Header with Icon -->
+                <div style="padding: 20px 20px 16px; display: flex; align-items: center; gap: 12px;">
+                  <div style="width: 40px; height: 40px; background: var(--primary-light); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                      <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                  </div>
+                  <div>
+                    <div style="font-size: 18px; font-weight: 700; color: var(--text-primary);">3 boletas detectadas</div>
+                    <div style="font-size: 13px; color: var(--text-secondary);">Cada imagen sera una transaccion</div>
+                  </div>
+                </div>
+
+                <!-- Collapsible Image Preview -->
+                <div style="padding: 0 20px;">
+                  <div style="border: 1px solid var(--border-light); border-radius: var(--radius-md); overflow: hidden;">
+                    <!-- Toggle Header -->
+                    <div style="padding: 10px 12px; background: var(--bg-tertiary); display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                      <span style="font-size: 13px; color: var(--text-secondary);">Ver imagenes</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                    </div>
+                    <!-- Thumbnails Row -->
+                    <div style="padding: 12px; display: flex; gap: 8px; background: var(--bg-secondary);">
+                      <!-- Thumbnail 1 -->
+                      <div style="position: relative; width: 56px; height: 72px; background: var(--bg-tertiary); border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border-light);">
+                        <div style="padding: 4px;">
+                          <div style="height: 4px; background: var(--border-medium); border-radius: 1px; margin-bottom: 3px; width: 70%;"></div>
+                          <div style="height: 3px; background: var(--border-light); border-radius: 1px; margin-bottom: 2px; width: 90%;"></div>
+                          <div style="height: 3px; background: var(--border-light); border-radius: 1px; margin-bottom: 2px; width: 80%;"></div>
+                        </div>
+                        <div style="position: absolute; bottom: 2px; left: 2px; width: 16px; height: 16px; background: var(--primary); color: white; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600;">1</div>
+                      </div>
+                      <!-- Thumbnail 2 -->
+                      <div style="position: relative; width: 56px; height: 72px; background: var(--bg-tertiary); border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border-light);">
+                        <div style="padding: 4px;">
+                          <div style="height: 4px; background: var(--border-medium); border-radius: 1px; margin-bottom: 3px; width: 60%;"></div>
+                          <div style="height: 3px; background: var(--border-light); border-radius: 1px; margin-bottom: 2px; width: 85%;"></div>
+                          <div style="height: 3px; background: var(--border-light); border-radius: 1px; margin-bottom: 2px; width: 75%;"></div>
+                        </div>
+                        <div style="position: absolute; bottom: 2px; left: 2px; width: 16px; height: 16px; background: var(--primary); color: white; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600;">2</div>
+                      </div>
+                      <!-- Thumbnail 3 -->
+                      <div style="position: relative; width: 56px; height: 72px; background: var(--bg-tertiary); border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border-light);">
+                        <div style="padding: 4px;">
+                          <div style="height: 4px; background: var(--border-medium); border-radius: 1px; margin-bottom: 3px; width: 75%;"></div>
+                          <div style="height: 3px; background: var(--border-light); border-radius: 1px; margin-bottom: 2px; width: 80%;"></div>
+                          <div style="height: 3px; background: var(--border-light); border-radius: 1px; margin-bottom: 2px; width: 70%;"></div>
+                        </div>
+                        <div style="position: absolute; bottom: 2px; left: 2px; width: 16px; height: 16px; background: var(--primary); color: white; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600;">3</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Credit Usage Section -->
+                <div style="padding: 16px 20px;">
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                      <line x1="12" y1="9" x2="12" y2="13"></line>
+                      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Uso de Creditos</span>
+                  </div>
+                  <div style="background: var(--bg-tertiary); border-radius: var(--radius-md); padding: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-light);">
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>
+                        <span style="font-size: 13px; color: var(--text-secondary);">Creditos necesarios</span>
+                      </div>
+                      <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">3</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-light);">
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                        <span style="font-size: 13px; color: var(--text-secondary);">Creditos disponibles</span>
+                      </div>
+                      <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">900</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0;">
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                        <span style="font-size: 13px; color: var(--text-secondary);">Despues del lote</span>
+                      </div>
+                      <span style="font-size: 14px; font-weight: 600; color: var(--success);">897</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="padding: 16px 20px 20px; display: flex; gap: 12px;">
+                  <button class="btn btn-secondary" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Cancelar
+                  </button>
+                  <button class="btn btn-success btn-ripple" style="flex: 1.2; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                      <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                      <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                      <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                      <line x1="7" y1="12" x2="17" y2="12"></line>
+                    </svg>
+                    Procesar Todas
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav -->
+          <div class="bottom-nav">
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="scan-center">
+              <button class="scan-btn">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+              </button>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+            <div class="nav-item" style="position: relative;">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <!-- Notification badge -->
+              <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+              <span>Alertas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== STATE 1: PROCESSING ========== -->
+    <div class="state-container">
+      <div class="state-label">1. Processing</div>
+      <div class="state-description">Quick Save card with placeholders + spinner (modal overlay)</div>
+
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 20V4" stroke-linecap="round"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0114.08 0M1.42 9a16 16 0 0121.16 0M8.53 16.11a6 6 0 016.95 0M12 20h.01"/></svg>
+              <svg viewBox="0 0 24 12"><rect x="0" y="0" width="22" height="12" rx="2" stroke="currentColor" fill="none"/><rect x="23" y="3" width="1" height="6" rx="0.5" fill="currentColor"/><rect x="2" y="2" width="16" height="8" rx="1" fill="currentColor"/></svg>
+            </div>
+          </div>
+
+          <!-- Scan Navigation Header (Operative) -->
+          <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary);">
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <span style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Escanea</span>
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Content Area with Quick Save Modal -->
+          <div class="content-area" style="position: relative;">
+            <!-- Backdrop -->
+            <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.4);"></div>
+
+            <!-- Quick Save Card (Processing State) -->
+            <div style="position: absolute; inset: 12px; background: var(--bg-secondary); border-radius: var(--radius-xl); padding: 20px; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.15);">
+              <!-- Header: Metadata Left, Thumbnail Right -->
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 16px;">
+                <!-- Left: Placeholder Metadata -->
+                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px;">
+                  <!-- Skeleton Title -->
+                  <div style="height: 22px; width: 70%; background: var(--bg-tertiary); border-radius: var(--radius-md); animation: pulse 1.5s infinite;"></div>
+                  <!-- Skeleton Category Badge -->
+                  <div style="height: 24px; width: 100px; background: var(--bg-tertiary); border-radius: var(--radius-full); animation: pulse 1.5s infinite;"></div>
+                  <!-- Skeleton Location -->
+                  <div style="height: 14px; width: 50%; background: var(--bg-tertiary); border-radius: var(--radius-sm); animation: pulse 1.5s infinite;"></div>
+                  <!-- Skeleton Date/Time -->
+                  <div style="display: flex; gap: 8px;">
+                    <div style="height: 14px; width: 80px; background: var(--bg-tertiary); border-radius: var(--radius-sm); animation: pulse 1.5s infinite;"></div>
+                    <div style="height: 14px; width: 50px; background: var(--bg-tertiary); border-radius: var(--radius-sm); animation: pulse 1.5s infinite;"></div>
+                  </div>
+                </div>
+                <!-- Right: Thumbnail with Spinner -->
+                <div style="position: relative; width: 72px; height: 90px; flex-shrink: 0;">
+                  <div style="width: 100%; height: 100%; background: var(--bg-tertiary); border-radius: var(--radius-md); overflow: hidden; border: 2px dashed var(--border-light);">
+                    <div style="padding: 8px; opacity: 0.3;">
+                      <div style="height: 6px; background: var(--border-medium); border-radius: 1px; margin-bottom: 4px; width: 70%;"></div>
+                      <div style="height: 4px; background: var(--border-light); border-radius: 1px; margin-bottom: 3px; width: 90%;"></div>
+                      <div style="height: 4px; background: var(--border-light); border-radius: 1px; margin-bottom: 3px; width: 80%;"></div>
+                    </div>
+                  </div>
+                  <!-- Spinner Overlay -->
+                  <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.8); border-radius: var(--radius-md);">
+                    <div style="width: 28px; height: 28px; border: 3px solid var(--bg-tertiary); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Total Highlight (Placeholder) -->
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: var(--bg-tertiary); border-radius: 12px; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>
+                  <span style="font-size: 14px; color: var(--text-tertiary);">Total</span>
+                </div>
+                <div style="height: 28px; width: 100px; background: var(--bg-secondary); border-radius: var(--radius-md); animation: pulse 1.5s infinite;"></div>
+              </div>
+
+              <!-- Items (Skeleton) -->
+              <div style="flex: 1;">
+                <div style="font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Procesando items...</div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--bg-tertiary); border-radius: 8px;">
+                    <div style="height: 16px; width: 60%; background: var(--bg-secondary); border-radius: var(--radius-sm); animation: pulse 1.5s infinite;"></div>
+                    <div style="height: 16px; width: 50px; background: var(--bg-secondary); border-radius: var(--radius-sm); animation: pulse 1.5s infinite;"></div>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--bg-tertiary); border-radius: 8px;">
+                    <div style="height: 16px; width: 50%; background: var(--bg-secondary); border-radius: var(--radius-sm); animation: pulse 1.5s infinite;"></div>
+                    <div style="height: 16px; width: 50px; background: var(--bg-secondary); border-radius: var(--radius-sm); animation: pulse 1.5s infinite;"></div>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--bg-tertiary); border-radius: 8px;">
+                    <div style="height: 16px; width: 55%; background: var(--bg-secondary); border-radius: var(--radius-sm); animation: pulse 1.5s infinite;"></div>
+                    <div style="height: 16px; width: 50px; background: var(--bg-secondary); border-radius: var(--radius-sm); animation: pulse 1.5s infinite;"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Processing Status -->
+              <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 16px; padding: 14px; background: var(--primary-light); border-radius: var(--radius-lg);">
+                <div style="width: 20px; height: 20px; border: 2px solid var(--primary-light); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                <span style="font-size: 14px; color: var(--primary); font-weight: 500;">Procesando boleta... ~3s</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav (Operative) -->
+          <div class="bottom-nav">
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="scan-center">
+              <button class="scan-btn">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+              </button>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+            <div class="nav-item" style="position: relative;">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <!-- Notification badge -->
+              <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+              <span>Alertas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== STATE 2: REVEALING ========== -->
+    <div class="state-container">
+      <div class="state-label">2. Revealing</div>
+      <div class="state-description">Quick Save: Side Header + Highlighted Total (data populated)</div>
+
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 20V4" stroke-linecap="round"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0114.08 0M1.42 9a16 16 0 0121.16 0M8.53 16.11a6 6 0 016.95 0M12 20h.01"/></svg>
+              <svg viewBox="0 0 24 12"><rect x="0" y="0" width="22" height="12" rx="2" stroke="currentColor" fill="none"/><rect x="23" y="3" width="1" height="6" rx="0.5" fill="currentColor"/><rect x="2" y="2" width="16" height="8" rx="1" fill="currentColor"/></svg>
+            </div>
+          </div>
+
+          <!-- Scan Navigation Header (Operative) -->
+          <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary);">
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <span style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Escanea</span>
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Content Area with Quick Save Modal -->
+          <div class="content-area" style="position: relative;">
+            <!-- Backdrop -->
+            <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.4);"></div>
+
+            <!-- Quick Save Card (Revealed State) -->
+            <div style="position: absolute; inset: 12px; background: var(--bg-secondary); border-radius: var(--radius-xl); padding: 20px; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.15);">
+              <!-- Header: Metadata Left, Thumbnail Right -->
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 16px;">
+                <!-- Left: Populated Metadata -->
+                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px;">
+                  <div style="font-size: 19px; font-weight: 700; color: var(--text-primary);">Supermercado Lider</div>
+                  <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <span class="category-badge groceries" style="padding: 4px 10px; font-size: 11px;">Supermercado</span>
+                  </div>
+                  <div style="font-size: 12px; color: var(--text-tertiary); display: flex; align-items: center; gap: 4px;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Las Condes, Chile
+                  </div>
+                  <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                    <span style="font-size: 12px; color: var(--text-tertiary); display: inline-flex; align-items: center; gap: 4px;">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                      23 Dic 2024
+                    </span>
+                    <span style="font-size: 12px; color: var(--text-tertiary); display: inline-flex; align-items: center; gap: 4px;">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                      14:30
+                    </span>
+                    <span style="font-size: 12px; color: var(--text-tertiary); font-weight: 600;">$</span>
+                  </div>
+                </div>
+                <!-- Right: Loaded Thumbnail with Green Border -->
+                <div style="position: relative; width: 72px; height: 90px; flex-shrink: 0;">
+                  <div style="width: 100%; height: 100%; background: var(--bg-tertiary); border-radius: var(--radius-md); overflow: hidden; border: 2px solid var(--success);">
+                    <div style="padding: 8px; opacity: 0.5;">
+                      <div style="height: 6px; background: var(--border-medium); border-radius: 1px; margin-bottom: 4px; width: 70%;"></div>
+                      <div style="height: 4px; background: var(--border-light); border-radius: 1px; margin-bottom: 3px; width: 90%;"></div>
+                      <div style="height: 4px; background: var(--border-light); border-radius: 1px; margin-bottom: 3px; width: 80%;"></div>
+                      <div style="height: 4px; background: var(--border-light); border-radius: 1px; margin-bottom: 3px; width: 85%;"></div>
+                      <div style="height: 4px; background: var(--border-light); border-radius: 1px; width: 60%;"></div>
+                    </div>
+                  </div>
+                  <!-- Category Icon Badge (bottom-right) -->
+                  <div style="position: absolute; bottom: -4px; right: -4px; width: 22px; height: 22px; border-radius: 50%; background: var(--success-light); border: 2px solid var(--bg-secondary); display: flex; align-items: center; justify-content: center;">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Total Highlight -->
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: var(--primary-light); border-radius: 12px; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>
+                  <span style="font-size: 14px; color: var(--text-secondary);">Total</span>
+                </div>
+                <span style="font-size: 26px; font-weight: 700; color: var(--primary);">$45.990</span>
+              </div>
+
+              <!-- Items (Populated) -->
+              <div style="flex: 1; overflow-y: auto;">
+                <div style="font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">5 Items detectados</div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--bg-tertiary); border-radius: 8px;">
+                    <span style="font-size: 14px; color: var(--text-primary);">Leche Descremada 1L</span>
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">$1.290</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--bg-tertiary); border-radius: 8px;">
+                    <span style="font-size: 14px; color: var(--text-primary);">Pan Molde Integral</span>
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">$2.490</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--bg-tertiary); border-radius: 8px;">
+                    <span style="font-size: 14px; color: var(--text-primary);">Huevos x12</span>
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">$3.890</span>
+                  </div>
+                  <div style="font-size: 13px; color: var(--primary); font-weight: 500; padding: 8px 12px; cursor: pointer;">+2 items mas...</div>
+                </div>
+              </div>
+
+              <!-- Buttons -->
+              <div style="display: flex; gap: 12px; margin-top: 16px;">
+                <button class="btn btn-secondary" style="flex: 1; height: 48px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                  Editar
+                </button>
+                <button class="btn btn-success" style="flex: 2; height: 48px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  Guardar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav (Operative) -->
+          <div class="bottom-nav">
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="scan-center">
+              <button class="scan-btn">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+              </button>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+            <div class="nav-item" style="position: relative;">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <!-- Notification badge -->
+              <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+              <span>Alertas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== STATE 3: COMPLETE (SUCCESS) ========== -->
+    <div class="state-container">
+      <div class="state-label">3. Complete</div>
+      <div class="state-description">Transaction saved successfully - success confirmation</div>
+
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 20V4" stroke-linecap="round"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0114.08 0M1.42 9a16 16 0 0121.16 0M8.53 16.11a6 6 0 016.95 0M12 20h.01"/></svg>
+              <svg viewBox="0 0 24 12"><rect x="0" y="0" width="22" height="12" rx="2" stroke="currentColor" fill="none"/><rect x="23" y="3" width="1" height="6" rx="0.5" fill="currentColor"/><rect x="2" y="2" width="16" height="8" rx="1" fill="currentColor"/></svg>
+            </div>
+          </div>
+
+          <!-- Scan Navigation Header -->
+          <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary);">
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <span style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Escanea</span>
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Content Area with Success Modal -->
+          <div class="content-area" style="position: relative;">
+            <!-- Backdrop -->
+            <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.4);"></div>
+
+            <!-- Success Confirmation Card -->
+            <div style="position: absolute; inset: 12px; background: var(--bg-secondary); border-radius: var(--radius-xl); padding: 20px; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.15);">
+              <!-- Close Button -->
+              <button style="position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border: none; background: var(--bg-tertiary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+              <!-- Success Icon -->
+              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 16px;">
+                <div style="width: 80px; height: 80px; background: var(--success-light); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+                <div style="text-align: center;">
+                  <div style="font-size: 22px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Transaccion Guardada</div>
+                  <div style="font-size: 14px; color: var(--text-secondary);">Tu boleta ha sido registrada exitosamente</div>
+                </div>
+              </div>
+
+              <!-- Transaction Summary -->
+              <div style="background: var(--bg-tertiary); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 40px; height: 40px; background: var(--secondary-light); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--secondary)" stroke-width="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
+                    </div>
+                    <div>
+                      <div style="font-size: 15px; font-weight: 600; color: var(--text-primary);">Supermercado Lider</div>
+                      <div style="font-size: 12px; color: var(--text-tertiary);">Las Condes • 23 Dic 2024</div>
+                    </div>
+                  </div>
+                  <span class="category-badge groceries" style="font-size: 10px; padding: 4px 8px;">Supermercado</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--border-light);">
+                  <span style="font-size: 13px; color: var(--text-secondary);">5 items</span>
+                  <span style="font-size: 20px; font-weight: 700; color: var(--success);">$45.990</span>
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div style="display: flex; gap: 12px;">
+                <button class="btn btn-secondary" style="flex: 1; height: 48px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  Ver Detalle
+                </button>
+                <button class="btn btn-success" style="flex: 1; height: 48px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                  Escanear Otra
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav -->
+          <div class="bottom-nav">
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="scan-center">
+              <button class="scan-btn">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+              </button>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+            <div class="nav-item" style="position: relative;">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <!-- Notification badge -->
+              <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+              <span>Alertas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== STATE 3.a: COMPLETE BATCH ========== -->
+    <div class="state-container">
+      <div class="state-label">3.a. Complete Batch</div>
+      <div class="state-description">Batch transactions saved successfully - batch completion modal</div>
+
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 20V4" stroke-linecap="round"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0114.08 0M1.42 9a16 16 0 0121.16 0M8.53 16.11a6 6 0 016.95 0M12 20h.01"/></svg>
+              <svg viewBox="0 0 24 12"><rect x="0" y="0" width="22" height="12" rx="2" stroke="currentColor" fill="none"/><rect x="23" y="3" width="1" height="6" rx="0.5" fill="currentColor"/><rect x="2" y="2" width="16" height="8" rx="1" fill="currentColor"/></svg>
+            </div>
+          </div>
+
+          <!-- Scan Navigation Header (Operative) -->
+          <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary);">
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <span style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Escanea</span>
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Content Area with Batch Success Modal -->
+          <div class="content-area" style="position: relative;">
+            <!-- Backdrop -->
+            <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.4);"></div>
+
+            <!-- Batch Success Confirmation Card -->
+            <div style="position: absolute; inset: 12px; background: var(--bg-secondary); border-radius: var(--radius-xl); padding: 20px; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.15); overflow: hidden;">
+              <!-- Close Button -->
+              <button style="position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border: none; background: var(--bg-tertiary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+              <!-- Success Icon -->
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <div style="width: 64px; height: 64px; background: var(--success-light); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+                <div style="text-align: center;">
+                  <div style="font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">3 Transacciones Guardadas</div>
+                  <div style="font-size: 13px; color: var(--text-secondary);">Lote procesado exitosamente</div>
+                </div>
+              </div>
+
+              <!-- Batch Summary -->
+              <div style="background: var(--bg-tertiary); border-radius: var(--radius-lg); padding: 14px; margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                  <span style="font-size: 12px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px;">Resumen del Lote</span>
+                  <span style="font-size: 11px; color: var(--text-tertiary);">23 Dic 2024</span>
+                </div>
+                <!-- Transaction 1 -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-light);">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 8px; height: 8px; background: var(--success); border-radius: 50%;"></div>
+                    <span style="font-size: 13px; color: var(--text-primary);">Supermercado Lider</span>
+                  </div>
+                  <span style="font-size: 13px; font-weight: 600; color: var(--text-primary);">$45.990</span>
+                </div>
+                <!-- Transaction 2 -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-light);">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 8px; height: 8px; background: var(--success); border-radius: 50%;"></div>
+                    <span style="font-size: 13px; color: var(--text-primary);">Farmacia Cruz Verde</span>
+                  </div>
+                  <span style="font-size: 13px; font-weight: 600; color: var(--text-primary);">$12.450</span>
+                </div>
+                <!-- Transaction 3 -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 8px; height: 8px; background: var(--success); border-radius: 50%;"></div>
+                    <span style="font-size: 13px; color: var(--text-primary);">Copec Estacion</span>
+                  </div>
+                  <span style="font-size: 13px; font-weight: 600; color: var(--text-primary);">$35.000</span>
+                </div>
+              </div>
+
+              <!-- Total -->
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: var(--success-light); border-radius: var(--radius-lg); margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>
+                  <span style="font-size: 14px; color: var(--success); font-weight: 500;">Total del Lote</span>
+                </div>
+                <span style="font-size: 22px; font-weight: 700; color: var(--success);">$93.440</span>
+              </div>
+
+              <!-- Credit Usage -->
+              <div style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 16px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                <span style="font-size: 12px; color: var(--text-tertiary);">3 creditos utilizados • 897 restantes</span>
+              </div>
+
+              <!-- Actions -->
+              <div style="display: flex; gap: 12px; margin-top: auto;">
+                <button class="btn btn-secondary" style="flex: 1; height: 48px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                  Ver Historial
+                </button>
+                <button class="btn btn-success" style="flex: 1; height: 48px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                  Ir a Inicio
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav (Operative) -->
+          <div class="bottom-nav">
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="scan-center">
+              <button class="scan-btn">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+              </button>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+            <div class="nav-item" style="position: relative;">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <!-- Notification badge -->
+              <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+              <span>Alertas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== STATE 4: EDIT TRANSACTION (Interactive) ========== -->
+    <div class="state-container">
+      <div class="state-label">4. Edit Transaction (Interactive)</div>
+      <div class="state-description">Edit Transaction with functional dropdowns - click metadata tags to edit, click items to open edit modal</div>
+
+      <div class="phone-frame">
+        <div class="phone-screen" id="edit-transaction-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 20V4" stroke-linecap="round"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0114.08 0M1.42 9a16 16 0 0121.16 0M8.53 16.11a6 6 0 016.95 0M12 20h.01"/></svg>
+              <svg viewBox="0 0 24 12"><rect x="0" y="0" width="22" height="12" rx="2" stroke="currentColor" fill="none"/><rect x="23" y="3" width="1" height="6" rx="0.5" fill="currentColor"/><rect x="2" y="2" width="16" height="8" rx="1" fill="currentColor"/></svg>
+            </div>
+          </div>
+
+          <!-- Scan Navigation Header -->
+          <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary);">
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <span style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Escanea</span>
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Content Area -->
+          <div class="content-area" style="padding: 16px; flex: 1; overflow-y: auto; position: relative;">
+            <!-- Container Card -->
+            <div id="edit-container" style="background: var(--bg-secondary); border-radius: var(--radius-xl); padding: 20px; box-shadow: var(--shadow-md); border: 1px solid var(--border-light);">
+
+              <!-- Header: Metadata + Thumbnail -->
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-light);">
+                <!-- Left: Metadata -->
+                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px;">
+                  <div style="font-size: 20px; font-weight: 700; color: var(--text-primary);">Supermercado Lider</div>
+                  <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; position: relative;">
+                    <!-- Category Badge - Clickable -->
+                    <div style="position: relative;" class="dropdown-wrapper">
+                      <span class="category-badge groceries editable-tag" style="font-size: 11px; padding: 5px 10px; cursor: pointer;" onclick="toggleDropdown('category-dropdown')">Supermercado</span>
+                      <!-- Category Dropdown -->
+                      <div id="category-dropdown" class="edit-dropdown" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; min-width: 160px; background: var(--bg-secondary); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); border: 1px solid var(--border-light); z-index: 100; overflow: hidden;">
+                        <div style="padding: 8px 10px; cursor: pointer; background: var(--primary-light);" onclick="selectCategory('Supermercado', 'groceries')">
+                          <span class="category-badge groceries" style="font-size: 10px; padding: 4px 8px;">Supermercado</span>
+                        </div>
+                        <div style="padding: 8px 10px; cursor: pointer;" onclick="selectCategory('Restaurante', 'restaurant')">
+                          <span class="category-badge restaurant" style="font-size: 10px; padding: 4px 8px;">Restaurante</span>
+                        </div>
+                        <div style="padding: 8px 10px; cursor: pointer;" onclick="selectCategory('Transporte', 'transport')">
+                          <span class="category-badge transport" style="font-size: 10px; padding: 4px 8px;">Transporte</span>
+                        </div>
+                        <div style="padding: 8px 10px; cursor: pointer;" onclick="selectCategory('Salud', 'health')">
+                          <span class="category-badge health" style="font-size: 10px; padding: 4px 8px;">Salud</span>
+                        </div>
+                        <div style="padding: 8px 10px; cursor: pointer;" onclick="selectCategory('Entretenimiento', 'entertainment')">
+                          <span class="category-badge entertainment" style="font-size: 10px; padding: 4px 8px;">Entretenimiento</span>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Location Tag - Clickable -->
+                    <div style="position: relative;" class="dropdown-wrapper">
+                      <span class="editable-tag" style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; background: var(--bg-primary); border: 1px solid var(--border-medium); border-radius: var(--radius-full); font-size: 11px; color: var(--text-secondary); cursor: pointer;" onclick="toggleDropdown('location-dropdown')">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <span id="location-value">Las Condes</span>
+                      </span>
+                      <!-- Location Dropdown -->
+                      <div id="location-dropdown" class="edit-dropdown" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; min-width: 240px; background: var(--bg-secondary); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); border: 1px solid var(--border-light); z-index: 100; padding: 12px;">
+                        <div style="position: relative; margin-bottom: 12px;">
+                          <label style="position: absolute; top: -8px; left: 10px; background: var(--bg-secondary); padding: 0 4px; font-size: 10px; color: var(--primary); font-weight: 500;">País</label>
+                          <select id="country-select" style="width: 100%; height: 40px; padding: 0 12px; border: 1px solid var(--border-medium); border-radius: var(--radius-md); font-size: 13px; background: var(--bg-secondary); color: var(--text-primary); cursor: pointer; font-family: inherit;">
+                            <option selected>Chile</option>
+                            <option>Argentina</option>
+                            <option>Peru</option>
+                            <option>Colombia</option>
+                          </select>
+                        </div>
+                        <div style="position: relative; margin-bottom: 12px;">
+                          <label style="position: absolute; top: -8px; left: 10px; background: var(--bg-secondary); padding: 0 4px; font-size: 10px; color: var(--primary); font-weight: 500;">Ciudad / Comuna</label>
+                          <select id="city-select" style="width: 100%; height: 40px; padding: 0 12px; border: 1px solid var(--border-medium); border-radius: var(--radius-md); font-size: 13px; background: var(--bg-secondary); color: var(--text-primary); cursor: pointer; font-family: inherit;">
+                            <option selected>Las Condes</option>
+                            <option>Providencia</option>
+                            <option>Santiago Centro</option>
+                            <option>Vitacura</option>
+                            <option>Ñuñoa</option>
+                          </select>
+                        </div>
+                        <button class="btn btn-soft btn-sm" style="width: 100%; font-size: 12px;" onclick="confirmLocation()">Confirmar</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; position: relative;">
+                    <!-- Date Tag - Clickable -->
+                    <div style="position: relative;" class="dropdown-wrapper">
+                      <span class="editable-tag" style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; background: var(--bg-primary); border: 1px solid var(--border-medium); border-radius: var(--radius-full); font-size: 11px; color: var(--text-secondary); cursor: pointer;" onclick="toggleDropdown('date-dropdown')">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                        <span id="date-value">23 Dic</span>
+                      </span>
+                      <!-- Date Dropdown -->
+                      <div id="date-dropdown" class="edit-dropdown" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; min-width: 200px; background: var(--bg-secondary); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); border: 1px solid var(--border-light); z-index: 100; padding: 12px;">
+                        <div style="position: relative; margin-bottom: 12px;">
+                          <label style="position: absolute; top: -8px; left: 10px; background: var(--bg-secondary); padding: 0 4px; font-size: 10px; color: var(--primary); font-weight: 500;">Seleccionar fecha</label>
+                          <input type="date" id="date-input" value="2024-12-23" style="width: 100%; height: 40px; padding: 0 12px; border: 1px solid var(--border-medium); border-radius: var(--radius-md); font-size: 13px; background: var(--bg-secondary); color: var(--text-primary); font-family: inherit;">
+                        </div>
+                        <button class="btn btn-soft btn-sm" style="width: 100%; font-size: 12px;" onclick="confirmDate()">Confirmar</button>
+                      </div>
+                    </div>
+                    <!-- Time Tag - Clickable -->
+                    <div style="position: relative;" class="dropdown-wrapper">
+                      <span class="editable-tag" style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; background: var(--bg-primary); border: 1px solid var(--border-medium); border-radius: var(--radius-full); font-size: 11px; color: var(--text-secondary); cursor: pointer;" onclick="toggleDropdown('time-dropdown')">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                        <span id="time-value">14:30</span>
+                      </span>
+                      <!-- Time Dropdown -->
+                      <div id="time-dropdown" class="edit-dropdown" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; min-width: 180px; background: var(--bg-secondary); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); border: 1px solid var(--border-light); z-index: 100; padding: 12px;">
+                        <div style="position: relative; margin-bottom: 12px;">
+                          <label style="position: absolute; top: -8px; left: 10px; background: var(--bg-secondary); padding: 0 4px; font-size: 10px; color: var(--primary); font-weight: 500;">Seleccionar hora</label>
+                          <input type="time" id="time-input" value="14:30" style="width: 100%; height: 40px; padding: 0 12px; border: 1px solid var(--border-medium); border-radius: var(--radius-md); font-size: 13px; background: var(--bg-secondary); color: var(--text-primary); font-family: inherit;">
+                        </div>
+                        <button class="btn btn-soft btn-sm" style="width: 100%; font-size: 12px;" onclick="confirmTime()">Confirmar</button>
+                      </div>
+                    </div>
+                    <!-- Currency Tag - Clickable -->
+                    <div style="position: relative;" class="dropdown-wrapper">
+                      <span class="editable-tag" style="display: inline-flex; align-items: center; padding: 5px 10px; background: var(--bg-primary); border: 1px solid var(--border-medium); border-radius: var(--radius-full); font-size: 11px; font-weight: 600; color: var(--text-secondary); cursor: pointer;" onclick="toggleDropdown('currency-dropdown')">
+                        <span id="currency-value">$</span>
+                      </span>
+                      <!-- Currency Dropdown -->
+                      <div id="currency-dropdown" class="edit-dropdown" style="display: none; position: absolute; top: calc(100% + 4px); right: 0; min-width: 200px; background: var(--bg-secondary); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); border: 1px solid var(--border-light); z-index: 100; padding: 12px;">
+                        <div style="position: relative; margin-bottom: 12px;">
+                          <label style="position: absolute; top: -8px; left: 10px; background: var(--bg-secondary); padding: 0 4px; font-size: 10px; color: var(--primary); font-weight: 500;">Moneda</label>
+                          <select id="currency-select" style="width: 100%; height: 40px; padding: 0 12px; border: 1px solid var(--border-medium); border-radius: var(--radius-md); font-size: 13px; background: var(--bg-secondary); color: var(--text-primary); cursor: pointer; font-family: inherit;">
+                            <option selected value="$">CLP - Peso Chileno</option>
+                            <option value="US$">USD - US Dollar</option>
+                            <option value="€">EUR - Euro</option>
+                            <option value="AR$">ARS - Peso Argentino</option>
+                          </select>
+                        </div>
+                        <button class="btn btn-soft btn-sm" style="width: 100%; font-size: 12px;" onclick="confirmCurrency()">Confirmar</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Right: Thumbnail -->
+                <div style="position: relative; width: 72px; height: 90px; flex-shrink: 0;">
+                  <div style="width: 100%; height: 100%; background: var(--bg-tertiary); border-radius: var(--radius-md); overflow: hidden; border: 2px solid var(--success);">
+                    <div style="padding: 8px; opacity: 0.5;">
+                      <div style="height: 6px; background: var(--border-medium); border-radius: 1px; margin-bottom: 4px; width: 70%;"></div>
+                      <div style="height: 4px; background: var(--border-light); border-radius: 1px; margin-bottom: 3px; width: 90%;"></div>
+                      <div style="height: 4px; background: var(--border-light); border-radius: 1px; margin-bottom: 3px; width: 80%;"></div>
+                      <div style="height: 4px; background: var(--border-light); border-radius: 1px; width: 60%;"></div>
+                    </div>
+                  </div>
+                  <div style="position: absolute; bottom: -4px; right: -4px; width: 24px; height: 24px; border-radius: 50%; background: var(--success-light); border: 2px solid var(--bg-secondary); display: flex; align-items: center; justify-content: center;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Items List -->
+              <div style="margin-bottom: 14px;">
+                <div style="font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; font-weight: 600;">Items</div>
+
+                <!-- Item 1 - Clickable -->
+                <div class="item-row" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-tertiary); border-radius: var(--radius-md); margin-bottom: 6px; cursor: pointer; transition: all 0.15s;" onclick="openItemEdit('Leche Descremada 1L', '$1.290', 'Supermercado', 'Lácteos')">
+                  <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px;">
+                      <span style="font-size: 13px; font-weight: 500; color: var(--text-primary);">Leche Descremada 1L</span>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2" style="opacity: 0.6;"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                      <span class="category-badge groceries" style="font-size: 9px; padding: 2px 6px;">Supermercado</span>
+                      <span style="font-size: 9px; padding: 2px 6px; background: var(--bg-secondary); border-radius: var(--radius-full); color: var(--text-tertiary);">Lácteos</span>
+                    </div>
+                  </div>
+                  <span style="font-size: 13px; font-weight: 600; color: var(--text-primary);">$1.290</span>
+                </div>
+
+                <!-- Item 2 - Clickable -->
+                <div class="item-row" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-tertiary); border-radius: var(--radius-md); margin-bottom: 6px; cursor: pointer; transition: all 0.15s;" onclick="openItemEdit('Pan Molde Integral', '$2.490', 'Supermercado', 'Panadería')">
+                  <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px;">
+                      <span style="font-size: 13px; font-weight: 500; color: var(--text-primary);">Pan Molde Integral</span>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2" style="opacity: 0.6;"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                      <span class="category-badge groceries" style="font-size: 9px; padding: 2px 6px;">Supermercado</span>
+                      <span style="font-size: 9px; padding: 2px 6px; background: var(--bg-secondary); border-radius: var(--radius-full); color: var(--text-tertiary);">Panadería</span>
+                    </div>
+                  </div>
+                  <span style="font-size: 13px; font-weight: 600; color: var(--text-primary);">$2.490</span>
+                </div>
+
+                <!-- Item 3 - Clickable -->
+                <div class="item-row" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-tertiary); border-radius: var(--radius-md); margin-bottom: 6px; cursor: pointer; transition: all 0.15s;" onclick="openItemEdit('Huevos x12', '$3.890', 'Supermercado', 'Lácteos')">
+                  <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px;">
+                      <span style="font-size: 13px; font-weight: 500; color: var(--text-primary);">Huevos x12</span>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2" style="opacity: 0.6;"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                      <span class="category-badge groceries" style="font-size: 9px; padding: 2px 6px;">Supermercado</span>
+                      <span style="font-size: 9px; padding: 2px 6px; background: var(--bg-secondary); border-radius: var(--radius-full); color: var(--text-tertiary);">Lácteos</span>
+                    </div>
+                  </div>
+                  <span style="font-size: 13px; font-weight: 600; color: var(--text-primary);">$3.890</span>
+                </div>
+
+                <!-- Add Item Button -->
+                <button style="width: 100%; padding: 10px; border: 2px dashed var(--border-light); background: transparent; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; color: var(--primary); font-size: 12px; font-weight: 500; font-family: var(--font-family);">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Agregar Item
+                </button>
+              </div>
+
+              <!-- Total -->
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--primary-light); border-radius: var(--radius-lg); margin-bottom: 14px;">
+                <span style="font-size: 12px; color: var(--text-secondary);">Total (3 items)</span>
+                <span style="font-size: 18px; font-weight: 700; color: var(--primary);">$7.670</span>
+              </div>
+
+              <!-- Save Button -->
+              <button class="btn btn-success" style="width: 100%; height: 44px; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Guardar Transacción
+              </button>
+            </div>
+
+            <!-- Item Edit Modal (Centered) -->
+            <div id="item-edit-modal" style="display: none; position: absolute; bottom: 0; left: 0; right: 0; top: 0; z-index: 200;">
+              <!-- Backdrop -->
+              <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.4);" onclick="closeItemEdit()"></div>
+              <!-- Modal - Centered -->
+              <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: calc(100% - 32px); max-width: 400px; background: var(--bg-secondary); border-radius: var(--radius-xl); padding: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); animation: modalFadeIn 0.2s ease-out;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                  <span style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Editar Item</span>
+                  <button style="width: 28px; height: 28px; border-radius: 50%; background: var(--bg-tertiary); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="closeItemEdit()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                  </button>
+                </div>
+
+                <!-- Name Input -->
+                <div style="position: relative; margin-bottom: 16px;">
+                  <label style="position: absolute; top: -8px; left: 10px; background: var(--bg-secondary); padding: 0 4px; font-size: 11px; color: var(--primary); font-weight: 500;">Nombre</label>
+                  <input type="text" id="item-name-input" value="Pan Molde Integral" style="width: 100%; height: 44px; padding: 0 12px; border: 1px solid var(--border-medium); border-radius: var(--radius-md); font-size: 14px; background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box; font-family: inherit;">
+                </div>
+
+                <!-- Price Input -->
+                <div style="position: relative; margin-bottom: 16px;">
+                  <label style="position: absolute; top: -8px; left: 10px; background: var(--bg-secondary); padding: 0 4px; font-size: 11px; color: var(--primary); font-weight: 500;">Precio</label>
+                  <input type="text" id="item-price-input" value="$2.490" style="width: 100%; height: 44px; padding: 0 12px; border: 1px solid var(--border-medium); border-radius: var(--radius-md); font-size: 14px; font-weight: 600; background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box; font-family: inherit;">
+                </div>
+
+                <!-- Category -->
+                <div style="margin-bottom: 16px;">
+                  <label style="display: block; font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Categoria</label>
+                  <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                    <span id="item-category-badge" class="category-badge groceries" style="cursor: pointer; padding: 6px 12px; border: 2px solid var(--primary);">Supermercado</span>
+                    <button style="height: 28px; padding: 0 10px; border-radius: var(--radius-full); background: var(--primary-light); border: 1px dashed var(--primary); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; color: var(--primary); font-size: 11px; font-weight: 500; font-family: inherit;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                      Mas
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Subcategory Input -->
+                <div style="position: relative; margin-bottom: 16px;">
+                  <label style="position: absolute; top: -8px; left: 10px; background: var(--bg-secondary); padding: 0 4px; font-size: 11px; color: var(--primary); font-weight: 500;">Subcategoria</label>
+                  <input type="text" id="item-subcategory-input" value="Panadería" style="width: 100%; height: 44px; padding: 0 12px; border: 1px solid var(--border-medium); border-radius: var(--radius-md); font-size: 14px; background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box; font-family: inherit;">
+                </div>
+
+                <button class="btn btn-soft" style="width: 100%; font-family: inherit;" onclick="closeItemEdit()">Guardar Cambios</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav -->
+          <div class="bottom-nav">
+            <div class="nav-item"><svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Inicio</span></div>
+            <div class="nav-item"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg><span>Analíticas</span></div>
+            <div class="scan-center"><button class="scan-btn"><svg viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></button></div>
+            <div class="nav-item"><svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg><span>Ideas</span></div>
+            <div class="nav-item" style="position: relative;"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div><span>Alertas</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- JavaScript for Interactive Functionality -->
+      <script>
+        // Close all dropdowns
+        function closeAllDropdowns() {
+          document.querySelectorAll('.edit-dropdown').forEach(d => d.style.display = 'none');
+          document.querySelectorAll('.editable-tag').forEach(t => {
+            // Reset to default styling (with border)
+            if (!t.classList.contains('category-badge')) {
+              t.style.border = '1px solid var(--border-medium)';
+              t.style.background = 'var(--bg-primary)';
+            } else {
+              t.style.border = '';
+            }
+          });
+        }
+
+        // Toggle dropdown
+        function toggleDropdown(id) {
+          const dropdown = document.getElementById(id);
+          const isOpen = dropdown.style.display === 'block';
+          closeAllDropdowns();
+          if (!isOpen) {
+            dropdown.style.display = 'block';
+            const tag = dropdown.parentElement.querySelector('.editable-tag');
+            tag.style.border = '2px solid var(--primary)';
+            if (!tag.classList.contains('category-badge')) {
+              tag.style.background = 'var(--primary-light)';
+            }
+          }
+        }
+
+        // Select category
+        function selectCategory(name, type) {
+          const badge = document.querySelector('#edit-transaction-screen .dropdown-wrapper .category-badge.editable-tag');
+          badge.textContent = name;
+          badge.className = 'category-badge ' + type + ' editable-tag';
+          closeAllDropdowns();
+        }
+
+        // Confirm location
+        function confirmLocation() {
+          const city = document.getElementById('city-select').value;
+          document.getElementById('location-value').textContent = city;
+          closeAllDropdowns();
+        }
+
+        // Confirm date
+        function confirmDate() {
+          const dateInput = document.getElementById('date-input').value;
+          const date = new Date(dateInput);
+          const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+          document.getElementById('date-value').textContent = date.getDate() + ' ' + months[date.getMonth()];
+          closeAllDropdowns();
+        }
+
+        // Confirm time
+        function confirmTime() {
+          document.getElementById('time-value').textContent = document.getElementById('time-input').value;
+          closeAllDropdowns();
+        }
+
+        // Confirm currency
+        function confirmCurrency() {
+          const select = document.getElementById('currency-select');
+          document.getElementById('currency-value').textContent = select.value;
+          closeAllDropdowns();
+        }
+
+        // Open item edit modal
+        function openItemEdit(name, price, category, subcategory) {
+          closeAllDropdowns();
+          document.getElementById('item-name-input').value = name;
+          document.getElementById('item-price-input').value = price;
+          document.getElementById('item-subcategory-input').value = subcategory;
+          document.getElementById('item-edit-modal').style.display = 'block';
+        }
+
+        // Close item edit modal
+        function closeItemEdit() {
+          document.getElementById('item-edit-modal').style.display = 'none';
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+          if (!e.target.closest('.dropdown-wrapper') && !e.target.closest('.edit-dropdown')) {
+            closeAllDropdowns();
+          }
+        });
+      </script>
+
+      <style>
+        @keyframes slideUp {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+        @keyframes modalFadeIn {
+          from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+          to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        .item-row:hover {
+          background: var(--primary-light) !important;
+        }
+        .editable-tag:hover {
+          opacity: 0.8;
+        }
+      </style>
+    </div>
+
+    <!-- ========== STATE 4.b: CANCEL CONFIRMATION ========== -->
+    <div class="state-container">
+      <div class="state-label">4.b Cancel Confirmation</div>
+      <div class="state-description">Warning modal when user taps X to cancel - credits already used</div>
+
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 20V4" stroke-linecap="round"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0114.08 0M1.42 9a16 16 0 0121.16 0M8.53 16.11a6 6 0 016.95 0M12 20h.01"/></svg>
+              <svg viewBox="0 0 24 12"><rect x="0" y="0" width="22" height="12" rx="2" stroke="currentColor" fill="none"/><rect x="23" y="3" width="1" height="6" rx="0.5" fill="currentColor"/><rect x="2" y="2" width="16" height="8" rx="1" fill="currentColor"/></svg>
+            </div>
+          </div>
+
+          <!-- Scan Navigation Header -->
+          <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary);">
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <span style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Escanea</span>
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Content (Grayed background - Edit Transaction behind) -->
+          <div class="content-area" style="position: relative;">
+            <div style="opacity: 0.3; padding: 16px;">
+              <!-- Faded Edit Transaction content -->
+              <div style="background: var(--bg-secondary); border-radius: var(--radius-xl); padding: 16px;">
+                <div style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Supermercado Lider</div>
+                <div style="display: flex; gap: 6px; margin-bottom: 12px;">
+                  <span class="category-badge groceries" style="font-size: 9px; padding: 2px 6px;">Supermercado</span>
+                </div>
+                <div style="background: var(--bg-tertiary); border-radius: var(--radius-md); padding: 10px; margin-bottom: 8px;">
+                  <div style="font-size: 11px; color: var(--text-secondary);">Leche Descremada 1L</div>
+                </div>
+                <div style="background: var(--bg-tertiary); border-radius: var(--radius-md); padding: 10px; margin-bottom: 8px;">
+                  <div style="font-size: 11px; color: var(--text-secondary);">Pan Molde Integral</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cancel Warning Overlay -->
+          <div class="success-overlay">
+            <div class="success-card" style="position: relative; border: 2px solid var(--warning);">
+              <!-- Close Button -->
+              <button style="position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border: none; background: var(--bg-tertiary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+              <!-- Warning Icon -->
+              <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--warning-light); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </div>
+              <div class="success-title" style="color: var(--warning);">¿Cancelar Escaneo?</div>
+              <div class="success-message">Ya usaste <strong>1 crédito</strong> para escanear esta boleta. Si cancelas, perderás el crédito utilizado y los datos no se guardarán.</div>
+              <div class="success-actions">
+                <button class="btn btn-secondary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                  </svg>
+                  Volver a Editar
+                </button>
+                <button class="btn" style="width: 100%; background: var(--error); color: white; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <path d="M18 6 6 18M6 6l12 12"/>
+                  </svg>
+                  Sí, Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav -->
+          <div class="bottom-nav">
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="scan-center">
+              <button class="scan-btn">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+              </button>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+            <div class="nav-item" style="position: relative;">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <!-- Notification badge -->
+              <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+              <span>Alertas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== STATE 5: SUCCESS ========== -->
+    <div class="state-container">
+      <div class="state-label">5. Success</div>
+      <div class="state-description">Success state with theme colors - transaction saved confirmation</div>
+
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 20V4" stroke-linecap="round"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0114.08 0M1.42 9a16 16 0 0121.16 0M8.53 16.11a6 6 0 016.95 0M12 20h.01"/></svg>
+              <svg viewBox="0 0 24 12"><rect x="0" y="0" width="22" height="12" rx="2" stroke="currentColor" fill="none"/><rect x="23" y="3" width="1" height="6" rx="0.5" fill="currentColor"/><rect x="2" y="2" width="16" height="8" rx="1" fill="currentColor"/></svg>
+            </div>
+          </div>
+
+          <!-- Scan Navigation Header -->
+          <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary);">
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <span style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Escanea</span>
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Content (Grayed background) -->
+          <div class="content-area">
+            <div class="edit-view" style="opacity: 0.3;">
+              <div class="merchant-header">
+                <div class="merchant-icon">🛒</div>
+                <div class="merchant-info">
+                  <div class="merchant-name">Lider</div>
+                  <div class="merchant-meta">Las Condes • Hoy, 14:30</div>
+                </div>
+                <div class="merchant-total">
+                  <div class="merchant-total-label">Total</div>
+                  <div class="merchant-total-amount">$45.990</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Success Overlay -->
+          <div class="success-overlay">
+            <div class="success-card" style="position: relative;">
+              <!-- Close Button -->
+              <button style="position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border: none; background: var(--bg-tertiary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+              <div class="success-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+              <div class="success-title">¡Boleta Guardada!</div>
+              <div class="success-message">Tu transacción de $45.990 en Supermercado Lider ha sido guardada exitosamente.</div>
+              <div class="success-actions">
+                <button class="btn btn-success" style="width: 100%;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                  </svg>
+                  Ir al Inicio
+                </button>
+                <button class="btn btn-secondary" style="width: 100%;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                    <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                    <circle cx="12" cy="13" r="3"/>
+                  </svg>
+                  Escanear Otra
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav -->
+          <div class="bottom-nav">
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="scan-center">
+              <button class="scan-btn">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+              </button>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+            <div class="nav-item" style="position: relative;">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <!-- Notification badge -->
+              <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+              <span>Alertas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== STATE 6: ERROR ========== -->
+    <div class="state-container">
+      <div class="state-label">6. Error</div>
+      <div class="state-description">Error state with theme colors - processing failed with retry options</div>
+
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 20V4" stroke-linecap="round"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0114.08 0M1.42 9a16 16 0 0121.16 0M8.53 16.11a6 6 0 016.95 0M12 20h.01"/></svg>
+              <svg viewBox="0 0 24 12"><rect x="0" y="0" width="22" height="12" rx="2" stroke="currentColor" fill="none"/><rect x="23" y="3" width="1" height="6" rx="0.5" fill="currentColor"/><rect x="2" y="2" width="16" height="8" rx="1" fill="currentColor"/></svg>
+            </div>
+          </div>
+
+          <!-- Scan Navigation Header -->
+          <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary);">
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <span style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Escanea</span>
+            <button style="width: 36px; height: 36px; border: none; background: var(--bg-secondary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Content (Grayed Out) -->
+          <div class="content-area">
+            <div class="edit-view grayed-out">
+              <div class="merchant-header">
+                <div class="merchant-icon">❓</div>
+                <div class="merchant-info">
+                  <div class="merchant-name">Desconocido</div>
+                  <div class="merchant-meta">Hoy, 14:30</div>
+                </div>
+                <div class="merchant-total">
+                  <div class="merchant-total-label">Total</div>
+                  <div class="merchant-total-amount">--</div>
+                </div>
+              </div>
+              <div class="transaction-list">
+                <div class="skeleton-item">
+                  <div class="skeleton-thumb"></div>
+                  <div class="skeleton-content">
+                    <div class="skeleton-line medium"></div>
+                    <div class="skeleton-line short"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error Overlay -->
+          <div class="error-overlay">
+            <div class="error-card" style="position: relative;">
+              <!-- Close Button -->
+              <button style="position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border: none; background: var(--bg-tertiary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+              <div class="error-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+              </div>
+              <div class="error-title">No pudimos leer la boleta</div>
+              <div class="error-message">La imagen puede estar borrosa o el formato no es compatible. Intenta tomar otra foto o ingresa los datos manualmente.</div>
+              <div class="error-actions">
+                <button class="btn btn-error" style="width: 100%;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                  Tomar otra foto
+                </button>
+                <button class="btn btn-secondary" style="width: 100%;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                  Ingresar manualmente
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav -->
+          <div class="bottom-nav">
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="scan-center">
+              <button class="scan-btn">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+              </button>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+            <div class="nav-item" style="position: relative;">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <!-- Notification badge -->
+              <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+              <span>Alertas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Controls -->
+  <div class="global-controls">
+    <div class="control-group">
+      <div class="control-label">Theme</div>
+      <div class="control-options">
+        <div class="theme-swatch" data-theme="professional" title="Professional Blue" onclick="setTheme('professional', this)"></div>
+        <div class="theme-swatch active" data-theme="mono" title="Mono" onclick="setTheme('mono', this)"></div>
+        <div class="theme-swatch" data-theme="ninokuni" title="Ni No Kuni" onclick="setTheme('ninokuni', this)"></div>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">Font</div>
+      <div class="control-options">
+        <div class="font-pill active" data-font="outfit" onclick="setFont('outfit', this)">Outfit</div>
+        <div class="font-pill" data-font="space" onclick="setFont('space', this)">Space</div>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">Mode</div>
+      <div class="control-options">
+        <div class="mode-toggle active" data-mode="light" onclick="setMode('light', this)">Light</div>
+        <div class="mode-toggle" data-mode="dark" onclick="setMode('dark', this)">Dark</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function setTheme(theme, el) {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function setFont(font, el) {
+      document.documentElement.setAttribute('data-font', font);
+      document.querySelectorAll('.font-pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function setMode(mode, el) {
+      document.documentElement.setAttribute('data-mode', mode);
+      document.querySelectorAll('.mode-toggle').forEach(m => m.classList.remove('active'));
+      el.classList.add('active');
+    }
+  </script>
+</body>
+</html>
