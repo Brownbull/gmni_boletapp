@@ -1016,6 +1016,220 @@ This UX Design Specification was created through visual collaboration:
 | ---------- | ------- | ------------------------------- | ------ |
 | 2025-12-04 | 1.0     | Initial UX Design Specification | Gabe   |
 | 2025-12-05 | 1.1     | Finalized all sections: user journeys, component library, UX patterns, responsive/accessibility, implementation guidance | Gabe   |
+| 2025-12-23 | 2.0     | Added Section 10: Epic 13 UX Redesign - Voice & Tone, Motion System, Persona Patterns, Visual Concepts, New Components | Gabe   |
+
+---
+
+## 10. Epic 13: UX Redesign - From Reactive to Alive
+
+_Added: 2025-12-23 | Source: Brainstorming Session 2025-12-22_
+
+### 10.1 Vision & Transformation
+
+**Core Transformation:** From "reactive data entry tool" to "alive financial awareness companion"
+
+**Key Insight:** The app proactively surfaces information the user didn't know to ask for, creating positive feedback loops for healthy spending habits. Someone is "on the other side" - not just a data store.
+
+### 10.2 The Boletapp Voice
+
+Epic 13 establishes a distinct communication personality:
+
+| Principle | Description | Example |
+|-----------|-------------|---------|
+| **Observes without judging** | State facts, not opinions | "Restaurants up 23%" NOT "You overspent on restaurants" |
+| **Reveals opportunity** | Show trade-offs without guilt | "This week's coffee = 1 day further from Tokyo" |
+| **Invites experimentation** | Suggest, don't prescribe | "What if you tried...?" |
+| **Celebrates progress** | Highlight wins | "Your lowest restaurant week in 3 months!" |
+| **Normalizes setbacks** | Life happens | "La vida es rara. Los datos también." |
+
+**Chilean Market Adaptation:**
+- Use colloquialisms: "Subió harto" not "Incrementó 27%"
+- Playful guesses: "¿Asado familiar?"
+- Validate experience: "Tu instinto tiene razón - todo está más caro"
+
+### 10.3 Motion Design System: "Everything Breathes"
+
+**Philosophy:** The app feels alive through subtle, purposeful animation.
+
+| Animation Type | Specification | Use Case |
+|----------------|---------------|----------|
+| **Navigation transitions** | Staggered entry, 200-300ms | Screen changes |
+| **Breathing effects** | Subtle pulse, 2-4s cycle | Polygon, key metrics |
+| **Count-up animations** | 300-500ms ease-out | Money amounts on load |
+| **Progressive reveal** | 50ms stagger per item | List items, scan results |
+
+**Exception:** Settings screen loads instantly (efficiency over delight).
+
+**Accessibility:** Respect `prefers-reduced-motion` - disable all non-essential animations.
+
+### 10.4 Persona-Specific Patterns
+
+#### María (38, Overwhelmed Parent)
+**Need:** "¿Dónde se fue la plata?"
+
+**Pattern: "Intentional or Accidental?" Framework**
+- Non-judgmental awareness prompts
+- User decides meaning, app just observes
+- Example: "Restaurants up 23% - ¿cumpleaños?"
+
+#### Diego (26, Young Professional)
+**Need:** Save for Japan trip
+
+**Pattern: Savings GPS**
+- Google Maps-style goal visualization
+- "Arriving at your goal by [date]"
+- Alternate routes: "Save 10% more = arrive 2 months sooner"
+- Goal-connected insights link spending to goals
+
+#### Rosa (62, Abuelita)
+**Need:** Confirm her intuition, simple summaries
+
+**Pattern: Simple Visual Language**
+- Arrows ↑↓→ instead of complex charts
+- "Subió harto" instead of percentages
+- Weekly summary like her paper notebook
+- Respect her 40 years of wisdom
+
+#### Tomás (34, Disciplined Accountant)
+**Need:** Honest mirror for drifting habits
+
+**Pattern: Emotional Airlock**
+Sequence for uncomfortable truths:
+1. **Curiosity Gate:** "¿Sabías que el 73% de las personas subestiman cuánto gastan en delivery?"
+2. **Playful Brace:** "Los pulpos tienen 3 corazones... La vida es rara. Los datos también."
+3. **The Reveal:** "Tu Espejo Honesto" - mirror, not judge
+4. **Response:** "Fue intencional" / "No me había dado cuenta"
+
+### 10.5 Key Visual Concepts
+
+#### Dynamic Spending Polygon
+- 3-6 sided shape based on trending categories
+- Only consistent spending categories qualify
+- Dual versions: merchant categories + item groups
+- Breathing animation on idle
+
+#### Expanding Lava Metaphor
+- Inner polygon = spending (lava/contamination)
+- Outer polygon = budget (green pastures)
+- Goal: Keep lava contained, protect the green
+- Themeable skins for Chilean market
+
+#### Savings GPS Visualization
+- Like Google Maps for goals
+- Real-time updates based on spending
+- Shows ETA and alternate routes
+- Custom goals: name, emoji, amount, currency
+
+#### Story Format Reports
+- Instagram-style swipeable cards
+- Weekly summary with simple arrows
+- Monthly milestone celebrations
+- Personal records highlighted
+
+### 10.6 New Component Patterns
+
+#### InsightCarousel
+```
+Props:
+- insights: Insight[]
+- onSwipe: (direction) => void
+- onAction: (insight, action) => void
+
+Behavior:
+- Horizontal swipeable cards
+- Larger, more visual than current
+- "Intentional?" prompts embedded
+- Celebration animations on achievements
+```
+
+#### SpendingPolygon
+```
+Props:
+- categories: { name: string, value: number, budget?: number }[]
+- mode: 'merchant' | 'item'
+- animated: boolean
+
+Behavior:
+- 3-6 vertices based on data
+- Breathing pulse animation
+- Inner/outer polygon for budget comparison
+- Tap vertex to drill into category
+```
+
+#### SavingsGPS
+```
+Props:
+- goal: { name: string, emoji: string, target: number, current: number }
+- projectedDate: Date
+- alternateRoutes: { savings: number, newDate: Date }[]
+
+Behavior:
+- Journey visualization (origin → destination)
+- Real-time ETA based on velocity
+- "Recalculating..." on spending changes
+- Milestone markers along path
+```
+
+#### EmotionalAirlock
+```
+Props:
+- insight: DifficultInsight
+- onResponse: (response: 'intentional' | 'unaware') => void
+
+Behavior:
+- Three-step progressive reveal
+- Curiosity → Playfulness → Truth
+- User controls pace
+- Records response for learning
+```
+
+#### StoryReport
+```
+Props:
+- period: 'weekly' | 'monthly'
+- data: ReportData
+- onSwipe: () => void
+
+Behavior:
+- Full-screen card format
+- Swipe to next card
+- Simple arrows for Rosa
+- Celebration on milestones
+```
+
+### 10.7 Theme System Extension
+
+**New Theme: Lava (Default for Epic 13+)**
+- Warm gradients for spending visualization
+- Cool gradients for budget/savings
+- Breathing glow effects
+
+**Future Themes (Epic 15.13):**
+- Cats theme (Chilean market)
+- Dogs theme (Chilean market)
+- Seasonal variations
+
+### 10.8 Epic 13 Deliverables
+
+| Story | Deliverable | Format |
+|-------|-------------|--------|
+| 13.1 | Critical Use Cases | Document (6 E2E scenarios) |
+| 13.2 | Voice & Tone Guidelines | Document + message templates |
+| 13.3 | Motion Design System Spec | Document + timing specs |
+| 13.4-13.11 | UI Mockups | Figma/Excalidraw files |
+| 13.12 | Design Review | Approval gate |
+
+### 10.9 Success Metrics
+
+**User Experience:**
+- Users describe app as "helpful" not "judgmental"
+- Time to understand polygon < 10 seconds
+- Goal progress check becomes habitual (weekly)
+
+**Emotional:**
+- Reduced anxiety when checking spending
+- Increased sense of control
+- Positive association with app notifications
 
 ---
 

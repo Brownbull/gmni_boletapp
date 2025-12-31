@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="mono" data-font="outfit" data-mode="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gastify - Navigation Alternatives Comparison</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Baloo+2:wght@700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       DESIGN TOKENS FROM REFERENCE
+       ============================================ */
+    :root {
+      /* Primary Palette */
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --primary-dark: #1e40af;
+      /* Secondary */
+      --secondary: #64748b;
+      --secondary-light: #f1f5f9;
+      --accent: #0ea5e9;
+      /* Backgrounds */
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --bg-inverse: #0f172a;
+      /* Text */
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --text-inverse: #f8fafc;
+      /* Borders */
+      --border-light: #e2e8f0;
+      --border-medium: #cbd5e1;
+      --border-dark: #94a3b8;
+      /* Semantic */
+      --success: #22c55e;
+      --success-light: #dcfce7;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --error: #ef4444;
+      --error-light: #fee2e2;
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      /* Spacing */
+      --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+      --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+      /* Radii */
+      --radius-sm: 6px; --radius-md: 10px; --radius-lg: 12px;
+      --radius-xl: 16px; --radius-2xl: 20px; --radius-full: 9999px;
+      /* Typography */
+      --font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+      --transition-fast: 150ms ease;
+      --transition-normal: 200ms ease;
+      --transition-slow: 300ms ease;
+    }
+
+    /* THEME 2: Monochrome Minimal */
+    [data-theme="mono"] {
+      --primary: #18181b;
+      --primary-hover: #27272a;
+      --primary-light: #f4f4f5;
+      --primary-dark: #09090b;
+      --secondary: #52525b;
+      --secondary-light: #e4e4e7;
+      --accent: #3b82f6;
+      --bg-primary: #fafafa;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f4f4f5;
+      --bg-inverse: #18181b;
+      --text-primary: #18181b;
+      --text-secondary: #52525b;
+      --text-tertiary: #a1a1aa;
+      --border-light: #e4e4e7;
+      --border-medium: #d4d4d8;
+    }
+
+    /* Mono - Dark Mode */
+    [data-theme="mono"][data-mode="dark"] {
+      --primary: #a1a1aa;
+      --primary-hover: #d4d4d8;
+      --primary-light: #27272a;
+      --primary-dark: #e4e4e7;
+      --secondary: #71717a;
+      --secondary-light: #3f3f46;
+      --accent: #60a5fa;
+      --bg-primary: #09090b;
+      --bg-secondary: #18181b;
+      --bg-tertiary: #27272a;
+      --bg-inverse: #fafafa;
+      --text-primary: #fafafa;
+      --text-secondary: #d4d4d8;
+      --text-tertiary: #71717a;
+      --text-inverse: #09090b;
+      --border-light: #27272a;
+      --border-medium: #3f3f46;
+    }
+
+    /* Font Definitions */
+    body[data-font="outfit"] { --font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif; }
+    body[data-font="space"] { --font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; }
+
+    /* Logo Style Definitions */
+    body[data-theme="mono"] .g-logo-circle { background: linear-gradient(135deg, #18181b 0%, #3f3f46 100%) !important; }
+    body[data-theme="mono"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #a1a1aa 0%, #71717a 100%) !important; }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-family);
+      background: #1a1a2e;
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+
+    /* Page Title */
+    .page-title {
+      text-align: center;
+      color: white;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .page-subtitle {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+
+    /* Grid of phone frames */
+    .phones-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* Phone Container */
+    .phone-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Option Label */
+    .option-label {
+      background: rgba(30, 41, 59, 0.95);
+      border-radius: 8px;
+      padding: 10px 14px;
+      border: 1px solid rgba(255,255,255,0.1);
+      width: 280px;
+    }
+    .option-title {
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+    }
+    .option-desc {
+      color: #94a3b8;
+      font-size: 11px;
+      text-align: center;
+      margin-top: 4px;
+    }
+    .option-details {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .option-details ul {
+      margin: 0;
+      padding-left: 16px;
+      color: #cbd5e1;
+      font-size: 10px;
+      line-height: 1.5;
+    }
+    .option-details li {
+      margin-bottom: 2px;
+    }
+    .option-details b {
+      color: #4ade80;
+    }
+    .option-label.current {
+      border-color: var(--success);
+      background: rgba(34, 197, 94, 0.1);
+    }
+    .option-label.current .option-title {
+      color: #4ade80;
+    }
+
+    /* Phone Frame - Smaller for comparison */
+    .phone-frame {
+      width: 280px;
+      min-height: 580px;
+      background: #1e293b;
+      border-radius: 40px;
+      padding: 10px;
+      box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25),
+        inset 0 0 0 2px #334155, inset 0 0 0 4px #475569;
+    }
+    .phone-screen {
+      width: 100%;
+      height: 560px;
+      background: var(--bg-primary);
+      border-radius: 32px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 18px 6px;
+      background: var(--bg-primary);
+      flex-shrink: 0;
+    }
+    .status-time {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .status-icons {
+      display: flex;
+      gap: 3px;
+      align-items: center;
+    }
+    .status-icons svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--text-primary);
+      fill: none;
+      stroke-width: 1.5;
+    }
+
+    /* Header Bar */
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 14px 10px;
+      background: var(--bg-primary);
+      flex-shrink: 0;
+    }
+    .g-logo-circle {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .g-logo-circle span {
+      color: white;
+      font-weight: 700;
+      font-size: 13px;
+      font-family: 'Baloo 2', sans-serif;
+    }
+    .header-title {
+      color: var(--text-primary);
+      font-weight: 700;
+      font-size: 18px;
+      font-family: 'Baloo 2', sans-serif;
+    }
+    .header-menu-btn {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .header-menu-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--text-primary);
+      fill: none;
+      stroke-width: 2;
+    }
+    .header-menu-btn:hover {
+      background: var(--bg-tertiary);
+      transform: scale(1.05);
+    }
+    .header-settings-btn {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .header-settings-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--text-tertiary);
+      fill: none;
+      stroke-width: 1.8;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Simplified Treemap Card */
+    .treemap-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 10px;
+      border: 1px solid var(--border-light);
+    }
+    .treemap-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .treemap-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .treemap-month {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      background: var(--bg-tertiary);
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+    }
+    .treemap-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      height: 80px;
+    }
+    .treemap-cell {
+      border-radius: var(--radius-sm);
+      padding: 6px;
+      font-size: 9px;
+      font-weight: 500;
+      color: white;
+    }
+    .treemap-cell.super { background: #3b82f6; }
+    .treemap-cell.rest { background: #f59e0b; }
+    .treemap-cell.trans { background: #8b5cf6; }
+    .treemap-cell.other { background: #64748b; }
+
+    /* Transaction List */
+    .transaction-section {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 10px;
+      border: 1px solid var(--border-light);
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .section-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .section-link {
+      font-size: 10px;
+      color: var(--accent);
+    }
+    .transaction-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .transaction-item:last-child { border-bottom: none; }
+    .transaction-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .transaction-info { flex: 1; }
+    .transaction-name {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .transaction-meta {
+      font-size: 9px;
+      color: var(--text-tertiary);
+    }
+    .transaction-amount {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Bottom Nav */
+    .bottom-nav {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      padding: 6px 8px 10px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-light);
+      flex-shrink: 0;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 4px 6px;
+      cursor: pointer;
+    }
+    .nav-item svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--text-tertiary);
+      fill: none;
+      stroke-width: 1.8;
+    }
+    .nav-item span {
+      font-size: 8px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+    }
+    .nav-item.active svg { stroke: var(--primary); }
+    .nav-item.active span { color: var(--primary); font-weight: 600; }
+
+    /* Scan Center Button */
+    .scan-center { margin-top: -40px; padding: 0; }
+    .scan-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+    .scan-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: white;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* Highlighted nav item */
+    .nav-item.highlight {
+      position: relative;
+    }
+    .nav-item.highlight::after {
+      content: 'NEW';
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: var(--success);
+      color: white;
+      font-size: 6px;
+      font-weight: 700;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+
+    /* Top Menu Dropdown Preview */
+    .top-menu-preview {
+      position: absolute;
+      top: 70px;
+      right: 12px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-light);
+      padding: 6px 0;
+      min-width: 130px;
+      z-index: 10;
+      display: none;
+    }
+    .top-menu-preview.open {
+      display: block;
+    }
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      font-size: 11px;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+    .menu-item:hover {
+      background: var(--bg-tertiary);
+    }
+    .menu-item svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--text-secondary);
+      fill: none;
+      stroke-width: 1.8;
+    }
+    .menu-divider {
+      height: 1px;
+      background: var(--border-light);
+      margin: 4px 0;
+    }
+
+    /* Top Tabs (Option E - Instagram style) */
+    .top-tabs {
+      display: flex;
+      gap: 0;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-light);
+      padding: 0 12px;
+    }
+    .top-tab {
+      flex: 1;
+      text-align: center;
+      padding: 8px 4px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+    }
+    .top-tab.active {
+      color: var(--text-primary);
+      border-bottom-color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* FAB Button (Option F) */
+    .fab-container {
+      position: absolute;
+      bottom: 70px;
+      right: 16px;
+      z-index: 20;
+    }
+    .fab-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+    }
+    .fab-btn svg {
+      width: 22px;
+      height: 22px;
+      stroke: white;
+      fill: none;
+      stroke-width: 2;
+    }
+    .fab-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+    .fab-menu {
+      position: absolute;
+      bottom: 56px;
+      right: 0;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-light);
+      padding: 6px 0;
+      min-width: 140px;
+      display: none;
+    }
+    .fab-menu.open {
+      display: block;
+    }
+    .fab-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+    .fab-menu-item:hover {
+      background: var(--bg-tertiary);
+    }
+    .fab-menu-item svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-secondary);
+      fill: none;
+      stroke-width: 1.8;
+    }
+
+    /* Bottom nav without center scan (Option F) */
+    .bottom-nav-flat {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 8px 12px 12px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-light);
+      flex-shrink: 0;
+    }
+
+    /* Perfil nav item with avatar */
+    .nav-item-avatar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 4px 6px;
+      cursor: pointer;
+    }
+    .nav-avatar {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: white;
+      font-weight: 600;
+    }
+    .nav-item-avatar span {
+      font-size: 8px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+    }
+    .nav-item-avatar.active .nav-avatar {
+      box-shadow: 0 0 0 2px var(--primary);
+    }
+    .nav-item-avatar.active span {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* Global Controls */
+    .global-controls {
+      background: rgba(30, 41, 59, 0.95);
+      border-radius: 12px;
+      padding: 12px 20px;
+      display: flex;
+      gap: 24px;
+      border: 1px solid rgba(255,255,255,0.1);
+      align-items: center;
+      justify-content: center;
+      margin: 30px auto 0;
+      max-width: 600px;
+    }
+    .control-group { display: flex; align-items: center; gap: 10px; }
+    .control-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+    }
+    .mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: #94a3b8;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .mode-toggle:hover { background: rgba(255,255,255,0.1); }
+    .mode-toggle svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+
+    /* Legend */
+    .legend {
+      background: rgba(30, 41, 59, 0.95);
+      border-radius: 12px;
+      padding: 16px 24px;
+      border: 1px solid rgba(255,255,255,0.1);
+      margin: 20px auto;
+      max-width: 900px;
+    }
+    .legend-title {
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .legend-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .legend-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .legend-label {
+      color: #94a3b8;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .legend-value {
+      color: white;
+      font-size: 12px;
+    }
+    .legend-value.pro { color: #4ade80; }
+    .legend-value.con { color: #f87171; }
+
+    /* Annotation callouts to highlight differences */
+    .annotation {
+      position: absolute;
+      background: #ef4444;
+      color: white;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 4px;
+      z-index: 30;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .annotation::after {
+      content: '';
+      position: absolute;
+      border: 6px solid transparent;
+    }
+    .annotation.arrow-down::after {
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border-top-color: #ef4444;
+    }
+    .annotation.arrow-up::after {
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border-bottom-color: #ef4444;
+    }
+    .annotation.arrow-left::after {
+      right: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border-right-color: #ef4444;
+    }
+    .annotation.arrow-right::after {
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border-left-color: #ef4444;
+    }
+    .annotation.green {
+      background: #22c55e;
+    }
+    .annotation.green.arrow-down::after { border-top-color: #22c55e; }
+    .annotation.green.arrow-up::after { border-bottom-color: #22c55e; }
+    .annotation.green.arrow-left::after { border-right-color: #22c55e; }
+    .annotation.green.arrow-right::after { border-left-color: #22c55e; }
+    .annotation.blue {
+      background: #3b82f6;
+    }
+    .annotation.blue.arrow-down::after { border-top-color: #3b82f6; }
+    .annotation.blue.arrow-up::after { border-bottom-color: #3b82f6; }
+
+    /* Highlight box around changed elements */
+    .highlight-box {
+      position: absolute;
+      border: 2px dashed #ef4444;
+      border-radius: 8px;
+      z-index: 25;
+      pointer-events: none;
+    }
+    .highlight-box.green { border-color: #22c55e; }
+    .highlight-box.blue { border-color: #3b82f6; }
+
+    /* Phone screen needs relative positioning for annotations */
+    .phone-screen {
+      position: relative;
+    }
+
+    /* Key differences summary inside each phone */
+    .diff-summary {
+      position: absolute;
+      bottom: 70px;
+      left: 8px;
+      right: 8px;
+      background: rgba(0,0,0,0.85);
+      color: white;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 10px;
+      z-index: 40;
+    }
+    .diff-summary strong {
+      color: #4ade80;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .diff-summary ul {
+      margin: 0;
+      padding-left: 14px;
+    }
+    .diff-summary li {
+      margin-bottom: 2px;
+    }
+  </style>
+</head>
+<body data-theme="mono" data-font="outfit" data-mode="light">
+
+  <h1 class="page-title">Navigation Alternatives</h1>
+  <p class="page-subtitle">Compare 6 different navigation structures for Gastify - interact with each screen!</p>
+
+  <div class="phones-grid">
+
+    <!-- ============================================
+         OPTION A: Current Structure
+         ============================================ -->
+    <div class="phone-container">
+      <div class="option-label current">
+        <div class="option-title">Option A: Current</div>
+        <div class="option-desc">4 tabs + center scan + hamburger menu</div>
+        <div class="option-details">
+          <ul>
+            <li>☰ Hamburger menu → Metas, Presupuestos, Reportes</li>
+            <li>Bottom: Inicio | Analíticas | 📷 | Ideas | Ajustes</li>
+            <li>Goals/Budgets hidden in menu</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/></svg>
+              <svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/></svg>
+            </div>
+          </div>
+
+          <!-- Header -->
+          <div class="header-bar">
+            <div class="g-logo-circle"><span>G</span></div>
+            <span class="header-title">Gastify</span>
+            <button class="header-menu-btn" onclick="toggleMenu('menuA')">
+              <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+          </div>
+
+          <!-- Top Menu Preview -->
+          <div class="top-menu-preview" id="menuA">
+            <div class="menu-item">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              Mis Metas
+            </div>
+            <div class="menu-item">
+              <svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Presupuestos
+            </div>
+            <div class="menu-item">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+              Reportes
+            </div>
+            <div class="menu-divider"></div>
+            <div class="menu-item">
+              <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Transacciones
+            </div>
+          </div>
+
+          <!-- Main Content -->
+          <div class="main-content">
+            <div class="treemap-card">
+              <div class="treemap-header">
+                <span class="treemap-title">Este Mes</span>
+                <span class="treemap-month">Dic</span>
+              </div>
+              <div class="treemap-grid">
+                <div class="treemap-cell super">Super</div>
+                <div class="treemap-cell rest">Restau</div>
+                <div class="treemap-cell trans">Trans</div>
+                <div class="treemap-cell other">Otros</div>
+              </div>
+            </div>
+            <div class="transaction-section">
+              <div class="section-header">
+                <span class="section-title">Recientes</span>
+                <span class="section-link">Ver todo →</span>
+              </div>
+              <div class="transaction-item">
+                <div class="transaction-icon">🛒</div>
+                <div class="transaction-info">
+                  <div class="transaction-name">Supermercado</div>
+                  <div class="transaction-meta">Hoy</div>
+                </div>
+                <div class="transaction-amount">-$45.000</div>
+              </div>
+              <div class="transaction-item">
+                <div class="transaction-icon">☕</div>
+                <div class="transaction-info">
+                  <div class="transaction-name">Café</div>
+                  <div class="transaction-meta">Ayer</div>
+                </div>
+                <div class="transaction-amount">-$8.500</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav: Inicio | Analíticas | [Scan] | Ideas | Ajustes -->
+          <nav class="bottom-nav">
+            <div class="nav-item active">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="scan-center">
+              <div class="scan-btn">
+                <svg viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+              </div>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2m11-11h-2M3 12H1m17.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m12.73 0l-1.41-1.41M6.34 6.34L4.93 4.93"/></svg>
+              <span>Ajustes</span>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================
+         OPTION B: Metas replaces Ajustes
+         ============================================ -->
+    <div class="phone-container">
+      <div class="option-label">
+        <div class="option-title">Option B: Metas Priority</div>
+        <div class="option-desc">Goals in nav, Settings in top menu</div>
+        <div class="option-details">
+          <ul>
+            <li>⚙️ Settings icon in header (not hamburger)</li>
+            <li>Bottom: Inicio | Analíticas | 📷 | <b>METAS</b> | Ideas</li>
+            <li>Ajustes replaced by Metas</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/></svg>
+              <svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/></svg>
+            </div>
+          </div>
+
+          <!-- Header with Settings icon instead of hamburger -->
+          <div class="header-bar">
+            <div class="g-logo-circle"><span>G</span></div>
+            <span class="header-title">Gastify</span>
+            <button class="header-settings-btn">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2m11-11h-2M3 12H1m17.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m12.73 0l-1.41-1.41M6.34 6.34L4.93 4.93"/></svg>
+            </button>
+          </div>
+
+          <!-- Main Content -->
+          <div class="main-content">
+            <div class="treemap-card">
+              <div class="treemap-header">
+                <span class="treemap-title">Este Mes</span>
+                <span class="treemap-month">Dic</span>
+              </div>
+              <div class="treemap-grid">
+                <div class="treemap-cell super">Super</div>
+                <div class="treemap-cell rest">Restau</div>
+                <div class="treemap-cell trans">Trans</div>
+                <div class="treemap-cell other">Otros</div>
+              </div>
+            </div>
+            <div class="transaction-section">
+              <div class="section-header">
+                <span class="section-title">Recientes</span>
+                <span class="section-link">Ver todo →</span>
+              </div>
+              <div class="transaction-item">
+                <div class="transaction-icon">🛒</div>
+                <div class="transaction-info">
+                  <div class="transaction-name">Supermercado</div>
+                  <div class="transaction-meta">Hoy</div>
+                </div>
+                <div class="transaction-amount">-$45.000</div>
+              </div>
+              <div class="transaction-item">
+                <div class="transaction-icon">☕</div>
+                <div class="transaction-info">
+                  <div class="transaction-name">Café</div>
+                  <div class="transaction-meta">Ayer</div>
+                </div>
+                <div class="transaction-amount">-$8.500</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav: Inicio | Analíticas | [Scan] | Metas | Ideas -->
+          <nav class="bottom-nav">
+            <div class="nav-item active">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="scan-center">
+              <div class="scan-btn">
+                <svg viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+              </div>
+            </div>
+            <div class="nav-item highlight">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              <span>Metas</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================
+         OPTION C: Metas replaces Ideas
+         ============================================ -->
+    <div class="phone-container">
+      <div class="option-label">
+        <div class="option-title">Option C: Action-Focused</div>
+        <div class="option-desc">Goals over Insights (passive)</div>
+        <div class="option-details">
+          <ul>
+            <li>☰ Hamburger menu → Ideas, Reportes</li>
+            <li>Bottom: Inicio | Analíticas | 📷 | <b>METAS</b> | Ajustes</li>
+            <li>Ideas replaced by Metas (passive → active)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/></svg>
+              <svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/></svg>
+            </div>
+          </div>
+
+          <!-- Header with hamburger for Ideas, Reports, etc -->
+          <div class="header-bar">
+            <div class="g-logo-circle"><span>G</span></div>
+            <span class="header-title">Gastify</span>
+            <button class="header-menu-btn" onclick="toggleMenu('menuC')">
+              <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+          </div>
+
+          <!-- Top Menu Preview -->
+          <div class="top-menu-preview" id="menuC">
+            <div class="menu-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              Ideas
+            </div>
+            <div class="menu-item">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+              Reportes
+            </div>
+          </div>
+
+          <!-- Main Content -->
+          <div class="main-content">
+            <div class="treemap-card">
+              <div class="treemap-header">
+                <span class="treemap-title">Este Mes</span>
+                <span class="treemap-month">Dic</span>
+              </div>
+              <div class="treemap-grid">
+                <div class="treemap-cell super">Super</div>
+                <div class="treemap-cell rest">Restau</div>
+                <div class="treemap-cell trans">Trans</div>
+                <div class="treemap-cell other">Otros</div>
+              </div>
+            </div>
+            <div class="transaction-section">
+              <div class="section-header">
+                <span class="section-title">Recientes</span>
+                <span class="section-link">Ver todo →</span>
+              </div>
+              <div class="transaction-item">
+                <div class="transaction-icon">🛒</div>
+                <div class="transaction-info">
+                  <div class="transaction-name">Supermercado</div>
+                  <div class="transaction-meta">Hoy</div>
+                </div>
+                <div class="transaction-amount">-$45.000</div>
+              </div>
+              <div class="transaction-item">
+                <div class="transaction-icon">☕</div>
+                <div class="transaction-info">
+                  <div class="transaction-name">Café</div>
+                  <div class="transaction-meta">Ayer</div>
+                </div>
+                <div class="transaction-amount">-$8.500</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav: Inicio | Analíticas | [Scan] | Metas | Ajustes -->
+          <nav class="bottom-nav">
+            <div class="nav-item active">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="scan-center">
+              <div class="scan-btn">
+                <svg viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+              </div>
+            </div>
+            <div class="nav-item highlight">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              <span>Metas</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2m11-11h-2M3 12H1m17.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m12.73 0l-1.41-1.41M6.34 6.34L4.93 4.93"/></svg>
+              <span>Ajustes</span>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================
+         OPTION D: Combined Datos Section
+         ============================================ -->
+    <div class="phone-container">
+      <div class="option-label">
+        <div class="option-title">Option D: Datos Hub</div>
+        <div class="option-desc">Analytics + Transactions + Reports combined</div>
+        <div class="option-details">
+          <ul>
+            <li>⚙️ Settings icon only (no hamburger)</li>
+            <li>Bottom: Inicio | <b>DATOS</b> | 📷 | Metas | Ideas</li>
+            <li>"Datos" = Analíticas + Transacciones + Reportes</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/></svg>
+              <svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/></svg>
+            </div>
+          </div>
+
+          <!-- Header with Settings icon only -->
+          <div class="header-bar">
+            <div class="g-logo-circle"><span>G</span></div>
+            <span class="header-title">Gastify</span>
+            <button class="header-settings-btn">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2m11-11h-2M3 12H1m17.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m12.73 0l-1.41-1.41M6.34 6.34L4.93 4.93"/></svg>
+            </button>
+          </div>
+
+          <!-- Main Content -->
+          <div class="main-content">
+            <div class="treemap-card">
+              <div class="treemap-header">
+                <span class="treemap-title">Este Mes</span>
+                <span class="treemap-month">Dic</span>
+              </div>
+              <div class="treemap-grid">
+                <div class="treemap-cell super">Super</div>
+                <div class="treemap-cell rest">Restau</div>
+                <div class="treemap-cell trans">Trans</div>
+                <div class="treemap-cell other">Otros</div>
+              </div>
+            </div>
+            <div class="transaction-section">
+              <div class="section-header">
+                <span class="section-title">Recientes</span>
+                <span class="section-link">Ver todo →</span>
+              </div>
+              <div class="transaction-item">
+                <div class="transaction-icon">🛒</div>
+                <div class="transaction-info">
+                  <div class="transaction-name">Supermercado</div>
+                  <div class="transaction-meta">Hoy</div>
+                </div>
+                <div class="transaction-amount">-$45.000</div>
+              </div>
+              <div class="transaction-item">
+                <div class="transaction-icon">☕</div>
+                <div class="transaction-info">
+                  <div class="transaction-name">Café</div>
+                  <div class="transaction-meta">Ayer</div>
+                </div>
+                <div class="transaction-amount">-$8.500</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav: Inicio | Datos | [Scan] | Metas | Ideas -->
+          <nav class="bottom-nav">
+            <div class="nav-item active">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M21 21v-5h-5"/></svg>
+              <span>Datos</span>
+            </div>
+            <div class="scan-center">
+              <div class="scan-btn">
+                <svg viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+              </div>
+            </div>
+            <div class="nav-item highlight">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              <span>Metas</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================
+         OPTION E: Instagram/TikTok Style - Top Tabs
+         ============================================ -->
+    <div class="phone-container">
+      <div class="option-label">
+        <div class="option-title">Option E: Top Tabs</div>
+        <div class="option-desc">Instagram-style swipeable tabs in Home</div>
+        <div class="option-details">
+          <ul>
+            <li>📑 Top tabs: Resumen | Gastos | Reportes (swipeable)</li>
+            <li>Bottom: Inicio | <b>METAS</b> | 📷 | Ideas | <b>PERFIL</b></li>
+            <li>Avatar replaces Ajustes (settings in Perfil)</li>
+            <li>Analíticas moved to top tabs</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/></svg>
+              <svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/></svg>
+            </div>
+          </div>
+
+          <!-- Header -->
+          <div class="header-bar">
+            <div class="g-logo-circle"><span>G</span></div>
+            <span class="header-title">Gastify</span>
+            <button class="header-settings-btn">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2m11-11h-2M3 12H1m17.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m12.73 0l-1.41-1.41M6.34 6.34L4.93 4.93"/></svg>
+            </button>
+          </div>
+
+          <!-- Top Tabs (Instagram-style) -->
+          <div class="top-tabs" id="topTabsE">
+            <div class="top-tab active" onclick="switchTabE(this, 'resumen')">Resumen</div>
+            <div class="top-tab" onclick="switchTabE(this, 'gastos')">Gastos</div>
+            <div class="top-tab" onclick="switchTabE(this, 'reportes')">Reportes</div>
+          </div>
+
+          <!-- TAB 1: Resumen (Dashboard Summary) -->
+          <div class="main-content tab-content-e" id="tab-resumen">
+            <div class="treemap-card">
+              <div class="treemap-header">
+                <span class="treemap-title">Este Mes</span>
+                <span class="treemap-month">Dic</span>
+              </div>
+              <div class="treemap-grid">
+                <div class="treemap-cell super">Super</div>
+                <div class="treemap-cell rest">Restau</div>
+                <div class="treemap-cell trans">Trans</div>
+                <div class="treemap-cell other">Otros</div>
+              </div>
+            </div>
+            <div class="transaction-section">
+              <div class="section-header">
+                <span class="section-title">Recientes</span>
+                <span class="section-link">Ver todo →</span>
+              </div>
+              <div class="transaction-item">
+                <div class="transaction-icon">🛒</div>
+                <div class="transaction-info">
+                  <div class="transaction-name">Supermercado</div>
+                  <div class="transaction-meta">Hoy</div>
+                </div>
+                <div class="transaction-amount">-$45.000</div>
+              </div>
+              <div class="transaction-item">
+                <div class="transaction-icon">☕</div>
+                <div class="transaction-info">
+                  <div class="transaction-name">Café</div>
+                  <div class="transaction-meta">Ayer</div>
+                </div>
+                <div class="transaction-amount">-$8.500</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: Gastos (Transaction List) -->
+          <div class="main-content tab-content-e" id="tab-gastos" style="display: none;">
+            <div class="transaction-section" style="margin-bottom: 8px;">
+              <div class="section-header">
+                <span class="section-title">Hoy</span>
+                <span class="section-link">$53.500</span>
+              </div>
+              <div class="transaction-item">
+                <div class="transaction-icon">🛒</div>
+                <div class="transaction-info">
+                  <div class="transaction-name">Supermercado Líder</div>
+                  <div class="transaction-meta">14:32 • Tarjeta</div>
+                </div>
+                <div class="transaction-amount">-$45.000</div>
+              </div>
+              <div class="transaction-item">
+                <div class="transaction-icon">☕</div>
+                <div class="transaction-info">
+                  <div class="transaction-name">Starbucks</div>
+                  <div class="transaction-meta">09:15 • Débito</div>
+                </div>
+                <div class="transaction-amount">-$8.500</div>
+              </div>
+            </div>
+            <div class="transaction-section" style="margin-bottom: 8px;">
+              <div class="section-header">
+                <span class="section-title">Ayer</span>
+                <span class="section-link">$32.000</span>
+              </div>
+              <div class="transaction-item">
+                <div class="transaction-icon">🍕</div>
+                <div class="transaction-info">
+                  <div class="transaction-name">Pizza Hut</div>
+                  <div class="transaction-meta">20:45 • Efectivo</div>
+                </div>
+                <div class="transaction-amount">-$18.000</div>
+              </div>
+              <div class="transaction-item">
+                <div class="transaction-icon">🚌</div>
+                <div class="transaction-info">
+                  <div class="transaction-name">Metro + Bus</div>
+                  <div class="transaction-meta">08:00 • BIP</div>
+                </div>
+                <div class="transaction-amount">-$1.400</div>
+              </div>
+              <div class="transaction-item">
+                <div class="transaction-icon">💊</div>
+                <div class="transaction-info">
+                  <div class="transaction-name">Farmacia</div>
+                  <div class="transaction-meta">12:30 • Débito</div>
+                </div>
+                <div class="transaction-amount">-$12.600</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: Reportes (Weekly Reports) -->
+          <div class="main-content tab-content-e" id="tab-reportes" style="display: none;">
+            <div class="report-card" style="background: var(--bg-secondary); border-radius: var(--radius-lg); padding: 12px; border: 1px solid var(--border-light); margin-bottom: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 12px; font-weight: 600; color: var(--text-primary);">Semana 23-29 Dic</span>
+                <span style="font-size: 10px; color: var(--success); background: var(--success-light); padding: 2px 6px; border-radius: 4px;">-12% vs anterior</span>
+              </div>
+              <div style="font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">$185.400</div>
+              <div style="font-size: 10px; color: var(--text-tertiary);">Total gastado esta semana</div>
+              <div style="display: flex; gap: 8px; margin-top: 10px;">
+                <div style="flex: 1; background: var(--bg-tertiary); border-radius: 6px; padding: 6px; text-align: center;">
+                  <div style="font-size: 11px; font-weight: 600; color: var(--text-primary);">$26.486</div>
+                  <div style="font-size: 8px; color: var(--text-tertiary);">Promedio/día</div>
+                </div>
+                <div style="flex: 1; background: var(--bg-tertiary); border-radius: 6px; padding: 6px; text-align: center;">
+                  <div style="font-size: 11px; font-weight: 600; color: var(--text-primary);">23</div>
+                  <div style="font-size: 8px; color: var(--text-tertiary);">Transacciones</div>
+                </div>
+              </div>
+            </div>
+            <div class="report-card" style="background: var(--bg-secondary); border-radius: var(--radius-lg); padding: 12px; border: 1px solid var(--border-light); margin-bottom: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 12px; font-weight: 600; color: var(--text-primary);">Semana 16-22 Dic</span>
+                <span style="font-size: 10px; color: var(--error); background: var(--error-light); padding: 2px 6px; border-radius: 4px;">+8% vs anterior</span>
+              </div>
+              <div style="font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">$210.650</div>
+              <div style="font-size: 10px; color: var(--text-tertiary);">Total gastado</div>
+            </div>
+            <div class="report-card" style="background: var(--bg-secondary); border-radius: var(--radius-lg); padding: 12px; border: 1px solid var(--border-light);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 12px; font-weight: 600; color: var(--text-primary);">Semana 9-15 Dic</span>
+                <span style="font-size: 10px; color: var(--success); background: var(--success-light); padding: 2px 6px; border-radius: 4px;">-5% vs anterior</span>
+              </div>
+              <div style="font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">$195.120</div>
+              <div style="font-size: 10px; color: var(--text-tertiary);">Total gastado</div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav: Inicio | Metas | [Scan] | Ideas | Perfil -->
+          <nav class="bottom-nav">
+            <div class="nav-item active">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item highlight">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              <span>Metas</span>
+            </div>
+            <div class="scan-center">
+              <div class="scan-btn">
+                <svg viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+              </div>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+            <div class="nav-item-avatar">
+              <div class="nav-avatar">G</div>
+              <span>Perfil</span>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================
+         OPTION F: Floating Action Button (FAB)
+         ============================================ -->
+    <div class="phone-container">
+      <div class="option-label">
+        <div class="option-title">Option F: FAB Actions</div>
+        <div class="option-desc">Floating button for quick actions</div>
+        <div class="option-details">
+          <ul>
+            <li>➕ FAB button (bottom-right) expands to 3 actions</li>
+            <li>Actions: Escanear | Agregar gasto | Nueva meta</li>
+            <li>Bottom: Inicio | Analíticas | <b>METAS</b> | Ideas (flat)</li>
+            <li>Center scan removed, replaced by FAB</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phone-frame">
+        <div class="phone-screen" style="position: relative;">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/></svg>
+              <svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/></svg>
+            </div>
+          </div>
+
+          <!-- Header -->
+          <div class="header-bar">
+            <div class="g-logo-circle"><span>G</span></div>
+            <span class="header-title">Gastify</span>
+            <button class="header-settings-btn">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2m11-11h-2M3 12H1m17.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m12.73 0l-1.41-1.41M6.34 6.34L4.93 4.93"/></svg>
+            </button>
+          </div>
+
+          <!-- Main Content -->
+          <div class="main-content">
+            <div class="treemap-card">
+              <div class="treemap-header">
+                <span class="treemap-title">Este Mes</span>
+                <span class="treemap-month">Dic</span>
+              </div>
+              <div class="treemap-grid">
+                <div class="treemap-cell super">Super</div>
+                <div class="treemap-cell rest">Restau</div>
+                <div class="treemap-cell trans">Trans</div>
+                <div class="treemap-cell other">Otros</div>
+              </div>
+            </div>
+            <div class="transaction-section">
+              <div class="section-header">
+                <span class="section-title">Recientes</span>
+                <span class="section-link">Ver todo →</span>
+              </div>
+              <div class="transaction-item">
+                <div class="transaction-icon">🛒</div>
+                <div class="transaction-info">
+                  <div class="transaction-name">Supermercado</div>
+                  <div class="transaction-meta">Hoy</div>
+                </div>
+                <div class="transaction-amount">-$45.000</div>
+              </div>
+              <div class="transaction-item">
+                <div class="transaction-icon">☕</div>
+                <div class="transaction-info">
+                  <div class="transaction-name">Café</div>
+                  <div class="transaction-meta">Ayer</div>
+                </div>
+                <div class="transaction-amount">-$8.500</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- FAB with expanded menu -->
+          <div class="fab-container">
+            <div class="fab-menu" id="fabMenuF">
+              <div class="fab-menu-item">
+                <svg viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                Escanear boleta
+              </div>
+              <div class="fab-menu-item">
+                <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                Agregar gasto
+              </div>
+              <div class="fab-menu-item">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                Nueva meta
+              </div>
+            </div>
+            <div class="fab-btn" onclick="toggleFab('fabMenuF')">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            </div>
+          </div>
+
+          <!-- Bottom Nav: Flat (no center scan) -->
+          <nav class="bottom-nav-flat">
+            <div class="nav-item active">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="nav-item highlight">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              <span>Metas</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end phones-grid -->
+
+  <!-- Legend comparing options -->
+  <div class="legend">
+    <div class="legend-title">Comparison Summary</div>
+    <div class="legend-grid" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="legend-item">
+        <div class="legend-label">Option A (Current)</div>
+        <div class="legend-value pro">+ Familiar, minimal changes</div>
+        <div class="legend-value con">- Goals hidden in menu</div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-label">Option B</div>
+        <div class="legend-value pro">+ Goals prominent</div>
+        <div class="legend-value con">- Settings harder to find</div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-label">Option C</div>
+        <div class="legend-value pro">+ Action-oriented nav</div>
+        <div class="legend-value con">- Insights might be ignored</div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-label">Option D</div>
+        <div class="legend-value pro">+ Clean, scalable</div>
+        <div class="legend-value con">- Deeper navigation in Datos</div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-label">Option E</div>
+        <div class="legend-value pro">+ Modern feel, everything accessible</div>
+        <div class="legend-value con">- Complex home screen</div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-label">Option F</div>
+        <div class="legend-value pro">+ Multiple quick actions, cleaner nav</div>
+        <div class="legend-value con">- Hides primary scan action</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Controls -->
+  <div class="global-controls">
+    <div class="control-group">
+      <div class="control-label">Mode</div>
+      <button class="mode-toggle" id="darkModeToggle" onclick="toggleDarkMode(this)">
+        <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        Dark
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Toggle hamburger menus
+    function toggleMenu(menuId) {
+      var menu = document.getElementById(menuId);
+      // Close all other menus first
+      document.querySelectorAll('.top-menu-preview').forEach(function(m) {
+        if (m.id !== menuId) m.classList.remove('open');
+      });
+      document.querySelectorAll('.fab-menu').forEach(function(m) {
+        m.classList.remove('open');
+      });
+      // Toggle this menu
+      menu.classList.toggle('open');
+    }
+
+    // Toggle FAB menu
+    function toggleFab(menuId) {
+      var menu = document.getElementById(menuId);
+      // Close all other menus first
+      document.querySelectorAll('.top-menu-preview').forEach(function(m) {
+        m.classList.remove('open');
+      });
+      document.querySelectorAll('.fab-menu').forEach(function(m) {
+        if (m.id !== menuId) m.classList.remove('open');
+      });
+      // Toggle this menu
+      menu.classList.toggle('open');
+    }
+
+    // Switch top tabs (Option E) - with content switching
+    function switchTabE(el, tabName) {
+      // Update tab styling
+      var parent = el.parentElement;
+      parent.querySelectorAll('.top-tab').forEach(function(tab) {
+        tab.classList.remove('active');
+      });
+      el.classList.add('active');
+
+      // Hide all tab contents
+      document.getElementById('tab-resumen').style.display = 'none';
+      document.getElementById('tab-gastos').style.display = 'none';
+      document.getElementById('tab-reportes').style.display = 'none';
+
+      // Show selected tab content
+      document.getElementById('tab-' + tabName).style.display = 'flex';
+    }
+
+    // Legacy switchTab for backward compatibility
+    function switchTab(el) {
+      var parent = el.parentElement;
+      parent.querySelectorAll('.top-tab').forEach(function(tab) {
+        tab.classList.remove('active');
+      });
+      el.classList.add('active');
+    }
+
+    // Close menus when clicking outside
+    document.addEventListener('click', function(e) {
+      // If click is not on a menu button or inside a menu, close all menus
+      if (!e.target.closest('.header-menu-btn') &&
+          !e.target.closest('.fab-btn') &&
+          !e.target.closest('.top-menu-preview') &&
+          !e.target.closest('.fab-menu')) {
+        document.querySelectorAll('.top-menu-preview').forEach(function(m) {
+          m.classList.remove('open');
+        });
+        document.querySelectorAll('.fab-menu').forEach(function(m) {
+          m.classList.remove('open');
+        });
+      }
+    });
+
+    // Dark Mode Toggle
+    function toggleDarkMode(el) {
+      var isDark = document.body.getAttribute('data-mode') === 'dark';
+      var newMode = isDark ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-mode', newMode);
+      document.body.setAttribute('data-mode', newMode);
+
+      if (newMode === 'dark') {
+        el.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg> Light';
+      } else {
+        el.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Dark';
+      }
+    }
+  </script>
+
+</body>
+</html>

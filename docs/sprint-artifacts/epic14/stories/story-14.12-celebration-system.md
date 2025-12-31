@@ -1,0 +1,213 @@
+# Story 14.12: Celebration System
+
+**Status:** ready-for-dev
+**Points:** 3
+**Epic:** 14 - Core Implementation
+**Dependencies:** Story 14.1 (Animation Framework)
+
+---
+
+## Story
+
+As a **user achieving financial milestones**,
+I want **multi-sensory celebration effects**,
+so that **I feel rewarded and motivated to continue tracking**.
+
+## Acceptance Criteria
+
+1. **CelebrationTrigger component** orchestrates celebration effects
+2. **Confetti animation** using existing canvas-confetti library
+3. **Haptic feedback** via navigator.vibrate API
+4. **Optional sound effects** if user has enabled audio
+5. **Celebration triggers** defined for milestones, personal records, goal completions
+6. **Reduced motion support** - skip visual animation but still provide feedback
+
+## Tasks / Subtasks
+
+- [ ] Task 1: Create CelebrationTrigger component (AC: #1)
+  - [ ] Create `src/components/celebrations/CelebrationTrigger.tsx`
+  - [ ] Orchestrate confetti, haptic, sound effects
+  - [ ] Accept trigger configuration
+
+- [ ] Task 2: Enhance confetti integration (AC: #2)
+  - [ ] Use existing `src/utils/confetti.ts`
+  - [ ] Add `celebrateSmall` for minor achievements
+  - [ ] Configure colors per celebration type
+  - [ ] Respect disableForReducedMotion
+
+- [ ] Task 3: Implement haptic feedback (AC: #3)
+  - [ ] Create haptic utility function
+  - [ ] Pattern for small: [50]
+  - [ ] Pattern for big: [100, 50, 100]
+  - [ ] Check navigator.vibrate availability
+
+- [ ] Task 4: Add optional sound effects (AC: #4)
+  - [ ] Create sound utility with audio files
+  - [ ] Small celebration: subtle chime
+  - [ ] Big celebration: triumphant sound
+  - [ ] Check user audio preference in settings
+
+- [ ] Task 5: Define celebration triggers (AC: #5)
+  - [ ] Milestone: savings goal reached
+  - [ ] Personal record: lowest category week
+  - [ ] Streak: consecutive tracking days
+  - [ ] First scan: welcome celebration
+
+- [ ] Task 6: Add reduced motion support (AC: #6)
+  - [ ] Skip confetti animation
+  - [ ] Still provide haptic feedback
+  - [ ] Still play sound if enabled
+  - [ ] Show static "success" indicator instead
+
+- [ ] Task 7: Write tests
+  - [ ] Test celebration orchestration
+  - [ ] Test haptic patterns
+  - [ ] Test reduced motion behavior
+
+## Dev Notes
+
+### Existing Confetti Utility
+
+**From src/utils/confetti.ts:**
+```typescript
+export function celebrateSuccess(): void {
+  confetti({
+    particleCount: 80,
+    spread: 60,
+    origin: { y: 0.6 },
+    colors: ['#3b82f6', '#6366f1', '#8b5cf6', '#22c55e', '#f59e0b'],
+    disableForReducedMotion: true,
+  });
+}
+
+export function celebrateBig(): void {
+  // Multi-burst celebration
+}
+```
+
+### Celebration Configuration
+
+```typescript
+interface CelebrationConfig {
+  type: 'small' | 'big';
+  confetti?: boolean;
+  haptic?: boolean;
+  sound?: boolean;
+}
+
+const CELEBRATION_PRESETS: Record<string, CelebrationConfig> = {
+  milestone: { type: 'big', confetti: true, haptic: true, sound: true },
+  personalRecord: { type: 'big', confetti: true, haptic: true, sound: true },
+  quickSave: { type: 'small', confetti: true, haptic: true, sound: false },
+  firstScan: { type: 'big', confetti: true, haptic: true, sound: true },
+  streak: { type: 'small', confetti: true, haptic: true, sound: false },
+};
+```
+
+### Haptic Patterns
+
+```typescript
+function triggerHaptic(type: 'small' | 'big'): void {
+  if (!navigator.vibrate) return;
+
+  const patterns = {
+    small: [50],           // Single short pulse
+    big: [100, 50, 100],   // Two pulses with gap
+  };
+
+  navigator.vibrate(patterns[type]);
+}
+```
+
+### Sound Effect Integration
+
+```typescript
+// Only if user has enabled sounds in settings
+interface CelebrationSounds {
+  small: HTMLAudioElement;
+  big: HTMLAudioElement;
+}
+
+function playSound(type: 'small' | 'big', enabled: boolean): void {
+  if (!enabled) return;
+
+  const sounds: CelebrationSounds = {
+    small: new Audio('/sounds/chime.mp3'),
+    big: new Audio('/sounds/triumph.mp3'),
+  };
+
+  sounds[type].play().catch(() => {
+    // Audio may be blocked by browser
+  });
+}
+```
+
+### Trigger Integration
+
+```typescript
+// In save completion handler
+async function onTransactionSaved(transaction: Transaction) {
+  // Check for achievements
+  const achievements = await checkAchievements(transaction);
+
+  if (achievements.personalRecord) {
+    triggerCelebration(CELEBRATION_PRESETS.personalRecord);
+  } else if (achievements.milestone) {
+    triggerCelebration(CELEBRATION_PRESETS.milestone);
+  } else {
+    // Standard save celebration
+    triggerCelebration(CELEBRATION_PRESETS.quickSave);
+  }
+}
+```
+
+### References
+
+- [Source: docs/sprint-artifacts/epic14/tech-context-epic14.md#Story 14.12]
+- [Source: src/utils/confetti.ts - Existing utility]
+- [Source: docs/uxui/motion-design-system.md#Celebration animations]
+
+---
+
+## Atlas Workflow Analysis
+
+> 🗺️ This section was generated by Atlas workflow chain analysis
+
+### Affected Workflows
+
+- **Quick Save Flow (#6)**: Celebration after successful save
+- **Insight Generation Flow (#5)**: Celebration for personal records
+- **Trust Merchant Flow (#7)**: Small celebration on trust save
+
+### Downstream Effects to Consider
+
+- Story 14.13 (Personal Records) will trigger celebrations
+- Story 14.14 (Session Complete) may include celebration
+- Don't over-celebrate - save big celebrations for real achievements
+
+### Testing Implications
+
+- **Existing tests to verify:** confetti.ts tests
+- **New scenarios to add:** Orchestration timing, haptic availability, sound preferences
+
+### Workflow Chain Visualization
+
+```
+[Save Complete] → [Achievement Check] → [THIS STORY: Celebration] → [User Delight]
+```
+
+---
+
+## Dev Agent Record
+
+### Agent Model Used
+
+_To be filled by dev agent_
+
+### Completion Notes List
+
+_To be filled during implementation_
+
+### File List
+
+_To be filled during implementation_
