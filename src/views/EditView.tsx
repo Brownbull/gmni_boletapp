@@ -114,6 +114,8 @@ interface EditViewProps {
     lang?: Language;
     /** Story 11.3: Animate items on initial load */
     animateItems?: boolean;
+    /** Story 12.3: Batch context for editing from batch review queue */
+    batchContext?: { index: number; total: number } | null;
 }
 
 export const EditView: React.FC<EditViewProps> = ({
@@ -156,6 +158,8 @@ export const EditView: React.FC<EditViewProps> = ({
     lang = 'en',
     // Story 11.3: Animate items on initial load
     animateItems = false,
+    // Story 12.3: Batch context for editing from batch review
+    batchContext = null,
 }) => {
     const [showImageViewer, setShowImageViewer] = useState(false);
     // Story 9.3: Debug info section state (AC #5)
@@ -627,9 +631,17 @@ export const EditView: React.FC<EditViewProps> = ({
                 >
                     <ArrowLeft size={24} strokeWidth={2} />
                 </button>
-                <h1 className="font-bold text-lg" style={{ color: 'var(--primary)' }}>
-                    {currentTransaction.id ? t('editTrans') : t('newTrans')}
-                </h1>
+                <div className="text-center">
+                    <h1 className="font-bold text-lg" style={{ color: 'var(--primary)' }}>
+                        {currentTransaction.id ? t('editTrans') : t('newTrans')}
+                    </h1>
+                    {/* Story 12.3: Batch context indicator (AC #4) */}
+                    {batchContext && (
+                        <p className="text-xs" style={{ color: 'var(--secondary)' }}>
+                            {batchContext.index} {t('of')} {batchContext.total}
+                        </p>
+                    )}
+                </div>
                 {currentTransaction.id ? (
                     <button
                         onClick={() => onDelete(currentTransaction.id!)}

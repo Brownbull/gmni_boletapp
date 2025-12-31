@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gastify Logo - Final Selection</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&family=DM+Serif+Text&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #1abc9c;
+            --primary-dark: #16a085;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-tertiary: #e8e8e8;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --logo-bg: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2a2a2a;
+            --bg-tertiary: #333333;
+            --text-primary: #ffffff;
+            --text-secondary: #aaaaaa;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 24px;
+            line-height: 1.5;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        /* Final Selection Banner */
+        .selection-banner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 32px;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, rgba(26, 188, 156, 0.1) 0%, rgba(22, 160, 133, 0.1) 100%);
+            border: 1px solid rgba(26, 188, 156, 0.3);
+            border-radius: var(--radius-lg);
+            flex-wrap: wrap;
+        }
+
+        .selection-banner .label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .selection-banner .value {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .selection-banner .color-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--logo-bg);
+            box-shadow: 0 2px 6px rgba(26, 188, 156, 0.4);
+        }
+
+        .selection-banner .color-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .selection-banner .separator {
+            color: var(--text-tertiary);
+            font-size: 14px;
+        }
+
+        .selection-banner .effect-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        /* Controls Bar */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-primary);
+            padding: 8px 16px;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .control-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .toggle-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: var(--radius-md);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .toggle-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+            margin: 32px 0 16px;
+            padding-left: 12px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .font-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: background 0.3s;
+        }
+
+        .font-card.selected {
+            border: 2px solid var(--primary);
+            box-shadow: 0 4px 16px rgba(26, 188, 156, 0.2);
+        }
+
+        .font-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .font-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .font-tag {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(26, 188, 156, 0.15);
+            color: var(--primary);
+        }
+
+        .font-preview {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .preview-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* G Logo Circle */
+        .g-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--logo-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(26, 188, 156, 0.3);
+        }
+
+        .g-logo span {
+            color: white;
+            font-weight: 700;
+            font-size: 22px;
+            text-shadow: 0 1px 0 rgba(255,255,255,0.5), 0 -1px 0 rgba(0,0,0,0.2);
+        }
+
+        .g-logo-sm {
+            width: 28px;
+            height: 28px;
+        }
+
+        .g-logo-sm span {
+            font-size: 16px;
+        }
+
+        /* Wordmark */
+        .wordmark {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Header Preview */
+        .header-preview {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-center {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .header-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+        }
+
+        /* Logo Sizes Section */
+        .sizes-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+        }
+
+        .size-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .size-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gastify Logo - Final Selection</h1>
+    <p class="subtitle">Teal color + Crisp effect + Baloo 2 / DM Serif Text fonts</p>
+
+    <!-- Final Selection Banner -->
+    <div class="selection-banner">
+        <span class="label">Final Selection:</span>
+        <div class="value">
+            <div class="color-dot"></div>
+            <span class="color-name">Teal</span>
+        </div>
+        <span class="separator">+</span>
+        <span class="effect-name">Crisp Effect</span>
+        <span class="separator">+</span>
+        <span class="effect-name">2 Font Options</span>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <div class="control-group">
+            <span class="control-label">Theme:</span>
+            <button class="toggle-btn active" onclick="setTheme('light')">Light</button>
+            <button class="toggle-btn" onclick="setTheme('dark')">Dark</button>
+        </div>
+    </div>
+
+    <!-- FINAL FONT OPTIONS -->
+    <h2 class="section-title">Final Font Options</h2>
+    <div class="grid">
+        <!-- Baloo 2 -->
+        <div class="font-card selected">
+            <div class="font-header">
+                <div class="font-name">Option A: Baloo 2</div>
+                <div class="font-tag">Playful</div>
+            </div>
+            <div class="font-preview">
+                <div class="preview-row">
+                    <div class="g-logo"><span style="font-family: 'Baloo 2', sans-serif;">G</span></div>
+                    <span class="wordmark" style="font-family: 'Baloo 2', sans-serif;">Gastify</span>
+                </div>
+                <div class="header-preview">
+                    <div class="g-logo g-logo-sm"><span style="font-family: 'Baloo 2', sans-serif;">G</span></div>
+                    <span class="header-center" style="font-family: 'Baloo 2', sans-serif;">Gastify</span>
+                    <div class="header-btn">☰</div>
+                </div>
+                <div class="sizes-row">
+                    <div class="size-item">
+                        <div class="g-logo" style="width: 48px; height: 48px;"><span style="font-family: 'Baloo 2', sans-serif; font-size: 28px;">G</span></div>
+                        <span class="size-label">48px</span>
+                    </div>
+                    <div class="size-item">
+                        <div class="g-logo" style="width: 36px; height: 36px;"><span style="font-family: 'Baloo 2', sans-serif; font-size: 20px;">G</span></div>
+                        <span class="size-label">36px</span>
+                    </div>
+                    <div class="size-item">
+                        <div class="g-logo" style="width: 28px; height: 28px;"><span style="font-family: 'Baloo 2', sans-serif; font-size: 16px;">G</span></div>
+                        <span class="size-label">28px</span>
+                    </div>
+                    <div class="size-item">
+                        <div class="g-logo" style="width: 24px; height: 24px;"><span style="font-family: 'Baloo 2', sans-serif; font-size: 14px;">G</span></div>
+                        <span class="size-label">24px</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DM Serif Text -->
+        <div class="font-card selected">
+            <div class="font-header">
+                <div class="font-name">Option B: DM Serif Text</div>
+                <div class="font-tag">Elegant</div>
+            </div>
+            <div class="font-preview">
+                <div class="preview-row">
+                    <div class="g-logo"><span style="font-family: 'DM Serif Text', serif; font-weight: 400;">G</span></div>
+                    <span class="wordmark" style="font-family: 'DM Serif Text', serif; font-weight: 400;">Gastify</span>
+                </div>
+                <div class="header-preview">
+                    <div class="g-logo g-logo-sm"><span style="font-family: 'DM Serif Text', serif; font-weight: 400;">G</span></div>
+                    <span class="header-center" style="font-family: 'DM Serif Text', serif; font-weight: 400;">Gastify</span>
+                    <div class="header-btn">☰</div>
+                </div>
+                <div class="sizes-row">
+                    <div class="size-item">
+                        <div class="g-logo" style="width: 48px; height: 48px;"><span style="font-family: 'DM Serif Text', serif; font-weight: 400; font-size: 28px;">G</span></div>
+                        <span class="size-label">48px</span>
+                    </div>
+                    <div class="size-item">
+                        <div class="g-logo" style="width: 36px; height: 36px;"><span style="font-family: 'DM Serif Text', serif; font-weight: 400; font-size: 20px;">G</span></div>
+                        <span class="size-label">36px</span>
+                    </div>
+                    <div class="size-item">
+                        <div class="g-logo" style="width: 28px; height: 28px;"><span style="font-family: 'DM Serif Text', serif; font-weight: 400; font-size: 16px;">G</span></div>
+                        <span class="size-label">28px</span>
+                    </div>
+                    <div class="size-item">
+                        <div class="g-logo" style="width: 24px; height: 24px;"><span style="font-family: 'DM Serif Text', serif; font-weight: 400; font-size: 14px;">G</span></div>
+                        <span class="size-label">24px</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Side by Side Comparison -->
+    <h2 class="section-title">Side by Side Comparison</h2>
+    <div class="font-card" style="max-width: 500px; margin: 0 auto;">
+        <div class="font-header">
+            <div class="font-name">Header Bar Comparison</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- Baloo 2 Header -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 11px; color: var(--text-secondary); width: 60px;">Baloo 2</span>
+                <div class="header-preview" style="flex: 1;">
+                    <div class="g-logo g-logo-sm"><span style="font-family: 'Baloo 2', sans-serif;">G</span></div>
+                    <span class="header-center" style="font-family: 'Baloo 2', sans-serif;">Gastify</span>
+                    <div class="header-btn">☰</div>
+                </div>
+            </div>
+            <!-- DM Serif Text Header -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 11px; color: var(--text-secondary); width: 60px;">DM Serif</span>
+                <div class="header-preview" style="flex: 1;">
+                    <div class="g-logo g-logo-sm"><span style="font-family: 'DM Serif Text', serif; font-weight: 400;">G</span></div>
+                    <span class="header-center" style="font-family: 'DM Serif Text', serif; font-weight: 400;">Gastify</span>
+                    <div class="header-btn">☰</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme Toggle
+        function setTheme(theme) {
+            document.body.setAttribute('data-theme', theme === 'dark' ? 'dark' : '');
+            document.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
