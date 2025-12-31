@@ -33,6 +33,7 @@ dist-ssr
 *.sln
 *.sw?
 .firebase/
+docs/uxui/research/racional_report_example.pdf
 
 # Firebase Emulator data
 emulator-data/
@@ -50,6 +51,9 @@ lighthouse-reports/
 # Prompt testing results (keep structure, ignore generated files)
 prompt-testing/results/*
 !prompt-testing/results/.gitkeep
+
+# Generated test/demo data (scripts are kept, output is ignored)
+scripts/generated-data/
 
 # Legacy test-results (deprecated - use prompt-testing/results/)
 test-results/

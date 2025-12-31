@@ -1,0 +1,3584 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="mono" data-font="outfit" data-mode="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gastify - Transaction List + Filters</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Baloo+2:wght@700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       DESIGN TOKENS FROM REFERENCE
+       ============================================ */
+    :root {
+      /* Primary Palette */
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --primary-dark: #1e40af;
+      /* Secondary */
+      --secondary: #64748b;
+      --secondary-light: #f1f5f9;
+      --accent: #0ea5e9;
+      /* Backgrounds */
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --bg-inverse: #0f172a;
+      /* Text */
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --text-inverse: #f8fafc;
+      /* Borders */
+      --border-light: #e2e8f0;
+      --border-medium: #cbd5e1;
+      --border-dark: #94a3b8;
+      /* Semantic */
+      --success: #22c55e;
+      --success-light: #dcfce7;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --error: #ef4444;
+      --error-light: #fee2e2;
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      /* Spacing */
+      --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+      --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+      /* Radii */
+      --radius-sm: 6px; --radius-md: 10px; --radius-lg: 12px;
+      --radius-xl: 16px; --radius-2xl: 20px; --radius-full: 9999px;
+      /* Typography */
+      --font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+      --transition-fast: 150ms ease;
+      --transition-normal: 200ms ease;
+      --transition-slow: 300ms ease;
+    }
+
+    /* THEME 1: Professional Blue (Default) */
+    [data-theme="professional"] {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --primary-dark: #1e40af;
+      --secondary: #64748b;
+      --secondary-light: #f1f5f9;
+      --accent: #0ea5e9;
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --bg-inverse: #0f172a;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --border-light: #e2e8f0;
+      --border-medium: #cbd5e1;
+    }
+
+    /* THEME 2: Monochrome Minimal */
+    [data-theme="mono"] {
+      --primary: #18181b;
+      --primary-hover: #27272a;
+      --primary-light: #f4f4f5;
+      --primary-dark: #09090b;
+      --secondary: #52525b;
+      --secondary-light: #e4e4e7;
+      --accent: #3b82f6;
+      --bg-primary: #fafafa;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f4f4f5;
+      --bg-inverse: #18181b;
+      --text-primary: #18181b;
+      --text-secondary: #52525b;
+      --text-tertiary: #a1a1aa;
+      --border-light: #e4e4e7;
+      --border-medium: #d4d4d8;
+    }
+
+    /* THEME 3: Ni No Kuni / Studio Ghibli */
+    [data-theme="ninokuni"] {
+      --primary: #4a7c59;
+      --primary-hover: #3d6b4a;
+      --primary-light: #d4e5d9;
+      --primary-dark: #2d5438;
+      --secondary: #5b8fa8;
+      --secondary-light: #d5e8f0;
+      --accent: #e8a87c;
+      --bg-primary: #f5f0e8;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1dbb6;
+      --bg-inverse: #2d3a4a;
+      --text-primary: #2d3a4a;
+      --text-secondary: #4a5568;
+      --text-tertiary: #7d9b5f;
+      --border-light: #e3bba1;
+      --border-medium: #d4a574;
+      --success: #7d9b5f;
+      --success-light: #d4e5d9;
+    }
+
+    /* ============================================
+       DARK MODE VARIANTS
+       ============================================ */
+    [data-theme="professional"][data-mode="dark"] {
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --primary-light: #1e3a5f;
+      --primary-dark: #60a5fa;
+      --secondary: #94a3b8;
+      --secondary-light: #334155;
+      --accent: #38bdf8;
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --bg-inverse: #f8fafc;
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-tertiary: #64748b;
+      --text-inverse: #0f172a;
+      --border-light: #334155;
+      --border-medium: #475569;
+      --border-dark: #64748b;
+    }
+
+    [data-theme="mono"][data-mode="dark"] {
+      --primary: #a1a1aa;
+      --primary-hover: #d4d4d8;
+      --primary-light: #27272a;
+      --primary-dark: #e4e4e7;
+      --secondary: #71717a;
+      --secondary-light: #3f3f46;
+      --accent: #60a5fa;
+      --bg-primary: #09090b;
+      --bg-secondary: #18181b;
+      --bg-tertiary: #27272a;
+      --bg-inverse: #fafafa;
+      --text-primary: #fafafa;
+      --text-secondary: #d4d4d8;
+      --text-tertiary: #71717a;
+      --text-inverse: #09090b;
+      --border-light: #27272a;
+      --border-medium: #3f3f46;
+    }
+
+    [data-theme="ninokuni"][data-mode="dark"] {
+      --primary: #6b9e7a;
+      --primary-hover: #5a8a68;
+      --primary-light: #2d3d32;
+      --primary-dark: #8fbf9c;
+      --secondary: #7ba8be;
+      --secondary-light: #2d3d4a;
+      --accent: #d4a574;
+      --bg-primary: #1a2420;
+      --bg-secondary: #243028;
+      --bg-tertiary: #2d3d32;
+      --bg-inverse: #f5f0e8;
+      --text-primary: #e8e4dc;
+      --text-secondary: #b8c4a8;
+      --text-tertiary: #6b8b5f;
+      --text-inverse: #2d3a4a;
+      --border-light: #3d4d42;
+      --border-medium: #4d5d52;
+      --success: #8fbf9c;
+      --success-light: #2d3d32;
+    }
+
+    /* Font Definitions */
+    body[data-font="outfit"] { --font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif; }
+    body[data-font="space"] { --font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; }
+
+    /* Logo Style Definitions - Paired with themes */
+    body[data-theme="professional"] .g-logo-circle { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important; }
+    body[data-theme="mono"] .g-logo-circle { background: linear-gradient(135deg, #18181b 0%, #3f3f46 100%) !important; }
+    body[data-theme="ninokuni"] .g-logo-circle { background: linear-gradient(135deg, #4a7c59 0%, #5b8fa8 100%) !important; }
+
+    /* Logo Style Definitions - Dark Mode Variants */
+    body[data-theme="professional"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important; }
+    body[data-theme="mono"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #a1a1aa 0%, #71717a 100%) !important; }
+    body[data-theme="ninokuni"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #6b9e7a 0%, #7ba8be 100%) !important; }
+
+    /* ============================================
+       BASE STYLES
+       ============================================ */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-family);
+      background: #1a1a2e;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    /* Page Title */
+    .page-title {
+      color: white;
+      font-size: 24px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .page-subtitle {
+      color: #94a3b8;
+      font-size: 14px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    /* Global Controls Panel */
+    .global-controls {
+      background: rgba(30, 41, 59, 0.95);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      padding: 12px 20px;
+      display: flex;
+      flex-direction: row;
+      gap: 24px;
+      border: 1px solid rgba(255,255,255,0.1);
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .control-group { display: flex; align-items: center; gap: 10px; }
+    .control-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      white-space: nowrap;
+    }
+    .control-options { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* Theme Swatches */
+    .theme-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 150ms ease;
+    }
+    .theme-swatch:hover { transform: scale(1.1); }
+    .theme-swatch.active {
+      border-color: white;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+    }
+    .theme-swatch[data-theme="professional"] { background: linear-gradient(135deg, #2563eb 50%, #64748b 50%); }
+    .theme-swatch[data-theme="mono"] { background: linear-gradient(135deg, #18181b 50%, #52525b 50%); }
+    .theme-swatch[data-theme="ninokuni"] { background: linear-gradient(135deg, #4a7c59 50%, #5b8fa8 50%); }
+
+    /* Font Pills */
+    .font-pill {
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: #94a3b8;
+      transition: all 150ms ease;
+    }
+    .font-pill:hover { background: rgba(255,255,255,0.1); }
+    .font-pill.active {
+      background: white;
+      color: #0f172a;
+      border-color: white;
+    }
+
+    /* Mode Toggle */
+    .mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: #94a3b8;
+      transition: all 150ms ease;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .mode-toggle:hover { background: rgba(255,255,255,0.1); }
+    .mode-toggle.active {
+      background: #1e293b;
+      border-color: #3b82f6;
+      color: #f1f5f9;
+    }
+    .mode-toggle svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    /* States Grid */
+    .states-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(375px, 1fr));
+      gap: 40px;
+      max-width: 1600px;
+      width: 100%;
+    }
+
+    /* State Container */
+    .state-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .state-label {
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      background: var(--primary);
+      padding: 6px 16px;
+      border-radius: var(--radius-full);
+    }
+    .state-description {
+      color: #94a3b8;
+      font-size: 12px;
+      text-align: center;
+      max-width: 300px;
+    }
+
+    /* ============================================
+       PHONE FRAME
+       ============================================ */
+    .phone-frame {
+      width: 375px;
+      min-height: 812px;
+      background: #1e293b;
+      border-radius: 54px;
+      padding: 14px;
+      box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25),
+        inset 0 0 0 2px #334155, inset 0 0 0 4px #475569;
+    }
+    .phone-screen {
+      width: 100%;
+      height: 784px;
+      background: var(--bg-primary);
+      border-radius: 44px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px 8px;
+      background: var(--bg-primary);
+    }
+    .status-time { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .status-icons { display: flex; gap: 4px; align-items: center; }
+    .status-icons svg { width: 16px; height: 16px; fill: var(--text-primary); }
+
+    /* Selection Header (for batch delete mode) */
+    .selection-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px 12px;
+      background: var(--bg-primary);
+    }
+    .selection-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .selection-close {
+      width: 36px; height: 36px;
+      border-radius: var(--radius-md);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .selection-close svg {
+      width: 22px; height: 22px;
+      stroke: var(--text-primary);
+      fill: none;
+      stroke-width: 2;
+    }
+    .selection-count {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .selection-delete {
+      width: 40px; height: 40px;
+      border-radius: var(--radius-md);
+      background: var(--error-light);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .selection-delete svg {
+      width: 20px; height: 20px;
+      stroke: var(--error);
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Transactions Header */
+    .transactions-header {
+      background: var(--bg-primary);
+      padding: 0 4px 12px;
+    }
+    .transactions-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .transactions-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+    }
+    .icon-btn {
+      width: 36px; height: 36px;
+      border: none;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .icon-btn svg {
+      width: 18px; height: 18px;
+      stroke: var(--text-primary);
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* Filter Icon Buttons - Standard Pattern */
+    .filter-icon-btn {
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      position: relative;
+    }
+    .filter-icon-btn:hover {
+      background: var(--bg-tertiary);
+    }
+    .filter-icon-btn.active {
+      background: var(--primary-light);
+    }
+    .filter-icon-btn.active svg {
+      stroke: var(--primary);
+    }
+    .filter-icon-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--text-secondary);
+      fill: none;
+      stroke-width: 1.8;
+    }
+
+    /* Filter Dropdown Menu */
+    .filter-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      min-width: 220px;
+      max-height: 400px;
+      overflow-y: auto;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-light);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-8px);
+      transition: all var(--transition-fast);
+      z-index: 100;
+      font-family: var(--font-family);
+    }
+    .filter-dropdown::-webkit-scrollbar {
+      width: 6px;
+    }
+    .filter-dropdown::-webkit-scrollbar-track {
+      background: var(--bg-tertiary);
+      border-radius: 3px;
+    }
+    .filter-dropdown::-webkit-scrollbar-thumb {
+      background: var(--border-medium);
+      border-radius: 3px;
+    }
+    .filter-dropdown.open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    .filter-dropdown-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-light);
+      font-family: var(--font-family);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-tertiary);
+    }
+    .filter-dropdown-section {
+      padding: 0;
+    }
+    .filter-dropdown-label {
+      padding: 6px 16px;
+      font-family: var(--font-family);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .filter-dropdown-label.collapsible {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      padding: 8px 16px;
+      background: var(--bg-tertiary);
+      transition: background var(--transition-fast);
+    }
+    .filter-dropdown-label.collapsible:hover {
+      background: var(--border-light);
+    }
+    .section-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-toggle-btn {
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--border-medium);
+      border-radius: 4px;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .section-toggle-btn:hover {
+      border-color: var(--primary);
+    }
+    .section-toggle-btn.all-selected {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+    .section-toggle-btn.some-selected {
+      background: var(--primary-light);
+      border-color: var(--primary);
+    }
+    .section-toggle-btn .toggle-check {
+      width: 14px;
+      height: 14px;
+      stroke: transparent;
+      fill: none;
+      stroke-width: 3;
+      transition: stroke var(--transition-fast);
+    }
+    .section-toggle-btn.all-selected .toggle-check {
+      stroke: white;
+    }
+    .section-toggle-btn.some-selected .toggle-check {
+      stroke: var(--primary);
+    }
+    .filter-dropdown-label .collapse-icon {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-tertiary);
+      fill: none;
+      stroke-width: 2;
+      transition: transform var(--transition-fast);
+      cursor: pointer;
+    }
+    .filter-dropdown-label.collapsed .collapse-icon {
+      transform: rotate(-90deg);
+    }
+    .filter-dropdown-items {
+      max-height: 500px;
+      overflow: hidden;
+      transition: max-height var(--transition-normal);
+    }
+    .filter-dropdown-items.collapsed {
+      max-height: 0;
+    }
+    .filter-dropdown-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      font-family: var(--font-family);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    .filter-dropdown-item:nth-child(odd) {
+      background: var(--bg-secondary);
+    }
+    .filter-dropdown-item:nth-child(even) {
+      background: var(--bg-tertiary);
+    }
+    .filter-dropdown-item:hover {
+      background: var(--border-light);
+    }
+    .filter-dropdown-item.selected {
+      background: var(--primary-light) !important;
+      color: var(--primary);
+    }
+    .filter-dropdown-item.selected::after {
+      content: '✓';
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    .filter-checkbox {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border-medium);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-right: 10px;
+      transition: all var(--transition-fast);
+    }
+    .filter-dropdown-item.selected .filter-checkbox {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+    .filter-checkbox svg {
+      width: 12px;
+      height: 12px;
+      stroke: white;
+      stroke-width: 3;
+      fill: none;
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+    }
+    .filter-dropdown-item.selected .filter-checkbox svg {
+      opacity: 1;
+    }
+    /* Radio button style for single-select filters */
+    .filter-radio {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border-medium);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-right: 10px;
+      transition: all var(--transition-fast);
+    }
+    .filter-radio::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: transparent;
+      transition: background var(--transition-fast);
+    }
+    .filter-dropdown-item.selected .filter-radio {
+      border-color: var(--primary);
+    }
+    .filter-dropdown-item.selected .filter-radio::after {
+      background: var(--primary);
+    }
+    .filter-item-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+    .filter-dropdown-empty {
+      padding: 16px;
+      text-align: center;
+      font-family: var(--font-family);
+      font-size: 13px;
+      font-style: italic;
+      color: var(--text-tertiary);
+    }
+
+    /* Time Filter Slider Row */
+    .time-slider-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      gap: 8px;
+      background: var(--bg-secondary);
+    }
+    .time-slider-row:nth-child(odd) {
+      background: var(--bg-tertiary);
+    }
+    .time-slider-label {
+      font-family: var(--font-family);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      min-width: 65px;
+      cursor: pointer;
+      padding: 4px 8px;
+      margin: -4px -8px;
+      border-radius: var(--radius-md);
+      transition: all var(--transition-fast);
+    }
+    .time-slider-label:hover {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+    }
+    .time-slider-label.active {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .time-slider-control {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+      justify-content: flex-end;
+    }
+    .time-slider-btn {
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: transparent;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      color: var(--text-tertiary);
+    }
+    .time-slider-btn:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+    .time-slider-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    .time-slider-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+    .time-slider-value {
+      font-family: var(--font-family);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      min-width: 80px;
+      text-align: center;
+      padding: 4px 8px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+    }
+    .time-slider-value.selected {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    /* Time Breadcrumb Component */
+    .time-breadcrumb-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      margin-top: -4px;
+    }
+    .time-breadcrumb-pills {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      gap: 4px;
+    }
+    .time-breadcrumb-pill {
+      flex: 1;
+      padding: 8px 4px;
+      font-family: var(--font-family);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      white-space: nowrap;
+      text-align: center;
+    }
+    .time-breadcrumb-pill:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--border-medium);
+    }
+    .time-breadcrumb-pill.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .time-breadcrumb-separator {
+      font-size: 14px;
+      color: var(--text-tertiary);
+      padding: 0 2px;
+      flex-shrink: 0;
+    }
+    /* Counter removed - using filter count message instead */
+    .time-breadcrumb-counter {
+      display: none; /* Hidden - no longer needed */
+      padding: 5px 10px;
+      font-family: var(--font-family);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-full);
+      white-space: nowrap;
+    }
+
+    /* Search Bar */
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-light);
+    }
+    .search-bar svg {
+      width: 18px; height: 18px;
+      stroke: var(--text-tertiary);
+      fill: none;
+      stroke-width: 2;
+    }
+    .search-bar span {
+      font-size: 14px;
+      color: var(--text-tertiary);
+    }
+
+    /* Filter Chips Row */
+    .filter-chips-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 4px;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+    }
+    .filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-full);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .filter-chip.active {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .filter-chip svg {
+      width: 14px; height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+    .filter-chip-clear {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      background: var(--bg-tertiary);
+      border: none;
+      border-radius: var(--radius-full);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .filter-chip-clear:hover {
+      background: var(--error-light);
+      color: var(--error);
+    }
+    .filter-chip-clear svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+    .filter-count {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      padding: 8px 4px;
+    }
+
+    /* Transaction List */
+    .transaction-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .transaction-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+    }
+    .transaction-checkbox {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--border-medium);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .transaction-checkbox.checked {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+    .transaction-checkbox.checked svg {
+      width: 14px; height: 14px;
+      stroke: white;
+      fill: none;
+      stroke-width: 3;
+    }
+    .transaction-thumb {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .transaction-thumb svg {
+      width: 24px; height: 24px;
+      stroke: var(--text-tertiary);
+      fill: none;
+      stroke-width: 1.5;
+    }
+    .transaction-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .transaction-merchant {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .transaction-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .category-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .category-badge.groceries { background: #dcfce7; color: #15803d; }
+    .category-badge.restaurant { background: #fef3c7; color: #b45309; }
+    .category-badge.transport { background: #dbeafe; color: #1d4ed8; }
+    .category-badge.health { background: #fce7f3; color: #be185d; }
+    .category-badge.entertainment { background: #ede9fe; color: #7c3aed; }
+    .transaction-date {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+    .transaction-amount {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-align: right;
+    }
+
+    /* ============================================
+       EXPANDABLE TRANSACTION ITEMS
+       ============================================ */
+    .expandable-item {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid var(--border-light);
+      transition: border-color var(--transition-fast);
+    }
+    .expandable-item.selected {
+      border: 2px solid var(--primary);
+    }
+    .expandable-header {
+      padding: 12px;
+      cursor: pointer;
+    }
+    .expandable-content {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    /* Receipt thumbnail */
+    .receipt-thumb {
+      flex-shrink: 0;
+      width: 40px;
+      height: 46px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #fafaf8 0%, #f0ede4 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-light);
+    }
+    .receipt-thumb svg {
+      width: 18px;
+      height: 22px;
+      stroke: #9ca3af;
+      fill: none;
+      stroke-width: 1.2;
+      opacity: 0.7;
+    }
+    /* Expandable info */
+    .expandable-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .expandable-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 4px;
+    }
+    .expandable-merchant {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    .expandable-amount {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    .expandable-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .expandable-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+    }
+    .category-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+    .category-icon.groceries { background: #dcfce7; }
+    .category-icon.restaurant { background: #fee2e2; }
+    .category-icon.transport { background: #dbeafe; }
+    .category-icon.health { background: #fce7f3; }
+    .category-icon.entertainment { background: #ede9fe; }
+    .category-icon.home { background: #e8f4fd; }
+    .meta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 6px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-full);
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+    .expandable-chevron {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      stroke: var(--text-tertiary);
+      fill: none;
+      stroke-width: 2;
+      transition: transform var(--transition-fast);
+    }
+    .expandable-item.open .expandable-chevron {
+      transform: rotate(180deg);
+    }
+    /* Expandable details (items list) */
+    .expandable-details {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height var(--transition-normal);
+    }
+    .expandable-item.open .expandable-details {
+      max-height: 500px;
+    }
+    .items-section {
+      padding: 10px 12px;
+      border-top: 1px solid var(--border-light);
+      background: var(--bg-tertiary);
+    }
+    .items-header {
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+    .item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      font-size: 11px;
+    }
+    .item-name {
+      color: var(--text-secondary);
+    }
+    .item-price {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    .items-more {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--border-light);
+    }
+    .items-more-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 11px;
+      color: #059669;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .items-more-link svg {
+      width: 12px;
+      height: 12px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* ============================================
+       SELECTION MODE
+       ============================================ */
+    .selection-checkbox {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+    }
+    .checkbox-circle {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-fast);
+    }
+    .checkbox-circle.unchecked {
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border-light);
+    }
+    .checkbox-circle.checked {
+      background: var(--primary);
+      border: none;
+    }
+    .checkbox-circle svg {
+      width: 14px;
+      height: 14px;
+      stroke: white;
+      fill: none;
+      stroke-width: 3;
+    }
+    /* Selection action bar - uses theme-appropriate colors */
+    .selection-bar {
+      background: var(--bg-inverse);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .selection-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .selection-bar-close {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .selection-bar-close svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--text-inverse);
+      fill: none;
+      stroke-width: 2;
+    }
+    .selection-bar-count {
+      color: var(--text-inverse);
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .selection-bar-actions {
+      display: flex;
+      gap: 16px;
+    }
+    .selection-bar-btn {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .selection-bar-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--text-inverse);
+      fill: none;
+      stroke-width: 2;
+    }
+    .selection-bar-btn span {
+      color: var(--text-inverse);
+      font-size: 9px;
+    }
+
+    /* ============================================
+       ASSIGN GROUP MODAL
+       ============================================ */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 200;
+    }
+    .modal-card {
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      width: 100%;
+      max-width: 343px;
+    }
+    .modal-header {
+      padding: 12px 12px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-icon svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--primary);
+      fill: none;
+      stroke-width: 2;
+    }
+    .modal-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .modal-subtitle {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+    }
+    .modal-close svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--text-secondary);
+      fill: none;
+      stroke-width: 2;
+    }
+    .modal-body {
+      padding: 16px 12px 12px;
+    }
+    .modal-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .modal-input-wrapper {
+      position: relative;
+      flex: 1;
+    }
+    .modal-input-label {
+      position: absolute;
+      top: -8px;
+      left: 10px;
+      background: var(--bg-primary);
+      padding: 0 4px;
+      font-size: 11px;
+      color: var(--primary);
+      font-weight: 500;
+    }
+    .modal-select {
+      width: 100%;
+      height: 44px;
+      padding: 0 32px 0 12px;
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-family: var(--font-family);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      cursor: pointer;
+      appearance: none;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%236b7280" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+    .modal-add-btn {
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+      border: 1px dashed var(--border-medium);
+      border-radius: var(--radius-md);
+      background: var(--bg-tertiary);
+      color: var(--primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-add-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+    .modal-footer {
+      padding: 8px 12px 12px;
+      display: flex;
+      gap: 8px;
+    }
+    .modal-btn {
+      flex: 1;
+      padding: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: var(--font-family);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .modal-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+    .modal-btn.secondary {
+      border: 1px solid var(--border-light);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+    .modal-btn.primary {
+      border: none;
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+    }
+
+    /* Bottom Nav */
+    .bottom-nav {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      padding: 8px 16px 24px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-light);
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    .nav-item svg {
+      width: 24px; height: 24px;
+      stroke: var(--text-tertiary);
+      fill: none;
+      stroke-width: 1.8;
+    }
+    .nav-item span {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+    }
+    .nav-item.active svg { stroke: var(--primary); }
+    .nav-item.active span { color: var(--primary); font-weight: 600; }
+    .scan-center { margin-top: -56px; padding: 0; }
+    .scan-btn {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      cursor: pointer;
+      transition: background 300ms ease;
+    }
+    .scan-btn svg {
+      width: 24px; height: 24px;
+      stroke: white;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* ============================================
+       BOTTOM SHEET (Filter Panel) - Pattern #34
+       ============================================ */
+    .bottom-sheet-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 100;
+    }
+    .bottom-sheet {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      padding: 12px 16px 24px;
+      z-index: 101;
+      animation: filterSlideUp 0.3s ease-out;
+      max-height: 70%;
+      overflow-y: auto;
+    }
+    @keyframes filterSlideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .drag-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--border-medium);
+      border-radius: var(--radius-full);
+      margin: 0 auto 16px;
+    }
+    .sheet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .sheet-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .sheet-clear {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--primary);
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* Filter Sections */
+    .filter-section {
+      margin-bottom: 20px;
+    }
+    .filter-section-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+
+    /* Segmented Control */
+    .segmented-control {
+      display: flex;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      padding: 4px;
+      gap: 4px;
+    }
+    .segment {
+      flex: 1;
+      padding: 8px 12px;
+      border: none;
+      background: transparent;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .segment.active {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Category Filter Grid */
+    .category-filter-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .category-filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-full);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .category-filter-chip.selected {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .category-filter-chip svg {
+      width: 16px; height: 16px;
+    }
+
+    /* Apply Button */
+    .apply-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-lg);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    /* Future Section Placeholder */
+    .future-placeholder {
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      text-align: center;
+      color: var(--text-tertiary);
+      font-size: 13px;
+    }
+
+    /* ============================================
+       CENTERED MODAL (Delete Confirmation) - Pattern #34
+       ============================================ */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: calc(100% - 48px);
+      max-width: 320px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      text-align: center;
+      animation: deleteModalFadeIn 0.2s ease-out;
+    }
+    @keyframes deleteModalFadeIn {
+      from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+      to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+    .modal-icon {
+      width: 56px;
+      height: 56px;
+      background: var(--error-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .modal-icon svg {
+      width: 28px; height: 28px;
+      stroke: var(--error);
+      fill: none;
+      stroke-width: 2;
+    }
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    .modal-message {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .modal-btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+    }
+    .modal-btn-cancel {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+    .modal-btn-delete {
+      background: var(--error);
+      color: white;
+    }
+
+    /* ============================================
+       EMPTY STATE
+       ============================================ */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      text-align: center;
+    }
+    .empty-icon {
+      width: 80px;
+      height: 80px;
+      background: var(--bg-tertiary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .empty-icon svg {
+      width: 40px; height: 40px;
+      stroke: var(--text-tertiary);
+      fill: none;
+      stroke-width: 1.5;
+    }
+    .empty-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    .empty-message {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      max-width: 240px;
+    }
+    .empty-btn {
+      padding: 12px 24px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-full);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* ============================================
+       REDUCED MOTION SUPPORT
+       ============================================ */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body data-font="outfit" data-theme="mono" data-mode="light">
+
+  <!-- Page Title -->
+  <h1 class="page-title">Transaction List + Filters</h1>
+  <p class="page-subtitle">Story 13.8 - Comprehensive filtering and batch operations</p>
+
+  <!-- Global Controls -->
+  <div class="global-controls">
+    <div class="control-group">
+      <span class="control-label">Theme</span>
+      <div class="control-options">
+        <div class="theme-swatch" data-theme="professional" onclick="setTheme('professional')"></div>
+        <div class="theme-swatch active" data-theme="mono" onclick="setTheme('mono')"></div>
+        <div class="theme-swatch" data-theme="ninokuni" onclick="setTheme('ninokuni')"></div>
+      </div>
+    </div>
+    <div class="control-group">
+      <span class="control-label">Font</span>
+      <div class="control-options">
+        <button class="font-pill active" data-font="outfit" onclick="setFont('outfit')">Outfit</button>
+        <button class="font-pill" data-font="space" onclick="setFont('space')">Space</button>
+      </div>
+    </div>
+    <div class="control-group">
+      <span class="control-label">Mode</span>
+      <button class="mode-toggle" onclick="toggleMode()">
+        <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        Dark
+      </button>
+    </div>
+  </div>
+
+  <!-- States Grid -->
+  <div class="states-grid">
+
+    <!-- ============================================
+         STATE 1: DEFAULT LIST VIEW
+         ============================================ -->
+    <div class="state-container">
+      <span class="state-label">1. Default List View</span>
+      <p class="state-description">All transactions, recent first. Filter button visible.</p>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
+              <svg viewBox="0 0 24 24"><rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="13" x2="23" y2="11"/></svg>
+            </div>
+          </div>
+
+          <!-- Main Content -->
+          <div class="main-content">
+            <!-- Transactions Header - Standard Filter Pattern -->
+            <div class="transactions-header" style="padding-top: 4px;">
+              <div class="transactions-title-row">
+                <span class="transactions-title">Transacciones</span>
+                <div class="header-actions">
+                  <!-- Time Filter (Calendar Icon) -->
+                  <button class="filter-icon-btn" id="time-filter-btn-1" onclick="toggleDropdown('time-1', event)">
+                    <svg viewBox="0 0 24 24">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                  </button>
+                  <!-- Category Filter (Tag Icon) -->
+                  <button class="filter-icon-btn" id="category-filter-btn-1" onclick="toggleDropdown('category-1', event)">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                      <line x1="7" y1="7" x2="7.01" y2="7"/>
+                    </svg>
+                  </button>
+                  <!-- Custom Groups Filter (Layers Icon) - Future -->
+                  <button class="filter-icon-btn" id="custom-filter-btn-1" onclick="toggleDropdown('custom-1', event)">
+                    <svg viewBox="0 0 24 24">
+                      <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                      <polyline points="2 17 12 22 22 17"/>
+                      <polyline points="2 12 12 17 22 12"/>
+                    </svg>
+                  </button>
+
+                  <!-- Time Dropdown -->
+                  <div class="filter-dropdown" id="time-1-dropdown">
+                    <div class="time-slider-row">
+                      <span class="time-slider-label" data-level="year">Año</span>
+                      <div class="time-slider-control">
+                        <button class="time-slider-btn"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+                        <span class="time-slider-value selected">2024</span>
+                        <button class="time-slider-btn"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+                      </div>
+                    </div>
+                    <div class="time-slider-row">
+                      <span class="time-slider-label" data-level="quarter">Trimestre</span>
+                      <div class="time-slider-control">
+                        <button class="time-slider-btn"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+                        <span class="time-slider-value selected">Q4</span>
+                        <button class="time-slider-btn"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+                      </div>
+                    </div>
+                    <div class="time-slider-row">
+                      <span class="time-slider-label active" data-level="month">Mes</span>
+                      <div class="time-slider-control">
+                        <button class="time-slider-btn"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+                        <span class="time-slider-value selected">diciembre</span>
+                        <button class="time-slider-btn"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+                      </div>
+                    </div>
+                    <div class="time-slider-row">
+                      <span class="time-slider-label" data-level="week">Semana</span>
+                      <div class="time-slider-control">
+                        <button class="time-slider-btn"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+                        <span class="time-slider-value selected">dic 23-29</span>
+                        <button class="time-slider-btn"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+                      </div>
+                    </div>
+                    <div class="time-slider-row">
+                      <span class="time-slider-label" data-level="day">Día</span>
+                      <div class="time-slider-control">
+                        <button class="time-slider-btn"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+                        <span class="time-slider-value">23</span>
+                        <button class="time-slider-btn"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Category Dropdown -->
+                  <div class="filter-dropdown" id="category-1-dropdown">
+                    <!-- Transaction Categories Section (Collapsible) -->
+                    <div class="filter-dropdown-section">
+                      <div class="filter-dropdown-label collapsible">
+                        <span>Transacciones</span>
+                        <div class="section-header-actions">
+                          <button class="section-toggle-btn all-selected" data-section="category"><svg class="toggle-check" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></button>
+                          <svg class="collapse-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                        </div>
+                      </div>
+                      <div class="filter-dropdown-items" id="category-items-1">
+                        <div class="filter-dropdown-item selected" data-type="category" data-value="Supermercado">
+                          <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                          <span class="filter-item-content">🛒 Supermercado</span>
+                        </div>
+                        <div class="filter-dropdown-item selected" data-type="category" data-value="Restaurantes">
+                          <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                          <span class="filter-item-content">🍽️ Restaurantes</span>
+                        </div>
+                        <div class="filter-dropdown-item selected" data-type="category" data-value="Transporte">
+                          <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                          <span class="filter-item-content">🚗 Transporte</span>
+                        </div>
+                        <div class="filter-dropdown-item selected" data-type="category" data-value="Entretención">
+                          <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                          <span class="filter-item-content">🎬 Entretención</span>
+                        </div>
+                        <div class="filter-dropdown-item selected" data-type="category" data-value="Servicios">
+                          <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                          <span class="filter-item-content">💡 Servicios</span>
+                        </div>
+                        <div class="filter-dropdown-item selected" data-type="category" data-value="Salud">
+                          <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                          <span class="filter-item-content">💊 Salud</span>
+                        </div>
+                        <div class="filter-dropdown-item selected" data-type="category" data-value="Educación">
+                          <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                          <span class="filter-item-content">📚 Educación</span>
+                        </div>
+                        <div class="filter-dropdown-item selected" data-type="category" data-value="Vestuario">
+                          <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                          <span class="filter-item-content">👕 Vestuario</span>
+                        </div>
+                        <div class="filter-dropdown-item selected" data-type="category" data-value="Hogar">
+                          <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                          <span class="filter-item-content">🏠 Hogar</span>
+                        </div>
+                        <div class="filter-dropdown-item selected" data-type="category" data-value="Tecnología">
+                          <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                          <span class="filter-item-content">💻 Tecnología</span>
+                        </div>
+                        <div class="filter-dropdown-item selected" data-type="category" data-value="Mascotas">
+                          <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                          <span class="filter-item-content">🐾 Mascotas</span>
+                        </div>
+                        <div class="filter-dropdown-item selected" data-type="category" data-value="Otros">
+                          <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                          <span class="filter-item-content">📦 Otros</span>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Item Groups Section (Collapsible) -->
+                    <div class="filter-dropdown-section">
+                      <div class="filter-dropdown-label collapsible">
+                        <span>Ítems</span>
+                        <div class="section-header-actions">
+                          <button class="section-toggle-btn" data-section="group"><svg class="toggle-check" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></button>
+                          <svg class="collapse-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                        </div>
+                      </div>
+                      <div class="filter-dropdown-items" id="group-items-1">
+                        <div class="filter-dropdown-item" data-type="group" data-value="Carnes y Mariscos">
+                          <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                          <span class="filter-item-content">Carnes y Mariscos</span>
+                        </div>
+                        <div class="filter-dropdown-item" data-type="group" data-value="Lácteos">
+                          <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                          <span class="filter-item-content">Lácteos</span>
+                        </div>
+                        <div class="filter-dropdown-item" data-type="group" data-value="Panadería">
+                          <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                          <span class="filter-item-content">Panadería</span>
+                        </div>
+                        <div class="filter-dropdown-item" data-type="group" data-value="Frutas y Verduras">
+                          <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                          <span class="filter-item-content">Frutas y Verduras</span>
+                        </div>
+                        <div class="filter-dropdown-item" data-type="group" data-value="Bebidas">
+                          <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                          <span class="filter-item-content">Bebidas</span>
+                        </div>
+                        <div class="filter-dropdown-item" data-type="group" data-value="Congelados">
+                          <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                          <span class="filter-item-content">Congelados</span>
+                        </div>
+                        <div class="filter-dropdown-item" data-type="group" data-value="Limpieza">
+                          <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                          <span class="filter-item-content">Limpieza</span>
+                        </div>
+                        <div class="filter-dropdown-item" data-type="group" data-value="Aseo Personal">
+                          <span class="filter-checkbox"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>
+                          <span class="filter-item-content">Aseo Personal</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Custom Groups Dropdown (Single-Select) -->
+                  <div class="filter-dropdown" id="custom-1-dropdown">
+                    <div class="filter-dropdown-section">
+                      <div class="filter-dropdown-label">Grupos Personalizados</div>
+                      <div class="filter-dropdown-items" id="custom-group-items-1">
+                        <div class="filter-dropdown-item selected" data-type="custom-group" data-value="gastos-hogar">
+                          <span class="filter-radio"></span>
+                          <span class="filter-item-content">🏠 Gastos del Hogar</span>
+                        </div>
+                        <div class="filter-dropdown-item" data-type="custom-group" data-value="navidad-2024">
+                          <span class="filter-radio"></span>
+                          <span class="filter-item-content">🎄 Navidad 2024</span>
+                        </div>
+                        <div class="filter-dropdown-item" data-type="custom-group" data-value="proyecto-trabajo">
+                          <span class="filter-radio"></span>
+                          <span class="filter-item-content">💼 Proyecto Trabajo</span>
+                        </div>
+                        <div class="filter-dropdown-item" data-type="custom-group" data-value="viaje-valpo">
+                          <span class="filter-radio"></span>
+                          <span class="filter-item-content">🏖️ Viaje Valpo</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="search-bar">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <span>Buscar transacciones...</span>
+              </div>
+            </div>
+
+            <!-- Time Breadcrumb Row -->
+            <div class="time-breadcrumb-row">
+              <div class="time-breadcrumb-pills">
+                <button class="time-breadcrumb-pill">2024</button>
+                <span class="time-breadcrumb-separator">›</span>
+                <button class="time-breadcrumb-pill">Q4</button>
+                <span class="time-breadcrumb-separator">›</span>
+                <button class="time-breadcrumb-pill active">Dic</button>
+                <span class="time-breadcrumb-separator">›</span>
+                <button class="time-breadcrumb-pill">Sem 4</button>
+                <span class="time-breadcrumb-separator">›</span>
+                <button class="time-breadcrumb-pill">23</button>
+              </div>
+            </div>
+
+            <div class="filter-count">Mostrando 47 transacciones</div>
+
+            <!-- Transaction List - Expandable Items -->
+            <div class="transaction-list">
+              <!-- Transaction 1: Expanded (showing items) -->
+              <div class="expandable-item open" onclick="this.classList.toggle('open')">
+                <div class="expandable-header">
+                  <div class="expandable-content">
+                    <div class="receipt-thumb">
+                      <svg viewBox="0 0 22 26"><path d="M3 1v24l1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1V1l-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1z"/><path d="M6 7h10M6 11h7M6 15h4" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="expandable-info">
+                      <div class="expandable-row">
+                        <span class="expandable-merchant">Lider</span>
+                        <span class="expandable-amount">$45.990</span>
+                      </div>
+                      <div class="expandable-meta">
+                        <div class="expandable-badges">
+                          <div class="category-icon groceries">🛒</div>
+                          <span class="meta-pill">Hoy, 14:30</span>
+                          <span class="meta-pill">Las Condes</span>
+                        </div>
+                        <svg class="expandable-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="expandable-details">
+                  <div class="items-section">
+                    <div class="items-header">Items del Recibo</div>
+                    <div class="item-row"><span class="item-name">Leche Entera 1L</span><span class="item-price">$1.290</span></div>
+                    <div class="item-row"><span class="item-name">Pan Molde Integral</span><span class="item-price">$2.490</span></div>
+                    <div class="item-row"><span class="item-name">Huevos x12</span><span class="item-price">$3.890</span></div>
+                    <div class="item-row"><span class="item-name">Aceite Vegetal 1L</span><span class="item-price">$2.990</span></div>
+                    <div class="item-row"><span class="item-name">Arroz Grado 1 kg</span><span class="item-price">$1.590</span></div>
+                    <div class="items-more">
+                      <a class="items-more-link">
+                        <span>+7 items más...</span>
+                        <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Transaction 2: Collapsed -->
+              <div class="expandable-item" onclick="this.classList.toggle('open')">
+                <div class="expandable-header">
+                  <div class="expandable-content">
+                    <div class="receipt-thumb">
+                      <svg viewBox="0 0 22 26"><path d="M3 1v24l1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1V1l-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1z"/><path d="M6 7h10M6 11h7M6 15h4" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="expandable-info">
+                      <div class="expandable-row">
+                        <span class="expandable-merchant">Starbucks</span>
+                        <span class="expandable-amount">$8.500</span>
+                      </div>
+                      <div class="expandable-meta">
+                        <div class="expandable-badges">
+                          <div class="category-icon restaurant">🍕</div>
+                          <span class="meta-pill">Hoy, 10:15</span>
+                          <span class="meta-pill">Providencia</span>
+                        </div>
+                        <svg class="expandable-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="expandable-details">
+                  <div class="items-section">
+                    <div class="items-header">Items del Recibo</div>
+                    <div class="item-row"><span class="item-name">Café Latte Grande</span><span class="item-price">$4.500</span></div>
+                    <div class="item-row"><span class="item-name">Croissant</span><span class="item-price">$2.500</span></div>
+                    <div class="item-row"><span class="item-name">Propina</span><span class="item-price">$1.500</span></div>
+                    <div class="items-more">
+                      <a class="items-more-link">
+                        <span>Ver boleta completa</span>
+                        <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Transaction 3: Collapsed -->
+              <div class="expandable-item" onclick="this.classList.toggle('open')">
+                <div class="expandable-header">
+                  <div class="expandable-content">
+                    <div class="receipt-thumb">
+                      <svg viewBox="0 0 22 26"><path d="M3 1v24l1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1V1l-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1z"/><path d="M6 7h10M6 11h7M6 15h4" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="expandable-info">
+                      <div class="expandable-row">
+                        <span class="expandable-merchant">Uber</span>
+                        <span class="expandable-amount">$12.300</span>
+                      </div>
+                      <div class="expandable-meta">
+                        <div class="expandable-badges">
+                          <div class="category-icon transport">🚗</div>
+                          <span class="meta-pill">Ayer, 18:45</span>
+                          <span class="meta-pill">Santiago</span>
+                        </div>
+                        <svg class="expandable-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="expandable-details">
+                  <div class="items-section">
+                    <div class="items-header">Detalles del Viaje</div>
+                    <div class="item-row"><span class="item-name">Tarifa base</span><span class="item-price">$8.500</span></div>
+                    <div class="item-row"><span class="item-name">Distancia (5.2km)</span><span class="item-price">$2.600</span></div>
+                    <div class="item-row"><span class="item-name">Propina</span><span class="item-price">$1.200</span></div>
+                    <div class="items-more">
+                      <a class="items-more-link">
+                        <span>Ver boleta completa</span>
+                        <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Transaction 4: Collapsed -->
+              <div class="expandable-item" onclick="this.classList.toggle('open')">
+                <div class="expandable-header">
+                  <div class="expandable-content">
+                    <div class="receipt-thumb">
+                      <svg viewBox="0 0 22 26"><path d="M3 1v24l1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1V1l-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1z"/><path d="M6 7h10M6 11h7M6 15h4" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="expandable-info">
+                      <div class="expandable-row">
+                        <span class="expandable-merchant">Farmacia Ahumada</span>
+                        <span class="expandable-amount">$15.200</span>
+                      </div>
+                      <div class="expandable-meta">
+                        <div class="expandable-badges">
+                          <div class="category-icon health">💊</div>
+                          <span class="meta-pill">Ayer, 12:00</span>
+                          <span class="meta-pill">Ñuñoa</span>
+                        </div>
+                        <svg class="expandable-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="expandable-details">
+                  <div class="items-section">
+                    <div class="items-header">Items del Recibo</div>
+                    <div class="item-row"><span class="item-name">Ibuprofeno 400mg x20</span><span class="item-price">$3.990</span></div>
+                    <div class="item-row"><span class="item-name">Vitamina C 1000mg</span><span class="item-price">$6.990</span></div>
+                    <div class="item-row"><span class="item-name">Alcohol Gel 500ml</span><span class="item-price">$4.220</span></div>
+                    <div class="items-more">
+                      <a class="items-more-link">
+                        <span>Ver boleta completa</span>
+                        <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Transaction 5: Collapsed -->
+              <div class="expandable-item" onclick="this.classList.toggle('open')">
+                <div class="expandable-header">
+                  <div class="expandable-content">
+                    <div class="receipt-thumb">
+                      <svg viewBox="0 0 22 26"><path d="M3 1v24l1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1V1l-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1z"/><path d="M6 7h10M6 11h7M6 15h4" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="expandable-info">
+                      <div class="expandable-row">
+                        <span class="expandable-merchant">Cinemark</span>
+                        <span class="expandable-amount">$9.800</span>
+                      </div>
+                      <div class="expandable-meta">
+                        <div class="expandable-badges">
+                          <div class="category-icon entertainment">🎬</div>
+                          <span class="meta-pill">22 Dic, 20:00</span>
+                          <span class="meta-pill">Costanera</span>
+                        </div>
+                        <svg class="expandable-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="expandable-details">
+                  <div class="items-section">
+                    <div class="items-header">Items del Recibo</div>
+                    <div class="item-row"><span class="item-name">Entrada General</span><span class="item-price">$6.500</span></div>
+                    <div class="item-row"><span class="item-name">Combo Popcorn Med</span><span class="item-price">$3.300</span></div>
+                    <div class="items-more">
+                      <a class="items-more-link">
+                        <span>Ver boleta completa</span>
+                        <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav -->
+          <nav class="bottom-nav" role="navigation" aria-label="Navegación principal">
+            <div class="nav-item active">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="scan-center">
+              <div class="scan-btn">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+              </div>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+            <div class="nav-item" style="position: relative;">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <!-- Notification badge -->
+              <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+              <span>Alertas</span>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================
+         STATE 2: FILTERS APPLIED
+         ============================================ -->
+    <div class="state-container">
+      <span class="state-label">2. Filters Applied</span>
+      <p class="state-description">Filter chips visible showing active filters, filtered count displayed.</p>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
+              <svg viewBox="0 0 24 24"><rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="13" x2="23" y2="11"/></svg>
+            </div>
+          </div>
+
+          <!-- Main Content -->
+          <div class="main-content">
+            <!-- Transactions Header - Standard Filter Pattern (Active Filters) -->
+            <div class="transactions-header" style="padding-top: 4px;">
+              <div class="transactions-title-row">
+                <span class="transactions-title">Transacciones</span>
+                <div class="header-actions">
+                  <!-- Time Filter (Calendar Icon) -->
+                  <button class="filter-icon-btn" id="time-filter-btn-3" onclick="toggleDropdown('time-3', event)">
+                    <svg viewBox="0 0 24 24">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                  </button>
+                  <!-- Category Filter (Tag Icon) - Active -->
+                  <button class="filter-icon-btn active" id="category-filter-btn-3" onclick="toggleDropdown('category-3', event)">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                      <line x1="7" y1="7" x2="7.01" y2="7"/>
+                    </svg>
+                  </button>
+                  <!-- Custom Groups Filter (Layers Icon) -->
+                  <button class="filter-icon-btn" id="custom-filter-btn-3" onclick="toggleDropdown('custom-3', event)">
+                    <svg viewBox="0 0 24 24">
+                      <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                      <polyline points="2 17 12 22 22 17"/>
+                      <polyline points="2 12 12 17 22 12"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="search-bar">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <span>Buscar transacciones...</span>
+              </div>
+            </div>
+
+            <!-- Time Breadcrumb Row -->
+            <div class="time-breadcrumb-row">
+              <div class="time-breadcrumb-pills">
+                <button class="time-breadcrumb-pill">2024</button>
+                <span class="time-breadcrumb-separator">›</span>
+                <button class="time-breadcrumb-pill">Q4</button>
+                <span class="time-breadcrumb-separator">›</span>
+                <button class="time-breadcrumb-pill active">Dic</button>
+                <span class="time-breadcrumb-separator">›</span>
+                <button class="time-breadcrumb-pill">Sem 4</button>
+                <span class="time-breadcrumb-separator">›</span>
+                <button class="time-breadcrumb-pill">23</button>
+              </div>
+            </div>
+
+            <!-- Active Category Filter Chip -->
+            <div class="filter-chips-row">
+              <span class="filter-chip active">
+                Supermercado
+                <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </span>
+              <button class="filter-chip-clear" title="Limpiar filtros"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+            </div>
+
+            <div class="filter-count">Mostrando 12 de 47 transacciones</div>
+
+            <!-- Transaction List (filtered) - Expandable Items -->
+            <div class="transaction-list">
+              <!-- Transaction 1: Expanded -->
+              <div class="expandable-item open" onclick="this.classList.toggle('open')">
+                <div class="expandable-header">
+                  <div class="expandable-content">
+                    <div class="receipt-thumb">
+                      <svg viewBox="0 0 22 26"><path d="M3 1v24l1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1V1l-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1z"/><path d="M6 7h10M6 11h7M6 15h4" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="expandable-info">
+                      <div class="expandable-row">
+                        <span class="expandable-merchant">Lider</span>
+                        <span class="expandable-amount">$45.990</span>
+                      </div>
+                      <div class="expandable-meta">
+                        <div class="expandable-badges">
+                          <div class="category-icon groceries">🛒</div>
+                          <span class="meta-pill">Hoy, 14:30</span>
+                          <span class="meta-pill">Las Condes</span>
+                        </div>
+                        <svg class="expandable-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="expandable-details">
+                  <div class="items-section">
+                    <div class="items-header">Items del Recibo</div>
+                    <div class="item-row"><span class="item-name">Leche Entera 1L</span><span class="item-price">$1.290</span></div>
+                    <div class="item-row"><span class="item-name">Pan Molde Integral</span><span class="item-price">$2.490</span></div>
+                    <div class="item-row"><span class="item-name">Huevos x12</span><span class="item-price">$3.890</span></div>
+                    <div class="items-more">
+                      <a class="items-more-link">
+                        <span>+5 items más...</span>
+                        <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Transaction 2: Collapsed -->
+              <div class="expandable-item" onclick="this.classList.toggle('open')">
+                <div class="expandable-header">
+                  <div class="expandable-content">
+                    <div class="receipt-thumb">
+                      <svg viewBox="0 0 22 26"><path d="M3 1v24l1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1V1l-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1z"/><path d="M6 7h10M6 11h7M6 15h4" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="expandable-info">
+                      <div class="expandable-row">
+                        <span class="expandable-merchant">Jumbo</span>
+                        <span class="expandable-amount">$67.450</span>
+                      </div>
+                      <div class="expandable-meta">
+                        <div class="expandable-badges">
+                          <div class="category-icon groceries">🛒</div>
+                          <span class="meta-pill">20 Dic, 11:00</span>
+                          <span class="meta-pill">Providencia</span>
+                        </div>
+                        <svg class="expandable-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="expandable-details">
+                  <div class="items-section">
+                    <div class="items-header">Items del Recibo</div>
+                    <div class="item-row"><span class="item-name">Pollo Entero</span><span class="item-price">$5.990</span></div>
+                    <div class="item-row"><span class="item-name">Arroz 5kg</span><span class="item-price">$6.490</span></div>
+                    <div class="item-row"><span class="item-name">Aceite 3L</span><span class="item-price">$7.990</span></div>
+                    <div class="items-more">
+                      <a class="items-more-link">
+                        <span>+8 items más...</span>
+                        <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Transaction 3: Collapsed -->
+              <div class="expandable-item" onclick="this.classList.toggle('open')">
+                <div class="expandable-header">
+                  <div class="expandable-content">
+                    <div class="receipt-thumb">
+                      <svg viewBox="0 0 22 26"><path d="M3 1v24l1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1V1l-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1z"/><path d="M6 7h10M6 11h7M6 15h4" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="expandable-info">
+                      <div class="expandable-row">
+                        <span class="expandable-merchant">Tottus</span>
+                        <span class="expandable-amount">$32.100</span>
+                      </div>
+                      <div class="expandable-meta">
+                        <div class="expandable-badges">
+                          <div class="category-icon groceries">🛒</div>
+                          <span class="meta-pill">18 Dic, 16:20</span>
+                          <span class="meta-pill">Ñuñoa</span>
+                        </div>
+                        <svg class="expandable-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="expandable-details">
+                  <div class="items-section">
+                    <div class="items-header">Items del Recibo</div>
+                    <div class="item-row"><span class="item-name">Detergente 3L</span><span class="item-price">$4.990</span></div>
+                    <div class="item-row"><span class="item-name">Papel Higiénico x12</span><span class="item-price">$5.490</span></div>
+                    <div class="item-row"><span class="item-name">Cloro 2L</span><span class="item-price">$2.190</span></div>
+                    <div class="items-more">
+                      <a class="items-more-link">
+                        <span>+4 items más...</span>
+                        <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Transaction 4: Collapsed -->
+              <div class="expandable-item" onclick="this.classList.toggle('open')">
+                <div class="expandable-header">
+                  <div class="expandable-content">
+                    <div class="receipt-thumb">
+                      <svg viewBox="0 0 22 26"><path d="M3 1v24l1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1V1l-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1z"/><path d="M6 7h10M6 11h7M6 15h4" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="expandable-info">
+                      <div class="expandable-row">
+                        <span class="expandable-merchant">Santa Isabel</span>
+                        <span class="expandable-amount">$28.700</span>
+                      </div>
+                      <div class="expandable-meta">
+                        <div class="expandable-badges">
+                          <div class="category-icon groceries">🛒</div>
+                          <span class="meta-pill">15 Dic, 09:45</span>
+                          <span class="meta-pill">Vitacura</span>
+                        </div>
+                        <svg class="expandable-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="expandable-details">
+                  <div class="items-section">
+                    <div class="items-header">Items del Recibo</div>
+                    <div class="item-row"><span class="item-name">Frutas Varias</span><span class="item-price">$8.990</span></div>
+                    <div class="item-row"><span class="item-name">Verduras Frescas</span><span class="item-price">$6.450</span></div>
+                    <div class="item-row"><span class="item-name">Yogurt Pack x6</span><span class="item-price">$3.290</span></div>
+                    <div class="items-more">
+                      <a class="items-more-link">
+                        <span>+3 items más...</span>
+                        <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav -->
+          <nav class="bottom-nav" role="navigation" aria-label="Navegación principal">
+            <div class="nav-item active">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="scan-center">
+              <div class="scan-btn">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+              </div>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+            <div class="nav-item" style="position: relative;">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <!-- Notification badge -->
+              <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+              <span>Alertas</span>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================
+         STATE 3: SELECTION MODE (BATCH ACTIONS)
+         ============================================ -->
+    <div class="state-container">
+      <span class="state-label">3. Selection Mode</span>
+      <p class="state-description">Checkbox centered with card. Selection bar shows Grupo + Eliminar actions.</p>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
+              <svg viewBox="0 0 24 24"><rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="13" x2="23" y2="11"/></svg>
+            </div>
+          </div>
+
+          <!-- Main Content -->
+          <div class="main-content" style="gap: 4px;">
+            <!-- Transactions Header - Title only (no search in selection mode) -->
+            <div class="transactions-header" style="padding-top: 0; padding-bottom: 4px;">
+              <div class="transactions-title-row">
+                <span class="transactions-title">Transacciones</span>
+                <div class="header-actions">
+                  <!-- Time Filter (Calendar Icon) -->
+                  <button class="filter-icon-btn">
+                    <svg viewBox="0 0 24 24">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                  </button>
+                  <!-- Category Filter (Tag Icon) -->
+                  <button class="filter-icon-btn">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                      <line x1="7" y1="7" x2="7.01" y2="7"/>
+                    </svg>
+                  </button>
+                  <!-- Custom Groups Filter (Layers Icon) -->
+                  <button class="filter-icon-btn">
+                    <svg viewBox="0 0 24 24">
+                      <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                      <polyline points="2 17 12 22 22 17"/>
+                      <polyline points="2 12 12 17 22 12"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Selection Action Bar (right after title) -->
+            <div class="selection-bar" style="border-radius: var(--radius-md);">
+              <div class="selection-bar-left">
+                <button class="selection-bar-close">
+                  <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+                <span class="selection-bar-count">2 seleccionados</span>
+              </div>
+              <div class="selection-bar-actions">
+                <button class="selection-bar-btn">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                    <line x1="7" y1="7" x2="7.01" y2="7"/>
+                  </svg>
+                  <span>Grupo</span>
+                </button>
+                <button class="selection-bar-btn">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    <line x1="10" y1="11" x2="10" y2="17"/>
+                    <line x1="14" y1="11" x2="14" y2="17"/>
+                  </svg>
+                  <span>Eliminar</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Transaction List with Selection Checkboxes -->
+            <div class="transaction-list" style="margin-top: 12px;">
+              <!-- Transaction 1: Selected -->
+              <div class="expandable-item selected">
+                <div class="expandable-header">
+                  <div class="expandable-content">
+                    <div class="selection-checkbox">
+                      <div class="checkbox-circle checked">
+                        <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                      </div>
+                    </div>
+                    <div class="receipt-thumb">
+                      <svg viewBox="0 0 22 26"><path d="M3 1v24l1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1V1l-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1z"/><path d="M6 7h10M6 11h7M6 15h4" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="expandable-info">
+                      <div class="expandable-row">
+                        <span class="expandable-merchant">Lider</span>
+                        <span class="expandable-amount">$45.990</span>
+                      </div>
+                      <div class="expandable-meta">
+                        <div class="expandable-badges">
+                          <div class="category-icon groceries">🛒</div>
+                          <span class="meta-pill">Hoy, 14:30</span>
+                          <span class="meta-pill">Las Condes</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Transaction 2: Selected -->
+              <div class="expandable-item selected">
+                <div class="expandable-header">
+                  <div class="expandable-content">
+                    <div class="selection-checkbox">
+                      <div class="checkbox-circle checked">
+                        <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                      </div>
+                    </div>
+                    <div class="receipt-thumb">
+                      <svg viewBox="0 0 22 26"><path d="M3 1v24l1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1V1l-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1z"/><path d="M6 7h10M6 11h7M6 15h4" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="expandable-info">
+                      <div class="expandable-row">
+                        <span class="expandable-merchant">Starbucks</span>
+                        <span class="expandable-amount">$8.500</span>
+                      </div>
+                      <div class="expandable-meta">
+                        <div class="expandable-badges">
+                          <div class="category-icon restaurant">🍕</div>
+                          <span class="meta-pill">Hoy, 10:15</span>
+                          <span class="meta-pill">Providencia</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Transaction 3: Not Selected -->
+              <div class="expandable-item">
+                <div class="expandable-header">
+                  <div class="expandable-content">
+                    <div class="selection-checkbox">
+                      <div class="checkbox-circle unchecked"></div>
+                    </div>
+                    <div class="receipt-thumb">
+                      <svg viewBox="0 0 22 26"><path d="M3 1v24l1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1V1l-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1z"/><path d="M6 7h10M6 11h7M6 15h4" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="expandable-info">
+                      <div class="expandable-row">
+                        <span class="expandable-merchant">Uber</span>
+                        <span class="expandable-amount">$12.300</span>
+                      </div>
+                      <div class="expandable-meta">
+                        <div class="expandable-badges">
+                          <div class="category-icon transport">🚗</div>
+                          <span class="meta-pill">Ayer, 18:45</span>
+                          <span class="meta-pill">Santiago</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Transaction 4: Not Selected -->
+              <div class="expandable-item">
+                <div class="expandable-header">
+                  <div class="expandable-content">
+                    <div class="selection-checkbox">
+                      <div class="checkbox-circle unchecked"></div>
+                    </div>
+                    <div class="receipt-thumb">
+                      <svg viewBox="0 0 22 26"><path d="M3 1v24l1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1V1l-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1z"/><path d="M6 7h10M6 11h7M6 15h4" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="expandable-info">
+                      <div class="expandable-row">
+                        <span class="expandable-merchant">Farmacia Ahumada</span>
+                        <span class="expandable-amount">$15.200</span>
+                      </div>
+                      <div class="expandable-meta">
+                        <div class="expandable-badges">
+                          <div class="category-icon health">💊</div>
+                          <span class="meta-pill">Ayer, 12:00</span>
+                          <span class="meta-pill">Ñuñoa</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Transaction 5: Not Selected -->
+              <div class="expandable-item">
+                <div class="expandable-header">
+                  <div class="expandable-content">
+                    <div class="selection-checkbox">
+                      <div class="checkbox-circle unchecked"></div>
+                    </div>
+                    <div class="receipt-thumb">
+                      <svg viewBox="0 0 22 26"><path d="M3 1v24l1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1V1l-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1z"/><path d="M6 7h10M6 11h7M6 15h4" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="expandable-info">
+                      <div class="expandable-row">
+                        <span class="expandable-merchant">Cinemark</span>
+                        <span class="expandable-amount">$9.800</span>
+                      </div>
+                      <div class="expandable-meta">
+                        <div class="expandable-badges">
+                          <div class="category-icon entertainment">🎬</div>
+                          <span class="meta-pill">22 Dic, 20:00</span>
+                          <span class="meta-pill">Costanera</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav -->
+          <nav class="bottom-nav" role="navigation" aria-label="Navegación principal">
+            <div class="nav-item active">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="scan-center">
+              <div class="scan-btn">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+              </div>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+            <div class="nav-item" style="position: relative;">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <!-- Notification badge -->
+              <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+              <span>Alertas</span>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================
+         STATE 4: ASSIGN GROUP MODAL
+         ============================================ -->
+    <div class="state-container">
+      <span class="state-label">4. Assign Group Modal</span>
+      <p class="state-description">Modal to assign selected transactions to a group. Can select existing or create new.</p>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
+              <svg viewBox="0 0 24 24"><rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="13" x2="23" y2="11"/></svg>
+            </div>
+          </div>
+
+          <!-- Main Content (dimmed) -->
+          <div class="main-content" style="opacity: 0.3;">
+            <!-- Transactions Header - Standard Filter Pattern -->
+            <div class="transactions-header" style="padding-top: 4px;">
+              <div class="transactions-title-row">
+                <span class="transactions-title">Transacciones</span>
+                <div class="header-actions">
+                  <button class="filter-icon-btn">
+                    <svg viewBox="0 0 24 24">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                  </button>
+                  <button class="filter-icon-btn">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                      <line x1="7" y1="7" x2="7.01" y2="7"/>
+                    </svg>
+                  </button>
+                  <button class="filter-icon-btn">
+                    <svg viewBox="0 0 24 24">
+                      <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                      <polyline points="2 17 12 22 22 17"/>
+                      <polyline points="2 12 12 17 22 12"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="search-bar">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <span>Buscar transacciones...</span>
+              </div>
+            </div>
+
+            <!-- Selection Bar (dimmed) -->
+            <div class="selection-bar" style="margin-top: 8px;">
+              <div class="selection-bar-left">
+                <button class="selection-bar-close">
+                  <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+                <span class="selection-bar-count">2 seleccionados</span>
+              </div>
+              <div class="selection-bar-actions">
+                <button class="selection-bar-btn">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                    <line x1="7" y1="7" x2="7.01" y2="7"/>
+                  </svg>
+                  <span>Grupo</span>
+                </button>
+                <button class="selection-bar-btn">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                  <span>Eliminar</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="transaction-list" style="margin-top: 12px;">
+              <div class="expandable-item selected" style="height: 60px;"></div>
+              <div class="expandable-item selected" style="height: 60px;"></div>
+              <div class="expandable-item" style="height: 60px;"></div>
+            </div>
+          </div>
+
+          <!-- Modal Overlay -->
+          <div class="modal-overlay">
+            <div class="modal-card">
+              <!-- Modal Header -->
+              <div class="modal-header">
+                <div class="modal-header-left">
+                  <div class="modal-icon">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                      <line x1="7" y1="7" x2="7.01" y2="7"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <div class="modal-title">Asignar Grupo</div>
+                    <div class="modal-subtitle">2 transacciones</div>
+                  </div>
+                </div>
+                <button class="modal-close">
+                  <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+
+              <!-- Modal Body -->
+              <div class="modal-body">
+                <div class="modal-input-row">
+                  <div class="modal-input-wrapper">
+                    <label class="modal-input-label">Grupo</label>
+                    <select class="modal-select">
+                      <option>Seleccionar...</option>
+                      <option>🏠 Gastos del Hogar</option>
+                      <option>🎄 Navidad 2024</option>
+                      <option>🚗 Viaje Valparaíso</option>
+                      <option>👨‍👩‍👧 Familia</option>
+                    </select>
+                  </div>
+                  <button class="modal-add-btn">
+                    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Modal Footer -->
+              <div class="modal-footer">
+                <button class="modal-btn secondary">
+                  <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  Cancelar
+                </button>
+                <button class="modal-btn primary">
+                  <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                  Asignar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav (dimmed, behind modal) -->
+          <nav class="bottom-nav" role="navigation" aria-label="Navegación principal" style="opacity: 0.3;">
+            <div class="nav-item active">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="scan-center">
+              <div class="scan-btn">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+              </div>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+            <div class="nav-item" style="position: relative;">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <!-- Notification badge -->
+              <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+              <span>Alertas</span>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================
+         STATE 5: DELETE CONFIRMATION MODAL
+         ============================================ -->
+    <div class="state-container">
+      <span class="state-label">5. Delete Confirmation</span>
+      <p class="state-description">Confirm deletion of selected transactions with preview.</p>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
+              <svg viewBox="0 0 24 24"><rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="13" x2="23" y2="11"/></svg>
+            </div>
+          </div>
+
+          <!-- Main Content (dimmed) -->
+          <div class="main-content" style="opacity: 0.3;">
+            <!-- Transactions Header -->
+            <div class="transactions-header" style="padding-top: 4px;">
+              <div class="transactions-title-row">
+                <span class="transactions-title">Transacciones</span>
+                <div class="header-actions">
+                  <button class="filter-icon-btn">
+                    <svg viewBox="0 0 24 24">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                  </button>
+                  <button class="filter-icon-btn">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                      <line x1="7" y1="7" x2="7.01" y2="7"/>
+                    </svg>
+                  </button>
+                  <button class="filter-icon-btn">
+                    <svg viewBox="0 0 24 24">
+                      <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                      <polyline points="2 17 12 22 22 17"/>
+                      <polyline points="2 12 12 17 22 12"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <!-- Selection Bar (dimmed) -->
+            <div class="selection-bar" style="margin-top: 8px; border-radius: var(--radius-md);">
+              <div class="selection-bar-left">
+                <button class="selection-bar-close">
+                  <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+                <span class="selection-bar-count">2 seleccionados</span>
+              </div>
+              <div class="selection-bar-actions">
+                <button class="selection-bar-btn">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                    <line x1="7" y1="7" x2="7.01" y2="7"/>
+                  </svg>
+                  <span>Grupo</span>
+                </button>
+                <button class="selection-bar-btn">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                  <span>Eliminar</span>
+                </button>
+              </div>
+            </div>
+            <div class="transaction-list" style="margin-top: 12px;">
+              <div class="expandable-item selected" style="height: 60px;"></div>
+              <div class="expandable-item selected" style="height: 60px;"></div>
+              <div class="expandable-item" style="height: 60px;"></div>
+            </div>
+          </div>
+
+          <!-- Delete Confirmation Modal -->
+          <div class="modal-overlay">
+            <div class="modal-card" style="max-width: 343px;">
+              <!-- Warning Header -->
+              <div style="padding: 14px 12px 10px; display: flex; align-items: flex-start; gap: 10px;">
+                <div style="width: 36px; height: 36px; flex-shrink: 0; background: var(--error-light); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="2">
+                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                </div>
+                <div style="flex: 1;">
+                  <div style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px;">¿Eliminar 2 transacciones?</div>
+                  <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4;">Esta acción no se puede deshacer.</div>
+                </div>
+                <button class="modal-close">
+                  <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+
+              <!-- Transactions Preview -->
+              <div style="padding: 0 12px 10px;">
+                <div style="background: var(--bg-tertiary); border-radius: var(--radius-md); padding: 10px; font-size: 12px;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="color: var(--text-primary);">Lider - Las Condes</span>
+                    <span style="color: var(--text-secondary);">$45.990</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                    <span style="color: var(--text-primary);">Starbucks - Providencia</span>
+                    <span style="color: var(--text-secondary);">$8.500</span>
+                  </div>
+                  <div style="padding-top: 6px; border-top: 1px solid var(--border-light); display: flex; justify-content: space-between; font-weight: 600;">
+                    <span style="color: var(--text-primary);">Total</span>
+                    <span style="color: var(--text-primary);">$54.490</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Footer Buttons -->
+              <div class="modal-footer">
+                <button class="modal-btn secondary">
+                  <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  Cancelar
+                </button>
+                <button class="modal-btn" style="background: var(--error); color: white;">
+                  <svg viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav (dimmed) -->
+          <nav class="bottom-nav" role="navigation" aria-label="Navegación principal" style="opacity: 0.3;">
+            <div class="nav-item active">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="scan-center">
+              <div class="scan-btn">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+              </div>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+            <div class="nav-item" style="position: relative;">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <!-- Notification badge -->
+              <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+              <span>Alertas</span>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================
+         STATE 6: CREATE NEW GROUP MODAL
+         ============================================ -->
+    <div class="state-container">
+      <span class="state-label">6. Create New Group</span>
+      <p class="state-description">Create a new custom group to assign transactions.</p>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
+              <svg viewBox="0 0 24 24"><rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="13" x2="23" y2="11"/></svg>
+            </div>
+          </div>
+
+          <!-- Main Content (dimmed) -->
+          <div class="main-content" style="opacity: 0.3;">
+            <!-- Transactions Header -->
+            <div class="transactions-header" style="padding-top: 4px;">
+              <div class="transactions-title-row">
+                <span class="transactions-title">Transacciones</span>
+                <div class="header-actions">
+                  <button class="filter-icon-btn">
+                    <svg viewBox="0 0 24 24">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                  </button>
+                  <button class="filter-icon-btn">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                      <line x1="7" y1="7" x2="7.01" y2="7"/>
+                    </svg>
+                  </button>
+                  <button class="filter-icon-btn">
+                    <svg viewBox="0 0 24 24">
+                      <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                      <polyline points="2 17 12 22 22 17"/>
+                      <polyline points="2 12 12 17 22 12"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <!-- Selection Bar (dimmed) -->
+            <div class="selection-bar" style="margin-top: 8px; border-radius: var(--radius-md);">
+              <div class="selection-bar-left">
+                <button class="selection-bar-close">
+                  <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+                <span class="selection-bar-count">2 seleccionados</span>
+              </div>
+              <div class="selection-bar-actions">
+                <button class="selection-bar-btn">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                    <line x1="7" y1="7" x2="7.01" y2="7"/>
+                  </svg>
+                  <span>Grupo</span>
+                </button>
+                <button class="selection-bar-btn">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                  <span>Eliminar</span>
+                </button>
+              </div>
+            </div>
+            <div class="transaction-list" style="margin-top: 12px;">
+              <div class="expandable-item selected" style="height: 60px;"></div>
+              <div class="expandable-item selected" style="height: 60px;"></div>
+              <div class="expandable-item" style="height: 60px;"></div>
+            </div>
+          </div>
+
+          <!-- Create New Group Modal -->
+          <div class="modal-overlay">
+            <div class="modal-card" style="max-width: 343px;">
+              <!-- Compact Header with Plus Icon -->
+              <div style="padding: 12px 12px 0; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="width: 44px; height: 44px; flex-shrink: 0; border: 1px dashed var(--border-medium); border-radius: var(--radius-md); background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                  </div>
+                  <div>
+                    <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Nuevo Grupo</div>
+                    <div style="font-size: 11px; color: var(--text-secondary);">2 transacciones</div>
+                  </div>
+                </div>
+                <button class="modal-close">
+                  <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+
+              <!-- Modal Body - Overlapping label input -->
+              <div style="padding: 16px 12px 12px;">
+                <div style="position: relative;">
+                  <label style="position: absolute; top: -8px; left: 10px; background: var(--bg-primary); padding: 0 4px; font-size: 11px; color: var(--primary); font-weight: 500;">Nombre del grupo</label>
+                  <input type="text" style="width: 100%; height: 44px; padding: 0 12px; font-size: 14px; font-family: inherit; border: 1px solid var(--border-medium); border-radius: var(--radius-md); background: var(--bg-secondary); color: var(--text-primary); outline: none; box-sizing: border-box;" value="🎁 Regalos Navidad">
+                </div>
+                <!-- Tip -->
+                <div style="display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 11px; color: var(--text-secondary);">
+                  <span>💡</span>
+                  <span>Usa emoji al inicio para identificar rápido</span>
+                </div>
+              </div>
+
+              <!-- Footer Buttons -->
+              <div class="modal-footer">
+                <button class="modal-btn secondary">
+                  <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                  Volver
+                </button>
+                <button class="modal-btn primary">
+                  <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                  Crear
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav (dimmed) -->
+          <nav class="bottom-nav" role="navigation" aria-label="Navegación principal" style="opacity: 0.3;">
+            <div class="nav-item active">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="scan-center">
+              <div class="scan-btn">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+              </div>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+            <div class="nav-item" style="position: relative;">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <!-- Notification badge -->
+              <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+              <span>Alertas</span>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================
+         STATE 7: EMPTY RESULTS
+         ============================================ -->
+    <div class="state-container">
+      <span class="state-label">7. Empty Results</span>
+      <p class="state-description">No transactions match the current filters.</p>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
+              <svg viewBox="0 0 24 24"><rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="13" x2="23" y2="11"/></svg>
+            </div>
+          </div>
+
+          <!-- Main Content -->
+          <div class="main-content">
+            <!-- Transactions Header - Standard Filter Pattern (Active Filters, Empty Results) -->
+            <div class="transactions-header" style="padding-top: 4px;">
+              <div class="transactions-title-row">
+                <span class="transactions-title">Transacciones</span>
+                <div class="header-actions">
+                  <!-- Time Filter (Calendar Icon) -->
+                  <button class="filter-icon-btn" id="time-filter-btn-6" onclick="toggleDropdown('time-6', event)">
+                    <svg viewBox="0 0 24 24">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                  </button>
+                  <!-- Category Filter (Tag Icon) - Active -->
+                  <button class="filter-icon-btn active" id="category-filter-btn-6" onclick="toggleDropdown('category-6', event)">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                      <line x1="7" y1="7" x2="7.01" y2="7"/>
+                    </svg>
+                  </button>
+                  <!-- Custom Groups Filter (Layers Icon) -->
+                  <button class="filter-icon-btn" id="custom-filter-btn-6" onclick="toggleDropdown('custom-6', event)">
+                    <svg viewBox="0 0 24 24">
+                      <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                      <polyline points="2 17 12 22 22 17"/>
+                      <polyline points="2 12 12 17 22 12"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="search-bar">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <span>Buscar transacciones...</span>
+              </div>
+            </div>
+
+            <!-- Time Breadcrumb Row -->
+            <div class="time-breadcrumb-row">
+              <div class="time-breadcrumb-pills">
+                <button class="time-breadcrumb-pill">2024</button>
+                <span class="time-breadcrumb-separator">›</span>
+                <button class="time-breadcrumb-pill">Q1</button>
+                <span class="time-breadcrumb-separator">›</span>
+                <button class="time-breadcrumb-pill active">Ene</button>
+                <span class="time-breadcrumb-separator">›</span>
+                <button class="time-breadcrumb-pill">Sem 2</button>
+                <span class="time-breadcrumb-separator">›</span>
+                <button class="time-breadcrumb-pill">10</button>
+              </div>
+            </div>
+
+            <!-- Active Category Filter Chip -->
+            <div class="filter-chips-row">
+              <span class="filter-chip active">
+                Salud
+                <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </span>
+              <button class="filter-chip-clear" title="Limpiar filtros"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state">
+              <div class="empty-icon">
+                <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m8 21 4-4 4 4"/><path d="M12 17v4"/></svg>
+              </div>
+              <h3 class="empty-title">Sin resultados</h3>
+              <p class="empty-message">No hay transacciones que coincidan con tus filtros.</p>
+              <button class="empty-btn">Limpiar filtros</button>
+            </div>
+          </div>
+
+          <!-- Bottom Nav -->
+          <nav class="bottom-nav" role="navigation" aria-label="Navegación principal">
+            <div class="nav-item active">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              <span>Inicio</span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              <span>Analíticas</span>
+            </div>
+            <div class="scan-center">
+              <div class="scan-btn">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                  <circle cx="12" cy="13" r="3"/>
+                </svg>
+              </div>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              <span>Ideas</span>
+            </div>
+            <div class="nav-item" style="position: relative;">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <!-- Notification badge -->
+              <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+              <span>Alertas</span>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Theme/Font/Mode Switching Scripts -->
+  <script>
+    function setTheme(theme) {
+      document.querySelectorAll('.phone-screen').forEach(screen => {
+        screen.closest('html') || document.documentElement.setAttribute('data-theme', theme);
+      });
+      document.documentElement.setAttribute('data-theme', theme);
+      document.body.setAttribute('data-theme', theme);
+      document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+      document.querySelector(`.theme-swatch[data-theme="${theme}"]`).classList.add('active');
+    }
+
+    function setFont(font) {
+      document.body.setAttribute('data-font', font);
+      document.querySelectorAll('.font-pill').forEach(p => p.classList.remove('active'));
+      document.querySelector(`.font-pill[data-font="${font}"]`).classList.add('active');
+    }
+
+    function toggleMode() {
+      const html = document.documentElement;
+      const body = document.body;
+      const currentMode = html.getAttribute('data-mode') || 'light';
+      const newMode = currentMode === 'light' ? 'dark' : 'light';
+      html.setAttribute('data-mode', newMode);
+      body.setAttribute('data-mode', newMode);
+      document.querySelector('.mode-toggle').classList.toggle('active', newMode === 'dark');
+    }
+
+    // ============================================
+    // FILTER DROPDOWN FUNCTIONALITY
+    // ============================================
+    let activeDropdown = null;
+
+    function toggleDropdown(type, e) {
+      if (e) e.stopPropagation();
+
+      const dropdown = document.getElementById(type + '-dropdown');
+      const btn = document.getElementById(type.replace('-', '-filter-btn-').replace(/(\d+)$/, '$1'));
+
+      // Close all other dropdowns
+      document.querySelectorAll('.filter-dropdown.open').forEach(d => {
+        if (d.id !== type + '-dropdown') d.classList.remove('open');
+      });
+
+      // Toggle this dropdown
+      if (dropdown.classList.contains('open')) {
+        dropdown.classList.remove('open');
+        activeDropdown = null;
+      } else {
+        dropdown.classList.add('open');
+        activeDropdown = type;
+      }
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.filter-icon-btn') && !e.target.closest('.filter-dropdown')) {
+        document.querySelectorAll('.filter-dropdown.open').forEach(d => d.classList.remove('open'));
+        activeDropdown = null;
+      }
+    });
+
+    // Toggle category filter item selection
+    function toggleFilterItem(el, e) {
+      if (e) e.stopPropagation();
+      el.classList.toggle('selected');
+    }
+
+    // Toggle section collapse
+    function toggleSection(sectionId, labelEl, e) {
+      if (e) e.stopPropagation();
+      const section = document.getElementById(sectionId);
+      section.classList.toggle('collapsed');
+      labelEl.classList.toggle('collapsed');
+    }
+  </script>
+</body>
+</html>

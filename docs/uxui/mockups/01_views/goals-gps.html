@@ -1,0 +1,2552 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="mono" data-font="outfit" data-mode="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gastify - Goals GPS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Baloo+2:wght@700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       DESIGN TOKENS FROM REFERENCE
+       ============================================ */
+    :root {
+      /* Primary Palette */
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --primary-dark: #1e40af;
+      /* Secondary */
+      --secondary: #64748b;
+      --secondary-light: #f1f5f9;
+      --accent: #0ea5e9;
+      /* Backgrounds */
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --bg-inverse: #0f172a;
+      /* Text */
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --text-inverse: #f8fafc;
+      /* Borders */
+      --border-light: #e2e8f0;
+      --border-medium: #cbd5e1;
+      --border-dark: #94a3b8;
+      /* Semantic */
+      --success: #22c55e;
+      --success-light: #dcfce7;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --error: #ef4444;
+      --error-light: #fee2e2;
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      /* Spacing */
+      --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+      --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+      /* Radii */
+      --radius-sm: 6px; --radius-md: 10px; --radius-lg: 12px;
+      --radius-xl: 16px; --radius-2xl: 20px; --radius-full: 9999px;
+      /* Typography */
+      --font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+      --transition-fast: 150ms ease;
+      --transition-normal: 200ms ease;
+      --transition-slow: 300ms ease;
+    }
+
+    /* THEME 1: Professional Blue (Default) */
+    [data-theme="professional"] {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --primary-dark: #1e40af;
+      --secondary: #64748b;
+      --secondary-light: #f1f5f9;
+      --accent: #0ea5e9;
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --bg-inverse: #0f172a;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --border-light: #e2e8f0;
+      --border-medium: #cbd5e1;
+    }
+
+    /* THEME 2: Monochrome Minimal */
+    [data-theme="mono"] {
+      --primary: #18181b;
+      --primary-hover: #27272a;
+      --primary-light: #f4f4f5;
+      --primary-dark: #09090b;
+      --secondary: #52525b;
+      --secondary-light: #e4e4e7;
+      --accent: #3b82f6;
+      --bg-primary: #fafafa;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f4f4f5;
+      --bg-inverse: #18181b;
+      --text-primary: #18181b;
+      --text-secondary: #52525b;
+      --text-tertiary: #a1a1aa;
+      --border-light: #e4e4e7;
+      --border-medium: #d4d4d8;
+    }
+
+    /* THEME 3: Ni No Kuni / Studio Ghibli */
+    [data-theme="ninokuni"] {
+      --primary: #4a7c59;
+      --primary-hover: #3d6b4a;
+      --primary-light: #d4e5d9;
+      --primary-dark: #2d5438;
+      --secondary: #5b8fa8;
+      --secondary-light: #d5e8f0;
+      --accent: #e8a87c;
+      --bg-primary: #f5f0e8;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1dbb6;
+      --bg-inverse: #2d3a4a;
+      --text-primary: #2d3a4a;
+      --text-secondary: #4a5568;
+      --text-tertiary: #7d9b5f;
+      --border-light: #e3bba1;
+      --border-medium: #d4a574;
+      --success: #7d9b5f;
+      --success-light: #d4e5d9;
+    }
+
+    /* ============================================
+       DARK MODE VARIANTS
+       ============================================ */
+
+    /* Professional Blue - Dark Mode */
+    [data-theme="professional"][data-mode="dark"] {
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --primary-light: #1e3a5f;
+      --primary-dark: #60a5fa;
+      --secondary: #94a3b8;
+      --secondary-light: #334155;
+      --accent: #38bdf8;
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --bg-inverse: #f8fafc;
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-tertiary: #64748b;
+      --text-inverse: #0f172a;
+      --border-light: #334155;
+      --border-medium: #475569;
+      --border-dark: #64748b;
+    }
+
+    /* Mono - Dark Mode */
+    [data-theme="mono"][data-mode="dark"] {
+      --primary: #a1a1aa;
+      --primary-hover: #d4d4d8;
+      --primary-light: #27272a;
+      --primary-dark: #e4e4e7;
+      --secondary: #71717a;
+      --secondary-light: #3f3f46;
+      --accent: #60a5fa;
+      --bg-primary: #09090b;
+      --bg-secondary: #18181b;
+      --bg-tertiary: #27272a;
+      --bg-inverse: #fafafa;
+      --text-primary: #fafafa;
+      --text-secondary: #d4d4d8;
+      --text-tertiary: #71717a;
+      --text-inverse: #09090b;
+      --border-light: #27272a;
+      --border-medium: #3f3f46;
+    }
+
+    /* Ni No Kuni - Dark Mode */
+    [data-theme="ninokuni"][data-mode="dark"] {
+      --primary: #6b9e7a;
+      --primary-hover: #5a8a68;
+      --primary-light: #2d3d32;
+      --primary-dark: #8fbf9c;
+      --secondary: #7ba8be;
+      --secondary-light: #2d3d4a;
+      --accent: #d4a574;
+      --bg-primary: #1a2420;
+      --bg-secondary: #243028;
+      --bg-tertiary: #2d3d32;
+      --bg-inverse: #f5f0e8;
+      --text-primary: #e8e4dc;
+      --text-secondary: #b8c4a8;
+      --text-tertiary: #6b8b5f;
+      --text-inverse: #2d3a4a;
+      --border-light: #3d4d42;
+      --border-medium: #4d5d52;
+      --success: #8fbf9c;
+      --success-light: #2d3d32;
+    }
+
+    /* Font Definitions */
+    body[data-font="outfit"] { --font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif; }
+    body[data-font="space"] { --font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; }
+
+    /* Logo Style Definitions - Paired with themes */
+    body[data-theme="professional"] .g-logo-circle { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important; }
+    body[data-theme="mono"] .g-logo-circle { background: linear-gradient(135deg, #18181b 0%, #3f3f46 100%) !important; }
+    body[data-theme="ninokuni"] .g-logo-circle { background: linear-gradient(135deg, #4a7c59 0%, #5b8fa8 100%) !important; }
+
+    /* Logo Style Definitions - Dark Mode Variants */
+    body[data-theme="professional"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important; }
+    body[data-theme="mono"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #a1a1aa 0%, #71717a 100%) !important; }
+    body[data-theme="ninokuni"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #6b9e7a 0%, #7ba8be 100%) !important; }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-family);
+      background: #1a1a2e;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+      gap: 24px;
+    }
+
+    /* Page Layout */
+    .page-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* Global Controls Panel */
+    .global-controls {
+      background: rgba(30, 41, 59, 0.95);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      padding: 12px 20px;
+      display: flex;
+      flex-direction: row;
+      gap: 24px;
+      border: 1px solid rgba(255,255,255,0.1);
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .control-group { display: flex; align-items: center; gap: 10px; }
+    .control-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .control-options { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* Theme Swatches */
+    .theme-swatch {
+      width: 28px; height: 28px; border-radius: 8px;
+      cursor: pointer; border: 2px solid transparent;
+      transition: all 150ms ease;
+    }
+    .theme-swatch:hover { transform: scale(1.1); }
+    .theme-swatch.active {
+      border-color: white;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+    }
+    .theme-swatch[data-theme="professional"] { background: linear-gradient(135deg, #2563eb 50%, #64748b 50%); }
+    .theme-swatch[data-theme="mono"] { background: linear-gradient(135deg, #18181b 50%, #52525b 50%); }
+    .theme-swatch[data-theme="ninokuni"] { background: linear-gradient(135deg, #4a7c59 50%, #5b8fa8 50%); }
+
+    /* Font Pills */
+    .font-pill {
+      padding: 4px 10px; border-radius: 9999px;
+      font-size: 12px; font-weight: 500; cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent; color: #94a3b8;
+      transition: all 150ms ease;
+      font-family: inherit;
+    }
+    .font-pill:hover { background: rgba(255,255,255,0.1); }
+    .font-pill.active { background: white; color: #0f172a; border-color: white; }
+
+    /* Mode Toggle */
+    .mode-toggle {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 12px; border-radius: 9999px; cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent; color: #94a3b8;
+      font-size: 12px; font-weight: 500;
+      transition: all 150ms ease;
+      font-family: inherit;
+    }
+    .mode-toggle:hover { background: rgba(255,255,255,0.1); }
+    .mode-toggle svg { width: 14px; height: 14px; }
+
+    /* Phone Frame */
+    .phone-frame {
+      width: 375px; min-height: 812px;
+      background: #1e293b; border-radius: 54px; padding: 14px;
+      box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25),
+        inset 0 0 0 2px #334155, inset 0 0 0 4px #475569;
+    }
+    .phone-screen {
+      width: 100%; height: 784px;
+      background: var(--bg-primary); border-radius: 44px;
+      overflow: hidden; display: flex; flex-direction: column;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 24px 8px; background: var(--bg-primary); flex-shrink: 0;
+    }
+    .status-time { font-size: 14px; font-weight: 600; color: var(--text-primary); font-family: inherit; }
+    .status-icons { display: flex; gap: 4px; align-items: center; }
+
+    /* Back Header */
+    .back-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px 12px; background: var(--bg-primary); flex-shrink: 0;
+    }
+    .back-arrow { cursor: pointer; }
+    .back-title { font-size: 20px; font-weight: 600; color: var(--text-primary); margin: 0; font-family: inherit; }
+
+    /* Content Area */
+    .content-area {
+      flex: 1; overflow-y: auto; padding: 0 16px 16px;
+      display: flex; flex-direction: column; gap: 16px;
+      position: relative;
+    }
+
+    /* Bottom Nav (Spanish Labels Required) */
+    .bottom-nav {
+      display: flex; align-items: flex-end; justify-content: space-around;
+      padding: 8px 12px 12px; background: var(--bg-secondary);
+      border-top: 1px solid var(--border-light); flex-shrink: 0;
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      padding: 6px 10px; cursor: pointer;
+    }
+    .nav-item svg { width: 24px; height: 24px; stroke: var(--text-tertiary); fill: none; stroke-width: 1.8; }
+    .nav-item span { font-size: 10px; color: var(--text-tertiary); font-weight: 600; font-family: inherit; }
+    .nav-item.active svg { stroke: var(--primary); }
+    .nav-item.active span { color: var(--primary); font-weight: 600; font-family: inherit; }
+
+    /* CRITICAL: Scan center button position */
+    .scan-center { margin-top: -56px; padding: 0; }
+    .scan-btn {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, #3d8b6e 100%);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(74, 158, 126, 0.4);
+    }
+    .scan-btn svg { width: 24px; height: 24px; stroke: white; fill: none; stroke-width: 2; }
+
+    /* ============================================
+       GOAL CARD COMPONENT
+       ============================================ */
+    .goal-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      border: 1px solid var(--border-light);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .goal-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    .goal-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .goal-emoji {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+    .goal-info { flex: 1; }
+    .goal-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+    .goal-target {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+      font-family: inherit;
+    }
+    .goal-eta {
+      text-align: right;
+    }
+    .goal-eta-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-family: inherit;
+    }
+    .goal-eta-date {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+    .goal-progress-container {
+      margin-bottom: 8px;
+    }
+    /* Progress bar from design system: height 6px */
+    .goal-progress-bar {
+      height: 6px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+    }
+    .goal-progress-fill {
+      height: 100%;
+      border-radius: var(--radius-full);
+      transition: width var(--transition-normal);
+    }
+    .goal-progress-fill.on-track { background: var(--success); }
+    .goal-progress-fill.behind { background: var(--warning); }
+    .goal-progress-fill.ahead { background: var(--primary); }
+    .goal-progress-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+      font-family: inherit;
+    }
+    .goal-progress-saved {
+      font-weight: 500;
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+
+    /* ============================================
+       GPS JOURNEY VISUALIZATION
+       ============================================ */
+    .gps-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      border: 1px solid var(--border-light);
+    }
+    .gps-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .gps-goal-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .gps-status-badge {
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 600;
+      font-family: inherit;
+    }
+    .gps-status-badge.on-track {
+      background: var(--success-light);
+      color: var(--success);
+    }
+    .gps-status-badge.behind {
+      background: var(--warning-light);
+      color: #b45309;
+    }
+    .gps-status-badge.ahead {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    /* Journey Path SVG */
+    .gps-journey-container {
+      position: relative;
+      height: 180px;
+      margin: 16px 0;
+    }
+    .gps-journey-svg {
+      width: 100%;
+      height: 100%;
+    }
+    .journey-path {
+      fill: none;
+      stroke: var(--border-medium);
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-dasharray: 8 4;
+    }
+    .journey-progress {
+      fill: none;
+      stroke: var(--success);
+      stroke-width: 4;
+      stroke-linecap: round;
+    }
+    .journey-progress.behind { stroke: var(--warning); }
+    .journey-progress.ahead { stroke: var(--primary); }
+    .milestone-marker {
+      fill: var(--bg-secondary);
+      stroke: var(--border-medium);
+      stroke-width: 2;
+    }
+    .milestone-marker.completed {
+      fill: var(--success);
+      stroke: var(--success);
+    }
+    .current-position {
+      fill: var(--success);
+      filter: drop-shadow(0 2px 4px rgba(34, 197, 94, 0.4));
+    }
+    .current-position.behind { fill: var(--warning); }
+    .current-position.ahead { fill: var(--primary); }
+    .destination-marker {
+      fill: var(--bg-secondary);
+      stroke: var(--primary);
+      stroke-width: 2;
+    }
+
+    /* GPS ETA Display */
+    .gps-eta-display {
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .gps-eta-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      margin-bottom: 4px;
+      font-family: inherit;
+    }
+    .gps-eta-date {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+    .gps-eta-remaining {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      font-family: inherit;
+    }
+
+    /* Alternate Routes */
+    .alternate-routes {
+      border-top: 1px solid var(--border-light);
+      padding-top: 16px;
+    }
+    .alternate-routes-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: inherit;
+    }
+    .route-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .route-option:hover {
+      background: var(--primary-light);
+    }
+    .route-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      background: var(--success-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .route-icon svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--success);
+      fill: none;
+      stroke-width: 2;
+    }
+    .route-info { flex: 1; }
+    .route-action {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+    .route-result {
+      font-size: 11px;
+      color: var(--success);
+      font-weight: 600;
+      font-family: inherit;
+    }
+
+    /* ============================================
+       INSIGHT CARD (Trade-off)
+       ============================================ */
+    .insight-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-md);
+    }
+    .insight-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+    .insight-card-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .insight-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .insight-icon.goal-impact {
+      background: linear-gradient(135deg, #fef3c7, #fbbf24);
+    }
+    .insight-icon.goal-impact svg {
+      stroke: #92400e;
+    }
+    .insight-title-group {
+      flex: 1;
+    }
+    .insight-subtitle {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      font-family: inherit;
+    }
+    .insight-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-top: 2px;
+      font-family: inherit;
+    }
+    .insight-close {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-full);
+    }
+    .insight-body {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      margin: 10px 0 0 50px;
+      line-height: 1.4;
+      font-family: inherit;
+    }
+
+    /* ============================================
+       CELEBRATION STATE
+       ============================================ */
+    .celebration-card {
+      background: linear-gradient(135deg, var(--primary-light), #dbeafe);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      border: 1px solid var(--primary);
+      text-align: center;
+    }
+    .celebration-emoji {
+      font-size: 64px;
+      margin-bottom: 16px;
+      animation: bounce 1s ease infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .celebration-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      font-family: inherit;
+    }
+    .celebration-subtitle {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      font-family: inherit;
+    }
+    .celebration-stats {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 20px;
+    }
+    .celebration-stat {
+      text-align: center;
+    }
+    .celebration-stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+      font-family: inherit;
+    }
+    .celebration-stat-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      font-family: inherit;
+    }
+    .celebration-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-full);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      font-family: inherit;
+    }
+    .celebration-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Celebration View - spacing between cards */
+    .celebration-view {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* View Switcher */
+    .view-switcher {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .view-btn {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid var(--border-light);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      font-family: inherit;
+    }
+    .view-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* Goals List - spacing between cards */
+    .goals-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Add Goal Button */
+    .add-goal-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px;
+      background: var(--bg-tertiary);
+      border: 2px dashed var(--border-medium);
+      border-radius: var(--radius-lg);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      font-family: inherit;
+    }
+    .add-goal-btn:hover {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* ============================================
+       NEW GOAL MODAL - Content Area Only
+       ============================================ */
+    .content-modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 8px;
+      z-index: 50;
+      opacity: 0;
+      visibility: hidden;
+      transition: all var(--transition-normal);
+      overflow: hidden;
+    }
+    .content-modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .new-goal-modal {
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 320px;
+      max-height: 100%;
+      display: flex;
+      flex-direction: column;
+      transform: scale(0.95) translateY(-10px);
+      transition: transform var(--transition-normal);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    .content-modal-overlay.active .new-goal-modal {
+      transform: scale(1) translateY(0);
+    }
+    .modal-header {
+      padding: 12px 12px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-icon svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--primary);
+    }
+    .modal-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+    }
+    .modal-close svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--text-secondary);
+    }
+
+    /* Modal Body */
+    .modal-body {
+      padding: 16px 12px 12px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    /* Form Group with Overlapping Label */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group-floating {
+      position: relative;
+    }
+    .form-label-floating {
+      position: absolute;
+      top: -8px;
+      left: 10px;
+      background: var(--bg-primary);
+      padding: 0 4px;
+      font-size: 11px;
+      color: var(--primary);
+      font-weight: 500;
+      font-family: inherit;
+    }
+    .form-input {
+      width: 100%;
+      height: 44px;
+      padding: 0 12px;
+      font-size: 14px;
+      font-family: inherit;
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      outline: none;
+      box-sizing: border-box;
+      transition: all var(--transition-fast);
+    }
+    .form-input::placeholder {
+      color: var(--text-tertiary);
+    }
+    .form-input:focus {
+      border-color: var(--primary);
+    }
+
+    /* Simple Label (non-floating) */
+    .form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      font-family: inherit;
+    }
+
+    /* Emoji/Icon Picker - Circles */
+    .icon-picker {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .icon-option {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--bg-tertiary);
+      border: 2px solid transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: all var(--transition-fast);
+    }
+    .icon-option:hover {
+      background: var(--primary-light);
+    }
+    .icon-option.selected {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+    .icon-option-add {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px dashed var(--border-medium);
+      background: var(--bg-tertiary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-fast);
+    }
+    .icon-option-add:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+    .icon-option-add svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--primary);
+    }
+
+    /* Color Picker - Circles */
+    .color-picker {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .color-option {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-fast);
+    }
+    .color-option:hover {
+      transform: scale(1.1);
+    }
+    .color-option.selected {
+      border-color: var(--text-primary);
+      box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--text-primary);
+    }
+    .color-option-add {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px dashed var(--border-medium);
+      background: var(--bg-tertiary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-fast);
+    }
+    .color-option-add:hover {
+      border-color: var(--primary);
+    }
+    .color-option-add svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--text-secondary);
+    }
+
+    /* Modal Footer - Compact with icons */
+    .modal-footer {
+      padding: 8px 12px 12px;
+      display: flex;
+      gap: 8px;
+    }
+    .btn-secondary {
+      flex: 1;
+      padding: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: inherit;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all var(--transition-fast);
+    }
+    .btn-secondary:hover {
+      background: var(--bg-tertiary);
+    }
+    .btn-primary {
+      flex: 1;
+      padding: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      border: none;
+      border-radius: var(--radius-md);
+      background: var(--primary);
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all var(--transition-fast);
+    }
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+
+    /* ============================================
+       EXPANDED PICKER SCREENS
+       ============================================ */
+    .picker-screen {
+      display: none;
+    }
+    .picker-screen.active {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .picker-header {
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-light);
+      flex-shrink: 0;
+    }
+    .picker-back {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .picker-back svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--text-primary);
+    }
+    .picker-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+    .picker-grid {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 12px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      align-content: start;
+    }
+    .picker-item {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: var(--bg-tertiary);
+      border: 2px solid transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: all var(--transition-fast);
+    }
+    .picker-item:hover {
+      background: var(--primary-light);
+    }
+    .picker-item.selected {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+    /* Color picker items */
+    .picker-item.color-item {
+      background: currentColor;
+    }
+    .picker-item.color-item.selected {
+      box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--text-primary);
+    }
+    .picker-footer {
+      padding: 8px 12px 12px;
+      border-top: 1px solid var(--border-light);
+      flex-shrink: 0;
+    }
+    .picker-select-btn {
+      width: 100%;
+      padding: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      border: none;
+      border-radius: var(--radius-md);
+      background: var(--primary);
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all var(--transition-fast);
+    }
+    .picker-select-btn:hover {
+      opacity: 0.9;
+    }
+
+    /* Main form visibility */
+    .main-form {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .main-form.hidden {
+      display: none;
+    }
+
+    /* ============================================
+       BUDGET SECTION STYLES
+       ============================================ */
+    .budget-header-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      border: 1px solid var(--border-light);
+      margin-bottom: 16px;
+    }
+    .budget-month-selector {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .month-nav-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-light);
+      background: var(--bg-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-fast);
+    }
+    .month-nav-btn:hover {
+      background: var(--bg-tertiary);
+    }
+    .month-nav-btn svg {
+      stroke: var(--text-secondary);
+    }
+    .current-month {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+    .budget-summary {
+      display: flex;
+      justify-content: space-around;
+      text-align: center;
+    }
+    .budget-summary-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .budget-summary-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      font-family: inherit;
+    }
+    .budget-summary-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+    .budget-summary-value.spent {
+      color: var(--warning);
+    }
+    .budget-summary-value.available {
+      color: var(--success);
+    }
+
+    .budget-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .budget-item {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      border: 1px solid var(--border-light);
+    }
+    .budget-item-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .budget-category-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .budget-category-info {
+      flex: 1;
+    }
+    .budget-category-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+    .budget-category-meta {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      font-family: inherit;
+    }
+    .budget-status {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: var(--radius-full);
+      font-family: inherit;
+    }
+    .budget-status.on-track {
+      background: var(--success-light);
+      color: var(--success);
+    }
+    .budget-status.warning {
+      background: var(--warning-light);
+      color: #b45309;
+    }
+    .budget-status.over {
+      background: var(--error-light);
+      color: var(--error);
+    }
+    .budget-progress-bar {
+      height: 6px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+    }
+    .budget-progress-fill {
+      height: 100%;
+      border-radius: var(--radius-full);
+      transition: width var(--transition-normal);
+    }
+    .budget-progress-fill.on-track {
+      background: var(--success);
+    }
+    .budget-progress-fill.warning {
+      background: var(--warning);
+    }
+    .budget-progress-fill.over {
+      background: var(--error);
+    }
+
+    /* Budget Expandable Section */
+    .budget-progress-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .budget-progress-row .budget-progress-bar {
+      flex: 1;
+    }
+    .budget-expand-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-light);
+      background: var(--bg-tertiary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-tertiary);
+      transition: all var(--transition-fast);
+      flex-shrink: 0;
+    }
+    .budget-expand-btn:hover {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+    }
+    .budget-expand-btn svg {
+      transition: transform var(--transition-fast);
+    }
+    .budget-item.expanded .budget-expand-btn svg {
+      transform: rotate(180deg);
+    }
+    .budget-expanded {
+      display: none;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-light);
+    }
+    .budget-item.expanded .budget-expanded {
+      display: block;
+    }
+    .budget-limit-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .budget-limit-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-family: inherit;
+    }
+    .budget-limit-input-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+      padding: 6px 10px;
+      border: 1px solid var(--border-light);
+    }
+    .budget-currency {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      font-family: inherit;
+    }
+    .budget-limit-input {
+      width: 80px;
+      border: none;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      font-family: inherit;
+      text-align: right;
+    }
+    .budget-limit-input:focus {
+      outline: none;
+    }
+    .budget-notice {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-family: inherit;
+    }
+    .budget-notice.on-track {
+      background: var(--success-light);
+      color: var(--success);
+    }
+    .budget-notice.warning {
+      background: var(--warning-light);
+      color: #b45309;
+    }
+    .budget-notice.over {
+      background: var(--error-light);
+      color: var(--error);
+    }
+    .budget-delete-btn {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      transition: all var(--transition-fast);
+    }
+    .budget-delete-btn:hover {
+      background: var(--bg-tertiary);
+      color: var(--error);
+    }
+
+    /* ============================================
+       GPS MODAL STYLES
+       ============================================ */
+    .gps-modal {
+      background: var(--bg-primary);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 340px;
+      max-height: 95%;
+      overflow-y: auto;
+      padding: 16px;
+      transform: scale(0.95) translateY(-10px);
+      transition: transform var(--transition-normal);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    .content-modal-overlay.active .gps-modal {
+      transform: scale(1) translateY(0);
+    }
+    .gps-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    /* Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-wrapper">
+    <!-- Phone Frame -->
+    <div class="phone-frame">
+      <div class="phone-screen">
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icons">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2">
+              <path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 20V4"/>
+            </svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2">
+              <path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/>
+            </svg>
+            <svg width="24" height="12" viewBox="0 0 24 12" fill="none">
+              <rect x="0.5" y="0.5" width="20" height="11" rx="2.5" stroke="var(--text-primary)"/>
+              <rect x="2" y="2" width="17" height="8" rx="1" fill="var(--text-primary)"/>
+              <path d="M23 4V8C23.8 7.6 24 6.7 24 6C24 5.3 23.8 4.4 23 4Z" fill="var(--text-primary)"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Back Header -->
+        <div class="back-header">
+          <svg class="back-arrow" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+          <h2 class="back-title">Mis Metas</h2>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area" id="content-area">
+
+          <!-- View Switcher -->
+          <div class="view-switcher">
+            <button class="view-btn active" onclick="showView('goals')">Metas</button>
+            <button class="view-btn" onclick="showView('budgets')">Presupuestos</button>
+            <button class="view-btn" onclick="showView('celebration')">Logros</button>
+          </div>
+
+          <!-- ============================================
+               VIEW 1: GOALS LIST
+               ============================================ -->
+          <div id="view-goals">
+
+            <!-- Goals List with spacing -->
+            <div class="goals-list">
+
+              <!-- Goal Card 1: On Track -->
+              <div class="goal-card" onclick="openGpsModal('japan')">
+                <div class="goal-card-header">
+                  <div class="goal-emoji">🗾</div>
+                  <div class="goal-info">
+                    <div class="goal-name">Viaje a Japón</div>
+                    <div class="goal-target">Meta: $2.000.000</div>
+                  </div>
+                  <div class="goal-eta">
+                    <div class="goal-eta-label">Llegada</div>
+                    <div class="goal-eta-date">Mar 2025</div>
+                  </div>
+                </div>
+                <div class="goal-progress-container">
+                  <div class="goal-progress-bar">
+                    <div class="goal-progress-fill on-track" style="width: 68%;"></div>
+                  </div>
+                  <div class="goal-progress-meta">
+                    <span>68% completado</span>
+                    <span class="goal-progress-saved">$1.360.000 ahorrados</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Goal Card 2: Behind -->
+              <div class="goal-card" onclick="openGpsModal('car')">
+                <div class="goal-card-header">
+                  <div class="goal-emoji">🚗</div>
+                  <div class="goal-info">
+                    <div class="goal-name">Auto Nuevo</div>
+                    <div class="goal-target">Meta: $8.000.000</div>
+                  </div>
+                  <div class="goal-eta">
+                    <div class="goal-eta-label">Llegada</div>
+                    <div class="goal-eta-date">Dic 2025</div>
+                  </div>
+                </div>
+                <div class="goal-progress-container">
+                  <div class="goal-progress-bar">
+                    <div class="goal-progress-fill behind" style="width: 22%;"></div>
+                  </div>
+                  <div class="goal-progress-meta">
+                    <span>22% completado</span>
+                    <span class="goal-progress-saved">$1.760.000 ahorrados</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Goal Card 3: Ahead -->
+              <div class="goal-card" onclick="openGpsModal('macbook')">
+                <div class="goal-card-header">
+                  <div class="goal-emoji">💻</div>
+                  <div class="goal-info">
+                    <div class="goal-name">MacBook Pro</div>
+                    <div class="goal-target">Meta: $1.500.000</div>
+                  </div>
+                  <div class="goal-eta">
+                    <div class="goal-eta-label">Llegada</div>
+                    <div class="goal-eta-date">Feb 2025</div>
+                  </div>
+                </div>
+                <div class="goal-progress-container">
+                  <div class="goal-progress-bar">
+                    <div class="goal-progress-fill ahead" style="width: 85%;"></div>
+                  </div>
+                  <div class="goal-progress-meta">
+                    <span>85% completado</span>
+                    <span class="goal-progress-saved">$1.275.000 ahorrados</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Trade-off Insight Card -->
+            <div class="insight-card" style="margin-top: 12px;">
+              <div class="insight-card-header">
+                <div class="insight-card-left">
+                  <div class="insight-icon goal-impact">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="M12 16v-4"/>
+                      <path d="M12 8h.01"/>
+                    </svg>
+                  </div>
+                  <div class="insight-title-group">
+                    <div class="insight-subtitle">Impacto en tu meta</div>
+                    <div class="insight-title">Café = 1 día más lejos</div>
+                  </div>
+                </div>
+                <button class="insight-close">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+              <p class="insight-body">Esta semana en café: $13.500 = 1 día más lejos de Tokyo. Reducir a la mitad te acercaría 2 días.</p>
+            </div>
+
+            <!-- Add Goal Button -->
+            <div class="add-goal-btn" onclick="openNewGoalModal()" style="margin-top: 12px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+              <span>Crear Nueva Meta</span>
+            </div>
+
+          </div>
+
+          <!-- ============================================
+               VIEW 2: CATEGORY BUDGETS
+               ============================================ -->
+          <div id="view-budgets" style="display: none;">
+
+            <!-- Monthly Budget Header -->
+            <div class="budget-header-card">
+              <div class="budget-month-selector">
+                <button class="month-nav-btn" onclick="prevMonth()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 18l-6-6 6-6"/>
+                  </svg>
+                </button>
+                <span class="current-month">Diciembre 2024</span>
+                <button class="month-nav-btn" onclick="nextMonth()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 18l6-6-6-6"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="budget-summary">
+                <div class="budget-summary-item">
+                  <span class="budget-summary-label">Presupuesto Total</span>
+                  <span class="budget-summary-value">$850.000</span>
+                </div>
+                <div class="budget-summary-item">
+                  <span class="budget-summary-label">Gastado</span>
+                  <span class="budget-summary-value spent">$623.500</span>
+                </div>
+                <div class="budget-summary-item">
+                  <span class="budget-summary-label">Disponible</span>
+                  <span class="budget-summary-value available">$226.500</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Category Budgets List -->
+            <div class="budget-list">
+
+              <!-- Budget Item: Food/Groceries - On Track -->
+              <div class="budget-item" id="budget-supermercado">
+                <div class="budget-item-header">
+                  <div class="budget-category-icon" style="background: #dcfce7;">
+                    <span>🛒</span>
+                  </div>
+                  <div class="budget-category-info">
+                    <div class="budget-category-name">Supermercado</div>
+                    <div class="budget-category-meta">$185.000 de $250.000</div>
+                  </div>
+                  <div class="budget-status on-track">74%</div>
+                </div>
+                <div class="budget-progress-row">
+                  <div class="budget-progress-bar">
+                    <div class="budget-progress-fill on-track" style="width: 74%;"></div>
+                  </div>
+                  <button class="budget-expand-btn" onclick="toggleBudgetExpand('budget-supermercado')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M6 9l6 6 6-6"/>
+                    </svg>
+                  </button>
+                </div>
+                <div class="budget-expanded">
+                  <div class="budget-limit-row">
+                    <span class="budget-limit-label">Límite mensual</span>
+                    <div class="budget-limit-input-group">
+                      <span class="budget-currency">$</span>
+                      <input type="text" class="budget-limit-input" value="250.000">
+                    </div>
+                  </div>
+                  <div class="budget-notice on-track">
+                    <span>74% del límite alcanzado</span>
+                    <button class="budget-delete-btn">Eliminar límite</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Budget Item: Restaurants - Over Budget (Expanded by default) -->
+              <div class="budget-item expanded" id="budget-restaurantes">
+                <div class="budget-item-header">
+                  <div class="budget-category-icon" style="background: #fee2e2;">
+                    <span>🍽️</span>
+                  </div>
+                  <div class="budget-category-info">
+                    <div class="budget-category-name">Restaurantes</div>
+                    <div class="budget-category-meta">$127.500 de $100.000</div>
+                  </div>
+                  <div class="budget-status over">127%</div>
+                </div>
+                <div class="budget-progress-row">
+                  <div class="budget-progress-bar">
+                    <div class="budget-progress-fill over" style="width: 100%;"></div>
+                  </div>
+                  <button class="budget-expand-btn" onclick="toggleBudgetExpand('budget-restaurantes')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M6 9l6 6 6-6"/>
+                    </svg>
+                  </button>
+                </div>
+                <div class="budget-expanded">
+                  <div class="budget-limit-row">
+                    <span class="budget-limit-label">Límite mensual</span>
+                    <div class="budget-limit-input-group">
+                      <span class="budget-currency">$</span>
+                      <input type="text" class="budget-limit-input" value="100.000">
+                    </div>
+                  </div>
+                  <div class="budget-notice over">
+                    <span>⚠️ 27% sobre el límite</span>
+                    <button class="budget-delete-btn">Eliminar límite</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Budget Item: Transport - Warning -->
+              <div class="budget-item" id="budget-transporte">
+                <div class="budget-item-header">
+                  <div class="budget-category-icon" style="background: #fef3c7;">
+                    <span>🚗</span>
+                  </div>
+                  <div class="budget-category-info">
+                    <div class="budget-category-name">Transporte</div>
+                    <div class="budget-category-meta">$78.000 de $80.000</div>
+                  </div>
+                  <div class="budget-status warning">98%</div>
+                </div>
+                <div class="budget-progress-row">
+                  <div class="budget-progress-bar">
+                    <div class="budget-progress-fill warning" style="width: 98%;"></div>
+                  </div>
+                  <button class="budget-expand-btn" onclick="toggleBudgetExpand('budget-transporte')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M6 9l6 6 6-6"/>
+                    </svg>
+                  </button>
+                </div>
+                <div class="budget-expanded">
+                  <div class="budget-limit-row">
+                    <span class="budget-limit-label">Límite mensual</span>
+                    <div class="budget-limit-input-group">
+                      <span class="budget-currency">$</span>
+                      <input type="text" class="budget-limit-input" value="80.000">
+                    </div>
+                  </div>
+                  <div class="budget-notice warning">
+                    <span>⚡ Casi al límite (98%)</span>
+                    <button class="budget-delete-btn">Eliminar límite</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Budget Item: Entertainment - Low -->
+              <div class="budget-item" id="budget-entretenimiento">
+                <div class="budget-item-header">
+                  <div class="budget-category-icon" style="background: #dbeafe;">
+                    <span>🎬</span>
+                  </div>
+                  <div class="budget-category-info">
+                    <div class="budget-category-name">Entretenimiento</div>
+                    <div class="budget-category-meta">$45.000 de $120.000</div>
+                  </div>
+                  <div class="budget-status on-track">38%</div>
+                </div>
+                <div class="budget-progress-row">
+                  <div class="budget-progress-bar">
+                    <div class="budget-progress-fill on-track" style="width: 38%;"></div>
+                  </div>
+                  <button class="budget-expand-btn" onclick="toggleBudgetExpand('budget-entretenimiento')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M6 9l6 6 6-6"/>
+                    </svg>
+                  </button>
+                </div>
+                <div class="budget-expanded">
+                  <div class="budget-limit-row">
+                    <span class="budget-limit-label">Límite mensual</span>
+                    <div class="budget-limit-input-group">
+                      <span class="budget-currency">$</span>
+                      <input type="text" class="budget-limit-input" value="120.000">
+                    </div>
+                  </div>
+                  <div class="budget-notice on-track">
+                    <span>38% del límite alcanzado</span>
+                    <button class="budget-delete-btn">Eliminar límite</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Budget Item: Coffee - Warning -->
+              <div class="budget-item" id="budget-cafe">
+                <div class="budget-item-header">
+                  <div class="budget-category-icon" style="background: #fef3c7;">
+                    <span>☕</span>
+                  </div>
+                  <div class="budget-category-info">
+                    <div class="budget-category-name">Café</div>
+                    <div class="budget-category-meta">$38.000 de $40.000</div>
+                  </div>
+                  <div class="budget-status warning">95%</div>
+                </div>
+                <div class="budget-progress-row">
+                  <div class="budget-progress-bar">
+                    <div class="budget-progress-fill warning" style="width: 95%;"></div>
+                  </div>
+                  <button class="budget-expand-btn" onclick="toggleBudgetExpand('budget-cafe')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M6 9l6 6 6-6"/>
+                    </svg>
+                  </button>
+                </div>
+                <div class="budget-expanded">
+                  <div class="budget-limit-row">
+                    <span class="budget-limit-label">Límite mensual</span>
+                    <div class="budget-limit-input-group">
+                      <span class="budget-currency">$</span>
+                      <input type="text" class="budget-limit-input" value="40.000">
+                    </div>
+                  </div>
+                  <div class="budget-notice warning">
+                    <span>⚡ Casi al límite (95%)</span>
+                    <button class="budget-delete-btn">Eliminar límite</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Budget Item: Health - On Track -->
+              <div class="budget-item" id="budget-salud">
+                <div class="budget-item-header">
+                  <div class="budget-category-icon" style="background: #dcfce7;">
+                    <span>💊</span>
+                  </div>
+                  <div class="budget-category-info">
+                    <div class="budget-category-name">Salud</div>
+                    <div class="budget-category-meta">$25.000 de $80.000</div>
+                  </div>
+                  <div class="budget-status on-track">31%</div>
+                </div>
+                <div class="budget-progress-row">
+                  <div class="budget-progress-bar">
+                    <div class="budget-progress-fill on-track" style="width: 31%;"></div>
+                  </div>
+                  <button class="budget-expand-btn" onclick="toggleBudgetExpand('budget-salud')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M6 9l6 6 6-6"/>
+                    </svg>
+                  </button>
+                </div>
+                <div class="budget-expanded">
+                  <div class="budget-limit-row">
+                    <span class="budget-limit-label">Límite mensual</span>
+                    <div class="budget-limit-input-group">
+                      <span class="budget-currency">$</span>
+                      <input type="text" class="budget-limit-input" value="80.000">
+                    </div>
+                  </div>
+                  <div class="budget-notice on-track">
+                    <span>✓ Vas muy bien, 31% del límite</span>
+                    <button class="budget-delete-btn">Eliminar límite</button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Add Budget Button -->
+            <div class="add-goal-btn" onclick="openBudgetModal()" style="margin-top: 12px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+              <span>Agregar Categoría</span>
+            </div>
+
+          </div>
+
+          <!-- ============================================
+               VIEW 3: CELEBRATION
+               ============================================ -->
+          <div id="view-celebration" class="celebration-view" style="display: none;">
+
+            <!-- Celebration Card -->
+            <div class="celebration-card">
+              <div class="celebration-emoji">🎉</div>
+              <h3 class="celebration-title">¡Llegaste a Tokyo!</h3>
+              <p class="celebration-subtitle">Completaste tu meta "Viaje a Japón"</p>
+
+              <div class="celebration-stats">
+                <div class="celebration-stat">
+                  <div class="celebration-stat-value">$2.000.000</div>
+                  <div class="celebration-stat-label">Ahorrados</div>
+                </div>
+                <div class="celebration-stat">
+                  <div class="celebration-stat-value">127 días</div>
+                  <div class="celebration-stat-label">Para lograrlo</div>
+                </div>
+              </div>
+
+              <button class="celebration-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+                Crear Nueva Meta
+              </button>
+            </div>
+
+            <!-- Completed Goal Card -->
+            <div class="goal-card" style="opacity: 0.7;">
+              <div class="goal-card-header">
+                <div class="goal-emoji">🗾</div>
+                <div class="goal-info">
+                  <div class="goal-name">Viaje a Japón</div>
+                  <div class="goal-target">Meta: $2.000.000</div>
+                </div>
+                <div class="goal-eta">
+                  <div class="goal-eta-label">Completada</div>
+                  <div class="goal-eta-date" style="color: var(--success);">✓ Dic 2024</div>
+                </div>
+              </div>
+              <div class="goal-progress-container">
+                <div class="goal-progress-bar">
+                  <div class="goal-progress-fill on-track" style="width: 100%;"></div>
+                </div>
+                <div class="goal-progress-meta">
+                  <span>100% completado</span>
+                  <span class="goal-progress-saved">$2.000.000 ahorrados</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Back to List Button -->
+            <button class="view-btn" onclick="showView('goals')" style="width: 100%;">
+              ← Volver a Mis Metas
+            </button>
+
+          </div>
+
+          <!-- New Goal Modal - Inside Content Area -->
+          <div class="content-modal-overlay" id="newGoalModal" onclick="closeNewGoalModal(event)">
+            <div class="new-goal-modal" onclick="event.stopPropagation()">
+
+              <!-- ========== MAIN FORM ========== -->
+              <div class="main-form" id="mainForm">
+                <!-- Compact Header -->
+                <div class="modal-header">
+                  <div class="modal-header-left">
+                    <div class="modal-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 8v8M8 12h8"/>
+                      </svg>
+                    </div>
+                    <div class="modal-title">Nueva Meta</div>
+                  </div>
+                  <button class="modal-close" onclick="closeNewGoalModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                      <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body">
+                  <!-- Icon Picker - 4 circles + plus -->
+                  <div class="form-group">
+                    <label class="form-label">Ícono</label>
+                    <div class="icon-picker">
+                      <div class="icon-option selected" data-icon="🗾" onclick="selectIcon(this)">🗾</div>
+                      <div class="icon-option" data-icon="🚗" onclick="selectIcon(this)">🚗</div>
+                      <div class="icon-option" data-icon="💻" onclick="selectIcon(this)">💻</div>
+                      <div class="icon-option" data-icon="✈️" onclick="selectIcon(this)">✈️</div>
+                      <div class="icon-option-add" onclick="showIconPicker()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                          <path d="M12 5v14M5 12h14"/>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Color Picker - 4 colors + plus -->
+                  <div class="form-group">
+                    <label class="form-label">Color de fondo</label>
+                    <div class="color-picker">
+                      <div class="color-option selected" style="background: #f87171;" data-color="#f87171" onclick="selectColor(this)"></div>
+                      <div class="color-option" style="background: #60a5fa;" data-color="#60a5fa" onclick="selectColor(this)"></div>
+                      <div class="color-option" style="background: #4ade80;" data-color="#4ade80" onclick="selectColor(this)"></div>
+                      <div class="color-option" style="background: #facc15;" data-color="#facc15" onclick="selectColor(this)"></div>
+                      <div class="color-option-add" onclick="showColorPicker()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                          <path d="M12 5v14M5 12h14"/>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Goal Name - Overlapping label -->
+                  <div class="form-group form-group-floating">
+                    <label class="form-label-floating">Nombre de la meta</label>
+                    <input type="text" class="form-input" placeholder="Ej: Viaje a Europa">
+                  </div>
+
+                  <!-- Target Amount - Overlapping label -->
+                  <div class="form-group form-group-floating">
+                    <label class="form-label-floating">Monto objetivo</label>
+                    <input type="text" class="form-input" placeholder="$0">
+                  </div>
+
+                  <!-- Target Date - Overlapping label -->
+                  <div class="form-group form-group-floating">
+                    <label class="form-label-floating">Fecha objetivo</label>
+                    <input type="date" class="form-input">
+                  </div>
+                </div>
+
+                <!-- Compact Footer with icons -->
+                <div class="modal-footer">
+                  <button class="btn-secondary" onclick="closeNewGoalModal()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    Cancelar
+                  </button>
+                  <button class="btn-primary" onclick="closeNewGoalModal()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                    Crear
+                  </button>
+                </div>
+              </div>
+
+              <!-- ========== ICON PICKER SCREEN ========== -->
+              <div class="picker-screen" id="iconPickerScreen">
+                <div class="picker-header">
+                  <button class="picker-back" onclick="hideIconPicker()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                      <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                  </button>
+                  <div class="picker-title">Seleccionar Ícono</div>
+                </div>
+                <div class="picker-grid">
+                  <div class="picker-item" data-icon="🗾" onclick="selectPickerIcon(this)">🗾</div>
+                  <div class="picker-item" data-icon="🚗" onclick="selectPickerIcon(this)">🚗</div>
+                  <div class="picker-item" data-icon="💻" onclick="selectPickerIcon(this)">💻</div>
+                  <div class="picker-item" data-icon="✈️" onclick="selectPickerIcon(this)">✈️</div>
+                  <div class="picker-item" data-icon="🏠" onclick="selectPickerIcon(this)">🏠</div>
+                  <div class="picker-item" data-icon="🎓" onclick="selectPickerIcon(this)">🎓</div>
+                  <div class="picker-item" data-icon="💍" onclick="selectPickerIcon(this)">💍</div>
+                  <div class="picker-item" data-icon="🎸" onclick="selectPickerIcon(this)">🎸</div>
+                  <div class="picker-item" data-icon="📚" onclick="selectPickerIcon(this)">📚</div>
+                  <div class="picker-item" data-icon="🏖️" onclick="selectPickerIcon(this)">🏖️</div>
+                  <div class="picker-item" data-icon="🎁" onclick="selectPickerIcon(this)">🎁</div>
+                  <div class="picker-item" data-icon="🎄" onclick="selectPickerIcon(this)">🎄</div>
+                  <div class="picker-item" data-icon="🎂" onclick="selectPickerIcon(this)">🎂</div>
+                  <div class="picker-item" data-icon="🏋️" onclick="selectPickerIcon(this)">🏋️</div>
+                  <div class="picker-item" data-icon="🚴" onclick="selectPickerIcon(this)">🚴</div>
+                  <div class="picker-item" data-icon="🎮" onclick="selectPickerIcon(this)">🎮</div>
+                  <div class="picker-item" data-icon="📱" onclick="selectPickerIcon(this)">📱</div>
+                  <div class="picker-item" data-icon="⌚" onclick="selectPickerIcon(this)">⌚</div>
+                  <div class="picker-item" data-icon="🎧" onclick="selectPickerIcon(this)">🎧</div>
+                  <div class="picker-item" data-icon="📷" onclick="selectPickerIcon(this)">📷</div>
+                </div>
+                <div class="picker-footer">
+                  <button class="picker-select-btn" onclick="confirmIconSelection()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                    Seleccionar
+                  </button>
+                </div>
+              </div>
+
+              <!-- ========== COLOR PICKER SCREEN ========== -->
+              <div class="picker-screen" id="colorPickerScreen">
+                <div class="picker-header">
+                  <button class="picker-back" onclick="hideColorPicker()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                      <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                  </button>
+                  <div class="picker-title">Seleccionar Color</div>
+                </div>
+                <div class="picker-grid">
+                  <div class="picker-item color-item" style="background: #f87171;" data-color="#f87171" onclick="selectPickerColor(this)"></div>
+                  <div class="picker-item color-item" style="background: #fb923c;" data-color="#fb923c" onclick="selectPickerColor(this)"></div>
+                  <div class="picker-item color-item" style="background: #facc15;" data-color="#facc15" onclick="selectPickerColor(this)"></div>
+                  <div class="picker-item color-item" style="background: #4ade80;" data-color="#4ade80" onclick="selectPickerColor(this)"></div>
+                  <div class="picker-item color-item" style="background: #2dd4bf;" data-color="#2dd4bf" onclick="selectPickerColor(this)"></div>
+                  <div class="picker-item color-item" style="background: #60a5fa;" data-color="#60a5fa" onclick="selectPickerColor(this)"></div>
+                  <div class="picker-item color-item" style="background: #818cf8;" data-color="#818cf8" onclick="selectPickerColor(this)"></div>
+                  <div class="picker-item color-item" style="background: #c084fc;" data-color="#c084fc" onclick="selectPickerColor(this)"></div>
+                  <div class="picker-item color-item" style="background: #f472b6;" data-color="#f472b6" onclick="selectPickerColor(this)"></div>
+                  <div class="picker-item color-item" style="background: #94a3b8;" data-color="#94a3b8" onclick="selectPickerColor(this)"></div>
+                  <div class="picker-item color-item" style="background: #78716c;" data-color="#78716c" onclick="selectPickerColor(this)"></div>
+                  <div class="picker-item color-item" style="background: #fca5a5;" data-color="#fca5a5" onclick="selectPickerColor(this)"></div>
+                  <div class="picker-item color-item" style="background: #fdba74;" data-color="#fdba74" onclick="selectPickerColor(this)"></div>
+                  <div class="picker-item color-item" style="background: #fde047;" data-color="#fde047" onclick="selectPickerColor(this)"></div>
+                  <div class="picker-item color-item" style="background: #86efac;" data-color="#86efac" onclick="selectPickerColor(this)"></div>
+                </div>
+                <div class="picker-footer">
+                  <button class="picker-select-btn" onclick="confirmColorSelection()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                    Seleccionar
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- GPS Detail Modal -->
+          <div class="content-modal-overlay" id="gpsModal" onclick="closeGpsModal(event)">
+            <div class="gps-modal" onclick="event.stopPropagation()">
+              <!-- Modal Header with close button -->
+              <div class="gps-modal-header">
+                <div class="gps-goal-info">
+                  <div class="goal-emoji" id="gpsModalEmoji">🗾</div>
+                  <div>
+                    <div class="goal-name" id="gpsModalName">Viaje a Japón</div>
+                    <div class="goal-target" id="gpsModalTarget">$2.000.000</div>
+                  </div>
+                </div>
+                <button class="modal-close" onclick="closeGpsModal()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Status Badge -->
+              <div style="display: flex; justify-content: center; margin-bottom: 12px;">
+                <div class="gps-status-badge on-track" id="gpsModalStatus">En camino</div>
+              </div>
+
+              <!-- Journey Visualization -->
+              <div class="gps-journey-container">
+                <svg class="gps-journey-svg" viewBox="0 0 320 160">
+                  <!-- Background path (dashed) -->
+                  <path class="journey-path" d="M 30 130 Q 80 130, 100 100 Q 120 70, 160 80 Q 200 90, 220 60 Q 240 30, 290 30"/>
+                  <!-- Progress path (solid) -->
+                  <path class="journey-progress on-track" d="M 30 130 Q 80 130, 100 100 Q 120 70, 160 80 Q 180 85, 195 75" stroke-dasharray="200" stroke-dashoffset="0"/>
+                  <!-- Start marker -->
+                  <circle cx="30" cy="130" r="8" fill="var(--success)" stroke="white" stroke-width="2"/>
+                  <text x="30" y="150" text-anchor="middle" font-size="9" fill="var(--text-tertiary)">Inicio</text>
+                  <!-- Milestone 1: 25% -->
+                  <circle class="milestone-marker completed" cx="100" cy="100" r="6"/>
+                  <text x="100" y="118" text-anchor="middle" font-size="8" fill="var(--text-tertiary)">25%</text>
+                  <!-- Milestone 2: 50% -->
+                  <circle class="milestone-marker completed" cx="160" cy="80" r="6"/>
+                  <text x="160" y="98" text-anchor="middle" font-size="8" fill="var(--text-tertiary)">50%</text>
+                  <!-- Current Position (68%) -->
+                  <circle class="current-position" cx="195" cy="70" r="10"/>
+                  <circle cx="195" cy="70" r="4" fill="white"/>
+                  <text x="195" y="55" text-anchor="middle" font-size="10" font-weight="600" fill="var(--success)">68%</text>
+                  <!-- Milestone 3: 75% -->
+                  <circle class="milestone-marker" cx="230" cy="50" r="6"/>
+                  <text x="230" y="68" text-anchor="middle" font-size="8" fill="var(--text-tertiary)">75%</text>
+                  <!-- Destination -->
+                  <circle class="destination-marker" cx="290" cy="30" r="10"/>
+                  <text x="290" y="30" text-anchor="middle" dominant-baseline="middle" font-size="12" id="gpsDestinationEmoji">🗾</text>
+                  <text x="290" y="48" text-anchor="middle" font-size="9" fill="var(--text-tertiary)">Meta</text>
+                </svg>
+              </div>
+
+              <!-- ETA Display -->
+              <div class="gps-eta-display">
+                <div class="gps-eta-label">Llegando el</div>
+                <div class="gps-eta-date" id="gpsModalEta">15 de Marzo, 2025</div>
+                <div class="gps-eta-remaining" id="gpsModalRemaining">Faltan 76 días • $640.000 restantes</div>
+              </div>
+
+              <!-- Alternate Routes -->
+              <div class="alternate-routes">
+                <div class="alternate-routes-title">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2">
+                    <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+                  </svg>
+                  <span>Rutas Alternativas</span>
+                </div>
+
+                <div class="route-option">
+                  <div class="route-icon">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M12 2v20M2 12h20"/>
+                    </svg>
+                  </div>
+                  <div class="route-info">
+                    <div class="route-action">Ahorra 10% más al mes</div>
+                    <div class="route-result">→ Llegas 2 meses antes</div>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                    <path d="M9 18l6-6-6-6"/>
+                  </svg>
+                </div>
+
+                <div class="route-option">
+                  <div class="route-icon" style="background: var(--warning-light);">
+                    <svg viewBox="0 0 24 24" style="stroke: #b45309;">
+                      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3Z"/>
+                    </svg>
+                  </div>
+                  <div class="route-info">
+                    <div class="route-action">Reduce café a la mitad</div>
+                    <div class="route-result" style="color: #b45309;">→ Llegas 1 semana antes</div>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                    <path d="M9 18l6-6-6-6"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Bottom Nav (Spanish Labels - Ideas Active) -->
+        <div class="bottom-nav">
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Inicio</span>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            <span>Analíticas</span>
+          </div>
+          <div class="scan-center">
+            <div class="scan-btn">
+              <!-- CAMERA ICON (NOT scan) -->
+              <svg viewBox="0 0 24 24">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                <circle cx="12" cy="13" r="3"/>
+              </svg>
+            </div>
+          </div>
+          <div class="nav-item active">
+            <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <span>Ideas</span>
+          </div>
+          <div class="nav-item" style="position: relative;">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <!-- Notification badge -->
+            <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+            <span>Alertas</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Global Controls Panel -->
+    <div class="global-controls">
+      <div class="control-group">
+        <div class="control-label">Theme</div>
+        <div class="control-options">
+          <div class="theme-swatch" data-theme="professional" title="Professional Blue" onclick="setTheme('professional', this)"></div>
+          <div class="theme-swatch active" data-theme="mono" title="Mono" onclick="setTheme('mono', this)"></div>
+          <div class="theme-swatch" data-theme="ninokuni" title="Ni No Kuni" onclick="setTheme('ninokuni', this)"></div>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="control-label">Font</div>
+        <div class="control-options">
+          <div class="font-pill active" data-font="outfit" onclick="setFont('outfit', this)">Outfit</div>
+          <div class="font-pill" data-font="space" onclick="setFont('space', this)">Space</div>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="control-label">Mode</div>
+        <div class="control-options">
+          <button class="mode-toggle" onclick="toggleMode(this)">
+            <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="5"/>
+              <path d="M12 1v2m0 18v2m11-11h-2M3 12H1m17.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m12.73 0l-1.41-1.41M6.34 6.34L4.93 4.93"/>
+            </svg>
+            <span>Light</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Theme Switcher
+    function setTheme(theme, el) {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.body.setAttribute('data-theme', theme);
+      document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    // Font Switcher
+    function setFont(font, el) {
+      document.body.setAttribute('data-font', font);
+      document.querySelectorAll('.font-pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    // Mode Toggle
+    function toggleMode(btn) {
+      const html = document.documentElement;
+      const currentMode = html.getAttribute('data-mode') || 'light';
+      const newMode = currentMode === 'light' ? 'dark' : 'light';
+      html.setAttribute('data-mode', newMode);
+      btn.querySelector('span').textContent = newMode === 'light' ? 'Light' : 'Dark';
+    }
+
+    // View Switcher
+    function showView(viewName) {
+      // Hide all views
+      document.getElementById('view-goals').style.display = 'none';
+      document.getElementById('view-budgets').style.display = 'none';
+      document.getElementById('view-celebration').style.display = 'none';
+
+      // Show selected view (celebration needs flex for gap spacing)
+      const targetView = document.getElementById('view-' + viewName);
+      targetView.style.display = viewName === 'celebration' ? 'flex' : 'block';
+
+      // Update view buttons
+      document.querySelectorAll('.view-switcher .view-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      const activeBtn = document.querySelector(`.view-switcher .view-btn[onclick="showView('${viewName}')"]`);
+      if (activeBtn) activeBtn.classList.add('active');
+    }
+
+    // GPS Modal Functions
+    function openGpsModal(goalId) {
+      // In a real app, this would load goal-specific data
+      // For mockup, we just show the modal with default Japan data
+      document.getElementById('gpsModal').classList.add('active');
+    }
+
+    function closeGpsModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('gpsModal').classList.remove('active');
+    }
+
+    // Budget Modal placeholder
+    function openBudgetModal() {
+      // Would open a modal to add new category budget
+      alert('Agregar nueva categoría de presupuesto');
+    }
+
+    // Month navigation placeholders
+    function prevMonth() {
+      // Would navigate to previous month
+    }
+
+    function nextMonth() {
+      // Would navigate to next month
+    }
+
+    // Budget expand toggle
+    function toggleBudgetExpand(budgetId) {
+      const budgetItem = document.getElementById(budgetId);
+      if (budgetItem) {
+        budgetItem.classList.toggle('expanded');
+      }
+    }
+
+    // New Goal Modal
+    function openNewGoalModal() {
+      document.getElementById('newGoalModal').classList.add('active');
+    }
+
+    function closeNewGoalModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('newGoalModal').classList.remove('active');
+    }
+
+    // Icon selection in main form
+    function selectIcon(el) {
+      document.querySelectorAll('.icon-option').forEach(e => e.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    // Color selection in main form
+    function selectColor(el) {
+      document.querySelectorAll('.color-option').forEach(e => e.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    // ========== ICON PICKER SCREEN ==========
+    let selectedPickerIcon = null;
+
+    function showIconPicker() {
+      document.getElementById('mainForm').classList.add('hidden');
+      document.getElementById('iconPickerScreen').classList.add('active');
+      // Pre-select current icon
+      const currentIcon = document.querySelector('.icon-option.selected');
+      if (currentIcon) {
+        const iconValue = currentIcon.dataset.icon;
+        document.querySelectorAll('#iconPickerScreen .picker-item').forEach(item => {
+          item.classList.toggle('selected', item.dataset.icon === iconValue);
+        });
+        selectedPickerIcon = iconValue;
+      }
+    }
+
+    function hideIconPicker() {
+      document.getElementById('mainForm').classList.remove('hidden');
+      document.getElementById('iconPickerScreen').classList.remove('active');
+    }
+
+    function selectPickerIcon(el) {
+      document.querySelectorAll('#iconPickerScreen .picker-item').forEach(e => e.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedPickerIcon = el.dataset.icon;
+    }
+
+    function confirmIconSelection() {
+      if (selectedPickerIcon) {
+        // Update main form icon
+        document.querySelectorAll('.icon-option').forEach(el => {
+          el.classList.toggle('selected', el.dataset.icon === selectedPickerIcon);
+        });
+        // If icon not in quick picker, update first one
+        const existingOption = document.querySelector(`.icon-option[data-icon="${selectedPickerIcon}"]`);
+        if (!existingOption) {
+          const firstOption = document.querySelector('.icon-option');
+          firstOption.textContent = selectedPickerIcon;
+          firstOption.dataset.icon = selectedPickerIcon;
+          firstOption.classList.add('selected');
+        }
+      }
+      hideIconPicker();
+    }
+
+    // ========== COLOR PICKER SCREEN ==========
+    let selectedPickerColor = null;
+
+    function showColorPicker() {
+      document.getElementById('mainForm').classList.add('hidden');
+      document.getElementById('colorPickerScreen').classList.add('active');
+      // Pre-select current color
+      const currentColor = document.querySelector('.color-option.selected');
+      if (currentColor) {
+        const colorValue = currentColor.dataset.color;
+        document.querySelectorAll('#colorPickerScreen .picker-item').forEach(item => {
+          item.classList.toggle('selected', item.dataset.color === colorValue);
+        });
+        selectedPickerColor = colorValue;
+      }
+    }
+
+    function hideColorPicker() {
+      document.getElementById('mainForm').classList.remove('hidden');
+      document.getElementById('colorPickerScreen').classList.remove('active');
+    }
+
+    function selectPickerColor(el) {
+      document.querySelectorAll('#colorPickerScreen .picker-item').forEach(e => e.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedPickerColor = el.dataset.color;
+    }
+
+    function confirmColorSelection() {
+      if (selectedPickerColor) {
+        // Update main form color
+        document.querySelectorAll('.color-option').forEach(el => {
+          el.classList.toggle('selected', el.dataset.color === selectedPickerColor);
+        });
+        // If color not in quick picker, update first one
+        const existingOption = document.querySelector(`.color-option[data-color="${selectedPickerColor}"]`);
+        if (!existingOption) {
+          const firstOption = document.querySelector('.color-option');
+          firstOption.style.background = selectedPickerColor;
+          firstOption.dataset.color = selectedPickerColor;
+          firstOption.classList.add('selected');
+        }
+      }
+      hideColorPicker();
+    }
+  </script>
+
+</body>
+</html>

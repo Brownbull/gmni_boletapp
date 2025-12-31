@@ -1,0 +1,20 @@
+name: build-mockup-screen
+description: "Build HTML mockup screens using ONLY components from the design system. Enforces design system compliance by loading and validating against the component library first."
+author: "BMad"
+
+# Config values
+config_source: "{project-root}/_bmad/bmm/config.yaml"
+output_folder: "{config_source}:output_folder"
+
+# Workflow components
+installed_path: "{project-root}/_bmad/bmm/workflows/excalidraw-diagrams/build-mockup-screen"
+instructions: "{installed_path}/instructions.md"
+validation: "{installed_path}/checklist.md"
+
+# CRITICAL: Design system source (must be loaded FIRST before any screen building)
+design_system_source: "{project-root}/docs/uxui/mockups/00_components/design-system-final.html"
+
+# Output folder for mockup screens
+mockups_output_folder: "{project-root}/docs/uxui/mockups"
+
+standalone: true
