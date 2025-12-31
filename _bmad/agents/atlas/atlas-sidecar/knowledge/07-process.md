@@ -1,7 +1,7 @@
 # Process & Strategy
 
 > Section 7 of Atlas Memory
-> Last Sync: 2025-12-18
+> Last Sync: 2025-12-31
 > Sources: retrospectives, CI/CD docs, sprint-status.yaml
 
 ## Development Workflow
@@ -82,13 +82,31 @@ backlog → drafted → ready-for-dev → in-progress → review → done
 
 | Story | Date | Environment | Notes |
 |-------|------|-------------|-------|
+| **Epic 12 Complete (12.5, 12.99)** | 2025-12-23 | Production | v9.7.0 - Batch insights with aggregate summary, 2799 tests |
+| **Epic 12 Stories 12.1-12.4** | 2025-12-22 | Production | v9.6.0 - Batch Mode: Multi-image capture, parallel processing, batch review queue, credit warning. PR #127. 43 files, 8925 insertions, 200+ tests |
 | **Stories 11.2-11.6** | 2025-12-22 | Production | v9.5.0 - Quick Save Card, Animated Item Reveal, Trust Merchants, Scan Status, Viewport Adaptation. PRs #119→#120→#121. 46 files, 5576 insertions |
 | **Story 11.1** | 2025-12-21 | Production | v9.4.0 - Batch processing, 49 new tests, PR #116→#117→#118 |
 | **v9.1.0 Duplicate Fix** | 2025-12-20 | Production | PR #106 - Simplified duplicate detection (date/merchant/amount/country), new duplicate_detected insight |
 | **Epic 10 Complete** | 2025-12-19 | Production | PR #102 - Full Insight Engine: 12 generators, phase-based selection, batch mode |
-| 10.5-selection-algorithm | 2025-12-19 | Production | ADR-017 phase-based priority, 33/66 sprinkle, WARNING category |
-| 10.1-insight-engine-core | 2025-12-18 | Production | InsightEngine foundation - 47 tests, defensive Timestamp handling |
-| 10.0-foundation-sprint | 2025-12-18 | Production | Analytics refactor, filtering service, App.tsx cleanup |
+
+## Epic 13 Documentation (2025-12-31)
+
+| Deliverable | Status |
+|-------------|--------|
+| 10 HTML Mockups | ✅ Complete |
+| Motion Design System | ✅ Complete |
+| Voice & Tone Guidelines | ✅ Complete |
+| Design System Reference | ✅ Complete |
+| Critical Use Cases (E2E) | ✅ Complete |
+
+## Epic 14 Ready-for-Dev (2025-12-31)
+
+All 14 stories created with Atlas workflow analysis:
+- Animation Framework (5 pts)
+- Dynamic Polygon (11 pts)
+- Celebrations (8 pts)
+- Weekly Reports (5 pts)
+- Enhanced Charts (6 pts)
 
 ---
 
@@ -97,3 +115,5 @@ backlog → drafted → ready-for-dev → in-progress → review → done
 - 3-branch strategy restored in Epic 10 (develop → staging → main)
 - CI/CD standards from Epic 8 retrospective
 - Sprint status tracking active since Epic 7
+- **Epic 13 complete (2025-12-31):** Design phase with 10 HTML mockups
+- **Epic 14 stories ready:** 14 stories (48 pts) all marked ready-for-dev
