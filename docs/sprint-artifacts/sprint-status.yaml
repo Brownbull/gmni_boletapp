@@ -268,12 +268,12 @@ development_status:
   # └─────────────────────────────────────────────────────────────────┘
   #
   epic-12: contexted  # Tech context created 2025-12-22
-  12-1-batch-capture-ui: done  # 5 pts - PARALLEL with 12.4 - Camera + preview strip - Code Review APPROVED 2025-12-22
-  12-2-parallel-processing-service: done  # 5 pts - Depends on 12.1 - Concurrent API calls - Code Review APPROVED 2025-12-22
-  12-3-batch-review-queue: review  # 5 pts - Depends on 12.2 - Summary cards + edit capability - IMPLEMENTED 2025-12-22
-  12-4-credit-warning-system: review  # 3 pts - PARALLEL with 12.1 - Pre-batch credit check
-  12-5-batch-save-and-insights: ready-for-dev  # 3 pts - Depends on 12.3 - Save all + aggregate insight
-  12-99-epic-release-deployment: ready-for-dev  # 2 pts - Production deployment
+  12-1-batch-capture-ui: done  # 5 pts - PARALLEL with 12.4 - Camera + preview strip - Code Review APPROVED 2025-12-22, DEPLOYED
+  12-2-parallel-processing-service: done  # 5 pts - Depends on 12.1 - Concurrent API calls - Code Review APPROVED 2025-12-22, DEPLOYED
+  12-3-batch-review-queue: done  # 5 pts - Depends on 12.2 - Summary cards + edit capability - Code Review APPROVED 2025-12-22, DEPLOYED
+  12-4-credit-warning-system: done  # 3 pts - PARALLEL with 12.1 - Pre-batch credit check - Code Review APPROVED 2025-12-22, DEPLOYED
+  12-5-batch-save-and-insights: done  # 3 pts - Depends on 12.3 - Save all + aggregate insight - Code Review APPROVED 2025-12-23
+  12-99-epic-release-deployment: done  # 2 pts - Production deployment - DEPLOYED 2025-12-23, Atlas Code Review APPROVED 2025-12-23
   epic-12-retrospective: optional
 
   # ============================================================================
@@ -283,62 +283,101 @@ development_status:
   # Total scope: ~128 points across 3 epics
   # ============================================================================
 
-  # Epic 13: UX Design & Mockups (~34 points)
-  # Mockup-first workflow before implementation
-  # Key deliverables: Voice guidelines, Motion system, All screen mockups
+  # Epic 13: UX Design & Mockups (~41 points)
+  # RESTRUCTURED 2025-12-27: Using design-system-mockup-builder workflow
+  # Phase 1: Extract design system reference | Phase 2: Build each screen independently
+  # Workflow: _bmad/bmm/workflows/design-system-mockup-builder
   # Personas: María (parent), Diego (young pro), Rosa (abuelita), Tomás (drifter)
-  epic-13: backlog
-  13-1-critical-use-cases-document: backlog  # 3 pts - E2E scenarios for Chrome extension testing
-  13-2-voice-tone-guidelines: backlog  # 2 pts - Non-judgmental, playful, celebratory voice
-  13-3-motion-design-system-spec: backlog  # 3 pts - "Everything Breathes" animation system
-  13-4-mockup-home-dashboard: backlog  # 3 pts - Breathing polygon, visual health
-  13-5-mockup-analytics: backlog  # 5 pts - Sankey, Treemap exploration
-  13-6-mockup-transaction-list: backlog  # 3 pts - Filters + swipe time navigation
-  13-7-mockup-scan-overlay-flow: backlog  # 3 pts - Overlay processing, progressive reveal
-  13-8-mockup-goals-savings-gps: backlog  # 3 pts - Goal tracking visualization
-  13-9-mockup-reports: backlog  # 3 pts - Story format (swipeable cards)
-  13-10-mockup-insights-redesign: backlog  # 3 pts - Carousel, Emotional Airlock
-  13-11-mockup-settings: backlog  # 2 pts - Progressive disclosure
-  13-12-design-review-approval-gate: backlog  # 1 pt - Final approval before implementation
+  # Tech Context: docs/sprint-artifacts/epic13/tech-context-epic13.md (2025-12-23)
+  # UX Spec Update: docs/ux-design-specification.md Section 10 (2025-12-23)
+  epic-13: done  # Completed 2025-12-31 - All mockups approved
+
+  # Foundation (Specification Documents) - COMPLETED
+  13-1-critical-use-cases-document: done  # 3 pts - E2E scenarios - Atlas Code Review APPROVED 2025-12-23
+  13-2-voice-tone-guidelines: done  # 2 pts - Non-judgmental voice - Atlas Code Review APPROVED 2025-12-23
+  13-3-motion-design-system-spec: done  # 3 pts - "Everything Breathes" - Atlas Code Review APPROVED 2025-12-23
+
+  # Design System Foundation
+  13-4-design-system-html-components: done  # 5 pts - Build design-system-final.html with ALL components - Atlas Code Review APPROVED 2025-12-27
+  13-5-extract-design-system-reference: done  # 2 pts - Workflow Phase 1: Atlas Code Review APPROVED 2025-12-27
+
+  # Screen Mockups (Each uses Workflow Phase 2 independently - prevents context overflow)
+  # UNBLOCKED by 13.5 completion (2025-12-27) - All ready for parallel development
+  13-6-mockup-home-dashboard: done  # 3 pts - Atlas Code Review APPROVED 2025-12-29
+  13-7-mockup-analytics-polygon: done  # 5 pts - Includes Dynamic Polygon - Complete 2025-12-30
+  13-8-mockup-transaction-list: done  # 3 pts - Transaction items + filters - Complete 2025-12-30
+  13-9-mockup-scan-overlay: done  # 3 pts - Camera overlay flow - Complete 2025-12-29
+  13-10-mockup-goals-gps: done  # 3 pts - Savings GPS visualization - Complete 2025-12-31
+  13-11-mockup-reports: done  # 3 pts - Weekly report cards - Complete 2025-12-31
+  13-12-mockup-insights: done  # 3 pts - Insights history view - Complete 2025-12-31
+  13-13-mockup-settings: done  # 2 pts - Settings screen - Complete 2025-12-29
+
+  # Review Gate
+  13-14-design-review-approval-gate: done  # 1 pt - Design consistency review - APPROVED 2025-12-31
   epic-13-retrospective: optional
 
   # Epic 14: Core Implementation (~48 points)
   # Implement approved mockups with animation framework
   # Key features: Polygon, Scan flow, Reports, Celebrations
-  epic-14: backlog
-  14-1-animation-framework: backlog  # 5 pts - Core animation utilities
-  14-2-screen-transition-system: backlog  # 3 pts - Staggered entry, breathing
-  14-3-scan-overlay-flow: backlog  # 5 pts - Non-blocking overlay processing
-  14-4-quick-save-path: backlog  # 3 pts - Progressive item reveal
-  14-5-dynamic-polygon-component: backlog  # 5 pts - 3-6 sided spending shape
-  14-6-polygon-dual-mode: backlog  # 3 pts - Merchant categories + item groups
-  14-7-expanding-lava-visual: backlog  # 3 pts - Inverted metaphor
-  14-8-enhanced-existing-charts: backlog  # 3 pts - Pie, Bar, Stacked improvements
-  14-9-swipe-time-navigation: backlog  # 3 pts - Left/right for week/month
-  14-10-weekly-report-story-format: backlog  # 5 pts - Instagram-style cards
-  14-11-intentional-or-accidental-pattern: backlog  # 2 pts - Non-judgmental prompts
-  14-12-celebration-system: backlog  # 3 pts - Confetti, haptics, sounds
-  14-13-personal-records-detection: backlog  # 3 pts - "Lowest restaurant week!"
-  14-14-session-completion-messaging: backlog  # 2 pts - "Great check-in today"
+  # UNBLOCKED by Epic 13 completion (2025-12-31) - Ready for development
+  # Atlas Feature Mapping: Animation system, Polygon visualization, Celebrations
+  # Workflow Chains: Extends Scan Flow (#1), Analytics (#2), Quick Save (#6)
+  epic-14: in-progress  # Started 2025-12-31 after Epic 13 approval
+
+  # Foundation Layer (must be completed first)
+  14-1-animation-framework: ready-for-dev  # 5 pts - Core animation utilities [NEW FEATURE: Animation system]
+  14-2-screen-transition-system: ready-for-dev  # 3 pts - Staggered entry, breathing [DEPENDS: 14.1]
+
+  # Scan Flow Enhancement
+  14-3-scan-overlay-flow: ready-for-dev  # 5 pts - Non-blocking overlay [EXTENDS: Quick Save Flow #6]
+  14-4-quick-save-path: ready-for-dev  # 3 pts - Progressive item reveal [EXTENDS: Quick Save Flow #6]
+
+  # Analytics & Visualization (can parallelize after 14.1)
+  14-5-dynamic-polygon-component: ready-for-dev  # 5 pts - 3-6 sided spending shape [NEW FEATURE: Polygon]
+  14-6-polygon-dual-mode: ready-for-dev  # 3 pts - Merchant categories + item groups [DEPENDS: 14.5]
+  14-7-expanding-lava-visual: ready-for-dev  # 3 pts - Inverted metaphor [DEPENDS: 14.5]
+  14-8-enhanced-existing-charts: ready-for-dev  # 3 pts - Pie, Bar, Stacked improvements [EXTENDS: Analytics #2]
+  14-9-swipe-time-navigation: ready-for-dev  # 3 pts - Left/right for week/month [EXTENDS: Analytics #2]
+
+  # Reports & Insights
+  14-10-weekly-report-story-format: ready-for-dev  # 5 pts - Instagram-style cards [EXTENDS: Insight History #8]
+  14-11-intentional-or-accidental-pattern: ready-for-dev  # 2 pts - Non-judgmental prompts [EXTENDS: Insight Gen #5]
+
+  # Celebrations & Engagement
+  14-12-celebration-system: ready-for-dev  # 3 pts - Confetti, haptics, sounds [NEW FEATURE: Celebrations]
+  14-13-personal-records-detection: ready-for-dev  # 3 pts - "Lowest restaurant week!" [EXTENDS: Insight Gen #5]
+  14-14-session-completion-messaging: ready-for-dev  # 2 pts - "Great check-in today" [NEW FEATURE: Session UX]
+
   epic-14-retrospective: optional
 
-  # Epic 15: Advanced Features (~46 points)
-  # Goals system, learned thresholds, out-of-character detection
-  # Key features: Savings GPS, Emotional Airlock, Advanced charts
+  # Epic 15: Advanced Features (~38 points - revised after mockup verification 2025-12-31)
+  # Goals system, learned thresholds, out-of-character detection, treemap, themeable skins
+  # Key features: Savings GPS, Emotional Airlock, Treemap, Themeable Skins (Sankey/Sharing REMOVED - not in mockups)
+  # BLOCKED by Epic 14 - Requires animation framework and polygon
+  # Atlas Feature Mapping: Goals system, Pattern detection, Treemap viz
+  # Workflow Chains: Extends Insight Gen (#5), Analytics (#2)
   epic-15: backlog
-  15-1-custom-goals-crud: backlog  # 3 pts - Name, emoji, amount, currency
-  15-2-savings-gps-visualization: backlog  # 5 pts - ETA, alternate routes
-  15-3-hybrid-income-mode: backlog  # 3 pts - Smart + Precision modes
-  15-4-goal-connected-insights: backlog  # 3 pts - "Coffee = 1 day from Tokyo"
-  15-5-learned-budget-thresholds: backlog  # 3 pts - App suggests limits
-  15-6-threshold-proximity-alerts: backlog  # 2 pts - 75%, 90%, 100% warnings
-  15-7-out-of-character-detection: backlog  # 5 pts - Pattern deviation
-  15-8-emotional-airlock-flow: backlog  # 3 pts - Curiosity → Playful → Reveal
-  15-9-sankey-diagram-implementation: backlog  # 5 pts - Flow visualization
-  15-10-treemap-implementation: backlog  # 5 pts - Proportional breakdown
-  15-11-monthly-milestone-view: backlog  # 3 pts - Progress celebrations
-  15-12-shareable-spending-personality: backlog  # 3 pts - Generate image
-  15-13-themeable-skins-infrastructure: backlog  # 3 pts - Cats/dogs themes
+
+  # Goals System (new feature area)
+  15-1-custom-goals-crud: backlog  # 3 pts - Name, emoji, amount, currency [NEW FEATURE: Goals] [MOCKUP: goals-gps.html]
+  15-2-savings-gps-visualization: backlog  # 5 pts - ETA, alternate routes [DEPENDS: 15.1] [MOCKUP: goals-gps.html]
+  15-3-hybrid-income-mode: backlog  # 3 pts - Smart + Precision modes [NEW FEATURE: Income tracking]
+  15-4-goal-connected-insights: backlog  # 3 pts - "Coffee = 1 day from Tokyo" [EXTENDS: Insight Gen #5]
+
+  # Learned Behavior (extends Insight Engine)
+  15-5-learned-budget-thresholds: backlog  # 3 pts - App suggests limits [EXTENDS: Insight Gen #5] [MOCKUP: goals-gps.html budget-limit]
+  15-6-threshold-proximity-alerts: backlog  # 2 pts - 75%, 90%, 100% warnings [DEPENDS: 15.5]
+  15-7-out-of-character-detection: backlog  # 5 pts - Pattern deviation [EXTENDS: Insight Gen #5]
+  15-8-emotional-airlock-flow: backlog  # 3 pts - Curiosity → Playful → Reveal [DEPENDS: 15.7] [MOCKUP: insights.html airlock sequence]
+
+  # Advanced Visualizations
+  15-9-treemap-implementation: backlog  # 5 pts - Proportional breakdown [MOCKUP: analytics-polygon.html, home-dashboard.html]
+  # REMOVED 15.9-Sankey (CSS defined but not rendered), 15.12-Sharing (not in mockups)
+
+  # Engagement & Personalization
+  15-10-monthly-milestone-view: backlog  # 3 pts - Progress celebrations [DEPENDS: 14.12] [MOCKUP: goals-gps.html milestone markers]
+  15-11-themeable-skins: backlog  # 3 pts - 3 themes: Professional Blue, Mono, Ni No Kuni [MOCKUP: settings.html PALETA DE COLOR]
+
   epic-15-retrospective: optional
 
   # Epic 16: Onboarding & Progressive Disclosure (~15 points)
