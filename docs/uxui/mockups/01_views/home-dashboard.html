@@ -1,0 +1,2173 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="mono" data-font="outfit" data-mode="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gastify - Home Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Baloo+2:wght@700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       DESIGN TOKENS FROM REFERENCE
+       ============================================ */
+    :root {
+      /* Primary Palette */
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --primary-dark: #1e40af;
+      /* Secondary */
+      --secondary: #64748b;
+      --secondary-light: #f1f5f9;
+      --accent: #0ea5e9;
+      /* Backgrounds */
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --bg-inverse: #0f172a;
+      /* Text */
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --text-inverse: #f8fafc;
+      /* Borders */
+      --border-light: #e2e8f0;
+      --border-medium: #cbd5e1;
+      --border-dark: #94a3b8;
+      /* Semantic */
+      --success: #22c55e;
+      --success-light: #dcfce7;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --error: #ef4444;
+      --error-light: #fee2e2;
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      /* Spacing */
+      --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+      --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+      /* Radii */
+      --radius-sm: 6px; --radius-md: 10px; --radius-lg: 12px;
+      --radius-xl: 16px; --radius-2xl: 20px; --radius-full: 9999px;
+      /* Typography */
+      --font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+      --transition-fast: 150ms ease;
+      --transition-normal: 200ms ease;
+      --transition-slow: 300ms ease;
+    }
+
+    /* THEME 1: Professional Blue (Default) */
+    [data-theme="professional"] {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --primary-dark: #1e40af;
+      --secondary: #64748b;
+      --secondary-light: #f1f5f9;
+      --accent: #0ea5e9;
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --bg-inverse: #0f172a;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --border-light: #e2e8f0;
+      --border-medium: #cbd5e1;
+    }
+
+    /* THEME 2: Monochrome Minimal */
+    [data-theme="mono"] {
+      --primary: #18181b;
+      --primary-hover: #27272a;
+      --primary-light: #f4f4f5;
+      --primary-dark: #09090b;
+      --secondary: #52525b;
+      --secondary-light: #e4e4e7;
+      --accent: #3b82f6;
+      --bg-primary: #fafafa;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f4f4f5;
+      --bg-inverse: #18181b;
+      --text-primary: #18181b;
+      --text-secondary: #52525b;
+      --text-tertiary: #a1a1aa;
+      --border-light: #e4e4e7;
+      --border-medium: #d4d4d8;
+    }
+
+    /* THEME 3: Ni No Kuni / Studio Ghibli */
+    [data-theme="ninokuni"] {
+      --primary: #4a7c59;
+      --primary-hover: #3d6b4a;
+      --primary-light: #d4e5d9;
+      --primary-dark: #2d5438;
+      --secondary: #5b8fa8;
+      --secondary-light: #d5e8f0;
+      --accent: #e8a87c;
+      --bg-primary: #f5f0e8;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1dbb6;
+      --bg-inverse: #2d3a4a;
+      --text-primary: #2d3a4a;
+      --text-secondary: #4a5568;
+      --text-tertiary: #7d9b5f;
+      --border-light: #e3bba1;
+      --border-medium: #d4a574;
+      --success: #7d9b5f;
+      --success-light: #d4e5d9;
+    }
+
+    /* ============================================
+       DARK MODE VARIANTS
+       ============================================ */
+
+    /* Professional Blue - Dark Mode */
+    [data-theme="professional"][data-mode="dark"] {
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --primary-light: #1e3a5f;
+      --primary-dark: #60a5fa;
+      --secondary: #94a3b8;
+      --secondary-light: #334155;
+      --accent: #38bdf8;
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --bg-inverse: #f8fafc;
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-tertiary: #64748b;
+      --text-inverse: #0f172a;
+      --border-light: #334155;
+      --border-medium: #475569;
+      --border-dark: #64748b;
+    }
+
+    /* Mono - Dark Mode */
+    [data-theme="mono"][data-mode="dark"] {
+      --primary: #a1a1aa;
+      --primary-hover: #d4d4d8;
+      --primary-light: #27272a;
+      --primary-dark: #e4e4e7;
+      --secondary: #71717a;
+      --secondary-light: #3f3f46;
+      --accent: #60a5fa;
+      --bg-primary: #09090b;
+      --bg-secondary: #18181b;
+      --bg-tertiary: #27272a;
+      --bg-inverse: #fafafa;
+      --text-primary: #fafafa;
+      --text-secondary: #d4d4d8;
+      --text-tertiary: #71717a;
+      --text-inverse: #09090b;
+      --border-light: #27272a;
+      --border-medium: #3f3f46;
+    }
+
+    /* Ni No Kuni - Dark Mode */
+    [data-theme="ninokuni"][data-mode="dark"] {
+      --primary: #6b9e7a;
+      --primary-hover: #5a8a68;
+      --primary-light: #2d3d32;
+      --primary-dark: #8fbf9c;
+      --secondary: #7ba8be;
+      --secondary-light: #2d3d4a;
+      --accent: #d4a574;
+      --bg-primary: #1a2420;
+      --bg-secondary: #243028;
+      --bg-tertiary: #2d3d32;
+      --bg-inverse: #f5f0e8;
+      --text-primary: #e8e4dc;
+      --text-secondary: #b8c4a8;
+      --text-tertiary: #6b8b5f;
+      --text-inverse: #2d3a4a;
+      --border-light: #3d4d42;
+      --border-medium: #4d5d52;
+      --success: #8fbf9c;
+      --success-light: #2d3d32;
+    }
+
+    /* Font Definitions */
+    body[data-font="outfit"] { --font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif; }
+    body[data-font="space"] { --font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; }
+
+    /* Logo Style Definitions - Paired with themes */
+    /* Professional Blue theme -> Blue/Black gradient logo */
+    body[data-theme="professional"] .g-logo-circle { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important; }
+    /* Mono theme -> Mono logo (default) */
+    body[data-theme="mono"] .g-logo-circle { background: linear-gradient(135deg, #18181b 0%, #3f3f46 100%) !important; }
+    /* Ni No Kuni theme -> Ghibli logo (green/blue) */
+    body[data-theme="ninokuni"] .g-logo-circle { background: linear-gradient(135deg, #4a7c59 0%, #5b8fa8 100%) !important; }
+
+    /* Logo Style Definitions - Dark Mode Variants */
+    body[data-theme="professional"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important; }
+    body[data-theme="mono"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #a1a1aa 0%, #71717a 100%) !important; }
+    body[data-theme="ninokuni"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #6b9e7a 0%, #7ba8be 100%) !important; }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-family);
+      background: #1a1a2e;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+      gap: 24px;
+    }
+
+    /* Page Layout - Stack phone and controls vertically */
+    .page-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* Global Controls Panel - Horizontal bar below phone */
+    .global-controls {
+      background: rgba(30, 41, 59, 0.95);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      padding: 12px 20px;
+      display: flex;
+      flex-direction: row;
+      gap: 24px;
+      border: 1px solid rgba(255,255,255,0.1);
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .control-group { display: flex; align-items: center; gap: 10px; }
+    .control-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      white-space: nowrap;
+    }
+    .control-options { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* Theme Swatches */
+    .theme-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 150ms ease;
+    }
+    .theme-swatch:hover { transform: scale(1.1); }
+    .theme-swatch.active {
+      border-color: white;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+    }
+    .theme-swatch[data-theme="professional"] { background: linear-gradient(135deg, #2563eb 50%, #64748b 50%); }
+    .theme-swatch[data-theme="mono"] { background: linear-gradient(135deg, #18181b 50%, #52525b 50%); }
+    .theme-swatch[data-theme="ninokuni"] { background: linear-gradient(135deg, #4a7c59 50%, #5b8fa8 50%); }
+
+    /* Font Pills */
+    .font-pill {
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: #94a3b8;
+      transition: all 150ms ease;
+    }
+    .font-pill:hover { background: rgba(255,255,255,0.1); }
+    .font-pill.active {
+      background: white;
+      color: #0f172a;
+      border-color: white;
+    }
+
+    /* Mode Toggle */
+    .mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: #94a3b8;
+      transition: all 150ms ease;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .mode-toggle:hover { background: rgba(255,255,255,0.1); }
+    .mode-toggle.active {
+      background: #1e293b;
+      border-color: #3b82f6;
+      color: #f1f5f9;
+    }
+    .mode-toggle svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    /* Logo Swatches */
+    .logo-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 150ms ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: white;
+      font-family: 'Baloo 2', sans-serif;
+    }
+    .logo-swatch:hover { transform: scale(1.1); }
+    .logo-swatch.active {
+      border-color: white;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+    }
+    .logo-swatch[data-logo="gastify"] { background: linear-gradient(135deg, #4a9e7e 0%, #3d8b6e 100%); }
+    .logo-swatch[data-logo="blue"] { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
+    .logo-swatch[data-logo="mono"] { background: linear-gradient(135deg, #18181b 0%, #3f3f46 100%); }
+    .logo-swatch[data-logo="sunset"] { background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%); }
+    .logo-swatch[data-logo="ghibli"] { background: linear-gradient(135deg, #4a7c59 0%, #5b8fa8 100%); }
+
+    /* Phone Frame */
+    .phone-frame {
+      width: 375px;
+      min-height: 812px;
+      background: #1e293b;
+      border-radius: 54px;
+      padding: 14px;
+      box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25),
+        inset 0 0 0 2px #334155, inset 0 0 0 4px #475569;
+    }
+    .phone-screen {
+      width: 100%;
+      height: 784px;
+      background: var(--bg-primary);
+      border-radius: 44px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px 8px;
+      background: var(--bg-primary);
+    }
+    .status-time { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .status-icons { display: flex; gap: 4px; align-items: center; }
+    .status-icons svg { width: 16px; height: 16px; fill: var(--text-primary); }
+
+    /* Header Bar */
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px 12px;
+      background: var(--bg-primary);
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .g-logo { width: 28px; height: 28px; }
+    .header-wordmark {
+      font-family: 'Baloo 2', cursive;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .header-menu {
+      width: 36px; height: 36px;
+      border-radius: var(--radius-md);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .header-menu svg {
+      width: 22px; height: 22px;
+      stroke: var(--text-secondary);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Carousel */
+    .carousel-container { position: relative; width: 100%; }
+    .carousel-viewport {
+      overflow: hidden;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      touch-action: pan-y pinch-zoom;
+    }
+    .carousel-track {
+      display: flex;
+      transition: transform var(--transition-normal);
+      transform: translateX(calc(var(--active-slide, 0) * -100%));
+    }
+    .carousel-slide {
+      flex: 0 0 100%;
+      min-width: 100%;
+      min-height: 314px; /* 320px minus 6px nav bar height - integrated design */
+      display: flex;
+      flex-direction: column;
+    }
+    .carousel-slide > * {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    /* Collapsible carousel content */
+    .carousel-container.collapsed .carousel-slide {
+      min-height: auto;
+    }
+    .carousel-container.collapsed .carousel-content {
+      display: none;
+    }
+    .carousel-container.collapsed .carousel-viewport {
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+    /* Bottom border indicator bar - corners follow card curvature */
+    .carousel-indicator-bar {
+      display: flex;
+      width: 100%;
+      height: 6px;
+      background: var(--border-light);
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+      overflow: hidden; /* Clip segment backgrounds to bar's border-radius */
+      border: 1px solid var(--border-light);
+      border-top: none; /* Card provides top edge */
+    }
+    .carousel-segment {
+      flex: 1;
+      height: 100%;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: background var(--transition-fast);
+      position: relative;
+    }
+    .carousel-segment::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 100%;
+      background: var(--border-medium);
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+    }
+    .carousel-segment:hover::after { opacity: 0.5; }
+    .carousel-segment.active { background: var(--border-medium); }
+    .carousel-segment.active::after { display: none; }
+    /* First active segment gets left rounded corner */
+    .carousel-segment:first-child.active { border-radius: 0 0 0 var(--radius-lg); }
+    /* Last active segment gets right rounded corner */
+    .carousel-segment:last-child.active { border-radius: 0 0 var(--radius-lg) 0; }
+
+    /* Radar Chart */
+    .radar-chart-container {
+      position: relative;
+      width: 100%;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0; /* Square bottom corners for nav bar continuity */
+      padding: 12px;
+      border: 1px solid var(--border-light);
+      border-bottom: none; /* Remove bottom border - nav bar provides it */
+    }
+    .radar-chart { width: 100%; height: 100%; }
+    .radar-grid { fill: none; stroke: var(--border-light); stroke-width: 0.5; opacity: 0.4; }
+    .radar-budget {
+      fill: var(--success); fill-opacity: 0.1;
+      stroke: var(--success); stroke-width: 2;
+      stroke-dasharray: 4 2;
+    }
+    .radar-actual {
+      fill: var(--primary); fill-opacity: 0.2;
+      stroke: var(--primary); stroke-width: 2;
+      animation: breathe 3s ease-in-out infinite;
+      transform-origin: center;
+    }
+    @keyframes breathe {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.02); opacity: 1; }
+    }
+    .radar-point { fill: var(--primary); }
+    .radar-center {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .radar-label { font-size: 11px; color: var(--text-tertiary); }
+    .radar-amount { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+    .radar-status { font-size: 12px; color: var(--success); font-weight: 500; }
+
+    /* Bump Chart */
+    .bump-chart-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0; /* Square bottom corners for nav bar continuity */
+      padding: 12px;
+      border: 1px solid var(--border-light);
+      border-bottom: none; /* Remove bottom border - nav bar provides it */
+    }
+    .chart-header { display: flex; justify-content: space-between; margin-bottom: 16px; }
+    .chart-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .chart-period { font-size: 12px; color: var(--text-tertiary); }
+    .bump-chart-wrapper { position: relative; }
+    .bump-y-axis {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-tertiary);
+      padding: 8px 0;
+    }
+    .bump-chart { width: calc(100% - 24px); height: 120px; margin-left: 24px; }
+    .bump-x-axis {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-left: 24px;
+      margin-top: 8px;
+    }
+    .bump-x-axis .current { font-weight: 600; color: var(--primary); }
+    .bump-point:hover { transform: scale(1.3); }
+    .bump-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-light);
+    }
+    .legend-item {
+      padding: 6px 10px;
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    /* Tree Map */
+    .treemap-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0; /* Square bottom corners for nav bar continuity */
+      padding: 12px;
+      border: 1px solid var(--border-light);
+      border-bottom: none; /* Remove bottom border - nav bar provides it */
+    }
+    .treemap-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .treemap-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .treemap-period { font-size: 12px; color: var(--primary); font-weight: 500; }
+    .treemap-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr 1fr;
+      gap: 4px;
+      height: 200px;
+    }
+    .treemap-cell {
+      border-radius: var(--radius-md);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .treemap-cell.supermercado {
+      grid-row: 1 / 4;
+      grid-column: 1;
+    }
+    .treemap-cell.restaurantes {
+      grid-row: 1 / 2;
+      grid-column: 2;
+    }
+    .treemap-cell.transporte {
+      grid-row: 2 / 3;
+      grid-column: 2;
+    }
+    .treemap-cell.otro {
+      grid-row: 3 / 4;
+      grid-column: 2;
+    }
+    .treemap-cell-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: white;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    .treemap-cell-count {
+      font-size: 10px;
+      color: rgba(255,255,255,0.8);
+    }
+    .treemap-cell-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: white;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    .treemap-cell-percent {
+      font-size: 11px;
+      color: rgba(255,255,255,0.8);
+    }
+    .treemap-cell.supermercado { background: var(--primary); }
+    .treemap-cell.restaurantes { background: #f59e0b; }
+    .treemap-cell.transporte { background: #8b5cf6; }
+    .treemap-cell.otro { background: #9ca3af; }
+    .treemap-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-light);
+    }
+    .treemap-total-label { font-size: 12px; color: var(--text-tertiary); }
+    .treemap-total-value { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+
+    /* Category Ticker Carousel */
+    .ticker-carousel-container {
+      position: relative;
+    }
+    .ticker-carousel-wrapper {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      border: 1px solid var(--border-light);
+      border-bottom: none;
+      position: relative;
+      overflow: hidden;
+    }
+    .ticker-carousel-track {
+      position: relative;
+    }
+    .ticker-carousel-slide {
+      padding: 12px;
+      box-sizing: border-box;
+      display: none;
+    }
+    .ticker-carousel-slide.active {
+      display: block;
+    }
+    .ticker-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .ticker-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+    .ticker-period { font-size: 11px; color: var(--text-tertiary); }
+    .ticker-see-all {
+      font-size: 12px;
+      color: var(--primary);
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-block;
+      transition: all var(--transition-fast);
+    }
+    .ticker-see-all:hover {
+      transform: translateY(-2px);
+      text-shadow: 0 2px 4px rgba(var(--primary-rgb), 0.3);
+    }
+
+    /* Collapsible items */
+    .ticker-item.collapsible,
+    .category-breakdown-item.collapsible {
+      display: none;
+    }
+    .ticker-list.expanded .ticker-item.collapsible,
+    .category-breakdown-list.expanded .category-breakdown-item.collapsible {
+      display: flex;
+    }
+    .category-breakdown-list.expanded .category-breakdown-item.collapsible {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Card expand toggle button (next to title) - subtle circular style */
+    .expand-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      margin-left: 6px;
+      background: transparent;
+      border: 1px solid var(--border-light);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .expand-btn:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--border-medium);
+    }
+    .expand-btn:active {
+      transform: scale(0.95);
+    }
+    .expand-btn.expanded {
+      background: var(--bg-tertiary);
+      border-color: var(--border-medium);
+    }
+    .expand-btn .expand-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-tertiary);
+    }
+    .expand-btn .expand-icon svg {
+      width: 10px;
+      height: 10px;
+      stroke-width: 2.5;
+    }
+    .expand-btn:hover .expand-icon {
+      color: var(--text-secondary);
+    }
+    .expand-btn.expanded .expand-icon {
+      color: var(--text-secondary);
+    }
+    .ticker-list { display: flex; flex-direction: column; gap: 2px; }
+    .ticker-item {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      gap: 12px;
+      border-radius: var(--radius-md);
+    }
+    .ticker-item.trend-up { background: rgba(239, 68, 68, 0.04); }
+    .ticker-item.trend-down { background: rgba(16, 185, 129, 0.04); }
+    .ticker-info { flex: 1; }
+    .ticker-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .ticker-count { font-size: 11px; color: var(--text-tertiary); }
+    .ticker-sparkline { width: 60px; height: 28px; }
+    .ticker-value { text-align: right; min-width: 70px; }
+    .ticker-amount { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .ticker-change {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 2px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .ticker-change.up { color: #ef4444; }
+    .ticker-change.down { color: var(--success); }
+
+    /* Ticker Carousel Navigation */
+    .ticker-indicator-bar {
+      display: flex;
+      width: 100%;
+      height: 6px;
+      background: var(--bg-tertiary);
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid var(--border-light);
+      border-top: none;
+    }
+    .ticker-segment {
+      flex: 1;
+      height: 100%;
+      background: transparent;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .ticker-segment:hover:not(.active) { background: var(--border-medium); }
+    .ticker-segment.active { background: var(--border-medium); }
+
+    /* Category Breakdown List */
+    .category-breakdown-list { display: flex; flex-direction: column; gap: 14px; }
+    .category-breakdown-item { display: flex; flex-direction: column; gap: 6px; }
+    .category-breakdown-header { display: flex; justify-content: space-between; align-items: center; }
+    .category-breakdown-info { display: flex; align-items: center; gap: 10px; }
+    .category-breakdown-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .category-breakdown-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+    .category-breakdown-amount { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .category-breakdown-bar {
+      height: 6px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+    }
+    .category-breakdown-bar-fill {
+      height: 100%;
+      border-radius: var(--radius-full);
+    }
+    .category-breakdown-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    /* Transactions Section Carousel */
+    .transactions-carousel-container {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      border: 1px solid var(--border-light);
+      border-bottom: none;
+      position: relative;
+    }
+    .transactions-carousel-wrapper {
+      position: relative;
+    }
+    .transactions-carousel-track {
+      position: relative;
+    }
+    .transactions-carousel-slide {
+      padding: 12px;
+      box-sizing: border-box;
+      display: none;
+    }
+    .transactions-carousel-slide.active {
+      display: block;
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .section-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+    .section-link {
+      font-size: 12px;
+      color: var(--primary);
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-block;
+      transition: all var(--transition-fast);
+    }
+    .section-link:hover {
+      transform: translateY(-2px);
+      text-shadow: 0 2px 4px rgba(var(--primary-rgb), 0.3);
+    }
+    .transactions-list { display: flex; flex-direction: column; gap: 8px; }
+
+    /* Transactions Carousel Navigation */
+    .transactions-indicator-bar {
+      display: flex;
+      width: 100%;
+      height: 6px;
+      background: var(--border-light);
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid var(--border-light);
+      border-top: none;
+    }
+    .transactions-segment {
+      flex: 1;
+      background: transparent;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .transactions-segment.active { background: var(--border-medium); }
+    .transactions-segment:first-child.active { border-radius: 0 0 0 var(--radius-lg); }
+    .transactions-segment:last-child.active { border-radius: 0 0 var(--radius-lg) 0; }
+
+    /* Date Group Header */
+    .date-group-header {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      padding-left: 4px;
+    }
+    .date-group { margin-bottom: 12px; }
+    .date-group:last-child { margin-bottom: 0; }
+
+    /* Expandable Transaction - Compact Style */
+    .expandable-item {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    .expandable-header {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 8px;
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    .expandable-header:hover { background: var(--bg-tertiary); }
+    .transaction-thumb { flex-shrink: 0; }
+    .receipt-icon {
+      width: 40px; height: 46px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #fafaf8 0%, #f0ede4 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-light);
+    }
+    .receipt-icon svg {
+      width: 18px; height: 22px;
+      stroke: #9ca3af;
+      fill: none;
+      stroke-width: 1.2;
+      opacity: 0.7;
+    }
+    .expandable-content { flex: 1; min-width: 0; }
+    .expandable-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 4px;
+    }
+    .expandable-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .expandable-amount { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .expandable-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .expandable-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+    }
+    .category-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+    .category-icon.groceries { background: #dcfce7; }
+    .category-icon.restaurant { background: #fee2e2; }
+    .category-icon.transport { background: #dbeafe; }
+    .category-icon.other { background: #ede9fe; }
+    .meta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 6px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-full);
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+    .expandable-chevron {
+      width: 16px; height: 16px;
+      stroke: var(--text-tertiary);
+      fill: none;
+      stroke-width: 2;
+      flex-shrink: 0;
+      transition: transform var(--transition-fast);
+    }
+    .expandable-item.open .expandable-chevron { transform: rotate(180deg); }
+    .expandable-details {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height var(--transition-normal);
+    }
+    .expandable-item.open .expandable-details { max-height: 300px; }
+    /* Collapsible transaction items (hidden by default, shown when list expanded) */
+    .expandable-item.collapsible { display: none; }
+    .transactions-list.expanded .expandable-item.collapsible { display: block; }
+    .expandable-details-inner {
+      padding: 10px 12px;
+      border-top: 1px solid var(--border-light);
+      background: var(--bg-tertiary);
+    }
+    .details-header {
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+    .line-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      font-size: 11px;
+    }
+    .line-item-name { color: var(--text-secondary); }
+    .line-item-price { color: var(--text-primary); font-weight: 500; }
+    .details-link {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--border-light);
+    }
+    .details-link a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 11px;
+      color: #059669;
+      font-weight: 500;
+      text-decoration: none;
+    }
+    .details-link a:hover { text-decoration: underline; }
+    /* Legacy badge styles for other carousels */
+    .category-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .category-badge.groceries { background: #dcfce7; color: #15803d; }
+    .category-badge.restaurant { background: #fef3c7; color: #b45309; }
+    .category-badge.transport { background: #dbeafe; color: #1d4ed8; }
+
+    /* Bottom Nav */
+    .bottom-nav {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      padding: 8px 12px 24px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-light);
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    .nav-item svg {
+      width: 24px; height: 24px;
+      stroke: var(--text-tertiary);
+      fill: none;
+      stroke-width: 1.8;
+    }
+    .nav-item span {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+    }
+    .nav-item.active svg { stroke: var(--primary); }
+    .nav-item.active span { color: var(--primary); font-weight: 600; }
+    .scan-center { margin-top: -56px; padding: 0; }
+    .scan-btn {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      cursor: pointer;
+      transition: background 300ms ease;
+    }
+    .scan-btn svg {
+      width: 24px; height: 24px;
+      stroke: white;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body data-theme="mono" data-font="outfit">
+  <div class="page-wrapper">
+    <div class="phone-frame">
+    <div class="phone-screen">
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <svg viewBox="0 0 24 24"><path d="M18 10a6 6 0 0 0-12 0c0 7 6 13 6 13s6-6 6-13z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+          <svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 11v2"/></svg>
+        </div>
+      </div>
+
+      <!-- Header Bar -->
+      <div class="header-bar" style="display: flex; justify-content: space-between; align-items: center;">
+        <!-- Left: G Logo (Circular) -->
+        <div class="g-logo-circle" style="width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 300ms ease;">
+          <span style="color: white; font-weight: 700; font-size: 16px; font-family: 'Baloo 2', sans-serif;">G</span>
+        </div>
+        <!-- Center: Gastify Wordmark -->
+        <span style="color: var(--text-primary); font-weight: 700; font-size: 24px; font-family: 'Baloo 2', sans-serif;">Gastify</span>
+        <!-- Right: Profile Avatar with Dropdown -->
+        <div style="position: relative;">
+          <button id="profile-btn" onclick="toggleProfileMenu()" style="width: 36px; height: 36px; border: none; background: transparent; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+            <!-- Tailwind-style avatar circle with initials -->
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); display: flex; align-items: center; justify-content: center; border: 2px solid var(--border-light);">
+              <span style="color: white; font-size: 14px; font-weight: 600;">JD</span>
+            </div>
+          </button>
+          <!-- Profile Dropdown Menu -->
+          <div id="profile-menu" style="display: none; position: absolute; top: 44px; right: 0; background: var(--bg-secondary); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); border: 1px solid var(--border-light); padding: 6px 0; min-width: 160px; z-index: 100;">
+            <!-- User info header -->
+            <div style="padding: 10px 14px; border-bottom: 1px solid var(--border-light); margin-bottom: 4px;">
+              <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Juan Díaz</div>
+              <div style="font-size: 12px; color: var(--text-tertiary);">juan@ejemplo.com</div>
+            </div>
+            <div class="profile-menu-item" style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; transition: background var(--transition-fast);" onmouseover="this.style.background='var(--bg-tertiary)'" onmouseout="this.style.background='transparent'">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 9h20"/></svg>
+              <span style="font-size: 14px; font-weight: 500; color: var(--text-primary);">Transacciones</span>
+            </div>
+            <div class="profile-menu-item" style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; transition: background var(--transition-fast);" onmouseover="this.style.background='var(--bg-tertiary)'" onmouseout="this.style.background='transparent'">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span style="font-size: 14px; font-weight: 500; color: var(--text-primary);">Reportes</span>
+            </div>
+            <!-- Goals - greyed out, future feature -->
+            <div class="profile-menu-item" style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: not-allowed; opacity: 0.5;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+              <span style="font-size: 14px; font-weight: 500; color: var(--text-tertiary);">Metas</span>
+              <span style="font-size: 10px; color: var(--text-tertiary); margin-left: auto;">Próximamente</span>
+            </div>
+            <div style="border-top: 1px solid var(--border-light); margin-top: 4px; padding-top: 4px;">
+              <div class="profile-menu-item" style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; transition: background var(--transition-fast);" onmouseover="this.style.background='var(--bg-tertiary)'" onmouseout="this.style.background='transparent'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                <span style="font-size: 14px; font-weight: 500; color: var(--text-primary);">Ajustes</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <!-- Chart Carousel -->
+        <div class="carousel-container">
+          <div class="carousel-viewport">
+            <div class="carousel-track" style="--active-slide: 0;">
+              <!-- Slide 1: Tree Map - Este Mes -->
+              <div class="carousel-slide">
+                <div class="treemap-card">
+                  <div class="treemap-header">
+                    <div style="display: flex; align-items: center;">
+                      <span class="treemap-title">Este Mes</span>
+                      <button class="expand-btn expanded" id="carousel-collapse-btn" onclick="toggleMainCarousel()">
+                        <span class="expand-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14"/></svg></span>
+                      </button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                      <!-- Left Arrow -->
+                      <button class="carousel-nav-btn" onclick="navigateMainCarousel(-1)" style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border-light); background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all var(--transition-fast);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+                      </button>
+                      <!-- Right Arrow -->
+                      <button class="carousel-nav-btn" onclick="navigateMainCarousel(1)" style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border-light); background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all var(--transition-fast);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="carousel-content">
+                    <div class="treemap-grid">
+                      <div class="treemap-cell supermercado">
+                        <div>
+                          <div class="treemap-cell-label">Supermercado</div>
+                          <div class="treemap-cell-count">18 compras</div>
+                        </div>
+                        <div>
+                          <div class="treemap-cell-value">$216.8k</div>
+                          <div class="treemap-cell-percent">40%</div>
+                        </div>
+                      </div>
+                      <div class="treemap-cell restaurantes">
+                        <div class="treemap-cell-label">Restaurantes</div>
+                        <div>
+                          <div class="treemap-cell-value">$162.6k</div>
+                          <div class="treemap-cell-percent">30%</div>
+                        </div>
+                      </div>
+                      <div class="treemap-cell transporte">
+                        <div class="treemap-cell-label">Transporte</div>
+                        <div>
+                          <div class="treemap-cell-value">$108k</div>
+                          <div class="treemap-cell-percent">20%</div>
+                        </div>
+                      </div>
+                      <div class="treemap-cell otro">
+                        <div class="treemap-cell-label">Otro</div>
+                        <div>
+                          <div class="treemap-cell-value" style="font-size: 16px;">$54k</div>
+                          <div class="treemap-cell-percent">10%</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="treemap-footer">
+                      <span class="treemap-total-label">Total del mes</span>
+                      <span class="treemap-total-value">$542.000</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Slide 2: Radar Chart - Comparación Mensual -->
+              <div class="carousel-slide">
+                <div class="radar-chart-container">
+                  <!-- Title with navigation arrows (matching slide 1 style) -->
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center;">
+                      <span class="treemap-title">Mes a Mes</span>
+                      <button class="expand-btn expanded" onclick="toggleMainCarousel()">
+                        <span class="expand-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14"/></svg></span>
+                      </button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                      <!-- Left Arrow -->
+                      <button class="carousel-nav-btn" onclick="navigateMainCarousel(-1)" style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border-light); background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all var(--transition-fast);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+                      </button>
+                      <!-- Right Arrow -->
+                      <button class="carousel-nav-btn" onclick="navigateMainCarousel(1)" style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border-light); background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all var(--transition-fast);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="carousel-content">
+                    <div style="position: relative;">
+                      <svg class="radar-chart" viewBox="0 0 200 180" style="width: 100%; height: auto; min-height: 220px;">
+                      <!-- Grid rings (hexagon) - alternating fills for 3D ripple effect -->
+                      <!-- Outermost ring - darker -->
+                      <polygon points="100,20 165,47 165,127 100,154 35,127 35,47" fill="#f1f5f9" stroke="var(--border-light)" stroke-width="1"/>
+                      <!-- Second ring - lighter -->
+                      <polygon points="100,37 152,57 152,117 100,137 48,117 48,57" fill="#f8fafc" stroke="var(--border-light)" stroke-width="1"/>
+                      <!-- Third ring - darker -->
+                      <polygon points="100,54 139,67 139,107 100,120 61,107 61,67" fill="#f1f5f9" stroke="var(--border-light)" stroke-width="1"/>
+                      <!-- Innermost ring - lighter (center) -->
+                      <polygon points="100,71 126,78 126,97 100,104 74,97 74,78" fill="#f8fafc" stroke="var(--border-light)" stroke-width="1"/>
+                      <!-- Axis lines from center - more visible -->
+                      <line x1="100" y1="87" x2="100" y2="20" stroke="var(--border-light)" stroke-width="1" opacity="0.5"/>
+                      <line x1="100" y1="87" x2="165" y2="47" stroke="var(--border-light)" stroke-width="1" opacity="0.5"/>
+                      <line x1="100" y1="87" x2="165" y2="127" stroke="var(--border-light)" stroke-width="1" opacity="0.5"/>
+                      <line x1="100" y1="87" x2="100" y2="154" stroke="var(--border-light)" stroke-width="1" opacity="0.5"/>
+                      <line x1="100" y1="87" x2="35" y2="127" stroke="var(--border-light)" stroke-width="1" opacity="0.5"/>
+                      <line x1="100" y1="87" x2="35" y2="47" stroke="var(--border-light)" stroke-width="1" opacity="0.5"/>
+                      <!-- Presupuesto/Budget boundary (green dashed, back layer) - ALWAYS VISIBLE -->
+                      <polygon id="radar-meta" points="100,28 158,52 158,122 100,146 42,122 42,52"
+                          fill="var(--success)" fill-opacity="0.05" stroke="var(--success)" stroke-width="1.5" stroke-dasharray="4 2"/>
+                      <!-- November data (orange, middle layer) -->
+                      <polygon id="radar-nov" points="100,38 148,58 145,118 100,138 52,115 55,62"
+                          fill="#f59e0b" fill-opacity="0.12" stroke="#f59e0b" stroke-width="2" style="display: none;"/>
+                      <!-- December data (primary blue, front layer) -->
+                      <polygon id="radar-dec" points="100,32 155,55 150,125 100,142 48,120 52,58"
+                          fill="var(--primary)" fill-opacity="0.18" stroke="var(--primary)" stroke-width="2"/>
+                      <!-- Data points - December (teal) -->
+                      <g id="radar-dec-points">
+                        <circle cx="100" cy="32" r="4" fill="var(--primary)" stroke="white" stroke-width="1.5"/>
+                        <circle cx="155" cy="55" r="4" fill="var(--primary)" stroke="white" stroke-width="1.5"/>
+                        <circle cx="150" cy="125" r="4" fill="var(--primary)" stroke="white" stroke-width="1.5"/>
+                        <circle cx="100" cy="142" r="4" fill="var(--primary)" stroke="white" stroke-width="1.5"/>
+                        <circle cx="48" cy="120" r="4" fill="var(--primary)" stroke="white" stroke-width="1.5"/>
+                        <circle cx="52" cy="58" r="4" fill="var(--primary)" stroke="white" stroke-width="1.5"/>
+                      </g>
+                      <!-- Data points - November (orange) -->
+                      <g id="radar-nov-points" style="display: none;">
+                        <circle cx="100" cy="38" r="3" fill="#f59e0b" stroke="white" stroke-width="1"/>
+                        <circle cx="148" cy="58" r="3" fill="#f59e0b" stroke="white" stroke-width="1"/>
+                        <circle cx="145" cy="118" r="3" fill="#f59e0b" stroke="white" stroke-width="1"/>
+                        <circle cx="100" cy="138" r="3" fill="#f59e0b" stroke="white" stroke-width="1"/>
+                        <circle cx="52" cy="115" r="3" fill="#f59e0b" stroke="white" stroke-width="1"/>
+                        <circle cx="55" cy="62" r="3" fill="#f59e0b" stroke="white" stroke-width="1"/>
+                      </g>
+                    </svg>
+                    <!-- Category Icons positioned around the chart - touching corners -->
+                    <!-- Each icon has data-dic and data-nov for monthly totals -->
+                    <div class="radar-icon" data-category="Supermercado" data-dic="$216.800" data-nov="$198.500" style="position: absolute; top: 4%; left: 50%; transform: translateX(-50%); width: 28px; height: 28px; border-radius: 50%; background: #dcfce7; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; border: 2px solid white; box-shadow: var(--shadow-sm);">🛒</div>
+                    <div class="radar-icon" data-category="Restaurantes" data-dic="$162.600" data-nov="$178.900" style="position: absolute; top: 20%; right: 2%; width: 28px; height: 28px; border-radius: 50%; background: #fef3c7; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; border: 2px solid white; box-shadow: var(--shadow-sm);">🍽️</div>
+                    <div class="radar-icon" data-category="Transporte" data-dic="$108.000" data-nov="$105.300" style="position: absolute; bottom: 26%; right: 2%; width: 28px; height: 28px; border-radius: 50%; background: #dbeafe; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; border: 2px solid white; box-shadow: var(--shadow-sm);">🚗</div>
+                    <div class="radar-icon" data-category="Salud" data-dic="$42.500" data-nov="$38.200" style="position: absolute; bottom: 4%; left: 50%; transform: translateX(-50%); width: 28px; height: 28px; border-radius: 50%; background: #fce7f3; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; border: 2px solid white; box-shadow: var(--shadow-sm);">💊</div>
+                    <div class="radar-icon" data-category="Ocio" data-dic="$67.300" data-nov="$72.100" style="position: absolute; bottom: 26%; left: 2%; width: 28px; height: 28px; border-radius: 50%; background: #fef3c7; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; border: 2px solid white; box-shadow: var(--shadow-sm);">🎮</div>
+                    <div class="radar-icon" data-category="Otros" data-dic="$54.000" data-nov="$49.600" style="position: absolute; top: 20%; left: 2%; width: 28px; height: 28px; border-radius: 50%; background: #ede9fe; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; border: 2px solid white; box-shadow: var(--shadow-sm);">📦</div>
+                      <!-- Tooltip for category totals -->
+                      <div id="radar-tooltip" style="display: none; position: absolute; background: #1e293b; color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; pointer-events: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.3); text-align: center;"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Slide 3: Bump Chart - Ranking Trimestral -->
+              <div class="carousel-slide">
+                <div class="bump-chart-card">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center;">
+                      <span class="treemap-title">Ultimos 4 Meses</span>
+                      <button class="expand-btn expanded" onclick="toggleMainCarousel()">
+                        <span class="expand-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14"/></svg></span>
+                      </button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                      <!-- Left Arrow -->
+                      <button class="carousel-nav-btn" onclick="navigateMainCarousel(-1)" style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border-light); background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all var(--transition-fast);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+                      </button>
+                      <!-- Right Arrow -->
+                      <button class="carousel-nav-btn" onclick="navigateMainCarousel(1)" style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border-light); background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all var(--transition-fast);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="carousel-content">
+                    <div style="position: relative;">
+                      <!-- Bump Chart with Y-axis labels integrated into SVG for perfect alignment -->
+                    <!-- viewBox: 0 0 320 120 - Y-axis labels at x=0-20, chart area x=28-310, 4 ranks at y=10,43,77,110 (33px spacing) -->
+                    <svg viewBox="0 0 320 120" id="bump-chart-svg" style="width: 100%; height: 120px;">
+                      <!-- Y-axis labels - 11px font, positioned to align exactly with grid lines -->
+                      <text x="0" y="10" dominant-baseline="middle" font-size="11" fill="var(--text-tertiary)" font-weight="600">#1</text>
+                      <text x="0" y="43" dominant-baseline="middle" font-size="11" fill="var(--text-tertiary)">#2</text>
+                      <text x="0" y="77" dominant-baseline="middle" font-size="11" fill="var(--text-tertiary)">#3</text>
+                      <text x="0" y="110" dominant-baseline="middle" font-size="11" fill="var(--text-tertiary)">#4</text>
+                      <!-- Grid lines for 4 ranks at y: 10, 43, 77, 110 (33px spacing) -->
+                      <line x1="28" y1="10" x2="310" y2="10" stroke="var(--border-light)" stroke-width="1"/>
+                      <line x1="28" y1="43" x2="310" y2="43" stroke="var(--border-light)" stroke-width="1"/>
+                      <line x1="28" y1="77" x2="310" y2="77" stroke="var(--border-light)" stroke-width="1"/>
+                      <line x1="28" y1="110" x2="310" y2="110" stroke="var(--border-light)" stroke-width="1"/>
+                      <!-- Supermercado line (primary) - Rank: 1,2,1,1 - starts at x=28, ends at x=310 -->
+                      <polyline fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="28,10 122,43 216,10 310,10"/>
+                      <!-- Restaurantes line (orange) - Rank: 2,1,2,2 -->
+                      <polyline fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="28,43 122,10 216,43 310,43"/>
+                      <!-- Transporte line (purple) - Rank: 3,3,4,3 -->
+                      <polyline fill="none" stroke="#8b5cf6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="28,77 122,77 216,110 310,77"/>
+                      <!-- Otro line (gray) - Rank: 4,4,3,4 -->
+                      <polyline fill="none" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="28,110 122,110 216,77 310,110"/>
+                      <!-- Supermercado points - BIGGER first circle (r=8) -->
+                      <circle class="bump-point" data-cat="Supermercado" data-month="Oct" data-amount="$210.3k" cx="28" cy="10" r="8" fill="var(--primary)" stroke="white" stroke-width="2" style="cursor: pointer;"/>
+                      <circle class="bump-point" data-cat="Supermercado" data-month="Nov" data-amount="$198.7k" cx="122" cy="43" r="5" fill="var(--primary)" stroke="white" stroke-width="2" style="cursor: pointer;"/>
+                      <circle class="bump-point" data-cat="Supermercado" data-month="Dic" data-amount="$216.8k" cx="216" cy="10" r="5" fill="var(--primary)" stroke="white" stroke-width="2" style="cursor: pointer;"/>
+                      <circle class="bump-point" data-cat="Supermercado" data-month="Actual" data-amount="$216.8k" cx="310" cy="10" r="6" fill="var(--primary)" stroke="white" stroke-width="2" style="cursor: pointer;"/>
+                      <!-- Restaurantes points - BIGGER first circle -->
+                      <circle class="bump-point" data-cat="Restaurantes" data-month="Oct" data-amount="$148.2k" cx="28" cy="43" r="8" fill="#f59e0b" stroke="white" stroke-width="2" style="cursor: pointer;"/>
+                      <circle class="bump-point" data-cat="Restaurantes" data-month="Nov" data-amount="$178.9k" cx="122" cy="10" r="5" fill="#f59e0b" stroke="white" stroke-width="2" style="cursor: pointer;"/>
+                      <circle class="bump-point" data-cat="Restaurantes" data-month="Dic" data-amount="$162.6k" cx="216" cy="43" r="5" fill="#f59e0b" stroke="white" stroke-width="2" style="cursor: pointer;"/>
+                      <circle class="bump-point" data-cat="Restaurantes" data-month="Actual" data-amount="$162.6k" cx="310" cy="43" r="6" fill="#f59e0b" stroke="white" stroke-width="2" style="cursor: pointer;"/>
+                      <!-- Transporte points - BIGGER first circle -->
+                      <circle class="bump-point" data-cat="Transporte" data-month="Oct" data-amount="$98.6k" cx="28" cy="77" r="8" fill="#8b5cf6" stroke="white" stroke-width="2" style="cursor: pointer;"/>
+                      <circle class="bump-point" data-cat="Transporte" data-month="Nov" data-amount="$105.3k" cx="122" cy="77" r="5" fill="#8b5cf6" stroke="white" stroke-width="2" style="cursor: pointer;"/>
+                      <circle class="bump-point" data-cat="Transporte" data-month="Dic" data-amount="$108.0k" cx="216" cy="110" r="5" fill="#8b5cf6" stroke="white" stroke-width="2" style="cursor: pointer;"/>
+                      <circle class="bump-point" data-cat="Transporte" data-month="Actual" data-amount="$108.0k" cx="310" cy="77" r="6" fill="#8b5cf6" stroke="white" stroke-width="2" style="cursor: pointer;"/>
+                      <!-- Otro points - BIGGER first circle -->
+                      <circle class="bump-point" data-cat="Otro" data-month="Oct" data-amount="$55.1k" cx="28" cy="110" r="8" fill="#94a3b8" stroke="white" stroke-width="2" style="cursor: pointer;"/>
+                      <circle class="bump-point" data-cat="Otro" data-month="Nov" data-amount="$49.6k" cx="122" cy="110" r="5" fill="#94a3b8" stroke="white" stroke-width="2" style="cursor: pointer;"/>
+                      <circle class="bump-point" data-cat="Otro" data-month="Dic" data-amount="$54.0k" cx="216" cy="77" r="5" fill="#94a3b8" stroke="white" stroke-width="2" style="cursor: pointer;"/>
+                      <circle class="bump-point" data-cat="Otro" data-month="Actual" data-amount="$54.0k" cx="310" cy="110" r="6" fill="#94a3b8" stroke="white" stroke-width="2" style="cursor: pointer;"/>
+                    </svg>
+                    <!-- X-axis labels (4 months for quarter) - aligned with chart points -->
+                    <div id="bump-x-labels" style="display: flex; justify-content: space-between; margin-top: 6px; padding-left: 18px;">
+                      <span style="font-size: 10px; color: var(--text-tertiary);">Oct</span>
+                      <span style="font-size: 10px; color: var(--text-tertiary);">Nov</span>
+                      <span style="font-size: 10px; color: var(--text-tertiary);">Dic</span>
+                      <span style="font-size: 10px; font-weight: 600; color: var(--primary);">Hoy</span>
+                    </div>
+                    <!-- Tooltip for bump chart -->
+                    <div id="bump-tooltip" style="display: none; position: absolute; background: var(--bg-inverse); color: var(--text-inverse); padding: 6px 10px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 500; white-space: nowrap; pointer-events: none; z-index: 20; box-shadow: var(--shadow-md);"></div>
+                  </div>
+                  <!-- Legend with pills matching design system - 4 categories -->
+                  <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-light);">
+                    <div style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: var(--primary-light); border-radius: var(--radius-full);">
+                      <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--primary);"></div>
+                      <span style="font-size: 11px; font-weight: 500; color: var(--primary);">Supermercado #1</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: #fef3c7; border-radius: var(--radius-full);">
+                      <div style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b;"></div>
+                      <span style="font-size: 11px; font-weight: 500; color: #b45309;">Restaurantes #2</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: #ede9fe; border-radius: var(--radius-full);">
+                      <div style="width: 8px; height: 8px; border-radius: 50%; background: #8b5cf6;"></div>
+                      <span style="font-size: 11px; font-weight: 500; color: #6d28d9;">Transporte #3</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: var(--bg-tertiary); border-radius: var(--radius-full);">
+                      <div style="width: 8px; height: 8px; border-radius: 50%; background: #94a3b8;"></div>
+                      <span style="font-size: 11px; font-weight: 500; color: #64748b;">Otro #4</span>
+                    </div>
+                  </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Carousel indicators as bottom border -->
+          <div class="carousel-indicator-bar">
+            <button class="carousel-segment active" data-slide="0"></button>
+            <button class="carousel-segment" data-slide="1"></button>
+            <button class="carousel-segment" data-slide="2"></button>
+          </div>
+        </div>
+
+        <!-- Recientes Transactions Section -->
+        <div class="recientes-section" style="background: var(--bg-secondary); border-radius: var(--radius-lg); border: 1px solid var(--border-light); padding: 12px;">
+          <div class="section-header">
+            <div style="display: flex; align-items: center;">
+              <span class="section-title">Recientes</span>
+              <button class="expand-btn" id="recientes-list-handle" onclick="toggleRecientesList()">
+                <span class="expand-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span>
+              </button>
+            </div>
+            <span class="section-link">Ver todo →</span>
+          </div>
+          <div class="transactions-list" id="recientes-list">
+                  <!-- Transaction 1: Lider (scanned today) -->
+                  <div class="expandable-item" onclick="this.classList.toggle('open')">
+                    <div class="expandable-header">
+                      <div class="transaction-thumb">
+                        <div class="receipt-icon">
+                          <svg viewBox="0 0 22 26">
+                            <path d="M3 1v24l1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1V1l-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1z"/>
+                            <path d="M6 7h10M6 11h7M6 15h4" stroke-linecap="round"/>
+                          </svg>
+                        </div>
+                      </div>
+                      <div class="expandable-content">
+                        <div class="expandable-row">
+                          <div class="expandable-title">Lider</div>
+                          <div class="expandable-amount">$45.990</div>
+                        </div>
+                        <div class="expandable-meta">
+                          <div class="expandable-pills">
+                            <div class="category-icon groceries">🛒</div>
+                            <span class="meta-pill">Hoy, 14:30</span>
+                            <span class="meta-pill">Las Condes</span>
+                          </div>
+                          <svg class="expandable-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="expandable-details">
+                      <div class="expandable-details-inner">
+                        <div class="details-header">Items del Recibo</div>
+                        <div class="line-item"><span class="line-item-name">Leche Entera 1L</span><span class="line-item-price">$1.290</span></div>
+                        <div class="line-item"><span class="line-item-name">Pan Molde Integral</span><span class="line-item-price">$2.490</span></div>
+                        <div class="line-item"><span class="line-item-name">Huevos x12</span><span class="line-item-price">$3.890</span></div>
+                        <div class="details-link">
+                          <a href="#">
+                            <span>+9 items más...</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Transaction 2: Sodimac (scanned yesterday, but receipt from 20 Dic) -->
+                  <div class="expandable-item" onclick="this.classList.toggle('open')">
+                    <div class="expandable-header">
+                      <div class="transaction-thumb">
+                        <div class="receipt-icon">
+                          <svg viewBox="0 0 22 26">
+                            <path d="M3 1v24l1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1V1l-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1z"/>
+                            <path d="M6 7h10M6 11h7M6 15h4" stroke-linecap="round"/>
+                          </svg>
+                        </div>
+                      </div>
+                      <div class="expandable-content">
+                        <div class="expandable-row">
+                          <div class="expandable-title">Sodimac</div>
+                          <div class="expandable-amount">$67.450</div>
+                        </div>
+                        <div class="expandable-meta">
+                          <div class="expandable-pills">
+                            <div class="category-icon other">🏠</div>
+                            <span class="meta-pill">20 Dic</span>
+                            <span class="meta-pill">Villarrica</span>
+                          </div>
+                          <svg class="expandable-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="expandable-details">
+                      <div class="expandable-details-inner">
+                        <div class="details-header">Items del Recibo</div>
+                        <div class="line-item"><span class="line-item-name">Pintura Látex 4L</span><span class="line-item-price">$24.990</span></div>
+                        <div class="line-item"><span class="line-item-name">Rodillo Profesional</span><span class="line-item-price">$8.990</span></div>
+                        <div class="line-item"><span class="line-item-name">Cinta Masking</span><span class="line-item-price">$2.490</span></div>
+                        <div class="details-link">
+                          <a href="#">
+                            <span>+5 items más...</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Transaction 3: Domino's (scanned 2 days ago) -->
+                  <div class="expandable-item" onclick="this.classList.toggle('open')">
+                    <div class="expandable-header">
+                      <div class="transaction-thumb">
+                        <div class="receipt-icon">
+                          <svg viewBox="0 0 22 26">
+                            <path d="M3 1v24l1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1V1l-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1z"/>
+                            <path d="M6 7h10M6 11h7M6 15h4" stroke-linecap="round"/>
+                          </svg>
+                        </div>
+                      </div>
+                      <div class="expandable-content">
+                        <div class="expandable-row">
+                          <div class="expandable-title">Domino's</div>
+                          <div class="expandable-amount">$18.990</div>
+                        </div>
+                        <div class="expandable-meta">
+                          <div class="expandable-pills">
+                            <div class="category-icon restaurant">🍕</div>
+                            <span class="meta-pill">Ayer, 20:15</span>
+                            <span class="meta-pill">Providencia</span>
+                          </div>
+                          <svg class="expandable-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="expandable-details">
+                      <div class="expandable-details-inner">
+                        <div class="details-header">Items del Recibo</div>
+                        <div class="line-item"><span class="line-item-name">Pizza Grande Pepperoni</span><span class="line-item-price">$12.990</span></div>
+                        <div class="line-item"><span class="line-item-name">Bebida 1.5L</span><span class="line-item-price">$2.500</span></div>
+                        <div class="line-item"><span class="line-item-name">Pan de Ajo x4</span><span class="line-item-price">$3.500</span></div>
+                        <div class="details-link">
+                          <a href="#">
+                            <span>Ver boleta completa</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Transaction 4: Copec (collapsible) -->
+                  <div class="expandable-item collapsible" onclick="this.classList.toggle('open')">
+                    <div class="expandable-header">
+                      <div class="transaction-thumb">
+                        <div class="receipt-icon">
+                          <svg viewBox="0 0 22 26">
+                            <path d="M3 1v24l1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1V1l-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1z"/>
+                            <path d="M6 7h10M6 11h7M6 15h4" stroke-linecap="round"/>
+                          </svg>
+                        </div>
+                      </div>
+                      <div class="expandable-content">
+                        <div class="expandable-row">
+                          <div class="expandable-title">Copec</div>
+                          <div class="expandable-amount">$28.500</div>
+                        </div>
+                        <div class="expandable-meta">
+                          <div class="expandable-pills">
+                            <div class="category-icon transport">⛽</div>
+                            <span class="meta-pill">Lun, 08:45</span>
+                            <span class="meta-pill">Providencia</span>
+                          </div>
+                          <svg class="expandable-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="expandable-details">
+                      <div class="expandable-details-inner">
+                        <div class="details-header">Items del Recibo</div>
+                        <div class="line-item"><span class="line-item-name">Bencina 95 - 25L</span><span class="line-item-price">$28.500</span></div>
+                        <div class="details-link">
+                          <a href="#">
+                            <span>Ver boleta completa</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Transaction 5: Farmacia (collapsible) -->
+                  <div class="expandable-item collapsible" onclick="this.classList.toggle('open')">
+                    <div class="expandable-header">
+                      <div class="transaction-thumb">
+                        <div class="receipt-icon">
+                          <svg viewBox="0 0 22 26">
+                            <path d="M3 1v24l1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1V1l-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1z"/>
+                            <path d="M6 7h10M6 11h7M6 15h4" stroke-linecap="round"/>
+                          </svg>
+                        </div>
+                      </div>
+                      <div class="expandable-content">
+                        <div class="expandable-row">
+                          <div class="expandable-title">Cruz Verde</div>
+                          <div class="expandable-amount">$12.890</div>
+                        </div>
+                        <div class="expandable-meta">
+                          <div class="expandable-pills">
+                            <div class="category-icon" style="background: #fce7f3;">💊</div>
+                            <span class="meta-pill">18 Dic</span>
+                            <span class="meta-pill">Las Condes</span>
+                          </div>
+                          <svg class="expandable-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="expandable-details">
+                      <div class="expandable-details-inner">
+                        <div class="details-header">Items del Recibo</div>
+                        <div class="line-item"><span class="line-item-name">Paracetamol 500mg</span><span class="line-item-price">$2.990</span></div>
+                        <div class="line-item"><span class="line-item-name">Vitamina C</span><span class="line-item-price">$5.990</span></div>
+                        <div class="line-item"><span class="line-item-name">Crema Hidratante</span><span class="line-item-price">$3.910</span></div>
+                        <div class="details-link">
+                          <a href="#">
+                            <span>Ver boleta completa</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Nav -->
+      <nav class="bottom-nav" role="navigation" aria-label="Navegación principal">
+        <div class="nav-item active">
+          <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          <span>Inicio</span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+          <span>Analíticas</span>
+        </div>
+        <div class="scan-center">
+          <div class="scan-btn">
+            <svg viewBox="0 0 24 24">
+              <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+              <circle cx="12" cy="13" r="3"/>
+            </svg>
+          </div>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+          <span>Ideas</span>
+        </div>
+        <div class="nav-item" style="position: relative;">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <!-- Notification badge -->
+          <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+          <span>Alertas</span>
+        </div>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Global Controls Panel - Below Phone -->
+  <div class="global-controls">
+    <div class="control-group">
+      <div class="control-label">Theme</div>
+      <div class="control-options">
+        <div class="theme-swatch" data-theme="professional" title="Professional Blue" onclick="setTheme('professional', this)"></div>
+        <div class="theme-swatch active" data-theme="mono" title="Mono" onclick="setTheme('mono', this)"></div>
+        <div class="theme-swatch" data-theme="ninokuni" title="Ni No Kuni" onclick="setTheme('ninokuni', this)"></div>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">Mode</div>
+      <div class="control-options">
+        <button class="mode-toggle" id="darkModeToggle" onclick="toggleDarkMode(this)">
+          <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          Dark
+        </button>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">Font</div>
+      <div class="control-options">
+        <div class="font-pill active" data-font="outfit" onclick="setFont('outfit', this)">Outfit</div>
+        <div class="font-pill" data-font="space" onclick="setFont('space', this)">Space</div>
+      </div>
+    </div>
+  </div>
+  </div><!-- end page-wrapper -->
+
+  <script>
+    // Carousel navigation with swipe support
+    document.querySelectorAll('.carousel-container').forEach(container => {
+      const track = container.querySelector('.carousel-track');
+      const segments = container.querySelectorAll('.carousel-segment');
+      const slideCount = container.querySelectorAll('.carousel-slide').length;
+      let currentSlide = 0;
+      let startX = 0;
+      let isDragging = false;
+
+      // Update slide
+      function goToSlide(index) {
+        currentSlide = Math.max(0, Math.min(index, slideCount - 1));
+        track.style.setProperty('--active-slide', currentSlide);
+        segments.forEach((segment, i) => {
+          segment.classList.toggle('active', i === currentSlide);
+        });
+      }
+
+      // Click on segment indicators
+      segments.forEach(segment => {
+        segment.addEventListener('click', () => {
+          goToSlide(parseInt(segment.dataset.slide));
+        });
+      });
+
+      // Touch events for swipe
+      const viewport = container.querySelector('.carousel-viewport');
+
+      viewport.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        isDragging = true;
+      }, { passive: true });
+
+      viewport.addEventListener('touchend', (e) => {
+        if (!isDragging) return;
+        const endX = e.changedTouches[0].clientX;
+        const diff = startX - endX;
+        const threshold = 50;
+
+        if (Math.abs(diff) > threshold) {
+          if (diff > 0) {
+            goToSlide(currentSlide + 1); // Swipe left = next
+          } else {
+            goToSlide(currentSlide - 1); // Swipe right = prev
+          }
+        }
+        isDragging = false;
+      }, { passive: true });
+    });
+
+    // Ticker Carousel (Trends) navigation with swipe support
+    (function() {
+      const tickerSlides = document.querySelectorAll('#ticker-carousel-track .ticker-carousel-slide');
+      const tickerSegments = document.querySelectorAll('#ticker-indicator-bar .ticker-segment');
+      const tickerContainer = document.getElementById('ticker-carousel');
+      let currentTickerSlide = 0;
+      let startX = 0;
+      let isDragging = false;
+
+      function goToTickerSlide(index) {
+        currentTickerSlide = Math.max(0, Math.min(index, tickerSlides.length - 1));
+        tickerSlides.forEach((slide, i) => {
+          slide.classList.toggle('active', i === currentTickerSlide);
+        });
+        tickerSegments.forEach((segment, i) => {
+          segment.classList.toggle('active', i === currentTickerSlide);
+        });
+      }
+
+      // Click on segment indicators
+      tickerSegments.forEach(segment => {
+        segment.addEventListener('click', () => {
+          goToTickerSlide(parseInt(segment.dataset.slide));
+        });
+      });
+
+      // Touch events for swipe
+      tickerContainer.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        isDragging = true;
+      }, { passive: true });
+
+      tickerContainer.addEventListener('touchend', (e) => {
+        if (!isDragging) return;
+        const endX = e.changedTouches[0].clientX;
+        const diff = startX - endX;
+        const threshold = 50;
+
+        if (Math.abs(diff) > threshold) {
+          if (diff > 0) {
+            goToTickerSlide(currentTickerSlide + 1);
+          } else {
+            goToTickerSlide(currentTickerSlide - 1);
+          }
+        }
+        isDragging = false;
+      }, { passive: true });
+    })();
+
+    // Toggle functions for expandable lists
+    const plusSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14"/><path d="M5 12h14"/></svg>';
+    const minusSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14"/></svg>';
+
+    function toggleTrends() {
+      const list = document.getElementById('trends-list');
+      const handle = document.getElementById('trends-handle');
+      const icon = handle.querySelector('.expand-icon');
+      const isExpanded = list.classList.toggle('expanded');
+      handle.classList.toggle('expanded', isExpanded);
+      icon.innerHTML = isExpanded ? minusSvg : plusSvg;
+    }
+
+    function toggleItems() {
+      const list = document.getElementById('items-list');
+      const handle = document.getElementById('items-handle');
+      const icon = handle.querySelector('.expand-icon');
+      const isExpanded = list.classList.toggle('expanded');
+      handle.classList.toggle('expanded', isExpanded);
+      icon.innerHTML = isExpanded ? minusSvg : plusSvg;
+    }
+
+    function toggleRegisteredList() {
+      const list = document.getElementById('registered-list');
+      const handle = document.getElementById('registered-list-handle');
+      const icon = handle.querySelector('.expand-icon');
+      const isExpanded = list.classList.toggle('expanded');
+      handle.classList.toggle('expanded', isExpanded);
+      icon.innerHTML = isExpanded ? minusSvg : plusSvg;
+    }
+
+    function toggleByDateList() {
+      const list = document.getElementById('bydate-list');
+      const handle = document.getElementById('bydate-list-handle');
+      const icon = handle.querySelector('.expand-icon');
+      const isExpanded = list.classList.toggle('expanded');
+      handle.classList.toggle('expanded', isExpanded);
+      icon.innerHTML = isExpanded ? minusSvg : plusSvg;
+    }
+
+    function toggleMainCarousel() {
+      const container = document.querySelector('.carousel-container');
+      const buttons = container.querySelectorAll('.expand-btn');
+      const isCollapsed = container.classList.toggle('collapsed');
+
+      // Update all expand buttons in the carousel
+      buttons.forEach(btn => {
+        const icon = btn.querySelector('.expand-icon');
+        btn.classList.toggle('expanded', !isCollapsed);
+        icon.innerHTML = isCollapsed ? plusSvg : minusSvg;
+      });
+    }
+
+    // Main carousel navigation with left/right arrows (wrap-around)
+    // Uses the same goToSlide function from the carousel setup above
+    function navigateMainCarousel(direction) {
+      const container = document.querySelector('.carousel-container');
+      const track = container.querySelector('.carousel-track');
+      const segments = container.querySelectorAll('.carousel-segment');
+      const slideCount = container.querySelectorAll('.carousel-slide').length;
+
+      // Get current slide from the CSS variable
+      const currentValue = track.style.getPropertyValue('--active-slide');
+      let currentSlide = currentValue ? parseInt(currentValue) : 0;
+
+      // Calculate new slide with wrap-around
+      let newSlide = currentSlide + direction;
+      if (newSlide < 0) {
+        newSlide = slideCount - 1; // Wrap to last
+      } else if (newSlide >= slideCount) {
+        newSlide = 0; // Wrap to first
+      }
+
+      // Update the carousel
+      track.style.setProperty('--active-slide', newSlide);
+      segments.forEach((segment, i) => {
+        segment.classList.toggle('active', i === newSlide);
+      });
+    }
+
+    // Profile menu toggle
+    function toggleProfileMenu() {
+      const menu = document.getElementById('profile-menu');
+      menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Close profile menu when clicking outside
+    document.addEventListener('click', function(e) {
+      const menu = document.getElementById('profile-menu');
+      const btn = document.getElementById('profile-btn');
+      if (menu && btn && !btn.contains(e.target) && !menu.contains(e.target)) {
+        menu.style.display = 'none';
+      }
+    });
+
+    // Toggle recientes list expand/collapse
+    function toggleRecientesList() {
+      const list = document.getElementById('recientes-list');
+      const handle = document.getElementById('recientes-list-handle');
+      const icon = handle.querySelector('.expand-icon');
+      const isExpanded = list.classList.toggle('expanded');
+      handle.classList.toggle('expanded', isExpanded);
+      icon.innerHTML = isExpanded ? minusSvg : plusSvg;
+    }
+
+    // Meta button - opens modal
+    const metaBtn = document.getElementById('meta-btn');
+    const metaModal = document.getElementById('meta-modal');
+    const metaOverlay = document.getElementById('meta-overlay');
+    const metaClose = document.getElementById('meta-close');
+    const metaAction = document.getElementById('meta-action');
+    const metaStatus = document.getElementById('meta-status');
+
+    // Simulated budget data (in real app, this would come from backend)
+    let hasBudgetLimits = false;
+
+    metaBtn.addEventListener('click', () => {
+      // Show modal
+      metaModal.style.display = 'block';
+      metaOverlay.style.display = 'block';
+
+      // Update status based on whether limits exist
+      if (hasBudgetLimits) {
+        metaStatus.textContent = 'Límites configurados: $150k Super, $80k Rest, $50k Trans...';
+        metaAction.textContent = 'Modificar Límites';
+        metaAction.style.background = 'var(--primary)';
+      } else {
+        metaStatus.textContent = 'No hay límites configurados para este mes.';
+        metaAction.textContent = 'Crear Límites';
+        metaAction.style.background = 'var(--success)';
+      }
+
+      // Toggle Meta layer visibility
+      const isActive = metaBtn.classList.contains('active');
+      if (!isActive) {
+        metaBtn.classList.add('active');
+        metaBtn.style.border = '1.5px solid var(--success)';
+        metaBtn.style.background = 'var(--success-light)';
+        metaBtn.style.color = '#15803d';
+        document.getElementById('radar-meta').style.display = 'block';
+      }
+    });
+
+    metaClose.addEventListener('click', () => {
+      metaModal.style.display = 'none';
+      metaOverlay.style.display = 'none';
+    });
+
+    metaOverlay.addEventListener('click', () => {
+      metaModal.style.display = 'none';
+      metaOverlay.style.display = 'none';
+    });
+
+    metaAction.addEventListener('click', () => {
+      // Toggle budget state for demo
+      hasBudgetLimits = !hasBudgetLimits;
+      metaModal.style.display = 'none';
+      metaOverlay.style.display = 'none';
+      // In real app, this would navigate to budget settings
+      alert(hasBudgetLimits ? 'Límites creados!' : 'Límites eliminados');
+    });
+
+    // Radar icon tooltips - show category total for selected month
+    const radarTooltip = document.getElementById('radar-tooltip');
+    const radarContainer = document.querySelector('.radar-chart-container > div[style*="position: relative"]');
+
+    if (radarTooltip && radarContainer) {
+      document.querySelectorAll('.radar-icon').forEach(icon => {
+        icon.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+
+          const category = icon.dataset.category;
+          const primaryMonth = document.getElementById('month-primary-text').textContent.toLowerCase();
+          const amount = icon.dataset[primaryMonth] || icon.dataset.dic;
+
+          radarTooltip.innerHTML = `<strong>${category}</strong><br>${amount}`;
+          radarTooltip.style.display = 'block';
+          radarTooltip.style.zIndex = '100';
+
+          // Position tooltip near the icon
+          const iconRect = icon.getBoundingClientRect();
+          const containerRect = radarContainer.getBoundingClientRect();
+          radarTooltip.style.left = (iconRect.left - containerRect.left + iconRect.width/2) + 'px';
+          radarTooltip.style.top = (iconRect.top - containerRect.top - 35) + 'px';
+          radarTooltip.style.transform = 'translateX(-50%)';
+
+          setTimeout(() => {
+            radarTooltip.style.display = 'none';
+          }, 2500);
+        });
+      });
+
+      // Radar SVG data points - show category amount when clicked
+      document.querySelectorAll('#radar-dec-points circle, #radar-nov-points circle').forEach((point, index) => {
+        const categories = ['Supermercado', 'Restaurantes', 'Transporte', 'Salud', 'Ocio', 'Otros'];
+        const categoryIndex = index % 6;
+        const isNov = point.closest('#radar-nov-points') !== null;
+
+        point.style.cursor = 'pointer';
+        point.style.pointerEvents = 'all';
+
+        point.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+
+          const category = categories[categoryIndex];
+          const radarIcon = document.querySelector(`.radar-icon[data-category="${category}"]`);
+          if (!radarIcon) return;
+
+          const amount = isNov ? radarIcon.dataset.nov : radarIcon.dataset.dic;
+          const month = isNov ? 'Nov' : 'Dic';
+
+          radarTooltip.innerHTML = `<strong>${category}</strong><br>${month}: ${amount}`;
+          radarTooltip.style.display = 'block';
+          radarTooltip.style.zIndex = '100';
+
+          // Position near the clicked point using event coordinates
+          const containerRect = radarContainer.getBoundingClientRect();
+          radarTooltip.style.left = (e.clientX - containerRect.left) + 'px';
+          radarTooltip.style.top = (e.clientY - containerRect.top - 35) + 'px';
+          radarTooltip.style.transform = 'translateX(-50%)';
+
+          setTimeout(() => {
+            radarTooltip.style.display = 'none';
+          }, 2500);
+        });
+      });
+    }
+
+    // Quarter selector dropdown
+    const quarterPill = document.getElementById('quarter-pill');
+    const quarterDropdown = document.getElementById('quarter-dropdown');
+    const quarterText = document.getElementById('quarter-text');
+
+    quarterPill.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeAllDropdowns();
+      quarterDropdown.style.display = quarterDropdown.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.querySelectorAll('.quarter-option').forEach(option => {
+      option.addEventListener('click', () => {
+        quarterDropdown.querySelectorAll('.quarter-option').forEach(o => {
+          o.classList.remove('selected');
+          o.style.background = '';
+          o.style.color = '';
+        });
+        option.classList.add('selected');
+        option.style.background = 'var(--primary-light)';
+        option.style.color = 'var(--primary)';
+        quarterText.textContent = option.dataset.value;
+        closeAllDropdowns();
+      });
+      option.addEventListener('mouseenter', () => {
+        if (!option.classList.contains('selected')) {
+          option.style.background = 'var(--bg-tertiary)';
+        }
+      });
+      option.addEventListener('mouseleave', () => {
+        if (!option.classList.contains('selected')) {
+          option.style.background = '';
+        }
+      });
+    });
+
+    // Bump chart point tooltips
+    const bumpTooltip = document.getElementById('bump-tooltip');
+    const bumpChartCard = document.querySelector('.bump-chart-card');
+
+    document.querySelectorAll('.bump-point').forEach(point => {
+      point.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const cat = point.dataset.cat;
+        const month = point.dataset.month;
+        const amount = point.dataset.amount;
+
+        bumpTooltip.innerHTML = `<strong>${cat}</strong><br>${month}: ${amount}`;
+        bumpTooltip.style.display = 'block';
+
+        // Get SVG position
+        const svg = document.getElementById('bump-chart-svg');
+        const svgRect = svg.getBoundingClientRect();
+        const cardRect = bumpChartCard.getBoundingClientRect();
+
+        // Calculate position based on circle cx/cy
+        const cx = parseFloat(point.getAttribute('cx'));
+        const cy = parseFloat(point.getAttribute('cy'));
+        const svgWidth = 280;
+        const svgHeight = 120;
+
+        // Scale to actual pixel position
+        const scaleX = svgRect.width / svgWidth;
+        const scaleY = svgRect.height / svgHeight;
+
+        const pixelX = (svgRect.left - cardRect.left) + (cx * scaleX);
+        const pixelY = (svgRect.top - cardRect.top) + (cy * scaleY);
+
+        bumpTooltip.style.left = pixelX + 'px';
+        bumpTooltip.style.top = (pixelY - 40) + 'px';
+        bumpTooltip.style.transform = 'translateX(-50%)';
+
+        // Hide after 3 seconds
+        setTimeout(() => {
+          bumpTooltip.style.display = 'none';
+        }, 3000);
+      });
+    });
+
+    // Hide tooltip when clicking elsewhere
+    document.addEventListener('click', (e) => {
+      if (!e.target.classList.contains('bump-point')) {
+        bumpTooltip.style.display = 'none';
+      }
+    });
+
+    // ============================================
+    // GLOBAL CONTROLS: Theme & Font Switchers
+    // Logo is auto-paired with theme via CSS
+    // ============================================
+
+    function setTheme(theme, el) {
+      document.body.setAttribute('data-theme', theme);
+      document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function setFont(font, el) {
+      document.body.setAttribute('data-font', font);
+      document.querySelectorAll('.font-pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function toggleDarkMode(el) {
+      var isDark = document.body.getAttribute('data-mode') === 'dark';
+      var newMode = isDark ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-mode', newMode);
+      document.body.setAttribute('data-mode', newMode);
+      if (newMode === 'dark') {
+        el.classList.add('active');
+        el.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2m11-11h-2M3 12H1m17.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m12.73 0l-1.41-1.41M6.34 6.34L4.93 4.93"/></svg> Light';
+      } else {
+        el.classList.remove('active');
+        el.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Dark';
+      }
+    }
+  </script>
+</body>
+</html>

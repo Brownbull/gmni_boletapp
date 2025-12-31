@@ -1,18 +1,17 @@
 # Testing Patterns & Coverage Expectations
 
 > Section 5 of Atlas Memory
-> Last Sync: 2025-12-18
+> Last Sync: 2025-12-31
 > Sources: test-strategy.md, retrospectives, CI/CD docs
 
-## Current Metrics (Post-Epic 10.1 Code Review)
+## Current Metrics (Post-Epic 12 Deployment)
 
 | Metric | Value |
 |--------|-------|
-| Unit Tests | 1057+ passing |
-| Integration Tests | 328+ passing |
-| Total Tests | 1,385+ |
+| Total Tests | 2799 passing |
 | Coverage | 84%+ |
 | E2E Framework | Playwright configured |
+| Bundle Size | 1.84 MB (watch for growth) |
 
 ## Testing Strategy
 
@@ -183,8 +182,9 @@ it('should handle null Timestamp', () => {
 
 ## Sync Notes
 
-- Test metrics updated after Story 10.1 code review (1057 unit tests)
+- Test metrics updated after Epic 12 deployment (2799 tests)
 - Mocking patterns added for localStorage and Timestamps
 - Defensive Timestamp testing pattern added (Story 10.1)
 - Scan test harness from Epic 8 fully operational
 - CI/CD optimized to ~4 min for PRs (63% faster after Epic 8)
+- **Epic 14 Test Focus:** Animation timing, reduced motion, polygon calculations
