@@ -46,8 +46,8 @@ export interface TrendsViewProps {
     transactions: Transaction[];
     /** Theme for styling */
     theme: 'light' | 'dark';
-    /** Color theme for chart colors (Normal/Professional) */
-    colorTheme?: 'normal' | 'professional';
+    /** Color theme for chart colors (Normal/Professional/Mono) */
+    colorTheme?: 'normal' | 'professional' | 'mono';
     /** Currency code for formatting */
     currency: string;
     /** Locale for date/currency formatting */
