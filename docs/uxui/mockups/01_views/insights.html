@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="mono" data-font="outfit" data-mode="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gastify - Insights</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       RESET & BASE
+       ============================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-family);
+      background: #1e293b;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      gap: 16px;
+    }
+
+    /* ============================================
+       CSS VARIABLES (Design System)
+       ============================================ */
+    :root {
+      /* Primary Palette */
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --primary-dark: #1e40af;
+
+      /* Secondary */
+      --secondary: #64748b;
+      --secondary-light: #f1f5f9;
+      --accent: #0ea5e9;
+
+      /* Backgrounds */
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --bg-inverse: #0f172a;
+
+      /* Text */
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --text-inverse: #f8fafc;
+
+      /* Borders */
+      --border-light: #e2e8f0;
+      --border-medium: #cbd5e1;
+      --border-dark: #94a3b8;
+
+      /* Semantic */
+      --success: #22c55e;
+      --success-light: #dcfce7;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --error: #ef4444;
+      --error-light: #fee2e2;
+
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+      /* Spacing */
+      --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+      --space-5: 20px; --space-6: 24px; --space-8: 32px;
+
+      /* Border Radii */
+      --radius-sm: 6px; --radius-md: 10px; --radius-lg: 12px;
+      --radius-xl: 16px; --radius-2xl: 20px; --radius-full: 9999px;
+
+      /* Typography */
+      --font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+
+      /* Transitions */
+      --transition-fast: 150ms ease;
+      --transition-normal: 200ms ease;
+      --transition-slow: 300ms ease;
+      --transition-spring: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Theme: Professional (default) */
+    [data-theme="professional"] {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --primary-dark: #1e40af;
+      --secondary: #64748b;
+      --secondary-light: #f1f5f9;
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --border-light: #e2e8f0;
+      --border-medium: #cbd5e1;
+    }
+
+    /* Theme: Mono */
+    [data-theme="mono"] {
+      --primary: #18181b;
+      --primary-hover: #27272a;
+      --primary-light: #f4f4f5;
+      --primary-dark: #09090b;
+      --secondary: #52525b;
+      --secondary-light: #e4e4e7;
+      --bg-primary: #fafafa;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f4f4f5;
+      --text-primary: #18181b;
+      --text-secondary: #52525b;
+      --text-tertiary: #a1a1aa;
+      --border-light: #e4e4e7;
+      --border-medium: #d4d4d8;
+    }
+
+    /* Theme: Ni No Kuni */
+    [data-theme="ninokuni"] {
+      --primary: #4a7c59;
+      --primary-hover: #3d6b4a;
+      --primary-light: #d4e5d9;
+      --primary-dark: #2d5438;
+      --secondary: #5b8fa8;
+      --secondary-light: #d5e8f0;
+      --bg-primary: #f5f0e8;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1dbb6;
+      --text-primary: #2d3a4a;
+      --text-secondary: #4a5568;
+      --text-tertiary: #7d9b5f;
+      --border-light: #e3bba1;
+      --border-medium: #d4a574;
+      --success: #7d9b5f;
+      --success-light: #d4e5d9;
+    }
+
+    /* ============================================
+       DARK MODE VARIANTS
+       ============================================ */
+
+    /* Professional Blue - Dark Mode */
+    [data-theme="professional"][data-mode="dark"] {
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --primary-light: #1e3a5f;
+      --primary-dark: #60a5fa;
+      --secondary: #94a3b8;
+      --secondary-light: #334155;
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-tertiary: #64748b;
+      --border-light: #334155;
+      --border-medium: #475569;
+    }
+
+    /* Mono - Dark Mode */
+    [data-theme="mono"][data-mode="dark"] {
+      --primary: #a1a1aa;
+      --primary-hover: #d4d4d8;
+      --primary-light: #27272a;
+      --primary-dark: #e4e4e7;
+      --secondary: #71717a;
+      --secondary-light: #3f3f46;
+      --bg-primary: #09090b;
+      --bg-secondary: #18181b;
+      --bg-tertiary: #27272a;
+      --text-primary: #fafafa;
+      --text-secondary: #d4d4d8;
+      --text-tertiary: #71717a;
+      --border-light: #27272a;
+      --border-medium: #3f3f46;
+    }
+
+    /* Ni No Kuni - Dark Mode */
+    [data-theme="ninokuni"][data-mode="dark"] {
+      --primary: #6b9e7a;
+      --primary-hover: #5a8a68;
+      --primary-light: #2d3d32;
+      --primary-dark: #8fbf9c;
+      --secondary: #7ba8be;
+      --secondary-light: #2d3d4a;
+      --bg-primary: #1a2420;
+      --bg-secondary: #243028;
+      --bg-tertiary: #2d3d32;
+      --text-primary: #e8e4dc;
+      --text-secondary: #b8c4a8;
+      --text-tertiary: #6b8b5f;
+      --border-light: #3d4d42;
+      --border-medium: #4d5d52;
+      --success: #8fbf9c;
+      --success-light: #2d3d32;
+    }
+
+    /* Font Definitions */
+    [data-font="outfit"] { --font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif; }
+    [data-font="space-grotesk"] { --font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; }
+
+    /* ============================================
+       GLOBAL CONTROLS PANEL
+       ============================================ */
+    .global-controls {
+      background: rgba(30, 41, 59, 0.95);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      padding: 12px 20px;
+      display: flex;
+      gap: 24px;
+      border: 1px solid rgba(255,255,255,0.1);
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .control-group { display: flex; align-items: center; gap: 10px; }
+    .control-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .control-options { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* Theme Swatches */
+    .theme-swatch {
+      width: 28px; height: 28px; border-radius: 8px;
+      cursor: pointer; border: 2px solid transparent;
+      transition: all 150ms ease;
+    }
+    .theme-swatch:hover { transform: scale(1.1); }
+    .theme-swatch.active { border-color: white; box-shadow: 0 0 0 2px rgba(255,255,255,0.3); }
+    .theme-swatch[data-theme="professional"] { background: linear-gradient(135deg, #2563eb 50%, #64748b 50%); }
+    .theme-swatch[data-theme="mono"] { background: linear-gradient(135deg, #18181b 50%, #52525b 50%); }
+    .theme-swatch[data-theme="ninokuni"] { background: linear-gradient(135deg, #4a7c59 50%, #5b8fa8 50%); }
+
+    /* Font Pills */
+    .font-pill {
+      padding: 4px 10px; border-radius: 9999px;
+      font-size: 12px; font-weight: 500; cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent; color: #94a3b8;
+      transition: all 150ms ease;
+      font-family: inherit;
+    }
+    .font-pill:hover { background: rgba(255,255,255,0.1); }
+    .font-pill.active { background: white; color: #0f172a; border-color: white; }
+
+    /* Mode Toggle */
+    .mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: #94a3b8;
+      transition: all 150ms ease;
+      font-size: 11px;
+      font-weight: 500;
+      font-family: inherit;
+    }
+    .mode-toggle:hover { background: rgba(255,255,255,0.1); }
+    .mode-toggle.active {
+      background: #1e293b;
+      border-color: #3b82f6;
+      color: #f1f5f9;
+    }
+    .mode-toggle svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    /* ============================================
+       PHONE FRAME
+       ============================================ */
+    .phone-frame {
+      width: 375px; min-height: 812px;
+      background: #1e293b; border-radius: 54px; padding: 14px;
+      box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25),
+        inset 0 0 0 2px #334155, inset 0 0 0 4px #475569;
+    }
+    .phone-screen {
+      width: 100%; height: 784px;
+      background: var(--bg-primary); border-radius: 44px;
+      overflow: hidden; display: flex; flex-direction: column;
+    }
+
+    /* ============================================
+       STATUS BAR
+       ============================================ */
+    .status-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 24px 8px; background: var(--bg-primary); flex-shrink: 0;
+    }
+    .status-time { font-size: 14px; font-weight: 600; color: var(--text-primary); font-family: inherit; }
+    .status-icons { display: flex; gap: 4px; align-items: center; }
+
+    /* ============================================
+       INSIGHTS HEADER
+       ============================================ */
+    .insights-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px 12px; background: var(--bg-primary); flex-shrink: 0;
+    }
+    .back-arrow { cursor: pointer; }
+    .header-title {
+      font-size: 20px; font-weight: 700; color: var(--text-primary);
+      margin: 0; font-family: inherit; flex: 1;
+    }
+    .period-pill {
+      padding: 6px 12px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-full);
+      background: var(--bg-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-family: inherit;
+    }
+
+    /* ============================================
+       CONTENT AREA
+       ============================================ */
+    .content-area {
+      flex: 1; overflow-y: auto; padding: 0 16px 16px;
+      display: flex; flex-direction: column; gap: 16px;
+      position: relative;
+    }
+
+    /* ============================================
+       VIEW SWITCHER
+       ============================================ */
+    .view-switcher {
+      display: flex;
+      gap: 8px;
+    }
+    .view-btn {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid var(--border-light);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      font-family: inherit;
+    }
+    .view-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* ============================================
+       SECTION HEADER (Time Grouping)
+       ============================================ */
+    .section-header {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      font-family: inherit;
+    }
+
+    /* ============================================
+       INSIGHT LIST
+       ============================================ */
+    .insight-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* ============================================
+       INSIGHT LIST ITEM
+       ============================================ */
+    .insight-item {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      border: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .insight-item:hover {
+      background: var(--bg-tertiary);
+    }
+    .insight-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .insight-icon svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke-width: 2;
+    }
+    .insight-icon.quirky { background: var(--warning-light); }
+    .insight-icon.quirky svg { stroke: #92400e; }
+    .insight-icon.celebration { background: var(--primary-light); }
+    .insight-icon.celebration svg { stroke: var(--primary); }
+    .insight-icon.actionable { background: var(--success-light); }
+    .insight-icon.actionable svg { stroke: var(--success); }
+    .insight-icon.tradeoff { background: #fce7f3; }
+    .insight-icon.tradeoff svg { stroke: #be185d; }
+    .insight-icon.trend { background: #ede9fe; }
+    .insight-icon.trend svg { stroke: #7c3aed; }
+
+    .insight-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .insight-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: inherit;
+    }
+    .insight-meta {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+      font-family: inherit;
+    }
+    .insight-chevron {
+      flex-shrink: 0;
+    }
+
+    /* ============================================
+       CAROUSEL CONTAINER
+       ============================================ */
+    .carousel-container { position: relative; width: 100%; }
+    .carousel-viewport { overflow: hidden; border-radius: var(--radius-lg); }
+    .carousel-track {
+      display: flex;
+      transition: transform var(--transition-normal);
+      transform: translateX(calc(var(--active-slide) * -100%));
+    }
+    .carousel-slide { flex: 0 0 100%; min-width: 100%; padding: 0 4px; }
+    .carousel-dots {
+      display: flex; justify-content: center; gap: 8px;
+      margin-top: 12px;
+    }
+    .carousel-dot {
+      width: 8px; height: 8px; border-radius: var(--radius-full);
+      background: var(--border-medium); border: none; cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .carousel-dot.active { background: var(--primary); width: 24px; }
+
+    /* ============================================
+       INSIGHT CARD (Carousel Version)
+       ============================================ */
+    .insight-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-md);
+    }
+    .insight-card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .insight-card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .insight-card-icon svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke-width: 2;
+    }
+    .insight-card-icon.quirky { background: var(--warning-light); }
+    .insight-card-icon.quirky svg { stroke: #92400e; }
+    .insight-card-icon.celebration { background: linear-gradient(135deg, var(--primary-light), #dbeafe); }
+    .insight-card-icon.celebration svg { stroke: var(--primary); }
+    .insight-card-icon.actionable { background: var(--success-light); }
+    .insight-card-icon.actionable svg { stroke: var(--success); }
+
+    .insight-card-content { flex: 1; }
+    .insight-card-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      font-family: inherit;
+    }
+    .insight-card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+    .insight-card-body {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      font-family: inherit;
+    }
+    .insight-card-close {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-full);
+    }
+    .insight-card-close:hover {
+      background: var(--bg-tertiary);
+    }
+
+    /* ============================================
+       AIRLOCK SEQUENCE
+       ============================================ */
+    .airlock-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+    }
+    .airlock-emoji {
+      font-size: 64px;
+      animation: float 2s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .airlock-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      font-family: inherit;
+    }
+    .airlock-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-family: inherit;
+      max-width: 280px;
+    }
+    .airlock-progress {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .airlock-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border-medium);
+    }
+    .airlock-dot.active {
+      background: var(--primary);
+      width: 24px;
+      border-radius: var(--radius-full);
+    }
+    .airlock-btn {
+      margin-top: 16px;
+      padding: 12px 32px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-full);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all var(--transition-fast);
+    }
+    .airlock-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+    .airlock-btn.secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    /* Airlock Card Wrapper */
+    .airlock-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-lg);
+    }
+    .airlock-card.reveal {
+      background: linear-gradient(135deg, var(--warning-light), #fef9c3);
+      border-color: var(--warning);
+    }
+
+    /* ============================================
+       CELEBRATION CARD
+       ============================================ */
+    .celebration-card {
+      background: linear-gradient(135deg, var(--primary-light), #dbeafe);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      text-align: center;
+      border: 1px solid var(--primary);
+    }
+    .celebration-emoji {
+      font-size: 48px;
+      margin-bottom: 12px;
+      animation: bounce 1s ease-in-out infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .celebration-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      font-family: inherit;
+    }
+    .celebration-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      font-family: inherit;
+    }
+    .celebration-stats {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 16px;
+    }
+    .celebration-stat {
+      text-align: center;
+    }
+    .celebration-stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary);
+      font-family: inherit;
+    }
+    .celebration-stat-label {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      font-family: inherit;
+    }
+    .celebration-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-full);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all var(--transition-fast);
+    }
+    .celebration-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* ============================================
+       INTENTIONAL DIALOG
+       ============================================ */
+    .dialog-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 50;
+      opacity: 0;
+      visibility: hidden;
+      transition: all var(--transition-normal);
+    }
+    .dialog-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .dialog-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      max-width: 320px;
+      text-align: center;
+      transform: scale(0.95);
+      transition: transform var(--transition-normal);
+    }
+    .dialog-overlay.active .dialog-card {
+      transform: scale(1);
+    }
+    .dialog-emoji {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+    .dialog-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      font-family: inherit;
+    }
+    .dialog-body {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      line-height: 1.5;
+      font-family: inherit;
+    }
+    .dialog-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .dialog-btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all var(--transition-fast);
+    }
+    .dialog-btn.secondary {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-light);
+      color: var(--text-primary);
+    }
+    .dialog-btn.primary {
+      background: var(--primary);
+      border: none;
+      color: white;
+    }
+
+    /* ============================================
+       BOTTOM NAV (Spanish Labels Required)
+       ============================================ */
+    .bottom-nav {
+      display: flex; align-items: flex-end; justify-content: space-around;
+      padding: 8px 12px 12px; background: var(--bg-secondary);
+      border-top: 1px solid var(--border-light); flex-shrink: 0;
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      padding: 6px 10px; cursor: pointer;
+    }
+    .nav-item svg { width: 24px; height: 24px; stroke: var(--text-tertiary); fill: none; stroke-width: 1.8; }
+    .nav-item span { font-size: 10px; color: var(--text-tertiary); font-weight: 600; font-family: inherit; }
+    .nav-item.active svg { stroke: var(--primary); }
+    .nav-item.active span { color: var(--primary); }
+
+    /* CRITICAL: Scan center button position */
+    .scan-center { margin-top: -56px; padding: 0; }
+    .scan-btn {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, #3d8b6e 100%);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(74, 158, 126, 0.4);
+    }
+    .scan-btn svg { width: 24px; height: 24px; stroke: white; fill: none; stroke-width: 2; }
+
+    /* ============================================
+       REDUCED MOTION
+       ============================================ */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body data-theme="mono" data-font="outfit">
+
+  <!-- Global Controls -->
+  <div class="global-controls">
+    <div class="control-group">
+      <div class="control-label">Theme</div>
+      <div class="control-options">
+        <div class="theme-swatch" data-theme="professional" onclick="setTheme('professional', this)"></div>
+        <div class="theme-swatch active" data-theme="mono" onclick="setTheme('mono', this)"></div>
+        <div class="theme-swatch" data-theme="ninokuni" onclick="setTheme('ninokuni', this)"></div>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">Font</div>
+      <div class="control-options">
+        <div class="font-pill active" data-font="outfit" onclick="setFont('outfit', this)">Outfit</div>
+        <div class="font-pill" data-font="space-grotesk" onclick="setFont('space-grotesk', this)">Space</div>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">Mode</div>
+      <button class="mode-toggle" id="darkModeToggle" onclick="toggleDarkMode(this)">
+        <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        Dark
+      </button>
+    </div>
+  </div>
+
+  <!-- Phone Frame -->
+  <div class="phone-frame">
+    <div class="phone-screen">
+
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2">
+            <path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 20V4"/>
+          </svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/>
+          </svg>
+          <svg width="24" height="12" viewBox="0 0 24 12" fill="none">
+            <rect x="0" y="1" width="20" height="10" rx="2" stroke="var(--text-primary)" stroke-width="1"/>
+            <rect x="2" y="3" width="14" height="6" rx="1" fill="var(--text-primary)"/>
+            <path d="M22 4v4a2 2 0 0 0 0-4z" fill="var(--text-primary)"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Insights Header -->
+      <div class="insights-header">
+        <svg class="back-arrow" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+        <h1 class="header-title">Ideas</h1>
+      </div>
+
+      <!-- Content Area -->
+      <div class="content-area">
+
+        <!-- View Switcher -->
+        <div class="view-switcher">
+          <button class="view-btn active" onclick="showView('list')">Lista</button>
+          <button class="view-btn" onclick="showView('carousel')">Destacados</button>
+          <button class="view-btn" onclick="showView('airlock')">Airlock</button>
+          <button class="view-btn" onclick="showView('celebration')">Logro</button>
+        </div>
+
+        <!-- ============================================
+             VIEW 1: INSIGHTS LIST
+             ============================================ -->
+        <div id="view-list">
+
+          <!-- This Week Section -->
+          <div class="section-group">
+            <div class="section-header">Esta Semana</div>
+            <div class="insight-list">
+
+              <!-- Insight: Quirky -->
+              <div class="insight-item" onclick="showIntentionalDialog()">
+                <div class="insight-icon quirky">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>
+                  </svg>
+                </div>
+                <div class="insight-content">
+                  <div class="insight-title">Compra De Fin De Semana</div>
+                  <div class="insight-meta">Sábados gastas 40% más</div>
+                </div>
+                <svg class="insight-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </div>
+
+              <!-- Insight: Celebration -->
+              <div class="insight-item">
+                <div class="insight-icon celebration">
+                  <svg viewBox="0 0 24 24">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                </div>
+                <div class="insight-content">
+                  <div class="insight-title">Carrito Lleno</div>
+                  <div class="insight-meta">Compra #100 completada</div>
+                </div>
+                <svg class="insight-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </div>
+
+              <!-- Insight: Actionable -->
+              <div class="insight-item">
+                <div class="insight-icon actionable">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/>
+                    <path d="M12 12l4 10 1.7-4.3L22 16z"/>
+                  </svg>
+                </div>
+                <div class="insight-content">
+                  <div class="insight-title">Tu Hora Favorita</div>
+                  <div class="insight-meta">19:00 - 20:00 hrs</div>
+                </div>
+                <svg class="insight-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </div>
+
+              <!-- Insight: Trend -->
+              <div class="insight-item">
+                <div class="insight-icon trend">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M3 3v18h18"/>
+                    <path d="m19 9-5 5-4-4-3 3"/>
+                  </svg>
+                </div>
+                <div class="insight-content">
+                  <div class="insight-title">Día Favorito</div>
+                  <div class="insight-meta">Viernes es tu día top</div>
+                </div>
+                <svg class="insight-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Last Week Section -->
+          <div class="section-group">
+            <div class="section-header">Semana Anterior</div>
+            <div class="insight-list">
+
+              <!-- Insight: Trade-off -->
+              <div class="insight-item">
+                <div class="insight-icon tradeoff">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 16v-4"/>
+                    <path d="M12 8h.01"/>
+                  </svg>
+                </div>
+                <div class="insight-content">
+                  <div class="insight-title">Compra Variada</div>
+                  <div class="insight-meta">5 categorías diferentes</div>
+                </div>
+                <svg class="insight-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </div>
+
+              <!-- Insight: Quirky -->
+              <div class="insight-item">
+                <div class="insight-icon quirky">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>
+                  </svg>
+                </div>
+                <div class="insight-content">
+                  <div class="insight-title">¡Snacker Nocturno!</div>
+                  <div class="insight-meta">3 compras después de las 22:00</div>
+                </div>
+                <svg class="insight-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </div>
+
+              <!-- Insight: Actionable -->
+              <div class="insight-item">
+                <div class="insight-icon actionable">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/>
+                    <path d="M12 12l4 10 1.7-4.3L22 16z"/>
+                  </svg>
+                </div>
+                <div class="insight-content">
+                  <div class="insight-title">Visita Frecuente</div>
+                  <div class="insight-meta">3ra vez en Jumbo este mes</div>
+                </div>
+                <svg class="insight-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ============================================
+             VIEW 2: CAROUSEL (Highlighted Insights)
+             ============================================ -->
+        <div id="view-carousel" style="display: none;">
+
+          <div class="carousel-container">
+            <div class="carousel-viewport">
+              <div class="carousel-track" style="--active-slide: 0;">
+
+                <!-- Slide 1: Quirky Insight -->
+                <div class="carousel-slide">
+                  <div class="insight-card">
+                    <div class="insight-card-header">
+                      <div class="insight-card-icon quirky">
+                        <svg viewBox="0 0 24 24">
+                          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>
+                        </svg>
+                      </div>
+                      <div class="insight-card-content">
+                        <div class="insight-card-label">Observación</div>
+                        <div class="insight-card-title">¡Snacker Nocturno Detectado!</div>
+                      </div>
+                      <button class="insight-card-close">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                          <path d="M18 6L6 18M6 6l12 12"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <div class="insight-card-body">
+                      Tu yo de las 11PM parece tener hambre. 3 compras de snacks después de las 22:00 esta semana.
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Slide 2: Celebration Insight -->
+                <div class="carousel-slide">
+                  <div class="insight-card" style="background: linear-gradient(135deg, var(--primary-light), #dbeafe); border-color: var(--primary);">
+                    <div class="insight-card-header">
+                      <div class="insight-card-icon celebration">
+                        <svg viewBox="0 0 24 24">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                      </div>
+                      <div class="insight-card-content">
+                        <div class="insight-card-label">Celebración</div>
+                        <div class="insight-card-title">¡Escaneo #50!</div>
+                      </div>
+                      <button class="insight-card-close">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                          <path d="M18 6L6 18M6 6l12 12"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <div class="insight-card-body">
+                      Has escaneado 50 boletas. Ya tienes datos suficientes para insights más profundos.
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Slide 3: Actionable Insight -->
+                <div class="carousel-slide">
+                  <div class="insight-card">
+                    <div class="insight-card-header">
+                      <div class="insight-card-icon actionable">
+                        <svg viewBox="0 0 24 24">
+                          <path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/>
+                          <path d="M12 12l4 10 1.7-4.3L22 16z"/>
+                        </svg>
+                      </div>
+                      <div class="insight-card-content">
+                        <div class="insight-card-label">Oportunidad</div>
+                        <div class="insight-card-title">Café vs Meta</div>
+                      </div>
+                      <button class="insight-card-close">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2">
+                          <path d="M18 6L6 18M6 6l12 12"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <div class="insight-card-body">
+                      Esta semana en café: $13.500 = 1 día más lejos de Tokyo. Reducir a la mitad te acercaría 2 días.
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+            <div class="carousel-dots">
+              <button class="carousel-dot active" data-slide="0" onclick="goToSlide(0)"></button>
+              <button class="carousel-dot" data-slide="1" onclick="goToSlide(1)"></button>
+              <button class="carousel-dot" data-slide="2" onclick="goToSlide(2)"></button>
+            </div>
+          </div>
+
+          <!-- Swipe hint -->
+          <div style="text-align: center; margin-top: 16px; font-size: 12px; color: var(--text-tertiary);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
+              <path d="M14 4h6v6"/>
+              <path d="M20 4L10 14"/>
+              <path d="M10 4H4v16h16v-6"/>
+            </svg>
+            Desliza para ver más insights
+          </div>
+
+        </div>
+
+        <!-- ============================================
+             VIEW 3: AIRLOCK SEQUENCE
+             ============================================ -->
+        <div id="view-airlock" style="display: none;">
+
+          <!-- Airlock Step 1: Curiosity Gate -->
+          <div id="airlock-step-1" class="airlock-card">
+            <div class="airlock-container">
+              <div class="airlock-emoji">🔮</div>
+              <div class="airlock-title">Tengo algo que contarte...</div>
+              <div class="airlock-subtitle">
+                Descubrí un patrón interesante en tus compras de esta semana.
+              </div>
+              <div class="airlock-progress">
+                <div class="airlock-dot active"></div>
+                <div class="airlock-dot"></div>
+                <div class="airlock-dot"></div>
+              </div>
+              <button class="airlock-btn" onclick="nextAirlockStep(2)">
+                Cuéntame más
+              </button>
+            </div>
+          </div>
+
+          <!-- Airlock Step 2: Playful Brace -->
+          <div id="airlock-step-2" class="airlock-card" style="display: none;">
+            <div class="airlock-container">
+              <div class="airlock-emoji">🎢</div>
+              <div class="airlock-title">Prepárate...</div>
+              <div class="airlock-subtitle">
+                No es malo, pero puede que te sorprenda un poquito.
+              </div>
+              <div class="airlock-progress">
+                <div class="airlock-dot"></div>
+                <div class="airlock-dot active"></div>
+                <div class="airlock-dot"></div>
+              </div>
+              <button class="airlock-btn" onclick="nextAirlockStep(3)">
+                Estoy listo/a
+              </button>
+              <button class="airlock-btn secondary" onclick="nextAirlockStep(1)" style="margin-top: 8px;">
+                Mejor después
+              </button>
+            </div>
+          </div>
+
+          <!-- Airlock Step 3: The Reveal -->
+          <div id="airlock-step-3" class="airlock-card reveal" style="display: none;">
+            <div class="airlock-container">
+              <div class="airlock-emoji">☕</div>
+              <div class="airlock-title">Tu café de la semana...</div>
+              <div class="airlock-subtitle">
+                $27.000 en café este mes. Eso es 3 días más lejos de tu meta "Viaje a Japón".
+              </div>
+              <div style="background: var(--bg-secondary); border-radius: var(--radius-md); padding: 12px; margin-top: 16px; text-align: left;">
+                <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 4px;">Si reduces a la mitad:</div>
+                <div style="font-size: 16px; font-weight: 600; color: var(--success);">
+                  → Llegarías 1.5 días antes a Tokyo
+                </div>
+              </div>
+              <div class="airlock-progress" style="margin-top: 16px;">
+                <div class="airlock-dot"></div>
+                <div class="airlock-dot"></div>
+                <div class="airlock-dot active"></div>
+              </div>
+              <button class="airlock-btn" onclick="nextAirlockStep(1)">
+                Entendido
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ============================================
+             VIEW 4: CELEBRATION (Personal Record)
+             ============================================ -->
+        <div id="view-celebration" style="display: none;">
+
+          <div class="celebration-card">
+            <div class="celebration-emoji">🏆</div>
+            <h3 class="celebration-title">¡Nuevo Récord Personal!</h3>
+            <p class="celebration-subtitle">Tu semana con menos gastos en 3 meses</p>
+
+            <div class="celebration-stats">
+              <div class="celebration-stat">
+                <div class="celebration-stat-value">$89.500</div>
+                <div class="celebration-stat-label">Esta semana</div>
+              </div>
+              <div class="celebration-stat">
+                <div class="celebration-stat-value">-23%</div>
+                <div class="celebration-stat-label">vs promedio</div>
+              </div>
+            </div>
+
+            <button class="celebration-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                <polyline points="16 6 12 2 8 6"/>
+                <line x1="12" y1="2" x2="12" y2="15"/>
+              </svg>
+              Compartir logro
+            </button>
+          </div>
+
+          <!-- Badge unlocked -->
+          <div style="background: var(--bg-secondary); border-radius: var(--radius-lg); padding: 16px; border: 1px solid var(--border-light); text-align: center; margin-top: 12px;">
+            <div style="font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+              Insignia Desbloqueada
+            </div>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
+              <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #fef3c7, #fde68a); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                💎
+              </div>
+              <div style="text-align: left;">
+                <div style="font-size: 15px; font-weight: 600; color: var(--text-primary);">Ahorrador Élite</div>
+                <div style="font-size: 12px; color: var(--text-tertiary);">3 semanas bajo presupuesto</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Back button -->
+          <button class="view-btn" onclick="showView('list')" style="width: 100%; margin-top: 12px;">
+            ← Volver a Ideas
+          </button>
+
+        </div>
+
+        <!-- Intentional? Dialog -->
+        <div class="dialog-overlay" id="intentionalDialog" onclick="closeIntentionalDialog(event)">
+          <div class="dialog-card" onclick="event.stopPropagation()">
+            <div class="dialog-emoji">🤔</div>
+            <div class="dialog-title">¿Fue intencional?</div>
+            <div class="dialog-body">
+              Gastaste $45.000 en café este mes, un 30% más que el mes pasado.
+            </div>
+            <div class="dialog-actions">
+              <button class="dialog-btn secondary" onclick="closeIntentionalDialog()">
+                Sí, planeado
+              </button>
+              <button class="dialog-btn primary" onclick="closeIntentionalDialog()">
+                No, revisar
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Nav (Spanish Labels - Ideas Active) -->
+      <div class="bottom-nav">
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          <span>Inicio</span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+          <span>Analíticas</span>
+        </div>
+        <div class="scan-center">
+          <div class="scan-btn">
+            <svg viewBox="0 0 24 24">
+              <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+              <circle cx="12" cy="13" r="3"/>
+            </svg>
+          </div>
+        </div>
+        <div class="nav-item active">
+          <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+          <span>Ideas</span>
+        </div>
+        <div class="nav-item" style="position: relative;">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <!-- Notification badge -->
+          <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+          <span>Alertas</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Theme Switcher
+    function setTheme(theme, el) {
+      document.body.setAttribute('data-theme', theme);
+      document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    // Font Switcher
+    function setFont(font, el) {
+      document.body.setAttribute('data-font', font);
+      document.querySelectorAll('.font-pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    // Dark Mode Toggle
+    function toggleDarkMode(el) {
+      var isDark = document.body.getAttribute('data-mode') === 'dark';
+      var newMode = isDark ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-mode', newMode);
+      document.body.setAttribute('data-mode', newMode);
+
+      // Update button icon and text
+      if (newMode === 'dark') {
+        el.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg> Light';
+        el.classList.add('active');
+      } else {
+        el.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Dark';
+        el.classList.remove('active');
+      }
+    }
+
+    // View Switcher
+    function showView(viewName) {
+      // Hide all views
+      document.getElementById('view-list').style.display = 'none';
+      document.getElementById('view-carousel').style.display = 'none';
+      document.getElementById('view-airlock').style.display = 'none';
+      document.getElementById('view-celebration').style.display = 'none';
+
+      // Show selected view
+      document.getElementById('view-' + viewName).style.display = 'block';
+
+      // Update view buttons
+      document.querySelectorAll('.view-switcher .view-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      const activeBtn = document.querySelector(`.view-switcher .view-btn[onclick="showView('${viewName}')"]`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      // Reset airlock to step 1 when showing airlock view
+      if (viewName === 'airlock') {
+        nextAirlockStep(1);
+      }
+    }
+
+    // Carousel Navigation
+    function goToSlide(index) {
+      const track = document.querySelector('.carousel-track');
+      track.style.setProperty('--active-slide', index);
+
+      document.querySelectorAll('.carousel-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === index);
+      });
+    }
+
+    // Airlock Sequence
+    function nextAirlockStep(step) {
+      // Hide all steps
+      document.getElementById('airlock-step-1').style.display = 'none';
+      document.getElementById('airlock-step-2').style.display = 'none';
+      document.getElementById('airlock-step-3').style.display = 'none';
+
+      // Show requested step
+      document.getElementById('airlock-step-' + step).style.display = 'block';
+    }
+
+    // Intentional Dialog
+    function showIntentionalDialog() {
+      document.getElementById('intentionalDialog').classList.add('active');
+    }
+
+    function closeIntentionalDialog(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('intentionalDialog').classList.remove('active');
+    }
+  </script>
+
+</body>
+</html>

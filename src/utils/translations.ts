@@ -3,7 +3,7 @@ export const TRANSLATIONS = {
         overview: "Overview", welcome: "Smart Tracking", totalSpent: "Total Spent",
         thisMonth: "This Month", scanTitle: "AI Scanner", scanDesc: "Scan receipts.",
         scanBtn: "Scan", recent: "Recent", seeAll: "See All", history: "History",
-        trends: "Trends", settings: "Settings", home: "Home", language: "Language",
+        trends: "Trends", settings: "Settings", alerts: "Alerts", home: "Home", language: "Language",
         currency: "Currency", theme: "Theme", save: "Save", update: "Update",
         delete: "Delete", items: "Items", merchant: "Merchant", total: "Total",
         date: "Date", category: "Category", breakdown: "Breakdown",
@@ -23,6 +23,9 @@ export const TRANSLATIONS = {
         monthsBreakdown: "Monthly Breakdown", allTime: "All Time", login: "Login",
         signin: "Sign in with Google", signout: "Sign Out",
         back: "Back", scan: "Scan", deleteItem: "Delete item", confirmItem: "Confirm item",
+        // Story 14.10: Header titles and profile menu
+        transaction: "Transaction", batchReview: "Review Batch", gastify: "Gastify",
+        reports: "Reports", goals: "Goals", comingSoon: "Coming soon",
         showBarChart: "Show bar chart", showPieChart: "Show pie chart",
         selectMonth: "Select month", selectYear: "Select year",
         // Story 5.4: Premium transaction export
@@ -67,6 +70,7 @@ export const TRANSLATIONS = {
         drillDownByTime: "Drill down by time",
         drillDownByCategory: "Drill down by category",
         noTransactionsIn: "No transactions in {period}",
+        noTransactionsThisMonth: "No transactions detected this month",
         scanToAddData: "Scan a receipt to add data",
         // Story 7.9: Breadcrumb level indicators
         levelYear: "Year",
@@ -375,13 +379,15 @@ export const TRANSLATIONS = {
         batchDiscardConfirmTitle: "Discard this receipt?",
         batchDiscardConfirmMessage: "This receipt has high confidence and will not be saved.",
         batchDiscardConfirmYes: "Discard",
-        batchSaveSuccess: "{count} receipt(s) saved successfully"
+        batchSaveSuccess: "{count} receipt(s) saved successfully",
+        // Story 14.12: Dashboard recientes section
+        noRecentTransactions: "No recent transactions"
     },
     es: {
         overview: "Resumen", welcome: "Rastreo Inteligente", totalSpent: "Total Gastado",
         thisMonth: "Este Mes", scanTitle: "Escáner IA", scanDesc: "Escanea boletas.",
         scanBtn: "Escanear", recent: "Reciente", seeAll: "Ver Todo", history: "Historial",
-        trends: "Tendencias", settings: "Ajustes", home: "Inicio", language: "Idioma",
+        trends: "Tendencias", settings: "Ajustes", alerts: "Alertas", home: "Inicio", language: "Idioma",
         currency: "Moneda", theme: "Tema", save: "Guardar", update: "Actualizar",
         delete: "Eliminar", items: "Ítems", merchant: "Comercio", total: "Total",
         date: "Fecha", category: "Categoría", breakdown: "Desglose",
@@ -401,6 +407,9 @@ export const TRANSLATIONS = {
         monthsBreakdown: "Desglose Mensual", allTime: "Histórico", login: "Ingresar",
         signin: "Entrar con Google", signout: "Cerrar Sesión",
         back: "Volver", scan: "Escanear", deleteItem: "Eliminar ítem", confirmItem: "Confirmar ítem",
+        // Story 14.10: Header titles and profile menu
+        transaction: "Transacción", batchReview: "Revisar Lote", gastify: "Gastify",
+        reports: "Reportes", goals: "Metas", comingSoon: "Próximamente",
         showBarChart: "Mostrar gráfico de barras", showPieChart: "Mostrar gráfico circular",
         selectMonth: "Seleccionar mes", selectYear: "Seleccionar año",
         // Story 5.4: Premium transaction export
@@ -445,6 +454,7 @@ export const TRANSLATIONS = {
         drillDownByTime: "Desglosar por tiempo",
         drillDownByCategory: "Desglosar por categoría",
         noTransactionsIn: "Sin transacciones en {period}",
+        noTransactionsThisMonth: "No se detectaron transacciones este mes",
         scanToAddData: "Escanea un recibo para agregar datos",
         // Story 7.9: Breadcrumb level indicators
         levelYear: "Año",
@@ -753,7 +763,9 @@ export const TRANSLATIONS = {
         batchDiscardConfirmTitle: "¿Descartar esta boleta?",
         batchDiscardConfirmMessage: "Esta boleta tiene alta confianza y no será guardada.",
         batchDiscardConfirmYes: "Descartar",
-        batchSaveSuccess: "{count} boleta(s) guardada(s) exitosamente"
+        batchSaveSuccess: "{count} boleta(s) guardada(s) exitosamente",
+        // Story 14.12: Dashboard recientes section
+        noRecentTransactions: "Sin transacciones recientes"
     }
 };
 

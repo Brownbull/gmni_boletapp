@@ -1,7 +1,7 @@
 # Feature Inventory + Intent
 
 > Section 2 of Atlas Memory
-> Last Sync: 2025-12-22
+> Last Sync: 2025-12-31
 > Sources: sprint-status.yaml, epics.md, PRD documents
 
 ## Core Features (Implemented)
@@ -74,32 +74,68 @@
 | 11.6 | Responsive Viewport | Dynamic viewport units (dvh) + safe area CSS |
 | 11.7 | Epic Integration | Final integration and polish |
 
-## Current Development (Epic 12)
+### Epic 12: Batch Mode (v9.7.0 - COMPLETE)
+**Stories:** 6 | **Points:** ~25 | **Deployed:** 2025-12-23
 
-| Feature | Status | Purpose |
-|---------|--------|---------|
-| **Batch Mode** | Next Development | Multi-receipt capture UI with parallel processing |
+| Story | Name | Key Deliverable |
+|-------|------|-----------------|
+| 12.1 | Batch Capture UI | Long-press selection, thumbnail strip |
+| 12.2 | Parallel Processing | Worker pattern, AbortController, max 3 concurrent |
+| 12.3 | Batch Review Queue | Summary cards, confidence status |
+| 12.4 | Credit Warning | Styled dialog, pre-batch validation |
+| 12.5 | Batch Insights | Local aggregation, celebrateBig confetti |
+| 12.99 | Epic Deployment | Production deployment, 2799 tests |
 
-**Foundation from Epic 11.1:**
-- Batch image processing infrastructure exists
-- Sequential API calls with credit-after-save pattern
-- Ready for multi-image capture UI
+### Epic 13: UX Design & Mockups (COMPLETE)
+**Stories:** 15 | **Points:** ~41 | **Completed:** 2025-12-31
 
-## Future Roadmap (Epics 13-18) - REVISED 2025-12-22
+| Story | Name | Key Deliverable |
+|-------|------|-----------------|
+| 13.1 | Critical Use Cases | 6 E2E user journeys documented |
+| 13.2 | Voice & Tone | Non-judgmental messaging guidelines |
+| 13.3 | Motion Design System | "Everything Breathes" spec |
+| 13.4 | Design System Components | HTML/CSS reference library |
+| 13.5 | Design System Reference | Extracted component reference |
+| 13.6-13.13 | View Mockups | 10 HTML mockups (home, analytics, transactions, scan, goals, reports, insights, settings, nav, notifications) |
+| 13.14 | Design Review | User approval, navigation updates |
+
+**Deliverables:**
+- docs/uxui/mockups/ - 10 HTML view mockups
+- docs/uxui/motion-design-system.md
+- docs/uxui/voice-tone-guidelines.md
+- docs/uxui/use-cases-e2e.md
+
+## Current Development (Epic 14 - IN PROGRESS)
+
+**Status:** All 14 stories created, ready-for-dev
+**Points:** ~48
+**Tech Context:** docs/sprint-artifacts/epic14/tech-context-epic14.md
+
+| Feature Area | Stories | Points |
+|--------------|---------|--------|
+| Animation Framework | 14.1, 14.2 | 8 |
+| Scan Flow Enhancement | 14.3, 14.4 | 8 |
+| Dynamic Polygon | 14.5, 14.6, 14.7 | 11 |
+| Enhanced Charts | 14.8, 14.9 | 6 |
+| Weekly Reports | 14.10 | 5 |
+| Intentional Prompts | 14.11 | 2 |
+| Celebrations | 14.12, 14.13, 14.14 | 8 |
+
+## Future Roadmap (Epics 15-18) - REVISED 2025-12-31
 
 <!-- Source: brainstorming-session-2025-12-22.md, epics.md -->
 
 **Vision:** Transform from "reactive data entry tool" to "alive financial awareness companion"
 
-| Epic | Name | Focus | Points |
-|------|------|-------|--------|
-| 12 | Batch Mode | Multi-receipt capture with parallel processing | ~25 |
-| 13 | **UX Design & Mockups** | Mockup-first workflow, voice guidelines, motion system | ~34 |
-| 14 | **Core Implementation** | Animation framework, polygon, celebrations | ~48 |
-| 15 | **Advanced Features** | Goals/GPS, learned thresholds, Sankey/Treemap | ~46 |
-| 16 | Onboarding | <60 second time-to-value, progressive disclosure | ~15 |
-| 17 | Tags & Grouping | User-defined tags for project/trip tracking | ~18 |
-| 18 | Achievements | Ethical gamification, milestone celebration | ~12 |
+| Epic | Name | Focus | Points | Status |
+|------|------|-------|--------|--------|
+| 12 | Batch Mode | Multi-receipt capture with parallel processing | ~25 | ✅ COMPLETE |
+| 13 | UX Design & Mockups | Mockup-first workflow, voice guidelines, motion system | ~41 | ✅ COMPLETE |
+| 14 | Core Implementation | Animation framework, polygon, celebrations | ~48 | 🔄 IN PROGRESS |
+| 15 | Advanced Features | Goals/GPS, learned thresholds, Treemap, Themeable Skins | ~38 | Backlog |
+| 16 | Onboarding | <60 second time-to-value, progressive disclosure | ~15 | Backlog |
+| 17 | Tags & Grouping | User-defined tags for project/trip tracking | ~18 | Backlog |
+| 18 | Achievements | Ethical gamification, milestone celebration | ~12 | Backlog |
 
 ### Key Design Innovations (Epics 13-15)
 
@@ -158,19 +194,30 @@ Transactions → FilteringService → AnalyticsContext → Charts/Cards
 | Insight Engine | 10.0-10.6 |
 | UX Consolidation | 10a.1-10a.5 |
 | Quick Save | 11.1-11.7 |
+| **Animation Framework** | 14.1, 14.2 |
+| **Dynamic Polygon** | 14.5, 14.6, 14.7 |
+| **Scan Overlay Enhancement** | 14.3, 14.4 |
+| **Enhanced Charts** | 14.8, 14.9 |
+| **Weekly Reports** | 14.10 |
+| **Celebrations** | 14.12, 14.13, 14.14 |
+| **Intentional Prompts** | 14.11 |
+| **Goals System** | 15.1, 15.2, 15.4 |
+| **Income Tracking** | 15.3 |
+| **Learned Thresholds** | 15.5, 15.6 |
+| **Out-of-Character** | 15.7, 15.8 |
+| **Advanced Charts** | 15.9, 15.10 |
+| **Milestones** | 15.11 |
+| **Social Sharing** | 15.12 |
+| **Themes** | 15.13 |
 
 ---
 
 ## Sync Notes
 
-- Feature inventory aligned with sprint-status.yaml as of 2025-12-22
-- Epics 10, 10a, and 11 complete - combined ~72 points in ~6 days
-- Test count now at 2534+ unit tests
-- Versions v9.3.0, v9.4.0, v9.5.0 deployed to production
+- Feature inventory aligned with sprint-status.yaml as of 2025-12-31
+- **Epics 10-13 complete** - combined ~174 points
+- Test count: 2799 unit tests
+- Versions v9.3.0 through v9.7.0 deployed to production
+- **Epic 13 complete 2025-12-31:** 10 HTML mockups, design system, motion system
+- **Epic 14 ready 2025-12-31:** All 14 stories created via atlas-create-story
 - Combined retrospective: docs/sprint-artifacts/epic10-11-retro-2025-12-22.md
-- **Brainstorming session 2025-12-22:** Epic 13-15 restructured (~128 points total)
-  - Epic 13: UX Design & Mockups (mockup-first workflow)
-  - Epic 14: Core Implementation (animation framework, polygon, celebrations)
-  - Epic 15: Advanced Features (goals, GPS, learned thresholds)
-  - Original Epics 14-16 renumbered to 16-18
-  - Reference: docs/analysis/brainstorming-session-2025-12-22.md
