@@ -374,7 +374,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 paddingTop: 'env(safe-area-inset-top, 0px)',
                 paddingLeft: '16px',
                 paddingRight: '16px',
-                backgroundColor: 'var(--bg-primary, #f8fafc)',
+                backgroundColor: 'var(--bg, #f8fafc)',
                 // Story 14.12: No border per mockup - header blends with content background
             }}
         >
