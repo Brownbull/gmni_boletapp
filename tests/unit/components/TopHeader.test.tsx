@@ -446,7 +446,8 @@ describe('TopHeader', () => {
             );
 
             const header = container.querySelector('header');
-            expect(header?.className).toContain('h-14');
+            // Header uses inline style for height instead of Tailwind class for better control
+            expect(header?.style.height).toBe('72px');
         });
 
         it('centers the wordmark absolutely', () => {
