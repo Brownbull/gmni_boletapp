@@ -1,9 +1,10 @@
 /**
- * Scan Components - Stories 11.1, 11.2 & 11.5
+ * Scan Components - Stories 11.1, 11.2, 11.5 & 14.3
  *
  * @see docs/sprint-artifacts/epic11/story-11.1-one-image-one-transaction.md
  * @see docs/sprint-artifacts/epic11/story-11.2-quick-save-card.md
  * @see docs/sprint-artifacts/epic11/story-11.5-scan-status-clarity.md
+ * @see docs/sprint-artifacts/epic14/stories/story-14.3-scan-overlay-flow.md
  */
 
 // Story 11.5: Status indicator components
@@ -36,6 +37,10 @@ export type {
 // Story 11.2: Quick Save Card component
 export { QuickSaveCard } from './QuickSaveCard';
 export type { QuickSaveCardProps } from './QuickSaveCard';
+
+// Story 14.3: Scan Overlay component
+export { ScanOverlay } from './ScanOverlay';
+export type { ScanOverlayProps, ScanOverlayState } from './ScanOverlay';
 
 // Default export
 export { ScanStatusIndicator as default } from './ScanStatusIndicator';

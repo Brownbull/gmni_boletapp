@@ -1,6 +1,6 @@
 # Story 14.8: Enhanced Existing Charts
 
-**Status:** ready-for-dev
+**Status:** done
 **Points:** 3
 **Epic:** 14 - Core Implementation
 **Dependencies:** Story 14.1 (Animation Framework)
@@ -24,42 +24,42 @@ so that **data visualization feels dynamic and engaging**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add count-up animation for values (AC: #1)
-  - [ ] Create useCountUp hook for animating numbers
-  - [ ] Apply to total amounts in charts
-  - [ ] CLP formatting during animation
-  - [ ] Duration: 300-500ms per motion-design-system.md
+- [x] Task 1: Add count-up animation for values (AC: #1)
+  - [x] Create useCountUp hook for animating numbers
+  - [x] Apply to total amounts in charts
+  - [x] CLP formatting during animation
+  - [x] Duration: 300-500ms per motion-design-system.md
 
-- [ ] Task 2: Implement entry animations (AC: #2)
-  - [ ] Add fade-in + scale animation to SimplePieChart
-  - [ ] Add fade-in + scale animation to GroupedBarChart
-  - [ ] Stagger bar animations in grouped charts
-  - [ ] Use animation constants from 14.1
+- [x] Task 2: Implement entry animations (AC: #2)
+  - [x] Add fade-in + scale animation to SimplePieChart
+  - [x] Add fade-in + scale animation to GroupedBarChart
+  - [x] Stagger bar animations in grouped charts
+  - [x] Use animation constants from 14.1
 
-- [ ] Task 3: Add breathing on hover/focus (AC: #3)
-  - [ ] Apply subtle scale on hover (1.02x)
-  - [ ] Apply focus ring for keyboard navigation
-  - [ ] Use useBreathing hook for subtle pulse
+- [x] Task 3: Add breathing on hover/focus (AC: #3)
+  - [x] Apply subtle scale on hover (1.02x)
+  - [x] Apply focus ring for keyboard navigation
+  - [x] Use useBreathing hook for subtle pulse
 
-- [ ] Task 4: Update chart styling (AC: #4)
-  - [ ] Use CSS variables from design system
-  - [ ] Update colors to match mockup palette
-  - [ ] Ensure dark mode compatibility
+- [x] Task 4: Update chart styling (AC: #4)
+  - [x] Use CSS variables from design system
+  - [x] Update colors to match mockup palette
+  - [x] Ensure dark mode compatibility
 
-- [ ] Task 5: Add reduced motion support (AC: #5)
-  - [ ] Use useReducedMotion hook
-  - [ ] Instant count-up without animation
-  - [ ] Static charts without entry animation
+- [x] Task 5: Add reduced motion support (AC: #5)
+  - [x] Use useReducedMotion hook
+  - [x] Instant count-up without animation
+  - [x] Static charts without entry animation
 
-- [ ] Task 6: Implement touch feedback (AC: #6)
-  - [ ] Add touchstart/touchend handlers
-  - [ ] Scale segment on touch (0.95x press, 1.05x release)
-  - [ ] Brief haptic feedback on tap
+- [x] Task 6: Implement touch feedback (AC: #6)
+  - [x] Add touchstart/touchend handlers
+  - [x] Scale segment on touch (0.95x press, 1.05x release)
+  - [x] Brief haptic feedback on tap
 
-- [ ] Task 7: Write tests
-  - [ ] Test count-up animation with mock timers
-  - [ ] Test entry animation triggers
-  - [ ] Test reduced motion behavior
+- [x] Task 7: Write tests
+  - [x] Test count-up animation with mock timers
+  - [x] Test entry animation triggers
+  - [x] Test reduced motion behavior
 
 ## Dev Notes
 
@@ -165,12 +165,39 @@ Recharts supports `isAnimationActive` prop - can disable animations for reduced 
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
-_To be filled during implementation_
+1. **useCountUp Hook Created**: New hook at `src/hooks/useCountUp.ts` providing animated count-up effect for money values with configurable duration (default 400ms), ease-out cubic curve, reduced motion support, and optional start value.
+
+2. **SimplePieChart Enhanced**:
+   - Entry animation: fade-in + scale-up (200ms) on initial render
+   - Count-up animation: Animated total value displayed in center donut hole
+   - Breathing effect: Subtle 1.02x scale on hover/focus
+   - Touch feedback: 0.95x press-in effect with haptic vibration
+   - Keyboard accessibility: Enter/Space triggers tooltip, focus states
+   - Reduced motion: All animations disabled when prefers-reduced-motion
+
+3. **StackedBarChart (GroupedBarChart) Enhanced**:
+   - Staggered entry animation: Each bar animates with scaleY(0→1) from bottom with staggered delays (100ms/bar, 50ms for 10+ bars)
+   - Breathing effect: Subtle 1.05x scaleX on segment hover/focus
+   - Touch feedback: 0.95x press-in effect with haptic vibration
+   - Keyboard accessibility: All segments have role="button", tabIndex, aria-labels
+   - Reduced motion: All animations disabled when prefers-reduced-motion
+
+4. **Animation Constants Used**: Leveraged DURATION, EASING, STAGGER from animation/constants.ts for consistency with motion-design-system.md
+
+5. **Tests Added**: 60 new tests covering useCountUp hook, SimplePieChart, and StackedBarChart - all animations, accessibility, reduced motion, and theme support
 
 ### File List
 
-_To be filled during implementation_
+**New Files:**
+- `src/hooks/useCountUp.ts` - Animated count-up hook
+- `tests/unit/hooks/useCountUp.test.ts` - 13 tests (moved from charts/ during code review)
+- `tests/unit/components/charts/SimplePieChart.test.tsx` - 22 tests
+- `tests/unit/components/charts/StackedBarChart.test.tsx` - 25 tests
+
+**Modified Files:**
+- `src/components/charts/SimplePieChart.tsx` - Entry animations, count-up, hover/touch feedback, reduced motion
+- `src/components/charts/GroupedBarChart.tsx` - Staggered entry, hover/touch feedback, reduced motion

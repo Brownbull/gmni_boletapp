@@ -1,4 +1,4 @@
-# Story 14.11: "Intentional or Accidental?" Pattern
+# Story 14.17: "Intentional or Accidental?" Pattern
 
 **Status:** ready-for-dev
 **Points:** 2
