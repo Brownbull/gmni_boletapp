@@ -24,6 +24,7 @@ import { ImageViewer } from '../components/ImageViewer';
 import { HistoryFilterBar } from '../components/history/HistoryFilterBar';
 // Story 9.12: Category translations
 import type { Language } from '../utils/translations';
+import { translateCategory } from '../utils/categoryTranslations';
 // Story 10a.1: Filter and duplicate detection utilities (AC #2, #4)
 import { useHistoryFilters } from '../hooks/useHistoryFilters';
 import { getDuplicateIds } from '../services/duplicateDetectionService';
@@ -147,7 +148,10 @@ const TransactionThumbnail: React.FC<ThumbnailProps> = ({ transaction, onThumbna
                 <img
                     src={transaction.thumbnailUrl}
                     alt={`Receipt from ${transaction.alias || transaction.merchant}`}
-                    className={`w-10 h-[50px] object-cover rounded border border-slate-200 dark:border-slate-700 ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity hover:border-blue-400`}
+                    className={`w-10 h-[50px] object-cover rounded ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity`}
+                    style={{
+                        border: '1px solid var(--border-medium)',
+                    }}
                     onLoad={handleLoad}
                     onError={handleError}
                 />
@@ -156,28 +160,35 @@ const TransactionThumbnail: React.FC<ThumbnailProps> = ({ transaction, onThumbna
     );
 };
 
-// Story 14.12: Number of recent transactions to show (collapsed)
-const RECENT_TRANSACTIONS_COLLAPSED = 3;
-const RECENT_TRANSACTIONS_EXPANDED = 5;
+// Story 14.12: Number of recent transactions to show (collapsed/expanded)
+const RECENT_TRANSACTIONS_COLLAPSED = 5;
+const RECENT_TRANSACTIONS_EXPANDED = 10;
 
 // Story 14.12: Carousel slide configuration
 type CarouselSlide = 0 | 1 | 2;
-const CAROUSEL_TITLES = ['Este Mes', 'Mes a Mes', 'Ultimos 4 Meses'] as const;
+// CAROUSEL_TITLES keys for translation lookup
+const CAROUSEL_TITLE_KEYS = ['thisMonthCarousel', 'monthToMonth', 'lastFourMonths'] as const;
 
-// Story 14.12: Treemap category colors (matching mockup)
+// Story 14.12: Treemap/Bump chart category colors (matching mockup)
+// Uses distinct colors to avoid confusion in charts
+// Primary category uses CSS variable, others use fixed colors for consistency
 const TREEMAP_COLORS: Record<string, string> = {
-    'Supermarket': '#2563eb', // primary blue
-    'Supermercado': '#2563eb',
-    'Restaurant': '#f59e0b', // orange
+    'Supermarket': 'var(--primary)', // theme primary (forest green in normal)
+    'Supermercado': 'var(--primary)',
+    'Restaurant': '#f59e0b', // amber/orange
     'Restaurante': '#f59e0b',
-    'Transport': '#8b5cf6', // purple
+    'Transport': '#8b5cf6', // violet/purple
     'Transporte': '#8b5cf6',
     'Health': '#ec4899', // pink
     'Salud': '#ec4899',
-    'Entertainment': '#10b981', // green
+    'Entertainment': '#10b981', // emerald green
     'Entretenimiento': '#10b981',
-    'Other': '#6b7280', // gray
-    'Otro': '#6b7280',
+    'PetShop': '#06b6d4', // cyan
+    'Tienda de Mascotas': '#06b6d4',
+    'Clothing': '#6366f1', // indigo
+    'Ropa': '#6366f1',
+    'Other': '#94a3b8', // slate gray (distinct from other colors)
+    'Otro': '#94a3b8',
 };
 
 // Story 14.12: Get category color for treemap
@@ -185,11 +196,15 @@ const getTreemapColor = (category: string): string => {
     return TREEMAP_COLORS[category] || getColor(category) || '#6b7280';
 };
 
-// Story 14.12: Month names in Spanish
-const MONTH_NAMES_ES = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-];
+// Story 14.12: Month translation keys (short and full)
+const MONTH_SHORT_KEYS = [
+    'monthJan', 'monthFeb', 'monthMar', 'monthApr', 'monthMay', 'monthJun',
+    'monthJul', 'monthAug', 'monthSep', 'monthOct', 'monthNov', 'monthDec'
+] as const;
+const MONTH_FULL_KEYS = [
+    'monthJanFull', 'monthFebFull', 'monthMarFull', 'monthAprFull', 'monthMayFull', 'monthJunFull',
+    'monthJulFull', 'monthAugFull', 'monthSepFull', 'monthOctFull', 'monthNovFull', 'monthDecFull'
+] as const;
 
 // Story 14.12: Circular progress ring component for percentage display with text inside
 interface CircularProgressProps {
@@ -257,6 +272,8 @@ const CircularProgress: React.FC<CircularProgressProps> = ({ animatedPercent, si
 // Story 14.12: Animated treemap card with count-up effect and circular progress
 interface AnimatedTreemapCardProps {
     cat: { name: string; amount: number; percent: number; count: number; color: string };
+    displayName: string; // Translated category name
+    purchasesLabel: string; // Translated "purchases" label
     isMainCell: boolean;
     gridRow?: string;
     gridColumn: string;
@@ -266,6 +283,8 @@ interface AnimatedTreemapCardProps {
 
 const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
     cat,
+    displayName,
+    purchasesLabel,
     isMainCell,
     gridRow,
     gridColumn,
@@ -295,8 +314,8 @@ const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
             {isMainCell ? (
                 <>
                     <div>
-                        <div className="text-white font-bold" style={{ fontSize: '15px', textShadow: '0 1px 2px rgba(0,0,0,0.2)', lineHeight: 1.2 }}>{cat.name}</div>
-                        <div className="text-white/80" style={{ fontSize: '11px', lineHeight: 1.2 }}>{cat.count} compras</div>
+                        <div className="text-white font-bold" style={{ fontSize: '15px', textShadow: '0 1px 2px rgba(0,0,0,0.2)', lineHeight: 1.2 }}>{displayName}</div>
+                        <div className="text-white/80" style={{ fontSize: '11px', lineHeight: 1.2 }}>{cat.count} {purchasesLabel}</div>
                     </div>
                     <div className="flex items-center justify-between gap-2">
                         <div className="text-white font-bold" style={{ fontSize: getValueFontSize(cat.percent, true), textShadow: '0 1px 2px rgba(0,0,0,0.2)', lineHeight: 1 }}>
@@ -311,7 +330,7 @@ const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
                 </>
             ) : (
                 <>
-                    <div className="text-white font-bold" style={{ fontSize: '13px', textShadow: '0 1px 2px rgba(0,0,0,0.2)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.name}</div>
+                    <div className="text-white font-bold" style={{ fontSize: '13px', textShadow: '0 1px 2px rgba(0,0,0,0.2)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</div>
                     <div className="flex items-center justify-between gap-1">
                         <div className="text-white font-bold" style={{ fontSize: getValueFontSize(cat.percent, false), textShadow: '0 1px 2px rgba(0,0,0,0.2)', lineHeight: 1 }}>
                             ${animatedAmount}k
@@ -739,25 +758,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             maxValue,
             sides,
             polygonType,
-            currentMonthLabel: MONTH_NAMES_ES[selectedMonth.month].slice(0, 3),
-            prevMonthLabel: MONTH_NAMES_ES[prevMonth].slice(0, 3),
+            currentMonthIdx: selectedMonth.month,
+            prevMonthIdx: prevMonth,
         };
     }, [monthTransactions, allTx, selectedMonth]);
+
+    // Story 14.12: Translate month labels for radar chart (outside useMemo to access t)
+    const radarCurrentMonthLabel = t(MONTH_SHORT_KEYS[radarChartData.currentMonthIdx]);
+    const radarPrevMonthLabel = t(MONTH_SHORT_KEYS[radarChartData.prevMonthIdx]);
 
 
     // Story 14.12: Bump chart data for "Ultimos 4 Meses" view
     const bumpChartData = useMemo(() => {
         // Get last 4 months including current
-        const months: { year: number; month: number; label: string }[] = [];
+        const months: { year: number; month: number; isCurrentMonth: boolean }[] = [];
         let year = selectedMonth.year;
         let month = selectedMonth.month;
 
         for (let i = 0; i < 4; i++) {
-            const shortMonthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
             months.unshift({
                 year,
                 month,
-                label: i === 0 ? 'Hoy' : shortMonthNames[month]
+                isCurrentMonth: i === 0
             });
             // Go to previous month
             if (month === 0) {
@@ -857,8 +879,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             });
         }
 
-        return { months: months.map(m => m.label), categories: categoryTotals };
+        return { monthData: months, categories: categoryTotals };
     }, [allTx, selectedMonth]);
+
+    // Story 14.12: Translate bump chart month labels (outside useMemo to access t)
+    const bumpChartMonthLabels = bumpChartData.monthData.map(m =>
+        m.isCurrentMonth ? t('todayLabel') : t(MONTH_SHORT_KEYS[m.month])
+    );
 
     // Story 10a.1: Extract available filters from transactions (AC #2)
     const availableFilters = useMemo(() => {
@@ -902,33 +929,40 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     }, [allTx, filterState, showDuplicatesOnly, duplicateIds, sortType]);
 
     // Story 14.12: Recent transactions by SCAN date (sorted by createdAt/scan order)
+    // NOTE: NOT filtered by month - shows globally recent scans
     const recentTransactionsByScan = useMemo(() => {
-        const monthTx = filteredTransactions.filter(tx => tx.date.startsWith(selectedMonthString));
-        // Sort by createdAt descending (most recently scanned first)
-        const sorted = [...monthTx].sort((a, b) => {
+        // Sort ALL transactions by createdAt descending (most recently scanned first)
+        const sorted = [...filteredTransactions].sort((a, b) => {
             const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
             const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
             return bDate - aDate;
         });
         const limit = recientesExpanded ? RECENT_TRANSACTIONS_EXPANDED : RECENT_TRANSACTIONS_COLLAPSED;
         return sorted.slice(0, limit);
-    }, [filteredTransactions, selectedMonthString, recientesExpanded]);
+    }, [filteredTransactions, recientesExpanded]);
 
     // Story 14.12: Recent transactions by TRANSACTION date (sorted by date field)
+    // NOTE: NOT filtered by month - shows globally recent transactions
     const recentTransactionsByDate = useMemo(() => {
-        const monthTx = filteredTransactions.filter(tx => tx.date.startsWith(selectedMonthString));
-        // Sort by transaction date descending (most recent transaction first)
-        const sorted = [...monthTx].sort((a, b) => {
+        // Sort ALL transactions by transaction date descending (most recent transaction first)
+        const sorted = [...filteredTransactions].sort((a, b) => {
             const aDate = new Date(a.date + (a.time ? `T${a.time}` : '')).getTime();
             const bDate = new Date(b.date + (b.time ? `T${b.time}` : '')).getTime();
             return bDate - aDate;
         });
         const limit = recientesExpanded ? RECENT_TRANSACTIONS_EXPANDED : RECENT_TRANSACTIONS_COLLAPSED;
         return sorted.slice(0, limit);
-    }, [filteredTransactions, selectedMonthString, recientesExpanded]);
+    }, [filteredTransactions, recientesExpanded]);
 
     // Story 14.12: Active transactions based on recientes carousel slide
     const recentTransactions = recientesSlide === 0 ? recentTransactionsByScan : recentTransactionsByDate;
+
+    // Story 14.12: Total transaction count (for determining if expand is useful)
+    // NOTE: Uses ALL transactions, not month-filtered
+    const totalTransactionsCount = filteredTransactions.length;
+
+    // Story 14.12: Whether expand button should be shown (more than collapsed limit)
+    const canExpand = totalTransactionsCount > RECENT_TRANSACTIONS_COLLAPSED;
 
     // Story 10a.1: Paginate filtered results (AC #3)
     const totalPages = Math.ceil(filteredTransactions.length / pageSize);
@@ -944,9 +978,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     }, [filterState, sortType, showDuplicatesOnly]);
 
     // Card styling using CSS variables (AC #1)
+    // Story 14.12: Use --border-light for theme-aware border color (peach in normal theme)
     const cardStyle: React.CSSProperties = {
         backgroundColor: 'var(--surface)',
-        borderColor: isDark ? '#334155' : '#e2e8f0',
+        borderColor: 'var(--border-light)',
     };
 
     // Story 9.11: Thumbnail click handler
@@ -972,9 +1007,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         }
     };
 
-    // Story 14.12: Format relative date (Hoy, Ayer, or date)
+    // Story 14.12: Format relative date (Today, Yesterday, or date) - translated
+    // Fix: Parse ISO date strings (YYYY-MM-DD) as local time, not UTC
     const formatRelativeDate = (dateStr: string, time?: string): string => {
-        const date = new Date(dateStr);
+        // Parse date string as local time to avoid timezone shift
+        // ISO format "YYYY-MM-DD" is parsed as UTC by default, causing off-by-one errors
+        let date: Date;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+            // ISO date without time - parse as local
+            const [year, month, day] = dateStr.split('-').map(Number);
+            date = new Date(year, month - 1, day);
+        } else {
+            date = new Date(dateStr);
+        }
+
         const today = new Date();
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
@@ -983,14 +1029,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         const isYesterday = date.toDateString() === yesterday.toDateString();
 
         if (isToday && time) {
-            return `Hoy, ${time}`;
+            return `${t('todayLabel')}, ${time}`;
         } else if (isYesterday && time) {
-            return `Ayer, ${time}`;
+            return `${t('yesterdayLabel')}, ${time}`;
         } else {
-            // Format as "20 Dic" style
+            // Format as "20 Dec" style with translated month
             const day = date.getDate();
-            const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-            return `${day} ${monthNames[date.getMonth()]}`;
+            return `${day} ${t(MONTH_SHORT_KEYS[date.getMonth()])}`;
         }
     };
 
@@ -1015,6 +1060,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         const location = transaction.city;
         const isDuplicate = transaction.id ? duplicateIds.has(transaction.id) : false;
         const emoji = getCategoryEmoji(transaction.category);
+        const categoryColor = getTreemapColor(transaction.category);
         const isItemsExpanded = transaction.id ? expandedItemIds.has(transaction.id) : false;
         const hasItems = transaction.items && transaction.items.length > 0;
 
@@ -1056,12 +1102,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                     {/* Transaction details */}
                     <div className="flex-1 min-w-0">
-                        {/* Row 1: Merchant + Amount */}
+                        {/* Row 1: Merchant + Amount - use --text-primary per mockup */}
                         <div className="flex justify-between items-start gap-2">
-                            <div className="text-sm font-semibold truncate" style={{ color: 'var(--primary)' }}>
+                            <div className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
                                 {transaction.alias || transaction.merchant}
                             </div>
-                            <div className="text-sm font-semibold whitespace-nowrap flex-shrink-0" style={{ color: 'var(--primary)' }}>
+                            <div className="text-sm font-semibold whitespace-nowrap flex-shrink-0" style={{ color: 'var(--text-primary)' }}>
                                 {formatCurrency(transaction.total, displayCurrency)}
                             </div>
                         </div>
@@ -1069,25 +1115,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         {/* Row 2: Category emoji pill + date pill + location pill + chevron */}
                         <div className="flex items-center justify-between mt-1">
                             <div className="flex items-center gap-1 flex-wrap">
-                                {/* Category emoji in circular background */}
+                                {/* Category emoji in circular background - uses treemap category color */}
                                 <div
                                     className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[11px] flex-shrink-0"
-                                    style={{ backgroundColor: isDark ? '#334155' : '#dcfce7' }}
+                                    style={{ backgroundColor: categoryColor, opacity: 0.85 }}
                                 >
                                     {emoji}
                                 </div>
-                                {/* Time pill */}
+                                {/* Time pill - uses bg-tertiary per mockup */}
                                 <span
                                     className="text-[10px] px-1.5 py-0.5 rounded-full"
-                                    style={{ backgroundColor: isDark ? '#334155' : '#f1f5f9', color: 'var(--secondary)' }}
+                                    style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
                                 >
                                     {formatRelativeDate(transaction.date, transaction.time)}
                                 </span>
-                                {/* Location pill */}
+                                {/* Location pill - uses bg-tertiary per mockup */}
                                 {location && (
                                     <span
                                         className="text-[10px] px-1.5 py-0.5 rounded-full"
-                                        style={{ backgroundColor: isDark ? '#334155' : '#f1f5f9', color: 'var(--secondary)' }}
+                                        style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
                                     >
                                         {location}
                                     </span>
@@ -1126,34 +1172,42 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                 </div>
 
-                {/* Expandable items section */}
+                {/* Expandable items section - Story 14.12: Box styling per mockup */}
                 {isItemsExpanded && hasItems && (
                     <div
-                        className="px-3 pb-3 pt-1"
-                        style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}
+                        className="mx-3 mb-3 mt-1 p-3 rounded-lg"
+                        style={{
+                            backgroundColor: 'var(--bg-tertiary)',
+                            border: '1px solid var(--border-light)',
+                        }}
                     >
-                        <div className="text-[10px] font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--secondary)' }}>
+                        <div className="text-[9px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-tertiary)' }}>
                             Items del Recibo
                         </div>
-                        <div className="space-y-1.5">
+                        <div className="space-y-1">
                             {sortedItems.map((item, idx) => (
-                                <div key={idx} className="flex justify-between items-center text-xs">
-                                    <span className="truncate" style={{ color: 'var(--primary)' }}>{item.name}</span>
-                                    <span className="font-medium flex-shrink-0 ml-2" style={{ color: 'var(--primary)' }}>
+                                <div key={idx} className="flex justify-between items-center text-[11px] py-1">
+                                    <span className="truncate" style={{ color: 'var(--text-secondary)' }}>{item.name}</span>
+                                    <span className="font-medium flex-shrink-0 ml-2" style={{ color: 'var(--text-primary)' }}>
                                         {formatCurrency(item.price, displayCurrency)}
                                     </span>
                                 </div>
                             ))}
                         </div>
                         {remainingCount > 0 && (
-                            <button
-                                onClick={() => onEditTransaction(transaction)}
-                                className="flex items-center gap-1 mt-2 text-xs font-medium"
-                                style={{ color: 'var(--accent)' }}
+                            <div
+                                className="mt-2 pt-2"
+                                style={{ borderTop: '1px dashed var(--border-light)' }}
                             >
-                                <span>+{remainingCount} items más...</span>
-                                <ChevronRight size={12} />
-                            </button>
+                                <button
+                                    onClick={() => onEditTransaction(transaction)}
+                                    className="flex items-center justify-center gap-1 w-full text-[11px] font-medium"
+                                    style={{ color: 'var(--primary)' }}
+                                >
+                                    <span>+{remainingCount} items más...</span>
+                                    <ChevronRight size={12} />
+                                </button>
+                            </div>
                         )}
                     </div>
                 )}
@@ -1195,8 +1249,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             className="text-sm py-1.5 px-2 rounded-lg border min-h-[36px] cursor-pointer"
                             style={{
                                 backgroundColor: 'var(--surface)',
-                                borderColor: isDark ? '#334155' : '#e2e8f0',
-                                color: 'var(--primary)',
+                                borderColor: 'var(--border-light)',
+                                color: 'var(--text-primary)',
                             }}
                             aria-label={t('sortBy')}
                         >
@@ -1238,7 +1292,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 {filteredTransactions.length === 0 && hasActiveFilters ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                         <Inbox size={48} className="mb-4 opacity-50" style={{ color: 'var(--secondary)' }} />
-                        <p className="text-lg font-medium mb-2" style={{ color: 'var(--primary)' }}>{t('noMatchingTransactions')}</p>
+                        <p className="text-lg font-medium mb-2" style={{ color: 'var(--text-primary)' }}>{t('noMatchingTransactions')}</p>
                         <p className="text-sm opacity-75" style={{ color: 'var(--secondary)' }}>{t('tryDifferentFilters')}</p>
                     </div>
                 ) : (
@@ -1254,9 +1308,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     onClick={() => setHistoryPage(p => p - 1)}
                                     className="px-4 py-2 border rounded-lg disabled:opacity-50 min-h-11"
                                     style={{
-                                        borderColor: isDark ? '#334155' : '#e2e8f0',
+                                        borderColor: 'var(--border-light)',
                                         backgroundColor: 'var(--surface)',
-                                        color: 'var(--primary)',
+                                        color: 'var(--text-primary)',
                                     }}
                                 >
                                     {t('prev')}
@@ -1269,9 +1323,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     onClick={() => setHistoryPage(p => p + 1)}
                                     className="px-4 py-2 border rounded-lg disabled:opacity-50 min-h-11"
                                     style={{
-                                        borderColor: isDark ? '#334155' : '#e2e8f0',
+                                        borderColor: 'var(--border-light)',
                                         backgroundColor: 'var(--surface)',
-                                        color: 'var(--primary)',
+                                        color: 'var(--text-primary)',
                                     }}
                                 >
                                     {t('next')}
@@ -1312,10 +1366,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     ref={monthPickerToggleRef}
                                     onClick={toggleMonthPicker}
                                     className="flex items-center gap-1 font-semibold hover:opacity-80 transition-opacity"
-                                    style={{ color: 'var(--primary)' }}
+                                    style={{ color: 'var(--text-primary)' }}
                                     data-testid="carousel-title"
                                 >
-                                    <span>{CAROUSEL_TITLES[carouselSlide]}</span>
+                                    <span>{t(CAROUSEL_TITLE_KEYS[carouselSlide])}</span>
                                     <ChevronDown size={14} className={`transition-transform ${showMonthPicker ? 'rotate-180' : ''}`} />
                                 </button>
 
@@ -1340,7 +1394,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                             >
                                                 <ChevronLeft size={16} style={{ color: 'var(--secondary)' }} />
                                             </button>
-                                            <span className="font-semibold text-sm min-w-[60px] text-center" style={{ color: 'var(--primary)' }}>
+                                            <span className="font-semibold text-sm min-w-[60px] text-center" style={{ color: 'var(--text-primary)' }}>
                                                 {pickerMonth.year}
                                             </span>
                                             <button
@@ -1374,8 +1428,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                             >
                                                 <ChevronLeft size={16} style={{ color: 'var(--secondary)' }} />
                                             </button>
-                                            <span className="font-medium text-sm min-w-[80px] text-center" style={{ color: 'var(--primary)' }}>
-                                                {MONTH_NAMES_ES[pickerMonth.month]}
+                                            <span className="font-medium text-sm min-w-[80px] text-center" style={{ color: 'var(--text-primary)' }}>
+                                                {t(MONTH_FULL_KEYS[pickerMonth.month])}
                                             </span>
                                             <button
                                                 onClick={() => {
@@ -1411,7 +1465,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                             style={{ backgroundColor: 'var(--accent)' }}
                                             data-testid="apply-month-picker-btn"
                                         >
-                                            Aplicar
+                                            {t('apply')}
                                         </button>
                                     </div>
                                 )}
@@ -1420,7 +1474,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                 <button
                                     onClick={toggleCarouselCollapse}
                                     className="w-5 h-5 rounded-full border flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                                    style={{ borderColor: isDark ? '#334155' : '#e2e8f0' }}
+                                    style={{ borderColor: 'var(--border-medium)' }}
                                     aria-label={carouselCollapsed ? 'Expand carousel' : 'Collapse carousel'}
                                     data-testid="carousel-collapse-btn"
                                 >
@@ -1438,7 +1492,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     onClick={goToPrevSlide}
                                     className="w-6 h-6 rounded-full border flex items-center justify-center focus:outline-none select-none"
                                     style={{
-                                        borderColor: isDark ? '#334155' : '#e2e8f0',
+                                        borderColor: 'var(--border-medium)',
                                         WebkitTapHighlightColor: 'transparent'
                                     }}
                                     onTouchStart={(e) => (e.currentTarget.style.transform = 'scale(0.9)')}
@@ -1455,7 +1509,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     onClick={goToNextSlide}
                                     className="w-6 h-6 rounded-full border flex items-center justify-center focus:outline-none select-none"
                                     style={{
-                                        borderColor: isDark ? '#334155' : '#e2e8f0',
+                                        borderColor: 'var(--border-medium)',
                                         WebkitTapHighlightColor: 'transparent'
                                     }}
                                     onTouchStart={(e) => (e.currentTarget.style.transform = 'scale(0.9)')}
@@ -1474,10 +1528,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         {/* Carousel Content (collapsible) - Fixed height for consistent carousel across all slides */}
                         {/* pt-3 matches the p-3 header padding for equal spacing above/below title */}
                         {/* Touch handlers for swipe gesture navigation */}
+                        {/* Story 14.12: Height increased to 310px for better footer spacing */}
                         {!carouselCollapsed && (
                             <div
                                 className="p-3 pt-3 overflow-hidden"
-                                style={{ height: '290px', touchAction: 'pan-y' }}
+                                style={{ height: '310px', touchAction: 'pan-y' }}
                                 data-testid="carousel-content"
                                 onTouchStart={onTouchStart}
                                 onTouchMove={onTouchMove}
@@ -1533,6 +1588,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                             <AnimatedTreemapCard
                                                                 key={`main-${animationKey}`}
                                                                 cat={displayCategories[0]}
+                                                                displayName={displayCategories[0].name === 'Otro' || displayCategories[0].name === 'Other' ? t('otherCategory') : translateCategory(displayCategories[0].name, lang)}
+                                                                purchasesLabel={t('purchases')}
                                                                 isMainCell={true}
                                                                 gridRow={`1 / ${gridRowCount + 1}`}
                                                                 gridColumn="1"
@@ -1546,6 +1603,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                             <AnimatedTreemapCard
                                                                 key={`${cat.name}-${animationKey}`}
                                                                 cat={cat}
+                                                                displayName={cat.name === 'Otro' || cat.name === 'Other' ? t('otherCategory') : translateCategory(cat.name, lang)}
+                                                                purchasesLabel={t('purchases')}
                                                                 isMainCell={false}
                                                                 gridRow={`${idx + 1} / ${idx + 2}`}
                                                                 gridColumn="2"
@@ -1565,8 +1624,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         )}
                                         </div>
                                         {/* Footer with total and month progress - single row layout */}
+                                        {/* Story 14.12: Increased spacing (mt-3 pt-3), thicker bar (h-2), larger total (text-lg) */}
                                         <div
-                                            className="pt-2 mt-1 border-t flex-shrink-0"
+                                            className="pt-3 mt-3 border-t flex-shrink-0"
                                             style={{ borderColor: isDark ? '#334155' : '#e2e8f0' }}
                                         >
                                             {/* Single row: Label | Progress | Amount */}
@@ -1574,10 +1634,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                 <span className="text-xs whitespace-nowrap" style={{ color: 'var(--secondary)' }}>
                                                     Total del mes
                                                 </span>
-                                                {/* Month progress bar in the middle */}
+                                                {/* Month progress bar in the middle - thicker for better visibility */}
                                                 <div className="flex-1 flex items-center gap-1.5">
                                                     <div
-                                                        className="flex-1 h-1.5 rounded-full overflow-hidden"
+                                                        className="flex-1 h-2 rounded-full overflow-hidden"
                                                         style={{ backgroundColor: isDark ? '#334155' : '#e2e8f0' }}
                                                     >
                                                         <div
@@ -1592,7 +1652,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                         {animatedDaysElapsed}/{monthProgress.daysInMonth}
                                                     </span>
                                                 </div>
-                                                <span className="text-base font-bold whitespace-nowrap" style={{ color: 'var(--primary)' }}>
+                                                {/* Total amount - larger font for emphasis */}
+                                                <span className="text-lg font-bold whitespace-nowrap" style={{ color: 'var(--text-primary)' }}>
                                                     {formatCurrency(animatedMonthTotal, currency)}
                                                 </span>
                                             </div>
@@ -1929,7 +1990,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                                     color: 'var(--secondary)'
                                                                 }}
                                                             >
-                                                                <span className="opacity-70">{radarChartData.prevMonthLabel}</span>
+                                                                <span className="opacity-70">{radarPrevMonthLabel}</span>
                                                                 <span>${Math.round(selectedRadarCategory.prevAmount / 1000)}k</span>
                                                             </div>
                                                             <div
@@ -1940,7 +2001,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                                 }}
                                                             >
                                                                 <span>{selectedRadarCategory.emoji}</span>
-                                                                <span className="truncate" style={{ maxWidth: '55px' }}>{selectedRadarCategory.name}</span>
+                                                                <span className="truncate" style={{ maxWidth: '55px' }}>{selectedRadarCategory.name === 'Otro' || selectedRadarCategory.name === 'Other' ? t('otherCategory') : translateCategory(selectedRadarCategory.name, lang)}</span>
                                                             </div>
                                                         </div>
 
@@ -1956,7 +2017,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                                     color: 'var(--bg)'
                                                                 }}
                                                             >
-                                                                <span className="opacity-70">{radarChartData.currentMonthLabel}</span>
+                                                                <span className="opacity-70">{radarCurrentMonthLabel}</span>
                                                                 <span>${Math.round(selectedRadarCategory.currAmount / 1000)}k</span>
                                                             </div>
                                                             {/* Change badge */}
@@ -2009,7 +2070,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                     {bumpTooltip ? (
                                                         <div className="flex items-center gap-2 text-sm">
                                                             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: bumpTooltip.color }} />
-                                                            <span style={{ color: bumpTooltip.color, fontWeight: 600 }}>{bumpTooltip.category}</span>
+                                                            <span style={{ color: bumpTooltip.color, fontWeight: 600 }}>{bumpTooltip.category === 'Otro' || bumpTooltip.category === 'Other' ? t('otherCategory') : translateCategory(bumpTooltip.category, lang)}</span>
                                                             <span style={{ color: 'var(--text-tertiary)' }}>en {bumpTooltip.month}:</span>
                                                             <span className="font-semibold" style={{ color: 'var(--foreground)' }}>
                                                                 ${Math.round(bumpTooltip.amount).toLocaleString('es-CL')}
@@ -2067,7 +2128,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                                 {/* Points - all same size, clickable, with appear animation */}
                                                                 {cat.ranks.map((rank, monthIdx) => {
                                                                     const y = yPositions[Math.min(rank - 1, 4)];
-                                                                    const isSelected = bumpTooltip?.category === cat.name && bumpTooltip?.month === bumpChartData.months[monthIdx];
+                                                                    const isSelected = bumpTooltip?.category === cat.name && bumpTooltip?.month === bumpChartMonthLabels[monthIdx];
                                                                     return (
                                                                         <circle
                                                                             key={`${cat.name}-${monthIdx}-${animationKey}`}
@@ -2085,7 +2146,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                                             }}
                                                                             onClick={() => setBumpTooltip({
                                                                                 category: cat.name,
-                                                                                month: bumpChartData.months[monthIdx],
+                                                                                month: bumpChartMonthLabels[monthIdx],
                                                                                 amount: cat.amounts[monthIdx],
                                                                                 color: cat.color
                                                                             })}
@@ -2099,7 +2160,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                                                 {/* X-axis labels */}
                                                 <div className="flex justify-between mt-1 pl-5">
-                                                    {bumpChartData.months.map((label, idx) => (
+                                                    {bumpChartMonthLabels.map((label, idx) => (
                                                         <span
                                                             key={label}
                                                             className="text-xs"
@@ -2128,7 +2189,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                         >
                                                             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
                                                             <span style={{ color: cat.color }}>
-                                                                {cat.name} #{idx + 1}
+                                                                {cat.name === 'Otro' || cat.name === 'Other' ? t('otherCategory') : translateCategory(cat.name, lang)} #{idx + 1}
                                                             </span>
                                                         </div>
                                                     ))}
@@ -2146,8 +2207,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             </div>
                         )}
 
-                        {/* Carousel Indicator Bar - add top margin when collapsed to match header padding */}
-                        <div className={`flex ${carouselCollapsed ? 'mt-3' : ''}`} data-testid="carousel-indicators">
+                        {/* Carousel Indicator Bar - uses CSS variables for theme colors
+                            Story 14.12: Uses --border-light for inactive, --border-medium for active (per mockup) */}
+                        <div
+                            className={`flex ${carouselCollapsed ? 'mt-3' : ''}`}
+                            style={{
+                                backgroundColor: 'var(--border-light)',
+                                borderRadius: '0 0 12px 12px',
+                                overflow: 'hidden',
+                                height: '6px',
+                            }}
+                            data-testid="carousel-indicators"
+                        >
                             {[0, 1, 2].map((idx) => (
                                 <button
                                     key={idx}
@@ -2161,13 +2232,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         setSelectedRadarCategory(null);
                                         setBumpTooltip(null);
                                     }}
-                                    className={`flex-1 h-1 transition-colors ${idx === 0 ? 'rounded-bl-xl' : ''} ${idx === 2 ? 'rounded-br-xl' : ''}`}
+                                    className="flex-1 h-full transition-colors"
                                     style={{
                                         backgroundColor: carouselSlide === idx
-                                            ? (isDark ? '#64748b' : '#cbd5e1')
-                                            : (isDark ? '#1e293b' : '#f1f5f9')
+                                            ? 'var(--border-medium, #d4a574)'
+                                            : 'transparent',
+                                        borderRadius: carouselSlide === idx
+                                            ? (idx === 0 ? '0 0 0 12px' : idx === 2 ? '0 0 12px 0' : '0')
+                                            : '0',
                                     }}
-                                    aria-label={`Go to slide ${idx + 1}: ${CAROUSEL_TITLES[idx]}`}
+                                    aria-label={`Go to slide ${idx + 1}: ${t(CAROUSEL_TITLE_KEYS[idx])}`}
                                     data-testid={`carousel-indicator-${idx}`}
                                 />
                             ))}
@@ -2181,25 +2255,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         {/* Section Header */}
                         <div className="flex justify-between items-center p-3 pb-2">
                             <div className="flex items-center gap-2">
-                                <h2 className="font-semibold" style={{ color: 'var(--primary)' }}>
+                                <h2 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
                                     {recientesSlide === 0 ? 'Últimos Escaneados' : 'Por Fecha'}
                                 </h2>
-                                <button
-                                    onClick={() => setRecientesExpanded(!recientesExpanded)}
-                                    className="w-5 h-5 rounded-full border flex items-center justify-center"
-                                    style={{ borderColor: isDark ? '#334155' : '#e2e8f0' }}
-                                    aria-label={recientesExpanded ? 'Colapsar' : 'Expandir'}
-                                    data-testid="expand-recientes-btn"
-                                >
-                                    <span className="text-xs" style={{ color: 'var(--secondary)' }}>
-                                        {recientesExpanded ? '−' : '+'}
-                                    </span>
-                                </button>
+                                {canExpand && (
+                                    <button
+                                        onClick={() => setRecientesExpanded(!recientesExpanded)}
+                                        className="w-5 h-5 rounded-full border flex items-center justify-center"
+                                        style={{ borderColor: 'var(--border-medium)' }}
+                                        aria-label={recientesExpanded ? 'Colapsar' : 'Expandir'}
+                                        data-testid="expand-recientes-btn"
+                                    >
+                                        <span className="text-xs" style={{ color: 'var(--secondary)' }}>
+                                            {recientesExpanded ? '−' : '+'}
+                                        </span>
+                                    </button>
+                                )}
                             </div>
                             <button
                                 onClick={handleViewAll}
                                 className="text-sm font-medium"
-                                style={{ color: 'var(--accent)' }}
+                                style={{ color: 'var(--primary)' }}
                                 data-testid="view-all-link"
                             >
                                 Ver todo →
@@ -2260,8 +2336,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             )}
                         </div>
 
-                        {/* Indicator Bar (2 segments) */}
-                        <div className="flex" data-testid="recientes-indicator-bar">
+                        {/* Indicator Bar (2 segments) - uses CSS variables for theme colors */}
+                        <div
+                            className="flex"
+                            style={{
+                                backgroundColor: 'var(--border-light)',
+                                borderRadius: '0 0 12px 12px',
+                                overflow: 'hidden',
+                                height: '6px',
+                            }}
+                            data-testid="recientes-indicator-bar"
+                        >
                             {[0, 1].map((idx) => (
                                 <button
                                     key={idx}
@@ -2270,11 +2355,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                             goToRecientesSlide(idx as 0 | 1, idx > recientesSlide ? 'left' : 'right');
                                         }
                                     }}
-                                    className={`flex-1 h-1 transition-colors ${idx === 0 ? 'rounded-bl-xl' : ''} ${idx === 1 ? 'rounded-br-xl' : ''}`}
+                                    className="flex-1 h-full transition-colors"
                                     style={{
                                         backgroundColor: recientesSlide === idx
-                                            ? (isDark ? '#64748b' : '#cbd5e1')
-                                            : (isDark ? '#1e293b' : '#f1f5f9')
+                                            ? 'var(--border-medium, #d4a574)'
+                                            : 'transparent',
+                                        borderRadius: recientesSlide === idx
+                                            ? (idx === 0 ? '0 0 0 12px' : '0 0 12px 0')
+                                            : '0',
                                     }}
                                     aria-label={idx === 0 ? 'Últimos Escaneados' : 'Por Fecha'}
                                     data-testid={`recientes-indicator-${idx}`}
