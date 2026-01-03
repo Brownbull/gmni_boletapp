@@ -9,9 +9,9 @@
  * - Quick action buttons
  *
  * Coverage:
- * - AC#1: Carousel with 3 slides (Este Mes, Mes a Mes, Ultimos 4 Meses)
+ * - AC#1: Carousel with 3 slides (This Month, Month to Month, Last 4 Months)
  * - AC#2: Month picker dropdown for date selection
- * - AC#3: Recientes section (3 collapsed, 5 expanded)
+ * - AC#3: Recientes section (5 collapsed, 10 expanded)
  * - AC#4: Quick action buttons (Scan, Add Manual)
  * - AC#5: Duplicate detection in transaction list
  * - AC#6: Full list view with filters and pagination
@@ -127,8 +127,8 @@ describe('DashboardView', () => {
           allTransactions: createCategoryTransactions(),
         });
 
-        // Default slide is "Este Mes"
-        expect(screen.getByTestId('carousel-title')).toHaveTextContent('Este Mes');
+        // Default slide is "This Month" (t returns key: 'thisMonthCarousel')
+        expect(screen.getByTestId('carousel-title')).toHaveTextContent('thisMonthCarousel');
       });
 
       it('should render carousel navigation buttons', () => {
@@ -147,8 +147,8 @@ describe('DashboardView', () => {
 
         fireEvent.click(screen.getByTestId('next-slide-btn'));
 
-        // Should now show "Mes a Mes"
-        expect(screen.getByTestId('carousel-title')).toHaveTextContent('Mes a Mes');
+        // Should now show "Month to Month" (t returns key: 'monthToMonth')
+        expect(screen.getByTestId('carousel-title')).toHaveTextContent('monthToMonth');
       });
 
       it('should navigate to previous slide when prev button clicked', () => {
@@ -160,8 +160,8 @@ describe('DashboardView', () => {
         fireEvent.click(screen.getByTestId('next-slide-btn'));
         fireEvent.click(screen.getByTestId('prev-slide-btn'));
 
-        // Should be back at "Este Mes"
-        expect(screen.getByTestId('carousel-title')).toHaveTextContent('Este Mes');
+        // Should be back at "This Month" (t returns key: 'thisMonthCarousel')
+        expect(screen.getByTestId('carousel-title')).toHaveTextContent('thisMonthCarousel');
       });
 
       it('should wrap around when navigating past last slide', () => {
@@ -174,7 +174,7 @@ describe('DashboardView', () => {
         fireEvent.click(screen.getByTestId('next-slide-btn')); // 2
         fireEvent.click(screen.getByTestId('next-slide-btn')); // back to 0
 
-        expect(screen.getByTestId('carousel-title')).toHaveTextContent('Este Mes');
+        expect(screen.getByTestId('carousel-title')).toHaveTextContent('thisMonthCarousel');
       });
 
       it('should show carousel indicator bar with 3 segments', () => {
@@ -194,7 +194,7 @@ describe('DashboardView', () => {
 
         fireEvent.click(screen.getByTestId('carousel-indicator-2'));
 
-        expect(screen.getByTestId('carousel-title')).toHaveTextContent('Ultimos 4 Meses');
+        expect(screen.getByTestId('carousel-title')).toHaveTextContent('lastFourMonths');
       });
 
       it('should render collapse/expand button', () => {
@@ -345,7 +345,7 @@ describe('DashboardView', () => {
         expect(screen.getByTestId('next-month-picker-btn')).toBeInTheDocument();
         // Apply button
         expect(screen.getByTestId('apply-month-picker-btn')).toBeInTheDocument();
-        expect(screen.getByText('Aplicar')).toBeInTheDocument();
+        expect(screen.getByText('apply')).toBeInTheDocument();
       });
 
       it('should navigate to previous year in picker (not applied until Apply)', () => {
@@ -370,16 +370,19 @@ describe('DashboardView', () => {
 
         fireEvent.click(screen.getByTestId('carousel-title'));
 
-        const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-          'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        // Month keys used when t(key) returns the key itself
+        const monthFullKeys = [
+          'monthJanFull', 'monthFebFull', 'monthMarFull', 'monthAprFull', 'monthMayFull', 'monthJunFull',
+          'monthJulFull', 'monthAugFull', 'monthSepFull', 'monthOctFull', 'monthNovFull', 'monthDecFull'
+        ];
         const now = new Date();
         const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
 
         // Click prev month - should update picker display
         fireEvent.click(screen.getByTestId('prev-month-picker-btn'));
 
-        // Picker should show previous month
-        expect(screen.getByText(monthNames[prevMonth])).toBeInTheDocument();
+        // Picker should show previous month (t returns the key)
+        expect(screen.getByText(monthFullKeys[prevMonth])).toBeInTheDocument();
       });
 
       it('should apply selection when Apply button is clicked', () => {
@@ -445,27 +448,27 @@ describe('DashboardView', () => {
       expect(screen.getByText('Por Fecha')).toBeInTheDocument();
     });
 
-    it('should show 3 transactions by default (collapsed)', () => {
-      const transactions = createManyTransactions(10);
+    it('should show 5 transactions by default (collapsed)', () => {
+      const transactions = createManyTransactions(15);
 
       renderDashboardView({ allTransactions: transactions });
 
-      // Should only show first 3
+      // Should only show first 5 (updated from 3)
       const cards = screen.getAllByTestId('transaction-card');
-      expect(cards).toHaveLength(3);
+      expect(cards).toHaveLength(5);
     });
 
-    it('should expand to show 5 transactions when expand button clicked', () => {
-      const transactions = createManyTransactions(10);
+    it('should expand to show 10 transactions when expand button clicked', () => {
+      const transactions = createManyTransactions(15);
 
       renderDashboardView({ allTransactions: transactions });
 
       // Click expand button
       fireEvent.click(screen.getByTestId('expand-recientes-btn'));
 
-      // Should now show 5
+      // Should now show 10 (updated from 5)
       const cards = screen.getAllByTestId('transaction-card');
-      expect(cards).toHaveLength(5);
+      expect(cards).toHaveLength(10);
     });
 
     it('should show "Ver todo" link when more than 5 transactions', () => {
