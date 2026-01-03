@@ -240,28 +240,28 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
             </div>
 
-            {/* Story 7.12 AC#11: Color theme selector (Story 7.17: renamed themes) */}
+            {/* Story 7.12 AC#11: Color theme selector
+                Story 14.12: Added 'mono' option as default, changed to dropdown */}
             {onSetColorTheme && (
                 <div className="p-4 rounded-xl border flex justify-between items-center" style={cardStyle}>
                     <div className="flex gap-2 items-center" style={{ color: 'var(--primary)' }}>
                         <Palette size={24} strokeWidth={2} /> {t('colorTheme')}
                     </div>
-                    <div className="flex rounded-lg p-1 border" style={toggleContainerStyle}>
-                        <button
-                            onClick={() => onSetColorTheme('normal')}
-                            className="min-h-11 px-3 rounded-md flex items-center justify-center font-medium text-sm"
-                            style={getToggleButtonStyle(colorTheme === 'normal')}
-                        >
-                            {t('colorThemeNormal')}
-                        </button>
-                        <button
-                            onClick={() => onSetColorTheme('professional')}
-                            className="min-h-11 px-3 rounded-md flex items-center justify-center font-medium text-sm"
-                            style={getToggleButtonStyle(colorTheme === 'professional')}
-                        >
-                            {t('colorThemeProfessional')}
-                        </button>
-                    </div>
+                    <select
+                        value={colorTheme}
+                        onChange={(e) => onSetColorTheme(e.target.value)}
+                        className="min-h-11 px-3 rounded-lg font-medium text-sm border"
+                        style={{
+                            backgroundColor: isDark ? '#1e293b' : '#f8fafc',
+                            borderColor: isDark ? '#475569' : '#e2e8f0',
+                            color: 'var(--primary)',
+                        }}
+                        aria-label={t('colorTheme')}
+                    >
+                        <option value="mono">{t('colorThemeMono')}</option>
+                        <option value="normal">{t('colorThemeNormal')}</option>
+                        <option value="professional">{t('colorThemeProfessional')}</option>
+                    </select>
                 </div>
             )}
 

@@ -206,13 +206,16 @@ function App() {
     const [currency, setCurrency] = useState<Currency>('CLP');
     const [theme, setTheme] = useState<Theme>('light');
     const [dateFormat, setDateFormat] = useState<'LatAm' | 'US'>('LatAm');
-    // Story 7.12 AC#11: Color theme selector (Story 7.17: 'normal' is default, was 'ghibli')
+    // Story 7.12 AC#11: Color theme selector
+    // Story 14.12: Added 'mono' as new default, migrated from 'normal' default
     const [colorTheme, setColorTheme] = useState<ColorTheme>(() => {
         const saved = localStorage.getItem('colorTheme');
-        // Migration: treat old 'ghibli' as new 'normal', old 'default' as new 'professional'
-        if (saved === 'ghibli' || saved === 'normal') return 'normal';
-        if (saved === 'default' || saved === 'professional') return 'professional';
-        return 'normal'; // Default to 'normal' (warm colors)
+        // Migration: treat old 'ghibli' as 'normal', old 'default' as 'professional'
+        if (saved === 'ghibli') return 'normal';
+        if (saved === 'default') return 'professional';
+        // Keep explicit preferences
+        if (saved === 'normal' || saved === 'professional' || saved === 'mono') return saved;
+        return 'mono'; // Default to 'mono' (monochrome minimal)
     });
     // Story 9.3: Default location settings (used when scan doesn't detect location)
     const [defaultCountry, setDefaultCountry] = useState(() => localStorage.getItem('defaultCountry') || '');
@@ -1338,12 +1341,14 @@ function App() {
     };
 
     // Story 7.12: Theme setup using CSS custom properties (AC #6, #7, #11)
-    // Story 7.17: Renamed themes - 'normal' (warm, was ghibli) is default, 'professional' (cool, was default)
+    // Story 7.17: Renamed themes - 'normal' (warm), 'professional' (cool)
+    // Story 14.12: Added 'mono' (monochrome) as new default
     // The 'dark' class activates CSS variable overrides defined in index.html
-    // The data-theme attribute activates color theme variations (normal or professional)
+    // The data-theme attribute activates color theme variations
     const isDark = theme === 'dark';
     const themeClass = isDark ? 'dark' : '';
-    const dataTheme = colorTheme === 'professional' ? 'professional' : undefined;
+    // 'normal' is base CSS, 'professional' and 'mono' are overrides
+    const dataTheme = colorTheme !== 'normal' ? colorTheme : undefined;
 
     // Story 12.3: Compute scan status for Nav icon indicator (AC #3)
     // - 'processing': batch or single scan processing is in progress
@@ -1368,9 +1373,9 @@ function App() {
         } else {
             html.classList.remove('dark');
         }
-        // 'normal' theme (warm colors) is base CSS, 'professional' is the override
-        if (colorTheme === 'professional') {
-            html.setAttribute('data-theme', 'professional');
+        // 'normal' theme (warm colors) is base CSS, 'professional' and 'mono' are overrides
+        if (colorTheme !== 'normal') {
+            html.setAttribute('data-theme', colorTheme);
         } else {
             html.removeAttribute('data-theme');
         }

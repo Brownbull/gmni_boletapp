@@ -91,9 +91,11 @@ export const TRANSLATIONS = {
         // Story 7.11: Floating Download FAB
         downloadAnalytics: "Download Analytics",
         // Story 7.12 AC#11: Color theme selector (Story 7.17: renamed themes)
-        colorTheme: "Color Palette",
+        // Story 14.12: Added monochrome theme
+        colorTheme: "Theme",
         colorThemeNormal: "Normal",
         colorThemeProfessional: "Professional",
+        colorThemeMono: "Monochrome",
         // Story 7.16: Drill-down mode toggle
         drillDownTemporal: "Temporal",
         drillDownCategory: "Category",
@@ -381,7 +383,27 @@ export const TRANSLATIONS = {
         batchDiscardConfirmYes: "Discard",
         batchSaveSuccess: "{count} receipt(s) saved successfully",
         // Story 14.12: Dashboard recientes section
-        noRecentTransactions: "No recent transactions"
+        noRecentTransactions: "No recent transactions",
+        // Story 14.12: Dashboard carousel and date labels
+        purchases: "purchases",
+        todayLabel: "Today",
+        yesterdayLabel: "Yesterday",
+        thisMonthCarousel: "This Month",
+        monthToMonth: "Month to Month",
+        lastFourMonths: "Last 4 Months",
+        otherCategory: "Other",
+        apply: "Apply",
+        // Story 14.12: Month names (short)
+        monthJan: "Jan", monthFeb: "Feb", monthMar: "Mar", monthApr: "Apr",
+        monthMay: "May", monthJun: "Jun", monthJul: "Jul", monthAug: "Aug",
+        monthSep: "Sep", monthOct: "Oct", monthNov: "Nov", monthDec: "Dec",
+        // Story 14.12: Month names (full)
+        monthJanFull: "January", monthFebFull: "February", monthMarFull: "March", monthAprFull: "April",
+        monthMayFull: "May", monthJunFull: "June", monthJulFull: "July", monthAugFull: "August",
+        monthSepFull: "September", monthOctFull: "October", monthNovFull: "November", monthDecFull: "December",
+        // Story 14.12: Recientes carousel
+        byScanDate: "By scan date",
+        byTransactionDate: "By transaction date"
     },
     es: {
         overview: "Resumen", welcome: "Rastreo Inteligente", totalSpent: "Total Gastado",
@@ -475,9 +497,11 @@ export const TRANSLATIONS = {
         // Story 7.11: Floating Download FAB
         downloadAnalytics: "Descargar Analíticas",
         // Story 7.12 AC#11: Color theme selector (Story 7.17: renamed themes)
-        colorTheme: "Paleta de Color",
+        // Story 14.12: Added monochrome theme
+        colorTheme: "Tema",
         colorThemeNormal: "Normal",
         colorThemeProfessional: "Profesional",
+        colorThemeMono: "Monocromo",
         // Story 7.16: Drill-down mode toggle
         drillDownTemporal: "Temporal",
         drillDownCategory: "Categoría",
@@ -765,7 +789,27 @@ export const TRANSLATIONS = {
         batchDiscardConfirmYes: "Descartar",
         batchSaveSuccess: "{count} boleta(s) guardada(s) exitosamente",
         // Story 14.12: Dashboard recientes section
-        noRecentTransactions: "Sin transacciones recientes"
+        noRecentTransactions: "Sin transacciones recientes",
+        // Story 14.12: Dashboard carousel and date labels
+        purchases: "compras",
+        todayLabel: "Hoy",
+        yesterdayLabel: "Ayer",
+        thisMonthCarousel: "Este Mes",
+        monthToMonth: "Mes a Mes",
+        lastFourMonths: "Últimos 4 Meses",
+        otherCategory: "Otro",
+        apply: "Aplicar",
+        // Story 14.12: Month names (short)
+        monthJan: "Ene", monthFeb: "Feb", monthMar: "Mar", monthApr: "Abr",
+        monthMay: "May", monthJun: "Jun", monthJul: "Jul", monthAug: "Ago",
+        monthSep: "Sep", monthOct: "Oct", monthNov: "Nov", monthDec: "Dic",
+        // Story 14.12: Month names (full)
+        monthJanFull: "Enero", monthFebFull: "Febrero", monthMarFull: "Marzo", monthAprFull: "Abril",
+        monthMayFull: "Mayo", monthJunFull: "Junio", monthJulFull: "Julio", monthAugFull: "Agosto",
+        monthSepFull: "Septiembre", monthOctFull: "Octubre", monthNovFull: "Noviembre", monthDecFull: "Diciembre",
+        // Story 14.12: Recientes carousel
+        byScanDate: "Por fecha de escaneo",
+        byTransactionDate: "Por fecha de transacción"
     }
 };
 

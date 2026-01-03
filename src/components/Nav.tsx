@@ -117,9 +117,10 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
     };
 
     // Story 14.11 AC #1: Nav bar styling from mockup
+    // Story 14.12: Use --bg to match header, --border-medium for accent top border (1px to match button outlines)
     const navStyle: React.CSSProperties = {
-        backgroundColor: 'var(--bg-secondary)',
-        borderColor: 'var(--border-light)',
+        backgroundColor: 'var(--bg)',
+        borderTop: '1px solid var(--border-medium)',
     };
 
     // Story 12.3 + 14.11 AC #3: FAB button gradient based on scan status
@@ -156,8 +157,9 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
 
     return (
         // Story 14.11 AC #1, #4: Fixed nav with mockup styling and safe area handling
+        // Story 14.12: Orange/peach top border accent line per mockup
         <nav
-            className="fixed bottom-0 left-0 right-0 border-t flex items-end justify-around z-50 flex-shrink-0"
+            className="fixed bottom-0 left-0 right-0 flex items-end justify-around z-50 flex-shrink-0"
             style={{
                 ...navStyle,
                 // Story 14.11 AC #1: Padding from mockup CSS - explicit to allow paddingBottom override
