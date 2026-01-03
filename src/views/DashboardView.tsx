@@ -1848,7 +1848,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                                         style={{
                                                                             transform: 'rotate(-90deg)',
                                                                             transformOrigin: 'center',
-                                                                            // @ts-ignore - CSS custom properties
+                                                                            // @ts-expect-error - CSS custom properties
                                                                             '--ring-circumference': outerCircum,
                                                                             '--target-offset': outerOffset,
                                                                             strokeDashoffset: outerOffset,
@@ -1878,7 +1878,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                                         style={{
                                                                             transform: 'rotate(-90deg)',
                                                                             transformOrigin: 'center',
-                                                                            // @ts-ignore - CSS custom properties
+                                                                            // @ts-expect-error - CSS custom properties
                                                                             '--ring-circumference': innerCircum,
                                                                             '--target-offset': innerOffset,
                                                                             strokeDashoffset: innerOffset,
