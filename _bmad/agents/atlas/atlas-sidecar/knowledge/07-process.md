@@ -82,6 +82,9 @@ backlog → drafted → ready-for-dev → in-progress → review → done
 
 | Story | Date | Environment | Notes |
 |-------|------|-------------|-------|
+| **Story 14.12 UI Refinements** | 2026-01-03 | Production | PR #136→#137 - Header sizing (72px), treemap badges with count-up, polygon dark mode fix, Recientes padding reduction, responsive 320px+ |
+| **Story 14.12 Home Dashboard** | 2026-01-03 | Production | PR #135 - Carousel with 3 views (treemap, polygon, bump chart), month picker, 3 themes |
+| **Epic 14 Stories 14.1-14.11** | 2026-01-02 | Production | PR #134 - Animation framework, screen transitions, polygon components, nav redesign |
 | **Epic 12 Complete (12.5, 12.99)** | 2025-12-23 | Production | v9.7.0 - Batch insights with aggregate summary, 2799 tests |
 | **Epic 12 Stories 12.1-12.4** | 2025-12-22 | Production | v9.6.0 - Batch Mode: Multi-image capture, parallel processing, batch review queue, credit warning. PR #127. 43 files, 8925 insertions, 200+ tests |
 | **Stories 11.2-11.6** | 2025-12-22 | Production | v9.5.0 - Quick Save Card, Animated Item Reveal, Trust Merchants, Scan Status, Viewport Adaptation. PRs #119→#120→#121. 46 files, 5576 insertions |
@@ -116,4 +119,5 @@ All 14 stories created with Atlas workflow analysis:
 - CI/CD standards from Epic 8 retrospective
 - Sprint status tracking active since Epic 7
 - **Epic 13 complete (2025-12-31):** Design phase with 10 HTML mockups
-- **Epic 14 stories ready:** 14 stories (48 pts) all marked ready-for-dev
+- **Epic 14 Phase 3 in progress (2026-01-03):** Story 14.12 UI refinements deployed. Phase 3 View Integration complete.
+- **Next:** Story 14.13 Analytics Polygon Integration ready-for-dev

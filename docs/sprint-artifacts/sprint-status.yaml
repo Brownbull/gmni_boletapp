@@ -350,7 +350,7 @@ development_status:
   # PHASE 3: VIEW INTEGRATION (wire components into actual views)
   # ============================================================================
   # These make the mockups visible in the app - BLOCKED by 14.10 + 14.11
-  14-12-home-dashboard-refresh: deployed  # 5 pts - Update DashboardView with new design [MOCKUP: home-dashboard.html] - DEPLOYED 2026-01-03 (PR #135)
+  14-12-home-dashboard-refresh: deployed  # 5 pts - Update DashboardView with new design [MOCKUP: home-dashboard.html] - DEPLOYED 2026-01-03 (PR #135, #136, #137 UI refinements)
   14-13-analytics-polygon-integration: ready-for-dev  # 5 pts - Wire polygon + charts into TrendsView [MOCKUP: analytics-polygon.html]
   14-14-transaction-list-redesign: ready-for-dev  # 3 pts - Update HistoryView with card design [MOCKUP: transaction-list.html]
   14-15-scan-flow-integration: ready-for-dev  # 3 pts - Wire ScanOverlay + QuickSaveCard into ScanView [MOCKUP: scan-overlay.html]
