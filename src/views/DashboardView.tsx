@@ -273,7 +273,6 @@ const CircularProgress: React.FC<CircularProgressProps> = ({ animatedPercent, si
 interface AnimatedTreemapCardProps {
     cat: { name: string; amount: number; percent: number; count: number; color: string };
     displayName: string; // Translated category name
-    purchasesLabel: string; // Translated "purchases" label
     isMainCell: boolean;
     gridRow?: string;
     gridColumn: string;
@@ -284,7 +283,6 @@ interface AnimatedTreemapCardProps {
 const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
     cat,
     displayName,
-    purchasesLabel,
     isMainCell,
     gridRow,
     gridColumn,
@@ -294,10 +292,37 @@ const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
     // Pass animationKey to useCountUp to re-trigger animation when carousel slides
     const animatedAmount = useCountUp(Math.round(cat.amount / 1000), { duration: 1200, startValue: 0, key: animationKey });
     const animatedPercent = useCountUp(Math.round(cat.percent), { duration: 1200, startValue: 0, key: animationKey });
+    // Animated count for the badge
+    const animatedCount = useCountUp(cat.count, { duration: 800, startValue: 0, key: animationKey });
 
-    // Circle sizes - bigger to fit percentage text inside
-    const circleSize = isMainCell ? 36 : 28;
-    const strokeWidth = isMainCell ? 3 : 2.5;
+    // Circle sizes - responsive: smaller on narrow screens
+    // Main cell: 36px, Small cells: 24px (reduced from 28px for better fit on 320px screens)
+    const circleSize = isMainCell ? 36 : 24;
+    const strokeWidth = isMainCell ? 3 : 2;
+
+    // Transaction count badge - inline with category name (left side)
+    // Compact sizes for mobile screens
+    const countBadgeSize = isMainCell ? 18 : 14;
+    const countBadgeFontSize = isMainCell ? '10px' : '9px';
+
+    // Count badge component to avoid duplication
+    const CountBadge = (
+        <div
+            className="flex items-center justify-center font-bold flex-shrink-0"
+            style={{
+                width: countBadgeSize,
+                height: countBadgeSize,
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255,255,255,0.9)',
+                color: cat.color,
+                fontSize: countBadgeFontSize,
+                lineHeight: 1,
+                boxShadow: '0 1px 2px rgba(0,0,0,0.15)'
+            }}
+        >
+            {animatedCount}
+        </div>
+    );
 
     return (
         <div
@@ -308,14 +333,16 @@ const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
                 gridRow: gridRow,
                 gridColumn: gridColumn,
                 minHeight: 0,
-                padding: isMainCell ? '8px 10px' : '6px 8px'
+                // Compact padding for mobile screens
+                padding: isMainCell ? '8px 8px' : '6px 6px'
             }}
         >
             {isMainCell ? (
                 <>
-                    <div>
-                        <div className="text-white font-bold" style={{ fontSize: '15px', textShadow: '0 1px 2px rgba(0,0,0,0.2)', lineHeight: 1.2 }}>{displayName}</div>
-                        <div className="text-white/80" style={{ fontSize: '11px', lineHeight: 1.2 }}>{cat.count} {purchasesLabel}</div>
+                    {/* Top row: Count badge + Category name */}
+                    <div className="flex items-center gap-1.5">
+                        {CountBadge}
+                        <div className="text-white font-bold truncate" style={{ fontSize: '14px', textShadow: '0 1px 2px rgba(0,0,0,0.2)', lineHeight: 1.2 }}>{displayName}</div>
                     </div>
                     <div className="flex items-center justify-between gap-2">
                         <div className="text-white font-bold" style={{ fontSize: getValueFontSize(cat.percent, true), textShadow: '0 1px 2px rgba(0,0,0,0.2)', lineHeight: 1 }}>
@@ -330,7 +357,11 @@ const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
                 </>
             ) : (
                 <>
-                    <div className="text-white font-bold" style={{ fontSize: '13px', textShadow: '0 1px 2px rgba(0,0,0,0.2)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</div>
+                    {/* Top row: Count badge + Category name - compact for small screens */}
+                    <div className="flex items-center gap-1 min-w-0">
+                        {CountBadge}
+                        <div className="text-white font-bold truncate" style={{ fontSize: '11px', textShadow: '0 1px 2px rgba(0,0,0,0.2)', lineHeight: 1.2 }}>{displayName}</div>
+                    </div>
                     <div className="flex items-center justify-between gap-1">
                         <div className="text-white font-bold" style={{ fontSize: getValueFontSize(cat.percent, false), textShadow: '0 1px 2px rgba(0,0,0,0.2)', lineHeight: 1 }}>
                             ${animatedAmount}k
@@ -397,6 +428,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     const [showMonthPicker, setShowMonthPicker] = useState(false);
     const monthPickerRef = useRef<HTMLDivElement>(null);
     const monthPickerToggleRef = useRef<HTMLButtonElement>(null);
+    // Story 14.12: Tooltip for transaction count badge
+    const [showCountTooltip, setShowCountTooltip] = useState(false);
     // Story 14.12: Radar tooltip state (shows category name + amounts on click)
     // Story 14.12: Selected radar category for comparison display
     const [selectedRadarCategory, setSelectedRadarCategory] = useState<{
@@ -456,6 +489,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     }, [monthTransactions]);
 
     const animatedMonthTotal = useCountUp(monthTotal, { duration: 400, key: animationKey });
+    // Animated transaction count for footer badge
+    const animatedMonthCount = useCountUp(monthTransactions.length, { duration: 800, startValue: 0, key: animationKey });
 
     // Story 14.12: Calculate month progress (days elapsed / total days)
     const monthProgress = useMemo(() => {
@@ -644,6 +679,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [showMonthPicker]);
+
+    // Story 14.12: Auto-hide transaction count tooltip after 2 seconds
+    useEffect(() => {
+        if (showCountTooltip) {
+            const timer = setTimeout(() => setShowCountTooltip(false), 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [showCountTooltip]);
 
 
     // Story 14.12: Radar chart data for "Mes a Mes" view (dynamic polygon)
@@ -1073,13 +1116,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         return (
             <div
                 key={transaction.id}
-                className={`rounded-xl overflow-hidden ${isDuplicate ? 'border border-amber-400' : ''}`}
+                className={`rounded-lg overflow-hidden ${isDuplicate ? 'border border-amber-400' : ''}`}
                 data-testid="transaction-card"
             >
-                {/* Main clickable area */}
+                {/* Main clickable area - compact padding for better space usage */}
                 <div
                     onClick={() => onEditTransaction(transaction)}
-                    className="flex gap-2.5 p-2.5 cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+                    className="flex gap-2 p-2 cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                     style={{ backgroundColor: 'var(--surface)' }}
                 >
                     {/* Receipt icon or thumbnail */}
@@ -1589,7 +1632,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                                 key={`main-${animationKey}`}
                                                                 cat={displayCategories[0]}
                                                                 displayName={displayCategories[0].name === 'Otro' || displayCategories[0].name === 'Other' ? t('otherCategory') : translateCategory(displayCategories[0].name, lang)}
-                                                                purchasesLabel={t('purchases')}
                                                                 isMainCell={true}
                                                                 gridRow={`1 / ${gridRowCount + 1}`}
                                                                 gridColumn="1"
@@ -1604,7 +1646,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                                 key={`${cat.name}-${animationKey}`}
                                                                 cat={cat}
                                                                 displayName={cat.name === 'Otro' || cat.name === 'Other' ? t('otherCategory') : translateCategory(cat.name, lang)}
-                                                                purchasesLabel={t('purchases')}
                                                                 isMainCell={false}
                                                                 gridRow={`${idx + 1} / ${idx + 2}`}
                                                                 gridColumn="2"
@@ -1623,18 +1664,64 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                             </div>
                                         )}
                                         </div>
-                                        {/* Footer with total and month progress - single row layout */}
-                                        {/* Story 14.12: Increased spacing (mt-3 pt-3), thicker bar (h-2), larger total (text-lg) */}
+                                        {/* Footer with total, transaction count, and month progress */}
+                                        {/* Layout: Total del mes | [count badge] | Progress bar | days | Amount */}
                                         <div
                                             className="pt-3 mt-3 border-t flex-shrink-0"
                                             style={{ borderColor: isDark ? '#334155' : '#e2e8f0' }}
                                         >
-                                            {/* Single row: Label | Progress | Amount */}
                                             <div className="flex items-center gap-2">
+                                                {/* Total label */}
                                                 <span className="text-xs whitespace-nowrap" style={{ color: 'var(--secondary)' }}>
                                                     Total del mes
                                                 </span>
-                                                {/* Month progress bar in the middle - thicker for better visibility */}
+                                                {/* Transaction count badge with tooltip on click */}
+                                                <div className="relative">
+                                                    <button
+                                                        onClick={() => setShowCountTooltip(!showCountTooltip)}
+                                                        className="flex items-center justify-center font-bold cursor-pointer transition-transform hover:scale-110"
+                                                        style={{
+                                                            width: 20,
+                                                            height: 20,
+                                                            borderRadius: '50%',
+                                                            backgroundColor: 'var(--primary)',
+                                                            color: 'white',
+                                                            fontSize: '12px',
+                                                            lineHeight: 1,
+                                                            flexShrink: 0,
+                                                            border: 'none',
+                                                            padding: 0
+                                                        }}
+                                                        aria-label="Total transacciones"
+                                                    >
+                                                        {animatedMonthCount}
+                                                    </button>
+                                                    {/* Tooltip popup */}
+                                                    {showCountTooltip && (
+                                                        <div
+                                                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 rounded text-xs whitespace-nowrap z-50 animate-in fade-in slide-in-from-bottom-1 duration-150"
+                                                            style={{
+                                                                backgroundColor: isDark ? '#1e293b' : '#0f172a',
+                                                                color: 'white',
+                                                                boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                                                            }}
+                                                        >
+                                                            Total transacciones
+                                                            {/* Tooltip arrow */}
+                                                            <div
+                                                                className="absolute top-full left-1/2 -translate-x-1/2"
+                                                                style={{
+                                                                    width: 0,
+                                                                    height: 0,
+                                                                    borderLeft: '5px solid transparent',
+                                                                    borderRight: '5px solid transparent',
+                                                                    borderTop: `5px solid ${isDark ? '#1e293b' : '#0f172a'}`
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {/* Month progress bar */}
                                                 <div className="flex-1 flex items-center gap-1.5">
                                                     <div
                                                         className="flex-1 h-2 rounded-full overflow-hidden"
@@ -1652,7 +1739,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                         {animatedDaysElapsed}/{monthProgress.daysInMonth}
                                                     </span>
                                                 </div>
-                                                {/* Total amount - larger font for emphasis */}
+                                                {/* Total amount */}
                                                 <span className="text-lg font-bold whitespace-nowrap" style={{ color: 'var(--text-primary)' }}>
                                                     {formatCurrency(animatedMonthTotal, currency)}
                                                 </span>
@@ -1700,11 +1787,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                                 y: center.y + radius * Math.sin(a)
                                                             }));
 
-                                                        // Generate 4 concentric grid rings
+                                                        // Generate 4 concentric grid rings - theme-aware colors
                                                         const ringRadii = [maxRadius, maxRadius * 0.75, maxRadius * 0.5, maxRadius * 0.25];
                                                         const gridRings = ringRadii.map((r, i) => ({
                                                             points: getPolygonPoints(r).map(p => `${p.x},${p.y}`).join(' '),
-                                                            fill: i % 2 === 0 ? '#f1f5f9' : '#f8fafc'
+                                                            fill: isDark
+                                                                ? (i % 2 === 0 ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)')
+                                                                : (i % 2 === 0 ? '#f1f5f9' : '#f8fafc')
                                                         }));
 
                                                         // Axis lines from center to each vertex
@@ -1734,18 +1823,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                                                         return (
                                                             <>
-                                                                {/* Grid rings (dynamic N-sided polygons) */}
+                                                                {/* Grid rings (dynamic N-sided polygons) - theme-aware */}
                                                                 {gridRings.map((ring, i) => (
                                                                     <polygon
                                                                         key={`ring-${i}`}
                                                                         points={ring.points}
                                                                         fill={ring.fill}
-                                                                        stroke="#e2e8f0"
+                                                                        stroke={isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0'}
                                                                         strokeWidth="1"
                                                                     />
                                                                 ))}
 
-                                                                {/* Axis lines from center to each vertex */}
+                                                                {/* Axis lines from center to each vertex - theme-aware */}
                                                                 {axisEndpoints.map((p, i) => (
                                                                     <line
                                                                         key={`axis-${i}`}
@@ -1753,7 +1842,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                                         y1={center.y}
                                                                         x2={p.x}
                                                                         y2={p.y}
-                                                                        stroke="#e2e8f0"
+                                                                        stroke={isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0'}
                                                                         strokeWidth="1"
                                                                         opacity="0.5"
                                                                     />
@@ -1815,7 +1904,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                     })()}
                                                 </svg>
 
-                                                {/* Category icons with dual progress rings (inner=current, outer=previous) */}
+                                                {/* Category icons with dual progress rings (outer=current, inner=previous) */}
                                                 {(() => {
                                                     const sides = radarChartData.sides;
                                                     // Calculate positions based on polygon sides (top vertex = -90 degrees)
@@ -1854,8 +1943,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                         const prevPercent = getPercent(cat.prevAmount);
                                                         const innerCircum = 2 * Math.PI * innerRadius;
                                                         const outerCircum = 2 * Math.PI * outerRadius;
-                                                        const innerOffset = innerCircum - (currPercent / 100) * innerCircum;
-                                                        const outerOffset = outerCircum - (prevPercent / 100) * outerCircum;
+                                                        // Swapped: outer = current month, inner = previous month
+                                                        const innerOffset = innerCircum - (prevPercent / 100) * innerCircum;
+                                                        const outerOffset = outerCircum - (currPercent / 100) * outerCircum;
                                                         const isSelected = selectedRadarCategory?.name === cat.name;
                                                         const animDelay = baseDelay + (i * staggerDelay);
 
@@ -1884,25 +1974,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                                 }}
                                                                 data-testid={`radar-icon-${cat.name.toLowerCase().replace(/\s+/g, '-')}`}
                                                             >
-                                                                {/* SVG with dual progress rings */}
+                                                                {/* SVG with dual progress rings - no background circles, only percentage covered */}
                                                                 <svg width={iconSize} height={iconSize} style={{ position: 'absolute', top: 0, left: 0 }}>
-                                                                    {/* Outer ring background (previous month) */}
-                                                                    <circle
-                                                                        cx={iconSize / 2}
-                                                                        cy={iconSize / 2}
-                                                                        r={outerRadius}
-                                                                        fill="none"
-                                                                        stroke={isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)'}
-                                                                        strokeWidth={strokeWidth}
-                                                                    />
-                                                                    {/* Outer ring progress (previous month - orange) - animated fill */}
+                                                                    {/* Outer ring progress (current month - primary blue) - animated fill */}
                                                                     <circle
                                                                         key={`outer-ring-${cat.name}-${animationKey}`}
                                                                         cx={iconSize / 2}
                                                                         cy={iconSize / 2}
                                                                         r={outerRadius}
                                                                         fill="none"
-                                                                        stroke="#f59e0b"
+                                                                        stroke="var(--primary, #2563eb)"
                                                                         strokeWidth={strokeWidth}
                                                                         strokeLinecap="round"
                                                                         strokeDasharray={outerCircum}
@@ -1916,23 +1997,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                                             animation: `progressRingFill 0.8s ease-out ${animDelay}s forwards`
                                                                         }}
                                                                     />
-                                                                    {/* Inner ring background (current month) */}
-                                                                    <circle
-                                                                        cx={iconSize / 2}
-                                                                        cy={iconSize / 2}
-                                                                        r={innerRadius}
-                                                                        fill="none"
-                                                                        stroke={isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)'}
-                                                                        strokeWidth={strokeWidth}
-                                                                    />
-                                                                    {/* Inner ring progress (current month - primary blue) - animated fill */}
+                                                                    {/* Inner ring progress (previous month - orange) - animated fill */}
                                                                     <circle
                                                                         key={`inner-ring-${cat.name}-${animationKey}`}
                                                                         cx={iconSize / 2}
                                                                         cy={iconSize / 2}
                                                                         r={innerRadius}
                                                                         fill="none"
-                                                                        stroke="var(--primary, #2563eb)"
+                                                                        stroke="#f59e0b"
                                                                         strokeWidth={strokeWidth}
                                                                         strokeLinecap="round"
                                                                         strokeDasharray={innerCircum}
@@ -2252,10 +2324,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 {/* Section 2: Recientes Carousel (AC #3) - 2 slides: by scan date, by transaction date */}
                 <TransitionChild index={1} totalItems={2}>
                     <div className="rounded-xl border overflow-hidden" style={cardStyle}>
-                        {/* Section Header */}
-                        <div className="flex justify-between items-center p-3 pb-2">
+                        {/* Section Header - compact padding */}
+                        <div className="flex justify-between items-center px-2.5 pt-2.5 pb-1.5">
                             <div className="flex items-center gap-2">
-                                <h2 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                                <h2 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
                                     {recientesSlide === 0 ? 'Últimos Escaneados' : 'Por Fecha'}
                                 </h2>
                                 {canExpand && (
@@ -2282,9 +2354,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             </button>
                         </div>
 
-                        {/* Transaction List with swipe support */}
+                        {/* Transaction List with swipe support - reduced horizontal padding */}
                         <div
-                            className="px-3 pb-2"
+                            className="px-1.5 pb-1.5"
                             onTouchStart={(e) => setRecientesTouchStart(e.targetTouches[0].clientX)}
                             onTouchMove={(e) => setRecientesTouchEnd(e.targetTouches[0].clientX)}
                             onTouchEnd={() => {

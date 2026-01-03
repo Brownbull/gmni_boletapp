@@ -1477,13 +1477,13 @@ function App() {
 
             {/* Story 11.6: Main content area with flex-1 and overflow (AC #2, #4, #5) */}
             {/* Story 14.10: Added pt-12 (48px) to account for fixed header (AC #5) */}
-            {/* Story 14.12: Increased top padding for more gap between header and first card (per mockup) */}
+            {/* Story 14.12: Increased top padding for larger header (72px) + gap for mobile visibility */}
             {/* pb-24 (96px) accounts for nav bar (~70px) + safe area bottom */}
             <main
-                className="flex-1 overflow-y-auto p-3 pt-14"
+                className="flex-1 overflow-y-auto p-3"
                 style={{
                     paddingBottom: 'calc(6rem + var(--safe-bottom, 0px))',
-                    paddingTop: 'calc(4.25rem + env(safe-area-inset-top, 0px))'
+                    paddingTop: 'calc(5rem + env(safe-area-inset-top, 0px))'
                 }}
             >
                 {/* Story 10a.1: Wrap DashboardView with HistoryFiltersProvider for filter context (AC #2, #6) */}
