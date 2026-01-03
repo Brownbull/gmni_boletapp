@@ -2,13 +2,21 @@
  * Tests for QuickSaveCard component
  *
  * Story 11.2: Quick Save Card Component
- * Tests the quick save UI, button actions, and accessibility.
+ * Story 14.4: Quick Save Path (Animations)
+ * Tests the quick save UI, button actions, accessibility, and animations.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { QuickSaveCard } from '../../../../src/components/scan/QuickSaveCard';
 import type { Transaction } from '../../../../src/types/transaction';
+
+// Mock useReducedMotion hook
+vi.mock('../../../../src/hooks/useReducedMotion', () => ({
+  useReducedMotion: vi.fn(() => false),
+}));
+
+import { useReducedMotion } from '../../../../src/hooks/useReducedMotion';
 
 // Mock transaction for testing
 const mockTransaction: Transaction = {
@@ -34,6 +42,7 @@ const mockT = (key: string) => {
     unknown: 'Desconocido',
     confidence: 'confidence',
     saving: 'Guardando...',
+    saved: '¡Guardado!',
     category_Supermarket: 'Supermercado',
   };
   return translations[key] || key;
@@ -260,6 +269,162 @@ describe('QuickSaveCard', () => {
         transaction: { ...mockTransaction, merchant: '', alias: undefined },
       });
       expect(screen.getByText('Desconocido')).toBeInTheDocument();
+    });
+  });
+
+  // Story 14.4: Animation Tests
+  describe('Story 14.4: animations', () => {
+    beforeEach(() => {
+      // Reset mock to default (motion enabled)
+      vi.mocked(useReducedMotion).mockReturnValue(false);
+    });
+
+    it('shows success state after save completes (AC #2)', async () => {
+      const onSaveComplete = vi.fn();
+      renderCard({ onSaveComplete });
+
+      // Click save button - wrap in act to handle async state updates
+      await act(async () => {
+        const saveButton = screen.getByTestId('quick-save-button');
+        fireEvent.click(saveButton);
+      });
+
+      // Wait for onSave to resolve and success state to appear
+      await waitFor(() => {
+        expect(onSave).toHaveBeenCalledTimes(1);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('quick-save-success')).toBeInTheDocument();
+      });
+
+      // Success text should be visible
+      expect(screen.getByText('¡Guardado!')).toBeInTheDocument();
+    });
+
+    it('hides action buttons when showing success state', async () => {
+      renderCard();
+
+      // Click save - wrap in act to handle async state updates
+      await act(async () => {
+        const saveButton = screen.getByTestId('quick-save-button');
+        fireEvent.click(saveButton);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('quick-save-success')).toBeInTheDocument();
+      });
+
+      // Action buttons should be hidden
+      expect(screen.queryByTestId('quick-save-button')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('quick-save-edit-button')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('quick-save-cancel-button')).not.toBeInTheDocument();
+    });
+
+    it('calls onSaveComplete after success animation (AC #5)', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const onSaveComplete = vi.fn();
+      renderCard({ onSaveComplete });
+
+      // Click save - wrap in act to handle async state updates
+      await act(async () => {
+        const saveButton = screen.getByTestId('quick-save-button');
+        fireEvent.click(saveButton);
+      });
+
+      // Wait for save to complete and success state
+      await vi.waitFor(() => {
+        expect(screen.getByTestId('quick-save-success')).toBeInTheDocument();
+      });
+
+      // Advance timers for animation duration (DURATION.SLOWER = 400ms)
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(500);
+      });
+
+      // onSaveComplete should have been called
+      expect(onSaveComplete).toHaveBeenCalledTimes(1);
+
+      vi.useRealTimers();
+    });
+
+    it('disables edit and cancel buttons during save animation', async () => {
+      // Make onSave return a pending promise
+      let resolvePromise: () => void;
+      onSave.mockImplementation(() => new Promise(resolve => {
+        resolvePromise = resolve;
+      }));
+
+      renderCard();
+
+      // Click save without awaiting - we want to check the intermediate state
+      const saveButton = screen.getByTestId('quick-save-button');
+      fireEvent.click(saveButton);
+
+      // While saving, buttons should be disabled
+      const editButton = screen.getByTestId('quick-save-edit-button');
+      const cancelButton = screen.getByTestId('quick-save-cancel-button');
+
+      expect(editButton).toBeDisabled();
+      expect(cancelButton).toBeDisabled();
+
+      // Cleanup - resolve the promise inside act to avoid warnings
+      await act(async () => {
+        resolvePromise!();
+      });
+    });
+
+    it('applies entry animation when isEntering is true', () => {
+      renderCard({ isEntering: true });
+
+      // Dialog should be present
+      const dialog = screen.getByRole('dialog');
+      expect(dialog).toBeInTheDocument();
+    });
+  });
+
+  // Story 14.4: Reduced Motion Tests
+  describe('Story 14.4: reduced motion support (AC #6)', () => {
+    beforeEach(() => {
+      // Enable reduced motion
+      vi.mocked(useReducedMotion).mockReturnValue(true);
+    });
+
+    afterEach(() => {
+      vi.mocked(useReducedMotion).mockReturnValue(false);
+    });
+
+    it('skips animations when prefers-reduced-motion is enabled', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const onSaveComplete = vi.fn();
+      renderCard({ onSaveComplete });
+
+      // Click save - wrap in act to handle async state updates
+      await act(async () => {
+        const saveButton = screen.getByTestId('quick-save-button');
+        fireEvent.click(saveButton);
+      });
+
+      await vi.waitFor(() => {
+        expect(screen.getByTestId('quick-save-success')).toBeInTheDocument();
+      });
+
+      // With reduced motion, onSaveComplete should be called with 0ms delay
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10);
+      });
+
+      expect(onSaveComplete).toHaveBeenCalledTimes(1);
+
+      vi.useRealTimers();
+    });
+
+    it('shows content immediately without entry animation', () => {
+      renderCard({ isEntering: true });
+
+      // Dialog should be visible immediately (reduced motion skips entry animation)
+      const dialog = screen.getByRole('dialog');
+      expect(dialog).toHaveClass('opacity-100');
     });
   });
 });

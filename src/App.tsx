@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { useTransactions } from './hooks/useTransactions';
 import { useCategoryMappings } from './hooks/useCategoryMappings';
@@ -29,6 +29,8 @@ import { BatchCaptureView } from './views/BatchCaptureView';
 import { BatchReviewView } from './views/BatchReviewView';
 import { SettingsView } from './views/SettingsView';
 import { Nav, ScanStatus } from './components/Nav';
+// Story 14.10: Top Header Bar component
+import { TopHeader } from './components/TopHeader';
 import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
 // Story 10.6: Insight card components
 import { InsightCard } from './components/insights/InsightCard';
@@ -92,7 +94,8 @@ import { getCitiesForCountry } from './data/locations';
 // Story 10a.3: Changed 'list' to 'insights' (InsightsView will be added in 10a.4)
 // Story 12.1: Added 'batch-capture' view for batch mode scanning
 // Story 12.3: Added 'batch-review' view for reviewing processed receipts before saving
-type View = 'dashboard' | 'scan' | 'edit' | 'trends' | 'insights' | 'settings' | 'batch-capture' | 'batch-review';
+// Story 14.11: Added 'alerts' view for nav bar redesign (settings still accessible via header menu)
+type View = 'dashboard' | 'scan' | 'edit' | 'trends' | 'insights' | 'settings' | 'alerts' | 'batch-capture' | 'batch-review';
 
 function App() {
     const { user, services, initError, signIn, signInWithTestCredentials, signOut } = useAuth();
@@ -1001,6 +1004,16 @@ function App() {
     };
 
     // Story 11.2: Quick Save Card handlers (AC #3, #4, #7)
+    // Story 14.4: Quick Save completion handler (called after success animation)
+    // This is the callback that fires AFTER the success animation completes
+    const handleQuickSaveComplete = useCallback(() => {
+        // Story 14.4 AC #5: Close card and show Trust Merchant if eligible
+        setShowQuickSaveCard(false);
+        setQuickSaveTransaction(null);
+        setPendingScan(null);
+        setView('dashboard');
+    }, []);
+
     const handleQuickSave = async () => {
         if (!services || !user || !quickSaveTransaction || isQuickSaving) return;
         const { db, appId } = services;
@@ -1039,11 +1052,8 @@ function App() {
             // Add to batch session
             addToBatch(txWithId, insight);
 
-            // Story 11.2: Close Quick Save Card and navigate to dashboard
-            setShowQuickSaveCard(false);
-            setQuickSaveTransaction(null);
-            setPendingScan(null);
-            setView('dashboard');
+            // Story 14.4: DON'T close card here - let success animation play first
+            // The QuickSaveCard will call onSaveComplete after animation
 
             // Show insight card (unless silenced or in batch mode)
             if (!silenced) {
@@ -1090,6 +1100,9 @@ function App() {
         } catch (error) {
             console.error('Quick save failed:', error);
             setToastMessage({ text: t('scanFailed'), type: 'info' });
+            // On error, close the card immediately
+            setShowQuickSaveCard(false);
+            setQuickSaveTransaction(null);
         } finally {
             setIsQuickSaving(false);
         }
@@ -1413,11 +1426,60 @@ function App() {
                 onChange={handleFileSelect}
             />
 
+            {/* Story 14.10: Top Header Bar (AC #1-5) */}
+            {/* Determine header variant and title based on current view */}
+            <TopHeader
+                variant={
+                    view === 'settings' ? 'settings' :
+                    (view === 'edit' || view === 'batch-review') ? 'detail' :
+                    'home'
+                }
+                viewTitle={
+                    view === 'dashboard' ? 'gastify' :
+                    view === 'trends' ? 'analytics' :
+                    view === 'insights' ? 'insights' :
+                    view === 'alerts' ? 'alerts' :
+                    view === 'batch-capture' ? 'gastify' :
+                    undefined
+                }
+                title={
+                    view === 'edit' ? t('transaction') :
+                    view === 'batch-review' ? t('batchReview') :
+                    undefined
+                }
+                onBack={
+                    view === 'settings' ? () => setView('dashboard') :
+                    view === 'edit' ? (() => {
+                        // Story 11.3: Reset animation state when leaving EditView
+                        setAnimateEditViewItems(false);
+                        // Story 12.3: If editing from batch, return to batch review
+                        if (batchEditingReceipt) {
+                            setBatchEditingReceipt(null);
+                            setView('batch-review');
+                        } else {
+                            setView('dashboard');
+                        }
+                    }) :
+                    view === 'batch-review' ? handleBatchReviewBack :
+                    undefined
+                }
+                onMenuClick={() => setView('settings')}
+                userName={user?.displayName || ''}
+                userEmail={user?.email || ''}
+                theme={theme}
+                t={t}
+            />
+
             {/* Story 11.6: Main content area with flex-1 and overflow (AC #2, #4, #5) */}
+            {/* Story 14.10: Added pt-12 (48px) to account for fixed header (AC #5) */}
+            {/* Story 14.12: Increased top padding for more gap between header and first card (per mockup) */}
             {/* pb-24 (96px) accounts for nav bar (~70px) + safe area bottom */}
             <main
-                className="flex-1 overflow-y-auto p-6"
-                style={{ paddingBottom: 'calc(6rem + var(--safe-bottom, 0px))' }}
+                className="flex-1 overflow-y-auto p-3 pt-14"
+                style={{
+                    paddingBottom: 'calc(6rem + var(--safe-bottom, 0px))',
+                    paddingTop: 'calc(4.25rem + env(safe-area-inset-top, 0px))'
+                }}
             >
                 {/* Story 10a.1: Wrap DashboardView with HistoryFiltersProvider for filter context (AC #2, #6) */}
                 {view === 'dashboard' && (
@@ -1701,6 +1763,44 @@ function App() {
                         onRevokeTrust={removeTrust}
                     />
                 )}
+
+                {/* Story 14.11: Alerts View - placeholder for future alerts/notifications feature */}
+                {view === 'alerts' && (
+                    <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+                        <div
+                            className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+                            style={{ backgroundColor: 'var(--bg-tertiary, #f1f5f9)' }}
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="32"
+                                height="32"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                style={{ color: 'var(--text-secondary, #64748b)' }}
+                            >
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                            </svg>
+                        </div>
+                        <h2
+                            className="text-lg font-semibold mb-2"
+                            style={{ color: 'var(--text-primary, #0f172a)' }}
+                        >
+                            {t('alerts')}
+                        </h2>
+                        <p
+                            className="text-sm"
+                            style={{ color: 'var(--text-secondary, #64748b)' }}
+                        >
+                            {t('comingSoon')}
+                        </p>
+                    </div>
+                )}
             </main>
 
             <Nav
@@ -1770,6 +1870,7 @@ function App() {
                     onSave={handleQuickSave}
                     onEdit={handleQuickSaveEdit}
                     onCancel={handleQuickSaveCancel}
+                    onSaveComplete={handleQuickSaveComplete}
                     theme={theme as 'light' | 'dark'}
                     t={t}
                     formatCurrency={formatCurrency}

@@ -1,8 +1,8 @@
 # Workflow Chains
 
 > Section 8 of Atlas Memory
-> Last Sync: 2025-12-22
-> Sources: architecture docs, story files, UX specification
+> Last Sync: 2025-12-31
+> Sources: architecture docs, story files, UX specification, Epic 14 stories
 
 ## Critical User Journeys
 
@@ -225,6 +225,79 @@ Batch Review Queue (Story 12.3)
 
 ---
 
+## Epic 14 Workflow Chains (Planned)
+
+### 10. Animation Flow (Epic 14.1-14.2)
+
+```
+App Mount → AnimationContext Provider →
+  useBreathing hook (3s cycle) → breathingPhase value →
+  Components subscribe → Apply scale/opacity transforms
+```
+
+**Features Touched:** AnimationContext, useBreathing, all animated components
+**Risk Level:** LOW - Visual enhancement, no data impact
+**Key Constraint:** Must respect prefers-reduced-motion
+
+### 11. Dynamic Polygon Flow (Epic 14.5-14.7)
+
+```
+TrendsView Mount → Fetch category aggregates →
+  Calculate polygon vertices (3-6 based on data) →
+  DynamicPolygon component renders →
+    Breathing mode: scale/opacity animation
+    Interactive mode: touch to expand category
+  Budget overlay: outer polygon shows limits (future)
+```
+
+**Features Touched:** TrendsView, DynamicPolygon, AnimationContext
+**Risk Level:** LOW - New visualization component, opt-in
+**Key Constraint:** Polygon vertices calculated from actual spending data
+
+### 12. Celebration Trigger Flow (Epic 14.12-14.13)
+
+```
+Transaction Save → Check for achievements →
+  Personal Record? → RecordsService.detectRecords() →
+    Record found → triggerCelebration(PRESETS.personalRecord) →
+      Confetti animation + Haptic feedback + Optional sound
+    No record → Standard quickSave celebration
+```
+
+**Features Touched:** CelebrationTrigger, RecordsService, confetti.ts
+**Risk Level:** LOW - Post-save side effect
+**Key Constraint:** Celebration cooldown (max 1 per session for records)
+
+### 13. Weekly Report Flow (Epic 14.10)
+
+```
+ReportsView → Generate weekly cards →
+  ReportCarousel → Swipe navigation →
+    Summary card → Category cards → Trend cards
+  Progress dots show position
+```
+
+**Features Touched:** ReportCarousel, ReportCard, TrendArrow
+**Risk Level:** LOW - New view, read-only
+**Key Constraint:** Rosa-friendly language, large readable numbers
+
+### 14. Intentional Prompt Flow (Epic 14.11)
+
+```
+Insight Generation → Pattern detected (>30% increase) →
+  shouldShowIntentionalPrompt() →
+    True → Show IntentionalPrompt dialog →
+      "Fue intencional" or "No me había dado cuenta" →
+      Store response → Profile learning
+    False → Skip prompt
+```
+
+**Features Touched:** IntentionalPrompt, InsightEngine, user profile
+**Risk Level:** LOW - Optional prompt, non-blocking
+**Key Constraint:** Non-judgmental language only
+
+---
+
 ## Sync Notes
 
 - Workflow chains mapped from architecture and story documentation
@@ -235,3 +308,4 @@ Batch Review Queue (Story 12.3)
 - Epic 11 added Quick Save and Trust Merchant flows
 - Combined retrospective: docs/sprint-artifacts/epic10-11-retro-2025-12-22.md
 - Epic 12 Story 12.2 added Batch Processing Flow with parallel execution (2025-12-22)
+- **Epic 14 workflow chains planned (2025-12-31)**: Animation, Polygon, Celebration, Reports, Intentional flows
