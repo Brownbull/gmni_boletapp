@@ -1,4 +1,4 @@
-# Story 14.12: Celebration System
+# Story 14.18: Celebration System
 
 **Status:** ready-for-dev
 **Points:** 3

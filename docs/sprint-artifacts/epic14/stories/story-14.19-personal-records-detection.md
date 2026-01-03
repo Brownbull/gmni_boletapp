@@ -1,9 +1,9 @@
-# Story 14.13: Personal Records Detection
+# Story 14.19: Personal Records Detection
 
 **Status:** ready-for-dev
 **Points:** 3
 **Epic:** 14 - Core Implementation
-**Dependencies:** Story 14.1 (Animation Framework), Story 14.12 (Celebration System)
+**Dependencies:** Story 14.1 (Animation Framework), Story 14.18 (Celebration System)
 
 ---
 
