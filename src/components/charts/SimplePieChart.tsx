@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { formatCurrency } from '../../utils/currency';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { useCountUp } from '../../hooks/useCountUp';
+import { DURATION, EASING } from '../animation/constants';
 
 export interface PieChartData {
     label: string;
@@ -24,6 +27,13 @@ interface TooltipData {
 /**
  * SimplePieChart - Donut-style pie chart for category breakdown.
  *
+ * Story 14.8: Enhanced with animations:
+ * - Entry animation: fade-in + scale-up on initial render
+ * - Count-up animation for total value
+ * - Breathing effect on hover/focus (subtle scale)
+ * - Touch feedback on tap
+ * - Reduced motion support
+ *
  * Uses CSS custom properties for theme-aware colors:
  * - Slice colors come from getColor() which uses --chart-* variables
  * - Center hole uses var(--bg) so it appears transparent (matches page background)
@@ -35,17 +45,44 @@ interface TooltipData {
  * - Dismisses on click outside or selecting another slice
  *
  * @see docs/ux-design-specification.md Section 6.2 - PieChart component spec
+ * @see docs/uxui/motion-design-system.md - Animation specifications
  */
 export const SimplePieChart: React.FC<SimplePieChartProps> = ({ data, theme, currency }) => {
+    // Animation and accessibility hooks
+    const prefersReducedMotion = useReducedMotion();
+
     // Tooltip state - stores the data to display
     const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
     // Track which slice is active (for opacity effect)
     const [activeSliceIndex, setActiveSliceIndex] = useState<number | null>(null);
+    // Track hover state for breathing effect
+    const [hoveredSliceIndex, setHoveredSliceIndex] = useState<number | null>(null);
+    // Track touch state for touch feedback
+    const [touchedSliceIndex, setTouchedSliceIndex] = useState<number | null>(null);
+    // Entry animation state
+    const [hasEntered, setHasEntered] = useState(false);
     // Timer ref for auto-dismiss
     const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const isDark = theme === 'dark';
     const total = data.reduce((acc, d) => acc + d.value, 0);
+
+    // Animated total value for count-up effect
+    const animatedTotal = useCountUp(total, {
+        duration: DURATION.SLOWER, // 400ms
+        enabled: !prefersReducedMotion && hasEntered,
+    });
+
+    // Trigger entry animation after mount
+    useEffect(() => {
+        if (prefersReducedMotion) {
+            setHasEntered(true);
+            return;
+        }
+        // Small delay before entry animation
+        const timer = setTimeout(() => setHasEntered(true), 50);
+        return () => clearTimeout(timer);
+    }, [prefersReducedMotion]);
 
     // Clear any existing timer
     const clearDismissTimer = useCallback(() => {
@@ -99,6 +136,21 @@ export const SimplePieChart: React.FC<SimplePieChartProps> = ({ data, theme, cur
         startDismissTimer();
     };
 
+    // Touch handlers for mobile feedback
+    const handleTouchStart = (sliceIndex: number) => {
+        if (!prefersReducedMotion) {
+            setTouchedSliceIndex(sliceIndex);
+            // Haptic feedback on supported devices
+            if (navigator.vibrate) {
+                navigator.vibrate(10);
+            }
+        }
+    };
+
+    const handleTouchEnd = () => {
+        setTouchedSliceIndex(null);
+    };
+
     // Click outside to dismiss tooltip
     const handleContainerClick = () => {
         setTooltipData(null);
@@ -123,10 +175,20 @@ export const SimplePieChart: React.FC<SimplePieChartProps> = ({ data, theme, cur
     // This ensures the chart blends seamlessly with the page in all themes
     const bgColor = 'var(--bg)';
 
+    // Entry animation styles
+    const entryStyle: React.CSSProperties = prefersReducedMotion
+        ? {}
+        : {
+            opacity: hasEntered ? 1 : 0,
+            transform: hasEntered ? 'scale(1)' : 'scale(0.95)',
+            transition: `opacity ${DURATION.NORMAL}ms ${EASING.OUT}, transform ${DURATION.NORMAL}ms ${EASING.OUT}`,
+        };
+
     return (
         <div
-            className="flex flex-col items-center justify-center py-4 animate-in fade-in relative"
+            className="flex flex-col items-center justify-center py-4 relative"
             onClick={handleContainerClick}
+            style={entryStyle}
         >
             {/* Tooltip positioned at top of chart area - always visible (Story 7.17) */}
             {tooltipData && (
@@ -165,6 +227,28 @@ export const SimplePieChart: React.FC<SimplePieChartProps> = ({ data, theme, cur
                         : `M 50 50 L ${x1} ${y1} A 50 50 0 ${large} 1 ${x2} ${y2} Z`;
 
                     const isActive = activeSliceIndex === i;
+                    const isHovered = hoveredSliceIndex === i;
+                    const isTouched = touchedSliceIndex === i;
+
+                    // Calculate scale for hover/touch feedback
+                    let scale = 1;
+                    if (!prefersReducedMotion) {
+                        if (isTouched) {
+                            scale = 0.95; // Press-in effect
+                        } else if (isHovered) {
+                            scale = 1.02; // Subtle breathing/hover effect
+                        }
+                    }
+
+                    // Slice styles with animation
+                    const sliceStyle: React.CSSProperties = {
+                        opacity: isActive ? 0.7 : 1,
+                        transform: `scale(${scale})`,
+                        transformOrigin: 'center center',
+                        transition: prefersReducedMotion
+                            ? undefined
+                            : `opacity ${DURATION.FAST}ms ${EASING.OUT}, transform ${DURATION.FAST}ms ${EASING.OUT}`,
+                    };
 
                     return (
                         <path
@@ -174,8 +258,24 @@ export const SimplePieChart: React.FC<SimplePieChartProps> = ({ data, theme, cur
                             stroke={bgColor}
                             strokeWidth="2"
                             onClick={(e) => handleSliceClick(e, i, slice)}
-                            className="cursor-pointer transition-opacity"
-                            style={{ opacity: isActive ? 0.7 : 1 }}
+                            onMouseEnter={() => setHoveredSliceIndex(i)}
+                            onMouseLeave={() => setHoveredSliceIndex(null)}
+                            onTouchStart={() => handleTouchStart(i)}
+                            onTouchEnd={handleTouchEnd}
+                            onTouchCancel={handleTouchEnd}
+                            className="cursor-pointer"
+                            style={sliceStyle}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`${slice.label}: ${formatCurrency(slice.value, currency)}`}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    handleSliceClick(e as unknown as React.MouseEvent, i, slice);
+                                }
+                            }}
+                            onFocus={() => setHoveredSliceIndex(i)}
+                            onBlur={() => setHoveredSliceIndex(null)}
                         />
                     );
                 })}
@@ -186,6 +286,21 @@ export const SimplePieChart: React.FC<SimplePieChartProps> = ({ data, theme, cur
                     r="30"
                     fill={bgColor}
                 />
+                {/* Center total value - rotated back to normal */}
+                <text
+                    x="50"
+                    y="50"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    className={`text-xs font-semibold ${isDark ? 'fill-slate-200' : 'fill-slate-700'}`}
+                    style={{
+                        transform: 'rotate(90deg)',
+                        transformOrigin: '50px 50px',
+                        fontVariantNumeric: 'tabular-nums',
+                    }}
+                >
+                    {formatCurrency(animatedTotal, currency)}
+                </text>
             </svg>
         </div>
     );

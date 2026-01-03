@@ -1,5 +1,23 @@
+/**
+ * Nav Component - Bottom Navigation Bar
+ *
+ * Story 14.11: Bottom Navigation Redesign
+ * Epic 14: Core Implementation
+ *
+ * Redesigned navigation bar matching mockup design system with:
+ * - CSS variable theming (--primary, --text-tertiary, --bg-secondary)
+ * - Center FAB elevated with gradient
+ * - Active state animations with reduced motion support
+ * - Haptic feedback on navigation
+ * - Safe area handling for iOS home indicator
+ *
+ * @see docs/uxui/mockups/01_views/navigation-alternatives.html
+ */
+
 import React, { useRef, useCallback } from 'react';
-import { Camera, Home, Lightbulb, BarChart3, Settings } from 'lucide-react';
+import { Camera, Home, Lightbulb, BarChart3, Bell } from 'lucide-react';
+import { useReducedMotion } from '../hooks/useReducedMotion';
+import { DURATION, EASING } from './animation/constants';
 
 // Story 12.3: Scan status for nav icon indicator
 export type ScanStatus = 'idle' | 'processing' | 'ready';
@@ -18,8 +36,12 @@ interface NavProps {
 }
 
 export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchClick, onTrendsClick, theme, t, scanStatus = 'idle' }) => {
+    // Story 14.11: Reduced motion preference for AC #5
+    const prefersReducedMotion = useReducedMotion();
+
     // Story 7.12: Theme-aware styling using CSS variables (AC #8)
-    const isDark = theme === 'dark';
+    // Theme awareness handled via CSS variables, dark/light mode set by parent
+    void theme; // Theme applied via CSS variables
 
     // Story 12.1: Long-press detection for batch mode (AC #1)
     const longPressTimer = useRef<NodeJS.Timeout | null>(null);
@@ -55,18 +77,52 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
         }
     }, []);
 
-    // Nav item color based on active state - uses CSS variables
-    const getNavItemStyle = (v: string): React.CSSProperties => ({
-        color: view === v ? 'var(--accent)' : 'var(--secondary)',
-    });
+    // Story 14.11 AC #6: Haptic feedback on nav selection
+    const triggerHaptic = useCallback(() => {
+        if (!prefersReducedMotion && navigator.vibrate) {
+            navigator.vibrate(10); // Brief 10ms haptic
+        }
+    }, [prefersReducedMotion]);
 
-    // Nav bar background styling
-    const navStyle: React.CSSProperties = {
-        backgroundColor: 'var(--surface)',
-        borderColor: isDark ? '#334155' : '#e2e8f0',
+    // Story 14.11 AC #5: Handle nav click with animation and haptic
+    const handleNavClick = useCallback((targetView: string, additionalCallback?: () => void) => {
+        triggerHaptic();
+        if (additionalCallback) {
+            additionalCallback();
+        }
+        setView(targetView);
+    }, [setView, triggerHaptic]);
+
+    // Story 14.11 AC #2: Nav item styling with CSS variables
+    const getNavItemClasses = (_v: string): string => {
+        // Note: v is available if view-specific classes are needed
+        const baseClasses = 'flex flex-col items-center gap-1 py-1.5 px-2.5 cursor-pointer select-none';
+
+        // Story 14.11 AC #5: Active state animation with scale
+        const transitionClasses = prefersReducedMotion
+            ? ''
+            : 'transition-all active:scale-95';
+
+        return `${baseClasses} ${transitionClasses}`;
     };
 
-    // Story 12.3: FAB button gradient based on scan status (AC #3)
+    // Story 14.11 AC #2: Icon and label color based on active state
+    const getNavItemStyle = (v: string): React.CSSProperties => {
+        const isActive = view === v;
+        return {
+            color: isActive ? 'var(--primary)' : 'var(--text-tertiary)',
+            // Story 14.11 AC #5: Transition for color change
+            transition: prefersReducedMotion ? 'none' : `color ${DURATION.FAST}ms ${EASING.OUT}`,
+        };
+    };
+
+    // Story 14.11 AC #1: Nav bar styling from mockup
+    const navStyle: React.CSSProperties = {
+        backgroundColor: 'var(--bg-secondary)',
+        borderColor: 'var(--border-light)',
+    };
+
+    // Story 12.3 + 14.11 AC #3: FAB button gradient based on scan status
     const getFabGradient = (): string => {
         switch (scanStatus) {
             case 'processing':
@@ -76,74 +132,141 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
                 // Green gradient for ready-to-review state
                 return 'linear-gradient(135deg, #10b981, #059669)';
             default:
-                // Default accent gradient
-                return 'linear-gradient(135deg, var(--accent), #6366f1)';
+                // Story 14.11 AC #3: Default gradient from mockup
+                return 'linear-gradient(135deg, var(--primary), var(--primary-hover, #6366f1))';
         }
     };
 
+    // Story 14.11 AC #3: FAB styling classes
+    const getFabClasses = (): string => {
+        const baseClasses = 'text-white rounded-full select-none';
+        const sizeClasses = 'w-[52px] h-[52px] flex items-center justify-center';
+        const shadowClasses = 'shadow-lg';
+
+        // Story 14.11 AC #5: Animation classes based on reduced motion preference
+        const animationClasses = prefersReducedMotion
+            ? ''
+            : 'transition-all hover:scale-105 active:scale-95';
+
+        // Story 12.3: Pulse animation for processing state
+        const pulseClass = scanStatus === 'processing' && !prefersReducedMotion ? 'animate-pulse' : '';
+
+        return `${baseClasses} ${sizeClasses} ${shadowClasses} ${animationClasses} ${pulseClass}`;
+    };
+
     return (
-        // Story 11.6: Fixed nav with safe area bottom padding (AC #3, #6)
-        <div
-            className="fixed bottom-0 left-0 right-0 border-t px-6 py-3 flex justify-between items-center z-50 flex-shrink-0"
+        // Story 14.11 AC #1, #4: Fixed nav with mockup styling and safe area handling
+        <nav
+            className="fixed bottom-0 left-0 right-0 border-t flex items-end justify-around z-50 flex-shrink-0"
             style={{
                 ...navStyle,
-                paddingBottom: 'calc(0.75rem + var(--safe-bottom, 0px))',
+                // Story 14.11 AC #1: Padding from mockup CSS - explicit to allow paddingBottom override
+                paddingTop: '8px',
+                paddingLeft: '16px',
+                paddingRight: '16px',
+                // Story 14.11 AC #4: Safe area bottom padding for iOS home indicator
+                paddingBottom: 'calc(12px + var(--safe-bottom, env(safe-area-inset-bottom, 0px)))',
             }}
+            role="navigation"
+            aria-label={t('mainNavigation') || 'Main navigation'}
         >
+            {/* Home */}
             <button
-                onClick={() => setView('dashboard')}
-                className="min-w-11 min-h-11 flex flex-col items-center justify-center gap-1"
+                onClick={() => handleNavClick('dashboard')}
+                className={getNavItemClasses('dashboard')}
                 style={getNavItemStyle('dashboard')}
+                aria-current={view === 'dashboard' ? 'page' : undefined}
             >
-                <Home size={24} strokeWidth={2} />
-                <span className="text-[10px] font-medium">{t('home')}</span>
+                <Home size={24} strokeWidth={1.8} />
+                <span
+                    className="text-[10px]"
+                    style={{ fontWeight: view === 'dashboard' ? 600 : 500 }}
+                >
+                    {t('home')}
+                </span>
             </button>
+
+            {/* Analytics */}
             <button
-                onClick={() => {
-                    if (onTrendsClick) onTrendsClick();
-                    setView('trends');
-                }}
-                className="min-w-11 min-h-11 flex flex-col items-center justify-center gap-1"
+                onClick={() => handleNavClick('trends', onTrendsClick)}
+                className={getNavItemClasses('trends')}
                 style={getNavItemStyle('trends')}
+                aria-current={view === 'trends' ? 'page' : undefined}
             >
-                <BarChart3 size={24} strokeWidth={2} />
+                <BarChart3 size={24} strokeWidth={1.8} />
                 {/* Story 7.10 AC #9: UX spec label is "Analytics" */}
-                <span className="text-[10px] font-medium">{t('analytics')}</span>
+                <span
+                    className="text-[10px]"
+                    style={{ fontWeight: view === 'trends' ? 600 : 500 }}
+                >
+                    {t('analytics')}
+                </span>
             </button>
-            {/* Center FAB - Story 7.10 AC #10: Prominent styling with gradient and elevation */}
+
+            {/* Center FAB - Story 14.11 AC #3: Elevated scan button */}
             {/* Story 12.1: Long-press opens batch mode (AC #1) */}
-            <div className="relative -top-6">
+            <div
+                className="relative"
+                style={{
+                    // Story 14.11 AC #3: FAB elevation matching mockup (margin-top: -56px → -40px for 52px button)
+                    marginTop: '-40px',
+                    padding: 0,
+                }}
+            >
                 <button
                     onPointerDown={handlePointerDown}
                     onPointerUp={handlePointerUp}
                     onPointerLeave={handlePointerLeave}
                     onPointerCancel={handlePointerLeave}
-                    className={`text-white p-4 rounded-full shadow-xl hover:scale-105 transition-all hover:shadow-2xl select-none ${
-                        scanStatus === 'processing' ? 'animate-pulse' : ''
-                    }`}
-                    style={{ background: getFabGradient() }}
-                    aria-label={scanStatus === 'processing' ? t('batchProcessing') : scanStatus === 'ready' ? t('batchReviewReady') : t('scan')}
+                    className={getFabClasses()}
+                    style={{
+                        background: getFabGradient(),
+                        // Story 14.11 AC #3: Shadow from mockup
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                    }}
+                    aria-label={
+                        scanStatus === 'processing'
+                            ? t('batchProcessing')
+                            : scanStatus === 'ready'
+                                ? t('batchReviewReady')
+                                : t('scan')
+                    }
                 >
                     <Camera size={24} strokeWidth={2} />
                 </button>
             </div>
-            {/* Story 10a.3: Renamed from Receipts to Insights (AC #1, #2, #3) */}
+
+            {/* Insights - Story 10a.3: Renamed from Receipts to Insights */}
             <button
-                onClick={() => setView('insights')}
-                className="min-w-11 min-h-11 flex flex-col items-center justify-center gap-1"
+                onClick={() => handleNavClick('insights')}
+                className={getNavItemClasses('insights')}
                 style={getNavItemStyle('insights')}
+                aria-current={view === 'insights' ? 'page' : undefined}
             >
-                <Lightbulb size={24} strokeWidth={2} />
-                <span className="text-[10px] font-medium">{t('insights')}</span>
+                <Lightbulb size={24} strokeWidth={1.8} />
+                <span
+                    className="text-[10px]"
+                    style={{ fontWeight: view === 'insights' ? 600 : 500 }}
+                >
+                    {t('insights')}
+                </span>
             </button>
+
+            {/* Alerts - Story 14.11: Per mockup, 5th nav item is Alerts not Settings */}
             <button
-                onClick={() => setView('settings')}
-                className="min-w-11 min-h-11 flex flex-col items-center justify-center gap-1"
-                style={getNavItemStyle('settings')}
+                onClick={() => handleNavClick('alerts')}
+                className={getNavItemClasses('alerts')}
+                style={getNavItemStyle('alerts')}
+                aria-current={view === 'alerts' ? 'page' : undefined}
             >
-                <Settings size={24} strokeWidth={2} />
-                <span className="text-[10px] font-medium">{t('settings')}</span>
+                <Bell size={24} strokeWidth={1.8} />
+                <span
+                    className="text-[10px]"
+                    style={{ fontWeight: view === 'alerts' ? 600 : 500 }}
+                >
+                    {t('alerts')}
+                </span>
             </button>
-        </div>
+        </nav>
     );
 };
