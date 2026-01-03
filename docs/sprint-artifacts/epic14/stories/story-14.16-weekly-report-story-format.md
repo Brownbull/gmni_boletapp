@@ -1,4 +1,4 @@
-# Story 14.10: Weekly Report Story Format
+# Story 14.16: Weekly Report Story Format
 
 **Status:** ready-for-dev
 **Points:** 5

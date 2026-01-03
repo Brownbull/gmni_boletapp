@@ -8,7 +8,7 @@
  * @see docs/sprint-artifacts/epic9/story-9.19-history-transaction-filters.md
  */
 
-import { useContext, useMemo } from 'react';
+import { useContext, useMemo, useCallback } from 'react';
 import {
   HistoryFiltersContext,
   type HistoryFilterState,
@@ -17,6 +17,10 @@ import {
   type CategoryFilterState,
   type LocationFilterState,
 } from '../contexts/HistoryFiltersContext';
+import {
+  getNextTemporalPeriod,
+  getPrevTemporalPeriod,
+} from '../utils/historyFilterUtils';
 
 /**
  * Return type for useHistoryFilters hook.
@@ -46,6 +50,16 @@ export interface UseHistoryFiltersReturn {
   hasCategoryFilter: boolean;
   /** True if location filter is active */
   hasLocationFilter: boolean;
+
+  // Time navigation helpers (Story 14.9)
+  /** Navigate to next time period at current granularity level */
+  goNextPeriod: () => void;
+  /** Navigate to previous time period at current granularity level */
+  goPrevPeriod: () => void;
+  /** True if can navigate to next period */
+  canGoNext: boolean;
+  /** True if can navigate to previous period */
+  canGoPrev: boolean;
 }
 
 /**
@@ -89,6 +103,10 @@ export function useHistoryFilters(): UseHistoryFiltersReturn {
     if (hasCategoryFilter) activeFilterCount++;
     if (hasLocationFilter) activeFilterCount++;
 
+    // Story 14.9: Calculate if navigation is possible
+    const canGoNext = getNextTemporalPeriod(state.temporal) !== null;
+    const canGoPrev = getPrevTemporalPeriod(state.temporal) !== null;
+
     return {
       temporal: state.temporal,
       category: state.category,
@@ -98,13 +116,32 @@ export function useHistoryFilters(): UseHistoryFiltersReturn {
       hasLocationFilter,
       hasActiveFilters: activeFilterCount > 0,
       activeFilterCount,
+      canGoNext,
+      canGoPrev,
     };
   }, [state]);
+
+  // Story 14.9: Time period navigation helpers
+  const goNextPeriod = useCallback(() => {
+    const nextPeriod = getNextTemporalPeriod(state.temporal);
+    if (nextPeriod) {
+      dispatch({ type: 'SET_TEMPORAL_FILTER', payload: nextPeriod });
+    }
+  }, [state.temporal, dispatch]);
+
+  const goPrevPeriod = useCallback(() => {
+    const prevPeriod = getPrevTemporalPeriod(state.temporal);
+    if (prevPeriod) {
+      dispatch({ type: 'SET_TEMPORAL_FILTER', payload: prevPeriod });
+    }
+  }, [state.temporal, dispatch]);
 
   return {
     state,
     dispatch,
     ...selectors,
+    goNextPeriod,
+    goPrevPeriod,
   };
 }
 

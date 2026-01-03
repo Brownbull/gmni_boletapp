@@ -325,28 +325,48 @@ development_status:
   epic-14: in-progress  # Started 2025-12-31 after Epic 13 approval
 
   # Foundation Layer (must be completed first)
-  14-1-animation-framework: ready-for-dev  # 5 pts - Core animation utilities [NEW FEATURE: Animation system]
-  14-2-screen-transition-system: ready-for-dev  # 3 pts - Staggered entry, breathing [DEPENDS: 14.1]
+  14-1-animation-framework: done  # 5 pts - Core animation utilities - Atlas Code Review APPROVED 2025-12-31
+  14-2-screen-transition-system: done  # 3 pts - Staggered entry, breathing - Atlas Code Review APPROVED 2025-12-31
 
   # Scan Flow Enhancement
-  14-3-scan-overlay-flow: ready-for-dev  # 5 pts - Non-blocking overlay [EXTENDS: Quick Save Flow #6]
-  14-4-quick-save-path: ready-for-dev  # 3 pts - Progressive item reveal [EXTENDS: Quick Save Flow #6]
+  14-3-scan-overlay-flow: done  # 5 pts - Non-blocking overlay [EXTENDS: Quick Save Flow #6] - Atlas Code Review APPROVED 2025-12-31
+  14-4-quick-save-path: done  # 3 pts - Progressive item reveal [EXTENDS: Quick Save Flow #6] - Atlas Code Review APPROVED 2026-01-01
 
   # Analytics & Visualization (can parallelize after 14.1)
-  14-5-dynamic-polygon-component: ready-for-dev  # 5 pts - 3-6 sided spending shape [NEW FEATURE: Polygon]
-  14-6-polygon-dual-mode: ready-for-dev  # 3 pts - Merchant categories + item groups [DEPENDS: 14.5]
-  14-7-expanding-lava-visual: ready-for-dev  # 3 pts - Inverted metaphor [DEPENDS: 14.5]
-  14-8-enhanced-existing-charts: ready-for-dev  # 3 pts - Pie, Bar, Stacked improvements [EXTENDS: Analytics #2]
-  14-9-swipe-time-navigation: ready-for-dev  # 3 pts - Left/right for week/month [EXTENDS: Analytics #2]
+  14-5-dynamic-polygon-component: done  # 5 pts - 3-6 sided spending shape [NEW FEATURE: Polygon] - Atlas Code Review APPROVED 2025-12-31
+  14-6-polygon-dual-mode: done  # 3 pts - Merchant categories + item groups [DEPENDS: 14.5] - Atlas Code Review APPROVED 2026-01-01
+  14-7-expanding-lava-visual: done  # 3 pts - Inverted metaphor [DEPENDS: 14.5] - Atlas Code Review APPROVED 2026-01-01
+  14-8-enhanced-existing-charts: done  # 3 pts - Pie, Bar, Stacked improvements [EXTENDS: Analytics #2] - Atlas Code Review APPROVED 2026-01-01
+  14-9-swipe-time-navigation: done  # 3 pts - Left/right for week/month [EXTENDS: Analytics #2] - Atlas Code Review APPROVED 2026-01-01
 
-  # Reports & Insights
-  14-10-weekly-report-story-format: ready-for-dev  # 5 pts - Instagram-style cards [EXTENDS: Insight History #8]
-  14-11-intentional-or-accidental-pattern: ready-for-dev  # 2 pts - Non-judgmental prompts [EXTENDS: Insight Gen #5]
+  # ============================================================================
+  # PHASE 2: NAVIGATION INFRASTRUCTURE (do NEXT - foundational for all views)
+  # ============================================================================
+  # These must be done BEFORE view integration - all views depend on navigation
+  14-10-top-header-bar: done  # 3 pts - App-wide header (logo, title, menu) [BLOCKS: all view stories] - Atlas Code Review APPROVED 2026-01-02
+  14-11-bottom-nav-redesign: done  # 3 pts - Redesign Nav.tsx to match mockups [BLOCKS: all view stories] - Atlas Code Review APPROVED 2026-01-02
 
-  # Celebrations & Engagement
-  14-12-celebration-system: ready-for-dev  # 3 pts - Confetti, haptics, sounds [NEW FEATURE: Celebrations]
-  14-13-personal-records-detection: ready-for-dev  # 3 pts - "Lowest restaurant week!" [EXTENDS: Insight Gen #5]
-  14-14-session-completion-messaging: ready-for-dev  # 2 pts - "Great check-in today" [NEW FEATURE: Session UX]
+  # ============================================================================
+  # PHASE 3: VIEW INTEGRATION (wire components into actual views)
+  # ============================================================================
+  # These make the mockups visible in the app - BLOCKED by 14.10 + 14.11
+  14-12-home-dashboard-refresh: done  # 5 pts - Update DashboardView with new design [MOCKUP: home-dashboard.html] - Atlas Code Review APPROVED 2026-01-03
+  14-13-analytics-polygon-integration: ready-for-dev  # 5 pts - Wire polygon + charts into TrendsView [MOCKUP: analytics-polygon.html]
+  14-14-transaction-list-redesign: ready-for-dev  # 3 pts - Update HistoryView with card design [MOCKUP: transaction-list.html]
+  14-15-scan-flow-integration: ready-for-dev  # 3 pts - Wire ScanOverlay + QuickSaveCard into ScanView [MOCKUP: scan-overlay.html]
+
+  # ============================================================================
+  # PHASE 4: REPORTS & INSIGHTS
+  # ============================================================================
+  14-16-weekly-report-story-format: in-progress  # 5 pts - Instagram-style cards [MOCKUP: reports.html]
+  14-17-intentional-or-accidental-pattern: ready-for-dev  # 2 pts - Non-judgmental prompts [EXTENDS: Insight Gen #5]
+
+  # ============================================================================
+  # PHASE 5: CELEBRATIONS & ENGAGEMENT
+  # ============================================================================
+  14-18-celebration-system: ready-for-dev  # 3 pts - Confetti, haptics, sounds [NEW FEATURE: Celebrations]
+  14-19-personal-records-detection: ready-for-dev  # 3 pts - "Lowest restaurant week!" [EXTENDS: Insight Gen #5]
+  14-20-session-completion-messaging: ready-for-dev  # 2 pts - "Great check-in today" [NEW FEATURE: Session UX]
 
   epic-14-retrospective: optional
 

@@ -3,7 +3,9 @@
  *
  * Story 11.2: Quick Save Card Component
  * Story 11.3: Animated Item Reveal
+ * Story 14.4: Quick Save Path (Animations)
  * Epic 11: Quick Save & Scan Flow Optimization
+ * Epic 14: Core Implementation
  *
  * Displays a summary card after successful scan with Accept/Edit options.
  * Reduces scan-to-save time to <15 seconds for high-confidence scans.
@@ -17,17 +19,21 @@
  * - Dark mode support
  * - Accessibility features (ARIA labels, keyboard navigation)
  * - Story 11.3: Animated item reveal with staggered timing
+ * - Story 14.4: Spring animation on save, success checkmark, reduced motion support
  *
  * @see docs/sprint-artifacts/epic11/story-11.2-quick-save-card.md
  * @see docs/sprint-artifacts/epic11/story-11.3-animated-item-reveal.md
+ * @see docs/sprint-artifacts/epic14/stories/story-14.4-quick-save-path.md
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Check, ChevronRight, X } from 'lucide-react';
 import { Transaction, StoreCategory } from '../../types/transaction';
 import { getCategoryEmoji } from '../../utils/categoryEmoji';
 import { useStaggeredReveal } from '../../hooks/useStaggeredReveal';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { AnimatedItem } from '../AnimatedItem';
+import { DURATION, EASING } from '../animation/constants';
 
 export interface QuickSaveCardProps {
   /** Transaction data from scan result */
@@ -54,6 +60,10 @@ export interface QuickSaveCardProps {
   showItems?: boolean;
   /** Story 11.3: Maximum items to show before "and X more" */
   maxVisibleItems?: number;
+  /** Story 14.4: Callback when save animation completes (for chaining Trust Merchant prompt) */
+  onSaveComplete?: () => void;
+  /** Story 14.4: Whether card is entering (for slide-up animation) */
+  isEntering?: boolean;
 }
 
 /**
@@ -87,14 +97,52 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
   isSaving = false,
   showItems = true,
   maxVisibleItems = 5,
+  onSaveComplete,
+  isEntering = true,
 }) => {
   const isDark = theme === 'dark';
+  const prefersReducedMotion = useReducedMotion();
 
-  // Handle save with loading state
+  // Story 14.4: Animation states (AC #2)
+  const [saveAnimating, setSaveAnimating] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [isVisible, setIsVisible] = useState(!isEntering || prefersReducedMotion);
+
+  // Story 14.4: Card entry animation (AC #4) - slide up on mount
+  useEffect(() => {
+    if (isEntering && !prefersReducedMotion) {
+      // Small delay for mount, then animate in
+      const timer = setTimeout(() => setIsVisible(true), 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isEntering, prefersReducedMotion]);
+
+  // Handle save with animation (Story 14.4 AC #2)
   const handleSave = useCallback(async () => {
-    if (isSaving) return;
-    await onSave();
-  }, [onSave, isSaving]);
+    if (isSaving || saveAnimating) return;
+
+    // Story 14.4: Trigger spring animation on button (AC #2)
+    if (!prefersReducedMotion) {
+      setSaveAnimating(true);
+    }
+
+    try {
+      await onSave();
+
+      // Story 14.4: Show success checkmark after save completes (AC #2)
+      setShowSuccess(true);
+
+      // After success animation, call onSaveComplete for Trust Merchant chain (AC #5)
+      const successDuration = prefersReducedMotion ? 0 : DURATION.SLOWER;
+      setTimeout(() => {
+        if (onSaveComplete) {
+          onSaveComplete();
+        }
+      }, successDuration);
+    } finally {
+      setSaveAnimating(false);
+    }
+  }, [onSave, isSaving, saveAnimating, prefersReducedMotion, onSaveComplete]);
 
   // Get display values
   const merchantName = transaction.alias || transaction.merchant || t('unknown');
@@ -120,11 +168,16 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
     : `${itemCount} ${t('items')}`;
 
   // Story 11.6: Modal with safe area padding (AC #3, #6)
+  // Story 14.4: Entry animation and success state (AC #2, #4)
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity ${
+        isVisible ? 'opacity-100' : 'opacity-0'
+      }`}
       style={{
         padding: 'calc(1rem + var(--safe-top, 0px)) calc(1rem + var(--safe-right, 0px)) calc(1rem + var(--safe-bottom, 0px)) calc(1rem + var(--safe-left, 0px))',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        transitionDuration: prefersReducedMotion ? '0ms' : `${DURATION.NORMAL}ms`,
       }}
       role="dialog"
       aria-modal="true"
@@ -133,12 +186,19 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
       <div
         className={`
           w-full max-w-sm rounded-2xl p-6 shadow-xl
-          animate-slide-up
           ${isDark
             ? 'bg-slate-800 text-white border border-slate-700'
             : 'bg-white text-slate-900 border border-slate-200'
           }
         `}
+        style={{
+          // Story 14.4: Card slide-up + fade-in animation (AC #4)
+          transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
+          opacity: isVisible ? 1 : 0,
+          transition: prefersReducedMotion
+            ? 'none'
+            : `transform ${DURATION.SLOW}ms ${EASING.OUT}, opacity ${DURATION.SLOW}ms ${EASING.OUT}`,
+        }}
       >
         {/* Header with merchant and emoji */}
         <div className="flex items-center gap-3 mb-4">
@@ -227,64 +287,111 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
         )}
 
         {/* Action buttons - Story 11.3: Buttons appear after items animation (AC #8) */}
-        <div className="space-y-3">
-          {/* Primary save button (AC #3) */}
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className={`
-              w-full py-3.5 px-4 rounded-xl font-semibold text-white
-              flex items-center justify-center gap-2
-              transition-all duration-200
-              ${isSaving
-                ? 'bg-green-400 cursor-not-allowed'
-                : 'bg-green-600 hover:bg-green-700 active:scale-[0.98]'
-              }
-            `}
-            aria-label={t('quickSave') || 'Guardar'}
+        {/* Story 14.4: Show success state or action buttons */}
+        {showSuccess ? (
+          // Story 14.4: Success checkmark animation (AC #2)
+          <div
+            className="flex flex-col items-center justify-center py-6"
+            data-testid="quick-save-success"
           >
-            <Check className="w-5 h-5" />
-            {isSaving ? t('saving') || 'Guardando...' : t('quickSave') || 'Guardar'}
-          </button>
+            <div
+              className={`
+                w-16 h-16 rounded-full flex items-center justify-center mb-3
+                ${isDark ? 'bg-green-500/20' : 'bg-green-100'}
+                ${prefersReducedMotion ? '' : 'animate-quick-save-success'}
+              `}
+            >
+              <Check
+                className="w-8 h-8 text-green-500"
+                strokeWidth={3}
+              />
+            </div>
+            <span
+              className={`text-lg font-semibold text-green-500 ${
+                prefersReducedMotion ? '' : 'animate-fade-in'
+              }`}
+            >
+              {t('saved') || '¡Guardado!'}
+            </span>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {/* Primary save button (AC #3) - Story 14.4: Spring animation (AC #2) */}
+            <button
+              onClick={handleSave}
+              disabled={isSaving || saveAnimating}
+              data-testid="quick-save-button"
+              className={`
+                w-full py-3.5 px-4 rounded-xl font-semibold text-white
+                flex items-center justify-center gap-2
+                ${isSaving || saveAnimating
+                  ? 'bg-green-400 cursor-not-allowed'
+                  : 'bg-green-600 hover:bg-green-700'
+                }
+              `}
+              style={{
+                // Story 14.4: Spring animation on click (AC #2)
+                transform: saveAnimating && !prefersReducedMotion ? 'scale(0.95)' : 'scale(1)',
+                transition: prefersReducedMotion
+                  ? 'none'
+                  : `transform ${DURATION.SLOWER}ms ${EASING.SPRING}`,
+              }}
+              aria-label={t('quickSave') || 'Guardar'}
+            >
+              <Check className="w-5 h-5" />
+              {isSaving || saveAnimating ? t('saving') || 'Guardando...' : t('quickSave') || 'Guardar'}
+            </button>
 
-          {/* Secondary edit button (AC #4) */}
+            {/* Secondary edit button (AC #4) - Story 14.4: Ghost button styling (AC #3) */}
+            <button
+              onClick={onEdit}
+              disabled={isSaving || saveAnimating}
+              data-testid="quick-save-edit-button"
+              className={`
+                w-full py-3 px-4 rounded-xl font-medium
+                flex items-center justify-center gap-2
+                border-2
+                ${isDark
+                  ? 'border-slate-600 text-slate-300 hover:bg-slate-700/50'
+                  : 'border-slate-300 text-slate-700 hover:bg-slate-50'
+                }
+                ${isSaving || saveAnimating ? 'opacity-50 cursor-not-allowed' : ''}
+              `}
+              style={{
+                // Story 14.4: Subtle hover animation (AC #3)
+                transition: prefersReducedMotion
+                  ? 'none'
+                  : `background-color ${DURATION.FAST}ms ${EASING.OUT}, transform ${DURATION.FAST}ms ${EASING.OUT}`,
+              }}
+              aria-label={t('editTrans') || 'Editar'}
+            >
+              {t('editTrans') || 'Editar'}
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Cancel link (AC #7) - Hidden when showing success */}
+        {!showSuccess && (
           <button
-            onClick={onEdit}
-            disabled={isSaving}
+            onClick={onCancel}
+            disabled={isSaving || saveAnimating}
+            data-testid="quick-save-cancel-button"
             className={`
-              w-full py-3 px-4 rounded-xl font-medium
-              flex items-center justify-center gap-2
-              border-2 transition-all duration-200
-              ${isDark
-                ? 'border-slate-600 text-slate-300 hover:bg-slate-700'
-                : 'border-slate-300 text-slate-700 hover:bg-slate-50'
-              }
-              ${isSaving ? 'opacity-50 cursor-not-allowed' : 'active:scale-[0.98]'}
+              w-full mt-4 py-2 text-sm font-medium
+              flex items-center justify-center gap-1
+              transition-colors
+              ${isDark ? 'text-slate-400 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700'}
+              ${isSaving || saveAnimating ? 'opacity-50 cursor-not-allowed' : ''}
             `}
-            aria-label={t('editTrans') || 'Editar'}
+            aria-label={t('cancel') || 'Cancelar'}
           >
-            {t('editTrans') || 'Editar'}
-            <ChevronRight className="w-4 h-4" />
+            <X className="w-4 h-4" />
+            {t('cancel') || 'Cancelar'}
           </button>
-        </div>
-
-        {/* Cancel link (AC #7) */}
-        <button
-          onClick={onCancel}
-          disabled={isSaving}
-          className={`
-            w-full mt-4 py-2 text-sm font-medium
-            flex items-center justify-center gap-1
-            transition-colors
-            ${isDark ? 'text-slate-400 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700'}
-            ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}
-          `}
-          aria-label={t('cancel') || 'Cancelar'}
-        >
-          <X className="w-4 h-4" />
-          {t('cancel') || 'Cancelar'}
-        </button>
+        )}
       </div>
+
     </div>
   );
 };

@@ -1,20 +1,24 @@
 /**
  * DashboardView Unit Tests
  *
- * Story 10a.1: Home Screen Consolidation
- * Tests for the consolidated Home screen with filters, pagination, and duplicate detection.
+ * Story 14.12: Home Dashboard Refresh
+ * Tests for the redesigned dashboard matching home-dashboard.html mockup:
+ * - Carousel with 3 views (Treemap, Polygon, Bump Chart)
+ * - Month/Year picker dropdown
+ * - "Recientes" expandable transaction list
+ * - Quick action buttons
  *
  * Coverage:
- * - AC#1: Scan AI CTA removed
- * - AC#2: Filter bar appears below summary cards
- * - AC#3: Full transaction list with pagination
- * - AC#4: Duplicate badges visible
- * - AC#5: Thumbnail clicks work
- * - AC#6: Filter state preserved
+ * - AC#1: Carousel with 3 slides (Este Mes, Mes a Mes, Ultimos 4 Meses)
+ * - AC#2: Month picker dropdown for date selection
+ * - AC#3: Recientes section (3 collapsed, 5 expanded)
+ * - AC#4: Quick action buttons (Scan, Add Manual)
+ * - AC#5: Duplicate detection in transaction list
+ * - AC#6: Full list view with filters and pagination
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '../../setup/test-utils';
+import { render, screen, fireEvent, waitFor } from '../../setup/test-utils';
 import { DashboardView } from '../../../src/views/DashboardView';
 import { HistoryFiltersProvider } from '../../../src/contexts/HistoryFiltersContext';
 
@@ -44,16 +48,20 @@ const renderDashboardView = (props: Partial<React.ComponentProps<typeof Dashboar
   );
 };
 
-// Test data
-const createTransaction = (overrides = {}) => ({
-  id: '1',
-  merchant: 'Test Supermarket',
-  alias: 'Grocery Store',
-  date: '2024-12-15',
-  total: 45.99,
-  category: 'Supermarket',
-  ...overrides,
-});
+// Test data - transactions within current month
+const createTransaction = (overrides = {}) => {
+  const now = new Date();
+  const currentMonth = now.toISOString().slice(0, 7);
+  return {
+    id: '1',
+    merchant: 'Test Supermarket',
+    alias: 'Grocery Store',
+    date: `${currentMonth}-15`,
+    total: 45.99,
+    category: 'Supermercado',
+    ...overrides,
+  };
+};
 
 const createTransactionWithImages = (overrides = {}) => ({
   ...createTransaction(overrides),
@@ -61,174 +69,434 @@ const createTransactionWithImages = (overrides = {}) => ({
   imageUrls: ['https://example.com/full.jpg'],
 });
 
-// Generate multiple transactions for pagination tests
+// Generate multiple transactions for different categories
+const createCategoryTransactions = () => {
+  const now = new Date();
+  const currentMonth = now.toISOString().slice(0, 7);
+  return [
+    { id: 'tx-1', merchant: 'Supermarket A', alias: 'Super A', date: `${currentMonth}-15`, total: 200, category: 'Supermercado' },
+    { id: 'tx-2', merchant: 'Restaurant B', alias: 'Rest B', date: `${currentMonth}-14`, total: 150, category: 'Restaurante' },
+    { id: 'tx-3', merchant: 'Gas Station', alias: 'Gas', date: `${currentMonth}-13`, total: 100, category: 'Transporte' },
+    { id: 'tx-4', merchant: 'Other Store', alias: 'Other', date: `${currentMonth}-12`, total: 50, category: 'Otro' },
+    { id: 'tx-5', merchant: 'Supermarket C', alias: 'Super C', date: `${currentMonth}-11`, total: 100, category: 'Supermercado' },
+    { id: 'tx-6', merchant: 'Restaurant D', alias: 'Rest D', date: `${currentMonth}-10`, total: 75, category: 'Restaurante' },
+  ];
+};
+
+// Generate many transactions for pagination tests
 const createManyTransactions = (count: number) => {
+  const now = new Date();
+  const currentMonth = now.toISOString().slice(0, 7);
   return Array.from({ length: count }, (_, i) => ({
     id: `tx-${i + 1}`,
     merchant: `Store ${i + 1}`,
     alias: `Alias ${i + 1}`,
-    date: `2024-12-${String(15 - Math.floor(i / 3)).padStart(2, '0')}`,
+    date: `${currentMonth}-${String(15 - Math.floor(i / 3)).padStart(2, '0')}`,
     total: 10 + i,
-    category: 'Supermarket',
+    category: 'Supermercado',
   }));
 };
 
 // Create duplicate transactions (same date, merchant, total)
-const createDuplicateTransactions = () => [
-  {
-    id: 'dup-1',
-    merchant: 'Duplicate Store',
-    alias: 'Dup Store',
-    date: '2024-12-15',
-    total: 50.00,
-    category: 'Supermarket',
-  },
-  {
-    id: 'dup-2',
-    merchant: 'Duplicate Store',
-    alias: 'Dup Store',
-    date: '2024-12-15',
-    total: 50.00,
-    category: 'Supermarket',
-  },
-];
+const createDuplicateTransactions = () => {
+  const now = new Date();
+  const currentMonth = now.toISOString().slice(0, 7);
+  return [
+    { id: 'dup-1', merchant: 'Duplicate Store', alias: 'Dup Store', date: `${currentMonth}-15`, total: 50.00, category: 'Supermercado' },
+    { id: 'dup-2', merchant: 'Duplicate Store', alias: 'Dup Store', date: `${currentMonth}-15`, total: 50.00, category: 'Supermercado' },
+  ];
+};
 
 describe('DashboardView', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('AC#1: Scan AI CTA Removed', () => {
-    it('should NOT render the Scan AI CTA card', () => {
-      renderDashboardView({
-        allTransactions: [createTransaction()],
+  describe('Story 14.12: Carousel Layout', () => {
+    describe('AC#1: Carousel with 3 Views', () => {
+      it('should render carousel card', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
+
+        expect(screen.getByTestId('carousel-card')).toBeInTheDocument();
       });
 
-      // The scanTitle and scanBtn translation keys should NOT be present
-      expect(screen.queryByText('scanTitle')).not.toBeInTheDocument();
-      expect(screen.queryByText('scanBtn')).not.toBeInTheDocument();
-    });
+      it('should show carousel title with current slide name', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
 
-    it('should only render Total Spent and This Month summary cards', () => {
-      renderDashboardView({
-        allTransactions: [createTransaction({ total: 100 })],
+        // Default slide is "Este Mes"
+        expect(screen.getByTestId('carousel-title')).toHaveTextContent('Este Mes');
       });
 
-      // Summary cards should be present
-      expect(screen.getByText('totalSpent')).toBeInTheDocument();
-      expect(screen.getByText('thisMonth')).toBeInTheDocument();
+      it('should render carousel navigation buttons', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
+
+        expect(screen.getByTestId('prev-slide-btn')).toBeInTheDocument();
+        expect(screen.getByTestId('next-slide-btn')).toBeInTheDocument();
+      });
+
+      it('should navigate to next slide when next button clicked', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
+
+        fireEvent.click(screen.getByTestId('next-slide-btn'));
+
+        // Should now show "Mes a Mes"
+        expect(screen.getByTestId('carousel-title')).toHaveTextContent('Mes a Mes');
+      });
+
+      it('should navigate to previous slide when prev button clicked', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
+
+        // Go to slide 2, then back
+        fireEvent.click(screen.getByTestId('next-slide-btn'));
+        fireEvent.click(screen.getByTestId('prev-slide-btn'));
+
+        // Should be back at "Este Mes"
+        expect(screen.getByTestId('carousel-title')).toHaveTextContent('Este Mes');
+      });
+
+      it('should wrap around when navigating past last slide', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
+
+        // Navigate forward 3 times (0 -> 1 -> 2 -> 0)
+        fireEvent.click(screen.getByTestId('next-slide-btn')); // 1
+        fireEvent.click(screen.getByTestId('next-slide-btn')); // 2
+        fireEvent.click(screen.getByTestId('next-slide-btn')); // back to 0
+
+        expect(screen.getByTestId('carousel-title')).toHaveTextContent('Este Mes');
+      });
+
+      it('should show carousel indicator bar with 3 segments', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
+
+        expect(screen.getByTestId('carousel-indicator-0')).toBeInTheDocument();
+        expect(screen.getByTestId('carousel-indicator-1')).toBeInTheDocument();
+        expect(screen.getByTestId('carousel-indicator-2')).toBeInTheDocument();
+      });
+
+      it('should navigate to slide when indicator is clicked', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
+
+        fireEvent.click(screen.getByTestId('carousel-indicator-2'));
+
+        expect(screen.getByTestId('carousel-title')).toHaveTextContent('Ultimos 4 Meses');
+      });
+
+      it('should render collapse/expand button', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
+
+        expect(screen.getByTestId('carousel-collapse-btn')).toBeInTheDocument();
+      });
+
+      it('should hide carousel content when collapsed', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
+
+        // Click collapse button
+        fireEvent.click(screen.getByTestId('carousel-collapse-btn'));
+
+        expect(screen.queryByTestId('carousel-content')).not.toBeInTheDocument();
+      });
+
+      it('should show carousel content when expanded again', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
+
+        // Collapse then expand
+        fireEvent.click(screen.getByTestId('carousel-collapse-btn'));
+        fireEvent.click(screen.getByTestId('carousel-collapse-btn'));
+
+        expect(screen.getByTestId('carousel-content')).toBeInTheDocument();
+      });
     });
 
-    it('should calculate total spent correctly', () => {
-      const transactions = [
-        createTransaction({ id: '1', total: 100 }),
-        createTransaction({ id: '2', total: 50 }),
-      ];
+    describe('AC#1a: Treemap View (Slide 0)', () => {
+      it('should display top categories in treemap grid', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
 
-      renderDashboardView({ allTransactions: transactions });
+        // Should show top categories
+        expect(screen.getByText('Supermercado')).toBeInTheDocument();
+        expect(screen.getByText('Restaurante')).toBeInTheDocument();
+      });
 
-      // $150.00 should appear
-      expect(screen.getByText('$150.00')).toBeInTheDocument();
+      it('should navigate to TrendsView when treemap is clicked', () => {
+        const onViewTrends = vi.fn();
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+          onViewTrends,
+        });
+
+        fireEvent.click(screen.getByTestId('treemap-grid'));
+
+        expect(onViewTrends).toHaveBeenCalled();
+      });
+
+      it('should show empty state when no transactions', () => {
+        renderDashboardView({ allTransactions: [] });
+
+        expect(screen.getByText('noTransactionsThisMonth')).toBeInTheDocument();
+      });
+
+      it('should show month total in footer', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
+
+        expect(screen.getByText('Total del mes')).toBeInTheDocument();
+      });
+    });
+
+    describe('AC#1b: Radar Chart View (Slide 1)', () => {
+      it('should show radar view when navigating to slide 1', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
+
+        fireEvent.click(screen.getByTestId('next-slide-btn'));
+
+        expect(screen.getByTestId('radar-view')).toBeInTheDocument();
+      });
+
+      it('should show fallback message when fewer than 3 categories', () => {
+        const now = new Date();
+        const currentMonth = now.toISOString().slice(0, 7);
+        const fewCategories = [
+          { id: 'tx-1', merchant: 'Store', alias: 'S', date: `${currentMonth}-15`, total: 100, category: 'Supermercado' },
+        ];
+
+        renderDashboardView({ allTransactions: fewCategories });
+
+        fireEvent.click(screen.getByTestId('next-slide-btn'));
+
+        expect(screen.getByText('needMoreCategories')).toBeInTheDocument();
+      });
+    });
+
+    describe('AC#1c: Bump Chart View (Slide 2)', () => {
+      it('should show bump chart view when navigating to slide 2', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
+
+        fireEvent.click(screen.getByTestId('carousel-indicator-2'));
+
+        expect(screen.getByTestId('bump-chart-view')).toBeInTheDocument();
+      });
+    });
+
+    describe('AC#2: Month Picker Dropdown', () => {
+      it('should show month picker when title is clicked', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
+
+        fireEvent.click(screen.getByTestId('carousel-title'));
+
+        expect(screen.getByTestId('month-picker')).toBeInTheDocument();
+      });
+
+      it('should toggle picker closed when title is clicked again', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
+
+        // Open picker
+        fireEvent.click(screen.getByTestId('carousel-title'));
+        expect(screen.getByTestId('month-picker')).toBeInTheDocument();
+
+        // Click title again to close
+        fireEvent.click(screen.getByTestId('carousel-title'));
+        expect(screen.queryByTestId('month-picker')).not.toBeInTheDocument();
+      });
+
+      it('should display navigation arrows and Apply button', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
+
+        fireEvent.click(screen.getByTestId('carousel-title'));
+
+        // Year navigation
+        expect(screen.getByTestId('prev-year-btn')).toBeInTheDocument();
+        expect(screen.getByTestId('next-year-btn')).toBeInTheDocument();
+        // Month navigation
+        expect(screen.getByTestId('prev-month-picker-btn')).toBeInTheDocument();
+        expect(screen.getByTestId('next-month-picker-btn')).toBeInTheDocument();
+        // Apply button
+        expect(screen.getByTestId('apply-month-picker-btn')).toBeInTheDocument();
+        expect(screen.getByText('Aplicar')).toBeInTheDocument();
+      });
+
+      it('should navigate to previous year in picker (not applied until Apply)', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
+
+        fireEvent.click(screen.getByTestId('carousel-title'));
+        const currentYear = new Date().getFullYear();
+
+        // Click prev year - should update picker display
+        fireEvent.click(screen.getByTestId('prev-year-btn'));
+
+        // Picker should show previous year
+        expect(screen.getByText((currentYear - 1).toString())).toBeInTheDocument();
+      });
+
+      it('should navigate to previous month in picker (not applied until Apply)', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
+
+        fireEvent.click(screen.getByTestId('carousel-title'));
+
+        const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+          'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const now = new Date();
+        const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+
+        // Click prev month - should update picker display
+        fireEvent.click(screen.getByTestId('prev-month-picker-btn'));
+
+        // Picker should show previous month
+        expect(screen.getByText(monthNames[prevMonth])).toBeInTheDocument();
+      });
+
+      it('should apply selection when Apply button is clicked', () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
+
+        fireEvent.click(screen.getByTestId('carousel-title'));
+
+        // Navigate to previous year
+        fireEvent.click(screen.getByTestId('prev-year-btn'));
+
+        // Click Apply
+        fireEvent.click(screen.getByTestId('apply-month-picker-btn'));
+
+        // Picker should close
+        expect(screen.queryByTestId('month-picker')).not.toBeInTheDocument();
+      });
+
+      it('should close picker when clicking outside', async () => {
+        renderDashboardView({
+          allTransactions: createCategoryTransactions(),
+        });
+
+        // Open picker
+        fireEvent.click(screen.getByTestId('carousel-title'));
+        expect(screen.getByTestId('month-picker')).toBeInTheDocument();
+
+        // Click outside (on the carousel card)
+        fireEvent.mouseDown(screen.getByTestId('carousel-card'));
+
+        // Picker should close
+        await waitFor(() => {
+          expect(screen.queryByTestId('month-picker')).not.toBeInTheDocument();
+        });
+      });
     });
   });
 
-  describe('AC#2: Filter Bar Added', () => {
-    it('should render HistoryFilterBar below summary cards', () => {
+  describe('AC#3: Recientes Carousel Section', () => {
+    it('should render recientes carousel with default "Últimos Escaneados" slide', () => {
       renderDashboardView({
-        allTransactions: [createTransaction()],
+        allTransactions: createManyTransactions(10),
       });
 
-      // Filter bar shows transaction count
-      expect(screen.getByText(/1\s*transactions/i)).toBeInTheDocument();
+      // Default slide is 0 = "Últimos Escaneados"
+      expect(screen.getByText('Últimos Escaneados')).toBeInTheDocument();
+      // Should have indicator bar with 2 segments
+      expect(screen.getByTestId('recientes-indicator-bar')).toBeInTheDocument();
+      expect(screen.getByTestId('recientes-indicator-0')).toBeInTheDocument();
+      expect(screen.getByTestId('recientes-indicator-1')).toBeInTheDocument();
     });
 
-    it('should show correct transaction counts in filter bar', () => {
-      const transactions = createManyTransactions(15);
+    it('should switch to "Por Fecha" slide when indicator is clicked', async () => {
+      renderDashboardView({
+        allTransactions: createManyTransactions(10),
+      });
+
+      // Click on second indicator
+      fireEvent.click(screen.getByTestId('recientes-indicator-1'));
+
+      // Title should change
+      expect(screen.getByText('Por Fecha')).toBeInTheDocument();
+    });
+
+    it('should show 3 transactions by default (collapsed)', () => {
+      const transactions = createManyTransactions(10);
 
       renderDashboardView({ allTransactions: transactions });
 
-      // Should show total count
-      expect(screen.getByText(/15\s*transactions/i)).toBeInTheDocument();
+      // Should only show first 3
+      const cards = screen.getAllByTestId('transaction-card');
+      expect(cards).toHaveLength(3);
+    });
+
+    it('should expand to show 5 transactions when expand button clicked', () => {
+      const transactions = createManyTransactions(10);
+
+      renderDashboardView({ allTransactions: transactions });
+
+      // Click expand button
+      fireEvent.click(screen.getByTestId('expand-recientes-btn'));
+
+      // Should now show 5
+      const cards = screen.getAllByTestId('transaction-card');
+      expect(cards).toHaveLength(5);
+    });
+
+    it('should show "Ver todo" link when more than 5 transactions', () => {
+      const transactions = createManyTransactions(10);
+
+      renderDashboardView({ allTransactions: transactions });
+
+      expect(screen.getByTestId('view-all-link')).toBeInTheDocument();
+    });
+
+    it('should ALWAYS show "Ver todo" link even with 3 or fewer transactions', () => {
+      // Story 14.12: Ver todo is always visible - expand just shows 3→5 items, not all
+      const transactions = createManyTransactions(3);
+
+      renderDashboardView({ allTransactions: transactions });
+
+      // Ver todo should always be visible to navigate to full HistoryView
+      expect(screen.getByTestId('view-all-link')).toBeInTheDocument();
+    });
+
+    it('should show empty state when no transactions', () => {
+      renderDashboardView({ allTransactions: [] });
+
+      expect(screen.getByText('noRecentTransactions')).toBeInTheDocument();
     });
   });
 
-  describe('AC#3: Full Transaction List with Pagination', () => {
-    it('should show paginated transactions (first page)', () => {
-      const transactions = createManyTransactions(15);
+  // AC#4: Quick Action Buttons - REMOVED per Story 14.12 mockup alignment
+  // FAB in Nav.tsx now handles scan functionality, no separate buttons needed
 
-      renderDashboardView({ allTransactions: transactions });
-
-      // Should show first 10 transactions (page size = 10)
-      expect(screen.getByText('Alias 1')).toBeInTheDocument();
-      expect(screen.getByText('Alias 10')).toBeInTheDocument();
-
-      // Should NOT show transaction 11 (it's on page 2)
-      expect(screen.queryByText('Alias 11')).not.toBeInTheDocument();
-    });
-
-    it('should show pagination controls when multiple pages exist', () => {
-      const transactions = createManyTransactions(15);
-
-      renderDashboardView({ allTransactions: transactions });
-
-      // Pagination controls
-      expect(screen.getByText('prev')).toBeInTheDocument();
-      expect(screen.getByText('next')).toBeInTheDocument();
-      expect(screen.getByText(/page 1 \/ 2/i)).toBeInTheDocument();
-    });
-
-    it('should NOT show pagination controls when only one page', () => {
-      const transactions = createManyTransactions(5);
-
-      renderDashboardView({ allTransactions: transactions });
-
-      // No pagination needed
-      expect(screen.queryByText('prev')).not.toBeInTheDocument();
-      expect(screen.queryByText('next')).not.toBeInTheDocument();
-    });
-
-    it('should navigate to next page when next button clicked', () => {
-      const transactions = createManyTransactions(15);
-
-      renderDashboardView({ allTransactions: transactions });
-
-      // Click next
-      fireEvent.click(screen.getByText('next'));
-
-      // Should now show transactions 11-15
-      expect(screen.getByText('Alias 11')).toBeInTheDocument();
-      expect(screen.getByText('Alias 15')).toBeInTheDocument();
-
-      // Should NOT show transaction 1 (it's on page 1)
-      expect(screen.queryByText('Alias 1')).not.toBeInTheDocument();
-
-      // Page indicator should update
-      expect(screen.getByText(/page 2 \/ 2/i)).toBeInTheDocument();
-    });
-
-    it('should disable prev button on first page', () => {
-      const transactions = createManyTransactions(15);
-
-      renderDashboardView({ allTransactions: transactions });
-
-      const prevButton = screen.getByText('prev');
-      expect(prevButton).toBeDisabled();
-    });
-
-    it('should disable next button on last page', () => {
-      const transactions = createManyTransactions(15);
-
-      renderDashboardView({ allTransactions: transactions });
-
-      // Navigate to last page
-      fireEvent.click(screen.getByText('next'));
-
-      const nextButton = screen.getByText('next');
-      expect(nextButton).toBeDisabled();
-    });
-  });
-
-  describe('AC#4: Duplicate Badges Visible', () => {
+  describe('AC#5: Duplicate Detection', () => {
     it('should show duplicate badge for duplicate transactions', () => {
       const duplicates = createDuplicateTransactions();
 
@@ -256,14 +524,14 @@ describe('DashboardView', () => {
       renderDashboardView({ allTransactions: duplicates });
 
       const cards = screen.getAllByTestId('transaction-card');
-      // Both cards should have amber border
+      // Both cards should have amber border class
       cards.forEach(card => {
         expect(card).toHaveClass('border-amber-400');
       });
     });
   });
 
-  describe('AC#5: Thumbnail Clicks Work', () => {
+  describe('Thumbnail Functionality', () => {
     it('should render thumbnail when transaction has thumbnailUrl', () => {
       renderDashboardView({
         allTransactions: [createTransactionWithImages()],
@@ -313,134 +581,143 @@ describe('DashboardView', () => {
     });
   });
 
-  describe('Empty State', () => {
-    it('should render empty transaction list when no transactions', () => {
-      renderDashboardView({ allTransactions: [] });
+  describe('Full List View (View All)', () => {
+    // Helper to navigate to full list view
+    const navigateToFullList = () => {
+      // Expand first to see all transactions
+      fireEvent.click(screen.getByTestId('expand-recientes-btn'));
+      const viewAllLink = screen.getByTestId('view-all-link');
+      fireEvent.click(viewAllLink);
+    };
 
-      // Summary cards should still show with $0.00 (both Total Spent and This Month)
-      const zeroAmounts = screen.getAllByText('$0.00');
-      expect(zeroAmounts).toHaveLength(2);
+    describe('AC#6: Filter Bar in Full List', () => {
+      it('should show filter bar in full list view', () => {
+        const transactions = createManyTransactions(15);
+
+        renderDashboardView({ allTransactions: transactions });
+
+        navigateToFullList();
+
+        // Filter bar shows transaction count
+        expect(screen.getByText(/15\s*transactions/i)).toBeInTheDocument();
+      });
+
+      it('should show back button in full list view', () => {
+        const transactions = createManyTransactions(15);
+
+        renderDashboardView({ allTransactions: transactions });
+
+        navigateToFullList();
+
+        expect(screen.getByText('backToDashboard')).toBeInTheDocument();
+      });
+
+      it('should return to dashboard when back button is clicked', () => {
+        const transactions = createManyTransactions(15);
+
+        renderDashboardView({ allTransactions: transactions });
+
+        navigateToFullList();
+
+        fireEvent.click(screen.getByText('backToDashboard'));
+
+        // Should be back on dashboard (carousel visible)
+        expect(screen.getByTestId('carousel-card')).toBeInTheDocument();
+      });
+    });
+
+    describe('Pagination in Full List', () => {
+      it('should show paginated transactions (first page)', () => {
+        const transactions = createManyTransactions(15);
+
+        renderDashboardView({ allTransactions: transactions });
+
+        navigateToFullList();
+
+        // Should show first 10 transactions (page size = 10)
+        expect(screen.getByText('Alias 1')).toBeInTheDocument();
+        expect(screen.getByText('Alias 10')).toBeInTheDocument();
+
+        // Should NOT show transaction 11 (it's on page 2)
+        expect(screen.queryByText('Alias 11')).not.toBeInTheDocument();
+      });
+
+      it('should show pagination controls when multiple pages exist', () => {
+        const transactions = createManyTransactions(15);
+
+        renderDashboardView({ allTransactions: transactions });
+
+        navigateToFullList();
+
+        // Pagination controls
+        expect(screen.getByText('prev')).toBeInTheDocument();
+        expect(screen.getByText('next')).toBeInTheDocument();
+        expect(screen.getByText(/page 1 \/ 2/i)).toBeInTheDocument();
+      });
+
+      it('should navigate to next page when next button clicked', () => {
+        const transactions = createManyTransactions(15);
+
+        renderDashboardView({ allTransactions: transactions });
+
+        navigateToFullList();
+
+        // Click next
+        fireEvent.click(screen.getByText('next'));
+
+        // Should now show transactions 11-15
+        expect(screen.getByText('Alias 11')).toBeInTheDocument();
+        expect(screen.getByText('Alias 15')).toBeInTheDocument();
+
+        // Should NOT show transaction 1 (it's on page 1)
+        expect(screen.queryByText('Alias 1')).not.toBeInTheDocument();
+
+        // Page indicator should update
+        expect(screen.getByText(/page 2 \/ 2/i)).toBeInTheDocument();
+      });
+
+      it('should disable prev button on first page', () => {
+        const transactions = createManyTransactions(15);
+
+        renderDashboardView({ allTransactions: transactions });
+
+        navigateToFullList();
+
+        const prevButton = screen.getByText('prev');
+        expect(prevButton).toBeDisabled();
+      });
+
+      it('should disable next button on last page', () => {
+        const transactions = createManyTransactions(15);
+
+        renderDashboardView({ allTransactions: transactions });
+
+        navigateToFullList();
+
+        // Navigate to last page
+        fireEvent.click(screen.getByText('next'));
+
+        const nextButton = screen.getByText('next');
+        expect(nextButton).toBeDisabled();
+      });
     });
   });
 
-  describe('Summary Card Interactions', () => {
-    it('should call onViewTrends with null when Total Spent card is clicked', () => {
-      const onViewTrends = vi.fn();
-
-      renderDashboardView({
-        allTransactions: [createTransaction()],
-        onViewTrends,
-      });
-
-      fireEvent.click(screen.getByText('totalSpent'));
-
-      expect(onViewTrends).toHaveBeenCalledWith(null);
-    });
-
-    it('should call onViewTrends with current month when This Month card is clicked', () => {
-      const onViewTrends = vi.fn();
-      const currentMonth = new Date().toISOString().slice(0, 7);
-
-      renderDashboardView({
-        allTransactions: [createTransaction()],
-        onViewTrends,
-      });
-
-      fireEvent.click(screen.getByText('thisMonth'));
-
-      expect(onViewTrends).toHaveBeenCalledWith(currentMonth);
-    });
-  });
-
-  describe('Header Actions', () => {
-    it('should call onCreateNew when + button is clicked', () => {
-      const onCreateNew = vi.fn();
-
-      renderDashboardView({
-        allTransactions: [createTransaction()],
-        onCreateNew,
-      });
-
-      const plusButton = screen.getByLabelText('newTrans');
-      fireEvent.click(plusButton);
-
-      expect(onCreateNew).toHaveBeenCalled();
-    });
-  });
-
-  describe('AC#6: Filter State Preserved', () => {
-    it('should reset to page 1 when filters change (filter state triggers re-render)', () => {
-      const transactions = createManyTransactions(25);
-
-      const { rerender } = render(
-        <HistoryFiltersProvider>
-          <DashboardView
-            transactions={[]}
-            allTransactions={transactions}
-            t={(key: string) => key}
-            currency="USD"
-            dateFormat="MM/DD/YYYY"
-            theme="light"
-            formatCurrency={(amount: number) => `$${amount.toFixed(2)}`}
-            formatDate={(date: string) => date}
-            getSafeDate={(val: any) => val || new Date().toISOString().split('T')[0]}
-            onCreateNew={vi.fn()}
-            onViewTrends={vi.fn()}
-            onEditTransaction={vi.fn()}
-            lang="en"
-          />
-        </HistoryFiltersProvider>
-      );
-
-      // Navigate to page 2
-      fireEvent.click(screen.getByText('next'));
-      expect(screen.getByText(/page 2 \/ 3/i)).toBeInTheDocument();
-
-      // Re-render with same provider (simulating filter change would reset page)
-      // The component has useEffect that resets page when filterState changes
-      // This test verifies the pagination reset mechanism exists
-      rerender(
-        <HistoryFiltersProvider>
-          <DashboardView
-            transactions={[]}
-            allTransactions={transactions}
-            t={(key: string) => key}
-            currency="USD"
-            dateFormat="MM/DD/YYYY"
-            theme="light"
-            formatCurrency={(amount: number) => `$${amount.toFixed(2)}`}
-            formatDate={(date: string) => date}
-            getSafeDate={(val: any) => val || new Date().toISOString().split('T')[0]}
-            onCreateNew={vi.fn()}
-            onViewTrends={vi.fn()}
-            onEditTransaction={vi.fn()}
-            lang="en"
-          />
-        </HistoryFiltersProvider>
-      );
-
-      // Page should still be 2 since filter state didn't change
-      expect(screen.getByText(/page 2 \/ 3/i)).toBeInTheDocument();
-    });
-
-    it('should preserve filter context across transaction interactions', () => {
-      const onEditTransaction = vi.fn();
-      const transactions = createManyTransactions(5);
+  describe('Backward Compatibility', () => {
+    it('should use onViewHistory callback when provided for View All', () => {
+      const onViewHistory = vi.fn();
+      const transactions = createManyTransactions(10);
 
       renderDashboardView({
         allTransactions: transactions,
-        onEditTransaction,
+        onViewHistory,
       });
 
-      // Verify filter bar is rendered (filter context is active)
-      expect(screen.getByText(/5\s*transactions/i)).toBeInTheDocument();
+      // Expand first
+      fireEvent.click(screen.getByTestId('expand-recientes-btn'));
+      fireEvent.click(screen.getByTestId('view-all-link'));
 
-      // Click a transaction
-      fireEvent.click(screen.getByText('Alias 1'));
-
-      // Filter context should still be active (transaction count still visible)
-      // The context persists because we're still within the same provider
-      expect(onEditTransaction).toHaveBeenCalled();
+      expect(onViewHistory).toHaveBeenCalled();
     });
   });
 });
