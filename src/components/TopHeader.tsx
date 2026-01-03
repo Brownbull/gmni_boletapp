@@ -91,7 +91,7 @@ const getInitials = (name: string): string => {
  * App Logo Component
  * Renders the "G" logo in a circle with theme-aware colors
  * Uses CSS variables so theme switching works automatically
- * Per mockup: 28x28px circle
+ * Sized for mobile visibility: 36x36px circle
  */
 const AppLogo: React.FC<{ theme: string }> = () => {
     // Logo uses --primary color which changes per theme:
@@ -103,8 +103,8 @@ const AppLogo: React.FC<{ theme: string }> = () => {
             data-testid="app-logo"
             className="g-logo-circle rounded-full flex items-center justify-center flex-shrink-0 transition-colors duration-300"
             style={{
-                width: '28px',
-                height: '28px',
+                width: '36px',
+                height: '36px',
                 background: 'var(--primary, #2563eb)',
             }}
         >
@@ -112,7 +112,7 @@ const AppLogo: React.FC<{ theme: string }> = () => {
                 className="text-white font-bold"
                 style={{
                     fontFamily: "var(--font-family-wordmark, 'Baloo 2', cursive)",
-                    fontSize: '14px',
+                    fontSize: '18px',
                 }}
             >
                 G
@@ -123,8 +123,8 @@ const AppLogo: React.FC<{ theme: string }> = () => {
 
 /**
  * Profile Avatar Component
- * Circular avatar with user initials - matches mockup exactly
- * Per mockup: 32px circle with solid theme color (same as logo), 2px border
+ * Circular avatar with user initials - sized for mobile visibility
+ * 40px circle with solid theme color (same as logo), 2px border
  * Uses CSS variables so theme switching works automatically
  */
 const ProfileAvatar = React.forwardRef<
@@ -141,7 +141,7 @@ const ProfileAvatar = React.forwardRef<
             data-testid="profile-avatar"
             onClick={onClick}
             className="flex items-center justify-center cursor-pointer p-0 bg-transparent border-none rounded-full transition-transform duration-200 hover:scale-105"
-            style={{ width: '32px', height: '32px' }}
+            style={{ width: '40px', height: '40px' }}
             aria-label="Open profile menu"
             aria-haspopup="true"
         >
@@ -149,15 +149,15 @@ const ProfileAvatar = React.forwardRef<
             <div
                 className="flex items-center justify-center rounded-full"
                 style={{
-                    width: '32px',
-                    height: '32px',
+                    width: '40px',
+                    height: '40px',
                     background: 'var(--primary, #2563eb)',
                     border: '2px solid var(--border-light, #e2e8f0)',
                 }}
             >
                 <span
                     className="text-white"
-                    style={{ fontSize: '12px', fontWeight: 600 }}
+                    style={{ fontSize: '14px', fontWeight: 600 }}
                 >
                     {initials}
                 </span>
@@ -369,27 +369,29 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 
     return (
         <header
-            className="fixed top-0 left-0 right-0 z-50 h-14 flex items-center"
+            className="fixed top-0 left-0 right-0 z-50 flex items-center"
             style={{
-                paddingTop: 'env(safe-area-inset-top, 0px)',
+                // Increased height: 72px (was 56px) + safe area for better mobile visibility
+                height: '72px',
+                paddingTop: 'max(env(safe-area-inset-top, 0px), 8px)',
                 paddingLeft: '16px',
                 paddingRight: '16px',
-                backgroundColor: 'var(--bg-primary, #f8fafc)',
+                backgroundColor: 'var(--bg, #f8fafc)',
                 // Story 14.12: No border per mockup - header blends with content background
             }}
         >
             {/* 3-column layout: Left | Center | Right */}
             <div className="w-full flex items-center justify-between">
                 {/* Left side: Logo OR Back button */}
-                <div className="flex items-center min-w-[44px]">
+                <div className="flex items-center min-w-[48px]">
                     {showBackButton && onBack && (
                         <button
                             onClick={onBack}
-                            className="min-w-11 min-h-11 flex items-center justify-center -ml-2"
+                            className="min-w-12 min-h-12 flex items-center justify-center -ml-2"
                             aria-label="Go back"
                             style={{ color: 'var(--text-secondary, #475569)' }}
                         >
-                            <ArrowLeft size={24} strokeWidth={2} />
+                            <ArrowLeft size={28} strokeWidth={2} />
                         </button>
                     )}
 
@@ -399,11 +401,12 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 {/* Center: Title/Wordmark - absolutely centered */}
                 <div className="absolute left-1/2 transform -translate-x-1/2">
                     <span
-                        className={`font-semibold ${isWordmark ? 'text-2xl' : 'text-lg'}`}
+                        className="font-semibold"
                         style={{
                             fontFamily: isWordmark ? "var(--font-family-wordmark, 'Baloo 2', cursive)" : 'var(--font-family)',
                             color: 'var(--text-primary, #0f172a)',
                             fontWeight: 700,
+                            fontSize: isWordmark ? '28px' : '20px',
                         }}
                     >
                         {getDisplayTitle()}
@@ -411,7 +414,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 </div>
 
                 {/* Right side: Profile Avatar OR empty placeholder */}
-                <div className="flex items-center justify-end min-w-[44px] relative">
+                <div className="flex items-center justify-end min-w-[48px] relative">
                     {showProfileAvatar && (
                         <>
                             <ProfileAvatar
@@ -434,7 +437,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                     )}
 
                     {/* Empty placeholder for detail/settings to maintain layout */}
-                    {!showProfileAvatar && <div className="w-9" />}
+                    {!showProfileAvatar && <div className="w-10" />}
                 </div>
             </div>
         </header>
