@@ -1,4 +1,4 @@
-# Story 14.14: Session Completion Messaging
+# Story 14.20: Session Completion Messaging
 
 **Status:** ready-for-dev
 **Points:** 2
