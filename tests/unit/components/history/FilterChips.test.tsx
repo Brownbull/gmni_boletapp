@@ -87,7 +87,7 @@ describe('FilterChips', () => {
   });
 
   describe('Clear All Button', () => {
-    it('shows Clear All when multiple filters active', () => {
+    it('shows Clear All button (X icon) when multiple filters active', () => {
       renderWithProvider({
         temporal: { level: 'year', year: '2024' },
         category: { level: 'category', category: 'Supermarket' },
@@ -95,7 +95,8 @@ describe('FilterChips', () => {
         group: {},
       });
 
-      expect(screen.getByText('Limpiar todo')).toBeInTheDocument();
+      // Clear All is now an X icon button with aria-label
+      expect(screen.getByRole('button', { name: 'Limpiar todos los filtros' })).toBeInTheDocument();
     });
 
     it('does not show Clear All when only one filter active', () => {
@@ -104,7 +105,7 @@ describe('FilterChips', () => {
         temporal: { level: 'year', year: '2024' },
       });
 
-      expect(screen.queryByText('Limpiar todo')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Limpiar todos los filtros' })).not.toBeInTheDocument();
     });
   });
 
