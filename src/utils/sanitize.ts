@@ -9,9 +9,10 @@
 
 /**
  * Characters that could be used for script injection or special formatting
+ * Note: Using simpler patterns to avoid ReDoS (catastrophic backtracking)
  */
 const DANGEROUS_PATTERNS = [
-  /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, // Script tags
+  /<script[\s\S]*?<\/script>/gi, // Script tags (non-greedy match)
   /<[^>]*on\w+\s*=/gi, // Event handlers like onclick, onload, etc.
   /javascript:/gi, // JavaScript protocol
   /data:/gi, // Data URLs (can contain scripts)
