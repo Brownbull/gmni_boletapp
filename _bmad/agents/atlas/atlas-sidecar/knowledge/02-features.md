@@ -1,7 +1,7 @@
 # Feature Inventory + Intent
 
 > Section 2 of Atlas Memory
-> Last Sync: 2025-12-31
+> Last Sync: 2026-01-06
 > Sources: sprint-status.yaml, epics.md, PRD documents
 
 ## Core Features (Implemented)
@@ -107,19 +107,43 @@
 
 ## Current Development (Epic 14 - IN PROGRESS)
 
-**Status:** All 14 stories created, ready-for-dev
-**Points:** ~48
+**Status:** 19 of 23 stories done, 4 remaining
+**Points:** ~65 (expanded from initial ~48)
 **Tech Context:** docs/sprint-artifacts/epic14/tech-context-epic14.md
+**Last Deployed:** Story 14.22 Settings View Redesign (2026-01-06)
 
-| Feature Area | Stories | Points |
-|--------------|---------|--------|
-| Animation Framework | 14.1, 14.2 | 8 |
-| Scan Flow Enhancement | 14.3, 14.4 | 8 |
-| Dynamic Polygon | 14.5, 14.6, 14.7 | 11 |
-| Enhanced Charts | 14.8, 14.9 | 6 |
-| Weekly Reports | 14.10 | 5 |
-| Intentional Prompts | 14.11 | 2 |
-| Celebrations | 14.12, 14.13, 14.14 | 8 |
+### Completed Stories (19)
+
+| Story | Name | Status | Key Deliverable |
+|-------|------|--------|-----------------|
+| 14.1 | Animation Framework | ✅ Done | Core animation utilities, useReducedMotion |
+| 14.2 | Screen Transition System | ✅ Done | Staggered entry, breathing animations |
+| 14.3 | Scan Overlay Flow | ✅ Done | Non-blocking overlay UI |
+| 14.4 | Quick Save Path | ✅ Done | Progressive item reveal |
+| 14.5 | Dynamic Polygon Component | ✅ Done | 3-6 sided spending shape |
+| 14.6 | Polygon Dual Mode | ✅ Done | Merchant categories + item groups |
+| 14.7 | Expanding Lava Visual | ✅ Done | Inverted metaphor overlay |
+| 14.8 | Enhanced Existing Charts | ✅ Done | Pie, Bar, Stacked improvements |
+| 14.9 | Swipe Time Navigation | ✅ Done | Left/right for week/month |
+| 14.10 | Top Header Bar | ✅ Done | App-wide header (logo, title, menu) |
+| 14.11 | Bottom Nav Redesign | ✅ Done | Nav.tsx matching mockups |
+| 14.12 | Home Dashboard Refresh | ✅ Deployed | DashboardView with new design |
+| 14.14 | Transaction List Redesign | ✅ Done | HistoryView with card design |
+| 14.14b | Donut Chart Redesign | 🔄 In Progress | Donut with drill-down navigation |
+| 14.15b | Selection Mode Groups | ✅ Done | Transaction selection & grouping |
+| 14.15c | Category Group Filters | ✅ Done | IconFilterBar category groups |
+| 14.16 | Weekly Report Story Format | ✅ Done | Instagram-style cards |
+| 14.21 | Category Color Consolidation | ✅ Done | Unified category colors |
+| 14.22 | Settings View Redesign | ✅ Deployed | Hierarchical sub-views |
+
+### Remaining Stories (4)
+
+| Story | Name | Status | Points |
+|-------|------|--------|--------|
+| 14.13 | Analytics Explorer Redesign | Review | 8 pts |
+| 14.15 | Scan Flow Integration | Ready | 3 pts |
+| 14.16b | Semantic Color System | Review | 5 pts |
+| 14.17-20 | Celebrations & Engagement | Ready | 10 pts |
 
 ## Future Roadmap (Epics 15-18) - REVISED 2025-12-31
 

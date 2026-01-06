@@ -1,17 +1,17 @@
 # Testing Patterns & Coverage Expectations
 
 > Section 5 of Atlas Memory
-> Last Sync: 2025-12-31
+> Last Sync: 2026-01-06
 > Sources: test-strategy.md, retrospectives, CI/CD docs
 
-## Current Metrics (Post-Epic 12 Deployment)
+## Current Metrics (Post-Epic 14 Story 14.22)
 
 | Metric | Value |
 |--------|-------|
-| Total Tests | 2799 passing |
+| Total Tests | 3,118+ passing |
 | Coverage | 84%+ |
 | E2E Framework | Playwright configured |
-| Bundle Size | 1.84 MB (watch for growth) |
+| Bundle Size | 2.0 MB (**ALERT: Code splitting needed**) |
 
 ## Testing Strategy
 
@@ -76,22 +76,29 @@ tests/
 
 ## CI/CD Testing Standards
 
-<!-- Synced from: epic-8-retrospective.md -->
+<!-- Synced from: epic-8-retrospective.md, Story 14.22 CI optimization -->
 
-| Job | Target | Max Allowed |
-|-----|--------|-------------|
-| setup | ~2 min | 3 min |
-| test-unit | ~2 min | 4 min |
-| test-integration | ~2 min | 4 min |
-| test-e2e | ~2.5 min | 5 min |
-| security | ~2 min | 3 min |
-| **Total PR** | **~4-5 min** | **7 min** |
+| Job | Target | Max Allowed | Notes |
+|-----|--------|-------------|-------|
+| gitleaks | ~8s | 30s | Runs in parallel with setup (Story 14.22 optimization) |
+| setup | ~3 min | 4 min | Shallow clone, workspace caching |
+| test-unit | ~3 min | 5 min | Firebase emulators required |
+| test-integration | ~1.5 min | 3 min | Parallel with unit tests |
+| test-e2e | ~2.5 min | 5 min | Playwright + emulators |
+| security | ~2 min | 3 min | ESLint security rules |
+| **Total PR** | **~6 min** | **8 min** | Gitleaks parallelized (Story 14.22) |
+
+### CI/CD Optimizations (Story 14.22)
+- **Gitleaks parallelized**: Now runs alongside setup instead of blocking (~30s saved)
+- **Shallow clone for setup**: Only gitleaks needs full history
+- **Security lint fix**: ReDoS vulnerability in sanitize.ts regex fixed
 
 ### Anti-Patterns to Avoid
 - Running same tests twice
 - Sequential steps that could be parallel
 - Installing tools that aren't cached
 - Running expensive checks (Lighthouse) on every PR
+- **NEW**: Complex regex patterns with catastrophic backtracking (ReDoS)
 
 ## Mocking Patterns
 
@@ -182,9 +189,10 @@ it('should handle null Timestamp', () => {
 
 ## Sync Notes
 
-- Test metrics updated after Epic 12 deployment (2799 tests)
+- Test metrics updated after Story 14.22 deployment (3,118+ tests)
 - Mocking patterns added for localStorage and Timestamps
 - Defensive Timestamp testing pattern added (Story 10.1)
 - Scan test harness from Epic 8 fully operational
-- CI/CD optimized to ~4 min for PRs (63% faster after Epic 8)
-- **Epic 14 Test Focus:** Animation timing, reduced motion, polygon calculations
+- CI/CD optimized to ~6 min for PRs (Story 14.22: gitleaks parallelized)
+- **Epic 14 Test Focus:** Animation timing, reduced motion, polygon calculations, donut chart drill-down
+- **Security**: ReDoS vulnerability fixed in sanitize.ts (unsafe regex pattern)
