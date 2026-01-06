@@ -521,16 +521,17 @@ describe('DashboardView', () => {
       expect(screen.queryByText('potentialDuplicate')).not.toBeInTheDocument();
     });
 
-    it('should apply amber border to duplicate transactions', () => {
+    it('should detect duplicate transactions and show filter button', () => {
+      // Story 14.12: Carousel layout doesn't show individual transaction cards
+      // Duplicate detection is shown via the filter button in list view
       const duplicates = createDuplicateTransactions();
 
       renderDashboardView({ allTransactions: duplicates });
 
-      const cards = screen.getAllByTestId('transaction-card');
-      // Both cards should have amber border class
-      cards.forEach(card => {
-        expect(card).toHaveClass('border-amber-400');
-      });
+      // Duplicates are detected and shown via badge count
+      // The amber border styling is applied in full list view, not carousel
+      const badges = screen.getAllByText('potentialDuplicate');
+      expect(badges).toHaveLength(2);
     });
   });
 

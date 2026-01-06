@@ -73,7 +73,9 @@ describe('FilterChips', () => {
         category: { level: 'category', category: 'Supermarket' },
       });
 
-      expect(screen.getByText('Supermarket')).toBeInTheDocument();
+      // Category is translated by getCategoryFilterLabel via translateStoreCategory
+      // "Supermarket" translates to "Supermercado" in Spanish (locale="es")
+      expect(screen.getByText('Supermercado')).toBeInTheDocument();
     });
 
     it('renders chips when location filter is active', () => {
