@@ -6,6 +6,10 @@
  *
  * Updated for Story 7.7 - Uses AnalyticsContext-based TrendsView
  *
+ * SKIPPED: Story 14.13 redesigned TrendsView to "Explora" view which removes
+ * the export button in favor of filter icons. Export functionality will be
+ * re-implemented in a different location (e.g., filter dropdown or FAB on other views).
+ *
  * Coverage: TrendsView export button, subscription check, csvExport integration
  */
 
@@ -94,7 +98,8 @@ function renderWithProvider(
   );
 }
 
-describe('Trends Export - Story 5.4', () => {
+// SKIPPED: Story 14.13 redesigned TrendsView - export button removed
+describe.skip('Trends Export - Story 5.4', () => {
   let downloadMonthlyTransactionsSpy: ReturnType<typeof vi.spyOn>;
   let downloadYearlyStatisticsSpy: ReturnType<typeof vi.spyOn>;
   let useSubscriptionTierSpy: ReturnType<typeof vi.spyOn>;
@@ -214,7 +219,8 @@ describe('Trends Export - Story 5.4', () => {
   });
 });
 
-describe('Statistics Export & Upgrade Prompt - Story 5.5', () => {
+// SKIPPED: Story 14.13 redesigned TrendsView - export button removed
+describe.skip('Statistics Export & Upgrade Prompt - Story 5.5', () => {
   let downloadYearlyStatisticsSpy: ReturnType<typeof vi.spyOn>;
   let downloadMonthlyTransactionsSpy: ReturnType<typeof vi.spyOn>;
   let useSubscriptionTierSpy: ReturnType<typeof vi.spyOn>;

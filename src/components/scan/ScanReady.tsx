@@ -74,16 +74,17 @@ export const ScanReady: React.FC<ScanReadyProps> = ({
       </style>
 
       {/* Checkmark with bounce animation */}
+      {/* Story 14.16b: Using semantic positive colors for success state */}
       <div
         className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
         style={{
-          backgroundColor: isDark ? 'rgba(34, 197, 94, 0.2)' : 'rgba(34, 197, 94, 0.1)',
+          backgroundColor: 'var(--positive-bg)',
           animation: isAnimating ? 'checkmark-bounce 0.4s ease-out forwards' : 'none',
         }}
       >
         <Check
           size={32}
-          style={{ color: '#22c55e' }}
+          style={{ color: 'var(--positive-primary)' }}
           strokeWidth={3}
           aria-hidden="true"
         />
@@ -93,7 +94,7 @@ export const ScanReady: React.FC<ScanReadyProps> = ({
       <div
         className="text-lg font-bold"
         style={{
-          color: '#22c55e',
+          color: 'var(--positive-primary)',
           animation: isAnimating ? 'fade-slide-up 0.3s ease-out 0.2s forwards' : 'none',
           opacity: isAnimating ? 0 : 1,
         }}
