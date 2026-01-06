@@ -43,7 +43,8 @@ export const INSIGHT_TYPE_CONFIG: Record<string, InsightTypeStyle> = {
   merchant_frequency: { icon: 'Store', color: '#2563eb', bgColor: '#dbeafe', darkBgColor: '#1e3a5f' },
   category_trend: { icon: 'TrendingUp', color: '#059669', bgColor: '#d1fae5', darkBgColor: '#064e3b' },
   spending_pattern: { icon: 'BarChart3', color: '#7c3aed', bgColor: '#ede9fe', darkBgColor: '#4c1d95' },
-  budget_alert: { icon: 'AlertTriangle', color: '#dc2626', bgColor: '#fee2e2', darkBgColor: '#7f1d1d' },
+  // Story 14.16b: budget_alert uses semantic warning colors for theme harmony
+  budget_alert: { icon: 'AlertTriangle', color: 'var(--warning-semantic)', bgColor: 'var(--warning-bg)', darkBgColor: 'var(--warning-bg)' },
   spending_velocity: { icon: 'Gauge', color: '#0891b2', bgColor: '#cffafe', darkBgColor: '#164e63' },
   duplicate_detected: { icon: 'Copy', color: '#f59e0b', bgColor: '#fef3c7', darkBgColor: '#78350f' },
 

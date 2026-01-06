@@ -96,18 +96,27 @@ export interface WeeklySummary {
   weekNumber: number;
   /** Whether this is the user's first week */
   isFirstWeek: boolean;
+  /** Total number of transactions in this week */
+  transactionCount: number;
 }
 
 /**
- * Trend arrow color configuration
- * Up (spending increased) = Red (bad)
- * Down (spending decreased) = Green (good)
- * Neutral = Gray
+ * Trend arrow color configuration using CSS variables.
+ * Story 14.16b: Migrated to semantic colors for theme harmony.
+ *
+ * Up (spending increased) = Negative semantic color (red tones)
+ * Down (spending decreased) = Positive semantic color (green tones)
+ * Neutral = Neutral semantic color (gray tones)
+ *
+ * Colors adapt per theme:
+ * - Normal: Terracotta red / Sage green / Warm gray
+ * - Professional: Clear red / Clear green / Cool gray
+ * - Mono: Clay red / Teal green / True gray
  */
 export const TREND_COLORS = {
-  up: '#ef4444', // Red - spending increased (bad)
-  down: '#22c55e', // Green - spending decreased (good)
-  neutral: '#6b7280', // Gray - no change
+  up: 'var(--negative-primary)', // Spending increased (bad) - theme-aware red
+  down: 'var(--positive-primary)', // Spending decreased (good) - theme-aware green
+  neutral: 'var(--neutral-primary)', // No change - theme-aware gray
 } as const;
 
 /**

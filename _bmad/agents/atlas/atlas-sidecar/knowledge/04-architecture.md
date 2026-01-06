@@ -439,6 +439,118 @@ const CELEBRATION_PRESETS = {
 
 ---
 
+## Transaction Groups & Selection Mode (Story 14.15)
+
+### Data Model Extension
+```typescript
+// New collection for user groups
+users/{userId}/groups/{groupId}
+  - name: string
+  - transactionCount: number
+  - totalAmount: number
+  - currency?: string
+  - createdAt: Timestamp
+  - updatedAt: Timestamp
+
+// Transaction fields extended
+interface Transaction {
+  // ...existing fields
+  groupId?: string;    // Reference to group document
+  groupName?: string;  // Denormalized for display
+}
+```
+
+### Service Layer Pattern
+```typescript
+// groupService.ts - CRUD operations for groups
+- subscribeToGroups(): Real-time listener
+- createGroup(): Create with serverTimestamp
+- assignTransactionsToGroup(): Batch update with totals
+- removeTransactionsFromGroup(): Batch removal with totals
+
+// firestore.ts - Extended with batch operations
+- deleteTransactionsBatch(): Delete multiple transactions
+```
+
+### Hook Pattern
+```typescript
+// useSelectionMode hook
+- isSelectionMode: boolean
+- selectedIds: Set<string>
+- enterSelectionMode(initialId?): Long-press triggers
+- toggleSelection(id): Checkbox toggle
+- exitSelectionMode(): Clear selection
+
+// useGroups hook
+- groups: TransactionGroup[]
+- loading: boolean
+- addGroup(input): Create new group
+```
+
+### Modal Architecture
+```typescript
+// Three-modal flow for group assignment:
+1. AssignGroupModal - Select existing group or create new
+2. CreateGroupModal - Name input with emoji tip
+3. DeleteTransactionsModal - Confirmation with preview
+
+// Shared patterns:
+- Focus trap with Tab cycling
+- Escape key closes modal
+- Restore focus on close
+- Body scroll prevention
+```
+
+---
+
+## Input Sanitization Pattern (Story 14.15 - Security Enhancement)
+
+### Problem Statement
+User input fields (merchant names, item names, locations, subcategories) could potentially contain malicious content like XSS scripts or injection attacks.
+
+### Solution: Centralized Sanitization Utility
+Created `src/utils/sanitize.ts` with functions that:
+1. Remove dangerous patterns (script tags, event handlers, javascript: protocols)
+2. Remove control characters
+3. Normalize whitespace
+4. Enforce maximum length limits
+
+### Available Functions
+```typescript
+// src/utils/sanitize.ts
+sanitizeInput(input, options)      // Base function with configurable options
+sanitizeMerchantName(name)         // Max 200 chars
+sanitizeItemName(name)             // Max 200 chars
+sanitizeLocation(location)         // Max 100 chars
+sanitizeSubcategory(subcategory)   // Max 100 chars
+sanitizeNumericInput(value)        // Clean numeric strings
+```
+
+### Usage Pattern
+```typescript
+// Apply sanitization before saving to Firestore
+const sanitizedMerchant = sanitizeMerchantName(merchantName);
+const sanitizedCity = sanitizeLocation(city);
+
+const sanitizedItems = items.map((item) => ({
+  ...item,
+  name: sanitizeItemName(item.name),
+  subcategory: item.subcategory ? sanitizeSubcategory(item.subcategory) : undefined,
+}));
+```
+
+### Where Applied
+- **ScanResultView.tsx**: `handleSave()` and `handleSaveItem()` functions
+- **Story 14.23 (planned)**: App-wide audit to apply sanitization to all input fields
+
+### Security Patterns Blocked
+- `<script>` tags and event handlers (`onclick=`, etc.)
+- Protocol attacks (`javascript:`, `data:`, `vbscript:`)
+- Control character injection
+- DoS via extremely long strings
+
+---
+
 ## Sync Notes
 
 - Architecture stable since Epic 7
@@ -462,3 +574,87 @@ const CELEBRATION_PRESETS = {
 - Story 11.6 added PWA viewport fixes with dynamic viewport units (dvh) and safe area CSS properties (2025-12-22)
 - Combined retrospective: docs/sprint-artifacts/epic10-11-retro-2025-12-22.md
 - Total velocity: ~72 points in ~6 days (~12 pts/day)
+- Story 14.15 (done): Selection mode with long-press entry, group assignment modals, batch delete confirmation
+- Story 14.16 (done): Weekly Report Story Format - Instagram-style swipeable report cards with weekly summary, category breakdowns, Rosa-friendly language, and progress dots. Added transactionCount + dateRange fields, navigation to History with period filters (2026-01-05)
+- Story 14.16b (drafted): Semantic Color System - CSS variables for trend colors (positive/negative/neutral/warning) per theme, harmonized chart palettes
+
+## Weekly Reports System (Story 14.16)
+
+### Architecture Overview
+Instagram-style swipeable report cards for displaying weekly spending summaries.
+
+### Key Components
+1. **ReportCard** (`src/components/reports/ReportCard.tsx`): Full-screen card with gradient backgrounds, TrendIndicator for arrows/colors
+2. **ReportCarousel** (`src/components/reports/ReportCarousel.tsx`): Swipeable carousel using useSwipeNavigation hook, keyboard navigation, progress dots
+3. **ReportsView** (`src/views/ReportsView.tsx`): View component rendering the carousel
+4. **reportUtils** (`src/utils/reportUtils.ts`): Weekly summary generation, category breakdown, report card generation
+
+### Data Flow
+```
+Transaction[] → generateWeeklySummary() → WeeklySummary → generateReportCards() → ReportCard[] → ReportCarousel
+```
+
+### Patterns Used
+- **Rosa-friendly language**: "Subió harto" instead of "Incrementó 27%" (TREND_DESCRIPTIONS in types/report.ts)
+- **Swipe navigation reuse**: Uses useSwipeNavigation from Story 14.9
+- **Category emoji mapping**: Uses getCategoryEmoji from categoryEmoji.ts
+- **Profile menu integration**: Added 'reports' view type, enabled menu item in TopHeader
+
+### Test Coverage
+71 tests across 3 files:
+- ReportCard.test.tsx: 15 tests
+- ReportCarousel.test.tsx: 18 tests
+- reportUtils.test.ts: 38 tests
+
+### Recent Enhancements (2026-01-05)
+- **Transaction Count Pill**: Report header shows transaction count with Receipt icon, clickable to navigate to History
+- **Period Filtering**: Clicking pill navigates to History with temporal filters matching report period
+- **Section Counters**: Fixed to show total periods per year (52 weeks, 12 months, 4 quarters, 1 yearly)
+- **New Fields**: ReportRowData now includes `transactionCount` and `dateRange` for all period types
+
+---
+
+## Semantic Color System (Story 14.16b - Planned)
+
+### Problem Statement
+Hardcoded trend colors (#ef4444 red, #22c55e green) don't harmonize with all themes:
+- **Normal (Ghibli)**: Bright corporate colors look jarring in warm, hand-painted aesthetic
+- **Mono**: Saturated colors clash with subdued palette
+
+### Proposed Solution
+CSS variables for semantic colors that adapt per theme:
+
+```css
+/* Theme-specific semantic colors */
+--positive-primary: /* Spending down (good) */
+--positive-bg: /* Badge background */
+--positive-border: /* Badge border */
+
+--negative-primary: /* Spending up (bad) */
+--negative-bg:
+--negative-border:
+
+--neutral-primary: /* No change */
+--warning-primary: /* Approaching limits */
+
+/* Chart palette (6 harmonized colors) */
+--chart-1 through --chart-6
+```
+
+### Theme Color Mapping
+| State | Normal (Ghibli) | Professional | Mono |
+|-------|-----------------|--------------|------|
+| Positive | Sage #3d8c5a | Green #16a34a | Teal #3a8c70 |
+| Negative | Terracotta #b85c4a | Red #dc2626 | Clay #a05858 |
+| Neutral | Warm gray #7a7268 | Cool gray #64748b | True gray #686870 |
+| Warning | Ochre #a8842c | Amber #d97706 | Tan #988040 |
+
+### Files to Migrate
+- `types/report.ts`: TREND_COLORS constant
+- `DashboardView.tsx`: Hardcoded #ef4444/#22c55e
+- `TrendsView.tsx`: DRILL_DOWN_COLORS array
+- `insightTypeConfig.ts`: Accent colors
+- `ScanReady.tsx`: Success green
+
+### Design Reference
+`docs/uxui/mockups/00_components/category-colors.html` - "Semantic Colors" section

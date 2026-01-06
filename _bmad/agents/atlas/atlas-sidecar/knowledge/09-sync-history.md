@@ -48,6 +48,11 @@
 | 2025-12-31 | 02-features | Epic 15 mockup verification | REMOVED: 15.9 Sankey (CSS only), 15.12 Sharing. RESTORED: 15.11 Skins (in settings.html). Points ~46→~38 |
 | 2025-12-31 | 04-architecture | Epic 14 Tech Context | Created tech-context-epic14.md with animation framework, polygon, celebrations architecture |
 | 2025-12-31 | 02-features | Epic 14 Story Creation | All 14 stories (48 pts) created via atlas-create-story, all marked ready-for-dev |
+| 2026-01-04 | 04-architecture | Story 14.15 implementation | Selection Mode & Groups - Phases 1-4 complete, group service pattern, modal architecture |
+| 2026-01-05 | 04-architecture | Story 14.16 implementation | Weekly Report Story Format - ReportCard, ReportCarousel, reportUtils, ReportsView. 71 tests. Reports menu enabled in TopHeader. |
+| 2026-01-05 | 04-architecture | Story 14.16 completion | Added transactionCount + dateRange to reports, navigation to History with filters. Section counters fixed (52/12/4/1). |
+| 2026-01-05 | 02-features | Story 14.16b created | Semantic Color System - CSS variables for trend colors (positive/negative/neutral/warning) per theme. Mockup updated with new section. |
+| 2026-01-05 | 02-features | Story 14.22 created | Settings View Redesign via atlas-create-story - hierarchical sub-views, affects Learning Flow (#3) and Trust Merchant Flow (#7) |
 
 ## Documents Tracked
 

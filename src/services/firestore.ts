@@ -8,7 +8,8 @@ import {
     serverTimestamp,
     Firestore,
     Unsubscribe,
-    getDocs
+    getDocs,
+    writeBatch,
 } from 'firebase/firestore';
 import { Transaction } from '../types/transaction';
 
@@ -101,4 +102,75 @@ export async function wipeAllTransactions(
     const q = collection(db, 'artifacts', appId, 'users', userId, 'transactions');
     const snap = await getDocs(q);
     await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+}
+
+/**
+ * Story 14.15: Delete multiple transactions in a batch.
+ * Uses Firestore writeBatch for atomic deletion.
+ *
+ * @param db Firestore instance
+ * @param userId User ID
+ * @param appId App ID
+ * @param transactionIds Array of transaction IDs to delete
+ */
+export async function deleteTransactionsBatch(
+    db: Firestore,
+    userId: string,
+    appId: string,
+    transactionIds: string[]
+): Promise<void> {
+    if (transactionIds.length === 0) return;
+
+    // Firestore batch limit is 500 operations
+    const BATCH_SIZE = 500;
+
+    for (let i = 0; i < transactionIds.length; i += BATCH_SIZE) {
+        const chunk = transactionIds.slice(i, i + BATCH_SIZE);
+        const batch = writeBatch(db);
+
+        for (const txId of chunk) {
+            const docRef = doc(db, 'artifacts', appId, 'users', userId, 'transactions', txId);
+            batch.delete(docRef);
+        }
+
+        await batch.commit();
+    }
+}
+
+/**
+ * Story 14.15: Update multiple transactions in a batch.
+ * Uses Firestore writeBatch for atomic updates.
+ *
+ * @param db Firestore instance
+ * @param userId User ID
+ * @param appId App ID
+ * @param transactionIds Array of transaction IDs to update
+ * @param updates Partial transaction data to apply to all
+ */
+export async function updateTransactionsBatch(
+    db: Firestore,
+    userId: string,
+    appId: string,
+    transactionIds: string[],
+    updates: Partial<Transaction>
+): Promise<void> {
+    if (transactionIds.length === 0) return;
+
+    // Clean undefined values
+    const cleanedUpdates = removeUndefined(updates as Record<string, unknown>);
+
+    // Firestore batch limit is 500 operations
+    const BATCH_SIZE = 500;
+
+    for (let i = 0; i < transactionIds.length; i += BATCH_SIZE) {
+        const chunk = transactionIds.slice(i, i + BATCH_SIZE);
+        const batch = writeBatch(db);
+
+        for (const txId of chunk) {
+            const docRef = doc(db, 'artifacts', appId, 'users', userId, 'transactions', txId);
+            batch.update(docRef, { ...cleanedUpdates, updatedAt: serverTimestamp() });
+        }
+
+        await batch.commit();
+    }
 }
