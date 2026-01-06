@@ -1,8 +1,8 @@
 # Historical Lessons (Retrospectives)
 
 > Section 6 of Atlas Memory
-> Last Sync: 2025-12-22
-> Sources: epic-8-retrospective.md, epic-9-retro-2025-12-16.md, brainstorming-session-2025-12-22.md
+> Last Sync: 2026-01-06
+> Sources: epic-8-retrospective.md, epic-9-retro-2025-12-16.md, brainstorming-session-2025-12-22.md, Epic 14 stories
 
 ## What Worked Well
 
@@ -27,7 +27,8 @@
 | **Git Branch Divergence** | Squash merges create sync issues | Use 2-branch strategy, merge commits for sync |
 | **EditView.tsx Complexity** | Accumulated tech debt | Scheduled for refactor in Epic 10 |
 | **Scope Creep** | Epics grow significantly (7 → 21 stories) | Better upfront scoping |
-| **Bundle Size Growth** | At 948KB, needs attention | Code-splitting, lazy loading |
+| **Bundle Size Growth** | At 2.0 MB, CRITICAL | Code-splitting, lazy loading - deferred to Epic 15 |
+| **Unsafe Regex Patterns** | ReDoS vulnerability in sanitize.ts | Avoid catastrophic backtracking in regex |
 | **API Key Security Incident** | Hardcoded in code, leaked to git | Always use environment variables |
 
 ## Hard-Won Wisdom
@@ -345,3 +346,5 @@
   - **Pattern #88: Mono Dark Primary Color Must Be Visible** - In mono dark mode, `--primary` cannot be white/near-white (#fafafa) because logo, FAB, and avatar all use `background: var(--primary)` with white text - creating invisible white-on-white. Use zinc-700 (#3f3f46) for mono dark `--primary` to ensure visibility against zinc-950 background.
   - **Pattern #89: Date String Timezone Parsing** - When parsing ISO date strings (`"2025-01-02"`), `new Date("2025-01-02")` parses as UTC midnight, which converts to previous day in western timezones (Chile UTC-3/4). **Fix:** Detect ISO format with regex and parse as local: `const [year, month, day] = dateStr.split('-').map(Number); new Date(year, month - 1, day);`. This ensures "January 2nd" displays as January 2nd regardless of timezone.
   - **Pattern #90: CSS Variable Theming for Three Themes** - Organize CSS custom properties in index.html with: (1) `:root` for default theme (Normal) light mode, (2) `.dark` for default theme dark mode, (3) `[data-theme="professional"]` + `[data-theme="professional"].dark` for second theme, (4) `[data-theme="mono"]` + `[data-theme="mono"].dark` for third theme. Each theme needs complete variable set including: --bg, --bg-secondary, --bg-tertiary, --surface, --primary, --primary-hover, --secondary, --accent, --text-primary/secondary/tertiary, --border-light/medium, --chart-1 through --chart-6.
+- **Pattern #91: CI/CD Gitleaks Parallelization (Story 14.22)** - Move gitleaks secret scanning from setup job to separate parallel job. Setup uses shallow clone (default), gitleaks uses `fetch-depth: 0` for full history. This reduces critical path by ~30s because gitleaks (~8s) runs parallel to setup (~3min) instead of blocking it. Update test summary job to depend on gitleaks: `needs: [gitleaks, test-unit, test-integration, test-e2e, security]`.
+- **Pattern #92: Avoid ReDoS in Regex Patterns** - When writing regex for input sanitization, avoid patterns with nested quantifiers or catastrophic backtracking potential. **BAD:** `/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi` (nested negative lookahead with quantifiers). **GOOD:** `/<script[\s\S]*?<\/script>/gi` (simple non-greedy match). The eslint-plugin-security `detect-unsafe-regex` rule catches these - run `npm run lint:security` to verify.
