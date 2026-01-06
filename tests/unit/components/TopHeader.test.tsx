@@ -162,7 +162,8 @@ describe('TopHeader', () => {
 
             await waitFor(() => {
                 const badges = screen.getAllByText('Próximamente');
-                expect(badges.length).toBeGreaterThanOrEqual(2); // Reports and Goals
+                // Story 14.16: Reports now enabled, only Goals shows "Próximamente"
+                expect(badges.length).toBeGreaterThanOrEqual(1); // Goals only
             });
         });
 
@@ -303,11 +304,11 @@ describe('TopHeader', () => {
             // Should show back button
             expect(screen.getByRole('button', { name: /back/i })).toBeInTheDocument();
 
-            // Should show "Configuración" title (centered)
+            // Should show "Configuración" title (left-aligned per Story 14.22)
             expect(screen.getByText('Configuración')).toBeInTheDocument();
 
-            // Should NOT show profile avatar
-            expect(screen.queryByTestId('profile-avatar')).not.toBeInTheDocument();
+            // Story 14.22: Settings now shows profile avatar (like home variant)
+            expect(screen.queryByTestId('profile-avatar')).toBeInTheDocument();
         });
     });
 
@@ -327,7 +328,8 @@ describe('TopHeader', () => {
             expect(screen.getByText('Analytics')).toBeInTheDocument();
         });
 
-        it('renders "Historial" title for history view', () => {
+        it('renders "Transacciones" title for history view', () => {
+            // Story 14.14: History view now uses "Transacciones" instead of "Historial"
             render(
                 <TopHeader
                     variant="home"
@@ -338,7 +340,7 @@ describe('TopHeader', () => {
                 />
             );
 
-            expect(screen.getByText('Historial')).toBeInTheDocument();
+            expect(screen.getByText('Transacciones')).toBeInTheDocument();
         });
     });
 

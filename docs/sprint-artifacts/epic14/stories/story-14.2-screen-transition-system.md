@@ -1,6 +1,6 @@
 # Story 14.2: Screen Transition System
 
-**Status:** complete
+**Status:** done
 **Points:** 3
 **Epic:** 14 - Core Implementation
 **Dependencies:** Story 14.1 (Animation Framework)

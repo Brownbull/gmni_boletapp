@@ -17,6 +17,7 @@ function createTouchEvent(clientX: number, clientY: number): Partial<TouchEvent>
     touches: [{ clientX, clientY }] as unknown as TouchList,
     changedTouches: [{ clientX, clientY }] as unknown as TouchList,
     preventDefault: vi.fn(),
+    cancelable: true, // Required for preventDefault to be called
   };
 }
 

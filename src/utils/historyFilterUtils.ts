@@ -13,6 +13,7 @@ import type {
   TemporalFilterState,
   CategoryFilterState,
   LocationFilterState,
+  GroupFilterState,
 } from '../contexts/HistoryFiltersContext';
 
 // ============================================================================
@@ -224,6 +225,12 @@ function matchesTemporalFilter(
 ): boolean {
   if (filter.level === 'all') return true;
 
+  // Story 14.16: Date range filter takes priority (used by Reports navigation for ISO weeks)
+  // This ensures exact date range matching regardless of month boundaries
+  if (filter.dateRange) {
+    return txDate >= filter.dateRange.start && txDate <= filter.dateRange.end;
+  }
+
   const txYear = txDate.substring(0, 4);
   const txMonth = txDate.substring(0, 7);
 
@@ -258,6 +265,7 @@ function matchesTemporalFilter(
 
 /**
  * Check if a transaction matches a category filter.
+ * Supports multi-select via comma-separated values in category and group fields.
  */
 function matchesCategoryFilter(
   tx: Transaction,
@@ -265,17 +273,40 @@ function matchesCategoryFilter(
 ): boolean {
   if (filter.level === 'all') return true;
 
-  // Store category filter
-  if (filter.category && tx.category !== filter.category) {
-    return false;
+  // Store category filter (supports multi-select via comma-separated values)
+  if (filter.category) {
+    // Check if it's a multi-select (comma-separated)
+    const categories = filter.category.split(',').map(c => c.trim());
+    if (categories.length > 1) {
+      // Multi-select: transaction must match ANY of the selected categories
+      if (!categories.includes(tx.category)) {
+        return false;
+      }
+    } else {
+      // Single select: exact match
+      if (tx.category !== filter.category) {
+        return false;
+      }
+    }
   }
 
   // Item group filter - transaction must have at least one item in the group
+  // Supports multi-select via comma-separated values
   if (filter.group) {
-    const hasMatchingGroup = tx.items?.some(
-      item => item.category === filter.group
-    );
-    if (!hasMatchingGroup) return false;
+    const groups = filter.group.split(',').map(g => g.trim());
+    if (groups.length > 1) {
+      // Multi-select: transaction must have at least one item in ANY of the groups
+      const hasMatchingGroup = tx.items?.some(
+        item => item.category && groups.includes(item.category)
+      );
+      if (!hasMatchingGroup) return false;
+    } else {
+      // Single select
+      const hasMatchingGroup = tx.items?.some(
+        item => item.category === filter.group
+      );
+      if (!hasMatchingGroup) return false;
+    }
   }
 
   // Subcategory filter - transaction must have at least one item in the subcategory
@@ -318,6 +349,30 @@ function matchesLocationFilter(
 }
 
 // ============================================================================
+// Group Filter Helpers (Story 14.15b)
+// ============================================================================
+
+/**
+ * Check if a transaction matches a group filter.
+ * Story 14.15b: Transaction Selection Mode & Groups (AC #7)
+ * Supports multi-select (comma-separated groupIds)
+ */
+function matchesGroupFilter(
+  tx: Transaction,
+  filter: GroupFilterState
+): boolean {
+  // No group filter applied - include all transactions
+  if (!filter.groupIds) return true;
+
+  // Parse comma-separated group IDs
+  const selectedGroupIds = filter.groupIds.split(',').map(id => id.trim()).filter(Boolean);
+  if (selectedGroupIds.length === 0) return true;
+
+  // Transaction must belong to one of the selected groups
+  return tx.groupId ? selectedGroupIds.includes(tx.groupId) : false;
+}
+
+// ============================================================================
 // Main Filtering Function
 // ============================================================================
 
@@ -344,6 +399,11 @@ export function filterTransactionsByHistoryFilters(
 
     // Location filter (AC #4)
     if (!matchesLocationFilter(tx, filters.location)) {
+      return false;
+    }
+
+    // Story 14.15b: Group filter (AC #7)
+    if (!matchesGroupFilter(tx, filters.group)) {
       return false;
     }
 
@@ -763,4 +823,141 @@ export function getPrevPeriodLabel(
   const prev = getPrevTemporalPeriod(current);
   if (!prev) return null;
   return formatTemporalRange(prev, locale);
+}
+
+// ============================================================================
+// Cascading Temporal Filter Updates (Story 14.14)
+// ============================================================================
+
+/**
+ * Build a complete temporal filter state with cascading defaults.
+ * When a higher-level dimension changes, lower-level dimensions cascade to their first valid values.
+ *
+ * Story 14.14: Synchronized temporal navigation between breadcrumbs and IconFilterBar
+ *
+ * @param level - The target filter level
+ * @param year - Selected year
+ * @param quarter - Selected quarter (Q1-Q4) - optional, will be derived from month if not provided
+ * @param month - Selected month (YYYY-MM format) - optional, will cascade from quarter
+ * @param week - Selected week (1-5) - optional, will cascade from month
+ * @param day - Selected day (YYYY-MM-DD format) - optional, will cascade from week
+ * @returns Complete TemporalFilterState with all appropriate fields populated
+ */
+export function buildCascadingTemporalFilter(
+  level: 'year' | 'quarter' | 'month' | 'week' | 'day',
+  year: string,
+  quarter?: string,
+  month?: string,
+  week?: number,
+  day?: string
+): TemporalFilterState {
+  // Helper: get first month of a quarter
+  const getFirstMonthOfQuarter = (y: string, q: string): string => {
+    const qNum = parseInt(q.replace('Q', ''), 10);
+    const monthNum = (qNum - 1) * 3 + 1;
+    return `${y}-${String(monthNum).padStart(2, '0')}`;
+  };
+
+  // Helper: get quarter from month
+  const getQuarterFromMonthStr = (m: string): string => {
+    const monthNum = parseInt(m.split('-')[1], 10);
+    return `Q${Math.ceil(monthNum / 3)}`;
+  };
+
+  // Helper: get first week (always 1)
+  const getFirstWeek = (): number => 1;
+
+  // Helper: get first day of a week in a month
+  const getFirstDayOfWeek = (m: string, w: number): string => {
+    const [y, mon] = m.split('-');
+    const dayNum = (w - 1) * 7 + 1;
+    return `${y}-${mon}-${String(dayNum).padStart(2, '0')}`;
+  };
+
+  // Build the filter based on level
+  if (level === 'year') {
+    return { level: 'year', year };
+  }
+
+  if (level === 'quarter') {
+    const q = quarter || 'Q1';
+    return { level: 'quarter', year, quarter: q };
+  }
+
+  if (level === 'month') {
+    // Derive month from quarter if not provided
+    const q = quarter || (month ? getQuarterFromMonthStr(month) : 'Q1');
+    const m = month || getFirstMonthOfQuarter(year, q);
+    // Ensure month is within the quarter
+    const monthQuarter = getQuarterFromMonthStr(m);
+    const finalMonth = monthQuarter === q ? m : getFirstMonthOfQuarter(year, q);
+    return { level: 'month', year, quarter: q, month: finalMonth };
+  }
+
+  if (level === 'week') {
+    const q = quarter || (month ? getQuarterFromMonthStr(month) : 'Q1');
+    const m = month || getFirstMonthOfQuarter(year, q);
+    // Ensure month is within the quarter
+    const monthQuarter = getQuarterFromMonthStr(m);
+    const finalMonth = monthQuarter === q ? m : getFirstMonthOfQuarter(year, q);
+    const w = week !== undefined ? week : getFirstWeek();
+    return { level: 'week', year, quarter: q, month: finalMonth, week: w };
+  }
+
+  if (level === 'day') {
+    const q = quarter || (month ? getQuarterFromMonthStr(month) : 'Q1');
+    const m = month || getFirstMonthOfQuarter(year, q);
+    // Ensure month is within the quarter
+    const monthQuarter = getQuarterFromMonthStr(m);
+    const finalMonth = monthQuarter === q ? m : getFirstMonthOfQuarter(year, q);
+    const w = week !== undefined ? week : getFirstWeek();
+    const d = day || getFirstDayOfWeek(finalMonth, w);
+    return { level: 'day', year, quarter: q, month: finalMonth, week: w, day: d };
+  }
+
+  // Default fallback
+  return { level: 'all' };
+}
+
+/**
+ * Build temporal filter when changing year.
+ * Cascades to Q1 → January → Week 1 → Day 1
+ */
+export function buildYearFilter(year: string): TemporalFilterState {
+  return buildCascadingTemporalFilter('year', year);
+}
+
+/**
+ * Build temporal filter when changing quarter.
+ * Cascades to first month of quarter → Week 1 → Day 1
+ */
+export function buildQuarterFilter(year: string, quarter: string): TemporalFilterState {
+  return buildCascadingTemporalFilter('quarter', year, quarter);
+}
+
+/**
+ * Build temporal filter when changing month.
+ * Updates quarter if needed, cascades to Week 1 → Day 1
+ */
+export function buildMonthFilter(year: string, month: string): TemporalFilterState {
+  const quarter = `Q${Math.ceil(parseInt(month.split('-')[1], 10) / 3)}`;
+  return buildCascadingTemporalFilter('month', year, quarter, month);
+}
+
+/**
+ * Build temporal filter when changing week.
+ * Cascades to first day of week
+ */
+export function buildWeekFilter(year: string, month: string, week: number): TemporalFilterState {
+  const quarter = `Q${Math.ceil(parseInt(month.split('-')[1], 10) / 3)}`;
+  return buildCascadingTemporalFilter('week', year, quarter, month, week);
+}
+
+/**
+ * Build temporal filter when changing day.
+ * Full specification - no cascading needed
+ */
+export function buildDayFilter(year: string, month: string, week: number, day: string): TemporalFilterState {
+  const quarter = `Q${Math.ceil(parseInt(month.split('-')[1], 10) / 3)}`;
+  return buildCascadingTemporalFilter('day', year, quarter, month, week, day);
 }

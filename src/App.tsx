@@ -7,6 +7,8 @@ import { useSubcategoryMappings } from './hooks/useSubcategoryMappings';
 // Story 11.4: Trusted merchants for auto-save
 import { useTrustedMerchants } from './hooks/useTrustedMerchants';
 import { useUserPreferences } from './hooks/useUserPreferences';
+// Story 14.15 AC #5: Reduced motion check for haptic feedback
+import { useReducedMotion } from './hooks/useReducedMotion';
 // Story 10.6: Insight profile hook for insight generation
 import { useInsightProfile } from './hooks/useInsightProfile';
 // Story 10.7: Batch session tracking for multi-receipt scanning
@@ -23,11 +25,17 @@ import { EditView } from './views/EditView';
 import { TrendsView } from './views/TrendsView';
 // Story 10a.4: Insights History View (replaces HistoryView in insights tab)
 import { InsightsView } from './views/InsightsView';
+// Story 14.14: Transaction List View (accessible via profile menu)
+import { HistoryView } from './views/HistoryView';
 // Story 12.1: Batch Capture UI - dedicated view for batch mode scanning
 import { BatchCaptureView } from './views/BatchCaptureView';
 // Story 12.3: Batch Review Queue - review processed receipts before saving
 import { BatchReviewView } from './views/BatchReviewView';
 import { SettingsView } from './views/SettingsView';
+// Story 14.16: Weekly Report Story Format - Instagram-style swipeable report cards
+import { ReportsView } from './views/ReportsView';
+// Story 14.15: New scan result view matching scan-overlay.html mockup
+import { ScanResultView } from './views/ScanResultView';
 import { Nav, ScanStatus } from './components/Nav';
 // Story 14.10: Top Header Bar component
 import { TopHeader } from './components/TopHeader';
@@ -39,8 +47,13 @@ import { BuildingProfileCard } from './components/insights/BuildingProfileCard';
 import { BatchSummary } from './components/insights/BatchSummary';
 // Story 11.1: Batch upload components for multi-image processing
 // Story 11.2: Quick Save Card for high-confidence scans
-import { BatchUploadPreview, BatchProcessingProgress, MAX_BATCH_IMAGES, QuickSaveCard } from './components/scan';
+// Story 14.15: ScanOverlay for non-blocking scan flow
+import { BatchUploadPreview, BatchProcessingProgress, MAX_BATCH_IMAGES, QuickSaveCard, ScanOverlay } from './components/scan';
 import type { BatchItemResult } from './components/scan';
+// Story 14.15: Scan overlay state machine hook
+import { useScanOverlayState } from './hooks/useScanOverlayState';
+// Story 14.15 AC #4: Timeout constant for network timeout handling
+import { PROCESSING_TIMEOUT_MS } from './hooks/useScanState';
 // Story 11.2: Confidence check for Quick Save eligibility
 import { shouldShowQuickSave, calculateConfidence } from './utils/confidenceCheck';
 // Story 11.4: Trust Merchant Prompt component
@@ -53,7 +66,7 @@ import { AnalyticsProvider } from './contexts/AnalyticsContext';
 // Story 10a.2: Import for building analytics initial state
 import { getQuarterFromMonth } from './utils/analyticsHelpers';
 import type { AnalyticsNavigationState } from './types/analytics';
-import { HistoryFiltersProvider, type HistoryFilterState } from './contexts/HistoryFiltersContext';
+import { HistoryFiltersProvider, type HistoryFilterState, type TemporalFilterState } from './contexts/HistoryFiltersContext';
 import type { HistoryNavigationPayload } from './views/TrendsView';
 import { analyzeReceipt, ReceiptType } from './services/gemini';
 import { SupportedCurrency } from './services/userPreferencesService';
@@ -76,7 +89,7 @@ import {
 import { Transaction, StoreCategory } from './types/transaction';
 // Story 10.6: Insight types
 import { Insight } from './types/insight';
-import { Language, Currency, Theme, ColorTheme } from './types/settings';
+import { Language, Currency, Theme, ColorTheme, FontColorMode } from './types/settings';
 // Story 9.10: Persistent scan state management
 import { PendingScan, UserCredits, DEFAULT_CREDITS, createPendingScan } from './types/scan';
 import { formatCurrency } from './utils/currency';
@@ -95,7 +108,10 @@ import { getCitiesForCountry } from './data/locations';
 // Story 12.1: Added 'batch-capture' view for batch mode scanning
 // Story 12.3: Added 'batch-review' view for reviewing processed receipts before saving
 // Story 14.11: Added 'alerts' view for nav bar redesign (settings still accessible via header menu)
-type View = 'dashboard' | 'scan' | 'edit' | 'trends' | 'insights' | 'settings' | 'alerts' | 'batch-capture' | 'batch-review';
+// Story 14.14: Added 'history' view for transaction list (accessible via profile menu)
+// Story 14.16: Added 'reports' view for weekly report cards (accessible via profile menu)
+// Story 14.15: Added 'scan-result' view for new scan flow UI (mockup-compliant layout)
+type View = 'dashboard' | 'scan' | 'scan-result' | 'edit' | 'trends' | 'insights' | 'settings' | 'alerts' | 'batch-capture' | 'batch-review' | 'history' | 'reports';
 
 function App() {
     const { user, services, initError, signIn, signInWithTestCredentials, signOut } = useAuth();
@@ -122,9 +138,16 @@ function App() {
         updateMappingTarget: updateSubcategoryMapping
     } = useSubcategoryMappings(user, services);
     // Story 9.8: User preferences for default scan currency
+    // Story 14.22: Extended to include location settings from Firestore
     const {
         preferences: userPreferences,
-        setDefaultCurrency: setDefaultScanCurrencyPref
+        setDefaultCurrency: setDefaultScanCurrencyPref,
+        setDefaultCountry: setDefaultCountryPref,
+        setDefaultCity: setDefaultCityPref,
+        // Story 14.22: These will be used in Profile sub-view (Task 6)
+        setDisplayName: _setDisplayNamePref,
+        setPhoneNumber: _setPhoneNumberPref,
+        setBirthDate: _setBirthDatePref,
     } = useUserPreferences(user, services);
     // Story 10.6: Insight profile for insight generation
     const {
@@ -154,6 +177,10 @@ function App() {
 
     // UI State
     const [view, setView] = useState<View>('dashboard');
+    // Story 14.15b: Track previous view for proper back navigation
+    const [previousView, setPreviousView] = useState<View>('dashboard');
+    // Story 14.22: Settings subview state for breadcrumb navigation
+    const [settingsSubview, setSettingsSubview] = useState<'main' | 'limites' | 'perfil' | 'preferencias' | 'escaneo' | 'suscripcion' | 'datos' | 'app' | 'cuenta'>('main');
     const [scanImages, setScanImages] = useState<string[]>([]);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [scanError, setScanError] = useState<string | null>(null);
@@ -201,6 +228,11 @@ function App() {
     const [batchReviewResults, setBatchReviewResults] = useState<typeof batchProcessing.results>([]);
     const [batchEditingReceipt, setBatchEditingReceipt] = useState<{ receipt: BatchReceipt; index: number; total: number } | null>(null);
 
+    // Story 14.15: Scan overlay state machine for non-blocking scan flow (AC #1, #4)
+    const scanOverlay = useScanOverlayState();
+    // Story 14.15 AC #5: Check reduced motion preference for haptic feedback
+    const prefersReducedMotion = useReducedMotion();
+
     // Settings
     const [lang, setLang] = useState<Language>('es');
     const [currency, setCurrency] = useState<Currency>('CLP');
@@ -217,9 +249,19 @@ function App() {
         if (saved === 'normal' || saved === 'professional' || saved === 'mono') return saved;
         return 'mono'; // Default to 'mono' (monochrome minimal)
     });
+    // Story 14.21: Font color mode for category text
+    // 'colorful' = use fg colors from category palette (default)
+    // 'plain' = use standard text colors (black/white based on mode)
+    const [fontColorMode, setFontColorMode] = useState<FontColorMode>(() => {
+        const saved = localStorage.getItem('fontColorMode');
+        if (saved === 'colorful' || saved === 'plain') return saved;
+        return 'colorful'; // Default to colorful
+    });
     // Story 9.3: Default location settings (used when scan doesn't detect location)
-    const [defaultCountry, setDefaultCountry] = useState(() => localStorage.getItem('defaultCountry') || '');
-    const [defaultCity, setDefaultCity] = useState(() => localStorage.getItem('defaultCity') || '');
+    // Story 14.22: Now using Firestore-backed preferences instead of localStorage
+    // These derived values are for convenience - actual data comes from userPreferences
+    const defaultCountry = userPreferences.defaultCountry || '';
+    const defaultCity = userPreferences.defaultCity || '';
     const [wiping, setWiping] = useState(false);
     const [exporting, setExporting] = useState(false);
     const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' } | null>(null);
@@ -261,14 +303,14 @@ function App() {
         localStorage.setItem('colorTheme', colorTheme);
     }, [colorTheme]);
 
-    // Story 9.3: Persist default location to localStorage
+    // Story 14.21: Persist font color mode to localStorage
     useEffect(() => {
-        localStorage.setItem('defaultCountry', defaultCountry);
-    }, [defaultCountry]);
+        localStorage.setItem('fontColorMode', fontColorMode);
+    }, [fontColorMode]);
 
-    useEffect(() => {
-        localStorage.setItem('defaultCity', defaultCity);
-    }, [defaultCity]);
+    // Story 9.3: Default location persistence
+    // Story 14.22: REMOVED localStorage persistence - now stored in Firestore via useUserPreferences
+    // The setDefaultCountryPref and setDefaultCityPref functions handle saving to Firestore
 
     // Story 9.8: Sync scanCurrency with user's default preference when it loads
     useEffect(() => {
@@ -299,6 +341,23 @@ function App() {
 
     // Note: Theme is applied synchronously during render (before JSX return)
     // to ensure CSS variables are available when children compute memoized data
+
+    // Story 14.15b: Navigate to a view while tracking the previous view for back navigation
+    const navigateToView = useCallback((targetView: View) => {
+        setPreviousView(view);
+        setView(targetView);
+    }, [view]);
+
+    // Story 14.15b: Navigate back to the previous view (fallback to dashboard)
+    // Story 14.16b: If previousView is same as current or invalid, always fallback to dashboard
+    const navigateBack = useCallback(() => {
+        // Always go to dashboard if:
+        // 1. previousView is the same as current view (would be a no-op)
+        // 2. previousView is undefined/falsy
+        // 3. previousView is 'dashboard' (already the home screen)
+        const targetView = (previousView && previousView !== view) ? previousView : 'dashboard';
+        setView(targetView);
+    }, [previousView, view]);
 
     // Story 9.9: Unified new transaction handler
     // Story 9.10: Now checks for existing pending scan and restores it (AC #2)
@@ -347,9 +406,14 @@ function App() {
         });
         // Story 9.10 AC#1, AC#3: Create new pending scan session
         setPendingScan(createPendingScan());
-        setView('edit');
+        // Story 14.15: If auto-opening file picker (camera button), go directly to scan-result view
+        // The file picker will open and after image selection, processing starts automatically
         if (autoOpenFilePicker) {
+            setView('scan-result');
             setTimeout(() => fileInputRef.current?.click(), 200);
+        } else {
+            // Manual "+" button - go to edit view for manual entry
+            setView('edit');
         }
     };
 
@@ -414,21 +478,24 @@ function App() {
             return;
         }
 
-        // Single image - standard flow (AC #1)
-        setScanImages(p => {
-            const updatedImages = [...p, ...newImages];
-            // Story 9.10 AC#3: Update pending scan with new images
-            if (pendingScan) {
-                setPendingScan({
-                    ...pendingScan,
-                    images: updatedImages,
-                    status: 'images_added'
-                });
-            }
-            return updatedImages;
-        });
-        // Story 9.9: No longer navigate to 'scan' view - stay in EditView
+        // Single image - Story 14.15: Go to scan-result view and auto-process
+        const updatedImages = [...scanImages, ...newImages];
+        setScanImages(updatedImages);
+        // Story 9.10 AC#3: Update pending scan with new images
+        if (pendingScan) {
+            setPendingScan({
+                ...pendingScan,
+                images: updatedImages,
+                status: 'images_added'
+            });
+        }
+        // Story 14.15: Navigate to scan-result view and auto-start processing
+        setView('scan-result');
         if (fileInputRef.current) fileInputRef.current.value = '';
+        // Auto-trigger scan processing after a brief delay for state to settle
+        setTimeout(() => {
+            processScan();
+        }, 100);
     };
 
     const processScan = async () => {
@@ -441,6 +508,12 @@ function App() {
 
         setIsAnalyzing(true);
         setScanError(null);
+        // Story 14.15: Start scan overlay flow (AC #1)
+        scanOverlay.startUpload();
+        // Simulate upload progress (images are already local base64)
+        scanOverlay.setProgress(100);
+        scanOverlay.startProcessing();
+
         // Story 9.10: Update pending scan status to 'analyzing'
         if (pendingScan) {
             setPendingScan({ ...pendingScan, status: 'analyzing' });
@@ -453,11 +526,18 @@ function App() {
             }));
 
             // Story 9.8: Pass scan options (currency and store type) to analyzeReceipt
-            const result = await analyzeReceipt(
-                scanImages,
-                scanCurrency,
-                scanStoreType !== 'auto' ? scanStoreType : undefined
-            );
+            // Story 14.15 AC #4: Add timeout handling for network requests
+            const timeoutPromise = new Promise<never>((_, reject) => {
+                setTimeout(() => reject(new Error('Request timed out. Please check your connection and try again.')), PROCESSING_TIMEOUT_MS);
+            });
+            const result = await Promise.race([
+                analyzeReceipt(
+                    scanImages,
+                    scanCurrency,
+                    scanStoreType !== 'auto' ? scanStoreType : undefined
+                ),
+                timeoutPromise
+            ]);
             let d = getSafeDate(result.date);
             if (new Date(d).getFullYear() > new Date().getFullYear())
                 d = new Date().toISOString().split('T')[0];
@@ -559,6 +639,13 @@ function App() {
             // Clear local scan images since they're now stored in transaction
             setScanImages([]);
 
+            // Story 14.15: Mark scan as ready (AC #1)
+            scanOverlay.setReady();
+            // Story 14.15 AC #5: Haptic feedback on scan success (only when motion enabled)
+            if (!prefersReducedMotion && navigator.vibrate) {
+                navigator.vibrate(50); // Brief success haptic
+            }
+
             // Story 11.4: Check if merchant is trusted for auto-save (AC #5)
             const merchantAlias = finalTransaction.alias || finalTransaction.merchant;
             const isTrusted = merchantAlias ? await checkTrusted(merchantAlias) : false;
@@ -627,6 +714,9 @@ function App() {
         } catch (e: any) {
             const errorMessage = 'Failed: ' + e.message;
             setScanError(errorMessage);
+            // Story 14.15 AC #4: Detect timeout vs other errors and show in overlay
+            const isTimeout = e.message?.includes('timed out');
+            scanOverlay.setError(isTimeout ? 'timeout' : 'api', errorMessage);
             // Story 9.10: Update pending scan with error status
             if (pendingScan) {
                 setPendingScan({
@@ -635,7 +725,7 @@ function App() {
                     error: errorMessage
                 });
             }
-            setToastMessage({ text: t('scanFailed'), type: 'info' });
+            // Note: Toast removed - error now shown in ScanOverlay (Story 14.15 AC #4)
         } finally {
             setIsAnalyzing(false);
         }
@@ -1006,6 +1096,30 @@ function App() {
         });
     };
 
+    // Story 14.15: Scan overlay handlers (AC #4)
+    // Handle cancel from overlay - return to dashboard
+    const handleScanOverlayCancel = useCallback(() => {
+        scanOverlay.reset();
+        setIsAnalyzing(false);
+        setScanError(null);
+        setScanImages([]);
+        setPendingScan(null);
+        setCurrentTransaction(null);
+        setView('dashboard');
+    }, [scanOverlay]);
+
+    // Handle retry from overlay error state - re-run processScan
+    const handleScanOverlayRetry = useCallback(() => {
+        scanOverlay.retry();
+        setScanError(null);
+        // processScan will be called again from EditView
+    }, [scanOverlay]);
+
+    // Handle dismiss from overlay ready state
+    const handleScanOverlayDismiss = useCallback(() => {
+        scanOverlay.reset();
+    }, [scanOverlay]);
+
     // Story 11.2: Quick Save Card handlers (AC #3, #4, #7)
     // Story 14.4: Quick Save completion handler (called after success animation)
     // This is the callback that fires AFTER the success animation completes
@@ -1327,10 +1441,14 @@ function App() {
     // This is called when user clicks a transaction count badge on a drill-down card
     const handleNavigateToHistory = (payload: HistoryNavigationPayload) => {
         // Create a complete filter state from the navigation payload
+        // Default to 'all' level if temporal/category not provided
         const filterState: HistoryFilterState = {
-            temporal: payload.temporal,
-            category: payload.category,
+            temporal: payload.temporal
+                ? { ...payload.temporal, level: payload.temporal.level as TemporalFilterState['level'] }
+                : { level: 'all' },
+            category: payload.category ? { level: 'category', category: payload.category } : { level: 'all' },
             location: {}, // Location filter not set from analytics navigation
+            group: {}, // Story 14.15b: Group filter not set from analytics navigation
         };
 
         // Store the filters (kept for potential future use with filtered insights)
@@ -1432,58 +1550,81 @@ function App() {
             />
 
             {/* Story 14.10: Top Header Bar (AC #1-5) */}
+            {/* Story 14.13: Hide TopHeader on TrendsView - Explora has its own header */}
+            {/* Story 14.14: Hide TopHeader on HistoryView - has its own header */}
+            {/* Story 14.16: Hide TopHeader on ReportsView - has its own header with year selector */}
             {/* Determine header variant and title based on current view */}
-            <TopHeader
-                variant={
-                    view === 'settings' ? 'settings' :
-                    (view === 'edit' || view === 'batch-review') ? 'detail' :
-                    'home'
-                }
-                viewTitle={
-                    view === 'dashboard' ? 'gastify' :
-                    view === 'trends' ? 'analytics' :
-                    view === 'insights' ? 'insights' :
-                    view === 'alerts' ? 'alerts' :
-                    view === 'batch-capture' ? 'gastify' :
-                    undefined
-                }
-                title={
-                    view === 'edit' ? t('transaction') :
-                    view === 'batch-review' ? t('batchReview') :
-                    undefined
-                }
-                onBack={
-                    view === 'settings' ? () => setView('dashboard') :
-                    view === 'edit' ? (() => {
-                        // Story 11.3: Reset animation state when leaving EditView
-                        setAnimateEditViewItems(false);
-                        // Story 12.3: If editing from batch, return to batch review
-                        if (batchEditingReceipt) {
-                            setBatchEditingReceipt(null);
-                            setView('batch-review');
-                        } else {
-                            setView('dashboard');
-                        }
-                    }) :
-                    view === 'batch-review' ? handleBatchReviewBack :
-                    undefined
-                }
-                onMenuClick={() => setView('settings')}
-                userName={user?.displayName || ''}
-                userEmail={user?.email || ''}
-                theme={theme}
-                t={t}
-            />
+            {/* Story 14.15: scan-result has its own header, so exclude it */}
+            {view !== 'trends' && view !== 'history' && view !== 'reports' && view !== 'scan-result' && (
+                <TopHeader
+                    variant={
+                        view === 'settings' ? 'settings' :
+                        (view === 'edit' || view === 'batch-review') ? 'detail' :
+                        'home'
+                    }
+                    viewTitle={
+                        view === 'dashboard' ? 'gastify' :
+                        view === 'insights' ? 'insights' :
+                        view === 'alerts' ? 'alerts' :
+                        view === 'batch-capture' ? 'gastify' :
+                        undefined
+                    }
+                    title={
+                        view === 'edit' ? t('transaction') :
+                        view === 'batch-review' ? t('batchReview') :
+                        undefined
+                    }
+                    settingsSubview={
+                        view === 'settings' && settingsSubview !== 'main'
+                            ? t(`settings${settingsSubview.charAt(0).toUpperCase() + settingsSubview.slice(1)}Short`)
+                            : undefined
+                    }
+                    onBack={
+                        view === 'settings' ? () => {
+                            if (settingsSubview !== 'main') {
+                                setSettingsSubview('main');
+                            } else {
+                                setView('dashboard');
+                            }
+                        } :
+                        view === 'edit' ? (() => {
+                            // Story 11.3: Reset animation state when leaving EditView
+                            setAnimateEditViewItems(false);
+                            // Story 12.3: If editing from batch, return to batch review
+                            if (batchEditingReceipt) {
+                                setBatchEditingReceipt(null);
+                                setView('batch-review');
+                            } else {
+                                setView('dashboard');
+                            }
+                        }) :
+                        view === 'batch-review' ? handleBatchReviewBack :
+                        undefined
+                    }
+                    onMenuClick={() => setView('settings')}
+                    onNavigateToView={(targetView) => setView(targetView as any)}
+                    userName={user?.displayName || ''}
+                    userEmail={user?.email || ''}
+                    theme={theme}
+                    t={t}
+                />
+            )}
 
             {/* Story 11.6: Main content area with flex-1 and overflow (AC #2, #4, #5) */}
             {/* Story 14.10: Added pt-12 (48px) to account for fixed header (AC #5) */}
             {/* Story 14.12: Increased top padding for larger header (72px) + gap for mobile visibility */}
+            {/* Story 14.14b: TrendsView now has its own sticky header like HistoryView, so no padding needed */}
+            {/* Story 14.14: HistoryView has its own sticky header, so no top padding needed */}
+            {/* Story 14.16: ReportsView has its own fixed header and padding, so no main padding needed */}
+            {/* Story 14.15: ScanResultView has its own header, so no padding needed */}
             {/* pb-24 (96px) accounts for nav bar (~70px) + safe area bottom */}
             <main
-                className="flex-1 overflow-y-auto p-3"
+                className={`flex-1 overflow-y-auto ${(view === 'reports' || view === 'history' || view === 'trends' || view === 'scan-result') ? '' : 'p-3'}`}
                 style={{
-                    paddingBottom: 'calc(6rem + var(--safe-bottom, 0px))',
-                    paddingTop: 'calc(5rem + env(safe-area-inset-top, 0px))'
+                    paddingBottom: (view === 'reports' || view === 'history' || view === 'trends' || view === 'scan-result') ? '0' : 'calc(6rem + var(--safe-bottom, 0px))',
+                    paddingTop: (view === 'history' || view === 'reports' || view === 'trends' || view === 'scan-result')
+                        ? '0'
+                        : 'calc(5rem + env(safe-area-inset-top, 0px))'
                 }}
             >
                 {/* Story 10a.1: Wrap DashboardView with HistoryFiltersProvider for filter context (AC #2, #6) */}
@@ -1531,6 +1672,11 @@ function App() {
                             allTransactions={transactions as any}
                             // Story 9.12: Language for category translations
                             lang={lang}
+                            // Story 14.14: Color theme for unified TransactionCard display
+                            colorTheme={colorTheme}
+                            // Story 14.15b: Selection mode props for group/delete operations
+                            userId={user?.uid}
+                            appId={services?.appId}
                         />
                     </HistoryFiltersProvider>
                 )}
@@ -1549,6 +1695,33 @@ function App() {
                     />
                 )}
                 */}
+
+                {/* Story 14.15: ScanResultView - New scan flow UI matching mockup #4 "Edit Transaction (Interactive)" */}
+                {view === 'scan-result' && (
+                    <ScanResultView
+                        transaction={currentTransaction}
+                        isProcessing={isAnalyzing}
+                        thumbnailUrl={scanImages[0]}
+                        onSave={async (trans) => {
+                            // Update current transaction with edited data and save
+                            setCurrentTransaction(trans);
+                            if (services && user) {
+                                await saveTransaction();
+                            }
+                        }}
+                        onCancel={() => {
+                            handleCancelNewTransaction();
+                        }}
+                        theme={theme as 'light' | 'dark'}
+                        t={t}
+                        formatCurrency={formatCurrency}
+                        currency={currency}
+                        defaultCity={defaultCity}
+                        defaultCountry={defaultCountry}
+                        isSaving={false}
+                        lang={lang}
+                    />
+                )}
 
                 {view === 'edit' && currentTransaction && (
                     <EditView
@@ -1617,30 +1790,49 @@ function App() {
                 {view === 'trends' && (
                     // Story 10a.2: Pass initial state to navigate to specific month (AC #1, #2)
                     // Key forces remount when initial state changes to apply new initial value
-                    <AnalyticsProvider
-                        key={analyticsInitialState ? JSON.stringify(analyticsInitialState.temporal) : 'default'}
-                        initialState={analyticsInitialState ?? undefined}
-                    >
-                        <TrendsView
-                            transactions={transactions}
-                            theme={theme as 'light' | 'dark'}
-                            colorTheme={colorTheme}
-                            currency={currency}
-                            locale={lang}
-                            t={t}
-                            onEditTransaction={(transaction) => {
-                                setCurrentTransaction(transaction);
-                                setView('edit');
-                            }}
-                            exporting={exporting}
-                            onExporting={setExporting}
-                            onUpgradeRequired={() => {
-                                setToastMessage({ text: t('upgradeRequired'), type: 'info' });
-                            }}
-                            // Story 9.20: Navigation from analytics badge to filtered History (AC #3)
-                            onNavigateToHistory={handleNavigateToHistory}
-                        />
-                    </AnalyticsProvider>
+                    // Story 14.14b: Wrap with HistoryFiltersProvider for IconFilterBar support
+                    <HistoryFiltersProvider>
+                        <AnalyticsProvider
+                            key={analyticsInitialState ? JSON.stringify(analyticsInitialState.temporal) : 'default'}
+                            initialState={analyticsInitialState ?? undefined}
+                        >
+                            <TrendsView
+                                transactions={transactions}
+                                theme={theme as 'light' | 'dark'}
+                                colorTheme={colorTheme}
+                                currency={currency}
+                                locale={lang}
+                                t={t}
+                                onEditTransaction={(transaction) => {
+                                    setCurrentTransaction(transaction);
+                                    setView('edit');
+                                }}
+                                exporting={exporting}
+                                onExporting={setExporting}
+                                onUpgradeRequired={() => {
+                                    setToastMessage({ text: t('upgradeRequired'), type: 'info' });
+                                }}
+                                // Story 9.20: Navigation from analytics badge to filtered History (AC #3)
+                                onNavigateToHistory={handleNavigateToHistory}
+                                // Story 14.14b: Header consistency props
+                                onBack={() => setView('dashboard')}
+                                userName={user?.displayName || ''}
+                                userEmail={user?.email || ''}
+                                onNavigateToView={(viewName) => {
+                                    if (viewName === 'settings') {
+                                        setView('settings');
+                                    } else if (viewName === 'history') {
+                                        setView('history');
+                                    } else if (viewName === 'reports') {
+                                        setView('reports');
+                                    }
+                                }}
+                                // Story 14.14b: Groups support for IconFilterBar
+                                userId={user?.uid || ''}
+                                appId={services?.appId || ''}
+                            />
+                        </AnalyticsProvider>
+                    </HistoryFiltersProvider>
                 )}
 
                 {/* Story 10a.4: InsightsView - Insight History (AC #1-6) */}
@@ -1739,11 +1931,15 @@ function App() {
                         // Story 7.12 AC#11: Color theme selector
                         colorTheme={colorTheme}
                         onSetColorTheme={(ct: string) => setColorTheme(ct as ColorTheme)}
+                        // Story 14.21: Font color mode setting
+                        fontColorMode={fontColorMode}
+                        onSetFontColorMode={(mode: string) => setFontColorMode(mode as FontColorMode)}
                         // Story 9.3: Default location settings
+                        // Story 14.22: Now using Firestore-backed preferences
                         defaultCountry={defaultCountry}
                         defaultCity={defaultCity}
-                        onSetDefaultCountry={setDefaultCountry}
-                        onSetDefaultCity={setDefaultCity}
+                        onSetDefaultCountry={setDefaultCountryPref}
+                        onSetDefaultCity={setDefaultCityPref}
                         // Story 9.7: Merchant mappings management
                         merchantMappings={merchantMappings}
                         merchantMappingsLoading={merchantMappingsLoading}
@@ -1766,6 +1962,21 @@ function App() {
                         trustedMerchants={trustedMerchants}
                         trustedMerchantsLoading={trustedMerchantsLoading}
                         onRevokeTrust={removeTrust}
+                        // Story 14.22: Profile editing (from Firestore preferences)
+                        userEmail={user?.email || ''}
+                        displayName={userPreferences.displayName || user?.displayName || ''}
+                        phoneNumber={userPreferences.phoneNumber || ''}
+                        birthDate={userPreferences.birthDate || ''}
+                        onSetDisplayName={_setDisplayNamePref}
+                        onSetPhoneNumber={_setPhoneNumberPref}
+                        onSetBirthDate={_setBirthDatePref}
+                        // Story 14.22: Subscription info (MVP placeholder)
+                        plan="free"
+                        creditsUsed={userCredits.used}
+                        creditsTotal={userCredits.remaining + userCredits.used}
+                        // Story 14.22: Controlled subview state for breadcrumb
+                        currentSubview={settingsSubview}
+                        onSubviewChange={setSettingsSubview}
                     />
                 )}
 
@@ -1806,6 +2017,54 @@ function App() {
                         </p>
                     </div>
                 )}
+
+                {/* Story 14.14: Transaction History View (accessible via profile menu) */}
+                {/* Story 14.21: Added colorTheme prop for unified category colors */}
+                {view === 'history' && (
+                    <HistoryFiltersProvider initialState={pendingHistoryFilters || undefined}>
+                        <HistoryView
+                            historyTrans={transactions as any}
+                            historyPage={1}
+                            totalHistoryPages={1}
+                            theme={theme}
+                            colorTheme={colorTheme}
+                            currency={currency}
+                            dateFormat={dateFormat}
+                            t={t}
+                            formatCurrency={formatCurrency}
+                            formatDate={formatDate as any}
+                            onBack={navigateBack}
+                            onSetHistoryPage={() => {}}
+                            onEditTransaction={(tx) => {
+                                setCurrentTransaction(tx as any);
+                                setView('edit');
+                            }}
+                            allTransactions={transactions as any}
+                            defaultCity={defaultCity}
+                            defaultCountry={defaultCountry}
+                            lang={lang}
+                            userId={user?.uid}
+                            appId={services?.appId}
+                            userName={user?.displayName || ''}
+                            userEmail={user?.email || ''}
+                            onNavigateToView={(targetView) => setView(targetView as View)}
+                        />
+                    </HistoryFiltersProvider>
+                )}
+
+                {/* Story 14.16: Weekly Reports View (accessible via profile menu) */}
+                {view === 'reports' && (
+                    <ReportsView
+                        transactions={transactions as Transaction[]}
+                        t={t}
+                        theme={theme}
+                        userName={user?.displayName || ''}
+                        userEmail={user?.email || ''}
+                        onBack={navigateBack}
+                        onNavigateToView={(targetView) => navigateToView(targetView as View)}
+                        onSetPendingHistoryFilters={setPendingHistoryFilters}
+                    />
+                )}
             </main>
 
             <Nav
@@ -1835,23 +2094,51 @@ function App() {
                 scanStatus={scanStatus}
             />
 
-            {/* Toast notification for feedback (AC#6, AC#7) */}
+            {/* Toast notification for feedback (AC#6, AC#7) - Story 14.22: Theme-aware styling */}
             {toastMessage && (
                 <div
                     role="status"
                     aria-live="polite"
-                    className={`fixed bottom-24 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg z-50 animate-fade-in ${
-                        toastMessage.type === 'success'
-                            ? 'bg-green-500 text-white'
-                            : 'bg-blue-500 text-white'
-                    }`}
+                    className="fixed bottom-24 left-1/2 -translate-x-1/2 px-4 py-3 rounded-xl shadow-lg z-50 animate-fade-in flex items-center gap-2"
+                    style={{
+                        backgroundColor: toastMessage.type === 'success' ? 'var(--primary)' : 'var(--accent)',
+                        color: '#ffffff',
+                        fontFamily: 'var(--font-family)',
+                        fontSize: '14px',
+                        fontWeight: 500,
+                    }}
                 >
+                    {toastMessage.type === 'success' ? (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                    ) : (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="16" x2="12" y2="12" />
+                            <line x1="12" y1="8" x2="12.01" y2="8" />
+                        </svg>
+                    )}
                     {toastMessage.text}
                 </div>
             )}
 
             {/* Story 9.14: PWA update notification */}
             <PWAUpdatePrompt />
+
+            {/* Story 14.15: Scan Overlay for non-blocking scan flow (AC #1, #4) */}
+            <ScanOverlay
+                state={scanOverlay.state}
+                progress={scanOverlay.progress}
+                eta={scanOverlay.eta}
+                error={scanOverlay.error}
+                onCancel={handleScanOverlayCancel}
+                onRetry={handleScanOverlayRetry}
+                onDismiss={handleScanOverlayDismiss}
+                theme={theme as 'light' | 'dark'}
+                t={t}
+                visible={isAnalyzing || scanOverlay.state === 'error'}
+            />
 
             {/* Story 10.6: Insight card after transaction save (AC #1, #3, #4) */}
             {showInsightCard && (

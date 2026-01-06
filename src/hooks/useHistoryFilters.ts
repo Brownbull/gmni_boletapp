@@ -16,11 +16,23 @@ import {
   type TemporalFilterState,
   type CategoryFilterState,
   type LocationFilterState,
+  type GroupFilterState,
 } from '../contexts/HistoryFiltersContext';
 import {
   getNextTemporalPeriod,
   getPrevTemporalPeriod,
 } from '../utils/historyFilterUtils';
+// Story 14.15c: Group detection for smart chip labels
+import { detectStoreCategoryGroup, detectItemCategoryGroup } from '../config/categoryColors';
+import {
+  translateStoreCategoryGroup,
+  getStoreCategoryGroupEmoji,
+  translateStoreCategory,
+  translateItemGroup,
+  translateItemCategoryGroup,
+  getItemCategoryGroupEmoji,
+} from '../utils/categoryTranslations';
+import type { Language } from '../utils/translations';
 
 /**
  * Return type for useHistoryFilters hook.
@@ -38,6 +50,8 @@ export interface UseHistoryFiltersReturn {
   category: CategoryFilterState;
   /** Current location filter */
   location: LocationFilterState;
+  /** Story 14.15b: Current group filter */
+  group: GroupFilterState;
 
   // Boolean helpers
   /** True if any filter is active */
@@ -50,6 +64,8 @@ export interface UseHistoryFiltersReturn {
   hasCategoryFilter: boolean;
   /** True if location filter is active */
   hasLocationFilter: boolean;
+  /** Story 14.15b: True if group filter is active */
+  hasGroupFilter: boolean;
 
   // Time navigation helpers (Story 14.9)
   /** Navigate to next time period at current granularity level */
@@ -97,11 +113,14 @@ export function useHistoryFilters(): UseHistoryFiltersReturn {
     const hasTemporalFilter = state.temporal.level !== 'all';
     const hasCategoryFilter = state.category.level !== 'all';
     const hasLocationFilter = Boolean(state.location.country);
+    // Story 14.15b: Check if group filter is active (multi-select)
+    const hasGroupFilter = Boolean(state.group.groupIds);
 
     let activeFilterCount = 0;
     if (hasTemporalFilter) activeFilterCount++;
     if (hasCategoryFilter) activeFilterCount++;
     if (hasLocationFilter) activeFilterCount++;
+    if (hasGroupFilter) activeFilterCount++;
 
     // Story 14.9: Calculate if navigation is possible
     const canGoNext = getNextTemporalPeriod(state.temporal) !== null;
@@ -111,9 +130,11 @@ export function useHistoryFilters(): UseHistoryFiltersReturn {
       temporal: state.temporal,
       category: state.category,
       location: state.location,
+      group: state.group,
       hasTemporalFilter,
       hasCategoryFilter,
       hasLocationFilter,
+      hasGroupFilter,
       hasActiveFilters: activeFilterCount > 0,
       activeFilterCount,
       canGoNext,
@@ -159,6 +180,21 @@ export function getTemporalFilterLabel(
     return locale === 'es' ? 'Todo el tiempo' : 'All time';
   }
 
+  // Story 14.16: If date range is present (ISO week from Reports), show the date range
+  if (temporal.dateRange) {
+    const formatShortDate = (dateStr: string) => {
+      const [y, m, d] = dateStr.split('-');
+      const date = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+      return date.toLocaleDateString(
+        locale === 'es' ? 'es-ES' : 'en-US',
+        { month: 'short', day: 'numeric' }
+      );
+    };
+    const startLabel = formatShortDate(temporal.dateRange.start);
+    const endLabel = formatShortDate(temporal.dateRange.end);
+    return `${startLabel} - ${endLabel}`;
+  }
+
   const parts: string[] = [];
 
   if (temporal.year) {
@@ -189,26 +225,72 @@ export function getTemporalFilterLabel(
 
 /**
  * Get formatted label for category filter display.
+ * Story 14.15c: Enhanced to detect and display group names.
+ *
  * @param category - Current category filter state
  * @param t - Translation function
+ * @param locale - Optional locale for group translation (defaults to 'en')
  * @returns Human-readable label for the filter
  */
 export function getCategoryFilterLabel(
   category: CategoryFilterState,
-  t: (key: string) => string
+  t: (key: string) => string,
+  locale?: string
 ): string {
   if (category.level === 'all') {
     return t('allCategories');
   }
 
+  const lang: Language = locale === 'es' ? 'es' : 'en';
+
+  // Story 14.15c: Check if multi-select category matches a known group (Store Categories)
+  if (category.level === 'category' && category.category) {
+    const selectedCategories = category.category.split(',').map(c => c.trim());
+
+    // If multiple categories selected, check if they form a group
+    if (selectedCategories.length > 1) {
+      const detectedGroup = detectStoreCategoryGroup(selectedCategories);
+      if (detectedGroup) {
+        const emoji = getStoreCategoryGroupEmoji(detectedGroup);
+        const name = translateStoreCategoryGroup(detectedGroup, lang);
+        return `${emoji} ${name}`;
+      }
+      // Not a known group, show count
+      return `${selectedCategories.length} ${locale === 'es' ? 'categorías' : 'categories'}`;
+    }
+
+    // Single category - translate it
+    return translateStoreCategory(selectedCategories[0], lang);
+  }
+
+  // Story 14.15c: Check if multi-select item category matches a known group (Item Categories / Products)
+  if (category.level === 'group' && category.group) {
+    const selectedItems = category.group.split(',').map(g => g.trim());
+
+    // If multiple items selected, check if they form a group
+    if (selectedItems.length > 1) {
+      const detectedGroup = detectItemCategoryGroup(selectedItems);
+      if (detectedGroup) {
+        const emoji = getItemCategoryGroupEmoji(detectedGroup);
+        const name = translateItemCategoryGroup(detectedGroup, lang);
+        return `${emoji} ${name}`;
+      }
+      // Not a known group, show count
+      return `${selectedItems.length} ${locale === 'es' ? 'productos' : 'products'}`;
+    }
+
+    // Single item category - translate it
+    return translateItemGroup(selectedItems[0], lang);
+  }
+
   const parts: string[] = [];
 
   if (category.category) {
-    parts.push(category.category);
+    parts.push(translateStoreCategory(category.category, lang));
   }
 
   if (category.group) {
-    parts.push(category.group);
+    parts.push(translateItemGroup(category.group, lang));
   }
 
   if (category.subcategory) {

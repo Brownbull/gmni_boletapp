@@ -96,14 +96,15 @@ describe('HistoryView Thumbnail Display', () => {
       expect(img).toHaveAttribute('src', transactionWithThumbnail.thumbnailUrl)
     })
 
-    it('should have proper thumbnail dimensions (40x50px)', () => {
+    it('should have proper thumbnail dimensions', () => {
       renderHistoryView({
         ...mockProps,
         historyTrans: [transactionWithThumbnail],
       })
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
-      expect(thumbnail).toHaveClass('w-10', 'h-[50px]')
+      // Story 14.14: TransactionCard uses 46px height for receipt aspect ratio
+      expect(thumbnail).toHaveClass('w-10', 'h-[46px]')
     })
 
     it('should have accessible aria-label on thumbnail', () => {
@@ -113,7 +114,8 @@ describe('HistoryView Thumbnail Display', () => {
       })
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
-      expect(thumbnail).toHaveAttribute('aria-label', `View receipt image from ${transactionWithThumbnail.alias}`)
+      // Story 14.14: Updated label format
+      expect(thumbnail).toHaveAttribute('aria-label', `View receipt from ${transactionWithThumbnail.alias}`)
     })
   })
 
@@ -136,9 +138,10 @@ describe('HistoryView Thumbnail Display', () => {
       // Merchant appears at least once (as alias fallback or merchant display)
       const merchantElements = screen.getAllByText(transactionWithoutImages.merchant)
       expect(merchantElements.length).toBeGreaterThanOrEqual(1)
-      // Story 9.11: Unified card now shows "Currency Amount" format (e.g., "USD 10.00")
-      // The formatCurrency returns "$10.00" and we strip the $ prefix and show currency separately
-      expect(screen.getByText(/10\.00/)).toBeInTheDocument()
+      // Story 14.14: TransactionCard shows formatted amount via formatCurrency
+      // The formatCurrency returns "$10.00" which is displayed
+      const amountMatches = screen.getAllByText(/10\.00/)
+      expect(amountMatches.length).toBeGreaterThanOrEqual(1)
     })
 
     it('should render mixed transactions (with and without thumbnails)', () => {
@@ -287,6 +290,209 @@ describe('HistoryView Thumbnail Display', () => {
       // Should show error placeholder (Image icon)
       const thumbnail = screen.getByTestId('transaction-thumbnail')
       expect(thumbnail.querySelector('svg')).toBeInTheDocument()
+    })
+  })
+
+  describe('Pagination (Story 14.14)', () => {
+    // Generate transactions for pagination testing
+    const generateTransactions = (count: number) => {
+      return Array.from({ length: count }, (_, i) => ({
+        id: `tx-${i + 1}`,
+        merchant: `Merchant ${i + 1}`,
+        date: `2024-01-${String(15 + (i % 10)).padStart(2, '0')}`,
+        total: (i + 1) * 10,
+        category: 'Other',
+      }))
+    }
+
+    it('should show pagination controls when there are transactions', () => {
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: generateTransactions(10),
+        allTransactions: generateTransactions(10),
+      })
+
+      // Should show page indicator
+      expect(screen.getByText('1 / 1')).toBeInTheDocument()
+    })
+
+    it('should default to 15 items per page', () => {
+      const twentyTransactions = generateTransactions(20)
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: twentyTransactions,
+        allTransactions: twentyTransactions,
+        totalHistoryPages: 2,
+      })
+
+      // With 20 transactions and default PAGE_SIZE=15, should show 2 pages
+      expect(screen.getByText('1 / 2')).toBeInTheDocument()
+    })
+
+    it('should show correct page count for exactly 15 transactions', () => {
+      const fifteenTransactions = generateTransactions(15)
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: fifteenTransactions,
+        allTransactions: fifteenTransactions,
+        totalHistoryPages: 1,
+      })
+
+      // Exactly 15 transactions = 1 page (default page size)
+      expect(screen.getByText('1 / 1')).toBeInTheDocument()
+    })
+
+    it('should show correct page count for 16 transactions', () => {
+      const sixteenTransactions = generateTransactions(16)
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: sixteenTransactions,
+        allTransactions: sixteenTransactions,
+        totalHistoryPages: 2,
+      })
+
+      // 16 transactions with default PAGE_SIZE=15 = 2 pages
+      expect(screen.getByText('1 / 2')).toBeInTheDocument()
+    })
+
+    it('should show page size selector with options 15, 30, 60', () => {
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: generateTransactions(10),
+        allTransactions: generateTransactions(10),
+      })
+
+      expect(screen.getByTestId('page-size-selector')).toBeInTheDocument()
+      expect(screen.getByTestId('page-size-15')).toBeInTheDocument()
+      expect(screen.getByTestId('page-size-30')).toBeInTheDocument()
+      expect(screen.getByTestId('page-size-60')).toBeInTheDocument()
+    })
+
+    it('should highlight default page size (15)', () => {
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: generateTransactions(10),
+        allTransactions: generateTransactions(10),
+      })
+
+      const button15 = screen.getByTestId('page-size-15')
+      expect(button15).toHaveAttribute('aria-pressed', 'true')
+    })
+
+    it('should change page size when clicking a different option', () => {
+      const manyTransactions = generateTransactions(45)
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: manyTransactions,
+        allTransactions: manyTransactions,
+      })
+
+      // Initially 45 transactions with PAGE_SIZE=15 = 3 pages
+      expect(screen.getByText('1 / 3')).toBeInTheDocument()
+
+      // Verify 15 is initially selected
+      expect(screen.getByTestId('page-size-15')).toHaveAttribute('aria-pressed', 'true')
+      expect(screen.getByTestId('page-size-30')).toHaveAttribute('aria-pressed', 'false')
+
+      // Click to change to 30 per page
+      fireEvent.click(screen.getByTestId('page-size-30'))
+
+      // 30 should now be selected and page count updated
+      expect(screen.getByTestId('page-size-30')).toHaveAttribute('aria-pressed', 'true')
+      expect(screen.getByTestId('page-size-15')).toHaveAttribute('aria-pressed', 'false')
+      // 45 transactions with PAGE_SIZE=30 = 2 pages
+      expect(screen.getByText('1 / 2')).toBeInTheDocument()
+    })
+
+    it('should reset to page 1 when changing page size after navigating', () => {
+      // With 45 transactions and page size 15, we have 3 pages
+      const manyTransactions = generateTransactions(45)
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: manyTransactions,
+        allTransactions: manyTransactions,
+      })
+
+      // Navigate to page 2
+      fireEvent.click(screen.getByLabelText('nextPage'))
+      expect(screen.getByText('2 / 3')).toBeInTheDocument()
+
+      // Change page size to 60
+      fireEvent.click(screen.getByTestId('page-size-60'))
+
+      // Should reset to page 1 (45 transactions / 60 per page = 1 page)
+      expect(screen.getByText('1 / 1')).toBeInTheDocument()
+    })
+
+    it('should navigate to next page when clicking next page button', () => {
+      // 20 transactions with page size 15 = 2 pages
+      const manyTransactions = generateTransactions(20)
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: manyTransactions,
+        allTransactions: manyTransactions,
+      })
+
+      // Should start at page 1
+      expect(screen.getByText('1 / 2')).toBeInTheDocument()
+
+      // Click next page button
+      const nextButton = screen.getByLabelText('nextPage')
+      fireEvent.click(nextButton)
+
+      // Should now be on page 2
+      expect(screen.getByText('2 / 2')).toBeInTheDocument()
+    })
+
+    it('should disable previous button on first page', () => {
+      const manyTransactions = generateTransactions(20)
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: manyTransactions,
+        allTransactions: manyTransactions,
+      })
+
+      // Internal state starts at page 1
+      const prevButton = screen.getByLabelText('previousPage')
+      expect(prevButton).toBeDisabled()
+    })
+
+    it('should disable next button on last page', () => {
+      // 10 transactions with PAGE_SIZE=15 = 1 page, so page 1 is last
+      // (Internal state starts at page 1, so we use a small dataset)
+      const fewTransactions = generateTransactions(10)
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: fewTransactions,
+        allTransactions: fewTransactions,
+      })
+
+      // With only 10 transactions and page size 15, there's only 1 page
+      // So next button should be disabled
+      const nextButton = screen.getByLabelText('nextPage')
+      expect(nextButton).toBeDisabled()
+    })
+
+    it('should show "Per page:" label in English', () => {
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: generateTransactions(10),
+        allTransactions: generateTransactions(10),
+        lang: 'en',
+      })
+
+      expect(screen.getByText('Per page:')).toBeInTheDocument()
+    })
+
+    it('should show "Por página:" label in Spanish', () => {
+      renderHistoryView({
+        ...mockProps,
+        historyTrans: generateTransactions(10),
+        allTransactions: generateTransactions(10),
+        lang: 'es',
+      })
+
+      expect(screen.getByText('Por página:')).toBeInTheDocument()
     })
   })
 })

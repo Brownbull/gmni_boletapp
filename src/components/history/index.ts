@@ -2,9 +2,43 @@
  * History Components - Barrel Export
  *
  * Story 9.19: History Transaction Filters
+ * Story 14.14: Transaction List Redesign
+ * Story 14.15b: TransactionCard consolidated to transactions/ folder
  */
 
 export { HistoryFilterBar } from './HistoryFilterBar';
 export { TemporalFilterDropdown } from './TemporalFilterDropdown';
 export { CategoryFilterDropdown } from './CategoryFilterDropdown';
 export { LocationFilterDropdown } from './LocationFilterDropdown';
+
+// Story 14.15b: LEGACY TransactionCard - views that import from here will continue to work
+// This is the original component with individual props interface
+export { TransactionCard } from './TransactionCard';
+export type { TransactionCardProps, TransactionItem } from './TransactionCard';
+
+// Story 14.15b: NEW consolidated TransactionCard in transactions/ folder
+// Views should migrate to use this new simplified interface via:
+// import { TransactionCard } from '../components/transactions';
+// The new component accepts a Transaction object directly instead of individual props
+export { DateGroupHeader, groupTransactionsByDate, formatDateGroupLabel, calculateGroupTotal } from './DateGroupHeader';
+export type { DateGroupHeaderProps } from './DateGroupHeader';
+export { FilterChips } from './FilterChips';
+export type { FilterChipsProps } from './FilterChips';
+// Story 14.14: Icon-based filter UI
+export { IconFilterBar } from './IconFilterBar';
+export { TimeBreadcrumb } from './TimeBreadcrumb';
+export { TemporalBreadcrumb } from './TemporalBreadcrumb';
+export { SearchBar } from './SearchBar';
+// Story 14.15: Selection mode components
+export { SelectionBar } from './SelectionBar';
+export type { SelectionBarProps } from './SelectionBar';
+export { AssignGroupModal } from './AssignGroupModal';
+export type { AssignGroupModalProps } from './AssignGroupModal';
+export { CreateGroupModal } from './CreateGroupModal';
+export type { CreateGroupModalProps } from './CreateGroupModal';
+export { EditGroupModal } from './EditGroupModal';
+export type { EditGroupModalProps } from './EditGroupModal';
+export { DeleteGroupModal } from './DeleteGroupModal';
+export type { DeleteGroupModalProps } from './DeleteGroupModal';
+export { DeleteTransactionsModal } from './DeleteTransactionsModal';
+export type { DeleteTransactionsModalProps, TransactionPreview } from './DeleteTransactionsModal';

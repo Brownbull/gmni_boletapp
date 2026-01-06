@@ -201,6 +201,7 @@ Transactions → FilteringService → AnalyticsContext → Charts/Cards
 | **Weekly Reports** | 14.10 |
 | **Celebrations** | 14.12, 14.13, 14.14 |
 | **Intentional Prompts** | 14.11 |
+| **Settings Redesign** | 14.22 |
 | **Goals System** | 15.1, 15.2, 15.4 |
 | **Income Tracking** | 15.3 |
 | **Learned Thresholds** | 15.5, 15.6 |
@@ -221,3 +222,4 @@ Transactions → FilteringService → AnalyticsContext → Charts/Cards
 - **Epic 13 complete 2025-12-31:** 10 HTML mockups, design system, motion system
 - **Epic 14 ready 2025-12-31:** All 14 stories created via atlas-create-story
 - Combined retrospective: docs/sprint-artifacts/epic10-11-retro-2025-12-22.md
+- **Story 14.22 created 2026-01-05:** Settings View Redesign - hierarchical sub-views matching mockup, affects Learning Flow (#3) and Trust Merchant Flow (#7)
