@@ -2,22 +2,21 @@
 # Tracks optimization generations and enables restore capability
 
 metadata:
-  created: null  # Set on first optimization
-  last_optimization: null
-  current_generation: 0
+  created: 2026-01-06T10:30:00Z
+  last_optimization: 2026-01-06T10:30:00Z
+  current_generation: 1
 
-versions: []
-  # Example entry (added by memory-optimize):
-  # - generation: 1
-  #   timestamp: 2025-12-18T10:30:00Z
-  #   backup_path: ./backups/v1/
-  #   token_count_before: 5200
-  #   token_count_after: 3800
-  #   validation_checksum: abc123...
-  #   optimization_type: full
-  #   changes_summary:
-  #     - "Consolidated 3 redundant architecture decisions"
-  #     - "Migrated onboarding flow details to UX doc"
+versions:
+  - generation: 1
+    timestamp: 2026-01-06T10:30:00Z
+    backup_path: ./backups/v1/
+    token_count_before: 37000
+    token_count_after: 22778
+    optimization_type: full
+    changes_summary:
+      - "Consolidated 92 patterns in 06-lessons.md into categorized sections"
+      - "Removed verbose code examples (reference docs instead)"
+      - "Summarized pre-Epic 14 sync history entries"
 
 restore_history: []
   # Example entry (added by memory-restore):
