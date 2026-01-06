@@ -10,7 +10,8 @@
 
 import type { Transaction } from '../types/transaction';
 import { getQuarterFromMonth } from './analyticsHelpers';
-import { getColor } from './colors';
+// Story 14.21: Use unified category colors
+import { getCategoryBackgroundAuto } from '../config/categoryColors';
 
 // ============================================================================
 // Types
@@ -395,7 +396,7 @@ export function formatBarChartData(
       const segments = Object.entries(data.segments).map(([segLabel, value]) => ({
         label: segLabel,
         value,
-        color: getColor(segLabel),
+        color: getCategoryBackgroundAuto(segLabel),
       }));
       return { label: slot.label, total: data.total, segments };
     } else {

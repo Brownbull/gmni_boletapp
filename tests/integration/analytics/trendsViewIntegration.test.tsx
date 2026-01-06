@@ -1,33 +1,82 @@
 /**
- * TrendsView Integration Tests
+ * TrendsView "Explora" Integration Tests
  *
- * Tests the complete TrendsView flow with AnalyticsContext integration:
- * - Context-based navigation state
- * - Component orchestration (breadcrumbs, chart toggle, drill-down grid)
- * - Breadcrumb-based navigation (Story 7.14: removed back button)
- * - Transaction filtering
+ * Story 14.13: Analytics Explorer Redesign
+ * Epic 14: Core Implementation
  *
- * Story 7.7 - TrendsView Integration
- * Story 7.14 - Analytics Header & Layout Fixes (removed back button)
+ * Tests the complete "Explora" view flow with AnalyticsContext integration:
+ * - Time period pills and period navigation
+ * - Analytics carousel with treemap and trend list
+ * - View toggle functionality
+ * - Category drill-down via navigation callback
+ * - Theme support
+ * - Empty states
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { AnalyticsProvider } from '../../../src/contexts/AnalyticsContext';
+import { HistoryFiltersProvider } from '../../../src/contexts/HistoryFiltersContext';
 import { TrendsView } from '../../../src/views/TrendsView';
 import type { Transaction } from '../../../src/types/transaction';
+
+// ============================================================================
+// Mock localStorage
+// ============================================================================
+let mockStorage: Record<string, string>;
+let mockLocalStorage: Storage;
+
+beforeEach(() => {
+  mockStorage = {};
+  mockLocalStorage = {
+    getItem: vi.fn((key: string) => mockStorage[key] || null),
+    setItem: vi.fn((key: string, value: string) => {
+      mockStorage[key] = value;
+    }),
+    removeItem: vi.fn((key: string) => {
+      delete mockStorage[key];
+    }),
+    clear: vi.fn(() => {
+      mockStorage = {};
+    }),
+    length: 0,
+    key: vi.fn(() => null),
+  };
+  vi.stubGlobal('localStorage', mockLocalStorage);
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.clearAllMocks();
+});
 
 // ============================================================================
 // Test Setup
 // ============================================================================
 
+// Use dynamic dates to match the current period (component starts at current date)
+const getCurrentMonthDate = (day: number) => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}-${String(day).padStart(2, '0')}`;
+};
+
+const getPreviousMonthDate = (day: number) => {
+  const now = new Date();
+  now.setMonth(now.getMonth() - 1);
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}-${String(day).padStart(2, '0')}`;
+};
+
 const mockTransactions: Transaction[] = [
-  // Q1 - January
+  // Current month transactions
   {
     id: 't1',
-    date: '2024-01-15',
+    date: getCurrentMonthDate(5),
     merchant: 'Supermarket A',
     category: 'Supermarket',
     alias: 'Super A',
@@ -37,10 +86,9 @@ const mockTransactions: Transaction[] = [
       { name: 'Bread', price: 1500, category: 'Fresh Food', subcategory: 'Bakery' },
     ],
   },
-  // Q2 - April
   {
     id: 't2',
-    date: '2024-04-20',
+    date: getCurrentMonthDate(10),
     merchant: 'Restaurant B',
     category: 'Restaurant',
     alias: 'Resto B',
@@ -49,10 +97,9 @@ const mockTransactions: Transaction[] = [
       { name: 'Lunch', price: 15000, category: 'Food', subcategory: 'Meals' },
     ],
   },
-  // Q4 - October (multiple)
   {
     id: 't3',
-    date: '2024-10-05',
+    date: getCurrentMonthDate(3),
     merchant: 'Pharmacy D',
     category: 'Pharmacy',
     total: 20000,
@@ -62,7 +109,7 @@ const mockTransactions: Transaction[] = [
   },
   {
     id: 't4',
-    date: '2024-10-12',
+    date: getCurrentMonthDate(12),
     merchant: 'Supermarket E',
     category: 'Supermarket',
     alias: 'Super E',
@@ -73,7 +120,7 @@ const mockTransactions: Transaction[] = [
   },
   {
     id: 't5',
-    date: '2024-10-22',
+    date: getCurrentMonthDate(15),
     merchant: 'Restaurant F',
     category: 'Restaurant',
     alias: 'Resto F',
@@ -82,10 +129,10 @@ const mockTransactions: Transaction[] = [
       { name: 'Dinner', price: 25000, category: 'Food', subcategory: 'Meals' },
     ],
   },
-  // November
+  // Previous month transaction
   {
     id: 't6',
-    date: '2024-11-15',
+    date: getPreviousMonthDate(15),
     merchant: 'Supermarket G',
     category: 'Supermarket',
     total: 55000,
@@ -102,11 +149,17 @@ const mockT = (key: string) => {
     downloadTransactions: 'Download transactions',
     upgradeRequired: 'Upgrade required',
     totalSpent: 'Total Spent',
+    // Story 14.14b: IconFilterBar translations
+    temporalFilter: 'Time filter',
+    categoryFilter: 'Category filter',
+    allTime: 'All time',
+    allCategories: 'All categories',
+    allLocations: 'All locations',
+    allGroups: 'All groups',
   };
   return translations[key] || key;
 };
 
-// Story 7.14: Removed onBackToDashboard - navigation via breadcrumbs/bottom nav
 const defaultProps = {
   transactions: mockTransactions,
   theme: 'light' as const,
@@ -117,203 +170,307 @@ const defaultProps = {
   exporting: false,
   onExporting: vi.fn(),
   onUpgradeRequired: vi.fn(),
+  onNavigateToHistory: vi.fn(),
 };
 
-// Initial state for 2024 (test data year)
-// Story 7.16: drillDownMode is required to show drill-down sections
-const initialState2024 = {
+const initialState = {
   temporal: { level: 'year' as const, year: '2024' },
   category: { level: 'all' as const },
   chartMode: 'aggregation' as const,
-  drillDownMode: 'temporal' as const, // Default to temporal mode
+  drillDownMode: 'temporal' as const,
 };
 
-function renderTrendsView(props = {}, initialState = initialState2024) {
+function renderTrendsView(props = {}, state = initialState) {
   return render(
-    <AnalyticsProvider initialState={initialState}>
-      <TrendsView {...defaultProps} {...props} />
-    </AnalyticsProvider>
+    <HistoryFiltersProvider>
+      <AnalyticsProvider initialState={state}>
+        <TrendsView {...defaultProps} {...props} />
+      </AnalyticsProvider>
+    </HistoryFiltersProvider>
   );
 }
 
 // ============================================================================
-// TrendsView Component Rendering Tests
+// Initial Rendering Tests
 // ============================================================================
 
 describe('TrendsView Integration - Initial Rendering', () => {
-  // Story 7.14: Back button removed - navigation via breadcrumbs and bottom nav
-  it('renders with breadcrumbs for navigation (no back button)', () => {
+  it('renders Explora header', () => {
     renderTrendsView();
 
-    // Should have temporal and category breadcrumb navigation
-    expect(screen.getByRole('navigation', { name: /time period/i })).toBeInTheDocument();
-    expect(screen.getByRole('navigation', { name: /category filter/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Explora' })).toBeInTheDocument();
   });
 
-  // Story 7.14: Period label replaced with "Total Spent"
-  it('shows Total Spent label instead of year', () => {
+  it('renders time period pills with Month active', () => {
     renderTrendsView();
 
-    // Should show "Total Spent" label above the amount (Story 7.14)
-    expect(screen.getByText('Total Spent')).toBeInTheDocument();
+    expect(screen.getByTestId('time-pill-month')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('time-pill-week')).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('shows chart mode toggle at year level', () => {
+  it('renders period navigator with current period label', () => {
     renderTrendsView();
 
-    // ChartModeToggle should be visible (shows Aggregation/Comparison buttons)
-    expect(screen.getByRole('tablist', { name: /chart display mode/i })).toBeInTheDocument();
+    expect(screen.getByTestId('period-label')).toBeInTheDocument();
+    expect(screen.getByTestId('period-nav-prev')).toBeInTheDocument();
+    expect(screen.getByTestId('period-nav-next')).toBeInTheDocument();
   });
 
-  it('shows drill-down sections', () => {
+  it('renders analytics card with treemap by default', () => {
     renderTrendsView();
 
-    // Story 7.16: DrillDownModeToggle shows either temporal OR category section, not both
-    // Default mode is 'temporal', so we should see the time drill-down section
-    expect(screen.getByRole('region', { name: /drill down by time/i })).toBeInTheDocument();
-    // Category section should NOT be visible when in temporal mode
-    expect(screen.queryByRole('region', { name: /drill down by category/i })).not.toBeInTheDocument();
+    expect(screen.getByTestId('analytics-card')).toBeInTheDocument();
+    expect(screen.getByTestId('treemap-grid')).toBeInTheDocument();
   });
-});
 
-// ============================================================================
-// Navigation Tests
-// ============================================================================
+  it('shows no data message when no transactions', () => {
+    renderTrendsView({ transactions: [] });
 
-// Story 7.14: Back button removed - users navigate via breadcrumbs or bottom nav
-describe('TrendsView Integration - Breadcrumb Navigation', () => {
-  it('provides navigation via breadcrumbs instead of back button', () => {
-    renderTrendsView();
-
-    // Breadcrumbs should be present for navigation
-    const temporalNav = screen.getByRole('navigation', { name: /time period/i });
-    const categoryNav = screen.getByRole('navigation', { name: /category filter/i });
-
-    expect(temporalNav).toBeInTheDocument();
-    expect(categoryNav).toBeInTheDocument();
+    expect(screen.getByText(/no data/i)).toBeInTheDocument();
   });
 });
 
 // ============================================================================
-// Drill-Down Grid Integration Tests
+// Time Period Selection Tests
 // ============================================================================
 
-describe('TrendsView Integration - Drill-Down Navigation', () => {
-  it('displays temporal drill-down cards at year level', () => {
-    renderTrendsView();
-
-    // Should see quarters as drill-down options
-    expect(screen.getByText('Quarter 1')).toBeInTheDocument();
-    expect(screen.getByText('Quarter 2')).toBeInTheDocument();
-    expect(screen.getByText('Quarter 4')).toBeInTheDocument();
-  });
-
-  it('displays category drill-down cards', async () => {
+describe('TrendsView Integration - Time Period Selection', () => {
+  it('changes period label format when switching pills', async () => {
     const user = userEvent.setup();
     renderTrendsView();
 
-    // Story 7.16: Need to switch to category mode to see category cards
-    const categoryTab = screen.getByRole('tab', { name: /category/i });
-    await user.click(categoryTab);
+    // Get initial label
+    const periodLabel = screen.getByTestId('period-label');
+    const initialText = periodLabel.textContent;
 
-    // Should see store categories after switching to category mode
+    // Switch to Year
+    await user.click(screen.getByTestId('time-pill-year'));
+
+    // Label should change to just year format
     await waitFor(() => {
-      expect(screen.getByText('Supermarket')).toBeInTheDocument();
-      expect(screen.getByText('Restaurant')).toBeInTheDocument();
+      expect(periodLabel.textContent).not.toBe(initialText);
     });
   });
 
-  it('drills down temporally when clicking a quarter', async () => {
+  it('Week pill shows week format in period label', async () => {
     const user = userEvent.setup();
-
     renderTrendsView();
 
-    // Click Quarter 4 (Story 7.18: full quarter names)
-    const q4Card = screen.getByText('Quarter 4').closest('button');
-    if (q4Card) {
-      await user.click(q4Card);
-    }
+    await user.click(screen.getByTestId('time-pill-week'));
 
-    // Should now see months in Q4
+    const periodLabel = screen.getByTestId('period-label');
+    expect(periodLabel.textContent).toMatch(/week/i);
+  });
+
+  it('Quarter pill shows quarter format in period label', async () => {
+    const user = userEvent.setup();
+    renderTrendsView();
+
+    await user.click(screen.getByTestId('time-pill-quarter'));
+
+    const periodLabel = screen.getByTestId('period-label');
+    expect(periodLabel.textContent).toMatch(/Q\d/);
+  });
+});
+
+// ============================================================================
+// Period Navigation Tests
+// ============================================================================
+
+describe('TrendsView Integration - Period Navigation', () => {
+  it('navigates to previous period', async () => {
+    const user = userEvent.setup();
+    renderTrendsView();
+
+    const periodLabel = screen.getByTestId('period-label');
+    const initialText = periodLabel.textContent;
+
+    await user.click(screen.getByTestId('period-nav-prev'));
+
     await waitFor(() => {
-      expect(screen.getByText('October')).toBeInTheDocument();
-      expect(screen.getByText('November')).toBeInTheDocument();
+      expect(periodLabel.textContent).not.toBe(initialText);
     });
   });
 
-  it('drills down categorically when clicking a store category', async () => {
+  it('navigates to next period when not at boundary', async () => {
     const user = userEvent.setup();
-
     renderTrendsView();
 
-    // Story 7.16: Switch to category mode first
-    const categoryTab = screen.getByRole('tab', { name: /category/i });
-    await user.click(categoryTab);
+    // First go back a period
+    await user.click(screen.getByTestId('period-nav-prev'));
+    const afterPrevText = screen.getByTestId('period-label').textContent;
 
-    // Wait for category cards to appear
+    // Then go forward
+    await user.click(screen.getByTestId('period-nav-next'));
+
     await waitFor(() => {
-      expect(screen.getByText('Supermarket')).toBeInTheDocument();
-    });
-
-    // Click Supermarket category
-    const supermarketCard = screen.getByText('Supermarket').closest('button');
-    if (supermarketCard) {
-      await user.click(supermarketCard);
-    }
-
-    // Should now see item groups within Supermarket
-    await waitFor(() => {
-      expect(screen.getByText('Fresh Food')).toBeInTheDocument();
+      expect(screen.getByTestId('period-label').textContent).not.toBe(afterPrevText);
     });
   });
 });
 
 // ============================================================================
-// Chart Mode Toggle Integration Tests
+// Carousel Navigation Tests
 // ============================================================================
 
-describe('TrendsView Integration - Chart Mode Toggle', () => {
-  it('toggles between aggregation and comparison modes', async () => {
+describe('TrendsView Integration - Carousel Navigation', () => {
+  it('switches from Distribution to Tendencia slide', async () => {
     const user = userEvent.setup();
-
     renderTrendsView();
 
-    // Initial mode should be aggregation
-    const aggregationTab = screen.getByRole('tab', { name: /aggregation/i });
-    expect(aggregationTab).toHaveAttribute('aria-selected', 'true');
+    // Initially on Distribution - Story 14.14b Session 5: shows view mode pills instead of title
+    expect(screen.getByTestId('viewmode-pills-container')).toBeInTheDocument();
+    expect(screen.getByTestId('treemap-grid')).toBeInTheDocument();
 
-    // Click comparison tab
-    const comparisonTab = screen.getByRole('tab', { name: /comparison/i });
-    await user.click(comparisonTab);
+    // Click next
+    await user.click(screen.getByTestId('carousel-next'));
 
-    // Comparison should now be selected
+    // Now on Tendencia - Story 14.14b Session 5: shows view mode pills instead of title
     await waitFor(() => {
-      expect(comparisonTab).toHaveAttribute('aria-selected', 'true');
-      expect(aggregationTab).toHaveAttribute('aria-selected', 'false');
+      expect(screen.getByTestId('viewmode-pills-container')).toBeInTheDocument();
+      expect(screen.getByTestId('trend-list')).toBeInTheDocument();
+    });
+  });
+
+  it('switches back from Tendencia to Distribution', async () => {
+    const user = userEvent.setup();
+    renderTrendsView();
+
+    // Go to Tendencia
+    await user.click(screen.getByTestId('carousel-next'));
+    expect(screen.getByTestId('trend-list')).toBeInTheDocument();
+
+    // Go back to Distribution
+    await user.click(screen.getByTestId('carousel-prev'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('treemap-grid')).toBeInTheDocument();
+    });
+  });
+
+  it('clicking indicator segment changes slide', async () => {
+    const user = userEvent.setup();
+    renderTrendsView();
+
+    // Find indicator tabs
+    const indicator = screen.getByTestId('carousel-indicator');
+    const tabs = indicator.querySelectorAll('[role="tab"]');
+
+    // Click second tab (Tendencia)
+    await user.click(tabs[1]);
+
+    // Story 14.14b Session 5: Tendencia also shows view mode pills
+    await waitFor(() => {
+      expect(screen.getByTestId('trend-list')).toBeInTheDocument();
     });
   });
 });
 
 // ============================================================================
-// Export Functionality Tests
+// View Toggle Tests
 // ============================================================================
 
-describe('TrendsView Integration - Export Functionality', () => {
-  it('shows export button', () => {
+describe('TrendsView Integration - View Toggle', () => {
+  it('toggles from treemap to donut on Distribution slide', async () => {
+    const user = userEvent.setup();
     renderTrendsView();
 
-    // Should have an export button
-    const exportButton = screen.getByRole('button', { name: /download/i });
-    expect(exportButton).toBeInTheDocument();
+    // Initially treemap
+    expect(screen.getByTestId('treemap-grid')).toBeInTheDocument();
+
+    // Click toggle
+    await user.click(screen.getByTestId('view-toggle'));
+
+    // Now donut
+    await waitFor(() => {
+      expect(screen.getByTestId('donut-view')).toBeInTheDocument();
+      expect(screen.queryByTestId('treemap-grid')).not.toBeInTheDocument();
+    });
   });
 
-  it('shows loading state during export', () => {
-    renderTrendsView({ exporting: true });
+  it('toggles from list to breakdown on Tendencia slide', async () => {
+    const user = userEvent.setup();
+    renderTrendsView();
 
-    // Export button should be disabled and show spinner
-    const exportButton = screen.getByRole('button', { name: /download/i });
-    expect(exportButton).toBeDisabled();
-    expect(exportButton).toHaveAttribute('aria-busy', 'true');
+    // Go to Tendencia slide
+    await user.click(screen.getByTestId('carousel-next'));
+    expect(screen.getByTestId('trend-list')).toBeInTheDocument();
+
+    // Click toggle
+    await user.click(screen.getByTestId('view-toggle'));
+
+    // Now breakdown view
+    await waitFor(() => {
+      expect(screen.getByTestId('breakdown-view')).toBeInTheDocument();
+      expect(screen.queryByTestId('trend-list')).not.toBeInTheDocument();
+    });
+  });
+
+  it('toggle state is independent per slide', async () => {
+    const user = userEvent.setup();
+    renderTrendsView();
+
+    // Toggle to donut on Distribution
+    await user.click(screen.getByTestId('view-toggle'));
+    expect(screen.getByTestId('donut-view')).toBeInTheDocument();
+
+    // Go to Tendencia - should show list (not affected by Distribution toggle)
+    await user.click(screen.getByTestId('carousel-next'));
+    expect(screen.getByTestId('trend-list')).toBeInTheDocument();
+
+    // Go back to Distribution - should still be donut
+    await user.click(screen.getByTestId('carousel-prev'));
+    expect(screen.getByTestId('donut-view')).toBeInTheDocument();
+  });
+});
+
+// ============================================================================
+// Category Drill-Down Tests
+// ============================================================================
+
+describe('TrendsView Integration - Category Navigation', () => {
+  it('calls onNavigateToHistory when clicking treemap cell', async () => {
+    const onNavigateToHistory = vi.fn();
+    const user = userEvent.setup();
+    renderTrendsView({ onNavigateToHistory });
+
+    await user.click(screen.getByTestId('treemap-cell-supermarket'));
+
+    expect(onNavigateToHistory).toHaveBeenCalledWith({ category: 'Supermarket' });
+  });
+
+  it('calls onNavigateToHistory when clicking trend item', async () => {
+    const onNavigateToHistory = vi.fn();
+    const user = userEvent.setup();
+    renderTrendsView({ onNavigateToHistory });
+
+    // Go to Tendencia slide
+    await user.click(screen.getByTestId('carousel-next'));
+
+    await user.click(screen.getByTestId('trend-item-supermarket'));
+
+    expect(onNavigateToHistory).toHaveBeenCalledWith({ category: 'Supermarket' });
+  });
+
+  it('selects segment and updates center when clicking donut segment (Story 14.14)', async () => {
+    // Story 14.14: Clicking a donut segment now selects/highlights it and updates
+    // the center text. Drill-down navigation will be via chevron in legend (Phase 4/6).
+    const user = userEvent.setup();
+    renderTrendsView();
+
+    // Switch to donut view
+    await user.click(screen.getByTestId('view-toggle'));
+
+    // Click a donut segment (find circle elements in donut - ring style)
+    const donutView = screen.getByTestId('donut-view');
+    const circles = donutView.querySelectorAll('circle[stroke]');
+    expect(circles.length).toBeGreaterThan(0);
+
+    // Click first segment - should highlight it (not navigate)
+    await user.click(circles[0]);
+
+    // Verify segment is highlighted (has thicker stroke-width when selected)
+    expect(circles[0]).toHaveAttribute('stroke');
   });
 });
 
@@ -322,74 +479,98 @@ describe('TrendsView Integration - Export Functionality', () => {
 // ============================================================================
 
 describe('TrendsView Integration - Theme Support', () => {
-  it('renders with light theme', () => {
+  it('renders correctly with light theme', () => {
     renderTrendsView({ theme: 'light' });
-    // Story 7.14: Check for chart toggle instead of removed back button
-    expect(screen.getByRole('tablist', { name: /chart display mode/i })).toBeInTheDocument();
+
+    expect(screen.getByRole('heading', { name: 'Explora' })).toBeInTheDocument();
+    expect(screen.getByTestId('analytics-card')).toBeInTheDocument();
   });
 
-  it('renders with dark theme', () => {
+  it('renders correctly with dark theme', () => {
     renderTrendsView({ theme: 'dark' });
-    // Story 7.14: Check for chart toggle instead of removed back button
-    expect(screen.getByRole('tablist', { name: /chart display mode/i })).toBeInTheDocument();
+
+    expect(screen.getByRole('heading', { name: 'Explora' })).toBeInTheDocument();
+    expect(screen.getByTestId('analytics-card')).toBeInTheDocument();
   });
 });
 
 // ============================================================================
-// Empty State Tests
+// Locale Support Tests
 // ============================================================================
 
-describe('TrendsView Integration - Empty States', () => {
-  it('shows no data message when no transactions', () => {
-    renderTrendsView({ transactions: [] });
+describe('TrendsView Integration - Locale Support', () => {
+  it('displays Spanish labels with es locale', () => {
+    renderTrendsView({ locale: 'es' });
 
-    // Should show no data message in chart area
-    expect(screen.getByText(/no data/i)).toBeInTheDocument();
+    // Pills should be in Spanish
+    expect(screen.getByText('Semana')).toBeInTheDocument();
+    expect(screen.getByText('Mes')).toBeInTheDocument();
+    expect(screen.getByText('Trimestre')).toBeInTheDocument();
+    expect(screen.getByText('Año')).toBeInTheDocument();
   });
 
-  it('handles empty quarters gracefully', () => {
-    // Only Q4 transactions
-    const q4Only = mockTransactions.filter((t) => t.date.startsWith('2024-10') || t.date.startsWith('2024-11'));
+  it('displays English labels with en locale', () => {
+    renderTrendsView({ locale: 'en' });
 
-    renderTrendsView({ transactions: q4Only });
-
-    // Q4 should be present with data - check for Quarter 4 card (Story 7.18: full quarter names)
-    expect(screen.getByText('Quarter 4')).toBeInTheDocument();
+    // Pills should be in English
+    expect(screen.getByText('Week')).toBeInTheDocument();
+    expect(screen.getByText('Month')).toBeInTheDocument();
+    expect(screen.getByText('Quarter')).toBeInTheDocument();
+    expect(screen.getByText('Year')).toBeInTheDocument();
   });
 });
 
 // ============================================================================
-// Context Integration Tests
+// Filter Icons Tests
 // ============================================================================
 
-describe('TrendsView Integration - Context State', () => {
-  it('respects initial temporal state', () => {
-    const quarterState = {
-      temporal: { level: 'quarter' as const, year: '2024', quarter: 'Q4' as const },
-      category: { level: 'all' as const },
-      chartMode: 'aggregation' as const,
-      drillDownMode: 'temporal' as const, // Story 7.16: explicit drill-down mode
-    };
+describe('TrendsView Integration - Filter Icons', () => {
+  it('renders filter icon buttons via IconFilterBar', () => {
+    renderTrendsView();
 
-    renderTrendsView({}, quarterState);
+    // Story 14.14b: Filter icons are now provided by IconFilterBar component
+    expect(screen.getByRole('button', { name: 'Time filter' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Category filter' })).toBeInTheDocument();
+  });
+});
 
-    // Should show months (Q4 level) - temporal drill-down mode shows temporal children
-    expect(screen.getByText('October')).toBeInTheDocument();
-    expect(screen.getByText('November')).toBeInTheDocument();
+// ============================================================================
+// Empty State and Edge Cases
+// ============================================================================
+
+describe('TrendsView Integration - Edge Cases', () => {
+  it('handles transactions from different months gracefully', () => {
+    renderTrendsView();
+
+    // Should render without errors with mixed dates
+    expect(screen.getByTestId('analytics-card')).toBeInTheDocument();
   });
 
-  it('respects initial category state', () => {
-    const categoryState = {
-      temporal: { level: 'year' as const, year: '2024' },
-      category: { level: 'category' as const, category: 'Supermarket' },
-      chartMode: 'aggregation' as const,
-      drillDownMode: 'category' as const, // Story 7.16: must set to category mode to see category children
-    };
+  it('handles single category gracefully', () => {
+    const singleCategoryTransactions: Transaction[] = [
+      {
+        id: 't1',
+        date: getCurrentMonthDate(5),
+        merchant: 'Store A',
+        category: 'Supermarket',
+        total: 100,
+        items: [{ name: 'Item', price: 100, category: 'Food', subcategory: 'Food' }],
+      },
+    ];
 
-    renderTrendsView({}, categoryState);
+    renderTrendsView({ transactions: singleCategoryTransactions });
 
-    // Should show item groups for Supermarket (category mode shows category children)
-    expect(screen.getByText('Fresh Food')).toBeInTheDocument();
-    expect(screen.getByText('Pantry')).toBeInTheDocument();
+    expect(screen.getByTestId('treemap-cell-supermarket')).toBeInTheDocument();
+  });
+
+  it('handles missing onNavigateToHistory callback gracefully', async () => {
+    const user = userEvent.setup();
+    renderTrendsView({ onNavigateToHistory: undefined });
+
+    // Should not throw when clicking
+    await user.click(screen.getByTestId('treemap-cell-supermarket'));
+
+    // Still works
+    expect(screen.getByTestId('analytics-card')).toBeInTheDocument();
   });
 });

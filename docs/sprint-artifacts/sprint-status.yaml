@@ -350,15 +350,19 @@ development_status:
   # PHASE 3: VIEW INTEGRATION (wire components into actual views)
   # ============================================================================
   # These make the mockups visible in the app - BLOCKED by 14.10 + 14.11
-  14-12-home-dashboard-refresh: deployed  # 5 pts - Update DashboardView with new design [MOCKUP: home-dashboard.html] - DEPLOYED 2026-01-03 (PR #135)
-  14-13-analytics-polygon-integration: ready-for-dev  # 5 pts - Wire polygon + charts into TrendsView [MOCKUP: analytics-polygon.html]
-  14-14-transaction-list-redesign: ready-for-dev  # 3 pts - Update HistoryView with card design [MOCKUP: transaction-list.html]
+  14-12-home-dashboard-refresh: deployed  # 5 pts - Update DashboardView with new design [MOCKUP: home-dashboard.html] - DEPLOYED 2026-01-03 (PR #135, #136, #137 UI refinements)
+  14-13-analytics-explorer-redesign: review  # 8 pts - Complete TrendsView redesign to "Explora" [MOCKUP: analytics-polygon.html] - Implementation complete 2026-01-03
+  14-14-transaction-list-redesign: done  # 3 pts - Update HistoryView with card design [MOCKUP: transaction-list.html] - Completed 2026-01-04
+  14-14b-donut-chart-redesign: in-progress  # 13 pts - Donut chart with drill-down navigation [MOCKUP: analytics-polygon.html]
   14-15-scan-flow-integration: ready-for-dev  # 3 pts - Wire ScanOverlay + QuickSaveCard into ScanView [MOCKUP: scan-overlay.html]
+  14-15b-selection-mode-groups: done  # 5 pts - Transaction selection mode & groups [MOCKUP: transaction-list.html states 3-6] - Completed 2026-01-05
+  14-15c-category-group-filters: done  # 3 pts - Category group filters in IconFilterBar [EXTENDS: 14.14, 14.21] - Completed 2026-01-05
 
   # ============================================================================
   # PHASE 4: REPORTS & INSIGHTS
   # ============================================================================
-  14-16-weekly-report-story-format: in-progress  # 5 pts - Instagram-style cards [MOCKUP: reports.html]
+  14-16-weekly-report-story-format: done  # 5 pts - Instagram-style cards [MOCKUP: reports.html] - Completed 2026-01-05
+  14-16b-semantic-color-system: review  # 5 pts - Apply semantic colors (trends, charts) across app [DEPENDS: 14.21] - Implementation complete 2026-01-05, pending visual verification
   14-17-intentional-or-accidental-pattern: ready-for-dev  # 2 pts - Non-judgmental prompts [EXTENDS: Insight Gen #5]
 
   # ============================================================================
@@ -367,6 +371,12 @@ development_status:
   14-18-celebration-system: ready-for-dev  # 3 pts - Confetti, haptics, sounds [NEW FEATURE: Celebrations]
   14-19-personal-records-detection: ready-for-dev  # 3 pts - "Lowest restaurant week!" [EXTENDS: Insight Gen #5]
   14-20-session-completion-messaging: ready-for-dev  # 2 pts - "Great check-in today" [NEW FEATURE: Session UX]
+
+  # Design System Consolidation
+  14-21-category-color-consolidation: done  # 5 pts - Unified category colors for all themes/modes [TECH DEBT: Design System] - Completed 2026-01-04
+
+  # Settings Redesign
+  14-22-settings-view-redesign: ready-for-dev  # 8 pts - Hierarchical settings with sub-views [MOCKUP: settings.html]
 
   epic-14-retrospective: optional
 

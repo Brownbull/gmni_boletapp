@@ -7,6 +7,8 @@ import { CategoryLearningPrompt } from '../components/CategoryLearningPrompt';
 import { SubcategoryLearningPrompt } from '../components/SubcategoryLearningPrompt';
 import { LearnMerchantDialog } from '../components/dialogs/LearnMerchantDialog';
 import { LocationSelect } from '../components/LocationSelect';
+import { DateTimeTag } from '../components/DateTimeTag';
+import { CurrencyTag } from '../components/CurrencyTag';
 import { StoreTypeSelector } from '../components/StoreTypeSelector';
 import { AdvancedScanOptions } from '../components/AdvancedScanOptions';
 import { celebrateSuccess } from '../utils/confetti';
@@ -21,9 +23,7 @@ import type { Language } from '../utils/translations';
 // Story 11.3: Animated item reveal
 import { useStaggeredReveal } from '../hooks/useStaggeredReveal';
 import { AnimatedItem } from '../components/AnimatedItem';
-// Story 11.5: Scan status indicator for clear visual feedback
-import { ScanStatusIndicator } from '../components/scan/ScanStatusIndicator';
-import { useScanState, type ScanErrorType } from '../hooks/useScanState';
+// Story 14.15: ScanStatusIndicator removed - replaced by ScanOverlay in App.tsx
 
 /**
  * Local TransactionItem interface for EditView.
@@ -145,7 +145,7 @@ export const EditView: React.FC<EditViewProps> = ({
     onRemovePhoto,
     onProcessScan,
     isAnalyzing,
-    scanError,
+    scanError: _scanError, // Story 14.15: Error display moved to ScanOverlay in App.tsx
     // Story 9.8: Scan options
     scanStoreType,
     onSetScanStoreType,
@@ -178,73 +178,9 @@ export const EditView: React.FC<EditViewProps> = ({
     // Story 9.16: Loading state for learning prompts to prevent duplicate saves (AC #1, #2)
     const [savingMappings, setSavingMappings] = useState(false);
 
-    // Story 11.5: Scan state machine for visual feedback (AC #1-8)
-    // This hook manages the scan status UI states: idle → processing → ready/error
-    // NOTE: The 'uploading' state with progress tracking is available but not used in current flow.
-    // Current implementation: API call is atomic (no separate upload phase), so we go directly
-    // from idle → processing → ready/error. The uploading state is available for future use
-    // if we implement chunked uploads or separate upload tracking.
-    const scanStateHook = useScanState();
-    const {
-        state: scanStatus,
-        error: scanStateError,
-        estimatedTime,
-        startProcessing: startScanProcessing,
-        setReady: setScanReady,
-        setError: setScanError,
-        reset: resetScanState,
-    } = scanStateHook;
-
-    // Story 11.5: Sync scan state with props from App.tsx
-    // When isAnalyzing changes, update the scan state machine
-    const prevIsAnalyzingRef = useRef(isAnalyzing);
-    useEffect(() => {
-        // Transition to processing when analyzing starts
-        if (isAnalyzing && !prevIsAnalyzingRef.current) {
-            startScanProcessing();
-        }
-        // Transition to ready or error when analyzing finishes
-        if (!isAnalyzing && prevIsAnalyzingRef.current) {
-            if (scanError) {
-                // Map error string to error type and set error state
-                const errorType: ScanErrorType = scanError.includes('timeout')
-                    ? 'timeout'
-                    : scanError.includes('network') || scanError.includes('fetch')
-                    ? 'network'
-                    : scanError.includes('invalid')
-                    ? 'invalid'
-                    : 'api';
-                setScanError(errorType, scanError);
-            } else {
-                // No error means success - show ready state
-                setScanReady();
-            }
-        }
-        prevIsAnalyzingRef.current = isAnalyzing;
-    }, [isAnalyzing, scanError, startScanProcessing, setScanReady, setScanError]);
-
-    // Story 11.5: Handle scan cancel from status indicator
-    // LIMITATION: This only resets the UI state. The actual API call continues in background
-    // because Cloud Functions don't support cancellation. The credit deduction happens after
-    // successful save (per credit-after-save pattern), so cancelling before save won't lose credits.
-    // Future enhancement: If we add AbortController support to the scan API, wire it up here.
-    const handleScanCancel = () => {
-        resetScanState();
-    };
-
-    // Story 11.5: Handle retry from error state
-    const handleScanRetry = () => {
-        resetScanState();
-        // Trigger new scan if onProcessScan is available
-        if (onProcessScan) {
-            onProcessScan();
-        }
-    };
-
-    // Story 11.5: Handle ready state completion
-    const handleReadyComplete = () => {
-        resetScanState();
-    };
+    // Story 14.15: Scan state management moved to App.tsx with ScanOverlay
+    // The old ScanStatusIndicator and useScanState hook in EditView have been removed.
+    // Scan progress, errors, and completion are now handled by the ScanOverlay component.
 
     // Story 9.6: Merchant learning prompt state
     const [showMerchantLearningPrompt, setShowMerchantLearningPrompt] = useState(false);
@@ -775,23 +711,13 @@ export const EditView: React.FC<EditViewProps> = ({
                                 />
                             )}
 
-                            {/* Story 11.5: Scan Status Indicator - Shows progress, skeleton, ready, or error states */}
-                            {scanStatus !== 'idle' && (
-                                <ScanStatusIndicator
-                                    status={scanStatus}
-                                    error={scanStateError}
-                                    estimatedTime={estimatedTime}
-                                    onCancel={handleScanCancel}
-                                    onRetry={handleScanRetry}
-                                    onReadyComplete={handleReadyComplete}
-                                    theme={theme as 'light' | 'dark'}
-                                    t={t}
-                                />
-                            )}
+                            {/* Story 11.5: ScanStatusIndicator REMOVED - replaced by ScanOverlay (Story 14.15)
+                               The new ScanOverlay is a full-screen fixed overlay rendered in App.tsx
+                               that provides non-blocking feedback during scan processing. */}
 
                             {/* Process Scan button - Story 9.10 AC#7: Disabled when no credits */}
-                            {/* Story 11.5: Hide button when scan is in progress (non-idle state) */}
-                            {onProcessScan && scanStatus === 'idle' && (
+                            {/* Story 14.15: Hide button when scan is in progress (isAnalyzing from App.tsx) */}
+                            {onProcessScan && !isAnalyzing && (
                                 <button
                                     onClick={onProcessScan}
                                     disabled={!hasCredits}
@@ -932,24 +858,23 @@ export const EditView: React.FC<EditViewProps> = ({
                     ))}
                 </datalist>
 
-                {/* Story 9.3 AC #1: Date and time - stacked on mobile for better fit */}
+                {/* Story 14.14b Session 4: Date, time, location, and currency as clickable tags */}
                 <div className="flex flex-wrap items-center gap-2">
-                    <input
-                        type="date"
-                        className="flex-1 min-w-[140px] p-2 border rounded-lg"
-                        style={inputStyle}
-                        value={currentTransaction.date}
-                        onChange={e => onUpdateTransaction({ ...currentTransaction, date: e.target.value })}
-                        aria-label={t('date')}
+                    {/* Date and Time tags */}
+                    <DateTimeTag
+                        date={currentTransaction.date}
+                        time={currentTransaction.time || ''}
+                        onDateChange={date => onUpdateTransaction({ ...currentTransaction, date })}
+                        onTimeChange={time => onUpdateTransaction({ ...currentTransaction, time })}
+                        theme={theme as 'light' | 'dark'}
+                        t={t}
                     />
-                    {/* Editable time input (AC #1) */}
-                    <input
-                        type="time"
-                        className="w-[100px] p-2 border rounded-lg text-sm"
-                        style={inputStyle}
-                        value={currentTransaction.time || ''}
-                        onChange={e => onUpdateTransaction({ ...currentTransaction, time: e.target.value })}
-                        aria-label={t('time')}
+                    {/* Currency tag */}
+                    <CurrencyTag
+                        currency={currentTransaction.currency || 'CLP'}
+                        onCurrencyChange={currency => onUpdateTransaction({ ...currentTransaction, currency })}
+                        theme={theme as 'light' | 'dark'}
+                        t={t}
                     />
                     {/* Story 9.3 AC #4: Receipt type badge (only for non-receipt types) */}
                     {currentTransaction.receiptType && currentTransaction.receiptType !== 'receipt' && (
@@ -962,13 +887,15 @@ export const EditView: React.FC<EditViewProps> = ({
                     )}
                 </div>
 
-                {/* Story 9.3 AC #2: Location dropdowns (City, Country) */}
+                {/* Story 14.14b Session 4: Location as clickable tag with dropdown */}
                 <LocationSelect
                     country={currentTransaction.country || ''}
                     city={currentTransaction.city || ''}
                     onCountryChange={country => onUpdateTransaction({ ...currentTransaction, country })}
                     onCityChange={city => onUpdateTransaction({ ...currentTransaction, city })}
                     inputStyle={inputStyle}
+                    theme={theme as 'light' | 'dark'}
+                    t={t}
                 />
 
                 {/* Story 9.12 AC #6: Translated category dropdown - shows translated, stores English */}

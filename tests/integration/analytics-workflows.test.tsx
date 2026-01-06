@@ -45,6 +45,7 @@ import { addTransaction } from '../../src/services/firestore';
 import { Transaction } from '../../src/types/transaction';
 import { TrendsView } from '../../src/views/TrendsView';
 import { AnalyticsProvider } from '../../src/contexts/AnalyticsContext';
+import { HistoryFiltersProvider } from '../../src/contexts/HistoryFiltersContext';
 import { exportToCSV } from '../../src/utils/csv';
 
 const APP_ID = 'boletapp-d609f';
@@ -296,11 +297,13 @@ describe('Analytics & Export Workflows', () => {
       onUpgradeRequired: vi.fn(),
     };
 
-    // Wrap with AnalyticsProvider (required since Story 7.7)
+    // Wrap with AnalyticsProvider and HistoryFiltersProvider (required since Story 7.7/14.x)
     render(
-      <AnalyticsProvider>
-        <TrendsView {...emptyProps} />
-      </AnalyticsProvider>
+      <HistoryFiltersProvider>
+        <AnalyticsProvider>
+          <TrendsView {...emptyProps} />
+        </AnalyticsProvider>
+      </HistoryFiltersProvider>
     );
 
     // Verify "No Data" message is displayed
