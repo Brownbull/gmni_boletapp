@@ -107,6 +107,14 @@ export interface Transaction {
     // NEW: Source tracking for transparency
     /** Source of the merchant name (scan, learned, or user) */
     merchantSource?: MerchantSource;
+
+    // Story 14.15: Transaction Groups
+    /** Reference to the transaction group document ID */
+    groupId?: string;
+    /** Denormalized group name for display (updated when group is renamed) */
+    groupName?: string;
+    /** Denormalized group color for display (hex code, e.g., "#10b981") */
+    groupColor?: string;
 }
 
 /**

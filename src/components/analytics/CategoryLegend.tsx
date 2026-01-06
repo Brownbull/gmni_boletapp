@@ -12,7 +12,8 @@
  */
 
 import React, { memo } from 'react';
-import { getColor } from '../../utils/colors';
+// Story 14.21: Use unified category colors
+import { getCategoryBackgroundAuto } from '../../config/categoryColors';
 
 // ============================================================================
 // Types
@@ -71,7 +72,8 @@ export const CategoryLegend = memo(function CategoryLegend({
     <div className="px-4 mb-4">
       <div className="flex flex-wrap gap-3 justify-center">
         {items.map((item) => {
-          const color = item.color || getColor(item.label);
+          // Story 14.21: Use unified category colors
+          const color = item.color || getCategoryBackgroundAuto(item.label);
           const percentage = total > 0 ? (item.value / total) * 100 : 0;
 
           return (

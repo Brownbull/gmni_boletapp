@@ -96,9 +96,9 @@ describe('DrillDownCard - AC #7: Color indicator', () => {
 
     // Story 7.18: Color is now on the progress bar fill element
     const fillBar = container.querySelector('[role="progressbar"] > div');
-    // Color comes from getColor() which uses CSS variables with fallback
-    // Supermarket maps to chart-1 which is #3b82f6 (blue-500)
-    expect(fillBar).toHaveStyle({ backgroundColor: '#3b82f6' });
+    // Story 14.21: Colors from unified categoryColors (normal theme, light mode)
+    // Supermarket bg: #dcfce7 (green-100)
+    expect(fillBar).toHaveStyle({ backgroundColor: '#dcfce7' });
   });
 
   it('uses different colors for different colorKeys', () => {
@@ -109,10 +109,10 @@ describe('DrillDownCard - AC #7: Color indicator', () => {
     const fill1 = container1.querySelector('[role="progressbar"] > div');
     const fill2 = container2.querySelector('[role="progressbar"] > div');
 
-    // Colors come from getColor() with fallback to Slate theme defaults
-    // Supermarket uses chart-1 (#3b82f6), Restaurant uses chart-3 (#f59e0b)
-    expect(fill1).toHaveStyle({ backgroundColor: '#3b82f6' }); // Supermarket -> chart-1
-    expect(fill2).toHaveStyle({ backgroundColor: '#f59e0b' }); // Restaurant -> chart-3
+    // Story 14.21: Colors from unified categoryColors (normal theme, light mode)
+    // Supermarket bg: #dcfce7, Restaurant bg: #ffedd5
+    expect(fill1).toHaveStyle({ backgroundColor: '#dcfce7' }); // Supermarket
+    expect(fill2).toHaveStyle({ backgroundColor: '#ffedd5' }); // Restaurant
   });
 
   it('uses default color when no colorKey provided', () => {
@@ -547,14 +547,15 @@ describe('DrillDownCard - Story 7.18: Progress Bar', () => {
   });
 
   // AC #3: Progress bar color from colorKey
+  // Story 14.21: Updated to use unified categoryColors
   describe('AC #3: Progress bar color from colorKey', () => {
     it('progress bar uses color for Supermarket', () => {
       const { container } = renderCard({ percentage: 50, colorKey: 'Supermarket' });
 
       const fillBar = container.querySelector('[role="progressbar"] > div');
 
-      // Supermarket maps to chart-1 which is #3b82f6 (blue-500)
-      expect(fillBar).toHaveStyle({ backgroundColor: '#3b82f6' });
+      // Story 14.21: Supermarket bg: #dcfce7 (green-100)
+      expect(fillBar).toHaveStyle({ backgroundColor: '#dcfce7' });
     });
 
     it('progress bar uses color for Restaurant', () => {
@@ -562,8 +563,8 @@ describe('DrillDownCard - Story 7.18: Progress Bar', () => {
 
       const fillBar = container.querySelector('[role="progressbar"] > div');
 
-      // Restaurant maps to chart-3 which is #f59e0b (amber-500)
-      expect(fillBar).toHaveStyle({ backgroundColor: '#f59e0b' });
+      // Story 14.21: Restaurant bg: #ffedd5 (orange-100)
+      expect(fillBar).toHaveStyle({ backgroundColor: '#ffedd5' });
     });
 
     it('progress bar uses default color when no colorKey', () => {
@@ -580,8 +581,8 @@ describe('DrillDownCard - Story 7.18: Progress Bar', () => {
 
       const fillBar = container.querySelector('[role="progressbar"] > div');
 
-      // temporal-0 maps to chart-1 which is #3b82f6 (blue-500)
-      expect(fillBar).toHaveStyle({ backgroundColor: '#3b82f6' });
+      // Story 14.21: temporal-0 falls back to Other category color #f1f5f9 (slate-100)
+      expect(fillBar).toHaveStyle({ backgroundColor: '#f1f5f9' });
     });
   });
 

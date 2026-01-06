@@ -1,7 +1,9 @@
 import React from 'react';
 import { BookMarked } from 'lucide-react';
-import { getColor } from '../utils/colors';
+// Story 14.21: Use getCategoryPillColors for badges - always colorful regardless of fontColorMode
+import { getCategoryPillColors } from '../config/categoryColors';
 import { translateCategory, translateSubcategory } from '../utils/categoryTranslations';
+import { getCategoryEmoji } from '../utils/categoryEmoji';
 import type { CategorySource } from '../types/transaction';
 import type { Language } from '../utils/translations';
 
@@ -15,6 +17,10 @@ interface CategoryBadgeProps {
     subcategorySource?: CategorySource;
     /** Language for translation (defaults to 'en') - Story 9.12 AC #5 */
     lang?: Language;
+    /** Story 14.15: Show emoji icon inside badge */
+    showIcon?: boolean;
+    /** Story 14.15: Maximum width for text truncation (default: no max) */
+    maxWidth?: string;
 }
 
 /**
@@ -32,18 +38,27 @@ export const CategoryBadge: React.FC<CategoryBadgeProps> = ({
     categorySource,
     subcategorySource,
     lang = 'en',
+    showIcon = false,
+    maxWidth,
 }) => {
     // Translate category and subcategory for display (AC #5)
     const displayCategory = translateCategory(category, lang);
     const displaySubcategory = subcategory ? translateSubcategory(subcategory, lang) : undefined;
+    const emoji = getCategoryEmoji(category);
 
     return (
         <div className="flex flex-wrap gap-1 items-center">
             <span
-                className={`rounded-md font-bold uppercase text-white ${mini ? 'px-1.5 py-0.5 text-[8px]' : 'px-2 py-0.5 text-[10px]'}`}
-                style={{ backgroundColor: getColor(category) }} // Color uses English key
+                className={`rounded-full font-bold uppercase flex items-center gap-1 ${mini ? 'px-2 py-0.5 text-[8px]' : 'px-2.5 py-1 text-[10px]'}`}
+                // Story 14.21: Pills/badges always use colorful colors (not affected by fontColorMode)
+                style={{
+                    backgroundColor: getCategoryPillColors(category).bg,
+                    color: getCategoryPillColors(category).fg,
+                    maxWidth: maxWidth,
+                }}
             >
-                {displayCategory}
+                {showIcon && <span className={mini ? 'text-[10px]' : 'text-xs'}>{emoji}</span>}
+                <span className={maxWidth ? 'truncate' : ''}>{displayCategory}</span>
             </span>
             {categorySource === 'learned' && (
                 <span

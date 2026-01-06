@@ -1,0 +1,13 @@
+/**
+ * Settings Sub-Views
+ * Story 14.22: Barrel export for all settings sub-view components
+ */
+
+export { LimitesView } from './LimitesView';
+export { PerfilView } from './PerfilView';
+export { PreferenciasView } from './PreferenciasView';
+export { EscaneoView } from './EscaneoView';
+export { SuscripcionView } from './SuscripcionView';
+export { DatosAprendidosView } from './DatosAprendidosView';
+export { AppView } from './AppView';
+export { CuentaView } from './CuentaView';

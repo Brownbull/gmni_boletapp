@@ -393,15 +393,16 @@ export const InsightsView: React.FC<InsightsViewProps> = ({
               {selectedKeys.size} {t('selected') || 'selected'}
             </span>
           </div>
+          {/* Story 14.16b: Using --error CSS variable for destructive action */}
           <button
             onClick={handleDeleteSelected}
             disabled={selectedKeys.size === 0 || isDeleting}
             className="py-2 px-3 rounded-lg font-medium flex items-center gap-1.5 min-h-10 transition-colors text-sm"
             style={{
               backgroundColor: selectedKeys.size > 0
-                ? (theme === 'dark' ? 'rgba(220, 38, 38, 0.2)' : 'rgba(220, 38, 38, 0.1)')
+                ? (theme === 'dark' ? 'var(--negative-bg)' : 'var(--negative-bg)')
                 : (theme === 'dark' ? '#374151' : '#f3f4f6'),
-              color: selectedKeys.size > 0 ? '#dc2626' : (theme === 'dark' ? '#6b7280' : '#9ca3af'),
+              color: selectedKeys.size > 0 ? 'var(--error)' : (theme === 'dark' ? '#6b7280' : '#9ca3af'),
               opacity: isDeleting ? 0.6 : 1,
             }}
           >

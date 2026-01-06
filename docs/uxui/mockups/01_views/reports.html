@@ -580,6 +580,29 @@
       font-weight: 600;
       color: var(--text-primary);
       margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Transaction Count Badge (Story 14.16 Enhancement) */
+    .tx-count-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 500;
+      padding: 2px 6px;
+      border-radius: 9999px;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+    }
+    .tx-count-badge svg {
+      width: 10px;
+      height: 10px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
     }
     .report-meta {
       display: flex;
@@ -819,6 +842,136 @@
       color: var(--text-primary);
     }
 
+    /* ============================================
+       CATEGORY GROUPS (Story 14.15c / 14.16)
+       Semantic grouping with background colors
+       ============================================ */
+
+    /* Category Group Container */
+    .category-group {
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    /* Category Group Header */
+    .category-group-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+    .category-group-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .category-group-emoji {
+      font-size: 16px;
+    }
+    .category-group-name {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .category-group-amount {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    /* Category Group Items */
+    .category-group-items {
+      padding: 0 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* Individual Category in Group */
+    .category-group-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.5);
+    }
+    .category-group-item-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+    .category-group-item-info {
+      flex: 1;
+    }
+    .category-group-item-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .category-group-item-count {
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+    .category-group-item-amount {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Category Group Color Themes */
+    .category-group.food-dining {
+      background: #fef3c7; /* Warm yellow */
+    }
+    .category-group.food-dining .category-group-name,
+    .category-group.food-dining .category-group-amount {
+      color: #92400e;
+    }
+
+    .category-group.transport-auto {
+      background: #dbeafe; /* Blue */
+    }
+    .category-group.transport-auto .category-group-name,
+    .category-group.transport-auto .category-group-amount {
+      color: #1e40af;
+    }
+
+    .category-group.health-wellness {
+      background: #fce7f3; /* Pink */
+    }
+    .category-group.health-wellness .category-group-name,
+    .category-group.health-wellness .category-group-amount {
+      color: #9d174d;
+    }
+
+    .category-group.home-living {
+      background: #d1fae5; /* Green */
+    }
+    .category-group.home-living .category-group-name,
+    .category-group.home-living .category-group-amount {
+      color: #065f46;
+    }
+
+    .category-group.entertainment-leisure {
+      background: #ede9fe; /* Purple */
+    }
+    .category-group.entertainment-leisure .category-group-name,
+    .category-group.entertainment-leisure .category-group-amount {
+      color: #5b21b6;
+    }
+
+    .category-group.shopping-retail {
+      background: #fee2e2; /* Red/Coral */
+    }
+    .category-group.shopping-retail .category-group-name,
+    .category-group.shopping-retail .category-group-amount {
+      color: #991b1b;
+    }
+
     /* Report Content - Scrollable */
     .report-content-scroll {
       flex: 1;
@@ -931,12 +1084,18 @@
             </div>
           </div>
           <div class="report-cards">
-            <!-- Unread Report -->
+            <!-- Unread Report with Transaction Count Badge -->
             <div class="report-card weekly unread" onclick="openReport('weekly', 'S23')">
               <div class="unread-dot"></div>
               <div class="report-logo"><span>G</span></div>
               <div class="report-content">
-                <div class="report-title">Semana 23</div>
+                <div class="report-title">
+                  <span>Semana 23</span>
+                  <span class="tx-count-badge">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+                    12
+                  </span>
+                </div>
                 <div class="report-meta">
                   <span class="report-amount">$45.200</span>
                   <span class="report-trend up">
@@ -946,12 +1105,18 @@
                 </div>
               </div>
             </div>
-            <!-- Read Report -->
+            <!-- Read Report with Transaction Count Badge -->
             <div class="report-card weekly read" onclick="openReport('weekly', 'S22')">
               <div class="unread-dot"></div>
               <div class="report-logo"><span>G</span></div>
               <div class="report-content">
-                <div class="report-title">Semana 22</div>
+                <div class="report-title">
+                  <span>Semana 22</span>
+                  <span class="tx-count-badge">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+                    11
+                  </span>
+                </div>
                 <div class="report-meta">
                   <span class="report-amount">$42.000</span>
                   <span class="report-trend down">
@@ -961,12 +1126,18 @@
                 </div>
               </div>
             </div>
-            <!-- First Report -->
+            <!-- First Report with Transaction Count Badge -->
             <div class="report-card weekly read" onclick="openReport('weekly', 'S21')">
               <div class="unread-dot"></div>
               <div class="report-logo"><span>G</span></div>
               <div class="report-content">
-                <div class="report-title">Semana 21</div>
+                <div class="report-title">
+                  <span>Semana 21</span>
+                  <span class="tx-count-badge">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+                    8
+                  </span>
+                </div>
                 <div class="report-meta">
                   <span class="report-amount">$38.500</span>
                   <span class="report-first">· Tu primera semana</span>
@@ -1227,6 +1398,7 @@
     }
 
     // Report content templates with full temporal context
+    // Story 14.16: Added categoryGroups for semantic grouping with background colors
     const reportContent = {
       weekly: {
         S23: {
@@ -1235,10 +1407,35 @@
           amount: '$45.200',
           trend: '+8%',
           trendDirection: 'up',
+          transactionCount: 12,
+          // Individual categories (legacy, still used for simple breakdown)
           categories: [
             { icon: '🛒', name: 'Supermercado', count: '5 compras', amount: '$22.500', color: 'var(--primary-light)' },
             { icon: '🍔', name: 'Restaurantes', count: '3 compras', amount: '$12.800', color: '#fef3c7' },
             { icon: '🚗', name: 'Transporte', count: '4 compras', amount: '$9.900', color: '#dbeafe' }
+          ],
+          // Story 14.16: Grouped categories with semantic colors
+          categoryGroups: [
+            {
+              name: 'Alimentación',
+              emoji: '🍽️',
+              cssClass: 'food-dining',
+              totalAmount: '$35.300',
+              items: [
+                { icon: '🛒', name: 'Supermercado', count: '5 compras', amount: '$22.500' },
+                { icon: '🍔', name: 'Restaurantes', count: '3 compras', amount: '$12.800' }
+              ]
+            },
+            {
+              name: 'Transporte',
+              emoji: '🚗',
+              cssClass: 'transport-auto',
+              totalAmount: '$9.900',
+              items: [
+                { icon: '⛽', name: 'Gasolinera', count: '2 compras', amount: '$6.500' },
+                { icon: '🚌', name: 'Transporte público', count: '2 compras', amount: '$3.400' }
+              ]
+            }
           ]
         },
         S22: {
@@ -1443,24 +1640,59 @@
         `;
       }
 
-      // Categories breakdown
-      html += `
-        <div class="story-card">
-          <div class="story-label">📊 Desglose por categoría</div>
-          <div class="story-categories" style="margin-top: 12px;">
-            ${report.categories.map(cat => `
-              <div class="story-category-row">
-                <div class="story-category-icon" style="background: ${cat.color};">${cat.icon}</div>
-                <div class="story-category-info">
-                  <div class="story-category-name">${cat.name}</div>
-                  <div class="story-category-count">${cat.count}</div>
+      // Categories breakdown - Story 14.16: Use grouped categories if available
+      if (report.categoryGroups && report.categoryGroups.length > 0) {
+        // Render grouped categories with semantic backgrounds
+        html += `
+          <div class="story-card">
+            <div class="story-label">📊 Desglose por categoría</div>
+            <div style="margin-top: 12px;">
+              ${report.categoryGroups.map(group => `
+                <div class="category-group ${group.cssClass}">
+                  <div class="category-group-header">
+                    <div class="category-group-header-left">
+                      <span class="category-group-emoji">${group.emoji}</span>
+                      <span class="category-group-name">${group.name}</span>
+                    </div>
+                    <span class="category-group-amount">${group.totalAmount}</span>
+                  </div>
+                  <div class="category-group-items">
+                    ${group.items.map(item => `
+                      <div class="category-group-item">
+                        <div class="category-group-item-icon">${item.icon}</div>
+                        <div class="category-group-item-info">
+                          <div class="category-group-item-name">${item.name}</div>
+                          <div class="category-group-item-count">${item.count}</div>
+                        </div>
+                        <div class="category-group-item-amount">${item.amount}</div>
+                      </div>
+                    `).join('')}
+                  </div>
                 </div>
-                <div class="story-category-amount">${cat.amount}</div>
-              </div>
-            `).join('')}
+              `).join('')}
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      } else {
+        // Fallback to flat categories (legacy)
+        html += `
+          <div class="story-card">
+            <div class="story-label">📊 Desglose por categoría</div>
+            <div class="story-categories" style="margin-top: 12px;">
+              ${report.categories.map(cat => `
+                <div class="story-category-row">
+                  <div class="story-category-icon" style="background: ${cat.color};">${cat.icon}</div>
+                  <div class="story-category-info">
+                    <div class="story-category-name">${cat.name}</div>
+                    <div class="story-category-count">${cat.count}</div>
+                  </div>
+                  <div class="story-category-amount">${cat.amount}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
 
       document.getElementById('reportContentScroll').innerHTML = html;
 
