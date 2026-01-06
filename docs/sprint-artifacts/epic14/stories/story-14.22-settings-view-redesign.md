@@ -443,33 +443,82 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ---
 
+## Session 2026-01-05: Settings Refinements
+
+### Completed Work
+
+#### 1. Short Breadcrumb Titles ✅
+Fixed breadcrumb titles to avoid two-line displays in TopHeader:
+- Added `*Short` translation keys for all settings subviews
+- Updated App.tsx to use short keys for breadcrumb display
+
+| Subview | Full Title (ES) | Short Title (ES) |
+|---------|-----------------|------------------|
+| Limites | Limites de Gasto | **Limites** |
+| Perfil | Perfil | Perfil |
+| Preferencias | Preferencias | Preferencias |
+| Escaneo | Escaneo | Escaneo |
+| Suscripcion | Suscripcion | **Plan** |
+| Datos | Datos Aprendidos | **Memoria** |
+| App | App | App |
+| Cuenta | Datos y Cuenta | **Mis Datos** |
+
+#### 2. Removed Redundant SettingsBackHeader ✅
+Since TopHeader now shows breadcrumb navigation ("Ajustes > Section"), the `SettingsBackHeader` inside each subview was redundant:
+- Removed `SettingsBackHeader` from all 8 subviews
+- Removed `onBack` prop from all subview interfaces
+- Removed unused `handleBack` function from SettingsView.tsx
+
+#### 3. Theme-Aware Toast Notifications ✅
+Updated the global toast notification in App.tsx:
+- Uses `var(--primary)` for success (theme green)
+- Uses `var(--accent)` for info messages
+- Uses `var(--font-family)` for consistent typography
+- Added icons: checkmark for success, info circle for other
+
+### Deployment In Progress
+
+**PR #138**: https://github.com/Brownbull/gmni_boletapp/pull/138
+
+**CI Status**: Tests running (as of session end)
+
+**Test Fixes Applied:**
+1. `settings-export.test.tsx`: Tests `CuentaView` directly instead of old flat SettingsView
+2. `FilterChips.test.tsx`: Uses aria-label for Clear All button (now X icon), fixed category translation
+3. `analytics-workflows.test.tsx`: Added `HistoryFiltersProvider` wrapper for TrendsView
+4. `DashboardView.test.tsx`: Updated duplicate detection test for carousel layout
+
+**Files Changed in This Session:**
+- `src/utils/translations.ts` - Added `*Short` translation keys
+- `src/App.tsx` - Updated breadcrumb to use short keys, theme-aware toast
+- `src/views/SettingsView.tsx` - Removed `handleBack` function
+- `src/components/settings/subviews/*.tsx` - All 8 subviews: removed SettingsBackHeader
+- `tests/integration/settings-export.test.tsx` - Test CuentaView directly
+- `tests/unit/components/history/FilterChips.test.tsx` - Fixed Clear All and category tests
+- `tests/integration/analytics-workflows.test.tsx` - Added HistoryFiltersProvider
+- `tests/unit/views/DashboardView.test.tsx` - Updated duplicate detection test
+
+---
+
 ## Next Session: Items to Tackle
 
-### 1. Remove Unused onBack Prop from PerfilView
+### 1. Complete Deployment
+- Monitor PR #138 CI status
+- Merge to develop once tests pass
+- Promote to staging → main for production
+- Update Atlas memory with deployment lessons
 
-The `onBack` prop is currently unused (prefixed with `_onBack`) since navigation is now handled by TopHeader breadcrumb. Consider:
-- Remove from PerfilView interface OR
-- Keep for potential future use
-
-### 2. Other Sub-Views to Review Against Mockup
-
-Review and update each sub-view to match mockup styling:
-- PreferenciasView - Apply Tailwind input patterns
-- EscaneoView - Apply Tailwind input patterns
-- SuscripcionView - Review plan card styling
-- DatosAprendidosView - Review expandable sections
-- AppView - Review PWA/notification sections
-- CuentaView - Review destructive action styling
+### 2. Version Update in Settings
+- Update app version displayed in settings
+- Consider adding to Suscripcion or App subview
 
 ### 3. Animation Framework Integration (AC #14)
-
 Still pending - depends on Story 14.1/14.2:
 - PageTransition wrapper for main settings
 - Slide animation for sub-view transitions
 - Staggered entry for menu items
 
-### 4. Consider Phone Number Formatting
-
-Current implementation stores raw phone number without country code prefix. Consider:
-- Store country code + phone together OR
-- Store separately in preferences
+### 4. Mark Story Complete
+Once deployment is verified:
+- Update story status to "done"
+- Run retrospective if needed
