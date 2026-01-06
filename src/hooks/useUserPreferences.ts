@@ -21,6 +21,16 @@ interface UseUserPreferencesResult {
   loading: boolean;
   /** Update default currency */
   setDefaultCurrency: (currency: SupportedCurrency) => Promise<void>;
+  /** Story 14.22: Update default country */
+  setDefaultCountry: (country: string) => Promise<void>;
+  /** Story 14.22: Update default city */
+  setDefaultCity: (city: string) => Promise<void>;
+  /** Story 14.22: Update display name */
+  setDisplayName: (name: string) => Promise<void>;
+  /** Story 14.22: Update phone number */
+  setPhoneNumber: (phone: string) => Promise<void>;
+  /** Story 14.22: Update birth date */
+  setBirthDate: (date: string) => Promise<void>;
 }
 
 interface FirebaseServices {
@@ -41,6 +51,12 @@ export function useUserPreferences(
 ): UseUserPreferencesResult {
   const [preferences, setPreferences] = useState<UserPreferences>({
     defaultCurrency: 'CLP',
+    // Story 14.22: Initialize new fields
+    defaultCountry: '',
+    defaultCity: '',
+    displayName: '',
+    phoneNumber: '',
+    birthDate: '',
   });
   const [loading, setLoading] = useState(true);
 
@@ -88,9 +104,119 @@ export function useUserPreferences(
     [user, services]
   );
 
+  // Story 14.22: Update default country
+  const setDefaultCountry = useCallback(
+    async (country: string) => {
+      if (!user || !services) return;
+
+      // Optimistic update
+      setPreferences((prev) => ({ ...prev, defaultCountry: country }));
+
+      try {
+        await saveUserPreferences(services.db, user.uid, services.appId, {
+          defaultCountry: country,
+        });
+      } catch (error) {
+        console.error('Failed to save default country:', error);
+        const prefs = await getUserPreferences(services.db, user.uid, services.appId);
+        setPreferences(prefs);
+      }
+    },
+    [user, services]
+  );
+
+  // Story 14.22: Update default city
+  const setDefaultCity = useCallback(
+    async (city: string) => {
+      if (!user || !services) return;
+
+      // Optimistic update
+      setPreferences((prev) => ({ ...prev, defaultCity: city }));
+
+      try {
+        await saveUserPreferences(services.db, user.uid, services.appId, {
+          defaultCity: city,
+        });
+      } catch (error) {
+        console.error('Failed to save default city:', error);
+        const prefs = await getUserPreferences(services.db, user.uid, services.appId);
+        setPreferences(prefs);
+      }
+    },
+    [user, services]
+  );
+
+  // Story 14.22: Update display name
+  const setDisplayName = useCallback(
+    async (name: string) => {
+      if (!user || !services) return;
+
+      // Optimistic update
+      setPreferences((prev) => ({ ...prev, displayName: name }));
+
+      try {
+        await saveUserPreferences(services.db, user.uid, services.appId, {
+          displayName: name,
+        });
+      } catch (error) {
+        console.error('Failed to save display name:', error);
+        const prefs = await getUserPreferences(services.db, user.uid, services.appId);
+        setPreferences(prefs);
+      }
+    },
+    [user, services]
+  );
+
+  // Story 14.22: Update phone number
+  const setPhoneNumber = useCallback(
+    async (phone: string) => {
+      if (!user || !services) return;
+
+      // Optimistic update
+      setPreferences((prev) => ({ ...prev, phoneNumber: phone }));
+
+      try {
+        await saveUserPreferences(services.db, user.uid, services.appId, {
+          phoneNumber: phone,
+        });
+      } catch (error) {
+        console.error('Failed to save phone number:', error);
+        const prefs = await getUserPreferences(services.db, user.uid, services.appId);
+        setPreferences(prefs);
+      }
+    },
+    [user, services]
+  );
+
+  // Story 14.22: Update birth date
+  const setBirthDate = useCallback(
+    async (date: string) => {
+      if (!user || !services) return;
+
+      // Optimistic update
+      setPreferences((prev) => ({ ...prev, birthDate: date }));
+
+      try {
+        await saveUserPreferences(services.db, user.uid, services.appId, {
+          birthDate: date,
+        });
+      } catch (error) {
+        console.error('Failed to save birth date:', error);
+        const prefs = await getUserPreferences(services.db, user.uid, services.appId);
+        setPreferences(prefs);
+      }
+    },
+    [user, services]
+  );
+
   return {
     preferences,
     loading,
     setDefaultCurrency,
+    setDefaultCountry,
+    setDefaultCity,
+    setDisplayName,
+    setPhoneNumber,
+    setBirthDate,
   };
 }

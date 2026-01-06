@@ -27,6 +27,8 @@ export interface TemporalFilterState {
   month?: string;     // "2024-12"
   week?: number;      // 1-5 (week within month)
   day?: string;       // "2024-12-15"
+  /** Story 14.16: Date range for ISO week filtering (used by Reports navigation) */
+  dateRange?: { start: string; end: string }; // "2024-12-30" format
 }
 
 /**
@@ -50,12 +52,24 @@ export interface LocationFilterState {
 }
 
 /**
+ * Group filter state for filtering by custom transaction groups.
+ * Story 14.15b: Transaction Selection Mode & Groups
+ * Supports multi-select (comma-separated group IDs like category filter)
+ */
+export interface GroupFilterState {
+  /** Comma-separated group IDs to filter by, or undefined for no filter */
+  groupIds?: string;
+}
+
+/**
  * Complete history filter state.
  */
 export interface HistoryFilterState {
   temporal: TemporalFilterState;
   category: CategoryFilterState;
   location: LocationFilterState;
+  /** Story 14.15b: Group filter for custom transaction groups */
+  group: GroupFilterState;
 }
 
 /**
@@ -65,9 +79,11 @@ export type HistoryFilterAction =
   | { type: 'SET_TEMPORAL_FILTER'; payload: TemporalFilterState }
   | { type: 'SET_CATEGORY_FILTER'; payload: CategoryFilterState }
   | { type: 'SET_LOCATION_FILTER'; payload: LocationFilterState }
+  | { type: 'SET_GROUP_FILTER'; payload: GroupFilterState }
   | { type: 'CLEAR_TEMPORAL' }
   | { type: 'CLEAR_CATEGORY' }
   | { type: 'CLEAR_LOCATION' }
+  | { type: 'CLEAR_GROUP' }
   | { type: 'CLEAR_ALL_FILTERS' };
 
 /**
@@ -101,6 +117,7 @@ export function getDefaultFilterState(): HistoryFilterState {
     temporal: { level: 'all' },
     category: { level: 'all' },
     location: {},
+    group: {},
   };
 }
 
@@ -154,6 +171,19 @@ function historyFiltersReducer(
       return {
         ...state,
         location: {},
+      };
+
+    case 'SET_GROUP_FILTER':
+      // Story 14.15b: Update group while PRESERVING other filters
+      return {
+        ...state,
+        group: action.payload,
+      };
+
+    case 'CLEAR_GROUP':
+      return {
+        ...state,
+        group: {},
       };
 
     case 'CLEAR_ALL_FILTERS':
@@ -231,6 +261,14 @@ export function setCategoryFilter(payload: CategoryFilterState): HistoryFilterAc
  */
 export function setLocationFilter(payload: LocationFilterState): HistoryFilterAction {
   return { type: 'SET_LOCATION_FILTER', payload };
+}
+
+/**
+ * Creates a SET_GROUP_FILTER action.
+ * Story 14.15b: Transaction Selection Mode & Groups
+ */
+export function setGroupFilter(payload: GroupFilterState): HistoryFilterAction {
+  return { type: 'SET_GROUP_FILTER', payload };
 }
 
 /**
