@@ -29,12 +29,13 @@ interface CurrencyTagProps {
 export const CurrencyTag: React.FC<CurrencyTagProps> = ({
     currency,
     onCurrencyChange,
-    theme = 'light',
+    theme: _theme = 'light',
     t,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const isDark = theme === 'dark';
+    // theme kept for API compatibility but not used (colors now use CSS variables)
+    void _theme;
 
     // Close dropdown on click outside
     useEffect(() => {
@@ -54,9 +55,9 @@ export const CurrencyTag: React.FC<CurrencyTagProps> = ({
     const displaySymbol = currentCurrency.symbol;
 
     const inputStyle: React.CSSProperties = {
-        backgroundColor: isDark ? '#1e293b' : '#f8fafc',
-        borderColor: isDark ? '#475569' : '#e2e8f0',
-        color: 'var(--primary)',
+        backgroundColor: 'var(--bg-secondary)',
+        borderColor: 'var(--border-medium)',
+        color: 'var(--text-primary)',
     };
 
     return (
@@ -65,11 +66,11 @@ export const CurrencyTag: React.FC<CurrencyTagProps> = ({
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className="inline-flex items-center justify-center px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                className="inline-flex items-center justify-center px-2.5 py-1.5 rounded-full text-xs font-semibold transition-colors"
                 style={{
-                    backgroundColor: isOpen ? 'var(--primary-light)' : (isDark ? '#1e293b' : '#f1f5f9'),
-                    border: `1px solid ${isOpen ? 'var(--primary)' : (isDark ? '#475569' : '#cbd5e1')}`,
-                    color: isOpen ? 'var(--primary)' : (isDark ? '#94a3b8' : '#64748b'),
+                    backgroundColor: 'var(--bg-primary)',
+                    border: '1px solid var(--border-medium)',
+                    color: 'var(--text-secondary)',
                     minWidth: '40px',
                 }}
                 aria-expanded={isOpen}

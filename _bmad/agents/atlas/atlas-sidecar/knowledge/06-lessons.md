@@ -1,9 +1,9 @@
 # Historical Lessons (Retrospectives)
 
 > Section 6 of Atlas Memory
-> Last Sync: 2026-01-06
+> Last Sync: 2026-01-07
 > Last Optimized: 2026-01-06 (Generation 1)
-> Sources: Epic retrospectives, code reviews, Story 14.22
+> Sources: Epic retrospectives, code reviews, Story 14.22, Story 14.14b, Story 14.15b, Story 14.23
 
 ## What Worked Well
 
@@ -16,6 +16,9 @@
 | Parallel CI Jobs | 63% faster after Epic 8 optimization | Epic 8 |
 | Mockup-First Workflow | Design before implementation for UX | Epic 13 |
 | Persona-Driven Design | María, Diego, Rosa, Tomás inform decisions | Epic 13 |
+| Single Source of Truth Schema | Categories/currencies in shared/schema/ | Story 14.15b |
+| Token Optimization | V3 prompt 21% smaller than V2 | Story 14.15b |
+| Unified View Pattern | Consolidate similar views with mode prop | Story 14.23 |
 
 ## What Failed / What to Avoid
 
@@ -42,10 +45,36 @@
 - **Defensive Timestamps**: Always use try/catch with `?.toDate?.()?.getTime?.()`
 - **serverTimestamp()**: Use separate `*Create` interface with `FieldValue` for writes
 
+### Time Period Navigation (Story 14.14b)
+- **Cascade on Granularity Change**: When user switches from coarse to fine granularity (e.g., Quarter→Month), set to FIRST unit of current period, not first unit of year
+  - Q3 → Month = **July** (first month of Q3), not January
+  - Year → Quarter = Q1; Year → Month = January
+  - Month → Week = Week 1 of current month
+- **Preserve Context on Drill-Up**: When going from fine to coarse (Month→Year), keep current values
+- **Reference**: `TrendsView.tsx` `setTimePeriod()` callback (~lines 1840-1943)
+
 ### CI/CD (Story 14.22)
 - **Gitleaks Parallelized**: Separate job runs ~8s alongside setup (~3min)
 - Setup uses shallow clone; only gitleaks needs `fetch-depth: 0`
 - Total PR time: ~6 min
+
+### AI Prompt Optimization (Story 14.15b)
+- **V3 Prompt Production**: 21% token reduction (~229 tokens/scan) vs V2
+- **Currency Auto-Detection**: AI detects from receipt symbols/text, no app hint needed
+- **Single Source of Truth**: Categories in `shared/schema/categories.ts` (36 store + 39 item)
+- **Rule #10 Pattern**: "MUST have at least one item" - handles parking, utilities, single-charge receipts
+- **Legacy Normalization**: Map old categories at read time (Fresh Food → Produce, Drinks → Beverages)
+- **Prebuild Pattern**: `functions/package.json` copies prompts + schema, fixes import paths via sed
+- **Cost Savings**: ~$17/month at 1M scans
+- **Reference**: `prompt-testing/TOKEN-ANALYSIS.md`, `story-14.15b-v3-prompt-integration.md`
+
+### Unified View Pattern (Story 14.23)
+- **Mode Prop Pattern**: Use `mode: 'new' | 'existing'` to differentiate behaviors in single component
+- **State Machine for UI**: Scan button states (idle→pending→scanning→complete→error) drive visual feedback
+- **Gradual Migration**: Comment out old views with deprecation notice, don't delete immediately
+- **Preserve Navigation State**: Check `pendingScan.status` to restore correct state when user returns
+- **Parent-Managed State**: Keep transaction/scan state in App.tsx, pass callbacks to view
+- **Reference**: `src/views/TransactionEditorView.tsx`, `story-14.23-unified-transaction-editor.md`
 
 ---
 
@@ -70,6 +99,7 @@
 | useCallback for Convenience | Wrap hook functions with proper deps |
 | Unused State with Refs | Prefix with underscore: `_batchCancelRequested` |
 | Hook Wrapper for Services | Service = pure logic, hook = React state |
+| **Time Period Cascade** | When switching granularity, adjust related values (Q3→Month = July, not January) |
 
 ### SVG & Charts (#49-52, #62-64)
 | Pattern | Summary |

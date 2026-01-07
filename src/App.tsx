@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+// Story 14.15 Session 10: Icons for credit info modal
+import { Camera, Zap, X, ShoppingCart } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useTransactions } from './hooks/useTransactions';
 import { useCategoryMappings } from './hooks/useCategoryMappings';
@@ -7,6 +9,8 @@ import { useSubcategoryMappings } from './hooks/useSubcategoryMappings';
 // Story 11.4: Trusted merchants for auto-save
 import { useTrustedMerchants } from './hooks/useTrustedMerchants';
 import { useUserPreferences } from './hooks/useUserPreferences';
+// Persistent scan credits
+import { useUserCredits } from './hooks/useUserCredits';
 // Story 14.15 AC #5: Reduced motion check for haptic feedback
 import { useReducedMotion } from './hooks/useReducedMotion';
 // Story 10.6: Insight profile hook for insight generation
@@ -21,7 +25,9 @@ import { LoginScreen } from './views/LoginScreen';
 import { DashboardView } from './views/DashboardView';
 // Story 9.9: ScanView is deprecated - scan functionality is now in EditView
 // import { ScanView } from './views/ScanView';
-import { EditView } from './views/EditView';
+// Story 14.23: DEPRECATED - EditView replaced by TransactionEditorView
+// Keeping import commented for potential rollback
+// import { EditView } from './views/EditView';
 import { TrendsView } from './views/TrendsView';
 // Story 10a.4: Insights History View (replaces HistoryView in insights tab)
 import { InsightsView } from './views/InsightsView';
@@ -35,7 +41,11 @@ import { SettingsView } from './views/SettingsView';
 // Story 14.16: Weekly Report Story Format - Instagram-style swipeable report cards
 import { ReportsView } from './views/ReportsView';
 // Story 14.15: New scan result view matching scan-overlay.html mockup
-import { ScanResultView } from './views/ScanResultView';
+// Story 14.23: DEPRECATED - ScanResultView replaced by TransactionEditorView
+// Keeping import commented for potential rollback
+// import { ScanResultView } from './views/ScanResultView';
+// Story 14.23: Unified transaction editor (replaces ScanResultView + EditView)
+import { TransactionEditorView, type ScanButtonState } from './views/TransactionEditorView';
 import { Nav, ScanStatus } from './components/Nav';
 // Story 14.10: Top Header Bar component
 import { TopHeader } from './components/TopHeader';
@@ -47,8 +57,9 @@ import { BuildingProfileCard } from './components/insights/BuildingProfileCard';
 import { BatchSummary } from './components/insights/BatchSummary';
 // Story 11.1: Batch upload components for multi-image processing
 // Story 11.2: Quick Save Card for high-confidence scans
-// Story 14.15: ScanOverlay for non-blocking scan flow
-import { BatchUploadPreview, BatchProcessingProgress, MAX_BATCH_IMAGES, QuickSaveCard, ScanOverlay } from './components/scan';
+// Story 14.15: ScanOverlay for non-blocking scan flow, BatchCompleteModal for batch success
+// Story 14.15b: CurrencyMismatchDialog for currency auto-detection
+import { BatchUploadPreview, BatchProcessingProgress, MAX_BATCH_IMAGES, QuickSaveCard, ScanOverlay, BatchCompleteModal, CurrencyMismatchDialog } from './components/scan';
 import type { BatchItemResult } from './components/scan';
 // Story 14.15: Scan overlay state machine hook
 import { useScanOverlayState } from './hooks/useScanOverlayState';
@@ -68,6 +79,8 @@ import { getQuarterFromMonth } from './utils/analyticsHelpers';
 import type { AnalyticsNavigationState } from './types/analytics';
 import { HistoryFiltersProvider, type HistoryFilterState, type TemporalFilterState } from './contexts/HistoryFiltersContext';
 import type { HistoryNavigationPayload } from './views/TrendsView';
+// Story 14.22: Import group expansion functions for navigation filters
+import { expandStoreCategoryGroup, expandItemCategoryGroup, type StoreCategoryGroup, type ItemCategoryGroup } from './config/categoryColors';
 import { analyzeReceipt, ReceiptType } from './services/gemini';
 import { SupportedCurrency } from './services/userPreferencesService';
 import {
@@ -91,7 +104,7 @@ import { Transaction, StoreCategory } from './types/transaction';
 import { Insight } from './types/insight';
 import { Language, Currency, Theme, ColorTheme, FontColorMode } from './types/settings';
 // Story 9.10: Persistent scan state management
-import { PendingScan, UserCredits, DEFAULT_CREDITS, createPendingScan } from './types/scan';
+import { PendingScan, createPendingScan } from './types/scan';
 import { formatCurrency } from './utils/currency';
 import { formatDate } from './utils/date';
 import { getSafeDate, parseStrictNumber } from './utils/validation';
@@ -111,7 +124,53 @@ import { getCitiesForCountry } from './data/locations';
 // Story 14.14: Added 'history' view for transaction list (accessible via profile menu)
 // Story 14.16: Added 'reports' view for weekly report cards (accessible via profile menu)
 // Story 14.15: Added 'scan-result' view for new scan flow UI (mockup-compliant layout)
-type View = 'dashboard' | 'scan' | 'scan-result' | 'edit' | 'trends' | 'insights' | 'settings' | 'alerts' | 'batch-capture' | 'batch-review' | 'history' | 'reports';
+// Story 14.23: Added 'transaction-editor' view for unified transaction editor (replaces scan-result + edit)
+type View = 'dashboard' | 'scan' | 'scan-result' | 'edit' | 'transaction-editor' | 'trends' | 'insights' | 'settings' | 'alerts' | 'batch-capture' | 'batch-review' | 'history' | 'reports';
+
+/**
+ * Story 14.15b: Reconcile transaction total with sum of items
+ * If there's a discrepancy, adds a surplus or discount item to balance
+ * @param items - Array of transaction items
+ * @param receiptTotal - Total from the receipt
+ * @param language - Language for item names
+ * @returns Object with reconciled items and whether a discrepancy was found
+ */
+function reconcileItemsTotal(
+    items: Array<{ name: string; price: number; category?: string; qty?: number; subcategory?: string }>,
+    receiptTotal: number,
+    language: 'en' | 'es'
+): { items: typeof items; hasDiscrepancy: boolean; discrepancyAmount: number } {
+    // Calculate sum of items (price * qty for each)
+    const itemsSum = items.reduce((sum, item) => {
+        const qty = item.qty ?? 1;
+        return sum + (item.price * qty);
+    }, 0);
+
+    // Round to 2 decimal places for comparison (avoid floating point issues)
+    const roundedItemsSum = Math.round(itemsSum * 100) / 100;
+    const roundedReceiptTotal = Math.round(receiptTotal * 100) / 100;
+    const difference = Math.round((roundedReceiptTotal - roundedItemsSum) * 100) / 100;
+
+    // If difference is negligible (less than 1 unit of currency), no adjustment needed
+    if (Math.abs(difference) < 1) {
+        return { items, hasDiscrepancy: false, discrepancyAmount: 0 };
+    }
+
+    // Create adjustment item
+    const translations = TRANSLATIONS[language];
+    const adjustmentItem = {
+        name: difference > 0 ? translations.surplusItem : translations.discountItem,
+        price: difference, // Positive for surplus, negative for discount
+        category: 'Other' as const,
+        qty: 1,
+    };
+
+    return {
+        items: [...items, adjustmentItem],
+        hasDiscrepancy: true,
+        discrepancyAmount: difference,
+    };
+}
 
 function App() {
     const { user, services, initError, signIn, signInWithTestCredentials, signOut } = useAuth();
@@ -148,7 +207,14 @@ function App() {
         setDisplayName: _setDisplayNamePref,
         setPhoneNumber: _setPhoneNumberPref,
         setBirthDate: _setBirthDatePref,
+        // Story 14.22: Font family preference (persisted to Firestore)
+        setFontFamily: setFontFamilyPref,
     } = useUserPreferences(user, services);
+    // Persistent scan credits from Firestore
+    const {
+        credits: userCredits,
+        deductCredits: deductUserCredits,
+    } = useUserCredits(user, services);
     // Story 10.6: Insight profile for insight generation
     const {
         profile: insightProfile,
@@ -184,15 +250,17 @@ function App() {
     const [scanImages, setScanImages] = useState<string[]>([]);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [scanError, setScanError] = useState<string | null>(null);
+    // Story 14.15b: Re-scan loading state
+    const [isRescanning, setIsRescanning] = useState(false);
     // Story 9.8: Scan options state
     const [scanStoreType, setScanStoreType] = useState<ReceiptType>('auto');
     const [scanCurrency, setScanCurrency] = useState<SupportedCurrency>('CLP');
     const [currentTransaction, setCurrentTransaction] = useState<Transaction | null>(null);
-    const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
+    // Story 14.23: editingItemIndex was used by EditView, kept for potential rollback
+    const [_editingItemIndex, _setEditingItemIndex] = useState<number | null>(null);
     // Story 9.10: Persistent scan state - maintains scan across navigation
     const [pendingScan, setPendingScan] = useState<PendingScan | null>(null);
-    // Story 9.10: User credits for scan (MVP placeholder: 900 credits)
-    const [userCredits, setUserCredits] = useState<UserCredits>(DEFAULT_CREDITS);
+    // Note: userCredits now managed by useUserCredits hook (line ~157)
     // Story 10.6: Insight card state (AC #1, #4)
     const [currentInsight, setCurrentInsight] = useState<Insight | null>(null);
     const [showInsightCard, setShowInsightCard] = useState(false);
@@ -215,18 +283,35 @@ function App() {
     const [isQuickSaving, setIsQuickSaving] = useState(false);
     // Story 11.3: Track when EditView should animate items (fresh scan result)
     const [animateEditViewItems, setAnimateEditViewItems] = useState(false);
+    // Story 14.23: Scan button state for TransactionEditorView
+    const [scanButtonState, setScanButtonState] = useState<ScanButtonState>('idle');
+    // Story 14.23: Transaction editor mode ('new' for new transactions, 'existing' for editing)
+    const [transactionEditorMode, setTransactionEditorMode] = useState<'new' | 'existing'>('new');
     // Story 11.4: Trust Merchant Prompt state (AC #2, #3, #4)
     const [showTrustPrompt, setShowTrustPrompt] = useState(false);
     const [trustPromptData, setTrustPromptData] = useState<TrustPromptEligibility | null>(null);
     // Story 12.4: Credit Warning Dialog state (AC #1, #5, #7)
     const [showCreditWarning, setShowCreditWarning] = useState(false);
     const [creditCheckResult, setCreditCheckResult] = useState<CreditCheckResult | null>(null);
+    // Story 14.15 Session 10: Credit Info Modal state (tappable from Nav credit badges)
+    const [showCreditInfoModal, setShowCreditInfoModal] = useState(false);
     // Story 12.1: Batch Capture Mode state (AC #1)
     const [isBatchCaptureMode, setIsBatchCaptureMode] = useState(false);
     // Story 12.2 & 12.3: Batch processing and review state
     const batchProcessing = useBatchProcessing(3); // Max 3 concurrent API calls
     const [batchReviewResults, setBatchReviewResults] = useState<typeof batchProcessing.results>([]);
     const [batchEditingReceipt, setBatchEditingReceipt] = useState<{ receipt: BatchReceipt; index: number; total: number } | null>(null);
+    // Story 14.15: Batch complete modal state
+    const [showBatchCompleteModal, setShowBatchCompleteModal] = useState(false);
+    const [batchCompletedTransactions, setBatchCompletedTransactions] = useState<Transaction[]>([]);
+    const [batchCreditsUsed, setBatchCreditsUsed] = useState(0);
+    // Story 14.15b: Currency mismatch dialog state (AC #2)
+    const [showCurrencyMismatch, setShowCurrencyMismatch] = useState(false);
+    const [currencyMismatchData, setCurrencyMismatchData] = useState<{
+        detectedCurrency: string;
+        pendingTransaction: Transaction;
+        hasDiscrepancy?: boolean; // Story 14.15b: Track if items total didn't match receipt
+    } | null>(null);
 
     // Story 14.15: Scan overlay state machine for non-blocking scan flow (AC #1, #4)
     const scanOverlay = useScanOverlayState();
@@ -257,6 +342,10 @@ function App() {
         if (saved === 'colorful' || saved === 'plain') return saved;
         return 'colorful'; // Default to colorful
     });
+    // Story 14.22: Font family selection - now persisted to Firestore via useUserPreferences
+    // Derive from userPreferences for convenience (defaults to 'outfit')
+    const fontFamily = userPreferences.fontFamily || 'outfit';
+
     // Story 9.3: Default location settings (used when scan doesn't detect location)
     // Story 14.22: Now using Firestore-backed preferences instead of localStorage
     // These derived values are for convenience - actual data comes from userPreferences
@@ -279,6 +368,10 @@ function App() {
     const [analyticsInitialState, setAnalyticsInitialState] = useState<AnalyticsNavigationState | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    // Story 14.22: Main content scroll container ref for scroll position management
+    const mainRef = useRef<HTMLDivElement>(null);
+    // Story 14.22: Track scroll positions per view for back navigation
+    const scrollPositionsRef = useRef<Record<string, number>>({});
     const t = (k: string) => (TRANSLATIONS[lang] as any)[k] || k;
 
     // Extract distinct aliases from transactions
@@ -308,6 +401,9 @@ function App() {
         localStorage.setItem('fontColorMode', fontColorMode);
     }, [fontColorMode]);
 
+    // Story 14.22: Font family persistence REMOVED from localStorage
+    // Now stored in Firestore via useUserPreferences.setFontFamily
+
     // Story 9.3: Default location persistence
     // Story 14.22: REMOVED localStorage persistence - now stored in Firestore via useUserPreferences
     // The setDefaultCountryPref and setDefaultCityPref functions handle saving to Firestore
@@ -321,11 +417,12 @@ function App() {
 
     // Story 9.20: Clear pending history filters when navigating AWAY from insights view
     // Story 10a.3: Renamed 'list' to 'insights'
-    // This ensures filters are applied when entering insights view, but cleared when leaving
-    // so that returning to insights view normally shows unfiltered transactions
+    // Story 14.22: Clear pending filters when navigating away from history/insights views
+    // This ensures filters are applied when entering these views, but cleared when leaving
+    // so that returning normally shows unfiltered transactions
     useEffect(() => {
-        // Clear filters when navigating away from insights view (not when entering it)
-        if (view !== 'insights' && pendingHistoryFilters) {
+        // Clear filters when navigating away from history or insights view (not when entering them)
+        if (view !== 'insights' && view !== 'history' && pendingHistoryFilters) {
             setPendingHistoryFilters(null);
         }
     }, [view]); // Only depend on view, not pendingHistoryFilters
@@ -343,13 +440,25 @@ function App() {
     // to ensure CSS variables are available when children compute memoized data
 
     // Story 14.15b: Navigate to a view while tracking the previous view for back navigation
+    // Story 14.22: Also saves scroll position before navigating
     const navigateToView = useCallback((targetView: View) => {
+        // Save current scroll position before navigating
+        if (mainRef.current) {
+            scrollPositionsRef.current[view] = mainRef.current.scrollTop;
+        }
         setPreviousView(view);
         setView(targetView);
+        // Reset scroll to top for the new view
+        setTimeout(() => {
+            if (mainRef.current) {
+                mainRef.current.scrollTo(0, 0);
+            }
+        }, 0);
     }, [view]);
 
     // Story 14.15b: Navigate back to the previous view (fallback to dashboard)
     // Story 14.16b: If previousView is same as current or invalid, always fallback to dashboard
+    // Story 14.22: Also restores scroll position when navigating back
     const navigateBack = useCallback(() => {
         // Always go to dashboard if:
         // 1. previousView is the same as current view (would be a no-op)
@@ -357,6 +466,13 @@ function App() {
         // 3. previousView is 'dashboard' (already the home screen)
         const targetView = (previousView && previousView !== view) ? previousView : 'dashboard';
         setView(targetView);
+        // Restore scroll position for the target view
+        setTimeout(() => {
+            if (mainRef.current) {
+                const savedPosition = scrollPositionsRef.current[targetView] || 0;
+                mainRef.current.scrollTo(0, savedPosition);
+            }
+        }, 0);
     }, [previousView, view]);
 
     // Story 9.9: Unified new transaction handler
@@ -370,8 +486,10 @@ function App() {
             return;
         }
 
-        // Story 9.10 AC#2: Check for existing pending scan
-        if (pendingScan) {
+        // Story 9.10 AC#2: Check for existing pending scan WITH meaningful content
+        // Story 14.15: Only restore if there are images or analyzed transaction
+        // Don't restore empty pending scans (e.g., from cancelled file picker)
+        if (pendingScan && (pendingScan.images.length > 0 || pendingScan.analyzedTransaction)) {
             // Restore pending scan state
             setScanImages(pendingScan.images);
             setScanError(pendingScan.error || null);
@@ -386,10 +504,29 @@ function App() {
                     items: []
                 });
             }
-            setView('edit');
+            // Story 14.23: Restore to unified TransactionEditorView
+            // Determine scan button state based on pending scan status
+            setTransactionEditorMode('new');
+            if (pendingScan.status === 'analyzing') {
+                // Scan is in progress - show scanning state
+                setScanButtonState('scanning');
+            } else if (pendingScan.analyzedTransaction) {
+                // Scan completed - show complete state
+                setScanButtonState('complete');
+            } else if (pendingScan.images.length > 0) {
+                // Has images but not processed - show pending state
+                setScanButtonState('pending');
+            } else {
+                // No images - show idle state
+                setScanButtonState('idle');
+            }
+            navigateToView('transaction-editor');
             // Don't auto-open file picker when returning to pending scan
             return;
         }
+
+        // Clear any empty/stale pending scan
+        setPendingScan(null);
 
         // No pending scan - create fresh session
         setScanImages([]);
@@ -406,20 +543,21 @@ function App() {
         });
         // Story 9.10 AC#1, AC#3: Create new pending scan session
         setPendingScan(createPendingScan());
-        // Story 14.15: If auto-opening file picker (camera button), go directly to scan-result view
-        // The file picker will open and after image selection, processing starts automatically
+        // Story 14.23: Use unified TransactionEditorView for new transactions
+        // Camera button opens file picker, manual "+" goes directly to editor for manual entry
         if (autoOpenFilePicker) {
-            setView('scan-result');
+            navigateToTransactionEditor('new');
             setTimeout(() => fileInputRef.current?.click(), 200);
         } else {
-            // Manual "+" button - go to edit view for manual entry
-            setView('edit');
+            // Manual "+" button - go to transaction editor for manual entry
+            navigateToTransactionEditor('new');
         }
     };
 
     // Story 9.9: Handler to remove a photo from scan images
     // Story 9.10: Also update pending scan state
-    const handleRemovePhoto = (index: number) => {
+    // Story 14.23: DEPRECATED - was used by EditView/ScanResultView, kept for potential rollback
+    const _handleRemovePhoto = (index: number) => {
         setScanImages(prev => {
             const updatedImages = prev.filter((_, i) => i !== index);
             // Story 9.10: Update pending scan with removed image
@@ -432,16 +570,40 @@ function App() {
             return updatedImages;
         });
     };
+    void _handleRemovePhoto; // Suppress unused warning
 
     // Story 9.9: Cancel handler for new transactions
     // Story 9.10 AC#4: Clear pending scan on cancel
-    const handleCancelNewTransaction = () => {
+    // Story 14.23: DEPRECATED - was used by EditView/ScanResultView, kept for potential rollback
+    const _handleCancelNewTransaction = () => {
         setScanImages([]);
         setScanError(null);
         setCurrentTransaction(null);
         // Story 9.10 AC#4: Clear pending scan state on cancel
         setPendingScan(null);
+        // Story 14.23: Reset scan button state
+        setScanButtonState('idle');
         setView('dashboard');
+    };
+    void _handleCancelNewTransaction; // Suppress unused warning
+
+    // Story 14.23: Navigate to unified transaction editor
+    // mode: 'new' for new transactions, 'existing' for editing
+    const navigateToTransactionEditor = (mode: 'new' | 'existing', transaction?: Transaction | null) => {
+        setTransactionEditorMode(mode);
+        setScanButtonState(mode === 'new' ? 'idle' : (transaction?.thumbnailUrl ? 'complete' : 'idle'));
+        if (transaction) {
+            setCurrentTransaction(transaction as any);
+        } else if (mode === 'new') {
+            setCurrentTransaction({
+                merchant: '',
+                date: getSafeDate(null),
+                total: 0,
+                category: 'Supermarket',
+                items: []
+            });
+        }
+        navigateToView('transaction-editor');
     };
 
     // Legacy scan handler (for backward compatibility during transition)
@@ -478,7 +640,7 @@ function App() {
             return;
         }
 
-        // Single image - Story 14.15: Go to scan-result view and auto-process
+        // Single image - Story 14.15: Go to scan-result view with pending image (NOT auto-process)
         const updatedImages = [...scanImages, ...newImages];
         setScanImages(updatedImages);
         // Story 9.10 AC#3: Update pending scan with new images
@@ -489,13 +651,10 @@ function App() {
                 status: 'images_added'
             });
         }
-        // Story 14.15: Navigate to scan-result view and auto-start processing
+        // Story 14.15: Navigate to scan-result view - user must click to process
+        // Don't auto-process - wait for user to click the scan button
         setView('scan-result');
         if (fileInputRef.current) fileInputRef.current.value = '';
-        // Auto-trigger scan processing after a brief delay for state to settle
-        setTimeout(() => {
-            processScan();
-        }, 100);
     };
 
     const processScan = async () => {
@@ -519,11 +678,8 @@ function App() {
             setPendingScan({ ...pendingScan, status: 'analyzing' });
         }
         try {
-            // Story 9.10 AC#6: Deduct 1 credit when scan starts
-            setUserCredits(prev => ({
-                remaining: prev.remaining - 1,
-                used: prev.used + 1
-            }));
+            // Story 9.10 AC#6: Deduct 1 credit when scan starts (persisted to Firestore)
+            await deductUserCredits(1);
 
             // Story 9.8: Pass scan options (currency and store type) to analyzeReceipt
             // Story 14.15 AC #4: Add timeout handling for network requests
@@ -568,6 +724,21 @@ function App() {
                 finalCity = defaultCity;
             }
 
+            // Story 14.15b: Map 'quantity' from AI to 'qty' field, default to 1
+            const parsedItems = (result.items || []).map(i => ({
+                ...i,
+                price: parseStrictNumber(i.price),
+                qty: (i as any).quantity ?? i.qty ?? 1,
+            }));
+
+            // Story 14.15b: Reconcile items total with receipt total
+            // If sum of items doesn't match receipt total, add an adjustment item
+            const { items: reconciledItems, hasDiscrepancy: scanHasDiscrepancy } = reconcileItemsTotal(
+                parsedItems,
+                finalTotal,
+                lang
+            );
+
             // Build initial transaction from Gemini response
             const initialTransaction: Transaction = {
                 merchant: merchant,
@@ -575,10 +746,7 @@ function App() {
                 total: finalTotal,
                 category: result.category || 'Other',
                 alias: merchant,
-                items: (result.items || []).map(i => ({
-                    ...i,
-                    price: parseStrictNumber(i.price)
-                })),
+                items: reconciledItems,
                 // Include image URLs from Cloud Function response
                 imageUrls: result.imageUrls,
                 thumbnailUrl: result.thumbnailUrl,
@@ -626,6 +794,34 @@ function App() {
                 }
             }
 
+            // Story 14.15b AC #2: Currency auto-detection handling
+            // Compare AI-detected currency with user's default currency
+            const detectedCurrency = finalTransaction.currency;
+            const userDefaultCurrency = userPreferences.defaultCurrency;
+
+            // If AI detected a currency different from user's default, show dialog
+            if (detectedCurrency && userDefaultCurrency && detectedCurrency !== userDefaultCurrency) {
+                // Store pending transaction and show currency mismatch dialog
+                setCurrencyMismatchData({
+                    detectedCurrency,
+                    pendingTransaction: finalTransaction,
+                    hasDiscrepancy: scanHasDiscrepancy, // Story 14.15b: Pass discrepancy flag
+                });
+                setShowCurrencyMismatch(true);
+                // Don't proceed with normal flow - wait for user's choice
+                setIsAnalyzing(false);
+                scanOverlay.setReady();
+                return;
+            }
+
+            // If AI returned null/undefined, use user's default currency
+            if (!detectedCurrency && userDefaultCurrency) {
+                finalTransaction = {
+                    ...finalTransaction,
+                    currency: userDefaultCurrency,
+                };
+            }
+
             setCurrentTransaction(finalTransaction);
             // Story 9.10: Update pending scan with analyzed transaction (status = 'analyzed')
             // Keep images for reference, but mark as analyzed
@@ -636,6 +832,8 @@ function App() {
                     status: 'analyzed'
                 });
             }
+            // Story 14.23: Update scan button state to complete for TransactionEditorView
+            setScanButtonState('complete');
             // Clear local scan images since they're now stored in transaction
             setScanImages([]);
 
@@ -644,6 +842,11 @@ function App() {
             // Story 14.15 AC #5: Haptic feedback on scan success (only when motion enabled)
             if (!prefersReducedMotion && navigator.vibrate) {
                 navigator.vibrate(50); // Brief success haptic
+            }
+
+            // Story 14.15b: Show warning if items total didn't match receipt total
+            if (scanHasDiscrepancy) {
+                setToastMessage({ text: t('discrepancyWarning'), type: 'info' });
             }
 
             // Story 11.4: Check if merchant is trusted for auto-save (AC #5)
@@ -705,10 +908,12 @@ function App() {
                     setQuickSaveConfidence(confidence);
                     setShowQuickSaveCard(true);
                 } else {
-                    // Low confidence: Go to EditView (AC #6)
+                    // Low confidence: Stay on TransactionEditorView for editing
+                    // Story 14.23: View is already 'transaction-editor', ScanCompleteModal will show
                     // Story 11.3: Enable item animation for fresh scan results
                     setAnimateEditViewItems(true);
-                    setView('edit');
+                    // Note: No setView call needed - view is already 'transaction-editor'
+                    // and ScanCompleteModal shows automatically via useEffect
                 }
             }
         } catch (e: any) {
@@ -717,6 +922,8 @@ function App() {
             // Story 14.15 AC #4: Detect timeout vs other errors and show in overlay
             const isTimeout = e.message?.includes('timed out');
             scanOverlay.setError(isTimeout ? 'timeout' : 'api', errorMessage);
+            // Story 14.23: Update scan button state to error for TransactionEditorView
+            setScanButtonState('error');
             // Story 9.10: Update pending scan with error status
             if (pendingScan) {
                 setPendingScan({
@@ -728,6 +935,92 @@ function App() {
             // Note: Toast removed - error now shown in ScanOverlay (Story 14.15 AC #4)
         } finally {
             setIsAnalyzing(false);
+        }
+    };
+
+    // Story 14.15b: Re-scan existing transaction with stored imageUrls
+    const handleRescan = async () => {
+        if (!currentTransaction?.id || !currentTransaction.imageUrls?.length) {
+            console.error('Cannot rescan: no transaction or images');
+            return;
+        }
+        if (userCredits.remaining <= 0) {
+            setToastMessage({ text: t('noCreditsMessage'), type: 'info' });
+            return;
+        }
+
+        setIsRescanning(true);
+        try {
+            // Deduct 1 credit for re-scan
+            await deductUserCredits(1);
+
+            // Call analyzeReceipt with stored images (using imageUrls directly)
+            // V3 prompt auto-detects currency, but we still pass empty string (required param)
+            // Story 14.15b: Pass isRescan=true so Cloud Function fetches from URLs
+            const result = await analyzeReceipt(
+                currentTransaction.imageUrls,
+                '', // V3 auto-detects currency, empty string skips currency hint
+                undefined,  // receiptType auto-detected
+                true  // isRescan - images are URLs, not base64
+            );
+
+            // Process the result similar to processScan
+            let d = getSafeDate(result.date);
+            if (new Date(d).getFullYear() > new Date().getFullYear())
+                d = new Date().toISOString().split('T')[0];
+
+            const receiptTotal = parseStrictNumber(result.total);
+
+            // Story 14.15b: Map 'quantity' from AI to 'qty' field
+            const parsedItems = (result.items || []).map(i => ({
+                ...i,
+                price: parseStrictNumber(i.price),
+                qty: (i as any).quantity ?? i.qty ?? 1,
+            }));
+
+            // Story 14.15b: Reconcile items total with receipt total
+            const { items: reconciledItems, hasDiscrepancy } = reconcileItemsTotal(
+                parsedItems,
+                receiptTotal,
+                lang
+            );
+
+            // Preserve user-edited fields, update AI-extracted fields
+            const updatedTransaction: Transaction = {
+                ...currentTransaction,
+                // AI-extracted fields (overwrite)
+                merchant: result.merchant || currentTransaction.merchant,
+                date: d,
+                total: receiptTotal,
+                category: result.category || currentTransaction.category,
+                items: reconciledItems,
+                // V3 fields
+                time: result.time || currentTransaction.time,
+                country: result.country || currentTransaction.country,
+                city: result.city || currentTransaction.city,
+                currency: result.currency || currentTransaction.currency,
+                receiptType: result.receiptType,
+                promptVersion: result.promptVersion,
+                // Preserve existing imageUrls (already stored)
+                imageUrls: currentTransaction.imageUrls,
+                thumbnailUrl: currentTransaction.thumbnailUrl,
+                // Keep the alias if user edited it
+                alias: currentTransaction.alias || result.merchant,
+            };
+
+            setCurrentTransaction(updatedTransaction);
+
+            // Show appropriate toast message
+            if (hasDiscrepancy) {
+                setToastMessage({ text: t('discrepancyWarning'), type: 'info' });
+            } else {
+                setToastMessage({ text: t('rescanSuccess'), type: 'success' });
+            }
+        } catch (e: any) {
+            console.error('Re-scan failed:', e);
+            setToastMessage({ text: t('rescanError'), type: 'info' }); // 'error' not in type, use 'info'
+        } finally {
+            setIsRescanning(false);
         }
     };
 
@@ -811,9 +1104,11 @@ function App() {
                     total: finalTotal,
                     category: result.category || 'Other',
                     alias: merchant,
+                    // Story 14.15b: Map 'quantity' from AI to 'qty' field, default to 1
                     items: (result.items || []).map(item => ({
                         ...item,
-                        price: parseStrictNumber(item.price)
+                        price: parseStrictNumber(item.price),
+                        qty: (item as any).quantity ?? item.qty ?? 1,
                     })),
                     imageUrls: result.imageUrls,
                     thumbnailUrl: result.thumbnailUrl,
@@ -857,11 +1152,8 @@ function App() {
                 const transactionId = await firestoreAddTransaction(db, user.uid, appId, finalTx);
                 const txWithId = { ...finalTx, id: transactionId };
 
-                // Deduct credit AFTER successful save (prevents credit loss on API failure)
-                setUserCredits(prev => ({
-                    remaining: prev.remaining - 1,
-                    used: prev.used + 1
-                }));
+                // Deduct credit AFTER successful save (prevents credit loss on API failure, persisted to Firestore)
+                await deductUserCredits(1);
 
                 // Add to batch session for summary
                 const insight = await generateInsightForTransaction(
@@ -953,7 +1245,8 @@ function App() {
     // Called when user clicks "Procesar todas" in BatchUploadPreview
     const handleBatchConfirmWithCreditCheck = () => {
         // AC #1: Pre-batch warning shows credit cost before processing
-        const result = checkCreditSufficiency(userCredits, batchImages.length);
+        // Story 14.15 Session 10: Use super credits for batch mode
+        const result = checkCreditSufficiency(userCredits, batchImages.length, true);
         setCreditCheckResult(result);
         setShowCreditWarning(true);
     };
@@ -996,19 +1289,24 @@ function App() {
         setBatchImages(prev => prev.slice(0, maxProcessable));
         setShowCreditWarning(false);
         // Re-check credits with reduced batch
-        const newResult = checkCreditSufficiency(userCredits, maxProcessable);
+        // Story 14.15 Session 10: Use super credits for batch mode
+        const newResult = checkCreditSufficiency(userCredits, maxProcessable, true);
         setCreditCheckResult(newResult);
         setShowCreditWarning(true);
     };
 
     // Story 12.3: Batch Review handlers (AC #4, #6, #7)
     // Handle edit receipt from batch review
+    // Story 14.23: Updated to use TransactionEditorView
     const handleBatchEditReceipt = (receipt: BatchReceipt, batchIndex: number, batchTotal: number) => {
         setBatchEditingReceipt({ receipt, index: batchIndex, total: batchTotal });
-        // Set up edit view with the receipt's transaction
+        // Set up transaction editor with the receipt's transaction
         setCurrentTransaction(receipt.transaction);
         setScanImages(receipt.imageUrl ? [receipt.imageUrl] : []);
-        setView('edit');
+        // Story 14.23: Use unified TransactionEditorView for batch editing
+        setTransactionEditorMode('existing'); // Treat as existing since it's already processed
+        setScanButtonState(receipt.imageUrl ? 'complete' : 'idle');
+        navigateToView('transaction-editor');
     };
 
     // Handle back from batch review (return to dashboard, discard batch)
@@ -1020,23 +1318,22 @@ function App() {
     };
 
     // Handle save all complete from batch review
-    const handleBatchSaveComplete = async (savedTransactionIds: string[]) => {
-        // Deduct credits for saved transactions
-        setUserCredits(prev => ({
-            remaining: prev.remaining - savedTransactionIds.length,
-            used: prev.used + savedTransactionIds.length
-        }));
+    // Story 14.15: Now receives saved transactions for batch complete modal
+    const handleBatchSaveComplete = async (savedTransactionIds: string[], savedTransactions: Transaction[]) => {
+        const creditsUsed = savedTransactionIds.length;
+
+        // Deduct credits for saved transactions (persisted to Firestore)
+        await deductUserCredits(creditsUsed);
 
         // Clear batch state
         setBatchReviewResults([]);
         setBatchImages([]);
         batchProcessing.reset();
 
-        // Show success and return to dashboard
-        setToastMessage({
-            text: t('batchSaveSuccess').replace('{count}', String(savedTransactionIds.length)),
-            type: 'info'
-        });
+        // Story 14.15: Show batch complete modal instead of toast
+        setBatchCompletedTransactions(savedTransactions);
+        setBatchCreditsUsed(creditsUsed);
+        setShowBatchCompleteModal(true);
         setView('dashboard');
     };
 
@@ -1077,6 +1374,7 @@ function App() {
     };
 
     // Story 11.1: Remove image from batch
+    // Story 14.23: Updated to use TransactionEditorView
     const handleRemoveBatchImage = (index: number) => {
         setBatchImages(prev => {
             const updated = prev.filter((_, i) => i !== index);
@@ -1089,7 +1387,10 @@ function App() {
                     setPendingScan(createPendingScan());
                 }
                 setPendingScan(prev => prev ? { ...prev, images: updated, status: 'images_added' } : null);
-                setView('edit');
+                // Story 14.23: Use unified TransactionEditorView
+                setTransactionEditorMode('new');
+                setScanButtonState('pending'); // Has image but not processed
+                navigateToView('transaction-editor');
                 return [];
             }
             return updated;
@@ -1226,15 +1527,15 @@ function App() {
     };
 
     // Story 11.2: Handle "Editar" from Quick Save Card (AC #4)
+    // Story 14.15 Session 13: Navigate to scan-result view (new editor) instead of old edit view
     const handleQuickSaveEdit = () => {
         if (quickSaveTransaction) {
             setCurrentTransaction(quickSaveTransaction);
         }
         setShowQuickSaveCard(false);
         setQuickSaveTransaction(null);
-        // Story 11.3: Enable item animation when editing from Quick Save
-        setAnimateEditViewItems(true);
-        setView('edit');
+        // Navigate to new scan-result editor instead of old edit view
+        setView('scan-result');
     };
 
     // Story 11.2: Handle "Cancelar" from Quick Save Card (AC #7)
@@ -1274,17 +1575,76 @@ function App() {
         }
     };
 
+    // Story 14.15b: Currency mismatch dialog handlers (AC #2)
+    const handleCurrencyUseDetected = () => {
+        if (!currencyMismatchData) return;
+        // Use detected currency (already in transaction)
+        const transaction = currencyMismatchData.pendingTransaction;
+        const hasDiscrepancy = currencyMismatchData.hasDiscrepancy;
+        setCurrentTransaction(transaction);
+        if (pendingScan) {
+            setPendingScan({
+                ...pendingScan,
+                analyzedTransaction: transaction,
+                status: 'analyzed'
+            });
+        }
+        setScanImages([]);
+        setShowCurrencyMismatch(false);
+        setCurrencyMismatchData(null);
+        // Story 14.15b: Show warning if items total didn't match receipt total
+        if (hasDiscrepancy) {
+            setToastMessage({ text: t('discrepancyWarning'), type: 'info' });
+        }
+    };
+
+    const handleCurrencyUseDefault = () => {
+        if (!currencyMismatchData) return;
+        // Override with user's default currency
+        const transaction = {
+            ...currencyMismatchData.pendingTransaction,
+            currency: userPreferences.defaultCurrency,
+        };
+        const hasDiscrepancy = currencyMismatchData.hasDiscrepancy;
+        setCurrentTransaction(transaction);
+        if (pendingScan) {
+            setPendingScan({
+                ...pendingScan,
+                analyzedTransaction: transaction,
+                status: 'analyzed'
+            });
+        }
+        setScanImages([]);
+        setShowCurrencyMismatch(false);
+        setCurrencyMismatchData(null);
+        // Story 14.15b: Show warning if items total didn't match receipt total
+        if (hasDiscrepancy) {
+            setToastMessage({ text: t('discrepancyWarning'), type: 'info' });
+        }
+    };
+
+    const handleCurrencyMismatchCancel = () => {
+        // Cancel scan entirely
+        setShowCurrencyMismatch(false);
+        setCurrencyMismatchData(null);
+        setCurrentTransaction(null);
+        setPendingScan(null);
+        setView('dashboard');
+    };
+
     // Transaction Handlers
     // Note: We use fire-and-forget pattern because Firestore's offline persistence
     // means addDoc/updateDoc/deleteDoc may not resolve until server confirms,
     // but local cache updates immediately. Navigate optimistically.
-    const saveTransaction = async () => {
-        if (!services || !user || !currentTransaction) return;
+    // Story 14.15b: Accept optional transaction parameter to avoid React state timing issues
+    const saveTransaction = async (transactionOverride?: Transaction) => {
+        const transactionToSave = transactionOverride || currentTransaction;
+        if (!services || !user || !transactionToSave) return;
         const { db, appId } = services;
 
         const tDoc = {
-            ...currentTransaction,
-            total: parseStrictNumber(currentTransaction.total)
+            ...transactionToSave,
+            total: parseStrictNumber(transactionToSave.total)
         };
 
         // Navigate immediately (optimistic UI) - AC #4: Card appears AFTER save confirmation
@@ -1294,9 +1654,9 @@ function App() {
         setPendingScan(null);
 
         // Fire the Firestore operation and chain insight generation for new transactions
-        if (currentTransaction.id) {
+        if (transactionToSave.id) {
             // Update existing transaction - no insight generation
-            firestoreUpdateTransaction(db, user.uid, appId, currentTransaction.id, tDoc)
+            firestoreUpdateTransaction(db, user.uid, appId, transactionToSave.id, tDoc)
                 .catch(e => console.error('Update failed:', e));
         } else {
             // Story 10.6: Async side-effect pattern for insight generation (AC #2)
@@ -1437,26 +1797,46 @@ function App() {
     };
 
     // Story 9.20: Handler for navigating from Analytics to History with pre-applied filters (AC #4)
-    // Story 10a.4: This now navigates to InsightsView (pending filters kept for future use)
-    // This is called when user clicks a transaction count badge on a drill-down card
-    const handleNavigateToHistory = (payload: HistoryNavigationPayload) => {
+    // Story 14.22: Navigate to History view with pre-applied filters
+    // This is called when user clicks a transaction count badge on analytics views
+    const handleNavigateToHistory = useCallback((payload: HistoryNavigationPayload) => {
         // Create a complete filter state from the navigation payload
         // Default to 'all' level if temporal/category not provided
+
+        // Build category filter based on what's in the payload
+        // Priority: category > storeGroup > itemGroup > itemCategory
+        let categoryFilter: HistoryFilterState['category'] = { level: 'all' };
+        if (payload.category) {
+            // Store category filter (e.g., "Supermarket")
+            categoryFilter = { level: 'category', category: payload.category };
+        } else if (payload.storeGroup) {
+            // Store group filter (e.g., "food-dining") - expand to all categories in the group
+            const storeCategories = expandStoreCategoryGroup(payload.storeGroup as StoreCategoryGroup);
+            categoryFilter = { level: 'category', category: storeCategories.join(',') };
+        } else if (payload.itemGroup) {
+            // Item group filter (e.g., "food-fresh") - expand to all item categories in the group
+            const itemCategories = expandItemCategoryGroup(payload.itemGroup as ItemCategoryGroup);
+            categoryFilter = { level: 'group', group: itemCategories.join(',') };
+        } else if (payload.itemCategory) {
+            // Item category filter (e.g., "Bakery") - filter by item.category field directly
+            categoryFilter = { level: 'group', group: payload.itemCategory };
+        }
+
         const filterState: HistoryFilterState = {
             temporal: payload.temporal
                 ? { ...payload.temporal, level: payload.temporal.level as TemporalFilterState['level'] }
                 : { level: 'all' },
-            category: payload.category ? { level: 'category', category: payload.category } : { level: 'all' },
+            category: categoryFilter,
             location: {}, // Location filter not set from analytics navigation
             group: {}, // Story 14.15b: Group filter not set from analytics navigation
         };
 
-        // Store the filters (kept for potential future use with filtered insights)
+        // Store the filters to be applied when History view loads
         setPendingHistoryFilters(filterState);
 
-        // Navigate to insights view (Story 10a.4: now shows InsightsView)
-        setView('insights');
-    };
+        // Navigate to History view using navigateToView to track previous view for back navigation
+        navigateToView('history');
+    }, [navigateToView]);
 
     // Story 7.12: Theme setup using CSS custom properties (AC #6, #7, #11)
     // Story 7.17: Renamed themes - 'normal' (warm), 'professional' (cool)
@@ -1497,6 +1877,8 @@ function App() {
         } else {
             html.removeAttribute('data-theme');
         }
+        // Story 14.22: Font family selection - 'outfit' is default in CSS
+        html.setAttribute('data-font', fontFamily);
     }
 
     if (initError) {
@@ -1555,11 +1937,13 @@ function App() {
             {/* Story 14.16: Hide TopHeader on ReportsView - has its own header with year selector */}
             {/* Determine header variant and title based on current view */}
             {/* Story 14.15: scan-result has its own header, so exclude it */}
-            {view !== 'trends' && view !== 'history' && view !== 'reports' && view !== 'scan-result' && (
+            {/* Story 14.15b: edit view has its own header with credits display */}
+            {/* Story 14.23: transaction-editor has its own header */}
+            {view !== 'trends' && view !== 'history' && view !== 'reports' && view !== 'scan-result' && view !== 'edit' && view !== 'transaction-editor' && (
                 <TopHeader
                     variant={
                         view === 'settings' ? 'settings' :
-                        (view === 'edit' || view === 'batch-review') ? 'detail' :
+                        view === 'batch-review' ? 'detail' :
                         'home'
                     }
                     viewTitle={
@@ -1570,7 +1954,6 @@ function App() {
                         undefined
                     }
                     title={
-                        view === 'edit' ? t('transaction') :
                         view === 'batch-review' ? t('batchReview') :
                         undefined
                     }
@@ -1587,17 +1970,6 @@ function App() {
                                 setView('dashboard');
                             }
                         } :
-                        view === 'edit' ? (() => {
-                            // Story 11.3: Reset animation state when leaving EditView
-                            setAnimateEditViewItems(false);
-                            // Story 12.3: If editing from batch, return to batch review
-                            if (batchEditingReceipt) {
-                                setBatchEditingReceipt(null);
-                                setView('batch-review');
-                            } else {
-                                setView('dashboard');
-                            }
-                        }) :
                         view === 'batch-review' ? handleBatchReviewBack :
                         undefined
                     }
@@ -1617,12 +1989,15 @@ function App() {
             {/* Story 14.14: HistoryView has its own sticky header, so no top padding needed */}
             {/* Story 14.16: ReportsView has its own fixed header and padding, so no main padding needed */}
             {/* Story 14.15: ScanResultView has its own header, so no padding needed */}
+            {/* Story 14.15b: EditView now has its own header matching ScanResultView */}
             {/* pb-24 (96px) accounts for nav bar (~70px) + safe area bottom */}
+            {/* Story 14.22: Added ref for scroll position management */}
             <main
-                className={`flex-1 overflow-y-auto ${(view === 'reports' || view === 'history' || view === 'trends' || view === 'scan-result') ? '' : 'p-3'}`}
+                ref={mainRef}
+                className={`flex-1 overflow-y-auto ${(view === 'reports' || view === 'history' || view === 'trends' || view === 'scan-result' || view === 'edit' || view === 'transaction-editor') ? '' : 'p-3'}`}
                 style={{
-                    paddingBottom: (view === 'reports' || view === 'history' || view === 'trends' || view === 'scan-result') ? '0' : 'calc(6rem + var(--safe-bottom, 0px))',
-                    paddingTop: (view === 'history' || view === 'reports' || view === 'trends' || view === 'scan-result')
+                    paddingBottom: (view === 'reports' || view === 'history' || view === 'trends' || view === 'scan-result' || view === 'edit' || view === 'transaction-editor') ? '0' : 'calc(6rem + var(--safe-bottom, 0px))',
+                    paddingTop: (view === 'history' || view === 'reports' || view === 'trends' || view === 'scan-result' || view === 'edit' || view === 'transaction-editor')
                         ? '0'
                         : 'calc(5rem + env(safe-area-inset-top, 0px))'
                 }}
@@ -1664,8 +2039,8 @@ function App() {
                                 setView('trends');
                             }}
                             onEditTransaction={(transaction: any) => {
-                                setCurrentTransaction(transaction);
-                                setView('edit');
+                                // Story 14.23: Use unified TransactionEditorView for existing transactions
+                                navigateToTransactionEditor('existing', transaction);
                             }}
                             onTriggerScan={triggerScan}
                             // Story 10a.1: Pass all transactions for full paginated list (AC #3)
@@ -1696,94 +2071,101 @@ function App() {
                 )}
                 */}
 
-                {/* Story 14.15: ScanResultView - New scan flow UI matching mockup #4 "Edit Transaction (Interactive)" */}
+                {/* Story 14.23: DEPRECATED - ScanResultView replaced by TransactionEditorView
+                 * This rendering block is commented out as part of the migration.
+                 * All new transaction flows now use TransactionEditorView.
+                 * Remove this commented block after verifying TransactionEditorView works correctly.
                 {view === 'scan-result' && (
-                    <ScanResultView
+                    <ScanResultView ... />
+                )}
+                */}
+
+                {/* Story 14.23: DEPRECATED - EditView replaced by TransactionEditorView
+                 * This rendering block is commented out as part of the migration.
+                 * All edit transaction flows now use TransactionEditorView.
+                 * Remove this commented block after verifying TransactionEditorView works correctly.
+                {view === 'edit' && currentTransaction && (
+                    <EditView ... />
+                )}
+                */}
+
+                {/* Story 14.23: TransactionEditorView - Unified transaction editor */}
+                {view === 'transaction-editor' && (
+                    <TransactionEditorView
                         transaction={currentTransaction}
+                        mode={transactionEditorMode}
+                        scanButtonState={scanButtonState}
                         isProcessing={isAnalyzing}
-                        thumbnailUrl={scanImages[0]}
+                        processingEta={null}
+                        scanError={scanError}
+                        thumbnailUrl={currentTransaction?.thumbnailUrl || (scanButtonState === 'complete' && scanImages.length > 0 ? scanImages[0] : undefined)}
+                        pendingImageUrl={scanButtonState === 'pending' && scanImages.length > 0 ? scanImages[0] : undefined}
+                        onUpdateTransaction={(trans) => setCurrentTransaction(trans as any)}
                         onSave={async (trans) => {
-                            // Update current transaction with edited data and save
-                            setCurrentTransaction(trans);
-                            if (services && user) {
-                                await saveTransaction();
-                            }
+                            await saveTransaction(trans);
+                            // Reset scan state after save
+                            setScanButtonState('idle');
+                            setScanImages([]);
                         }}
                         onCancel={() => {
-                            handleCancelNewTransaction();
-                        }}
-                        theme={theme as 'light' | 'dark'}
-                        t={t}
-                        formatCurrency={formatCurrency}
-                        currency={currency}
-                        defaultCity={defaultCity}
-                        defaultCountry={defaultCountry}
-                        isSaving={false}
-                        lang={lang}
-                    />
-                )}
-
-                {view === 'edit' && currentTransaction && (
-                    <EditView
-                        currentTransaction={currentTransaction as any}
-                        editingItemIndex={editingItemIndex}
-                        distinctAliases={distinctAliases}
-                        theme={theme}
-                        currency={currency}
-                        language={lang}
-                        t={t}
-                        storeCategories={STORE_CATEGORIES as unknown as string[]}
-                        formatCurrency={formatCurrency}
-                        parseStrictNumber={parseStrictNumber}
-                        onBack={() => {
-                            // Story 11.3: Reset animation state when leaving EditView
+                            // Story 14.23: Reset scan state and navigate back
+                            setScanButtonState('idle');
+                            setScanImages([]);
                             setAnimateEditViewItems(false);
-                            // Story 12.3: If editing from batch, return to batch review
                             if (batchEditingReceipt) {
                                 setBatchEditingReceipt(null);
                                 setView('batch-review');
                             } else {
-                                setView('dashboard');
+                                navigateBack();
                             }
                         }}
-                        // Story 11.3: Animate items for fresh scan results (AC #1-5)
-                        animateItems={animateEditViewItems}
-                        onSave={saveTransaction}
-                        onDelete={deleteTransaction}
-                        onUpdateTransaction={setCurrentTransaction as any}
-                        onSetEditingItemIndex={setEditingItemIndex}
+                        onPhotoSelect={(file) => {
+                            // Convert file to base64 and update scan state
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                                const base64 = reader.result as string;
+                                setScanImages([base64]);
+                                setScanButtonState('pending');
+                            };
+                            reader.readAsDataURL(file);
+                        }}
+                        onProcessScan={() => {
+                            // Transition to scanning state and process
+                            setScanButtonState('scanning');
+                            processScan();
+                        }}
+                        onRetry={() => {
+                            // Clear error and retry
+                            setScanError(null);
+                            setScanButtonState('scanning');
+                            processScan();
+                        }}
+                        onRescan={transactionEditorMode === 'existing' ? async () => {
+                            // Re-scan existing transaction
+                            setScanButtonState('scanning');
+                            await handleRescan();
+                        } : undefined}
+                        isRescanning={isRescanning}
+                        onDelete={transactionEditorMode === 'existing' ? deleteTransaction : undefined}
                         onSaveMapping={saveMapping}
                         onSaveMerchantMapping={saveMerchantMapping}
-                        // Story 9.15: Subcategory learning prompt
                         onSaveSubcategoryMapping={saveSubcategoryMapping}
-                        onShowToast={(text: string) => setToastMessage({ text, type: 'success' })}
-                        // Story 9.9: Cancel handler for new transactions
-                        // Story 12.3: If in batch context, return to batch review instead
-                        onCancel={!currentTransaction.id ? (batchEditingReceipt ? () => {
-                            setBatchEditingReceipt(null);
-                            setCurrentTransaction(null);
-                            setView('batch-review');
-                        } : handleCancelNewTransaction) : undefined}
-                        // Story 9.9: Scan-related props for unified transaction flow (only for new transactions)
-                        scanImages={!currentTransaction.id ? scanImages : undefined}
-                        onAddPhoto={!currentTransaction.id ? () => fileInputRef.current?.click() : undefined}
-                        onRemovePhoto={!currentTransaction.id ? handleRemovePhoto : undefined}
-                        onProcessScan={!currentTransaction.id ? processScan : undefined}
-                        isAnalyzing={!currentTransaction.id ? isAnalyzing : undefined}
-                        scanError={!currentTransaction.id ? scanError : undefined}
-                        // Story 9.8: Scan options (store type and currency)
-                        scanStoreType={!currentTransaction.id ? scanStoreType : undefined}
-                        onSetScanStoreType={!currentTransaction.id ? setScanStoreType : undefined}
-                        scanCurrency={!currentTransaction.id ? scanCurrency : undefined}
-                        onSetScanCurrency={!currentTransaction.id ? setScanCurrency : undefined}
-                        // Story 9.10: Pending scan for visual indicator (AC #5)
-                        pendingScan={!currentTransaction.id ? pendingScan : undefined}
-                        // Story 9.10: Credits for display and scan blocking (AC #6, #7)
-                        userCredits={userCredits}
-                        // Story 9.12: Language for category translations (AC #6)
+                        onShowToast={(text) => setToastMessage({ text, type: 'success' })}
+                        theme={theme as 'light' | 'dark'}
+                        t={t}
+                        formatCurrency={formatCurrency}
+                        currency={currency}
                         lang={lang}
-                        // Story 12.3: Batch context for editing from batch review (AC #4)
+                        credits={userCredits}
+                        storeCategories={STORE_CATEGORIES as unknown as string[]}
+                        distinctAliases={distinctAliases}
                         batchContext={batchEditingReceipt ? { index: batchEditingReceipt.index, total: batchEditingReceipt.total } : null}
+                        defaultCity={defaultCity}
+                        defaultCountry={defaultCountry}
+                        onCreditInfoClick={() => setShowCreditInfoModal(true)}
+                        isSaving={false}
+                        animateItems={animateEditViewItems}
+                        creditUsed={scanButtonState === 'complete' || scanButtonState === 'error'}
                     />
                 )}
 
@@ -1804,8 +2186,8 @@ function App() {
                                 locale={lang}
                                 t={t}
                                 onEditTransaction={(transaction) => {
-                                    setCurrentTransaction(transaction);
-                                    setView('edit');
+                                    // Story 14.23: Use unified TransactionEditorView for existing transactions
+                                    navigateToTransactionEditor('existing', transaction);
                                 }}
                                 exporting={exporting}
                                 onExporting={setExporting}
@@ -1841,10 +2223,10 @@ function App() {
                         onBack={() => setView('dashboard')}
                         onEditTransaction={(transactionId: string) => {
                             // AC4: Navigate to transaction by finding it in the list
+                            // Story 14.23: Use unified TransactionEditorView for existing transactions
                             const tx = transactions.find(t => t.id === transactionId);
                             if (tx) {
-                                setCurrentTransaction(tx);
-                                setView('edit');
+                                navigateToTransactionEditor('existing', tx);
                             }
                         }}
                         theme={theme}
@@ -1934,6 +2316,9 @@ function App() {
                         // Story 14.21: Font color mode setting
                         fontColorMode={fontColorMode}
                         onSetFontColorMode={(mode: string) => setFontColorMode(mode as FontColorMode)}
+                        // Story 14.22: Font family setting (persisted to Firestore)
+                        fontFamily={fontFamily}
+                        onSetFontFamily={(ff: string) => setFontFamilyPref(ff as 'outfit' | 'space')}
                         // Story 9.3: Default location settings
                         // Story 14.22: Now using Firestore-backed preferences
                         defaultCountry={defaultCountry}
@@ -1962,6 +2347,40 @@ function App() {
                         trustedMerchants={trustedMerchants}
                         trustedMerchantsLoading={trustedMerchantsLoading}
                         onRevokeTrust={removeTrust}
+                        // Story 14.22: Clear all learned data action
+                        onClearAllLearnedData={async () => {
+                            // Delete all learned mappings in parallel
+                            const deletePromises: Promise<void>[] = [];
+
+                            // Delete all category mappings
+                            for (const mapping of mappings) {
+                                if (mapping.id) {
+                                    deletePromises.push(deleteMapping(mapping.id));
+                                }
+                            }
+
+                            // Delete all merchant mappings
+                            for (const mapping of merchantMappings) {
+                                if (mapping.id) {
+                                    deletePromises.push(deleteMerchantMapping(mapping.id));
+                                }
+                            }
+
+                            // Delete all subcategory mappings
+                            for (const mapping of subcategoryMappings) {
+                                if (mapping.id) {
+                                    deletePromises.push(deleteSubcategoryMapping(mapping.id));
+                                }
+                            }
+
+                            // Revoke all trusted merchants
+                            for (const merchant of trustedMerchants) {
+                                deletePromises.push(removeTrust(merchant.merchantName));
+                            }
+
+                            await Promise.all(deletePromises);
+                            setToastMessage({ text: t('clearAllLearnedDataSuccess') || 'All learned data cleared', type: 'success' });
+                        }}
                         // Story 14.22: Profile editing (from Firestore preferences)
                         userEmail={user?.email || ''}
                         displayName={userPreferences.displayName || user?.displayName || ''}
@@ -1971,9 +2390,9 @@ function App() {
                         onSetPhoneNumber={_setPhoneNumberPref}
                         onSetBirthDate={_setBirthDatePref}
                         // Story 14.22: Subscription info (MVP placeholder)
-                        plan="free"
-                        creditsUsed={userCredits.used}
-                        creditsTotal={userCredits.remaining + userCredits.used}
+                        plan="freemium"
+                        creditsRemaining={userCredits.remaining}
+                        superCreditsRemaining={userCredits.superRemaining}
                         // Story 14.22: Controlled subview state for breadcrumb
                         currentSubview={settingsSubview}
                         onSubviewChange={setSettingsSubview}
@@ -2036,8 +2455,8 @@ function App() {
                             onBack={navigateBack}
                             onSetHistoryPage={() => {}}
                             onEditTransaction={(tx) => {
-                                setCurrentTransaction(tx as any);
-                                setView('edit');
+                                // Story 14.23: Use unified TransactionEditorView for existing transactions
+                                navigateToTransactionEditor('existing', tx as any);
                             }}
                             allTransactions={transactions as any}
                             defaultCity={defaultCity}
@@ -2092,6 +2511,12 @@ function App() {
                 t={t}
                 // Story 12.3: Pass scan status for NAV icon indicator (AC #3)
                 scanStatus={scanStatus}
+                // Display remaining scan credits on camera FAB
+                scanCredits={userCredits.remaining}
+                // Display super credits (tier 2) on camera FAB
+                superCredits={userCredits.superRemaining}
+                // Story 14.15 Session 10: Show credit info modal when badges tapped
+                onCreditInfoClick={() => setShowCreditInfoModal(true)}
             />
 
             {/* Toast notification for feedback (AC#6, AC#7) - Story 14.22: Theme-aware styling */}
@@ -2126,7 +2551,128 @@ function App() {
             {/* Story 9.14: PWA update notification */}
             <PWAUpdatePrompt />
 
+            {/* Story 14.15 Session 10: Credit Info Modal (triggered by Nav credit badges) */}
+            {showCreditInfoModal && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-black/50"
+                        onClick={() => setShowCreditInfoModal(false)}
+                    />
+                    {/* Modal */}
+                    <div
+                        className="relative w-[calc(100%-32px)] max-w-sm rounded-2xl shadow-xl overflow-hidden"
+                        style={{
+                            backgroundColor: 'var(--bg-secondary)',
+                            animation: 'modalFadeIn 0.2s ease-out',
+                        }}
+                    >
+                        {/* Header */}
+                        <div
+                            className="flex justify-between items-center px-5 py-4"
+                            style={{ borderBottom: '1px solid var(--border-light)' }}
+                        >
+                            <span className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+                                {t('creditInfoTitle') || 'Tus Créditos'}
+                            </span>
+                            <button
+                                onClick={() => setShowCreditInfoModal(false)}
+                                className="w-8 h-8 rounded-full flex items-center justify-center"
+                                style={{ backgroundColor: 'var(--bg-tertiary)' }}
+                                aria-label={t('close') || 'Cerrar'}
+                            >
+                                <X size={18} style={{ color: 'var(--text-primary)' }} />
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-5 space-y-4">
+                            {/* Normal Credits */}
+                            <div
+                                className="flex items-start gap-3 p-3 rounded-xl"
+                                style={{ backgroundColor: 'var(--primary-light)' }}
+                            >
+                                <div
+                                    className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                                    style={{ backgroundColor: 'var(--primary)' }}
+                                >
+                                    <Camera size={20} className="text-white" strokeWidth={2} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-baseline justify-between gap-2 mb-1">
+                                        <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
+                                            {t('normalCredits') || 'Créditos Normales'}
+                                        </span>
+                                        <span className="font-bold text-lg" style={{ color: 'var(--primary)' }}>
+                                            {userCredits.remaining.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                                        {t('normalCreditsDesc') || '1 crédito = 1 foto individual escaneada'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Super Credits */}
+                            <div
+                                className="flex items-start gap-3 p-3 rounded-xl"
+                                style={{ backgroundColor: '#fef3c7' }}
+                            >
+                                <div
+                                    className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                                    style={{ backgroundColor: '#f59e0b' }}
+                                >
+                                    <Zap size={20} className="text-white" strokeWidth={2} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-baseline justify-between gap-2 mb-1">
+                                        <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
+                                            {t('superCredits') || 'Super Créditos'}
+                                        </span>
+                                        <span className="font-bold text-lg" style={{ color: '#d97706' }}>
+                                            {userCredits.superRemaining.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                                        {t('superCreditsDesc') || '1 crédito = escaneo en lote de hasta 10 fotos'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Usage stats */}
+                            <div
+                                className="text-xs text-center pt-2"
+                                style={{
+                                    color: 'var(--text-tertiary)',
+                                    borderTop: '1px solid var(--border-light)',
+                                }}
+                            >
+                                {t('creditsUsed') || 'Usados'}: {userCredits.used} {t('normal') || 'normales'}, {userCredits.superUsed} {t('super') || 'super'}
+                            </div>
+
+                            {/* Buy more credits button */}
+                            <button
+                                onClick={() => {
+                                    setShowCreditInfoModal(false);
+                                    setView('settings');
+                                    setSettingsSubview('suscripcion');
+                                }}
+                                className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                                style={{
+                                    backgroundColor: 'var(--primary)',
+                                    color: 'white',
+                                }}
+                            >
+                                <ShoppingCart size={18} strokeWidth={2} />
+                                {t('buyMoreCredits') || 'Comprar más créditos'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Story 14.15: Scan Overlay for non-blocking scan flow (AC #1, #4) */}
+            {/* Only show overlay when on scan-related views so user can navigate away */}
             <ScanOverlay
                 state={scanOverlay.state}
                 progress={scanOverlay.progress}
@@ -2137,7 +2683,8 @@ function App() {
                 onDismiss={handleScanOverlayDismiss}
                 theme={theme as 'light' | 'dark'}
                 t={t}
-                visible={isAnalyzing || scanOverlay.state === 'error'}
+                visible={(isAnalyzing || scanOverlay.state === 'error') && (view === 'scan' || view === 'edit')}
+                capturedImageUrl={scanImages[0]}
             />
 
             {/* Story 10.6: Insight card after transaction save (AC #1, #3, #4) */}
@@ -2155,6 +2702,7 @@ function App() {
             )}
 
             {/* Story 11.2: Quick Save Card for high-confidence scans (AC #1-9) */}
+            {/* Story 14.15: Added lang prop for proper category translation */}
             {showQuickSaveCard && quickSaveTransaction && (
                 <QuickSaveCard
                     transaction={quickSaveTransaction}
@@ -2168,6 +2716,7 @@ function App() {
                     formatCurrency={formatCurrency}
                     currency={currency}
                     isSaving={isQuickSaving}
+                    lang={lang}
                 />
             )}
 
@@ -2185,6 +2734,8 @@ function App() {
                         onConfirm={handleBatchConfirmWithCreditCheck}
                         onCancel={handleCancelBatchPreview}
                         onRemoveImage={handleRemoveBatchImage}
+                        credits={userCredits}
+                        usesSuperCredits={true}
                     />
                 </div>
             )}
@@ -2316,6 +2867,49 @@ function App() {
                     t={t}
                 />
             )}
+
+            {/* Story 14.15: Batch Complete Success Modal (State 3.a from scan-overlay.html mockup) */}
+            {showBatchCompleteModal && batchCompletedTransactions.length > 0 && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+                    style={{ paddingTop: 'calc(1rem + var(--safe-top, 0px))', paddingBottom: 'calc(1rem + var(--safe-bottom, 0px))' }}
+                >
+                    <BatchCompleteModal
+                        transactions={batchCompletedTransactions}
+                        creditsUsed={batchCreditsUsed}
+                        creditsRemaining={userCredits.superRemaining ?? 0}
+                        theme={theme as 'light' | 'dark'}
+                        t={t}
+                        onDismiss={() => {
+                            setShowBatchCompleteModal(false);
+                            setBatchCompletedTransactions([]);
+                        }}
+                        onViewHistory={() => {
+                            setShowBatchCompleteModal(false);
+                            setBatchCompletedTransactions([]);
+                            setView('history');
+                        }}
+                        onGoHome={() => {
+                            setShowBatchCompleteModal(false);
+                            setBatchCompletedTransactions([]);
+                            setView('dashboard');
+                        }}
+                        formatCurrency={formatCurrency}
+                    />
+                </div>
+            )}
+
+            {/* Story 14.15b: Currency Mismatch Dialog (AC #2) */}
+            <CurrencyMismatchDialog
+                isOpen={showCurrencyMismatch}
+                detectedCurrency={currencyMismatchData?.detectedCurrency || ''}
+                userCurrency={userPreferences.defaultCurrency || 'CLP'}
+                onUseDetected={handleCurrencyUseDetected}
+                onUseDefault={handleCurrencyUseDefault}
+                onCancel={handleCurrencyMismatchCancel}
+                theme={theme as 'light' | 'dark'}
+                t={t}
+            />
         </div>
     );
 }
