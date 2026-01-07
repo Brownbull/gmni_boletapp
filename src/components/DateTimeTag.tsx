@@ -6,7 +6,6 @@ interface DateTimeTagProps {
     time?: string;
     onDateChange: (date: string) => void;
     onTimeChange: (time: string) => void;
-    theme?: 'light' | 'dark';
     t?: (key: string) => string;
 }
 
@@ -22,15 +21,12 @@ export const DateTimeTag: React.FC<DateTimeTagProps> = ({
     time = '',
     onDateChange,
     onTimeChange,
-    theme: _theme = 'light',
     t,
 }) => {
     const [isDateOpen, setIsDateOpen] = useState(false);
     const [isTimeOpen, setIsTimeOpen] = useState(false);
     const dateRef = useRef<HTMLDivElement>(null);
     const timeRef = useRef<HTMLDivElement>(null);
-    // theme kept for API compatibility but not used (colors now use CSS variables)
-    void _theme;
 
     // Close dropdown on click outside
     useEffect(() => {

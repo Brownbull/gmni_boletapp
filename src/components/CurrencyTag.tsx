@@ -15,7 +15,6 @@ const CURRENCIES = [
 interface CurrencyTagProps {
     currency: string;
     onCurrencyChange: (currency: string) => void;
-    theme?: 'light' | 'dark';
     t?: (key: string) => string;
 }
 
@@ -29,13 +28,10 @@ interface CurrencyTagProps {
 export const CurrencyTag: React.FC<CurrencyTagProps> = ({
     currency,
     onCurrencyChange,
-    theme: _theme = 'light',
     t,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    // theme kept for API compatibility but not used (colors now use CSS variables)
-    void _theme;
 
     // Close dropdown on click outside
     useEffect(() => {

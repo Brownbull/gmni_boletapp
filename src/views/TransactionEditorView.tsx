@@ -955,13 +955,11 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                   time={displayTransaction.time || ''}
                   onDateChange={date => transaction && onUpdateTransaction({ ...transaction, date })}
                   onTimeChange={time => transaction && onUpdateTransaction({ ...transaction, time })}
-                  theme={theme}
                   t={t}
                 />
                 <CurrencyTag
                   currency={displayTransaction.currency || 'CLP'}
                   onCurrencyChange={currency => transaction && onUpdateTransaction({ ...transaction, currency })}
-                  theme={theme}
                   t={t}
                 />
               </div>
