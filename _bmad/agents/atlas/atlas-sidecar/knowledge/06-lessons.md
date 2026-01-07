@@ -76,6 +76,14 @@
 - **Parent-Managed State**: Keep transaction/scan state in App.tsx, pass callbacks to view
 - **Reference**: `src/views/TransactionEditorView.tsx`, `story-14.23-unified-transaction-editor.md`
 
+### Single Active Transaction Pattern (Story 14.24 - Planned)
+- **One Transaction Rule**: Only one transaction can be in edit mode at any time
+- **Credit Reserve Pattern**: Reserve credit when scan starts, confirm on success, refund on error
+- **State Persistence**: Form changes and images persist across navigation
+- **Conflict Detection**: Show dialog when user tries to edit while another is active
+- **Read-Only First**: Transaction list opens read-only view; "Edit" button to enter edit mode
+- **Reference**: `story-14.24-persistent-transaction-state.md`
+
 ---
 
 ## Pattern Reference (92 patterns consolidated)
