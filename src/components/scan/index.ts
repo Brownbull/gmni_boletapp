@@ -42,5 +42,20 @@ export type { QuickSaveCardProps } from './QuickSaveCard';
 export { ScanOverlay } from './ScanOverlay';
 export type { ScanOverlayProps, ScanOverlayState } from './ScanOverlay';
 
+// Story 14.15: Batch Complete Modal
+export { BatchCompleteModal } from './BatchCompleteModal';
+export type { BatchCompleteModalProps } from './BatchCompleteModal';
+
+// Story 14.15b: Currency Mismatch Dialog
+export { CurrencyMismatchDialog } from './CurrencyMismatchDialog';
+export type { CurrencyMismatchDialogProps } from './CurrencyMismatchDialog';
+
+// Story 14.23: Unified Transaction Editor components
+export { ProcessingOverlay } from './ProcessingOverlay';
+export type { ProcessingOverlayProps } from './ProcessingOverlay';
+
+export { ScanCompleteModal } from './ScanCompleteModal';
+export type { ScanCompleteModalProps } from './ScanCompleteModal';
+
 // Default export
 export { ScanStatusIndicator as default } from './ScanStatusIndicator';
