@@ -2180,7 +2180,12 @@ function App() {
             });
         }
         setScanButtonState('complete');
-        setScanImages([]);
+        // Don't clear scanImages here - they're needed for thumbnail display
+        // Images are cleared when transaction is saved or discarded
+
+        // Navigate to transaction editor to review/save the transaction
+        setTransactionEditorMode('new');
+        navigateToView('transaction-editor');
     };
 
     // Transaction Handlers
@@ -3277,7 +3282,7 @@ function App() {
                 onDismiss={handleScanOverlayDismiss}
                 theme={theme as 'light' | 'dark'}
                 t={t}
-                visible={(isAnalyzing || scanOverlay.state === 'error') && (view === 'scan' || view === 'edit')}
+                visible={(isAnalyzing || scanOverlay.state === 'error') && (view === 'scan' || view === 'scan-result' || view === 'edit' || view === 'transaction-editor')}
                 capturedImageUrl={scanImages[0]}
             />
 
