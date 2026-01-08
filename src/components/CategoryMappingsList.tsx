@@ -443,14 +443,9 @@ export const CategoryMappingsList: React.FC<CategoryMappingsListProps> = ({
   const [editTarget, setEditTarget] = useState<CategoryMapping | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [editing, setEditing] = useState(false)
-  const listRef = useRef<HTMLUListElement>(null)
 
-  // Theme-aware styling
-  const cardBg = theme === 'dark' ? 'bg-slate-800' : 'bg-slate-50'
-  const itemBg = theme === 'dark' ? 'bg-slate-700' : 'bg-white'
-  const textColor = theme === 'dark' ? 'text-white' : 'text-slate-900'
-  const secondaryText = theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
-  const borderColor = theme === 'dark' ? 'border-slate-600' : 'border-slate-200'
+  // Theme-aware styling using CSS variables for consistency
+  const isDark = theme === 'dark'
 
   // Handle delete confirmation
   const handleConfirmDelete = async () => {
@@ -494,19 +489,13 @@ export const CategoryMappingsList: React.FC<CategoryMappingsListProps> = ({
     }
   }
 
-  // Format usage count message
-  const formatUsageCount = (count: number): string => {
-    return t('usedTimes').replace('{count}', count.toString())
-  }
-
   // Loading state
   if (loading) {
     return (
-      <div className={`p-4 rounded-xl ${cardBg} ${textColor}`}>
+      <div className="py-4" style={{ color: 'var(--text-secondary)' }}>
         <div className="animate-pulse space-y-3">
-          <div className="h-4 bg-slate-300 dark:bg-slate-600 rounded w-1/3"></div>
-          <div className="h-12 bg-slate-300 dark:bg-slate-600 rounded"></div>
-          <div className="h-12 bg-slate-300 dark:bg-slate-600 rounded"></div>
+          <div className="h-12 rounded" style={{ backgroundColor: isDark ? '#334155' : '#e2e8f0' }}></div>
+          <div className="h-12 rounded" style={{ backgroundColor: isDark ? '#334155' : '#e2e8f0' }}></div>
         </div>
       </div>
     )
@@ -516,77 +505,108 @@ export const CategoryMappingsList: React.FC<CategoryMappingsListProps> = ({
   if (mappings.length === 0) {
     return (
       <div
-        className={`p-6 rounded-xl ${cardBg} ${textColor} text-center`}
+        className="py-6 text-center"
         role="status"
         aria-label={t('learnedCategoriesEmpty')}
       >
-        <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-gradient-to-br from-slate-300 to-slate-400 dark:from-slate-600 dark:to-slate-700 flex items-center justify-center">
-          <BookMarked size={32} className={secondaryText} aria-hidden="true" />
+        <div
+          className="mx-auto mb-4 w-12 h-12 rounded-full flex items-center justify-center"
+          style={{ backgroundColor: isDark ? '#334155' : '#e2e8f0' }}
+        >
+          <BookMarked size={24} style={{ color: 'var(--text-tertiary)' }} aria-hidden="true" />
         </div>
-        <p className="font-medium mb-2">{t('learnedCategoriesEmpty')}</p>
-        <p className={`text-sm ${secondaryText}`}>{t('learnedCategoriesHint')}</p>
+        <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
+          {t('learnedCategoriesEmpty')}
+        </p>
+        <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+          {t('learnedCategoriesHint')}
+        </p>
       </div>
     )
   }
 
   return (
     <>
-      <ul
-        ref={listRef}
-        className={`rounded-xl ${cardBg} overflow-hidden divide-y ${borderColor}`}
-        role="list"
-        aria-label={t('learnedCategories')}
-      >
+      <div role="list" aria-label={t('learnedCategories')}>
         {mappings.map((mapping, index) => (
-          <li
+          <div
             key={mapping.id || index}
-            className={`${itemBg} p-3 flex items-center justify-between gap-3 hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-inset`}
+            className="flex items-center justify-between py-2.5"
+            style={{
+              borderBottom: index < mappings.length - 1 ? `1px solid ${isDark ? '#334155' : '#e2e8f0'}` : 'none',
+            }}
+            role="listitem"
           >
+            {/* Item info */}
             <div className="flex-1 min-w-0">
-              {/* Item name */}
-              <p className={`font-medium ${textColor} truncate`}>
+              {/* Item name in quotes */}
+              <p
+                className="font-semibold text-sm truncate"
+                style={{ color: 'var(--text-primary)' }}
+              >
                 "{mapping.originalItem}"
               </p>
-              {/* Category badge and usage count */}
+              {/* Category tag and usage count */}
               <div className="flex items-center gap-2 mt-1">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+                <span
+                  className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                  style={{
+                    backgroundColor: '#dbeafe',
+                    color: '#2563eb',
+                  }}
+                >
                   {mapping.targetCategory}
                 </span>
-                <span className={`text-xs ${secondaryText}`}>
-                  {formatUsageCount(mapping.usageCount)}
+                <span
+                  className="text-xs"
+                  style={{ color: 'var(--text-tertiary)' }}
+                >
+                  {mapping.usageCount}x
                 </span>
               </div>
             </div>
 
             {/* Action buttons */}
-            <div className="flex items-center gap-1 flex-shrink-0">
-              {/* Edit button (Story 9.7 enhancement) */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Edit button - green per mockup */}
               {onEditMapping && (
                 <button
                   onClick={() => setEditTarget(mapping)}
                   onKeyDown={(e) => handleKeyDown(e, mapping, 'edit')}
-                  className={`p-2 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
+                  style={{
+                    color: '#22c55e',
+                    backgroundColor: 'transparent',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDark ? 'rgba(34, 197, 94, 0.15)' : 'rgba(34, 197, 94, 0.1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   aria-label={`${t('editCategoryMapping') || 'Edit'} "${mapping.originalItem}"`}
                   disabled={editing}
                 >
-                  <Edit2 size={18} aria-hidden="true" />
+                  <Edit2 size={16} aria-hidden="true" />
                 </button>
               )}
 
-              {/* Delete button */}
+              {/* Delete button - red per mockup */}
               <button
                 onClick={() => setDeleteTarget(mapping)}
                 onKeyDown={(e) => handleKeyDown(e, mapping, 'delete')}
-                className={`p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500`}
+                className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
+                style={{
+                  color: '#ef4444',
+                  backgroundColor: 'transparent',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 aria-label={`${t('deleteMapping')} "${mapping.originalItem}"`}
                 disabled={deleting}
               >
-                <Trash2 size={18} aria-hidden="true" />
+                <Trash2 size={16} aria-hidden="true" />
               </button>
             </div>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
 
       {/* Delete confirmation modal (AC#4) */}
       <DeleteConfirmModal

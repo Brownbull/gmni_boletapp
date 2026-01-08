@@ -580,6 +580,29 @@
       font-weight: 600;
       color: var(--text-primary);
       margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Transaction Count Badge (Story 14.16 Enhancement) */
+    .tx-count-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 500;
+      padding: 2px 6px;
+      border-radius: 9999px;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+    }
+    .tx-count-badge svg {
+      width: 10px;
+      height: 10px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
     }
     .report-meta {
       display: flex;
@@ -819,6 +842,321 @@
       color: var(--text-primary);
     }
 
+    /* ============================================
+       CATEGORY GROUPS (Story 14.15c / 14.16)
+       Semantic grouping with background colors
+
+       Updated 2026-01: Full support for:
+       - Transaction Categories (StoreCategory - 32 values)
+       - Transaction Groups (StoreCategoryGroup - 8 groups)
+       - Item Categories (ItemCategory - 37 values)
+       - Item Groups (ItemCategoryGroup - 7 groups)
+       ============================================ */
+
+    /* Category Group Container */
+    .category-group {
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    /* Category Group Header */
+    .category-group-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      font-family: var(--font-family);
+    }
+    .category-group-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .category-group-emoji {
+      font-size: 16px;
+    }
+    .category-group-name {
+      font-family: var(--font-family);
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .category-group-amount {
+      font-family: var(--font-family);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    /* Category Group Items */
+    .category-group-items {
+      padding: 0 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* Individual Category in Group */
+    .category-group-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.5);
+      font-family: var(--font-family);
+    }
+    .category-group-item-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+    .category-group-item-info {
+      flex: 1;
+    }
+    .category-group-item-name {
+      font-family: var(--font-family);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .category-group-item-count {
+      font-family: var(--font-family);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+    .category-group-item-amount {
+      font-family: var(--font-family);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* ============================================
+       STORE CATEGORY GROUPS (Transaction Level)
+       8 groups: food-dining, health-wellness,
+       retail-general, retail-specialty, automotive,
+       services, hospitality, other
+       ============================================ */
+
+    /* Food & Dining Group */
+    .category-group.food-dining {
+      background: #fef3c7; /* Warm yellow */
+    }
+    .category-group.food-dining .category-group-name,
+    .category-group.food-dining .category-group-amount {
+      color: #92400e;
+    }
+
+    /* Health & Wellness Group */
+    .category-group.health-wellness {
+      background: #fce7f3; /* Pink */
+    }
+    .category-group.health-wellness .category-group-name,
+    .category-group.health-wellness .category-group-amount {
+      color: #9d174d;
+    }
+
+    /* Retail General Group */
+    .category-group.retail-general {
+      background: #ccfbf1; /* Teal */
+    }
+    .category-group.retail-general .category-group-name,
+    .category-group.retail-general .category-group-amount {
+      color: #0f766e;
+    }
+
+    /* Retail Specialty Group */
+    .category-group.retail-specialty {
+      background: #ede9fe; /* Purple */
+    }
+    .category-group.retail-specialty .category-group-name,
+    .category-group.retail-specialty .category-group-amount {
+      color: #5b21b6;
+    }
+
+    /* Automotive Group */
+    .category-group.automotive {
+      background: #f3f4f6; /* Gray */
+    }
+    .category-group.automotive .category-group-name,
+    .category-group.automotive .category-group-amount {
+      color: #374151;
+    }
+    /* Alias for backward compatibility */
+    .category-group.transport-auto {
+      background: #dbeafe; /* Blue */
+    }
+    .category-group.transport-auto .category-group-name,
+    .category-group.transport-auto .category-group-amount {
+      color: #1e40af;
+    }
+
+    /* Services Group */
+    .category-group.services {
+      background: #dbeafe; /* Blue */
+    }
+    .category-group.services .category-group-name,
+    .category-group.services .category-group-amount {
+      color: #1e40af;
+    }
+
+    /* Hospitality Group */
+    .category-group.hospitality {
+      background: #f5f3ff; /* Light purple */
+    }
+    .category-group.hospitality .category-group-name,
+    .category-group.hospitality .category-group-amount {
+      color: #7c3aed;
+    }
+    /* Alias for backward compatibility */
+    .category-group.entertainment-leisure {
+      background: #ede9fe; /* Purple */
+    }
+    .category-group.entertainment-leisure .category-group-name,
+    .category-group.entertainment-leisure .category-group-amount {
+      color: #5b21b6;
+    }
+
+    /* Other Group (Store) */
+    .category-group.other-store {
+      background: #d1fae5; /* Green */
+    }
+    .category-group.other-store .category-group-name,
+    .category-group.other-store .category-group-amount {
+      color: #047857;
+    }
+
+    /* Legacy aliases */
+    .category-group.home-living {
+      background: #d1fae5; /* Green */
+    }
+    .category-group.home-living .category-group-name,
+    .category-group.home-living .category-group-amount {
+      color: #065f46;
+    }
+    .category-group.shopping-retail {
+      background: #fee2e2; /* Red/Coral */
+    }
+    .category-group.shopping-retail .category-group-name,
+    .category-group.shopping-retail .category-group-amount {
+      color: #991b1b;
+    }
+
+    /* ============================================
+       ITEM CATEGORY GROUPS (Line Item Level)
+       7 groups: food-fresh, food-packaged,
+       health-personal, household, nonfood-retail,
+       services-fees, other-item
+       ============================================ */
+
+    /* Food Fresh Group */
+    .item-group.food-fresh {
+      background: #dcfce7; /* Light green */
+    }
+    .item-group.food-fresh .category-group-name,
+    .item-group.food-fresh .category-group-amount {
+      color: #15803d;
+    }
+
+    /* Food Packaged Group */
+    .item-group.food-packaged {
+      background: #fef3c7; /* Yellow/amber */
+    }
+    .item-group.food-packaged .category-group-name,
+    .item-group.food-packaged .category-group-amount {
+      color: #92400e;
+    }
+
+    /* Health & Personal Group */
+    .item-group.health-personal {
+      background: #fae8ff; /* Light magenta */
+    }
+    .item-group.health-personal .category-group-name,
+    .item-group.health-personal .category-group-amount {
+      color: #a21caf;
+    }
+
+    /* Household Group */
+    .item-group.household {
+      background: #ccfbf1; /* Teal */
+    }
+    .item-group.household .category-group-name,
+    .item-group.household .category-group-amount {
+      color: #0f766e;
+    }
+
+    /* Non-Food Retail Group */
+    .item-group.nonfood-retail {
+      background: #dbeafe; /* Blue */
+    }
+    .item-group.nonfood-retail .category-group-name,
+    .item-group.nonfood-retail .category-group-amount {
+      color: #1e40af;
+    }
+
+    /* Services & Fees Group */
+    .item-group.services-fees {
+      background: #f1f5f9; /* Slate */
+    }
+    .item-group.services-fees .category-group-name,
+    .item-group.services-fees .category-group-amount {
+      color: #64748b;
+    }
+
+    /* Other Item Group */
+    .item-group.other-item {
+      background: #f1f5f9; /* Slate */
+    }
+    .item-group.other-item .category-group-name,
+    .item-group.other-item .category-group-amount {
+      color: #64748b;
+    }
+
+    /* ============================================
+       USER-DEFINED TRANSACTION GROUPS
+       Custom groups created by users with
+       user-defined colors
+       ============================================ */
+
+    .user-group {
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: 8px;
+      border-left: 4px solid var(--group-color, var(--primary));
+    }
+    .user-group .category-group-header {
+      background: color-mix(in srgb, var(--group-color, var(--primary)) 15%, var(--bg-secondary) 85%);
+    }
+    .user-group .category-group-name,
+    .user-group .category-group-amount {
+      color: var(--text-primary);
+    }
+    .user-group .category-group-items {
+      background: color-mix(in srgb, var(--group-color, var(--primary)) 8%, var(--bg-secondary) 92%);
+    }
+
+    /* Section Divider for Reports */
+    .report-section-divider {
+      height: 1px;
+      background: var(--border-light);
+      margin: 16px 0;
+    }
+
+    /* Section Title for Report Breakdown */
+    .report-section-title {
+      font-family: var(--font-family);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-tertiary);
+      margin: 16px 0 8px;
+    }
+
     /* Report Content - Scrollable */
     .report-content-scroll {
       flex: 1;
@@ -931,12 +1269,18 @@
             </div>
           </div>
           <div class="report-cards">
-            <!-- Unread Report -->
+            <!-- Unread Report with Transaction Count Badge -->
             <div class="report-card weekly unread" onclick="openReport('weekly', 'S23')">
               <div class="unread-dot"></div>
               <div class="report-logo"><span>G</span></div>
               <div class="report-content">
-                <div class="report-title">Semana 23</div>
+                <div class="report-title">
+                  <span>Semana 23</span>
+                  <span class="tx-count-badge">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+                    12
+                  </span>
+                </div>
                 <div class="report-meta">
                   <span class="report-amount">$45.200</span>
                   <span class="report-trend up">
@@ -946,12 +1290,18 @@
                 </div>
               </div>
             </div>
-            <!-- Read Report -->
+            <!-- Read Report with Transaction Count Badge -->
             <div class="report-card weekly read" onclick="openReport('weekly', 'S22')">
               <div class="unread-dot"></div>
               <div class="report-logo"><span>G</span></div>
               <div class="report-content">
-                <div class="report-title">Semana 22</div>
+                <div class="report-title">
+                  <span>Semana 22</span>
+                  <span class="tx-count-badge">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+                    11
+                  </span>
+                </div>
                 <div class="report-meta">
                   <span class="report-amount">$42.000</span>
                   <span class="report-trend down">
@@ -961,12 +1311,18 @@
                 </div>
               </div>
             </div>
-            <!-- First Report -->
+            <!-- First Report with Transaction Count Badge -->
             <div class="report-card weekly read" onclick="openReport('weekly', 'S21')">
               <div class="unread-dot"></div>
               <div class="report-logo"><span>G</span></div>
               <div class="report-content">
-                <div class="report-title">Semana 21</div>
+                <div class="report-title">
+                  <span>Semana 21</span>
+                  <span class="tx-count-badge">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+                    8
+                  </span>
+                </div>
                 <div class="report-meta">
                   <span class="report-amount">$38.500</span>
                   <span class="report-first">· Tu primera semana</span>
@@ -1226,7 +1582,125 @@
       // Would navigate to analytics.html
     }
 
+    // ============================================================================
+    // DATA MODEL - 2026-01 Update
+    // Full support for:
+    // - Transaction Categories (StoreCategory - 32 values)
+    // - Transaction Groups (StoreCategoryGroup - 8 groups)
+    // - Item Categories (ItemCategory - 37 values)
+    // - Item Groups (ItemCategoryGroup - 7 groups)
+    // - User-defined Transaction Groups (custom groups with colors)
+    // ============================================================================
+
+    // Store Category Group mappings (8 groups)
+    const STORE_CATEGORY_GROUPS = {
+      'food-dining': {
+        name: { en: 'Food & Dining', es: 'Alimentación' },
+        emoji: '🍽️',
+        categories: ['Supermarket', 'Restaurant', 'Bakery', 'Butcher', 'StreetVendor']
+      },
+      'health-wellness': {
+        name: { en: 'Health & Wellness', es: 'Salud y Bienestar' },
+        emoji: '💊',
+        categories: ['Pharmacy', 'Medical', 'Veterinary', 'HealthBeauty']
+      },
+      'retail-general': {
+        name: { en: 'General Retail', es: 'Tiendas General' },
+        emoji: '🛒',
+        categories: ['Bazaar', 'Clothing', 'Electronics', 'HomeGoods', 'Furniture', 'Hardware', 'GardenCenter']
+      },
+      'retail-specialty': {
+        name: { en: 'Specialty Retail', es: 'Tiendas Especializadas' },
+        emoji: '🎁',
+        categories: ['PetShop', 'BooksMedia', 'OfficeSupplies', 'SportsOutdoors', 'ToysGames', 'Jewelry', 'Optical', 'MusicStore']
+      },
+      'automotive': {
+        name: { en: 'Automotive', es: 'Automotriz' },
+        emoji: '⛽',
+        categories: ['Automotive', 'GasStation', 'Transport']
+      },
+      'services': {
+        name: { en: 'Services', es: 'Servicios' },
+        emoji: '🏢',
+        categories: ['Services', 'BankingFinance', 'Education', 'TravelAgency', 'Subscription', 'Government']
+      },
+      'hospitality': {
+        name: { en: 'Hospitality', es: 'Hospitalidad' },
+        emoji: '🏨',
+        categories: ['HotelLodging', 'Entertainment', 'Gambling']
+      },
+      'other': {
+        name: { en: 'Other', es: 'Otros' },
+        emoji: '📦',
+        categories: ['CharityDonation', 'Other']
+      }
+    };
+
+    // Item Category Group mappings (7 groups)
+    const ITEM_CATEGORY_GROUPS = {
+      'food-fresh': {
+        name: { en: 'Food - Fresh', es: 'Alimentos Frescos' },
+        emoji: '🥬',
+        categories: ['Produce', 'Meat & Seafood', 'Bakery', 'Dairy & Eggs']
+      },
+      'food-packaged': {
+        name: { en: 'Food - Packaged', es: 'Alimentos Envasados' },
+        emoji: '🥫',
+        categories: ['Pantry', 'Frozen Foods', 'Snacks', 'Beverages', 'Alcohol', 'Prepared Food']
+      },
+      'health-personal': {
+        name: { en: 'Health & Personal', es: 'Salud y Personal' },
+        emoji: '💄',
+        categories: ['Health & Beauty', 'Personal Care', 'Pharmacy', 'Supplements', 'Baby Products']
+      },
+      'household': {
+        name: { en: 'Household', es: 'Hogar' },
+        emoji: '🏠',
+        categories: ['Cleaning Supplies', 'Household', 'Pet Supplies']
+      },
+      'nonfood-retail': {
+        name: { en: 'Non-Food Retail', es: 'Retail No Alimentario' },
+        emoji: '🛍️',
+        categories: ['Clothing', 'Electronics', 'Hardware', 'Garden', 'Automotive', 'Sports & Outdoors', 'Toys & Games', 'Books & Media', 'Office & Stationery', 'Crafts & Hobbies', 'Furniture', 'Musical Instruments']
+      },
+      'services-fees': {
+        name: { en: 'Services & Fees', es: 'Servicios y Cargos' },
+        emoji: '📋',
+        categories: ['Service', 'Tax & Fees', 'Subscription', 'Insurance', 'Loan Payment', 'Tickets & Events', 'Tobacco', 'Gambling']
+      },
+      'other-item': {
+        name: { en: 'Other', es: 'Otros' },
+        emoji: '📦',
+        categories: ['Other']
+      }
+    };
+
+    // Category emoji mappings for display
+    const CATEGORY_EMOJIS = {
+      // Store Categories
+      'Supermarket': '🛒', 'Restaurant': '🍔', 'Bakery': '🥖', 'Butcher': '🥩', 'StreetVendor': '🌮',
+      'Pharmacy': '💊', 'Medical': '🏥', 'Veterinary': '🐾', 'HealthBeauty': '💄',
+      'Bazaar': '🏪', 'Clothing': '👕', 'Electronics': '📱', 'HomeGoods': '🏠', 'Furniture': '🛋️',
+      'Hardware': '🔧', 'GardenCenter': '🌱', 'PetShop': '🐕', 'BooksMedia': '📚',
+      'OfficeSupplies': '📎', 'SportsOutdoors': '⚽', 'ToysGames': '🎮', 'Jewelry': '💎',
+      'Optical': '👓', 'MusicStore': '🎵', 'Automotive': '🔧', 'GasStation': '⛽', 'Transport': '🚌',
+      'Services': '🏢', 'BankingFinance': '🏦', 'Education': '🎓', 'TravelAgency': '✈️',
+      'Subscription': '📱', 'Government': '🏛️', 'HotelLodging': '🏨', 'Entertainment': '🎬',
+      'Gambling': '🎰', 'CharityDonation': '❤️', 'Other': '📦',
+      // Item Categories
+      'Produce': '🥬', 'Meat & Seafood': '🥩', 'Dairy & Eggs': '🥛', 'Pantry': '🥫',
+      'Frozen Foods': '🧊', 'Snacks': '🍿', 'Beverages': '🥤', 'Alcohol': '🍷',
+      'Prepared Food': '🍱', 'Health & Beauty': '💄', 'Personal Care': '🧴',
+      'Supplements': '💪', 'Baby Products': '👶', 'Cleaning Supplies': '🧹',
+      'Household': '🏠', 'Pet Supplies': '🐕', 'Garden': '🌱',
+      'Sports & Outdoors': '⚽', 'Toys & Games': '🎮', 'Books & Media': '📚',
+      'Office & Stationery': '📎', 'Crafts & Hobbies': '🎨', 'Musical Instruments': '🎸',
+      'Service': '🏢', 'Tax & Fees': '📋', 'Insurance': '🛡️', 'Loan Payment': '💳',
+      'Tickets & Events': '🎟️', 'Tobacco': '🚬'
+    };
+
     // Report content templates with full temporal context
+    // Story 14.16: Updated with transaction groups, item groups, and user groups
     const reportContent = {
       weekly: {
         S23: {
@@ -1235,10 +1709,128 @@
           amount: '$45.200',
           trend: '+8%',
           trendDirection: 'up',
-          categories: [
-            { icon: '🛒', name: 'Supermercado', count: '5 compras', amount: '$22.500', color: 'var(--primary-light)' },
-            { icon: '🍔', name: 'Restaurantes', count: '3 compras', amount: '$12.800', color: '#fef3c7' },
-            { icon: '🚗', name: 'Transporte', count: '4 compras', amount: '$9.900', color: '#dbeafe' }
+          transactionCount: 12,
+
+          // View Mode 1: Transaction Categories (StoreCategory - flat list)
+          transactionCategories: [
+            { key: 'Supermarket', name: 'Supermercado', count: '5 compras', amount: '$22.500' },
+            { key: 'Restaurant', name: 'Restaurantes', count: '3 compras', amount: '$12.800' },
+            { key: 'GasStation', name: 'Bencinera', count: '2 compras', amount: '$6.500' },
+            { key: 'Transport', name: 'Transporte', count: '2 compras', amount: '$3.400' }
+          ],
+
+          // View Mode 2: Transaction Groups (StoreCategoryGroup - grouped)
+          transactionGroups: [
+            {
+              key: 'food-dining',
+              name: 'Alimentación',
+              emoji: '🍽️',
+              cssClass: 'food-dining',
+              totalAmount: '$35.300',
+              categories: [
+                { key: 'Supermarket', name: 'Supermercado', count: '5 compras', amount: '$22.500' },
+                { key: 'Restaurant', name: 'Restaurantes', count: '3 compras', amount: '$12.800' }
+              ]
+            },
+            {
+              key: 'automotive',
+              name: 'Automotriz',
+              emoji: '⛽',
+              cssClass: 'automotive',
+              totalAmount: '$9.900',
+              categories: [
+                { key: 'GasStation', name: 'Bencinera', count: '2 compras', amount: '$6.500' },
+                { key: 'Transport', name: 'Transporte', count: '2 compras', amount: '$3.400' }
+              ]
+            }
+          ],
+
+          // View Mode 3: Item Categories (ItemCategory - flat list)
+          itemCategories: [
+            { key: 'Produce', name: 'Frutas y Verduras', count: '8 items', amount: '$8.200' },
+            { key: 'Meat & Seafood', name: 'Carnes y Mariscos', count: '4 items', amount: '$12.100' },
+            { key: 'Dairy & Eggs', name: 'Lácteos y Huevos', count: '6 items', amount: '$4.800' },
+            { key: 'Pantry', name: 'Despensa', count: '5 items', amount: '$6.500' },
+            { key: 'Beverages', name: 'Bebidas', count: '4 items', amount: '$3.200' },
+            { key: 'Prepared Food', name: 'Comida Preparada', count: '3 items', amount: '$10.400' }
+          ],
+
+          // View Mode 4: Item Groups (ItemCategoryGroup - grouped)
+          itemGroups: [
+            {
+              key: 'food-fresh',
+              name: 'Alimentos Frescos',
+              emoji: '🥬',
+              cssClass: 'food-fresh',
+              totalAmount: '$25.100',
+              categories: [
+                { key: 'Produce', name: 'Frutas y Verduras', count: '8 items', amount: '$8.200' },
+                { key: 'Meat & Seafood', name: 'Carnes y Mariscos', count: '4 items', amount: '$12.100' },
+                { key: 'Dairy & Eggs', name: 'Lácteos y Huevos', count: '6 items', amount: '$4.800' }
+              ]
+            },
+            {
+              key: 'food-packaged',
+              name: 'Alimentos Envasados',
+              emoji: '🥫',
+              cssClass: 'food-packaged',
+              totalAmount: '$20.100',
+              categories: [
+                { key: 'Pantry', name: 'Despensa', count: '5 items', amount: '$6.500' },
+                { key: 'Beverages', name: 'Bebidas', count: '4 items', amount: '$3.200' },
+                { key: 'Prepared Food', name: 'Comida Preparada', count: '3 items', amount: '$10.400' }
+              ]
+            }
+          ],
+
+          // View Mode 5: User-Defined Transaction Groups
+          userGroups: [
+            {
+              id: 'christmas-2025',
+              name: '🎄 Navidad 2025',
+              color: '#ef4444',
+              totalAmount: '$18.500',
+              transactionCount: 4,
+              transactions: [
+                { merchant: 'Jumbo', amount: '$12.500', date: '22 dic' },
+                { merchant: 'Casa Ideas', amount: '$6.000', date: '21 dic' }
+              ]
+            },
+            {
+              id: 'trip-valparaiso',
+              name: '🚗 Viaje Valparaíso',
+              color: '#3b82f6',
+              totalAmount: '$9.900',
+              transactionCount: 3,
+              transactions: [
+                { merchant: 'Copec', amount: '$6.500', date: '20 dic' },
+                { merchant: 'Peaje Costanera', amount: '$3.400', date: '20 dic' }
+              ]
+            }
+          ],
+
+          // Legacy: Keep categoryGroups for backward compatibility
+          categoryGroups: [
+            {
+              name: 'Alimentación',
+              emoji: '🍽️',
+              cssClass: 'food-dining',
+              totalAmount: '$35.300',
+              items: [
+                { icon: '🛒', name: 'Supermercado', count: '5 compras', amount: '$22.500' },
+                { icon: '🍔', name: 'Restaurantes', count: '3 compras', amount: '$12.800' }
+              ]
+            },
+            {
+              name: 'Transporte',
+              emoji: '🚗',
+              cssClass: 'transport-auto',
+              totalAmount: '$9.900',
+              items: [
+                { icon: '⛽', name: 'Gasolinera', count: '2 compras', amount: '$6.500' },
+                { icon: '🚌', name: 'Transporte público', count: '2 compras', amount: '$3.400' }
+              ]
+            }
           ]
         },
         S22: {
@@ -1247,6 +1839,31 @@
           amount: '$42.000',
           trend: '-3%',
           trendDirection: 'down',
+          transactionCount: 11,
+          transactionGroups: [
+            {
+              key: 'food-dining',
+              name: 'Alimentación',
+              emoji: '🍽️',
+              cssClass: 'food-dining',
+              totalAmount: '$31.300',
+              categories: [
+                { key: 'Supermarket', name: 'Supermercado', count: '4 compras', amount: '$20.100' },
+                { key: 'Restaurant', name: 'Restaurantes', count: '2 compras', amount: '$11.200' }
+              ]
+            },
+            {
+              key: 'automotive',
+              name: 'Automotriz',
+              emoji: '⛽',
+              cssClass: 'automotive',
+              totalAmount: '$10.700',
+              categories: [
+                { key: 'GasStation', name: 'Bencinera', count: '3 compras', amount: '$7.200' },
+                { key: 'Transport', name: 'Transporte', count: '2 compras', amount: '$3.500' }
+              ]
+            }
+          ],
           categories: [
             { icon: '🛒', name: 'Supermercado', count: '4 compras', amount: '$20.100', color: 'var(--primary-light)' },
             { icon: '🍔', name: 'Restaurantes', count: '2 compras', amount: '$11.200', color: '#fef3c7' },
@@ -1260,6 +1877,31 @@
           trend: null,
           trendDirection: null,
           isFirst: true,
+          transactionCount: 8,
+          transactionGroups: [
+            {
+              key: 'food-dining',
+              name: 'Alimentación',
+              emoji: '🍽️',
+              cssClass: 'food-dining',
+              totalAmount: '$30.500',
+              categories: [
+                { key: 'Supermarket', name: 'Supermercado', count: '3 compras', amount: '$18.200' },
+                { key: 'Restaurant', name: 'Restaurantes', count: '2 compras', amount: '$12.300' }
+              ]
+            },
+            {
+              key: 'automotive',
+              name: 'Automotriz',
+              emoji: '⛽',
+              cssClass: 'automotive',
+              totalAmount: '$8.000',
+              categories: [
+                { key: 'GasStation', name: 'Bencinera', count: '2 compras', amount: '$5.200' },
+                { key: 'Transport', name: 'Transporte', count: '1 compra', amount: '$2.800' }
+              ]
+            }
+          ],
           categories: [
             { icon: '🛒', name: 'Supermercado', count: '3 compras', amount: '$18.200', color: 'var(--primary-light)' },
             { icon: '🍔', name: 'Restaurantes', count: '2 compras', amount: '$12.300', color: '#fef3c7' },
@@ -1274,7 +1916,84 @@
           amount: '$185.400',
           trend: '+12%',
           trendDirection: 'up',
+          transactionCount: 48,
           persona: 'Las fiestas se notaron: Restaurantes subió 25% este mes.',
+
+          // Full transaction groups breakdown
+          transactionGroups: [
+            {
+              key: 'food-dining',
+              name: 'Alimentación',
+              emoji: '🍽️',
+              cssClass: 'food-dining',
+              totalAmount: '$129.800',
+              categories: [
+                { key: 'Supermarket', name: 'Supermercado', count: '18 compras', amount: '$74.200' },
+                { key: 'Restaurant', name: 'Restaurantes', count: '12 compras', amount: '$55.600' }
+              ]
+            },
+            {
+              key: 'automotive',
+              name: 'Automotriz',
+              emoji: '⛽',
+              cssClass: 'automotive',
+              totalAmount: '$37.100',
+              categories: [
+                { key: 'GasStation', name: 'Bencinera', count: '8 compras', amount: '$24.500' },
+                { key: 'Transport', name: 'Transporte', count: '7 compras', amount: '$12.600' }
+              ]
+            },
+            {
+              key: 'health-wellness',
+              name: 'Salud y Bienestar',
+              emoji: '💊',
+              cssClass: 'health-wellness',
+              totalAmount: '$18.500',
+              categories: [
+                { key: 'Pharmacy', name: 'Farmacia', count: '3 compras', amount: '$18.500' }
+              ]
+            }
+          ],
+
+          // Item groups for monthly detail
+          itemGroups: [
+            {
+              key: 'food-fresh',
+              name: 'Alimentos Frescos',
+              emoji: '🥬',
+              cssClass: 'food-fresh',
+              totalAmount: '$52.300',
+              categories: [
+                { key: 'Produce', name: 'Frutas y Verduras', count: '32 items', amount: '$18.400' },
+                { key: 'Meat & Seafood', name: 'Carnes y Mariscos', count: '18 items', amount: '$24.100' },
+                { key: 'Dairy & Eggs', name: 'Lácteos y Huevos', count: '22 items', amount: '$9.800' }
+              ]
+            },
+            {
+              key: 'food-packaged',
+              name: 'Alimentos Envasados',
+              emoji: '🥫',
+              cssClass: 'food-packaged',
+              totalAmount: '$38.200',
+              categories: [
+                { key: 'Pantry', name: 'Despensa', count: '15 items', amount: '$12.500' },
+                { key: 'Beverages', name: 'Bebidas', count: '12 items', amount: '$8.200' },
+                { key: 'Alcohol', name: 'Alcohol', count: '6 items', amount: '$17.500' }
+              ]
+            },
+            {
+              key: 'health-personal',
+              name: 'Salud y Personal',
+              emoji: '💄',
+              cssClass: 'health-personal',
+              totalAmount: '$18.500',
+              categories: [
+                { key: 'Pharmacy', name: 'Farmacia', count: '4 items', amount: '$14.200' },
+                { key: 'Personal Care', name: 'Cuidado Personal', count: '3 items', amount: '$4.300' }
+              ]
+            }
+          ],
+
           categories: [
             { icon: '🛒', name: 'Supermercado', count: '18 compras', amount: '$74.200', color: 'var(--primary-light)' },
             { icon: '🍔', name: 'Restaurantes', count: '12 compras', amount: '$55.600', color: '#fef3c7' },
@@ -1288,7 +2007,42 @@
           amount: '$165.200',
           trend: '-5%',
           trendDirection: 'down',
+          transactionCount: 42,
           persona: 'Buen control este mes. Gastaste menos que Octubre.',
+          transactionGroups: [
+            {
+              key: 'food-dining',
+              name: 'Alimentación',
+              emoji: '🍽️',
+              cssClass: 'food-dining',
+              totalAmount: '$116.600',
+              categories: [
+                { key: 'Supermarket', name: 'Supermercado', count: '16 compras', amount: '$68.400' },
+                { key: 'Restaurant', name: 'Restaurantes', count: '10 compras', amount: '$48.200' }
+              ]
+            },
+            {
+              key: 'automotive',
+              name: 'Automotriz',
+              emoji: '⛽',
+              cssClass: 'automotive',
+              totalAmount: '$32.600',
+              categories: [
+                { key: 'GasStation', name: 'Bencinera', count: '7 compras', amount: '$21.400' },
+                { key: 'Transport', name: 'Transporte', count: '5 compras', amount: '$11.200' }
+              ]
+            },
+            {
+              key: 'health-wellness',
+              name: 'Salud y Bienestar',
+              emoji: '💊',
+              cssClass: 'health-wellness',
+              totalAmount: '$16.000',
+              categories: [
+                { key: 'Pharmacy', name: 'Farmacia', count: '2 compras', amount: '$16.000' }
+              ]
+            }
+          ],
           categories: [
             { icon: '🛒', name: 'Supermercado', count: '16 compras', amount: '$68.400', color: 'var(--primary-light)' },
             { icon: '🍔', name: 'Restaurantes', count: '10 compras', amount: '$48.200', color: '#fef3c7' },
@@ -1303,7 +2057,42 @@
           trend: null,
           trendDirection: null,
           isFirst: true,
+          transactionCount: 44,
           persona: 'Tu primer mes completo con Gastify.',
+          transactionGroups: [
+            {
+              key: 'food-dining',
+              name: 'Alimentación',
+              emoji: '🍽️',
+              cssClass: 'food-dining',
+              totalAmount: '$122.800',
+              categories: [
+                { key: 'Supermarket', name: 'Supermercado', count: '15 compras', amount: '$70.800' },
+                { key: 'Restaurant', name: 'Restaurantes', count: '11 compras', amount: '$52.000' }
+              ]
+            },
+            {
+              key: 'automotive',
+              name: 'Automotriz',
+              emoji: '⛽',
+              cssClass: 'automotive',
+              totalAmount: '$35.200',
+              categories: [
+                { key: 'GasStation', name: 'Bencinera', count: '8 compras', amount: '$23.200' },
+                { key: 'Transport', name: 'Transporte', count: '6 compras', amount: '$12.000' }
+              ]
+            },
+            {
+              key: 'health-wellness',
+              name: 'Salud y Bienestar',
+              emoji: '💊',
+              cssClass: 'health-wellness',
+              totalAmount: '$16.000',
+              categories: [
+                { key: 'Pharmacy', name: 'Farmacia', count: '2 compras', amount: '$16.000' }
+              ]
+            }
+          ],
           categories: [
             { icon: '🛒', name: 'Supermercado', count: '15 compras', amount: '$70.800', color: 'var(--primary-light)' },
             { icon: '🍔', name: 'Restaurantes', count: '11 compras', amount: '$52.000', color: '#fef3c7' },
@@ -1319,11 +2108,46 @@
           amount: '$524.600',
           trend: '+15%',
           trendDirection: 'up',
+          transactionCount: 134,
           persona: 'Este trimestre, Supermercado fue tu categoría estrella con 40% del gasto total. Las fiestas de fin de año impulsaron Restaurantes.',
           highlights: [
             { label: 'Mes más alto', value: 'Diciembre · $185.400' },
             { label: 'Mes más bajo', value: 'Noviembre · $165.200' },
             { label: 'Categoría líder', value: 'Supermercado · 40%' }
+          ],
+          transactionGroups: [
+            {
+              key: 'food-dining',
+              name: 'Alimentación',
+              emoji: '🍽️',
+              cssClass: 'food-dining',
+              totalAmount: '$367.220',
+              categories: [
+                { key: 'Supermarket', name: 'Supermercado', count: '52 compras', amount: '$209.840' },
+                { key: 'Restaurant', name: 'Restaurantes', count: '36 compras', amount: '$157.380' }
+              ]
+            },
+            {
+              key: 'automotive',
+              name: 'Automotriz',
+              emoji: '⛽',
+              cssClass: 'automotive',
+              totalAmount: '$104.920',
+              categories: [
+                { key: 'GasStation', name: 'Bencinera', count: '25 compras', amount: '$68.200' },
+                { key: 'Transport', name: 'Transporte', count: '20 compras', amount: '$36.720' }
+              ]
+            },
+            {
+              key: 'health-wellness',
+              name: 'Salud y Bienestar',
+              emoji: '💊',
+              cssClass: 'health-wellness',
+              totalAmount: '$52.460',
+              categories: [
+                { key: 'Pharmacy', name: 'Farmacia', count: '8 compras', amount: '$52.460' }
+              ]
+            }
           ],
           categories: [
             { icon: '🛒', name: 'Supermercado', count: '52 compras', amount: '$209.840', color: 'var(--primary-light)' },
@@ -1338,11 +2162,46 @@
           amount: '$498.200',
           trend: '+8%',
           trendDirection: 'up',
+          transactionCount: 126,
           persona: 'El verano trajo más gastos en Restaurantes. ¡Disfrutaste bien! Tu categoría de Transporte se mantuvo estable.',
           highlights: [
             { label: 'Mes más alto', value: 'Septiembre · $178.500' },
             { label: 'Mes más bajo', value: 'Julio · $156.200' },
             { label: 'Mayor aumento', value: 'Restaurantes · +22%' }
+          ],
+          transactionGroups: [
+            {
+              key: 'food-dining',
+              name: 'Alimentación',
+              emoji: '🍽️',
+              cssClass: 'food-dining',
+              totalAmount: '$357.900',
+              categories: [
+                { key: 'Supermarket', name: 'Supermercado', count: '48 compras', amount: '$189.500' },
+                { key: 'Restaurant', name: 'Restaurantes', count: '42 compras', amount: '$168.400' }
+              ]
+            },
+            {
+              key: 'automotive',
+              name: 'Automotriz',
+              emoji: '⛽',
+              cssClass: 'automotive',
+              totalAmount: '$89.800',
+              categories: [
+                { key: 'GasStation', name: 'Bencinera', count: '22 compras', amount: '$58.200' },
+                { key: 'Transport', name: 'Transporte', count: '16 compras', amount: '$31.600' }
+              ]
+            },
+            {
+              key: 'health-wellness',
+              name: 'Salud y Bienestar',
+              emoji: '💊',
+              cssClass: 'health-wellness',
+              totalAmount: '$50.500',
+              categories: [
+                { key: 'Pharmacy', name: 'Farmacia', count: '6 compras', amount: '$50.500' }
+              ]
+            }
           ],
           categories: [
             { icon: '🛒', name: 'Supermercado', count: '48 compras', amount: '$189.500', color: 'var(--primary-light)' },
@@ -1359,11 +2218,127 @@
           amount: '$2.145.800',
           trend: null,
           trendDirection: null,
+          transactionCount: 520,
           persona: 'Un año completo de decisiones inteligentes. Tu mayor inversión fue en bienestar y alimentación.',
           highlights: [
             { label: 'Mes más alto', value: 'Diciembre · $185.400' },
             { label: 'Mes más bajo', value: 'Febrero · $142.300' },
             { label: 'Categoría #1', value: 'Supermercado · 38%' }
+          ],
+          transactionGroups: [
+            {
+              key: 'food-dining',
+              name: 'Alimentación',
+              emoji: '🍽️',
+              cssClass: 'food-dining',
+              totalAmount: '$1.351.850',
+              categories: [
+                { key: 'Supermarket', name: 'Supermercado', count: '208 compras', amount: '$815.400' },
+                { key: 'Restaurant', name: 'Restaurantes', count: '144 compras', amount: '$536.450' }
+              ]
+            },
+            {
+              key: 'automotive',
+              name: 'Automotriz',
+              emoji: '⛽',
+              cssClass: 'automotive',
+              totalAmount: '$429.160',
+              categories: [
+                { key: 'GasStation', name: 'Bencinera', count: '102 compras', amount: '$278.500' },
+                { key: 'Transport', name: 'Transporte', count: '78 compras', amount: '$150.660' }
+              ]
+            },
+            {
+              key: 'health-wellness',
+              name: 'Salud y Bienestar',
+              emoji: '💊',
+              cssClass: 'health-wellness',
+              totalAmount: '$214.580',
+              categories: [
+                { key: 'Pharmacy', name: 'Farmacia', count: '32 compras', amount: '$214.580' }
+              ]
+            },
+            {
+              key: 'hospitality',
+              name: 'Hospitalidad',
+              emoji: '🏨',
+              cssClass: 'hospitality',
+              totalAmount: '$150.210',
+              categories: [
+                { key: 'Entertainment', name: 'Entretenimiento', count: '48 compras', amount: '$150.210' }
+              ]
+            }
+          ],
+          itemGroups: [
+            {
+              key: 'food-fresh',
+              name: 'Alimentos Frescos',
+              emoji: '🥬',
+              cssClass: 'food-fresh',
+              totalAmount: '$512.300',
+              categories: [
+                { key: 'Produce', name: 'Frutas y Verduras', count: '312 items', amount: '$148.400' },
+                { key: 'Meat & Seafood', name: 'Carnes y Mariscos', count: '186 items', amount: '$264.100' },
+                { key: 'Dairy & Eggs', name: 'Lácteos y Huevos', count: '224 items', amount: '$99.800' }
+              ]
+            },
+            {
+              key: 'food-packaged',
+              name: 'Alimentos Envasados',
+              emoji: '🥫',
+              cssClass: 'food-packaged',
+              totalAmount: '$382.500',
+              categories: [
+                { key: 'Pantry', name: 'Despensa', count: '156 items', amount: '$125.200' },
+                { key: 'Beverages', name: 'Bebidas', count: '124 items', amount: '$82.100' },
+                { key: 'Alcohol', name: 'Alcohol', count: '52 items', amount: '$175.200' }
+              ]
+            },
+            {
+              key: 'health-personal',
+              name: 'Salud y Personal',
+              emoji: '💄',
+              cssClass: 'health-personal',
+              totalAmount: '$214.580',
+              categories: [
+                { key: 'Pharmacy', name: 'Farmacia', count: '42 items', amount: '$142.200' },
+                { key: 'Personal Care', name: 'Cuidado Personal', count: '36 items', amount: '$72.380' }
+              ]
+            },
+            {
+              key: 'household',
+              name: 'Hogar',
+              emoji: '🏠',
+              cssClass: 'household',
+              totalAmount: '$86.420',
+              categories: [
+                { key: 'Cleaning Supplies', name: 'Productos de Limpieza', count: '48 items', amount: '$52.100' },
+                { key: 'Household', name: 'Hogar', count: '24 items', amount: '$34.320' }
+              ]
+            }
+          ],
+          userGroups: [
+            {
+              id: 'christmas-2025',
+              name: '🎄 Navidad 2025',
+              color: '#ef4444',
+              totalAmount: '$125.400',
+              transactionCount: 18
+            },
+            {
+              id: 'summer-vacation',
+              name: '☀️ Vacaciones de Verano',
+              color: '#f59e0b',
+              totalAmount: '$285.600',
+              transactionCount: 32
+            },
+            {
+              id: 'home-renovation',
+              name: '🏠 Renovación Casa',
+              color: '#10b981',
+              totalAmount: '$342.100',
+              transactionCount: 24
+            }
           ],
           categories: [
             { icon: '🛒', name: 'Supermercado', count: '208 compras', amount: '$815.400', color: 'var(--primary-light)' },
@@ -1443,24 +2418,271 @@
         `;
       }
 
-      // Categories breakdown
-      html += `
-        <div class="story-card">
-          <div class="story-label">📊 Desglose por categoría</div>
-          <div class="story-categories" style="margin-top: 12px;">
-            ${report.categories.map(cat => `
-              <div class="story-category-row">
-                <div class="story-category-icon" style="background: ${cat.color};">${cat.icon}</div>
-                <div class="story-category-info">
-                  <div class="story-category-name">${cat.name}</div>
-                  <div class="story-category-count">${cat.count}</div>
-                </div>
-                <div class="story-category-amount">${cat.amount}</div>
+      // ============================================
+      // BREAKDOWN SECTION - 2026-01 Update
+      // Non-interactive, progressive information by report type:
+      // - Weekly: Transaction groups only (high-level summary)
+      // - Monthly: Transaction groups + item groups
+      // - Quarterly: Transaction groups + item groups + trends
+      // - Yearly: Everything (all groups + user groups + detailed breakdown)
+      // ============================================
+
+      const hasTransactionGroups = report.transactionGroups && report.transactionGroups.length > 0;
+      const hasItemGroups = report.itemGroups && report.itemGroups.length > 0;
+      const hasUserGroups = report.userGroups && report.userGroups.length > 0;
+      const hasLegacyCategories = report.categories && report.categories.length > 0;
+
+      // Helper function to render a category group (non-interactive, always expanded)
+      function renderCategoryGroup(group, isItemGroup = false) {
+        return `
+          <div class="category-group ${isItemGroup ? 'item-group ' : ''}${group.cssClass}">
+            <div class="category-group-header">
+              <div class="category-group-header-left">
+                <span class="category-group-emoji">${group.emoji}</span>
+                <span class="category-group-name">${group.name}</span>
               </div>
-            `).join('')}
+              <span class="category-group-amount">${group.totalAmount}</span>
+            </div>
+            <div class="category-group-items">
+              ${group.categories.map(cat => `
+                <div class="category-group-item">
+                  <div class="category-group-item-icon">${CATEGORY_EMOJIS[cat.key] || '📦'}</div>
+                  <div class="category-group-item-info">
+                    <div class="category-group-item-name">${cat.name}</div>
+                    <div class="category-group-item-count">${cat.count}</div>
+                  </div>
+                  <div class="category-group-item-amount">${cat.amount}</div>
+                </div>
+              `).join('')}
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      }
+
+      // Helper function to render user group (non-interactive, always expanded)
+      function renderUserGroup(group) {
+        return `
+          <div class="user-group" style="--group-color: ${group.color};">
+            <div class="category-group-header">
+              <div class="category-group-header-left">
+                <span class="category-group-name">${group.name}</span>
+              </div>
+              <span class="category-group-amount">${group.totalAmount}</span>
+            </div>
+            <div class="category-group-items">
+              <div style="font-family: var(--font-family); font-size: 11px; color: var(--text-tertiary); padding: 4px 0;">
+                ${group.transactionCount} transacciones
+              </div>
+              ${group.transactions ? group.transactions.map(tx => `
+                <div class="category-group-item">
+                  <div class="category-group-item-info">
+                    <div class="category-group-item-name">${tx.merchant}</div>
+                    <div class="category-group-item-count">${tx.date}</div>
+                  </div>
+                  <div class="category-group-item-amount">${tx.amount}</div>
+                </div>
+              `).join('') : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      // ============================================
+      // WEEKLY REPORT: Transaction Groups only
+      // ============================================
+      if (type === 'weekly') {
+        if (hasTransactionGroups) {
+          html += `
+            <div class="story-card">
+              <div class="story-label">🏪 Gasto por tipo de tienda</div>
+              <div style="margin-top: 12px;">
+                ${report.transactionGroups.map(g => renderCategoryGroup(g, false)).join('')}
+              </div>
+            </div>
+          `;
+        } else if (hasLegacyCategories) {
+          // Fallback for legacy data
+          html += `
+            <div class="story-card">
+              <div class="story-label">📊 Desglose por categoría</div>
+              <div class="story-categories" style="margin-top: 12px;">
+                ${report.categories.map(cat => `
+                  <div class="story-category-row">
+                    <div class="story-category-icon" style="background: ${cat.color};">${cat.icon}</div>
+                    <div class="story-category-info">
+                      <div class="story-category-name">${cat.name}</div>
+                      <div class="story-category-count">${cat.count}</div>
+                    </div>
+                    <div class="story-category-amount">${cat.amount}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      // ============================================
+      // MONTHLY REPORT: Transaction Groups + Item Groups
+      // ============================================
+      if (type === 'monthly') {
+        // Transaction Groups Section
+        if (hasTransactionGroups) {
+          html += `
+            <div class="story-card">
+              <div class="story-label">🏪 Gasto por tipo de tienda</div>
+              <div style="margin-top: 12px;">
+                ${report.transactionGroups.map(g => renderCategoryGroup(g, false)).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        // Item Groups Section (monthly adds this)
+        if (hasItemGroups) {
+          html += `
+            <div class="story-card">
+              <div class="story-label">📦 Gasto por tipo de producto</div>
+              <div style="margin-top: 12px;">
+                ${report.itemGroups.map(g => renderCategoryGroup(g, true)).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        // Fallback for legacy
+        if (!hasTransactionGroups && hasLegacyCategories) {
+          html += `
+            <div class="story-card">
+              <div class="story-label">📊 Desglose por categoría</div>
+              <div class="story-categories" style="margin-top: 12px;">
+                ${report.categories.map(cat => `
+                  <div class="story-category-row">
+                    <div class="story-category-icon" style="background: ${cat.color};">${cat.icon}</div>
+                    <div class="story-category-info">
+                      <div class="story-category-name">${cat.name}</div>
+                      <div class="story-category-count">${cat.count}</div>
+                    </div>
+                    <div class="story-category-amount">${cat.amount}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      // ============================================
+      // QUARTERLY REPORT: Transaction Groups + Item Groups + More detail
+      // ============================================
+      if (type === 'quarterly') {
+        // Transaction Groups Section
+        if (hasTransactionGroups) {
+          html += `
+            <div class="story-card">
+              <div class="story-label">🏪 Gasto por tipo de tienda</div>
+              <div style="margin-top: 12px;">
+                ${report.transactionGroups.map(g => renderCategoryGroup(g, false)).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        // Item Groups Section
+        if (hasItemGroups) {
+          html += `
+            <div class="story-card">
+              <div class="story-label">📦 Gasto por tipo de producto</div>
+              <div style="margin-top: 12px;">
+                ${report.itemGroups.map(g => renderCategoryGroup(g, true)).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        // Fallback for legacy
+        if (!hasTransactionGroups && hasLegacyCategories) {
+          html += `
+            <div class="story-card">
+              <div class="story-label">📊 Desglose por categoría</div>
+              <div class="story-categories" style="margin-top: 12px;">
+                ${report.categories.map(cat => `
+                  <div class="story-category-row">
+                    <div class="story-category-icon" style="background: ${cat.color};">${cat.icon}</div>
+                    <div class="story-category-info">
+                      <div class="story-category-name">${cat.name}</div>
+                      <div class="story-category-count">${cat.count}</div>
+                    </div>
+                    <div class="story-category-amount">${cat.amount}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      // ============================================
+      // YEARLY REPORT: Everything - All groups + User groups
+      // ============================================
+      if (type === 'yearly') {
+        // Transaction Groups Section
+        if (hasTransactionGroups) {
+          html += `
+            <div class="story-card">
+              <div class="story-label">🏪 Gasto por tipo de tienda</div>
+              <div style="margin-top: 12px;">
+                ${report.transactionGroups.map(g => renderCategoryGroup(g, false)).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        // Item Groups Section
+        if (hasItemGroups) {
+          html += `
+            <div class="story-card">
+              <div class="story-label">📦 Gasto por tipo de producto</div>
+              <div style="margin-top: 12px;">
+                ${report.itemGroups.map(g => renderCategoryGroup(g, true)).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        // User-Defined Groups Section (yearly exclusive)
+        if (hasUserGroups) {
+          html += `
+            <div class="story-card">
+              <div class="story-label">📁 Mis grupos personalizados</div>
+              <div style="margin-top: 12px;">
+                ${report.userGroups.map(g => renderUserGroup(g)).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        // Fallback for legacy
+        if (!hasTransactionGroups && hasLegacyCategories) {
+          html += `
+            <div class="story-card">
+              <div class="story-label">📊 Desglose por categoría</div>
+              <div class="story-categories" style="margin-top: 12px;">
+                ${report.categories.map(cat => `
+                  <div class="story-category-row">
+                    <div class="story-category-icon" style="background: ${cat.color};">${cat.icon}</div>
+                    <div class="story-category-info">
+                      <div class="story-category-name">${cat.name}</div>
+                      <div class="story-category-count">${cat.count}</div>
+                    </div>
+                    <div class="story-category-amount">${cat.amount}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+      }
 
       document.getElementById('reportContentScroll').innerHTML = html;
 

@@ -86,6 +86,8 @@ const ITEM_GROUP_TRANSLATIONS: Record<string, Record<Language, string>> = {
     'Snacks': { en: 'Snacks', es: 'Snacks' },
     'Beverages': { en: 'Beverages', es: 'Bebidas' },
     'Alcohol': { en: 'Alcohol', es: 'Alcohol' },
+    // Food - Prepared
+    'Prepared Food': { en: 'Prepared Food', es: 'Comida Preparada' },
     // Health & Personal
     'Health & Beauty': { en: 'Health & Beauty', es: 'Salud y Belleza' },
     'Personal Care': { en: 'Personal Care', es: 'Cuidado Personal' },
@@ -108,14 +110,32 @@ const ITEM_GROUP_TRANSLATIONS: Record<string, Record<Language, string>> = {
     'Office & Stationery': { en: 'Office & Stationery', es: 'Oficina y Papeleria' },
     'Crafts & Hobbies': { en: 'Crafts & Hobbies', es: 'Manualidades y Pasatiempos' },
     'Furniture': { en: 'Furniture', es: 'Muebles' },
+    'Musical Instruments': { en: 'Musical Instruments', es: 'Instrumentos Musicales' },
     // Services & Fees
     'Service': { en: 'Service', es: 'Servicio' },
     'Tax & Fees': { en: 'Tax & Fees', es: 'Impuestos y Cargos' },
+    'Subscription': { en: 'Subscription', es: 'Suscripcion' },
+    'Insurance': { en: 'Insurance', es: 'Seguros' },
+    'Loan Payment': { en: 'Loan Payment', es: 'Pago de Prestamo' },
+    'Tickets & Events': { en: 'Tickets & Events', es: 'Entradas y Eventos' },
+    // Vices
     'Tobacco': { en: 'Tobacco', es: 'Tabaco' },
+    'Gambling': { en: 'Gambling', es: 'Apuestas' },
     // Catch-all
     'Other': { en: 'Other', es: 'Otro' },
-    // Legacy variations
+    // Legacy variations (old data compatibility)
     'Condiments': { en: 'Condiments', es: 'Condimentos' },
+    'Fresh Food': { en: 'Fresh Food', es: 'Alimentos Frescos' },
+    'Drinks': { en: 'Drinks', es: 'Bebidas' },
+    'Car': { en: 'Car', es: 'Auto' },
+    // Store categories that might appear as item categories (legacy data)
+    'SportsOutdoors': { en: 'Sports & Outdoors', es: 'Deportes y Exterior' },
+    'HomeGoods': { en: 'Home Goods', es: 'Articulos del Hogar' },
+    'OfficeSupplies': { en: 'Office Supplies', es: 'Articulos de Oficina' },
+    'HealthBeauty': { en: 'Health & Beauty', es: 'Salud y Belleza' },
+    'Butcher': { en: 'Butcher', es: 'Carniceria' },
+    'Jewelry': { en: 'Jewelry', es: 'Joyeria' },
+    'Services': { en: 'Services', es: 'Servicios' },
 };
 
 // ============================================================================
@@ -243,6 +263,39 @@ export function translateItemGroup(group: string, lang: Language): string {
 }
 
 /**
+ * Normalizes an item group/category from any language to its canonical English key.
+ * This is the reverse of translateItemGroup - it converts Spanish (or other)
+ * category names back to English for consistent lookups.
+ *
+ * Example: 'Frutas y Verduras' → 'Produce'
+ *          'Snacks' → 'Snacks'
+ *          'Otro' → 'Other'
+ *
+ * @param group - The item category in any language
+ * @returns The canonical English key for the category
+ */
+export function normalizeItemGroupToEnglish(group: string): string {
+    if (!group) return group;
+
+    // If it's already a valid English key, return it
+    if (ITEM_GROUP_TRANSLATIONS[group]) {
+        return group;
+    }
+
+    // Search for a match in any language and return the English key
+    for (const [englishKey, translations] of Object.entries(ITEM_GROUP_TRANSLATIONS)) {
+        for (const translatedValue of Object.values(translations)) {
+            if (translatedValue === group) {
+                return englishKey;
+            }
+        }
+    }
+
+    // Fallback to original if no match found
+    return group;
+}
+
+/**
  * Translates a subcategory.
  * Best-effort - returns original if no translation exists.
  *
@@ -274,9 +327,271 @@ export function getTranslatedStoreCategoryOptions(
     }));
 }
 
+// ============================================================================
+// Store Category Group Translations (Story 14.15c)
+// ============================================================================
+
+/**
+ * Translations for store category groups.
+ * Keys match StoreCategoryGroup type from categoryColors.ts
+ */
+const STORE_CATEGORY_GROUP_TRANSLATIONS: Record<string, Record<Language, string>> = {
+    'food-dining': { en: 'Food & Dining', es: 'Alimentación' },
+    'health-wellness': { en: 'Health & Wellness', es: 'Salud y Bienestar' },
+    'retail-general': { en: 'General Retail', es: 'Tiendas General' },
+    'retail-specialty': { en: 'Specialty Retail', es: 'Tiendas Especializadas' },
+    'automotive': { en: 'Automotive', es: 'Automotriz' },
+    'services': { en: 'Services', es: 'Servicios' },
+    'hospitality': { en: 'Hospitality', es: 'Hospitalidad' },
+    'other': { en: 'Other', es: 'Otros' },
+};
+
+/**
+ * Emoji mapping for store category groups.
+ * Used in filter dropdowns and chips.
+ */
+export const STORE_CATEGORY_GROUP_EMOJIS: Record<string, string> = {
+    'food-dining': '🍽️',
+    'health-wellness': '💊',
+    'retail-general': '🛒',
+    'retail-specialty': '🎁',
+    'automotive': '⛽',
+    'services': '🏢',
+    'hospitality': '🏨',
+    'other': '📦',
+};
+
+/**
+ * Translates a store category group key to the user's language.
+ * @param groupKey - The group key (e.g., 'food-dining')
+ * @param lang - The target language ('en' | 'es')
+ * @returns The translated group name or original key if no translation exists
+ */
+export function translateStoreCategoryGroup(groupKey: string, lang: Language): string {
+    if (!groupKey) return groupKey;
+    return STORE_CATEGORY_GROUP_TRANSLATIONS[groupKey]?.[lang] || groupKey;
+}
+
+/**
+ * Gets the emoji for a store category group.
+ * @param groupKey - The group key (e.g., 'food-dining')
+ * @returns The emoji for the group or a default box emoji
+ */
+export function getStoreCategoryGroupEmoji(groupKey: string): string {
+    return STORE_CATEGORY_GROUP_EMOJIS[groupKey] || '📦';
+}
+
+// ============================================================================
+// Item Category Group Translations (Story 14.15c)
+// ============================================================================
+
+/**
+ * Translations for item category groups.
+ * Keys match ItemCategoryGroup type from categoryColors.ts
+ */
+const ITEM_CATEGORY_GROUP_TRANSLATIONS: Record<string, Record<Language, string>> = {
+    'food-fresh': { en: 'Food - Fresh', es: 'Alimentos Frescos' },
+    'food-packaged': { en: 'Food - Packaged', es: 'Alimentos Envasados' },
+    'health-personal': { en: 'Health & Personal', es: 'Salud y Personal' },
+    'household': { en: 'Household', es: 'Hogar' },
+    'nonfood-retail': { en: 'Non-Food Retail', es: 'Retail No Alimentario' },
+    'services-fees': { en: 'Services & Fees', es: 'Servicios y Cargos' },
+    'other-item': { en: 'Other', es: 'Otros' },
+};
+
+/**
+ * Emoji mapping for item category groups.
+ */
+export const ITEM_CATEGORY_GROUP_EMOJIS: Record<string, string> = {
+    'food-fresh': '🥬',
+    'food-packaged': '🥫',
+    'health-personal': '💄',
+    'household': '🏠',
+    'nonfood-retail': '🛍️',
+    'services-fees': '📋',
+    'other-item': '📦',
+};
+
+/**
+ * Emoji mapping for individual item categories.
+ * Story 14.24: Each item category gets its own distinct emoji.
+ */
+export const ITEM_CATEGORY_EMOJIS: Record<string, string> = {
+    // Food - Fresh
+    'Produce': '🥬',
+    'Meat & Seafood': '🥩',
+    'Bakery': '🥖',
+    'Dairy & Eggs': '🥛',
+    // Food - Packaged
+    'Pantry': '🥫',
+    'Frozen Foods': '🧊',
+    'Snacks': '🍿',
+    'Beverages': '🥤',
+    'Alcohol': '🍷',
+    // Food - Prepared
+    'Prepared Food': '🍱',
+    // Health & Personal
+    'Health & Beauty': '💄',
+    'Personal Care': '🧴',
+    'Pharmacy': '💊',
+    'Supplements': '💪',
+    'Baby Products': '🍼',
+    // Household
+    'Cleaning Supplies': '🧹',
+    'Household': '🏠',
+    'Pet Supplies': '🐾',
+    // Non-Food Retail
+    'Clothing': '👕',
+    'Electronics': '📱',
+    'Hardware': '🔧',
+    'Garden': '🌱',
+    'Automotive': '🚗',
+    'Sports & Outdoors': '⚽',
+    'Toys & Games': '🎮',
+    'Books & Media': '📚',
+    'Office & Stationery': '📎',
+    'Crafts & Hobbies': '🎨',
+    'Furniture': '🪑',
+    'Musical Instruments': '🎸',
+    // Services & Fees
+    'Service': '🔧',
+    'Tax & Fees': '📋',
+    'Subscription': '📅',
+    'Insurance': '🛡️',
+    'Loan Payment': '💳',
+    'Tickets & Events': '🎟️',
+    // Vices
+    'Tobacco': '🚬',
+    'Gambling': '🎰',
+    // Catch-all
+    'Other': '📦',
+    // Legacy variations
+    'Condiments': '🧂',
+    'Fresh Food': '🥬',
+    'Drinks': '🥤',
+    'Car': '🚗',
+};
+
+/**
+ * Gets the emoji for a specific item category.
+ * Falls back to group emoji if category not found, then to default.
+ */
+export function getItemCategoryEmoji(category: string): string {
+    if (!category) return '📦';
+    // First try exact category match
+    if (ITEM_CATEGORY_EMOJIS[category]) {
+        return ITEM_CATEGORY_EMOJIS[category];
+    }
+    // Fallback to default
+    return '📦';
+}
+
+/**
+ * Description/subtitle for each item category group.
+ */
+export const ITEM_CATEGORY_GROUP_DESCRIPTIONS: Record<string, Record<Language, string>> = {
+    'food-fresh': {
+        en: 'Produce, meat, seafood, dairy, and bakery items',
+        es: 'Frutas, verduras, carnes, mariscos, lácteos y panadería',
+    },
+    'food-packaged': {
+        en: 'Pantry items, frozen foods, snacks, and beverages',
+        es: 'Despensa, congelados, snacks y bebidas',
+    },
+    'health-personal': {
+        en: 'Health, beauty, pharmacy, supplements, and baby products',
+        es: 'Salud, belleza, farmacia, suplementos y bebé',
+    },
+    'household': {
+        en: 'Cleaning supplies, home essentials, and pet supplies',
+        es: 'Limpieza, hogar y mascotas',
+    },
+    'nonfood-retail': {
+        en: 'Clothing, electronics, hardware, garden, sports, and more',
+        es: 'Ropa, electrónica, ferretería, jardín, deportes y más',
+    },
+    'services-fees': {
+        en: 'Service charges, taxes, fees, and tobacco',
+        es: 'Servicios, impuestos, cargos y tabaco',
+    },
+    'other-item': {
+        en: 'Miscellaneous and uncategorized items',
+        es: 'Artículos misceláneos y sin categorizar',
+    },
+};
+
+/**
+ * Description/subtitle for each store category group.
+ */
+export const STORE_CATEGORY_GROUP_DESCRIPTIONS: Record<string, Record<Language, string>> = {
+    'food-dining': {
+        en: 'Restaurants, supermarkets, bakeries, and food vendors',
+        es: 'Restaurantes, supermercados, panaderías y vendedores',
+    },
+    'health-wellness': {
+        en: 'Pharmacies, medical services, veterinary, and beauty',
+        es: 'Farmacias, servicios médicos, veterinaria y belleza',
+    },
+    'retail-general': {
+        en: 'General retail stores, home goods, electronics, and hardware',
+        es: 'Tiendas retail, hogar, electrónica y ferretería',
+    },
+    'retail-specialty': {
+        en: 'Specialty stores: pets, books, sports, toys, and jewelry',
+        es: 'Tiendas especializadas: mascotas, libros, deportes y joyería',
+    },
+    'automotive': {
+        en: 'Automotive services, gas stations, and transportation',
+        es: 'Servicios automotrices, gasolineras y transporte',
+    },
+    'services': {
+        en: 'Banking, professional services, education, and travel',
+        es: 'Banca, servicios profesionales, educación y viajes',
+    },
+    'hospitality': {
+        en: 'Hotels, lodging, and entertainment venues',
+        es: 'Hoteles, alojamiento y entretenimiento',
+    },
+    'other': {
+        en: 'Charity, donations, and uncategorized',
+        es: 'Caridad, donaciones y sin categorizar',
+    },
+};
+
+/**
+ * Translates an item category group key to the user's language.
+ */
+export function translateItemCategoryGroup(groupKey: string, lang: Language): string {
+    if (!groupKey) return groupKey;
+    return ITEM_CATEGORY_GROUP_TRANSLATIONS[groupKey]?.[lang] || groupKey;
+}
+
+/**
+ * Gets the emoji for an item category group.
+ */
+export function getItemCategoryGroupEmoji(groupKey: string): string {
+    return ITEM_CATEGORY_GROUP_EMOJIS[groupKey] || '📦';
+}
+
+/**
+ * Gets the description for a store category group.
+ */
+export function getStoreCategoryGroupDescription(groupKey: string, lang: Language): string {
+    return STORE_CATEGORY_GROUP_DESCRIPTIONS[groupKey]?.[lang] || '';
+}
+
+/**
+ * Gets the description for an item category group.
+ */
+export function getItemCategoryGroupDescription(groupKey: string, lang: Language): string {
+    return ITEM_CATEGORY_GROUP_DESCRIPTIONS[groupKey]?.[lang] || '';
+}
+
 // Export translation maps for testing
 export {
     STORE_CATEGORY_TRANSLATIONS,
     ITEM_GROUP_TRANSLATIONS,
     SUBCATEGORY_TRANSLATIONS,
+    STORE_CATEGORY_GROUP_TRANSLATIONS,
+    ITEM_CATEGORY_GROUP_TRANSLATIONS,
 };

@@ -1,5 +1,12 @@
+/**
+ * useTrustedMerchants Hook Tests
+ *
+ * Story 14.29: Updated to use renderHookWithClient for React Query support
+ */
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { act } from '@testing-library/react';
+import { renderHookWithClient } from '../../setup/test-utils';
 
 // Mock the service module before importing the hook
 vi.mock('../../../src/services/merchantTrustService', () => ({
@@ -32,15 +39,16 @@ describe('useTrustedMerchants', () => {
 
     describe('Initialization', () => {
         it('should return empty merchants when user is null', () => {
-            const { result } = renderHook(() => useTrustedMerchants(null, mockServices));
+            const { result } = renderHookWithClient(() => useTrustedMerchants(null, mockServices));
 
             expect(result.current.merchants).toEqual([]);
             expect(result.current.trustedMerchants).toEqual([]);
+            // Story 14.29: loading is true initially until subscription confirms no data
             expect(result.current.loading).toBe(false);
         });
 
         it('should return empty merchants when services is null', () => {
-            const { result } = renderHook(() => useTrustedMerchants(mockUser, null));
+            const { result } = renderHookWithClient(() => useTrustedMerchants(mockUser, null));
 
             expect(result.current.merchants).toEqual([]);
             expect(result.current.trustedMerchants).toEqual([]);
@@ -48,7 +56,7 @@ describe('useTrustedMerchants', () => {
         });
 
         it('should subscribe to merchants when user and services are provided', () => {
-            renderHook(() => useTrustedMerchants(mockUser, mockServices));
+            renderHookWithClient(() => useTrustedMerchants(mockUser, mockServices));
 
             expect(merchantTrustService.subscribeToTrustedMerchants).toHaveBeenCalledWith(
                 mockServices.db,
@@ -64,7 +72,7 @@ describe('useTrustedMerchants', () => {
             const mockEligibility = { shouldShowPrompt: false, reason: 'insufficient_scans' as const };
             vi.mocked(merchantTrustService.recordScan).mockResolvedValue(mockEligibility);
 
-            const { result } = renderHook(() => useTrustedMerchants(mockUser, mockServices));
+            const { result } = renderHookWithClient(() => useTrustedMerchants(mockUser, mockServices));
 
             let eligibility;
             await act(async () => {
@@ -82,7 +90,7 @@ describe('useTrustedMerchants', () => {
         });
 
         it('should return insufficient_scans when user is null', async () => {
-            const { result } = renderHook(() => useTrustedMerchants(null, mockServices));
+            const { result } = renderHookWithClient(() => useTrustedMerchants(null, mockServices));
 
             let eligibility;
             await act(async () => {
@@ -100,7 +108,7 @@ describe('useTrustedMerchants', () => {
         it('should call isMerchantTrusted service', async () => {
             vi.mocked(merchantTrustService.isMerchantTrusted).mockResolvedValue(true);
 
-            const { result } = renderHook(() => useTrustedMerchants(mockUser, mockServices));
+            const { result } = renderHookWithClient(() => useTrustedMerchants(mockUser, mockServices));
 
             let isTrusted;
             await act(async () => {
@@ -117,7 +125,7 @@ describe('useTrustedMerchants', () => {
         });
 
         it('should return false when user is null', async () => {
-            const { result } = renderHook(() => useTrustedMerchants(null, mockServices));
+            const { result } = renderHookWithClient(() => useTrustedMerchants(null, mockServices));
 
             let isTrusted;
             await act(async () => {
@@ -132,7 +140,7 @@ describe('useTrustedMerchants', () => {
         it('should call trustMerchant service', async () => {
             vi.mocked(merchantTrustService.trustMerchant).mockResolvedValue(undefined);
 
-            const { result } = renderHook(() => useTrustedMerchants(mockUser, mockServices));
+            const { result } = renderHookWithClient(() => useTrustedMerchants(mockUser, mockServices));
 
             await act(async () => {
                 await result.current.acceptTrust('Jumbo');
@@ -147,7 +155,7 @@ describe('useTrustedMerchants', () => {
         });
 
         it('should throw when user is null', async () => {
-            const { result } = renderHook(() => useTrustedMerchants(null, mockServices));
+            const { result } = renderHookWithClient(() => useTrustedMerchants(null, mockServices));
 
             await expect(
                 act(async () => {
@@ -161,7 +169,7 @@ describe('useTrustedMerchants', () => {
         it('should call declineTrust service', async () => {
             vi.mocked(merchantTrustService.declineTrust).mockResolvedValue(undefined);
 
-            const { result } = renderHook(() => useTrustedMerchants(mockUser, mockServices));
+            const { result } = renderHookWithClient(() => useTrustedMerchants(mockUser, mockServices));
 
             await act(async () => {
                 await result.current.declinePrompt('Jumbo');
@@ -180,7 +188,7 @@ describe('useTrustedMerchants', () => {
         it('should call revokeTrust service', async () => {
             vi.mocked(merchantTrustService.revokeTrust).mockResolvedValue(undefined);
 
-            const { result } = renderHook(() => useTrustedMerchants(mockUser, mockServices));
+            const { result } = renderHookWithClient(() => useTrustedMerchants(mockUser, mockServices));
 
             await act(async () => {
                 await result.current.removeTrust('Jumbo');
@@ -199,7 +207,7 @@ describe('useTrustedMerchants', () => {
         it('should filter only trusted merchants', () => {
             // The subscription callback is mocked, so we can't easily test the filter
             // This would require more complex mock setup
-            const { result } = renderHook(() => useTrustedMerchants(mockUser, mockServices));
+            const { result } = renderHookWithClient(() => useTrustedMerchants(mockUser, mockServices));
 
             // Initially empty since subscription hasn't fired
             expect(result.current.trustedMerchants).toEqual([]);

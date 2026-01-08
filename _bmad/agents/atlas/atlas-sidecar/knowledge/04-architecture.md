@@ -103,9 +103,89 @@ src/
 ### Receipt Scan Flow
 ```
 Camera → Image Capture → Base64 Encode →
-Cloud Function → Gemini API → Parse Response →
-Apply Mappings → Display in EditView → Save to Firestore
+Cloud Function → Gemini API (V3 Prompt) → Parse Response →
+Apply Mappings → Currency Comparison → Display in ScanResultView → Save to Firestore
 ```
+
+---
+
+## AI Prompt System (V3 - Current)
+
+### Prompt Architecture
+```
+shared/schema/               ← Single Source of Truth
+├── categories.ts            # 36 store + 39 item categories
+├── currencies.ts            # 20+ currencies with usesCents flag
+└── index.ts                 # Re-exports
+
+prompt-testing/prompts/      ← Prompt Versions
+├── v1-original.ts           # Legacy (deprecated)
+├── v2-multi-currency.ts     # Production until 2026-01
+├── v3-category-standard.ts  # Current production (2026-01+)
+└── index.ts                 # Registry, PRODUCTION_PROMPT export
+
+functions/src/prompts/       ← Cloud Function copies (via prebuild)
+```
+
+### V3 Prompt Key Features
+
+| Feature | V2 (Old) | V3 (Current) |
+|---------|----------|--------------|
+| Tokens | ~1,065 | ~836 (-21%) |
+| Currency | App provides hint | AI auto-detects |
+| Categories | 29 store / 28 item | 36 store / 39 item |
+| Single-charge | Verbose rules | Rule #10 (concise) |
+| Source | Inline lists | shared/schema imports |
+
+### Currency Auto-Detection Flow
+```
+┌─────────────────────────────────────────────────────────────┐
+│              AI extracts data (V3 prompt)                    │
+│              Returns: { currency: "GBP" | null, ... }        │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Compare AI currency vs user settings            │
+└─────────────────────────────────────────────────────────────┘
+           │                  │                    │
+           ▼                  ▼                    ▼
+      AI = null          AI = user           AI ≠ user
+           │                  │                    │
+           ▼                  ▼                    ▼
+   Use user default     Use as-is         Show dialog
+```
+
+### Category Normalization (Legacy Data)
+```typescript
+// For transactions with V1/V2 categories
+const LEGACY_MAP = {
+  'Fresh Food': 'Produce',
+  'Drinks': 'Beverages',
+  'Pets': 'Pet Supplies',
+  'Apparel': 'Clothing',
+  'Technology': 'Electronics',
+};
+// Apply in: TrendsView, historyFilterUtils
+```
+
+### V3 Rules Summary
+1. Extract ALL visible line items (max 100)
+2. Store category = type of establishment
+3. Item category = what the item IS
+4. Use 'Other' only if no category fits
+5. Item names max 50 characters
+6. Time in 24h format, default "04:04"
+7. Extract country/city from receipt text only
+8. Subcategory is optional free-form
+9. Currency can be null (app will ask user)
+10. **MUST have at least one item** - if no line items, create one from receipt keyword
+
+### Reference Documents
+- Token Analysis: `prompt-testing/TOKEN-ANALYSIS.md`
+- Test Harness: `prompt-testing/QUICKSTART.md`
+- Architecture: `prompt-testing/ARCHITECTURE.md`
+- Story: `docs/sprint-artifacts/epic14/stories/story-14.15b-v3-prompt-integration.md`
 
 ### Analytics Data Flow
 ```
@@ -439,26 +519,286 @@ const CELEBRATION_PRESETS = {
 
 ---
 
-## Sync Notes
+## Transaction Groups & Selection Mode (Story 14.15)
 
-- Architecture stable since Epic 7
-- Epic 10 COMPLETE: Client-side insight engine with 12 generators (ADRs 015-017)
-- Epic 10a COMPLETE: UX Consolidation with Home+History merge, Insights tab
-- Epic 11 COMPLETE: Quick Save optimization with confidence scoring, trust merchants, PWA viewport
-- Epic 12 COMPLETE: Batch mode with parallel processing, credit validation
-- Epic 13 COMPLETE: UX Design with 10 HTML mockups, motion design system
-- **Epic 14 READY-FOR-DEV**: Animation framework, dynamic polygon, celebrations (14 stories, ~48 pts)
-- Security rules pattern consistently applied
-- Story 10.3 established generator registry pattern with `canGenerate/generate` interface
-- Story 10.4 added 5 pattern detection generators with precomputed aggregates (2025-12-18)
-- Story 10.5 implemented full selection algorithm with phase-based priority and sprinkle distribution (2025-12-19)
-- Story 10.6 added InsightCard UI layer with async side-effect pattern in App.tsx save flow (2025-12-19)
-- Story 10a.1 unified Dashboard+History into consolidated Home view with shared filter context (2025-12-20)
-- Story 11.1 added batch image processing with sequential API calls and credit-after-save pattern (2025-12-21)
-- Story 11.2 added Quick Save Card with weighted confidence scoring and 85% threshold (2025-12-21)
-- Story 11.3 added animated item reveal with staggered timing, reduced motion support, and App.tsx integration (2025-12-21)
-- Story 11.4 added trust merchant system with auto-save capability for frequent merchants (2025-12-21)
-- Story 11.5 added scan status clarity with state machine hook, status components, and reduced motion support (2025-12-22)
-- Story 11.6 added PWA viewport fixes with dynamic viewport units (dvh) and safe area CSS properties (2025-12-22)
-- Combined retrospective: docs/sprint-artifacts/epic10-11-retro-2025-12-22.md
-- Total velocity: ~72 points in ~6 days (~12 pts/day)
+### Data Model Extension
+```typescript
+// New collection for user groups
+users/{userId}/groups/{groupId}
+  - name: string
+  - transactionCount: number
+  - totalAmount: number
+  - currency?: string
+  - createdAt: Timestamp
+  - updatedAt: Timestamp
+
+// Transaction fields extended
+interface Transaction {
+  // ...existing fields
+  groupId?: string;    // Reference to group document
+  groupName?: string;  // Denormalized for display
+}
+```
+
+### Service Layer Pattern
+```typescript
+// groupService.ts - CRUD operations for groups
+- subscribeToGroups(): Real-time listener
+- createGroup(): Create with serverTimestamp
+- assignTransactionsToGroup(): Batch update with totals
+- removeTransactionsFromGroup(): Batch removal with totals
+
+// firestore.ts - Extended with batch operations
+- deleteTransactionsBatch(): Delete multiple transactions
+```
+
+### Hook Pattern
+```typescript
+// useSelectionMode hook
+- isSelectionMode: boolean
+- selectedIds: Set<string>
+- enterSelectionMode(initialId?): Long-press triggers
+- toggleSelection(id): Checkbox toggle
+- exitSelectionMode(): Clear selection
+
+// useGroups hook
+- groups: TransactionGroup[]
+- loading: boolean
+- addGroup(input): Create new group
+```
+
+### Modal Architecture
+```typescript
+// Three-modal flow for group assignment:
+1. AssignGroupModal - Select existing group or create new
+2. CreateGroupModal - Name input with emoji tip
+3. DeleteTransactionsModal - Confirmation with preview
+
+// Shared patterns:
+- Focus trap with Tab cycling
+- Escape key closes modal
+- Restore focus on close
+- Body scroll prevention
+```
+
+---
+
+## Input Sanitization Pattern (Story 14.15 - Security Enhancement)
+
+### Problem Statement
+User input fields (merchant names, item names, locations, subcategories) could potentially contain malicious content like XSS scripts or injection attacks.
+
+### Solution: Centralized Sanitization Utility
+Created `src/utils/sanitize.ts` with functions that:
+1. Remove dangerous patterns (script tags, event handlers, javascript: protocols)
+2. Remove control characters
+3. Normalize whitespace
+4. Enforce maximum length limits
+
+### Available Functions
+```typescript
+// src/utils/sanitize.ts
+sanitizeInput(input, options)      // Base function with configurable options
+sanitizeMerchantName(name)         // Max 200 chars
+sanitizeItemName(name)             // Max 200 chars
+sanitizeLocation(location)         // Max 100 chars
+sanitizeSubcategory(subcategory)   // Max 100 chars
+sanitizeNumericInput(value)        // Clean numeric strings
+```
+
+### Usage Pattern
+```typescript
+// Apply sanitization before saving to Firestore
+const sanitizedMerchant = sanitizeMerchantName(merchantName);
+const sanitizedCity = sanitizeLocation(city);
+
+const sanitizedItems = items.map((item) => ({
+  ...item,
+  name: sanitizeItemName(item.name),
+  subcategory: item.subcategory ? sanitizeSubcategory(item.subcategory) : undefined,
+}));
+```
+
+### Where Applied
+- **ScanResultView.tsx**: `handleSave()` and `handleSaveItem()` functions
+- **Story 14.23 (planned)**: App-wide audit to apply sanitization to all input fields
+
+### Security Patterns Blocked
+- `<script>` tags and event handlers (`onclick=`, etc.)
+- Protocol attacks (`javascript:`, `data:`, `vbscript:`)
+- Control character injection
+- DoS via extremely long strings
+
+---
+
+## Firestore Cost Optimization (Story 14.25-14.27)
+
+### Problem Statement (Discovered 2026-01-07)
+Cloud Firestore costs spiked to $19/week during development. Investigation revealed 6+ real-time listeners without limits, fetching entire collections on every change.
+
+### Root Causes Identified (FIXED in Story 14.25)
+
+| File | Function | Issue | Status |
+|------|----------|-------|--------|
+| `firestore.ts` | `subscribeToTransactions` | ALL transactions on every change | ✅ FIXED - limit(100) |
+| `groupService.ts` | `subscribeToGroups` | All groups, ordered, no limit | ✅ FIXED - limit(50) |
+| `merchantTrustService.ts` | `subscribeToTrustedMerchants` | All merchants | ✅ FIXED - limit(200) |
+| `categoryMappingService.ts` | `subscribeToCategoryMappings` | All mappings | ✅ FIXED - limit(500) |
+| `merchantMappingService.ts` | `subscribeToMerchantMappings` | All mappings | ✅ FIXED - limit(500) |
+| `subcategoryMappingService.ts` | `subscribeToSubcategoryMappings` | All mappings | ✅ FIXED - limit(500) |
+
+### Cost Impact Example (BEFORE Story 14.25)
+- User with 500 transactions
+- App opened 10x/day
+- Each open = 500 reads
+- 10 opens × 500 reads = 5,000 reads/day per user
+- **30 days × 5,000 = 150,000 reads/month (per user!)**
+
+### Solution Stories (Phase 6 of Epic 14)
+
+| Story | Focus | Status |
+|-------|-------|--------|
+| **14.25** | Add `limit()` to listeners | ✅ COMPLETE (2026-01-07) |
+| **14.26** | Add `limit(1)` to single-doc queries, batch deletes | Ready for dev |
+| **14.27** | Pagination with react-window virtualization | Ready for dev |
+
+### LISTENER_LIMITS Constant (Story 14.25)
+
+```typescript
+// src/services/firestore.ts
+export const LISTENER_LIMITS = {
+    TRANSACTIONS: 100,      // Most recent 100, paginate for more
+    GROUPS: 50,             // Most users have <20 groups
+    TRUSTED_MERCHANTS: 200, // Grows slowly
+    MAPPINGS: 500,          // Category/merchant/subcategory
+} as const;
+```
+
+### Implementation Pattern
+```typescript
+// BEFORE (costly)
+const q = collection(db, path);
+return onSnapshot(q, callback);
+
+// AFTER (optimized) - Story 14.25
+import { LISTENER_LIMITS } from './firestore';
+
+const q = query(
+  collection(db, path),
+  orderBy('date', 'desc'),
+  limit(LISTENER_LIMITS.TRANSACTIONS)
+);
+return onSnapshot(q, (snapshot) => {
+  // Dev-mode logging when at limit
+  if (import.meta.env.DEV && snapshot.size >= LISTENER_LIMITS.TRANSACTIONS) {
+    console.warn('[service] Listener at limit - pagination needed');
+  }
+  callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+});
+```
+
+### Expected Savings
+- **Before**: ~$19/week
+- **Target**: ~$1/week
+- **Reduction**: 95%+
+
+### Reference Documents
+- Story files: `docs/sprint-artifacts/epic14/stories/story-14.25-*.md`
+- Firebase Console: https://console.firebase.google.com/u/0/project/boletapp-d609f/usage
+
+---
+
+## React Query Integration (Story 14.29 - COMPLETE)
+
+> **Reference**: `docs/architecture/react-query-caching.md` for full documentation
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `src/lib/queryClient.ts` | QueryClient (5min stale, 30min cache) |
+| `src/lib/queryKeys.ts` | Hierarchical cache keys |
+| `src/hooks/useFirestoreSubscription.ts` | Real-time subscriptions + cache |
+| `src/hooks/useFirestoreQuery.ts` | One-time fetch hook |
+| `src/hooks/useFirestoreMutation.ts` | Mutations with cache invalidation |
+
+### Migrated Hooks
+All use `useFirestoreSubscription` pattern: `useTransactions`, `useCategoryMappings`, `useMerchantMappings`, `useSubcategoryMappings`, `useGroups`, `useTrustedMerchants`, `useUserPreferences`
+
+### Critical Pattern
+Use refs for subscribeFn to avoid infinite loops. Local state + React Query cache for persistence. See `06-lessons.md` for pitfalls.
+
+### Unblocked Stories
+- **14.27**: Transaction pagination with `useInfiniteQuery`
+- **14.28**: App-level preferences (cache warming)
+- **Epic 14c**: Household sharing (multi-user sync)
+
+---
+
+## Epic Progress Summary
+
+> **Detailed sync history**: See `09-sync-history.md`
+
+| Epic | Status | Key Patterns |
+|------|--------|--------------|
+| Epic 10 | COMPLETE | Insight engine, 12 generators, ADRs 015-017 |
+| Epic 10a | COMPLETE | Home+History merge, shared filter context |
+| Epic 11 | COMPLETE | QuickSave (85% confidence), trust merchants, PWA viewport |
+| Epic 12 | COMPLETE | Batch processing, credit-after-save, worker pattern |
+| Epic 13 | COMPLETE | 10 HTML mockups, motion design system |
+| Epic 14 | IN PROGRESS | React Query, Firestore optimization, unified editor |
+
+---
+
+## Transaction Editor (Story 14.23)
+
+**Pattern**: Unified `TransactionEditorView` replaces ScanResultView + EditView
+
+| Component | Purpose |
+|-----------|---------|
+| `TransactionEditorView.tsx` | Unified editor (~1200 lines) |
+| `ProcessingOverlay.tsx` | Content blocking during scan |
+| `ScanCompleteModal.tsx` | "Save now or Edit?" choice |
+
+**State Machine**: `idle → pending → scanning → complete | error`
+
+**Mode Prop**: `mode: 'new' | 'existing'` - determines post-scan behavior
+
+---
+
+## Weekly Reports (Story 14.16)
+
+**Pattern**: Instagram-style swipeable cards
+
+| Component | Purpose |
+|-----------|---------|
+| `ReportCard.tsx` | Full-screen card with gradients |
+| `ReportCarousel.tsx` | Swipeable with keyboard nav |
+| `reportUtils.ts` | Summary generation |
+
+**Flow**: `Transaction[] → generateWeeklySummary() → generateReportCards() → ReportCarousel`
+
+---
+
+## Semantic Color System (Story 14.16b - Planned)
+
+CSS variables for semantic colors per theme. See `docs/uxui/mockups/00_components/category-colors.html`.
+
+| State | Normal (Ghibli) | Professional | Mono |
+|-------|-----------------|--------------|------|
+| Positive | Sage #3d8c5a | Green #16a34a | Teal #3a8c70 |
+| Negative | Terracotta #b85c4a | Red #dc2626 | Clay #a05858 |
+| Neutral | Warm gray #7a7268 | Cool gray #64748b | True gray #686870 |
+| Warning | Ochre #a8842c | Amber #d97706 | Tan #988040 |
+
+---
+
+## Code Review Learnings (Summary)
+
+> **Full details**: See `06-lessons.md` and story files
+
+| Story | Pattern | Reference |
+|-------|---------|-----------|
+| 14.26 | Batch chunking (500 ops), `limit(1)` for existence checks | `story-14.26-*.md` |
+| 14.16 | Multi-page PDF export with print container | `docs/development/pdf-export-pattern.md` |
+| 14.29 | React Query + Firestore subscription refs | `06-lessons.md` |
+| 14.28 | useFirestoreQuery for one-time fetches, cache warming at App level | `story-14.28-*.md` |

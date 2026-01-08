@@ -177,7 +177,15 @@ export function useSwipeNavigation(
       // If we've determined this is a horizontal swipe
       if (isHorizontal.current) {
         setIsSwiping(true);
-        e.preventDefault(); // Prevent scroll
+        // Try to prevent scroll, but handle passive event listeners gracefully
+        // React's synthetic events are passive by default, so this may not work
+        try {
+          if (e.cancelable) {
+            e.preventDefault();
+          }
+        } catch {
+          // Ignore - passive event listeners can't be prevented
+        }
 
         // Update direction
         setSwipeDirection(diffX < 0 ? 'left' : 'right');

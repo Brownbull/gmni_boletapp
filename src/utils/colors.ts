@@ -4,6 +4,10 @@
  * Uses CSS custom properties (--chart-1 through --chart-6) for theme support.
  * Colors change automatically when theme changes (Slate Professional vs Ghibli).
  *
+ * NOTE: This file provides CHART colors (single colors for pie/bar segments).
+ * For BADGE colors (fg/bg pairs for category badges), use:
+ * @see src/config/categoryColors.ts - Story 14.21: Unified category colors
+ *
  * @see docs/ux-design-specification.md Section 3.1 - Color System
  */
 

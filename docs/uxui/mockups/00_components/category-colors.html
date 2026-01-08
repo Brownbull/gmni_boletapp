@@ -1,0 +1,2125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Category Colors - Design Reference</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       CATEGORY & SEMANTIC COLORS - DESIGN REFERENCE
+       Story 14.21: Category Color Consolidation
+
+       This mockup defines colors for:
+       - 32 Store Categories (transaction-level)
+       - 32 Item Categories (line-item-level)
+       - Semantic Colors: Positive/Negative/Neutral/Warning indicators
+       - Chart Accent Colors (6-color palette per theme)
+       - 3 Themes: Normal (Ni No Kuni), Professional, Mono
+       - 2 Modes: Light, Dark
+
+       Total: 64 categories × 6 variations = 384 color sets
+              + 4 semantic states × 4 variants × 6 theme/modes
+              + 6 chart colors × 6 theme/modes
+       ============================================================ */
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      transition: background 0.3s, color 0.3s;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    /* ============================================================
+       BASE THEME TOKENS
+       ============================================================ */
+    :root {
+      /* Light mode defaults */
+      --bg: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --border-light: #e2e8f0;
+      --border-medium: #cbd5e1;
+    }
+
+    .dark {
+      --bg: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-tertiary: #94a3b8;
+      --border-light: #334155;
+      --border-medium: #475569;
+    }
+
+    /* ============================================================
+       STORE CATEGORY COLORS - NORMAL THEME (Ni No Kuni / Ghibli)
+       Warm, muted, hand-painted, earthy tones
+       ============================================================ */
+
+    /* --- FOOD & DINING --- */
+    .theme-normal .cat-Supermarket { --cat-fg: #15803d; --cat-bg: #dcfce7; }
+    .theme-normal.dark .cat-Supermarket { --cat-fg: #86efac; --cat-bg: #14532d; }
+
+    .theme-normal .cat-Restaurant { --cat-fg: #c2410c; --cat-bg: #ffedd5; }
+    .theme-normal.dark .cat-Restaurant { --cat-fg: #fdba74; --cat-bg: #7c2d12; }
+
+    .theme-normal .cat-Bakery { --cat-fg: #b45309; --cat-bg: #fef3c7; }
+    .theme-normal.dark .cat-Bakery { --cat-fg: #fcd34d; --cat-bg: #78350f; }
+
+    .theme-normal .cat-Butcher { --cat-fg: #b91c1c; --cat-bg: #fee2e2; }
+    .theme-normal.dark .cat-Butcher { --cat-fg: #fca5a5; --cat-bg: #7f1d1d; }
+
+    .theme-normal .cat-StreetVendor { --cat-fg: #ea580c; --cat-bg: #fff7ed; }
+    .theme-normal.dark .cat-StreetVendor { --cat-fg: #fb923c; --cat-bg: #7c2d12; }
+
+    /* --- HEALTH & WELLNESS --- */
+    .theme-normal .cat-Pharmacy { --cat-fg: #be185d; --cat-bg: #fce7f3; }
+    .theme-normal.dark .cat-Pharmacy { --cat-fg: #f9a8d4; --cat-bg: #831843; }
+
+    .theme-normal .cat-Medical { --cat-fg: #9f1239; --cat-bg: #ffe4e6; }
+    .theme-normal.dark .cat-Medical { --cat-fg: #fda4af; --cat-bg: #881337; }
+
+    .theme-normal .cat-Veterinary { --cat-fg: #166534; --cat-bg: #dcfce7; }
+    .theme-normal.dark .cat-Veterinary { --cat-fg: #86efac; --cat-bg: #14532d; }
+
+    .theme-normal .cat-HealthBeauty { --cat-fg: #a21caf; --cat-bg: #fae8ff; }
+    .theme-normal.dark .cat-HealthBeauty { --cat-fg: #e879f9; --cat-bg: #701a75; }
+
+    /* --- RETAIL - GENERAL --- */
+    .theme-normal .cat-Bazaar { --cat-fg: #6d28d9; --cat-bg: #ede9fe; }
+    .theme-normal.dark .cat-Bazaar { --cat-fg: #c4b5fd; --cat-bg: #4c1d95; }
+
+    .theme-normal .cat-Clothing { --cat-fg: #be185d; --cat-bg: #fdf2f8; }
+    .theme-normal.dark .cat-Clothing { --cat-fg: #f9a8d4; --cat-bg: #831843; }
+
+    .theme-normal .cat-Electronics { --cat-fg: #1e40af; --cat-bg: #dbeafe; }
+    .theme-normal.dark .cat-Electronics { --cat-fg: #93c5fd; --cat-bg: #1e3a8a; }
+
+    .theme-normal .cat-HomeGoods { --cat-fg: #0f766e; --cat-bg: #ccfbf1; }
+    .theme-normal.dark .cat-HomeGoods { --cat-fg: #5eead4; --cat-bg: #134e4a; }
+
+    .theme-normal .cat-Furniture { --cat-fg: #115e59; --cat-bg: #ccfbf1; }
+    .theme-normal.dark .cat-Furniture { --cat-fg: #5eead4; --cat-bg: #134e4a; }
+
+    .theme-normal .cat-Hardware { --cat-fg: #374151; --cat-bg: #f3f4f6; }
+    .theme-normal.dark .cat-Hardware { --cat-fg: #d1d5db; --cat-bg: #1f2937; }
+
+    .theme-normal .cat-GardenCenter { --cat-fg: #166534; --cat-bg: #d1fae5; }
+    .theme-normal.dark .cat-GardenCenter { --cat-fg: #6ee7b7; --cat-bg: #064e3b; }
+
+    /* --- RETAIL - SPECIALTY --- */
+    .theme-normal .cat-PetShop { --cat-fg: #a21caf; --cat-bg: #fdf4ff; }
+    .theme-normal.dark .cat-PetShop { --cat-fg: #f0abfc; --cat-bg: #701a75; }
+
+    .theme-normal .cat-BooksMedia { --cat-fg: #1d4ed8; --cat-bg: #dbeafe; }
+    .theme-normal.dark .cat-BooksMedia { --cat-fg: #93c5fd; --cat-bg: #1e3a8a; }
+
+    .theme-normal .cat-OfficeSupplies { --cat-fg: #475569; --cat-bg: #f1f5f9; }
+    .theme-normal.dark .cat-OfficeSupplies { --cat-fg: #cbd5e1; --cat-bg: #334155; }
+
+    .theme-normal .cat-SportsOutdoors { --cat-fg: #047857; --cat-bg: #d1fae5; }
+    .theme-normal.dark .cat-SportsOutdoors { --cat-fg: #6ee7b7; --cat-bg: #064e3b; }
+
+    .theme-normal .cat-ToysGames { --cat-fg: #7c3aed; --cat-bg: #ede9fe; }
+    .theme-normal.dark .cat-ToysGames { --cat-fg: #c4b5fd; --cat-bg: #5b21b6; }
+
+    .theme-normal .cat-Jewelry { --cat-fg: #6d28d9; --cat-bg: #f5f3ff; }
+    .theme-normal.dark .cat-Jewelry { --cat-fg: #c4b5fd; --cat-bg: #4c1d95; }
+
+    .theme-normal .cat-Optical { --cat-fg: #0369a1; --cat-bg: #e0f2fe; }
+    .theme-normal.dark .cat-Optical { --cat-fg: #7dd3fc; --cat-bg: #0c4a6e; }
+
+    /* --- AUTOMOTIVE & TRANSPORT --- */
+    .theme-normal .cat-Automotive { --cat-fg: #374151; --cat-bg: #f3f4f6; }
+    .theme-normal.dark .cat-Automotive { --cat-fg: #d1d5db; --cat-bg: #1f2937; }
+
+    .theme-normal .cat-GasStation { --cat-fg: #92400e; --cat-bg: #fef3c7; }
+    .theme-normal.dark .cat-GasStation { --cat-fg: #fcd34d; --cat-bg: #78350f; }
+
+    .theme-normal .cat-Transport { --cat-fg: #1e40af; --cat-bg: #dbeafe; }
+    .theme-normal.dark .cat-Transport { --cat-fg: #93c5fd; --cat-bg: #1e3a8a; }
+
+    /* --- SERVICES & FINANCE --- */
+    .theme-normal .cat-Services { --cat-fg: #1e40af; --cat-bg: #dbeafe; }
+    .theme-normal.dark .cat-Services { --cat-fg: #93c5fd; --cat-bg: #1e3a8a; }
+
+    .theme-normal .cat-BankingFinance { --cat-fg: #1e3a8a; --cat-bg: #dbeafe; }
+    .theme-normal.dark .cat-BankingFinance { --cat-fg: #93c5fd; --cat-bg: #1e3a8a; }
+
+    .theme-normal .cat-Education { --cat-fg: #2563eb; --cat-bg: #dbeafe; }
+    .theme-normal.dark .cat-Education { --cat-fg: #93c5fd; --cat-bg: #1e40af; }
+
+    .theme-normal .cat-TravelAgency { --cat-fg: #0284c7; --cat-bg: #e0f2fe; }
+    .theme-normal.dark .cat-TravelAgency { --cat-fg: #7dd3fc; --cat-bg: #075985; }
+
+    /* --- HOSPITALITY & ENTERTAINMENT --- */
+    .theme-normal .cat-HotelLodging { --cat-fg: #44403c; --cat-bg: #f5f5f4; }
+    .theme-normal.dark .cat-HotelLodging { --cat-fg: #d6d3d1; --cat-bg: #292524; }
+
+    .theme-normal .cat-Entertainment { --cat-fg: #7c3aed; --cat-bg: #f5f3ff; }
+    .theme-normal.dark .cat-Entertainment { --cat-fg: #c4b5fd; --cat-bg: #5b21b6; }
+
+    /* --- OTHER --- */
+    .theme-normal .cat-CharityDonation { --cat-fg: #047857; --cat-bg: #d1fae5; }
+    .theme-normal.dark .cat-CharityDonation { --cat-fg: #6ee7b7; --cat-bg: #064e3b; }
+
+    .theme-normal .cat-Other { --cat-fg: #64748b; --cat-bg: #f1f5f9; }
+    .theme-normal.dark .cat-Other { --cat-fg: #cbd5e1; --cat-bg: #334155; }
+
+    /* ============================================================
+       STORE CATEGORY COLORS - PROFESSIONAL THEME
+       Clean, high-contrast, corporate colors
+       ============================================================ */
+
+    /* --- FOOD & DINING --- */
+    .theme-professional .cat-Supermarket { --cat-fg: #16a34a; --cat-bg: #dcfce7; }
+    .theme-professional.dark .cat-Supermarket { --cat-fg: #4ade80; --cat-bg: #166534; }
+
+    .theme-professional .cat-Restaurant { --cat-fg: #ea580c; --cat-bg: #ffedd5; }
+    .theme-professional.dark .cat-Restaurant { --cat-fg: #fb923c; --cat-bg: #9a3412; }
+
+    .theme-professional .cat-Bakery { --cat-fg: #d97706; --cat-bg: #fef3c7; }
+    .theme-professional.dark .cat-Bakery { --cat-fg: #fbbf24; --cat-bg: #92400e; }
+
+    .theme-professional .cat-Butcher { --cat-fg: #dc2626; --cat-bg: #fee2e2; }
+    .theme-professional.dark .cat-Butcher { --cat-fg: #f87171; --cat-bg: #991b1b; }
+
+    .theme-professional .cat-StreetVendor { --cat-fg: #f97316; --cat-bg: #fff7ed; }
+    .theme-professional.dark .cat-StreetVendor { --cat-fg: #fdba74; --cat-bg: #9a3412; }
+
+    /* --- HEALTH & WELLNESS --- */
+    .theme-professional .cat-Pharmacy { --cat-fg: #db2777; --cat-bg: #fce7f3; }
+    .theme-professional.dark .cat-Pharmacy { --cat-fg: #f472b6; --cat-bg: #9d174d; }
+
+    .theme-professional .cat-Medical { --cat-fg: #e11d48; --cat-bg: #ffe4e6; }
+    .theme-professional.dark .cat-Medical { --cat-fg: #fb7185; --cat-bg: #9f1239; }
+
+    .theme-professional .cat-Veterinary { --cat-fg: #22c55e; --cat-bg: #dcfce7; }
+    .theme-professional.dark .cat-Veterinary { --cat-fg: #4ade80; --cat-bg: #166534; }
+
+    .theme-professional .cat-HealthBeauty { --cat-fg: #c026d3; --cat-bg: #fae8ff; }
+    .theme-professional.dark .cat-HealthBeauty { --cat-fg: #e879f9; --cat-bg: #86198f; }
+
+    /* --- RETAIL - GENERAL --- */
+    .theme-professional .cat-Bazaar { --cat-fg: #7c3aed; --cat-bg: #ede9fe; }
+    .theme-professional.dark .cat-Bazaar { --cat-fg: #a78bfa; --cat-bg: #5b21b6; }
+
+    .theme-professional .cat-Clothing { --cat-fg: #ec4899; --cat-bg: #fdf2f8; }
+    .theme-professional.dark .cat-Clothing { --cat-fg: #f472b6; --cat-bg: #9d174d; }
+
+    .theme-professional .cat-Electronics { --cat-fg: #2563eb; --cat-bg: #dbeafe; }
+    .theme-professional.dark .cat-Electronics { --cat-fg: #60a5fa; --cat-bg: #1e40af; }
+
+    .theme-professional .cat-HomeGoods { --cat-fg: #14b8a6; --cat-bg: #ccfbf1; }
+    .theme-professional.dark .cat-HomeGoods { --cat-fg: #2dd4bf; --cat-bg: #115e59; }
+
+    .theme-professional .cat-Furniture { --cat-fg: #0d9488; --cat-bg: #ccfbf1; }
+    .theme-professional.dark .cat-Furniture { --cat-fg: #2dd4bf; --cat-bg: #115e59; }
+
+    .theme-professional .cat-Hardware { --cat-fg: #4b5563; --cat-bg: #f3f4f6; }
+    .theme-professional.dark .cat-Hardware { --cat-fg: #9ca3af; --cat-bg: #374151; }
+
+    .theme-professional .cat-GardenCenter { --cat-fg: #22c55e; --cat-bg: #d1fae5; }
+    .theme-professional.dark .cat-GardenCenter { --cat-fg: #4ade80; --cat-bg: #166534; }
+
+    /* --- RETAIL - SPECIALTY --- */
+    .theme-professional .cat-PetShop { --cat-fg: #d946ef; --cat-bg: #fdf4ff; }
+    .theme-professional.dark .cat-PetShop { --cat-fg: #e879f9; --cat-bg: #86198f; }
+
+    .theme-professional .cat-BooksMedia { --cat-fg: #3b82f6; --cat-bg: #dbeafe; }
+    .theme-professional.dark .cat-BooksMedia { --cat-fg: #60a5fa; --cat-bg: #1e40af; }
+
+    .theme-professional .cat-OfficeSupplies { --cat-fg: #64748b; --cat-bg: #f1f5f9; }
+    .theme-professional.dark .cat-OfficeSupplies { --cat-fg: #94a3b8; --cat-bg: #475569; }
+
+    .theme-professional .cat-SportsOutdoors { --cat-fg: #10b981; --cat-bg: #d1fae5; }
+    .theme-professional.dark .cat-SportsOutdoors { --cat-fg: #34d399; --cat-bg: #065f46; }
+
+    .theme-professional .cat-ToysGames { --cat-fg: #8b5cf6; --cat-bg: #ede9fe; }
+    .theme-professional.dark .cat-ToysGames { --cat-fg: #a78bfa; --cat-bg: #5b21b6; }
+
+    .theme-professional .cat-Jewelry { --cat-fg: #7c3aed; --cat-bg: #f5f3ff; }
+    .theme-professional.dark .cat-Jewelry { --cat-fg: #a78bfa; --cat-bg: #5b21b6; }
+
+    .theme-professional .cat-Optical { --cat-fg: #0ea5e9; --cat-bg: #e0f2fe; }
+    .theme-professional.dark .cat-Optical { --cat-fg: #38bdf8; --cat-bg: #0369a1; }
+
+    /* --- AUTOMOTIVE & TRANSPORT --- */
+    .theme-professional .cat-Automotive { --cat-fg: #4b5563; --cat-bg: #f3f4f6; }
+    .theme-professional.dark .cat-Automotive { --cat-fg: #9ca3af; --cat-bg: #374151; }
+
+    .theme-professional .cat-GasStation { --cat-fg: #d97706; --cat-bg: #fef3c7; }
+    .theme-professional.dark .cat-GasStation { --cat-fg: #fbbf24; --cat-bg: #92400e; }
+
+    .theme-professional .cat-Transport { --cat-fg: #2563eb; --cat-bg: #dbeafe; }
+    .theme-professional.dark .cat-Transport { --cat-fg: #60a5fa; --cat-bg: #1e40af; }
+
+    /* --- SERVICES & FINANCE --- */
+    .theme-professional .cat-Services { --cat-fg: #2563eb; --cat-bg: #dbeafe; }
+    .theme-professional.dark .cat-Services { --cat-fg: #60a5fa; --cat-bg: #1e40af; }
+
+    .theme-professional .cat-BankingFinance { --cat-fg: #1d4ed8; --cat-bg: #dbeafe; }
+    .theme-professional.dark .cat-BankingFinance { --cat-fg: #60a5fa; --cat-bg: #1e40af; }
+
+    .theme-professional .cat-Education { --cat-fg: #3b82f6; --cat-bg: #dbeafe; }
+    .theme-professional.dark .cat-Education { --cat-fg: #60a5fa; --cat-bg: #1e40af; }
+
+    .theme-professional .cat-TravelAgency { --cat-fg: #0ea5e9; --cat-bg: #e0f2fe; }
+    .theme-professional.dark .cat-TravelAgency { --cat-fg: #38bdf8; --cat-bg: #0369a1; }
+
+    /* --- HOSPITALITY & ENTERTAINMENT --- */
+    .theme-professional .cat-HotelLodging { --cat-fg: #57534e; --cat-bg: #f5f5f4; }
+    .theme-professional.dark .cat-HotelLodging { --cat-fg: #a8a29e; --cat-bg: #44403c; }
+
+    .theme-professional .cat-Entertainment { --cat-fg: #8b5cf6; --cat-bg: #f5f3ff; }
+    .theme-professional.dark .cat-Entertainment { --cat-fg: #a78bfa; --cat-bg: #5b21b6; }
+
+    /* --- OTHER --- */
+    .theme-professional .cat-CharityDonation { --cat-fg: #10b981; --cat-bg: #d1fae5; }
+    .theme-professional.dark .cat-CharityDonation { --cat-fg: #34d399; --cat-bg: #065f46; }
+
+    .theme-professional .cat-Other { --cat-fg: #64748b; --cat-bg: #f1f5f9; }
+    .theme-professional.dark .cat-Other { --cat-fg: #94a3b8; --cat-bg: #475569; }
+
+    /* ============================================================
+       STORE CATEGORY COLORS - MONO THEME
+       Moderately desaturated colors (~50-60% saturation) - colorful but subdued
+       Less vibrant than Normal, which is less vibrant than Professional
+       ============================================================ */
+
+    /* Food & Dining - Subdued greens, oranges, reds */
+    .theme-mono .cat-Supermarket { --cat-fg: #2d8c50; --cat-bg: #e0f2e8; }
+    .theme-mono.dark .cat-Supermarket { --cat-fg: #6dc792; --cat-bg: #1e4a30; }
+
+    .theme-mono .cat-Restaurant { --cat-fg: #b86830; --cat-bg: #f8e8d8; }
+    .theme-mono.dark .cat-Restaurant { --cat-fg: #d9a070; --cat-bg: #4a2810; }
+
+    .theme-mono .cat-Bakery { --cat-fg: #a88020; --cat-bg: #f8f0d8; }
+    .theme-mono.dark .cat-Bakery { --cat-fg: #d4b860; --cat-bg: #4a3810; }
+
+    .theme-mono .cat-Butcher { --cat-fg: #a83838; --cat-bg: #f8e0e0; }
+    .theme-mono.dark .cat-Butcher { --cat-fg: #d47070; --cat-bg: #4a1818; }
+
+    .theme-mono .cat-StreetVendor { --cat-fg: #b85020; --cat-bg: #f8e8d8; }
+    .theme-mono.dark .cat-StreetVendor { --cat-fg: #d98858; --cat-bg: #4a2010; }
+
+    /* Health & Wellness - Subdued pinks, greens */
+    .theme-mono .cat-Pharmacy { --cat-fg: #a83868; --cat-bg: #f8e0ec; }
+    .theme-mono.dark .cat-Pharmacy { --cat-fg: #d47098; --cat-bg: #4a1830; }
+
+    .theme-mono .cat-Medical { --cat-fg: #b82840; --cat-bg: #f8d8e0; }
+    .theme-mono.dark .cat-Medical { --cat-fg: #d46878; --cat-bg: #4a1018; }
+
+    .theme-mono .cat-Veterinary { --cat-fg: #288c50; --cat-bg: #d8f2e0; }
+    .theme-mono.dark .cat-Veterinary { --cat-fg: #68c790; --cat-bg: #104a28; }
+
+    .theme-mono .cat-HealthBeauty { --cat-fg: #9838a8; --cat-bg: #f0e0f8; }
+    .theme-mono.dark .cat-HealthBeauty { --cat-fg: #c070d4; --cat-bg: #3a1848; }
+
+    /* Retail - General - Subdued purples, pinks, blues, teals */
+    .theme-mono .cat-Bazaar { --cat-fg: #6838a8; --cat-bg: #e8e0f8; }
+    .theme-mono.dark .cat-Bazaar { --cat-fg: #a070d4; --cat-bg: #2a1848; }
+
+    .theme-mono .cat-Clothing { --cat-fg: #a83868; --cat-bg: #f8e0ec; }
+    .theme-mono.dark .cat-Clothing { --cat-fg: #d47098; --cat-bg: #4a1830; }
+
+    .theme-mono .cat-Electronics { --cat-fg: #3850a8; --cat-bg: #e0e8f8; }
+    .theme-mono.dark .cat-Electronics { --cat-fg: #7090d4; --cat-bg: #182848; }
+
+    .theme-mono .cat-HomeGoods { --cat-fg: #288c8c; --cat-bg: #d8f2f2; }
+    .theme-mono.dark .cat-HomeGoods { --cat-fg: #60c8c8; --cat-bg: #104848; }
+
+    .theme-mono .cat-Furniture { --cat-fg: #30708c; --cat-bg: #d8e8f0; }
+    .theme-mono.dark .cat-Furniture { --cat-fg: #68a8c0; --cat-bg: #103848; }
+
+    .theme-mono .cat-Hardware { --cat-fg: #506878; --cat-bg: #e8ecf0; }
+    .theme-mono.dark .cat-Hardware { --cat-fg: #90a8b8; --cat-bg: #283038; }
+
+    .theme-mono .cat-GardenCenter { --cat-fg: #28a050; --cat-bg: #d8f8e0; }
+    .theme-mono.dark .cat-GardenCenter { --cat-fg: #60d488; --cat-bg: #104820; }
+
+    /* Retail - Specialty - Subdued magentas, blues, purples */
+    .theme-mono .cat-PetShop { --cat-fg: #a03890; --cat-bg: #f8e0f4; }
+    .theme-mono.dark .cat-PetShop { --cat-fg: #d068c0; --cat-bg: #481838; }
+
+    .theme-mono .cat-BooksMedia { --cat-fg: #3068a8; --cat-bg: #d8e8f8; }
+    .theme-mono.dark .cat-BooksMedia { --cat-fg: #68a0d4; --cat-bg: #103048; }
+
+    .theme-mono .cat-OfficeSupplies { --cat-fg: #5878a0; --cat-bg: #e8f0f8; }
+    .theme-mono.dark .cat-OfficeSupplies { --cat-fg: #90b0d0; --cat-bg: #283848; }
+
+    .theme-mono .cat-SportsOutdoors { --cat-fg: #289070; --cat-bg: #d8f2ec; }
+    .theme-mono.dark .cat-SportsOutdoors { --cat-fg: #60c8a8; --cat-bg: #104838; }
+
+    .theme-mono .cat-ToysGames { --cat-fg: #7838a0; --cat-bg: #ece0f8; }
+    .theme-mono.dark .cat-ToysGames { --cat-fg: #a868d0; --cat-bg: #301840; }
+
+    .theme-mono .cat-Jewelry { --cat-fg: #6838a0; --cat-bg: #e8e0f4; }
+    .theme-mono.dark .cat-Jewelry { --cat-fg: #9868c8; --cat-bg: #281838; }
+
+    .theme-mono .cat-Optical { --cat-fg: #2878a0; --cat-bg: #d8ecf8; }
+    .theme-mono.dark .cat-Optical { --cat-fg: #60b0d0; --cat-bg: #103848; }
+
+    /* Automotive & Transport - Subdued grays with blue/amber tints */
+    .theme-mono .cat-Automotive { --cat-fg: #507080; --cat-bg: #e8ecf0; }
+    .theme-mono.dark .cat-Automotive { --cat-fg: #90a8b8; --cat-bg: #283438; }
+
+    .theme-mono .cat-GasStation { --cat-fg: #a88020; --cat-bg: #f8f0d8; }
+    .theme-mono.dark .cat-GasStation { --cat-fg: #d4b860; --cat-bg: #483810; }
+
+    .theme-mono .cat-Transport { --cat-fg: #3858a8; --cat-bg: #e0e8f8; }
+    .theme-mono.dark .cat-Transport { --cat-fg: #7098d4; --cat-bg: #182848; }
+
+    /* Services & Finance - Subdued blues */
+    .theme-mono .cat-Services { --cat-fg: #385898; --cat-bg: #e0e8f4; }
+    .theme-mono.dark .cat-Services { --cat-fg: #7098c8; --cat-bg: #182840; }
+
+    .theme-mono .cat-BankingFinance { --cat-fg: #284880; --cat-bg: #dce4f0; }
+    .theme-mono.dark .cat-BankingFinance { --cat-fg: #6088b8; --cat-bg: #102038; }
+
+    .theme-mono .cat-Education { --cat-fg: #3068a0; --cat-bg: #d8e8f8; }
+    .theme-mono.dark .cat-Education { --cat-fg: #68a0d0; --cat-bg: #103040; }
+
+    .theme-mono .cat-TravelAgency { --cat-fg: #2888a0; --cat-bg: #d8f0f8; }
+    .theme-mono.dark .cat-TravelAgency { --cat-fg: #60c0d0; --cat-bg: #104048; }
+
+    /* Hospitality & Entertainment - Subdued warm grays, purples */
+    .theme-mono .cat-HotelLodging { --cat-fg: #786858; --cat-bg: #f4f0e8; }
+    .theme-mono.dark .cat-HotelLodging { --cat-fg: #b8a890; --cat-bg: #383020; }
+
+    .theme-mono .cat-Entertainment { --cat-fg: #7838a0; --cat-bg: #ece0f4; }
+    .theme-mono.dark .cat-Entertainment { --cat-fg: #a868c8; --cat-bg: #301838; }
+
+    /* Other - Subdued greens and neutrals */
+    .theme-mono .cat-CharityDonation { --cat-fg: #289068; --cat-bg: #d8f2e8; }
+    .theme-mono.dark .cat-CharityDonation { --cat-fg: #60c8a0; --cat-bg: #104838; }
+
+    .theme-mono .cat-Other { --cat-fg: #607080; --cat-bg: #e8ecf0; }
+    .theme-mono.dark .cat-Other { --cat-fg: #98a8b8; --cat-bg: #303840; }
+
+    /* ============================================================
+       ITEM CATEGORY COLORS - All themes
+       (Following same pattern as store categories)
+       ============================================================ */
+
+    /* Food - Fresh */
+    .theme-normal .cat-Produce { --cat-fg: #15803d; --cat-bg: #dcfce7; }
+    .theme-normal.dark .cat-Produce { --cat-fg: #86efac; --cat-bg: #14532d; }
+    .theme-professional .cat-Produce { --cat-fg: #16a34a; --cat-bg: #dcfce7; }
+    .theme-professional.dark .cat-Produce { --cat-fg: #4ade80; --cat-bg: #166534; }
+    .theme-mono .cat-Produce { --cat-fg: #2d8c50; --cat-bg: #e0f2e8; }
+    .theme-mono.dark .cat-Produce { --cat-fg: #6dc792; --cat-bg: #1e4a30; }
+
+    .theme-normal .cat-MeatSeafood { --cat-fg: #b91c1c; --cat-bg: #fee2e2; }
+    .theme-normal.dark .cat-MeatSeafood { --cat-fg: #fca5a5; --cat-bg: #7f1d1d; }
+    .theme-professional .cat-MeatSeafood { --cat-fg: #dc2626; --cat-bg: #fee2e2; }
+    .theme-professional.dark .cat-MeatSeafood { --cat-fg: #f87171; --cat-bg: #991b1b; }
+    .theme-mono .cat-MeatSeafood { --cat-fg: #a83838; --cat-bg: #f8e0e0; }
+    .theme-mono.dark .cat-MeatSeafood { --cat-fg: #d47070; --cat-bg: #4a1818; }
+
+    .theme-normal .cat-ItemBakery { --cat-fg: #b45309; --cat-bg: #fef3c7; }
+    .theme-normal.dark .cat-ItemBakery { --cat-fg: #fcd34d; --cat-bg: #78350f; }
+    .theme-professional .cat-ItemBakery { --cat-fg: #d97706; --cat-bg: #fef3c7; }
+    .theme-professional.dark .cat-ItemBakery { --cat-fg: #fbbf24; --cat-bg: #92400e; }
+    .theme-mono .cat-ItemBakery { --cat-fg: #a88020; --cat-bg: #f8f0d8; }
+    .theme-mono.dark .cat-ItemBakery { --cat-fg: #d4b860; --cat-bg: #4a3810; }
+
+    .theme-normal .cat-DairyEggs { --cat-fg: #166534; --cat-bg: #dcfce7; }
+    .theme-normal.dark .cat-DairyEggs { --cat-fg: #86efac; --cat-bg: #14532d; }
+    .theme-professional .cat-DairyEggs { --cat-fg: #22c55e; --cat-bg: #dcfce7; }
+    .theme-professional.dark .cat-DairyEggs { --cat-fg: #4ade80; --cat-bg: #166534; }
+    .theme-mono .cat-DairyEggs { --cat-fg: #288c50; --cat-bg: #d8f2e0; }
+    .theme-mono.dark .cat-DairyEggs { --cat-fg: #68c790; --cat-bg: #104a28; }
+
+    /* Food - Packaged */
+    .theme-normal .cat-Pantry { --cat-fg: #92400e; --cat-bg: #fef3c7; }
+    .theme-normal.dark .cat-Pantry { --cat-fg: #fcd34d; --cat-bg: #78350f; }
+    .theme-professional .cat-Pantry { --cat-fg: #d97706; --cat-bg: #fef3c7; }
+    .theme-professional.dark .cat-Pantry { --cat-fg: #fbbf24; --cat-bg: #92400e; }
+    .theme-mono .cat-Pantry { --cat-fg: #a88020; --cat-bg: #f8f0d8; }
+    .theme-mono.dark .cat-Pantry { --cat-fg: #d4b860; --cat-bg: #4a3810; }
+
+    .theme-normal .cat-FrozenFoods { --cat-fg: #0369a1; --cat-bg: #e0f2fe; }
+    .theme-normal.dark .cat-FrozenFoods { --cat-fg: #7dd3fc; --cat-bg: #0c4a6e; }
+    .theme-professional .cat-FrozenFoods { --cat-fg: #0ea5e9; --cat-bg: #e0f2fe; }
+    .theme-professional.dark .cat-FrozenFoods { --cat-fg: #38bdf8; --cat-bg: #0369a1; }
+    .theme-mono .cat-FrozenFoods { --cat-fg: #2080a8; --cat-bg: #d8ecf8; }
+    .theme-mono.dark .cat-FrozenFoods { --cat-fg: #58b8d8; --cat-bg: #104050; }
+
+    .theme-normal .cat-Snacks { --cat-fg: #ea580c; --cat-bg: #fff7ed; }
+    .theme-normal.dark .cat-Snacks { --cat-fg: #fb923c; --cat-bg: #7c2d12; }
+    .theme-professional .cat-Snacks { --cat-fg: #f97316; --cat-bg: #fff7ed; }
+    .theme-professional.dark .cat-Snacks { --cat-fg: #fdba74; --cat-bg: #9a3412; }
+    .theme-mono .cat-Snacks { --cat-fg: #b86830; --cat-bg: #f8e8d8; }
+    .theme-mono.dark .cat-Snacks { --cat-fg: #d9a070; --cat-bg: #4a2810; }
+
+    .theme-normal .cat-Beverages { --cat-fg: #0284c7; --cat-bg: #e0f2fe; }
+    .theme-normal.dark .cat-Beverages { --cat-fg: #7dd3fc; --cat-bg: #075985; }
+    .theme-professional .cat-Beverages { --cat-fg: #0ea5e9; --cat-bg: #e0f2fe; }
+    .theme-professional.dark .cat-Beverages { --cat-fg: #38bdf8; --cat-bg: #0369a1; }
+    .theme-mono .cat-Beverages { --cat-fg: #2088a8; --cat-bg: #d8f0f8; }
+    .theme-mono.dark .cat-Beverages { --cat-fg: #58c0d8; --cat-bg: #104050; }
+
+    .theme-normal .cat-Alcohol { --cat-fg: #6d28d9; --cat-bg: #ede9fe; }
+    .theme-normal.dark .cat-Alcohol { --cat-fg: #c4b5fd; --cat-bg: #4c1d95; }
+    .theme-professional .cat-Alcohol { --cat-fg: #7c3aed; --cat-bg: #ede9fe; }
+    .theme-professional.dark .cat-Alcohol { --cat-fg: #a78bfa; --cat-bg: #5b21b6; }
+    .theme-mono .cat-Alcohol { --cat-fg: #6838a8; --cat-bg: #e8e0f8; }
+    .theme-mono.dark .cat-Alcohol { --cat-fg: #a070d4; --cat-bg: #2a1848; }
+
+    /* Health & Personal */
+    .theme-normal .cat-HealthBeautyItem { --cat-fg: #a21caf; --cat-bg: #fae8ff; }
+    .theme-normal.dark .cat-HealthBeautyItem { --cat-fg: #e879f9; --cat-bg: #701a75; }
+    .theme-professional .cat-HealthBeautyItem { --cat-fg: #c026d3; --cat-bg: #fae8ff; }
+    .theme-professional.dark .cat-HealthBeautyItem { --cat-fg: #e879f9; --cat-bg: #86198f; }
+    .theme-mono .cat-HealthBeautyItem { --cat-fg: #9838a8; --cat-bg: #f0e0f8; }
+    .theme-mono.dark .cat-HealthBeautyItem { --cat-fg: #c070d4; --cat-bg: #3a1848; }
+
+    .theme-normal .cat-PersonalCare { --cat-fg: #be185d; --cat-bg: #fce7f3; }
+    .theme-normal.dark .cat-PersonalCare { --cat-fg: #f9a8d4; --cat-bg: #831843; }
+    .theme-professional .cat-PersonalCare { --cat-fg: #db2777; --cat-bg: #fce7f3; }
+    .theme-professional.dark .cat-PersonalCare { --cat-fg: #f472b6; --cat-bg: #9d174d; }
+    .theme-mono .cat-PersonalCare { --cat-fg: #a83868; --cat-bg: #f8e0ec; }
+    .theme-mono.dark .cat-PersonalCare { --cat-fg: #d47098; --cat-bg: #4a1830; }
+
+    .theme-normal .cat-PharmacyItem { --cat-fg: #be185d; --cat-bg: #fce7f3; }
+    .theme-normal.dark .cat-PharmacyItem { --cat-fg: #f9a8d4; --cat-bg: #831843; }
+    .theme-professional .cat-PharmacyItem { --cat-fg: #db2777; --cat-bg: #fce7f3; }
+    .theme-professional.dark .cat-PharmacyItem { --cat-fg: #f472b6; --cat-bg: #9d174d; }
+    .theme-mono .cat-PharmacyItem { --cat-fg: #a83868; --cat-bg: #f8e0ec; }
+    .theme-mono.dark .cat-PharmacyItem { --cat-fg: #d47098; --cat-bg: #4a1830; }
+
+    .theme-normal .cat-Supplements { --cat-fg: #a21caf; --cat-bg: #fdf4ff; }
+    .theme-normal.dark .cat-Supplements { --cat-fg: #f0abfc; --cat-bg: #701a75; }
+    .theme-professional .cat-Supplements { --cat-fg: #d946ef; --cat-bg: #fdf4ff; }
+    .theme-professional.dark .cat-Supplements { --cat-fg: #e879f9; --cat-bg: #86198f; }
+    .theme-mono .cat-Supplements { --cat-fg: #a03890; --cat-bg: #f8e0f4; }
+    .theme-mono.dark .cat-Supplements { --cat-fg: #d068c0; --cat-bg: #481838; }
+
+    .theme-normal .cat-BabyProducts { --cat-fg: #be185d; --cat-bg: #fdf2f8; }
+    .theme-normal.dark .cat-BabyProducts { --cat-fg: #f9a8d4; --cat-bg: #831843; }
+    .theme-professional .cat-BabyProducts { --cat-fg: #ec4899; --cat-bg: #fdf2f8; }
+    .theme-professional.dark .cat-BabyProducts { --cat-fg: #f472b6; --cat-bg: #9d174d; }
+    .theme-mono .cat-BabyProducts { --cat-fg: #b04878; --cat-bg: #f8e0f0; }
+    .theme-mono.dark .cat-BabyProducts { --cat-fg: #d880a8; --cat-bg: #481828; }
+
+    /* Household */
+    .theme-normal .cat-CleaningSupplies { --cat-fg: #0f766e; --cat-bg: #ccfbf1; }
+    .theme-normal.dark .cat-CleaningSupplies { --cat-fg: #5eead4; --cat-bg: #134e4a; }
+    .theme-professional .cat-CleaningSupplies { --cat-fg: #14b8a6; --cat-bg: #ccfbf1; }
+    .theme-professional.dark .cat-CleaningSupplies { --cat-fg: #2dd4bf; --cat-bg: #115e59; }
+    .theme-mono .cat-CleaningSupplies { --cat-fg: #288c8c; --cat-bg: #d8f2f2; }
+    .theme-mono.dark .cat-CleaningSupplies { --cat-fg: #60c8c8; --cat-bg: #104848; }
+
+    .theme-normal .cat-Household { --cat-fg: #0f766e; --cat-bg: #ccfbf1; }
+    .theme-normal.dark .cat-Household { --cat-fg: #5eead4; --cat-bg: #134e4a; }
+    .theme-professional .cat-Household { --cat-fg: #14b8a6; --cat-bg: #ccfbf1; }
+    .theme-professional.dark .cat-Household { --cat-fg: #2dd4bf; --cat-bg: #115e59; }
+    .theme-mono .cat-Household { --cat-fg: #288c8c; --cat-bg: #d8f2f2; }
+    .theme-mono.dark .cat-Household { --cat-fg: #60c8c8; --cat-bg: #104848; }
+
+    .theme-normal .cat-PetSupplies { --cat-fg: #a21caf; --cat-bg: #fdf4ff; }
+    .theme-normal.dark .cat-PetSupplies { --cat-fg: #f0abfc; --cat-bg: #701a75; }
+    .theme-professional .cat-PetSupplies { --cat-fg: #d946ef; --cat-bg: #fdf4ff; }
+    .theme-professional.dark .cat-PetSupplies { --cat-fg: #e879f9; --cat-bg: #86198f; }
+    .theme-mono .cat-PetSupplies { --cat-fg: #a03890; --cat-bg: #f8e0f4; }
+    .theme-mono.dark .cat-PetSupplies { --cat-fg: #d068c0; --cat-bg: #481838; }
+
+    /* Non-Food Retail Items */
+    .theme-normal .cat-ClothingItem { --cat-fg: #be185d; --cat-bg: #fdf2f8; }
+    .theme-normal.dark .cat-ClothingItem { --cat-fg: #f9a8d4; --cat-bg: #831843; }
+    .theme-professional .cat-ClothingItem { --cat-fg: #ec4899; --cat-bg: #fdf2f8; }
+    .theme-professional.dark .cat-ClothingItem { --cat-fg: #f472b6; --cat-bg: #9d174d; }
+    .theme-mono .cat-ClothingItem { --cat-fg: #a83868; --cat-bg: #f8e0ec; }
+    .theme-mono.dark .cat-ClothingItem { --cat-fg: #d47098; --cat-bg: #4a1830; }
+
+    .theme-normal .cat-ElectronicsItem { --cat-fg: #1e40af; --cat-bg: #dbeafe; }
+    .theme-normal.dark .cat-ElectronicsItem { --cat-fg: #93c5fd; --cat-bg: #1e3a8a; }
+    .theme-professional .cat-ElectronicsItem { --cat-fg: #2563eb; --cat-bg: #dbeafe; }
+    .theme-professional.dark .cat-ElectronicsItem { --cat-fg: #60a5fa; --cat-bg: #1e40af; }
+    .theme-mono .cat-ElectronicsItem { --cat-fg: #3850a8; --cat-bg: #e0e8f8; }
+    .theme-mono.dark .cat-ElectronicsItem { --cat-fg: #7090d4; --cat-bg: #182848; }
+
+    .theme-normal .cat-HardwareItem { --cat-fg: #374151; --cat-bg: #f3f4f6; }
+    .theme-normal.dark .cat-HardwareItem { --cat-fg: #d1d5db; --cat-bg: #1f2937; }
+    .theme-professional .cat-HardwareItem { --cat-fg: #4b5563; --cat-bg: #f3f4f6; }
+    .theme-professional.dark .cat-HardwareItem { --cat-fg: #9ca3af; --cat-bg: #374151; }
+    .theme-mono .cat-HardwareItem { --cat-fg: #506878; --cat-bg: #e8ecf0; }
+    .theme-mono.dark .cat-HardwareItem { --cat-fg: #90a8b8; --cat-bg: #283038; }
+
+    .theme-normal .cat-Garden { --cat-fg: #166534; --cat-bg: #d1fae5; }
+    .theme-normal.dark .cat-Garden { --cat-fg: #6ee7b7; --cat-bg: #064e3b; }
+    .theme-professional .cat-Garden { --cat-fg: #22c55e; --cat-bg: #d1fae5; }
+    .theme-professional.dark .cat-Garden { --cat-fg: #4ade80; --cat-bg: #166534; }
+    .theme-mono .cat-Garden { --cat-fg: #28a050; --cat-bg: #d8f8e0; }
+    .theme-mono.dark .cat-Garden { --cat-fg: #60d488; --cat-bg: #104820; }
+
+    .theme-normal .cat-AutomotiveItem { --cat-fg: #374151; --cat-bg: #f3f4f6; }
+    .theme-normal.dark .cat-AutomotiveItem { --cat-fg: #d1d5db; --cat-bg: #1f2937; }
+    .theme-professional .cat-AutomotiveItem { --cat-fg: #4b5563; --cat-bg: #f3f4f6; }
+    .theme-professional.dark .cat-AutomotiveItem { --cat-fg: #9ca3af; --cat-bg: #374151; }
+    .theme-mono .cat-AutomotiveItem { --cat-fg: #507080; --cat-bg: #e8ecf0; }
+    .theme-mono.dark .cat-AutomotiveItem { --cat-fg: #90a8b8; --cat-bg: #283438; }
+
+    .theme-normal .cat-SportsOutdoorsItem { --cat-fg: #047857; --cat-bg: #d1fae5; }
+    .theme-normal.dark .cat-SportsOutdoorsItem { --cat-fg: #6ee7b7; --cat-bg: #064e3b; }
+    .theme-professional .cat-SportsOutdoorsItem { --cat-fg: #10b981; --cat-bg: #d1fae5; }
+    .theme-professional.dark .cat-SportsOutdoorsItem { --cat-fg: #34d399; --cat-bg: #065f46; }
+    .theme-mono .cat-SportsOutdoorsItem { --cat-fg: #289070; --cat-bg: #d8f2ec; }
+    .theme-mono.dark .cat-SportsOutdoorsItem { --cat-fg: #60c8a8; --cat-bg: #104838; }
+
+    .theme-normal .cat-ToysGamesItem { --cat-fg: #7c3aed; --cat-bg: #ede9fe; }
+    .theme-normal.dark .cat-ToysGamesItem { --cat-fg: #c4b5fd; --cat-bg: #5b21b6; }
+    .theme-professional .cat-ToysGamesItem { --cat-fg: #8b5cf6; --cat-bg: #ede9fe; }
+    .theme-professional.dark .cat-ToysGamesItem { --cat-fg: #a78bfa; --cat-bg: #5b21b6; }
+    .theme-mono .cat-ToysGamesItem { --cat-fg: #7838a0; --cat-bg: #ece0f8; }
+    .theme-mono.dark .cat-ToysGamesItem { --cat-fg: #a868d0; --cat-bg: #301840; }
+
+    .theme-normal .cat-BooksMediaItem { --cat-fg: #1d4ed8; --cat-bg: #dbeafe; }
+    .theme-normal.dark .cat-BooksMediaItem { --cat-fg: #93c5fd; --cat-bg: #1e3a8a; }
+    .theme-professional .cat-BooksMediaItem { --cat-fg: #3b82f6; --cat-bg: #dbeafe; }
+    .theme-professional.dark .cat-BooksMediaItem { --cat-fg: #60a5fa; --cat-bg: #1e40af; }
+    .theme-mono .cat-BooksMediaItem { --cat-fg: #3068a8; --cat-bg: #d8e8f8; }
+    .theme-mono.dark .cat-BooksMediaItem { --cat-fg: #68a0d4; --cat-bg: #103048; }
+
+    .theme-normal .cat-OfficeStationery { --cat-fg: #475569; --cat-bg: #f1f5f9; }
+    .theme-normal.dark .cat-OfficeStationery { --cat-fg: #cbd5e1; --cat-bg: #334155; }
+    .theme-professional .cat-OfficeStationery { --cat-fg: #64748b; --cat-bg: #f1f5f9; }
+    .theme-professional.dark .cat-OfficeStationery { --cat-fg: #94a3b8; --cat-bg: #475569; }
+    .theme-mono .cat-OfficeStationery { --cat-fg: #5878a0; --cat-bg: #e8f0f8; }
+    .theme-mono.dark .cat-OfficeStationery { --cat-fg: #90b0d0; --cat-bg: #283848; }
+
+    .theme-normal .cat-CraftsHobbies { --cat-fg: #7c3aed; --cat-bg: #f5f3ff; }
+    .theme-normal.dark .cat-CraftsHobbies { --cat-fg: #c4b5fd; --cat-bg: #5b21b6; }
+    .theme-professional .cat-CraftsHobbies { --cat-fg: #8b5cf6; --cat-bg: #f5f3ff; }
+    .theme-professional.dark .cat-CraftsHobbies { --cat-fg: #a78bfa; --cat-bg: #5b21b6; }
+    .theme-mono .cat-CraftsHobbies { --cat-fg: #7838a0; --cat-bg: #ece0f8; }
+    .theme-mono.dark .cat-CraftsHobbies { --cat-fg: #a868d0; --cat-bg: #301840; }
+
+    .theme-normal .cat-FurnitureItem { --cat-fg: #115e59; --cat-bg: #ccfbf1; }
+    .theme-normal.dark .cat-FurnitureItem { --cat-fg: #5eead4; --cat-bg: #134e4a; }
+    .theme-professional .cat-FurnitureItem { --cat-fg: #0d9488; --cat-bg: #ccfbf1; }
+    .theme-professional.dark .cat-FurnitureItem { --cat-fg: #2dd4bf; --cat-bg: #115e59; }
+    .theme-mono .cat-FurnitureItem { --cat-fg: #30708c; --cat-bg: #d8e8f0; }
+    .theme-mono.dark .cat-FurnitureItem { --cat-fg: #68a8c0; --cat-bg: #103848; }
+
+    /* Services & Fees */
+    .theme-normal .cat-Service { --cat-fg: #64748b; --cat-bg: #f1f5f9; }
+    .theme-normal.dark .cat-Service { --cat-fg: #cbd5e1; --cat-bg: #334155; }
+    .theme-professional .cat-Service { --cat-fg: #64748b; --cat-bg: #f1f5f9; }
+    .theme-professional.dark .cat-Service { --cat-fg: #94a3b8; --cat-bg: #475569; }
+    .theme-mono .cat-Service { --cat-fg: #385898; --cat-bg: #e0e8f4; }
+    .theme-mono.dark .cat-Service { --cat-fg: #7098c8; --cat-bg: #182840; }
+
+    .theme-normal .cat-TaxFees { --cat-fg: #64748b; --cat-bg: #f1f5f9; }
+    .theme-normal.dark .cat-TaxFees { --cat-fg: #cbd5e1; --cat-bg: #334155; }
+    .theme-professional .cat-TaxFees { --cat-fg: #64748b; --cat-bg: #f1f5f9; }
+    .theme-professional.dark .cat-TaxFees { --cat-fg: #94a3b8; --cat-bg: #475569; }
+    .theme-mono .cat-TaxFees { --cat-fg: #607080; --cat-bg: #e8ecf0; }
+    .theme-mono.dark .cat-TaxFees { --cat-fg: #98a8b8; --cat-bg: #303840; }
+
+    .theme-normal .cat-Tobacco { --cat-fg: #374151; --cat-bg: #f3f4f6; }
+    .theme-normal.dark .cat-Tobacco { --cat-fg: #d1d5db; --cat-bg: #1f2937; }
+    .theme-professional .cat-Tobacco { --cat-fg: #4b5563; --cat-bg: #f3f4f6; }
+    .theme-professional.dark .cat-Tobacco { --cat-fg: #9ca3af; --cat-bg: #374151; }
+    .theme-mono .cat-Tobacco { --cat-fg: #686050; --cat-bg: #f0ece8; }
+    .theme-mono.dark .cat-Tobacco { --cat-fg: #a89888; --cat-bg: #383020; }
+
+    /* Other Item */
+    .theme-normal .cat-OtherItem { --cat-fg: #64748b; --cat-bg: #f1f5f9; }
+    .theme-normal.dark .cat-OtherItem { --cat-fg: #cbd5e1; --cat-bg: #334155; }
+    .theme-professional .cat-OtherItem { --cat-fg: #64748b; --cat-bg: #f1f5f9; }
+    .theme-professional.dark .cat-OtherItem { --cat-fg: #94a3b8; --cat-bg: #475569; }
+    .theme-mono .cat-OtherItem { --cat-fg: #607080; --cat-bg: #e8ecf0; }
+    .theme-mono.dark .cat-OtherItem { --cat-fg: #98a8b8; --cat-bg: #303840; }
+
+    /* ============================================================
+       CATEGORY GROUP COLORS - STORE CATEGORIES
+       ============================================================ */
+
+    /* Food & Dining Group */
+    .theme-normal .group-food-dining { --grp-fg: #b45309; --grp-bg: #fef3c7; --grp-border: #fcd34d; }
+    .theme-normal.dark .group-food-dining { --grp-fg: #fcd34d; --grp-bg: #78350f; --grp-border: #92400e; }
+    .theme-professional .group-food-dining { --grp-fg: #d97706; --grp-bg: #fef3c7; --grp-border: #fbbf24; }
+    .theme-professional.dark .group-food-dining { --grp-fg: #fbbf24; --grp-bg: #92400e; --grp-border: #b45309; }
+    .theme-mono .group-food-dining { --grp-fg: #a88020; --grp-bg: #f8f0d8; --grp-border: #d4b860; }
+    .theme-mono.dark .group-food-dining { --grp-fg: #d4b860; --grp-bg: #4a3810; --grp-border: #6a5020; }
+
+    /* Health & Wellness Group */
+    .theme-normal .group-health-wellness { --grp-fg: #be185d; --grp-bg: #fce7f3; --grp-border: #f9a8d4; }
+    .theme-normal.dark .group-health-wellness { --grp-fg: #f9a8d4; --grp-bg: #831843; --grp-border: #9d174d; }
+    .theme-professional .group-health-wellness { --grp-fg: #db2777; --grp-bg: #fce7f3; --grp-border: #f472b6; }
+    .theme-professional.dark .group-health-wellness { --grp-fg: #f472b6; --grp-bg: #9d174d; --grp-border: #be185d; }
+    .theme-mono .group-health-wellness { --grp-fg: #a83868; --grp-bg: #f8e0ec; --grp-border: #d47098; }
+    .theme-mono.dark .group-health-wellness { --grp-fg: #d47098; --grp-bg: #4a1830; --grp-border: #6a2848; }
+
+    /* Retail General Group */
+    .theme-normal .group-retail-general { --grp-fg: #0f766e; --grp-bg: #ccfbf1; --grp-border: #5eead4; }
+    .theme-normal.dark .group-retail-general { --grp-fg: #5eead4; --grp-bg: #134e4a; --grp-border: #14b8a6; }
+    .theme-professional .group-retail-general { --grp-fg: #14b8a6; --grp-bg: #ccfbf1; --grp-border: #2dd4bf; }
+    .theme-professional.dark .group-retail-general { --grp-fg: #2dd4bf; --grp-bg: #115e59; --grp-border: #0d9488; }
+    .theme-mono .group-retail-general { --grp-fg: #288c8c; --grp-bg: #d8f2f2; --grp-border: #60c8c8; }
+    .theme-mono.dark .group-retail-general { --grp-fg: #60c8c8; --grp-bg: #104848; --grp-border: #286868; }
+
+    /* Retail Specialty Group */
+    .theme-normal .group-retail-specialty { --grp-fg: #7c3aed; --grp-bg: #ede9fe; --grp-border: #c4b5fd; }
+    .theme-normal.dark .group-retail-specialty { --grp-fg: #c4b5fd; --grp-bg: #5b21b6; --grp-border: #7c3aed; }
+    .theme-professional .group-retail-specialty { --grp-fg: #8b5cf6; --grp-bg: #ede9fe; --grp-border: #a78bfa; }
+    .theme-professional.dark .group-retail-specialty { --grp-fg: #a78bfa; --grp-bg: #5b21b6; --grp-border: #7c3aed; }
+    .theme-mono .group-retail-specialty { --grp-fg: #7838a0; --grp-bg: #ece0f8; --grp-border: #a868d0; }
+    .theme-mono.dark .group-retail-specialty { --grp-fg: #a868d0; --grp-bg: #301840; --grp-border: #502860; }
+
+    /* Automotive & Transport Group */
+    .theme-normal .group-automotive { --grp-fg: #374151; --grp-bg: #f3f4f6; --grp-border: #d1d5db; }
+    .theme-normal.dark .group-automotive { --grp-fg: #d1d5db; --grp-bg: #1f2937; --grp-border: #4b5563; }
+    .theme-professional .group-automotive { --grp-fg: #4b5563; --grp-bg: #f3f4f6; --grp-border: #9ca3af; }
+    .theme-professional.dark .group-automotive { --grp-fg: #9ca3af; --grp-bg: #374151; --grp-border: #6b7280; }
+    .theme-mono .group-automotive { --grp-fg: #507080; --grp-bg: #e8ecf0; --grp-border: #90a8b8; }
+    .theme-mono.dark .group-automotive { --grp-fg: #90a8b8; --grp-bg: #283438; --grp-border: #405058; }
+
+    /* Services & Finance Group */
+    .theme-normal .group-services { --grp-fg: #1e40af; --grp-bg: #dbeafe; --grp-border: #93c5fd; }
+    .theme-normal.dark .group-services { --grp-fg: #93c5fd; --grp-bg: #1e3a8a; --grp-border: #2563eb; }
+    .theme-professional .group-services { --grp-fg: #2563eb; --grp-bg: #dbeafe; --grp-border: #60a5fa; }
+    .theme-professional.dark .group-services { --grp-fg: #60a5fa; --grp-bg: #1e40af; --grp-border: #3b82f6; }
+    .theme-mono .group-services { --grp-fg: #385898; --grp-bg: #e0e8f4; --grp-border: #7098c8; }
+    .theme-mono.dark .group-services { --grp-fg: #7098c8; --grp-bg: #182840; --grp-border: #304060; }
+
+    /* Hospitality & Entertainment Group */
+    .theme-normal .group-hospitality { --grp-fg: #7c3aed; --grp-bg: #f5f3ff; --grp-border: #c4b5fd; }
+    .theme-normal.dark .group-hospitality { --grp-fg: #c4b5fd; --grp-bg: #5b21b6; --grp-border: #7c3aed; }
+    .theme-professional .group-hospitality { --grp-fg: #8b5cf6; --grp-bg: #f5f3ff; --grp-border: #a78bfa; }
+    .theme-professional.dark .group-hospitality { --grp-fg: #a78bfa; --grp-bg: #5b21b6; --grp-border: #7c3aed; }
+    .theme-mono .group-hospitality { --grp-fg: #7838a0; --grp-bg: #ece0f4; --grp-border: #a868c8; }
+    .theme-mono.dark .group-hospitality { --grp-fg: #a868c8; --grp-bg: #301838; --grp-border: #502858; }
+
+    /* Other Group */
+    .theme-normal .group-other { --grp-fg: #047857; --grp-bg: #d1fae5; --grp-border: #6ee7b7; }
+    .theme-normal.dark .group-other { --grp-fg: #6ee7b7; --grp-bg: #064e3b; --grp-border: #10b981; }
+    .theme-professional .group-other { --grp-fg: #10b981; --grp-bg: #d1fae5; --grp-border: #34d399; }
+    .theme-professional.dark .group-other { --grp-fg: #34d399; --grp-bg: #065f46; --grp-border: #059669; }
+    .theme-mono .group-other { --grp-fg: #289068; --grp-bg: #d8f2e8; --grp-border: #60c8a0; }
+    .theme-mono.dark .group-other { --grp-fg: #60c8a0; --grp-bg: #104838; --grp-border: #286850; }
+
+    /* ============================================================
+       CATEGORY GROUP COLORS - ITEM CATEGORIES
+       ============================================================ */
+
+    /* Food Fresh Group */
+    .theme-normal .group-food-fresh { --grp-fg: #15803d; --grp-bg: #dcfce7; --grp-border: #86efac; }
+    .theme-normal.dark .group-food-fresh { --grp-fg: #86efac; --grp-bg: #14532d; --grp-border: #22c55e; }
+    .theme-professional .group-food-fresh { --grp-fg: #16a34a; --grp-bg: #dcfce7; --grp-border: #4ade80; }
+    .theme-professional.dark .group-food-fresh { --grp-fg: #4ade80; --grp-bg: #166534; --grp-border: #22c55e; }
+    .theme-mono .group-food-fresh { --grp-fg: #2d8c50; --grp-bg: #e0f2e8; --grp-border: #6dc792; }
+    .theme-mono.dark .group-food-fresh { --grp-fg: #6dc792; --grp-bg: #1e4a30; --grp-border: #3a6a48; }
+
+    /* Food Packaged Group */
+    .theme-normal .group-food-packaged { --grp-fg: #92400e; --grp-bg: #fef3c7; --grp-border: #fcd34d; }
+    .theme-normal.dark .group-food-packaged { --grp-fg: #fcd34d; --grp-bg: #78350f; --grp-border: #d97706; }
+    .theme-professional .group-food-packaged { --grp-fg: #d97706; --grp-bg: #fef3c7; --grp-border: #fbbf24; }
+    .theme-professional.dark .group-food-packaged { --grp-fg: #fbbf24; --grp-bg: #92400e; --grp-border: #b45309; }
+    .theme-mono .group-food-packaged { --grp-fg: #a88020; --grp-bg: #f8f0d8; --grp-border: #d4b860; }
+    .theme-mono.dark .group-food-packaged { --grp-fg: #d4b860; --grp-bg: #4a3810; --grp-border: #6a5020; }
+
+    /* Health & Personal Group */
+    .theme-normal .group-health-personal { --grp-fg: #a21caf; --grp-bg: #fae8ff; --grp-border: #e879f9; }
+    .theme-normal.dark .group-health-personal { --grp-fg: #e879f9; --grp-bg: #701a75; --grp-border: #a855f7; }
+    .theme-professional .group-health-personal { --grp-fg: #c026d3; --grp-bg: #fae8ff; --grp-border: #e879f9; }
+    .theme-professional.dark .group-health-personal { --grp-fg: #e879f9; --grp-bg: #86198f; --grp-border: #a855f7; }
+    .theme-mono .group-health-personal { --grp-fg: #9838a8; --grp-bg: #f0e0f8; --grp-border: #c070d4; }
+    .theme-mono.dark .group-health-personal { --grp-fg: #c070d4; --grp-bg: #3a1848; --grp-border: #582868; }
+
+    /* Household Group */
+    .theme-normal .group-household { --grp-fg: #0f766e; --grp-bg: #ccfbf1; --grp-border: #5eead4; }
+    .theme-normal.dark .group-household { --grp-fg: #5eead4; --grp-bg: #134e4a; --grp-border: #14b8a6; }
+    .theme-professional .group-household { --grp-fg: #14b8a6; --grp-bg: #ccfbf1; --grp-border: #2dd4bf; }
+    .theme-professional.dark .group-household { --grp-fg: #2dd4bf; --grp-bg: #115e59; --grp-border: #0d9488; }
+    .theme-mono .group-household { --grp-fg: #288c8c; --grp-bg: #d8f2f2; --grp-border: #60c8c8; }
+    .theme-mono.dark .group-household { --grp-fg: #60c8c8; --grp-bg: #104848; --grp-border: #286868; }
+
+    /* Non-Food Retail Group */
+    .theme-normal .group-nonfood-retail { --grp-fg: #1e40af; --grp-bg: #dbeafe; --grp-border: #93c5fd; }
+    .theme-normal.dark .group-nonfood-retail { --grp-fg: #93c5fd; --grp-bg: #1e3a8a; --grp-border: #2563eb; }
+    .theme-professional .group-nonfood-retail { --grp-fg: #2563eb; --grp-bg: #dbeafe; --grp-border: #60a5fa; }
+    .theme-professional.dark .group-nonfood-retail { --grp-fg: #60a5fa; --grp-bg: #1e40af; --grp-border: #3b82f6; }
+    .theme-mono .group-nonfood-retail { --grp-fg: #3850a8; --grp-bg: #e0e8f8; --grp-border: #7090d4; }
+    .theme-mono.dark .group-nonfood-retail { --grp-fg: #7090d4; --grp-bg: #182848; --grp-border: #304068; }
+
+    /* Services & Fees Group */
+    .theme-normal .group-services-fees { --grp-fg: #64748b; --grp-bg: #f1f5f9; --grp-border: #cbd5e1; }
+    .theme-normal.dark .group-services-fees { --grp-fg: #cbd5e1; --grp-bg: #334155; --grp-border: #64748b; }
+    .theme-professional .group-services-fees { --grp-fg: #64748b; --grp-bg: #f1f5f9; --grp-border: #94a3b8; }
+    .theme-professional.dark .group-services-fees { --grp-fg: #94a3b8; --grp-bg: #475569; --grp-border: #64748b; }
+    .theme-mono .group-services-fees { --grp-fg: #607080; --grp-bg: #e8ecf0; --grp-border: #98a8b8; }
+    .theme-mono.dark .group-services-fees { --grp-fg: #98a8b8; --grp-bg: #303840; --grp-border: #485058; }
+
+    /* Other Item Group */
+    .theme-normal .group-other-item { --grp-fg: #64748b; --grp-bg: #f1f5f9; --grp-border: #cbd5e1; }
+    .theme-normal.dark .group-other-item { --grp-fg: #cbd5e1; --grp-bg: #334155; --grp-border: #64748b; }
+    .theme-professional .group-other-item { --grp-fg: #64748b; --grp-bg: #f1f5f9; --grp-border: #94a3b8; }
+    .theme-professional.dark .group-other-item { --grp-fg: #94a3b8; --grp-bg: #475569; --grp-border: #64748b; }
+    .theme-mono .group-other-item { --grp-fg: #607080; --grp-bg: #e8ecf0; --grp-border: #98a8b8; }
+    .theme-mono.dark .group-other-item { --grp-fg: #98a8b8; --grp-bg: #303840; --grp-border: #485058; }
+
+    /* ============================================================
+       SEMANTIC COLORS - GRAPHICS & INDICATORS
+
+       Colors for trend indicators, charts, progress bars, and
+       other graphical elements. Each theme has harmonized colors
+       that feel cohesive with the overall aesthetic.
+
+       Usage:
+       - --positive-*: Spending decrease (good), savings growth
+       - --negative-*: Spending increase (bad), budget exceeded
+       - --neutral-*: No change, informational
+       - --warning-*: Caution states, approaching limits
+       - --chart-*: Multi-series chart colors
+       ============================================================ */
+
+    /* --- NORMAL THEME (Ni No Kuni / Ghibli) ---
+       Muted, warm, earthy tones - softer greens and terracotta reds
+       Less saturated to match the hand-painted aesthetic */
+
+    .theme-normal {
+      /* Positive - Earthy sage green, not too bright */
+      --positive-primary: #3d8c5a;
+      --positive-secondary: #5ca376;
+      --positive-bg: #e8f5ec;
+      --positive-border: #a8d4b8;
+
+      /* Negative - Terracotta/brick red, warm not harsh */
+      --negative-primary: #b85c4a;
+      --negative-secondary: #c87868;
+      --negative-bg: #f8ebe8;
+      --negative-border: #dab0a8;
+
+      /* Neutral - Warm gray with slight amber tint */
+      --neutral-primary: #7a7268;
+      --neutral-secondary: #9a9288;
+      --neutral-bg: #f4f2f0;
+      --neutral-border: #d4d0c8;
+
+      /* Warning - Muted amber/ochre */
+      --warning-primary: #a8842c;
+      --warning-secondary: #c49c48;
+      --warning-bg: #fcf4e0;
+      --warning-border: #e8d498;
+
+      /* Chart accent colors - earthy palette */
+      --chart-1: #3d8c5a;    /* Sage green */
+      --chart-2: #b85c4a;    /* Terracotta */
+      --chart-3: #7c6d9c;    /* Dusty purple */
+      --chart-4: #5c8494;    /* Steel blue */
+      --chart-5: #a8842c;    /* Ochre */
+      --chart-6: #8c7048;    /* Bronze */
+    }
+
+    .theme-normal.dark {
+      /* Positive - Softer sage, visible on dark bg */
+      --positive-primary: #7cc494;
+      --positive-secondary: #5ca376;
+      --positive-bg: #1a3828;
+      --positive-border: #3d6848;
+
+      /* Negative - Warm coral, not neon */
+      --negative-primary: #d4948a;
+      --negative-secondary: #c87868;
+      --negative-bg: #3a2420;
+      --negative-border: #6a4840;
+
+      /* Neutral - Warm gray */
+      --neutral-primary: #b8b0a8;
+      --neutral-secondary: #9a9288;
+      --neutral-bg: #2a2824;
+      --neutral-border: #4a4840;
+
+      /* Warning - Warm amber */
+      --warning-primary: #d4b868;
+      --warning-secondary: #c49c48;
+      --warning-bg: #3a3018;
+      --warning-border: #5a4820;
+
+      /* Chart accent colors */
+      --chart-1: #7cc494;
+      --chart-2: #d4948a;
+      --chart-3: #a898c4;
+      --chart-4: #88b0c0;
+      --chart-5: #d4b868;
+      --chart-6: #b89870;
+    }
+
+    /* --- PROFESSIONAL THEME ---
+       Clean, high-contrast, corporate colors - standard green/red
+       More saturated for clarity in business context */
+
+    .theme-professional {
+      /* Positive - Clear, professional green */
+      --positive-primary: #16a34a;
+      --positive-secondary: #22c55e;
+      --positive-bg: #dcfce7;
+      --positive-border: #86efac;
+
+      /* Negative - Clear, professional red */
+      --negative-primary: #dc2626;
+      --negative-secondary: #ef4444;
+      --negative-bg: #fee2e2;
+      --negative-border: #fca5a5;
+
+      /* Neutral - Cool gray */
+      --neutral-primary: #64748b;
+      --neutral-secondary: #94a3b8;
+      --neutral-bg: #f1f5f9;
+      --neutral-border: #cbd5e1;
+
+      /* Warning - Vivid amber */
+      --warning-primary: #d97706;
+      --warning-secondary: #f59e0b;
+      --warning-bg: #fef3c7;
+      --warning-border: #fcd34d;
+
+      /* Chart accent colors - corporate palette */
+      --chart-1: #16a34a;    /* Green */
+      --chart-2: #dc2626;    /* Red */
+      --chart-3: #7c3aed;    /* Purple */
+      --chart-4: #0ea5e9;    /* Sky blue */
+      --chart-5: #d97706;    /* Amber */
+      --chart-6: #0d9488;    /* Teal */
+    }
+
+    .theme-professional.dark {
+      /* Positive - Bright green for dark mode */
+      --positive-primary: #4ade80;
+      --positive-secondary: #22c55e;
+      --positive-bg: #14532d;
+      --positive-border: #166534;
+
+      /* Negative - Bright red for dark mode */
+      --negative-primary: #f87171;
+      --negative-secondary: #ef4444;
+      --negative-bg: #7f1d1d;
+      --negative-border: #991b1b;
+
+      /* Neutral - Cool gray */
+      --neutral-primary: #94a3b8;
+      --neutral-secondary: #cbd5e1;
+      --neutral-bg: #334155;
+      --neutral-border: #475569;
+
+      /* Warning - Bright amber */
+      --warning-primary: #fbbf24;
+      --warning-secondary: #f59e0b;
+      --warning-bg: #78350f;
+      --warning-border: #92400e;
+
+      /* Chart accent colors */
+      --chart-1: #4ade80;
+      --chart-2: #f87171;
+      --chart-3: #a78bfa;
+      --chart-4: #38bdf8;
+      --chart-5: #fbbf24;
+      --chart-6: #2dd4bf;
+    }
+
+    /* --- MONO THEME ---
+       Subdued, low-saturation - desaturated greens and reds
+       Colorful but calm, ~50-60% saturation */
+
+    .theme-mono {
+      /* Positive - Desaturated teal-green */
+      --positive-primary: #3a8c70;
+      --positive-secondary: #58a890;
+      --positive-bg: #e4f2ec;
+      --positive-border: #98c8b8;
+
+      /* Negative - Desaturated brick/clay red */
+      --negative-primary: #a05858;
+      --negative-secondary: #b87878;
+      --negative-bg: #f4e8e8;
+      --negative-border: #c8a8a8;
+
+      /* Neutral - True gray with slight warmth */
+      --neutral-primary: #686870;
+      --neutral-secondary: #909098;
+      --neutral-bg: #f0f0f2;
+      --neutral-border: #c8c8d0;
+
+      /* Warning - Desaturated amber/tan */
+      --warning-primary: #988040;
+      --warning-secondary: #b09858;
+      --warning-bg: #f8f0e0;
+      --warning-border: #d0c098;
+
+      /* Chart accent colors - muted palette */
+      --chart-1: #3a8c70;    /* Teal-green */
+      --chart-2: #a05858;    /* Clay red */
+      --chart-3: #6858a0;    /* Dusty violet */
+      --chart-4: #4878a0;    /* Steel blue */
+      --chart-5: #988040;    /* Tan */
+      --chart-6: #608078;    /* Sage */
+    }
+
+    .theme-mono.dark {
+      /* Positive - Muted teal-green for dark */
+      --positive-primary: #78c0a8;
+      --positive-secondary: #58a890;
+      --positive-bg: #1a3830;
+      --positive-border: #2a5848;
+
+      /* Negative - Muted rose for dark */
+      --negative-primary: #c89898;
+      --negative-secondary: #b87878;
+      --negative-bg: #382828;
+      --negative-border: #503838;
+
+      /* Neutral - Warm gray */
+      --neutral-primary: #a8a8b0;
+      --neutral-secondary: #909098;
+      --neutral-bg: #2a2a30;
+      --neutral-border: #404048;
+
+      /* Warning - Muted gold */
+      --warning-primary: #c8b070;
+      --warning-secondary: #b09858;
+      --warning-bg: #383020;
+      --warning-border: #504028;
+
+      /* Chart accent colors */
+      --chart-1: #78c0a8;
+      --chart-2: #c89898;
+      --chart-3: #9888c0;
+      --chart-4: #78a0c0;
+      --chart-5: #c8b070;
+      --chart-6: #88a898;
+    }
+
+    /* ============================================================
+       SEMANTIC COLOR UTILITIES
+       Helper classes for applying semantic colors
+       ============================================================ */
+
+    /* Trend indicators */
+    .trend-positive { color: var(--positive-primary); }
+    .trend-negative { color: var(--negative-primary); }
+    .trend-neutral { color: var(--neutral-primary); }
+
+    /* Trend badges */
+    .badge-positive {
+      color: var(--positive-primary);
+      background: var(--positive-bg);
+      border: 1px solid var(--positive-border);
+    }
+    .badge-negative {
+      color: var(--negative-primary);
+      background: var(--negative-bg);
+      border: 1px solid var(--negative-border);
+    }
+    .badge-neutral {
+      color: var(--neutral-primary);
+      background: var(--neutral-bg);
+      border: 1px solid var(--neutral-border);
+    }
+    .badge-warning {
+      color: var(--warning-primary);
+      background: var(--warning-bg);
+      border: 1px solid var(--warning-border);
+    }
+
+    /* ============================================================
+       LAYOUT STYLES
+       ============================================================ */
+
+    .controls {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      padding: 16px;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      border: 1px solid var(--border-light);
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .control-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .control-group select {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-medium);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-top: 32px;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border-light);
+    }
+
+    h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-top: 20px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Group Header Styling */
+    .group-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      margin-top: 24px;
+      margin-bottom: 16px;
+      background: var(--grp-bg);
+      border-radius: 12px;
+      border-left: 4px solid var(--grp-border);
+    }
+
+    .group-header-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      background: var(--grp-border);
+      flex-shrink: 0;
+    }
+
+    .group-header-content {
+      flex: 1;
+    }
+
+    .group-header-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--grp-fg);
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .group-header-subtitle {
+      font-size: 12px;
+      color: var(--grp-fg);
+      opacity: 0.8;
+      margin-top: 2px;
+    }
+
+    .group-header-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--grp-border);
+      color: var(--grp-fg);
+    }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .category-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: 10px;
+      border: 1px solid var(--border-light);
+    }
+
+    .category-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      background: var(--cat-bg);
+    }
+
+    .category-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .category-name {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .category-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 500;
+      background: var(--cat-bg);
+      color: var(--cat-fg);
+    }
+
+    .color-codes {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .color-code {
+      font-size: 9px;
+      font-family: monospace;
+      color: var(--text-tertiary);
+    }
+
+    .current-values {
+      margin-top: 24px;
+      padding: 16px;
+      background: var(--bg-tertiary);
+      border-radius: 12px;
+    }
+
+    .current-values h3 {
+      margin-top: 0;
+    }
+
+    .current-values code {
+      display: block;
+      font-family: 'SF Mono', Consolas, monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      color: var(--text-primary);
+    }
+  </style>
+</head>
+<body class="theme-normal">
+
+  <h1>Category & Semantic Colors Reference</h1>
+  <p class="subtitle">Story 14.21: Category Color Consolidation - Visual Design Reference for Categories, Trend Indicators, and Chart Graphics</p>
+
+  <div class="controls">
+    <div class="control-group">
+      <label>Theme</label>
+      <select id="theme-select">
+        <option value="normal">Normal (Ni No Kuni)</option>
+        <option value="professional">Professional Blue</option>
+        <option value="mono">Mono (Grayscale)</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Mode</label>
+      <select id="mode-select">
+        <option value="light">Light Mode</option>
+        <option value="dark">Dark Mode</option>
+      </select>
+    </div>
+  </div>
+
+  <h2>Store Categories (32)</h2>
+
+  <div class="group-header group-food-dining">
+    <div class="group-header-icon">🍽️</div>
+    <div class="group-header-content">
+      <div class="group-header-title">Food & Dining</div>
+      <div class="group-header-subtitle">Restaurants, supermarkets, bakeries, and food vendors</div>
+    </div>
+    <span class="group-header-badge">5 categories</span>
+  </div>
+  <div class="category-grid">
+    <div class="category-card cat-Supermarket">
+      <div class="category-icon">🛒</div>
+      <div class="category-info">
+        <div class="category-name">Supermarket</div>
+        <span class="category-badge">Supermercado</span>
+      </div>
+    </div>
+    <div class="category-card cat-Restaurant">
+      <div class="category-icon">🍽️</div>
+      <div class="category-info">
+        <div class="category-name">Restaurant</div>
+        <span class="category-badge">Restaurante</span>
+      </div>
+    </div>
+    <div class="category-card cat-Bakery">
+      <div class="category-icon">🥐</div>
+      <div class="category-info">
+        <div class="category-name">Bakery</div>
+        <span class="category-badge">Panadería</span>
+      </div>
+    </div>
+    <div class="category-card cat-Butcher">
+      <div class="category-icon">🥩</div>
+      <div class="category-info">
+        <div class="category-name">Butcher</div>
+        <span class="category-badge">Carnicería</span>
+      </div>
+    </div>
+    <div class="category-card cat-StreetVendor">
+      <div class="category-icon">🌮</div>
+      <div class="category-info">
+        <div class="category-name">StreetVendor</div>
+        <span class="category-badge">Ambulante</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="group-header group-health-wellness">
+    <div class="group-header-icon">💊</div>
+    <div class="group-header-content">
+      <div class="group-header-title">Health & Wellness</div>
+      <div class="group-header-subtitle">Pharmacies, medical services, veterinary, and beauty</div>
+    </div>
+    <span class="group-header-badge">4 categories</span>
+  </div>
+  <div class="category-grid">
+    <div class="category-card cat-Pharmacy">
+      <div class="category-icon">💊</div>
+      <div class="category-info">
+        <div class="category-name">Pharmacy</div>
+        <span class="category-badge">Farmacia</span>
+      </div>
+    </div>
+    <div class="category-card cat-Medical">
+      <div class="category-icon">🏥</div>
+      <div class="category-info">
+        <div class="category-name">Medical</div>
+        <span class="category-badge">Médico</span>
+      </div>
+    </div>
+    <div class="category-card cat-Veterinary">
+      <div class="category-icon">🐾</div>
+      <div class="category-info">
+        <div class="category-name">Veterinary</div>
+        <span class="category-badge">Veterinaria</span>
+      </div>
+    </div>
+    <div class="category-card cat-HealthBeauty">
+      <div class="category-icon">💄</div>
+      <div class="category-info">
+        <div class="category-name">HealthBeauty</div>
+        <span class="category-badge">Belleza</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="group-header group-retail-general">
+    <div class="group-header-icon">🏠</div>
+    <div class="group-header-content">
+      <div class="group-header-title">Retail - General</div>
+      <div class="group-header-subtitle">General retail stores, home goods, electronics, and hardware</div>
+    </div>
+    <span class="group-header-badge">7 categories</span>
+  </div>
+  <div class="category-grid">
+    <div class="category-card cat-Bazaar">
+      <div class="category-icon">🏪</div>
+      <div class="category-info">
+        <div class="category-name">Bazaar</div>
+        <span class="category-badge">Bazar</span>
+      </div>
+    </div>
+    <div class="category-card cat-Clothing">
+      <div class="category-icon">👕</div>
+      <div class="category-info">
+        <div class="category-name">Clothing</div>
+        <span class="category-badge">Ropa</span>
+      </div>
+    </div>
+    <div class="category-card cat-Electronics">
+      <div class="category-icon">📱</div>
+      <div class="category-info">
+        <div class="category-name">Electronics</div>
+        <span class="category-badge">Electrónica</span>
+      </div>
+    </div>
+    <div class="category-card cat-HomeGoods">
+      <div class="category-icon">🏠</div>
+      <div class="category-info">
+        <div class="category-name">HomeGoods</div>
+        <span class="category-badge">Hogar</span>
+      </div>
+    </div>
+    <div class="category-card cat-Furniture">
+      <div class="category-icon">🛋️</div>
+      <div class="category-info">
+        <div class="category-name">Furniture</div>
+        <span class="category-badge">Muebles</span>
+      </div>
+    </div>
+    <div class="category-card cat-Hardware">
+      <div class="category-icon">🔧</div>
+      <div class="category-info">
+        <div class="category-name">Hardware</div>
+        <span class="category-badge">Ferretería</span>
+      </div>
+    </div>
+    <div class="category-card cat-GardenCenter">
+      <div class="category-icon">🌱</div>
+      <div class="category-info">
+        <div class="category-name">GardenCenter</div>
+        <span class="category-badge">Jardín</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="group-header group-retail-specialty">
+    <div class="group-header-icon">🎁</div>
+    <div class="group-header-content">
+      <div class="group-header-title">Retail - Specialty</div>
+      <div class="group-header-subtitle">Specialty stores: pets, books, sports, toys, and jewelry</div>
+    </div>
+    <span class="group-header-badge">7 categories</span>
+  </div>
+  <div class="category-grid">
+    <div class="category-card cat-PetShop">
+      <div class="category-icon">🐕</div>
+      <div class="category-info">
+        <div class="category-name">PetShop</div>
+        <span class="category-badge">Mascotas</span>
+      </div>
+    </div>
+    <div class="category-card cat-BooksMedia">
+      <div class="category-icon">📚</div>
+      <div class="category-info">
+        <div class="category-name">BooksMedia</div>
+        <span class="category-badge">Libros</span>
+      </div>
+    </div>
+    <div class="category-card cat-OfficeSupplies">
+      <div class="category-icon">📎</div>
+      <div class="category-info">
+        <div class="category-name">OfficeSupplies</div>
+        <span class="category-badge">Oficina</span>
+      </div>
+    </div>
+    <div class="category-card cat-SportsOutdoors">
+      <div class="category-icon">⚽</div>
+      <div class="category-info">
+        <div class="category-name">SportsOutdoors</div>
+        <span class="category-badge">Deportes</span>
+      </div>
+    </div>
+    <div class="category-card cat-ToysGames">
+      <div class="category-icon">🎮</div>
+      <div class="category-info">
+        <div class="category-name">ToysGames</div>
+        <span class="category-badge">Juguetes</span>
+      </div>
+    </div>
+    <div class="category-card cat-Jewelry">
+      <div class="category-icon">💎</div>
+      <div class="category-info">
+        <div class="category-name">Jewelry</div>
+        <span class="category-badge">Joyería</span>
+      </div>
+    </div>
+    <div class="category-card cat-Optical">
+      <div class="category-icon">👓</div>
+      <div class="category-info">
+        <div class="category-name">Optical</div>
+        <span class="category-badge">Óptica</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="group-header group-automotive">
+    <div class="group-header-icon">🚗</div>
+    <div class="group-header-content">
+      <div class="group-header-title">Automotive & Transport</div>
+      <div class="group-header-subtitle">Automotive services, gas stations, and transportation</div>
+    </div>
+    <span class="group-header-badge">3 categories</span>
+  </div>
+  <div class="category-grid">
+    <div class="category-card cat-Automotive">
+      <div class="category-icon">🚗</div>
+      <div class="category-info">
+        <div class="category-name">Automotive</div>
+        <span class="category-badge">Automotriz</span>
+      </div>
+    </div>
+    <div class="category-card cat-GasStation">
+      <div class="category-icon">⛽</div>
+      <div class="category-info">
+        <div class="category-name">GasStation</div>
+        <span class="category-badge">Gasolinera</span>
+      </div>
+    </div>
+    <div class="category-card cat-Transport">
+      <div class="category-icon">🚌</div>
+      <div class="category-info">
+        <div class="category-name">Transport</div>
+        <span class="category-badge">Transporte</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="group-header group-services">
+    <div class="group-header-icon">🏦</div>
+    <div class="group-header-content">
+      <div class="group-header-title">Services & Finance</div>
+      <div class="group-header-subtitle">Banking, professional services, education, and travel</div>
+    </div>
+    <span class="group-header-badge">4 categories</span>
+  </div>
+  <div class="category-grid">
+    <div class="category-card cat-Services">
+      <div class="category-icon">🔧</div>
+      <div class="category-info">
+        <div class="category-name">Services</div>
+        <span class="category-badge">Servicios</span>
+      </div>
+    </div>
+    <div class="category-card cat-BankingFinance">
+      <div class="category-icon">🏦</div>
+      <div class="category-info">
+        <div class="category-name">BankingFinance</div>
+        <span class="category-badge">Banco</span>
+      </div>
+    </div>
+    <div class="category-card cat-Education">
+      <div class="category-icon">📖</div>
+      <div class="category-info">
+        <div class="category-name">Education</div>
+        <span class="category-badge">Educación</span>
+      </div>
+    </div>
+    <div class="category-card cat-TravelAgency">
+      <div class="category-icon">✈️</div>
+      <div class="category-info">
+        <div class="category-name">TravelAgency</div>
+        <span class="category-badge">Viajes</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="group-header group-hospitality">
+    <div class="group-header-icon">🎬</div>
+    <div class="group-header-content">
+      <div class="group-header-title">Hospitality & Entertainment</div>
+      <div class="group-header-subtitle">Hotels, lodging, and entertainment venues</div>
+    </div>
+    <span class="group-header-badge">2 categories</span>
+  </div>
+  <div class="category-grid">
+    <div class="category-card cat-HotelLodging">
+      <div class="category-icon">🏨</div>
+      <div class="category-info">
+        <div class="category-name">HotelLodging</div>
+        <span class="category-badge">Hotel</span>
+      </div>
+    </div>
+    <div class="category-card cat-Entertainment">
+      <div class="category-icon">🎬</div>
+      <div class="category-info">
+        <div class="category-name">Entertainment</div>
+        <span class="category-badge">Entretenimiento</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="group-header group-other">
+    <div class="group-header-icon">❤️</div>
+    <div class="group-header-content">
+      <div class="group-header-title">Other</div>
+      <div class="group-header-subtitle">Charity, donations, and uncategorized</div>
+    </div>
+    <span class="group-header-badge">2 categories</span>
+  </div>
+  <div class="category-grid">
+    <div class="category-card cat-CharityDonation">
+      <div class="category-icon">❤️</div>
+      <div class="category-info">
+        <div class="category-name">CharityDonation</div>
+        <span class="category-badge">Donación</span>
+      </div>
+    </div>
+    <div class="category-card cat-Other">
+      <div class="category-icon">📦</div>
+      <div class="category-info">
+        <div class="category-name">Other</div>
+        <span class="category-badge">Otro</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ITEM CATEGORIES -->
+  <h2>Item Categories (32)</h2>
+
+  <div class="group-header group-food-fresh">
+    <div class="group-header-icon">🥬</div>
+    <div class="group-header-content">
+      <div class="group-header-title">Food - Fresh</div>
+      <div class="group-header-subtitle">Produce, meat, seafood, dairy, and bakery items</div>
+    </div>
+    <span class="group-header-badge">4 categories</span>
+  </div>
+  <div class="category-grid">
+    <div class="category-card cat-Produce">
+      <div class="category-icon">🥬</div>
+      <div class="category-info">
+        <div class="category-name">Produce</div>
+        <span class="category-badge">Frutas y Verduras</span>
+      </div>
+    </div>
+    <div class="category-card cat-MeatSeafood">
+      <div class="category-icon">🥩</div>
+      <div class="category-info">
+        <div class="category-name">Meat & Seafood</div>
+        <span class="category-badge">Carnes y Mariscos</span>
+      </div>
+    </div>
+    <div class="category-card cat-ItemBakery">
+      <div class="category-icon">🥖</div>
+      <div class="category-info">
+        <div class="category-name">Bakery</div>
+        <span class="category-badge">Panadería</span>
+      </div>
+    </div>
+    <div class="category-card cat-DairyEggs">
+      <div class="category-icon">🥛</div>
+      <div class="category-info">
+        <div class="category-name">Dairy & Eggs</div>
+        <span class="category-badge">Lácteos</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="group-header group-food-packaged">
+    <div class="group-header-icon">🥫</div>
+    <div class="group-header-content">
+      <div class="group-header-title">Food - Packaged</div>
+      <div class="group-header-subtitle">Pantry items, frozen foods, snacks, and beverages</div>
+    </div>
+    <span class="group-header-badge">5 categories</span>
+  </div>
+  <div class="category-grid">
+    <div class="category-card cat-Pantry">
+      <div class="category-icon">🥫</div>
+      <div class="category-info">
+        <div class="category-name">Pantry</div>
+        <span class="category-badge">Despensa</span>
+      </div>
+    </div>
+    <div class="category-card cat-FrozenFoods">
+      <div class="category-icon">🧊</div>
+      <div class="category-info">
+        <div class="category-name">Frozen Foods</div>
+        <span class="category-badge">Congelados</span>
+      </div>
+    </div>
+    <div class="category-card cat-Snacks">
+      <div class="category-icon">🍿</div>
+      <div class="category-info">
+        <div class="category-name">Snacks</div>
+        <span class="category-badge">Snacks</span>
+      </div>
+    </div>
+    <div class="category-card cat-Beverages">
+      <div class="category-icon">🥤</div>
+      <div class="category-info">
+        <div class="category-name">Beverages</div>
+        <span class="category-badge">Bebidas</span>
+      </div>
+    </div>
+    <div class="category-card cat-Alcohol">
+      <div class="category-icon">🍷</div>
+      <div class="category-info">
+        <div class="category-name">Alcohol</div>
+        <span class="category-badge">Alcohol</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="group-header group-health-personal">
+    <div class="group-header-icon">💄</div>
+    <div class="group-header-content">
+      <div class="group-header-title">Health & Personal</div>
+      <div class="group-header-subtitle">Health, beauty, pharmacy, supplements, and baby products</div>
+    </div>
+    <span class="group-header-badge">5 categories</span>
+  </div>
+  <div class="category-grid">
+    <div class="category-card cat-HealthBeautyItem">
+      <div class="category-icon">💄</div>
+      <div class="category-info">
+        <div class="category-name">Health & Beauty</div>
+        <span class="category-badge">Belleza</span>
+      </div>
+    </div>
+    <div class="category-card cat-PersonalCare">
+      <div class="category-icon">🧴</div>
+      <div class="category-info">
+        <div class="category-name">Personal Care</div>
+        <span class="category-badge">Cuidado Personal</span>
+      </div>
+    </div>
+    <div class="category-card cat-PharmacyItem">
+      <div class="category-icon">💊</div>
+      <div class="category-info">
+        <div class="category-name">Pharmacy</div>
+        <span class="category-badge">Farmacia</span>
+      </div>
+    </div>
+    <div class="category-card cat-Supplements">
+      <div class="category-icon">💪</div>
+      <div class="category-info">
+        <div class="category-name">Supplements</div>
+        <span class="category-badge">Suplementos</span>
+      </div>
+    </div>
+    <div class="category-card cat-BabyProducts">
+      <div class="category-icon">🍼</div>
+      <div class="category-info">
+        <div class="category-name">Baby Products</div>
+        <span class="category-badge">Bebé</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="group-header group-household">
+    <div class="group-header-icon">🏠</div>
+    <div class="group-header-content">
+      <div class="group-header-title">Household</div>
+      <div class="group-header-subtitle">Cleaning supplies, home essentials, and pet supplies</div>
+    </div>
+    <span class="group-header-badge">3 categories</span>
+  </div>
+  <div class="category-grid">
+    <div class="category-card cat-CleaningSupplies">
+      <div class="category-icon">🧹</div>
+      <div class="category-info">
+        <div class="category-name">Cleaning Supplies</div>
+        <span class="category-badge">Limpieza</span>
+      </div>
+    </div>
+    <div class="category-card cat-Household">
+      <div class="category-icon">🏠</div>
+      <div class="category-info">
+        <div class="category-name">Household</div>
+        <span class="category-badge">Hogar</span>
+      </div>
+    </div>
+    <div class="category-card cat-PetSupplies">
+      <div class="category-icon">🐾</div>
+      <div class="category-info">
+        <div class="category-name">Pet Supplies</div>
+        <span class="category-badge">Mascotas</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="group-header group-nonfood-retail">
+    <div class="group-header-icon">🛍️</div>
+    <div class="group-header-content">
+      <div class="group-header-title">Non-Food Retail</div>
+      <div class="group-header-subtitle">Clothing, electronics, hardware, garden, sports, and more</div>
+    </div>
+    <span class="group-header-badge">11 categories</span>
+  </div>
+  <div class="category-grid">
+    <div class="category-card cat-ClothingItem">
+      <div class="category-icon">👕</div>
+      <div class="category-info">
+        <div class="category-name">Clothing</div>
+        <span class="category-badge">Ropa</span>
+      </div>
+    </div>
+    <div class="category-card cat-ElectronicsItem">
+      <div class="category-icon">📱</div>
+      <div class="category-info">
+        <div class="category-name">Electronics</div>
+        <span class="category-badge">Electrónica</span>
+      </div>
+    </div>
+    <div class="category-card cat-HardwareItem">
+      <div class="category-icon">🔧</div>
+      <div class="category-info">
+        <div class="category-name">Hardware</div>
+        <span class="category-badge">Ferretería</span>
+      </div>
+    </div>
+    <div class="category-card cat-Garden">
+      <div class="category-icon">🌱</div>
+      <div class="category-info">
+        <div class="category-name">Garden</div>
+        <span class="category-badge">Jardín</span>
+      </div>
+    </div>
+    <div class="category-card cat-AutomotiveItem">
+      <div class="category-icon">🚗</div>
+      <div class="category-info">
+        <div class="category-name">Automotive</div>
+        <span class="category-badge">Automotriz</span>
+      </div>
+    </div>
+    <div class="category-card cat-SportsOutdoorsItem">
+      <div class="category-icon">⚽</div>
+      <div class="category-info">
+        <div class="category-name">Sports & Outdoors</div>
+        <span class="category-badge">Deportes</span>
+      </div>
+    </div>
+    <div class="category-card cat-ToysGamesItem">
+      <div class="category-icon">🎮</div>
+      <div class="category-info">
+        <div class="category-name">Toys & Games</div>
+        <span class="category-badge">Juguetes</span>
+      </div>
+    </div>
+    <div class="category-card cat-BooksMediaItem">
+      <div class="category-icon">📚</div>
+      <div class="category-info">
+        <div class="category-name">Books & Media</div>
+        <span class="category-badge">Libros</span>
+      </div>
+    </div>
+    <div class="category-card cat-OfficeStationery">
+      <div class="category-icon">📎</div>
+      <div class="category-info">
+        <div class="category-name">Office & Stationery</div>
+        <span class="category-badge">Oficina</span>
+      </div>
+    </div>
+    <div class="category-card cat-CraftsHobbies">
+      <div class="category-icon">🎨</div>
+      <div class="category-info">
+        <div class="category-name">Crafts & Hobbies</div>
+        <span class="category-badge">Manualidades</span>
+      </div>
+    </div>
+    <div class="category-card cat-FurnitureItem">
+      <div class="category-icon">🛋️</div>
+      <div class="category-info">
+        <div class="category-name">Furniture</div>
+        <span class="category-badge">Muebles</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="group-header group-services-fees">
+    <div class="group-header-icon">📋</div>
+    <div class="group-header-content">
+      <div class="group-header-title">Services & Fees</div>
+      <div class="group-header-subtitle">Service charges, taxes, fees, and tobacco</div>
+    </div>
+    <span class="group-header-badge">3 categories</span>
+  </div>
+  <div class="category-grid">
+    <div class="category-card cat-Service">
+      <div class="category-icon">🔧</div>
+      <div class="category-info">
+        <div class="category-name">Service</div>
+        <span class="category-badge">Servicio</span>
+      </div>
+    </div>
+    <div class="category-card cat-TaxFees">
+      <div class="category-icon">📋</div>
+      <div class="category-info">
+        <div class="category-name">Tax & Fees</div>
+        <span class="category-badge">Impuestos</span>
+      </div>
+    </div>
+    <div class="category-card cat-Tobacco">
+      <div class="category-icon">🚬</div>
+      <div class="category-info">
+        <div class="category-name">Tobacco</div>
+        <span class="category-badge">Tabaco</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="group-header group-other-item">
+    <div class="group-header-icon">📦</div>
+    <div class="group-header-content">
+      <div class="group-header-title">Other</div>
+      <div class="group-header-subtitle">Miscellaneous and uncategorized items</div>
+    </div>
+    <span class="group-header-badge">1 category</span>
+  </div>
+  <div class="category-grid">
+    <div class="category-card cat-OtherItem">
+      <div class="category-icon">📦</div>
+      <div class="category-info">
+        <div class="category-name">Other</div>
+        <span class="category-badge">Otro</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SEMANTIC COLORS - GRAPHICS & INDICATORS
+       ============================================================ -->
+
+  <h2 style="margin-top: 48px;">Semantic Colors - Graphics & Indicators</h2>
+  <p style="color: var(--text-secondary); margin-bottom: 24px;">
+    Colors for trend indicators, charts, progress bars, and other graphical elements.
+    Each theme has harmonized colors that feel cohesive with the overall aesthetic.
+  </p>
+
+  <!-- Trend Indicators Section -->
+  <h3>Trend Indicators</h3>
+  <p style="font-size: 13px; color: var(--text-tertiary); margin-bottom: 16px;">
+    Used for spending changes: positive = spending decreased (good), negative = spending increased (bad)
+  </p>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 32px;">
+    <!-- Positive Trend -->
+    <div style="padding: 20px; border-radius: 12px; background: var(--positive-bg); border: 2px solid var(--positive-border);">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--positive-primary); display: flex; align-items: center; justify-content: center;">
+          <span style="font-size: 20px;">↓</span>
+        </div>
+        <div>
+          <div style="font-weight: 600; color: var(--positive-primary);">Positive / Down</div>
+          <div style="font-size: 12px; color: var(--positive-secondary);">Spending decreased</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <span class="badge-positive" style="padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 500;">-15% vs last week</span>
+        <span style="padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 500; background: var(--positive-primary); color: white;">$50 saved</span>
+      </div>
+      <div style="margin-top: 12px; font-size: 10px; font-family: monospace; color: var(--text-tertiary);">
+        --positive-primary | --positive-bg | --positive-border
+      </div>
+    </div>
+
+    <!-- Negative Trend -->
+    <div style="padding: 20px; border-radius: 12px; background: var(--negative-bg); border: 2px solid var(--negative-border);">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--negative-primary); display: flex; align-items: center; justify-content: center;">
+          <span style="font-size: 20px; color: white;">↑</span>
+        </div>
+        <div>
+          <div style="font-weight: 600; color: var(--negative-primary);">Negative / Up</div>
+          <div style="font-size: 12px; color: var(--negative-secondary);">Spending increased</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <span class="badge-negative" style="padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 500;">+23% vs last week</span>
+        <span style="padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 500; background: var(--negative-primary); color: white;">Over budget</span>
+      </div>
+      <div style="margin-top: 12px; font-size: 10px; font-family: monospace; color: var(--text-tertiary);">
+        --negative-primary | --negative-bg | --negative-border
+      </div>
+    </div>
+
+    <!-- Neutral -->
+    <div style="padding: 20px; border-radius: 12px; background: var(--neutral-bg); border: 2px solid var(--neutral-border);">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--neutral-primary); display: flex; align-items: center; justify-content: center;">
+          <span style="font-size: 20px; color: white;">→</span>
+        </div>
+        <div>
+          <div style="font-weight: 600; color: var(--neutral-primary);">Neutral</div>
+          <div style="font-size: 12px; color: var(--neutral-secondary);">No significant change</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <span class="badge-neutral" style="padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 500;">~0% change</span>
+        <span style="padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 500; background: var(--neutral-primary); color: white;">On track</span>
+      </div>
+      <div style="margin-top: 12px; font-size: 10px; font-family: monospace; color: var(--text-tertiary);">
+        --neutral-primary | --neutral-bg | --neutral-border
+      </div>
+    </div>
+
+    <!-- Warning -->
+    <div style="padding: 20px; border-radius: 12px; background: var(--warning-bg); border: 2px solid var(--warning-border);">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--warning-primary); display: flex; align-items: center; justify-content: center;">
+          <span style="font-size: 20px; color: white;">⚠</span>
+        </div>
+        <div>
+          <div style="font-weight: 600; color: var(--warning-primary);">Warning</div>
+          <div style="font-size: 12px; color: var(--warning-secondary);">Approaching limit</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <span class="badge-warning" style="padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 500;">85% of budget</span>
+        <span style="padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 500; background: var(--warning-primary); color: white;">Caution</span>
+      </div>
+      <div style="margin-top: 12px; font-size: 10px; font-family: monospace; color: var(--text-tertiary);">
+        --warning-primary | --warning-bg | --warning-border
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart Colors Section -->
+  <h3>Chart Accent Colors</h3>
+  <p style="font-size: 13px; color: var(--text-tertiary); margin-bottom: 16px;">
+    A harmonized palette of 6 colors for multi-series charts, legends, and data visualizations.
+  </p>
+
+  <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 32px;">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+      <div style="width: 60px; height: 60px; border-radius: 12px; background: var(--chart-1);"></div>
+      <span style="font-size: 10px; font-family: monospace; color: var(--text-tertiary);">--chart-1</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+      <div style="width: 60px; height: 60px; border-radius: 12px; background: var(--chart-2);"></div>
+      <span style="font-size: 10px; font-family: monospace; color: var(--text-tertiary);">--chart-2</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+      <div style="width: 60px; height: 60px; border-radius: 12px; background: var(--chart-3);"></div>
+      <span style="font-size: 10px; font-family: monospace; color: var(--text-tertiary);">--chart-3</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+      <div style="width: 60px; height: 60px; border-radius: 12px; background: var(--chart-4);"></div>
+      <span style="font-size: 10px; font-family: monospace; color: var(--text-tertiary);">--chart-4</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+      <div style="width: 60px; height: 60px; border-radius: 12px; background: var(--chart-5);"></div>
+      <span style="font-size: 10px; font-family: monospace; color: var(--text-tertiary);">--chart-5</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+      <div style="width: 60px; height: 60px; border-radius: 12px; background: var(--chart-6);"></div>
+      <span style="font-size: 10px; font-family: monospace; color: var(--text-tertiary);">--chart-6</span>
+    </div>
+  </div>
+
+  <!-- Example Usage in Context -->
+  <h3>Example: Report Trend Badges</h3>
+  <p style="font-size: 13px; color: var(--text-tertiary); margin-bottom: 16px;">
+    How these colors appear in actual report cards and trend indicators.
+  </p>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin-bottom: 32px;">
+    <!-- Spending Down Card -->
+    <div style="padding: 16px; border-radius: 12px; background: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 4px;">This Week</div>
+      <div style="font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">$1,234</div>
+      <div style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; background: var(--positive-bg); color: var(--positive-primary); font-size: 13px; font-weight: 500;">
+        <span>↓</span> -12% vs last week
+      </div>
+    </div>
+
+    <!-- Spending Up Card -->
+    <div style="padding: 16px; border-radius: 12px; background: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 4px;">This Month</div>
+      <div style="font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">$5,678</div>
+      <div style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; background: var(--negative-bg); color: var(--negative-primary); font-size: 13px; font-weight: 500;">
+        <span>↑</span> +18% vs last month
+      </div>
+    </div>
+
+    <!-- No Change Card -->
+    <div style="padding: 16px; border-radius: 12px; background: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 4px;">Q4 Total</div>
+      <div style="font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">$12,345</div>
+      <div style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; background: var(--neutral-bg); color: var(--neutral-primary); font-size: 13px; font-weight: 500;">
+        <span>→</span> ~0% vs Q3
+      </div>
+    </div>
+  </div>
+
+  <!-- CSS Variables Reference -->
+  <div class="current-values">
+    <h3>CSS Variables Reference</h3>
+    <code>/* Positive (spending down - good) */
+--positive-primary   /* Main text/icon color */
+--positive-secondary /* Secondary/hover color */
+--positive-bg        /* Background fill */
+--positive-border    /* Border/outline color */
+
+/* Negative (spending up - bad) */
+--negative-primary
+--negative-secondary
+--negative-bg
+--negative-border
+
+/* Neutral (no change) */
+--neutral-primary
+--neutral-secondary
+--neutral-bg
+--neutral-border
+
+/* Warning (approaching limits) */
+--warning-primary
+--warning-secondary
+--warning-bg
+--warning-border
+
+/* Chart palette (6 harmonized colors) */
+--chart-1 through --chart-6</code>
+  </div>
+
+  <script>
+    const themeSelect = document.getElementById('theme-select');
+    const modeSelect = document.getElementById('mode-select');
+
+    function updateTheme() {
+      const theme = themeSelect.value;
+      const mode = modeSelect.value;
+
+      // Remove all theme classes
+      document.body.classList.remove('theme-normal', 'theme-professional', 'theme-mono', 'dark');
+
+      // Add selected theme
+      document.body.classList.add(`theme-${theme}`);
+
+      // Add dark mode if selected
+      if (mode === 'dark') {
+        document.body.classList.add('dark');
+      }
+    }
+
+    themeSelect.addEventListener('change', updateTheme);
+    modeSelect.addEventListener('change', updateTheme);
+  </script>
+</body>
+</html>
