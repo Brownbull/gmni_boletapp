@@ -111,7 +111,7 @@ function squarify(
     // Build a row greedily, adding items while the aspect ratio improves
     const row: TreemapItem[] = [];
     let rowTotal = 0;
-    let remaining = [...items];
+    const remaining = [...items];
 
     // Add the first item to start the row
     const firstItem = remaining.shift()!;
