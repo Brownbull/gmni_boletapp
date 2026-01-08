@@ -1,6 +1,6 @@
 # Story 14.24: Persistent Transaction State & Single Active Transaction
 
-## Status: 🔍 Ready for Review
+## Status: ✅ Done
 
 > **Session 6 (2026-01-07)**: Additional refinements and bug fixes:
 > - ✅ Full-screen category selector overlays (transaction & item categories)
