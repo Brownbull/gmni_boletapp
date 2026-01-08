@@ -1,0 +1,596 @@
+transactionId,date,time,merchant,category,total,itemCount,country,city,currency
+txn_3per50dbdparnubuyzttsc,2024-01-01,14:47,Copec,GasStation,50820,3,Chile,Santiago,CLP
+txn_vfyjr2wzovnve4fgmhh8lc,2024-01-02,20:10,Metrogas,Services,45900,1,Chile,Las Condes,CLP
+txn_qdfc985s1bfd9fnumj43w8,2024-01-02,21:43,Netflix,Entertainment,12990,1,Chile,Santiago,CLP
+txn_80370otce2irmhefooz77k,2024-01-03,09:56,Cabify,Transport,13750,1,Chile,Ñuñoa,CLP
+txn_roczyqinm9rorthkhunrrn,2024-01-03,11:27,Estacionamiento,Transport,4220,1,Chile,Las Condes,CLP
+txn_dtplc9tmu7am41sis4ibuf,2024-01-04,19:11,Líder,Supermarket,45240,7,Chile,Santiago,CLP
+txn_fp15p04m4kluipck1z3ugi,2024-01-04,19:44,Falabella,Clothing,94420,1,Chile,Vitacura,CLP
+txn_a6s1v97p1gnsm5f10nmwua,2024-01-05,08:43,Starbucks,Restaurant,7900,1,Chile,Santiago,CLP
+txn_htomfqiil8rlyvosxke1a,2024-01-05,08:52,Jumbo,Supermarket,32120,3,Chile,Santiago,CLP
+txn_hsc8twb5hflzdcdvpur1u,2024-01-06,08:19,Santa Isabel,Supermarket,28080,3,Chile,Santiago,CLP
+txn_lsaafs9gyuot9vu0pnycrb,2024-01-06,17:02,Dominos Pizza,Restaurant,34060,2,Chile,Las Condes,CLP
+txn_j6twsxm2uybewoly36b1v,2024-01-07,15:44,Shell,GasStation,14920,1,Chile,Santiago,CLP
+txn_txdelvbw8bmdei81upgxr,2024-01-08,16:27,Netflix,Entertainment,12990,1,Chile,Santiago,CLP
+txn_vznqlhlyojkd6yi1apjjmt,2024-01-09,09:03,McDonalds,Restaurant,11900,1,Chile,Santiago,CLP
+txn_bas2sk5m3qh5gf8d230wts,2024-01-09,12:34,Feria Libre,StreetVendor,14340,2,Chile,Las Condes,CLP
+txn_kc0f4en6oiib9u9bhl2qa,2024-01-09,19:00,Cinemark,Entertainment,23280,1,Chile,Las Condes,CLP
+txn_58uanmuu5wbim70p6rvmjh,2024-01-10,12:37,Shell,GasStation,84950,2,Chile,Santiago,CLP
+txn_62dfnynlfa5d9lp3ygbele,2024-01-10,13:39,Feria Libre,StreetVendor,23080,2,Chile,Santiago,CLP
+txn_6234bjmlvsotmjyajxjf0a,2024-01-11,18:25,Unimarc,Supermarket,45890,11,Chile,Santiago,CLP
+txn_pl1bqsvt08hab854zks5a,2024-01-11,20:26,Panadería Local,Bakery,5890,2,Chile,Las Condes,CLP
+txn_46sdlx0nt2jxqykj6o5x7g,2024-01-12,13:12,Feria Libre,StreetVendor,6630,1,Chile,Ñuñoa,CLP
+txn_qpchkydxvsg2qg0gogxiew,2024-01-12,19:01,Jumbo,Supermarket,61470,6,Chile,Providencia,CLP
+txn_f0dj4s2n3btcg0sgvrmei,2024-01-13,12:42,Panadería Local,Bakery,4560,2,Chile,Santiago,CLP
+txn_eq3brf30c2bkmjcgjp3x4,2024-01-14,08:50,Starbucks,Restaurant,8490,2,Chile,Ñuñoa,CLP
+txn_ykxa6pi39ig08mfael20kal,2024-01-14,14:06,Sushi Express,Restaurant,29600,4,Chile,Santiago,CLP
+txn_uxqh5l7mpy1rws7g96u8l,2024-01-15,20:10,Jumbo,Supermarket,45530,3,Chile,Providencia,CLP
+txn_5fs2ogdpajo86nqif5pxyr,2024-01-18,11:20,Starbucks,Restaurant,11500,1,Chile,Las Condes,CLP
+txn_x7qbg15cmkle6hii8t2i,2024-01-18,15:23,Líder,Supermarket,91580,11,Chile,Santiago,CLP
+txn_ljfrpoc4vs5tj7s32q5d,2024-01-19,15:15,Uber,Transport,9030,1,Chile,Santiago,CLP
+txn_29shdasbm89u2pk8nm5d7,2024-01-20,11:39,PCFactory,Electronics,364180,6,Chile,Santiago,CLP
+txn_evlfqe7oe0qrgc2zsa0fvd,2024-01-20,20:14,Copec,GasStation,35730,2,Chile,Providencia,CLP
+txn_h0yu5rjdj9v0cqllix20hxn,2024-01-21,11:48,Telepizza,Restaurant,23570,2,Chile,Vitacura,CLP
+txn_7tkfss6izuih1k5ibs2nc,2024-01-21,11:49,Santa Isabel,Supermarket,12180,3,Chile,Santiago,CLP
+txn_ye8x0fv491jc441bwz9y15,2024-01-22,12:40,Tottus,Supermarket,69860,6,Chile,Santiago,CLP
+txn_zzuxq7by6rmw5ew390zdca,2024-01-23,12:55,Unimarc,Supermarket,33830,5,Chile,Ñuñoa,CLP
+txn_ndgjs3zfm2twj5lr0r63bf,2024-01-24,13:14,Santa Isabel,Supermarket,28330,6,Chile,Providencia,CLP
+txn_s96ipwntszlexcvz42f8tr,2024-01-24,16:00,Uber,Transport,11300,1,Chile,Santiago,CLP
+txn_jg8e3euk2x9on02sy60qa,2024-01-24,20:54,Santa Isabel,Supermarket,18500,4,Chile,Ñuñoa,CLP
+txn_udfby38oku9diacucfpoos,2024-01-25,08:49,Tottus,Supermarket,63170,4,Chile,Santiago,CLP
+txn_ut7q88fab7tx02g54wke,2024-01-25,20:17,Juan Maestro,Restaurant,26200,2,Chile,Vitacura,CLP
+txn_75j0naoj5zl5kr7ok8h04b,2024-01-26,15:42,Copec,GasStation,28660,3,Chile,Santiago,CLP
+txn_5y0um2176pbgmaua695i14,2024-01-28,08:54,Jumbo,Supermarket,99580,8,Chile,Santiago,CLP
+txn_1hco1zzh82ab4wlcqyqy6f,2024-01-28,19:05,Metro de Santiago,Transport,9000,1,Chile,Santiago,CLP
+txn_vzlvgmsp52ix96bxknbfp,2024-01-29,13:38,Metro de Santiago,Transport,8970,1,Chile,Santiago,CLP
+txn_b17mycdnwr9vnjng4o4mmd,2024-01-29,20:36,Feria Libre,StreetVendor,9000,2,Chile,Santiago,CLP
+txn_rycmfx6ui4lytw5k0os8h,2024-01-30,12:39,McDonalds,Restaurant,13940,3,Chile,Vitacura,CLP
+txn_cyj2p9rxoyho3hk7dwt5f,2024-01-30,12:50,Cinemark,Entertainment,8700,1,Chile,Las Condes,CLP
+txn_tzqxkcln2wv1t56rkfg9,2024-01-30,13:55,Entel,Electronics,19580,1,Chile,Vitacura,CLP
+txn_yuane4hxv60vxmwznnmfkf,2024-01-30,18:20,Feria Libre,StreetVendor,26000,3,Chile,Santiago,CLP
+txn_yhw32bwxblmkfa5e1h4i4,2024-01-30,18:43,Dominos Pizza,Restaurant,18180,2,Chile,Santiago,CLP
+txn_tkemnch0yjrxllp6kxkop,2024-01-30,18:46,Panadería Local,Bakery,9140,2,Chile,Providencia,CLP
+txn_5ej6rw2gkzv5ldxb9i4xh,2024-01-31,10:08,Uber,Transport,21060,1,Chile,Ñuñoa,CLP
+txn_ve6zw1aqbjfna4wknmykos,2024-02-01,19:34,Isapre Consalud,Medical,127530,1,Chile,Ñuñoa,CLP
+txn_a1ezhj63zagrbqfqmjkam,2024-02-04,16:52,Starbucks,Restaurant,10240,2,Chile,Providencia,CLP
+txn_g0p944cj2jvsda22kohwms,2024-02-04,21:57,Dominos Pizza,Restaurant,21900,2,Chile,Vitacura,CLP
+txn_ws3su8eneekp3bc0xefp,2024-02-05,14:20,Estacionamiento,Transport,7360,1,Chile,Santiago,CLP
+txn_3om7rlnharrfb7pb2b8zdl,2024-02-05,15:00,Líder,Supermarket,58060,4,Chile,Providencia,CLP
+txn_kh1opcll0sktamtwy24m,2024-02-06,16:11,Panadería Local,Bakery,7500,1,Chile,Santiago,CLP
+txn_el7711iiplvrc5nng8zws,2024-02-07,13:23,Jumbo,Supermarket,88220,13,Chile,Vitacura,CLP
+txn_rqsltt0uy6cb2iytzhp1yf,2024-02-09,12:23,Shell,GasStation,78600,2,Chile,Santiago,CLP
+txn_8rf7kmj5ebyuus6nu7miaq,2024-02-10,13:42,Estacionamiento,Transport,2580,1,Chile,Providencia,CLP
+txn_xo0f387489xrtr4dd10r,2024-02-10,19:57,Santa Isabel,Supermarket,34290,4,Chile,Santiago,CLP
+txn_hb88a6g8updlgpwhwy3j2,2024-02-11,21:01,Unimarc,Supermarket,16840,3,Chile,Santiago,CLP
+txn_ymvgy6b33ia7xn2s2mykbh,2024-02-13,12:32,Farmacias Ahumada,Pharmacy,26580,2,Chile,Santiago,CLP
+txn_i1jtbf0xqufg6t9g9u9ge,2024-02-13,13:13,Uber,Transport,5190,1,Chile,Santiago,CLP
+txn_zfoz9r8d7wtoe1vs7qspb,2024-02-13,21:17,Pet Happy,PetShop,73420,2,Chile,Ñuñoa,CLP
+txn_vxjlx3n45jka4ocvqvi7kt,2024-02-14,10:01,Estacionamiento,Transport,6070,1,Chile,Vitacura,CLP
+txn_xcclvjhkmpfpx1xlrt6g8,2024-02-15,15:42,Telepizza,Restaurant,25760,3,Chile,Providencia,CLP
+txn_hj66w8dctdm7a2o7efw9xj,2024-02-16,17:15,Movistar Hogar,Services,33300,1,Chile,Santiago,CLP
+txn_127ue4w1f6oafcppqxje05,2024-02-18,12:47,Estacionamiento,Transport,5150,1,Chile,Las Condes,CLP
+txn_u8wjm2zrj986p2g00gs16l,2024-02-18,12:56,Metro de Santiago,Transport,5500,1,Chile,Santiago,CLP
+txn_7uqqhn2y2f4exf971gagjh,2024-02-18,15:48,Salcobrand,Pharmacy,22880,1,Chile,Las Condes,CLP
+txn_51eewoxq6pwnic2vy8i8u,2024-02-18,20:19,Cinemark,Entertainment,24260,2,Chile,Santiago,CLP
+txn_apldd9ijv6031q5z5y4oi6,2024-02-18,20:50,Unimarc,Supermarket,52940,14,Chile,Vitacura,CLP
+txn_1575jxpw3n8kvcx5fzcdns,2024-02-19,15:50,Copec,GasStation,74860,4,Chile,Vitacura,CLP
+txn_lx95nsjo6rs6ydq6fu0c,2024-02-19,17:16,Metro de Santiago,Transport,7640,1,Chile,Las Condes,CLP
+txn_exboreamil81jsevzqnppr,2024-02-20,12:06,Jumbo,Supermarket,94500,5,Chile,Santiago,CLP
+txn_x3u4bgs9kfdd6owvqwdwcu,2024-02-21,20:20,Farmacias Ahumada,Pharmacy,30710,2,Chile,Las Condes,CLP
+txn_8ll3mwjqksq6m2q0okt7a,2024-02-21,21:22,McDonalds,Restaurant,20960,2,Chile,Las Condes,CLP
+txn_ptwpertyno8jnl7ivjv9b,2024-02-22,19:44,Líder,Supermarket,19540,2,Chile,Santiago,CLP
+txn_m03gmadk3fo6fql171nb,2024-02-23,19:44,Copec,GasStation,18040,3,Chile,Vitacura,CLP
+txn_sw59o1jm1ivre2lvvcx6s,2024-02-24,12:14,WOM,Electronics,21130,1,Chile,Ñuñoa,CLP
+txn_5b2he513if7gofkxivqdcl,2024-02-24,15:50,Cinemark,Entertainment,10660,1,Chile,Santiago,CLP
+txn_1is43yk2xa9ky00b1llev,2024-02-24,20:12,Copec,GasStation,40680,1,Chile,Providencia,CLP
+txn_ggbyppsjeb7h7iz759fbf,2024-02-24,20:28,Jumbo,Supermarket,31390,2,Chile,Santiago,CLP
+txn_mz9pd0bf5g9brao0evod1v,2024-02-25,10:14,Cabify,Transport,7440,1,Chile,Santiago,CLP
+txn_kzlhgkemfl2j2v717dkt,2024-02-25,12:20,Cruz Verde,Pharmacy,46610,3,Chile,Santiago,CLP
+txn_brqis785cbhwj4wwg19lap,2024-02-26,12:40,Jumbo,Supermarket,74600,9,Chile,Santiago,CLP
+txn_er3uoq2evqqyk25ii4kt7,2024-02-26,19:54,Unimarc,Supermarket,58750,7,Chile,Santiago,CLP
+txn_qegzv3g3a5kjd7n2uqu36m,2024-02-27,12:00,Metro de Santiago,Transport,5540,1,Chile,Vitacura,CLP
+txn_7swya01r2ow3cb30cilc,2024-02-28,11:34,Aguas Andinas,Services,15540,1,Chile,Las Condes,CLP
+txn_lhwlojkruhzpvhcrmydh,2024-02-29,19:32,Líder,Supermarket,59700,11,Chile,Santiago,CLP
+txn_3y3k6uk15jx5yp0unq64tn,2024-03-02,16:21,Copec,GasStation,36160,3,Chile,Santiago,CLP
+txn_279kncniq94bqdbtqxkvg8,2024-03-03,11:19,Cabify,Transport,17620,1,Chile,Ñuñoa,CLP
+txn_jtlttn4q23j74sluwnth,2024-03-03,13:45,Isapre Consalud,Medical,137710,1,Chile,Las Condes,CLP
+txn_axdw3tzfbbibrk0usia75v,2024-03-03,20:19,Metro de Santiago,Transport,6810,1,Chile,Ñuñoa,CLP
+txn_yel3eauvxmtel3say8l5uv,2024-03-04,12:43,Juan Maestro,Restaurant,11880,2,Chile,Las Condes,CLP
+txn_2n70jjm7p7jwb5lu1xt2b,2024-03-04,14:53,Jumbo,Supermarket,91740,8,Chile,Vitacura,CLP
+txn_ohrp57zbfnj3vhyeuj0s87,2024-03-08,08:34,Estacionamiento,Transport,4980,1,Chile,Ñuñoa,CLP
+txn_livhv6bd738xr986bwc9c,2024-03-08,12:23,Panadería Local,Bakery,4720,1,Chile,Las Condes,CLP
+txn_1mgamu6imrme8wnlygw1c,2024-03-08,15:10,Panadería Local,Bakery,2210,1,Chile,Las Condes,CLP
+txn_9i609mkulsjdp5eufecija,2024-03-08,20:47,Unimarc,Supermarket,56430,13,Chile,Santiago,CLP
+txn_g6xr3f7v2g4c3ttzfmippg,2024-03-09,11:50,Tottus,Supermarket,88150,4,Chile,Vitacura,CLP
+txn_r593rmzx4y6rh5nkmxuos,2024-03-09,19:00,Uber,Transport,24020,1,Chile,Santiago,CLP
+txn_bacsg9dfbdqfiq1fd7rm46,2024-03-09,19:46,Cabify,Transport,15060,1,Chile,Providencia,CLP
+txn_ta88o5r60urb7mh12oywa7,2024-03-10,13:22,Santa Isabel,Supermarket,42130,5,Chile,Las Condes,CLP
+txn_56v55z4k773p3dr2bv8tp8,2024-03-10,13:42,Dominos Pizza,Restaurant,29910,3,Chile,Santiago,CLP
+txn_pdo6501bnm0palzq77doel,2024-03-10,14:28,Feria Libre,StreetVendor,32300,3,Chile,Vitacura,CLP
+txn_ivcujo8qqaa9lvc1hd62,2024-03-10,19:16,Cabify,Transport,10500,1,Chile,Las Condes,CLP
+txn_9q6bhtyiu978s8uafrpol,2024-03-12,15:20,Jumbo,Supermarket,68450,4,Chile,Santiago,CLP
+txn_r7ikyz3dhes2ohvgw0zhlv,2024-03-12,19:30,Feria Libre,StreetVendor,28260,2,Chile,Providencia,CLP
+txn_ixjdy5r3suab826on29fvl,2024-03-14,15:48,Metro de Santiago,Transport,6110,1,Chile,Ñuñoa,CLP
+txn_vo4hxxzxfxqtqc2euhiim,2024-03-14,16:27,Petrobras,GasStation,40260,1,Chile,Providencia,CLP
+txn_c0omwpfmp17kjyosgdq1hk,2024-03-15,12:42,Shell,GasStation,13230,1,Chile,Santiago,CLP
+txn_1zhzg1raa8w1q09o0elj9c,2024-03-15,16:31,Uber,Transport,6420,1,Chile,Santiago,CLP
+txn_t82s1f8s8t7uelrplomac,2024-03-16,08:41,Unimarc,Supermarket,23150,5,Chile,Santiago,CLP
+txn_9v5fhx5r80dkhtdxef3x3p,2024-03-16,12:13,Shell,GasStation,52170,1,Chile,Santiago,CLP
+txn_kfio209x31kbldv7gsc99,2024-03-16,12:16,Sushi Express,Restaurant,23020,1,Chile,Santiago,CLP
+txn_0ee0pxi9hkaaft0wixoon98,2024-03-16,13:30,Ripley,Electronics,322020,1,Chile,Ñuñoa,CLP
+txn_d7ezl42b47axk6xmbqtjwr,2024-03-16,15:54,Petrobras,GasStation,45630,1,Chile,Santiago,CLP
+txn_ge5fkp4tprglzkj1qd9znj,2024-03-16,17:54,Easy,Hardware,24090,1,Chile,Las Condes,CLP
+txn_jxm86vprs3r2leo7lf0pjt,2024-03-16,19:38,Copec,GasStation,44120,4,Chile,Las Condes,CLP
+txn_89pvep3j37x3r3ds2lsii,2024-03-17,13:29,Santa Isabel,Supermarket,11820,4,Chile,Ñuñoa,CLP
+txn_phboat0p9q6kvrqcxskk7,2024-03-18,17:32,Copec,GasStation,48180,4,Chile,Las Condes,CLP
+txn_8bl4p1bdt164lloav90g24,2024-03-18,17:51,Feria Libre,StreetVendor,14520,2,Chile,Providencia,CLP
+txn_x428a7wk3gezq2q8ygou6k,2024-03-18,18:03,Santa Isabel,Supermarket,51520,8,Chile,Providencia,CLP
+txn_xfpviyblpu5jfo5djedab,2024-03-19,11:21,Líder,Supermarket,85730,18,Chile,Las Condes,CLP
+txn_behpmnu0a4z6snte6u49c,2024-03-19,13:32,Petrobras,GasStation,1190,1,Chile,Santiago,CLP
+txn_quxm6hom0gcfzvzbxn6crj,2024-03-19,16:14,Santa Isabel,Supermarket,31990,6,Chile,Vitacura,CLP
+txn_5gse3w1h1v7bg0on2xrzm,2024-03-20,14:00,Panadería Local,Bakery,6920,2,Chile,Santiago,CLP
+txn_rdw6qspw0lnx0tuapnm5mn,2024-03-21,11:34,Jumbo,Supermarket,107150,7,Chile,Ñuñoa,CLP
+txn_pta69i276ejuttkynjomym,2024-03-21,14:20,VTR,Services,21400,1,Chile,Santiago,CLP
+txn_02kbyf5s5rvhhjdxz6m74n,2024-03-21,19:08,Tottus,Supermarket,25710,2,Chile,Vitacura,CLP
+txn_5yuh3rj67uux2ncy85w9gc,2024-03-21,21:16,Unimarc,Supermarket,40710,6,Chile,Providencia,CLP
+txn_z6umib3mrbm0wkrlaie3,2024-03-22,12:16,Jumbo,Supermarket,63200,9,Chile,Santiago,CLP
+txn_iu7chbzte6mf8nky739t,2024-03-23,21:05,Unimarc,Supermarket,20280,4,Chile,Santiago,CLP
+txn_0k6o66fu11tbi3amq525wk9,2024-03-24,08:38,Telepizza,Restaurant,3270,1,Chile,Ñuñoa,CLP
+txn_snd7807if1z89pnio2z6,2024-03-25,13:32,Santa Isabel,Supermarket,45060,8,Chile,Santiago,CLP
+txn_jen2wybugyekfuzzpgfho,2024-03-25,13:59,Tottus,Supermarket,60670,6,Chile,Las Condes,CLP
+txn_aelfqhw4dffvxeu9t53pjl,2024-03-25,16:01,Spotify,Entertainment,8490,1,Chile,Ñuñoa,CLP
+txn_lhkbbq8oceqjudjkun034a,2024-03-26,16:02,Estacionamiento,Transport,2220,1,Chile,Las Condes,CLP
+txn_eex7ykpe1eiehx0lu51lq6,2024-03-28,11:03,WOM,Electronics,29600,1,Chile,Ñuñoa,CLP
+txn_5u37wrxivcbvg8msh1yjwd,2024-03-28,19:55,Unimarc,Supermarket,23790,8,Chile,Providencia,CLP
+txn_0vf94re4mp7my51londt7,2024-03-29,13:48,Dominos Pizza,Restaurant,25010,3,Chile,Santiago,CLP
+txn_6t8jdozpad7vykfq5wuskh,2024-03-30,17:03,Feria Libre,StreetVendor,17600,2,Chile,Ñuñoa,CLP
+txn_1lbc17q7yhb4zcp1ovafet,2024-03-30,19:17,Líder,Supermarket,32960,5,Chile,Vitacura,CLP
+txn_0jc4b7fzsssdeuyy1lmjwt,2024-03-31,09:39,H&M,Clothing,80360,3,Chile,Santiago,CLP
+txn_6aiuq4x4g4rvrql5c6c7ac,2024-03-31,18:44,Petrobras,GasStation,32700,1,Chile,Providencia,CLP
+txn_ux35ljlq9pih2reoh9jtmr,2024-04-01,10:11,Panadería Local,Bakery,6330,1,Chile,Santiago,CLP
+txn_6zbb0urq6nvmdoq090a2o,2024-04-02,13:51,Juan Maestro,Restaurant,11420,2,Chile,Vitacura,CLP
+txn_7jn12pvh4yph9abbr0wqm6,2024-04-02,16:07,Estacionamiento,Transport,7540,1,Chile,Ñuñoa,CLP
+txn_68ao4l728krreuuoduupu,2024-04-02,16:08,McDonalds,Restaurant,5730,2,Chile,Providencia,CLP
+txn_90g3wel3q95n27cy85rab8,2024-04-02,17:50,Cabify,Transport,16210,1,Chile,Providencia,CLP
+txn_09nyl7h4967dzsblp75rics,2024-04-03,15:39,Santa Isabel,Supermarket,29930,4,Chile,Ñuñoa,CLP
+txn_1qyjn8rbto5c4vspglzrj,2024-04-04,13:31,Uber,Transport,12580,1,Chile,Las Condes,CLP
+txn_rbfc84q9xkgv8s5i1f0yj,2024-04-05,12:34,Juan Maestro,Restaurant,11880,1,Chile,Santiago,CLP
+txn_qyq367gf3b8fv749rdzhg,2024-04-08,09:19,Panadería Local,Bakery,4720,2,Chile,Santiago,CLP
+txn_4k8k6iqhvnvrx9765yrtf,2024-04-08,13:04,Uber,Transport,11530,1,Chile,Santiago,CLP
+txn_uerfccqgdfak9a5qxqqg4,2024-04-08,13:18,Starbucks,Restaurant,11350,3,Chile,Santiago,CLP
+txn_0dethu9ap1zxnce2helv9,2024-04-08,21:15,Uber,Transport,22290,2,Chile,Las Condes,CLP
+txn_oc14lcd029eunmj1m7l6e,2024-04-09,10:04,Estacionamiento,Transport,3680,1,Chile,Vitacura,CLP
+txn_bvw3en2dvh9xd43ft7o2,2024-04-10,17:19,Restaurant La Fuente,Restaurant,66110,5,Chile,Santiago,CLP
+txn_2q5mda00tqilbrhgfye7hi,2024-04-11,19:30,Unimarc,Supermarket,45750,7,Chile,Ñuñoa,CLP
+txn_nq6cy2b0cv9g5l8c5p36i,2024-04-12,09:45,Metro de Santiago,Transport,3050,1,Chile,Santiago,CLP
+txn_05srr03uo6lvg99lxy5ecyg,2024-04-13,09:13,Unimarc,Supermarket,40520,5,Chile,Santiago,CLP
+txn_up5w7g2mypvib12srrei,2024-04-13,10:09,Líder,Supermarket,25450,5,Chile,Ñuñoa,CLP
+txn_u6fypk2nunlzy35c4uutd,2024-04-13,10:41,Juan Maestro,Restaurant,20060,2,Chile,Santiago,CLP
+txn_emnlufbpa9doacq8mloo1q,2024-04-15,12:18,Copec,GasStation,24730,3,Chile,Santiago,CLP
+txn_0t0w3ol2cpcoo2ahpkquga,2024-04-15,13:05,Santa Isabel,Supermarket,22160,5,Chile,Santiago,CLP
+txn_tyt8dgrhikg35qb04enrw,2024-04-15,16:19,Feria Libre,StreetVendor,12320,1,Chile,Vitacura,CLP
+txn_1zx7x278zi2h8djaik6qqn,2024-04-15,19:06,WOM,Electronics,25400,1,Chile,Providencia,CLP
+txn_2iq88ppwgmkr7mjo8mcj3,2024-04-16,20:20,Shell,GasStation,55500,1,Chile,Santiago,CLP
+txn_bs5409h021t25alqt343i,2024-04-18,13:17,Panadería Local,Bakery,3260,1,Chile,Las Condes,CLP
+txn_p866ed3izesmy2zsyq3og,2024-04-18,17:33,Cabify,Transport,5740,1,Chile,Santiago,CLP
+txn_g2zj7rfdazts5cla8ffqf8,2024-04-20,08:05,Uber,Transport,5500,1,Chile,Las Condes,CLP
+txn_org6ajwftgb286clf9wm41,2024-04-20,13:39,Easy,Hardware,59380,1,Chile,Ñuñoa,CLP
+txn_f9uiej3p3xnud33hto267,2024-04-20,13:55,Tottus,Supermarket,36330,2,Chile,Providencia,CLP
+txn_djtyxqkcxmkl5y4kmm1ay,2024-04-21,19:42,Aguas Andinas,Services,28480,1,Chile,Santiago,CLP
+txn_dj7a15slyyojtfndr556zi,2024-04-22,13:31,Shell,GasStation,45830,2,Chile,Santiago,CLP
+txn_gmuvgsbctpgn9r9f5srke9,2024-04-23,13:12,Feria Libre,StreetVendor,28060,2,Chile,Santiago,CLP
+txn_p18zdp8j7gznsqbd3y9i,2024-04-24,20:04,Líder,Supermarket,49640,8,Chile,Providencia,CLP
+txn_lbfj0m0c4iycwwnnoa9w,2024-04-25,14:52,Easy,Hardware,69360,2,Chile,Vitacura,CLP
+txn_uy6e6z7rcxt1vim3gbg2n,2024-04-25,19:00,Tottus,Supermarket,35670,2,Chile,Santiago,CLP
+txn_nm0wsafe6dpy0l8fbv2il,2024-04-25,19:40,Metro de Santiago,Transport,4990,1,Chile,Ñuñoa,CLP
+txn_5ri2wk8i4ou2k1gq09u1tq,2024-04-26,12:18,Líder,Supermarket,76200,8,Chile,Vitacura,CLP
+txn_aypstvguqnpxjqclst9e,2024-04-27,11:12,Starbucks,Restaurant,7680,1,Chile,Ñuñoa,CLP
+txn_pfmddlhv549p1pdt55eb0l,2024-04-27,15:52,Uber,Transport,10660,1,Chile,Providencia,CLP
+txn_avd9mbvltykfyorgmp03w5,2024-04-27,16:34,Aguas Andinas,Services,39850,1,Chile,Ñuñoa,CLP
+txn_13xmcptpnbacmtjac6q0fwa,2024-04-27,19:24,Santa Isabel,Supermarket,40430,6,Chile,Ñuñoa,CLP
+txn_j865x8doh7o09qgbfh0vdz,2024-04-28,13:33,Cinemark,Entertainment,20980,2,Chile,Santiago,CLP
+txn_bmq0el7e1qh0l5dddi5uyc,2024-04-28,18:44,Panadería Local,Bakery,2780,1,Chile,Vitacura,CLP
+txn_gqnczb594bsptzuyp3v88,2024-04-29,15:23,Unimarc,Supermarket,21570,1,Chile,Las Condes,CLP
+txn_bm4sa2l1zir97ce0hvewa,2024-04-29,16:16,Jumbo,Supermarket,57420,2,Chile,Santiago,CLP
+txn_ku6q7ts7f6qzaxvhv1e7os,2024-04-29,16:51,Copec,GasStation,79230,4,Chile,Santiago,CLP
+txn_vf1tyn1k1wp204m5xqx0d,2024-04-30,09:23,Starbucks,Restaurant,12390,1,Chile,Santiago,CLP
+txn_8dwv125vkk3zioibshvn8b,2024-04-30,15:11,McDonalds,Restaurant,17480,3,Chile,Santiago,CLP
+txn_rg0e62ui0qcv3m7b01pym,2024-05-01,13:31,Feria Libre,StreetVendor,39790,5,Chile,Providencia,CLP
+txn_obxj13nbfzqmqa88kmjlip,2024-05-01,15:17,Juan Maestro,Restaurant,20580,3,Chile,Vitacura,CLP
+txn_kqgkglpkskuz0g919ouqi,2024-05-02,13:47,Copec,GasStation,33400,2,Chile,Ñuñoa,CLP
+txn_s2oh8fxw1sgq2g0y9u93k,2024-05-02,18:22,Netflix,Entertainment,12990,1,Chile,Providencia,CLP
+txn_bazddzwsy5r0hk1t33deneg,2024-05-03,10:53,WOM,Electronics,20590,1,Chile,Santiago,CLP
+txn_rn98xguij8g7hxbfeuk4,2024-05-03,12:46,Isapre Consalud,Medical,148880,1,Chile,Providencia,CLP
+txn_751myvkwjqb9gbfbk6pqs6,2024-05-04,10:38,Santa Isabel,Supermarket,24990,4,Chile,Santiago,CLP
+txn_rkuoxr036gc5x9qrb0at9,2024-05-05,11:08,Panadería Local,Bakery,7990,2,Chile,Santiago,CLP
+txn_ct38v30v1i4cs4ezhlldiv,2024-05-07,09:36,Jumbo,Supermarket,30690,4,Chile,Santiago,CLP
+txn_qg0npn4dg5acpduxcb0be,2024-05-08,12:36,Uber,Transport,11660,1,Chile,Santiago,CLP
+txn_t2y5br6277km8poh71egei,2024-05-08,12:39,Jumbo,Supermarket,29900,3,Chile,Santiago,CLP
+txn_ab84282onhdmr51tvnev4r,2024-05-08,12:41,Sodimac,Hardware,156360,3,Chile,Santiago,CLP
+txn_4lf05mrs8dc026v5t6ir,2024-05-08,16:22,Líder,Supermarket,81790,11,Chile,Las Condes,CLP
+txn_aesfavxtvhwomtfz135xp,2024-05-09,15:45,Tottus,Supermarket,36980,2,Chile,Las Condes,CLP
+txn_1e19udkzynd5xrnecdgrcg,2024-05-09,19:17,Líder,Supermarket,51590,6,Chile,Las Condes,CLP
+txn_vsvx8qsukfqr82hdv4jkio,2024-05-10,11:57,Metro de Santiago,Transport,7270,1,Chile,Vitacura,CLP
+txn_0appb0kccefc5rgeoobr9i,2024-05-10,13:15,Panadería Local,Bakery,5400,2,Chile,Providencia,CLP
+txn_s4oebc88i542bw88pausb,2024-05-10,14:07,Panadería Local,Bakery,4680,1,Chile,Santiago,CLP
+txn_wmtcz0shzcqqjoh4zq5jai,2024-05-10,15:39,Starbucks,Restaurant,10880,1,Chile,Santiago,CLP
+txn_yxi7yrx3xti9ga7az6u1ac,2024-05-11,13:44,Feria Libre,StreetVendor,9360,2,Chile,Santiago,CLP
+txn_fhq7ndt1lt3kqbr2r4f5x,2024-05-12,15:02,Panadería Local,Bakery,5200,1,Chile,Vitacura,CLP
+txn_dc4x3ypan3tsltehlhqpd,2024-05-12,16:08,Dominos Pizza,Restaurant,13170,2,Chile,Santiago,CLP
+txn_vquie46br6dgb3f1h1yr,2024-05-13,10:14,Unimarc,Supermarket,50690,12,Chile,Vitacura,CLP
+txn_cst0osx8uvndz3wo2wgbqv,2024-05-14,08:53,Cineplanet,Entertainment,8240,1,Chile,Santiago,CLP
+txn_nxcc7knoltqxesrt32dzh,2024-05-14,10:57,Líder,Supermarket,51060,5,Chile,Las Condes,CLP
+txn_5275cvgqcdl726wz3aqf0o,2024-05-14,11:32,Jumbo,Supermarket,32850,4,Chile,Vitacura,CLP
+txn_6g2emtdws5yedppgxfyq9,2024-05-14,19:50,Starbucks,Restaurant,10400,3,Chile,Santiago,CLP
+txn_12v4hfey5q93zn1ay0eh22,2024-05-15,12:29,Panadería Local,Bakery,5440,1,Chile,Las Condes,CLP
+txn_sf71vmx2z793obys8mgx,2024-05-15,14:09,Cabify,Transport,11640,1,Chile,Santiago,CLP
+txn_o2a9ard75mshr710ps2m9u,2024-05-15,18:36,Santa Isabel,Supermarket,35210,5,Chile,Vitacura,CLP
+txn_u2r28x8dp1k0kfi2edh256,2024-05-16,13:27,Entel,Electronics,13080,1,Chile,Providencia,CLP
+txn_h12fb7ku51fohpdbi7adqd,2024-05-18,14:59,Panadería Local,Bakery,4460,1,Chile,Santiago,CLP
+txn_epwkvcdy9hkmncsi3lxwa,2024-05-18,16:10,Uber,Transport,22760,1,Chile,Ñuñoa,CLP
+txn_l670o0976kcwb5m3ua5qfl,2024-05-18,19:12,Santa Isabel,Supermarket,11780,2,Chile,Providencia,CLP
+txn_0qthhwtxwbeg9ddjrx512de,2024-05-18,19:36,Santa Isabel,Supermarket,26230,6,Chile,Santiago,CLP
+txn_uti0qutcbbsbjnbvj1y0t9,2024-05-18,20:39,Líder,Supermarket,26320,2,Chile,Santiago,CLP
+txn_k0zji1dui5nei43ws9bsv8,2024-05-19,19:33,Feria Libre,StreetVendor,15750,3,Chile,Santiago,CLP
+txn_lk8r3zoupa3p2q78qwt7r,2024-05-21,16:49,Tottus,Supermarket,77020,5,Chile,Santiago,CLP
+txn_4kh89twck7pauygrhtxft,2024-05-22,08:56,Petrobras,GasStation,27500,1,Chile,Ñuñoa,CLP
+txn_6qjdevg1qi70vx4ce43cnwp,2024-05-22,14:05,Unimarc,Supermarket,38830,6,Chile,Las Condes,CLP
+txn_yz59sime0kpt42f7uyl2rq,2024-05-23,13:21,Estacionamiento,Transport,2450,1,Chile,Santiago,CLP
+txn_hm1acd9rp8745svcsm8m51,2024-05-23,16:04,Tottus,Supermarket,49270,5,Chile,Ñuñoa,CLP
+txn_ak44atimgv6o0had4tj1v9,2024-05-23,18:10,Copec,GasStation,34100,1,Chile,Santiago,CLP
+txn_up27pgzlcnkmzgbb86nivo,2024-05-24,13:03,Estacionamiento,Transport,5910,1,Chile,Vitacura,CLP
+txn_4z852zs6n8kurfujey92,2024-05-24,13:58,Unimarc,Supermarket,43450,10,Chile,Ñuñoa,CLP
+txn_39xg9wadx48x9trk18fcn,2024-05-27,14:41,Easy,Hardware,84850,2,Chile,Santiago,CLP
+txn_j7ckmigf31pp09zmzj6tb,2024-05-28,12:01,Metro de Santiago,Transport,3130,1,Chile,Las Condes,CLP
+txn_65qwi4m7pykqd2uqqbhqki,2024-05-28,17:38,McDonalds,Restaurant,15740,4,Chile,Las Condes,CLP
+txn_egza0734qjdo7ey38h1e7,2024-05-29,13:51,Copec,GasStation,48730,2,Chile,Santiago,CLP
+txn_2qw4o7d5vxv14rsdimnlsr,2024-05-29,14:37,Petrobras,GasStation,55620,2,Chile,Ñuñoa,CLP
+txn_julmsygqfacepsh9mxn2ul,2024-05-29,16:30,Telepizza,Restaurant,27300,2,Chile,Vitacura,CLP
+txn_us41yrghvo7n7fofbkj9,2024-05-29,20:35,Tottus,Supermarket,70550,6,Chile,Las Condes,CLP
+txn_xpksktfygvgeerf4q8rqo,2024-05-30,18:29,Starbucks,Restaurant,9670,2,Chile,Las Condes,CLP
+txn_qap128518flges4o4dexsr,2024-06-01,12:00,Spotify,Entertainment,5490,1,Chile,Providencia,CLP
+txn_sgakoh4u65gati32kkp2v,2024-06-01,18:58,Metrogas,Services,79890,1,Chile,Santiago,CLP
+txn_a0agyj2fzween3thn3u25i,2024-06-01,21:51,Pet Happy,PetShop,27460,1,Chile,Ñuñoa,CLP
+txn_m0c7pfo4ahjvpvkj8m2il,2024-06-02,08:56,Telepizza,Restaurant,9210,1,Chile,Providencia,CLP
+txn_1eg1re2xgys4uyxq3uk3jd,2024-06-02,11:04,Feria Libre,StreetVendor,40050,2,Chile,Ñuñoa,CLP
+txn_uhqw1l1qzbbxesh3pfkpj9,2024-06-02,12:21,Petrobras,GasStation,28290,1,Chile,Las Condes,CLP
+txn_jnv2bv6m49mwmpkmcbjby,2024-06-03,14:48,McDonalds,Restaurant,21610,4,Chile,Las Condes,CLP
+txn_sdqs120p6hkov6aziwoxoc,2024-06-03,17:10,Dominos Pizza,Restaurant,10050,2,Chile,Vitacura,CLP
+txn_x13123tqj7vmwsi8uq38,2024-06-05,13:51,Panadería Local,Bakery,7200,1,Chile,Vitacura,CLP
+txn_l3i8x3iuq3fs258p9zg4pk,2024-06-06,10:20,Enel,Services,113780,1,Chile,Santiago,CLP
+txn_vw5u3pthotajc17p1ppf9q,2024-06-06,19:46,Pet Happy,PetShop,14770,1,Chile,Las Condes,CLP
+txn_mi74zjp7z9so476ry0vqon,2024-06-09,13:07,Dominos Pizza,Restaurant,13650,2,Chile,Santiago,CLP
+txn_shrd6rmgj0e59vxyf4xyfk,2024-06-09,14:09,Metrogas,Services,46610,1,Chile,Providencia,CLP
+txn_heawwh0h298tfcvhm95em7,2024-06-09,19:28,Starbucks,Restaurant,7290,2,Chile,Providencia,CLP
+txn_9nnlhoto9vi1x37j04qhbp,2024-06-11,10:49,Santa Isabel,Supermarket,47440,10,Chile,Vitacura,CLP
+txn_zqax43q4o75ywhwikz6a4,2024-06-11,13:45,Uber,Transport,9130,1,Chile,Santiago,CLP
+txn_yu3a2wq0djmp2hfkbmvzzr,2024-06-11,18:25,Pet Happy,PetShop,49010,2,Chile,Las Condes,CLP
+txn_qbolnczt7t70nz9lu6646,2024-06-12,15:47,Shell,GasStation,23460,1,Chile,Santiago,CLP
+txn_05lpe1og717i9mjla4goc9t,2024-06-14,12:24,Feria Libre,StreetVendor,28540,2,Chile,Santiago,CLP
+txn_gyct3e2ow1aeqaufvtltt,2024-06-14,13:16,Estacionamiento,Transport,3710,1,Chile,Vitacura,CLP
+txn_0k91u7o8hifrex4ml4kg4,2024-06-15,09:33,Panadería Local,Bakery,8080,2,Chile,Santiago,CLP
+txn_24175wiupn6qhbxc66kvsk,2024-06-15,10:13,Petrobras,GasStation,43320,1,Chile,Ñuñoa,CLP
+txn_sy8qd8gpas8jk2bfj73od,2024-06-16,18:23,Uber,Transport,6840,1,Chile,Santiago,CLP
+txn_exqbjmzyqt44zbp0q8q6ss,2024-06-17,17:56,Panadería Local,Bakery,3220,1,Chile,Providencia,CLP
+txn_zh1hwxopqsqodv9oa4r59,2024-06-18,08:12,Jumbo,Supermarket,67660,8,Chile,Santiago,CLP
+txn_mwfm0k76us3paxpbklfz1,2024-06-18,10:27,Cruz Verde,Pharmacy,26660,2,Chile,Santiago,CLP
+txn_7n24mush1l23m15b3wy44b,2024-06-18,17:45,Feria Libre,StreetVendor,3250,2,Chile,Las Condes,CLP
+txn_fr7h25emmv8la07ko4hir,2024-06-18,21:00,Tottus,Supermarket,63530,7,Chile,Las Condes,CLP
+txn_qbghra5ceb6ibftlvtm1v,2024-06-18,21:05,Metro de Santiago,Transport,6760,1,Chile,Ñuñoa,CLP
+txn_8sg64mov9f4h7lbbb7msl,2024-06-19,11:53,Metro de Santiago,Transport,3990,1,Chile,Vitacura,CLP
+txn_f1aa77rlschapm0500qkoe,2024-06-19,16:15,Movistar Hogar,Services,13200,1,Chile,Vitacura,CLP
+txn_4gxai4ahxx2qgfxekvn0j,2024-06-19,19:25,Santa Isabel,Supermarket,24300,5,Chile,Santiago,CLP
+txn_nu2o38xg7ij6n3sxmcm6,2024-06-20,20:24,Entel,Electronics,35500,2,Chile,Santiago,CLP
+txn_xojtbz8tu6btbu8oawhep,2024-06-23,21:00,Easy,Hardware,104690,3,Chile,Ñuñoa,CLP
+txn_6j43hlednrbeuplf5kktza,2024-06-24,21:45,Copec,GasStation,24300,3,Chile,Santiago,CLP
+txn_vjuwakvyl108ajfh27fgii,2024-06-25,17:49,Copec,GasStation,55310,4,Chile,Santiago,CLP
+txn_hk0t6td6imeuuezxxll83n,2024-06-26,12:38,Shell,GasStation,69420,2,Chile,Santiago,CLP
+txn_gvgaln51wj85ohupjz6ifv,2024-06-26,16:31,Uber,Transport,16280,1,Chile,Ñuñoa,CLP
+txn_bosuvtoyq4mtlgnny23joh,2024-06-26,18:29,Jumbo,Supermarket,80730,7,Chile,Las Condes,CLP
+txn_d14w7d5kzt7s96axxmke1,2024-06-27,08:49,Jumbo,Supermarket,31820,3,Chile,Vitacura,CLP
+txn_i5k6xzc49emcyf86wj67xf,2024-06-27,20:30,Starbucks,Restaurant,11460,2,Chile,Las Condes,CLP
+txn_1i0giga2xr73qifz4l1zzi,2024-06-30,11:56,Líder,Supermarket,76330,7,Chile,Providencia,CLP
+txn_g8j15mvlevhku384u9mdcs,2024-06-30,15:40,Farmacias Ahumada,Pharmacy,22620,2,Chile,Vitacura,CLP
+txn_yxk5och4dqqjvofeeggg,2024-07-02,19:00,Unimarc,Supermarket,57510,5,Chile,Vitacura,CLP
+txn_wmzgrolrxsp2qfp0ao9dc7,2024-07-02,20:42,Falabella,Clothing,66640,1,Chile,Santiago,CLP
+txn_fef7vfd28n9r31a2jqgzk,2024-07-03,21:11,Petrobras,GasStation,41650,1,Chile,Vitacura,CLP
+txn_lko5jrvzwuahmsnj6zm8tb,2024-07-04,18:05,Jumbo,Supermarket,89250,8,Chile,Vitacura,CLP
+txn_123ruzqv3odpj2436x1tlpf,2024-07-06,10:50,Tottus,Supermarket,97860,7,Chile,Ñuñoa,CLP
+txn_8w0yekl6atvet45g2xoai,2024-07-06,14:41,Líder,Supermarket,61050,5,Chile,Ñuñoa,CLP
+txn_u7p5r6newejyy76vv1bog,2024-07-07,15:12,Copec,GasStation,34360,3,Chile,Providencia,CLP
+txn_kmzy5b8ybfklypyeuoefyq,2024-07-07,18:11,Jumbo,Supermarket,114490,5,Chile,Santiago,CLP
+txn_h794nls8mthv20g32vfwe,2024-07-08,18:12,Panadería Local,Bakery,8460,2,Chile,Santiago,CLP
+txn_lu3hkf0z9rb9lv931mpaiu,2024-07-08,19:19,Sushi Express,Restaurant,22440,2,Chile,Ñuñoa,CLP
+txn_q5wbkc9c0lcefh2sot9u8i,2024-07-09,13:30,Feria Libre,StreetVendor,22230,1,Chile,Santiago,CLP
+txn_nwkw1cndrp2ri6mtfgv0c,2024-07-09,15:48,Shell,GasStation,45780,1,Chile,Santiago,CLP
+txn_rwloqzkrph9o4q7autij,2024-07-11,15:34,Metro de Santiago,Transport,5120,1,Chile,Vitacura,CLP
+txn_f9uif0rxoua9geew3lwjt,2024-07-11,19:35,Estacionamiento,Transport,7060,1,Chile,Providencia,CLP
+txn_k0k5y8mt7uq1gxbi6qdjrvh,2024-07-12,15:40,Entel,Electronics,8880,1,Chile,Providencia,CLP
+txn_w51ng77co89irgycy2rjj,2024-07-12,16:28,Tottus,Supermarket,18830,2,Chile,Providencia,CLP
+txn_34e1tbt9u7jqrcovtbrnh,2024-07-13,12:54,Uber,Transport,6830,1,Chile,Santiago,CLP
+txn_ko9p9yw0lsltlid8u8eoah,2024-07-14,20:13,Enel,Services,74420,1,Chile,Santiago,CLP
+txn_2zfeak3nq7l1gnuwl6o8dn,2024-07-14,21:32,Panadería Local,Bakery,8220,1,Chile,Vitacura,CLP
+txn_2sgco94wfzr3pm0l9ap9,2024-07-16,13:43,Unimarc,Supermarket,27700,3,Chile,Santiago,CLP
+txn_9kxpb95ky1rmefae6rbscg,2024-07-16,13:53,Jumbo,Supermarket,79930,6,Chile,Santiago,CLP
+txn_9yp2fy464ey2uw3ahkm3,2024-07-16,19:59,Metro de Santiago,Transport,2250,1,Chile,Providencia,CLP
+txn_60er5b9fyafq2w4gfahho,2024-07-17,12:12,Feria Libre,StreetVendor,36030,2,Chile,Santiago,CLP
+txn_jbq4cz947kwng8ahfxsak,2024-07-17,17:06,Metro de Santiago,Transport,2670,1,Chile,Vitacura,CLP
+txn_tsm8gcmism2chkcxrki12,2024-07-19,15:42,Cinemark,Entertainment,19410,2,Chile,Las Condes,CLP
+txn_f1hgi2lgikj3eqtvmmmnod,2024-07-19,21:40,Shell,GasStation,33900,1,Chile,Providencia,CLP
+txn_6ww47320t2lfpzg9c2exor,2024-07-20,12:07,Tottus,Supermarket,72050,3,Chile,Providencia,CLP
+txn_ueobmqfce2g8khhacvc0st,2024-07-20,16:54,Petrobras,GasStation,1150,1,Chile,Santiago,CLP
+txn_7v5xz20ls5o7xg9ac2nk3x,2024-07-20,17:28,Starbucks,Restaurant,6620,1,Chile,Santiago,CLP
+txn_menpabtoiqg4ambdngow,2024-07-23,19:22,Netflix,Entertainment,9990,1,Chile,Vitacura,CLP
+txn_uwzh6l394dikl1937d0a,2024-07-24,11:24,Copec,GasStation,19850,3,Chile,Las Condes,CLP
+txn_c9mj187l3rpud4qa6cent,2024-07-24,12:29,Estacionamiento,Transport,5550,1,Chile,Santiago,CLP
+txn_cg20vkrq5md0p5c6x3ou83j,2024-07-24,13:10,Metro de Santiago,Transport,9760,1,Chile,Santiago,CLP
+txn_48q2wl60xob7owjuj1b8k,2024-07-24,16:03,Líder,Supermarket,43880,4,Chile,Santiago,CLP
+txn_j8cbaxgz5v2qfx2vlofx4,2024-07-24,16:35,Uber,Transport,7900,1,Chile,Vitacura,CLP
+txn_c8o3danq1u40cwbysdrwfyb,2024-07-26,09:55,Salcobrand,Pharmacy,27680,2,Chile,Providencia,CLP
+txn_sys9crv1nnboxcb89d5o6e,2024-07-26,13:02,Líder,Supermarket,63550,10,Chile,Ñuñoa,CLP
+txn_bv8h4egnd2gb6pibnoiuo4,2024-07-26,18:42,Líder,Supermarket,35080,9,Chile,Santiago,CLP
+txn_io3uuq8p12qxi8srlfw5ce,2024-07-27,19:21,Santa Isabel,Supermarket,39950,10,Chile,Las Condes,CLP
+txn_zy404766rb7oaxbut0m22,2024-07-28,18:25,Copec,GasStation,62900,2,Chile,Ñuñoa,CLP
+txn_xnx29wzafvgyff1wuseec7,2024-07-28,18:59,Jumbo,Supermarket,24630,1,Chile,Providencia,CLP
+txn_nz5udbmp9pdlhhsfiz6jp,2024-07-28,21:51,Unimarc,Supermarket,69170,12,Chile,Santiago,CLP
+txn_yzy6lkk97mbo6grc0m74k,2024-07-30,16:58,Panadería Local,Bakery,3940,1,Chile,Ñuñoa,CLP
+txn_hjm3ood1n8cw3xjg26at4l,2024-07-31,14:28,Tottus,Supermarket,50550,2,Chile,Providencia,CLP
+txn_y4gkbl3o2cu89fnqfq12l,2024-07-31,14:35,Shell,GasStation,45600,2,Chile,Ñuñoa,CLP
+txn_womp77xhrchz0dupt5zcm,2024-08-01,17:37,Shell,GasStation,61250,1,Chile,Las Condes,CLP
+txn_m60oq0f9bvolv7fvmy69uh,2024-08-02,13:09,Juan Maestro,Restaurant,26210,4,Chile,Santiago,CLP
+txn_d6bqbscpdurbbbqvhvqfc9,2024-08-02,14:32,Panadería Local,Bakery,2240,1,Chile,Santiago,CLP
+txn_rxyhaszq3fhir48x9n6pn,2024-08-02,18:33,Copec,GasStation,61250,4,Chile,Ñuñoa,CLP
+txn_f83lo56ue7d6lvazv2m0wf,2024-08-03,13:35,Santa Isabel,Supermarket,18410,6,Chile,Vitacura,CLP
+txn_a0us6bgglieqxyjz1zf7m,2024-08-03,15:45,Panadería Local,Bakery,4220,1,Chile,Las Condes,CLP
+txn_6sy7qfdrmap45gxm68fhg,2024-08-03,19:10,Dominos Pizza,Restaurant,8670,1,Chile,Vitacura,CLP
+txn_e74fwypypft9o3uofgs6af,2024-08-05,12:10,Uber,Transport,5490,1,Chile,Ñuñoa,CLP
+txn_2botcrinkbub9cbdo352yf,2024-08-05,17:22,Santa Isabel,Supermarket,21560,5,Chile,Santiago,CLP
+txn_367c2o3veq4cm8rck7wawm,2024-08-05,20:34,Starbucks,Restaurant,9840,2,Chile,Providencia,CLP
+txn_n59rmxsp6567j1b9k5djs,2024-08-06,18:53,Feria Libre,StreetVendor,14970,3,Chile,Santiago,CLP
+txn_51a0ck92ou4g6tlghwj0ia,2024-08-07,19:32,Líder,Supermarket,80080,15,Chile,Ñuñoa,CLP
+txn_p7zw65v8k4em9hi82jl8k,2024-08-08,17:21,Copec,GasStation,49400,1,Chile,Las Condes,CLP
+txn_l63yg9mzhw98brgxnll1d,2024-08-08,20:28,Shell,GasStation,52240,2,Chile,Santiago,CLP
+txn_8bcghzn5wjns24nyj6cr7,2024-08-10,12:44,Shell,GasStation,70790,3,Chile,Vitacura,CLP
+txn_70rb7dofdvv3wdn9nh0xs4,2024-08-10,14:39,Panadería Local,Bakery,2240,1,Chile,Providencia,CLP
+txn_91yqn4jfwkiggo04haiwip,2024-08-11,19:08,Metro de Santiago,Transport,6850,1,Chile,Santiago,CLP
+txn_0ros14jama4m4l36ew8dem,2024-08-14,08:44,Cinemark,Entertainment,18140,1,Chile,Ñuñoa,CLP
+txn_e8zydgiglilyoj4viqm8e,2024-08-14,12:06,H&M,Clothing,28420,1,Chile,Ñuñoa,CLP
+txn_xqsguqz1xhyg3jhbgbr88,2024-08-14,15:52,Netflix,Entertainment,12990,1,Chile,Ñuñoa,CLP
+txn_rmbgfuo4n4dog0w92vmhbd,2024-08-14,16:01,Jumbo,Supermarket,79650,6,Chile,Vitacura,CLP
+txn_d7jz19qc6cehbprqieoewr,2024-08-15,17:25,Metrogas,Services,43900,1,Chile,Ñuñoa,CLP
+txn_9o2gf8so2vex6kkva942u,2024-08-16,15:26,Cabify,Transport,23400,1,Chile,Santiago,CLP
+txn_qvvfimzdmgoh52j7d01ejs,2024-08-16,19:42,Estacionamiento,Transport,6600,1,Chile,Las Condes,CLP
+txn_97hwqji1vka2w1wvwdqmmg,2024-08-17,10:30,Líder,Supermarket,73680,9,Chile,Santiago,CLP
+txn_07u8o91v2d8sg7sfg3a8ra4,2024-08-17,16:48,Feria Libre,StreetVendor,30170,5,Chile,Ñuñoa,CLP
+txn_lysmtlqds471eoguouniztj,2024-08-18,13:46,Estacionamiento,Transport,1940,1,Chile,Santiago,CLP
+txn_ttv7xlysl9fuc7p1y98ykb,2024-08-18,13:48,Sushi Express,Restaurant,28680,2,Chile,Santiago,CLP
+txn_al9zl8y204n4pzuw9sl64,2024-08-19,16:38,Petrobras,GasStation,25960,1,Chile,Santiago,CLP
+txn_u9ju2veisyslw0672yif,2024-08-19,18:20,Juan Maestro,Restaurant,19980,3,Chile,Vitacura,CLP
+txn_51isjnuj5kpr4tempnaq3,2024-08-20,08:08,Starbucks,Restaurant,6260,2,Chile,Providencia,CLP
+txn_60wbo0l85jhcpyz6ry48i,2024-08-20,13:50,Copec,GasStation,40340,2,Chile,Ñuñoa,CLP
+txn_hky0cpn5utgu53u5cly5w,2024-08-20,18:22,Líder,Supermarket,79100,11,Chile,Ñuñoa,CLP
+txn_9nq8i3t4cokvutgoifwqs,2024-08-21,14:55,Juan Maestro,Restaurant,12470,2,Chile,Las Condes,CLP
+txn_ygddjqb60zg70kmu29o3p,2024-08-21,19:54,Unimarc,Supermarket,49940,11,Chile,Santiago,CLP
+txn_ck8mw24juehsci2uwgaj7s,2024-08-24,15:21,Tottus,Supermarket,52000,3,Chile,Santiago,CLP
+txn_eh1wxsel0ostlo9f60of4k,2024-08-26,11:49,Santa Isabel,Supermarket,47230,9,Chile,Santiago,CLP
+txn_1w9q8yzq0kpq4d6uaksg79,2024-08-26,13:35,Metro de Santiago,Transport,2910,1,Chile,Vitacura,CLP
+txn_s5z5d4l3tgg0wokipzxplsr,2024-08-27,17:45,Farmacias Ahumada,Pharmacy,27040,3,Chile,Santiago,CLP
+txn_6p8k9c6zyl8kzrjp0zrqzh,2024-08-28,13:06,Telepizza,Restaurant,16460,1,Chile,Providencia,CLP
+txn_j8iq8a9ep9sztb7hfr4dls,2024-08-28,17:42,Shell,GasStation,34500,1,Chile,Ñuñoa,CLP
+txn_6kt811f7xhsagedjh0lbnj,2024-08-29,10:16,Estacionamiento,Transport,4370,1,Chile,Providencia,CLP
+txn_80s9d94acdi69nspxoit53,2024-08-29,13:41,Juan Maestro,Restaurant,11690,3,Chile,Providencia,CLP
+txn_ialp2m3vrbdwy97nvbszbm,2024-08-29,21:33,Dominos Pizza,Restaurant,5020,1,Chile,Ñuñoa,CLP
+txn_ehl0o9kaar89jtn624zbd,2024-08-30,19:01,Panadería Local,Bakery,5410,2,Chile,Providencia,CLP
+txn_bubrmbh2qv5m7x277d44wh,2024-08-30,21:52,Jumbo,Supermarket,56500,6,Chile,Las Condes,CLP
+txn_hxg2lns6swi4kf0x5w603a,2024-08-31,13:57,Shell,GasStation,53960,1,Chile,Santiago,CLP
+txn_5byavrguhsvzhpx74sxcd,2024-09-01,10:56,McDonalds,Restaurant,5570,1,Chile,Vitacura,CLP
+txn_j4i0sc0sta7gr4xu81jy,2024-09-02,08:43,Estacionamiento,Transport,3420,1,Chile,Providencia,CLP
+txn_a98jbl1m0q65wyp98ebxt,2024-09-03,11:59,Juan Maestro,Restaurant,30930,2,Chile,Santiago,CLP
+txn_g2dy81f1nxwo8fmfdbnrz,2024-09-03,14:56,Metro de Santiago,Transport,3990,1,Chile,Providencia,CLP
+txn_zvm5fd9y6v5qh1k1083mv,2024-09-04,09:28,Cineplanet,Entertainment,12210,1,Chile,Santiago,CLP
+txn_8g47e69h9dqtxc21utu1jj,2024-09-04,15:12,Panadería Local,Bakery,6770,2,Chile,Providencia,CLP
+txn_9tc3y328penaq27zllaka9,2024-09-06,12:33,Starbucks,Restaurant,8460,1,Chile,Santiago,CLP
+txn_3e6ec4t0qq97dqdx0rl1,2024-09-06,18:12,Jumbo,Supermarket,105650,15,Chile,Santiago,CLP
+txn_e9rnvi83nvmw88z7jy7lm,2024-09-06,20:06,Unimarc,Supermarket,30720,12,Chile,Las Condes,CLP
+txn_av5wewp9ei7a0u5g7z1pxd,2024-09-07,19:15,Shell,GasStation,25620,1,Chile,Ñuñoa,CLP
+txn_356xbq2btza80brqj35fqi,2024-09-08,17:17,Jumbo,Supermarket,73530,7,Chile,Providencia,CLP
+txn_c9d246mcjhfwfphxnk8em,2024-09-08,17:54,Telepizza,Restaurant,32520,3,Chile,Santiago,CLP
+txn_yxxr1h9cca5ytmoszntr,2024-09-09,13:32,Santa Isabel,Supermarket,56500,11,Chile,Vitacura,CLP
+txn_kxnv7vtho2hic6jq8okj,2024-09-10,11:47,Shell,GasStation,30750,1,Chile,Santiago,CLP
+txn_ubzmixfaha8bylu72u1e0e,2024-09-11,08:05,Santa Isabel,Supermarket,38020,8,Chile,Ñuñoa,CLP
+txn_497codom0v47exem5g0el9,2024-09-11,13:54,Estacionamiento,Transport,3060,1,Chile,Santiago,CLP
+txn_nzmphbr700rbzgjjuuep4c,2024-09-11,21:37,Shell,GasStation,53060,2,Chile,Providencia,CLP
+txn_vv9tds92jx8y8l3e7y3nw,2024-09-13,11:23,Starbucks,Restaurant,10440,1,Chile,Santiago,CLP
+txn_lxcy2twxj9oswrmtxltts,2024-09-13,13:06,Petrobras,GasStation,48100,1,Chile,Vitacura,CLP
+txn_g624zdbnuqll7yveo787qp,2024-09-13,19:38,Tottus,Supermarket,74720,7,Chile,Santiago,CLP
+txn_w0a5q3rpyjetgnp4pdk5e,2024-09-15,08:14,Petrobras,GasStation,51660,1,Chile,Santiago,CLP
+txn_jlecjgms5lel5vsnanmgl,2024-09-15,21:42,Feria Libre,StreetVendor,16760,1,Chile,Vitacura,CLP
+txn_khryl3oarvm4o8pnwg88id,2024-09-16,12:54,McDonalds,Restaurant,5490,1,Chile,Las Condes,CLP
+txn_ie1u7avm9nq9kzapgugs,2024-09-16,19:35,Metro de Santiago,Transport,7530,1,Chile,Santiago,CLP
+txn_q745ja65ehm7grdwfr31l8,2024-09-16,21:01,Paris,Clothing,96970,2,Chile,Santiago,CLP
+txn_nl3fbj8mz3q9ex6piwnsil,2024-09-17,13:56,Pet Happy,PetShop,52050,3,Chile,Santiago,CLP
+txn_rmxnx0sr0z4h0fi9t7m2d,2024-09-18,16:01,Santa Isabel,Supermarket,21300,5,Chile,Santiago,CLP
+txn_8qn3z8n0pem0dgctn6qlces,2024-09-18,16:34,Uber,Transport,25740,1,Chile,Santiago,CLP
+txn_cqyswbd11i6gxm70wyj4nv,2024-09-18,16:44,Netflix,Entertainment,12990,1,Chile,Vitacura,CLP
+txn_k7hsaronyvrs6trfnbbmo,2024-09-19,12:31,Telepizza,Restaurant,23250,2,Chile,Santiago,CLP
+txn_9ts0i3h399b3isrjvw7yj9,2024-09-19,19:24,Panadería Local,Bakery,3700,1,Chile,Providencia,CLP
+txn_ziki1sl52vr86vp06221li,2024-09-20,13:12,Starbucks,Restaurant,5710,1,Chile,Santiago,CLP
+txn_5mrab238d49bjpny6qutt,2024-09-20,17:37,Uber,Transport,12920,1,Chile,Vitacura,CLP
+txn_fwu9itkwzzv7i35yrixzx9,2024-09-20,19:21,Jumbo,Supermarket,103370,14,Chile,Providencia,CLP
+txn_itwhpsqg7tie5222985dj,2024-09-20,19:31,Metro de Santiago,Transport,6490,1,Chile,Santiago,CLP
+txn_5u9gh9bt1sm2wb86fv2po,2024-09-20,19:45,Salcobrand,Pharmacy,13840,2,Chile,Vitacura,CLP
+txn_1d22l35wkvx3vqtqh4k9ny,2024-09-22,20:46,Santa Isabel,Supermarket,33420,8,Chile,Las Condes,CLP
+txn_pmcn79vqqedokusd1hm9sg,2024-09-23,12:05,Estacionamiento,Transport,4620,1,Chile,Ñuñoa,CLP
+txn_pwqt3ntj7vda6on4lynkp,2024-09-23,14:00,Telepizza,Restaurant,40460,3,Chile,Santiago,CLP
+txn_d07esagf4lolm2vfdvsmd,2024-09-23,19:29,Líder,Supermarket,101340,12,Chile,Las Condes,CLP
+txn_dvi2mnqzndfxmd44zosefm,2024-09-23,21:38,Jumbo,Supermarket,54870,6,Chile,Santiago,CLP
+txn_orh63jzesmhdwzujtof1vj,2024-09-25,13:30,Starbucks,Restaurant,12270,1,Chile,Vitacura,CLP
+txn_mjkyq1g0ocdy4tqdikcufg,2024-09-25,19:56,McDonalds,Restaurant,22250,2,Chile,Vitacura,CLP
+txn_ca4wegsx8qwyomb7l8otr,2024-09-26,14:58,Panadería Local,Bakery,4520,1,Chile,Providencia,CLP
+txn_p3vo7s2uxce9dgi7q2get4,2024-09-28,12:10,Jumbo,Supermarket,70710,5,Chile,Santiago,CLP
+txn_ss9uc0hsosndmurwpl7pcl,2024-09-28,12:14,Uber,Transport,20920,1,Chile,Santiago,CLP
+txn_l6e1vt5jan3rk7ol9rjlk,2024-09-28,16:43,Isapre Consalud,Medical,124570,1,Chile,Las Condes,CLP
+txn_pbz94e4kkli2utq2xbtha,2024-09-28,18:53,Shell,GasStation,67840,2,Chile,Santiago,CLP
+txn_z2k9k409gbin4s8ewjbx9i,2024-09-29,19:36,Jumbo,Supermarket,129140,14,Chile,Ñuñoa,CLP
+txn_0ep6x18l7iajyqpa4adf66,2024-09-29,20:14,Shell,GasStation,42420,1,Chile,Santiago,CLP
+txn_76u53730lxj2iqqvuwuwe5,2024-09-30,11:42,Metro de Santiago,Transport,8290,1,Chile,Santiago,CLP
+txn_vmm5mphx2e8ap7uco883l9,2024-10-01,12:41,Shell,GasStation,95220,2,Chile,Ñuñoa,CLP
+txn_hfq1nf9amt829p95nsu2v1,2024-10-02,14:08,McDonalds,Restaurant,9510,3,Chile,Providencia,CLP
+txn_80yq5cg5u9d4g1c8giivs,2024-10-02,16:50,McDonalds,Restaurant,13330,3,Chile,Santiago,CLP
+txn_kbyfgsyvvaokvpwgfiwyc,2024-10-04,09:12,Líder,Supermarket,61870,6,Chile,Las Condes,CLP
+txn_342lw0n4aab5ccp5jy3ngj,2024-10-04,12:13,Cabify,Transport,12980,1,Chile,Vitacura,CLP
+txn_9p6parvrz9qu5r3o01a1q,2024-10-04,17:28,Feria Libre,StreetVendor,31680,3,Chile,Santiago,CLP
+txn_94nnbkgklg0e9vthgpdiod,2024-10-05,13:23,Sushi Express,Restaurant,44110,3,Chile,Ñuñoa,CLP
+txn_81i4gns1qvuy61w53adx0i,2024-10-05,13:30,Santa Isabel,Supermarket,42690,5,Chile,Santiago,CLP
+txn_w36advszx5fztziqo3qcae,2024-10-06,09:15,Shell,GasStation,54880,1,Chile,Santiago,CLP
+txn_5zhf7lfprqaqg5rpxkbzub,2024-10-06,14:22,Líder,Supermarket,31360,11,Chile,Vitacura,CLP
+txn_3p1opxb7sjm92wdu3dixtb,2024-10-06,19:24,Uber,Transport,18040,2,Chile,Las Condes,CLP
+txn_cv0hr5wi3etg6u5o7zmqru,2024-10-07,19:03,Santa Isabel,Supermarket,37980,8,Chile,Santiago,CLP
+txn_a90q3ycjpo5shesh0kac4d,2024-10-08,10:28,Juan Maestro,Restaurant,14780,1,Chile,Santiago,CLP
+txn_1xmpeos112q9vxs2fawvr,2024-10-08,13:48,Uber,Transport,12870,1,Chile,Santiago,CLP
+txn_lf7ga9hmftu9kzi4p7rup,2024-10-09,17:35,Jumbo,Supermarket,58020,4,Chile,Santiago,CLP
+txn_zj5sgnxxxcsoqd9mklnpn,2024-10-10,11:11,Isapre Consalud,Medical,128320,1,Chile,Santiago,CLP
+txn_rx8lurxaogqgp1786sw7xa,2024-10-10,13:43,Starbucks,Restaurant,12940,3,Chile,Santiago,CLP
+txn_g3yorhm0fw51idu7nsdl2f,2024-10-11,11:41,Cabify,Transport,18950,2,Chile,Ñuñoa,CLP
+txn_olbsfwzervmp8y0wx29b0e,2024-10-11,19:39,Shell,GasStation,47970,1,Chile,Vitacura,CLP
+txn_bespcclodmsboyhr2xl85s,2024-10-13,17:47,Santa Isabel,Supermarket,19070,2,Chile,Providencia,CLP
+txn_btylftytgadot3vprz9lv,2024-10-14,19:25,Shell,GasStation,41820,1,Chile,Providencia,CLP
+txn_mg80mzd3t36gvih7lfnhv,2024-10-16,20:01,Telepizza,Restaurant,24000,1,Chile,Vitacura,CLP
+txn_hlixp44w0v92qwh15y9m9j,2024-10-17,13:01,Uber,Transport,8560,1,Chile,Ñuñoa,CLP
+txn_t1t8q8kt636p3tuhdj7hn,2024-10-17,16:37,Líder,Supermarket,80260,14,Chile,Santiago,CLP
+txn_ul1y0sxdgdggksc3ir934m,2024-10-17,18:35,McDonalds,Restaurant,8490,1,Chile,Vitacura,CLP
+txn_9mvovge1k18ggxu9bnnwv,2024-10-18,20:38,Feria Libre,StreetVendor,27680,3,Chile,Ñuñoa,CLP
+txn_1t7u92uezb3q1sudpwluf,2024-10-19,11:43,Panadería Local,Bakery,5860,1,Chile,Ñuñoa,CLP
+txn_nuf4js0flbrgxkk0rjwoj8,2024-10-20,09:03,Restaurant La Fuente,Restaurant,29900,2,Chile,Santiago,CLP
+txn_du2s0l8fcrs02x2hf4ex,2024-10-20,12:29,Cruz Verde,Pharmacy,11850,2,Chile,Santiago,CLP
+txn_t43f8pmnkhv9q746rmq1,2024-10-20,20:06,Movistar Hogar,Services,36690,1,Chile,Santiago,CLP
+txn_rqjwojmdytkhosxo37vyd,2024-10-21,17:19,Feria Libre,StreetVendor,27550,3,Chile,Providencia,CLP
+txn_68ty1h40wn4p7hfhyids7r,2024-10-22,13:37,Juan Maestro,Restaurant,16860,3,Chile,Santiago,CLP
+txn_6hwtr71pxrolkcr2vfqywh,2024-10-22,13:52,Dominos Pizza,Restaurant,18850,2,Chile,Vitacura,CLP
+txn_4qogyov7wc5j6hhxfxeun8,2024-10-22,17:10,H&M,Clothing,46080,2,Chile,Las Condes,CLP
+txn_bblzijfq7zmdus0t4ebjas,2024-10-24,12:07,Cinemark,Entertainment,13620,2,Chile,Providencia,CLP
+txn_z62k9zfz5tgy29fct5aoqe,2024-10-25,17:54,Estacionamiento,Transport,2640,1,Chile,Santiago,CLP
+txn_vz2wbia274jt50znpt5k0d,2024-10-26,19:45,Telepizza,Restaurant,25580,2,Chile,Santiago,CLP
+txn_1tv7x32b0gevtupal53c1,2024-10-27,08:36,Jumbo,Supermarket,51060,1,Chile,Santiago,CLP
+txn_tgmi0yhkohtxpes9yi53,2024-10-27,19:19,Feria Libre,StreetVendor,14260,1,Chile,Santiago,CLP
+txn_gdekmbu3irjcxbnmrtcb1r,2024-10-28,08:12,Starbucks,Restaurant,8330,2,Chile,Santiago,CLP
+txn_h8dkyh3l4dsqjdhmcza12,2024-10-28,15:58,Uber,Transport,10190,1,Chile,Santiago,CLP
+txn_yaw17nmtnjnai4vd7nqv2e,2024-10-29,13:22,Metrogas,Services,57000,1,Chile,Vitacura,CLP
+txn_1dlathydg0d2uc0kstjrg2,2024-10-29,19:19,Starbucks,Restaurant,12660,1,Chile,Santiago,CLP
+txn_3jn3f0twt3b00ule5fi0av7,2024-10-30,20:57,Panadería Local,Bakery,8470,2,Chile,Ñuñoa,CLP
+txn_cwaodrmcizbxs4kp1lcgqn,2024-10-31,12:27,Starbucks,Restaurant,7500,1,Chile,Providencia,CLP
+txn_79main2hu7rzulz6ytwfq,2024-10-31,14:02,Santa Isabel,Supermarket,37450,5,Chile,Las Condes,CLP
+txn_f6fsw894xatl4nk3atq3ni,2024-10-31,21:54,Tottus,Supermarket,77920,5,Chile,Santiago,CLP
+txn_4ajhm56ij7hq64aunga3l,2024-11-01,19:35,Farmacias Ahumada,Pharmacy,13370,2,Chile,Santiago,CLP
+txn_3rqdr51qwlqyz2vw2nvyig,2024-11-02,21:44,Netflix,Entertainment,12990,1,Chile,Santiago,CLP
+txn_dld7c0tg8fsu5kzegkt7pn,2024-11-03,17:24,Unimarc,Supermarket,53790,4,Chile,Las Condes,CLP
+txn_6vsweb5f1zui088wily88,2024-11-03,17:33,Cruz Verde,Pharmacy,25800,2,Chile,Providencia,CLP
+txn_id3dpbvmj8sq9cif50ybo,2024-11-04,13:47,Metro de Santiago,Transport,5730,1,Chile,Ñuñoa,CLP
+txn_cuhek8qwlb5ited8psc6ns,2024-11-04,15:06,Petrobras,GasStation,39960,1,Chile,Santiago,CLP
+txn_r9fia34gpeqz43mj25pit,2024-11-05,13:33,Juan Maestro,Restaurant,31230,2,Chile,Las Condes,CLP
+txn_12i3whuyl89nl50gbff2xp,2024-11-06,11:48,Uber,Transport,13920,1,Chile,Santiago,CLP
+txn_juk0qc6o6iizywuj82ih,2024-11-07,14:36,Feria Libre,StreetVendor,20510,3,Chile,Santiago,CLP
+txn_py616qfkzs6w2xatjw76s,2024-11-08,11:06,Unimarc,Supermarket,59980,12,Chile,Providencia,CLP
+txn_ljvvq7kudw4b01qpxqet9,2024-11-08,13:50,Tottus,Supermarket,36440,3,Chile,Vitacura,CLP
+txn_8wfyth35rfto4upv7l807,2024-11-08,17:36,Cabify,Transport,7840,1,Chile,Vitacura,CLP
+txn_h6761dlaktpbpabd75v80s,2024-11-08,20:12,Telepizza,Restaurant,29210,2,Chile,Ñuñoa,CLP
+txn_7tzoxy58pznd0rx4mr7j3v,2024-11-09,12:12,Copec,GasStation,47310,4,Chile,Santiago,CLP
+txn_sh94c3lgbn11uk0zb89p4j,2024-11-09,12:14,Panadería Local,Bakery,2530,1,Chile,Ñuñoa,CLP
+txn_sxs95o6tvahw6qy4dmln19,2024-11-10,13:03,Metro de Santiago,Transport,9220,1,Chile,Vitacura,CLP
+txn_bm9muz0my63qqhy63tvnc,2024-11-11,14:26,Dominos Pizza,Restaurant,13610,2,Chile,Las Condes,CLP
+txn_or9tqm5ms39gy0b7oalvcn,2024-11-12,14:58,Shell,GasStation,42900,1,Chile,Providencia,CLP
+txn_1udkevwshuz960atu0tb5p,2024-11-12,18:12,Uber,Transport,18770,1,Chile,Santiago,CLP
+txn_w0y650gszb8jkcsvuwen,2024-11-13,13:11,Santa Isabel,Supermarket,50760,11,Chile,Santiago,CLP
+txn_iwms4uwhi2jkidvta8f4eg,2024-11-13,15:11,Paris,Clothing,63580,2,Chile,Ñuñoa,CLP
+txn_itmwy8xwz0gvpoopx0mhc,2024-11-13,16:09,Estacionamiento,Transport,7000,1,Chile,Vitacura,CLP
+txn_13zc5eqgnxk0jx1x43rx35,2024-11-14,11:34,Cabify,Transport,9420,1,Chile,Santiago,CLP
+txn_3eeamp7z0x6jygbfls914,2024-11-14,14:51,Santa Isabel,Supermarket,35520,6,Chile,Providencia,CLP
+txn_78wtt20nd6thpp37np0p29,2024-11-14,17:15,Feria Libre,StreetVendor,25890,1,Chile,Las Condes,CLP
+txn_m97e1pwxvepgtlkffuxtn,2024-11-15,15:32,Panadería Local,Bakery,7140,2,Chile,Las Condes,CLP
+txn_4hs601i92zdt6g68hma7c,2024-11-16,12:22,Uber,Transport,22300,1,Chile,Santiago,CLP
+txn_qarbrz9u3top06l7t2p9c,2024-11-16,18:34,Líder,Supermarket,83370,13,Chile,Santiago,CLP
+txn_l7dvvj4macvy2bmvysxch,2024-11-16,20:06,Tottus,Supermarket,55360,2,Chile,Vitacura,CLP
+txn_z60lwdupis9xxiil13ttk,2024-11-18,19:39,Unimarc,Supermarket,26760,9,Chile,Vitacura,CLP
+txn_v0xqgucnv87g38es0hrdjn,2024-11-19,12:58,Jumbo,Supermarket,83330,5,Chile,Las Condes,CLP
+txn_yivjsupr7bp1f0as20s6nz,2024-11-20,20:05,McDonalds,Restaurant,18690,4,Chile,Vitacura,CLP
+txn_ak3fzcxalif13aq40k3ugr,2024-11-21,18:56,Spotify,Entertainment,8490,1,Chile,Ñuñoa,CLP
+txn_e2ihmdd5mk74jeajulda4,2024-11-21,20:54,Uber,Transport,8570,1,Chile,Providencia,CLP
+txn_e53d5twffxh04zp1yr2y2hc,2024-11-22,18:06,Entel,Electronics,22650,1,Chile,Vitacura,CLP
+txn_3zbak26gg7kesfat26529b,2024-11-22,18:58,Uber,Transport,7430,1,Chile,Santiago,CLP
+txn_t7td78lzjymr0cfmmz462f,2024-11-22,19:16,Panadería Local,Bakery,4300,1,Chile,Santiago,CLP
+txn_gj1zxjwmmzkhyns915sbq4,2024-11-22,19:16,Feria Libre,StreetVendor,6190,2,Chile,Ñuñoa,CLP
+txn_yx102p5ypikb7kae5t0xn4,2024-11-25,12:51,Líder,Supermarket,66700,10,Chile,Las Condes,CLP
+txn_2egeanwsnlfxowu9cxym8,2024-11-25,18:08,Panadería Local,Bakery,4340,1,Chile,Providencia,CLP
+txn_6l8oi6o5o7xjqla08c3bh,2024-11-26,15:33,Petrobras,GasStation,25070,1,Chile,Las Condes,CLP
+txn_hkyhgi76vs0ez1s3owtf8g,2024-11-26,15:37,Dominos Pizza,Restaurant,15000,1,Chile,Santiago,CLP
+txn_bz1214y35sjlxd5sgjbwbb,2024-11-26,17:47,Cruz Verde,Pharmacy,12940,1,Chile,Santiago,CLP
+txn_df3rz3pn7bkk2ee7nkdvpl,2024-11-26,21:37,Ripley,Electronics,211080,2,Chile,Santiago,CLP
+txn_mnrss4x11ztf8pk3t9caa,2024-11-27,14:51,Starbucks,Restaurant,7650,1,Chile,Las Condes,CLP
+txn_mu2lp96ha5q8wu0vkzdu,2024-11-29,08:14,Feria Libre,StreetVendor,9660,2,Chile,Santiago,CLP
+txn_j6pguwidbto19o3p36czwh,2024-11-29,09:28,Cabify,Transport,5220,1,Chile,Santiago,CLP
+txn_c5ztw6b0qi86scn21vlpo,2024-11-29,10:37,Jumbo,Supermarket,28640,3,Chile,Santiago,CLP
+txn_m78a3a9j1y7ku93x6l3s8,2024-11-29,12:58,Copec,GasStation,50720,4,Chile,Vitacura,CLP
+txn_na90dyucqmsb3llc51to,2024-11-29,18:08,Jumbo,Supermarket,87580,13,Chile,Santiago,CLP
+txn_1x7hfajwx5v52deupjfkzx,2024-11-29,18:48,Tottus,Supermarket,41340,3,Chile,Ñuñoa,CLP
+txn_pc9akbut1lpwx97avgfh4o,2024-11-30,18:30,Shell,GasStation,50500,2,Chile,Las Condes,CLP
+txn_3n34t6t72k3czfyuljlpvn,2024-12-02,17:05,Petrobras,GasStation,26400,1,Chile,Providencia,CLP
+txn_t99e4tvbtnduy0wvo00cl,2024-12-02,17:12,Sushi Express,Restaurant,35100,2,Chile,Santiago,CLP
+txn_lly2t0ocjh4les444e6b,2024-12-03,11:06,Zara,Clothing,53600,1,Chile,Providencia,CLP
+txn_x3b8npxtcqjai1i5o3zukr,2024-12-05,13:33,Panadería Local,Bakery,4040,1,Chile,Las Condes,CLP
+txn_jq81e874twgrl5sw52c3,2024-12-05,14:59,VTR,Services,49780,1,Chile,Las Condes,CLP
+txn_ewajxdj92z87vna54m7adc,2024-12-05,15:33,Metro de Santiago,Transport,2190,1,Chile,Las Condes,CLP
+txn_gp68i2q66mpq4ypbu2h58,2024-12-06,08:10,Jumbo,Supermarket,90220,7,Chile,Vitacura,CLP
+txn_cj47f4bzq88g5ty56lhtnj,2024-12-06,12:40,Santa Isabel,Supermarket,40170,7,Chile,Santiago,CLP
+txn_xck04cw1bc9uhy75i2poi,2024-12-06,18:03,Zara,Clothing,53570,1,Chile,Ñuñoa,CLP
+txn_t9cy5cqi6yooddddlmr9j,2024-12-06,18:43,WOM,Electronics,18140,1,Chile,Vitacura,CLP
+txn_s4v9kwkr01n194ntivynbm,2024-12-06,21:14,Petrobras,GasStation,23940,1,Chile,Santiago,CLP
+txn_tl3tcvm8kwl3z57t3y31,2024-12-07,12:54,Copec,GasStation,78140,3,Chile,Las Condes,CLP
+txn_dz3j6mlufsmamptcq14l1b,2024-12-07,19:52,Unimarc,Supermarket,63860,10,Chile,Santiago,CLP
+txn_9rz3i38s9p9r1g9ugj2t2,2024-12-08,13:02,Sushi Express,Restaurant,24370,2,Chile,Providencia,CLP
+txn_8vofojzkfjqoxmqjypmlue,2024-12-08,20:34,Jumbo,Supermarket,92990,9,Chile,Las Condes,CLP
+txn_6olsqnz8glgh6v6rxdw6mv,2024-12-10,11:30,Petrobras,GasStation,29520,1,Chile,Providencia,CLP
+txn_or4ttv472uazcg6yfciji,2024-12-10,21:54,Tottus,Supermarket,87010,3,Chile,Santiago,CLP
+txn_wwchfecc03lus7bpc1292,2024-12-11,08:17,Panadería Local,Bakery,4800,2,Chile,Santiago,CLP
+txn_nadng11s67k0dfygcixx,2024-12-12,15:57,Uber,Transport,13530,1,Chile,Las Condes,CLP
+txn_qc35igwjl3emb96w0ctjg,2024-12-12,20:50,Shell,GasStation,58790,2,Chile,Santiago,CLP
+txn_7wlhjhr6fko1ccwf5acmjs,2024-12-13,12:15,Líder,Supermarket,65640,10,Chile,Santiago,CLP
+txn_pia1azi3kt9ori9hmnya2,2024-12-13,15:59,Santa Isabel,Supermarket,45390,6,Chile,Vitacura,CLP
+txn_kk63xko18uqx7qy3aavgc,2024-12-14,12:53,Falabella,Clothing,156580,1,Chile,Santiago,CLP
+txn_8fti3zjxvwb7fuiglp983t,2024-12-14,20:47,Uber,Transport,10930,1,Chile,Santiago,CLP
+txn_ox9v19zqvvejely546d1u,2024-12-15,20:34,Jumbo,Supermarket,109670,8,Chile,Las Condes,CLP
+txn_zv01ctujdufk19svgagazc,2024-12-16,12:20,Jumbo,Supermarket,105110,11,Chile,Providencia,CLP
+txn_j8miros1xodbg1zexh0su,2024-12-16,13:06,Telepizza,Restaurant,26160,3,Chile,Ñuñoa,CLP
+txn_cpc4tbdhg6jpyx6y8euph,2024-12-16,19:19,Uber,Transport,12480,1,Chile,Santiago,CLP
+txn_6xqy50xa9wg8ukz8fep5m8,2024-12-16,19:49,Metro de Santiago,Transport,7120,1,Chile,Providencia,CLP
+txn_0obq0c3hb89m4dyl2t03cq,2024-12-17,12:53,Cruz Verde,Pharmacy,46720,3,Chile,Vitacura,CLP
+txn_icpyvmeriiy1jh49vih1g,2024-12-19,11:18,Líder,Supermarket,110880,11,Chile,Ñuñoa,CLP
+txn_r5k8qwfpheh55jt1hwj44,2024-12-19,12:14,Líder,Supermarket,79730,10,Chile,Las Condes,CLP
+txn_z6qvpkb5z49a3ro73wn1f,2024-12-20,13:33,Metro de Santiago,Transport,8490,1,Chile,Providencia,CLP
+txn_jlcc4ec06zjqmt68s9s0nh,2024-12-21,13:25,Metro de Santiago,Transport,4510,1,Chile,Santiago,CLP
+txn_usdy4ozbfd21hxs5h713i,2024-12-21,16:32,Copec,GasStation,54040,4,Chile,Santiago,CLP
+txn_mo39v8lfnao9eq5ybzo405,2024-12-21,19:32,Farmacias Ahumada,Pharmacy,40090,4,Chile,Vitacura,CLP
+txn_sdi1ixk54j3ah32k2vp4,2024-12-22,17:14,Salcobrand,Pharmacy,35340,2,Chile,Santiago,CLP
+txn_2qexd01hlk5svhip9yeq3f,2024-12-23,08:25,Líder,Supermarket,68390,11,Chile,Las Condes,CLP
+txn_77s23hq1ofbkdbx4ai7jsq,2024-12-23,13:33,Cinemark,Entertainment,24480,1,Chile,Santiago,CLP
+txn_kcreemb4vansw8ym4a9a7m,2024-12-25,12:05,Jumbo,Supermarket,36770,5,Chile,Las Condes,CLP
+txn_rcivwyb17e7ta54kw326uh,2024-12-25,13:54,Sushi Express,Restaurant,58440,1,Chile,Santiago,CLP
+txn_v715y27npyalovea9gz3zr,2024-12-26,09:57,Tottus,Supermarket,24880,3,Chile,Las Condes,CLP
+txn_w2lmldsjbeqh7y0j6c7hm9,2024-12-26,17:07,Estacionamiento,Transport,6260,1,Chile,Providencia,CLP
+txn_p5utvs6vgag7pawpkkoxx2,2024-12-26,17:14,Tottus,Supermarket,59190,5,Chile,Santiago,CLP
+txn_nc2xtk9cqbhkh8b2lazzt,2024-12-27,17:07,Metro de Santiago,Transport,7550,1,Chile,Las Condes,CLP
+txn_k3bigj3gapro7ugu1wptsc,2024-12-29,18:58,Juan Maestro,Restaurant,15660,2,Chile,Las Condes,CLP
+txn_pukcrehprdrp741r4mfsm,2024-12-29,19:30,Farmacias Ahumada,Pharmacy,42800,2,Chile,Santiago,CLP
+txn_dxh8botn4lh8cb3hpyco99,2024-12-30,15:40,Unimarc,Supermarket,65130,11,Chile,Ñuñoa,CLP
+txn_3p5w5c4ne1dseoln5hjtyi,2024-12-31,12:40,Petrobras,GasStation,25000,1,Chile,Providencia,CLP
+txn_elbn6bpcrwbemt9yvgoxrp,2025-01-01,13:29,Metro de Santiago,Transport,4780,1,Chile,Vitacura,CLP
+txn_wwzs6gkvthxnrt3w5oc3c,2025-01-01,13:38,Panadería Local,Bakery,2950,1,Chile,Santiago,CLP
+txn_xeta4diznx00ye2l8jwd8ri,2025-01-01,15:22,Entel,Electronics,50010,2,Chile,Santiago,CLP
+txn_rsh4gqzn78ipw9cvvbpw0m,2025-01-02,11:49,Dominos Pizza,Restaurant,37630,3,Chile,Santiago,CLP
+txn_hjfq2oz5ehgce1n3eu7p15,2025-01-02,14:39,Juan Maestro,Restaurant,22620,1,Chile,Vitacura,CLP
+txn_s8ahtfyonq7tyv63m2j1t,2025-01-02,18:47,Restaurant La Fuente,Restaurant,89410,5,Chile,Las Condes,CLP
+txn_kelz5b2vuer0rg8d29sehk,2025-01-02,19:18,Cabify,Transport,16380,2,Chile,Providencia,CLP
+txn_d3u4i2nsce63re4mdyg8ix,2025-01-03,15:21,Cabify,Transport,8140,1,Chile,Vitacura,CLP
+txn_b52emgpan2fj2duhnnubvr,2025-01-03,18:52,Cruz Verde,Pharmacy,21830,2,Chile,Vitacura,CLP
+txn_83pe4bnqd6gy9v7u9iit8,2025-01-03,19:25,Unimarc,Supermarket,53830,11,Chile,Vitacura,CLP
+txn_tx28lr55k4ochg099nnm5r,2025-01-04,14:51,Jumbo,Supermarket,114490,11,Chile,Vitacura,CLP
+txn_8z9in89fv9ejrk263pneso,2025-01-05,20:06,Starbucks,Restaurant,17820,1,Chile,Vitacura,CLP

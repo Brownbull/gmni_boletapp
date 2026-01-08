@@ -1,0 +1,1786 @@
+transactionId,itemIndex,name,category,qty,price,lineTotal
+txn_roczyqinm9rorthkhunrrn,0,Estacionamiento Horas,Service,1,4220,4220
+txn_3per50dbdparnubuyzttsc,0,Lavado Auto,Service,1,7400,7400
+txn_3per50dbdparnubuyzttsc,1,Agua Botella,Beverages,1,1260,1260
+txn_3per50dbdparnubuyzttsc,2,Bencina 95 Litros,Automotive,34,1240,42160
+txn_htomfqiil8rlyvosxke1a,0,Cerveza Pack 6,Alcohol,1,8410,8410
+txn_htomfqiil8rlyvosxke1a,1,Leche Entera 1L,Dairy & Eggs,1,1390,1390
+txn_htomfqiil8rlyvosxke1a,2,Vino Tinto 750ml,Alcohol,2,11160,22320
+txn_dtplc9tmu7am41sis4ibuf,0,Pollo Trutro Kg,Meat & Seafood,3,3000,9000
+txn_dtplc9tmu7am41sis4ibuf,1,Leche Descremada 1L,Dairy & Eggs,2,1500,3000
+txn_dtplc9tmu7am41sis4ibuf,2,Cebolla Kg,Produce,2,1040,2080
+txn_dtplc9tmu7am41sis4ibuf,3,Reineta Filete Kg,Meat & Seafood,1,9710,9710
+txn_dtplc9tmu7am41sis4ibuf,4,Lavaloza 750ml,Cleaning Supplies,2,2360,4720
+txn_dtplc9tmu7am41sis4ibuf,5,Pan de Molde Blanco,Bakery,1,2030,2030
+txn_dtplc9tmu7am41sis4ibuf,6,Huevos 30u,Dairy & Eggs,2,7350,14700
+txn_hsc8twb5hflzdcdvpur1u,0,Pimentón Kg,Produce,3,2360,7080
+txn_hsc8twb5hflzdcdvpur1u,1,Legumbres 1Kg,Pantry,3,2060,6180
+txn_hsc8twb5hflzdcdvpur1u,2,Costillar Cerdo Kg,Meat & Seafood,3,4940,14820
+txn_qdfc985s1bfd9fnumj43w8,0,Plan Premium,Service,1,12990,12990
+txn_vfyjr2wzovnve4fgmhh8lc,0,Gas Natural Mes,Service,2,22950,45900
+txn_lsaafs9gyuot9vu0pnycrb,0,Pizza Mediana Pepperoni,Pantry,2,11070,22140
+txn_lsaafs9gyuot9vu0pnycrb,1,Palitos de Ajo,Pantry,2,5960,11920
+txn_a6s1v97p1gnsm5f10nmwua,0,Cappuccino Grande,Beverages,2,3950,7900
+txn_fp15p04m4kluipck1z3ugi,0,Jeans,Clothing,2,47210,94420
+txn_j6twsxm2uybewoly36b1v,0,Aceite Motor,Automotive,1,14920,14920
+txn_80370otce2irmhefooz77k,0,Viaje Cabify,Service,1,13750,13750
+txn_46sdlx0nt2jxqykj6o5x7g,0,Huevos Campo 30u,Dairy & Eggs,1,6630,6630
+txn_62dfnynlfa5d9lp3ygbele,0,Flores Ramo,Other,2,4140,8280
+txn_62dfnynlfa5d9lp3ygbele,1,Pescado Fresco Kg,Meat & Seafood,2,7400,14800
+txn_6234bjmlvsotmjyajxjf0a,0,Choclo Unidad,Produce,1,960,960
+txn_6234bjmlvsotmjyajxjf0a,1,Esponja Pack 3,Cleaning Supplies,2,1350,2700
+txn_6234bjmlvsotmjyajxjf0a,2,Leche Semidescremada 1L,Dairy & Eggs,3,1630,4890
+txn_6234bjmlvsotmjyajxjf0a,3,Crema 200ml,Dairy & Eggs,2,1790,3580
+txn_6234bjmlvsotmjyajxjf0a,4,Cloro 1L,Cleaning Supplies,3,1400,4200
+txn_6234bjmlvsotmjyajxjf0a,5,Azúcar 1Kg,Pantry,1,1550,1550
+txn_6234bjmlvsotmjyajxjf0a,6,Sal 1Kg,Pantry,3,730,2190
+txn_6234bjmlvsotmjyajxjf0a,7,Queso Chanco 200g,Dairy & Eggs,3,2650,7950
+txn_6234bjmlvsotmjyajxjf0a,8,Hallulla Pack 6,Bakery,1,1540,1540
+txn_6234bjmlvsotmjyajxjf0a,9,Huevos 15u,Dairy & Eggs,3,4870,14610
+txn_6234bjmlvsotmjyajxjf0a,10,Pepino Unidad,Produce,2,860,1720
+txn_vznqlhlyojkd6yi1apjjmt,0,McNuggets 10,Pantry,2,5950,11900
+txn_qpchkydxvsg2qg0gogxiew,0,Queso Mantecoso Kg,Dairy & Eggs,2,10900,21800
+txn_qpchkydxvsg2qg0gogxiew,1,Huevos Docena,Dairy & Eggs,1,4790,4790
+txn_qpchkydxvsg2qg0gogxiew,2,Aceite Vegetal 1L,Pantry,2,2520,5040
+txn_qpchkydxvsg2qg0gogxiew,3,Papel Higiénico 12u,Household,3,5890,17670
+txn_qpchkydxvsg2qg0gogxiew,4,Pan Molde Integral,Bakery,2,2570,5140
+txn_qpchkydxvsg2qg0gogxiew,5,Pechuga de Pollo Kg,Meat & Seafood,1,7030,7030
+txn_pl1bqsvt08hab854zks5a,0,Pan Fresco Kg,Bakery,2,1700,3400
+txn_pl1bqsvt08hab854zks5a,1,Kuchen,Bakery,1,2490,2490
+txn_ykxa6pi39ig08mfael20kal,0,Gyozas 6u,Pantry,1,5800,5800
+txn_ykxa6pi39ig08mfael20kal,1,Sake 300ml,Alcohol,1,10070,10070
+txn_ykxa6pi39ig08mfael20kal,2,Handroll Salmón,Pantry,2,4420,8840
+txn_ykxa6pi39ig08mfael20kal,3,Edamame,Pantry,1,4890,4890
+txn_kc0f4en6oiib9u9bhl2qa,0,Entrada General,Service,3,7760,23280
+txn_eq3brf30c2bkmjcgjp3x4,0,Frappuccino,Beverages,1,5750,5750
+txn_eq3brf30c2bkmjcgjp3x4,1,Croissant,Bakery,1,2740,2740
+txn_58uanmuu5wbim70p6rvmjh,0,Aceite Motor,Automotive,3,14130,42390
+txn_58uanmuu5wbim70p6rvmjh,1,Bencina 97 Litros,Automotive,32,1330,42560
+txn_f0dj4s2n3btcg0sgvrmei,0,Empanada,Bakery,1,2750,2750
+txn_f0dj4s2n3btcg0sgvrmei,1,Pan Fresco Kg,Bakery,1,1810,1810
+txn_txdelvbw8bmdei81upgxr,0,Plan Premium,Service,1,12990,12990
+txn_bas2sk5m3qh5gf8d230wts,0,Huevos Campo 30u,Dairy & Eggs,2,6120,12240
+txn_bas2sk5m3qh5gf8d230wts,1,Frutas Surtidas Kg,Produce,1,2100,2100
+txn_29shdasbm89u2pk8nm5d7,0,Cargador Rápido,Electronics,2,26400,52800
+txn_29shdasbm89u2pk8nm5d7,1,Cable USB-C,Electronics,3,10960,32880
+txn_29shdasbm89u2pk8nm5d7,2,Teclado Mecánico,Electronics,1,122930,122930
+txn_29shdasbm89u2pk8nm5d7,3,Pendrive 64GB,Electronics,1,12910,12910
+txn_29shdasbm89u2pk8nm5d7,4,Audífonos Bluetooth,Electronics,1,85120,85120
+txn_29shdasbm89u2pk8nm5d7,5,Mouse Gamer,Electronics,1,57540,57540
+txn_x7qbg15cmkle6hii8t2i,0,Naranja Kg,Produce,2,2420,4840
+txn_x7qbg15cmkle6hii8t2i,1,Leche Descremada 1L,Dairy & Eggs,1,1560,1560
+txn_x7qbg15cmkle6hii8t2i,2,Arroz Grado 2 Kg,Pantry,2,1270,2540
+txn_x7qbg15cmkle6hii8t2i,3,Pan de Molde Blanco,Bakery,2,1770,3540
+txn_x7qbg15cmkle6hii8t2i,4,Jamón Cocido 200g,Meat & Seafood,1,2940,2940
+txn_x7qbg15cmkle6hii8t2i,5,Huevos 30u,Dairy & Eggs,3,8500,25500
+txn_x7qbg15cmkle6hii8t2i,6,Servilletas 100u,Household,2,1890,3780
+txn_x7qbg15cmkle6hii8t2i,7,Jugo en Polvo Pack 8,Beverages,3,3680,11040
+txn_x7qbg15cmkle6hii8t2i,8,Limón Kg,Produce,1,3140,3140
+txn_x7qbg15cmkle6hii8t2i,9,Pollo Trutro Kg,Meat & Seafood,1,3420,3420
+txn_x7qbg15cmkle6hii8t2i,10,Asado Carnicero Kg,Meat & Seafood,3,9760,29280
+txn_h0yu5rjdj9v0cqllix20hxn,0,Bebida 2L,Beverages,3,3240,9720
+txn_h0yu5rjdj9v0cqllix20hxn,1,Pizza Familiar 4 Quesos,Pantry,1,13850,13850
+txn_uxqh5l7mpy1rws7g96u8l,0,Cerveza Pack 6,Alcohol,2,6590,13180
+txn_uxqh5l7mpy1rws7g96u8l,1,Plátano Kg,Produce,1,1650,1650
+txn_uxqh5l7mpy1rws7g96u8l,2,Salmón Filete Kg,Meat & Seafood,2,15350,30700
+txn_5fs2ogdpajo86nqif5pxyr,0,Frappuccino,Beverages,2,5750,11500
+txn_ljfrpoc4vs5tj7s32q5d,0,Viaje UberX,Service,1,9030,9030
+txn_7tkfss6izuih1k5ibs2nc,0,Pimentón Kg,Produce,2,2310,4620
+txn_7tkfss6izuih1k5ibs2nc,1,Ketchup 500g,Pantry,1,2230,2230
+txn_7tkfss6izuih1k5ibs2nc,2,Costillar Cerdo Kg,Meat & Seafood,1,5330,5330
+txn_evlfqe7oe0qrgc2zsa0fvd,0,Agua Botella,Beverages,3,1190,3570
+txn_evlfqe7oe0qrgc2zsa0fvd,1,Bencina 95 Litros,Automotive,24,1340,32160
+txn_ut7q88fab7tx02g54wke,0,Completo Italiano,Pantry,3,3620,10860
+txn_ut7q88fab7tx02g54wke,1,Hamburguesa Clásica,Pantry,2,7670,15340
+txn_s96ipwntszlexcvz42f8tr,0,Viaje Uber Comfort,Service,1,11300,11300
+txn_zzuxq7by6rmw5ew390zdca,0,Choclo Unidad,Produce,1,840,840
+txn_zzuxq7by6rmw5ew390zdca,1,Sal 1Kg,Pantry,2,670,1340
+txn_zzuxq7by6rmw5ew390zdca,2,Azúcar 1Kg,Pantry,1,1580,1580
+txn_zzuxq7by6rmw5ew390zdca,3,Crema 200ml,Dairy & Eggs,2,2060,4120
+txn_zzuxq7by6rmw5ew390zdca,4,Merluza Filete Kg,Meat & Seafood,3,8650,25950
+txn_jg8e3euk2x9on02sy60qa,0,Cilantro Atado,Produce,3,510,1530
+txn_jg8e3euk2x9on02sy60qa,1,Legumbres 1Kg,Pantry,3,2760,8280
+txn_jg8e3euk2x9on02sy60qa,2,Pimentón Kg,Produce,1,2290,2290
+txn_jg8e3euk2x9on02sy60qa,3,Mayonesa 500g,Pantry,2,3200,6400
+txn_5y0um2176pbgmaua695i14,0,Huevos Docena,Dairy & Eggs,3,4660,13980
+txn_5y0um2176pbgmaua695i14,1,Papel Higiénico 12u,Household,2,7330,14660
+txn_5y0um2176pbgmaua695i14,2,Arroz Grado 1 Kg,Pantry,2,2030,4060
+txn_5y0um2176pbgmaua695i14,3,Aceite Vegetal 1L,Pantry,3,3310,9930
+txn_5y0um2176pbgmaua695i14,4,Café Molido 250g,Beverages,2,5300,10600
+txn_5y0um2176pbgmaua695i14,5,Vino Tinto 750ml,Alcohol,2,10920,21840
+txn_5y0um2176pbgmaua695i14,6,Pizza Congelada,Frozen Foods,3,4150,12450
+txn_5y0um2176pbgmaua695i14,7,Palta Hass Kg,Produce,2,6030,12060
+txn_ndgjs3zfm2twj5lr0r63bf,0,Chorizo Parrillero Kg,Meat & Seafood,2,6840,13680
+txn_ndgjs3zfm2twj5lr0r63bf,1,Ajo Cabeza,Produce,1,610,610
+txn_ndgjs3zfm2twj5lr0r63bf,2,Ketchup 500g,Pantry,3,2100,6300
+txn_ndgjs3zfm2twj5lr0r63bf,3,Atún Lata 170g,Pantry,1,2170,2170
+txn_ndgjs3zfm2twj5lr0r63bf,4,Legumbres 1Kg,Pantry,1,2850,2850
+txn_ndgjs3zfm2twj5lr0r63bf,5,Leche Cultivada 1L,Dairy & Eggs,2,1360,2720
+txn_1hco1zzh82ab4wlcqyqy6f,0,Carga Bip!,Service,1,9000,9000
+txn_75j0naoj5zl5kr7ok8h04b,0,Snack Tienda,Snacks,1,1920,1920
+txn_75j0naoj5zl5kr7ok8h04b,1,Agua Botella,Beverages,1,1360,1360
+txn_75j0naoj5zl5kr7ok8h04b,2,Lavado Auto,Service,3,8460,25380
+txn_udfby38oku9diacucfpoos,0,Yogurt Griego Pack 4,Dairy & Eggs,3,4620,13860
+txn_udfby38oku9diacucfpoos,1,Quinoa 500g,Pantry,3,4310,12930
+txn_udfby38oku9diacucfpoos,2,Pavo Pechuga Kg,Meat & Seafood,2,10190,20380
+txn_udfby38oku9diacucfpoos,3,Camarones Kg,Meat & Seafood,1,16000,16000
+txn_ye8x0fv491jc441bwz9y15,0,Yogurt Griego Pack 4,Dairy & Eggs,1,4710,4710
+txn_ye8x0fv491jc441bwz9y15,1,Camarones Kg,Meat & Seafood,2,16140,32280
+txn_ye8x0fv491jc441bwz9y15,2,Pan Pita Pack 8,Bakery,2,2220,4440
+txn_ye8x0fv491jc441bwz9y15,3,Pavo Pechuga Kg,Meat & Seafood,1,11670,11670
+txn_ye8x0fv491jc441bwz9y15,4,Aceite Oliva 500ml,Pantry,2,6100,12200
+txn_ye8x0fv491jc441bwz9y15,5,Champiñones 200g,Produce,2,2280,4560
+txn_tzqxkcln2wv1t56rkfg9,0,Datos Adicionales,Service,2,9790,19580
+txn_tkemnch0yjrxllp6kxkop,0,Empanada,Bakery,1,2640,2640
+txn_tkemnch0yjrxllp6kxkop,1,Torta Porción,Bakery,2,3250,6500
+txn_cyj2p9rxoyho3hk7dwt5f,0,Combo Popcorn Grande,Snacks,1,8700,8700
+txn_g0p944cj2jvsda22kohwms,0,Pizza Mediana Pepperoni,Pantry,1,12930,12930
+txn_g0p944cj2jvsda22kohwms,1,Bebida 1.5L,Beverages,3,2990,8970
+txn_vzlvgmsp52ix96bxknbfp,0,Carga Bip!,Service,1,8970,8970
+txn_5ej6rw2gkzv5ldxb9i4xh,0,Viaje UberX,Service,2,10530,21060
+txn_a1ezhj63zagrbqfqmjkam,0,Sándwich Pollo,Pantry,1,6430,6430
+txn_a1ezhj63zagrbqfqmjkam,1,Cappuccino Grande,Beverages,1,3810,3810
+txn_ve6zw1aqbjfna4wknmykos,0,Plan Salud Mensual,Service,1,127530,127530
+txn_rycmfx6ui4lytw5k0os8h,0,McNuggets 10,Pantry,1,5210,5210
+txn_rycmfx6ui4lytw5k0os8h,1,Helado Cono,Snacks,1,780,780
+txn_rycmfx6ui4lytw5k0os8h,2,Papas Medianas,Pantry,3,2650,7950
+txn_b17mycdnwr9vnjng4o4mmd,0,Frutas Surtidas Kg,Produce,3,2470,7410
+txn_b17mycdnwr9vnjng4o4mmd,1,Verduras Surtidas Kg,Produce,1,1590,1590
+txn_yhw32bwxblmkfa5e1h4i4,0,Pizza Mediana Pepperoni,Pantry,1,10680,10680
+txn_yhw32bwxblmkfa5e1h4i4,1,Bebida 1.5L,Beverages,3,2500,7500
+txn_yuane4hxv60vxmwznnmfkf,0,Huevos Campo 30u,Dairy & Eggs,1,6200,6200
+txn_yuane4hxv60vxmwznnmfkf,1,Frutas Surtidas Kg,Produce,1,2960,2960
+txn_yuane4hxv60vxmwznnmfkf,2,Pescado Fresco Kg,Meat & Seafood,2,8420,16840
+txn_el7711iiplvrc5nng8zws,0,Lechuga Unidad,Produce,2,1480,2960
+txn_el7711iiplvrc5nng8zws,1,Manzana Royal Kg,Produce,1,2400,2400
+txn_el7711iiplvrc5nng8zws,2,Palta Hass Kg,Produce,2,5470,10940
+txn_el7711iiplvrc5nng8zws,3,Helado 1L,Frozen Foods,1,7730,7730
+txn_el7711iiplvrc5nng8zws,4,Café Molido 250g,Beverages,2,4240,8480
+txn_el7711iiplvrc5nng8zws,5,Fideos 400g,Pantry,1,1410,1410
+txn_el7711iiplvrc5nng8zws,6,Leche Entera 1L,Dairy & Eggs,3,1480,4440
+txn_el7711iiplvrc5nng8zws,7,Tomate Kg,Produce,1,1380,1380
+txn_el7711iiplvrc5nng8zws,8,Yogurt Pack 4,Dairy & Eggs,1,3950,3950
+txn_el7711iiplvrc5nng8zws,9,Carne Molida Kg,Meat & Seafood,1,8530,8530
+txn_el7711iiplvrc5nng8zws,10,Plátano Kg,Produce,1,1260,1260
+txn_el7711iiplvrc5nng8zws,11,Cerveza Pack 6,Alcohol,3,7080,21240
+txn_el7711iiplvrc5nng8zws,12,Pizza Congelada,Frozen Foods,3,4500,13500
+txn_xo0f387489xrtr4dd10r,0,Chorizo Parrillero Kg,Meat & Seafood,3,6450,19350
+txn_xo0f387489xrtr4dd10r,1,Mayonesa 500g,Pantry,3,2960,8880
+txn_xo0f387489xrtr4dd10r,2,Ajo Cabeza,Produce,1,680,680
+txn_xo0f387489xrtr4dd10r,3,Costillar Cerdo Kg,Meat & Seafood,1,5380,5380
+txn_rqsltt0uy6cb2iytzhp1yf,0,Aceite Motor,Automotive,3,15700,47100
+txn_rqsltt0uy6cb2iytzhp1yf,1,Diesel Litros,Automotive,30,1050,31500
+txn_hb88a6g8updlgpwhwy3j2,0,Leche Semidescremada 1L,Dairy & Eggs,2,1670,3340
+txn_hb88a6g8updlgpwhwy3j2,1,Queso Chanco 200g,Dairy & Eggs,3,3180,9540
+txn_hb88a6g8updlgpwhwy3j2,2,Cloro 1L,Cleaning Supplies,3,1320,3960
+txn_3om7rlnharrfb7pb2b8zdl,0,Mantequilla 250g,Dairy & Eggs,1,3610,3610
+txn_3om7rlnharrfb7pb2b8zdl,1,Reineta Filete Kg,Meat & Seafood,2,12210,24420
+txn_3om7rlnharrfb7pb2b8zdl,2,Asado Carnicero Kg,Meat & Seafood,3,8190,24570
+txn_3om7rlnharrfb7pb2b8zdl,3,Lavaloza 750ml,Cleaning Supplies,3,1820,5460
+txn_ws3su8eneekp3bc0xefp,0,Estacionamiento Horas,Service,1,7360,7360
+txn_8rf7kmj5ebyuus6nu7miaq,0,Estacionamiento Horas,Service,1,2580,2580
+txn_kh1opcll0sktamtwy24m,0,Kuchen,Bakery,3,2500,7500
+txn_i1jtbf0xqufg6t9g9u9ge,0,Viaje UberX,Service,1,5190,5190
+txn_51eewoxq6pwnic2vy8i8u,0,Nachos,Snacks,3,5060,15180
+txn_51eewoxq6pwnic2vy8i8u,1,Entrada 3D,Service,1,9080,9080
+txn_apldd9ijv6031q5z5y4oi6,0,Chuleta de Cerdo Kg,Meat & Seafood,2,6350,12700
+txn_apldd9ijv6031q5z5y4oi6,1,Esponja Pack 3,Cleaning Supplies,1,1010,1010
+txn_apldd9ijv6031q5z5y4oi6,2,Papa Kg,Produce,2,1000,2000
+txn_apldd9ijv6031q5z5y4oi6,3,Merluza Filete Kg,Meat & Seafood,1,7210,7210
+txn_apldd9ijv6031q5z5y4oi6,4,Queso Chanco 200g,Dairy & Eggs,1,3120,3120
+txn_apldd9ijv6031q5z5y4oi6,5,Cloro 1L,Cleaning Supplies,3,1250,3750
+txn_apldd9ijv6031q5z5y4oi6,6,Harina 1Kg,Pantry,2,1290,2580
+txn_apldd9ijv6031q5z5y4oi6,7,Sal 1Kg,Pantry,3,610,1830
+txn_apldd9ijv6031q5z5y4oi6,8,Huevos 15u,Dairy & Eggs,2,4290,8580
+txn_apldd9ijv6031q5z5y4oi6,9,Crema 200ml,Dairy & Eggs,1,2270,2270
+txn_apldd9ijv6031q5z5y4oi6,10,Hallulla Pack 6,Bakery,2,1530,3060
+txn_apldd9ijv6031q5z5y4oi6,11,Pepino Unidad,Produce,1,550,550
+txn_apldd9ijv6031q5z5y4oi6,12,Choclo Unidad,Produce,2,820,1640
+txn_apldd9ijv6031q5z5y4oi6,13,Azúcar 1Kg,Pantry,2,1320,2640
+txn_vxjlx3n45jka4ocvqvi7kt,0,Estacionamiento Horas,Service,1,6070,6070
+txn_127ue4w1f6oafcppqxje05,0,Estacionamiento Horas,Service,1,5150,5150
+txn_hj66w8dctdm7a2o7efw9xj,0,Telefonía Fija,Service,3,11100,33300
+txn_zfoz9r8d7wtoe1vs7qspb,0,Arena Gato 10L,Pet Supplies,2,14020,28040
+txn_zfoz9r8d7wtoe1vs7qspb,1,Antipulgas,Pet Supplies,2,22690,45380
+txn_7uqqhn2y2f4exf971gagjh,0,Magnesio 60u,Supplements,2,11440,22880
+txn_u8wjm2zrj986p2g00gs16l,0,Carga Bip!,Service,1,5500,5500
+txn_ymvgy6b33ia7xn2s2mykbh,0,Crema Hidratante,Personal Care,2,8190,16380
+txn_ymvgy6b33ia7xn2s2mykbh,1,Desodorante,Personal Care,2,5100,10200
+txn_xcclvjhkmpfpx1xlrt6g8,0,Pizza Familiar 4 Quesos,Pantry,1,13150,13150
+txn_xcclvjhkmpfpx1xlrt6g8,1,Bebida 2L,Beverages,1,3140,3140
+txn_xcclvjhkmpfpx1xlrt6g8,2,Pizza Mediana BBQ,Pantry,1,9470,9470
+txn_sw59o1jm1ivre2lvvcx6s,0,Plan Móvil,Service,1,21130,21130
+txn_mz9pd0bf5g9brao0evod1v,0,Viaje Cabify Lite,Service,1,7440,7440
+txn_1is43yk2xa9ky00b1llev,0,Bencina 93 Litros,Automotive,36,1130,40680
+txn_kzlhgkemfl2j2v717dkt,0,Pañales Pack,Baby Products,1,14200,14200
+txn_kzlhgkemfl2j2v717dkt,1,Loratadina 10mg 30u,Pharmacy,1,4750,4750
+txn_kzlhgkemfl2j2v717dkt,2,Preservativos 12u,Personal Care,3,9220,27660
+txn_1575jxpw3n8kvcx5fzcdns,0,Snack Tienda,Snacks,1,1680,1680
+txn_1575jxpw3n8kvcx5fzcdns,1,Lavado Auto,Service,1,6680,6680
+txn_1575jxpw3n8kvcx5fzcdns,2,Bencina 93 Litros,Automotive,21,1150,24150
+txn_1575jxpw3n8kvcx5fzcdns,3,Bencina 95 Litros,Automotive,35,1210,42350
+txn_lx95nsjo6rs6ydq6fu0c,0,Carga Bip!,Service,1,7640,7640
+txn_x3u4bgs9kfdd6owvqwdwcu,0,Pasta Dental,Personal Care,1,4790,4790
+txn_x3u4bgs9kfdd6owvqwdwcu,1,Crema Hidratante,Personal Care,2,12960,25920
+txn_exboreamil81jsevzqnppr,0,Salmón Filete Kg,Meat & Seafood,3,16950,50850
+txn_exboreamil81jsevzqnppr,1,Papel Higiénico 12u,Household,2,6220,12440
+txn_exboreamil81jsevzqnppr,2,Manzana Royal Kg,Produce,2,2400,4800
+txn_exboreamil81jsevzqnppr,3,Café Molido 250g,Beverages,3,4770,14310
+txn_exboreamil81jsevzqnppr,4,Pechuga de Pollo Kg,Meat & Seafood,2,6050,12100
+txn_ptwpertyno8jnl7ivjv9b,0,Limón Kg,Produce,3,2190,6570
+txn_ptwpertyno8jnl7ivjv9b,1,Reineta Filete Kg,Meat & Seafood,1,12970,12970
+txn_8ll3mwjqksq6m2q0okt7a,0,McFlurry,Snacks,2,2860,5720
+txn_8ll3mwjqksq6m2q0okt7a,1,McNuggets 10,Pantry,3,5080,15240
+txn_m03gmadk3fo6fql171nb,0,Snack Tienda,Snacks,1,2330,2330
+txn_m03gmadk3fo6fql171nb,1,Agua Botella,Beverages,1,1050,1050
+txn_m03gmadk3fo6fql171nb,2,Lavado Auto,Service,2,7330,14660
+txn_5b2he513if7gofkxivqdcl,0,Nachos,Snacks,2,5330,10660
+txn_ggbyppsjeb7h7iz759fbf,0,Cerveza Pack 6,Alcohol,3,8430,25290
+txn_ggbyppsjeb7h7iz759fbf,1,Helado 1L,Frozen Foods,1,6100,6100
+txn_3y3k6uk15jx5yp0unq64tn,0,Snack Tienda,Snacks,3,1520,4560
+txn_3y3k6uk15jx5yp0unq64tn,1,Agua Botella,Beverages,2,1190,2380
+txn_3y3k6uk15jx5yp0unq64tn,2,Lavado Auto,Service,3,9740,29220
+txn_axdw3tzfbbibrk0usia75v,0,Carga Bip!,Service,1,6810,6810
+txn_brqis785cbhwj4wwg19lap,0,Detergente Líquido 3L,Cleaning Supplies,3,8010,24030
+txn_brqis785cbhwj4wwg19lap,1,Fideos 400g,Pantry,2,970,1940
+txn_brqis785cbhwj4wwg19lap,2,Aceite Vegetal 1L,Pantry,1,3430,3430
+txn_brqis785cbhwj4wwg19lap,3,Arroz Grado 1 Kg,Pantry,1,1670,1670
+txn_brqis785cbhwj4wwg19lap,4,Pollo Entero Kg,Meat & Seafood,2,4080,8160
+txn_brqis785cbhwj4wwg19lap,5,Cerveza Pack 6,Alcohol,2,8860,17720
+txn_brqis785cbhwj4wwg19lap,6,Leche Entera 1L,Dairy & Eggs,2,1610,3220
+txn_brqis785cbhwj4wwg19lap,7,Papel Higiénico 12u,Household,1,7260,7260
+txn_brqis785cbhwj4wwg19lap,8,Tomate Kg,Produce,3,2390,7170
+txn_lhwlojkruhzpvhcrmydh,0,Jamón Cocido 200g,Meat & Seafood,2,3950,7900
+txn_lhwlojkruhzpvhcrmydh,1,Cebolla Kg,Produce,1,1460,1460
+txn_lhwlojkruhzpvhcrmydh,2,Zanahoria Kg,Produce,1,1200,1200
+txn_lhwlojkruhzpvhcrmydh,3,Reineta Filete Kg,Meat & Seafood,1,12740,12740
+txn_lhwlojkruhzpvhcrmydh,4,Naranja Kg,Produce,3,2200,6600
+txn_lhwlojkruhzpvhcrmydh,5,Servilletas 100u,Household,3,1420,4260
+txn_lhwlojkruhzpvhcrmydh,6,Pan de Molde Blanco,Bakery,3,2120,6360
+txn_lhwlojkruhzpvhcrmydh,7,Lavaloza 750ml,Cleaning Supplies,2,2440,4880
+txn_lhwlojkruhzpvhcrmydh,8,Aceite Maravilla 1L,Pantry,3,2320,6960
+txn_lhwlojkruhzpvhcrmydh,9,Leche Descremada 1L,Dairy & Eggs,3,1470,4410
+txn_lhwlojkruhzpvhcrmydh,10,Té Caja 100u,Beverages,1,2930,2930
+txn_jtlttn4q23j74sluwnth,0,Plan Salud Mensual,Service,1,137710,137710
+txn_er3uoq2evqqyk25ii4kt7,0,Pepino Unidad,Produce,3,770,2310
+txn_er3uoq2evqqyk25ii4kt7,1,Azúcar 1Kg,Pantry,2,1340,2680
+txn_er3uoq2evqqyk25ii4kt7,2,Chuleta de Cerdo Kg,Meat & Seafood,2,6510,13020
+txn_er3uoq2evqqyk25ii4kt7,3,Merluza Filete Kg,Meat & Seafood,3,7780,23340
+txn_er3uoq2evqqyk25ii4kt7,4,Hallulla Pack 6,Bakery,2,1840,3680
+txn_er3uoq2evqqyk25ii4kt7,5,Cloro 1L,Cleaning Supplies,1,1320,1320
+txn_er3uoq2evqqyk25ii4kt7,6,Longaniza Kg,Meat & Seafood,2,6200,12400
+txn_qegzv3g3a5kjd7n2uqu36m,0,Carga Bip!,Service,1,5540,5540
+txn_279kncniq94bqdbtqxkvg8,0,Viaje Cabify,Service,1,17620,17620
+txn_7swya01r2ow3cb30cilc,0,Agua Potable Mes,Service,1,15540,15540
+txn_livhv6bd738xr986bwc9c,0,Empanada,Bakery,2,2360,4720
+txn_2n70jjm7p7jwb5lu1xt2b,0,Plátano Kg,Produce,1,1330,1330
+txn_2n70jjm7p7jwb5lu1xt2b,1,Pollo Entero Kg,Meat & Seafood,2,3750,7500
+txn_2n70jjm7p7jwb5lu1xt2b,2,Pechuga de Pollo Kg,Meat & Seafood,2,7180,14360
+txn_2n70jjm7p7jwb5lu1xt2b,3,Carne Molida Kg,Meat & Seafood,2,9090,18180
+txn_2n70jjm7p7jwb5lu1xt2b,4,Manzana Royal Kg,Produce,2,2570,5140
+txn_2n70jjm7p7jwb5lu1xt2b,5,Vino Tinto 750ml,Alcohol,2,11190,22380
+txn_2n70jjm7p7jwb5lu1xt2b,6,Coca Cola 3L,Beverages,1,3670,3670
+txn_2n70jjm7p7jwb5lu1xt2b,7,Salmón Filete Kg,Meat & Seafood,1,19180,19180
+txn_ivcujo8qqaa9lvc1hd62,0,Viaje Cabify Lite,Service,1,10500,10500
+txn_pdo6501bnm0palzq77doel,0,Pescado Fresco Kg,Meat & Seafood,1,7280,7280
+txn_pdo6501bnm0palzq77doel,1,Verduras Surtidas Kg,Produce,3,1750,5250
+txn_pdo6501bnm0palzq77doel,2,Huevos Campo 30u,Dairy & Eggs,3,6590,19770
+txn_bacsg9dfbdqfiq1fd7rm46,0,Viaje Cabify Lite,Service,3,5020,15060
+txn_g6xr3f7v2g4c3ttzfmippg,0,Quinoa 500g,Pantry,2,4340,8680
+txn_g6xr3f7v2g4c3ttzfmippg,1,Aceite Oliva 500ml,Pantry,3,8230,24690
+txn_g6xr3f7v2g4c3ttzfmippg,2,Pan Pita Pack 8,Bakery,2,2670,5340
+txn_g6xr3f7v2g4c3ttzfmippg,3,Camarones Kg,Meat & Seafood,3,16480,49440
+txn_ta88o5r60urb7mh12oywa7,0,Huevos 6u,Dairy & Eggs,3,2320,6960
+txn_ta88o5r60urb7mh12oywa7,1,Ajo Cabeza,Produce,3,470,1410
+txn_ta88o5r60urb7mh12oywa7,2,Chorizo Parrillero Kg,Meat & Seafood,2,6530,13060
+txn_ta88o5r60urb7mh12oywa7,3,Ketchup 500g,Pantry,3,2360,7080
+txn_ta88o5r60urb7mh12oywa7,4,Costillar Cerdo Kg,Meat & Seafood,3,4540,13620
+txn_1mgamu6imrme8wnlygw1c,0,Empanada,Bakery,1,2210,2210
+txn_56v55z4k773p3dr2bv8tp8,0,Palitos de Ajo,Pantry,1,5480,5480
+txn_56v55z4k773p3dr2bv8tp8,1,Bebida 1.5L,Beverages,1,2590,2590
+txn_56v55z4k773p3dr2bv8tp8,2,Pizza Mediana Pepperoni,Pantry,2,10920,21840
+txn_ohrp57zbfnj3vhyeuj0s87,0,Estacionamiento Horas,Service,1,4980,4980
+txn_r593rmzx4y6rh5nkmxuos,0,Viaje Uber Comfort,Service,1,24020,24020
+txn_9i609mkulsjdp5eufecija,0,Azúcar 1Kg,Pantry,2,1640,3280
+txn_9i609mkulsjdp5eufecija,1,Esponja Pack 3,Cleaning Supplies,1,1150,1150
+txn_9i609mkulsjdp5eufecija,2,Merluza Filete Kg,Meat & Seafood,1,9620,9620
+txn_9i609mkulsjdp5eufecija,3,Queso Chanco 200g,Dairy & Eggs,1,2650,2650
+txn_9i609mkulsjdp5eufecija,4,Leche Semidescremada 1L,Dairy & Eggs,3,1530,4590
+txn_9i609mkulsjdp5eufecija,5,Harina 1Kg,Pantry,3,1140,3420
+txn_9i609mkulsjdp5eufecija,6,Chuleta de Cerdo Kg,Meat & Seafood,1,6730,6730
+txn_9i609mkulsjdp5eufecija,7,Sal 1Kg,Pantry,3,740,2220
+txn_9i609mkulsjdp5eufecija,8,Pepino Unidad,Produce,3,710,2130
+txn_9i609mkulsjdp5eufecija,9,Longaniza Kg,Meat & Seafood,2,7070,14140
+txn_9i609mkulsjdp5eufecija,10,Papa Kg,Produce,2,1140,2280
+txn_9i609mkulsjdp5eufecija,11,Choclo Unidad,Produce,2,770,1540
+txn_9i609mkulsjdp5eufecija,12,Hallulla Pack 6,Bakery,2,1340,2680
+txn_yel3eauvxmtel3say8l5uv,0,Bebida 500ml,Beverages,2,1960,3920
+txn_yel3eauvxmtel3say8l5uv,1,Papas Fritas Grande,Pantry,2,3980,7960
+txn_r7ikyz3dhes2ohvgw0zhlv,0,Frutas Surtidas Kg,Produce,2,3360,6720
+txn_r7ikyz3dhes2ohvgw0zhlv,1,Huevos Campo 30u,Dairy & Eggs,3,7180,21540
+txn_ge5fkp4tprglzkj1qd9znj,0,Tierra de Hoja,Garden,3,8030,24090
+txn_1zhzg1raa8w1q09o0elj9c,0,Viaje Uber Comfort,Service,1,6420,6420
+txn_0ee0pxi9hkaaft0wixoon98,0,"Smart TV 50""",Electronics,1,322020,322020
+txn_9q6bhtyiu978s8uafrpol,0,Carne Molida Kg,Meat & Seafood,3,7260,21780
+txn_9q6bhtyiu978s8uafrpol,1,Yogurt Pack 4,Dairy & Eggs,3,2750,8250
+txn_9q6bhtyiu978s8uafrpol,2,Vino Tinto 750ml,Alcohol,2,9350,18700
+txn_9q6bhtyiu978s8uafrpol,3,Salmón Filete Kg,Meat & Seafood,1,19720,19720
+txn_d7ezl42b47axk6xmbqtjwr,0,Bencina 93 Litros,Automotive,39,1170,45630
+txn_ixjdy5r3suab826on29fvl,0,Carga Bip!,Service,1,6110,6110
+txn_9v5fhx5r80dkhtdxef3x3p,0,Bencina 93 Litros,Automotive,47,1110,52170
+txn_89pvep3j37x3r3ds2lsii,0,Legumbres 1Kg,Pantry,1,2620,2620
+txn_89pvep3j37x3r3ds2lsii,1,Ketchup 500g,Pantry,1,2180,2180
+txn_89pvep3j37x3r3ds2lsii,2,Leche Cultivada 1L,Dairy & Eggs,2,1500,3000
+txn_89pvep3j37x3r3ds2lsii,3,Pimentón Kg,Produce,2,2010,4020
+txn_jxm86vprs3r2leo7lf0pjt,0,Snack Tienda,Snacks,2,1790,3580
+txn_jxm86vprs3r2leo7lf0pjt,1,Lavado Auto,Service,1,6000,6000
+txn_jxm86vprs3r2leo7lf0pjt,2,Bencina 93 Litros,Automotive,29,1150,33350
+txn_jxm86vprs3r2leo7lf0pjt,3,Agua Botella,Beverages,1,1190,1190
+txn_vo4hxxzxfxqtqc2euhiim,0,Bencina 93 Litros,Automotive,33,1220,40260
+txn_kfio209x31kbldv7gsc99,0,Sake 300ml,Alcohol,2,11510,23020
+txn_t82s1f8s8t7uelrplomac,0,Cloro 1L,Cleaning Supplies,3,1340,4020
+txn_t82s1f8s8t7uelrplomac,1,Pepino Unidad,Produce,3,780,2340
+txn_t82s1f8s8t7uelrplomac,2,Sal 1Kg,Pantry,1,510,510
+txn_t82s1f8s8t7uelrplomac,3,Choclo Unidad,Produce,2,790,1580
+txn_t82s1f8s8t7uelrplomac,4,Merluza Filete Kg,Meat & Seafood,2,7350,14700
+txn_c0omwpfmp17kjyosgdq1hk,0,Aceite Motor,Automotive,1,13230,13230
+txn_02kbyf5s5rvhhjdxz6m74n,0,Espárragos Atado,Produce,3,4370,13110
+txn_02kbyf5s5rvhhjdxz6m74n,1,Quinoa 500g,Pantry,3,4200,12600
+txn_5yuh3rj67uux2ncy85w9gc,0,Harina 1Kg,Pantry,1,1140,1140
+txn_5yuh3rj67uux2ncy85w9gc,1,Esponja Pack 3,Cleaning Supplies,1,1680,1680
+txn_5yuh3rj67uux2ncy85w9gc,2,Hallulla Pack 6,Bakery,3,1500,4500
+txn_5yuh3rj67uux2ncy85w9gc,3,Choclo Unidad,Produce,1,750,750
+txn_5yuh3rj67uux2ncy85w9gc,4,Huevos 15u,Dairy & Eggs,2,4980,9960
+txn_5yuh3rj67uux2ncy85w9gc,5,Longaniza Kg,Meat & Seafood,3,7560,22680
+txn_xfpviyblpu5jfo5djedab,0,Naranja Kg,Produce,3,1740,5220
+txn_xfpviyblpu5jfo5djedab,1,Jamón Cocido 200g,Meat & Seafood,2,3500,7000
+txn_xfpviyblpu5jfo5djedab,2,Cebolla Kg,Produce,1,1270,1270
+txn_xfpviyblpu5jfo5djedab,3,Jugo en Polvo Pack 8,Beverages,1,3400,3400
+txn_xfpviyblpu5jfo5djedab,4,Pollo Trutro Kg,Meat & Seafood,1,3100,3100
+txn_xfpviyblpu5jfo5djedab,5,Aceite Maravilla 1L,Pantry,1,2950,2950
+txn_xfpviyblpu5jfo5djedab,6,Limón Kg,Produce,1,2070,2070
+txn_xfpviyblpu5jfo5djedab,7,Tallarines 500g,Pantry,2,920,1840
+txn_xfpviyblpu5jfo5djedab,8,Arroz Grado 2 Kg,Pantry,1,1570,1570
+txn_xfpviyblpu5jfo5djedab,9,Huevos 30u,Dairy & Eggs,1,7490,7490
+txn_xfpviyblpu5jfo5djedab,10,Mantequilla 250g,Dairy & Eggs,1,3910,3910
+txn_xfpviyblpu5jfo5djedab,11,Zanahoria Kg,Produce,1,860,860
+txn_xfpviyblpu5jfo5djedab,12,Asado Carnicero Kg,Meat & Seafood,1,8180,8180
+txn_xfpviyblpu5jfo5djedab,13,Lavaloza 750ml,Cleaning Supplies,1,2410,2410
+txn_xfpviyblpu5jfo5djedab,14,Té Caja 100u,Beverages,2,3190,6380
+txn_xfpviyblpu5jfo5djedab,15,Servilletas 100u,Household,2,1780,3560
+txn_xfpviyblpu5jfo5djedab,16,Leche Descremada 1L,Dairy & Eggs,2,1250,2500
+txn_xfpviyblpu5jfo5djedab,17,Reineta Filete Kg,Meat & Seafood,2,11010,22020
+txn_behpmnu0a4z6snte6u49c,0,Bencina 95 Litros,Automotive,1,1190,1190
+txn_5gse3w1h1v7bg0on2xrzm,0,Kuchen,Bakery,1,2300,2300
+txn_5gse3w1h1v7bg0on2xrzm,1,Pan Fresco Kg,Bakery,3,1540,4620
+txn_rdw6qspw0lnx0tuapnm5mn,0,Helado 1L,Frozen Foods,2,5810,11620
+txn_rdw6qspw0lnx0tuapnm5mn,1,Tomate Kg,Produce,1,1630,1630
+txn_rdw6qspw0lnx0tuapnm5mn,2,Pizza Congelada,Frozen Foods,3,5840,17520
+txn_rdw6qspw0lnx0tuapnm5mn,3,Café Molido 250g,Beverages,2,5960,11920
+txn_rdw6qspw0lnx0tuapnm5mn,4,Manzana Royal Kg,Produce,3,2400,7200
+txn_rdw6qspw0lnx0tuapnm5mn,5,Salmón Filete Kg,Meat & Seafood,2,15520,31040
+txn_rdw6qspw0lnx0tuapnm5mn,6,Carne Molida Kg,Meat & Seafood,3,8740,26220
+txn_quxm6hom0gcfzvzbxn6crj,0,Pimentón Kg,Produce,2,2650,5300
+txn_quxm6hom0gcfzvzbxn6crj,1,Atún Lata 170g,Pantry,1,2860,2860
+txn_quxm6hom0gcfzvzbxn6crj,2,Mayonesa 500g,Pantry,3,2520,7560
+txn_quxm6hom0gcfzvzbxn6crj,3,Leche Cultivada 1L,Dairy & Eggs,3,1440,4320
+txn_quxm6hom0gcfzvzbxn6crj,4,Marraqueta Kg,Bakery,2,1970,3940
+txn_quxm6hom0gcfzvzbxn6crj,5,Ketchup 500g,Pantry,3,2670,8010
+txn_phboat0p9q6kvrqcxskk7,0,Bencina 95 Litros,Automotive,22,1190,26180
+txn_phboat0p9q6kvrqcxskk7,1,Lavado Auto,Service,2,8440,16880
+txn_phboat0p9q6kvrqcxskk7,2,Agua Botella,Beverages,2,1300,2600
+txn_phboat0p9q6kvrqcxskk7,3,Snack Tienda,Snacks,1,2520,2520
+txn_8bl4p1bdt164lloav90g24,0,Huevos Campo 30u,Dairy & Eggs,1,7620,7620
+txn_8bl4p1bdt164lloav90g24,1,Verduras Surtidas Kg,Produce,3,2300,6900
+txn_z6umib3mrbm0wkrlaie3,0,Tomate Kg,Produce,2,1770,3540
+txn_z6umib3mrbm0wkrlaie3,1,Palta Hass Kg,Produce,1,5610,5610
+txn_z6umib3mrbm0wkrlaie3,2,Café Molido 250g,Beverages,1,5580,5580
+txn_z6umib3mrbm0wkrlaie3,3,Fideos 400g,Pantry,2,1250,2500
+txn_z6umib3mrbm0wkrlaie3,4,Huevos Docena,Dairy & Eggs,3,4010,12030
+txn_z6umib3mrbm0wkrlaie3,5,Pan Molde Integral,Bakery,2,2010,4020
+txn_z6umib3mrbm0wkrlaie3,6,Carne Molida Kg,Meat & Seafood,1,7400,7400
+txn_z6umib3mrbm0wkrlaie3,7,Pollo Entero Kg,Meat & Seafood,2,3340,6680
+txn_z6umib3mrbm0wkrlaie3,8,Papel Higiénico 12u,Household,2,7920,15840
+txn_iu7chbzte6mf8nky739t,0,Leche Semidescremada 1L,Dairy & Eggs,3,1420,4260
+txn_iu7chbzte6mf8nky739t,1,Choclo Unidad,Produce,3,910,2730
+txn_iu7chbzte6mf8nky739t,2,Hallulla Pack 6,Bakery,3,1540,4620
+txn_iu7chbzte6mf8nky739t,3,Queso Chanco 200g,Dairy & Eggs,3,2890,8670
+txn_0k6o66fu11tbi3amq525wk9,0,Bebida 2L,Beverages,1,3270,3270
+txn_x428a7wk3gezq2q8ygou6k,0,Ajo Cabeza,Produce,2,430,860
+txn_x428a7wk3gezq2q8ygou6k,1,Atún Lata 170g,Pantry,1,2970,2970
+txn_x428a7wk3gezq2q8ygou6k,2,Cilantro Atado,Produce,1,580,580
+txn_x428a7wk3gezq2q8ygou6k,3,Pimentón Kg,Produce,3,2010,6030
+txn_x428a7wk3gezq2q8ygou6k,4,Costillar Cerdo Kg,Meat & Seafood,2,5060,10120
+txn_x428a7wk3gezq2q8ygou6k,5,Huevos 6u,Dairy & Eggs,2,2460,4920
+txn_x428a7wk3gezq2q8ygou6k,6,Marraqueta Kg,Bakery,3,1610,4830
+txn_x428a7wk3gezq2q8ygou6k,7,Chorizo Parrillero Kg,Meat & Seafood,3,7070,21210
+txn_pta69i276ejuttkynjomym,0,TV Cable,Service,1,21400,21400
+txn_lhkbbq8oceqjudjkun034a,0,Estacionamiento Horas,Service,1,2220,2220
+txn_aelfqhw4dffvxeu9t53pjl,0,Suscripción Familiar,Service,1,8490,8490
+txn_0vf94re4mp7my51londt7,0,Bebida 1.5L,Beverages,1,2540,2540
+txn_0vf94re4mp7my51londt7,1,Palitos de Ajo,Pantry,1,5420,5420
+txn_0vf94re4mp7my51londt7,2,Pizza Grande Hawaiana,Pantry,1,17050,17050
+txn_eex7ykpe1eiehx0lu51lq6,0,Recarga Prepago,Service,2,14800,29600
+txn_jen2wybugyekfuzzpgfho,0,Leche Entera 6 Pack,Dairy & Eggs,2,8800,17600
+txn_jen2wybugyekfuzzpgfho,1,Queso Parmesano 200g,Dairy & Eggs,1,5250,5250
+txn_jen2wybugyekfuzzpgfho,2,Quinoa 500g,Pantry,3,3220,9660
+txn_jen2wybugyekfuzzpgfho,3,Champiñones 200g,Produce,2,2000,4000
+txn_jen2wybugyekfuzzpgfho,4,Aceite Oliva 500ml,Pantry,3,7260,21780
+txn_jen2wybugyekfuzzpgfho,5,Pan Pita Pack 8,Bakery,1,2380,2380
+txn_snd7807if1z89pnio2z6,0,Pimentón Kg,Produce,3,2680,8040
+txn_snd7807if1z89pnio2z6,1,Atún Lata 170g,Pantry,2,2780,5560
+txn_snd7807if1z89pnio2z6,2,Legumbres 1Kg,Pantry,1,2270,2270
+txn_snd7807if1z89pnio2z6,3,Huevos 6u,Dairy & Eggs,1,2470,2470
+txn_snd7807if1z89pnio2z6,4,Marraqueta Kg,Bakery,2,1700,3400
+txn_snd7807if1z89pnio2z6,5,Chorizo Parrillero Kg,Meat & Seafood,2,5570,11140
+txn_snd7807if1z89pnio2z6,6,Ketchup 500g,Pantry,3,2250,6750
+txn_snd7807if1z89pnio2z6,7,Costillar Cerdo Kg,Meat & Seafood,1,5430,5430
+txn_0jc4b7fzsssdeuyy1lmjwt,0,Camiseta Básica,Clothing,1,9350,9350
+txn_0jc4b7fzsssdeuyy1lmjwt,1,Vestido Verano,Clothing,1,34870,34870
+txn_0jc4b7fzsssdeuyy1lmjwt,2,Short,Clothing,2,18070,36140
+txn_6aiuq4x4g4rvrql5c6c7ac,0,Bencina 93 Litros,Automotive,30,1090,32700
+txn_6t8jdozpad7vykfq5wuskh,0,Verduras Surtidas Kg,Produce,2,2070,4140
+txn_6t8jdozpad7vykfq5wuskh,1,Huevos Campo 30u,Dairy & Eggs,2,6730,13460
+txn_5u37wrxivcbvg8msh1yjwd,0,Pepino Unidad,Produce,3,870,2610
+txn_5u37wrxivcbvg8msh1yjwd,1,Hallulla Pack 6,Bakery,2,1760,3520
+txn_5u37wrxivcbvg8msh1yjwd,2,Crema 200ml,Dairy & Eggs,1,1580,1580
+txn_5u37wrxivcbvg8msh1yjwd,3,Leche Semidescremada 1L,Dairy & Eggs,1,1640,1640
+txn_5u37wrxivcbvg8msh1yjwd,4,Esponja Pack 3,Cleaning Supplies,1,1140,1140
+txn_5u37wrxivcbvg8msh1yjwd,5,Harina 1Kg,Pantry,2,1100,2200
+txn_5u37wrxivcbvg8msh1yjwd,6,Chuleta de Cerdo Kg,Meat & Seafood,1,5080,5080
+txn_5u37wrxivcbvg8msh1yjwd,7,Queso Chanco 200g,Dairy & Eggs,2,3010,6020
+txn_1lbc17q7yhb4zcp1ovafet,0,Servilletas 100u,Household,2,1960,3920
+txn_1lbc17q7yhb4zcp1ovafet,1,Zanahoria Kg,Produce,3,980,2940
+txn_1lbc17q7yhb4zcp1ovafet,2,Pollo Trutro Kg,Meat & Seafood,3,3130,9390
+txn_1lbc17q7yhb4zcp1ovafet,3,Tallarines 500g,Pantry,3,1160,3480
+txn_1lbc17q7yhb4zcp1ovafet,4,Jugo en Polvo Pack 8,Beverages,3,4410,13230
+txn_68ao4l728krreuuoduupu,0,Helado Cono,Snacks,1,710,710
+txn_68ao4l728krreuuoduupu,1,McPollo,Pantry,1,5020,5020
+txn_rbfc84q9xkgv8s5i1f0yj,0,Papas Fritas Grande,Pantry,3,3960,11880
+txn_1qyjn8rbto5c4vspglzrj,0,Viaje Uber Comfort,Service,2,6290,12580
+txn_ux35ljlq9pih2reoh9jtmr,0,Pan Fresco Kg,Bakery,3,2110,6330
+txn_7jn12pvh4yph9abbr0wqm6,0,Estacionamiento Horas,Service,1,7540,7540
+txn_09nyl7h4967dzsblp75rics,0,Cilantro Atado,Produce,3,640,1920
+txn_09nyl7h4967dzsblp75rics,1,Legumbres 1Kg,Pantry,1,2600,2600
+txn_09nyl7h4967dzsblp75rics,2,Mayonesa 500g,Pantry,2,2880,5760
+txn_09nyl7h4967dzsblp75rics,3,Chorizo Parrillero Kg,Meat & Seafood,3,6550,19650
+txn_6zbb0urq6nvmdoq090a2o,0,Papas Fritas Grande,Pantry,2,3960,7920
+txn_6zbb0urq6nvmdoq090a2o,1,Completo Italiano,Pantry,1,3500,3500
+txn_90g3wel3q95n27cy85rab8,0,Viaje Cabify,Service,1,16210,16210
+txn_up5w7g2mypvib12srrei,0,Servilletas 100u,Household,1,1600,1600
+txn_up5w7g2mypvib12srrei,1,Naranja Kg,Produce,1,2300,2300
+txn_up5w7g2mypvib12srrei,2,Jugo en Polvo Pack 8,Beverages,1,3010,3010
+txn_up5w7g2mypvib12srrei,3,Asado Carnicero Kg,Meat & Seafood,2,8030,16060
+txn_up5w7g2mypvib12srrei,4,Zanahoria Kg,Produce,2,1240,2480
+txn_2q5mda00tqilbrhgfye7hi,0,Azúcar 1Kg,Pantry,1,1460,1460
+txn_2q5mda00tqilbrhgfye7hi,1,Cloro 1L,Cleaning Supplies,2,1220,2440
+txn_2q5mda00tqilbrhgfye7hi,2,Sal 1Kg,Pantry,1,790,790
+txn_2q5mda00tqilbrhgfye7hi,3,Choclo Unidad,Produce,3,820,2460
+txn_2q5mda00tqilbrhgfye7hi,4,Chuleta de Cerdo Kg,Meat & Seafood,3,5020,15060
+txn_2q5mda00tqilbrhgfye7hi,5,Longaniza Kg,Meat & Seafood,2,6700,13400
+txn_2q5mda00tqilbrhgfye7hi,6,Queso Chanco 200g,Dairy & Eggs,3,3380,10140
+txn_u6fypk2nunlzy35c4uutd,0,Completo Italiano,Pantry,3,4100,12300
+txn_u6fypk2nunlzy35c4uutd,1,Papas Fritas Grande,Pantry,2,3880,7760
+txn_bvw3en2dvh9xd43ft7o2,0,Vino Copa,Alcohol,2,6630,13260
+txn_bvw3en2dvh9xd43ft7o2,1,Pisco Sour,Alcohol,3,6000,18000
+txn_bvw3en2dvh9xd43ft7o2,2,Cazuela de Ave,Pantry,1,12360,12360
+txn_bvw3en2dvh9xd43ft7o2,3,Postre del Día,Snacks,1,6930,6930
+txn_bvw3en2dvh9xd43ft7o2,4,Pastel de Choclo,Pantry,1,15560,15560
+txn_0dethu9ap1zxnce2helv9,0,Viaje UberX,Service,1,5220,5220
+txn_0dethu9ap1zxnce2helv9,1,Viaje Uber Comfort,Service,3,5690,17070
+txn_4k8k6iqhvnvrx9765yrtf,0,Viaje UberX,Service,1,11530,11530
+txn_05srr03uo6lvg99lxy5ecyg,0,Merluza Filete Kg,Meat & Seafood,3,7040,21120
+txn_05srr03uo6lvg99lxy5ecyg,1,Choclo Unidad,Produce,2,710,1420
+txn_05srr03uo6lvg99lxy5ecyg,2,Sal 1Kg,Pantry,2,720,1440
+txn_05srr03uo6lvg99lxy5ecyg,3,Esponja Pack 3,Cleaning Supplies,2,1080,2160
+txn_05srr03uo6lvg99lxy5ecyg,4,Longaniza Kg,Meat & Seafood,2,7190,14380
+txn_uerfccqgdfak9a5qxqqg4,0,Frappuccino,Beverages,1,5430,5430
+txn_uerfccqgdfak9a5qxqqg4,1,Muffin Arándanos,Bakery,1,3210,3210
+txn_uerfccqgdfak9a5qxqqg4,2,Croissant,Bakery,1,2710,2710
+txn_oc14lcd029eunmj1m7l6e,0,Estacionamiento Horas,Service,1,3680,3680
+txn_nq6cy2b0cv9g5l8c5p36i,0,Carga Bip!,Service,1,3050,3050
+txn_qyq367gf3b8fv749rdzhg,0,Empanada,Bakery,1,2440,2440
+txn_qyq367gf3b8fv749rdzhg,1,Kuchen,Bakery,1,2280,2280
+txn_org6ajwftgb286clf9wm41,0,Macetero Grande,Garden,2,29690,59380
+txn_0t0w3ol2cpcoo2ahpkquga,0,Huevos 6u,Dairy & Eggs,3,2310,6930
+txn_0t0w3ol2cpcoo2ahpkquga,1,Chorizo Parrillero Kg,Meat & Seafood,1,6920,6920
+txn_0t0w3ol2cpcoo2ahpkquga,2,Cilantro Atado,Produce,1,670,670
+txn_0t0w3ol2cpcoo2ahpkquga,3,Marraqueta Kg,Bakery,3,1490,4470
+txn_0t0w3ol2cpcoo2ahpkquga,4,Mayonesa 500g,Pantry,1,3170,3170
+txn_emnlufbpa9doacq8mloo1q,0,Snack Tienda,Snacks,1,2340,2340
+txn_emnlufbpa9doacq8mloo1q,1,Agua Botella,Beverages,1,1030,1030
+txn_emnlufbpa9doacq8mloo1q,2,Lavado Auto,Service,3,7120,21360
+txn_p866ed3izesmy2zsyq3og,0,Viaje Cabify Lite,Service,1,5740,5740
+txn_1zx7x278zi2h8djaik6qqn,0,Plan Móvil,Service,1,25400,25400
+txn_bs5409h021t25alqt343i,0,Torta Porción,Bakery,1,3260,3260
+txn_g2zj7rfdazts5cla8ffqf8,0,Viaje UberX,Service,1,5500,5500
+txn_2iq88ppwgmkr7mjo8mcj3,0,Diesel Litros,Automotive,50,1110,55500
+txn_djtyxqkcxmkl5y4kmm1ay,0,Agua Potable Mes,Service,1,28480,28480
+txn_tyt8dgrhikg35qb04enrw,0,Huevos Campo 30u,Dairy & Eggs,2,6160,12320
+txn_f9uiej3p3xnud33hto267,0,Champiñones 200g,Produce,3,2560,7680
+txn_f9uiej3p3xnud33hto267,1,Pavo Pechuga Kg,Meat & Seafood,3,9550,28650
+txn_lbfj0m0c4iycwwnnoa9w,0,Tierra de Hoja,Garden,3,5680,17040
+txn_lbfj0m0c4iycwwnnoa9w,1,Macetero Grande,Garden,2,26160,52320
+txn_avd9mbvltykfyorgmp03w5,0,Agua Potable Mes,Service,1,39850,39850
+txn_uy6e6z7rcxt1vim3gbg2n,0,Aceite Oliva 500ml,Pantry,3,7020,21060
+txn_uy6e6z7rcxt1vim3gbg2n,1,Camarones Kg,Meat & Seafood,1,14610,14610
+txn_dj7a15slyyojtfndr556zi,0,Aceite Motor,Automotive,1,12190,12190
+txn_dj7a15slyyojtfndr556zi,1,Bencina 93 Litros,Automotive,29,1160,33640
+txn_5ri2wk8i4ou2k1gq09u1tq,0,Tallarines 500g,Pantry,3,980,2940
+txn_5ri2wk8i4ou2k1gq09u1tq,1,Pollo Trutro Kg,Meat & Seafood,3,3960,11880
+txn_5ri2wk8i4ou2k1gq09u1tq,2,Leche Descremada 1L,Dairy & Eggs,3,1240,3720
+txn_5ri2wk8i4ou2k1gq09u1tq,3,Jamón Cocido 200g,Meat & Seafood,3,3770,11310
+txn_5ri2wk8i4ou2k1gq09u1tq,4,Mantequilla 250g,Dairy & Eggs,2,3310,6620
+txn_5ri2wk8i4ou2k1gq09u1tq,5,Jugo en Polvo Pack 8,Beverages,2,4470,8940
+txn_5ri2wk8i4ou2k1gq09u1tq,6,Naranja Kg,Produce,1,2440,2440
+txn_5ri2wk8i4ou2k1gq09u1tq,7,Asado Carnicero Kg,Meat & Seafood,3,9450,28350
+txn_gmuvgsbctpgn9r9f5srke9,0,Pescado Fresco Kg,Meat & Seafood,2,6130,12260
+txn_gmuvgsbctpgn9r9f5srke9,1,Huevos Campo 30u,Dairy & Eggs,2,7900,15800
+txn_p18zdp8j7gznsqbd3y9i,0,Lavaloza 750ml,Cleaning Supplies,3,2160,6480
+txn_p18zdp8j7gznsqbd3y9i,1,Aceite Maravilla 1L,Pantry,3,2940,8820
+txn_p18zdp8j7gznsqbd3y9i,2,Tallarines 500g,Pantry,3,1150,3450
+txn_p18zdp8j7gznsqbd3y9i,3,Jamón Cocido 200g,Meat & Seafood,1,3450,3450
+txn_p18zdp8j7gznsqbd3y9i,4,Té Caja 100u,Beverages,1,2520,2520
+txn_p18zdp8j7gznsqbd3y9i,5,Limón Kg,Produce,1,2980,2980
+txn_p18zdp8j7gznsqbd3y9i,6,Cebolla Kg,Produce,2,970,1940
+txn_p18zdp8j7gznsqbd3y9i,7,Asado Carnicero Kg,Meat & Seafood,2,10000,20000
+txn_j865x8doh7o09qgbfh0vdz,0,Bebida Grande,Beverages,3,3920,11760
+txn_j865x8doh7o09qgbfh0vdz,1,Combo Popcorn Grande,Snacks,1,9220,9220
+txn_nm0wsafe6dpy0l8fbv2il,0,Carga Bip!,Service,1,4990,4990
+txn_13xmcptpnbacmtjac6q0fwa,0,Cilantro Atado,Produce,3,690,2070
+txn_13xmcptpnbacmtjac6q0fwa,1,Leche Cultivada 1L,Dairy & Eggs,1,1530,1530
+txn_13xmcptpnbacmtjac6q0fwa,2,Marraqueta Kg,Bakery,1,1910,1910
+txn_13xmcptpnbacmtjac6q0fwa,3,Pimentón Kg,Produce,3,2710,8130
+txn_13xmcptpnbacmtjac6q0fwa,4,Chorizo Parrillero Kg,Meat & Seafood,3,6930,20790
+txn_13xmcptpnbacmtjac6q0fwa,5,Huevos 6u,Dairy & Eggs,3,2000,6000
+txn_aypstvguqnpxjqclst9e,0,Cappuccino Grande,Beverages,2,3840,7680
+txn_pfmddlhv549p1pdt55eb0l,0,Viaje UberX,Service,2,5330,10660
+txn_bmq0el7e1qh0l5dddi5uyc,0,Torta Porción,Bakery,1,2780,2780
+txn_vf1tyn1k1wp204m5xqx0d,0,Cappuccino Grande,Beverages,3,4130,12390
+txn_s2oh8fxw1sgq2g0y9u93k,0,Plan Premium,Service,1,12990,12990
+txn_bm4sa2l1zir97ce0hvewa,0,Queso Mantecoso Kg,Dairy & Eggs,3,10410,31230
+txn_bm4sa2l1zir97ce0hvewa,1,Palta Hass Kg,Produce,3,8730,26190
+txn_ku6q7ts7f6qzaxvhv1e7os,0,Agua Botella,Beverages,2,1270,2540
+txn_ku6q7ts7f6qzaxvhv1e7os,1,Snack Tienda,Snacks,1,1600,1600
+txn_ku6q7ts7f6qzaxvhv1e7os,2,Lavado Auto,Service,3,8370,25110
+txn_ku6q7ts7f6qzaxvhv1e7os,3,Bencina 95 Litros,Automotive,42,1190,49980
+txn_8dwv125vkk3zioibshvn8b,0,Helado Cono,Snacks,2,870,1740
+txn_8dwv125vkk3zioibshvn8b,1,McPollo,Pantry,2,5210,10420
+txn_8dwv125vkk3zioibshvn8b,2,McNuggets 10,Pantry,1,5320,5320
+txn_rn98xguij8g7hxbfeuk4,0,Plan Salud Mensual,Service,1,148880,148880
+txn_rg0e62ui0qcv3m7b01pym,0,Huevos Campo 30u,Dairy & Eggs,1,6670,6670
+txn_rg0e62ui0qcv3m7b01pym,1,Frutas Surtidas Kg,Produce,1,3080,3080
+txn_rg0e62ui0qcv3m7b01pym,2,Queso Fresco Kg,Dairy & Eggs,1,9360,9360
+txn_rg0e62ui0qcv3m7b01pym,3,Verduras Surtidas Kg,Produce,1,2410,2410
+txn_rg0e62ui0qcv3m7b01pym,4,Pescado Fresco Kg,Meat & Seafood,3,6090,18270
+txn_751myvkwjqb9gbfbk6pqs6,0,Legumbres 1Kg,Pantry,2,2400,4800
+txn_751myvkwjqb9gbfbk6pqs6,1,Ketchup 500g,Pantry,1,2880,2880
+txn_751myvkwjqb9gbfbk6pqs6,2,Huevos 6u,Dairy & Eggs,3,2460,7380
+txn_751myvkwjqb9gbfbk6pqs6,3,Pimentón Kg,Produce,3,3310,9930
+txn_obxj13nbfzqmqa88kmjlip,0,Bebida 500ml,Beverages,2,1650,3300
+txn_obxj13nbfzqmqa88kmjlip,1,Completo Italiano,Pantry,3,3660,10980
+txn_obxj13nbfzqmqa88kmjlip,2,Papas Fritas Grande,Pantry,2,3150,6300
+txn_bazddzwsy5r0hk1t33deneg,0,Plan Móvil,Service,1,20590,20590
+txn_gqnczb594bsptzuyp3v88,0,Longaniza Kg,Meat & Seafood,3,7190,21570
+txn_kqgkglpkskuz0g919ouqi,0,Bencina 95 Litros,Automotive,24,1220,29280
+txn_kqgkglpkskuz0g919ouqi,1,Snack Tienda,Snacks,2,2060,4120
+txn_rkuoxr036gc5x9qrb0at9,0,Kuchen,Bakery,2,2010,4020
+txn_rkuoxr036gc5x9qrb0at9,1,Torta Porción,Bakery,1,3970,3970
+txn_fhq7ndt1lt3kqbr2r4f5x,0,Torta Porción,Bakery,2,2600,5200
+txn_aesfavxtvhwomtfz135xp,0,Queso Parmesano 200g,Dairy & Eggs,3,6980,20940
+txn_aesfavxtvhwomtfz135xp,1,Aceite Oliva 500ml,Pantry,2,8020,16040
+txn_vsvx8qsukfqr82hdv4jkio,0,Carga Bip!,Service,1,7270,7270
+txn_ct38v30v1i4cs4ezhlldiv,0,Coca Cola 3L,Beverages,3,3770,11310
+txn_ct38v30v1i4cs4ezhlldiv,1,Vino Tinto 750ml,Alcohol,1,9780,9780
+txn_ct38v30v1i4cs4ezhlldiv,2,Fideos 400g,Pantry,1,1290,1290
+txn_ct38v30v1i4cs4ezhlldiv,3,Carne Molida Kg,Meat & Seafood,1,8310,8310
+txn_wmtcz0shzcqqjoh4zq5jai,0,Frappuccino,Beverages,2,5440,10880
+txn_4lf05mrs8dc026v5t6ir,0,Servilletas 100u,Household,1,1980,1980
+txn_4lf05mrs8dc026v5t6ir,1,Cebolla Kg,Produce,3,1050,3150
+txn_4lf05mrs8dc026v5t6ir,2,Reineta Filete Kg,Meat & Seafood,2,11560,23120
+txn_4lf05mrs8dc026v5t6ir,3,Jamón Cocido 200g,Meat & Seafood,3,3960,11880
+txn_4lf05mrs8dc026v5t6ir,4,Aceite Maravilla 1L,Pantry,2,2790,5580
+txn_4lf05mrs8dc026v5t6ir,5,Arroz Grado 2 Kg,Pantry,1,1510,1510
+txn_4lf05mrs8dc026v5t6ir,6,Leche Descremada 1L,Dairy & Eggs,1,1570,1570
+txn_4lf05mrs8dc026v5t6ir,7,Tallarines 500g,Pantry,1,1000,1000
+txn_4lf05mrs8dc026v5t6ir,8,Naranja Kg,Produce,1,1580,1580
+txn_4lf05mrs8dc026v5t6ir,9,Huevos 30u,Dairy & Eggs,3,7320,21960
+txn_4lf05mrs8dc026v5t6ir,10,Jugo en Polvo Pack 8,Beverages,2,4230,8460
+txn_ab84282onhdmr51tvnev4r,0,Cerradura,Hardware,3,18840,56520
+txn_ab84282onhdmr51tvnev4r,1,Extensión Eléctrica,Hardware,3,14850,44550
+txn_ab84282onhdmr51tvnev4r,2,Ampolleta LED Pack,Hardware,3,18430,55290
+txn_s4oebc88i542bw88pausb,0,Kuchen,Bakery,2,2340,4680
+txn_1e19udkzynd5xrnecdgrcg,0,Jamón Cocido 200g,Meat & Seafood,2,2800,5600
+txn_1e19udkzynd5xrnecdgrcg,1,Arroz Grado 2 Kg,Pantry,2,1560,3120
+txn_1e19udkzynd5xrnecdgrcg,2,Pan de Molde Blanco,Bakery,3,1890,5670
+txn_1e19udkzynd5xrnecdgrcg,3,Aceite Maravilla 1L,Pantry,2,2770,5540
+txn_1e19udkzynd5xrnecdgrcg,4,Huevos 30u,Dairy & Eggs,3,7010,21030
+txn_1e19udkzynd5xrnecdgrcg,5,Asado Carnicero Kg,Meat & Seafood,1,10630,10630
+txn_qg0npn4dg5acpduxcb0be,0,Viaje UberX,Service,2,5830,11660
+txn_t2y5br6277km8poh71egei,0,Queso Mantecoso Kg,Dairy & Eggs,2,10420,20840
+txn_t2y5br6277km8poh71egei,1,Tomate Kg,Produce,2,1770,3540
+txn_t2y5br6277km8poh71egei,2,Yogurt Pack 4,Dairy & Eggs,2,2760,5520
+txn_0appb0kccefc5rgeoobr9i,0,Torta Porción,Bakery,1,2740,2740
+txn_0appb0kccefc5rgeoobr9i,1,Empanada,Bakery,1,2660,2660
+txn_dc4x3ypan3tsltehlhqpd,0,Bebida 1.5L,Beverages,1,2850,2850
+txn_dc4x3ypan3tsltehlhqpd,1,Palitos de Ajo,Pantry,2,5160,10320
+txn_yxi7yrx3xti9ga7az6u1ac,0,Verduras Surtidas Kg,Produce,2,2190,4380
+txn_yxi7yrx3xti9ga7az6u1ac,1,Frutas Surtidas Kg,Produce,3,1660,4980
+txn_nxcc7knoltqxesrt32dzh,0,Cebolla Kg,Produce,2,1130,2260
+txn_nxcc7knoltqxesrt32dzh,1,Servilletas 100u,Household,2,1350,2700
+txn_nxcc7knoltqxesrt32dzh,2,Té Caja 100u,Beverages,3,3190,9570
+txn_nxcc7knoltqxesrt32dzh,3,Jugo en Polvo Pack 8,Beverages,1,4280,4280
+txn_nxcc7knoltqxesrt32dzh,4,Reineta Filete Kg,Meat & Seafood,3,10750,32250
+txn_epwkvcdy9hkmncsi3lxwa,0,Viaje Uber Comfort,Service,1,22760,22760
+txn_u2r28x8dp1k0kfi2edh256,0,Datos Adicionales,Service,2,6540,13080
+txn_cst0osx8uvndz3wo2wgbqv,0,Hot Dog,Snacks,2,4120,8240
+txn_0qthhwtxwbeg9ddjrx512de,0,Ketchup 500g,Pantry,2,2770,5540
+txn_0qthhwtxwbeg9ddjrx512de,1,Legumbres 1Kg,Pantry,1,2050,2050
+txn_0qthhwtxwbeg9ddjrx512de,2,Ajo Cabeza,Produce,2,420,840
+txn_0qthhwtxwbeg9ddjrx512de,3,Costillar Cerdo Kg,Meat & Seafood,2,5650,11300
+txn_0qthhwtxwbeg9ddjrx512de,4,Cilantro Atado,Produce,2,530,1060
+txn_0qthhwtxwbeg9ddjrx512de,5,Mayonesa 500g,Pantry,2,2720,5440
+txn_uti0qutcbbsbjnbvj1y0t9,0,Lavaloza 750ml,Cleaning Supplies,1,1880,1880
+txn_uti0qutcbbsbjnbvj1y0t9,1,Reineta Filete Kg,Meat & Seafood,2,12220,24440
+txn_o2a9ard75mshr710ps2m9u,0,Leche Cultivada 1L,Dairy & Eggs,1,1580,1580
+txn_o2a9ard75mshr710ps2m9u,1,Ketchup 500g,Pantry,1,2320,2320
+txn_o2a9ard75mshr710ps2m9u,2,Marraqueta Kg,Bakery,1,1850,1850
+txn_o2a9ard75mshr710ps2m9u,3,Legumbres 1Kg,Pantry,3,2480,7440
+txn_o2a9ard75mshr710ps2m9u,4,Chorizo Parrillero Kg,Meat & Seafood,3,7340,22020
+txn_sf71vmx2z793obys8mgx,0,Viaje Cabify,Service,1,11640,11640
+txn_vquie46br6dgb3f1h1yr,0,Esponja Pack 3,Cleaning Supplies,1,1500,1500
+txn_vquie46br6dgb3f1h1yr,1,Azúcar 1Kg,Pantry,1,1340,1340
+txn_vquie46br6dgb3f1h1yr,2,Cloro 1L,Cleaning Supplies,3,1020,3060
+txn_vquie46br6dgb3f1h1yr,3,Crema 200ml,Dairy & Eggs,1,2270,2270
+txn_vquie46br6dgb3f1h1yr,4,Leche Semidescremada 1L,Dairy & Eggs,1,1500,1500
+txn_vquie46br6dgb3f1h1yr,5,Pepino Unidad,Produce,3,760,2280
+txn_vquie46br6dgb3f1h1yr,6,Choclo Unidad,Produce,1,910,910
+txn_vquie46br6dgb3f1h1yr,7,Merluza Filete Kg,Meat & Seafood,2,9760,19520
+txn_vquie46br6dgb3f1h1yr,8,Harina 1Kg,Pantry,3,1080,3240
+txn_vquie46br6dgb3f1h1yr,9,Hallulla Pack 6,Bakery,1,1810,1810
+txn_vquie46br6dgb3f1h1yr,10,Sal 1Kg,Pantry,2,580,1160
+txn_vquie46br6dgb3f1h1yr,11,Chuleta de Cerdo Kg,Meat & Seafood,2,6050,12100
+txn_6g2emtdws5yedppgxfyq9,0,Muffin Arándanos,Bakery,1,3030,3030
+txn_6g2emtdws5yedppgxfyq9,1,Croissant,Bakery,1,2970,2970
+txn_6g2emtdws5yedppgxfyq9,2,Café Latte Grande,Beverages,1,4400,4400
+txn_k0zji1dui5nei43ws9bsv8,0,Frutas Surtidas Kg,Produce,2,2600,5200
+txn_k0zji1dui5nei43ws9bsv8,1,Flores Ramo,Other,1,8310,8310
+txn_k0zji1dui5nei43ws9bsv8,2,Verduras Surtidas Kg,Produce,2,1120,2240
+txn_l670o0976kcwb5m3ua5qfl,0,Atún Lata 170g,Pantry,1,2780,2780
+txn_l670o0976kcwb5m3ua5qfl,1,Pimentón Kg,Produce,3,3000,9000
+txn_12v4hfey5q93zn1ay0eh22,0,Torta Porción,Bakery,2,2720,5440
+txn_5275cvgqcdl726wz3aqf0o,0,Tomate Kg,Produce,2,2330,4660
+txn_5275cvgqcdl726wz3aqf0o,1,Aceite Vegetal 1L,Pantry,2,3050,6100
+txn_5275cvgqcdl726wz3aqf0o,2,Cerveza Pack 6,Alcohol,1,7090,7090
+txn_5275cvgqcdl726wz3aqf0o,3,Papel Higiénico 12u,Household,2,7500,15000
+txn_h12fb7ku51fohpdbi7adqd,0,Kuchen,Bakery,2,2230,4460
+txn_hm1acd9rp8745svcsm8m51,0,Pavo Pechuga Kg,Meat & Seafood,2,10750,21500
+txn_hm1acd9rp8745svcsm8m51,1,Yogurt Griego Pack 4,Dairy & Eggs,1,3950,3950
+txn_hm1acd9rp8745svcsm8m51,2,Leche Entera 6 Pack,Dairy & Eggs,1,7270,7270
+txn_hm1acd9rp8745svcsm8m51,3,Quinoa 500g,Pantry,1,4350,4350
+txn_hm1acd9rp8745svcsm8m51,4,Queso Parmesano 200g,Dairy & Eggs,2,6100,12200
+txn_ak44atimgv6o0had4tj1v9,0,Bencina 93 Litros,Automotive,31,1100,34100
+txn_4kh89twck7pauygrhtxft,0,Bencina 93 Litros,Automotive,25,1100,27500
+txn_lk8r3zoupa3p2q78qwt7r,0,Espárragos Atado,Produce,3,4820,14460
+txn_lk8r3zoupa3p2q78qwt7r,1,Queso Parmesano 200g,Dairy & Eggs,2,6530,13060
+txn_lk8r3zoupa3p2q78qwt7r,2,Yogurt Griego Pack 4,Dairy & Eggs,3,4500,13500
+txn_lk8r3zoupa3p2q78qwt7r,3,Quinoa 500g,Pantry,3,3380,10140
+txn_lk8r3zoupa3p2q78qwt7r,4,Leche Entera 6 Pack,Dairy & Eggs,3,8620,25860
+txn_6qjdevg1qi70vx4ce43cnwp,0,Azúcar 1Kg,Pantry,1,1670,1670
+txn_6qjdevg1qi70vx4ce43cnwp,1,Longaniza Kg,Meat & Seafood,1,6490,6490
+txn_6qjdevg1qi70vx4ce43cnwp,2,Cloro 1L,Cleaning Supplies,2,1220,2440
+txn_6qjdevg1qi70vx4ce43cnwp,3,Queso Chanco 200g,Dairy & Eggs,2,2640,5280
+txn_6qjdevg1qi70vx4ce43cnwp,4,Choclo Unidad,Produce,3,820,2460
+txn_6qjdevg1qi70vx4ce43cnwp,5,Chuleta de Cerdo Kg,Meat & Seafood,3,6830,20490
+txn_4z852zs6n8kurfujey92,0,Queso Chanco 200g,Dairy & Eggs,2,2690,5380
+txn_4z852zs6n8kurfujey92,1,Longaniza Kg,Meat & Seafood,2,6980,13960
+txn_4z852zs6n8kurfujey92,2,Leche Semidescremada 1L,Dairy & Eggs,3,1390,4170
+txn_4z852zs6n8kurfujey92,3,Sal 1Kg,Pantry,2,590,1180
+txn_4z852zs6n8kurfujey92,4,Pepino Unidad,Produce,1,630,630
+txn_4z852zs6n8kurfujey92,5,Cloro 1L,Cleaning Supplies,3,1350,4050
+txn_4z852zs6n8kurfujey92,6,Azúcar 1Kg,Pantry,3,1350,4050
+txn_4z852zs6n8kurfujey92,7,Choclo Unidad,Produce,1,750,750
+txn_4z852zs6n8kurfujey92,8,Crema 200ml,Dairy & Eggs,2,1820,3640
+txn_4z852zs6n8kurfujey92,9,Hallulla Pack 6,Bakery,3,1880,5640
+txn_yz59sime0kpt42f7uyl2rq,0,Estacionamiento Horas,Service,1,2450,2450
+txn_up27pgzlcnkmzgbb86nivo,0,Estacionamiento Horas,Service,1,5910,5910
+txn_39xg9wadx48x9trk18fcn,0,Tierra de Hoja,Garden,3,6610,19830
+txn_39xg9wadx48x9trk18fcn,1,Macetero Grande,Garden,2,32510,65020
+txn_uhqw1l1qzbbxesh3pfkpj9,0,Bencina 95 Litros,Automotive,23,1230,28290
+txn_m0c7pfo4ahjvpvkj8m2il,0,Bebida 2L,Beverages,3,3070,9210
+txn_65qwi4m7pykqd2uqqbhqki,0,McFlurry,Snacks,1,2990,2990
+txn_65qwi4m7pykqd2uqqbhqki,1,McPollo,Pantry,1,5270,5270
+txn_65qwi4m7pykqd2uqqbhqki,2,Helado Cono,Snacks,3,600,1800
+txn_65qwi4m7pykqd2uqqbhqki,3,McNuggets 10,Pantry,1,5680,5680
+txn_julmsygqfacepsh9mxn2ul,0,Calzone Jamón Queso,Pantry,2,8580,17160
+txn_julmsygqfacepsh9mxn2ul,1,Bebida 2L,Beverages,3,3380,10140
+txn_1eg1re2xgys4uyxq3uk3jd,0,Huevos Campo 30u,Dairy & Eggs,3,6850,20550
+txn_1eg1re2xgys4uyxq3uk3jd,1,Queso Fresco Kg,Dairy & Eggs,2,9750,19500
+txn_a0agyj2fzween3thn3u25i,0,Antipulgas,Pet Supplies,2,13730,27460
+txn_us41yrghvo7n7fofbkj9,0,Quinoa 500g,Pantry,2,3060,6120
+txn_us41yrghvo7n7fofbkj9,1,Champiñones 200g,Produce,3,2550,7650
+txn_us41yrghvo7n7fofbkj9,2,Pavo Pechuga Kg,Meat & Seafood,2,10130,20260
+txn_us41yrghvo7n7fofbkj9,3,Aceite Oliva 500ml,Pantry,2,8380,16760
+txn_us41yrghvo7n7fofbkj9,4,Yogurt Griego Pack 4,Dairy & Eggs,3,4740,14220
+txn_us41yrghvo7n7fofbkj9,5,Queso Parmesano 200g,Dairy & Eggs,1,5540,5540
+txn_egza0734qjdo7ey38h1e7,0,Snack Tienda,Snacks,1,2370,2370
+txn_egza0734qjdo7ey38h1e7,1,Bencina 93 Litros,Automotive,38,1220,46360
+txn_qap128518flges4o4dexsr,0,Suscripción Premium,Service,1,5490,5490
+txn_sgakoh4u65gati32kkp2v,0,Gas Natural Mes,Service,1,79890,79890
+txn_xpksktfygvgeerf4q8rqo,0,Café Latte Grande,Beverages,1,4550,4550
+txn_xpksktfygvgeerf4q8rqo,1,Croissant,Bakery,2,2560,5120
+txn_2qw4o7d5vxv14rsdimnlsr,0,Bencina 95 Litros,Automotive,22,1210,26620
+txn_2qw4o7d5vxv14rsdimnlsr,1,Bencina 93 Litros,Automotive,25,1160,29000
+txn_j7ckmigf31pp09zmzj6tb,0,Carga Bip!,Service,1,3130,3130
+txn_l3i8x3iuq3fs258p9zg4pk,0,Electricidad Mes,Service,2,56890,113780
+txn_x13123tqj7vmwsi8uq38,0,Kuchen,Bakery,3,2400,7200
+txn_jnv2bv6m49mwmpkmcbjby,0,McPollo,Pantry,2,5240,10480
+txn_jnv2bv6m49mwmpkmcbjby,1,McFlurry,Snacks,1,2540,2540
+txn_jnv2bv6m49mwmpkmcbjby,2,Helado Cono,Snacks,1,760,760
+txn_jnv2bv6m49mwmpkmcbjby,3,Papas Medianas,Pantry,3,2610,7830
+txn_shrd6rmgj0e59vxyf4xyfk,0,Gas Natural Mes,Service,1,46610,46610
+txn_heawwh0h298tfcvhm95em7,0,Muffin Arándanos,Bakery,1,3010,3010
+txn_heawwh0h298tfcvhm95em7,1,Café Latte Grande,Beverages,1,4280,4280
+txn_sdqs120p6hkov6aziwoxoc,0,Bebida 1.5L,Beverages,2,2510,5020
+txn_sdqs120p6hkov6aziwoxoc,1,Palitos de Ajo,Pantry,1,5030,5030
+txn_vw5u3pthotajc17p1ppf9q,0,Antipulgas,Pet Supplies,1,14770,14770
+txn_mi74zjp7z9so476ry0vqon,0,Palitos de Ajo,Pantry,1,5190,5190
+txn_mi74zjp7z9so476ry0vqon,1,Bebida 1.5L,Beverages,3,2820,8460
+txn_yu3a2wq0djmp2hfkbmvzzr,0,Antipulgas,Pet Supplies,1,21150,21150
+txn_yu3a2wq0djmp2hfkbmvzzr,1,Juguete Mascota,Pet Supplies,2,13930,27860
+txn_qbolnczt7t70nz9lu6646,0,Diesel Litros,Automotive,23,1020,23460
+txn_zqax43q4o75ywhwikz6a4,0,Viaje Uber Comfort,Service,1,9130,9130
+txn_9nnlhoto9vi1x37j04qhbp,0,Legumbres 1Kg,Pantry,2,1920,3840
+txn_9nnlhoto9vi1x37j04qhbp,1,Pimentón Kg,Produce,3,2140,6420
+txn_9nnlhoto9vi1x37j04qhbp,2,Atún Lata 170g,Pantry,3,2160,6480
+txn_9nnlhoto9vi1x37j04qhbp,3,Ajo Cabeza,Produce,3,530,1590
+txn_9nnlhoto9vi1x37j04qhbp,4,Marraqueta Kg,Bakery,1,1810,1810
+txn_9nnlhoto9vi1x37j04qhbp,5,Ketchup 500g,Pantry,1,2720,2720
+txn_9nnlhoto9vi1x37j04qhbp,6,Leche Cultivada 1L,Dairy & Eggs,2,1210,2420
+txn_9nnlhoto9vi1x37j04qhbp,7,Costillar Cerdo Kg,Meat & Seafood,3,5410,16230
+txn_9nnlhoto9vi1x37j04qhbp,8,Mayonesa 500g,Pantry,2,2640,5280
+txn_9nnlhoto9vi1x37j04qhbp,9,Cilantro Atado,Produce,1,650,650
+txn_05lpe1og717i9mjla4goc9t,0,Verduras Surtidas Kg,Produce,1,2410,2410
+txn_05lpe1og717i9mjla4goc9t,1,Pescado Fresco Kg,Meat & Seafood,3,8710,26130
+txn_gyct3e2ow1aeqaufvtltt,0,Estacionamiento Horas,Service,1,3710,3710
+txn_0k91u7o8hifrex4ml4kg4,0,Pan Fresco Kg,Bakery,3,1550,4650
+txn_0k91u7o8hifrex4ml4kg4,1,Torta Porción,Bakery,1,3430,3430
+txn_sy8qd8gpas8jk2bfj73od,0,Viaje UberX,Service,1,6840,6840
+txn_24175wiupn6qhbxc66kvsk,0,Bencina 93 Litros,Automotive,38,1140,43320
+txn_4gxai4ahxx2qgfxekvn0j,0,Cilantro Atado,Produce,2,760,1520
+txn_4gxai4ahxx2qgfxekvn0j,1,Legumbres 1Kg,Pantry,1,2110,2110
+txn_4gxai4ahxx2qgfxekvn0j,2,Pimentón Kg,Produce,3,2230,6690
+txn_4gxai4ahxx2qgfxekvn0j,3,Atún Lata 170g,Pantry,2,2190,4380
+txn_4gxai4ahxx2qgfxekvn0j,4,Mayonesa 500g,Pantry,3,3200,9600
+txn_zh1hwxopqsqodv9oa4r59,0,Helado 1L,Frozen Foods,1,7540,7540
+txn_zh1hwxopqsqodv9oa4r59,1,Manzana Royal Kg,Produce,1,2090,2090
+txn_zh1hwxopqsqodv9oa4r59,2,Papel Higiénico 12u,Household,1,6870,6870
+txn_zh1hwxopqsqodv9oa4r59,3,Huevos Docena,Dairy & Eggs,3,4860,14580
+txn_zh1hwxopqsqodv9oa4r59,4,Vino Tinto 750ml,Alcohol,1,9460,9460
+txn_zh1hwxopqsqodv9oa4r59,5,Pechuga de Pollo Kg,Meat & Seafood,1,7030,7030
+txn_zh1hwxopqsqodv9oa4r59,6,Coca Cola 3L,Beverages,1,3230,3230
+txn_zh1hwxopqsqodv9oa4r59,7,Pizza Congelada,Frozen Foods,3,5620,16860
+txn_8sg64mov9f4h7lbbb7msl,0,Carga Bip!,Service,1,3990,3990
+txn_fr7h25emmv8la07ko4hir,0,Quinoa 500g,Pantry,1,3450,3450
+txn_fr7h25emmv8la07ko4hir,1,Champiñones 200g,Produce,3,2360,7080
+txn_fr7h25emmv8la07ko4hir,2,Yogurt Griego Pack 4,Dairy & Eggs,1,4280,4280
+txn_fr7h25emmv8la07ko4hir,3,Camarones Kg,Meat & Seafood,1,14180,14180
+txn_fr7h25emmv8la07ko4hir,4,Espárragos Atado,Produce,1,4540,4540
+txn_fr7h25emmv8la07ko4hir,5,Queso Parmesano 200g,Dairy & Eggs,2,6060,12120
+txn_fr7h25emmv8la07ko4hir,6,Aceite Oliva 500ml,Pantry,2,8940,17880
+txn_exqbjmzyqt44zbp0q8q6ss,0,Pan Fresco Kg,Bakery,2,1610,3220
+txn_qbghra5ceb6ibftlvtm1v,0,Carga Bip!,Service,1,6760,6760
+txn_mwfm0k76us3paxpbklfz1,0,Pañales Pack,Baby Products,1,14480,14480
+txn_mwfm0k76us3paxpbklfz1,1,Jabón Líquido,Personal Care,3,4060,12180
+txn_xojtbz8tu6btbu8oawhep,0,Tierra de Hoja,Garden,1,7680,7680
+txn_xojtbz8tu6btbu8oawhep,1,Estante Metálico,Furniture,1,66460,66460
+txn_xojtbz8tu6btbu8oawhep,2,Macetero Grande,Garden,1,30550,30550
+txn_f1aa77rlschapm0500qkoe,0,Telefonía Fija,Service,1,13200,13200
+txn_7n24mush1l23m15b3wy44b,0,Verduras Surtidas Kg,Produce,1,1520,1520
+txn_7n24mush1l23m15b3wy44b,1,Frutas Surtidas Kg,Produce,1,1730,1730
+txn_nu2o38xg7ij6n3sxmcm6,0,Plan Móvil Mensual,Service,1,26150,26150
+txn_nu2o38xg7ij6n3sxmcm6,1,Datos Adicionales,Service,1,9350,9350
+txn_i5k6xzc49emcyf86wj67xf,0,Frappuccino,Beverages,1,5430,5430
+txn_i5k6xzc49emcyf86wj67xf,1,Sándwich Pollo,Pantry,1,6030,6030
+txn_1i0giga2xr73qifz4l1zzi,0,Té Caja 100u,Beverages,1,3280,3280
+txn_1i0giga2xr73qifz4l1zzi,1,Huevos 30u,Dairy & Eggs,3,7060,21180
+txn_1i0giga2xr73qifz4l1zzi,2,Cebolla Kg,Produce,1,1410,1410
+txn_1i0giga2xr73qifz4l1zzi,3,Zanahoria Kg,Produce,2,980,1960
+txn_1i0giga2xr73qifz4l1zzi,4,Asado Carnicero Kg,Meat & Seafood,3,11810,35430
+txn_1i0giga2xr73qifz4l1zzi,5,Lavaloza 750ml,Cleaning Supplies,3,1910,5730
+txn_1i0giga2xr73qifz4l1zzi,6,Pollo Trutro Kg,Meat & Seafood,2,3670,7340
+txn_g8j15mvlevhku384u9mdcs,0,Desodorante,Personal Care,3,4520,13560
+txn_g8j15mvlevhku384u9mdcs,1,Ibuprofeno 400mg 20u,Pharmacy,2,4530,9060
+txn_vjuwakvyl108ajfh27fgii,0,Snack Tienda,Snacks,3,2370,7110
+txn_vjuwakvyl108ajfh27fgii,1,Agua Botella,Beverages,1,1260,1260
+txn_vjuwakvyl108ajfh27fgii,2,Lavado Auto,Service,2,8260,16520
+txn_vjuwakvyl108ajfh27fgii,3,Bencina 93 Litros,Automotive,26,1170,30420
+txn_hk0t6td6imeuuezxxll83n,0,Aceite Motor,Automotive,3,10720,32160
+txn_hk0t6td6imeuuezxxll83n,1,Bencina 97 Litros,Automotive,27,1380,37260
+txn_d14w7d5kzt7s96axxmke1,0,Fideos 400g,Pantry,1,1030,1030
+txn_d14w7d5kzt7s96axxmke1,1,Café Molido 250g,Beverages,3,6690,20070
+txn_d14w7d5kzt7s96axxmke1,2,Palta Hass Kg,Produce,2,5360,10720
+txn_6j43hlednrbeuplf5kktza,0,Lavado Auto,Service,3,6720,20160
+txn_6j43hlednrbeuplf5kktza,1,Snack Tienda,Snacks,1,1840,1840
+txn_6j43hlednrbeuplf5kktza,2,Agua Botella,Beverages,2,1150,2300
+txn_gvgaln51wj85ohupjz6ifv,0,Viaje UberX,Service,2,8140,16280
+txn_bosuvtoyq4mtlgnny23joh,0,Papel Higiénico 12u,Household,1,7940,7940
+txn_bosuvtoyq4mtlgnny23joh,1,Manzana Royal Kg,Produce,2,2660,5320
+txn_bosuvtoyq4mtlgnny23joh,2,Lechuga Unidad,Produce,2,1240,2480
+txn_bosuvtoyq4mtlgnny23joh,3,Detergente Líquido 3L,Cleaning Supplies,1,8590,8590
+txn_bosuvtoyq4mtlgnny23joh,4,Palta Hass Kg,Produce,2,6080,12160
+txn_bosuvtoyq4mtlgnny23joh,5,Salmón Filete Kg,Meat & Seafood,2,19090,38180
+txn_bosuvtoyq4mtlgnny23joh,6,Tomate Kg,Produce,3,2020,6060
+txn_lko5jrvzwuahmsnj6zm8tb,0,Coca Cola 3L,Beverages,1,3530,3530
+txn_lko5jrvzwuahmsnj6zm8tb,1,Arroz Grado 1 Kg,Pantry,1,1890,1890
+txn_lko5jrvzwuahmsnj6zm8tb,2,Papel Higiénico 12u,Household,2,7380,14760
+txn_lko5jrvzwuahmsnj6zm8tb,3,Carne Molida Kg,Meat & Seafood,1,7080,7080
+txn_lko5jrvzwuahmsnj6zm8tb,4,Tomate Kg,Produce,3,2400,7200
+txn_lko5jrvzwuahmsnj6zm8tb,5,Palta Hass Kg,Produce,3,8160,24480
+txn_lko5jrvzwuahmsnj6zm8tb,6,Vino Tinto 750ml,Alcohol,1,7240,7240
+txn_lko5jrvzwuahmsnj6zm8tb,7,Cerveza Pack 6,Alcohol,3,7690,23070
+txn_yxk5och4dqqjvofeeggg,0,Merluza Filete Kg,Meat & Seafood,1,7570,7570
+txn_yxk5och4dqqjvofeeggg,1,Chuleta de Cerdo Kg,Meat & Seafood,3,6420,19260
+txn_yxk5och4dqqjvofeeggg,2,Sal 1Kg,Pantry,2,660,1320
+txn_yxk5och4dqqjvofeeggg,3,Longaniza Kg,Meat & Seafood,2,7450,14900
+txn_yxk5och4dqqjvofeeggg,4,Huevos 15u,Dairy & Eggs,3,4820,14460
+txn_fef7vfd28n9r31a2jqgzk,0,Bencina 93 Litros,Automotive,35,1190,41650
+txn_123ruzqv3odpj2436x1tlpf,0,Champiñones 200g,Produce,1,2500,2500
+txn_123ruzqv3odpj2436x1tlpf,1,Espárragos Atado,Produce,3,4330,12990
+txn_123ruzqv3odpj2436x1tlpf,2,Queso Parmesano 200g,Dairy & Eggs,1,6320,6320
+txn_123ruzqv3odpj2436x1tlpf,3,Pavo Pechuga Kg,Meat & Seafood,2,10680,21360
+txn_123ruzqv3odpj2436x1tlpf,4,Pan Pita Pack 8,Bakery,2,2630,5260
+txn_123ruzqv3odpj2436x1tlpf,5,Aceite Oliva 500ml,Pantry,1,8120,8120
+txn_123ruzqv3odpj2436x1tlpf,6,Camarones Kg,Meat & Seafood,3,13770,41310
+txn_kmzy5b8ybfklypyeuoefyq,0,Detergente Líquido 3L,Cleaning Supplies,1,6810,6810
+txn_kmzy5b8ybfklypyeuoefyq,1,Pizza Congelada,Frozen Foods,1,4890,4890
+txn_kmzy5b8ybfklypyeuoefyq,2,Helado 1L,Frozen Foods,2,5630,11260
+txn_kmzy5b8ybfklypyeuoefyq,3,Queso Mantecoso Kg,Dairy & Eggs,3,10530,31590
+txn_kmzy5b8ybfklypyeuoefyq,4,Salmón Filete Kg,Meat & Seafood,3,19980,59940
+txn_u7p5r6newejyy76vv1bog,0,Lavado Auto,Service,3,8660,25980
+txn_u7p5r6newejyy76vv1bog,1,Snack Tienda,Snacks,2,2930,5860
+txn_u7p5r6newejyy76vv1bog,2,Agua Botella,Beverages,2,1260,2520
+txn_8w0yekl6atvet45g2xoai,0,Naranja Kg,Produce,2,1800,3600
+txn_8w0yekl6atvet45g2xoai,1,Reineta Filete Kg,Meat & Seafood,3,12140,36420
+txn_8w0yekl6atvet45g2xoai,2,Huevos 30u,Dairy & Eggs,2,7990,15980
+txn_8w0yekl6atvet45g2xoai,3,Limón Kg,Produce,1,2620,2620
+txn_8w0yekl6atvet45g2xoai,4,Zanahoria Kg,Produce,3,810,2430
+txn_wmzgrolrxsp2qfp0ao9dc7,0,Camisa,Clothing,2,33320,66640
+txn_f9uif0rxoua9geew3lwjt,0,Estacionamiento Horas,Service,1,7060,7060
+txn_2zfeak3nq7l1gnuwl6o8dn,0,Empanada,Bakery,3,2740,8220
+txn_lu3hkf0z9rb9lv931mpaiu,0,Gyozas 6u,Pantry,3,5980,17940
+txn_lu3hkf0z9rb9lv931mpaiu,1,Edamame,Pantry,1,4500,4500
+txn_w51ng77co89irgycy2rjj,0,Yogurt Griego Pack 4,Dairy & Eggs,3,3710,11130
+txn_w51ng77co89irgycy2rjj,1,Espárragos Atado,Produce,2,3850,7700
+txn_h794nls8mthv20g32vfwe,0,Kuchen,Bakery,2,2030,4060
+txn_h794nls8mthv20g32vfwe,1,Empanada,Bakery,2,2200,4400
+txn_nwkw1cndrp2ri6mtfgv0c,0,Diesel Litros,Automotive,42,1090,45780
+txn_ko9p9yw0lsltlid8u8eoah,0,Electricidad Mes,Service,1,74420,74420
+txn_rwloqzkrph9o4q7autij,0,Carga Bip!,Service,1,5120,5120
+txn_34e1tbt9u7jqrcovtbrnh,0,Viaje Uber Comfort,Service,1,6830,6830
+txn_k0k5y8mt7uq1gxbi6qdjrvh,0,Datos Adicionales,Service,1,8880,8880
+txn_q5wbkc9c0lcefh2sot9u8i,0,Flores Ramo,Other,3,7410,22230
+txn_9kxpb95ky1rmefae6rbscg,0,Manzana Royal Kg,Produce,1,2260,2260
+txn_9kxpb95ky1rmefae6rbscg,1,Papel Higiénico 12u,Household,2,7960,15920
+txn_9kxpb95ky1rmefae6rbscg,2,Vino Tinto 750ml,Alcohol,2,12010,24020
+txn_9kxpb95ky1rmefae6rbscg,3,Pizza Congelada,Frozen Foods,2,4510,9020
+txn_9kxpb95ky1rmefae6rbscg,4,Helado 1L,Frozen Foods,3,6470,19410
+txn_9kxpb95ky1rmefae6rbscg,5,Aceite Vegetal 1L,Pantry,3,3100,9300
+txn_f1hgi2lgikj3eqtvmmmnod,0,Diesel Litros,Automotive,30,1130,33900
+txn_jbq4cz947kwng8ahfxsak,0,Carga Bip!,Service,1,2670,2670
+txn_60er5b9fyafq2w4gfahho,0,Huevos Campo 30u,Dairy & Eggs,3,6360,19080
+txn_60er5b9fyafq2w4gfahho,1,Flores Ramo,Other,3,5650,16950
+txn_2sgco94wfzr3pm0l9ap9,0,Queso Chanco 200g,Dairy & Eggs,2,2960,5920
+txn_2sgco94wfzr3pm0l9ap9,1,Cloro 1L,Cleaning Supplies,3,1130,3390
+txn_2sgco94wfzr3pm0l9ap9,2,Chuleta de Cerdo Kg,Meat & Seafood,3,6130,18390
+txn_6ww47320t2lfpzg9c2exor,0,Espárragos Atado,Produce,2,4180,8360
+txn_6ww47320t2lfpzg9c2exor,1,Camarones Kg,Meat & Seafood,3,16710,50130
+txn_6ww47320t2lfpzg9c2exor,2,Yogurt Griego Pack 4,Dairy & Eggs,3,4520,13560
+txn_ueobmqfce2g8khhacvc0st,0,Bencina 93 Litros,Automotive,1,1150,1150
+txn_tsm8gcmism2chkcxrki12,0,Nachos,Snacks,2,5040,10080
+txn_tsm8gcmism2chkcxrki12,1,Bebida Grande,Beverages,3,3110,9330
+txn_9yp2fy464ey2uw3ahkm3,0,Carga Bip!,Service,1,2250,2250
+txn_7v5xz20ls5o7xg9ac2nk3x,0,Muffin Arándanos,Bakery,2,3310,6620
+txn_io3uuq8p12qxi8srlfw5ce,0,Leche Cultivada 1L,Dairy & Eggs,3,1360,4080
+txn_io3uuq8p12qxi8srlfw5ce,1,Marraqueta Kg,Bakery,1,1590,1590
+txn_io3uuq8p12qxi8srlfw5ce,2,Atún Lata 170g,Pantry,1,2390,2390
+txn_io3uuq8p12qxi8srlfw5ce,3,Cilantro Atado,Produce,1,650,650
+txn_io3uuq8p12qxi8srlfw5ce,4,Legumbres 1Kg,Pantry,3,2870,8610
+txn_io3uuq8p12qxi8srlfw5ce,5,Ajo Cabeza,Produce,1,610,610
+txn_io3uuq8p12qxi8srlfw5ce,6,Ketchup 500g,Pantry,1,2090,2090
+txn_io3uuq8p12qxi8srlfw5ce,7,Mayonesa 500g,Pantry,2,2690,5380
+txn_io3uuq8p12qxi8srlfw5ce,8,Costillar Cerdo Kg,Meat & Seafood,2,5930,11860
+txn_io3uuq8p12qxi8srlfw5ce,9,Pimentón Kg,Produce,1,2690,2690
+txn_uwzh6l394dikl1937d0a,0,Snack Tienda,Snacks,1,2750,2750
+txn_uwzh6l394dikl1937d0a,1,Lavado Auto,Service,2,6750,13500
+txn_uwzh6l394dikl1937d0a,2,Agua Botella,Beverages,3,1200,3600
+txn_xnx29wzafvgyff1wuseec7,0,Detergente Líquido 3L,Cleaning Supplies,3,8210,24630
+txn_cg20vkrq5md0p5c6x3ou83j,0,Carga Bip!,Service,1,9760,9760
+txn_zy404766rb7oaxbut0m22,0,Bencina 93 Litros,Automotive,20,1180,23600
+txn_zy404766rb7oaxbut0m22,1,Bencina 95 Litros,Automotive,30,1310,39300
+txn_c9mj187l3rpud4qa6cent,0,Estacionamiento Horas,Service,3,1850,5550
+txn_menpabtoiqg4ambdngow,0,Plan Estándar,Service,1,9990,9990
+txn_j8cbaxgz5v2qfx2vlofx4,0,Viaje Uber Comfort,Service,1,7900,7900
+txn_c8o3danq1u40cwbysdrwfyb,0,Crema Antiarrugas,Health & Beauty,1,22660,22660
+txn_c8o3danq1u40cwbysdrwfyb,1,Antigripal 10u,Pharmacy,1,5020,5020
+txn_sys9crv1nnboxcb89d5o6e,0,Huevos 30u,Dairy & Eggs,2,7130,14260
+txn_sys9crv1nnboxcb89d5o6e,1,Reineta Filete Kg,Meat & Seafood,1,10680,10680
+txn_sys9crv1nnboxcb89d5o6e,2,Naranja Kg,Produce,3,2060,6180
+txn_sys9crv1nnboxcb89d5o6e,3,Pan de Molde Blanco,Bakery,2,2470,4940
+txn_sys9crv1nnboxcb89d5o6e,4,Servilletas 100u,Household,1,1760,1760
+txn_sys9crv1nnboxcb89d5o6e,5,Limón Kg,Produce,3,2900,8700
+txn_sys9crv1nnboxcb89d5o6e,6,Té Caja 100u,Beverages,2,2650,5300
+txn_sys9crv1nnboxcb89d5o6e,7,Cebolla Kg,Produce,2,1170,2340
+txn_sys9crv1nnboxcb89d5o6e,8,Lavaloza 750ml,Cleaning Supplies,2,2470,4940
+txn_sys9crv1nnboxcb89d5o6e,9,Jugo en Polvo Pack 8,Beverages,1,4450,4450
+txn_bv8h4egnd2gb6pibnoiuo4,0,Jamón Cocido 200g,Meat & Seafood,1,2600,2600
+txn_bv8h4egnd2gb6pibnoiuo4,1,Jugo en Polvo Pack 8,Beverages,1,3690,3690
+txn_bv8h4egnd2gb6pibnoiuo4,2,Arroz Grado 2 Kg,Pantry,1,1170,1170
+txn_bv8h4egnd2gb6pibnoiuo4,3,Leche Descremada 1L,Dairy & Eggs,2,1350,2700
+txn_bv8h4egnd2gb6pibnoiuo4,4,Pan de Molde Blanco,Bakery,1,1880,1880
+txn_bv8h4egnd2gb6pibnoiuo4,5,Zanahoria Kg,Produce,2,1210,2420
+txn_bv8h4egnd2gb6pibnoiuo4,6,Reineta Filete Kg,Meat & Seafood,1,9160,9160
+txn_bv8h4egnd2gb6pibnoiuo4,7,Tallarines 500g,Pantry,1,850,850
+txn_bv8h4egnd2gb6pibnoiuo4,8,Asado Carnicero Kg,Meat & Seafood,1,10610,10610
+txn_nz5udbmp9pdlhhsfiz6jp,0,Hallulla Pack 6,Bakery,1,1390,1390
+txn_nz5udbmp9pdlhhsfiz6jp,1,Longaniza Kg,Meat & Seafood,2,6300,12600
+txn_nz5udbmp9pdlhhsfiz6jp,2,Esponja Pack 3,Cleaning Supplies,2,1570,3140
+txn_nz5udbmp9pdlhhsfiz6jp,3,Papa Kg,Produce,3,1360,4080
+txn_nz5udbmp9pdlhhsfiz6jp,4,Cloro 1L,Cleaning Supplies,3,1150,3450
+txn_nz5udbmp9pdlhhsfiz6jp,5,Queso Chanco 200g,Dairy & Eggs,3,2660,7980
+txn_nz5udbmp9pdlhhsfiz6jp,6,Leche Semidescremada 1L,Dairy & Eggs,2,1430,2860
+txn_nz5udbmp9pdlhhsfiz6jp,7,Crema 200ml,Dairy & Eggs,3,1930,5790
+txn_nz5udbmp9pdlhhsfiz6jp,8,Azúcar 1Kg,Pantry,1,1460,1460
+txn_nz5udbmp9pdlhhsfiz6jp,9,Sal 1Kg,Pantry,1,670,670
+txn_nz5udbmp9pdlhhsfiz6jp,10,Choclo Unidad,Produce,1,640,640
+txn_nz5udbmp9pdlhhsfiz6jp,11,Merluza Filete Kg,Meat & Seafood,3,8370,25110
+txn_48q2wl60xob7owjuj1b8k,0,Mantequilla 250g,Dairy & Eggs,3,3400,10200
+txn_48q2wl60xob7owjuj1b8k,1,Tallarines 500g,Pantry,3,1070,3210
+txn_48q2wl60xob7owjuj1b8k,2,Asado Carnicero Kg,Meat & Seafood,2,11490,22980
+txn_48q2wl60xob7owjuj1b8k,3,Huevos 30u,Dairy & Eggs,1,7490,7490
+txn_y4gkbl3o2cu89fnqfq12l,0,Bencina 93 Litros,Automotive,26,1190,30940
+txn_y4gkbl3o2cu89fnqfq12l,1,Aceite Motor,Automotive,1,14660,14660
+txn_womp77xhrchz0dupt5zcm,0,Bencina 93 Litros,Automotive,49,1250,61250
+txn_d6bqbscpdurbbbqvhvqfc9,0,Empanada,Bakery,1,2240,2240
+txn_6sy7qfdrmap45gxm68fhg,0,Bebida 1.5L,Beverages,3,2890,8670
+txn_hjm3ood1n8cw3xjg26at4l,0,Espárragos Atado,Produce,1,3420,3420
+txn_hjm3ood1n8cw3xjg26at4l,1,Camarones Kg,Meat & Seafood,3,15710,47130
+txn_yzy6lkk97mbo6grc0m74k,0,Pan Fresco Kg,Bakery,2,1970,3940
+txn_f83lo56ue7d6lvazv2m0wf,0,Cilantro Atado,Produce,2,860,1720
+txn_f83lo56ue7d6lvazv2m0wf,1,Atún Lata 170g,Pantry,2,2580,5160
+txn_f83lo56ue7d6lvazv2m0wf,2,Huevos 6u,Dairy & Eggs,1,2240,2240
+txn_f83lo56ue7d6lvazv2m0wf,3,Legumbres 1Kg,Pantry,2,2260,4520
+txn_f83lo56ue7d6lvazv2m0wf,4,Pimentón Kg,Produce,1,2640,2640
+txn_f83lo56ue7d6lvazv2m0wf,5,Ketchup 500g,Pantry,1,2130,2130
+txn_a0us6bgglieqxyjz1zf7m,0,Kuchen,Bakery,2,2110,4220
+txn_rxyhaszq3fhir48x9n6pn,0,Snack Tienda,Snacks,1,2260,2260
+txn_rxyhaszq3fhir48x9n6pn,1,Agua Botella,Beverages,1,1380,1380
+txn_rxyhaszq3fhir48x9n6pn,2,Lavado Auto,Service,1,6810,6810
+txn_rxyhaszq3fhir48x9n6pn,3,Bencina 95 Litros,Automotive,40,1270,50800
+txn_m60oq0f9bvolv7fvmy69uh,0,Bebida 500ml,Beverages,3,1510,4530
+txn_m60oq0f9bvolv7fvmy69uh,1,Completo Italiano,Pantry,3,3900,11700
+txn_m60oq0f9bvolv7fvmy69uh,2,Papas Fritas Grande,Pantry,1,3310,3310
+txn_m60oq0f9bvolv7fvmy69uh,3,Hamburguesa Clásica,Pantry,1,6670,6670
+txn_367c2o3veq4cm8rck7wawm,0,Croissant,Bakery,1,2980,2980
+txn_367c2o3veq4cm8rck7wawm,1,Muffin Arándanos,Bakery,2,3430,6860
+txn_n59rmxsp6567j1b9k5djs,0,Verduras Surtidas Kg,Produce,1,2030,2030
+txn_n59rmxsp6567j1b9k5djs,1,Frutas Surtidas Kg,Produce,1,2720,2720
+txn_n59rmxsp6567j1b9k5djs,2,Flores Ramo,Other,2,5110,10220
+txn_p7zw65v8k4em9hi82jl8k,0,Bencina 95 Litros,Automotive,38,1300,49400
+txn_e74fwypypft9o3uofgs6af,0,Viaje UberX,Service,1,5490,5490
+txn_8bcghzn5wjns24nyj6cr7,0,Aceite Motor,Automotive,1,10350,10350
+txn_8bcghzn5wjns24nyj6cr7,1,Diesel Litros,Automotive,34,1060,36040
+txn_8bcghzn5wjns24nyj6cr7,2,Bencina 93 Litros,Automotive,20,1220,24400
+txn_2botcrinkbub9cbdo352yf,0,Leche Cultivada 1L,Dairy & Eggs,2,1350,2700
+txn_2botcrinkbub9cbdo352yf,1,Marraqueta Kg,Bakery,2,1540,3080
+txn_2botcrinkbub9cbdo352yf,2,Legumbres 1Kg,Pantry,2,2000,4000
+txn_2botcrinkbub9cbdo352yf,3,Huevos 6u,Dairy & Eggs,2,2080,4160
+txn_2botcrinkbub9cbdo352yf,4,Mayonesa 500g,Pantry,3,2540,7620
+txn_51a0ck92ou4g6tlghwj0ia,0,Reineta Filete Kg,Meat & Seafood,2,10870,21740
+txn_51a0ck92ou4g6tlghwj0ia,1,Servilletas 100u,Household,3,1540,4620
+txn_51a0ck92ou4g6tlghwj0ia,2,Jugo en Polvo Pack 8,Beverages,1,3830,3830
+txn_51a0ck92ou4g6tlghwj0ia,3,Pan de Molde Blanco,Bakery,2,2350,4700
+txn_51a0ck92ou4g6tlghwj0ia,4,Mantequilla 250g,Dairy & Eggs,2,3410,6820
+txn_51a0ck92ou4g6tlghwj0ia,5,Zanahoria Kg,Produce,1,860,860
+txn_51a0ck92ou4g6tlghwj0ia,6,Té Caja 100u,Beverages,1,3320,3320
+txn_51a0ck92ou4g6tlghwj0ia,7,Naranja Kg,Produce,1,1830,1830
+txn_51a0ck92ou4g6tlghwj0ia,8,Pollo Trutro Kg,Meat & Seafood,3,3520,10560
+txn_51a0ck92ou4g6tlghwj0ia,9,Tallarines 500g,Pantry,3,960,2880
+txn_51a0ck92ou4g6tlghwj0ia,10,Leche Descremada 1L,Dairy & Eggs,3,1410,4230
+txn_51a0ck92ou4g6tlghwj0ia,11,Aceite Maravilla 1L,Pantry,1,2950,2950
+txn_51a0ck92ou4g6tlghwj0ia,12,Cebolla Kg,Produce,2,1130,2260
+txn_51a0ck92ou4g6tlghwj0ia,13,Huevos 30u,Dairy & Eggs,1,7030,7030
+txn_51a0ck92ou4g6tlghwj0ia,14,Limón Kg,Produce,1,2450,2450
+txn_l63yg9mzhw98brgxnll1d,0,Diesel Litros,Automotive,36,1110,39960
+txn_l63yg9mzhw98brgxnll1d,1,Aceite Motor,Automotive,1,12280,12280
+txn_91yqn4jfwkiggo04haiwip,0,Carga Bip!,Service,1,6850,6850
+txn_70rb7dofdvv3wdn9nh0xs4,0,Pan Fresco Kg,Bakery,1,2240,2240
+txn_d7jz19qc6cehbprqieoewr,0,Gas Natural Mes,Service,1,43900,43900
+txn_lysmtlqds471eoguouniztj,0,Estacionamiento Horas,Service,1,1940,1940
+txn_9o2gf8so2vex6kkva942u,0,Viaje Cabify,Service,2,11700,23400
+txn_0ros14jama4m4l36ew8dem,0,Combo Popcorn Grande,Snacks,2,9070,18140
+txn_07u8o91v2d8sg7sfg3a8ra4,0,Verduras Surtidas Kg,Produce,3,1560,4680
+txn_07u8o91v2d8sg7sfg3a8ra4,1,Frutas Surtidas Kg,Produce,3,2000,6000
+txn_07u8o91v2d8sg7sfg3a8ra4,2,Pescado Fresco Kg,Meat & Seafood,1,7970,7970
+txn_07u8o91v2d8sg7sfg3a8ra4,3,Flores Ramo,Other,1,5200,5200
+txn_07u8o91v2d8sg7sfg3a8ra4,4,Huevos Campo 30u,Dairy & Eggs,1,6320,6320
+txn_qvvfimzdmgoh52j7d01ejs,0,Estacionamiento Horas,Service,3,2200,6600
+txn_rmbgfuo4n4dog0w92vmhbd,0,Coca Cola 3L,Beverages,2,2990,5980
+txn_rmbgfuo4n4dog0w92vmhbd,1,Lechuga Unidad,Produce,1,1380,1380
+txn_rmbgfuo4n4dog0w92vmhbd,2,Helado 1L,Frozen Foods,2,5660,11320
+txn_rmbgfuo4n4dog0w92vmhbd,3,Papel Higiénico 12u,Household,1,7480,7480
+txn_rmbgfuo4n4dog0w92vmhbd,4,Cerveza Pack 6,Alcohol,3,6780,20340
+txn_rmbgfuo4n4dog0w92vmhbd,5,Queso Mantecoso Kg,Dairy & Eggs,3,11050,33150
+txn_e8zydgiglilyoj4viqm8e,0,Short,Clothing,2,14210,28420
+txn_xqsguqz1xhyg3jhbgbr88,0,Plan Premium,Service,1,12990,12990
+txn_97hwqji1vka2w1wvwdqmmg,0,Jugo en Polvo Pack 8,Beverages,2,4320,8640
+txn_97hwqji1vka2w1wvwdqmmg,1,Reineta Filete Kg,Meat & Seafood,1,9980,9980
+txn_97hwqji1vka2w1wvwdqmmg,2,Servilletas 100u,Household,1,1500,1500
+txn_97hwqji1vka2w1wvwdqmmg,3,Zanahoria Kg,Produce,3,1190,3570
+txn_97hwqji1vka2w1wvwdqmmg,4,Té Caja 100u,Beverages,1,3760,3760
+txn_97hwqji1vka2w1wvwdqmmg,5,Aceite Maravilla 1L,Pantry,1,3110,3110
+txn_97hwqji1vka2w1wvwdqmmg,6,Pollo Trutro Kg,Meat & Seafood,2,3500,7000
+txn_97hwqji1vka2w1wvwdqmmg,7,Tallarines 500g,Pantry,1,990,990
+txn_97hwqji1vka2w1wvwdqmmg,8,Asado Carnicero Kg,Meat & Seafood,3,11710,35130
+txn_ttv7xlysl9fuc7p1y98ykb,0,Gyozas 6u,Pantry,1,6400,6400
+txn_ttv7xlysl9fuc7p1y98ykb,1,Sake 300ml,Alcohol,2,11140,22280
+txn_al9zl8y204n4pzuw9sl64,0,Bencina 95 Litros,Automotive,22,1180,25960
+txn_51isjnuj5kpr4tempnaq3,0,Muffin Arándanos,Bakery,1,3460,3460
+txn_51isjnuj5kpr4tempnaq3,1,Croissant,Bakery,1,2800,2800
+txn_9nq8i3t4cokvutgoifwqs,0,Hamburguesa Clásica,Pantry,1,7430,7430
+txn_9nq8i3t4cokvutgoifwqs,1,Bebida 500ml,Beverages,3,1680,5040
+txn_hky0cpn5utgu53u5cly5w,0,Naranja Kg,Produce,2,2380,4760
+txn_hky0cpn5utgu53u5cly5w,1,Asado Carnicero Kg,Meat & Seafood,2,8530,17060
+txn_hky0cpn5utgu53u5cly5w,2,Mantequilla 250g,Dairy & Eggs,2,3300,6600
+txn_hky0cpn5utgu53u5cly5w,3,Cebolla Kg,Produce,2,1050,2100
+txn_hky0cpn5utgu53u5cly5w,4,Zanahoria Kg,Produce,3,1110,3330
+txn_hky0cpn5utgu53u5cly5w,5,Pan de Molde Blanco,Bakery,2,2120,4240
+txn_hky0cpn5utgu53u5cly5w,6,Servilletas 100u,Household,3,1670,5010
+txn_hky0cpn5utgu53u5cly5w,7,Limón Kg,Produce,1,2220,2220
+txn_hky0cpn5utgu53u5cly5w,8,Pollo Trutro Kg,Meat & Seafood,3,3340,10020
+txn_hky0cpn5utgu53u5cly5w,9,Tallarines 500g,Pantry,2,930,1860
+txn_hky0cpn5utgu53u5cly5w,10,Reineta Filete Kg,Meat & Seafood,2,10950,21900
+txn_u9ju2veisyslw0672yif,0,Papas Fritas Grande,Pantry,2,3430,6860
+txn_u9ju2veisyslw0672yif,1,Bebida 500ml,Beverages,2,1640,3280
+txn_u9ju2veisyslw0672yif,2,Churrasquería Completa,Pantry,1,9840,9840
+txn_ck8mw24juehsci2uwgaj7s,0,Camarones Kg,Meat & Seafood,1,13310,13310
+txn_ck8mw24juehsci2uwgaj7s,1,Queso Parmesano 200g,Dairy & Eggs,2,6010,12020
+txn_ck8mw24juehsci2uwgaj7s,2,Leche Entera 6 Pack,Dairy & Eggs,3,8890,26670
+txn_60wbo0l85jhcpyz6ry48i,0,Snack Tienda,Snacks,3,2060,6180
+txn_60wbo0l85jhcpyz6ry48i,1,Bencina 95 Litros,Automotive,28,1220,34160
+txn_ygddjqb60zg70kmu29o3p,0,Hallulla Pack 6,Bakery,2,1580,3160
+txn_ygddjqb60zg70kmu29o3p,1,Sal 1Kg,Pantry,1,730,730
+txn_ygddjqb60zg70kmu29o3p,2,Leche Semidescremada 1L,Dairy & Eggs,2,1470,2940
+txn_ygddjqb60zg70kmu29o3p,3,Azúcar 1Kg,Pantry,2,1560,3120
+txn_ygddjqb60zg70kmu29o3p,4,Chuleta de Cerdo Kg,Meat & Seafood,2,6120,12240
+txn_ygddjqb60zg70kmu29o3p,5,Harina 1Kg,Pantry,2,1160,2320
+txn_ygddjqb60zg70kmu29o3p,6,Queso Chanco 200g,Dairy & Eggs,2,2510,5020
+txn_ygddjqb60zg70kmu29o3p,7,Crema 200ml,Dairy & Eggs,1,1590,1590
+txn_ygddjqb60zg70kmu29o3p,8,Cloro 1L,Cleaning Supplies,1,1070,1070
+txn_ygddjqb60zg70kmu29o3p,9,Merluza Filete Kg,Meat & Seafood,1,9630,9630
+txn_ygddjqb60zg70kmu29o3p,10,Huevos 15u,Dairy & Eggs,2,4060,8120
+txn_6kt811f7xhsagedjh0lbnj,0,Estacionamiento Horas,Service,1,4370,4370
+txn_j8iq8a9ep9sztb7hfr4dls,0,Diesel Litros,Automotive,30,1150,34500
+txn_80s9d94acdi69nspxoit53,0,Hamburguesa Clásica,Pantry,1,6500,6500
+txn_80s9d94acdi69nspxoit53,1,Papas Fritas Grande,Pantry,1,3440,3440
+txn_80s9d94acdi69nspxoit53,2,Bebida 500ml,Beverages,1,1750,1750
+txn_5byavrguhsvzhpx74sxcd,0,McNuggets 10,Pantry,1,5570,5570
+txn_s5z5d4l3tgg0wokipzxplsr,0,Ibuprofeno 400mg 20u,Pharmacy,1,4450,4450
+txn_s5z5d4l3tgg0wokipzxplsr,1,Paracetamol 500mg 20u,Pharmacy,2,2250,4500
+txn_s5z5d4l3tgg0wokipzxplsr,2,Vitamina C 1000mg 30u,Supplements,3,6030,18090
+txn_eh1wxsel0ostlo9f60of4k,0,Ketchup 500g,Pantry,1,2350,2350
+txn_eh1wxsel0ostlo9f60of4k,1,Mayonesa 500g,Pantry,1,3430,3430
+txn_eh1wxsel0ostlo9f60of4k,2,Pimentón Kg,Produce,2,3050,6100
+txn_eh1wxsel0ostlo9f60of4k,3,Cilantro Atado,Produce,3,580,1740
+txn_eh1wxsel0ostlo9f60of4k,4,Huevos 6u,Dairy & Eggs,2,2470,4940
+txn_eh1wxsel0ostlo9f60of4k,5,Ajo Cabeza,Produce,3,550,1650
+txn_eh1wxsel0ostlo9f60of4k,6,Chorizo Parrillero Kg,Meat & Seafood,2,5920,11840
+txn_eh1wxsel0ostlo9f60of4k,7,Atún Lata 170g,Pantry,3,2210,6630
+txn_eh1wxsel0ostlo9f60of4k,8,Legumbres 1Kg,Pantry,3,2850,8550
+txn_hxg2lns6swi4kf0x5w603a,0,Bencina 97 Litros,Automotive,38,1420,53960
+txn_ehl0o9kaar89jtn624zbd,0,Kuchen,Bakery,1,2410,2410
+txn_ehl0o9kaar89jtn624zbd,1,Pan Fresco Kg,Bakery,2,1500,3000
+txn_6p8k9c6zyl8kzrjp0zrqzh,0,Calzone Jamón Queso,Pantry,2,8230,16460
+txn_ialp2m3vrbdwy97nvbszbm,0,Bebida 1.5L,Beverages,2,2510,5020
+txn_bubrmbh2qv5m7x277d44wh,0,Pollo Entero Kg,Meat & Seafood,3,3500,10500
+txn_bubrmbh2qv5m7x277d44wh,1,Pizza Congelada,Frozen Foods,1,5290,5290
+txn_bubrmbh2qv5m7x277d44wh,2,Coca Cola 3L,Beverages,1,3350,3350
+txn_bubrmbh2qv5m7x277d44wh,3,Carne Molida Kg,Meat & Seafood,2,7560,15120
+txn_bubrmbh2qv5m7x277d44wh,4,Aceite Vegetal 1L,Pantry,2,2780,5560
+txn_bubrmbh2qv5m7x277d44wh,5,Palta Hass Kg,Produce,3,5560,16680
+txn_1w9q8yzq0kpq4d6uaksg79,0,Carga Bip!,Service,1,2910,2910
+txn_a98jbl1m0q65wyp98ebxt,0,Churrasquería Completa,Pantry,2,9510,19020
+txn_a98jbl1m0q65wyp98ebxt,1,Papas Fritas Grande,Pantry,3,3970,11910
+txn_c9d246mcjhfwfphxnk8em,0,Pizza Familiar 4 Quesos,Pantry,1,15250,15250
+txn_c9d246mcjhfwfphxnk8em,1,Pizza Mediana BBQ,Pantry,1,9860,9860
+txn_c9d246mcjhfwfphxnk8em,2,Calzone Jamón Queso,Pantry,1,7410,7410
+txn_356xbq2btza80brqj35fqi,0,Papel Higiénico 12u,Household,1,6270,6270
+txn_356xbq2btza80brqj35fqi,1,Cerveza Pack 6,Alcohol,1,6730,6730
+txn_356xbq2btza80brqj35fqi,2,Manzana Royal Kg,Produce,3,2460,7380
+txn_356xbq2btza80brqj35fqi,3,Carne Molida Kg,Meat & Seafood,3,8810,26430
+txn_356xbq2btza80brqj35fqi,4,Pechuga de Pollo Kg,Meat & Seafood,1,6280,6280
+txn_356xbq2btza80brqj35fqi,5,Pizza Congelada,Frozen Foods,2,4320,8640
+txn_356xbq2btza80brqj35fqi,6,Queso Mantecoso Kg,Dairy & Eggs,1,11800,11800
+txn_8g47e69h9dqtxc21utu1jj,0,Kuchen,Bakery,1,2430,2430
+txn_8g47e69h9dqtxc21utu1jj,1,Empanada,Bakery,2,2170,4340
+txn_j4i0sc0sta7gr4xu81jy,0,Estacionamiento Horas,Service,1,3420,3420
+txn_3e6ec4t0qq97dqdx0rl1,0,Palta Hass Kg,Produce,2,7760,15520
+txn_3e6ec4t0qq97dqdx0rl1,1,Café Molido 250g,Beverages,3,4310,12930
+txn_3e6ec4t0qq97dqdx0rl1,2,Coca Cola 3L,Beverages,1,3190,3190
+txn_3e6ec4t0qq97dqdx0rl1,3,Huevos Docena,Dairy & Eggs,1,3680,3680
+txn_3e6ec4t0qq97dqdx0rl1,4,Queso Mantecoso Kg,Dairy & Eggs,1,11070,11070
+txn_3e6ec4t0qq97dqdx0rl1,5,Cerveza Pack 6,Alcohol,2,6360,12720
+txn_3e6ec4t0qq97dqdx0rl1,6,Pan Molde Integral,Bakery,3,2120,6360
+txn_3e6ec4t0qq97dqdx0rl1,7,Tomate Kg,Produce,2,1320,2640
+txn_3e6ec4t0qq97dqdx0rl1,8,Manzana Royal Kg,Produce,3,2500,7500
+txn_3e6ec4t0qq97dqdx0rl1,9,Arroz Grado 1 Kg,Pantry,2,1950,3900
+txn_3e6ec4t0qq97dqdx0rl1,10,Pizza Congelada,Frozen Foods,3,4810,14430
+txn_3e6ec4t0qq97dqdx0rl1,11,Aceite Vegetal 1L,Pantry,1,2750,2750
+txn_3e6ec4t0qq97dqdx0rl1,12,Leche Entera 1L,Dairy & Eggs,1,1600,1600
+txn_3e6ec4t0qq97dqdx0rl1,13,Lechuga Unidad,Produce,3,1170,3510
+txn_3e6ec4t0qq97dqdx0rl1,14,Yogurt Pack 4,Dairy & Eggs,1,3850,3850
+txn_e9rnvi83nvmw88z7jy7lm,0,Choclo Unidad,Produce,2,810,1620
+txn_e9rnvi83nvmw88z7jy7lm,1,Crema 200ml,Dairy & Eggs,1,1780,1780
+txn_e9rnvi83nvmw88z7jy7lm,2,Queso Chanco 200g,Dairy & Eggs,2,2800,5600
+txn_e9rnvi83nvmw88z7jy7lm,3,Azúcar 1Kg,Pantry,1,1350,1350
+txn_e9rnvi83nvmw88z7jy7lm,4,Leche Semidescremada 1L,Dairy & Eggs,1,1580,1580
+txn_e9rnvi83nvmw88z7jy7lm,5,Longaniza Kg,Meat & Seafood,1,7630,7630
+txn_e9rnvi83nvmw88z7jy7lm,6,Sal 1Kg,Pantry,2,590,1180
+txn_e9rnvi83nvmw88z7jy7lm,7,Harina 1Kg,Pantry,1,1030,1030
+txn_e9rnvi83nvmw88z7jy7lm,8,Pepino Unidad,Produce,2,710,1420
+txn_e9rnvi83nvmw88z7jy7lm,9,Hallulla Pack 6,Bakery,1,1870,1870
+txn_e9rnvi83nvmw88z7jy7lm,10,Papa Kg,Produce,2,1280,2560
+txn_e9rnvi83nvmw88z7jy7lm,11,Esponja Pack 3,Cleaning Supplies,2,1550,3100
+txn_zvm5fd9y6v5qh1k1083mv,0,Hot Dog,Snacks,3,4070,12210
+txn_av5wewp9ei7a0u5g7z1pxd,0,Aceite Motor,Automotive,2,12810,25620
+txn_9tc3y328penaq27zllaka9,0,Café Latte Grande,Beverages,2,4230,8460
+txn_g2dy81f1nxwo8fmfdbnrz,0,Carga Bip!,Service,1,3990,3990
+txn_nzmphbr700rbzgjjuuep4c,0,Aceite Motor,Automotive,3,9420,28260
+txn_nzmphbr700rbzgjjuuep4c,1,Bencina 93 Litros,Automotive,20,1240,24800
+txn_kxnv7vtho2hic6jq8okj,0,Aceite Motor,Automotive,3,10250,30750
+txn_jlecjgms5lel5vsnanmgl,0,Flores Ramo,Other,2,8380,16760
+txn_vv9tds92jx8y8l3e7y3nw,0,Frappuccino,Beverages,2,5220,10440
+txn_w0a5q3rpyjetgnp4pdk5e,0,Bencina 93 Litros,Automotive,42,1230,51660
+txn_yxxr1h9cca5ytmoszntr,0,Legumbres 1Kg,Pantry,3,2740,8220
+txn_yxxr1h9cca5ytmoszntr,1,Cilantro Atado,Produce,2,640,1280
+txn_yxxr1h9cca5ytmoszntr,2,Atún Lata 170g,Pantry,1,2150,2150
+txn_yxxr1h9cca5ytmoszntr,3,Huevos 6u,Dairy & Eggs,1,2340,2340
+txn_yxxr1h9cca5ytmoszntr,4,Chorizo Parrillero Kg,Meat & Seafood,2,7420,14840
+txn_yxxr1h9cca5ytmoszntr,5,Marraqueta Kg,Bakery,2,1960,3920
+txn_yxxr1h9cca5ytmoszntr,6,Costillar Cerdo Kg,Meat & Seafood,2,5370,10740
+txn_yxxr1h9cca5ytmoszntr,7,Leche Cultivada 1L,Dairy & Eggs,3,1490,4470
+txn_yxxr1h9cca5ytmoszntr,8,Ajo Cabeza,Produce,3,460,1380
+txn_yxxr1h9cca5ytmoszntr,9,Pimentón Kg,Produce,2,2370,4740
+txn_yxxr1h9cca5ytmoszntr,10,Ketchup 500g,Pantry,1,2420,2420
+txn_ubzmixfaha8bylu72u1e0e,0,Cilantro Atado,Produce,3,580,1740
+txn_ubzmixfaha8bylu72u1e0e,1,Pimentón Kg,Produce,2,3060,6120
+txn_ubzmixfaha8bylu72u1e0e,2,Mayonesa 500g,Pantry,3,3220,9660
+txn_ubzmixfaha8bylu72u1e0e,3,Marraqueta Kg,Bakery,1,1760,1760
+txn_ubzmixfaha8bylu72u1e0e,4,Ajo Cabeza,Produce,1,680,680
+txn_ubzmixfaha8bylu72u1e0e,5,Ketchup 500g,Pantry,2,2430,4860
+txn_ubzmixfaha8bylu72u1e0e,6,Huevos 6u,Dairy & Eggs,3,2340,7020
+txn_ubzmixfaha8bylu72u1e0e,7,Atún Lata 170g,Pantry,3,2060,6180
+txn_g624zdbnuqll7yveo787qp,0,Champiñones 200g,Produce,1,2940,2940
+txn_g624zdbnuqll7yveo787qp,1,Espárragos Atado,Produce,3,4190,12570
+txn_g624zdbnuqll7yveo787qp,2,Queso Parmesano 200g,Dairy & Eggs,1,6810,6810
+txn_g624zdbnuqll7yveo787qp,3,Aceite Oliva 500ml,Pantry,3,8160,24480
+txn_g624zdbnuqll7yveo787qp,4,Quinoa 500g,Pantry,1,3900,3900
+txn_g624zdbnuqll7yveo787qp,5,Yogurt Griego Pack 4,Dairy & Eggs,3,4890,14670
+txn_g624zdbnuqll7yveo787qp,6,Pavo Pechuga Kg,Meat & Seafood,1,9350,9350
+txn_lxcy2twxj9oswrmtxltts,0,Bencina 95 Litros,Automotive,37,1300,48100
+txn_497codom0v47exem5g0el9,0,Estacionamiento Horas,Service,1,3060,3060
+txn_q745ja65ehm7grdwfr31l8,0,Sweater,Clothing,2,29030,58060
+txn_q745ja65ehm7grdwfr31l8,1,Bufanda,Clothing,3,12970,38910
+txn_k7hsaronyvrs6trfnbbmo,0,Calzone Jamón Queso,Pantry,1,8760,8760
+txn_k7hsaronyvrs6trfnbbmo,1,Pizza Familiar 4 Quesos,Pantry,1,14490,14490
+txn_1d22l35wkvx3vqtqh4k9ny,0,Legumbres 1Kg,Pantry,3,2620,7860
+txn_1d22l35wkvx3vqtqh4k9ny,1,Leche Cultivada 1L,Dairy & Eggs,3,1480,4440
+txn_1d22l35wkvx3vqtqh4k9ny,2,Marraqueta Kg,Bakery,2,1710,3420
+txn_1d22l35wkvx3vqtqh4k9ny,3,Pimentón Kg,Produce,2,3120,6240
+txn_1d22l35wkvx3vqtqh4k9ny,4,Cilantro Atado,Produce,1,510,510
+txn_1d22l35wkvx3vqtqh4k9ny,5,Mayonesa 500g,Pantry,2,2660,5320
+txn_1d22l35wkvx3vqtqh4k9ny,6,Ajo Cabeza,Produce,1,670,670
+txn_1d22l35wkvx3vqtqh4k9ny,7,Huevos 6u,Dairy & Eggs,2,2480,4960
+txn_ie1u7avm9nq9kzapgugs,0,Carga Bip!,Service,1,7530,7530
+txn_5mrab238d49bjpny6qutt,0,Viaje Uber Comfort,Service,1,12920,12920
+txn_8qn3z8n0pem0dgctn6qlces,0,Viaje Uber Comfort,Service,2,12870,25740
+txn_ziki1sl52vr86vp06221li,0,Sándwich Pollo,Pantry,1,5710,5710
+txn_5u9gh9bt1sm2wb86fv2po,0,Magnesio 60u,Supplements,1,8520,8520
+txn_5u9gh9bt1sm2wb86fv2po,1,Antigripal 10u,Pharmacy,1,5320,5320
+txn_khryl3oarvm4o8pnwg88id,0,McNuggets 10,Pantry,1,5490,5490
+txn_9ts0i3h399b3isrjvw7yj9,0,Pan Fresco Kg,Bakery,2,1850,3700
+txn_cqyswbd11i6gxm70wyj4nv,0,Plan Premium,Service,1,12990,12990
+txn_itwhpsqg7tie5222985dj,0,Carga Bip!,Service,1,6490,6490
+txn_rmxnx0sr0z4h0fi9t7m2d,0,Leche Cultivada 1L,Dairy & Eggs,1,1420,1420
+txn_rmxnx0sr0z4h0fi9t7m2d,1,Ketchup 500g,Pantry,3,2790,8370
+txn_rmxnx0sr0z4h0fi9t7m2d,2,Atún Lata 170g,Pantry,1,2150,2150
+txn_rmxnx0sr0z4h0fi9t7m2d,3,Pimentón Kg,Produce,1,2920,2920
+txn_rmxnx0sr0z4h0fi9t7m2d,4,Chorizo Parrillero Kg,Meat & Seafood,1,6440,6440
+txn_nl3fbj8mz3q9ex6piwnsil,0,Arena Gato 10L,Pet Supplies,2,12100,24200
+txn_nl3fbj8mz3q9ex6piwnsil,1,Antipulgas,Pet Supplies,1,21950,21950
+txn_nl3fbj8mz3q9ex6piwnsil,2,Juguete Mascota,Pet Supplies,1,5900,5900
+txn_fwu9itkwzzv7i35yrixzx9,0,Tomate Kg,Produce,3,2460,7380
+txn_fwu9itkwzzv7i35yrixzx9,1,Leche Entera 1L,Dairy & Eggs,1,1410,1410
+txn_fwu9itkwzzv7i35yrixzx9,2,Queso Mantecoso Kg,Dairy & Eggs,3,11360,34080
+txn_fwu9itkwzzv7i35yrixzx9,3,Pan Molde Integral,Bakery,3,2160,6480
+txn_fwu9itkwzzv7i35yrixzx9,4,Manzana Royal Kg,Produce,3,2340,7020
+txn_fwu9itkwzzv7i35yrixzx9,5,Café Molido 250g,Beverages,1,4960,4960
+txn_fwu9itkwzzv7i35yrixzx9,6,Plátano Kg,Produce,3,1160,3480
+txn_fwu9itkwzzv7i35yrixzx9,7,Cerveza Pack 6,Alcohol,1,8540,8540
+txn_fwu9itkwzzv7i35yrixzx9,8,Huevos Docena,Dairy & Eggs,1,4170,4170
+txn_fwu9itkwzzv7i35yrixzx9,9,Lechuga Unidad,Produce,2,1330,2660
+txn_fwu9itkwzzv7i35yrixzx9,10,Pollo Entero Kg,Meat & Seafood,1,4400,4400
+txn_fwu9itkwzzv7i35yrixzx9,11,Arroz Grado 1 Kg,Pantry,1,1950,1950
+txn_fwu9itkwzzv7i35yrixzx9,12,Papel Higiénico 12u,Household,2,6880,13760
+txn_fwu9itkwzzv7i35yrixzx9,13,Coca Cola 3L,Beverages,1,3080,3080
+txn_z2k9k409gbin4s8ewjbx9i,0,Coca Cola 3L,Beverages,2,3210,6420
+txn_z2k9k409gbin4s8ewjbx9i,1,Palta Hass Kg,Produce,1,7150,7150
+txn_z2k9k409gbin4s8ewjbx9i,2,Café Molido 250g,Beverages,1,5510,5510
+txn_z2k9k409gbin4s8ewjbx9i,3,Yogurt Pack 4,Dairy & Eggs,3,2520,7560
+txn_z2k9k409gbin4s8ewjbx9i,4,Fideos 400g,Pantry,1,970,970
+txn_z2k9k409gbin4s8ewjbx9i,5,Cerveza Pack 6,Alcohol,1,7480,7480
+txn_z2k9k409gbin4s8ewjbx9i,6,Tomate Kg,Produce,2,1690,3380
+txn_z2k9k409gbin4s8ewjbx9i,7,Huevos Docena,Dairy & Eggs,3,4710,14130
+txn_z2k9k409gbin4s8ewjbx9i,8,Pechuga de Pollo Kg,Meat & Seafood,1,6430,6430
+txn_z2k9k409gbin4s8ewjbx9i,9,Detergente Líquido 3L,Cleaning Supplies,1,7210,7210
+txn_z2k9k409gbin4s8ewjbx9i,10,Salmón Filete Kg,Meat & Seafood,2,17640,35280
+txn_z2k9k409gbin4s8ewjbx9i,11,Vino Tinto 750ml,Alcohol,1,7580,7580
+txn_z2k9k409gbin4s8ewjbx9i,12,Aceite Vegetal 1L,Pantry,3,2600,7800
+txn_z2k9k409gbin4s8ewjbx9i,13,Pizza Congelada,Frozen Foods,3,4080,12240
+txn_pwqt3ntj7vda6on4lynkp,0,Pizza Familiar 4 Quesos,Pantry,1,13700,13700
+txn_pwqt3ntj7vda6on4lynkp,1,Bebida 2L,Beverages,3,3180,9540
+txn_pwqt3ntj7vda6on4lynkp,2,Calzone Jamón Queso,Pantry,2,8610,17220
+txn_pbz94e4kkli2utq2xbtha,0,Diesel Litros,Automotive,25,1000,25000
+txn_pbz94e4kkli2utq2xbtha,1,Aceite Motor,Automotive,3,14280,42840
+txn_orh63jzesmhdwzujtof1vj,0,Café Latte Grande,Beverages,3,4090,12270
+txn_0ep6x18l7iajyqpa4adf66,0,Diesel Litros,Automotive,42,1010,42420
+txn_p3vo7s2uxce9dgi7q2get4,0,Cerveza Pack 6,Alcohol,3,8140,24420
+txn_p3vo7s2uxce9dgi7q2get4,1,Queso Mantecoso Kg,Dairy & Eggs,2,12070,24140
+txn_p3vo7s2uxce9dgi7q2get4,2,Aceite Vegetal 1L,Pantry,2,2900,5800
+txn_p3vo7s2uxce9dgi7q2get4,3,Helado 1L,Frozen Foods,1,5530,5530
+txn_p3vo7s2uxce9dgi7q2get4,4,Pizza Congelada,Frozen Foods,2,5410,10820
+txn_dvi2mnqzndfxmd44zosefm,0,Detergente Líquido 3L,Cleaning Supplies,1,7020,7020
+txn_dvi2mnqzndfxmd44zosefm,1,Arroz Grado 1 Kg,Pantry,3,1580,4740
+txn_dvi2mnqzndfxmd44zosefm,2,Queso Mantecoso Kg,Dairy & Eggs,1,10440,10440
+txn_dvi2mnqzndfxmd44zosefm,3,Café Molido 250g,Beverages,3,6590,19770
+txn_dvi2mnqzndfxmd44zosefm,4,Leche Entera 1L,Dairy & Eggs,1,1650,1650
+txn_dvi2mnqzndfxmd44zosefm,5,Coca Cola 3L,Beverages,3,3750,11250
+txn_pmcn79vqqedokusd1hm9sg,0,Estacionamiento Horas,Service,1,4620,4620
+txn_l6e1vt5jan3rk7ol9rjlk,0,Plan Salud Mensual,Service,1,124570,124570
+txn_d07esagf4lolm2vfdvsmd,0,Pan de Molde Blanco,Bakery,2,2450,4900
+txn_d07esagf4lolm2vfdvsmd,1,Jamón Cocido 200g,Meat & Seafood,3,2980,8940
+txn_d07esagf4lolm2vfdvsmd,2,Limón Kg,Produce,3,2780,8340
+txn_d07esagf4lolm2vfdvsmd,3,Cebolla Kg,Produce,3,1150,3450
+txn_d07esagf4lolm2vfdvsmd,4,Arroz Grado 2 Kg,Pantry,2,1350,2700
+txn_d07esagf4lolm2vfdvsmd,5,Jugo en Polvo Pack 8,Beverages,3,4400,13200
+txn_d07esagf4lolm2vfdvsmd,6,Leche Descremada 1L,Dairy & Eggs,3,1510,4530
+txn_d07esagf4lolm2vfdvsmd,7,Té Caja 100u,Beverages,2,3040,6080
+txn_d07esagf4lolm2vfdvsmd,8,Mantequilla 250g,Dairy & Eggs,3,3820,11460
+txn_d07esagf4lolm2vfdvsmd,9,Tallarines 500g,Pantry,3,1080,3240
+txn_d07esagf4lolm2vfdvsmd,10,Zanahoria Kg,Produce,3,890,2670
+txn_d07esagf4lolm2vfdvsmd,11,Reineta Filete Kg,Meat & Seafood,3,10610,31830
+txn_ca4wegsx8qwyomb7l8otr,0,Pan Fresco Kg,Bakery,2,2260,4520
+txn_mjkyq1g0ocdy4tqdikcufg,0,Helado Cono,Snacks,1,710,710
+txn_mjkyq1g0ocdy4tqdikcufg,1,Big Mac Combo,Pantry,3,7180,21540
+txn_ss9uc0hsosndmurwpl7pcl,0,Viaje Uber Comfort,Service,1,20920,20920
+txn_kbyfgsyvvaokvpwgfiwyc,0,Naranja Kg,Produce,3,1870,5610
+txn_kbyfgsyvvaokvpwgfiwyc,1,Té Caja 100u,Beverages,2,3440,6880
+txn_kbyfgsyvvaokvpwgfiwyc,2,Lavaloza 750ml,Cleaning Supplies,3,1620,4860
+txn_kbyfgsyvvaokvpwgfiwyc,3,Zanahoria Kg,Produce,2,1070,2140
+txn_kbyfgsyvvaokvpwgfiwyc,4,Reineta Filete Kg,Meat & Seafood,2,9010,18020
+txn_kbyfgsyvvaokvpwgfiwyc,5,Asado Carnicero Kg,Meat & Seafood,3,8120,24360
+txn_94nnbkgklg0e9vthgpdiod,0,Sake 300ml,Alcohol,1,11590,11590
+txn_94nnbkgklg0e9vthgpdiod,1,Gyozas 6u,Pantry,3,6600,19800
+txn_94nnbkgklg0e9vthgpdiod,2,Handroll Salmón,Pantry,3,4240,12720
+txn_9p6parvrz9qu5r3o01a1q,0,Huevos Campo 30u,Dairy & Eggs,3,6620,19860
+txn_9p6parvrz9qu5r3o01a1q,1,Verduras Surtidas Kg,Produce,2,1550,3100
+txn_9p6parvrz9qu5r3o01a1q,2,Queso Fresco Kg,Dairy & Eggs,1,8720,8720
+txn_76u53730lxj2iqqvuwuwe5,0,Carga Bip!,Service,1,8290,8290
+txn_vmm5mphx2e8ap7uco883l9,0,Diesel Litros,Automotive,35,1020,35700
+txn_vmm5mphx2e8ap7uco883l9,1,Bencina 93 Litros,Automotive,48,1240,59520
+txn_81i4gns1qvuy61w53adx0i,0,Chorizo Parrillero Kg,Meat & Seafood,3,5610,16830
+txn_81i4gns1qvuy61w53adx0i,1,Cilantro Atado,Produce,3,820,2460
+txn_81i4gns1qvuy61w53adx0i,2,Ketchup 500g,Pantry,3,2960,8880
+txn_81i4gns1qvuy61w53adx0i,3,Costillar Cerdo Kg,Meat & Seafood,2,4850,9700
+txn_81i4gns1qvuy61w53adx0i,4,Huevos 6u,Dairy & Eggs,2,2410,4820
+txn_5zhf7lfprqaqg5rpxkbzub,0,Leche Descremada 1L,Dairy & Eggs,1,1280,1280
+txn_5zhf7lfprqaqg5rpxkbzub,1,Cebolla Kg,Produce,1,1260,1260
+txn_5zhf7lfprqaqg5rpxkbzub,2,Jamón Cocido 200g,Meat & Seafood,1,2660,2660
+txn_5zhf7lfprqaqg5rpxkbzub,3,Naranja Kg,Produce,1,1900,1900
+txn_5zhf7lfprqaqg5rpxkbzub,4,Zanahoria Kg,Produce,1,1180,1180
+txn_5zhf7lfprqaqg5rpxkbzub,5,Tallarines 500g,Pantry,3,1110,3330
+txn_5zhf7lfprqaqg5rpxkbzub,6,Jugo en Polvo Pack 8,Beverages,1,3750,3750
+txn_5zhf7lfprqaqg5rpxkbzub,7,Mantequilla 250g,Dairy & Eggs,1,3300,3300
+txn_5zhf7lfprqaqg5rpxkbzub,8,Arroz Grado 2 Kg,Pantry,3,1300,3900
+txn_5zhf7lfprqaqg5rpxkbzub,9,Servilletas 100u,Household,3,1650,4950
+txn_5zhf7lfprqaqg5rpxkbzub,10,Pollo Trutro Kg,Meat & Seafood,1,3850,3850
+txn_hfq1nf9amt829p95nsu2v1,0,Helado Cono,Snacks,2,770,1540
+txn_hfq1nf9amt829p95nsu2v1,1,Papas Medianas,Pantry,1,2860,2860
+txn_hfq1nf9amt829p95nsu2v1,2,McNuggets 10,Pantry,1,5110,5110
+txn_w36advszx5fztziqo3qcae,0,Bencina 93 Litros,Automotive,49,1120,54880
+txn_342lw0n4aab5ccp5jy3ngj,0,Viaje Cabify,Service,1,12980,12980
+txn_80yq5cg5u9d4g1c8giivs,0,Papas Medianas,Pantry,3,2740,8220
+txn_80yq5cg5u9d4g1c8giivs,1,Helado Cono,Snacks,3,850,2550
+txn_80yq5cg5u9d4g1c8giivs,2,McFlurry,Snacks,1,2560,2560
+txn_3p1opxb7sjm92wdu3dixtb,0,Viaje Uber Comfort,Service,1,5950,5950
+txn_3p1opxb7sjm92wdu3dixtb,1,Viaje UberX,Service,1,12090,12090
+txn_1xmpeos112q9vxs2fawvr,0,Viaje UberX,Service,3,4290,12870
+txn_olbsfwzervmp8y0wx29b0e,0,Aceite Motor,Automotive,3,15990,47970
+txn_a90q3ycjpo5shesh0kac4d,0,Hamburguesa Clásica,Pantry,2,7390,14780
+txn_g3yorhm0fw51idu7nsdl2f,0,Viaje Cabify Lite,Service,1,7530,7530
+txn_g3yorhm0fw51idu7nsdl2f,1,Viaje Cabify,Service,2,5710,11420
+txn_zj5sgnxxxcsoqd9mklnpn,0,Plan Salud Mensual,Service,1,128320,128320
+txn_cv0hr5wi3etg6u5o7zmqru,0,Legumbres 1Kg,Pantry,3,2770,8310
+txn_cv0hr5wi3etg6u5o7zmqru,1,Atún Lata 170g,Pantry,1,2070,2070
+txn_cv0hr5wi3etg6u5o7zmqru,2,Ajo Cabeza,Produce,2,500,1000
+txn_cv0hr5wi3etg6u5o7zmqru,3,Chorizo Parrillero Kg,Meat & Seafood,2,7450,14900
+txn_cv0hr5wi3etg6u5o7zmqru,4,Cilantro Atado,Produce,2,550,1100
+txn_cv0hr5wi3etg6u5o7zmqru,5,Ketchup 500g,Pantry,1,2620,2620
+txn_cv0hr5wi3etg6u5o7zmqru,6,Leche Cultivada 1L,Dairy & Eggs,3,1500,4500
+txn_cv0hr5wi3etg6u5o7zmqru,7,Marraqueta Kg,Bakery,2,1740,3480
+txn_lf7ga9hmftu9kzi4p7rup,0,Leche Entera 1L,Dairy & Eggs,3,1410,4230
+txn_lf7ga9hmftu9kzi4p7rup,1,Yogurt Pack 4,Dairy & Eggs,1,2720,2720
+txn_lf7ga9hmftu9kzi4p7rup,2,Salmón Filete Kg,Meat & Seafood,2,19130,38260
+txn_lf7ga9hmftu9kzi4p7rup,3,Pizza Congelada,Frozen Foods,3,4270,12810
+txn_bespcclodmsboyhr2xl85s,0,Chorizo Parrillero Kg,Meat & Seafood,2,5890,11780
+txn_bespcclodmsboyhr2xl85s,1,Ketchup 500g,Pantry,3,2430,7290
+txn_rx8lurxaogqgp1786sw7xa,0,Sándwich Pollo,Pantry,1,5650,5650
+txn_rx8lurxaogqgp1786sw7xa,1,Croissant,Bakery,1,2890,2890
+txn_rx8lurxaogqgp1786sw7xa,2,Café Latte Grande,Beverages,1,4400,4400
+txn_t1t8q8kt636p3tuhdj7hn,0,Lavaloza 750ml,Cleaning Supplies,3,2020,6060
+txn_t1t8q8kt636p3tuhdj7hn,1,Mantequilla 250g,Dairy & Eggs,3,3240,9720
+txn_t1t8q8kt636p3tuhdj7hn,2,Tallarines 500g,Pantry,3,970,2910
+txn_t1t8q8kt636p3tuhdj7hn,3,Aceite Maravilla 1L,Pantry,2,2710,5420
+txn_t1t8q8kt636p3tuhdj7hn,4,Cebolla Kg,Produce,2,1280,2560
+txn_t1t8q8kt636p3tuhdj7hn,5,Arroz Grado 2 Kg,Pantry,3,1130,3390
+txn_t1t8q8kt636p3tuhdj7hn,6,Leche Descremada 1L,Dairy & Eggs,1,1430,1430
+txn_t1t8q8kt636p3tuhdj7hn,7,Limón Kg,Produce,3,2440,7320
+txn_t1t8q8kt636p3tuhdj7hn,8,Servilletas 100u,Household,2,1480,2960
+txn_t1t8q8kt636p3tuhdj7hn,9,Zanahoria Kg,Produce,2,790,1580
+txn_t1t8q8kt636p3tuhdj7hn,10,Pan de Molde Blanco,Bakery,2,1710,3420
+txn_t1t8q8kt636p3tuhdj7hn,11,Asado Carnicero Kg,Meat & Seafood,1,9810,9810
+txn_t1t8q8kt636p3tuhdj7hn,12,Reineta Filete Kg,Meat & Seafood,1,12160,12160
+txn_t1t8q8kt636p3tuhdj7hn,13,Jamón Cocido 200g,Meat & Seafood,3,3840,11520
+txn_mg80mzd3t36gvih7lfnhv,0,Calzone Jamón Queso,Pantry,3,8000,24000
+txn_9mvovge1k18ggxu9bnnwv,0,Flores Ramo,Other,2,5370,10740
+txn_9mvovge1k18ggxu9bnnwv,1,Verduras Surtidas Kg,Produce,2,2040,4080
+txn_9mvovge1k18ggxu9bnnwv,2,Pescado Fresco Kg,Meat & Seafood,1,12860,12860
+txn_btylftytgadot3vprz9lv,0,Bencina 93 Litros,Automotive,34,1230,41820
+txn_t43f8pmnkhv9q746rmq1,0,Telefonía Fija,Service,3,12230,36690
+txn_ul1y0sxdgdggksc3ir934m,0,McFlurry,Snacks,3,2830,8490
+txn_nuf4js0flbrgxkk0rjwoj8,0,Pisco Sour,Alcohol,2,7540,15080
+txn_nuf4js0flbrgxkk0rjwoj8,1,Empanadas Pino 2u,Pantry,2,7410,14820
+txn_hlixp44w0v92qwh15y9m9j,0,Viaje Uber Comfort,Service,1,8560,8560
+txn_1t7u92uezb3q1sudpwluf,0,Kuchen,Bakery,2,2930,5860
+txn_du2s0l8fcrs02x2hf4ex,0,Jabón Líquido,Personal Care,1,4700,4700
+txn_du2s0l8fcrs02x2hf4ex,1,Preservativos 12u,Personal Care,1,7150,7150
+txn_rqjwojmdytkhosxo37vyd,0,Pescado Fresco Kg,Meat & Seafood,1,11130,11130
+txn_rqjwojmdytkhosxo37vyd,1,Frutas Surtidas Kg,Produce,1,1500,1500
+txn_rqjwojmdytkhosxo37vyd,2,Huevos Campo 30u,Dairy & Eggs,2,7460,14920
+txn_vz2wbia274jt50znpt5k0d,0,Bebida 2L,Beverages,1,3020,3020
+txn_vz2wbia274jt50znpt5k0d,1,Calzone Jamón Queso,Pantry,3,7520,22560
+txn_1tv7x32b0gevtupal53c1,0,Salmón Filete Kg,Meat & Seafood,3,17020,51060
+txn_6hwtr71pxrolkcr2vfqywh,0,Bebida 1.5L,Beverages,3,2550,7650
+txn_6hwtr71pxrolkcr2vfqywh,1,Palitos de Ajo,Pantry,2,5600,11200
+txn_bblzijfq7zmdus0t4ebjas,0,Combo Popcorn Grande,Snacks,1,9890,9890
+txn_bblzijfq7zmdus0t4ebjas,1,Bebida Grande,Beverages,1,3730,3730
+txn_68ty1h40wn4p7hfhyids7r,0,Papas Fritas Grande,Pantry,1,3120,3120
+txn_68ty1h40wn4p7hfhyids7r,1,Bebida 500ml,Beverages,1,1770,1770
+txn_68ty1h40wn4p7hfhyids7r,2,Completo Italiano,Pantry,3,3990,11970
+txn_tgmi0yhkohtxpes9yi53,0,Queso Fresco Kg,Dairy & Eggs,2,7130,14260
+txn_4qogyov7wc5j6hhxfxeun8,0,Vestido Verano,Clothing,1,27610,27610
+txn_4qogyov7wc5j6hhxfxeun8,1,Short,Clothing,1,18470,18470
+txn_z62k9zfz5tgy29fct5aoqe,0,Estacionamiento Horas,Service,1,2640,2640
+txn_6vsweb5f1zui088wily88,0,Preservativos 12u,Personal Care,2,9600,19200
+txn_6vsweb5f1zui088wily88,1,Loratadina 10mg 30u,Pharmacy,1,6600,6600
+txn_4ajhm56ij7hq64aunga3l,0,Ibuprofeno 400mg 20u,Pharmacy,2,3560,7120
+txn_4ajhm56ij7hq64aunga3l,1,Shampoo 400ml,Personal Care,1,6250,6250
+txn_cwaodrmcizbxs4kp1lcgqn,0,Croissant,Bakery,3,2500,7500
+txn_yaw17nmtnjnai4vd7nqv2e,0,Gas Natural Mes,Service,1,57000,57000
+txn_gdekmbu3irjcxbnmrtcb1r,0,Croissant,Bakery,2,2550,5100
+txn_gdekmbu3irjcxbnmrtcb1r,1,Muffin Arándanos,Bakery,1,3230,3230
+txn_79main2hu7rzulz6ytwfq,0,Chorizo Parrillero Kg,Meat & Seafood,2,7060,14120
+txn_79main2hu7rzulz6ytwfq,1,Legumbres 1Kg,Pantry,2,2180,4360
+txn_79main2hu7rzulz6ytwfq,2,Huevos 6u,Dairy & Eggs,1,2410,2410
+txn_79main2hu7rzulz6ytwfq,3,Mayonesa 500g,Pantry,2,3310,6620
+txn_79main2hu7rzulz6ytwfq,4,Costillar Cerdo Kg,Meat & Seafood,2,4970,9940
+txn_1dlathydg0d2uc0kstjrg2,0,Sándwich Pollo,Pantry,2,6330,12660
+txn_h8dkyh3l4dsqjdhmcza12,0,Viaje Uber Comfort,Service,1,10190,10190
+txn_dld7c0tg8fsu5kzegkt7pn,0,Hallulla Pack 6,Bakery,2,1860,3720
+txn_dld7c0tg8fsu5kzegkt7pn,1,Longaniza Kg,Meat & Seafood,3,6330,18990
+txn_dld7c0tg8fsu5kzegkt7pn,2,Esponja Pack 3,Cleaning Supplies,3,1530,4590
+txn_dld7c0tg8fsu5kzegkt7pn,3,Merluza Filete Kg,Meat & Seafood,3,8830,26490
+txn_3jn3f0twt3b00ule5fi0av7,0,Torta Porción,Bakery,1,3880,3880
+txn_3jn3f0twt3b00ule5fi0av7,1,Pan Fresco Kg,Bakery,3,1530,4590
+txn_3rqdr51qwlqyz2vw2nvyig,0,Plan Premium,Service,1,12990,12990
+txn_f6fsw894xatl4nk3atq3ni,0,Aceite Oliva 500ml,Pantry,3,7980,23940
+txn_f6fsw894xatl4nk3atq3ni,1,Pavo Pechuga Kg,Meat & Seafood,2,10390,20780
+txn_f6fsw894xatl4nk3atq3ni,2,Queso Parmesano 200g,Dairy & Eggs,2,6900,13800
+txn_f6fsw894xatl4nk3atq3ni,3,Champiñones 200g,Produce,1,2730,2730
+txn_f6fsw894xatl4nk3atq3ni,4,Camarones Kg,Meat & Seafood,1,16670,16670
+txn_12i3whuyl89nl50gbff2xp,0,Viaje UberX,Service,2,6960,13920
+txn_ljvvq7kudw4b01qpxqet9,0,Queso Parmesano 200g,Dairy & Eggs,2,5470,10940
+txn_ljvvq7kudw4b01qpxqet9,1,Quinoa 500g,Pantry,2,3540,7080
+txn_ljvvq7kudw4b01qpxqet9,2,Aceite Oliva 500ml,Pantry,3,6140,18420
+txn_cuhek8qwlb5ited8psc6ns,0,Bencina 93 Litros,Automotive,37,1080,39960
+txn_sxs95o6tvahw6qy4dmln19,0,Carga Bip!,Service,1,9220,9220
+txn_r9fia34gpeqz43mj25pit,0,Churrasquería Completa,Pantry,2,9540,19080
+txn_r9fia34gpeqz43mj25pit,1,Completo Italiano,Pantry,3,4050,12150
+txn_h6761dlaktpbpabd75v80s,0,Bebida 2L,Beverages,3,3150,9450
+txn_h6761dlaktpbpabd75v80s,1,Pizza Mediana BBQ,Pantry,2,9880,19760
+txn_8wfyth35rfto4upv7l807,0,Viaje Cabify Lite,Service,2,3920,7840
+txn_juk0qc6o6iizywuj82ih,0,Verduras Surtidas Kg,Produce,3,2320,6960
+txn_juk0qc6o6iizywuj82ih,1,Frutas Surtidas Kg,Produce,2,2450,4900
+txn_juk0qc6o6iizywuj82ih,2,Queso Fresco Kg,Dairy & Eggs,1,8650,8650
+txn_id3dpbvmj8sq9cif50ybo,0,Carga Bip!,Service,1,5730,5730
+txn_py616qfkzs6w2xatjw76s,0,Crema 200ml,Dairy & Eggs,1,1760,1760
+txn_py616qfkzs6w2xatjw76s,1,Leche Semidescremada 1L,Dairy & Eggs,2,1640,3280
+txn_py616qfkzs6w2xatjw76s,2,Papa Kg,Produce,2,980,1960
+txn_py616qfkzs6w2xatjw76s,3,Hallulla Pack 6,Bakery,3,1400,4200
+txn_py616qfkzs6w2xatjw76s,4,Queso Chanco 200g,Dairy & Eggs,3,2870,8610
+txn_py616qfkzs6w2xatjw76s,5,Sal 1Kg,Pantry,3,670,2010
+txn_py616qfkzs6w2xatjw76s,6,Huevos 15u,Dairy & Eggs,3,4230,12690
+txn_py616qfkzs6w2xatjw76s,7,Esponja Pack 3,Cleaning Supplies,1,1440,1440
+txn_py616qfkzs6w2xatjw76s,8,Pepino Unidad,Produce,1,820,820
+txn_py616qfkzs6w2xatjw76s,9,Chuleta de Cerdo Kg,Meat & Seafood,1,5130,5130
+txn_py616qfkzs6w2xatjw76s,10,Cloro 1L,Cleaning Supplies,2,1400,2800
+txn_py616qfkzs6w2xatjw76s,11,Longaniza Kg,Meat & Seafood,2,7640,15280
+txn_sh94c3lgbn11uk0zb89p4j,0,Torta Porción,Bakery,1,2530,2530
+txn_7tzoxy58pznd0rx4mr7j3v,0,Lavado Auto,Service,2,8200,16400
+txn_7tzoxy58pznd0rx4mr7j3v,1,Bencina 95 Litros,Automotive,20,1300,26000
+txn_7tzoxy58pznd0rx4mr7j3v,2,Agua Botella,Beverages,1,1470,1470
+txn_7tzoxy58pznd0rx4mr7j3v,3,Snack Tienda,Snacks,2,1720,3440
+txn_1udkevwshuz960atu0tb5p,0,Viaje Uber Comfort,Service,1,18770,18770
+txn_m97e1pwxvepgtlkffuxtn,0,Kuchen,Bakery,2,2100,4200
+txn_m97e1pwxvepgtlkffuxtn,1,Empanada,Bakery,1,2940,2940
+txn_itmwy8xwz0gvpoopx0mhc,0,Estacionamiento Horas,Service,1,7000,7000
+txn_78wtt20nd6thpp37np0p29,0,Flores Ramo,Other,3,8630,25890
+txn_w0y650gszb8jkcsvuwen,0,Ajo Cabeza,Produce,2,650,1300
+txn_w0y650gszb8jkcsvuwen,1,Legumbres 1Kg,Pantry,1,2500,2500
+txn_w0y650gszb8jkcsvuwen,2,Ketchup 500g,Pantry,1,2900,2900
+txn_w0y650gszb8jkcsvuwen,3,Leche Cultivada 1L,Dairy & Eggs,1,1210,1210
+txn_w0y650gszb8jkcsvuwen,4,Marraqueta Kg,Bakery,3,1520,4560
+txn_w0y650gszb8jkcsvuwen,5,Costillar Cerdo Kg,Meat & Seafood,2,5380,10760
+txn_w0y650gszb8jkcsvuwen,6,Pimentón Kg,Produce,2,2150,4300
+txn_w0y650gszb8jkcsvuwen,7,Atún Lata 170g,Pantry,3,2150,6450
+txn_w0y650gszb8jkcsvuwen,8,Mayonesa 500g,Pantry,1,3320,3320
+txn_w0y650gszb8jkcsvuwen,9,Cilantro Atado,Produce,1,740,740
+txn_w0y650gszb8jkcsvuwen,10,Chorizo Parrillero Kg,Meat & Seafood,2,6360,12720
+txn_qarbrz9u3top06l7t2p9c,0,Servilletas 100u,Household,2,1700,3400
+txn_qarbrz9u3top06l7t2p9c,1,Leche Descremada 1L,Dairy & Eggs,2,1370,2740
+txn_qarbrz9u3top06l7t2p9c,2,Té Caja 100u,Beverages,2,3110,6220
+txn_qarbrz9u3top06l7t2p9c,3,Zanahoria Kg,Produce,3,1240,3720
+txn_qarbrz9u3top06l7t2p9c,4,Jugo en Polvo Pack 8,Beverages,1,3460,3460
+txn_qarbrz9u3top06l7t2p9c,5,Cebolla Kg,Produce,1,1130,1130
+txn_qarbrz9u3top06l7t2p9c,6,Mantequilla 250g,Dairy & Eggs,3,3670,11010
+txn_qarbrz9u3top06l7t2p9c,7,Limón Kg,Produce,3,2010,6030
+txn_qarbrz9u3top06l7t2p9c,8,Pan de Molde Blanco,Bakery,1,2100,2100
+txn_qarbrz9u3top06l7t2p9c,9,Aceite Maravilla 1L,Pantry,2,2940,5880
+txn_qarbrz9u3top06l7t2p9c,10,Lavaloza 750ml,Cleaning Supplies,1,1900,1900
+txn_qarbrz9u3top06l7t2p9c,11,Arroz Grado 2 Kg,Pantry,2,1240,2480
+txn_qarbrz9u3top06l7t2p9c,12,Asado Carnicero Kg,Meat & Seafood,3,11100,33300
+txn_13zc5eqgnxk0jx1x43rx35,0,Viaje Cabify,Service,1,9420,9420
+txn_or9tqm5ms39gy0b7oalvcn,0,Bencina 97 Litros,Automotive,30,1430,42900
+txn_l7dvvj4macvy2bmvysxch,0,Camarones Kg,Meat & Seafood,2,15850,31700
+txn_l7dvvj4macvy2bmvysxch,1,Pavo Pechuga Kg,Meat & Seafood,2,11830,23660
+txn_bm9muz0my63qqhy63tvnc,0,Bebida 1.5L,Beverages,3,2700,8100
+txn_bm9muz0my63qqhy63tvnc,1,Palitos de Ajo,Pantry,1,5510,5510
+txn_iwms4uwhi2jkidvta8f4eg,0,Pantalón Casual,Clothing,1,30190,30190
+txn_iwms4uwhi2jkidvta8f4eg,1,Polera Básica,Clothing,3,11130,33390
+txn_3eeamp7z0x6jygbfls914,0,Ajo Cabeza,Produce,3,600,1800
+txn_3eeamp7z0x6jygbfls914,1,Pimentón Kg,Produce,3,3220,9660
+txn_3eeamp7z0x6jygbfls914,2,Leche Cultivada 1L,Dairy & Eggs,3,1330,3990
+txn_3eeamp7z0x6jygbfls914,3,Ketchup 500g,Pantry,3,2480,7440
+txn_3eeamp7z0x6jygbfls914,4,Marraqueta Kg,Bakery,3,1810,5430
+txn_3eeamp7z0x6jygbfls914,5,Huevos 6u,Dairy & Eggs,3,2400,7200
+txn_4hs601i92zdt6g68hma7c,0,Viaje Uber Comfort,Service,1,22300,22300
+txn_v0xqgucnv87g38es0hrdjn,0,Detergente Líquido 3L,Cleaning Supplies,3,6860,20580
+txn_v0xqgucnv87g38es0hrdjn,1,Tomate Kg,Produce,2,2100,4200
+txn_v0xqgucnv87g38es0hrdjn,2,Leche Entera 1L,Dairy & Eggs,2,1410,2820
+txn_v0xqgucnv87g38es0hrdjn,3,Pan Molde Integral,Bakery,2,2650,5300
+txn_v0xqgucnv87g38es0hrdjn,4,Salmón Filete Kg,Meat & Seafood,3,16810,50430
+txn_z60lwdupis9xxiil13ttk,0,Harina 1Kg,Pantry,1,960,960
+txn_z60lwdupis9xxiil13ttk,1,Sal 1Kg,Pantry,1,500,500
+txn_z60lwdupis9xxiil13ttk,2,Choclo Unidad,Produce,2,820,1640
+txn_z60lwdupis9xxiil13ttk,3,Cloro 1L,Cleaning Supplies,3,1130,3390
+txn_z60lwdupis9xxiil13ttk,4,Queso Chanco 200g,Dairy & Eggs,1,2710,2710
+txn_z60lwdupis9xxiil13ttk,5,Merluza Filete Kg,Meat & Seafood,1,9680,9680
+txn_z60lwdupis9xxiil13ttk,6,Leche Semidescremada 1L,Dairy & Eggs,1,1320,1320
+txn_z60lwdupis9xxiil13ttk,7,Hallulla Pack 6,Bakery,3,1860,5580
+txn_z60lwdupis9xxiil13ttk,8,Papa Kg,Produce,1,980,980
+txn_3zbak26gg7kesfat26529b,0,Viaje UberX,Service,1,7430,7430
+txn_ak3fzcxalif13aq40k3ugr,0,Suscripción Familiar,Service,1,8490,8490
+txn_e2ihmdd5mk74jeajulda4,0,Viaje UberX,Service,1,8570,8570
+txn_e53d5twffxh04zp1yr2y2hc,0,Datos Adicionales,Service,3,7550,22650
+txn_t7td78lzjymr0cfmmz462f,0,Empanada,Bakery,2,2150,4300
+txn_gj1zxjwmmzkhyns915sbq4,0,Verduras Surtidas Kg,Produce,2,2090,4180
+txn_gj1zxjwmmzkhyns915sbq4,1,Frutas Surtidas Kg,Produce,1,2010,2010
+txn_yivjsupr7bp1f0as20s6nz,0,Big Mac Combo,Pantry,1,8060,8060
+txn_yivjsupr7bp1f0as20s6nz,1,McFlurry,Snacks,1,2510,2510
+txn_yivjsupr7bp1f0as20s6nz,2,Helado Cono,Snacks,1,650,650
+txn_yivjsupr7bp1f0as20s6nz,3,Papas Medianas,Pantry,3,2490,7470
+txn_j6pguwidbto19o3p36czwh,0,Viaje Cabify Lite,Service,1,5220,5220
+txn_c5ztw6b0qi86scn21vlpo,0,Vino Tinto 750ml,Alcohol,1,10960,10960
+txn_c5ztw6b0qi86scn21vlpo,1,Helado 1L,Frozen Foods,2,6140,12280
+txn_c5ztw6b0qi86scn21vlpo,2,Tomate Kg,Produce,3,1800,5400
+txn_df3rz3pn7bkk2ee7nkdvpl,0,Licuadora,Electronics,2,33180,66360
+txn_df3rz3pn7bkk2ee7nkdvpl,1,Plancha Vapor,Electronics,3,48240,144720
+txn_mnrss4x11ztf8pk3t9caa,0,Croissant,Bakery,3,2550,7650
+txn_bz1214y35sjlxd5sgjbwbb,0,Omeprazol 20mg 28u,Pharmacy,2,6470,12940
+txn_m78a3a9j1y7ku93x6l3s8,0,Lavado Auto,Service,1,7390,7390
+txn_m78a3a9j1y7ku93x6l3s8,1,Bencina 93 Litros,Automotive,33,1130,37290
+txn_m78a3a9j1y7ku93x6l3s8,2,Agua Botella,Beverages,2,1480,2960
+txn_m78a3a9j1y7ku93x6l3s8,3,Snack Tienda,Snacks,2,1540,3080
+txn_na90dyucqmsb3llc51to,0,Leche Entera 1L,Dairy & Eggs,1,1460,1460
+txn_na90dyucqmsb3llc51to,1,Plátano Kg,Produce,2,1040,2080
+txn_na90dyucqmsb3llc51to,2,Fideos 400g,Pantry,3,1100,3300
+txn_na90dyucqmsb3llc51to,3,Coca Cola 3L,Beverages,2,3840,7680
+txn_na90dyucqmsb3llc51to,4,Vino Tinto 750ml,Alcohol,1,4670,4670
+txn_na90dyucqmsb3llc51to,5,Cerveza Pack 6,Alcohol,3,6550,19650
+txn_na90dyucqmsb3llc51to,6,Palta Hass Kg,Produce,2,5140,10280
+txn_na90dyucqmsb3llc51to,7,Detergente Líquido 3L,Cleaning Supplies,1,7920,7920
+txn_na90dyucqmsb3llc51to,8,Café Molido 250g,Beverages,1,4810,4810
+txn_na90dyucqmsb3llc51to,9,Papel Higiénico 12u,Household,2,5880,11760
+txn_na90dyucqmsb3llc51to,10,Tomate Kg,Produce,1,2130,2130
+txn_na90dyucqmsb3llc51to,11,Pan Molde Integral,Bakery,3,2100,6300
+txn_na90dyucqmsb3llc51to,12,Aceite Vegetal 1L,Pantry,2,2770,5540
+txn_hkyhgi76vs0ez1s3owtf8g,0,Palitos de Ajo,Pantry,3,5000,15000
+txn_1x7hfajwx5v52deupjfkzx,0,Aceite Oliva 500ml,Pantry,1,8310,8310
+txn_1x7hfajwx5v52deupjfkzx,1,Yogurt Griego Pack 4,Dairy & Eggs,3,4920,14760
+txn_1x7hfajwx5v52deupjfkzx,2,Queso Parmesano 200g,Dairy & Eggs,3,6090,18270
+txn_yx102p5ypikb7kae5t0xn4,0,Asado Carnicero Kg,Meat & Seafood,1,11230,11230
+txn_yx102p5ypikb7kae5t0xn4,1,Cebolla Kg,Produce,1,1460,1460
+txn_yx102p5ypikb7kae5t0xn4,2,Zanahoria Kg,Produce,2,1140,2280
+txn_yx102p5ypikb7kae5t0xn4,3,Arroz Grado 2 Kg,Pantry,2,1460,2920
+txn_yx102p5ypikb7kae5t0xn4,4,Huevos 30u,Dairy & Eggs,3,7680,23040
+txn_yx102p5ypikb7kae5t0xn4,5,Jugo en Polvo Pack 8,Beverages,2,3980,7960
+txn_yx102p5ypikb7kae5t0xn4,6,Mantequilla 250g,Dairy & Eggs,2,3430,6860
+txn_yx102p5ypikb7kae5t0xn4,7,Jamón Cocido 200g,Meat & Seafood,2,3100,6200
+txn_yx102p5ypikb7kae5t0xn4,8,Naranja Kg,Produce,1,1690,1690
+txn_yx102p5ypikb7kae5t0xn4,9,Tallarines 500g,Pantry,3,1020,3060
+txn_pc9akbut1lpwx97avgfh4o,0,Diesel Litros,Automotive,22,1050,23100
+txn_pc9akbut1lpwx97avgfh4o,1,Bencina 97 Litros,Automotive,20,1370,27400
+txn_mu2lp96ha5q8wu0vkzdu,0,Verduras Surtidas Kg,Produce,2,2220,4440
+txn_mu2lp96ha5q8wu0vkzdu,1,Flores Ramo,Other,1,5220,5220
+txn_2egeanwsnlfxowu9cxym8,0,Pan Fresco Kg,Bakery,2,2170,4340
+txn_6l8oi6o5o7xjqla08c3bh,0,Bencina 93 Litros,Automotive,23,1090,25070
+txn_gp68i2q66mpq4ypbu2h58,0,Huevos Docena,Dairy & Eggs,3,4840,14520
+txn_gp68i2q66mpq4ypbu2h58,1,Detergente Líquido 3L,Cleaning Supplies,3,6360,19080
+txn_gp68i2q66mpq4ypbu2h58,2,Pollo Entero Kg,Meat & Seafood,2,3400,6800
+txn_gp68i2q66mpq4ypbu2h58,3,Papel Higiénico 12u,Household,2,6440,12880
+txn_gp68i2q66mpq4ypbu2h58,4,Cerveza Pack 6,Alcohol,1,6980,6980
+txn_gp68i2q66mpq4ypbu2h58,5,Helado 1L,Frozen Foods,2,7400,14800
+txn_gp68i2q66mpq4ypbu2h58,6,Salmón Filete Kg,Meat & Seafood,1,15160,15160
+txn_ewajxdj92z87vna54m7adc,0,Carga Bip!,Service,1,2190,2190
+txn_9rz3i38s9p9r1g9ugj2t2,0,Edamame,Pantry,3,4400,13200
+txn_9rz3i38s9p9r1g9ugj2t2,1,Sake 300ml,Alcohol,1,11170,11170
+txn_cj47f4bzq88g5ty56lhtnj,0,Huevos 6u,Dairy & Eggs,2,2320,4640
+txn_cj47f4bzq88g5ty56lhtnj,1,Cilantro Atado,Produce,3,500,1500
+txn_cj47f4bzq88g5ty56lhtnj,2,Ajo Cabeza,Produce,2,550,1100
+txn_cj47f4bzq88g5ty56lhtnj,3,Marraqueta Kg,Bakery,3,1790,5370
+txn_cj47f4bzq88g5ty56lhtnj,4,Pimentón Kg,Produce,1,2840,2840
+txn_cj47f4bzq88g5ty56lhtnj,5,Ketchup 500g,Pantry,3,2540,7620
+txn_cj47f4bzq88g5ty56lhtnj,6,Costillar Cerdo Kg,Meat & Seafood,3,5700,17100
+txn_s4v9kwkr01n194ntivynbm,0,Bencina 93 Litros,Automotive,21,1140,23940
+txn_dz3j6mlufsmamptcq14l1b,0,Queso Chanco 200g,Dairy & Eggs,1,3190,3190
+txn_dz3j6mlufsmamptcq14l1b,1,Crema 200ml,Dairy & Eggs,3,2000,6000
+txn_dz3j6mlufsmamptcq14l1b,2,Harina 1Kg,Pantry,1,1040,1040
+txn_dz3j6mlufsmamptcq14l1b,3,Pepino Unidad,Produce,3,650,1950
+txn_dz3j6mlufsmamptcq14l1b,4,Azúcar 1Kg,Pantry,1,1340,1340
+txn_dz3j6mlufsmamptcq14l1b,5,Esponja Pack 3,Cleaning Supplies,2,1520,3040
+txn_dz3j6mlufsmamptcq14l1b,6,Merluza Filete Kg,Meat & Seafood,2,9160,18320
+txn_dz3j6mlufsmamptcq14l1b,7,Longaniza Kg,Meat & Seafood,2,6560,13120
+txn_dz3j6mlufsmamptcq14l1b,8,Leche Semidescremada 1L,Dairy & Eggs,2,1450,2900
+txn_dz3j6mlufsmamptcq14l1b,9,Huevos 15u,Dairy & Eggs,3,4320,12960
+txn_jq81e874twgrl5sw52c3,0,TV Cable,Service,2,24890,49780
+txn_x3b8npxtcqjai1i5o3zukr,0,Empanada,Bakery,2,2020,4040
+txn_t99e4tvbtnduy0wvo00cl,0,Edamame,Pantry,2,4800,9600
+txn_t99e4tvbtnduy0wvo00cl,1,Sake 300ml,Alcohol,2,12750,25500
+txn_8vofojzkfjqoxmqjypmlue,0,Pizza Congelada,Frozen Foods,1,4260,4260
+txn_8vofojzkfjqoxmqjypmlue,1,Cerveza Pack 6,Alcohol,2,7810,15620
+txn_8vofojzkfjqoxmqjypmlue,2,Papel Higiénico 12u,Household,3,7740,23220
+txn_8vofojzkfjqoxmqjypmlue,3,Carne Molida Kg,Meat & Seafood,2,7340,14680
+txn_8vofojzkfjqoxmqjypmlue,4,Arroz Grado 1 Kg,Pantry,2,1840,3680
+txn_8vofojzkfjqoxmqjypmlue,5,Manzana Royal Kg,Produce,1,2360,2360
+txn_8vofojzkfjqoxmqjypmlue,6,Detergente Líquido 3L,Cleaning Supplies,2,8190,16380
+txn_8vofojzkfjqoxmqjypmlue,7,Tomate Kg,Produce,3,1900,5700
+txn_8vofojzkfjqoxmqjypmlue,8,Palta Hass Kg,Produce,1,7090,7090
+txn_3n34t6t72k3czfyuljlpvn,0,Bencina 93 Litros,Automotive,22,1200,26400
+txn_tl3tcvm8kwl3z57t3y31,0,Snack Tienda,Snacks,2,1710,3420
+txn_tl3tcvm8kwl3z57t3y31,1,Lavado Auto,Service,2,8860,17720
+txn_tl3tcvm8kwl3z57t3y31,2,Bencina 93 Litros,Automotive,50,1140,57000
+txn_xck04cw1bc9uhy75i2poi,0,Pantalón Vestir,Clothing,1,53570,53570
+txn_lly2t0ocjh4les444e6b,0,Pantalón Vestir,Clothing,1,53600,53600
+txn_t9cy5cqi6yooddddlmr9j,0,Recarga Prepago,Service,1,18140,18140
+txn_7wlhjhr6fko1ccwf5acmjs,0,Jamón Cocido 200g,Meat & Seafood,3,3850,11550
+txn_7wlhjhr6fko1ccwf5acmjs,1,Cebolla Kg,Produce,1,1190,1190
+txn_7wlhjhr6fko1ccwf5acmjs,2,Pollo Trutro Kg,Meat & Seafood,1,3840,3840
+txn_7wlhjhr6fko1ccwf5acmjs,3,Reineta Filete Kg,Meat & Seafood,1,11100,11100
+txn_7wlhjhr6fko1ccwf5acmjs,4,Naranja Kg,Produce,3,2320,6960
+txn_7wlhjhr6fko1ccwf5acmjs,5,Arroz Grado 2 Kg,Pantry,1,1230,1230
+txn_7wlhjhr6fko1ccwf5acmjs,6,Limón Kg,Produce,2,2720,5440
+txn_7wlhjhr6fko1ccwf5acmjs,7,Asado Carnicero Kg,Meat & Seafood,2,8870,17740
+txn_7wlhjhr6fko1ccwf5acmjs,8,Servilletas 100u,Household,3,1330,3990
+txn_7wlhjhr6fko1ccwf5acmjs,9,Leche Descremada 1L,Dairy & Eggs,2,1300,2600
+txn_pia1azi3kt9ori9hmnya2,0,Mayonesa 500g,Pantry,3,3480,10440
+txn_pia1azi3kt9ori9hmnya2,1,Costillar Cerdo Kg,Meat & Seafood,3,4590,13770
+txn_pia1azi3kt9ori9hmnya2,2,Leche Cultivada 1L,Dairy & Eggs,3,1350,4050
+txn_pia1azi3kt9ori9hmnya2,3,Atún Lata 170g,Pantry,2,2610,5220
+txn_pia1azi3kt9ori9hmnya2,4,Legumbres 1Kg,Pantry,2,2340,4680
+txn_pia1azi3kt9ori9hmnya2,5,Huevos 6u,Dairy & Eggs,3,2410,7230
+txn_8fti3zjxvwb7fuiglp983t,0,Viaje UberX,Service,1,10930,10930
+txn_or4ttv472uazcg6yfciji,0,Aceite Oliva 500ml,Pantry,2,8120,16240
+txn_or4ttv472uazcg6yfciji,1,Yogurt Griego Pack 4,Dairy & Eggs,3,4850,14550
+txn_or4ttv472uazcg6yfciji,2,Camarones Kg,Meat & Seafood,3,18740,56220
+txn_kk63xko18uqx7qy3aavgc,0,Chaqueta,Clothing,2,78290,156580
+txn_qc35igwjl3emb96w0ctjg,0,Aceite Motor,Automotive,1,10190,10190
+txn_qc35igwjl3emb96w0ctjg,1,Diesel Litros,Automotive,45,1080,48600
+txn_wwchfecc03lus7bpc1292,0,Empanada,Bakery,1,2890,2890
+txn_wwchfecc03lus7bpc1292,1,Pan Fresco Kg,Bakery,1,1910,1910
+txn_ox9v19zqvvejely546d1u,0,Queso Mantecoso Kg,Dairy & Eggs,2,10710,21420
+txn_ox9v19zqvvejely546d1u,1,Lechuga Unidad,Produce,2,1490,2980
+txn_ox9v19zqvvejely546d1u,2,Cerveza Pack 6,Alcohol,3,7740,23220
+txn_ox9v19zqvvejely546d1u,3,Aceite Vegetal 1L,Pantry,2,2500,5000
+txn_ox9v19zqvvejely546d1u,4,Palta Hass Kg,Produce,3,8240,24720
+txn_ox9v19zqvvejely546d1u,5,Vino Tinto 750ml,Alcohol,3,7730,23190
+txn_ox9v19zqvvejely546d1u,6,Arroz Grado 1 Kg,Pantry,3,1820,5460
+txn_ox9v19zqvvejely546d1u,7,Coca Cola 3L,Beverages,1,3680,3680
+txn_nadng11s67k0dfygcixx,0,Viaje UberX,Service,1,13530,13530
+txn_6olsqnz8glgh6v6rxdw6mv,0,Bencina 95 Litros,Automotive,24,1230,29520
+txn_j8miros1xodbg1zexh0su,0,Bebida 2L,Beverages,1,3270,3270
+txn_j8miros1xodbg1zexh0su,1,Calzone Jamón Queso,Pantry,1,8960,8960
+txn_j8miros1xodbg1zexh0su,2,Pizza Familiar 4 Quesos,Pantry,1,13930,13930
+txn_r5k8qwfpheh55jt1hwj44,0,Naranja Kg,Produce,1,1580,1580
+txn_r5k8qwfpheh55jt1hwj44,1,Aceite Maravilla 1L,Pantry,2,2870,5740
+txn_r5k8qwfpheh55jt1hwj44,2,Asado Carnicero Kg,Meat & Seafood,3,8160,24480
+txn_r5k8qwfpheh55jt1hwj44,3,Jugo en Polvo Pack 8,Beverages,2,4280,8560
+txn_r5k8qwfpheh55jt1hwj44,4,Cebolla Kg,Produce,1,1190,1190
+txn_r5k8qwfpheh55jt1hwj44,5,Servilletas 100u,Household,2,1540,3080
+txn_r5k8qwfpheh55jt1hwj44,6,Té Caja 100u,Beverages,2,2950,5900
+txn_r5k8qwfpheh55jt1hwj44,7,Jamón Cocido 200g,Meat & Seafood,2,3210,6420
+txn_r5k8qwfpheh55jt1hwj44,8,Reineta Filete Kg,Meat & Seafood,1,12460,12460
+txn_r5k8qwfpheh55jt1hwj44,9,Pollo Trutro Kg,Meat & Seafood,3,3440,10320
+txn_icpyvmeriiy1jh49vih1g,0,Mantequilla 250g,Dairy & Eggs,3,3320,9960
+txn_icpyvmeriiy1jh49vih1g,1,Pollo Trutro Kg,Meat & Seafood,3,3830,11490
+txn_icpyvmeriiy1jh49vih1g,2,Jugo en Polvo Pack 8,Beverages,1,4040,4040
+txn_icpyvmeriiy1jh49vih1g,3,Té Caja 100u,Beverages,2,3030,6060
+txn_icpyvmeriiy1jh49vih1g,4,Reineta Filete Kg,Meat & Seafood,1,10700,10700
+txn_icpyvmeriiy1jh49vih1g,5,Lavaloza 750ml,Cleaning Supplies,2,1500,3000
+txn_icpyvmeriiy1jh49vih1g,6,Jamón Cocido 200g,Meat & Seafood,3,2780,8340
+txn_icpyvmeriiy1jh49vih1g,7,Zanahoria Kg,Produce,2,1150,2300
+txn_icpyvmeriiy1jh49vih1g,8,Servilletas 100u,Household,3,1480,4440
+txn_icpyvmeriiy1jh49vih1g,9,Huevos 30u,Dairy & Eggs,3,8870,26610
+txn_icpyvmeriiy1jh49vih1g,10,Asado Carnicero Kg,Meat & Seafood,2,11970,23940
+txn_sdi1ixk54j3ah32k2vp4,0,Magnesio 60u,Supplements,2,11160,22320
+txn_sdi1ixk54j3ah32k2vp4,1,Antigripal 10u,Pharmacy,2,6510,13020
+txn_jlcc4ec06zjqmt68s9s0nh,0,Carga Bip!,Service,1,4510,4510
+txn_usdy4ozbfd21hxs5h713i,0,Agua Botella,Beverages,1,1150,1150
+txn_usdy4ozbfd21hxs5h713i,1,Bencina 93 Litros,Automotive,25,1250,31250
+txn_usdy4ozbfd21hxs5h713i,2,Snack Tienda,Snacks,1,2680,2680
+txn_usdy4ozbfd21hxs5h713i,3,Lavado Auto,Service,2,9480,18960
+txn_mo39v8lfnao9eq5ybzo405,0,Pasta Dental,Personal Care,2,3370,6740
+txn_mo39v8lfnao9eq5ybzo405,1,Protector Solar FPS50,Personal Care,1,17430,17430
+txn_mo39v8lfnao9eq5ybzo405,2,Vitamina C 1000mg 30u,Supplements,1,7700,7700
+txn_mo39v8lfnao9eq5ybzo405,3,Shampoo 400ml,Personal Care,1,8220,8220
+txn_z6qvpkb5z49a3ro73wn1f,0,Carga Bip!,Service,1,8490,8490
+txn_zv01ctujdufk19svgagazc,0,Manzana Royal Kg,Produce,1,2220,2220
+txn_zv01ctujdufk19svgagazc,1,Café Molido 250g,Beverages,1,5320,5320
+txn_zv01ctujdufk19svgagazc,2,Coca Cola 3L,Beverages,1,3310,3310
+txn_zv01ctujdufk19svgagazc,3,Papel Higiénico 12u,Household,3,6640,19920
+txn_zv01ctujdufk19svgagazc,4,Carne Molida Kg,Meat & Seafood,1,7080,7080
+txn_zv01ctujdufk19svgagazc,5,Pizza Congelada,Frozen Foods,1,4680,4680
+txn_zv01ctujdufk19svgagazc,6,Lechuga Unidad,Produce,1,910,910
+txn_zv01ctujdufk19svgagazc,7,Vino Tinto 750ml,Alcohol,3,9330,27990
+txn_zv01ctujdufk19svgagazc,8,Huevos Docena,Dairy & Eggs,2,4640,9280
+txn_zv01ctujdufk19svgagazc,9,Plátano Kg,Produce,1,1660,1660
+txn_zv01ctujdufk19svgagazc,10,Helado 1L,Frozen Foods,3,7580,22740
+txn_6xqy50xa9wg8ukz8fep5m8,0,Carga Bip!,Service,1,7120,7120
+txn_0obq0c3hb89m4dyl2t03cq,0,Pañales Pack,Baby Products,1,21460,21460
+txn_0obq0c3hb89m4dyl2t03cq,1,Loratadina 10mg 30u,Pharmacy,2,4180,8360
+txn_0obq0c3hb89m4dyl2t03cq,2,Omega 3 90u,Supplements,1,16900,16900
+txn_cpc4tbdhg6jpyx6y8euph,0,Viaje UberX,Service,1,12480,12480
+txn_77s23hq1ofbkdbx4ai7jsq,0,Combo Popcorn Grande,Snacks,3,8160,24480
+txn_w2lmldsjbeqh7y0j6c7hm9,0,Estacionamiento Horas,Service,1,6260,6260
+txn_nc2xtk9cqbhkh8b2lazzt,0,Carga Bip!,Service,1,7550,7550
+txn_rcivwyb17e7ta54kw326uh,0,Combo Roll 40 Piezas,Pantry,3,19480,58440
+txn_pukcrehprdrp741r4mfsm,0,Shampoo 400ml,Personal Care,2,5510,11020
+txn_pukcrehprdrp741r4mfsm,1,Protector Solar FPS50,Personal Care,2,15890,31780
+txn_k3bigj3gapro7ugu1wptsc,0,Bebida 500ml,Beverages,3,1740,5220
+txn_k3bigj3gapro7ugu1wptsc,1,Papas Fritas Grande,Pantry,3,3480,10440
+txn_p5utvs6vgag7pawpkkoxx2,0,Yogurt Griego Pack 4,Dairy & Eggs,2,4890,9780
+txn_p5utvs6vgag7pawpkkoxx2,1,Leche Entera 6 Pack,Dairy & Eggs,2,7250,14500
+txn_p5utvs6vgag7pawpkkoxx2,2,Pan Pita Pack 8,Bakery,2,2080,4160
+txn_p5utvs6vgag7pawpkkoxx2,3,Espárragos Atado,Produce,3,3110,9330
+txn_p5utvs6vgag7pawpkkoxx2,4,Pavo Pechuga Kg,Meat & Seafood,2,10710,21420
+txn_kcreemb4vansw8ym4a9a7m,0,Carne Molida Kg,Meat & Seafood,1,7720,7720
+txn_kcreemb4vansw8ym4a9a7m,1,Aceite Vegetal 1L,Pantry,3,2540,7620
+txn_kcreemb4vansw8ym4a9a7m,2,Palta Hass Kg,Produce,1,6250,6250
+txn_kcreemb4vansw8ym4a9a7m,3,Manzana Royal Kg,Produce,3,2620,7860
+txn_kcreemb4vansw8ym4a9a7m,4,Pechuga de Pollo Kg,Meat & Seafood,1,7320,7320
+txn_2qexd01hlk5svhip9yeq3f,0,Jugo en Polvo Pack 8,Beverages,3,3040,9120
+txn_2qexd01hlk5svhip9yeq3f,1,Aceite Maravilla 1L,Pantry,3,2760,8280
+txn_2qexd01hlk5svhip9yeq3f,2,Jamón Cocido 200g,Meat & Seafood,2,3410,6820
+txn_2qexd01hlk5svhip9yeq3f,3,Pollo Trutro Kg,Meat & Seafood,1,3800,3800
+txn_2qexd01hlk5svhip9yeq3f,4,Arroz Grado 2 Kg,Pantry,2,1640,3280
+txn_2qexd01hlk5svhip9yeq3f,5,Leche Descremada 1L,Dairy & Eggs,1,1480,1480
+txn_2qexd01hlk5svhip9yeq3f,6,Tallarines 500g,Pantry,1,1020,1020
+txn_2qexd01hlk5svhip9yeq3f,7,Reineta Filete Kg,Meat & Seafood,1,12410,12410
+txn_2qexd01hlk5svhip9yeq3f,8,Servilletas 100u,Household,3,1740,5220
+txn_2qexd01hlk5svhip9yeq3f,9,Limón Kg,Produce,2,2840,5680
+txn_2qexd01hlk5svhip9yeq3f,10,Té Caja 100u,Beverages,3,3760,11280
+txn_v715y27npyalovea9gz3zr,0,Queso Parmesano 200g,Dairy & Eggs,1,5820,5820
+txn_v715y27npyalovea9gz3zr,1,Quinoa 500g,Pantry,1,3900,3900
+txn_v715y27npyalovea9gz3zr,2,Leche Entera 6 Pack,Dairy & Eggs,2,7580,15160
+txn_dxh8botn4lh8cb3hpyco99,0,Merluza Filete Kg,Meat & Seafood,2,8210,16420
+txn_dxh8botn4lh8cb3hpyco99,1,Choclo Unidad,Produce,2,710,1420
+txn_dxh8botn4lh8cb3hpyco99,2,Sal 1Kg,Pantry,2,730,1460
+txn_dxh8botn4lh8cb3hpyco99,3,Cloro 1L,Cleaning Supplies,1,1220,1220
+txn_dxh8botn4lh8cb3hpyco99,4,Esponja Pack 3,Cleaning Supplies,2,1410,2820
+txn_dxh8botn4lh8cb3hpyco99,5,Huevos 15u,Dairy & Eggs,3,4200,12600
+txn_dxh8botn4lh8cb3hpyco99,6,Papa Kg,Produce,2,1040,2080
+txn_dxh8botn4lh8cb3hpyco99,7,Longaniza Kg,Meat & Seafood,2,6330,12660
+txn_dxh8botn4lh8cb3hpyco99,8,Hallulla Pack 6,Bakery,2,1290,2580
+txn_dxh8botn4lh8cb3hpyco99,9,Queso Chanco 200g,Dairy & Eggs,2,2730,5460
+txn_dxh8botn4lh8cb3hpyco99,10,Chuleta de Cerdo Kg,Meat & Seafood,1,6410,6410
+txn_8z9in89fv9ejrk263pneso,0,Sándwich Pollo,Pantry,3,5940,17820
+txn_rsh4gqzn78ipw9cvvbpw0m,0,Bebida 1.5L,Beverages,3,2840,8520
+txn_rsh4gqzn78ipw9cvvbpw0m,1,Palitos de Ajo,Pantry,1,5110,5110
+txn_rsh4gqzn78ipw9cvvbpw0m,2,Pizza Mediana Pepperoni,Pantry,2,12000,24000
+txn_wwzs6gkvthxnrt3w5oc3c,0,Kuchen,Bakery,1,2950,2950
+txn_kelz5b2vuer0rg8d29sehk,0,Viaje Cabify Lite,Service,1,10680,10680
+txn_kelz5b2vuer0rg8d29sehk,1,Viaje Cabify,Service,1,5700,5700
+txn_83pe4bnqd6gy9v7u9iit8,0,Harina 1Kg,Pantry,3,1160,3480
+txn_83pe4bnqd6gy9v7u9iit8,1,Longaniza Kg,Meat & Seafood,1,7340,7340
+txn_83pe4bnqd6gy9v7u9iit8,2,Azúcar 1Kg,Pantry,1,1670,1670
+txn_83pe4bnqd6gy9v7u9iit8,3,Hallulla Pack 6,Bakery,2,1410,2820
+txn_83pe4bnqd6gy9v7u9iit8,4,Esponja Pack 3,Cleaning Supplies,2,1160,2320
+txn_83pe4bnqd6gy9v7u9iit8,5,Queso Chanco 200g,Dairy & Eggs,1,2960,2960
+txn_83pe4bnqd6gy9v7u9iit8,6,Pepino Unidad,Produce,2,530,1060
+txn_83pe4bnqd6gy9v7u9iit8,7,Papa Kg,Produce,1,950,950
+txn_83pe4bnqd6gy9v7u9iit8,8,Crema 200ml,Dairy & Eggs,1,1940,1940
+txn_83pe4bnqd6gy9v7u9iit8,9,Chuleta de Cerdo Kg,Meat & Seafood,1,6370,6370
+txn_83pe4bnqd6gy9v7u9iit8,10,Merluza Filete Kg,Meat & Seafood,3,7640,22920
+txn_elbn6bpcrwbemt9yvgoxrp,0,Carga Bip!,Service,1,4780,4780
+txn_b52emgpan2fj2duhnnubvr,0,Omega 3 90u,Supplements,1,13130,13130
+txn_b52emgpan2fj2duhnnubvr,1,Loratadina 10mg 30u,Pharmacy,2,4350,8700
+txn_3p5w5c4ne1dseoln5hjtyi,0,Bencina 95 Litros,Automotive,20,1250,25000
+txn_xeta4diznx00ye2l8jwd8ri,0,Plan Móvil Mensual,Service,2,21100,42200
+txn_xeta4diznx00ye2l8jwd8ri,1,Datos Adicionales,Service,1,7810,7810
+txn_d3u4i2nsce63re4mdyg8ix,0,Viaje Cabify Lite,Service,1,8140,8140
+txn_hjfq2oz5ehgce1n3eu7p15,0,Churrasquería Completa,Pantry,2,11310,22620
+txn_tx28lr55k4ochg099nnm5r,0,Palta Hass Kg,Produce,2,7040,14080
+txn_tx28lr55k4ochg099nnm5r,1,Aceite Vegetal 1L,Pantry,2,2560,5120
+txn_tx28lr55k4ochg099nnm5r,2,Cerveza Pack 6,Alcohol,3,6520,19560
+txn_tx28lr55k4ochg099nnm5r,3,Tomate Kg,Produce,1,1440,1440
+txn_tx28lr55k4ochg099nnm5r,4,Salmón Filete Kg,Meat & Seafood,1,18700,18700
+txn_tx28lr55k4ochg099nnm5r,5,Vino Tinto 750ml,Alcohol,1,9400,9400
+txn_tx28lr55k4ochg099nnm5r,6,Coca Cola 3L,Beverages,3,3190,9570
+txn_tx28lr55k4ochg099nnm5r,7,Pechuga de Pollo Kg,Meat & Seafood,3,7010,21030
+txn_tx28lr55k4ochg099nnm5r,8,Lechuga Unidad,Produce,2,1330,2660
+txn_tx28lr55k4ochg099nnm5r,9,Pizza Congelada,Frozen Foods,2,5150,10300
+txn_tx28lr55k4ochg099nnm5r,10,Pan Molde Integral,Bakery,1,2630,2630
+txn_s8ahtfyonq7tyv63m2j1t,0,Lomo a lo Pobre,Pantry,1,22110,22110
+txn_s8ahtfyonq7tyv63m2j1t,1,Empanadas Pino 2u,Pantry,1,7550,7550
+txn_s8ahtfyonq7tyv63m2j1t,2,Pisco Sour,Alcohol,1,7370,7370
+txn_s8ahtfyonq7tyv63m2j1t,3,Vino Copa,Alcohol,3,6740,20220
+txn_s8ahtfyonq7tyv63m2j1t,4,Pastel de Choclo,Pantry,2,16080,32160

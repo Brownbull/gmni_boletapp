@@ -15,6 +15,10 @@ import type {
   WeeklySummary,
   CategoryBreakdown,
   TrendDirection,
+  TransactionGroup,
+  GroupedCategory,
+  ItemGroup,
+  GroupedItem,
 } from '../types/report';
 import {
   formatCurrency,
@@ -24,6 +28,15 @@ import {
 } from '../types/report';
 import { getCategoryEmoji } from './categoryEmoji';
 import { getWeeksInMonth as _getWeeksInMonth } from './date';
+import {
+  STORE_CATEGORY_GROUPS,
+  STORE_GROUP_INFO,
+  ITEM_GROUP_INFO,
+  getItemCategoryGroup,
+  type StoreCategoryGroup,
+  type ItemCategoryGroup,
+} from '../config/categoryColors';
+import { translateItemGroup } from './categoryTranslations';
 
 // Suppress unused import warnings - these may be used in future
 void _formatDateRange;
@@ -198,6 +211,356 @@ export function getCategoryBreakdown(
   breakdowns.sort((a, b) => b.amount - a.amount);
 
   return breakdowns;
+}
+
+// ============================================================================
+// Transaction Group Generation - Story 14.16
+// Groups categories by StoreCategoryGroup for hierarchical display
+// ============================================================================
+
+/**
+ * Group category breakdowns by store category group
+ *
+ * Story 14.16: Weekly reports show transactionGroups for high-level summary.
+ * Groups related categories (e.g., Supermarket + Restaurant = "Alimentación")
+ * into semantic groups with display metadata.
+ *
+ * @param categories - Category breakdown from getCategoryBreakdown()
+ * @returns Array of TransactionGroup objects, sorted by total amount descending
+ *
+ * @example
+ * ```ts
+ * const categories = getCategoryBreakdown(transactions);
+ * const groups = groupCategoriesByStoreGroup(categories);
+ * // Returns:
+ * // [
+ * //   {
+ * //     key: 'food-dining',
+ * //     name: 'Alimentación',
+ * //     emoji: '🍽️',
+ * //     cssClass: 'food-dining',
+ * //     totalAmount: '$35.300',
+ * //     rawTotalAmount: 35300,
+ * //     categories: [
+ * //       { key: 'Supermarket', name: 'Supermercado', count: '5 compras', amount: '$22.500', rawAmount: 22500 },
+ * //       { key: 'Restaurant', name: 'Restaurantes', count: '3 compras', amount: '$12.800', rawAmount: 12800 }
+ * //     ]
+ * //   },
+ * //   ...
+ * // ]
+ * ```
+ */
+export function groupCategoriesByStoreGroup(
+  categories: CategoryBreakdown[]
+): TransactionGroup[] {
+  // Calculate total spending across all categories for percentage calculation
+  const totalPeriodAmount = categories.reduce((sum, cat) => sum + cat.amount, 0);
+
+  // Group categories by their store category group
+  const groupMap = new Map<StoreCategoryGroup, GroupedCategory[]>();
+  const groupTotals = new Map<StoreCategoryGroup, number>();
+  // Track previous period totals for group-level trend calculation
+  const groupPrevTotals = new Map<StoreCategoryGroup, number>();
+
+  for (const cat of categories) {
+    const groupKey = STORE_CATEGORY_GROUPS[cat.category] || 'other';
+    // Calculate individual category percentage
+    const categoryPercent = totalPeriodAmount > 0
+      ? Math.round((cat.amount / totalPeriodAmount) * 100)
+      : 0;
+
+    const groupedCat: GroupedCategory = {
+      key: cat.category,
+      name: formatCategoryName(cat.category),
+      count: `${cat.transactionCount} ${cat.transactionCount === 1 ? 'compra' : 'compras'}`,
+      amount: formatCurrency(cat.amount),
+      rawAmount: cat.amount,
+      percent: categoryPercent,
+      // Pass through trend data from CategoryBreakdown
+      trend: cat.trend,
+      trendPercent: cat.trendPercent,
+    };
+
+    const existingCats = groupMap.get(groupKey) || [];
+    existingCats.push(groupedCat);
+    groupMap.set(groupKey, existingCats);
+
+    const existingTotal = groupTotals.get(groupKey) || 0;
+    groupTotals.set(groupKey, existingTotal + cat.amount);
+
+    // Calculate implied previous total for group trend
+    if (cat.trend && cat.trendPercent !== undefined && cat.trendPercent > 0) {
+      // Reverse calculate previous amount from current amount and trend
+      // If up by X%, previous = current / (1 + X/100)
+      // If down by X%, previous = current / (1 - X/100)
+      const multiplier = cat.trend === 'up' ? (1 + cat.trendPercent / 100) : (1 - cat.trendPercent / 100);
+      const prevAmount = multiplier !== 0 ? cat.amount / multiplier : cat.amount;
+      const existingPrev = groupPrevTotals.get(groupKey) || 0;
+      groupPrevTotals.set(groupKey, existingPrev + prevAmount);
+    }
+  }
+
+  // Convert map to array of TransactionGroup objects
+  const groups: TransactionGroup[] = [];
+
+  for (const [groupKey, groupedCategories] of groupMap.entries()) {
+    const groupInfo = STORE_GROUP_INFO[groupKey];
+    const rawTotal = groupTotals.get(groupKey) || 0;
+    const prevTotal = groupPrevTotals.get(groupKey) || 0;
+
+    // Calculate group-level percentage
+    const groupPercent = totalPeriodAmount > 0
+      ? Math.round((rawTotal / totalPeriodAmount) * 100)
+      : 0;
+
+    // Calculate group-level trend
+    let groupTrend: TrendDirection | undefined;
+    let groupTrendPercent: number | undefined;
+    if (prevTotal > 0) {
+      const { direction, percent } = calculateTrend(rawTotal, prevTotal, NEUTRAL_THRESHOLD);
+      groupTrend = direction;
+      groupTrendPercent = Math.abs(percent);
+    }
+
+    // Sort categories within group by amount descending
+    groupedCategories.sort((a, b) => b.rawAmount - a.rawAmount);
+
+    groups.push({
+      key: groupKey,
+      name: groupInfo.name,
+      emoji: groupInfo.emoji,
+      cssClass: groupInfo.cssClass,
+      totalAmount: formatCurrency(rawTotal),
+      rawTotalAmount: rawTotal,
+      percent: groupPercent,
+      categories: groupedCategories,
+      trend: groupTrend,
+      trendPercent: groupTrendPercent,
+    });
+  }
+
+  // Sort groups by total amount descending
+  groups.sort((a, b) => b.rawTotalAmount - a.rawTotalAmount);
+
+  return groups;
+}
+
+/**
+ * Sort transaction groups alphabetically by name
+ * Used for monthly+ reports
+ */
+export function sortGroupsAlphabetically<T extends { name: string }>(groups: T[]): T[] {
+  return [...groups].sort((a, b) => a.name.localeCompare(b.name, 'es'));
+}
+
+// ============================================================================
+// Item Group Generation - Story 14.16
+// Groups items by ItemCategoryGroup for product-level breakdown
+// ============================================================================
+
+/**
+ * Item breakdown data for grouping
+ */
+interface ItemBreakdown {
+  category: string;
+  amount: number;
+  itemCount: number;
+  trend?: TrendDirection;
+  trendPercent?: number;
+}
+
+/**
+ * Get item breakdown from transactions
+ * Aggregates all items by their category across all transactions
+ *
+ * @param transactions - Array of transactions with items
+ * @param previousTransactions - Optional previous period transactions for trend calculation
+ * @returns Array of ItemBreakdown objects
+ */
+function getItemBreakdown(
+  transactions: Transaction[],
+  previousTransactions?: Transaction[]
+): ItemBreakdown[] {
+  const itemMap = new Map<string, { amount: number; count: number }>();
+
+  for (const tx of transactions) {
+    if (!tx.items || tx.items.length === 0) continue;
+
+    for (const item of tx.items) {
+      const category = item.category || 'Other';
+      const existing = itemMap.get(category) || { amount: 0, count: 0 };
+      // Story 14.24: price is total for line item, qty is informational only
+      existing.amount += item.price;
+      existing.count += item.qty || 1;
+      itemMap.set(category, existing);
+    }
+  }
+
+  // Calculate previous period totals for trend comparison
+  const prevItemMap = new Map<string, number>();
+  if (previousTransactions && previousTransactions.length > 0) {
+    for (const tx of previousTransactions) {
+      if (!tx.items || tx.items.length === 0) continue;
+      for (const item of tx.items) {
+        const category = item.category || 'Other';
+        const existing = prevItemMap.get(category) || 0;
+        // Story 14.24: price is total for line item, qty is informational only
+        prevItemMap.set(category, existing + item.price);
+      }
+    }
+  }
+
+  const breakdowns: ItemBreakdown[] = [];
+  for (const [category, data] of itemMap.entries()) {
+    const prevAmount = prevItemMap.get(category) || 0;
+    let trend: TrendDirection | undefined;
+    let trendPercent: number | undefined;
+
+    if (prevAmount > 0) {
+      const trendResult = calculateTrend(data.amount, prevAmount, NEUTRAL_THRESHOLD);
+      trend = trendResult.direction;
+      trendPercent = Math.abs(trendResult.percent);
+    }
+
+    breakdowns.push({
+      category,
+      amount: data.amount,
+      itemCount: data.count,
+      trend,
+      trendPercent,
+    });
+  }
+
+  // Sort by amount descending
+  breakdowns.sort((a, b) => b.amount - a.amount);
+
+  return breakdowns;
+}
+
+/**
+ * Group items by item category group
+ *
+ * Story 14.16: Reports show itemGroups for product-level summary.
+ * Groups related items (e.g., Produce + Meat & Seafood = "Alimentos Frescos")
+ * into semantic groups with display metadata.
+ *
+ * @param transactions - Transactions containing items to group
+ * @returns Array of ItemGroup objects, sorted by total amount descending
+ *
+ * @example
+ * ```ts
+ * const groups = groupItemsByItemCategory(transactions);
+ * // Returns:
+ * // [
+ * //   {
+ * //     key: 'food-fresh',
+ * //     name: 'Alimentos Frescos',
+ * //     emoji: '🥬',
+ * //     cssClass: 'food-fresh',
+ * //     totalAmount: '$25.300',
+ * //     rawTotalAmount: 25300,
+ * //     items: [
+ * //       { key: 'Produce', name: 'Frutas y Verduras', count: '8 items', amount: '$12.500', rawAmount: 12500 },
+ * //       { key: 'Meat & Seafood', name: 'Carnes y Mariscos', count: '4 items', amount: '$12.800', rawAmount: 12800 }
+ * //     ]
+ * //   },
+ * //   ...
+ * // ]
+ * ```
+ */
+export function groupItemsByItemCategory(
+  transactions: Transaction[],
+  previousTransactions?: Transaction[]
+): ItemGroup[] {
+  const itemBreakdowns = getItemBreakdown(transactions, previousTransactions);
+
+  // Calculate total item spending for percentage calculation
+  const totalItemsAmount = itemBreakdowns.reduce((sum, item) => sum + item.amount, 0);
+
+  // Group items by their item category group
+  const groupMap = new Map<ItemCategoryGroup, GroupedItem[]>();
+  const groupTotals = new Map<ItemCategoryGroup, number>();
+  // Track previous period totals for group-level trend calculation
+  const groupPrevTotals = new Map<ItemCategoryGroup, number>();
+
+  for (const item of itemBreakdowns) {
+    const groupKey = getItemCategoryGroup(item.category);
+    // Calculate individual item category percentage
+    const itemPercent = totalItemsAmount > 0
+      ? Math.round((item.amount / totalItemsAmount) * 100)
+      : 0;
+
+    const groupedItem: GroupedItem = {
+      key: item.category,
+      name: translateItemGroup(item.category, 'es'),
+      count: `${item.itemCount} ${item.itemCount === 1 ? 'item' : 'items'}`,
+      amount: formatCurrency(item.amount),
+      rawAmount: item.amount,
+      percent: itemPercent,
+      // Pass through trend data
+      trend: item.trend,
+      trendPercent: item.trendPercent,
+    };
+
+    const existingItems = groupMap.get(groupKey) || [];
+    existingItems.push(groupedItem);
+    groupMap.set(groupKey, existingItems);
+
+    const existingTotal = groupTotals.get(groupKey) || 0;
+    groupTotals.set(groupKey, existingTotal + item.amount);
+
+    // Calculate implied previous total for group trend
+    if (item.trend && item.trendPercent !== undefined && item.trendPercent > 0) {
+      const multiplier = item.trend === 'up' ? (1 + item.trendPercent / 100) : (1 - item.trendPercent / 100);
+      const prevAmount = multiplier !== 0 ? item.amount / multiplier : item.amount;
+      const existingPrev = groupPrevTotals.get(groupKey) || 0;
+      groupPrevTotals.set(groupKey, existingPrev + prevAmount);
+    }
+  }
+
+  // Convert map to array of ItemGroup objects
+  const groups: ItemGroup[] = [];
+
+  for (const [groupKey, groupedItems] of groupMap.entries()) {
+    const groupInfo = ITEM_GROUP_INFO[groupKey];
+    const rawTotal = groupTotals.get(groupKey) || 0;
+    const prevTotal = groupPrevTotals.get(groupKey) || 0;
+
+    // Calculate group-level percentage
+    const groupPercent = totalItemsAmount > 0
+      ? Math.round((rawTotal / totalItemsAmount) * 100)
+      : 0;
+
+    // Calculate group-level trend
+    let groupTrend: TrendDirection | undefined;
+    let groupTrendPercent: number | undefined;
+    if (prevTotal > 0) {
+      const { direction, percent } = calculateTrend(rawTotal, prevTotal, NEUTRAL_THRESHOLD);
+      groupTrend = direction;
+      groupTrendPercent = Math.abs(percent);
+    }
+
+    // Sort items within group by amount descending
+    groupedItems.sort((a, b) => b.rawAmount - a.rawAmount);
+
+    groups.push({
+      key: groupKey,
+      name: groupInfo.name,
+      emoji: groupInfo.emoji,
+      cssClass: groupInfo.cssClass,
+      totalAmount: formatCurrency(rawTotal),
+      rawTotalAmount: rawTotal,
+      percent: groupPercent,
+      items: groupedItems,
+      trend: groupTrend,
+      trendPercent: groupTrendPercent,
+    });
+  }
+
+  // Sort groups by total amount descending
+  groups.sort((a, b) => b.rawTotalAmount - a.rawTotalAmount);
+
+  return groups;
 }
 
 // ============================================================================
@@ -383,6 +746,7 @@ export function formatCategoryName(category: StoreCategory): string {
     ToysGames: 'Juguetes',
     Jewelry: 'Joyería',
     Optical: 'Óptica',
+    MusicStore: 'Música',
     // Automotive & Transport
     Automotive: 'Auto',
     GasStation: 'Bencina',
@@ -392,9 +756,13 @@ export function formatCategoryName(category: StoreCategory): string {
     BankingFinance: 'Banco',
     Education: 'Educación',
     TravelAgency: 'Viajes',
+    Subscription: 'Suscripción',
     // Hospitality & Entertainment
     HotelLodging: 'Hotel',
     Entertainment: 'Entretenimiento',
+    Gambling: 'Juegos de Azar',
+    // Government & Legal
+    Government: 'Gobierno',
     // Other
     CharityDonation: 'Donación',
     Other: 'Otros',
@@ -609,6 +977,16 @@ export interface ReportRowData {
   transactionCount: number;
   /** Date range for the period (used for filtering navigation) */
   dateRange: { start: Date; end: Date };
+  /**
+   * Transaction groups for grouped category display (Story 14.16)
+   * Weekly: Top 3 by amount, Monthly+: All sorted alphabetically
+   */
+  transactionGroups?: TransactionGroup[];
+  /**
+   * Item groups for product-level breakdown (Story 14.16)
+   * Weekly: Top 3 by amount, Monthly+: All sorted alphabetically
+   */
+  itemGroups?: ItemGroup[];
 }
 
 // ============================================================================
@@ -847,6 +1225,8 @@ export function generateYearlySummary(
 
 /**
  * Generate weekly report row data
+ * Story 14.16: Weekly reports include transactionGroups and itemGroups
+ * Weekly shows top 3 of each group type sorted by amount
  */
 export function generateWeeklyReportRow(
   transactions: Transaction[],
@@ -856,6 +1236,29 @@ export function generateWeeklyReportRow(
   if (!summary) return null;
 
   const prevWeekNum = summary.weekNumber - 1 > 0 ? summary.weekNumber - 1 : 52;
+
+  // Get transactions for this week and previous week to generate item groups with trends
+  const currentWeek = getWeekRange(weeksAgo);
+  const previousWeek = getWeekRange(weeksAgo + 1);
+  const weekTransactions = filterTransactionsByWeek(
+    transactions,
+    currentWeek.start,
+    currentWeek.end
+  );
+  const prevWeekTransactions = filterTransactionsByWeek(
+    transactions,
+    previousWeek.start,
+    previousWeek.end
+  );
+
+  // Story 14.16: Generate groups for weekly report
+  // Weekly shows top 3 transaction groups and top 3 item groups (sorted by amount)
+  const allTransactionGroups = groupCategoriesByStoreGroup(summary.topCategories);
+  const allItemGroups = groupItemsByItemCategory(weekTransactions, prevWeekTransactions);
+
+  // Take top 3 of each (already sorted by amount descending)
+  const transactionGroups = allTransactionGroups.slice(0, 3);
+  const itemGroups = allItemGroups.slice(0, 3);
 
   return {
     id: `weekly-${weeksAgo}`,
@@ -870,6 +1273,8 @@ export function generateWeeklyReportRow(
     isFirst: summary.isFirstWeek,
     firstLabel: 'Tu primera semana',
     categories: summary.topCategories,
+    transactionGroups,
+    itemGroups,
     transactionCount: summary.transactionCount,
     dateRange: summary.dateRange,
   };
@@ -1055,6 +1460,28 @@ function generateMonthlyPersonaInsight(
 }
 
 /**
+ * Format a week date range in compact Spanish format
+ * Example: "1-7 Ene" or "28 Dic - 3 Ene" (cross-month)
+ */
+function formatWeekDateRange(weekStart: Date, weekEnd: Date): string {
+  const startDay = weekStart.getDate();
+  const endDay = weekEnd.getDate();
+  const startMonth = weekStart.toLocaleDateString('es-CL', { month: 'short' });
+  const endMonth = weekEnd.toLocaleDateString('es-CL', { month: 'short' });
+
+  // Capitalize first letter of month
+  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).replace('.', '');
+
+  if (weekStart.getMonth() === weekEnd.getMonth()) {
+    // Same month: "1-7 Ene"
+    return `${startDay}-${endDay} ${capitalize(startMonth)}`;
+  } else {
+    // Cross month: "28 Dic - 3 Ene"
+    return `${startDay} ${capitalize(startMonth)} - ${endDay} ${capitalize(endMonth)}`;
+  }
+}
+
+/**
  * Generate highlights for monthly reports
  */
 function generateMonthlyHighlights(
@@ -1066,30 +1493,41 @@ function generateMonthlyHighlights(
   const highlights: Array<{ label: string; value: string }> = [];
 
   // Group transactions by week to find highest/lowest week
-  const weeklyTotals = new Map<number, number>();
+  // Track both total and date range for each week
+  const weeklyData = new Map<number, { total: number; start: Date; end: Date }>();
   for (const t of transactions) {
     const txDate = parseDate(t.date);
     const weekNum = getISOWeekNumber(txDate);
-    const existing = weeklyTotals.get(weekNum) || 0;
-    weeklyTotals.set(weekNum, existing + t.total);
+    const existing = weeklyData.get(weekNum);
+    if (existing) {
+      existing.total += t.total;
+    } else {
+      weeklyData.set(weekNum, {
+        total: t.total,
+        start: getWeekStart(txDate),
+        end: getWeekEnd(txDate),
+      });
+    }
   }
 
-  if (weeklyTotals.size >= 2) {
-    const weeks = Array.from(weeklyTotals.entries());
-    weeks.sort((a, b) => b[1] - a[1]);
+  if (weeklyData.size >= 2) {
+    const weeks = Array.from(weeklyData.entries());
+    weeks.sort((a, b) => b[1].total - a[1].total);
 
     const highestWeek = weeks[0];
     const lowestWeek = weeks[weeks.length - 1];
 
+    const highDateRange = formatWeekDateRange(highestWeek[1].start, highestWeek[1].end);
     highlights.push({
       label: 'Semana más alta',
-      value: `S${highestWeek[0]} · ${formatCurrency(highestWeek[1])}`,
+      value: `S${highestWeek[0]} (${highDateRange}) · ${formatCurrency(highestWeek[1].total)}`,
     });
 
     if (highestWeek[0] !== lowestWeek[0]) {
+      const lowDateRange = formatWeekDateRange(lowestWeek[1].start, lowestWeek[1].end);
       highlights.push({
         label: 'Semana más baja',
-        value: `S${lowestWeek[0]} · ${formatCurrency(lowestWeek[1])}`,
+        value: `S${lowestWeek[0]} (${lowDateRange}) · ${formatCurrency(lowestWeek[1].total)}`,
       });
     }
   }
@@ -1416,7 +1854,17 @@ function generateWeeklyReportsForYear(
     }
 
     const totalSpent = calculateTotal(weekTransactions);
-    const categories = getCategoryBreakdown(weekTransactions);
+
+    // Get previous week transactions for trend comparison
+    let prevWeekTxForCategories: Transaction[] = [];
+    if (weekNum === 1) {
+      prevWeekTxForCategories = prevYearWeeksMap.get(52) || prevYearWeeksMap.get(53) || [];
+    } else {
+      prevWeekTxForCategories = currentYearWeeksMap.get(weekNum - 1) || [];
+    }
+
+    // Pass previous week transactions to calculate category-level trends
+    const categories = getCategoryBreakdown(weekTransactions, prevWeekTxForCategories);
 
     // Get previous week data for trend - check across year boundary
     let prevWeekTransactions: Transaction[];
@@ -1470,6 +1918,15 @@ function generateWeeklyReportsForYear(
       }
     }
 
+    // Story 14.16: Generate groups for weekly report
+    // Weekly shows top 3 transaction groups and top 3 item groups (sorted by amount)
+    const allTransactionGroups = groupCategoriesByStoreGroup(categories);
+    const allItemGroups = groupItemsByItemCategory(weekTransactions, prevWeekTransactions);
+
+    // Take top 3 of each (already sorted by amount descending)
+    const transactionGroups = allTransactionGroups.slice(0, 3);
+    const itemGroups = allItemGroups.slice(0, 3);
+
     reports.push({
       id: `weekly-${year}-${weekNum}`,
       title: `Semana ${weekNum}`,
@@ -1483,6 +1940,8 @@ function generateWeeklyReportsForYear(
       isFirst,
       firstLabel: 'Tu primera semana',
       categories,
+      transactionGroups,
+      itemGroups,
       personaInsight,
       transactionCount: weekTransactions.length,
       dateRange: { start: weekStart, end: weekEnd },
@@ -1535,14 +1994,28 @@ function generateMonthlyReportsForYear(
   const sortedMonths = Array.from(monthsWithData.keys()).sort((a, b) => b - a);
 
   // Pre-calculate categories for all months to enable comparison (including December of prev year)
+  // First pass: calculate without previous for sorting, then recalculate with previous when generating reports
   const monthCategories = new Map<number, CategoryBreakdown[]>();
+
+  // Calculate December categories from previous year first (needed for January comparison)
+  const prevYearDecemberTransactions = prevYearMonthsWithData.get(11) || [];
+
+  // Now calculate categories for each month with proper previous month comparison
   for (const month of sortedMonths) {
     const monthTransactions = monthsWithData.get(month) || [];
-    monthCategories.set(month, getCategoryBreakdown(monthTransactions));
+    let prevMonthTx: Transaction[] = [];
+
+    if (month === 0) {
+      // January: compare with December of previous year
+      prevMonthTx = prevYearDecemberTransactions;
+    } else {
+      prevMonthTx = monthsWithData.get(month - 1) || [];
+    }
+
+    monthCategories.set(month, getCategoryBreakdown(monthTransactions, prevMonthTx));
   }
 
-  // Calculate December categories from previous year
-  const prevYearDecemberTransactions = prevYearMonthsWithData.get(11) || [];
+  // Calculate December categories from previous year (for January trend display)
   const prevYearDecemberCategories =
     prevYearDecemberTransactions.length > 0
       ? getCategoryBreakdown(prevYearDecemberTransactions)
@@ -1610,6 +2083,11 @@ function generateMonthlyReportsForYear(
     // Generate highlights for the month
     const highlights = generateMonthlyHighlights(categories, monthTransactions, year, month);
 
+    // Story 14.16: Generate groups for monthly report
+    // Monthly shows all groups sorted alphabetically
+    const transactionGroups = sortGroupsAlphabetically(groupCategoriesByStoreGroup(categories));
+    const itemGroups = sortGroupsAlphabetically(groupItemsByItemCategory(monthTransactions, prevMonthTransactions));
+
     reports.push({
       id: `monthly-${year}-${month}`,
       title: monthNameCapitalized,
@@ -1623,6 +2101,8 @@ function generateMonthlyReportsForYear(
       isFirst,
       firstLabel: 'Tu primer mes',
       categories,
+      transactionGroups,
+      itemGroups,
       personaInsight,
       highlights: highlights.length > 0 ? highlights : undefined,
       transactionCount: monthTransactions.length,
@@ -1675,15 +2155,26 @@ function generateQuarterlyReportsForYear(
   // Sort quarters descending
   const sortedQuarters = Array.from(quartersWithData.keys()).sort((a, b) => b - a);
 
-  // Pre-calculate categories for all quarters to enable comparison
+  // Calculate Q4 categories from previous year first (needed for Q1 comparison)
+  const prevYearQ4Transactions = prevYearQuartersWithData.get(4) || [];
+
+  // Pre-calculate categories for all quarters with proper previous quarter comparison
   const quarterCategories = new Map<number, CategoryBreakdown[]>();
   for (const quarter of sortedQuarters) {
     const quarterTransactions = quartersWithData.get(quarter) || [];
-    quarterCategories.set(quarter, getCategoryBreakdown(quarterTransactions));
+    let prevQuarterTx: Transaction[] = [];
+
+    if (quarter === 1) {
+      // Q1: compare with Q4 of previous year
+      prevQuarterTx = prevYearQ4Transactions;
+    } else {
+      prevQuarterTx = quartersWithData.get(quarter - 1) || [];
+    }
+
+    quarterCategories.set(quarter, getCategoryBreakdown(quarterTransactions, prevQuarterTx));
   }
 
-  // Calculate Q4 categories from previous year
-  const prevYearQ4Transactions = prevYearQuartersWithData.get(4) || [];
+  // Calculate Q4 categories from previous year (for Q1 trend display)
   const prevYearQ4Categories =
     prevYearQ4Transactions.length > 0
       ? getCategoryBreakdown(prevYearQ4Transactions)
@@ -1750,6 +2241,11 @@ function generateQuarterlyReportsForYear(
       prevCategories
     );
 
+    // Story 14.16: Generate groups for quarterly report
+    // Quarterly shows all groups sorted alphabetically
+    const transactionGroups = sortGroupsAlphabetically(groupCategoriesByStoreGroup(categories));
+    const itemGroups = sortGroupsAlphabetically(groupItemsByItemCategory(quarterTransactions, prevQuarterTransactions));
+
     reports.push({
       id: `quarterly-${year}-${quarter}`,
       title: `Q${quarter} ${year}`,
@@ -1764,6 +2260,8 @@ function generateQuarterlyReportsForYear(
       firstLabel: 'Tu primer trimestre',
       personaHook: 'Descubre qué categoría dominó tu trimestre',
       categories,
+      transactionGroups,
+      itemGroups,
       highlights: highlights.length > 0 ? highlights : undefined,
       personaInsight,
       transactionCount: quarterTransactions.length,
@@ -1793,11 +2291,12 @@ function generateYearlyReportForYear(
   const yearTransactions = filterTransactionsBySpecificYear(transactions, year);
   if (yearTransactions.length === 0) return [];
 
-  const totalSpent = calculateTotal(yearTransactions);
-  const categories = getCategoryBreakdown(yearTransactions);
-
-  // Get previous year data for trend
+  // Get previous year data for trend comparison
   const prevYearTransactions = filterTransactionsBySpecificYear(transactions, year - 1);
+
+  const totalSpent = calculateTotal(yearTransactions);
+  // Pass previous year transactions to calculate category-level trends
+  const categories = getCategoryBreakdown(yearTransactions, prevYearTransactions);
   const prevTotalSpent = calculateTotal(prevYearTransactions);
 
   const { direction: trend, percent: trendPercent } = calculateTrend(
@@ -1820,6 +2319,11 @@ function generateYearlyReportForYear(
   // Generate persona insight
   const personaInsight = generateYearlyPersonaInsight(categories, isFirst);
 
+  // Story 14.16: Generate groups for yearly report
+  // Yearly shows all groups sorted alphabetically
+  const transactionGroups = sortGroupsAlphabetically(groupCategoriesByStoreGroup(categories));
+  const itemGroups = sortGroupsAlphabetically(groupItemsByItemCategory(yearTransactions, prevYearTransactions));
+
   return [{
     id: `yearly-${year}`,
     title: `${year}`,
@@ -1834,6 +2338,8 @@ function generateYearlyReportForYear(
     firstLabel: 'Tu primer año completo',
     personaHook: 'Un año de decisiones financieras inteligentes',
     categories,
+    transactionGroups,
+    itemGroups,
     highlights: highlights.length > 0 ? highlights : undefined,
     personaInsight,
     transactionCount: yearTransactions.length,

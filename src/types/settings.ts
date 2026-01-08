@@ -9,6 +9,10 @@ export type ColorTheme = 'normal' | 'professional' | 'mono';
 // 'colorful' = use fg colors from category palette (default)
 // 'plain' = use standard text colors (black/white based on light/dark mode)
 export type FontColorMode = 'colorful' | 'plain';
+// Story 14.22: Font family selection
+// 'outfit' = Outfit font (default, modern geometric sans)
+// 'space' = Space Grotesk (alternative, technical feel)
+export type FontFamily = 'outfit' | 'space';
 
 export interface AppSettings {
     lang: Language;
@@ -16,6 +20,7 @@ export interface AppSettings {
     theme: Theme;
     colorTheme?: ColorTheme; // Story 7.12 AC#11
     fontColorMode?: FontColorMode; // Story 14.21
+    fontFamily?: FontFamily; // Story 14.22
 }
 
 /**

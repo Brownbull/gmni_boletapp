@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { X, ChevronLeft, ChevronRight, Image } from 'lucide-react'
 
 interface ImageViewerProps {
@@ -71,19 +72,26 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
     setHasError(true)
   }
 
-  return (
+  // Use portal to render at document body level (escapes any overflow containers)
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+      className="fixed inset-0 z-[100] flex items-center justify-center"
+      style={{
+        // Cover content area but leave nav bar visible
+        // Nav bar is ~70px + safe area bottom
+        bottom: 'calc(70px + env(safe-area-inset-bottom, 0px))',
+        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+      }}
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
       aria-label={`Receipt image viewer for ${merchantName}`}
     >
-      {/* Close button - Story 11.6: Account for safe area (AC #3) */}
+      {/* Close button - top right corner with safe area */}
       <button
         onClick={onClose}
         className="absolute right-4 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
-        style={{ top: 'calc(1rem + var(--safe-top, 0px))' }}
+        style={{ top: 'calc(1rem + env(safe-area-inset-top, 0px))' }}
         aria-label="Close image viewer"
         data-testid="image-viewer-close"
       >
@@ -112,8 +120,8 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
         </>
       )}
 
-      {/* Image container */}
-      <div className="relative max-w-[90vw] max-h-[90vh] flex flex-col items-center">
+      {/* Image container - centered and sized to fit available space */}
+      <div className="relative w-full h-full flex flex-col items-center justify-center p-4">
         {/* Loading spinner */}
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -131,17 +139,17 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
           <img
             src={images[currentIndex]}
             alt={`Receipt from ${merchantName} - Image ${currentIndex + 1} of ${images.length}`}
-            className={`max-w-full max-h-[85vh] object-contain rounded-lg ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity`}
+            className={`max-w-full max-h-full object-contain ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity`}
             onLoad={handleImageLoad}
             onError={handleImageError}
             data-testid="image-viewer-image"
           />
         )}
 
-        {/* Image counter */}
+        {/* Image counter - positioned at bottom of image area */}
         {hasMultipleImages && (
           <div
-            className="mt-4 px-4 py-2 rounded-full bg-black/50 text-white text-sm"
+            className="absolute bottom-6 px-4 py-2 rounded-full bg-black/50 text-white text-sm"
             aria-live="polite"
             data-testid="image-viewer-counter"
           >
@@ -149,6 +157,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

@@ -27,29 +27,42 @@ export interface CreditCheckResult {
   shortage: number;
   /** Maximum receipts processable with available credits */
   maxProcessable: number;
+  /** Story 14.15 Session 10: Type of credits being used */
+  creditType: 'normal' | 'super';
 }
 
 /**
- * Check if user has sufficient credits for a batch operation.
+ * Check if user has sufficient credits for an operation.
+ *
+ * Story 14.15 Session 10: Updated to support both credit types:
+ * - 'normal' credits: For single photo scans (1 photo = 1 credit)
+ * - 'super' credits: For batch scans (2+ photos = 1 super credit per photo)
  *
  * @param userCredits - Current user credit state
  * @param requiredCredits - Number of credits needed (usually = image count)
+ * @param isBatch - Whether this is a batch operation (2+ images)
  * @returns CreditCheckResult with all relevant data for UI display
  *
  * @example
  * ```typescript
- * const result = checkCreditSufficiency(userCredits, batchImages.length);
+ * // Single scan - uses normal credits
+ * const result = checkCreditSufficiency(userCredits, 1, false);
+ *
+ * // Batch scan - uses super credits
+ * const result = checkCreditSufficiency(userCredits, batchImages.length, true);
  * if (!result.sufficient) {
- *   // Show insufficient credits dialog
- *   console.log(`Need ${result.shortage} more credits`);
+ *   console.log(`Need ${result.shortage} more ${result.creditType} credits`);
  * }
  * ```
  */
 export function checkCreditSufficiency(
   userCredits: UserCredits,
-  requiredCredits: number
+  requiredCredits: number,
+  isBatch: boolean = false
 ): CreditCheckResult {
-  const available = userCredits.remaining;
+  // Story 14.15 Session 10: Use super credits for batch, normal for single
+  const creditType: 'normal' | 'super' = isBatch ? 'super' : 'normal';
+  const available = isBatch ? userCredits.superRemaining : userCredits.remaining;
   const sufficient = available >= requiredCredits;
   const remaining = sufficient ? available - requiredCredits : 0;
   const shortage = sufficient ? 0 : requiredCredits - available;
@@ -62,6 +75,7 @@ export function checkCreditSufficiency(
     remaining,
     shortage,
     maxProcessable,
+    creditType,
   };
 }
 
@@ -81,23 +95,42 @@ export function calculateCreditsRequired(imageCount: number): number {
  * Create updated credits after successful deduction.
  * Pure function - does not mutate state.
  *
+ * Story 14.15 Session 10: Updated to support both credit types:
+ * - 'normal' credits: Deducted for single photo scans
+ * - 'super' credits: Deducted for batch scans
+ *
  * @param currentCredits - Current credit state
  * @param amount - Amount to deduct
+ * @param creditType - Which type of credits to deduct ('normal' or 'super')
  * @returns New credit state
  * @throws Error if insufficient credits
  */
 export function deductCredits(
   currentCredits: UserCredits,
-  amount: number
+  amount: number,
+  creditType: 'normal' | 'super' = 'normal'
 ): UserCredits {
-  if (currentCredits.remaining < amount) {
-    throw new Error('Insufficient credits');
+  if (creditType === 'super') {
+    if (currentCredits.superRemaining < amount) {
+      throw new Error('Insufficient super credits');
+    }
+    return {
+      remaining: currentCredits.remaining,
+      used: currentCredits.used,
+      superRemaining: currentCredits.superRemaining - amount,
+      superUsed: currentCredits.superUsed + amount,
+    };
+  } else {
+    if (currentCredits.remaining < amount) {
+      throw new Error('Insufficient credits');
+    }
+    return {
+      remaining: currentCredits.remaining - amount,
+      used: currentCredits.used + amount,
+      superRemaining: currentCredits.superRemaining,
+      superUsed: currentCredits.superUsed,
+    };
   }
-
-  return {
-    remaining: currentCredits.remaining - amount,
-    used: currentCredits.used + amount,
-  };
 }
 
 /**

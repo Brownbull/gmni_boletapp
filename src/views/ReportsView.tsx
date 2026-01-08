@@ -230,6 +230,9 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
       categories: report.categories,
       transactionCount: report.transactionCount,
       dateRange: report.dateRange,
+      // Story 14.16: Pass transaction groups and item groups
+      transactionGroups: report.transactionGroups,
+      itemGroups: report.itemGroups,
     };
     setSelectedReport(detailData);
     setIsOverlayOpen(true);

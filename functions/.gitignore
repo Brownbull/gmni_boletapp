@@ -2,3 +2,4 @@ node_modules/
 lib/
 src/prompts/
 .runtimeconfig.json
+src/shared/

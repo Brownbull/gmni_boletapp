@@ -1,12 +1,34 @@
 /**
  * React Testing Library Custom Utilities
  *
+ * Story 14.29: React Query Migration
+ *
  * This file provides custom render functions and utilities for testing React components.
- * It wraps components with necessary providers (e.g., Router, Context, etc.)
+ * It wraps components with necessary providers (e.g., QueryClientProvider, etc.)
  */
 
-import { render, RenderOptions } from '@testing-library/react';
+import { render, RenderOptions, renderHook, RenderHookOptions } from '@testing-library/react';
 import { ReactElement, ReactNode } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+/**
+ * Creates a fresh QueryClient for each test to ensure isolation.
+ * Uses test-optimized settings (no retries, no gcTime).
+ */
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: 0,
+        staleTime: 0,
+      },
+      mutations: {
+        retry: false,
+      },
+    },
+  });
+}
 
 /**
  * Custom render function that wraps components with providers
@@ -17,26 +39,20 @@ import { ReactElement, ReactNode } from 'react';
  */
 
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
-  // Add any custom options here if needed in the future
-  // For example: initialRoute?: string;
+  queryClient?: QueryClient;
 }
 
 /**
  * Wrapper component that provides all necessary context providers
  */
-function AllTheProviders({ children }: { children: ReactNode }) {
-  return (
-    <>
-      {/* Add context providers here as needed, for example:
-        <AuthProvider>
-          <RouterProvider>
-            {children}
-          </RouterProvider>
-        </AuthProvider>
-      */}
-      {children}
-    </>
-  );
+function createWrapper(queryClient: QueryClient) {
+  return function AllTheProviders({ children }: { children: ReactNode }) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        {children}
+      </QueryClientProvider>
+    );
+  };
 }
 
 /**
@@ -46,7 +62,32 @@ function customRender(
   ui: ReactElement,
   options?: CustomRenderOptions,
 ) {
-  return render(ui, { wrapper: AllTheProviders, ...options });
+  const queryClient = options?.queryClient ?? createTestQueryClient();
+  return render(ui, { wrapper: createWrapper(queryClient), ...options });
+}
+
+/**
+ * Custom renderHook function with QueryClientProvider
+ *
+ * Story 14.29: Required for testing hooks that use React Query
+ *
+ * Usage:
+ *   import { renderHookWithClient } from '../setup/test-utils';
+ *   const { result } = renderHookWithClient(() => useMyHook());
+ */
+interface CustomRenderHookOptions<TProps> extends Omit<RenderHookOptions<TProps>, 'wrapper'> {
+  queryClient?: QueryClient;
+}
+
+function customRenderHook<TResult, TProps>(
+  hook: (props: TProps) => TResult,
+  options?: CustomRenderHookOptions<TProps>,
+) {
+  const queryClient = options?.queryClient ?? createTestQueryClient();
+  return renderHook(hook, {
+    wrapper: createWrapper(queryClient),
+    ...options
+  });
 }
 
 // Re-export everything from React Testing Library
@@ -54,3 +95,9 @@ export * from '@testing-library/react';
 
 // Override render with custom render
 export { customRender as render };
+
+// Export custom renderHook
+export { customRenderHook as renderHookWithClient };
+
+// Export createTestQueryClient for custom test setups
+export { createTestQueryClient };

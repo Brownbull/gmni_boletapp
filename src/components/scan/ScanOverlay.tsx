@@ -53,6 +53,8 @@ export interface ScanOverlayProps {
   t: (key: string) => string;
   /** Whether the overlay is visible */
   visible: boolean;
+  /** Optional captured image URL to show behind the overlay (AC #1: User can see image during processing) */
+  capturedImageUrl?: string;
 }
 
 /**
@@ -76,6 +78,7 @@ export const ScanOverlay: React.FC<ScanOverlayProps> = ({
   theme,
   t,
   visible,
+  capturedImageUrl,
 }) => {
   const isDark = theme === 'dark';
   const prefersReducedMotion = useReducedMotion();
@@ -137,15 +140,31 @@ export const ScanOverlay: React.FC<ScanOverlayProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label={getAriaLabel()}
-      className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity ${
+      className={`fixed inset-x-0 top-0 z-40 flex items-center justify-center transition-opacity ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
-      style={{ transitionDuration: `${DURATION.NORMAL}ms` }}
+      style={{
+        transitionDuration: `${DURATION.NORMAL}ms`,
+        // Leave space for nav bar (approx 80px + safe area) so user can still navigate
+        bottom: 'calc(80px + var(--safe-bottom, env(safe-area-inset-bottom, 0px)))',
+      }}
     >
-      {/* Backdrop */}
+      {/* AC #1: Captured image background - user can see the image during processing */}
+      {capturedImageUrl && (
+        <div className="absolute inset-0">
+          <img
+            src={capturedImageUrl}
+            alt=""
+            aria-hidden="true"
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
+      {/* Backdrop - more transparent when image is shown */}
       <div
         data-testid="scan-overlay-backdrop"
-        className={`absolute inset-0 bg-black/40 backdrop-blur-sm ${
+        className={`absolute inset-0 ${capturedImageUrl ? 'bg-black/50' : 'bg-black/40'} backdrop-blur-sm ${
           !prefersReducedMotion ? 'transition-opacity' : ''
         }`}
         style={!prefersReducedMotion ? { transitionDuration: `${DURATION.NORMAL}ms` } : undefined}
@@ -431,10 +450,10 @@ export const ScanOverlay: React.FC<ScanOverlayProps> = ({
           >
             <Info size={16} style={{ color: isDark ? '#64748b' : '#94a3b8' }} />
             <span
-              className="text-xs"
+              className="text-xs text-center"
               style={{ color: isDark ? '#94a3b8' : '#64748b' }}
             >
-              {t('tipCanNavigate')}
+              {t('tipCanNavigateWhileProcessing')}
             </span>
           </div>
         )}

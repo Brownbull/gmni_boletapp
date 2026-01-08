@@ -1,16 +1,18 @@
 # Architecture Document - Boletapp
 
-**Last Updated:** 2025-11-21 (Post-Epic 1 Refactoring + Epic 2 Visual Diagrams)
+**Last Updated:** 2026-01-07 (Epic 14: React Query Migration + Performance Optimizations)
 
 ## Executive Summary
 
 Boletapp is a Progressive Web Application (PWA) for expense tracking with AI-powered receipt scanning. Originally built as a single-file React application for rapid MVP development, it has evolved into a **modular architecture** with proper separation of concerns while maintaining its serverless backend and AI integration strengths. This document includes **3 Mermaid diagrams** for visual understanding of the system architecture, data flows, and deployment pipeline.
 
 **Key Architectural Decisions:**
-- **Modular Architecture** - 31 TypeScript files organized into 7 logical layers (Epic 1 transformation)
-- **Serverless Backend** - Firebase handles auth, database, and hosting
-- **AI Integration** - Google Gemini API for receipt OCR and data extraction
-- **Real-time Sync** - Firestore listeners for instant data updates
+- **Modular Architecture** - 100+ TypeScript files organized into logical layers (Epic 1 transformation, expanded through Epic 14)
+- **Serverless Backend** - Firebase handles auth, database, storage, and hosting
+- **AI Integration** - Google Gemini API (via Cloud Function) for receipt OCR and data extraction
+- **Real-time Sync** - Firestore listeners with React Query caching for instant navigation
+- **React Query Caching** - @tanstack/react-query for cache-first data loading (Story 14.29)
+- **PWA** - Service worker, offline support, installable on mobile devices
 - **Production Deployment** - Live at https://boletapp-d609f.web.app with HTTPS and security rules
 
 **Target Users:** Individuals and families tracking household expenses
@@ -57,7 +59,8 @@ graph TD
 | | TypeScript | 5.3.3 | Type-safe development |
 | | Lucide React | 0.460.0 | Icon library |
 | **Styling** | Tailwind CSS | 3.x | Utility-first CSS (via CDN) |
-| **State Management** | React Hooks | Built-in | `useState`, `useEffect`, `useRef` + Custom hooks |
+| **State Management** | React Hooks + React Query | Built-in + 5.x | `useState`, `useEffect`, `useMemo` + Custom hooks |
+| **Caching** | @tanstack/react-query | 5.x | Cache-first data loading, instant navigation |
 | **Authentication** | Firebase Auth | 10.14.1 | Google OAuth 2.0 |
 | **Database** | Cloud Firestore | 10.14.1 | NoSQL document store with real-time sync |
 | **AI/ML** | Google Gemini | 2.5-flash | Multimodal vision API for receipt scanning |
@@ -969,6 +972,53 @@ The modular architecture provides a solid foundation for future enhancements whi
 
 ---
 
-**Document Version:** 4.0
-**Last Updated:** 2025-12-01
-**Epic:** Post-Epic 4.5 (Receipt Image Storage Complete)
+---
+
+### ADR-010: React Query for Data Caching (Epic 14.29)
+
+**Decision:** Implement @tanstack/react-query for cache-first data loading alongside Firestore real-time subscriptions
+**Context:** Users experienced loading spinners on every view navigation; need instant data display
+**Date:** 2026-01-07 (Epic 14, Story 14.29)
+
+**Architecture Pattern:**
+```
+Component → useFirestoreSubscription → React Query Cache + Firestore onSnapshot
+                                              ↓
+                                        Instant cached data on navigation
+                                        + Real-time updates from Firestore
+```
+
+**Key Implementation Details:**
+- **Cache-first approach**: Display cached data immediately, update when Firestore fires
+- **Custom hook**: `useFirestoreSubscription` combines RQ cache with Firestore listeners
+- **No useQuery for subscriptions**: Local state + useEffect, cache for persistence only
+- **DevTools**: ReactQueryDevtools guarded by `import.meta.env.DEV` (dev-only)
+
+**Files Created:**
+- `src/lib/queryClient.ts` - QueryClient configuration
+- `src/lib/queryKeys.ts` - Hierarchical query key constants
+- `src/hooks/useFirestoreSubscription.ts` - Core subscription hook
+- `docs/architecture/react-query-caching.md` - Detailed architecture doc
+
+**Consequences:**
+- ✅ Instant navigation (no loading spinners on return visits)
+- ✅ Real-time updates preserved via Firestore listeners
+- ✅ DevTools for cache debugging (dev only)
+- ✅ Foundation for optimistic updates and pagination
+- ⚠️ JSON comparison for change detection (performance acceptable for current scale)
+
+**Lessons Learned:**
+- Don't use `useQuery` with real-time subscriptions
+- Use refs to prevent stale closures in subscription callbacks
+- Track initialization to prevent infinite re-render loops
+- Use `useMemo` for derived data instead of useState+useEffect
+
+**Reference:** `docs/architecture/react-query-caching.md`
+
+**Status:** Accepted (Story 14.29 Complete)
+
+---
+
+**Document Version:** 5.0
+**Last Updated:** 2026-01-07
+**Epic:** Post-Epic 14 (React Query Migration + Performance Optimizations)

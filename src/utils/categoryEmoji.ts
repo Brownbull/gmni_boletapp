@@ -42,6 +42,7 @@ const CATEGORY_EMOJI_MAP: Record<StoreCategory, string> = {
   ToysGames: '🎮',
   Jewelry: '💎',
   Optical: '👓',
+  MusicStore: '🎸',
 
   // Automotive & Transport
   Automotive: '🚗',
@@ -53,10 +54,15 @@ const CATEGORY_EMOJI_MAP: Record<StoreCategory, string> = {
   BankingFinance: '🏦',
   Education: '📖',
   TravelAgency: '✈️',
+  Subscription: '📺',
 
   // Hospitality & Entertainment
   HotelLodging: '🏨',
   Entertainment: '🎬',
+  Gambling: '🎰',
+
+  // Government & Legal
+  Government: '🏛️',
 
   // Other
   CharityDonation: '❤️',
