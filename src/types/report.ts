@@ -8,7 +8,8 @@
  * that display spending summaries in a Rosa-friendly format.
  */
 
-import { StoreCategory } from './transaction';
+import type { StoreCategory, ItemCategory } from './transaction';
+import type { StoreCategoryGroup, ItemCategoryGroup } from '../config/categoryColors';
 
 /**
  * Type of report card for styling and content
@@ -96,18 +97,27 @@ export interface WeeklySummary {
   weekNumber: number;
   /** Whether this is the user's first week */
   isFirstWeek: boolean;
+  /** Total number of transactions in this week */
+  transactionCount: number;
 }
 
 /**
- * Trend arrow color configuration
- * Up (spending increased) = Red (bad)
- * Down (spending decreased) = Green (good)
- * Neutral = Gray
+ * Trend arrow color configuration using CSS variables.
+ * Story 14.16b: Migrated to semantic colors for theme harmony.
+ *
+ * Up (spending increased) = Negative semantic color (red tones)
+ * Down (spending decreased) = Positive semantic color (green tones)
+ * Neutral = Neutral semantic color (gray tones)
+ *
+ * Colors adapt per theme:
+ * - Normal: Terracotta red / Sage green / Warm gray
+ * - Professional: Clear red / Clear green / Cool gray
+ * - Mono: Clay red / Teal green / True gray
  */
 export const TREND_COLORS = {
-  up: '#ef4444', // Red - spending increased (bad)
-  down: '#22c55e', // Green - spending decreased (good)
-  neutral: '#6b7280', // Gray - no change
+  up: 'var(--negative-primary)', // Spending increased (bad) - theme-aware red
+  down: 'var(--positive-primary)', // Spending decreased (good) - theme-aware green
+  neutral: 'var(--neutral-primary)', // No change - theme-aware gray
 } as const;
 
 /**
@@ -199,4 +209,146 @@ export function formatDateRange(start: Date, end: Date): string {
   const startStr = start.toLocaleDateString('es-CL', options);
   const endStr = end.toLocaleDateString('es-CL', options);
   return `${startStr} - ${endStr}`;
+}
+
+// ============================================================================
+// Transaction Groups - Story 14.16
+// Semantic grouping of store categories for progressive report breakdown
+// ============================================================================
+
+/**
+ * Category within a transaction group
+ * Represents a single store category's spending within a group
+ */
+export interface GroupedCategory {
+  /** Store category key (e.g., 'Supermarket', 'Restaurant') */
+  key: StoreCategory;
+  /** Display name in Spanish (e.g., 'Supermercado') */
+  name: string;
+  /** Number of transactions (e.g., '5 compras') */
+  count: string;
+  /** Formatted amount (e.g., '$22.500') */
+  amount: string;
+  /** Raw amount for sorting */
+  rawAmount: number;
+  /** Percentage of total period spending (Story 14.16) */
+  percent: number;
+  /** Trend direction vs previous period (up = more spending = bad, down = less = good) */
+  trend?: TrendDirection;
+  /** Trend percentage change (absolute value) */
+  trendPercent?: number;
+}
+
+/**
+ * Transaction group aggregating related store categories
+ * Story 14.16: Used for weekly report breakdown by store type
+ *
+ * @example
+ * ```ts
+ * const group: TransactionGroup = {
+ *   key: 'food-dining',
+ *   name: 'Alimentación',
+ *   emoji: '🍽️',
+ *   cssClass: 'food-dining',
+ *   totalAmount: '$35.300',
+ *   rawTotalAmount: 35300,
+ *   categories: [
+ *     { key: 'Supermarket', name: 'Supermercado', count: '5 compras', amount: '$22.500', rawAmount: 22500 },
+ *     { key: 'Restaurant', name: 'Restaurantes', count: '3 compras', amount: '$12.800', rawAmount: 12800 }
+ *   ]
+ * };
+ * ```
+ */
+export interface TransactionGroup {
+  /** Group key matching StoreCategoryGroup (e.g., 'food-dining') */
+  key: StoreCategoryGroup;
+  /** Display name in Spanish (e.g., 'Alimentación') */
+  name: string;
+  /** Group emoji for visual identification */
+  emoji: string;
+  /** CSS class for styling (matches mockup category-group classes) */
+  cssClass: string;
+  /** Formatted total amount for the group */
+  totalAmount: string;
+  /** Raw total amount for sorting */
+  rawTotalAmount: number;
+  /** Percentage of total period spending (Story 14.16) */
+  percent: number;
+  /** Categories within this group, sorted by amount descending */
+  categories: GroupedCategory[];
+  /** Trend direction vs previous period (up = more spending = bad, down = less = good) */
+  trend?: TrendDirection;
+  /** Trend percentage change (absolute value) */
+  trendPercent?: number;
+}
+
+// ============================================================================
+// Item Groups - Story 14.16
+// Semantic grouping of item categories for product-level breakdown
+// ============================================================================
+
+/**
+ * Item within an item group
+ * Represents a single item category's spending within a group
+ */
+export interface GroupedItem {
+  /** Item category key (e.g., 'Produce', 'Meat & Seafood') */
+  key: ItemCategory | string;
+  /** Display name in Spanish (e.g., 'Frutas y Verduras') */
+  name: string;
+  /** Number of items (e.g., '12 items') */
+  count: string;
+  /** Formatted amount (e.g., '$15.500') */
+  amount: string;
+  /** Raw amount for sorting */
+  rawAmount: number;
+  /** Percentage of total period item spending (Story 14.16) */
+  percent: number;
+  /** Trend direction vs previous period (up = more spending = bad, down = less = good) */
+  trend?: TrendDirection;
+  /** Trend percentage change (absolute value) */
+  trendPercent?: number;
+}
+
+/**
+ * Item group aggregating related item categories
+ * Story 14.16: Used for report breakdown by product type
+ *
+ * @example
+ * ```ts
+ * const group: ItemGroup = {
+ *   key: 'food-fresh',
+ *   name: 'Alimentos Frescos',
+ *   emoji: '🥬',
+ *   cssClass: 'food-fresh',
+ *   totalAmount: '$25.300',
+ *   rawTotalAmount: 25300,
+ *   items: [
+ *     { key: 'Produce', name: 'Frutas y Verduras', count: '8 items', amount: '$12.500', rawAmount: 12500 },
+ *     { key: 'Meat & Seafood', name: 'Carnes y Mariscos', count: '4 items', amount: '$12.800', rawAmount: 12800 }
+ *   ]
+ * };
+ * ```
+ */
+export interface ItemGroup {
+  /** Group key matching ItemCategoryGroup (e.g., 'food-fresh') */
+  key: ItemCategoryGroup;
+  /** Display name in Spanish (e.g., 'Alimentos Frescos') */
+  name: string;
+  /** Group emoji for visual identification */
+  emoji: string;
+  /** CSS class for styling (matches mockup item-group classes) */
+  cssClass: string;
+  /** Formatted total amount for the group */
+  totalAmount: string;
+  /** Raw total amount for sorting */
+  rawTotalAmount: number;
+  /** Percentage of total period item spending (Story 14.16) */
+  percent: number;
+  /** Items within this group, sorted by amount descending */
+  items: GroupedItem[];
+  /** Trend direction vs previous period (up = more spending = bad, down = less = good) */
+  trend?: TrendDirection;
+  /** Trend percentage change (absolute value) */
+  trendPercent?: number;
 }

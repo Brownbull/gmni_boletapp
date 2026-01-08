@@ -37,6 +37,8 @@ const mockTranslations: Record<string, string> = {
   itemCat: 'Item Category',
   delete: 'Delete',
   save: 'Save',
+  // Story 14.23: EditView uses saveTransaction, not save
+  saveTransaction: 'Save Transaction',
   deleteItem: 'Delete Item',
   confirmItem: 'Confirm Item',
 }
@@ -380,8 +382,8 @@ describe('Category Learning Prompt - Story 6.3', () => {
         />
       )
 
-      // Click save button
-      const saveButton = screen.getByRole('button', { name: 'Save' })
+      // Click save button - Story 14.23: Button text is now "Save Transaction"
+      const saveButton = screen.getByRole('button', { name: 'Save Transaction' })
       fireEvent.click(saveButton)
 
       // Learning prompt should appear BEFORE save (because save navigates away)
@@ -403,8 +405,8 @@ describe('Category Learning Prompt - Story 6.3', () => {
         />
       )
 
-      // Click save without changing item group
-      const saveButton = screen.getByRole('button', { name: 'Save' })
+      // Click save without changing item group - Story 14.23: Button text is now "Save Transaction"
+      const saveButton = screen.getByRole('button', { name: 'Save Transaction' })
       fireEvent.click(saveButton)
 
       await waitFor(() => {
@@ -431,7 +433,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
       )
 
       // Click save
-      const saveButton = screen.getByRole('button', { name: 'Save' })
+      const saveButton = screen.getByRole('button', { name: 'Save Transaction' })
       fireEvent.click(saveButton)
 
       await waitFor(() => {
@@ -472,7 +474,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
       )
 
       // Click save
-      const saveButton = screen.getByRole('button', { name: 'Save' })
+      const saveButton = screen.getByRole('button', { name: 'Save Transaction' })
       fireEvent.click(saveButton)
 
       await waitFor(() => {
@@ -521,7 +523,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
       )
 
       // Click save
-      fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Save Transaction' }))
 
       await waitFor(() => {
         expect(screen.getByRole('dialog')).toBeInTheDocument()
@@ -565,7 +567,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
       )
 
       // Click save
-      fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Save Transaction' }))
 
       await waitFor(() => {
         expect(screen.getByRole('dialog')).toBeInTheDocument()
@@ -610,7 +612,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
       )
 
       // Click save
-      fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Save Transaction' }))
 
       await waitFor(() => {
         expect(onSave).toHaveBeenCalled()
@@ -648,7 +650,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
         )
 
         // Click save
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+        fireEvent.click(screen.getByRole('button', { name: 'Save Transaction' }))
 
         await waitFor(() => {
           expect(onSave).toHaveBeenCalled()
@@ -684,7 +686,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
         )
 
         // Click save
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+        fireEvent.click(screen.getByRole('button', { name: 'Save Transaction' }))
 
         await waitFor(() => {
           expect(onSave).toHaveBeenCalled()
@@ -720,7 +722,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
         )
 
         // Click save
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+        fireEvent.click(screen.getByRole('button', { name: 'Save Transaction' }))
 
         await waitFor(() => {
           expect(onSave).toHaveBeenCalled()
@@ -755,7 +757,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
         )
 
         // Click save
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+        fireEvent.click(screen.getByRole('button', { name: 'Save Transaction' }))
 
         await waitFor(() => {
           expect(onSave).toHaveBeenCalled()
@@ -794,7 +796,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
         )
 
         // Click save
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+        fireEvent.click(screen.getByRole('button', { name: 'Save Transaction' }))
 
         await waitFor(() => {
           expect(onSave).toHaveBeenCalled()
@@ -837,7 +839,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
         )
 
         // Click save
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+        fireEvent.click(screen.getByRole('button', { name: 'Save Transaction' }))
 
         await waitFor(() => {
           expect(onSave).toHaveBeenCalled()
@@ -874,7 +876,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
         )
 
         // Click save
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+        fireEvent.click(screen.getByRole('button', { name: 'Save Transaction' }))
 
         await waitFor(() => {
           expect(onSave).toHaveBeenCalled()
@@ -910,7 +912,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
         )
 
         // Click save
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+        fireEvent.click(screen.getByRole('button', { name: 'Save Transaction' }))
 
         await waitFor(() => {
           expect(onSave).toHaveBeenCalled()
@@ -946,7 +948,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
         )
 
         // Click save
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+        fireEvent.click(screen.getByRole('button', { name: 'Save Transaction' }))
 
         await waitFor(() => {
           expect(onSave).toHaveBeenCalled()
@@ -983,7 +985,7 @@ describe('Category Learning Prompt - Story 6.3', () => {
         )
 
         // Click save
-        fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+        fireEvent.click(screen.getByRole('button', { name: 'Save Transaction' }))
 
         await waitFor(() => {
           expect(onSave).toHaveBeenCalled()

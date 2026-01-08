@@ -17,11 +17,21 @@
  * - Image viewer (Story 9.11)
  */
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Plus, Image as ImageIcon, AlertTriangle, Inbox, ArrowUpDown, Filter, ChevronRight, ChevronLeft, ChevronDown, Receipt, Minus } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { Plus, Inbox, ArrowUpDown, Filter, ChevronRight, ChevronLeft, ChevronDown, Minus, Package, X, Layers, Trash2 } from 'lucide-react';
 import { ImageViewer } from '../components/ImageViewer';
 // Story 10a.1: Filter bar for consolidated home view (AC #2)
 import { HistoryFilterBar } from '../components/history/HistoryFilterBar';
+// Story 14.15b: Selection mode and group modals for Dashboard
+import { AssignGroupModal } from '../components/history/AssignGroupModal';
+import { CreateGroupModal } from '../components/history/CreateGroupModal';
+import { DeleteTransactionsModal } from '../components/history/DeleteTransactionsModal';
+import type { TransactionPreview } from '../components/history/DeleteTransactionsModal';
+import { useSelectionMode } from '../hooks/useSelectionMode';
+import { useGroups } from '../hooks/useGroups';
+import { assignTransactionsToGroup, createGroup } from '../services/groupService';
+import { deleteTransactionsBatch } from '../services/firestore';
+import { getFirestore } from 'firebase/firestore';
 // Story 9.12: Category translations
 import type { Language } from '../utils/translations';
 import { translateCategory } from '../utils/categoryTranslations';
@@ -38,8 +48,14 @@ import { PageTransition } from '../components/animation/PageTransition';
 import { TransitionChild } from '../components/animation/TransitionChild';
 import { useCountUp } from '../hooks/useCountUp';
 import { useReducedMotion } from '../hooks/useReducedMotion';
-import { getColor } from '../utils/colors';
+// Story 14.21: Use unified category colors (both fg and bg for text contrast)
+// getCategoryColorsAuto - respects fontColorMode (colorful/plain) for general text
+// getCategoryPillColors - ALWAYS colorful for pills/badges/legends
+import { getCategoryColorsAuto, getCategoryBackgroundAuto, getCategoryPillColors, type ThemeName } from '../config/categoryColors';
 import { getCategoryEmoji } from '../utils/categoryEmoji';
+import { calculateTreemapLayout } from '../utils/treemapLayout';
+// Story 14.15b: Use consolidated TransactionCard from shared transactions folder
+import { TransactionCard } from '../components/transactions';
 // Story 14.12: Radar chart uses inline SVG (matching mockup hexagonal design)
 
 // Story 11.1: Sort type for dashboard transactions
@@ -68,6 +84,10 @@ interface Transaction {
     currency?: string;
     // Story 11.1: createdAt for sort by scan date
     createdAt?: any; // Firestore Timestamp or Date
+    // Story 14.15b: Group display fields
+    groupId?: string;
+    groupName?: string;
+    groupColor?: string;
 }
 
 interface DashboardViewProps {
@@ -91,74 +111,16 @@ interface DashboardViewProps {
     lang?: Language;
     /** Story 14.12: Navigate to history view */
     onViewHistory?: () => void;
+    /** Story 14.14: Color theme for unified category colors */
+    colorTheme?: ThemeName;
+    // Story 14.15b: Selection mode props for Dashboard
+    /** Authenticated user ID for group operations */
+    userId?: string | null;
+    /** App ID for Firestore path */
+    appId?: string;
+    /** Callback when transactions are deleted */
+    onTransactionsDeleted?: (deletedIds: string[]) => void;
 }
-
-// Story 9.11: Thumbnail component matching HistoryView style
-interface ThumbnailProps {
-    transaction: Transaction;
-    onThumbnailClick: (transaction: Transaction) => void;
-}
-
-const TransactionThumbnail: React.FC<ThumbnailProps> = ({ transaction, onThumbnailClick }) => {
-    const [isLoading, setIsLoading] = useState(true);
-    const [hasError, setHasError] = useState(false);
-
-    if (!transaction.thumbnailUrl) {
-        return null;
-    }
-
-    const handleClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (transaction.imageUrls && transaction.imageUrls.length > 0) {
-            onThumbnailClick(transaction);
-        }
-    };
-
-    const handleLoad = () => setIsLoading(false);
-    const handleError = () => {
-        setIsLoading(false);
-        setHasError(true);
-    };
-
-    return (
-        <div
-            className="relative w-10 h-[50px] flex-shrink-0 cursor-pointer"
-            onClick={handleClick}
-            role="button"
-            aria-label={`View receipt image from ${transaction.alias || transaction.merchant}`}
-            tabIndex={0}
-            onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.stopPropagation();
-                    if (transaction.imageUrls && transaction.imageUrls.length > 0) {
-                        onThumbnailClick(transaction);
-                    }
-                }
-            }}
-            data-testid="transaction-thumbnail"
-        >
-            {isLoading && !hasError && (
-                <div className="absolute inset-0 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
-            )}
-            {hasError ? (
-                <div className="w-full h-full flex items-center justify-center bg-slate-200 dark:bg-slate-700 rounded border border-slate-300 dark:border-slate-600">
-                    <ImageIcon size={16} className="text-slate-400" />
-                </div>
-            ) : (
-                <img
-                    src={transaction.thumbnailUrl}
-                    alt={`Receipt from ${transaction.alias || transaction.merchant}`}
-                    className={`w-10 h-[50px] object-cover rounded ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity`}
-                    style={{
-                        border: '1px solid var(--border-medium)',
-                    }}
-                    onLoad={handleLoad}
-                    onError={handleError}
-                />
-            )}
-        </div>
-    );
-};
 
 // Story 14.12: Number of recent transactions to show (collapsed/expanded)
 const RECENT_TRANSACTIONS_COLLAPSED = 5;
@@ -169,31 +131,11 @@ type CarouselSlide = 0 | 1 | 2;
 // CAROUSEL_TITLES keys for translation lookup
 const CAROUSEL_TITLE_KEYS = ['thisMonthCarousel', 'monthToMonth', 'lastFourMonths'] as const;
 
-// Story 14.12: Treemap/Bump chart category colors (matching mockup)
-// Uses distinct colors to avoid confusion in charts
-// Primary category uses CSS variable, others use fixed colors for consistency
-const TREEMAP_COLORS: Record<string, string> = {
-    'Supermarket': 'var(--primary)', // theme primary (forest green in normal)
-    'Supermercado': 'var(--primary)',
-    'Restaurant': '#f59e0b', // amber/orange
-    'Restaurante': '#f59e0b',
-    'Transport': '#8b5cf6', // violet/purple
-    'Transporte': '#8b5cf6',
-    'Health': '#ec4899', // pink
-    'Salud': '#ec4899',
-    'Entertainment': '#10b981', // emerald green
-    'Entretenimiento': '#10b981',
-    'PetShop': '#06b6d4', // cyan
-    'Tienda de Mascotas': '#06b6d4',
-    'Clothing': '#6366f1', // indigo
-    'Ropa': '#6366f1',
-    'Other': '#94a3b8', // slate gray (distinct from other colors)
-    'Otro': '#94a3b8',
-};
-
-// Story 14.12: Get category color for treemap
-const getTreemapColor = (category: string): string => {
-    return TREEMAP_COLORS[category] || getColor(category) || '#6b7280';
+// Story 14.21: Get category colors for treemap using unified color system
+// Returns both bg (background) and fg (text) colors for proper contrast
+const getTreemapColors = (category: string): { bg: string; fg: string } => {
+    const colors = getCategoryColorsAuto(category);
+    return { bg: colors.bg, fg: colors.fg };
 };
 
 // Story 14.12: Month translation keys (short and full)
@@ -207,39 +149,44 @@ const MONTH_FULL_KEYS = [
 ] as const;
 
 // Story 14.12: Circular progress ring component for percentage display with text inside
+// Story 14.21: Added fgColor prop for proper contrast with unified colors
 interface CircularProgressProps {
     animatedPercent: number;
     size: number;
     strokeWidth: number;
     fontSize?: number;
+    /** Foreground color for stroke and text (defaults to white for backwards compat) */
+    fgColor?: string;
 }
 
-const CircularProgress: React.FC<CircularProgressProps> = ({ animatedPercent, size, strokeWidth, fontSize }) => {
+const CircularProgress: React.FC<CircularProgressProps> = ({ animatedPercent, size, strokeWidth, fontSize, fgColor = 'white' }) => {
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
     const strokeDashoffset = circumference - (animatedPercent / 100) * circumference;
-    // Default font size based on circle size
-    const textSize = fontSize || Math.round(size * 0.32);
+    // Default font size based on circle size (0.38 multiplier for better readability)
+    const textSize = fontSize || Math.round(size * 0.38);
+    // Story 14.21: Calculate semi-transparent version of fgColor for background ring
+    const bgRingColor = fgColor === 'white' ? 'rgba(255,255,255,0.3)' : `${fgColor}33`; // 33 = 20% opacity in hex
 
     return (
         <div style={{ position: 'relative', width: size, height: size }}>
             <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-                {/* Background circle (soft color - white with low opacity) */}
+                {/* Background circle (soft color - fg with low opacity) */}
                 <circle
                     cx={size / 2}
                     cy={size / 2}
                     r={radius}
                     fill="none"
-                    stroke="rgba(255,255,255,0.3)"
+                    stroke={bgRingColor}
                     strokeWidth={strokeWidth}
                 />
-                {/* Progress circle (bold color - white) */}
+                {/* Progress circle (bold fg color) */}
                 <circle
                     cx={size / 2}
                     cy={size / 2}
                     r={radius}
                     fill="none"
-                    stroke="white"
+                    stroke={fgColor}
                     strokeWidth={strokeWidth}
                     strokeLinecap="round"
                     strokeDasharray={circumference}
@@ -258,8 +205,7 @@ const CircularProgress: React.FC<CircularProgressProps> = ({ animatedPercent, si
                     transform: 'translate(-50%, -50%)',
                     fontSize: `${textSize}px`,
                     fontWeight: 600,
-                    color: 'white',
-                    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                    color: fgColor,
                     lineHeight: 1
                 }}
             >
@@ -270,14 +216,17 @@ const CircularProgress: React.FC<CircularProgressProps> = ({ animatedPercent, si
 };
 
 // Story 14.12: Animated treemap card with count-up effect and circular progress
+// Story 14.21: Updated to use both bg and fg colors for proper contrast
+// Story 14.14: Category emoji in top row, transaction count moved to bottom right
 interface AnimatedTreemapCardProps {
-    cat: { name: string; amount: number; percent: number; count: number; color: string };
+    cat: { name: string; amount: number; percent: number; count: number; bgColor: string; fgColor: string };
     displayName: string; // Translated category name
     isMainCell: boolean;
     gridRow?: string;
-    gridColumn: string;
+    gridColumn?: string;
     animationKey: number;
     getValueFontSize: (percent: number, isMainCell: boolean) => string;
+    style?: React.CSSProperties; // Story 14.13: Support squarified treemap absolute positioning
 }
 
 const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
@@ -287,7 +236,8 @@ const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
     gridRow,
     gridColumn,
     animationKey,
-    getValueFontSize
+    getValueFontSize,
+    style
 }) => {
     // Pass animationKey to useCountUp to re-trigger animation when carousel slides
     const animatedAmount = useCountUp(Math.round(cat.amount / 1000), { duration: 1200, startValue: 0, key: animationKey });
@@ -296,84 +246,68 @@ const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
     const animatedCount = useCountUp(cat.count, { duration: 800, startValue: 0, key: animationKey });
 
     // Circle sizes - responsive: smaller on narrow screens
-    // Main cell: 36px, Small cells: 24px (reduced from 28px for better fit on 320px screens)
-    const circleSize = isMainCell ? 36 : 24;
+    // Main cell: 36px, Small cells: 28px (increased from 24px for better readability)
+    const circleSize = isMainCell ? 36 : 28;
     const strokeWidth = isMainCell ? 3 : 2;
+    // Override font size for small cells to improve readability (default 0.38 multiplier is too small)
+    const circleFontSize = isMainCell ? undefined : 11;
 
-    // Transaction count badge - inline with category name (left side)
-    // Compact sizes for mobile screens
-    const countBadgeSize = isMainCell ? 18 : 14;
-    const countBadgeFontSize = isMainCell ? '10px' : '9px';
-
-    // Count badge component to avoid duplication
-    const CountBadge = (
-        <div
-            className="flex items-center justify-center font-bold flex-shrink-0"
-            style={{
-                width: countBadgeSize,
-                height: countBadgeSize,
-                borderRadius: '50%',
-                backgroundColor: 'rgba(255,255,255,0.9)',
-                color: cat.color,
-                fontSize: countBadgeFontSize,
-                lineHeight: 1,
-                boxShadow: '0 1px 2px rgba(0,0,0,0.15)'
-            }}
-        >
-            {animatedCount}
-        </div>
-    );
+    // Story 14.14: Get category emoji for display
+    const emoji = getCategoryEmoji(cat.name);
+    const emojiFontSize = isMainCell ? '16px' : '13px';
 
     return (
         <div
             key={`${cat.name}-${animationKey}`}
             className="rounded-lg flex flex-col justify-between overflow-hidden"
             style={{
-                backgroundColor: cat.color,
+                backgroundColor: cat.bgColor,
                 gridRow: gridRow,
                 gridColumn: gridColumn,
                 minHeight: 0,
                 // Compact padding for mobile screens
-                padding: isMainCell ? '8px 8px' : '6px 6px'
+                padding: isMainCell ? '8px 8px' : '6px 6px',
+                // Story 14.13: Merge with passed style for squarified treemap positioning
+                ...style,
             }}
         >
-            {isMainCell ? (
-                <>
-                    {/* Top row: Count badge + Category name */}
-                    <div className="flex items-center gap-1.5">
-                        {CountBadge}
-                        <div className="text-white font-bold truncate" style={{ fontSize: '14px', textShadow: '0 1px 2px rgba(0,0,0,0.2)', lineHeight: 1.2 }}>{displayName}</div>
+            {/* Top row: Emoji + Category name */}
+            {/* Story 14.13: Unified layout for squarified treemap cells */}
+            <div className="flex items-center gap-1.5 min-w-0">
+                <span style={{ fontSize: emojiFontSize, lineHeight: 1 }}>{emoji}</span>
+                <div className="font-bold truncate" style={{ fontSize: isMainCell ? '14px' : '11px', color: cat.fgColor, lineHeight: 1.2 }}>{displayName}</div>
+            </div>
+
+            {/* Bottom section: Transaction count + Amount (left), Percentage circle (bottom right) */}
+            <div className="flex items-end justify-between">
+                {/* Left side: count above amount */}
+                <div className="flex flex-col gap-0.5">
+                    {/* Transaction count pill */}
+                    <span
+                        className="inline-flex items-center gap-[2px] px-[5px] py-[1px] rounded-full self-start"
+                        style={{
+                            backgroundColor: 'var(--bg)',
+                            color: cat.fgColor,
+                            fontSize: isMainCell ? '11px' : '10px',
+                        }}
+                    >
+                        <Package size={isMainCell ? 11 : 10} strokeWidth={2} />
+                        {animatedCount}
+                    </span>
+                    {/* Amount - left aligned below count */}
+                    <div className="font-bold" style={{ fontSize: getValueFontSize(cat.percent, isMainCell), color: cat.fgColor, lineHeight: 1 }}>
+                        ${animatedAmount}k
                     </div>
-                    <div className="flex items-center justify-between gap-2">
-                        <div className="text-white font-bold" style={{ fontSize: getValueFontSize(cat.percent, true), textShadow: '0 1px 2px rgba(0,0,0,0.2)', lineHeight: 1 }}>
-                            ${animatedAmount}k
-                        </div>
-                        <CircularProgress
-                            animatedPercent={animatedPercent}
-                            size={circleSize}
-                            strokeWidth={strokeWidth}
-                        />
-                    </div>
-                </>
-            ) : (
-                <>
-                    {/* Top row: Count badge + Category name - compact for small screens */}
-                    <div className="flex items-center gap-1 min-w-0">
-                        {CountBadge}
-                        <div className="text-white font-bold truncate" style={{ fontSize: '11px', textShadow: '0 1px 2px rgba(0,0,0,0.2)', lineHeight: 1.2 }}>{displayName}</div>
-                    </div>
-                    <div className="flex items-center justify-between gap-1">
-                        <div className="text-white font-bold" style={{ fontSize: getValueFontSize(cat.percent, false), textShadow: '0 1px 2px rgba(0,0,0,0.2)', lineHeight: 1 }}>
-                            ${animatedAmount}k
-                        </div>
-                        <CircularProgress
-                            animatedPercent={animatedPercent}
-                            size={circleSize}
-                            strokeWidth={strokeWidth}
-                        />
-                    </div>
-                </>
-            )}
+                </div>
+                {/* Right side: Percentage circle - bottom right */}
+                <CircularProgress
+                    animatedPercent={animatedPercent}
+                    size={circleSize}
+                    strokeWidth={strokeWidth}
+                    fontSize={circleFontSize}
+                    fgColor={cat.fgColor}
+                />
+            </div>
         </div>
     );
 };
@@ -382,8 +316,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     transactions,
     t,
     currency,
+    dateFormat,
     theme,
     formatCurrency,
+    formatDate,
     // onCreateNew - kept in interface for backwards compatibility, unused per mockup alignment
     onViewTrends,
     onEditTransaction,
@@ -392,6 +328,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     // Story 9.12: Language for translations
     lang = 'en',
     onViewHistory,
+    // Story 14.14: Color theme for unified category colors
+    colorTheme = 'normal',
+    // Story 14.15b: Selection mode props
+    userId = null,
+    appId = 'boletapp',
+    onTransactionsDeleted,
 }) => {
     // Story 7.12: Theme-aware styling using CSS variables (AC #1, #2, #8)
     const isDark = theme === 'dark';
@@ -410,8 +352,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
     // Story 14.12: Expanded state for recientes list
     const [recientesExpanded, setRecientesExpanded] = useState(false);
-    // Story 14.12: Track which transactions have expanded item details
-    const [expandedItemIds, setExpandedItemIds] = useState<Set<string>>(new Set());
     // Story 14.12: Recientes carousel state (0 = by scan date, 1 = by transaction date)
     const [recientesSlide, setRecientesSlide] = useState<0 | 1>(0);
     // Story 14.12: Slide direction for recientes carousel transition animation
@@ -465,6 +405,51 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
     // Story 14.12: Toggle between refreshed dashboard and full list view
     const [showFullList, setShowFullList] = useState(false);
+
+    // Story 14.15b: Selection mode state and hooks for Dashboard Recientes
+    const {
+        isSelectionMode,
+        selectedIds,
+        toggleSelection,
+        enterSelectionMode,
+        exitSelectionMode,
+        isSelected,
+    } = useSelectionMode();
+
+    // Story 14.15b: Groups hook for group assignment
+    const { groups } = useGroups(userId, appId);
+
+    // Story 14.15b: Modal states
+    const [showAssignGroupModal, setShowAssignGroupModal] = useState(false);
+    const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+    // Story 14.15b: Long-press state for selection mode entry
+    const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const longPressMoved = useRef(false);
+    const LONG_PRESS_DURATION = 500; // ms
+
+    // Story 14.15b: Long-press handlers
+    const handleLongPressStart = useCallback((txId: string) => {
+        longPressMoved.current = false;
+        longPressTimerRef.current = setTimeout(() => {
+            if (!longPressMoved.current) {
+                enterSelectionMode(txId);
+            }
+        }, LONG_PRESS_DURATION);
+    }, [enterSelectionMode]);
+
+    const handleLongPressEnd = useCallback(() => {
+        if (longPressTimerRef.current) {
+            clearTimeout(longPressTimerRef.current);
+            longPressTimerRef.current = null;
+        }
+    }, []);
+
+    const handleLongPressMove = useCallback(() => {
+        longPressMoved.current = true;
+        handleLongPressEnd();
+    }, [handleLongPressEnd]);
 
     // Story 10a.1: Access filter state from context (AC #2, #6)
     const { state: filterState, hasActiveFilters } = useHistoryFilters();
@@ -520,6 +505,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     const animatedDaysElapsed = useCountUp(monthProgress.daysElapsed, { duration: 1200, startValue: 0, key: animationKey });
 
     // Story 14.12: Calculate categories for treemap (AC #1)
+    // Story 14.21: Updated to use both bgColor and fgColor for proper contrast
     // Display: All categories >10% + first category ≤10% + "Otro" aggregating rest
     const treemapCategories = useMemo(() => {
         // Aggregate by category
@@ -534,22 +520,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         });
 
         // Convert to array and sort by amount (highest first)
+        // Story 14.21: Include both bg and fg colors for proper text contrast
         const sorted = Object.entries(categoryTotals)
-            .map(([name, data]) => ({
-                name,
-                amount: data.amount,
-                count: data.count,
-                color: getTreemapColor(name),
-                percent: monthTotal > 0 ? (data.amount / monthTotal) * 100 : 0,
-            }))
+            .map(([name, data]) => {
+                const colors = getTreemapColors(name);
+                return {
+                    name,
+                    amount: data.amount,
+                    count: data.count,
+                    bgColor: colors.bg,
+                    fgColor: colors.fg,
+                    percent: monthTotal > 0 ? (data.amount / monthTotal) * 100 : 0,
+                };
+            })
             .sort((a, b) => b.amount - a.amount);
 
         // Apply selection criteria:
-        // 1. All categories >10%
-        // 2. First category ≤10% (highest below threshold)
-        // 3. Everything else goes to "Otro"
-        const aboveThreshold = sorted.filter(c => c.percent > 10);
-        const belowThreshold = sorted.filter(c => c.percent <= 10);
+        // 1. All categories >10% (excluding 'Otro'/'Other' which will be merged into aggregated Otro)
+        // 2. First category ≤10% (highest below threshold, excluding 'Otro'/'Other')
+        // 3. Everything else goes to "Otro" (including any existing 'Otro'/'Other' transactions)
+        const isOtroCategory = (name: string) => name === 'Otro' || name === 'Other';
+        const aboveThreshold = sorted.filter(c => c.percent > 10 && !isOtroCategory(c.name));
+        const belowThreshold = sorted.filter(c => c.percent <= 10 && !isOtroCategory(c.name));
+        const existingOtro = sorted.find(c => isOtroCategory(c.name));
 
         const result = [...aboveThreshold];
 
@@ -559,15 +552,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         }
 
         // Aggregate remaining into "Otro" (skip the first below-threshold which we already added)
+        // Also include any existing 'Otro'/'Other' category transactions
         const remaining = belowThreshold.slice(1);
-        if (remaining.length > 0) {
-            const otroAmount = remaining.reduce((sum, cat) => sum + cat.amount, 0);
-            const otroCount = remaining.reduce((sum, cat) => sum + cat.count, 0);
+        let otroAmount = remaining.reduce((sum, cat) => sum + cat.amount, 0);
+        let otroCount = remaining.reduce((sum, cat) => sum + cat.count, 0);
+
+        // Merge existing 'Otro'/'Other' category into aggregated Otro
+        if (existingOtro) {
+            otroAmount += existingOtro.amount;
+            otroCount += existingOtro.count;
+        }
+
+        if (otroAmount > 0 || otroCount > 0) {
+            const otroColors = getTreemapColors('Otro');
             result.push({
                 name: 'Otro',
                 amount: otroAmount,
                 count: otroCount,
-                color: '#9ca3af', // Gray for "Otro" per mockup
+                bgColor: otroColors.bg,
+                fgColor: otroColors.fg,
                 percent: monthTotal > 0 ? (otroAmount / monthTotal) * 100 : 0,
             });
         }
@@ -730,7 +733,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 prevAmount: prevTotals[name] || 0,
                 percent: totalCurrMonth > 0 ? ((currTotals[name] || 0) / totalCurrMonth) * 100 : 0,
                 emoji: getCategoryEmoji(name),
-                color: getColor(name) || '#e2e8f0',
+                color: getCategoryBackgroundAuto(name),
             }))
             .sort((a, b) => b.currAmount - a.currAmount);
 
@@ -848,9 +851,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             });
 
             // Update rankings
+            // Story 14.21: Use fg colors (vibrant) for line charts/legends (always colorful)
+            // Use getCategoryPillColors to ignore fontColorMode - charts/legends always colorful
             Object.entries(totals).forEach(([cat, amount]) => {
                 if (!categoryRankings[cat]) {
-                    categoryRankings[cat] = { amounts: [0, 0, 0, 0], color: getTreemapColor(cat) };
+                    const colors = getCategoryPillColors(cat);
+                    categoryRankings[cat] = { amounts: [0, 0, 0, 0], color: colors.fg };
                 }
                 categoryRankings[cat].amounts[idx] = amount;
             });
@@ -899,11 +905,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 return sorted.indexOf(otroAmounts[monthIdx]) + 1;
             });
 
+            // Story 14.21: Use fg color for "Otro" from unified color system
+            // Use getCategoryPillColors - charts/legends always colorful
+            const otroColors = getCategoryPillColors('Otro');
             categoryTotals = [
                 ...top4,
                 {
                     name: 'Otro',
-                    color: '#94a3b8', // slate-400 for "Other"
+                    color: otroColors.fg,
                     amounts: otroAmounts,
                     ranks: otroRanks,
                     total: otroTotal
@@ -1050,210 +1059,141 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         }
     };
 
-    // Story 14.12: Format relative date (Today, Yesterday, or date) - translated
-    // Fix: Parse ISO date strings (YYYY-MM-DD) as local time, not UTC
-    const formatRelativeDate = (dateStr: string, time?: string): string => {
-        // Parse date string as local time to avoid timezone shift
-        // ISO format "YYYY-MM-DD" is parsed as UTC by default, causing off-by-one errors
-        let date: Date;
-        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-            // ISO date without time - parse as local
-            const [year, month, day] = dateStr.split('-').map(Number);
-            date = new Date(year, month - 1, day);
-        } else {
-            date = new Date(dateStr);
-        }
-
-        const today = new Date();
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-
-        const isToday = date.toDateString() === today.toDateString();
-        const isYesterday = date.toDateString() === yesterday.toDateString();
-
-        if (isToday && time) {
-            return `${t('todayLabel')}, ${time}`;
-        } else if (isYesterday && time) {
-            return `${t('yesterdayLabel')}, ${time}`;
-        } else {
-            // Format as "20 Dec" style with translated month
-            const day = date.getDate();
-            return `${day} ${t(MONTH_SHORT_KEYS[date.getMonth()])}`;
+    // Story 14.15b: Modal handlers for selection mode
+    const handleOpenAssignGroup = () => {
+        if (selectedIds.size > 0) {
+            setShowAssignGroupModal(true);
         }
     };
 
-    // Toggle expanded items for a transaction
-    const toggleTransactionItems = (txId: string, e: React.MouseEvent) => {
-        e.stopPropagation(); // Don't trigger edit transaction
-        setExpandedItemIds(prev => {
-            const next = new Set(prev);
-            if (next.has(txId)) {
-                next.delete(txId);
-            } else {
-                next.add(txId);
+    const handleOpenDelete = () => {
+        if (selectedIds.size > 0) {
+            setShowDeleteModal(true);
+        }
+    };
+
+    // Story 14.15b: Handle group assignment from AssignGroupModal
+    const handleAssignGroup = async (groupId: string, groupName: string) => {
+        if (!userId || selectedIds.size === 0) return;
+
+        const db = getFirestore();
+        const selectedTxIds = Array.from(selectedIds);
+
+        // Find the group to get its color
+        const group = groups.find(g => g.id === groupId);
+        const groupColor = group?.color || '#10b981';
+
+        // Build transaction totals map
+        const transactionTotals = new Map<string, number>();
+        recentTransactions.forEach(tx => {
+            const transaction = tx as Transaction;
+            if (selectedIds.has(transaction.id)) {
+                transactionTotals.set(transaction.id, transaction.total);
             }
-            return next;
         });
+
+        try {
+            await assignTransactionsToGroup(
+                db,
+                userId,
+                appId,
+                selectedTxIds,
+                groupId,
+                groupName,
+                groupColor,
+                transactionTotals
+            );
+            setShowAssignGroupModal(false);
+            exitSelectionMode();
+        } catch (error) {
+            console.error('Error assigning group:', error);
+        }
     };
 
-    // Render expandable transaction item (matching mockup)
+    const handleConfirmDelete = async () => {
+        if (!userId || selectedIds.size === 0) return;
+
+        const db = getFirestore();
+        const selectedTxIds = Array.from(selectedIds);
+
+        try {
+            await deleteTransactionsBatch(db, userId, appId, selectedTxIds);
+            onTransactionsDeleted?.(selectedTxIds);
+            setShowDeleteModal(false);
+            exitSelectionMode();
+        } catch (error) {
+            console.error('Error deleting transactions:', error);
+        }
+    };
+
+    // Story 14.15b: Get selected transactions for delete modal preview
+    const getSelectedTransactions = useCallback((): TransactionPreview[] => {
+        return recentTransactions
+            .filter(tx => selectedIds.has((tx as Transaction).id))
+            .map(tx => {
+                const transaction = tx as Transaction;
+                return {
+                    id: transaction.id,
+                    displayName: transaction.alias || transaction.merchant,
+                    total: transaction.total,
+                    currency: transaction.currency || currency,
+                };
+            });
+    }, [recentTransactions, selectedIds, currency]);
+
+    // Story 14.15b: Use consolidated TransactionCard with simplified props interface
+    // Includes selection mode and long-press handlers
     const renderTransactionItem = (tx: Transaction | TransactionType, _index: number) => {
         const transaction = tx as Transaction;
-        const displayCurrency = transaction.currency || currency;
-        const location = transaction.city;
         const isDuplicate = transaction.id ? duplicateIds.has(transaction.id) : false;
-        const emoji = getCategoryEmoji(transaction.category);
-        const categoryColor = getTreemapColor(transaction.category);
-        const isItemsExpanded = transaction.id ? expandedItemIds.has(transaction.id) : false;
-        const hasItems = transaction.items && transaction.items.length > 0;
-
-        // Get top 3 most expensive items for preview
-        const sortedItems = transaction.items
-            ? [...transaction.items].sort((a, b) => b.price - a.price).slice(0, 3)
-            : [];
-        const remainingCount = transaction.items ? Math.max(0, transaction.items.length - 3) : 0;
 
         return (
             <div
                 key={transaction.id}
-                className={`rounded-lg overflow-hidden ${isDuplicate ? 'border border-amber-400' : ''}`}
-                data-testid="transaction-card"
+                onTouchStart={() => handleLongPressStart(transaction.id)}
+                onTouchEnd={handleLongPressEnd}
+                onTouchMove={handleLongPressMove}
+                onMouseDown={() => handleLongPressStart(transaction.id)}
+                onMouseUp={handleLongPressEnd}
+                onMouseLeave={handleLongPressEnd}
             >
-                {/* Main clickable area - compact padding for better space usage */}
-                <div
+                <TransactionCard
+                    transaction={{
+                        id: transaction.id,
+                        merchant: transaction.merchant,
+                        alias: transaction.alias,
+                        date: transaction.date,
+                        time: transaction.time,
+                        total: transaction.total,
+                        category: transaction.category as any,
+                        city: transaction.city,
+                        currency: transaction.currency || currency,
+                        thumbnailUrl: transaction.thumbnailUrl,
+                        imageUrls: transaction.imageUrls,
+                        items: transaction.items || [],
+                        groupName: transaction.groupName,
+                        groupColor: transaction.groupColor,
+                    }}
+                    formatters={{
+                        formatCurrency,
+                        formatDate,
+                        t,
+                    }}
+                    theme={{
+                        mode: theme === 'dark' ? 'dark' : 'light',
+                        colorTheme,
+                        dateFormat,
+                    }}
+                    defaultCurrency={currency}
+                    isDuplicate={isDuplicate}
                     onClick={() => onEditTransaction(transaction)}
-                    className="flex gap-2 p-2 cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
-                    style={{ backgroundColor: 'var(--surface)' }}
-                >
-                    {/* Receipt icon or thumbnail */}
-                    {transaction.thumbnailUrl ? (
-                        <TransactionThumbnail
-                            transaction={transaction}
-                            onThumbnailClick={handleThumbnailClick}
-                        />
-                    ) : (
-                        <div
-                            className="w-10 h-[46px] flex-shrink-0 flex items-center justify-center rounded-md"
-                            style={{
-                                background: 'linear-gradient(135deg, #fafaf8 0%, #f0ede4 100%)',
-                                border: '1px solid var(--border-light, #e2e8f0)'
-                            }}
-                        >
-                            <Receipt size={18} style={{ color: '#9ca3af', opacity: 0.7 }} />
-                        </div>
-                    )}
-
-                    {/* Transaction details */}
-                    <div className="flex-1 min-w-0">
-                        {/* Row 1: Merchant + Amount - use --text-primary per mockup */}
-                        <div className="flex justify-between items-start gap-2">
-                            <div className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
-                                {transaction.alias || transaction.merchant}
-                            </div>
-                            <div className="text-sm font-semibold whitespace-nowrap flex-shrink-0" style={{ color: 'var(--text-primary)' }}>
-                                {formatCurrency(transaction.total, displayCurrency)}
-                            </div>
-                        </div>
-
-                        {/* Row 2: Category emoji pill + date pill + location pill + chevron */}
-                        <div className="flex items-center justify-between mt-1">
-                            <div className="flex items-center gap-1 flex-wrap">
-                                {/* Category emoji in circular background - uses treemap category color */}
-                                <div
-                                    className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[11px] flex-shrink-0"
-                                    style={{ backgroundColor: categoryColor, opacity: 0.85 }}
-                                >
-                                    {emoji}
-                                </div>
-                                {/* Time pill - uses bg-tertiary per mockup */}
-                                <span
-                                    className="text-[10px] px-1.5 py-0.5 rounded-full"
-                                    style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
-                                >
-                                    {formatRelativeDate(transaction.date, transaction.time)}
-                                </span>
-                                {/* Location pill - uses bg-tertiary per mockup */}
-                                {location && (
-                                    <span
-                                        className="text-[10px] px-1.5 py-0.5 rounded-full"
-                                        style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
-                                    >
-                                        {location}
-                                    </span>
-                                )}
-                            </div>
-
-                            {/* Chevron to toggle items - only show if transaction has items */}
-                            {hasItems && (
-                                <button
-                                    onClick={(e) => toggleTransactionItems(transaction.id, e)}
-                                    className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors active:bg-slate-200 dark:active:bg-slate-700"
-                                    style={{
-                                        backgroundColor: isItemsExpanded
-                                            ? (isDark ? '#334155' : '#e2e8f0')
-                                            : 'transparent'
-                                    }}
-                                    aria-label={isItemsExpanded ? 'Ocultar items' : 'Ver items'}
-                                    data-testid="toggle-items-btn"
-                                >
-                                    <ChevronDown
-                                        size={14}
-                                        className={`transition-transform ${isItemsExpanded ? '' : '-rotate-90'}`}
-                                        style={{ color: 'var(--secondary)' }}
-                                    />
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Story 10a.1: Duplicate badge (AC #4) */}
-                        {isDuplicate && (
-                            <div className="flex items-center gap-1 text-xs mt-1 text-amber-600 dark:text-amber-400">
-                                <AlertTriangle size={12} className="flex-shrink-0" />
-                                <span className="font-medium">{t('potentialDuplicate')}</span>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Expandable items section - Story 14.12: Box styling per mockup */}
-                {isItemsExpanded && hasItems && (
-                    <div
-                        className="mx-3 mb-3 mt-1 p-3 rounded-lg"
-                        style={{
-                            backgroundColor: 'var(--bg-tertiary)',
-                            border: '1px solid var(--border-light)',
-                        }}
-                    >
-                        <div className="text-[9px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-tertiary)' }}>
-                            Items del Recibo
-                        </div>
-                        <div className="space-y-1">
-                            {sortedItems.map((item, idx) => (
-                                <div key={idx} className="flex justify-between items-center text-[11px] py-1">
-                                    <span className="truncate" style={{ color: 'var(--text-secondary)' }}>{item.name}</span>
-                                    <span className="font-medium flex-shrink-0 ml-2" style={{ color: 'var(--text-primary)' }}>
-                                        {formatCurrency(item.price, displayCurrency)}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                        {remainingCount > 0 && (
-                            <div
-                                className="mt-2 pt-2"
-                                style={{ borderTop: '1px dashed var(--border-light)' }}
-                            >
-                                <button
-                                    onClick={() => onEditTransaction(transaction)}
-                                    className="flex items-center justify-center gap-1 w-full text-[11px] font-medium"
-                                    style={{ color: 'var(--primary)' }}
-                                >
-                                    <span>+{remainingCount} items más...</span>
-                                    <ChevronRight size={12} />
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                )}
+                    onThumbnailClick={() => handleThumbnailClick(transaction)}
+                    selection={isSelectionMode ? {
+                        isSelectionMode,
+                        isSelected: isSelected(transaction.id),
+                        onToggleSelect: () => toggleSelection(transaction.id),
+                    } : undefined}
+                />
             </div>
         );
     };
@@ -1391,9 +1331,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     }
 
     // Story 14.12: Refreshed dashboard view (matching mockup)
+    // Story 14.15b: Reduced gap between sections from space-y-4 (16px) to space-y-2 (8px)
     return (
         <PageTransition viewKey="dashboard" direction="none">
-            <div className="space-y-4">
+            <div className="space-y-2">
                 {/* Section 1: Carousel Card with 3 views */}
                 <TransitionChild index={0} totalItems={2}>
                     <div
@@ -1505,7 +1446,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         <button
                                             onClick={applyPickerSelection}
                                             className="w-full py-2 rounded-lg text-sm font-medium text-white transition-colors hover:opacity-90"
-                                            style={{ backgroundColor: 'var(--accent)' }}
+                                            style={{ backgroundColor: 'var(--primary)' }}
                                             data-testid="apply-month-picker-btn"
                                         >
                                             {t('apply')}
@@ -1601,58 +1542,59 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         >
                                         {treemapCategories.length > 0 ? (
                                             (() => {
-                                                // Per mockup: show up to 5 categories (1 left + 4 right)
-                                                // treemapCategories already has: all >10% + first ≤10% + Otro
+                                                // Story 14.13: Squarified treemap layout - cells sized proportionally
+                                                // Show up to 5 categories for dashboard
                                                 const displayCategories = treemapCategories.slice(0, 5);
-                                                const rightColumnCount = Math.max(displayCategories.length - 1, 1);
-                                                // Use 4 rows max for right column
-                                                const gridRowCount = Math.min(rightColumnCount, 4);
-                                                const gridRows = Array(gridRowCount).fill('1fr').join(' ');
 
                                                 // Calculate proportional font sizes based on percentage
-                                                // Larger percentage = larger font, smaller = smaller font
                                                 const getValueFontSize = (percent: number, isMainCell: boolean) => {
-                                                    if (isMainCell) return '22px'; // Main cell always larger
+                                                    if (isMainCell) return '22px';
                                                     if (percent >= 25) return '18px';
                                                     if (percent >= 15) return '16px';
-                                                    return '14px'; // Smaller cells like "Otro"
+                                                    return '14px';
                                                 };
 
-                                                return (
-                                                    <div
-                                                        className="grid gap-1 h-full"
-                                                        style={{
-                                                            gridTemplateColumns: '1fr 1fr',
-                                                            gridTemplateRows: gridRows
-                                                        }}
-                                                    >
-                                                        {/* First category spans all rows on left column - with animated values */}
-                                                        {displayCategories[0] && (
-                                                            <AnimatedTreemapCard
-                                                                key={`main-${animationKey}`}
-                                                                cat={displayCategories[0]}
-                                                                displayName={displayCategories[0].name === 'Otro' || displayCategories[0].name === 'Other' ? t('otherCategory') : translateCategory(displayCategories[0].name, lang)}
-                                                                isMainCell={true}
-                                                                gridRow={`1 / ${gridRowCount + 1}`}
-                                                                gridColumn="1"
-                                                                animationKey={animationKey}
-                                                                getValueFontSize={getValueFontSize}
-                                                            />
-                                                        )}
+                                                // Convert to treemap items format (use amount as value for layout)
+                                                const treemapItems = displayCategories.map(cat => ({
+                                                    id: cat.name,
+                                                    value: cat.amount,
+                                                    ...cat
+                                                }));
+                                                const layout = calculateTreemapLayout(treemapItems);
 
-                                                        {/* Right column: one cell per remaining category (max 4) - with animated values */}
-                                                        {displayCategories.slice(1).map((cat, idx) => (
-                                                            <AnimatedTreemapCard
-                                                                key={`${cat.name}-${animationKey}`}
-                                                                cat={cat}
-                                                                displayName={cat.name === 'Otro' || cat.name === 'Other' ? t('otherCategory') : translateCategory(cat.name, lang)}
-                                                                isMainCell={false}
-                                                                gridRow={`${idx + 1} / ${idx + 2}`}
-                                                                gridColumn="2"
-                                                                animationKey={animationKey}
-                                                                getValueFontSize={getValueFontSize}
-                                                            />
-                                                        ))}
+                                                // Find the largest cell (by area) to mark as main cell for styling
+                                                const largestArea = Math.max(...layout.map(r => r.width * r.height));
+
+                                                return (
+                                                    <div className="relative h-full">
+                                                        {layout.map((rect) => {
+                                                            const cat = rect.originalItem as unknown as typeof displayCategories[0];
+                                                            const cellArea = rect.width * rect.height;
+                                                            // Main cell = largest area (within 10% of max to handle ties)
+                                                            const isMainCell = cellArea >= largestArea * 0.9;
+                                                            const displayName = cat.name === 'Otro' || cat.name === 'Other'
+                                                                ? t('otherCategory')
+                                                                : translateCategory(cat.name, lang);
+
+                                                            return (
+                                                                <AnimatedTreemapCard
+                                                                    key={`${cat.name}-${animationKey}`}
+                                                                    cat={cat}
+                                                                    displayName={displayName}
+                                                                    isMainCell={isMainCell}
+                                                                    animationKey={animationKey}
+                                                                    getValueFontSize={getValueFontSize}
+                                                                    style={{
+                                                                        position: 'absolute',
+                                                                        left: `${rect.x}%`,
+                                                                        top: `${rect.y}%`,
+                                                                        width: `calc(${rect.width}% - 4px)`,
+                                                                        height: `calc(${rect.height}% - 4px)`,
+                                                                        margin: '2px',
+                                                                    }}
+                                                                />
+                                                            );
+                                                        })}
                                                     </div>
                                                 );
                                             })()
@@ -1731,7 +1673,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                             className="h-full rounded-full transition-all duration-100"
                                                             style={{
                                                                 width: `${(animatedDaysElapsed / monthProgress.daysInMonth) * 100}%`,
-                                                                backgroundColor: monthProgress.isCurrentMonth ? 'var(--accent)' : 'var(--secondary)'
+                                                                backgroundColor: monthProgress.isCurrentMonth ? 'var(--primary)' : 'var(--secondary)'
                                                             }}
                                                         />
                                                     </div>
@@ -2019,12 +1961,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                                         }}
                                                                     />
                                                                     {/* Center filled circle - fills up to inner ring edge, no gap */}
+                                                                    {/* Story 14.21: Use full category color for visible background */}
                                                                     <circle
                                                                         cx={iconSize / 2}
                                                                         cy={iconSize / 2}
                                                                         r={centerRadius}
-                                                                        fill={cat.color + '40'}
-                                                                        stroke={isSelected ? cat.color : 'none'}
+                                                                        fill={cat.color}
+                                                                        stroke={isSelected ? 'white' : 'none'}
                                                                         strokeWidth={isSelected ? 2 : 0}
                                                                     />
                                                                 </svg>
@@ -2056,7 +1999,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                             style={{ maxWidth: '80px' }}
                                                         >
                                                             <div
-                                                                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium shadow-sm"
+                                                                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-medium shadow-sm"
                                                                 style={{
                                                                     backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
                                                                     color: 'var(--secondary)'
@@ -2066,7 +2009,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                                 <span>${Math.round(selectedRadarCategory.prevAmount / 1000)}k</span>
                                                             </div>
                                                             <div
-                                                                className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                                                                className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
                                                                 style={{
                                                                     backgroundColor: selectedRadarCategory.color + '25',
                                                                     color: 'var(--primary)'
@@ -2083,7 +2026,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                             style={{ maxWidth: '80px' }}
                                                         >
                                                             <div
-                                                                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold shadow-sm"
+                                                                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-bold shadow-sm"
                                                                 style={{
                                                                     backgroundColor: 'var(--primary)',
                                                                     color: 'var(--bg)'
@@ -2102,8 +2045,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                                     <span
                                                                         className="inline-flex items-center mt-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold"
                                                                         style={{
-                                                                            backgroundColor: isUp ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)',
-                                                                            color: isUp ? '#ef4444' : '#22c55e'
+                                                                            backgroundColor: isUp ? 'var(--negative-bg)' : 'var(--positive-bg)',
+                                                                            color: isUp ? 'var(--negative-primary)' : 'var(--positive-primary)'
                                                                         }}
                                                                     >
                                                                         {isUp ? '↑' : '↓'}{Math.abs(Math.round(change))}%
@@ -2324,34 +2267,109 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 {/* Section 2: Recientes Carousel (AC #3) - 2 slides: by scan date, by transaction date */}
                 <TransitionChild index={1} totalItems={2}>
                     <div className="rounded-xl border overflow-hidden" style={cardStyle}>
-                        {/* Section Header - compact padding */}
-                        <div className="flex justify-between items-center px-2.5 pt-2.5 pb-1.5">
-                            <div className="flex items-center gap-2">
-                                <h2 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
-                                    {recientesSlide === 0 ? 'Últimos Escaneados' : 'Por Fecha'}
-                                </h2>
-                                {canExpand && (
+                        {/* Section Header - fixed height (h-10 = 40px) to prevent layout shift between modes */}
+                        <div className="flex justify-between items-center px-2.5 h-10 relative">
+                            {/* Left side: Title or Selection count - uses absolute positioning for smooth transitions */}
+                            <div className="flex items-center gap-2 h-full">
+                                {/* Normal mode: Title + Expand button */}
+                                <div
+                                    className="flex items-center gap-2 transition-opacity duration-150"
+                                    style={{
+                                        opacity: isSelectionMode ? 0 : 1,
+                                        pointerEvents: isSelectionMode ? 'none' : 'auto',
+                                        position: isSelectionMode ? 'absolute' : 'relative',
+                                    }}
+                                >
+                                    <h2 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
+                                        {recientesSlide === 0 ? 'Últimos Escaneados' : 'Por Fecha'}
+                                    </h2>
+                                    {canExpand && (
+                                        <button
+                                            onClick={() => setRecientesExpanded(!recientesExpanded)}
+                                            className="w-5 h-5 rounded-full border flex items-center justify-center"
+                                            style={{ borderColor: 'var(--border-medium)' }}
+                                            aria-label={recientesExpanded ? 'Colapsar' : 'Expandir'}
+                                            data-testid="expand-recientes-btn"
+                                        >
+                                            <span className="text-xs" style={{ color: 'var(--secondary)' }}>
+                                                {recientesExpanded ? '−' : '+'}
+                                            </span>
+                                        </button>
+                                    )}
+                                </div>
+                                {/* Selection mode: X button + count */}
+                                <div
+                                    className="flex items-center gap-2 transition-opacity duration-150"
+                                    style={{
+                                        opacity: isSelectionMode ? 1 : 0,
+                                        pointerEvents: isSelectionMode ? 'auto' : 'none',
+                                        position: isSelectionMode ? 'relative' : 'absolute',
+                                    }}
+                                >
                                     <button
-                                        onClick={() => setRecientesExpanded(!recientesExpanded)}
-                                        className="w-5 h-5 rounded-full border flex items-center justify-center"
-                                        style={{ borderColor: 'var(--border-medium)' }}
-                                        aria-label={recientesExpanded ? 'Colapsar' : 'Expandir'}
-                                        data-testid="expand-recientes-btn"
+                                        onClick={exitSelectionMode}
+                                        className="w-6 h-6 rounded-full flex items-center justify-center"
+                                        style={{ backgroundColor: 'var(--bg-tertiary)' }}
+                                        aria-label="Cancelar selección"
                                     >
-                                        <span className="text-xs" style={{ color: 'var(--secondary)' }}>
-                                            {recientesExpanded ? '−' : '+'}
-                                        </span>
+                                        <X size={14} style={{ color: 'var(--text-secondary)' }} />
                                     </button>
-                                )}
+                                    <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
+                                        {selectedIds.size} {selectedIds.size === 1 ? 'seleccionado' : 'seleccionados'}
+                                    </span>
+                                </div>
                             </div>
-                            <button
-                                onClick={handleViewAll}
-                                className="text-sm font-medium"
-                                style={{ color: 'var(--primary)' }}
-                                data-testid="view-all-link"
-                            >
-                                Ver todo →
-                            </button>
+                            {/* Right side: Ver todo or Action buttons - uses absolute positioning for smooth transitions */}
+                            <div className="flex items-center h-full">
+                                {/* Normal mode: Ver todo link */}
+                                <div
+                                    className="transition-opacity duration-150"
+                                    style={{
+                                        opacity: isSelectionMode ? 0 : 1,
+                                        pointerEvents: isSelectionMode ? 'none' : 'auto',
+                                        position: isSelectionMode ? 'absolute' : 'relative',
+                                        right: isSelectionMode ? '0.625rem' : undefined,
+                                    }}
+                                >
+                                    <button
+                                        onClick={handleViewAll}
+                                        className="text-sm font-medium"
+                                        style={{ color: 'var(--primary)' }}
+                                        data-testid="view-all-link"
+                                    >
+                                        Ver todo →
+                                    </button>
+                                </div>
+                                {/* Selection mode: Action buttons */}
+                                <div
+                                    className="flex items-center gap-2 transition-opacity duration-150"
+                                    style={{
+                                        opacity: isSelectionMode ? 1 : 0,
+                                        pointerEvents: isSelectionMode ? 'auto' : 'none',
+                                        position: isSelectionMode ? 'relative' : 'absolute',
+                                        right: isSelectionMode ? undefined : '0.625rem',
+                                    }}
+                                >
+                                    <button
+                                        onClick={handleOpenAssignGroup}
+                                        className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                                        style={{ backgroundColor: 'var(--primary)' }}
+                                        aria-label="Asignar grupo"
+                                        disabled={selectedIds.size === 0}
+                                    >
+                                        <Layers size={16} style={{ color: 'white' }} />
+                                    </button>
+                                    <button
+                                        onClick={handleOpenDelete}
+                                        className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                                        style={{ backgroundColor: 'var(--error)' }}
+                                        aria-label="Eliminar"
+                                        disabled={selectedIds.size === 0}
+                                    >
+                                        <Trash2 size={16} style={{ color: 'white' }} />
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Transaction List with swipe support - reduced horizontal padding */}
@@ -2450,6 +2468,58 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         images={selectedTransaction.imageUrls}
                         merchantName={selectedTransaction.alias || selectedTransaction.merchant}
                         onClose={handleCloseViewer}
+                    />
+                )}
+
+                {/* Story 14.15b: Group Assignment Modal */}
+                {showAssignGroupModal && (
+                    <AssignGroupModal
+                        isOpen={showAssignGroupModal}
+                        onClose={() => setShowAssignGroupModal(false)}
+                        groups={groups}
+                        onAssign={handleAssignGroup}
+                        onCreateNew={() => {
+                            setShowAssignGroupModal(false);
+                            setShowCreateGroupModal(true);
+                        }}
+                        selectedCount={selectedIds.size}
+                        t={t}
+                    />
+                )}
+
+                {/* Story 14.15b: Create Group Modal */}
+                {showCreateGroupModal && userId && (
+                    <CreateGroupModal
+                        isOpen={showCreateGroupModal}
+                        selectedCount={selectedIds.size}
+                        onClose={() => setShowCreateGroupModal(false)}
+                        onCreate={async (name: string, color: string) => {
+                            // Create the group and assign selected transactions
+                            const db = getFirestore();
+                            const groupId = await createGroup(db, userId, appId, { name, color });
+                            if (groupId) {
+                                await handleAssignGroup(groupId, name);
+                            }
+                            setShowCreateGroupModal(false);
+                        }}
+                        onBack={() => {
+                            setShowCreateGroupModal(false);
+                            setShowAssignGroupModal(true);
+                        }}
+                        t={t}
+                    />
+                )}
+
+                {/* Story 14.15b: Delete Transactions Modal */}
+                {showDeleteModal && (
+                    <DeleteTransactionsModal
+                        isOpen={showDeleteModal}
+                        onClose={() => setShowDeleteModal(false)}
+                        onDelete={handleConfirmDelete}
+                        transactions={getSelectedTransactions()}
+                        t={t}
+                        formatCurrency={formatCurrency}
+                        currency={currency}
                     />
                 )}
             </div>

@@ -10,7 +10,8 @@
  */
 
 import React, { memo } from 'react';
-import { getColor } from '../../utils/colors';
+// Story 14.21: Use unified category colors
+import { getCategoryBackgroundAuto } from '../../config/categoryColors';
 
 // ============================================================================
 // Types
@@ -132,7 +133,8 @@ export const DrillDownCard = memo(function DrillDownCard({
   onBadgeClick,
 }: DrillDownCardProps): React.ReactElement {
   const isDark = theme === 'dark';
-  const color = colorKey ? getColor(colorKey) : '#94a3b8'; // Default to slate-400
+  // Story 14.21: Use unified category colors
+  const color = colorKey ? getCategoryBackgroundAuto(colorKey) : '#94a3b8'; // Default to slate-400
 
   // Story 9.13: Determine if card is actually clickable
   // Not clickable if: explicitly set to false, or empty with no data

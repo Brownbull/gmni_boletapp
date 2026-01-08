@@ -69,6 +69,10 @@ bin/
 # Security scan reports (may contain sensitive paths)
 secrets-report.json
 
+# Service account keys (NEVER commit these!)
+docs/service-accounts/
+*-firebase-adminsdk-*.json
+
 # Tailwind templates
 docs/design-references/tailwind_templates
 

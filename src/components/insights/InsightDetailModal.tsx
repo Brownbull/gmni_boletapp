@@ -194,14 +194,14 @@ export const InsightDetailModal: React.FC<InsightDetailModalProps> = ({
             )
           )}
 
-          {/* Delete button */}
+          {/* Delete button - Story 14.16b: Using semantic negative colors for destructive action */}
           <button
             onClick={handleDelete}
             disabled={isDeleting}
             className="w-full py-3 px-4 rounded-xl font-medium transition-colors min-h-12 flex items-center justify-center gap-2"
             style={{
-              backgroundColor: isDark ? 'rgba(220, 38, 38, 0.15)' : 'rgba(220, 38, 38, 0.1)',
-              color: '#dc2626',
+              backgroundColor: 'var(--negative-bg)',
+              color: 'var(--error)',
               opacity: isDeleting ? 0.6 : 1,
             }}
           >

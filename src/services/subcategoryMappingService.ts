@@ -11,9 +11,12 @@ import {
     getDocs,
     query,
     where,
+    limit,
+    orderBy,
     increment
 } from 'firebase/firestore';
 import { SubcategoryMapping, NewSubcategoryMapping } from '../types/subcategoryMapping';
+import { LISTENER_LIMITS } from './firestore';
 
 /**
  * Get the collection path for a user's subcategory mappings
@@ -50,7 +53,12 @@ export async function saveSubcategoryMapping(
     const mappingsRef = collection(db, collectionPath);
 
     // Check if mapping with same normalizedItem already exists
-    const q = query(mappingsRef, where('normalizedItem', '==', mapping.normalizedItem));
+    // Story 14.26: Add limit(1) to reduce reads - we only need one match
+    const q = query(
+        mappingsRef,
+        where('normalizedItem', '==', mapping.normalizedItem),
+        limit(1)
+    );
     const existingDocs = await getDocs(q);
 
     if (!existingDocs.empty) {
@@ -82,7 +90,18 @@ export async function getSubcategoryMappings(
 ): Promise<SubcategoryMapping[]> {
     const collectionPath = getMappingsCollectionPath(appId, userId);
     const mappingsRef = collection(db, collectionPath);
-    const snapshot = await getDocs(mappingsRef);
+
+    // Story 14.26: Add limit to reduce reads for one-time fetches
+    const q = query(mappingsRef, limit(LISTENER_LIMITS.MAPPINGS));
+    const snapshot = await getDocs(q);
+
+    // Warn if user has reached the limit
+    if (import.meta.env.DEV && snapshot.size >= LISTENER_LIMITS.MAPPINGS) {
+        console.warn(
+            `[subcategoryMappingService] getSubcategoryMappings: ${snapshot.size} docs at limit ` +
+                '- user has reached mapping limit'
+        );
+    }
 
     return snapshot.docs.map(doc => ({
         id: doc.id,
@@ -92,6 +111,7 @@ export async function getSubcategoryMappings(
 
 /**
  * Subscribe to subcategory mappings (real-time updates)
+ * Story 14.25: LIMITED to 500 mappings to reduce Firestore reads
  */
 export function subscribeToSubcategoryMappings(
     db: Firestore,
@@ -102,11 +122,28 @@ export function subscribeToSubcategoryMappings(
     const collectionPath = getMappingsCollectionPath(appId, userId);
     const mappingsRef = collection(db, collectionPath);
 
-    return onSnapshot(mappingsRef, (snapshot) => {
+    // Story 14.25: Add limit to reduce Firestore reads
+    // Order by usageCount desc to prioritize most-used mappings
+    const q = query(
+        mappingsRef,
+        orderBy('usageCount', 'desc'),
+        limit(LISTENER_LIMITS.MAPPINGS)
+    );
+
+    return onSnapshot(q, (snapshot) => {
         const mappings = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
         } as SubcategoryMapping));
+
+        // Dev-mode logging for snapshot size monitoring (AC #6)
+        if (import.meta.env.DEV && snapshot.size >= LISTENER_LIMITS.MAPPINGS) {
+            console.warn(
+                `[subcategoryMappingService] subscribeToSubcategoryMappings: ${snapshot.size} docs at limit ` +
+                    '- user has exceeded typical mapping count'
+            );
+        }
+
         callback(mappings);
     });
 }

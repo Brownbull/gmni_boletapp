@@ -18,7 +18,7 @@
  */
 
 import React, { useState } from 'react';
-import { Handshake, X, Loader2 } from 'lucide-react';
+import { CheckCircle2, Trash2, Loader2 } from 'lucide-react';
 import { TrustedMerchant } from '../types/trust';
 
 export interface TrustedMerchantsListProps {
@@ -65,24 +65,32 @@ export const TrustedMerchantsList: React.FC<TrustedMerchantsListProps> = ({
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center py-8" style={{ color: 'var(--secondary)' }}>
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                <span className="text-sm">{t('loading')}</span>
+            <div className="py-4" style={{ color: 'var(--text-secondary)' }}>
+                <div className="animate-pulse space-y-3">
+                    <div className="h-12 rounded" style={{ backgroundColor: isDark ? '#334155' : '#e2e8f0' }}></div>
+                    <div className="h-12 rounded" style={{ backgroundColor: isDark ? '#334155' : '#e2e8f0' }}></div>
+                </div>
             </div>
         );
     }
 
     if (trustedOnly.length === 0) {
         return (
-            <div className="text-center py-6">
-                <Handshake
-                    className="w-10 h-10 mx-auto mb-2"
-                    style={{ color: isDark ? '#64748b' : '#94a3b8' }}
-                />
-                <p className="text-sm" style={{ color: 'var(--secondary)' }}>
+            <div
+                className="py-6 text-center"
+                role="status"
+                aria-label={t('trustedMerchantsEmpty')}
+            >
+                <div
+                    className="mx-auto mb-4 w-12 h-12 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: isDark ? '#334155' : '#e2e8f0' }}
+                >
+                    <CheckCircle2 size={24} style={{ color: 'var(--text-tertiary)' }} aria-hidden="true" />
+                </div>
+                <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
                     {t('trustedMerchantsEmpty')}
                 </p>
-                <p className="text-xs mt-1" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
                     {t('trustedMerchantsHint')}
                 </p>
             </div>
@@ -90,62 +98,70 @@ export const TrustedMerchantsList: React.FC<TrustedMerchantsListProps> = ({
     }
 
     return (
-        <div className="space-y-2">
-            {trustedOnly.map((merchant) => {
+        <div role="list" aria-label={t('trustedMerchants')}>
+            {trustedOnly.map((merchant, index) => {
                 const merchantId = merchant.id || merchant.normalizedName;
                 const isRevoking = revokingId === merchantId;
 
                 return (
                     <div
                         key={merchantId}
-                        className="flex items-center justify-between p-3 rounded-lg"
+                        className="flex items-center justify-between py-2.5"
                         style={{
-                            backgroundColor: isDark ? '#1e293b' : '#f8fafc',
-                            border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                            borderBottom: index < trustedOnly.length - 1 ? `1px solid ${isDark ? '#334155' : '#e2e8f0'}` : 'none',
                         }}
+                        role="listitem"
                     >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <Handshake
-                                className="w-5 h-5 flex-shrink-0"
-                                style={{ color: 'var(--accent)' }}
-                            />
-                            <div className="min-w-0 flex-1">
+                        {/* Item info */}
+                        <div className="flex-1 min-w-0">
+                            {/* Merchant name in quotes */}
+                            <p
+                                className="font-semibold text-sm truncate"
+                                style={{ color: 'var(--text-primary)' }}
+                            >
+                                "{merchant.merchantName}"
+                            </p>
+                            {/* Category tag and scan count */}
+                            <div className="flex items-center gap-2 mt-1">
                                 <span
-                                    className="font-medium text-sm block truncate"
-                                    style={{ color: 'var(--primary)' }}
+                                    className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                                    style={{
+                                        backgroundColor: '#e0e7ff',
+                                        color: '#4f46e5',
+                                    }}
                                 >
-                                    {merchant.merchantName}
+                                    {t('trusted') || 'Trusted'}
                                 </span>
                                 <span
                                     className="text-xs"
-                                    style={{ color: 'var(--secondary)' }}
+                                    style={{ color: 'var(--text-tertiary)' }}
                                 >
-                                    {(t('scansFromMerchant') || '{count} scans').replace(
-                                        '{count}',
-                                        String(merchant.scanCount)
-                                    )}
+                                    {merchant.scanCount}x
                                 </span>
                             </div>
                         </div>
 
-                        <button
-                            onClick={() => handleRevoke(merchant)}
-                            disabled={isRevoking}
-                            className="ml-2 p-2 rounded-lg transition-colors"
-                            style={{
-                                backgroundColor: isRevoking
-                                    ? (isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)')
-                                    : 'transparent',
-                                color: 'var(--error)',
-                            }}
-                            aria-label={t('removeTrust')}
-                        >
-                            {isRevoking ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                                <X className="w-4 h-4" />
-                            )}
-                        </button>
+                        {/* Delete/Revoke button - red per mockup */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            <button
+                                onClick={() => handleRevoke(merchant)}
+                                disabled={isRevoking}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
+                                style={{
+                                    color: '#ef4444',
+                                    backgroundColor: 'transparent',
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                aria-label={t('removeTrust')}
+                            >
+                                {isRevoking ? (
+                                    <Loader2 size={16} className="animate-spin" />
+                                ) : (
+                                    <Trash2 size={16} aria-hidden="true" />
+                                )}
+                            </button>
+                        </div>
                     </div>
                 );
             })}

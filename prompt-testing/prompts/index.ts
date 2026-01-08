@@ -28,14 +28,30 @@
  */
 
 // Re-export types
-export type { PromptConfig, StoreCategory, ItemCategory } from './types';
+export type { PromptConfig } from './types';
 
-// Re-export output schema (AI response structure)
+// Re-export from unified schema (single source of truth for categories)
 export {
   STORE_CATEGORIES,
   ITEM_CATEGORIES,
   STORE_CATEGORY_LIST,
   ITEM_CATEGORY_LIST,
+  STORE_CATEGORY_COUNT,
+  ITEM_CATEGORY_COUNT,
+} from '../../shared/schema/categories';
+export type { StoreCategory, ItemCategory } from '../../shared/schema/categories';
+
+// Re-export from unified schema (currencies)
+export {
+  CURRENCIES,
+  CURRENCY_CODES,
+  getCurrencyPromptContext,
+  getCurrency,
+} from '../../shared/schema/currencies';
+export type { CurrencyDefinition, CurrencyCode } from '../../shared/schema/currencies';
+
+// Re-export output schema (AI response structure)
+export {
   JSON_FORMAT_INSTRUCTIONS,
   JSON_STRUCTURE,
   DATE_INSTRUCTIONS,
@@ -58,6 +74,7 @@ export type { SupportedCurrency, InputHints, RuntimeVariables } from './input-hi
 // Import all prompt versions
 import { PROMPT_V1 } from './v1-original';
 import { PROMPT_V2, getReceiptTypeDescription, getCurrencyContext } from './v2-multi-currency-receipt-types';
+import { PROMPT_V3 } from './v3-category-standardization';
 import type { PromptConfig } from './types';
 import type { ReceiptType } from './v2-multi-currency-receipt-types';
 import { DEFAULT_INPUT_HINTS } from './input-hints';
@@ -69,6 +86,7 @@ import { DEFAULT_INPUT_HINTS } from './input-hints';
 const PROMPT_REGISTRY: Map<string, PromptConfig> = new Map([
   [PROMPT_V1.id, PROMPT_V1],
   [PROMPT_V2.id, PROMPT_V2],
+  [PROMPT_V3.id, PROMPT_V3],
 ]);
 
 // ============================================================================
@@ -86,7 +104,7 @@ const PROMPT_REGISTRY: Map<string, PromptConfig> = new Map([
  *   2. Change PRODUCTION_PROMPT to the new version
  *   3. Deploy: npm run build && firebase deploy --only functions
  */
-export const PRODUCTION_PROMPT: PromptConfig = PROMPT_V2;
+export const PRODUCTION_PROMPT: PromptConfig = PROMPT_V3;
 
 /**
  * DEVELOPMENT PROMPT - Used by the test harness
@@ -100,7 +118,7 @@ export const PRODUCTION_PROMPT: PromptConfig = PROMPT_V2;
  *   3. Run tests: npm run test:scan
  *   4. When satisfied, promote to PRODUCTION_PROMPT
  */
-export const DEV_PROMPT: PromptConfig = PROMPT_V2;
+export const DEV_PROMPT: PromptConfig = PROMPT_V3;
 
 /**
  * ACTIVE_PROMPT - Runtime selection
@@ -207,7 +225,7 @@ export interface BuildPromptOptions {
  */
 export function buildPrompt(options: BuildPromptOptions = {}): string {
   const {
-    currency = DEFAULT_INPUT_HINTS.currency,
+    currency, // No default - V3 auto-detects, V1/V2 use DEFAULT_INPUT_HINTS.currency
     date = new Date().toISOString().split('T')[0],
     receiptType = 'auto',
     promptConfig,
@@ -217,17 +235,29 @@ export function buildPrompt(options: BuildPromptOptions = {}): string {
   // Use explicit promptConfig if provided, otherwise select based on context
   const selectedPrompt = promptConfig ?? getActivePrompt(context);
 
-  // Get rich context for currency (e.g., "Chilean Peso (CLP) - integers only...")
-  const currencyContext = getCurrencyContext(currency);
+  // Check if this is V3 (which auto-detects currency, no {{currency}} placeholder)
+  const isV3 = selectedPrompt.id === 'v3-category-standardization';
 
   // Get human-readable description for receipt type
   const receiptTypeDescription = getReceiptTypeDescription(receiptType);
 
-  // Replace ALL occurrences of each placeholder
-  return selectedPrompt.prompt
-    .replaceAll('{{currency}}', currencyContext)
-    .replaceAll('{{date}}', date)
-    .replaceAll('{{receiptType}}', receiptTypeDescription);
+  // Start with the base prompt
+  let result = selectedPrompt.prompt;
+
+  // Replace {{currency}} only for V1/V2 (V3 doesn't have this placeholder)
+  if (!isV3) {
+    // V1/V2: currency is required, use default if not provided
+    const currencyToUse = currency || DEFAULT_INPUT_HINTS.currency || 'CLP';
+    const currencyContext = getCurrencyContext(currencyToUse);
+    result = result.replaceAll('{{currency}}', currencyContext);
+  }
+  // V3: no {{currency}} replacement needed - AI auto-detects
+
+  // Replace remaining placeholders
+  result = result.replaceAll('{{date}}', date);
+  result = result.replaceAll('{{receiptType}}', receiptTypeDescription);
+
+  return result;
 }
 
 /**
@@ -256,3 +286,7 @@ export {
   CURRENCY_CONTEXTS,
 } from './v2-multi-currency-receipt-types';
 export type { ReceiptType } from './v2-multi-currency-receipt-types';
+export {
+  PROMPT_V3,
+  buildCompleteV3Prompt,
+} from './v3-category-standardization';

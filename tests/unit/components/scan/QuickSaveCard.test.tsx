@@ -44,6 +44,8 @@ const mockT = (key: string) => {
     saving: 'Guardando...',
     saved: '¡Guardado!',
     category_Supermarket: 'Supermercado',
+    // Story 11.2: Items detected text
+    itemsDetected: 'detectados',
   };
   return translations[key] || key;
 };
@@ -101,7 +103,8 @@ describe('QuickSaveCard', () => {
 
     it('displays item count', () => {
       renderCard();
-      expect(screen.getByText(/3 items/)).toBeInTheDocument();
+      // Story 14.15: Item count shows "X Items detectados"
+      expect(screen.getByText(/3 Items/i)).toBeInTheDocument();
     });
 
     it('displays singular item for 1 item', () => {
@@ -158,10 +161,15 @@ describe('QuickSaveCard', () => {
       expect(onEdit).toHaveBeenCalledTimes(1);
     });
 
-    it('calls onCancel when Cancelar is clicked', () => {
+    it('calls onCancel when cancel confirmation is accepted', () => {
+      // Story 14.15: Cancel button now shows confirmation dialog (credit warning)
       renderCard();
-      const cancelButton = screen.getByRole('button', { name: /Cancelar/i });
+      // First click shows confirmation dialog - use test id for specificity
+      const cancelButton = screen.getByTestId('quick-save-cancel-button');
       fireEvent.click(cancelButton);
+      // Then confirm by clicking the discard button (text comes from t('cancelAnyway'))
+      const confirmButton = screen.getByText(/cancelAnyway/i);
+      fireEvent.click(confirmButton);
       expect(onCancel).toHaveBeenCalledTimes(1);
     });
   });
@@ -225,18 +233,25 @@ describe('QuickSaveCard', () => {
   });
 
   describe('dark mode', () => {
-    it('applies dark mode styles when theme is dark', () => {
+    it('uses CSS variable for background in dark mode', () => {
       renderCard({ theme: 'dark' });
       const dialog = screen.getByRole('dialog');
-      const card = dialog.querySelector('div > div');
-      expect(card?.className).toContain('bg-slate-800');
+      const card = dialog.querySelector('div > div') as HTMLElement;
+      // Story 14.15: Component now uses CSS variables instead of hardcoded colors
+      // The card uses var(--bg-secondary) which is theme-aware
+      expect(card?.className).toContain('rounded-3xl');
+      // Check that the style attribute contains the CSS variable
+      expect(card?.style.backgroundColor).toBe('var(--bg-secondary)');
     });
 
-    it('applies light mode styles when theme is light', () => {
+    it('uses CSS variable for background in light mode', () => {
       renderCard({ theme: 'light' });
       const dialog = screen.getByRole('dialog');
-      const card = dialog.querySelector('div > div');
-      expect(card?.className).toContain('bg-white');
+      const card = dialog.querySelector('div > div') as HTMLElement;
+      // Story 14.15: Component now uses CSS variables instead of hardcoded colors
+      expect(card?.className).toContain('rounded-3xl');
+      // Same CSS variable is used - theme determines actual color
+      expect(card?.style.backgroundColor).toBe('var(--bg-secondary)');
     });
   });
 
@@ -252,7 +267,11 @@ describe('QuickSaveCard', () => {
       renderCard({
         transaction: { ...mockTransaction, items: [] },
       });
-      expect(screen.getByText(/0 items/)).toBeInTheDocument();
+      // Story 11.2: Items section is hidden when there are no items
+      // The card should still render (showing merchant, category, total)
+      expect(screen.getByText(mockTransaction.alias!)).toBeInTheDocument();
+      // But the items section should not be visible
+      expect(screen.queryByText(/Items detectados/)).not.toBeInTheDocument();
     });
 
     it('handles "Other" category', () => {

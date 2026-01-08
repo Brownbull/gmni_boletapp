@@ -22,7 +22,8 @@
 import { useState, useCallback } from 'react';
 import type { Transaction } from '../types/transaction';
 import type { CategorySpending } from '../components/polygon/DynamicPolygon';
-import { getColor } from '../utils/colors';
+// Story 14.21: Use unified category colors
+import { getCategoryBackgroundAuto } from '../config/categoryColors';
 
 /**
  * Available polygon view modes
@@ -112,7 +113,7 @@ export function aggregateByMerchantCategory(
     .map(([name, amount]) => ({
       name,
       amount,
-      color: getColor(name),
+      color: getCategoryBackgroundAuto(name),
     }))
     .sort((a, b) => b.amount - a.amount);
 }
@@ -142,7 +143,7 @@ export function aggregateByItemGroup(
     .map(([name, amount]) => ({
       name,
       amount,
-      color: getColor(name),
+      color: getCategoryBackgroundAuto(name),
     }))
     .sort((a, b) => b.amount - a.amount);
 }
