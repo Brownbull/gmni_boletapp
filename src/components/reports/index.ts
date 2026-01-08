@@ -22,3 +22,12 @@ export {
   type ReportDetailData,
   type ReportHighlight,
 } from './ReportDetailOverlay';
+
+// Story 14.16: Grouped category display components
+export { CategoryGroupCard, type CategoryGroupCardProps } from './CategoryGroupCard';
+export { ItemGroupCard, type ItemGroupCardProps } from './ItemGroupCard';
+export {
+  SpendingDonutChart,
+  type SpendingDonutChartProps,
+  type DonutSegment,
+} from './SpendingDonutChart';

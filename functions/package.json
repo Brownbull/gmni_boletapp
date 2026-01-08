@@ -2,7 +2,7 @@
   "name": "functions",
   "description": "Cloud Functions for boletapp",
   "scripts": {
-    "prebuild": "rm -rf src/prompts && cp -r ../prompt-testing/prompts src/prompts",
+    "prebuild": "rm -rf src/prompts && cp -r ../prompt-testing/prompts src/prompts && rm -rf src/shared && mkdir -p src/shared && cp -r ../shared/schema src/shared/ && find src/prompts -name '*.ts' -exec sed -i 's|../../shared/schema|../shared/schema|g' {} \\;",
     "build": "tsc",
     "build:watch": "tsc --watch",
     "serve": "npm run build && firebase emulators:start --only functions",

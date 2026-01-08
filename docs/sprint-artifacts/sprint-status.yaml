@@ -351,17 +351,17 @@ development_status:
   # ============================================================================
   # These make the mockups visible in the app - BLOCKED by 14.10 + 14.11
   14-12-home-dashboard-refresh: deployed  # 5 pts - Update DashboardView with new design [MOCKUP: home-dashboard.html] - DEPLOYED 2026-01-03 (PR #135, #136, #137 UI refinements)
-  14-13-analytics-explorer-redesign: review  # 8 pts - Complete TrendsView redesign to "Explora" [MOCKUP: analytics-polygon.html] - Implementation complete 2026-01-03
+  14-13-analytics-explorer-redesign: in-progress  # 8 pts - Complete TrendsView redesign to "Explora" [MOCKUP: analytics-polygon.html] - Resumed 2026-01-07: fixing treemap proportional widths
   14-14-transaction-list-redesign: done  # 3 pts - Update HistoryView with card design [MOCKUP: transaction-list.html] - Completed 2026-01-04
   14-14b-donut-chart-redesign: in-progress  # 13 pts - Donut chart with drill-down navigation [MOCKUP: analytics-polygon.html]
-  14-15-scan-flow-integration: ready-for-dev  # 3 pts - Wire ScanOverlay + QuickSaveCard into ScanView [MOCKUP: scan-overlay.html]
+  14-15-scan-flow-integration: done  # 3 pts - Wire ScanOverlay + QuickSaveCard into ScanView [MOCKUP: scan-overlay.html] - Completed 2026-01-06
   14-15b-selection-mode-groups: done  # 5 pts - Transaction selection mode & groups [MOCKUP: transaction-list.html states 3-6] - Completed 2026-01-05
   14-15c-category-group-filters: done  # 3 pts - Category group filters in IconFilterBar [EXTENDS: 14.14, 14.21] - Completed 2026-01-05
 
   # ============================================================================
   # PHASE 4: REPORTS & INSIGHTS
   # ============================================================================
-  14-16-weekly-report-story-format: done  # 5 pts - Instagram-style cards [MOCKUP: reports.html] - Completed 2026-01-05
+  14-16-weekly-report-story-format: done  # 5 pts - Instagram-style cards [MOCKUP: reports.html] - Completed 2026-01-07, Atlas Code Review APPROVED
   14-16b-semantic-color-system: review  # 5 pts - Apply semantic colors (trends, charts) across app [DEPENDS: 14.21] - Implementation complete 2026-01-05, pending visual verification
   14-17-intentional-or-accidental-pattern: ready-for-dev  # 2 pts - Non-judgmental prompts [EXTENDS: Insight Gen #5]
 
@@ -378,7 +378,55 @@ development_status:
   # Settings Redesign
   14-22-settings-view-redesign: ready-for-dev  # 8 pts - Hierarchical settings with sub-views [MOCKUP: settings.html]
 
+  # Transaction Editor Improvements
+  14-23-unified-transaction-editor: done  # 5 pts - Unified editor for new/existing transactions - Completed 2026-01-06
+  14-24-persistent-transaction-state: done  # 8 pts - Single active transaction paradigm, credit reserve pattern, read-only detail view - FEATURE COMPLETE 2026-01-07
+
+  # ============================================================================
+  # PHASE 6: FIRESTORE COST OPTIMIZATION (HIGH PRIORITY - $19/week spike)
+  # ============================================================================
+  # Root cause: Unlimited listeners fetching entire collections
+  # Investigation: 2026-01-07 - Found 6+ listeners without limits
+  14-25-firestore-listener-limits: done  # 3 pts - Add limit(100) to listeners [HIGH PRIORITY: Cost reduction] - Atlas Code Review APPROVED 2026-01-07
+  14-26-firestore-query-optimization: done  # 2 pts - Add limit(1) to single-doc queries, batch deletes - Atlas Code Review APPROVED 2026-01-07
+  14-27-transaction-pagination: done  # 5 pts - usePaginatedTransactions hook + HistoryView "Load more" - Atlas Code Review APPROVED 2026-01-07 (45 tests added)
+  14-28-app-level-preferences: done  # 2 pts - Migrated to React Query caching - Atlas Code Review APPROVED 2026-01-07
+  14-29-react-query-migration: done  # 8 pts - Atlas Code Review APPROVED 2026-01-07
+
+  # ============================================================================
+  # PHASE 7: TEST TECHNICAL DEBT (from React Query + UI refactoring)
+  # ============================================================================
+  # 71 failing tests from: React Query migration (missing QueryClientProvider),
+  # UI refactoring (inline styles vs Tailwind classes), prompt library changes
+  14-30-test-technical-debt: ready-for-dev  # 3 pts - Fix failing tests from 14.23, 14.29, UI refactoring
+
   epic-14-retrospective: optional
+
+  # ============================================================================
+  # EPIC 14c: HOUSEHOLD SHARING (~34 points)
+  # ============================================================================
+  # Multi-user households (2-10 members), shared transactions
+  # PREREQUISITE: Story 14.29 (React Query Migration)
+  # See: docs/sprint-artifacts/epic14/epic-14c-household-sharing.md
+  epic-14c-household-sharing: backlog
+
+  # Foundation (Infrastructure) - 6 pts
+  14c-1-household-crud-service: backlog  # 3 pts - createHousehold, getHousehold, deleteHousehold, invite codes
+  14c-2-membership-service: backlog  # 3 pts - joinHousehold, leaveHousehold, getMembers, max 10 limit
+
+  # Core Features - 21 pts
+  14c-3-create-household-ui: backlog  # 5 pts - Create flow in Settings, show invite code
+  14c-4-join-household-ui: backlog  # 3 pts - 6-char code input, validation, confirmation
+  14c-5-share-transaction: backlog  # 5 pts - Share to household, bulk share, auto-share toggle
+  14c-6-household-transactions-view: backlog  # 5 pts - Combined view, filter by member, totals
+  14c-7-member-spending-breakdown: backlog  # 3 pts - Pie chart, per-member totals, percentages
+
+  # Real-time & Polish - 7 pts
+  14c-8-realtime-sync: backlog  # 3 pts - Firestore listener + React Query invalidation
+  14c-9-leave-delete-household: backlog  # 2 pts - Leave, delete, ownership transfer
+  14c-10-household-settings-ui: backlog  # 2 pts - Edit name, regenerate code, manage members
+
+  epic-14c-retrospective: optional
 
   # Epic 15: Advanced Features (~38 points - revised after mockup verification 2025-12-31)
   # Goals system, learned thresholds, out-of-character detection, treemap, themeable skins
@@ -437,9 +485,8 @@ development_status:
   # 3-tier model (Free/Pro/Max), Mercado Pago integration
   epic-f1-subscription: future-backlog
 
-  # Epic F2: Family Sharing
-  # Household combined view, member contribution breakdown
-  epic-f2-family-sharing: future-backlog
+  # Epic F2: Household Sharing - MOVED to Epic 14c (see above)
+  # epic-f2-household-sharing: moved-to-14c
 
   # Epic F3: Card Statement Scanning
   # Upload card statement → extract multiple transactions

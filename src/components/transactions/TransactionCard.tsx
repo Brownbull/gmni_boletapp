@@ -484,12 +484,20 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
                 className="flex justify-between items-center py-1 text-[11px]"
               >
                 <span style={{ color: 'var(--text-secondary)' }}>{item.name}</span>
-                <span
-                  className="font-medium"
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  {formatCurrency(item.price, currency || defaultCurrency)}
-                </span>
+                {/* Story 14.15b: Show quantity if > 1 */}
+                <div className="flex items-center gap-1">
+                  {(item.qty ?? 1) > 1 && (
+                    <span className="text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>
+                      x{item.qty}
+                    </span>
+                  )}
+                  <span
+                    className="font-medium"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    {formatCurrency(item.price, currency || defaultCurrency)}
+                  </span>
+                </div>
               </div>
             ))}
 

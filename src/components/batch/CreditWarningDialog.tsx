@@ -8,7 +8,7 @@
  * @see docs/sprint-artifacts/epic12/story-12.4-credit-warning-system.md
  */
 import React from 'react';
-import { AlertTriangle, XCircle, Coins, ArrowRight, MinusCircle } from 'lucide-react';
+import { AlertTriangle, XCircle, Coins, ArrowRight, MinusCircle, Zap } from 'lucide-react';
 import type { CreditCheckResult } from '../../services/creditService';
 import { isLowCreditsWarning } from '../../services/creditService';
 
@@ -62,7 +62,10 @@ export const CreditWarningDialog: React.FC<CreditWarningDialogProps> = ({
   onGetMoreCredits,
 }) => {
   const isDark = theme === 'dark';
-  const { sufficient, available, required, remaining, maxProcessable } = creditCheck;
+  const { sufficient, available, required, remaining, maxProcessable, creditType } = creditCheck;
+
+  // Story 14.15 Session 10: Determine if using super credits (batch mode)
+  const isSuperCredits = creditType === 'super';
 
   // Theme-aware colors
   const overlayBg = 'bg-black/50';
@@ -140,16 +143,25 @@ export const CreditWarningDialog: React.FC<CreditWarningDialogProps> = ({
                     <MinusCircle size={18} className={textMuted} />
                     <span className={`text-sm ${textSecondary}`}>{t('creditsRequired')}</span>
                   </div>
-                  <span className={`text-lg font-bold ${textPrimary}`}>{required}</span>
+                  <div className="flex items-center gap-1.5">
+                    {isSuperCredits && <Zap size={16} className="text-amber-500" />}
+                    <span className={`text-lg font-bold ${textPrimary}`}>{required}</span>
+                  </div>
                 </div>
 
-                {/* Available credits */}
+                {/* Available credits - Story 14.15 Session 10: Show correct credit type */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Coins size={18} className={textMuted} />
-                    <span className={`text-sm ${textSecondary}`}>{t('creditsAvailable')}</span>
+                    {isSuperCredits ? (
+                      <Zap size={18} className="text-amber-500" />
+                    ) : (
+                      <Coins size={18} className={textMuted} />
+                    )}
+                    <span className={`text-sm ${textSecondary}`}>
+                      {isSuperCredits ? t('superCreditsAvailable') : t('creditsAvailable')}
+                    </span>
                   </div>
-                  <span className={`text-lg font-semibold ${textPrimary}`}>{available}</span>
+                  <span className={`text-lg font-semibold ${isSuperCredits ? 'text-amber-600' : textPrimary}`}>{available}</span>
                 </div>
 
                 {/* Divider */}

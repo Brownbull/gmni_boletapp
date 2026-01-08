@@ -6,31 +6,47 @@
  * - Receipt type (what kind of document to expect)
  * - Date context (today's date for relative parsing)
  *
- * These are INPUT hints that help the AI understand the context,
- * NOT part of the AI's output schema.
- *
- * Usage in app:
- *   import { SUPPORTED_CURRENCIES, DEFAULT_INPUT_HINTS } from './prompts';
- *   const hints = { ...DEFAULT_INPUT_HINTS, currency: userSelectedCurrency };
- *
- * The prompt uses {{variableName}} placeholders that get replaced at runtime.
+ * Currency definitions are imported from the unified schema.
+ * See: shared/schema/currencies.ts
  */
 
 // ============================================================================
-// Currency Hints
+// RE-EXPORT FROM UNIFIED SCHEMA
 // ============================================================================
 
+export {
+  CURRENCIES,
+  CURRENCY_CODES,
+  CURRENCIES_WITH_CENTS,
+  CURRENCIES_WITHOUT_CENTS,
+  getCurrencyPromptContext,
+  isSupportedCurrency,
+  getCurrency,
+} from '../../shared/schema/currencies';
+
+export type {
+  CurrencyDefinition,
+  CurrencyCode,
+} from '../../shared/schema/currencies';
+
+// ============================================================================
+// LEGACY EXPORTS (for backward compatibility)
+// ============================================================================
+
+import { getCurrencyPromptContext } from '../../shared/schema/currencies';
+
 /**
- * Currencies supported by the application.
- * User selects one of these in the app settings or scan advanced options.
+ * @deprecated Use CURRENCY_CODES from unified schema
+ * Kept for backward compatibility with existing code.
  */
 export const SUPPORTED_CURRENCIES = ['CLP', 'USD', 'EUR'] as const;
 
-/** Type for supported currency codes */
+/** @deprecated Use CurrencyCode from unified schema */
 export type SupportedCurrency = (typeof SUPPORTED_CURRENCIES)[number];
 
 /**
- * Currency display information for UI.
+ * @deprecated Use CURRENCIES from unified schema
+ * Kept for backward compatibility.
  */
 export const CURRENCY_INFO: Record<
   SupportedCurrency,
@@ -42,8 +58,8 @@ export const CURRENCY_INFO: Record<
 };
 
 /**
- * Extended currency contexts for prompt injection.
- * Includes parsing hints for the AI.
+ * @deprecated Use getCurrencyPromptContext from unified schema
+ * Kept for backward compatibility.
  */
 export const CURRENCY_PARSING_CONTEXT: Record<SupportedCurrency, string> = {
   CLP: 'Chilean Peso (CLP) - integers only, no decimals. Example: $15.990 → 15990',
@@ -58,11 +74,6 @@ export const CURRENCY_PARSING_CONTEXT: Record<SupportedCurrency, string> = {
 /**
  * Hints injected into the prompt at scan time.
  * These come from app settings or user selection, NOT from the receipt.
- *
- * Think of these as "pre-scan context" that helps the AI understand:
- * - What currency to expect
- * - What type of document it's looking at
- * - What today's date is (for relative date parsing)
  */
 export interface InputHints {
   /**
@@ -70,7 +81,7 @@ export interface InputHints {
    * User selects this in app settings or advanced scan options.
    * AI will convert amounts to this currency's smallest unit.
    */
-  currency: SupportedCurrency;
+  currency: string;
 
   /**
    * Today's date in YYYY-MM-DD format.
@@ -83,8 +94,6 @@ export interface InputHints {
    * Optional hint about the receipt type.
    * Can improve extraction accuracy for specific document types.
    * Default: 'auto' (let AI determine)
-   *
-   * Examples: 'parking', 'supermarket', 'restaurant', 'utility_bill'
    */
   receiptType?: string;
 }
@@ -103,14 +112,10 @@ export const DEFAULT_INPUT_HINTS: InputHints = {
 // Backwards Compatibility Aliases
 // ============================================================================
 
-/**
- * @deprecated Use InputHints instead. Kept for backwards compatibility.
- */
+/** @deprecated Use InputHints instead */
 export type RuntimeVariables = InputHints;
 
-/**
- * @deprecated Use DEFAULT_INPUT_HINTS instead. Kept for backwards compatibility.
- */
+/** @deprecated Use DEFAULT_INPUT_HINTS instead */
 export const DEFAULT_RUNTIME_VARIABLES = DEFAULT_INPUT_HINTS;
 
 // ============================================================================
@@ -120,9 +125,6 @@ export const DEFAULT_RUNTIME_VARIABLES = DEFAULT_INPUT_HINTS;
 /**
  * Placeholder tokens used in prompts.
  * Format: {{variableName}}
- *
- * These placeholders are replaced with actual values at runtime
- * using the buildPrompt() function in index.ts.
  */
 export const VARIABLE_PLACEHOLDERS = {
   currency: '{{currency}}',
@@ -135,20 +137,8 @@ export const VARIABLE_PLACEHOLDERS = {
 // ============================================================================
 
 /**
- * Check if a currency code is supported.
- */
-export function isSupportedCurrency(code: string): code is SupportedCurrency {
-  return SUPPORTED_CURRENCIES.includes(code.toUpperCase() as SupportedCurrency);
-}
-
-/**
- * Get currency parsing context for prompt injection.
- * Falls back to generic message for unsupported currencies.
+ * @deprecated Use getCurrencyPromptContext from unified schema
  */
 export function getCurrencyParsingContext(currency: string): string {
-  const upper = currency.toUpperCase() as SupportedCurrency;
-  return (
-    CURRENCY_PARSING_CONTEXT[upper] ||
-    `${upper} - convert all amounts to smallest integer units (no decimals)`
-  );
+  return getCurrencyPromptContext(currency);
 }

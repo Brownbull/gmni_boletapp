@@ -31,6 +31,7 @@ import {
     serverTimestamp,
     query,
     orderBy,
+    limit,
     Firestore,
     Unsubscribe,
     increment,
@@ -41,6 +42,7 @@ import type {
     CreateTransactionGroupInput,
     UpdateTransactionGroupInput,
 } from '../types/transactionGroup';
+import { LISTENER_LIMITS } from './firestore';
 
 /**
  * Get the collection path for a user's transaction groups
@@ -153,7 +155,13 @@ export function subscribeToGroups(
 ): Unsubscribe {
     const collectionPath = getGroupsCollectionPath(appId, userId);
     const collectionRef = collection(db, collectionPath);
-    const q = query(collectionRef, orderBy('createdAt', 'desc'));
+
+    // Story 14.25: Add limit to reduce Firestore reads
+    const q = query(
+        collectionRef,
+        orderBy('createdAt', 'desc'),
+        limit(LISTENER_LIMITS.GROUPS)
+    );
 
     return onSnapshot(
         q,
@@ -162,6 +170,15 @@ export function subscribeToGroups(
                 id: doc.id,
                 ...doc.data(),
             })) as TransactionGroup[];
+
+            // Dev-mode logging for snapshot size monitoring (AC #6)
+            if (import.meta.env.DEV && snapshot.size >= LISTENER_LIMITS.GROUPS) {
+                console.warn(
+                    `[groupService] subscribeToGroups: ${snapshot.size} docs at limit ` +
+                        '- consider increasing limit or adding pagination'
+                );
+            }
+
             onUpdate(groups);
         },
         (error) => {

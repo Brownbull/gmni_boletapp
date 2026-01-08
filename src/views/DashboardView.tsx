@@ -53,6 +53,7 @@ import { useReducedMotion } from '../hooks/useReducedMotion';
 // getCategoryPillColors - ALWAYS colorful for pills/badges/legends
 import { getCategoryColorsAuto, getCategoryBackgroundAuto, getCategoryPillColors, type ThemeName } from '../config/categoryColors';
 import { getCategoryEmoji } from '../utils/categoryEmoji';
+import { calculateTreemapLayout } from '../utils/treemapLayout';
 // Story 14.15b: Use consolidated TransactionCard from shared transactions folder
 import { TransactionCard } from '../components/transactions';
 // Story 14.12: Radar chart uses inline SVG (matching mockup hexagonal design)
@@ -222,9 +223,10 @@ interface AnimatedTreemapCardProps {
     displayName: string; // Translated category name
     isMainCell: boolean;
     gridRow?: string;
-    gridColumn: string;
+    gridColumn?: string;
     animationKey: number;
     getValueFontSize: (percent: number, isMainCell: boolean) => string;
+    style?: React.CSSProperties; // Story 14.13: Support squarified treemap absolute positioning
 }
 
 const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
@@ -234,7 +236,8 @@ const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
     gridRow,
     gridColumn,
     animationKey,
-    getValueFontSize
+    getValueFontSize,
+    style
 }) => {
     // Pass animationKey to useCountUp to re-trigger animation when carousel slides
     const animatedAmount = useCountUp(Math.round(cat.amount / 1000), { duration: 1200, startValue: 0, key: animationKey });
@@ -263,81 +266,48 @@ const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
                 gridColumn: gridColumn,
                 minHeight: 0,
                 // Compact padding for mobile screens
-                padding: isMainCell ? '8px 8px' : '6px 6px'
+                padding: isMainCell ? '8px 8px' : '6px 6px',
+                // Story 14.13: Merge with passed style for squarified treemap positioning
+                ...style,
             }}
         >
-            {isMainCell ? (
-                <>
-                    {/* Top row: Category emoji + Category name */}
-                    {/* Story 14.14: Emoji replaces count badge, no background needed */}
-                    <div className="flex items-center gap-1.5">
-                        <span style={{ fontSize: emojiFontSize, lineHeight: 1 }}>{emoji}</span>
-                        <div className="font-bold truncate" style={{ fontSize: '14px', color: cat.fgColor, lineHeight: 1.2 }}>{displayName}</div>
+            {/* Top row: Emoji + Category name */}
+            {/* Story 14.13: Unified layout for squarified treemap cells */}
+            <div className="flex items-center gap-1.5 min-w-0">
+                <span style={{ fontSize: emojiFontSize, lineHeight: 1 }}>{emoji}</span>
+                <div className="font-bold truncate" style={{ fontSize: isMainCell ? '14px' : '11px', color: cat.fgColor, lineHeight: 1.2 }}>{displayName}</div>
+            </div>
+
+            {/* Bottom section: Transaction count + Amount (left), Percentage circle (bottom right) */}
+            <div className="flex items-end justify-between">
+                {/* Left side: count above amount */}
+                <div className="flex flex-col gap-0.5">
+                    {/* Transaction count pill */}
+                    <span
+                        className="inline-flex items-center gap-[2px] px-[5px] py-[1px] rounded-full self-start"
+                        style={{
+                            backgroundColor: 'var(--bg)',
+                            color: cat.fgColor,
+                            fontSize: isMainCell ? '11px' : '10px',
+                        }}
+                    >
+                        <Package size={isMainCell ? 11 : 10} strokeWidth={2} />
+                        {animatedCount}
+                    </span>
+                    {/* Amount - left aligned below count */}
+                    <div className="font-bold" style={{ fontSize: getValueFontSize(cat.percent, isMainCell), color: cat.fgColor, lineHeight: 1 }}>
+                        ${animatedAmount}k
                     </div>
-                    {/* Bottom row: Amount + Transaction count pill + Percentage circle */}
-                    <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5">
-                            <div className="font-bold" style={{ fontSize: getValueFontSize(cat.percent, true), color: cat.fgColor, lineHeight: 1 }}>
-                                ${animatedAmount}k
-                            </div>
-                            {/* Transaction count pill - uses app background color for theme consistency */}
-                            <span
-                                className="inline-flex items-center gap-[2px] px-[5px] py-[2px] rounded-full"
-                                style={{
-                                    backgroundColor: 'var(--bg)',
-                                    color: cat.fgColor,
-                                    fontSize: '11px',
-                                }}
-                            >
-                                <Package size={11} strokeWidth={2} />
-                                {animatedCount}
-                            </span>
-                        </div>
-                        <CircularProgress
-                            animatedPercent={animatedPercent}
-                            size={circleSize}
-                            strokeWidth={strokeWidth}
-                            fgColor={cat.fgColor}
-                        />
-                    </div>
-                </>
-            ) : (
-                <>
-                    {/* Top row: Category emoji + Category name - compact for small screens */}
-                    {/* Story 14.14: Emoji replaces count badge */}
-                    <div className="flex items-center gap-1 min-w-0">
-                        <span style={{ fontSize: emojiFontSize, lineHeight: 1 }}>{emoji}</span>
-                        <div className="font-bold truncate" style={{ fontSize: '11px', color: cat.fgColor, lineHeight: 1.2 }}>{displayName}</div>
-                    </div>
-                    {/* Bottom row: Amount + Transaction count pill + Percentage circle */}
-                    <div className="flex items-center justify-between gap-1">
-                        <div className="flex items-center gap-1">
-                            <div className="font-bold" style={{ fontSize: getValueFontSize(cat.percent, false), color: cat.fgColor, lineHeight: 1 }}>
-                                ${animatedAmount}k
-                            </div>
-                            {/* Transaction count pill - uses app background color for theme consistency */}
-                            <span
-                                className="inline-flex items-center gap-[2px] px-[4px] py-[1px] rounded-full"
-                                style={{
-                                    backgroundColor: 'var(--bg)',
-                                    color: cat.fgColor,
-                                    fontSize: '10px',
-                                }}
-                            >
-                                <Package size={10} strokeWidth={2} />
-                                {animatedCount}
-                            </span>
-                        </div>
-                        <CircularProgress
-                            animatedPercent={animatedPercent}
-                            size={circleSize}
-                            strokeWidth={strokeWidth}
-                            fontSize={circleFontSize}
-                            fgColor={cat.fgColor}
-                        />
-                    </div>
-                </>
-            )}
+                </div>
+                {/* Right side: Percentage circle - bottom right */}
+                <CircularProgress
+                    animatedPercent={animatedPercent}
+                    size={circleSize}
+                    strokeWidth={strokeWidth}
+                    fontSize={circleFontSize}
+                    fgColor={cat.fgColor}
+                />
+            </div>
         </div>
     );
 };
@@ -1572,58 +1542,59 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         >
                                         {treemapCategories.length > 0 ? (
                                             (() => {
-                                                // Per mockup: show up to 5 categories (1 left + 4 right)
-                                                // treemapCategories already has: all >10% + first ≤10% + Otro
+                                                // Story 14.13: Squarified treemap layout - cells sized proportionally
+                                                // Show up to 5 categories for dashboard
                                                 const displayCategories = treemapCategories.slice(0, 5);
-                                                const rightColumnCount = Math.max(displayCategories.length - 1, 1);
-                                                // Use 4 rows max for right column
-                                                const gridRowCount = Math.min(rightColumnCount, 4);
-                                                const gridRows = Array(gridRowCount).fill('1fr').join(' ');
 
                                                 // Calculate proportional font sizes based on percentage
-                                                // Larger percentage = larger font, smaller = smaller font
                                                 const getValueFontSize = (percent: number, isMainCell: boolean) => {
-                                                    if (isMainCell) return '22px'; // Main cell always larger
+                                                    if (isMainCell) return '22px';
                                                     if (percent >= 25) return '18px';
                                                     if (percent >= 15) return '16px';
-                                                    return '14px'; // Smaller cells like "Otro"
+                                                    return '14px';
                                                 };
 
-                                                return (
-                                                    <div
-                                                        className="grid gap-1 h-full"
-                                                        style={{
-                                                            gridTemplateColumns: '1fr 1fr',
-                                                            gridTemplateRows: gridRows
-                                                        }}
-                                                    >
-                                                        {/* First category spans all rows on left column - with animated values */}
-                                                        {displayCategories[0] && (
-                                                            <AnimatedTreemapCard
-                                                                key={`main-${animationKey}`}
-                                                                cat={displayCategories[0]}
-                                                                displayName={displayCategories[0].name === 'Otro' || displayCategories[0].name === 'Other' ? t('otherCategory') : translateCategory(displayCategories[0].name, lang)}
-                                                                isMainCell={true}
-                                                                gridRow={`1 / ${gridRowCount + 1}`}
-                                                                gridColumn="1"
-                                                                animationKey={animationKey}
-                                                                getValueFontSize={getValueFontSize}
-                                                            />
-                                                        )}
+                                                // Convert to treemap items format (use amount as value for layout)
+                                                const treemapItems = displayCategories.map(cat => ({
+                                                    id: cat.name,
+                                                    value: cat.amount,
+                                                    ...cat
+                                                }));
+                                                const layout = calculateTreemapLayout(treemapItems);
 
-                                                        {/* Right column: one cell per remaining category (max 4) - with animated values */}
-                                                        {displayCategories.slice(1).map((cat, idx) => (
-                                                            <AnimatedTreemapCard
-                                                                key={`${cat.name}-${animationKey}`}
-                                                                cat={cat}
-                                                                displayName={cat.name === 'Otro' || cat.name === 'Other' ? t('otherCategory') : translateCategory(cat.name, lang)}
-                                                                isMainCell={false}
-                                                                gridRow={`${idx + 1} / ${idx + 2}`}
-                                                                gridColumn="2"
-                                                                animationKey={animationKey}
-                                                                getValueFontSize={getValueFontSize}
-                                                            />
-                                                        ))}
+                                                // Find the largest cell (by area) to mark as main cell for styling
+                                                const largestArea = Math.max(...layout.map(r => r.width * r.height));
+
+                                                return (
+                                                    <div className="relative h-full">
+                                                        {layout.map((rect) => {
+                                                            const cat = rect.originalItem as unknown as typeof displayCategories[0];
+                                                            const cellArea = rect.width * rect.height;
+                                                            // Main cell = largest area (within 10% of max to handle ties)
+                                                            const isMainCell = cellArea >= largestArea * 0.9;
+                                                            const displayName = cat.name === 'Otro' || cat.name === 'Other'
+                                                                ? t('otherCategory')
+                                                                : translateCategory(cat.name, lang);
+
+                                                            return (
+                                                                <AnimatedTreemapCard
+                                                                    key={`${cat.name}-${animationKey}`}
+                                                                    cat={cat}
+                                                                    displayName={displayName}
+                                                                    isMainCell={isMainCell}
+                                                                    animationKey={animationKey}
+                                                                    getValueFontSize={getValueFontSize}
+                                                                    style={{
+                                                                        position: 'absolute',
+                                                                        left: `${rect.x}%`,
+                                                                        top: `${rect.y}%`,
+                                                                        width: `calc(${rect.width}% - 4px)`,
+                                                                        height: `calc(${rect.height}% - 4px)`,
+                                                                        margin: '2px',
+                                                                    }}
+                                                                />
+                                                            );
+                                                        })}
                                                     </div>
                                                 );
                                             })()

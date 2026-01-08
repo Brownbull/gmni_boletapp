@@ -20,6 +20,12 @@ import {
 export type SupportedCurrency = 'CLP' | 'USD' | 'EUR';
 
 /**
+ * Supported font families for the application
+ * Story 14.22: Typography selection - persisted to Firestore
+ */
+export type SupportedFontFamily = 'outfit' | 'space';
+
+/**
  * User preferences stored in Firestore
  * Story 14.22: Extended to include location settings for cloud persistence
  */
@@ -36,15 +42,19 @@ export interface UserPreferences {
   phoneNumber?: string;
   /** User birth date (Story 14.22: Profile sub-view) */
   birthDate?: string;
+  /** Font family preference (Story 14.22: Typography selection) */
+  fontFamily?: SupportedFontFamily;
   /** Timestamp when preferences were last updated */
   updatedAt?: any;
 }
 
 /**
  * Default preferences for new users
+ * Story 14.22: Added fontFamily default to 'outfit'
  */
 const DEFAULT_PREFERENCES: UserPreferences = {
   defaultCurrency: 'CLP',
+  fontFamily: 'outfit',
 };
 
 /**
@@ -81,6 +91,8 @@ export async function getUserPreferences(
         displayName: data.displayName || '',
         phoneNumber: data.phoneNumber || '',
         birthDate: data.birthDate || '',
+        // Story 14.22: Font family preference (defaults to 'outfit')
+        fontFamily: data.fontFamily || DEFAULT_PREFERENCES.fontFamily,
         updatedAt: data.updatedAt,
       };
     }

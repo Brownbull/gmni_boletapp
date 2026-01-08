@@ -90,6 +90,7 @@ export const STORE_CATEGORY_GROUPS: Record<StoreCategory, StoreCategoryGroup> = 
   ToysGames: 'retail-specialty',
   Jewelry: 'retail-specialty',
   Optical: 'retail-specialty',
+  MusicStore: 'retail-specialty',
   // Automotive & Transport
   Automotive: 'automotive',
   GasStation: 'automotive',
@@ -99,9 +100,13 @@ export const STORE_CATEGORY_GROUPS: Record<StoreCategory, StoreCategoryGroup> = 
   BankingFinance: 'services',
   Education: 'services',
   TravelAgency: 'services',
+  Subscription: 'services',
+  // Government
+  Government: 'services',
   // Hospitality & Entertainment
   HotelLodging: 'hospitality',
   Entertainment: 'hospitality',
+  Gambling: 'hospitality',
   // Other
   CharityDonation: 'other',
   Other: 'other',
@@ -123,13 +128,14 @@ export type ItemCategoryGroup =
 // Map ItemCategory to internal key (handles spaces in names)
 type ItemCategoryKey =
   | 'Produce' | 'MeatSeafood' | 'ItemBakery' | 'DairyEggs'
-  | 'Pantry' | 'FrozenFoods' | 'Snacks' | 'Beverages' | 'Alcohol'
+  | 'Pantry' | 'FrozenFoods' | 'Snacks' | 'Beverages' | 'Alcohol' | 'PreparedFood'
   | 'HealthBeautyItem' | 'PersonalCare' | 'PharmacyItem' | 'Supplements' | 'BabyProducts'
   | 'CleaningSupplies' | 'Household' | 'PetSupplies'
   | 'ClothingItem' | 'ElectronicsItem' | 'HardwareItem' | 'Garden' | 'AutomotiveItem'
   | 'SportsOutdoorsItem' | 'ToysGamesItem' | 'BooksMediaItem' | 'OfficeStationery'
-  | 'CraftsHobbies' | 'FurnitureItem'
-  | 'Service' | 'TaxFees' | 'Tobacco'
+  | 'CraftsHobbies' | 'FurnitureItem' | 'MusicalInstruments'
+  | 'Service' | 'TaxFees' | 'SubscriptionItem' | 'InsuranceItem' | 'LoanPayment' | 'TicketsEvents'
+  | 'Tobacco' | 'GamblingItem'
   | 'OtherItem';
 
 export const ITEM_CATEGORY_TO_KEY: Record<ItemCategory, ItemCategoryKey> = {
@@ -161,9 +167,16 @@ export const ITEM_CATEGORY_TO_KEY: Record<ItemCategory, ItemCategoryKey> = {
   'Office & Stationery': 'OfficeStationery',
   'Crafts & Hobbies': 'CraftsHobbies',
   'Furniture': 'FurnitureItem',
+  'Musical Instruments': 'MusicalInstruments',
+  'Prepared Food': 'PreparedFood',
   'Service': 'Service',
   'Tax & Fees': 'TaxFees',
+  'Subscription': 'SubscriptionItem',
+  'Insurance': 'InsuranceItem',
+  'Loan Payment': 'LoanPayment',
+  'Tickets & Events': 'TicketsEvents',
   'Tobacco': 'Tobacco',
+  'Gambling': 'GamblingItem',
   'Other': 'OtherItem',
 };
 
@@ -179,6 +192,7 @@ export const ITEM_CATEGORY_GROUPS: Record<ItemCategoryKey, ItemCategoryGroup> = 
   Snacks: 'food-packaged',
   Beverages: 'food-packaged',
   Alcohol: 'food-packaged',
+  PreparedFood: 'food-packaged',
   // Health & Personal
   HealthBeautyItem: 'health-personal',
   PersonalCare: 'health-personal',
@@ -201,10 +215,17 @@ export const ITEM_CATEGORY_GROUPS: Record<ItemCategoryKey, ItemCategoryGroup> = 
   OfficeStationery: 'nonfood-retail',
   CraftsHobbies: 'nonfood-retail',
   FurnitureItem: 'nonfood-retail',
+  MusicalInstruments: 'nonfood-retail',
   // Services & Fees
   Service: 'services-fees',
   TaxFees: 'services-fees',
+  SubscriptionItem: 'services-fees',
+  InsuranceItem: 'services-fees',
+  LoanPayment: 'services-fees',
+  TicketsEvents: 'services-fees',
+  // Vices
   Tobacco: 'services-fees',
+  GamblingItem: 'services-fees',
   // Other
   OtherItem: 'other-item',
 };
@@ -336,6 +357,11 @@ export const STORE_CATEGORY_COLORS: Record<StoreCategory, ThemeModeColors> = {
     professional: { light: { fg: '#0ea5e9', bg: '#e0f2fe' }, dark: { fg: '#38bdf8', bg: '#0369a1' } },
     mono: { light: { fg: '#2878a0', bg: '#d8ecf8' }, dark: { fg: '#60b0d0', bg: '#103848' } },
   },
+  MusicStore: {
+    normal: { light: { fg: '#7c3aed', bg: '#f5f3ff' }, dark: { fg: '#c4b5fd', bg: '#5b21b6' } },
+    professional: { light: { fg: '#8b5cf6', bg: '#f5f3ff' }, dark: { fg: '#a78bfa', bg: '#6d28d9' } },
+    mono: { light: { fg: '#6840a0', bg: '#ece0f8' }, dark: { fg: '#9878c8', bg: '#281840' } },
+  },
 
   // --- AUTOMOTIVE & TRANSPORT ---
   Automotive: {
@@ -375,6 +401,16 @@ export const STORE_CATEGORY_COLORS: Record<StoreCategory, ThemeModeColors> = {
     professional: { light: { fg: '#0ea5e9', bg: '#e0f2fe' }, dark: { fg: '#38bdf8', bg: '#0369a1' } },
     mono: { light: { fg: '#2888a0', bg: '#d8f0f8' }, dark: { fg: '#60c0d0', bg: '#104048' } },
   },
+  Subscription: {
+    normal: { light: { fg: '#7c3aed', bg: '#f5f3ff' }, dark: { fg: '#c4b5fd', bg: '#5b21b6' } },
+    professional: { light: { fg: '#8b5cf6', bg: '#f5f3ff' }, dark: { fg: '#a78bfa', bg: '#5b21b6' } },
+    mono: { light: { fg: '#7838a0', bg: '#ece0f4' }, dark: { fg: '#a868c8', bg: '#301838' } },
+  },
+  Government: {
+    normal: { light: { fg: '#475569', bg: '#f1f5f9' }, dark: { fg: '#94a3b8', bg: '#334155' } },
+    professional: { light: { fg: '#64748b', bg: '#f1f5f9' }, dark: { fg: '#cbd5e1', bg: '#475569' } },
+    mono: { light: { fg: '#506070', bg: '#e8ecf0' }, dark: { fg: '#90a0b0', bg: '#283038' } },
+  },
 
   // --- HOSPITALITY & ENTERTAINMENT ---
   HotelLodging: {
@@ -386,6 +422,11 @@ export const STORE_CATEGORY_COLORS: Record<StoreCategory, ThemeModeColors> = {
     normal: { light: { fg: '#7c3aed', bg: '#f5f3ff' }, dark: { fg: '#c4b5fd', bg: '#5b21b6' } },
     professional: { light: { fg: '#8b5cf6', bg: '#f5f3ff' }, dark: { fg: '#a78bfa', bg: '#5b21b6' } },
     mono: { light: { fg: '#7838a0', bg: '#ece0f4' }, dark: { fg: '#a868c8', bg: '#301838' } },
+  },
+  Gambling: {
+    normal: { light: { fg: '#be123c', bg: '#ffe4e6' }, dark: { fg: '#fda4af', bg: '#9f1239' } },
+    professional: { light: { fg: '#e11d48', bg: '#ffe4e6' }, dark: { fg: '#fb7185', bg: '#be123c' } },
+    mono: { light: { fg: '#b83050', bg: '#f8e0e4' }, dark: { fg: '#e07890', bg: '#501028' } },
   },
 
   // --- OTHER ---
@@ -453,6 +494,11 @@ export const ITEM_CATEGORY_COLORS: Record<ItemCategoryKey, ThemeModeColors> = {
     normal: { light: { fg: '#6d28d9', bg: '#ede9fe' }, dark: { fg: '#c4b5fd', bg: '#4c1d95' } },
     professional: { light: { fg: '#7c3aed', bg: '#ede9fe' }, dark: { fg: '#a78bfa', bg: '#5b21b6' } },
     mono: { light: { fg: '#6838a8', bg: '#e8e0f8' }, dark: { fg: '#a070d4', bg: '#2a1848' } },
+  },
+  PreparedFood: {
+    normal: { light: { fg: '#c2410c', bg: '#ffedd5' }, dark: { fg: '#fdba74', bg: '#7c2d12' } },
+    professional: { light: { fg: '#ea580c', bg: '#ffedd5' }, dark: { fg: '#fb923c', bg: '#9a3412' } },
+    mono: { light: { fg: '#b86830', bg: '#f8e8d8' }, dark: { fg: '#d9a070', bg: '#4a2810' } },
   },
 
   // --- HEALTH & PERSONAL ---
@@ -555,6 +601,11 @@ export const ITEM_CATEGORY_COLORS: Record<ItemCategoryKey, ThemeModeColors> = {
     professional: { light: { fg: '#0d9488', bg: '#ccfbf1' }, dark: { fg: '#2dd4bf', bg: '#115e59' } },
     mono: { light: { fg: '#30708c', bg: '#d8e8f0' }, dark: { fg: '#68a8c0', bg: '#103848' } },
   },
+  MusicalInstruments: {
+    normal: { light: { fg: '#7c3aed', bg: '#ede9fe' }, dark: { fg: '#c4b5fd', bg: '#5b21b6' } },
+    professional: { light: { fg: '#8b5cf6', bg: '#ede9fe' }, dark: { fg: '#a78bfa', bg: '#5b21b6' } },
+    mono: { light: { fg: '#7838a0', bg: '#ece0f8' }, dark: { fg: '#a868d0', bg: '#301840' } },
+  },
 
   // --- SERVICES & FEES ---
   Service: {
@@ -567,10 +618,37 @@ export const ITEM_CATEGORY_COLORS: Record<ItemCategoryKey, ThemeModeColors> = {
     professional: { light: { fg: '#64748b', bg: '#f1f5f9' }, dark: { fg: '#94a3b8', bg: '#475569' } },
     mono: { light: { fg: '#607080', bg: '#e8ecf0' }, dark: { fg: '#98a8b8', bg: '#303840' } },
   },
+  SubscriptionItem: {
+    normal: { light: { fg: '#7c3aed', bg: '#f5f3ff' }, dark: { fg: '#c4b5fd', bg: '#5b21b6' } },
+    professional: { light: { fg: '#8b5cf6', bg: '#f5f3ff' }, dark: { fg: '#a78bfa', bg: '#5b21b6' } },
+    mono: { light: { fg: '#7838a0', bg: '#ece0f4' }, dark: { fg: '#a868c8', bg: '#301838' } },
+  },
+  InsuranceItem: {
+    normal: { light: { fg: '#1e3a8a', bg: '#dbeafe' }, dark: { fg: '#93c5fd', bg: '#1e3a8a' } },
+    professional: { light: { fg: '#1d4ed8', bg: '#dbeafe' }, dark: { fg: '#60a5fa', bg: '#1e40af' } },
+    mono: { light: { fg: '#284880', bg: '#dce4f0' }, dark: { fg: '#6088b8', bg: '#102038' } },
+  },
+  LoanPayment: {
+    normal: { light: { fg: '#1e3a8a', bg: '#dbeafe' }, dark: { fg: '#93c5fd', bg: '#1e3a8a' } },
+    professional: { light: { fg: '#1d4ed8', bg: '#dbeafe' }, dark: { fg: '#60a5fa', bg: '#1e40af' } },
+    mono: { light: { fg: '#284880', bg: '#dce4f0' }, dark: { fg: '#6088b8', bg: '#102038' } },
+  },
+  TicketsEvents: {
+    normal: { light: { fg: '#7c3aed', bg: '#f5f3ff' }, dark: { fg: '#c4b5fd', bg: '#5b21b6' } },
+    professional: { light: { fg: '#8b5cf6', bg: '#f5f3ff' }, dark: { fg: '#a78bfa', bg: '#5b21b6' } },
+    mono: { light: { fg: '#7040a0', bg: '#ece0f8' }, dark: { fg: '#a070d0', bg: '#301840' } },
+  },
+
+  // --- VICES ---
   Tobacco: {
     normal: { light: { fg: '#374151', bg: '#f3f4f6' }, dark: { fg: '#d1d5db', bg: '#1f2937' } },
     professional: { light: { fg: '#4b5563', bg: '#f3f4f6' }, dark: { fg: '#9ca3af', bg: '#374151' } },
     mono: { light: { fg: '#686050', bg: '#f0ece8' }, dark: { fg: '#a89888', bg: '#383020' } },
+  },
+  GamblingItem: {
+    normal: { light: { fg: '#be123c', bg: '#ffe4e6' }, dark: { fg: '#fda4af', bg: '#9f1239' } },
+    professional: { light: { fg: '#e11d48', bg: '#ffe4e6' }, dark: { fg: '#fb7185', bg: '#be123c' } },
+    mono: { light: { fg: '#b83050', bg: '#f8e0e4' }, dark: { fg: '#e07890', bg: '#501028' } },
   },
 
   // --- OTHER ---
@@ -1101,3 +1179,131 @@ export function detectItemCategoryGroup(selectedCategories: string[]): ItemCateg
 
   return null;
 }
+
+// ============================================================================
+// GROUP DISPLAY INFO - Story 14.16
+// Provides display names and emojis for transaction/item groups in reports
+// ============================================================================
+
+/**
+ * Display information for store category groups.
+ * Used in weekly reports for grouped category breakdown.
+ */
+export interface GroupDisplayInfo {
+  /** Group key */
+  key: StoreCategoryGroup | ItemCategoryGroup;
+  /** Display name in Spanish */
+  name: string;
+  /** Representative emoji for the group */
+  emoji: string;
+  /** CSS class for styling (matches mockup) */
+  cssClass: string;
+}
+
+/**
+ * Store category group display information.
+ * Maps group keys to display names and emojis for report rendering.
+ *
+ * @example
+ * const info = STORE_GROUP_INFO['food-dining'];
+ * // { key: 'food-dining', name: 'Alimentación', emoji: '🍽️', cssClass: 'food-dining' }
+ */
+export const STORE_GROUP_INFO: Record<StoreCategoryGroup, GroupDisplayInfo> = {
+  'food-dining': {
+    key: 'food-dining',
+    name: 'Alimentación',
+    emoji: '🍽️',
+    cssClass: 'food-dining',
+  },
+  'health-wellness': {
+    key: 'health-wellness',
+    name: 'Salud y Bienestar',
+    emoji: '💊',
+    cssClass: 'health-wellness',
+  },
+  'retail-general': {
+    key: 'retail-general',
+    name: 'Tiendas General',
+    emoji: '🛒',
+    cssClass: 'retail-general',
+  },
+  'retail-specialty': {
+    key: 'retail-specialty',
+    name: 'Tiendas Especializadas',
+    emoji: '🎁',
+    cssClass: 'retail-specialty',
+  },
+  'automotive': {
+    key: 'automotive',
+    name: 'Automotriz',
+    emoji: '⛽',
+    cssClass: 'automotive',
+  },
+  'services': {
+    key: 'services',
+    name: 'Servicios',
+    emoji: '🏢',
+    cssClass: 'services',
+  },
+  'hospitality': {
+    key: 'hospitality',
+    name: 'Hospitalidad',
+    emoji: '🏨',
+    cssClass: 'hospitality',
+  },
+  'other': {
+    key: 'other',
+    name: 'Otros',
+    emoji: '📦',
+    cssClass: 'other-store',
+  },
+};
+
+/**
+ * Item category group display information.
+ * Maps group keys to display names and emojis for report rendering (monthly+).
+ */
+export const ITEM_GROUP_INFO: Record<ItemCategoryGroup, GroupDisplayInfo> = {
+  'food-fresh': {
+    key: 'food-fresh',
+    name: 'Alimentos Frescos',
+    emoji: '🥬',
+    cssClass: 'food-fresh',
+  },
+  'food-packaged': {
+    key: 'food-packaged',
+    name: 'Alimentos Envasados',
+    emoji: '🥫',
+    cssClass: 'food-packaged',
+  },
+  'health-personal': {
+    key: 'health-personal',
+    name: 'Salud y Personal',
+    emoji: '💄',
+    cssClass: 'health-personal',
+  },
+  'household': {
+    key: 'household',
+    name: 'Hogar',
+    emoji: '🏠',
+    cssClass: 'household',
+  },
+  'nonfood-retail': {
+    key: 'nonfood-retail',
+    name: 'Retail No Alimentario',
+    emoji: '🛍️',
+    cssClass: 'nonfood-retail',
+  },
+  'services-fees': {
+    key: 'services-fees',
+    name: 'Servicios y Cargos',
+    emoji: '📋',
+    cssClass: 'services-fees',
+  },
+  'other-item': {
+    key: 'other-item',
+    name: 'Otros',
+    emoji: '📦',
+    cssClass: 'other-item',
+  },
+};
