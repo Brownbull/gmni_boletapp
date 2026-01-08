@@ -48,98 +48,96 @@ console.log('Token Comparison by Input Scenario\n');
 
 const v1Config = getPrompt('v1-original');
 const v2Config = getPrompt('v2-multi-currency-types');
+const v3Config = getPrompt('v3-category-standardization');
 
-if (!v1Config || !v2Config) {
+if (!v1Config || !v2Config || !v3Config) {
   console.error('Error: Could not find prompt configs');
   process.exit(1);
 }
 
-// Table header
-console.log('┌─────────────────────────┬───────────┬───────────┬───────────┐');
-console.log('│ Scenario                │ V1 Tokens │ V2 Tokens │ Increase  │');
-console.log('├─────────────────────────┼───────────┼───────────┼───────────┤');
+// V2 vs V3 comparison (current focus)
+console.log('┌─────────────────────────┬───────────┬───────────┬──────────────┐');
+console.log('│ Scenario                │ V2 Tokens │ V3 Tokens │ Savings      │');
+console.log('├─────────────────────────┼───────────┼───────────┼──────────────┤');
 
-let totalV1 = 0;
 let totalV2 = 0;
+let totalV3 = 0;
 
 for (const input of testInputs) {
-  const v1Prompt = buildPrompt({ ...input, promptConfig: v1Config });
   const v2Prompt = buildPrompt({ ...input, promptConfig: v2Config });
+  const v3Prompt = buildPrompt({ ...input, promptConfig: v3Config });
 
-  const v1Tokens = estimateTokens(v1Prompt);
   const v2Tokens = estimateTokens(v2Prompt);
-  const increase = v2Tokens - v1Tokens;
-  const pct = ((increase / v1Tokens) * 100).toFixed(0);
+  const v3Tokens = estimateTokens(v3Prompt);
+  const savings = v2Tokens - v3Tokens;
+  const pct = ((savings / v2Tokens) * 100).toFixed(0);
 
-  totalV1 += v1Tokens;
   totalV2 += v2Tokens;
+  totalV3 += v3Tokens;
 
   const scenario = input.label.padEnd(23);
-  const v1Str = v1Tokens.toString().padStart(9);
   const v2Str = v2Tokens.toString().padStart(9);
-  const incStr = `+${increase} (${pct}%)`.padStart(9);
+  const v3Str = v3Tokens.toString().padStart(9);
+  const savStr = `-${savings} (${pct}%)`.padStart(12);
 
-  console.log(`│ ${scenario} │${v1Str} │${v2Str} │${incStr} │`);
+  console.log(`│ ${scenario} │${v2Str} │${v3Str} │${savStr} │`);
 }
 
-console.log('└─────────────────────────┴───────────┴───────────┴───────────┘');
+console.log('└─────────────────────────┴───────────┴───────────┴──────────────┘');
 
 // Average
-const avgV1 = Math.round(totalV1 / testInputs.length);
 const avgV2 = Math.round(totalV2 / testInputs.length);
-const avgIncrease = avgV2 - avgV1;
-const avgPct = ((avgIncrease / avgV1) * 100).toFixed(0);
+const avgV3 = Math.round(totalV3 / testInputs.length);
+const avgSavings = avgV2 - avgV3;
+const avgPct = ((avgSavings / avgV2) * 100).toFixed(0);
 
-console.log(`\nAverage: V1=${avgV1} tokens, V2=${avgV2} tokens (+${avgIncrease}, +${avgPct}%)`);
+console.log(`\nV2→V3: ${avgV2} → ${avgV3} tokens (SAVED ${avgSavings} tokens, ${avgPct}% reduction)`);
 
 // Cost estimation
 console.log('\n' + '─'.repeat(65));
-console.log('Cost Impact Estimation (Gemini 2.0 Flash)\n');
+console.log('Cost Savings V2 → V3 (Gemini 2.0 Flash)\n');
 
 const pricing = GEMINI_PRICING['gemini-2.0-flash'];
-const scansPerMonth = [1000, 10000, 100000];
+const scansPerMonth = [1000, 10000, 100000, 1000000];
 
-console.log('┌────────────────┬────────────────┬────────────────┬─────────────┐');
-console.log('│ Scans/Month    │ V1 Cost        │ V2 Cost        │ Difference  │');
-console.log('├────────────────┼────────────────┼────────────────┼─────────────┤');
+console.log('┌────────────────┬────────────────┬────────────────┬─────────────────┐');
+console.log('│ Scans/Month    │ V2 Cost        │ V3 Cost        │ Monthly Savings │');
+console.log('├────────────────┼────────────────┼────────────────┼─────────────────┤');
 
 for (const scans of scansPerMonth) {
-  // Cost = (tokens * scans / 1M) * pricePerM
-  // Using average token counts, input only (output is same for both)
-  const v1Cost = (avgV1 * scans / 1_000_000) * pricing.inputPer1M;
   const v2Cost = (avgV2 * scans / 1_000_000) * pricing.inputPer1M;
-  const diff = v2Cost - v1Cost;
+  const v3Cost = (avgV3 * scans / 1_000_000) * pricing.inputPer1M;
+  const savings = v2Cost - v3Cost;
 
   const scansStr = scans.toLocaleString().padEnd(14);
-  const v1Str = `$${v1Cost.toFixed(4)}`.padStart(14);
   const v2Str = `$${v2Cost.toFixed(4)}`.padStart(14);
-  const diffStr = `+$${diff.toFixed(4)}`.padStart(11);
+  const v3Str = `$${v3Cost.toFixed(4)}`.padStart(14);
+  const savStr = `-$${savings.toFixed(4)}`.padStart(15);
 
-  console.log(`│ ${scansStr} │${v1Str} │${v2Str} │${diffStr} │`);
+  console.log(`│ ${scansStr} │${v2Str} │${v3Str} │${savStr} │`);
 }
 
-console.log('└────────────────┴────────────────┴────────────────┴─────────────┘');
+console.log('└────────────────┴────────────────┴────────────────┴─────────────────┘');
 
 console.log('\nNote: Costs are INPUT tokens only. Output tokens (response) are the same.');
-console.log('      Actual token counts may vary ~10-20% from character-based estimates.');
+console.log('      V3 also removes currency from input (AI auto-detects), further simplifying UX.');
 
 // Show actual prompt lengths
 console.log('\n' + '─'.repeat(65));
 console.log('Raw Prompt Sizes (characters)\n');
 
-const defaultInput = { currency: 'CLP', receiptType: 'parking' as const };
-const v1Final = buildPrompt({ ...defaultInput, promptConfig: v1Config });
-const v2Final = buildPrompt({ ...defaultInput, promptConfig: v2Config });
-
-console.log(`V1 (${v1Config.name}):`);
-console.log(`  ${v1Final.length} characters\n`);
+// V3 doesn't need currency input, use empty string to simulate
+const v2Input = { currency: 'CLP', receiptType: 'auto' as const };
+const v3Input = { currency: '', receiptType: 'auto' as const };  // V3 auto-detects
+const v2Final = buildPrompt({ ...v2Input, promptConfig: v2Config });
+const v3Final = buildPrompt({ ...v3Input, promptConfig: v3Config });
 
 console.log(`V2 (${v2Config.name}):`);
-console.log(`  ${v2Final.length} characters\n`);
+console.log(`  ${v2Final.length} characters (~${estimateTokens(v2Final)} tokens)\n`);
 
-// Show truncated preview
-console.log('V1 Preview (first 200 chars):');
-console.log(`  "${v1Final.substring(0, 200)}..."\n`);
+console.log(`V3 (${v3Config.name}):`);
+console.log(`  ${v3Final.length} characters (~${estimateTokens(v3Final)} tokens)\n`);
 
-console.log('V2 Preview (first 300 chars):');
-console.log(`  "${v2Final.substring(0, 300)}..."`);
+const charSavings = v2Final.length - v3Final.length;
+const charPct = ((charSavings / v2Final.length) * 100).toFixed(0);
+console.log(`Character reduction: ${charSavings} chars (${charPct}%)`);

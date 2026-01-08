@@ -14,7 +14,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+// Story 14.29: Use custom render with QueryClientProvider
+import { render, screen, waitFor } from '../../setup/test-utils';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { AnalyticsProvider } from '../../../src/contexts/AnalyticsContext';

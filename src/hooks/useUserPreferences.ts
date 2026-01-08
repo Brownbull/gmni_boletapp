@@ -1,17 +1,25 @@
 /**
  * useUserPreferences Hook
- * Story 9.8: React hook for managing user preferences
  *
- * Provides access to user preferences with automatic loading and saving.
+ * Story 9.8: React hook for managing user preferences
+ * Story 14.28: Migrated to React Query for app-level caching
+ *
+ * Provides access to user preferences with automatic loading, saving, and caching.
+ * When called at App level, warms the React Query cache so subsequent Settings
+ * visits show instantly (no loading spinner).
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { User } from 'firebase/auth';
+import { useFirestoreQuery } from './useFirestoreQuery';
+import { QUERY_KEYS } from '../lib/queryKeys';
 import {
   getUserPreferences,
   saveUserPreferences,
   UserPreferences,
   SupportedCurrency,
+  SupportedFontFamily,
 } from '../services/userPreferencesService';
 
 interface UseUserPreferencesResult {
@@ -31,6 +39,8 @@ interface UseUserPreferencesResult {
   setPhoneNumber: (phone: string) => Promise<void>;
   /** Story 14.22: Update birth date */
   setBirthDate: (date: string) => Promise<void>;
+  /** Story 14.22: Update font family */
+  setFontFamily: (fontFamily: SupportedFontFamily) => Promise<void>;
 }
 
 interface FirebaseServices {
@@ -38,8 +48,23 @@ interface FirebaseServices {
   appId: string;
 }
 
+/** Default preferences used when no preferences exist */
+const DEFAULT_PREFERENCES: UserPreferences = {
+  defaultCurrency: 'CLP',
+  defaultCountry: '',
+  defaultCity: '',
+  displayName: '',
+  phoneNumber: '',
+  birthDate: '',
+  fontFamily: 'outfit',
+};
+
 /**
- * Hook for managing user preferences
+ * Hook for managing user preferences with React Query caching.
+ *
+ * Story 14.28: This hook now uses React Query for caching. When called
+ * at the App level (on login), it warms the cache so that subsequent
+ * Settings visits display instantly without a loading spinner.
  *
  * @param user - Firebase Auth user
  * @param services - Firebase services (db, appId)
@@ -49,174 +74,117 @@ export function useUserPreferences(
   user: User | null,
   services: FirebaseServices | null
 ): UseUserPreferencesResult {
-  const [preferences, setPreferences] = useState<UserPreferences>({
-    defaultCurrency: 'CLP',
-    // Story 14.22: Initialize new fields
-    defaultCountry: '',
-    defaultCity: '',
-    displayName: '',
-    phoneNumber: '',
-    birthDate: '',
-  });
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const enabled = !!user && !!services;
 
-  // Load preferences on mount or when user/services change
-  useEffect(() => {
-    if (!user || !services) {
-      setLoading(false);
-      return;
-    }
+  // Create stable query key
+  const queryKey = useMemo(
+    () => enabled
+      ? QUERY_KEYS.userPreferences(user!.uid, services!.appId)
+      : ['userPreferences', '', ''],
+    [enabled, user?.uid, services?.appId]
+  );
 
-    const loadPreferences = async () => {
-      setLoading(true);
+  // Use React Query for cached preferences fetch
+  const { data: preferences = DEFAULT_PREFERENCES, isLoading } = useFirestoreQuery(
+    queryKey,
+    () => getUserPreferences(services!.db, user!.uid, services!.appId),
+    { enabled }
+  );
+
+  /**
+   * Helper function for optimistic updates
+   * Updates cache immediately, then persists to Firestore
+   * Reverts on error by refetching
+   */
+  const updatePreference = useCallback(
+    async <K extends keyof Omit<UserPreferences, 'updatedAt'>>(
+      key: K,
+      value: UserPreferences[K]
+    ) => {
+      if (!user || !services) return;
+
+      // Get current preferences from cache
+      const currentPrefs = queryClient.getQueryData<UserPreferences>(queryKey) ?? DEFAULT_PREFERENCES;
+
+      // Optimistic update - immediately update cache
+      queryClient.setQueryData<UserPreferences>(queryKey, {
+        ...currentPrefs,
+        [key]: value,
+      });
+
       try {
-        const prefs = await getUserPreferences(services.db, user.uid, services.appId);
-        setPreferences(prefs);
+        // Persist to Firestore
+        await saveUserPreferences(services.db, user.uid, services.appId, {
+          [key]: value,
+        });
       } catch (error) {
-        console.error('Failed to load user preferences:', error);
-      } finally {
-        setLoading(false);
+        console.error(`Failed to save ${key}:`, error);
+        // Revert by refetching from Firestore
+        queryClient.invalidateQueries({ queryKey });
       }
-    };
+    },
+    [user, services, queryClient, queryKey]
+  );
 
-    loadPreferences();
-  }, [user, services]);
-
-  // Update default currency
+  // Update functions using the helper
   const setDefaultCurrency = useCallback(
-    async (currency: SupportedCurrency) => {
-      if (!user || !services) return;
-
-      // Optimistic update
-      setPreferences((prev) => ({ ...prev, defaultCurrency: currency }));
-
-      try {
-        await saveUserPreferences(services.db, user.uid, services.appId, {
-          defaultCurrency: currency,
-        });
-      } catch (error) {
-        console.error('Failed to save default currency:', error);
-        // Revert on error (could reload from server, but this is simpler)
-        const prefs = await getUserPreferences(services.db, user.uid, services.appId);
-        setPreferences(prefs);
-      }
-    },
-    [user, services]
+    (currency: SupportedCurrency) => updatePreference('defaultCurrency', currency),
+    [updatePreference]
   );
 
-  // Story 14.22: Update default country
   const setDefaultCountry = useCallback(
-    async (country: string) => {
-      if (!user || !services) return;
-
-      // Optimistic update
-      setPreferences((prev) => ({ ...prev, defaultCountry: country }));
-
-      try {
-        await saveUserPreferences(services.db, user.uid, services.appId, {
-          defaultCountry: country,
-        });
-      } catch (error) {
-        console.error('Failed to save default country:', error);
-        const prefs = await getUserPreferences(services.db, user.uid, services.appId);
-        setPreferences(prefs);
-      }
-    },
-    [user, services]
+    (country: string) => updatePreference('defaultCountry', country),
+    [updatePreference]
   );
 
-  // Story 14.22: Update default city
   const setDefaultCity = useCallback(
-    async (city: string) => {
-      if (!user || !services) return;
-
-      // Optimistic update
-      setPreferences((prev) => ({ ...prev, defaultCity: city }));
-
-      try {
-        await saveUserPreferences(services.db, user.uid, services.appId, {
-          defaultCity: city,
-        });
-      } catch (error) {
-        console.error('Failed to save default city:', error);
-        const prefs = await getUserPreferences(services.db, user.uid, services.appId);
-        setPreferences(prefs);
-      }
-    },
-    [user, services]
+    (city: string) => updatePreference('defaultCity', city),
+    [updatePreference]
   );
 
-  // Story 14.22: Update display name
   const setDisplayName = useCallback(
-    async (name: string) => {
-      if (!user || !services) return;
-
-      // Optimistic update
-      setPreferences((prev) => ({ ...prev, displayName: name }));
-
-      try {
-        await saveUserPreferences(services.db, user.uid, services.appId, {
-          displayName: name,
-        });
-      } catch (error) {
-        console.error('Failed to save display name:', error);
-        const prefs = await getUserPreferences(services.db, user.uid, services.appId);
-        setPreferences(prefs);
-      }
-    },
-    [user, services]
+    (name: string) => updatePreference('displayName', name),
+    [updatePreference]
   );
 
-  // Story 14.22: Update phone number
   const setPhoneNumber = useCallback(
-    async (phone: string) => {
-      if (!user || !services) return;
-
-      // Optimistic update
-      setPreferences((prev) => ({ ...prev, phoneNumber: phone }));
-
-      try {
-        await saveUserPreferences(services.db, user.uid, services.appId, {
-          phoneNumber: phone,
-        });
-      } catch (error) {
-        console.error('Failed to save phone number:', error);
-        const prefs = await getUserPreferences(services.db, user.uid, services.appId);
-        setPreferences(prefs);
-      }
-    },
-    [user, services]
+    (phone: string) => updatePreference('phoneNumber', phone),
+    [updatePreference]
   );
 
-  // Story 14.22: Update birth date
   const setBirthDate = useCallback(
-    async (date: string) => {
-      if (!user || !services) return;
-
-      // Optimistic update
-      setPreferences((prev) => ({ ...prev, birthDate: date }));
-
-      try {
-        await saveUserPreferences(services.db, user.uid, services.appId, {
-          birthDate: date,
-        });
-      } catch (error) {
-        console.error('Failed to save birth date:', error);
-        const prefs = await getUserPreferences(services.db, user.uid, services.appId);
-        setPreferences(prefs);
-      }
-    },
-    [user, services]
+    (date: string) => updatePreference('birthDate', date),
+    [updatePreference]
   );
 
-  return {
-    preferences,
-    loading,
-    setDefaultCurrency,
-    setDefaultCountry,
-    setDefaultCity,
-    setDisplayName,
-    setPhoneNumber,
-    setBirthDate,
-  };
+  const setFontFamily = useCallback(
+    (fontFamily: SupportedFontFamily) => updatePreference('fontFamily', fontFamily),
+    [updatePreference]
+  );
+
+  return useMemo(
+    () => ({
+      preferences,
+      loading: isLoading,
+      setDefaultCurrency,
+      setDefaultCountry,
+      setDefaultCity,
+      setDisplayName,
+      setPhoneNumber,
+      setBirthDate,
+      setFontFamily,
+    }),
+    [
+      preferences,
+      isLoading,
+      setDefaultCurrency,
+      setDefaultCountry,
+      setDefaultCity,
+      setDisplayName,
+      setPhoneNumber,
+      setBirthDate,
+      setFontFamily,
+    ]
+  );
 }

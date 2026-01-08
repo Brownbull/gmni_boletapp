@@ -1,0 +1,46 @@
+# Admin User Configuration File
+# =============================
+#
+# This file defines credit and subscription changes to apply to users.
+# Run with: npx tsx scripts/admin-apply-config.ts <config-file.yaml>
+#
+# USAGE:
+#   1. Copy this file: cp admin-user-config.example.yaml my-changes.yaml
+#   2. Edit the file with your changes
+#   3. Run: npx tsx scripts/admin-apply-config.ts my-changes.yaml
+#   4. Review the output to confirm all changes were applied
+#
+# STRUCTURE:
+#   Each user entry can have:
+#     - email: User's email address (used to find userId)
+#     - credits: Credit modifications
+#     - subscription: Subscription changes
+#
+# CREDIT MODES:
+#   - "set": Set absolute values (remaining = value)
+#   - "add": Add to existing values (remaining += value)
+#
+# SUBSCRIPTION TIERS:
+#   - free, basic, pro, max
+
+# ============================================================================
+# EXAMPLES
+# ============================================================================
+
+users:
+  # Example 1: Set credits to exact values
+  - email: "carcamo.gabriel@gmail.com"
+    credits:
+      mode: "set"          # "set" = absolute value, "add" = increment
+      normal: 1200          # Set normal credits remaining to 500
+      super: 101            # Set super credits remaining to 50
+
+# ============================================================================
+# METADATA (optional)
+# ============================================================================
+
+metadata:
+  admin: "carcamo.gabriel@gmail.com"    # Who is applying these changes
+  ticket: "SUPPORT-1234"            # Reference ticket number
+  campaign: "Test Campaign A"         # Campaign name if applicable
+  notes: "Settings limits for testing purposes"  # Additional notes

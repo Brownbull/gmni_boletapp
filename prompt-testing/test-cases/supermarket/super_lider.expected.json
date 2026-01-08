@@ -1,0 +1,210 @@
+{
+  "metadata": {
+    "testId": "super_lider",
+    "storeType": "supermarket",
+    "difficulty": "medium",
+    "region": "CL",
+    "source": "manual-collection",
+    "addedAt": "2026-01-07T19:25:05.626Z"
+  },
+  "input": {
+    "receiptType": "auto"
+  },
+  "aiExtraction": {
+    "merchant": "SATURNINO EPULEF",
+    "date": "2025-09-06",
+    "time": "12:57",
+    "total": 10205,
+    "currency": "CLP",
+    "category": "Supermarket",
+    "country": null,
+    "city": "VILLARRICA",
+    "items": [
+      {
+        "name": "SUPER8 HALLO",
+        "price": 1890,
+        "quantity": 1,
+        "category": "Snacks",
+        "subcategory": null
+      },
+      {
+        "name": "PAN CIA RUST",
+        "price": 3125,
+        "quantity": 1,
+        "category": "Bakery",
+        "subcategory": null
+      },
+      {
+        "name": "GALL DONUTS ORANGE",
+        "price": 1980,
+        "quantity": 1,
+        "category": "Bakery",
+        "subcategory": null
+      },
+      {
+        "name": "GALL DONUTS COCO",
+        "price": 2970,
+        "quantity": 1,
+        "category": "Bakery",
+        "subcategory": null
+      },
+      {
+        "name": "PACK SALSA T",
+        "price": 3890,
+        "quantity": 1,
+        "category": "Pantry",
+        "subcategory": null
+      },
+      {
+        "name": "PAN DULCE",
+        "price": 2390,
+        "quantity": 1,
+        "category": "Bakery",
+        "subcategory": null
+      },
+      {
+        "name": "PIZZA JAMON",
+        "price": 7250,
+        "quantity": 1,
+        "category": "Prepared Food",
+        "subcategory": null
+      },
+      {
+        "name": "R CEBOLLIN GRANEL",
+        "price": 1780,
+        "quantity": 1,
+        "category": "Produce",
+        "subcategory": null
+      },
+      {
+        "name": "JAMON ACARA",
+        "price": 2693,
+        "quantity": 1,
+        "category": "Meat & Seafood",
+        "subcategory": null
+      },
+      {
+        "name": "V POSTA NECRA ESCA",
+        "price": 12780,
+        "quantity": 1,
+        "category": "Other",
+        "subcategory": null
+      },
+      {
+        "name": "NATUR MAIZ N",
+        "price": 430,
+        "quantity": 1,
+        "category": "Pantry",
+        "subcategory": null
+      },
+      {
+        "name": "NIK BLCK",
+        "price": 1490,
+        "quantity": 1,
+        "category": "Snacks",
+        "subcategory": null
+      },
+      {
+        "name": "PLATANO",
+        "price": 3844,
+        "quantity": 1,
+        "category": "Produce",
+        "subcategory": null
+      },
+      {
+        "name": "QUESO RALLADO SOBR",
+        "price": 7160,
+        "quantity": 1,
+        "category": "Dairy & Eggs",
+        "subcategory": null
+      },
+      {
+        "name": "PIMIENTO VERDE 2UN",
+        "price": 2380,
+        "quantity": 1,
+        "category": "Produce",
+        "subcategory": null
+      },
+      {
+        "name": "PATO DISCO F",
+        "price": 4190,
+        "quantity": 1,
+        "category": "Snacks",
+        "subcategory": null
+      },
+      {
+        "name": "ROLLITOS ACE",
+        "price": 1790,
+        "quantity": 1,
+        "category": "Snacks",
+        "subcategory": null
+      },
+      {
+        "name": "MANZ VERDE",
+        "price": 1890,
+        "quantity": 1,
+        "category": "Produce",
+        "subcategory": null
+      },
+      {
+        "name": "LYSO 2X495",
+        "price": 7490,
+        "quantity": 1,
+        "category": "Cleaning Supplies",
+        "subcategory": null
+      },
+      {
+        "name": "CEPILLO WC",
+        "price": 5100,
+        "quantity": 1,
+        "category": "Cleaning Supplies",
+        "subcategory": null
+      },
+      {
+        "name": "SDY EXTRA FRESH 90",
+        "price": 10580,
+        "quantity": 1,
+        "category": "Personal Care",
+        "subcategory": null
+      },
+      {
+        "name": "ESPONJA ACAN",
+        "price": 2150,
+        "quantity": 1,
+        "category": "Cleaning Supplies",
+        "subcategory": null
+      },
+      {
+        "name": "PAPEL HIG",
+        "price": 12690,
+        "quantity": 1,
+        "category": "Personal Care",
+        "subcategory": null
+      },
+      {
+        "name": "CONFORT X12",
+        "price": 10750,
+        "quantity": 1,
+        "category": "Personal Care",
+        "subcategory": null
+      },
+      {
+        "name": "KINDER BUENO",
+        "price": 2190,
+        "quantity": 1,
+        "category": "Snacks",
+        "subcategory": null
+      }
+    ],
+    "aiMetadata": {
+      "receiptType": "receipt",
+      "confidence": 0.95
+    },
+    "model": "gemini-2.0-flash",
+    "modelVersion": "latest",
+    "promptId": "v3-category-standardization",
+    "promptVersion": "3.2.0",
+    "extractedAt": "2026-01-07T19:25:05.626Z"
+  },
+  "corrections": {}
+}

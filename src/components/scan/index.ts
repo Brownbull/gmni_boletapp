@@ -50,6 +50,10 @@ export type { BatchCompleteModalProps } from './BatchCompleteModal';
 export { CurrencyMismatchDialog } from './CurrencyMismatchDialog';
 export type { CurrencyMismatchDialogProps } from './CurrencyMismatchDialog';
 
+// Total Mismatch Dialog (OCR error detection)
+export { TotalMismatchDialog } from './TotalMismatchDialog';
+export type { TotalMismatchDialogProps } from './TotalMismatchDialog';
+
 // Story 14.23: Unified Transaction Editor components
 export { ProcessingOverlay } from './ProcessingOverlay';
 export type { ProcessingOverlayProps } from './ProcessingOverlay';

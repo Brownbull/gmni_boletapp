@@ -2,11 +2,11 @@
  * PreferenciasView Sub-View
  * Story 14.22 AC #5: Language, currency, date format, theme settings
  *
- * Migrates existing settings from flat SettingsView into dedicated sub-view
+ * Redesigned to match mockup with custom dropdown selects
  */
 
 import React from 'react';
-import { Globe, DollarSign, Calendar, Moon, Palette } from 'lucide-react';
+import { SettingsSelect, SelectOption } from '../SettingsSelect';
 
 interface PreferenciasViewProps {
     t: (key: string) => string;
@@ -16,184 +16,128 @@ interface PreferenciasViewProps {
     dateFormat: string;
     colorTheme?: string;
     fontColorMode?: string;
+    fontFamily?: string;
     onSetLang: (lang: string) => void;
     onSetCurrency: (currency: string) => void;
     onSetDateFormat: (format: string) => void;
     onSetTheme: (theme: string) => void;
     onSetColorTheme?: (colorTheme: string) => void;
     onSetFontColorMode?: (mode: string) => void;
+    onSetFontFamily?: (family: string) => void;
 }
 
 export const PreferenciasView: React.FC<PreferenciasViewProps> = ({
     t,
     theme,
     lang,
-    currency,
     dateFormat,
     colorTheme = 'normal',
     fontColorMode = 'colorful',
+    fontFamily = 'outfit',
     onSetLang,
-    onSetCurrency,
     onSetDateFormat,
     onSetTheme,
     onSetColorTheme,
     onSetFontColorMode,
+    onSetFontFamily,
 }) => {
-    const isDark = theme === 'dark';
+    // Language options
+    const languageOptions: SelectOption[] = [
+        { value: 'en', label: 'English' },
+        { value: 'es', label: 'Español' },
+    ];
 
-    const cardStyle: React.CSSProperties = {
-        backgroundColor: 'var(--bg-secondary)',
-        borderColor: isDark ? '#334155' : '#e2e8f0',
-    };
+    // Date format options
+    const dateFormatOptions: SelectOption[] = [
+        { value: 'LatAm', label: 'DD/MM/AAAA' },
+        { value: 'US', label: 'MM/DD/AAAA' },
+    ];
 
-    const toggleContainerStyle: React.CSSProperties = {
-        backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
-        borderColor: isDark ? '#475569' : '#cbd5e1',
-    };
+    // Theme mode options (light/dark)
+    const modeOptions: SelectOption[] = [
+        { value: 'light', label: lang === 'es' ? 'Claro' : 'Light' },
+        { value: 'dark', label: lang === 'es' ? 'Oscuro' : 'Dark' },
+    ];
 
-    const getToggleButtonStyle = (isActive: boolean): React.CSSProperties => ({
-        backgroundColor: isActive ? 'var(--accent)' : 'transparent',
-        color: isActive ? '#ffffff' : 'var(--text-secondary)',
-        transition: 'all 0.2s ease',
-    });
+    // Color palette options
+    const colorPaletteOptions: SelectOption[] = [
+        { value: 'professional', label: lang === 'es' ? 'Profesional' : 'Professional Blue' },
+        { value: 'normal', label: 'Normal' },
+        { value: 'mono', label: lang === 'es' ? 'Monocromo' : 'Monochrome' },
+    ];
 
-    const selectStyle: React.CSSProperties = {
-        backgroundColor: isDark ? '#1e293b' : '#f8fafc',
-        borderColor: isDark ? '#475569' : '#e2e8f0',
-        color: 'var(--text-primary)',
-    };
+    // Font color mode options
+    const fontColorOptions: SelectOption[] = [
+        { value: 'colorful', label: lang === 'es' ? 'Colorido' : 'Colorful' },
+        { value: 'plain', label: lang === 'es' ? 'Simple' : 'Plain' },
+    ];
+
+    // Font family options
+    const fontFamilyOptions: SelectOption[] = [
+        { value: 'outfit', label: 'Outfit' },
+        { value: 'space', label: 'Space Grotesk' },
+    ];
 
     return (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-3">
             {/* Language */}
-            <div className="p-4 rounded-xl border flex justify-between items-center" style={cardStyle}>
-                <div className="flex gap-2 items-center" style={{ color: 'var(--text-primary)' }}>
-                    <Globe size={24} strokeWidth={2} /> {t('language')}
-                </div>
-                <div className="flex rounded-lg p-1 border" style={toggleContainerStyle}>
-                    <button
-                        onClick={() => onSetLang('en')}
-                        className="min-h-11 px-4 rounded-md flex items-center justify-center font-medium text-sm"
-                        style={getToggleButtonStyle(lang === 'en')}
-                    >
-                        EN
-                    </button>
-                    <button
-                        onClick={() => onSetLang('es')}
-                        className="min-h-11 px-4 rounded-md flex items-center justify-center font-medium text-sm"
-                        style={getToggleButtonStyle(lang === 'es')}
-                    >
-                        ES
-                    </button>
-                </div>
-            </div>
-
-            {/* Currency */}
-            <div className="p-4 rounded-xl border flex justify-between items-center" style={cardStyle}>
-                <div className="flex gap-2 items-center" style={{ color: 'var(--text-primary)' }}>
-                    <DollarSign size={24} strokeWidth={2} /> {t('currency')}
-                </div>
-                <div className="flex rounded-lg p-1 border" style={toggleContainerStyle}>
-                    <button
-                        onClick={() => onSetCurrency('CLP')}
-                        className="min-h-11 px-4 rounded-md flex items-center justify-center font-medium text-sm"
-                        style={getToggleButtonStyle(currency === 'CLP')}
-                    >
-                        CLP
-                    </button>
-                    <button
-                        onClick={() => onSetCurrency('USD')}
-                        className="min-h-11 px-4 rounded-md flex items-center justify-center font-medium text-sm"
-                        style={getToggleButtonStyle(currency === 'USD')}
-                    >
-                        USD
-                    </button>
-                </div>
-            </div>
+            <SettingsSelect
+                label={t('language')}
+                value={lang}
+                options={languageOptions}
+                onChange={onSetLang}
+                aria-label={t('language')}
+            />
 
             {/* Date Format */}
-            <div className="p-4 rounded-xl border flex justify-between items-center" style={cardStyle}>
-                <div className="flex gap-2 items-center" style={{ color: 'var(--text-primary)' }}>
-                    <Calendar size={24} strokeWidth={2} /> {t('dateFormat')}
-                </div>
-                <div className="flex rounded-lg p-1 border" style={toggleContainerStyle}>
-                    <button
-                        onClick={() => onSetDateFormat('LatAm')}
-                        className="min-h-11 px-4 rounded-md flex items-center justify-center font-medium text-sm"
-                        style={getToggleButtonStyle(dateFormat === 'LatAm')}
-                    >
-                        31/12
-                    </button>
-                    <button
-                        onClick={() => onSetDateFormat('US')}
-                        className="min-h-11 px-4 rounded-md flex items-center justify-center font-medium text-sm"
-                        style={getToggleButtonStyle(dateFormat === 'US')}
-                    >
-                        12/31
-                    </button>
-                </div>
-            </div>
+            <SettingsSelect
+                label={t('dateFormat')}
+                value={dateFormat}
+                options={dateFormatOptions}
+                onChange={onSetDateFormat}
+                aria-label={t('dateFormat')}
+            />
 
-            {/* Theme (Light/Dark) */}
-            <div className="p-4 rounded-xl border flex justify-between items-center" style={cardStyle}>
-                <div className="flex gap-2 items-center" style={{ color: 'var(--text-primary)' }}>
-                    <Moon size={24} strokeWidth={2} /> {t('theme')}
-                </div>
-                <div className="flex rounded-lg p-1 border" style={toggleContainerStyle}>
-                    <button
-                        onClick={() => onSetTheme('light')}
-                        className="min-h-11 px-4 rounded-md flex items-center justify-center font-medium text-sm"
-                        style={getToggleButtonStyle(theme === 'light')}
-                    >
-                        Light
-                    </button>
-                    <button
-                        onClick={() => onSetTheme('dark')}
-                        className="min-h-11 px-4 rounded-md flex items-center justify-center font-medium text-sm"
-                        style={getToggleButtonStyle(theme === 'dark')}
-                    >
-                        Dark
-                    </button>
-                </div>
-            </div>
+            {/* Theme Mode (Light/Dark) */}
+            <SettingsSelect
+                label={lang === 'es' ? 'Modo' : 'Mode'}
+                value={theme}
+                options={modeOptions}
+                onChange={onSetTheme}
+                aria-label={t('theme')}
+            />
 
-            {/* Color Theme */}
+            {/* Color Palette */}
             {onSetColorTheme && (
-                <div className="p-4 rounded-xl border flex justify-between items-center" style={cardStyle}>
-                    <div className="flex gap-2 items-center" style={{ color: 'var(--text-primary)' }}>
-                        <Palette size={24} strokeWidth={2} /> {t('colorTheme')}
-                    </div>
-                    <select
-                        value={colorTheme}
-                        onChange={(e) => onSetColorTheme(e.target.value)}
-                        className="min-h-11 px-3 rounded-lg font-medium text-sm border"
-                        style={selectStyle}
-                        aria-label={t('colorTheme')}
-                    >
-                        <option value="mono">{t('colorThemeMono')}</option>
-                        <option value="normal">{t('colorThemeNormal')}</option>
-                        <option value="professional">{t('colorThemeProfessional')}</option>
-                    </select>
-                </div>
+                <SettingsSelect
+                    label={lang === 'es' ? 'Paleta de Color' : 'Color Palette'}
+                    value={colorTheme}
+                    options={colorPaletteOptions}
+                    onChange={onSetColorTheme}
+                    aria-label={t('colorTheme')}
+                />
             )}
 
             {/* Font Color Mode */}
             {onSetFontColorMode && (
-                <div className="p-4 rounded-xl border flex justify-between items-center" style={cardStyle}>
-                    <div className="flex gap-2 items-center" style={{ color: 'var(--text-primary)' }}>
-                        <Palette size={24} strokeWidth={2} /> {t('fontColorMode')}
-                    </div>
-                    <select
-                        value={fontColorMode}
-                        onChange={(e) => onSetFontColorMode(e.target.value)}
-                        className="min-h-11 px-3 rounded-lg font-medium text-sm border"
-                        style={selectStyle}
-                        aria-label={t('fontColorMode')}
-                    >
-                        <option value="colorful">{t('fontColorModeColorful')}</option>
-                        <option value="plain">{t('fontColorModePlain')}</option>
-                    </select>
-                </div>
+                <SettingsSelect
+                    label={t('fontColorMode')}
+                    value={fontColorMode}
+                    options={fontColorOptions}
+                    onChange={onSetFontColorMode}
+                    aria-label={t('fontColorMode')}
+                />
+            )}
+
+            {/* Typography / Font Family */}
+            {onSetFontFamily && (
+                <SettingsSelect
+                    label={lang === 'es' ? 'Tipografía' : 'Typography'}
+                    value={fontFamily}
+                    options={fontFamilyOptions}
+                    onChange={onSetFontFamily}
+                    aria-label={lang === 'es' ? 'Tipografía' : 'Typography'}
+                />
             )}
         </div>
     );

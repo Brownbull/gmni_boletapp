@@ -29,22 +29,26 @@ interface AnalyzeReceiptRequest {
     currency: string;
     /** Story 9.8: Optional hint for store/receipt type (defaults to 'auto') */
     receiptType?: ReceiptType;
+    /** Story 14.15b: If true, images are URLs from Firebase Storage (for re-scan) */
+    isRescan?: boolean;
 }
 
 /**
  * Analyzes receipt images using Firebase Cloud Function
  * The actual Gemini API call happens server-side for security
  *
- * @param images - Array of base64 encoded images
+ * @param images - Array of base64 encoded images OR URLs (for re-scan)
  * @param currency - Currency code (e.g., "CLP")
  * @param receiptType - Story 9.8: Optional hint for store type (defaults to 'auto')
+ * @param isRescan - Story 14.15b: If true, images are URLs from Firebase Storage
  * @returns Promise<Transaction> - Parsed transaction data
  * @throws Error if analysis fails or user is not authenticated
  */
 export async function analyzeReceipt(
     images: string[],
     currency: string,
-    receiptType?: ReceiptType
+    receiptType?: ReceiptType,
+    isRescan?: boolean
 ): Promise<Transaction> {
     try {
         // Call the Cloud Function
@@ -53,10 +57,13 @@ export async function analyzeReceipt(
             'analyzeReceipt'
         );
 
-        // Build request with optional receiptType (Story 9.8)
+        // Build request with optional receiptType (Story 9.8) and isRescan (Story 14.15b)
         const request: AnalyzeReceiptRequest = { images, currency };
         if (receiptType && receiptType !== 'auto') {
             request.receiptType = receiptType;
+        }
+        if (isRescan) {
+            request.isRescan = true;
         }
 
         const result = await analyzeReceiptFn(request);
