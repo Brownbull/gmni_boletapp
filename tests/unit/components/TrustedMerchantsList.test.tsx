@@ -21,12 +21,14 @@ function createMockTimestamp(): Timestamp {
 describe('TrustedMerchantsList', () => {
     const mockT = (key: string) => {
         const translations: Record<string, string> = {
+            trustedMerchants: 'trustedMerchants',
             trustedMerchantsEmpty: 'No trusted merchants yet',
             trustedMerchantsHint: 'Merchants you trust will auto-save on scan',
             scansFromMerchant: '{count} scans',
             removeTrust: 'Remove Trust',
             removeTrustConfirm: 'Stop auto-saving for this merchant?',
             loading: 'Loading...',
+            trusted: 'Trusted',
         };
         return translations[key] || key;
     };
@@ -64,8 +66,10 @@ describe('TrustedMerchantsList', () => {
         it('should render list of trusted merchants', () => {
             render(<TrustedMerchantsList {...defaultProps} />);
 
-            expect(screen.getByText('Jumbo')).toBeInTheDocument();
-            expect(screen.getByText('5 scans')).toBeInTheDocument();
+            // Component displays merchant name in quotes
+            expect(screen.getByText('"Jumbo"')).toBeInTheDocument();
+            // Component displays scan count as "Nx" format
+            expect(screen.getByText('5x')).toBeInTheDocument();
         });
 
         it('should render multiple trusted merchants', () => {
@@ -76,10 +80,12 @@ describe('TrustedMerchantsList', () => {
 
             render(<TrustedMerchantsList {...defaultProps} merchants={merchants} />);
 
-            expect(screen.getByText('Jumbo')).toBeInTheDocument();
-            expect(screen.getByText('Lider')).toBeInTheDocument();
-            expect(screen.getByText('5 scans')).toBeInTheDocument();
-            expect(screen.getByText('10 scans')).toBeInTheDocument();
+            // Component displays merchant names in quotes
+            expect(screen.getByText('"Jumbo"')).toBeInTheDocument();
+            expect(screen.getByText('"Lider"')).toBeInTheDocument();
+            // Component displays scan count as "Nx" format
+            expect(screen.getByText('5x')).toBeInTheDocument();
+            expect(screen.getByText('10x')).toBeInTheDocument();
         });
 
         it('should only show trusted merchants (trusted=true)', () => {
@@ -90,8 +96,9 @@ describe('TrustedMerchantsList', () => {
 
             render(<TrustedMerchantsList {...defaultProps} merchants={merchants} />);
 
-            expect(screen.getByText('Jumbo')).toBeInTheDocument();
-            expect(screen.queryByText('Lider')).not.toBeInTheDocument();
+            // Component displays merchant name in quotes
+            expect(screen.getByText('"Jumbo"')).toBeInTheDocument();
+            expect(screen.queryByText('"Lider"')).not.toBeInTheDocument();
         });
     });
 
@@ -116,9 +123,10 @@ describe('TrustedMerchantsList', () => {
 
     describe('Loading State', () => {
         it('should show loading indicator when loading', () => {
-            render(<TrustedMerchantsList {...defaultProps} loading={true} />);
+            const { container } = render(<TrustedMerchantsList {...defaultProps} loading={true} />);
 
-            expect(screen.getByText('Loading...')).toBeInTheDocument();
+            // Component shows animate-pulse skeleton, not text
+            expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
         });
     });
 
@@ -168,13 +176,15 @@ describe('TrustedMerchantsList', () => {
         it('should apply light theme styling', () => {
             render(<TrustedMerchantsList {...defaultProps} theme="light" />);
 
-            expect(screen.getByText('Jumbo')).toBeInTheDocument();
+            // Component displays merchant name in quotes
+            expect(screen.getByText('"Jumbo"')).toBeInTheDocument();
         });
 
         it('should apply dark theme styling', () => {
             render(<TrustedMerchantsList {...defaultProps} theme="dark" />);
 
-            expect(screen.getByText('Jumbo')).toBeInTheDocument();
+            // Component displays merchant name in quotes
+            expect(screen.getByText('"Jumbo"')).toBeInTheDocument();
         });
     });
 });
