@@ -216,6 +216,7 @@ export async function signOutUser(): Promise<void> {
 export async function scanReceipt(
   imageBuffer: Buffer,
   options: {
+    /** Currency hint (optional for V3 which auto-detects, required for V1/V2) */
     currency?: string;
     receiptType?: string;
     useEmulator?: boolean;
@@ -225,7 +226,7 @@ export async function scanReceipt(
   } = {}
 ): Promise<ScanResult> {
   const {
-    currency = 'CLP',
+    currency, // No default - V3 auto-detects, caller should pass for V1/V2
     receiptType,
     useEmulator = false,
     retries = CONFIG.api.maxRetries,
@@ -250,8 +251,9 @@ export async function scanReceipt(
   const dataUri = `data:${mimeType};base64,${base64Image}`;
 
   // Get callable function
+  // Note: currency is optional for V3 (auto-detects), required for V1/V2
   const analyzeReceipt = httpsCallable<
-    { images: string[]; currency: string; receiptType?: string; promptContext?: string },
+    { images: string[]; currency?: string; receiptType?: string; promptContext?: string },
     ScanResult
   >(functions, 'analyzeReceipt');
 
@@ -262,8 +264,8 @@ export async function scanReceipt(
     try {
       const result = await analyzeReceipt({
         images: [dataUri],
-        currency,
         promptContext, // 'development' for test harness, 'production' for app
+        ...(currency && { currency }), // Only send if provided (V3 auto-detects)
         ...(receiptType && { receiptType }),
       });
 

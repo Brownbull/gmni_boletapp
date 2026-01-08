@@ -165,9 +165,11 @@ interface TestInput {
 
 /**
  * Default input values when no .input.json file exists.
+ * Note: currency is undefined for V3 (auto-detects from receipt).
+ * For V1/V2, set currency in .input.json file.
  */
 const DEFAULT_INPUT: TestInput = {
-  currency: 'CLP',
+  currency: undefined, // V3 auto-detects, no hint needed
   receiptType: 'auto',
 };
 
@@ -244,9 +246,9 @@ async function generateForImage(imagePath: string, force: boolean): Promise<bool
   const hasInputFile = fs.existsSync(inputPath);
 
   if (hasInputFile) {
-    log.dim(`Using input: currency=${input.currency}, receiptType=${input.receiptType}`);
+    log.dim(`Using input: currency=${input.currency || 'auto-detect'}, receiptType=${input.receiptType}`);
   } else {
-    log.dim(`No input file found, using defaults: currency=${input.currency}, receiptType=${input.receiptType}`);
+    log.dim(`No input file, V3 will auto-detect currency. receiptType=${input.receiptType}`);
   }
 
   // Show which prompt version the Cloud Function will use
@@ -281,7 +283,8 @@ async function generateForImage(imagePath: string, force: boolean): Promise<bool
         addedAt: new Date().toISOString(),
       },
       input: {
-        currency: input.currency,
+        // Only include currency if explicitly provided (V3 auto-detects)
+        ...(input.currency && { currency: input.currency }),
         receiptType: input.receiptType,
       },
       aiExtraction: {
@@ -311,7 +314,8 @@ async function generateForImage(imagePath: string, force: boolean): Promise<bool
     // Show summary of what was extracted
     const itemCount = result.items?.length || 0;
     const location = result.country || result.city ? `${result.city || '?'}, ${result.country || '?'}` : 'not detected';
-    log.dim(`  → ${result.merchant} | ${result.total} ${result.currency || input.currency} | ${itemCount} items | Location: ${location}`);
+    const detectedCurrency = result.currency || 'unknown';
+    log.dim(`  → ${result.merchant} | ${result.total} ${detectedCurrency} | ${itemCount} items | Location: ${location}`);
 
     return true;
   } catch (error) {

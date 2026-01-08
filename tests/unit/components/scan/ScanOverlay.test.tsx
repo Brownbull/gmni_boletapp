@@ -39,7 +39,8 @@ const mockT = (key: string) => {
     cancel: 'Cancelar',
     estimatedTime: 'Tiempo estimado',
     seconds: 'segundos',
-    tipCanNavigate: 'Puedes navegar mientras procesamos',
+    // Story 14.15: Updated key name to match ScanOverlay component
+    tipCanNavigateWhileProcessing: 'Puedes navegar mientras procesamos',
     scanError: 'Error al procesar',
     retry: 'Reintentar',
   };

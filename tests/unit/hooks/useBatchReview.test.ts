@@ -318,14 +318,15 @@ describe('useBatchReview', () => {
 
       const mockSaveTransaction = vi.fn();
 
-      let saveResult: { saved: string[]; failed: string[] } | undefined;
+      let saveResult: { saved: string[]; failed: string[]; savedTransactions: unknown[] } | undefined;
 
       await act(async () => {
         saveResult = await result.current.saveAll(mockSaveTransaction);
       });
 
       expect(mockSaveTransaction).not.toHaveBeenCalled();
-      expect(saveResult).toEqual({ saved: [], failed: [] });
+      // Hook returns savedTransactions array for batch complete modal (Story 14.15)
+      expect(saveResult).toEqual({ saved: [], failed: [], savedTransactions: [] });
     });
   });
 

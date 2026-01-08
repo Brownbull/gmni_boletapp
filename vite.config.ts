@@ -45,7 +45,9 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         // Don't cache API calls - only static assets
         // Firebase SDK handles its own caching
-        runtimeCaching: []
+        runtimeCaching: [],
+        // Increase max file size limit for PWA precache (3MB to accommodate growing bundle)
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024
       }
     })
   ],

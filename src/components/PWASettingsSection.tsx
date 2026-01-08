@@ -1,12 +1,13 @@
 /**
  * PWA Settings Section Component - Story 9.14
+ * Story 14.22: Updated to match settings.html mockup design
  *
- * Displays PWA-related settings including Install and Update buttons.
+ * Displays PWA-related settings including Install and Update sections.
  * Shows manual install instructions when automatic install isn't available.
  */
 
 import { useState } from 'react';
-import { Smartphone, RefreshCw, Check, Download, MoreVertical, Share } from 'lucide-react';
+import { Smartphone, RefreshCw, Check, Download } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { usePWAUpdate } from '../hooks/usePWAUpdate';
 
@@ -18,53 +19,39 @@ interface PWASettingsSectionProps {
 }
 
 // Detect browser and platform for install instructions
-function getInstallInstructions(t: (key: string) => string): { steps: string[]; icon: 'menu' | 'share' } {
+function getInstallInstructions(t: (key: string) => string): { steps: string[] } {
   const ua = navigator.userAgent.toLowerCase();
   const isIOS = /iphone|ipad|ipod/.test(ua);
-  const isAndroid = /android/.test(ua);
   const isSamsung = /samsungbrowser/.test(ua);
 
   if (isIOS) {
-    // iOS Safari: Share button -> Add to Home Screen
     return {
       steps: [
         t('installStepIOSTapShare'),
         t('installStepIOSAddHome'),
       ],
-      icon: 'share',
     };
   } else if (isSamsung) {
-    // Samsung Internet: Menu -> Add page to -> Home screen
     return {
       steps: [
         t('installStepMenuTap'),
         t('installStepSamsungAdd'),
       ],
-      icon: 'menu',
     };
-  } else if (isAndroid) {
-    // Chrome Android: Menu -> Install app / Add to Home screen
+  } else {
+    // Chrome Android/Desktop
     return {
       steps: [
         t('installStepMenuTap'),
         t('installStepChromeInstall'),
       ],
-      icon: 'menu',
-    };
-  } else {
-    // Desktop Chrome/Edge: Menu -> Install app
-    return {
-      steps: [
-        t('installStepMenuTap'),
-        t('installStepDesktopInstall'),
-      ],
-      icon: 'menu',
     };
   }
 }
 
 /**
- * PWA Settings Section - Install and Update buttons for Settings view
+ * PWA Settings Section - Install and Update for Settings view
+ * Renders two separate cards matching mockup design
  */
 export function PWASettingsSection({ t, theme, onShowToast }: PWASettingsSectionProps) {
   const { canInstall, isInstalled, isInstalling, install } = usePWAInstall();
@@ -75,29 +62,12 @@ export function PWASettingsSection({ t, theme, onShowToast }: PWASettingsSection
 
   const isDark = theme === 'dark';
 
-  // Card styling using CSS variables (matches SettingsView pattern)
+  // Card styling matching mockup .settings-row with CSS variables
   const cardStyle: React.CSSProperties = {
     backgroundColor: 'var(--surface)',
-    borderColor: isDark ? '#334155' : '#e2e8f0',
-  };
-
-  // Button styling
-  const getButtonStyle = (variant: 'primary' | 'secondary' | 'success'): React.CSSProperties => {
-    const styles = {
-      primary: {
-        backgroundColor: isDark ? 'rgba(96, 165, 250, 0.3)' : 'rgba(59, 130, 246, 0.2)',
-        color: 'var(--accent)',
-      },
-      secondary: {
-        backgroundColor: isDark ? '#334155' : '#e2e8f0',
-        color: 'var(--secondary)',
-      },
-      success: {
-        backgroundColor: isDark ? 'rgba(74, 222, 128, 0.2)' : 'rgba(34, 197, 94, 0.15)',
-        color: 'var(--success)',
-      },
-    };
-    return styles[variant];
+    borderRadius: '12px',
+    padding: '14px 16px',
+    border: '1px solid var(--border-light)',
   };
 
   // Get platform-specific install instructions
@@ -105,159 +75,180 @@ export function PWASettingsSection({ t, theme, onShowToast }: PWASettingsSection
   const showManualInstructions = !canInstall && !isInstalled;
 
   return (
-    <div className="p-4 rounded-xl border" style={cardStyle}>
-      <div className="flex gap-2 items-center mb-4 justify-between">
-        <div className="flex gap-2 items-center">
-          <Smartphone size={24} strokeWidth={2} style={{ color: 'var(--accent)' }} />
-          <span className="font-medium" style={{ color: 'var(--primary)' }}>
-            {t('pwaSettings')}
+    <>
+      {/* App Installation Card */}
+      <div style={cardStyle}>
+        {/* Header with icon and title */}
+        <div className="flex items-center gap-2.5 mb-2">
+          <Smartphone
+            size={20}
+            strokeWidth={2}
+            style={{ color: 'var(--text-secondary)' }}
+          />
+          <span
+            className="text-sm font-medium"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            {t('installApp')}
           </span>
         </div>
-        <span
-          className="text-xs font-mono px-2 py-0.5 rounded"
-          style={{
-            backgroundColor: isDark ? 'rgba(148, 163, 184, 0.15)' : 'rgba(100, 116, 139, 0.1)',
-            color: 'var(--secondary)',
-          }}
+
+        {/* Description */}
+        <p
+          className="text-xs mb-3"
+          style={{ color: 'var(--text-secondary)' }}
         >
-          v{__APP_VERSION__}
-        </span>
+          {isInstalled
+            ? t('appAlreadyInstalled')
+            : t('installAppHint')}
+        </p>
+
+        {/* Manual Install Instructions Box - only when auto-install not available */}
+        {showManualInstructions && (
+          <div
+            className="rounded-lg p-3 mb-3"
+            style={{
+              backgroundColor: isDark ? 'rgba(100, 116, 139, 0.1)' : 'var(--bg-tertiary)',
+              borderLeft: '3px solid var(--primary)',
+            }}
+          >
+            <p
+              className="text-xs font-medium mb-1.5"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              {t('installManualTitle')}
+            </p>
+            <ol
+              className="text-xs space-y-1 pl-4"
+              style={{ color: 'var(--text-secondary)', listStyleType: 'decimal' }}
+            >
+              {installInstructions.steps.map((step, index) => (
+                <li key={index}>{step}</li>
+              ))}
+            </ol>
+          </div>
+        )}
+
+        {/* Install Button - full width, primary style using var(--primary) */}
+        <button
+          onClick={install}
+          disabled={!canInstall || isInstalling || isInstalled}
+          className="w-full py-3.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+          style={{
+            backgroundColor: isInstalled
+              ? (isDark ? 'rgba(34, 197, 94, 0.2)' : 'var(--success-light)')
+              : 'var(--primary)',
+            color: isInstalled ? 'var(--success)' : 'white',
+          }}
+          aria-label={t('installApp')}
+        >
+          {isInstalled ? (
+            <>
+              <Check size={16} strokeWidth={2} />
+              {t('installed')}
+            </>
+          ) : isInstalling ? (
+            <>
+              <Download size={16} strokeWidth={2} className="animate-bounce" />
+              {t('installing')}
+            </>
+          ) : (
+            <>
+              <Download size={16} strokeWidth={2} />
+              {t('installApp')}
+            </>
+          )}
+        </button>
       </div>
 
-      <div className="space-y-3">
-        {/* Install App Section */}
-        <div>
-          <div className="flex justify-between items-center">
-            <div className="flex-1">
-              <p className="text-sm font-medium" style={{ color: 'var(--primary)' }}>
-                {t('installApp')}
-              </p>
-              <p className="text-xs" style={{ color: 'var(--secondary)' }}>
-                {isInstalled
-                  ? t('appAlreadyInstalled')
-                  : canInstall
-                    ? t('installAppHint')
-                    : t('installManualHint')}
-              </p>
+      {/* Updates Card */}
+      <div style={cardStyle}>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2.5">
+            <RefreshCw
+              size={20}
+              strokeWidth={2}
+              style={{ color: 'var(--text-secondary)' }}
+            />
+            <div>
+              <div className="flex items-center gap-2">
+                <span
+                  className="text-sm font-medium"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  {t('updateApp')}
+                </span>
+                <span
+                  className="text-[10px] px-1.5 py-0.5 rounded"
+                  style={{
+                    backgroundColor: 'var(--bg-tertiary)',
+                    color: 'var(--text-tertiary)',
+                    fontFamily: 'monospace',
+                  }}
+                >
+                  v{__APP_VERSION__}
+                </span>
+              </div>
+              <span
+                className="text-xs block"
+                style={{ color: justChecked ? 'var(--success)' : 'var(--text-secondary)' }}
+              >
+                {checking
+                  ? t('checkingForUpdates')
+                  : needRefresh
+                    ? t('updateAvailable')
+                    : justChecked
+                      ? t('noUpdatesFound')
+                      : offlineReady
+                        ? t('appUpToDate')
+                        : t('tapToCheckUpdates')}
+              </span>
             </div>
-            <button
-              onClick={install}
-              disabled={!canInstall || isInstalling || isInstalled}
-              className="min-h-11 px-4 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors"
-              style={
-                isInstalled
-                  ? getButtonStyle('success')
-                  : canInstall
-                    ? getButtonStyle('primary')
-                    : getButtonStyle('secondary')
-              }
-              aria-label={t('installApp')}
-            >
-              {isInstalled ? (
-                <>
-                  <Check size={18} />
-                  {t('installed')}
-                </>
-              ) : isInstalling ? (
-                <>
-                  <Download size={18} className="animate-bounce" />
-                  {t('installing')}
-                </>
-              ) : (
-                <>
-                  <Download size={18} />
-                  {t('install')}
-                </>
-              )}
-            </button>
           </div>
 
-          {/* Manual Install Instructions */}
-          {showManualInstructions && (
-            <div
-              className="mt-3 p-3 rounded-lg text-xs"
-              style={{
-                backgroundColor: isDark ? 'rgba(96, 165, 250, 0.1)' : 'rgba(59, 130, 246, 0.08)',
-                border: `1px solid ${isDark ? 'rgba(96, 165, 250, 0.2)' : 'rgba(59, 130, 246, 0.15)'}`,
+          {/* Secondary Button - uses primary color for text */}
+          {!needRefresh ? (
+            <button
+              onClick={async () => {
+                setJustChecked(false);
+                const foundUpdate = await checkForUpdates();
+                if (!foundUpdate) {
+                  setJustChecked(true);
+                  if (onShowToast) {
+                    onShowToast(t('noUpdatesFound'));
+                  }
+                  setTimeout(() => setJustChecked(false), 5000);
+                }
               }}
+              disabled={checking}
+              className="px-3.5 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors"
+              style={{
+                backgroundColor: 'var(--bg-tertiary)',
+                border: '1px solid var(--border-light)',
+                color: 'var(--primary)',
+              }}
+              aria-label={t('checkUpdates')}
             >
-              <p className="font-medium mb-2 flex items-center gap-2" style={{ color: 'var(--accent)' }}>
-                {installInstructions.icon === 'share' ? (
-                  <Share size={14} />
-                ) : (
-                  <MoreVertical size={14} />
-                )}
-                {t('installManualTitle')}
-              </p>
-              <ol className="list-decimal list-inside space-y-1" style={{ color: 'var(--secondary)' }}>
-                {installInstructions.steps.map((step, index) => (
-                  <li key={index}>{step}</li>
-                ))}
-              </ol>
-            </div>
+              {checking && <RefreshCw size={14} className="animate-spin" />}
+              {t('checkUpdates')}
+            </button>
+          ) : (
+            <button
+              onClick={update}
+              className="px-3.5 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors"
+              style={{
+                backgroundColor: isDark ? 'rgba(34, 197, 94, 0.2)' : 'var(--success-light)',
+                color: 'var(--success)',
+              }}
+              aria-label={t('pwaUpdate')}
+            >
+              <Download size={14} />
+              {t('pwaUpdate')}
+            </button>
           )}
         </div>
-
-        {/* Update App Section */}
-        <div className="flex justify-between items-center">
-          <div className="flex-1">
-            <p className="text-sm font-medium" style={{ color: 'var(--primary)' }}>
-              {t('updateApp')}
-            </p>
-            <p className="text-xs" style={{ color: justChecked ? 'var(--success)' : 'var(--secondary)' }}>
-              {checking
-                ? t('checkingForUpdates')
-                : needRefresh
-                  ? t('updateAvailable')
-                  : justChecked
-                    ? t('noUpdatesFound')
-                    : offlineReady
-                      ? t('appUpToDate')
-                      : t('tapToCheckUpdates')}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Check for Updates button - always visible when not checking and no update ready */}
-            {!needRefresh && (
-              <button
-                onClick={async () => {
-                  setJustChecked(false);
-                  const foundUpdate = await checkForUpdates();
-                  if (!foundUpdate) {
-                    // No update found - show feedback
-                    setJustChecked(true);
-                    if (onShowToast) {
-                      onShowToast(t('noUpdatesFound'));
-                    }
-                    // Clear the "just checked" state after 5 seconds
-                    setTimeout(() => setJustChecked(false), 5000);
-                  }
-                }}
-                disabled={checking}
-                className="min-h-11 px-4 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors"
-                style={getButtonStyle('primary')}
-                aria-label={t('checkUpdates')}
-              >
-                <RefreshCw size={18} className={checking ? 'animate-spin' : ''} />
-                {checking ? t('checking') : t('checkUpdates')}
-              </button>
-            )}
-            {/* Update Now button - only visible when update is ready */}
-            {needRefresh && (
-              <button
-                onClick={update}
-                className="min-h-11 px-4 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors"
-                style={getButtonStyle('success')}
-                aria-label={t('pwaUpdate')}
-              >
-                <Download size={18} />
-                {t('pwaUpdate')}
-              </button>
-            )}
-          </div>
-        </div>
       </div>
-    </div>
+    </>
   );
 }
 

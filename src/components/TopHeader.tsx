@@ -220,39 +220,54 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                         >
                             <ChevronLeft size={28} strokeWidth={2.5} />
                         </button>
-                        <div className="flex items-center">
+                        <div className="flex flex-col">
+                            <div className="flex items-center">
+                                <span
+                                    className="font-semibold"
+                                    style={{
+                                        fontFamily: 'var(--font-family)',
+                                        color: settingsSubview ? 'var(--text-secondary)' : 'var(--text-primary)',
+                                        fontWeight: 700,
+                                        fontSize: '20px',
+                                    }}
+                                >
+                                    {t('settings')}
+                                </span>
+                                {settingsSubview && (
+                                    <>
+                                        <ChevronLeft
+                                            size={20}
+                                            strokeWidth={2}
+                                            className="mx-1 rotate-180"
+                                            style={{ color: 'var(--text-tertiary)' }}
+                                        />
+                                        <span
+                                            className="font-semibold"
+                                            style={{
+                                                fontFamily: 'var(--font-family)',
+                                                color: 'var(--text-primary)',
+                                                fontWeight: 700,
+                                                fontSize: '20px',
+                                            }}
+                                        >
+                                            {settingsSubview}
+                                        </span>
+                                    </>
+                                )}
+                            </div>
+                            {/* Show version subtitle on all settings screens */}
                             <span
-                                className="font-semibold"
+                                className="text-[10px]"
                                 style={{
+                                    color: 'var(--text-tertiary)',
                                     fontFamily: 'var(--font-family)',
-                                    color: settingsSubview ? 'var(--text-secondary)' : 'var(--text-primary)',
-                                    fontWeight: 700,
-                                    fontSize: '20px',
+                                    fontWeight: 400,
+                                    letterSpacing: '0.02em',
+                                    lineHeight: 1,
                                 }}
                             >
-                                {t('settings')}
+                                v{__APP_VERSION__}
                             </span>
-                            {settingsSubview && (
-                                <>
-                                    <ChevronLeft
-                                        size={20}
-                                        strokeWidth={2}
-                                        className="mx-1 rotate-180"
-                                        style={{ color: 'var(--text-tertiary)' }}
-                                    />
-                                    <span
-                                        className="font-semibold"
-                                        style={{
-                                            fontFamily: 'var(--font-family)',
-                                            color: 'var(--text-primary)',
-                                            fontWeight: 700,
-                                            fontSize: '20px',
-                                        }}
-                                    >
-                                        {settingsSubview}
-                                    </span>
-                                </>
-                            )}
                         </div>
                     </div>
                 ) : (

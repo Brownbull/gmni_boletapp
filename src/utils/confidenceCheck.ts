@@ -128,6 +128,12 @@ export function shouldShowQuickSave(transaction: Transaction): boolean {
     return false;
   }
 
+  // Story 14.24: Must have at least one valid item to show QuickSaveCard
+  // Transactions without items should always go to EditView for completion
+  if (!hasValidItems(transaction.items)) {
+    return false;
+  }
+
   // Calculate confidence and check threshold
   const confidence = calculateConfidence(transaction);
   return confidence >= QUICK_SAVE_CONFIDENCE_THRESHOLD;
