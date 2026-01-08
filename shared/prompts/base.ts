@@ -12,6 +12,9 @@ import type { StoreCategory, ItemCategory } from './types';
 /**
  * Valid store categories for receipt classification.
  * Order matters - commonly used categories are listed first.
+ *
+ * NOTE: This is the LEGACY set (V1/V2 prompts).
+ * See v3-category-standardization.ts for expanded 32-category set.
  */
 export const STORE_CATEGORIES: StoreCategory[] = [
   'Supermarket',
@@ -23,7 +26,6 @@ export const STORE_CATEGORIES: StoreCategory[] = [
   'PetShop',
   'Medical',
   'Pharmacy',
-  'Technology',
   'StreetVendor',
   'Transport',
   'Services',
@@ -32,18 +34,36 @@ export const STORE_CATEGORIES: StoreCategory[] = [
 
 /**
  * Valid item categories for line item classification.
+ *
+ * NOTE: This is the LEGACY set (V1/V2 prompts) - 9 categories.
+ * See v3-category-standardization.ts for expanded 32-category set.
  */
 export const ITEM_CATEGORIES: ItemCategory[] = [
-  'Fresh Food',
+  'Produce',
   'Pantry',
-  'Drinks',
+  'Beverages',
   'Household',
   'Personal Care',
-  'Pets',
+  'Pet Supplies',
   'Electronics',
-  'Apparel',
+  'Clothing',
   'Other',
 ];
+
+/**
+ * Legacy category mappings for data migration.
+ * Maps old prompt category values to new standardized values.
+ */
+export const LEGACY_ITEM_CATEGORY_MAP: Record<string, string> = {
+  'Fresh Food': 'Produce',
+  'Drinks': 'Beverages',
+  'Pets': 'Pet Supplies',
+  'Apparel': 'Clothing',
+};
+
+export const LEGACY_STORE_CATEGORY_MAP: Record<string, string> = {
+  'Technology': 'Electronics',
+};
 
 /**
  * Store category list formatted for prompt inclusion.
@@ -109,4 +129,20 @@ export function buildBasePrompt(options: {
   }
 
   return prompt;
+}
+
+/**
+ * Normalize a legacy item category to the current standard.
+ * Returns the input unchanged if not a legacy value.
+ */
+export function normalizeItemCategory(category: string): string {
+  return LEGACY_ITEM_CATEGORY_MAP[category] || category;
+}
+
+/**
+ * Normalize a legacy store category to the current standard.
+ * Returns the input unchanged if not a legacy value.
+ */
+export function normalizeStoreCategory(category: string): string {
+  return LEGACY_STORE_CATEGORY_MAP[category] || category;
 }

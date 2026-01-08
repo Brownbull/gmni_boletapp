@@ -86,6 +86,8 @@ const ITEM_GROUP_TRANSLATIONS: Record<string, Record<Language, string>> = {
     'Snacks': { en: 'Snacks', es: 'Snacks' },
     'Beverages': { en: 'Beverages', es: 'Bebidas' },
     'Alcohol': { en: 'Alcohol', es: 'Alcohol' },
+    // Food - Prepared
+    'Prepared Food': { en: 'Prepared Food', es: 'Comida Preparada' },
     // Health & Personal
     'Health & Beauty': { en: 'Health & Beauty', es: 'Salud y Belleza' },
     'Personal Care': { en: 'Personal Care', es: 'Cuidado Personal' },
@@ -108,14 +110,32 @@ const ITEM_GROUP_TRANSLATIONS: Record<string, Record<Language, string>> = {
     'Office & Stationery': { en: 'Office & Stationery', es: 'Oficina y Papeleria' },
     'Crafts & Hobbies': { en: 'Crafts & Hobbies', es: 'Manualidades y Pasatiempos' },
     'Furniture': { en: 'Furniture', es: 'Muebles' },
+    'Musical Instruments': { en: 'Musical Instruments', es: 'Instrumentos Musicales' },
     // Services & Fees
     'Service': { en: 'Service', es: 'Servicio' },
     'Tax & Fees': { en: 'Tax & Fees', es: 'Impuestos y Cargos' },
+    'Subscription': { en: 'Subscription', es: 'Suscripcion' },
+    'Insurance': { en: 'Insurance', es: 'Seguros' },
+    'Loan Payment': { en: 'Loan Payment', es: 'Pago de Prestamo' },
+    'Tickets & Events': { en: 'Tickets & Events', es: 'Entradas y Eventos' },
+    // Vices
     'Tobacco': { en: 'Tobacco', es: 'Tabaco' },
+    'Gambling': { en: 'Gambling', es: 'Apuestas' },
     // Catch-all
     'Other': { en: 'Other', es: 'Otro' },
-    // Legacy variations
+    // Legacy variations (old data compatibility)
     'Condiments': { en: 'Condiments', es: 'Condimentos' },
+    'Fresh Food': { en: 'Fresh Food', es: 'Alimentos Frescos' },
+    'Drinks': { en: 'Drinks', es: 'Bebidas' },
+    'Car': { en: 'Car', es: 'Auto' },
+    // Store categories that might appear as item categories (legacy data)
+    'SportsOutdoors': { en: 'Sports & Outdoors', es: 'Deportes y Exterior' },
+    'HomeGoods': { en: 'Home Goods', es: 'Articulos del Hogar' },
+    'OfficeSupplies': { en: 'Office Supplies', es: 'Articulos de Oficina' },
+    'HealthBeauty': { en: 'Health & Beauty', es: 'Salud y Belleza' },
+    'Butcher': { en: 'Butcher', es: 'Carniceria' },
+    'Jewelry': { en: 'Jewelry', es: 'Joyeria' },
+    'Services': { en: 'Services', es: 'Servicios' },
 };
 
 // ============================================================================
@@ -243,6 +263,39 @@ export function translateItemGroup(group: string, lang: Language): string {
 }
 
 /**
+ * Normalizes an item group/category from any language to its canonical English key.
+ * This is the reverse of translateItemGroup - it converts Spanish (or other)
+ * category names back to English for consistent lookups.
+ *
+ * Example: 'Frutas y Verduras' → 'Produce'
+ *          'Snacks' → 'Snacks'
+ *          'Otro' → 'Other'
+ *
+ * @param group - The item category in any language
+ * @returns The canonical English key for the category
+ */
+export function normalizeItemGroupToEnglish(group: string): string {
+    if (!group) return group;
+
+    // If it's already a valid English key, return it
+    if (ITEM_GROUP_TRANSLATIONS[group]) {
+        return group;
+    }
+
+    // Search for a match in any language and return the English key
+    for (const [englishKey, translations] of Object.entries(ITEM_GROUP_TRANSLATIONS)) {
+        for (const translatedValue of Object.values(translations)) {
+            if (translatedValue === group) {
+                return englishKey;
+            }
+        }
+    }
+
+    // Fallback to original if no match found
+    return group;
+}
+
+/**
  * Translates a subcategory.
  * Best-effort - returns original if no translation exists.
  *
@@ -358,6 +411,80 @@ export const ITEM_CATEGORY_GROUP_EMOJIS: Record<string, string> = {
     'services-fees': '📋',
     'other-item': '📦',
 };
+
+/**
+ * Emoji mapping for individual item categories.
+ * Story 14.24: Each item category gets its own distinct emoji.
+ */
+export const ITEM_CATEGORY_EMOJIS: Record<string, string> = {
+    // Food - Fresh
+    'Produce': '🥬',
+    'Meat & Seafood': '🥩',
+    'Bakery': '🥖',
+    'Dairy & Eggs': '🥛',
+    // Food - Packaged
+    'Pantry': '🥫',
+    'Frozen Foods': '🧊',
+    'Snacks': '🍿',
+    'Beverages': '🥤',
+    'Alcohol': '🍷',
+    // Food - Prepared
+    'Prepared Food': '🍱',
+    // Health & Personal
+    'Health & Beauty': '💄',
+    'Personal Care': '🧴',
+    'Pharmacy': '💊',
+    'Supplements': '💪',
+    'Baby Products': '🍼',
+    // Household
+    'Cleaning Supplies': '🧹',
+    'Household': '🏠',
+    'Pet Supplies': '🐾',
+    // Non-Food Retail
+    'Clothing': '👕',
+    'Electronics': '📱',
+    'Hardware': '🔧',
+    'Garden': '🌱',
+    'Automotive': '🚗',
+    'Sports & Outdoors': '⚽',
+    'Toys & Games': '🎮',
+    'Books & Media': '📚',
+    'Office & Stationery': '📎',
+    'Crafts & Hobbies': '🎨',
+    'Furniture': '🪑',
+    'Musical Instruments': '🎸',
+    // Services & Fees
+    'Service': '🔧',
+    'Tax & Fees': '📋',
+    'Subscription': '📅',
+    'Insurance': '🛡️',
+    'Loan Payment': '💳',
+    'Tickets & Events': '🎟️',
+    // Vices
+    'Tobacco': '🚬',
+    'Gambling': '🎰',
+    // Catch-all
+    'Other': '📦',
+    // Legacy variations
+    'Condiments': '🧂',
+    'Fresh Food': '🥬',
+    'Drinks': '🥤',
+    'Car': '🚗',
+};
+
+/**
+ * Gets the emoji for a specific item category.
+ * Falls back to group emoji if category not found, then to default.
+ */
+export function getItemCategoryEmoji(category: string): string {
+    if (!category) return '📦';
+    // First try exact category match
+    if (ITEM_CATEGORY_EMOJIS[category]) {
+        return ITEM_CATEGORY_EMOJIS[category];
+    }
+    // Fallback to default
+    return '📦';
+}
 
 /**
  * Description/subtitle for each item category group.

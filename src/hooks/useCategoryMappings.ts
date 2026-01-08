@@ -1,6 +1,23 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+/**
+ * useCategoryMappings Hook
+ *
+ * Story 14.29: React Query Migration
+ * Epic 14: Core Implementation
+ *
+ * Real-time subscription to user's category mappings with React Query caching.
+ * Provides CRUD operations for category learning.
+ *
+ * Migration benefits:
+ * - Settings navigation shows instantly (cached data)
+ * - No loading spinner on return visits
+ * - Shared cache across components
+ */
+
+import { useState, useCallback, useMemo } from 'react';
 import { User } from 'firebase/auth';
 import { Services } from './useAuth';
+import { useFirestoreSubscription } from './useFirestoreSubscription';
+import { QUERY_KEYS } from '../lib/queryKeys';
 import {
     subscribeToCategoryMappings,
     saveCategoryMapping,
@@ -36,33 +53,28 @@ export function useCategoryMappings(
     user: User | null,
     services: Services | null
 ): UseCategoryMappingsReturn {
-    const [mappings, setMappings] = useState<CategoryMapping[]>([]);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
+    const enabled = !!user && !!services;
 
-    // Subscribe to mappings on mount
-    useEffect(() => {
-        if (!user || !services) {
-            setMappings([]);
-            setLoading(false);
-            return;
-        }
+    // Create the query key
+    const queryKey = useMemo(
+        () => enabled
+            ? QUERY_KEYS.mappings.category(user!.uid, services!.appId)
+            : ['mappings', 'category', '', ''],
+        [enabled, user?.uid, services?.appId]
+    );
 
-        setLoading(true);
-        setError(null);
-
-        const unsubscribe = subscribeToCategoryMappings(
-            services.db,
-            user.uid,
-            services.appId,
-            (docs) => {
-                setMappings(docs);
-                setLoading(false);
-            }
-        );
-
-        return unsubscribe;
-    }, [user, services]);
+    // Subscribe to mappings with React Query caching
+    const { data: mappings = [], isLoading } = useFirestoreSubscription<CategoryMapping[]>(
+        queryKey,
+        (callback) => subscribeToCategoryMappings(
+            services!.db,
+            user!.uid,
+            services!.appId,
+            callback
+        ),
+        { enabled }
+    );
 
     // Save a new mapping or update existing
     const saveMapping = useCallback(
@@ -174,13 +186,13 @@ export function useCategoryMappings(
     return useMemo(
         () => ({
             mappings,
-            loading,
+            loading: isLoading,
             error,
             saveMapping,
             deleteMapping,
             updateMapping,
             findMatch
         }),
-        [mappings, loading, error, saveMapping, deleteMapping, updateMapping, findMatch]
+        [mappings, isLoading, error, saveMapping, deleteMapping, updateMapping, findMatch]
     );
 }

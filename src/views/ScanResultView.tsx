@@ -19,7 +19,8 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { ChevronLeft, X, Calendar, Clock, Plus, Check, Pencil, Camera, Scan } from 'lucide-react';
+import { ChevronLeft, X, Calendar, Clock, Plus, Check, Pencil, Camera, Zap, Info, ShoppingCart, AlertTriangle, ArrowLeft, Trash2 } from 'lucide-react';
+import type { UserCredits } from '../types/scan';
 import { Transaction, TransactionItem, StoreCategory, ItemCategory } from '../types/transaction';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { CategoryBadge } from '../components/CategoryBadge';
@@ -89,6 +90,16 @@ export interface ScanResultViewProps {
   onPhotoSelect?: (file: File) => void;
   /** Callback when user clicks process button (after photo selected) */
   onProcessScan?: () => void;
+  /** User's credit balance (normal + super credits) - Story 14.15 Session 10 */
+  credits?: UserCredits;
+  /** Callback to navigate to settings subscription page to buy credits */
+  onBuyCredits?: () => void;
+  /** Error message from scan processing (Story 14.15) */
+  scanError?: string | null;
+  /** Callback to retry after error (Story 14.15) */
+  onRetry?: () => void;
+  /** Whether a credit was already used for this scan (shows warning on cancel) - Story 14.15 Session 13 */
+  creditUsed?: boolean;
 }
 
 /**
@@ -112,10 +123,42 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
   lang = 'es',
   onPhotoSelect,
   onProcessScan,
+  credits,
+  onBuyCredits,
+  scanError,
+  onRetry,
+  creditUsed = false,
 }) => {
   const prefersReducedMotion = useReducedMotion();
   const merchantInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Credit info modal state - Story 14.15 Session 10
+  const [showCreditInfo, setShowCreditInfo] = useState(false);
+
+  // Cancel confirmation state - Story 14.15 Session 13
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+
+  // Determine if we should warn on cancel (credit was used for scan)
+  // Credit is used when we have a thumbnailUrl (successful scan) or creditUsed prop is true
+  const shouldWarnOnCancel = creditUsed || !!thumbnailUrl;
+
+  // Handle cancel with optional confirmation - Story 14.15 Session 13
+  const handleCancelClick = useCallback(() => {
+    if (shouldWarnOnCancel) {
+      setShowCancelConfirm(true);
+    } else {
+      onCancel();
+    }
+  }, [shouldWarnOnCancel, onCancel]);
+
+  // Format credits display (e.g., 1234 -> "1.2K")
+  const formatCreditsDisplay = (count: number): string => {
+    if (count >= 1000) {
+      return `${(count / 1000).toFixed(1).replace(/\.0$/, '')}K`;
+    }
+    return String(count);
+  };
 
   // Handle file input change
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -207,9 +250,20 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
     setOpenDropdown(openDropdown === name ? null : name);
   };
 
+  // Validation: require total > 0 and at least one item with price > 0
+  const hasValidTotal = total > 0;
+  const hasValidItem = items.some(item => item.price > 0);
+  const canSave = hasValidTotal && hasValidItem;
+
   // Handle save - with input sanitization for security
   const handleSave = useCallback(async () => {
     if (isSaving || isProcessing) return;
+
+    // Validate before saving - need total and at least one item with price
+    if (!canSave) {
+      // This shouldn't happen since button is disabled, but guard anyway
+      return;
+    }
 
     // Sanitize all user inputs before saving
     const sanitizedMerchant = sanitizeMerchantName(merchantName) || t('unknown') || 'Desconocido';
@@ -240,7 +294,7 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
     };
 
     await onSave(newTransaction);
-  }, [transaction, merchantName, category, city, country, date, time, total, selectedCurrency, items, onSave, isSaving, isProcessing, t]);
+  }, [transaction, merchantName, category, city, country, date, time, total, selectedCurrency, items, onSave, isSaving, isProcessing, t, canSave]);
 
   // Add new item
   const handleAddItem = () => {
@@ -344,7 +398,7 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
           {/* Left side: Back button + Title */}
           <div className="flex items-center gap-0">
             <button
-              onClick={onCancel}
+              onClick={handleCancelClick}
               className="min-w-10 min-h-10 flex items-center justify-center -ml-1"
               aria-label={t('back')}
               style={{ color: 'var(--text-primary)' }}
@@ -363,15 +417,55 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
               {t('scanViewTitle') || 'Escanea'}
             </h1>
           </div>
-          {/* Right side: Close button */}
-          <button
-            onClick={onCancel}
-            className="min-w-10 min-h-10 flex items-center justify-center"
-            aria-label={t('cancel')}
-            style={{ color: 'var(--text-primary)' }}
-          >
-            <X size={24} strokeWidth={2} />
-          </button>
+          {/* Right side: Credit badges + Close button */}
+          <div className="flex items-center gap-2">
+            {/* Credit badges - tappable to show info modal */}
+            {credits && (
+              <button
+                onClick={() => setShowCreditInfo(true)}
+                className="flex items-center gap-1.5 px-2 py-1 rounded-full transition-all active:scale-95"
+                style={{
+                  backgroundColor: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-light)',
+                }}
+                aria-label={t('creditInfo') || 'Credit information'}
+              >
+                {/* Super credits (gold) */}
+                <div
+                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                  style={{
+                    backgroundColor: '#fef3c7', // amber-100
+                    color: '#92400e', // amber-800
+                  }}
+                >
+                  <Zap size={10} strokeWidth={2.5} />
+                  <span>{formatCreditsDisplay(credits.superRemaining)}</span>
+                </div>
+                {/* Normal credits (theme color) */}
+                <div
+                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                  style={{
+                    backgroundColor: 'var(--primary-light)',
+                    color: 'var(--primary)',
+                  }}
+                >
+                  <Camera size={10} strokeWidth={2.5} />
+                  <span>{formatCreditsDisplay(credits.remaining)}</span>
+                </div>
+                {/* Info icon */}
+                <Info size={12} style={{ color: 'var(--text-tertiary)' }} />
+              </button>
+            )}
+            {/* Close button */}
+            <button
+              onClick={handleCancelClick}
+              className="min-w-10 min-h-10 flex items-center justify-center"
+              aria-label={t('cancel')}
+              style={{ color: 'var(--text-primary)' }}
+            >
+              <X size={24} strokeWidth={2} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -685,11 +779,19 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
                   }
                   @keyframes process-pulse {
                     0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
-                    50% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+                    50% { transform: scale(1.02); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
                   }
                   @keyframes processing-spin {
                     0% { transform: rotate(0deg); }
                     100% { transform: rotate(360deg); }
+                  }
+                  @keyframes scan-icon-pulse {
+                    0%, 100% { transform: scale(1); }
+                    50% { transform: scale(1.05); }
+                  }
+                  @keyframes scan-shine-sweep {
+                    0% { left: -100%; }
+                    50%, 100% { left: 100%; }
                   }
                 `}
               </style>
@@ -717,6 +819,33 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
                     <Check size={14} className="text-white" strokeWidth={3} />
                   </div>
                 </div>
+              ) : scanError && pendingImageUrl ? (
+                /* STATE 2b: Error - Processing failed, show retry */
+                <button
+                  onClick={onRetry || onProcessScan}
+                  className="w-full h-full rounded-xl overflow-hidden relative cursor-pointer"
+                  style={{ border: '2px solid var(--error)' }}
+                  aria-label={t('retry') || 'Reintentar'}
+                >
+                  {/* Preview image with error overlay */}
+                  <img
+                    src={pendingImageUrl}
+                    alt={t('receiptThumbnail') || 'Receipt'}
+                    className="w-full h-full object-cover opacity-50"
+                  />
+                  {/* Error overlay */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/50">
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: 'var(--error)' }}
+                    >
+                      <X size={18} className="text-white" strokeWidth={2.5} />
+                    </div>
+                    <span className="text-[9px] font-bold uppercase text-white drop-shadow-sm">
+                      {t('retry') || 'Reintentar'}
+                    </span>
+                  </div>
+                </button>
               ) : pendingImageUrl ? (
                 /* STATE 2: Pending - Photo selected, ready to process */
                 <button
@@ -727,17 +856,17 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
                     border: '2px solid var(--success)',
                     animation: !prefersReducedMotion && !isProcessing ? 'process-pulse 1.5s ease-in-out infinite' : 'none',
                   }}
-                  aria-label={t('processScan') || 'Procesar'}
+                  aria-label={t('scan') || 'Escanear'}
                 >
                   {/* Preview image with overlay */}
                   <img
                     src={pendingImageUrl}
                     alt={t('receiptThumbnail') || 'Receipt'}
                     className="w-full h-full object-cover"
-                    style={{ opacity: isProcessing ? 0.5 : 0.8 }}
+                    style={{ opacity: isProcessing ? 0.4 : 0.6 }}
                   />
                   {/* Process overlay */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/30">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/40">
                     {isProcessing ? (
                       /* Processing spinner */
                       <>
@@ -747,22 +876,59 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
                             animation: !prefersReducedMotion ? 'processing-spin 1s linear infinite' : 'none',
                           }}
                         />
-                        <span className="text-[9px] font-semibold uppercase text-white">
+                        <span
+                          className="text-[9px] font-semibold uppercase text-white"
+                          style={{ fontFamily: 'var(--font-family)' }}
+                        >
                           {t('processing') || 'Procesando'}
                         </span>
                       </>
                     ) : (
-                      /* Ready to process button */
+                      /* Ready to process - Camera icon with shine effect */
                       <>
+                        {/* Camera icon circle with shine */}
                         <div
-                          className="w-9 h-9 rounded-full flex items-center justify-center"
-                          style={{ backgroundColor: 'var(--success)' }}
+                          className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg overflow-hidden relative"
+                          style={{
+                            backgroundColor: 'var(--success)',
+                            animation: !prefersReducedMotion ? 'scan-icon-pulse 1.5s ease-in-out infinite' : 'none',
+                          }}
                         >
-                          <Scan size={18} className="text-white" strokeWidth={2.5} />
+                          <Camera size={24} className="text-white relative z-10" strokeWidth={2} />
+                          {/* Shine sweep effect */}
+                          {!prefersReducedMotion && (
+                            <div
+                              className="absolute top-0 w-full h-full pointer-events-none"
+                              style={{
+                                background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+                                animation: 'scan-shine-sweep 2s ease-in-out infinite',
+                              }}
+                            />
+                          )}
                         </div>
-                        <span className="text-[9px] font-bold uppercase text-white drop-shadow-sm">
-                          {t('processScan') || 'Procesar'}
-                        </span>
+                        {/* Escanear pill with shine */}
+                        <div
+                          className="px-3 py-1 rounded-full shadow-md overflow-hidden relative"
+                          style={{ backgroundColor: 'var(--success)', marginTop: '-2px' }}
+                        >
+                          <span
+                            className="text-[11px] font-semibold text-white relative z-10"
+                            style={{ fontFamily: 'var(--font-family)' }}
+                          >
+                            {t('scan') || 'Escanear'}
+                          </span>
+                          {/* Shine sweep effect */}
+                          {!prefersReducedMotion && (
+                            <div
+                              className="absolute top-0 w-full h-full pointer-events-none"
+                              style={{
+                                background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+                                animation: 'scan-shine-sweep 2s ease-in-out infinite',
+                                animationDelay: '0.3s',
+                              }}
+                            />
+                          )}
+                        </div>
                       </>
                     )}
                   </div>
@@ -778,7 +944,7 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
                     border: '2px dashed var(--primary)',
                     animation: !prefersReducedMotion && !isProcessing ? 'scan-pulse-border 2s ease-in-out infinite' : 'none',
                   }}
-                  aria-label={t('scan') || 'Escanear'}
+                  aria-label={t('attach') || 'Adjuntar'}
                 >
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center"
@@ -794,10 +960,10 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
                     />
                   </div>
                   <span
-                    className="text-[10px] font-semibold uppercase tracking-wide"
-                    style={{ color: 'var(--primary)' }}
+                    className="text-[10px] font-semibold tracking-wide"
+                    style={{ color: 'var(--primary)', fontFamily: 'var(--font-family)' }}
                   >
-                    {t('scan') || 'Escanear'}
+                    {t('attach') || 'Adjuntar'}
                   </span>
                 </button>
               )}
@@ -843,9 +1009,17 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
                     )}
                   </div>
                 </div>
-                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                  {formatCurrency(item.price, selectedCurrency)}
-                </span>
+                {/* Story 14.15b: Show quantity if > 1 */}
+                <div className="flex items-center gap-1.5">
+                  {(item.qty ?? 1) > 1 && (
+                    <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>
+                      x{item.qty}
+                    </span>
+                  )}
+                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    {formatCurrency(item.price, selectedCurrency)}
+                  </span>
+                </div>
               </div>
             ))}
 
@@ -900,16 +1074,18 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
               </span>
             </div>
           ) : (
-            /* Save Button */
+            /* Save Button - disabled when no valid total or items */
             <button
               onClick={handleSave}
-              disabled={isSaving}
+              disabled={isSaving || !canSave}
               className="w-full h-11 rounded-xl font-medium text-white flex items-center justify-center gap-1.5 text-sm transition-all"
               style={{
-                backgroundColor: isSaving ? 'var(--success-muted, #86efac)' : 'var(--success, #22c55e)',
-                opacity: isSaving ? 0.7 : 1,
+                backgroundColor: (isSaving || !canSave) ? 'var(--success-muted, #86efac)' : 'var(--success, #22c55e)',
+                opacity: (isSaving || !canSave) ? 0.5 : 1,
                 transform: isSaving && !prefersReducedMotion ? 'scale(0.98)' : 'scale(1)',
+                cursor: !canSave ? 'not-allowed' : 'pointer',
               }}
+              title={!canSave ? (t('requireTotalAndItem') || 'Se requiere un total y al menos un ítem con precio') : undefined}
             >
               <Check size={16} strokeWidth={2.5} />
               {isSaving ? (t('saving') || 'Guardando...') : (t('saveTransaction') || 'Guardar Transacción')}
@@ -1163,6 +1339,209 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
                     {translateItemGroup(cat, lang)}
                   </button>
                 ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Credit Info Modal - Story 14.15 Session 10 */}
+      {showCreditInfo && credits && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowCreditInfo(false)}
+          />
+          {/* Modal */}
+          <div
+            className="relative w-[calc(100%-32px)] max-w-sm rounded-2xl shadow-xl overflow-hidden"
+            style={{
+              backgroundColor: 'var(--bg-secondary)',
+              animation: prefersReducedMotion ? 'none' : 'modalFadeIn 0.2s ease-out',
+            }}
+          >
+            {/* Header */}
+            <div
+              className="flex justify-between items-center px-5 py-4"
+              style={{ borderBottom: '1px solid var(--border-light)' }}
+            >
+              <span className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+                {t('creditInfoTitle') || 'Tus Créditos'}
+              </span>
+              <button
+                onClick={() => setShowCreditInfo(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: 'var(--bg-tertiary)' }}
+                aria-label={t('close') || 'Cerrar'}
+              >
+                <X size={18} style={{ color: 'var(--text-primary)' }} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-5 space-y-4">
+              {/* Normal Credits */}
+              <div
+                className="flex items-start gap-3 p-3 rounded-xl"
+                style={{ backgroundColor: 'var(--primary-light)' }}
+              >
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: 'var(--primary)' }}
+                >
+                  <Camera size={20} className="text-white" strokeWidth={2} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline justify-between gap-2 mb-1">
+                    <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
+                      {t('normalCredits') || 'Créditos Normales'}
+                    </span>
+                    <span className="font-bold text-lg" style={{ color: 'var(--primary)' }}>
+                      {credits.remaining.toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    {t('normalCreditsDesc') || '1 crédito = 1 foto individual escaneada'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Super Credits */}
+              <div
+                className="flex items-start gap-3 p-3 rounded-xl"
+                style={{ backgroundColor: '#fef3c7' }} // amber-100
+              >
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: '#f59e0b' }} // amber-500
+                >
+                  <Zap size={20} className="text-white" strokeWidth={2} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline justify-between gap-2 mb-1">
+                    <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
+                      {t('superCredits') || 'Super Créditos'}
+                    </span>
+                    <span className="font-bold text-lg" style={{ color: '#d97706' }}> {/* amber-600 */}
+                      {credits.superRemaining.toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    {t('superCreditsDesc') || '1 crédito = escaneo en lote de hasta 10 fotos'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Usage stats */}
+              <div
+                className="text-xs text-center pt-2"
+                style={{
+                  color: 'var(--text-tertiary)',
+                  borderTop: '1px solid var(--border-light)',
+                }}
+              >
+                {t('creditsUsed') || 'Usados'}: {credits.used} {t('normal') || 'normales'}, {credits.superUsed} {t('super') || 'super'}
+              </div>
+
+              {/* Buy more credits button */}
+              {onBuyCredits && (
+                <button
+                  onClick={() => {
+                    setShowCreditInfo(false);
+                    onBuyCredits();
+                  }}
+                  className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                  style={{
+                    backgroundColor: 'var(--primary)',
+                    color: 'white',
+                  }}
+                >
+                  <ShoppingCart size={18} strokeWidth={2} />
+                  {t('buyMoreCredits') || 'Comprar más créditos'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Confirmation Modal - Story 14.15 Session 13 */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowCancelConfirm(false)}
+          />
+          {/* Modal */}
+          <div
+            className="relative w-[calc(100%-32px)] max-w-sm rounded-2xl shadow-xl overflow-hidden"
+            style={{
+              backgroundColor: 'var(--bg-secondary)',
+              animation: prefersReducedMotion ? 'none' : 'modalFadeIn 0.2s ease-out',
+            }}
+          >
+            {/* Warning Header */}
+            <div
+              className="flex items-center gap-3 px-5 py-4"
+              style={{
+                backgroundColor: 'rgba(251, 191, 36, 0.15)',
+                borderBottom: '1px solid rgba(251, 191, 36, 0.3)',
+              }}
+            >
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: '#f59e0b' }}
+              >
+                <AlertTriangle size={20} className="text-white" strokeWidth={2} />
+              </div>
+              <div>
+                <div className="font-semibold text-sm" style={{ color: '#d97706' }}>
+                  {t('cancelScanTitle') || '¿Cancelar escaneo?'}
+                </div>
+                <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  {t('creditAlreadyUsed') || 'Ya usaste 1 crédito en este escaneo'}
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-5">
+              <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+                {t('cancelScanWarning') || 'Si cancelas ahora, perderás el crédito usado y los datos escaneados.'}
+              </p>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                {/* Go Back Button */}
+                <button
+                  onClick={() => setShowCancelConfirm(false)}
+                  className="flex-1 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                  style={{
+                    backgroundColor: 'var(--bg-tertiary)',
+                    color: 'var(--text-primary)',
+                  }}
+                >
+                  <ArrowLeft size={16} strokeWidth={2} />
+                  {t('goBack') || 'Volver'}
+                </button>
+
+                {/* Cancel Anyway Button */}
+                <button
+                  onClick={() => {
+                    setShowCancelConfirm(false);
+                    onCancel();
+                  }}
+                  className="flex-1 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                  style={{
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    color: '#ef4444',
+                  }}
+                >
+                  <Trash2 size={16} strokeWidth={2} />
+                  {t('cancelAnyway') || 'Cancelar'}
+                </button>
               </div>
             </div>
           </div>

@@ -32,7 +32,8 @@
  */
 
 import { describe, it, expect, beforeAll, beforeEach, afterEach, afterAll, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+// Story 14.29: Use custom render with QueryClientProvider
+import { render, screen, waitFor } from '../setup/test-utils';
 import '@testing-library/jest-dom';
 import {
   setupFirebaseEmulator,

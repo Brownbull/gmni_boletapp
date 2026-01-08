@@ -58,8 +58,8 @@ export interface BatchReviewViewProps {
   onReceiptUpdated?: (receiptId: string, transaction: Transaction) => void;
   /** Called when user cancels and returns to batch capture */
   onBack: () => void;
-  /** Called when all receipts are saved successfully */
-  onSaveComplete: (savedTransactionIds: string[]) => void;
+  /** Called when all receipts are saved successfully. Story 14.15: Now includes saved transactions. */
+  onSaveComplete: (savedTransactionIds: string[], savedTransactions: Transaction[]) => void;
   /** Function to save a transaction to Firestore */
   saveTransaction: (transaction: Transaction) => Promise<string>;
   /** Called when user wants to retry a failed receipt */
@@ -150,11 +150,11 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
     setConfirmDiscardId(null);
   }, []);
 
-  // Handle save all
+  // Handle save all - Story 14.15: Now passes saved transactions for batch complete modal
   const handleSaveAll = useCallback(async () => {
     const result = await saveAll(saveTransaction);
     if (result.saved.length > 0) {
-      onSaveComplete(result.saved);
+      onSaveComplete(result.saved, result.savedTransactions);
     }
   }, [saveAll, saveTransaction, onSaveComplete]);
 

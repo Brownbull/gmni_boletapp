@@ -174,7 +174,13 @@ export const BatchSummaryCard: React.FC<BatchSummaryCardProps> = ({
               {topItems.map((item, idx) => (
                 <div key={idx} className="flex justify-between gap-2 truncate">
                   <span className="truncate">{item.name}</span>
-                  <span className="flex-shrink-0">{formatCurrency(item.price || 0, currency)}</span>
+                  {/* Story 14.15b: Show quantity if > 1 */}
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {(item.qty ?? 1) > 1 && (
+                      <span className="opacity-60">x{item.qty}</span>
+                    )}
+                    <span>{formatCurrency(item.price || 0, currency)}</span>
+                  </div>
                 </div>
               ))}
               {itemCount > 3 && (

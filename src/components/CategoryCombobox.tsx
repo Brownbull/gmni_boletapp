@@ -274,9 +274,16 @@ export const CategoryCombobox: React.FC<CategoryComboboxProps> = ({
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     {value && (
-                        <button
-                            type="button"
+                        <span
+                            role="button"
+                            tabIndex={0}
                             onClick={handleClear}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    handleClear(e as unknown as React.MouseEvent);
+                                }
+                            }}
                             style={{
                                 padding: '4px',
                                 display: 'flex',
@@ -290,7 +297,7 @@ export const CategoryCombobox: React.FC<CategoryComboboxProps> = ({
                             aria-label="Clear selection"
                         >
                             <X size={16} />
-                        </button>
+                        </span>
                     )}
                     <ChevronDown
                         size={18}

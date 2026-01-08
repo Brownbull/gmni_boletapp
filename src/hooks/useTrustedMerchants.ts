@@ -1,6 +1,24 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+/**
+ * useTrustedMerchants Hook
+ *
+ * Story 14.29: React Query Migration
+ * Story 11.4: Trust Merchant System
+ * Epic 14: Core Implementation
+ *
+ * Real-time subscription to user's trusted merchants with React Query caching.
+ * Provides trust lifecycle operations.
+ *
+ * Migration benefits:
+ * - Settings navigation shows instantly (cached data)
+ * - No loading spinner on return visits
+ * - Shared cache across components
+ */
+
+import { useState, useCallback, useMemo } from 'react';
 import { User } from 'firebase/auth';
 import { Services } from './useAuth';
+import { useFirestoreSubscription } from './useFirestoreSubscription';
+import { QUERY_KEYS } from '../lib/queryKeys';
 import {
     subscribeToTrustedMerchants,
     recordScan,
@@ -68,33 +86,28 @@ export function useTrustedMerchants(
     user: User | null,
     services: Services | null
 ): UseTrustedMerchantsReturn {
-    const [merchants, setMerchants] = useState<TrustedMerchant[]>([]);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
+    const enabled = !!user && !!services;
 
-    // Subscribe to trusted merchants on mount
-    useEffect(() => {
-        if (!user || !services) {
-            setMerchants([]);
-            setLoading(false);
-            return;
-        }
+    // Create the query key
+    const queryKey = useMemo(
+        () => enabled
+            ? QUERY_KEYS.trustedMerchants(user!.uid, services!.appId)
+            : ['trustedMerchants', '', ''],
+        [enabled, user?.uid, services?.appId]
+    );
 
-        setLoading(true);
-        setError(null);
-
-        const unsubscribe = subscribeToTrustedMerchants(
-            services.db,
-            user.uid,
-            services.appId,
-            (docs) => {
-                setMerchants(docs);
-                setLoading(false);
-            }
-        );
-
-        return unsubscribe;
-    }, [user, services]);
+    // Subscribe to trusted merchants with React Query caching
+    const { data: merchants = [], isLoading } = useFirestoreSubscription<TrustedMerchant[]>(
+        queryKey,
+        (callback) => subscribeToTrustedMerchants(
+            services!.db,
+            user!.uid,
+            services!.appId,
+            callback
+        ),
+        { enabled }
+    );
 
     // Computed: only trusted merchants
     const trustedMerchants = useMemo(
@@ -270,7 +283,7 @@ export function useTrustedMerchants(
         () => ({
             merchants,
             trustedMerchants,
-            loading,
+            loading: isLoading,
             error,
             recordMerchantScan,
             checkTrusted,
@@ -283,7 +296,7 @@ export function useTrustedMerchants(
         [
             merchants,
             trustedMerchants,
-            loading,
+            isLoading,
             error,
             recordMerchantScan,
             checkTrusted,
