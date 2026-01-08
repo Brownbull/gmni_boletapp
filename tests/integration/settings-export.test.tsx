@@ -21,13 +21,28 @@ import type { Transaction } from '../../src/types/transaction';
 // Mock translations
 const mockTranslations: Record<string, string> = {
   settings: 'Settings',
-  downloadAllData: 'Download All Your Data',
+  exportData: 'Export Data',
+  exportDataDesc: 'Download your transactions as CSV',
   exportingData: 'Exporting...',
   noTransactionsToExport: 'No transactions to export',
   exportSuccess: 'Export complete',
   wipe: 'Factory Reset',
   wipeConfirm: 'Delete ALL data?',
   signout: 'Sign Out',
+  // Additional translations used by CuentaView
+  localUser: 'Local User',
+  localUserDesc: 'Data stored on device',
+  importData: 'Import Data',
+  importDataDesc: 'Restore from backup',
+  selectFile: 'Select File',
+  cloudSync: 'Cloud Sync',
+  cloudSyncDesc: 'Sync across devices',
+  soonBadge: 'Soon',
+  resetAll: 'Reset All',
+  resetAllDesc: 'Delete all local data',
+  resetAllBtn: 'Reset',
+  signOutDesc: 'Sign out of your account',
+  signOutBtn: 'Sign Out',
 };
 
 const mockT = (key: string) => mockTranslations[key] || key;
@@ -56,8 +71,8 @@ describe('Settings Export - Story 5.2 (via CuentaView)', () => {
     it('should render export button with correct label', () => {
       render(<CuentaView {...defaultProps} />);
 
-      // Check button is visible with translated text
-      expect(screen.getByText('Download All Your Data')).toBeInTheDocument();
+      // Check label is visible with translated text (component uses exportData key)
+      expect(screen.getByText('Export Data')).toBeInTheDocument();
     });
 
     it('should render CSV button text when not exporting', () => {
@@ -269,7 +284,7 @@ describe('Settings Export - Story 5.2 (via CuentaView)', () => {
     it('should display Spanish translation for download button', () => {
       const spanishTranslations: Record<string, string> = {
         ...mockTranslations,
-        downloadAllData: 'Descargar Todos Tus Datos',
+        exportData: 'Exportar Datos',
         exportingData: 'Exportando...',
       };
 
@@ -280,13 +295,13 @@ describe('Settings Export - Story 5.2 (via CuentaView)', () => {
         />
       );
 
-      expect(screen.getByText('Descargar Todos Tus Datos')).toBeInTheDocument();
+      expect(screen.getByText('Exportar Datos')).toBeInTheDocument();
     });
 
     it('should display Spanish loading text when exporting', () => {
       const spanishTranslations: Record<string, string> = {
         ...mockTranslations,
-        downloadAllData: 'Descargar Todos Tus Datos',
+        exportData: 'Exportar Datos',
         exportingData: 'Exportando...',
       };
 
