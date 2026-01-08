@@ -21,6 +21,7 @@ import type { Language } from './translations';
 const STORE_CATEGORY_TRANSLATIONS: Record<string, Record<Language, string>> = {
     // Food & Dining
     'Supermarket': { en: 'Supermarket', es: 'Supermercado' },
+    'Almacen': { en: 'Corner Store', es: 'Almacén' },
     'Restaurant': { en: 'Restaurant', es: 'Restaurante' },
     'Bakery': { en: 'Bakery', es: 'Panaderia' },
     'Butcher': { en: 'Butcher', es: 'Carniceria' },

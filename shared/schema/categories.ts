@@ -26,6 +26,7 @@
 export const STORE_CATEGORIES = [
   // ── Food & Dining ──
   'Supermarket',      // Grocery stores, hypermarkets
+  'Almacen',          // Corner stores, bodegas, small neighborhood shops
   'Restaurant',       // Restaurants, cafes, bars, fast food
   'Bakery',           // Bakeries, pastry shops
   'Butcher',          // Butcher shops, meat markets
