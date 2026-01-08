@@ -15,7 +15,9 @@ import {
   where,
   getDocs,
   serverTimestamp,
-  Timestamp
+  Timestamp,
+  writeBatch,
+  limit
 } from 'firebase/firestore';
 
 /**
@@ -85,6 +87,7 @@ export async function deleteFCMToken(
 
 /**
  * Delete all FCM tokens for a user (e.g., on sign-out from all devices)
+ * Story 14.26: Uses writeBatch for atomic, cost-efficient deletion
  *
  * @param db Firestore instance
  * @param userId User ID
@@ -99,8 +102,19 @@ export async function deleteAllFCMTokens(
   const tokensRef = collection(db, collectionPath);
   const snapshot = await getDocs(tokensRef);
 
-  const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
-  await Promise.all(deletePromises);
+  if (snapshot.empty) return;
+
+  // Story 14.26: Use writeBatch with chunking for atomic deletion
+  // Firestore batch limit is 500 operations (users typically have <10 tokens)
+  const BATCH_SIZE = 500;
+  const docs = snapshot.docs;
+
+  for (let i = 0; i < docs.length; i += BATCH_SIZE) {
+    const chunk = docs.slice(i, i + BATCH_SIZE);
+    const batch = writeBatch(db);
+    chunk.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+  }
 }
 
 /**
@@ -119,7 +133,8 @@ export async function tokenExists(
 ): Promise<boolean> {
   const collectionPath = getTokensCollectionPath(appId, userId);
   const tokensRef = collection(db, collectionPath);
-  const q = query(tokensRef, where('token', '==', token));
+  // Story 14.26: Add limit(1) to reduce reads - we only need to know if it exists
+  const q = query(tokensRef, where('token', '==', token), limit(1));
   const snapshot = await getDocs(q);
 
   return !snapshot.empty;

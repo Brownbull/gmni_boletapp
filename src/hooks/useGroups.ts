@@ -1,11 +1,17 @@
 /**
  * useGroups Hook
  *
+ * Story 14.29: React Query Migration
  * Story 14.15: Transaction Selection Mode & Groups
  * Epic 14: Core Implementation
  *
- * Subscribes to real-time updates of user's transaction groups.
+ * Subscribes to real-time updates of user's transaction groups with React Query caching.
  * Provides a list of groups, loading state, and error handling.
+ *
+ * Migration benefits:
+ * - Group selector shows instantly (cached data)
+ * - No loading spinner on return visits
+ * - Shared cache across components
  *
  * @example
  * ```tsx
@@ -23,8 +29,10 @@
  * ```
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { getFirestore } from 'firebase/firestore';
+import { useFirestoreSubscription } from './useFirestoreSubscription';
+import { QUERY_KEYS } from '../lib/queryKeys';
 import {
     subscribeToGroups,
     createGroup,
@@ -53,43 +61,35 @@ export interface UseGroupsReturn {
  * @returns Group data and loading/error states
  */
 export function useGroups(userId: string | null, appId: string): UseGroupsReturn {
-    const [groups, setGroups] = useState<TransactionGroup[]>([]);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const enabled = !!userId;
 
-    // Subscribe to groups updates
-    useEffect(() => {
-        // Don't subscribe if no user
-        if (!userId) {
-            setGroups([]);
-            setLoading(false);
-            return;
-        }
+    // Create the query key
+    const queryKey = useMemo(
+        () => enabled
+            ? QUERY_KEYS.groups(userId!, appId)
+            : ['groups', '', ''],
+        [enabled, userId, appId]
+    );
 
-        setLoading(true);
-        setError(null);
-
-        const db = getFirestore();
-
-        const unsubscribe = subscribeToGroups(
-            db,
-            userId,
-            appId,
-            (updatedGroups) => {
-                setGroups(updatedGroups);
-                setLoading(false);
-            },
-            (err) => {
-                console.error('[useGroups] Subscription error:', err);
-                setError(err.message);
-                setLoading(false);
-            }
-        );
-
-        return () => {
-            unsubscribe();
-        };
-    }, [userId, appId]);
+    // Subscribe to groups with React Query caching
+    const { data: groups = [], isLoading } = useFirestoreSubscription<TransactionGroup[]>(
+        queryKey,
+        (callback) => {
+            const db = getFirestore();
+            return subscribeToGroups(
+                db,
+                userId!,
+                appId,
+                callback,
+                (err) => {
+                    console.error('[useGroups] Subscription error:', err);
+                    setError(err.message);
+                }
+            );
+        },
+        { enabled }
+    );
 
     /**
      * Create a new group.
@@ -129,7 +129,7 @@ export function useGroups(userId: string | null, appId: string): UseGroupsReturn
 
     return {
         groups,
-        loading,
+        loading: isLoading,
         error,
         addGroup,
         recalculateCounts,

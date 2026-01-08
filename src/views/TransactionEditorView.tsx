@@ -39,7 +39,7 @@ import {
 } from 'lucide-react';
 import { formatCreditsDisplay } from '../services/userCreditsService';
 import { CategoryBadge } from '../components/CategoryBadge';
-import { CategoryCombobox } from '../components/CategoryCombobox';
+import { CategorySelectorOverlay } from '../components/CategorySelectorOverlay';
 import { ImageViewer } from '../components/ImageViewer';
 import { CategoryLearningPrompt } from '../components/CategoryLearningPrompt';
 import { SubcategoryLearningPrompt } from '../components/SubcategoryLearningPrompt';
@@ -91,6 +91,17 @@ export interface TransactionEditorViewProps {
   transaction: Transaction | null;
   /** Mode: 'new' for new transactions, 'existing' for editing */
   mode: 'new' | 'existing';
+  /**
+   * Story 14.24: Read-only mode for viewing transactions
+   * When true:
+   * - All fields are disabled/non-interactive
+   * - Re-scan button is hidden
+   * - Edit button appears at bottom instead of Save
+   * - Clicking Edit triggers onRequestEdit callback with conflict check
+   */
+  readOnly?: boolean;
+  /** Callback when user clicks Edit button in read-only mode */
+  onRequestEdit?: () => void;
 
   // Scan state
   /** Current state of the scan button */
@@ -183,6 +194,9 @@ export interface TransactionEditorViewProps {
 export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   transaction,
   mode,
+  // Story 14.24: Read-only mode for viewing transactions from History
+  readOnly = false,
+  onRequestEdit,
   scanButtonState,
   isProcessing,
   processingEta,
@@ -231,6 +245,8 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  // Story 14.24: Track which item's category overlay is open (null = none, number = item index)
+  const [showItemCategoryOverlay, setShowItemCategoryOverlay] = useState<number | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
   // ScanCompleteModal state (for new transactions only)
@@ -267,9 +283,26 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   // Determine credit availability
   const hasCredits = (credits?.remaining ?? 0) > 0 || (credits?.superRemaining ?? 0) > 0;
 
-  // Show ScanCompleteModal when scan completes for NEW transactions
+  // Track previous scanButtonState to only show modal on TRANSITION to 'complete'
+  // Story 14.24: Prevent ScanCompleteModal from showing when entering editor with
+  // scanButtonState already at 'complete' (e.g., from QuickSaveCard edit)
+  const prevScanButtonStateRef = useRef<ScanButtonState>(scanButtonState);
+
+  // Show ScanCompleteModal when scan TRANSITIONS to complete for NEW transactions
+  // Only trigger when state changes FROM non-complete TO complete, not on mount
   useEffect(() => {
-    if (mode === 'new' && scanButtonState === 'complete' && transaction) {
+    const prevState = prevScanButtonStateRef.current;
+    prevScanButtonStateRef.current = scanButtonState;
+
+    // Only show modal if we transitioned from a non-complete state to complete
+    // This prevents the modal from appearing when mounting with state already at 'complete'
+    // (e.g., when navigating from QuickSaveCard's "Edit" button)
+    if (
+      mode === 'new' &&
+      scanButtonState === 'complete' &&
+      prevState !== 'complete' &&
+      transaction
+    ) {
       setShowScanCompleteModal(true);
     }
   }, [mode, scanButtonState, transaction]);
@@ -330,9 +363,11 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   }, [transaction]);
 
   // Calculate total from items
+  // Story 14.24: price is the total for the line item, NOT unit price
+  // qty is informational only (e.g., "6kg of tomatoes for $9000")
   const calculatedTotal = useMemo(() => {
     if (!transaction?.items) return 0;
-    return transaction.items.reduce((sum, item) => sum + (item.price * (item.qty ?? 1)), 0);
+    return transaction.items.reduce((sum, item) => sum + item.price, 0);
   }, [transaction?.items]);
 
   // Group items by category
@@ -375,7 +410,13 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   }, [animationComplete, shouldAnimate]);
 
   // Determine if we should warn on cancel
-  const shouldWarnOnCancel = creditUsed || hasUnsavedChanges || !!thumbnailUrl;
+  // Story 14.24: Only warn if there are actual unsaved changes
+  // - creditUsed: A credit was used in this session (re-scan)
+  // - hasUnsavedChanges: User made changes to transaction fields
+  // - thumbnailUrl for new transactions: Photo selected but not saved
+  // Note: For existing transactions, thumbnailUrl is already saved so it doesn't indicate unsaved work
+  const hasNewThumbnail = mode === 'new' && !!thumbnailUrl;
+  const shouldWarnOnCancel = creditUsed || hasUnsavedChanges || hasNewThumbnail;
 
   // Handle file input change
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -840,7 +881,8 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
             {/* Left: Metadata */}
             <div className="flex-1 min-w-0">
               {/* Merchant name - editable */}
-              {isEditingTitle ? (
+              {/* Story 14.24: Hide editing UI and pencil icon in read-only mode */}
+              {isEditingTitle && !readOnly ? (
                 <input
                   ref={titleInputRef}
                   type="text"
@@ -854,6 +896,17 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                   autoFocus
                   disabled={isProcessing}
                 />
+              ) : readOnly ? (
+                // Read-only mode: Just display the name, no edit button
+                <div className="mb-2">
+                  <span
+                    className="text-xl font-bold truncate"
+                    style={{ color: 'var(--text-primary)' }}
+                    title={displayTransaction.alias || displayTransaction.merchant || t('newTransaction')}
+                  >
+                    {displayTransaction.alias || displayTransaction.merchant || t('merchantPlaceholder')}
+                  </span>
+                </div>
               ) : (
                 <button
                   onClick={() => {
@@ -876,50 +929,46 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                 </button>
               )}
 
-              {/* Category badge */}
+              {/* Category badge - Story 14.24: disabled in read-only mode */}
               <div className="flex flex-wrap items-center gap-2 mb-2 relative">
-                <button
-                  onClick={() => !isProcessing && setShowCategoryDropdown(!showCategoryDropdown)}
-                  className="cursor-pointer"
-                  disabled={isProcessing}
-                >
+                {readOnly ? (
+                  // Read-only: just show badge without button wrapper
                   <CategoryBadge
                     category={displayTransaction.category || 'Other'}
                     lang={lang}
                     showIcon
                     maxWidth="120px"
                   />
-                </button>
-                {showCategoryDropdown && (
-                  <div
-                    className="fixed left-3 right-3 mt-1 rounded-xl shadow-lg z-50 overflow-hidden max-h-80 overflow-y-auto"
-                    style={{
-                      backgroundColor: 'var(--bg-secondary)',
-                      border: '1px solid var(--border-light)',
-                      top: 'auto',
-                    }}
+                ) : (
+                  <button
+                    onClick={() => !isProcessing && setShowCategoryDropdown(!showCategoryDropdown)}
+                    className="cursor-pointer"
+                    disabled={isProcessing}
                   >
-                    <div className="flex flex-wrap gap-2 p-3">
-                      {storeCategories.map((cat) => (
-                        <button
-                          key={cat}
-                          className="rounded-full transition-colors"
-                          style={{
-                            outline: displayTransaction.category === cat ? '2px solid var(--primary)' : 'none',
-                            outlineOffset: '1px',
-                          }}
-                          onClick={() => {
-                            if (transaction) {
-                              onUpdateTransaction({ ...transaction, category: cat as StoreCategory });
-                            }
-                            setShowCategoryDropdown(false);
-                          }}
-                        >
-                          <CategoryBadge category={cat} lang={lang} showIcon />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                    <CategoryBadge
+                      category={displayTransaction.category || 'Other'}
+                      lang={lang}
+                      showIcon
+                      maxWidth="120px"
+                    />
+                  </button>
+                )}
+                {/* Story 14.24: Full-screen category selector overlay */}
+                {showCategoryDropdown && (
+                  <CategorySelectorOverlay
+                    type="store"
+                    value={displayTransaction.category || 'Other'}
+                    onSelect={(cat) => {
+                      if (transaction) {
+                        onUpdateTransaction({ ...transaction, category: cat as StoreCategory });
+                      }
+                    }}
+                    onClose={() => setShowCategoryDropdown(false)}
+                    categories={storeCategories}
+                    language={lang}
+                    theme={theme}
+                    title={t('category')}
+                  />
                 )}
                 {displayTransaction.merchantSource === 'learned' && (
                   <span
@@ -1159,8 +1208,8 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
             </div>
           </div>
 
-          {/* Re-scan button (existing transactions only) */}
-          {mode === 'existing' && transaction?.id && onRescan && hasImages && (
+          {/* Re-scan button (existing transactions only, hidden in read-only mode) */}
+          {mode === 'existing' && transaction?.id && onRescan && hasImages && !readOnly && (
             <button
               onClick={handleRescanClick}
               disabled={isRescanning || !hasCredits}
@@ -1252,70 +1301,161 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                           return (
                             <ItemContainer key={i} {...containerProps}>
                               {editingItemIndex === i ? (
-                                /* Editing state */
+                                /* Editing state - Story 14.24: Compact layout with smaller fonts */
                                 <div
-                                  className="p-3 rounded-lg space-y-2"
+                                  className="p-2.5 rounded-lg space-y-1.5"
                                   style={{ backgroundColor: 'var(--bg-tertiary)' }}
                                 >
+                                  {/* Item name */}
                                   <input
-                                    className="w-full p-2 border rounded-lg text-sm"
+                                    className="w-full px-2 py-1.5 border rounded-lg text-xs"
                                     style={inputStyle}
                                     value={item.name}
                                     onChange={e => handleUpdateItem(i, 'name', e.target.value)}
                                     placeholder={t('itemName')}
                                     autoFocus
                                   />
+                                  {/* Price - Story 14.24: Select all on focus for easy replacement */}
                                   <input
-                                    type="number"
-                                    className="w-full p-2 border rounded-lg text-sm"
+                                    type="text"
+                                    inputMode="decimal"
+                                    className="w-full px-2 py-1.5 border rounded-lg text-xs"
                                     style={inputStyle}
-                                    value={item.price}
-                                    onChange={e => handleUpdateItem(i, 'price', parseFloat(e.target.value) || 0)}
+                                    defaultValue={item.price || ''}
+                                    key={`price-${i}-${editingItemIndex}`}
+                                    onFocus={e => {
+                                      // Select all text on focus so user can type a new value
+                                      e.target.select();
+                                    }}
+                                    onChange={e => {
+                                      // Allow digits and one decimal point
+                                      const cleaned = e.target.value.replace(/[^0-9.]/g, '');
+                                      // Ensure only one decimal point
+                                      const parts = cleaned.split('.');
+                                      const sanitized = parts.length > 2
+                                        ? parts[0] + '.' + parts.slice(1).join('')
+                                        : cleaned;
+                                      if (sanitized !== e.target.value) {
+                                        e.target.value = sanitized;
+                                      }
+                                    }}
+                                    onBlur={e => {
+                                      const val = parseFloat(e.target.value);
+                                      if (!isNaN(val) && val >= 0) {
+                                        handleUpdateItem(i, 'price', val);
+                                        // Format without unnecessary decimals
+                                        e.target.value = val % 1 === 0 ? String(val) : String(val);
+                                      } else {
+                                        // Invalid or empty - reset to 0
+                                        handleUpdateItem(i, 'price', 0);
+                                        e.target.value = '0';
+                                      }
+                                    }}
+                                    onKeyDown={e => {
+                                      // Submit on Enter
+                                      if (e.key === 'Enter') {
+                                        e.currentTarget.blur();
+                                      }
+                                    }}
                                     placeholder={t('price')}
                                   />
-                                  <CategoryCombobox
-                                    value={item.category || ''}
-                                    onChange={(value) => handleUpdateItem(i, 'category', value)}
-                                    language={lang}
-                                    theme={theme}
-                                    placeholder={t('itemCat')}
-                                    ariaLabel={t('itemCat')}
-                                  />
+                                  {/* Story 14.24: Category pill and quantity in same row */}
+                                  <div className="flex items-center gap-2">
+                                    {/* Category pill button - opens full-screen overlay */}
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowItemCategoryOverlay(i)}
+                                      className="flex-1 min-w-0"
+                                    >
+                                      <CategoryBadge
+                                        category={item.category || 'Other'}
+                                        lang={lang}
+                                        showIcon
+                                        mini
+                                        type="item"
+                                      />
+                                    </button>
+                                    {/* Integer-only quantity field - Story 14.24: Clear on focus, validate on blur */}
+                                    <input
+                                      type="text"
+                                      inputMode="numeric"
+                                      pattern="[0-9]*"
+                                      className="w-14 px-2 py-1.5 border rounded-lg text-xs text-center"
+                                      style={inputStyle}
+                                      defaultValue={item.qty ?? 1}
+                                      key={`qty-${i}-${editingItemIndex}`}
+                                      onFocus={e => {
+                                        // Select all text on focus so user can type a new value
+                                        e.target.select();
+                                      }}
+                                      onChange={e => {
+                                        // Only allow digits
+                                        const cleaned = e.target.value.replace(/[^0-9]/g, '');
+                                        if (cleaned !== e.target.value) {
+                                          e.target.value = cleaned;
+                                        }
+                                      }}
+                                      onBlur={e => {
+                                        const val = parseInt(e.target.value, 10);
+                                        if (!isNaN(val) && val >= 1) {
+                                          handleUpdateItem(i, 'qty', val);
+                                          e.target.value = String(val);
+                                        } else {
+                                          // Invalid or empty - reset to 1
+                                          handleUpdateItem(i, 'qty', 1);
+                                          e.target.value = '1';
+                                        }
+                                      }}
+                                      onKeyDown={e => {
+                                        // Prevent decimal, scientific notation, negative
+                                        if (e.key === '.' || e.key === ',' || e.key === 'e' || e.key === 'E' || e.key === '-' || e.key === '+') {
+                                          e.preventDefault();
+                                        }
+                                        // Submit on Enter
+                                        if (e.key === 'Enter') {
+                                          e.currentTarget.blur();
+                                        }
+                                      }}
+                                      placeholder={lang === 'es' ? 'Cant.' : 'Qty'}
+                                    />
+                                  </div>
+                                  {/* Subcategory */}
                                   <input
-                                    className="w-full p-2 border rounded-lg text-sm"
+                                    className="w-full px-2 py-1.5 border rounded-lg text-xs"
                                     style={inputStyle}
                                     value={item.subcategory || ''}
                                     onChange={e => handleUpdateItem(i, 'subcategory', e.target.value)}
                                     placeholder={t('itemSubcat')}
                                   />
-                                  <div className="flex justify-end gap-2 pt-1">
+                                  {/* Action buttons */}
+                                  <div className="flex justify-end gap-2 pt-0.5">
                                     <button
                                       onClick={() => handleDeleteItem(i)}
-                                      className="min-w-10 min-h-10 p-2 rounded-lg flex items-center justify-center"
+                                      className="min-w-9 min-h-9 p-1.5 rounded-lg flex items-center justify-center"
                                       style={{
                                         color: 'var(--error)',
                                         backgroundColor: isDark ? 'rgba(248, 113, 113, 0.1)' : 'rgba(239, 68, 68, 0.1)',
                                       }}
                                     >
-                                      <Trash2 size={18} strokeWidth={2} />
+                                      <Trash2 size={16} strokeWidth={2} />
                                     </button>
                                     <button
                                       onClick={() => setEditingItemIndex(null)}
-                                      className="min-w-10 min-h-10 p-2 rounded-lg flex items-center justify-center"
+                                      className="min-w-9 min-h-9 p-1.5 rounded-lg flex items-center justify-center"
                                       style={{
                                         color: 'var(--success)',
                                         backgroundColor: 'rgba(34, 197, 94, 0.1)',
                                       }}
                                     >
-                                      <Check size={18} strokeWidth={2} />
+                                      <Check size={16} strokeWidth={2} />
                                     </button>
                                   </div>
                                 </div>
                               ) : (
-                                /* Display state */
+                                /* Display state - Story 14.24: disable clicking in read-only mode */
                                 <div
-                                  onClick={() => !isProcessing && setEditingItemIndex(i)}
-                                  className="px-2.5 py-2 rounded-lg cursor-pointer transition-colors"
+                                  onClick={() => !isProcessing && !readOnly && setEditingItemIndex(i)}
+                                  className={`px-2.5 py-2 rounded-lg transition-colors ${readOnly ? '' : 'cursor-pointer'}`}
                                   style={{ backgroundColor: 'var(--bg-tertiary)' }}
                                 >
                                   <div className="flex justify-between items-start gap-2 mb-1">
@@ -1326,7 +1466,8 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                                       >
                                         {item.name}
                                       </span>
-                                      <Pencil size={10} style={{ color: 'var(--text-tertiary)', opacity: 0.6, flexShrink: 0 }} />
+                                      {/* Story 14.24: Hide pencil icon in read-only mode */}
+                                      {!readOnly && <Pencil size={10} style={{ color: 'var(--text-tertiary)', opacity: 0.6, flexShrink: 0 }} />}
                                     </div>
                                     <span
                                       className="text-xs font-semibold flex-shrink-0"
@@ -1337,7 +1478,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                                   </div>
                                   <div className="flex justify-between items-center">
                                     <div className="flex flex-wrap items-center gap-1">
-                                      <CategoryBadge category={item.category || 'Other'} lang={lang} mini />
+                                      <CategoryBadge category={item.category || 'Other'} lang={lang} mini type="item" />
                                       {item.subcategory && (
                                         <span
                                           className="text-[10px] px-1.5 py-0.5 rounded-full"
@@ -1371,20 +1512,22 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
               })}
             </div>
 
-            {/* Add Item button */}
-            <button
-              onClick={handleAddItem}
-              disabled={isProcessing}
-              className="w-full p-2.5 mt-3 rounded-lg border-2 border-dashed flex items-center justify-center gap-1.5 transition-colors"
-              style={{
-                borderColor: 'var(--border-light)',
-                color: 'var(--primary)',
-                backgroundColor: 'transparent',
-              }}
-            >
-              <Plus size={14} strokeWidth={2.5} />
-              <span className="text-sm font-medium">{t('addItem')}</span>
-            </button>
+            {/* Add Item button - Story 14.24: hidden in read-only mode */}
+            {!readOnly && (
+              <button
+                onClick={handleAddItem}
+                disabled={isProcessing}
+                className="w-full p-2.5 mt-3 rounded-lg border-2 border-dashed flex items-center justify-center gap-1.5 transition-colors"
+                style={{
+                  borderColor: 'var(--border-light)',
+                  color: 'var(--primary)',
+                  backgroundColor: 'transparent',
+                }}
+              >
+                <Plus size={14} strokeWidth={2.5} />
+                <span className="text-sm font-medium">{t('addItem')}</span>
+              </button>
+            )}
           </div>
 
           {/* Total row */}
@@ -1400,20 +1543,33 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
             </span>
           </div>
 
-          {/* Save button */}
-          <button
-            onClick={handleSaveWithLearning}
-            disabled={isSaving || isProcessing || !canSave}
-            className="w-full py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-transform hover:scale-[1.01] active:scale-[0.99]"
-            style={{
-              backgroundColor: (isSaving || isProcessing || !canSave) ? 'var(--success-muted, #86efac)' : 'var(--success)',
-              opacity: (isSaving || isProcessing || !canSave) ? 0.5 : 1,
-              cursor: !canSave ? 'not-allowed' : 'pointer',
-            }}
-          >
-            <Check size={18} strokeWidth={2.5} />
-            {isSaving ? (t('saving') || 'Guardando...') : (t('saveTransaction') || 'Guardar Transacción')}
-          </button>
+          {/* Story 14.24: Show Edit button in read-only mode, Save button otherwise */}
+          {readOnly ? (
+            <button
+              onClick={onRequestEdit}
+              className="w-full py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-transform hover:scale-[1.01] active:scale-[0.99]"
+              style={{
+                backgroundColor: 'var(--accent)',
+              }}
+            >
+              <Pencil size={18} strokeWidth={2.5} />
+              {t('editTransaction') || 'Editar Transacción'}
+            </button>
+          ) : (
+            <button
+              onClick={handleSaveWithLearning}
+              disabled={isSaving || isProcessing || !canSave}
+              className="w-full py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-transform hover:scale-[1.01] active:scale-[0.99]"
+              style={{
+                backgroundColor: (isSaving || isProcessing || !canSave) ? 'var(--success-muted, #86efac)' : 'var(--success)',
+                opacity: (isSaving || isProcessing || !canSave) ? 0.5 : 1,
+                cursor: !canSave ? 'not-allowed' : 'pointer',
+              }}
+            >
+              <Check size={18} strokeWidth={2.5} />
+              {isSaving ? (t('saving') || 'Guardando...') : (t('saveTransaction') || 'Guardar Transacción')}
+            </button>
+          )}
         </div>
 
         {/* Debug info section */}
@@ -1492,6 +1648,21 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
         />
       )}
 
+      {/* Story 14.24: Item Category Selector Overlay */}
+      {showItemCategoryOverlay !== null && (
+        <CategorySelectorOverlay
+          type="item"
+          value={transaction?.items[showItemCategoryOverlay]?.category || ''}
+          onSelect={(cat) => {
+            handleUpdateItem(showItemCategoryOverlay, 'category', cat);
+          }}
+          onClose={() => setShowItemCategoryOverlay(null)}
+          language={lang}
+          theme={theme}
+          title={t('itemCat')}
+        />
+      )}
+
       {/* Category Learning Prompt */}
       <CategoryLearningPrompt
         isOpen={showLearningPrompt}
@@ -1560,13 +1731,14 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
             <div className="flex gap-3">
               <button
                 onClick={() => setShowCancelConfirm(false)}
-                className="flex-1 py-2 px-4 rounded-lg border font-medium"
+                className="flex-1 py-2 px-4 rounded-lg border font-medium flex items-center justify-center gap-2"
                 style={{
                   borderColor: isDark ? '#475569' : '#e2e8f0',
                   color: 'var(--primary)',
                   backgroundColor: 'transparent',
                 }}
               >
+                <ChevronLeft size={16} strokeWidth={2} />
                 {t('back')}
               </button>
               <button
@@ -1574,9 +1746,10 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                   setShowCancelConfirm(false);
                   onCancel();
                 }}
-                className="flex-1 py-2 px-4 rounded-lg font-medium text-white"
+                className="flex-1 py-2 px-4 rounded-lg font-medium text-white flex items-center justify-center gap-2"
                 style={{ backgroundColor: 'var(--error)' }}
               >
+                <Trash2 size={16} strokeWidth={2} />
                 {t('confirm')}
               </button>
             </div>

@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 // Story 14.15 Session 10: Icons for credit info modal
 import { Camera, Zap, X, ShoppingCart } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useTransactions } from './hooks/useTransactions';
+// Story 14.27: Paginated transactions for HistoryView infinite scroll
+import { usePaginatedTransactions } from './hooks/usePaginatedTransactions';
 import { useCategoryMappings } from './hooks/useCategoryMappings';
 import { useMerchantMappings } from './hooks/useMerchantMappings';
 import { useSubcategoryMappings } from './hooks/useSubcategoryMappings';
@@ -45,6 +47,7 @@ import { ReportsView } from './views/ReportsView';
 // Keeping import commented for potential rollback
 // import { ScanResultView } from './views/ScanResultView';
 // Story 14.23: Unified transaction editor (replaces ScanResultView + EditView)
+// Story 14.24: Also handles read-only mode via readOnly prop
 import { TransactionEditorView, type ScanButtonState } from './views/TransactionEditorView';
 import { Nav, ScanStatus } from './components/Nav';
 // Story 14.10: Top Header Bar component
@@ -59,7 +62,8 @@ import { BatchSummary } from './components/insights/BatchSummary';
 // Story 11.2: Quick Save Card for high-confidence scans
 // Story 14.15: ScanOverlay for non-blocking scan flow, BatchCompleteModal for batch success
 // Story 14.15b: CurrencyMismatchDialog for currency auto-detection
-import { BatchUploadPreview, BatchProcessingProgress, MAX_BATCH_IMAGES, QuickSaveCard, ScanOverlay, BatchCompleteModal, CurrencyMismatchDialog } from './components/scan';
+// TotalMismatchDialog for detecting OCR total errors (missing digits)
+import { BatchUploadPreview, BatchProcessingProgress, MAX_BATCH_IMAGES, QuickSaveCard, ScanOverlay, BatchCompleteModal, CurrencyMismatchDialog, TotalMismatchDialog } from './components/scan';
 import type { BatchItemResult } from './components/scan';
 // Story 14.15: Scan overlay state machine hook
 import { useScanOverlayState } from './hooks/useScanOverlayState';
@@ -67,11 +71,15 @@ import { useScanOverlayState } from './hooks/useScanOverlayState';
 import { PROCESSING_TIMEOUT_MS } from './hooks/useScanState';
 // Story 11.2: Confidence check for Quick Save eligibility
 import { shouldShowQuickSave, calculateConfidence } from './utils/confidenceCheck';
+// Total validation for detecting OCR errors (missing digits)
+import { validateTotal, TotalValidationResult } from './utils/totalValidation';
 // Story 11.4: Trust Merchant Prompt component
 import { TrustMerchantPrompt } from './components/TrustMerchantPrompt';
 // Story 12.4: Credit Warning System
 import { CreditWarningDialog } from './components/batch';
 import { checkCreditSufficiency, type CreditCheckResult } from './services/creditService';
+// Story 14.24: Transaction conflict dialog for single active transaction paradigm
+import { TransactionConflictDialog, type ConflictingTransaction, type ConflictReason } from './components/dialogs/TransactionConflictDialog';
 import type { TrustPromptEligibility } from './types/trust';
 import { AnalyticsProvider } from './contexts/AnalyticsContext';
 // Story 10a.2: Import for building analytics initial state
@@ -105,6 +113,8 @@ import { Insight } from './types/insight';
 import { Language, Currency, Theme, ColorTheme, FontColorMode } from './types/settings';
 // Story 9.10: Persistent scan state management
 import { PendingScan, createPendingScan } from './types/scan';
+// Story 14.24: Persistent pending scan storage (survives refresh/logout)
+import { savePendingScan, loadPendingScan, clearPendingScan } from './services/pendingScanStorage';
 import { formatCurrency } from './utils/currency';
 import { formatDate } from './utils/date';
 import { getSafeDate, parseStrictNumber } from './utils/validation';
@@ -125,6 +135,7 @@ import { getCitiesForCountry } from './data/locations';
 // Story 14.16: Added 'reports' view for weekly report cards (accessible via profile menu)
 // Story 14.15: Added 'scan-result' view for new scan flow UI (mockup-compliant layout)
 // Story 14.23: Added 'transaction-editor' view for unified transaction editor (replaces scan-result + edit)
+// Story 14.24: Read-only viewing uses transaction-editor with readOnly prop (no separate view type needed)
 type View = 'dashboard' | 'scan' | 'scan-result' | 'edit' | 'transaction-editor' | 'trends' | 'insights' | 'settings' | 'alerts' | 'batch-capture' | 'batch-review' | 'history' | 'reports';
 
 /**
@@ -140,11 +151,8 @@ function reconcileItemsTotal(
     receiptTotal: number,
     language: 'en' | 'es'
 ): { items: typeof items; hasDiscrepancy: boolean; discrepancyAmount: number } {
-    // Calculate sum of items (price * qty for each)
-    const itemsSum = items.reduce((sum, item) => {
-        const qty = item.qty ?? 1;
-        return sum + (item.price * qty);
-    }, 0);
+    // Story 14.24: price is total for line item, qty is informational only
+    const itemsSum = items.reduce((sum, item) => sum + item.price, 0);
 
     // Round to 2 decimal places for comparison (avoid floating point issues)
     const roundedItemsSum = Math.round(itemsSum * 100) / 100;
@@ -175,6 +183,14 @@ function reconcileItemsTotal(
 function App() {
     const { user, services, initError, signIn, signInWithTestCredentials, signOut } = useAuth();
     const transactions = useTransactions(user, services);
+    // Story 14.27: Paginated transactions for HistoryView (includes loadMore for older transactions)
+    const {
+        transactions: paginatedTransactions,
+        hasMore: hasMoreTransactions,
+        loadMore: loadMoreTransactions,
+        loadingMore: loadingMoreTransactions,
+        isAtListenerLimit,
+    } = usePaginatedTransactions(user, services);
     // Story 9.7 enhancement: Also expose updateMapping for edit functionality
     const { mappings, loading: mappingsLoading, saveMapping, deleteMapping, updateMapping: updateCategoryMapping } = useCategoryMappings(user, services);
     // Story 9.5: Merchant mappings for fuzzy matching
@@ -211,9 +227,14 @@ function App() {
         setFontFamily: setFontFamilyPref,
     } = useUserPreferences(user, services);
     // Persistent scan credits from Firestore
+    // Story 14.24: Added reserve/confirm/refund pattern for credit management
     const {
         credits: userCredits,
         deductCredits: deductUserCredits,
+        hasReservedCredits: _hasReservedCredits, // TODO: Use for Task 2.4 credit display
+        reserveCredits,
+        confirmReservedCredits,
+        refundReservedCredits,
     } = useUserCredits(user, services);
     // Story 10.6: Insight profile for insight generation
     const {
@@ -256,6 +277,12 @@ function App() {
     const [scanStoreType, setScanStoreType] = useState<ReceiptType>('auto');
     const [scanCurrency, setScanCurrency] = useState<SupportedCurrency>('CLP');
     const [currentTransaction, setCurrentTransaction] = useState<Transaction | null>(null);
+    // Story 14.24: Read-only mode for viewing transactions from History
+    // When true, TransactionEditorView shows Edit button instead of Save
+    const [isViewingReadOnly, setIsViewingReadOnly] = useState(false);
+    // Story 14.24: Track if a credit was actually used in current editing session
+    // This is true only when processScan or handleRescan is called (not just opening an existing transaction)
+    const [creditUsedInSession, setCreditUsedInSession] = useState(false);
     // Story 14.23: editingItemIndex was used by EditView, kept for potential rollback
     const [_editingItemIndex, _setEditingItemIndex] = useState<number | null>(null);
     // Story 9.10: Persistent scan state - maintains scan across navigation
@@ -312,6 +339,20 @@ function App() {
         pendingTransaction: Transaction;
         hasDiscrepancy?: boolean; // Story 14.15b: Track if items total didn't match receipt
     } | null>(null);
+    // Total mismatch dialog state (for detecting OCR errors like missing digits)
+    const [showTotalMismatch, setShowTotalMismatch] = useState(false);
+    const [totalMismatchData, setTotalMismatchData] = useState<{
+        validationResult: TotalValidationResult;
+        pendingTransaction: Transaction;
+        parsedItems: Array<{ name: string; price: number; category?: string; qty?: number; subcategory?: string }>;
+    } | null>(null);
+    // Story 14.24: Conflict dialog for single active transaction paradigm
+    const [showConflictDialog, setShowConflictDialog] = useState(false);
+    const [conflictDialogData, setConflictDialogData] = useState<{
+        conflictingTransaction: ConflictingTransaction;
+        conflictReason: ConflictReason;
+        pendingAction: { mode: 'new' | 'existing'; transaction?: Transaction | null };
+    } | null>(null);
 
     // Story 14.15: Scan overlay state machine for non-blocking scan flow (AC #1, #4)
     const scanOverlay = useScanOverlayState();
@@ -356,7 +397,7 @@ function App() {
     const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' } | null>(null);
 
     // Story 10a.4: historyPage state removed - HistoryView no longer used in insights tab
-    const [distinctAliases, setDistinctAliases] = useState<string[]>([]);
+    // distinctAliases is now computed via useMemo, not state (see below)
 
     // Story 9.20: Pending filters for navigation from Analytics to History
     // When user clicks a badge in Analytics, we store the filters here,
@@ -372,15 +413,17 @@ function App() {
     const mainRef = useRef<HTMLDivElement>(null);
     // Story 14.22: Track scroll positions per view for back navigation
     const scrollPositionsRef = useRef<Record<string, number>>({});
+    // Story 14.24: Track if pendingScan save effect has been initialized (skip first run)
+    const pendingScanInitializedRef = useRef(false);
     const t = (k: string) => (TRANSLATIONS[lang] as any)[k] || k;
 
-    // Extract distinct aliases from transactions
-    useEffect(() => {
+    // Extract distinct aliases from transactions (computed, not state)
+    const distinctAliases = useMemo(() => {
         const aliases = new Set<string>();
         transactions.forEach(d => {
             if (d.alias) aliases.add(d.alias);
         });
-        setDistinctAliases(Array.from(aliases).sort());
+        return Array.from(aliases).sort();
     }, [transactions]);
 
     // Auto-dismiss toast after 3 seconds
@@ -400,6 +443,73 @@ function App() {
     useEffect(() => {
         localStorage.setItem('fontColorMode', fontColorMode);
     }, [fontColorMode]);
+
+    // Story 14.24: Load pending scan from persistent storage on user login
+    useEffect(() => {
+        if (user?.uid) {
+            const storedScan = loadPendingScan(user.uid);
+            if (storedScan) {
+                setPendingScan(storedScan);
+                // Also restore scanImages and currentTransaction for immediate use
+                if (storedScan.images.length > 0) {
+                    setScanImages(storedScan.images);
+                }
+                if (storedScan.analyzedTransaction) {
+                    setCurrentTransaction(storedScan.analyzedTransaction);
+                }
+            }
+        }
+    }, [user?.uid]);
+
+    // Story 14.24: Save/clear pending scan to persistent storage whenever it changes
+    // Skip on initial mount to avoid clearing storage before load effect runs
+    useEffect(() => {
+        if (!user?.uid) return;
+
+        // Skip the first run - let the load effect run first
+        if (!pendingScanInitializedRef.current) {
+            pendingScanInitializedRef.current = true;
+            return;
+        }
+
+        if (pendingScan === null) {
+            // Clear storage when pendingScan is explicitly set to null
+            clearPendingScan(user.uid);
+        } else {
+            // Only save if there's meaningful content
+            const hasContent = pendingScan.images.length > 0 || pendingScan.analyzedTransaction !== null;
+            if (hasContent) {
+                savePendingScan(user.uid, pendingScan);
+            } else {
+                // Clear storage if pending scan has no content
+                clearPendingScan(user.uid);
+            }
+        }
+    }, [user?.uid, pendingScan]);
+
+    // Story 14.24 Phase 6.2: Navigation guard - warn before closing/refreshing with active transaction
+    // This prevents accidental loss of scanned data and credits
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            // Check if there's an active transaction that would be lost
+            const hasActiveTransaction = pendingScan && (
+                pendingScan.status === 'analyzing' ||  // Scan in progress
+                pendingScan.analyzedTransaction !== null ||  // Analyzed but not saved
+                pendingScan.images.length > 0  // Images selected but not analyzed
+            );
+
+            if (hasActiveTransaction) {
+                // Standard way to trigger browser's "Leave site?" dialog
+                e.preventDefault();
+                // Chrome requires returnValue to be set
+                e.returnValue = '';
+                return '';
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [pendingScan]);
 
     // Story 14.22: Font family persistence REMOVED from localStorage
     // Now stored in Firestore via useUserPreferences.setFontFamily
@@ -448,6 +558,11 @@ function App() {
         }
         setPreviousView(view);
         setView(targetView);
+        // Story 14.24: Hide QuickSaveCard when navigating to a different view
+        // This prevents the modal from floating over other views
+        if (targetView !== 'transaction-editor' && targetView !== 'scan-result') {
+            setShowQuickSaveCard(false);
+        }
         // Reset scroll to top for the new view
         setTimeout(() => {
             if (mainRef.current) {
@@ -490,34 +605,45 @@ function App() {
         // Story 14.15: Only restore if there are images or analyzed transaction
         // Don't restore empty pending scans (e.g., from cancelled file picker)
         if (pendingScan && (pendingScan.images.length > 0 || pendingScan.analyzedTransaction)) {
+            // Story 14.24: Clear QuickSaveCard when restoring pending transaction
+            // QuickSaveCard should only appear after a fresh scan, not when returning to draft
+            setShowQuickSaveCard(false);
+            setQuickSaveTransaction(null);
+
             // Restore pending scan state
             setScanImages(pendingScan.images);
             setScanError(pendingScan.error || null);
             if (pendingScan.analyzedTransaction) {
                 setCurrentTransaction(pendingScan.analyzedTransaction);
             } else {
+                // Story 14.24: Include default location and currency in new transactions
                 setCurrentTransaction({
                     merchant: '',
                     date: getSafeDate(null),
                     total: 0,
                     category: 'Supermarket',
-                    items: []
+                    items: [],
+                    country: defaultCountry,
+                    city: defaultCity,
+                    currency: userPreferences.defaultCurrency || 'CLP',
                 });
             }
             // Story 14.23: Restore to unified TransactionEditorView
             // Determine scan button state based on pending scan status
             setTransactionEditorMode('new');
+            // Story 14.24: Only show 'complete' state if an actual scan happened (has images stored)
+            // If user just edited without scanning, keep idle state
             if (pendingScan.status === 'analyzing') {
                 // Scan is in progress - show scanning state
                 setScanButtonState('scanning');
-            } else if (pendingScan.analyzedTransaction) {
-                // Scan completed - show complete state
+            } else if (pendingScan.status === 'analyzed' && pendingScan.images.length > 0) {
+                // Scan completed WITH images - show complete state
                 setScanButtonState('complete');
             } else if (pendingScan.images.length > 0) {
                 // Has images but not processed - show pending state
                 setScanButtonState('pending');
             } else {
-                // No images - show idle state
+                // No images (just draft edits) - show idle state
                 setScanButtonState('idle');
             }
             navigateToView('transaction-editor');
@@ -534,12 +660,16 @@ function App() {
         // Story 9.8: Reset scan options to defaults
         setScanStoreType('auto');
         setScanCurrency(userPreferences.defaultCurrency || 'CLP');
+        // Story 14.24: Include default location and currency in new transactions
         setCurrentTransaction({
             merchant: '',
             date: getSafeDate(null),
             total: 0,
             category: 'Supermarket',
-            items: []
+            items: [],
+            country: defaultCountry,
+            city: defaultCity,
+            currency: userPreferences.defaultCurrency || 'CLP',
         });
         // Story 9.10 AC#1, AC#3: Create new pending scan session
         setPendingScan(createPendingScan());
@@ -587,24 +717,164 @@ function App() {
     };
     void _handleCancelNewTransaction; // Suppress unused warning
 
+    // Story 14.24: Check if there's an active transaction that would conflict
+    const hasActiveTransactionConflict = useCallback((): {
+        hasConflict: boolean;
+        conflictInfo?: { transaction: ConflictingTransaction; reason: ConflictReason };
+    } => {
+        // Check if there's a pending scan with content
+        if (!pendingScan) {
+            return { hasConflict: false };
+        }
+
+        // If we're already on transaction-editor, no conflict (editing same transaction)
+        if (view === 'transaction-editor') {
+            return { hasConflict: false };
+        }
+
+        // Check various conflict scenarios
+        const hasAnalyzedTransaction = !!pendingScan.analyzedTransaction;
+        const hasImages = pendingScan.images.length > 0;
+        const isScanning = pendingScan.status === 'analyzing';
+
+        // If scanning in progress, that's a conflict
+        if (isScanning) {
+            return {
+                hasConflict: true,
+                conflictInfo: {
+                    transaction: {
+                        merchant: pendingScan.analyzedTransaction?.merchant,
+                        total: pendingScan.analyzedTransaction?.total,
+                        currency: pendingScan.analyzedTransaction?.currency,
+                        creditUsed: true, // Credit reserved during scan
+                        hasChanges: false,
+                        isScanning: true,
+                        source: 'new_scan',
+                    },
+                    reason: 'scan_in_progress',
+                },
+            };
+        }
+
+        // If we have analyzed transaction (credit was used), that's a conflict
+        if (hasAnalyzedTransaction && pendingScan.status === 'analyzed') {
+            return {
+                hasConflict: true,
+                conflictInfo: {
+                    transaction: {
+                        merchant: pendingScan.analyzedTransaction?.merchant,
+                        total: pendingScan.analyzedTransaction?.total,
+                        currency: pendingScan.analyzedTransaction?.currency,
+                        creditUsed: true,
+                        hasChanges: true,
+                        isScanning: false,
+                        source: 'new_scan',
+                    },
+                    reason: 'credit_used',
+                },
+            };
+        }
+
+        // If we have images but no analysis yet, that's unsaved content
+        if (hasImages && !hasAnalyzedTransaction) {
+            return {
+                hasConflict: true,
+                conflictInfo: {
+                    transaction: {
+                        creditUsed: false,
+                        hasChanges: true,
+                        isScanning: false,
+                        source: 'new_scan',
+                    },
+                    reason: 'has_unsaved_changes',
+                },
+            };
+        }
+
+        return { hasConflict: false };
+    }, [pendingScan, view]);
+
     // Story 14.23: Navigate to unified transaction editor
+    // Story 14.24: Enhanced with conflict detection
     // mode: 'new' for new transactions, 'existing' for editing
     const navigateToTransactionEditor = (mode: 'new' | 'existing', transaction?: Transaction | null) => {
+        // Story 14.24: Check for conflicts with existing pending scan
+        const conflictCheck = hasActiveTransactionConflict();
+
+        // For 'existing' mode, also check if we're editing the same transaction
+        const isEditingSameTransaction = mode === 'existing' && transaction?.id &&
+            pendingScan?.analyzedTransaction?.id === transaction.id;
+
+        if (conflictCheck.hasConflict && conflictCheck.conflictInfo && !isEditingSameTransaction) {
+            // Show conflict dialog instead of navigating
+            setConflictDialogData({
+                conflictingTransaction: conflictCheck.conflictInfo.transaction,
+                conflictReason: conflictCheck.conflictInfo.reason,
+                pendingAction: { mode, transaction },
+            });
+            setShowConflictDialog(true);
+            return;
+        }
+
+        // No conflict, proceed with navigation
+        // Story 14.24: Reset read-only mode and creditUsedInSession when navigating to editor normally
+        setIsViewingReadOnly(false);
+        setCreditUsedInSession(false);
         setTransactionEditorMode(mode);
         setScanButtonState(mode === 'new' ? 'idle' : (transaction?.thumbnailUrl ? 'complete' : 'idle'));
         if (transaction) {
             setCurrentTransaction(transaction as any);
         } else if (mode === 'new') {
+            // Story 14.24: Include default location and currency in new transactions
             setCurrentTransaction({
                 merchant: '',
                 date: getSafeDate(null),
                 total: 0,
                 category: 'Supermarket',
-                items: []
+                items: [],
+                country: defaultCountry,
+                city: defaultCity,
+                currency: userPreferences.defaultCurrency || 'CLP',
             });
         }
         navigateToView('transaction-editor');
     };
+
+    // Story 14.24: Navigate to read-only transaction view
+    // Used when clicking a transaction in HistoryView - uses TransactionEditorView in readOnly mode
+    // User clicks "Edit" button to enter edit mode (with conflict check)
+    const navigateToTransactionDetail = (transaction: Transaction) => {
+        setIsViewingReadOnly(true);
+        setCreditUsedInSession(false); // No credit used yet - this is just viewing
+        setTransactionEditorMode('existing');
+        setCurrentTransaction(transaction);
+        setScanButtonState(transaction.thumbnailUrl ? 'complete' : 'idle');
+        navigateToView('transaction-editor');
+    };
+
+    // Story 14.24: Handle edit request from read-only view
+    // This is called when user clicks "Edit" button in the TransactionEditorView (readOnly mode)
+    // Performs conflict check before enabling edit mode
+    const handleRequestEditFromReadOnly = () => {
+        // Check for conflicts before allowing edit
+        const conflictCheck = hasActiveTransactionConflict();
+
+        if (conflictCheck.hasConflict && conflictCheck.conflictInfo) {
+            // Show conflict dialog
+            setConflictDialogData({
+                conflictingTransaction: conflictCheck.conflictInfo.transaction,
+                conflictReason: conflictCheck.conflictInfo.reason,
+                pendingAction: { mode: 'existing', transaction: currentTransaction! },
+            });
+            setShowConflictDialog(true);
+        } else {
+            // No conflict, enable edit mode
+            setIsViewingReadOnly(false);
+        }
+    };
+
+    // Story 14.24: DEPRECATED - TransactionDetailView removed, using TransactionEditorView with readOnly instead
+    // handleEditFromDetailView and handleShowConflictFromDetailView removed
 
     // Legacy scan handler (for backward compatibility during transition)
     const triggerScan = () => {
@@ -665,6 +935,18 @@ function App() {
             return;
         }
 
+        // Story 14.24: Reserve credit before scan (UI shows deducted, not persisted yet)
+        // Credit will be confirmed on success or refunded on error
+        const reserved = reserveCredits(1, 'normal');
+        if (!reserved) {
+            setScanError(t('noCreditsMessage'));
+            setToastMessage({ text: t('noCreditsMessage'), type: 'info' });
+            return;
+        }
+
+        // Story 14.24: Mark that a credit was used in this session (for cancel warning)
+        setCreditUsedInSession(true);
+
         setIsAnalyzing(true);
         setScanError(null);
         // Story 14.15: Start scan overlay flow (AC #1)
@@ -678,8 +960,8 @@ function App() {
             setPendingScan({ ...pendingScan, status: 'analyzing' });
         }
         try {
-            // Story 9.10 AC#6: Deduct 1 credit when scan starts (persisted to Firestore)
-            await deductUserCredits(1);
+            // Story 14.24: Credit already reserved locally - will be confirmed on success
+            // Removed: await deductUserCredits(1); - now using reserve/confirm pattern
 
             // Story 9.8: Pass scan options (currency and store type) to analyzeReceipt
             // Story 14.15 AC #4: Add timeout handling for network requests
@@ -730,6 +1012,45 @@ function App() {
                 price: parseStrictNumber(i.price),
                 qty: (i as any).quantity ?? i.qty ?? 1,
             }));
+
+            // Total validation: Check if extracted total matches items sum (>40% discrepancy)
+            // Build temporary transaction for validation
+            const tempTransaction: Transaction = {
+                merchant: merchant,
+                date: d,
+                total: finalTotal,
+                category: result.category || 'Other',
+                items: parsedItems,
+            };
+            const totalValidation = validateTotal(tempTransaction);
+
+            // If significant discrepancy detected, show dialog for user to choose
+            if (!totalValidation.isValid) {
+                // Story 14.24: Confirm credit - AI returned valid result, just needs user decision
+                await confirmReservedCredits();
+                // Store pending data and show total mismatch dialog
+                setTotalMismatchData({
+                    validationResult: totalValidation,
+                    pendingTransaction: {
+                        ...tempTransaction,
+                        alias: merchant,
+                        imageUrls: result.imageUrls,
+                        thumbnailUrl: result.thumbnailUrl,
+                        time: result.time,
+                        country: finalCountry,
+                        city: finalCity,
+                        currency: result.currency,
+                        receiptType: result.receiptType,
+                        promptVersion: result.promptVersion,
+                        merchantSource: result.merchantSource
+                    },
+                    parsedItems,
+                });
+                setShowTotalMismatch(true);
+                setIsAnalyzing(false);
+                scanOverlay.setReady();
+                return;
+            }
 
             // Story 14.15b: Reconcile items total with receipt total
             // If sum of items doesn't match receipt total, add an adjustment item
@@ -801,6 +1122,8 @@ function App() {
 
             // If AI detected a currency different from user's default, show dialog
             if (detectedCurrency && userDefaultCurrency && detectedCurrency !== userDefaultCurrency) {
+                // Story 14.24: Confirm credit - AI returned valid result, just needs user decision
+                await confirmReservedCredits();
                 // Store pending transaction and show currency mismatch dialog
                 setCurrencyMismatchData({
                     detectedCurrency,
@@ -836,6 +1159,10 @@ function App() {
             setScanButtonState('complete');
             // Clear local scan images since they're now stored in transaction
             setScanImages([]);
+
+            // Story 14.24: Confirm the reserved credit (persist to Firestore)
+            // This is the success path - credit is now officially charged
+            await confirmReservedCredits();
 
             // Story 14.15: Mark scan as ready (AC #1)
             scanOverlay.setReady();
@@ -932,7 +1259,10 @@ function App() {
                     error: errorMessage
                 });
             }
-            // Note: Toast removed - error now shown in ScanOverlay (Story 14.15 AC #4)
+            // Story 14.24: Refund the reserved credit (scan failed, credit not charged)
+            refundReservedCredits();
+            // Story 14.24 AC #4: Show toast that credit was not used
+            setToastMessage({ text: t('scanFailedCreditRefunded'), type: 'info' });
         } finally {
             setIsAnalyzing(false);
         }
@@ -949,10 +1279,19 @@ function App() {
             return;
         }
 
+        // Story 14.24: Reserve credit for re-scan
+        const reserved = reserveCredits(1, 'normal');
+        if (!reserved) {
+            setToastMessage({ text: t('noCreditsMessage'), type: 'info' });
+            return;
+        }
+
+        // Story 14.24: Mark that a credit was used in this session (for cancel warning)
+        setCreditUsedInSession(true);
+
         setIsRescanning(true);
         try {
-            // Deduct 1 credit for re-scan
-            await deductUserCredits(1);
+            // Story 14.24: Credit already reserved - will be confirmed on success
 
             // Call analyzeReceipt with stored images (using imageUrls directly)
             // V3 prompt auto-detects currency, but we still pass empty string (required param)
@@ -1010,6 +1349,9 @@ function App() {
 
             setCurrentTransaction(updatedTransaction);
 
+            // Story 14.24: Confirm the reserved credit (persist to Firestore)
+            await confirmReservedCredits();
+
             // Show appropriate toast message
             if (hasDiscrepancy) {
                 setToastMessage({ text: t('discrepancyWarning'), type: 'info' });
@@ -1018,7 +1360,9 @@ function App() {
             }
         } catch (e: any) {
             console.error('Re-scan failed:', e);
-            setToastMessage({ text: t('rescanError'), type: 'info' }); // 'error' not in type, use 'info'
+            // Story 14.24: Refund the reserved credit (re-scan failed)
+            refundReservedCredits();
+            setToastMessage({ text: t('scanFailedCreditRefunded'), type: 'info' });
         } finally {
             setIsRescanning(false);
         }
@@ -1434,6 +1778,22 @@ function App() {
 
     const handleQuickSave = async () => {
         if (!services || !user || !quickSaveTransaction || isQuickSaving) return;
+
+        // Story 14.24: Validate transaction has at least one item before saving
+        // This is a safety net - shouldShowQuickSave should already prevent this case
+        const hasValidItem = quickSaveTransaction.items?.some(
+            item => item.name && item.name.trim().length > 0 && typeof item.price === 'number' && item.price >= 0
+        );
+        if (!hasValidItem) {
+            // Redirect to editor instead of saving invalid transaction
+            setCurrentTransaction(quickSaveTransaction);
+            setShowQuickSaveCard(false);
+            setQuickSaveTransaction(null);
+            setToastMessage({ text: t('itemsRequired') || 'Add at least one item', type: 'info' });
+            navigateToView('transaction-editor');
+            return;
+        }
+
         const { db, appId } = services;
 
         setIsQuickSaving(true);
@@ -1527,15 +1887,17 @@ function App() {
     };
 
     // Story 11.2: Handle "Editar" from Quick Save Card (AC #4)
-    // Story 14.15 Session 13: Navigate to scan-result view (new editor) instead of old edit view
+    // Story 14.23: Navigate to TransactionEditorView instead of deprecated scan-result view
     const handleQuickSaveEdit = () => {
         if (quickSaveTransaction) {
             setCurrentTransaction(quickSaveTransaction);
         }
         setShowQuickSaveCard(false);
         setQuickSaveTransaction(null);
-        // Navigate to new scan-result editor instead of old edit view
-        setView('scan-result');
+        // Story 14.24: Navigate to unified TransactionEditorView
+        setTransactionEditorMode('new');
+        setScanButtonState('complete'); // Show completed scan state
+        setView('transaction-editor');
     };
 
     // Story 11.2: Handle "Cancelar" from Quick Save Card (AC #7)
@@ -1630,6 +1992,180 @@ function App() {
         setCurrentTransaction(null);
         setPendingScan(null);
         setView('dashboard');
+    };
+
+    // Total mismatch dialog handlers (for OCR errors like missing digits)
+    const handleTotalUseItemsSum = () => {
+        if (!totalMismatchData) return;
+        const { validationResult, pendingTransaction, parsedItems } = totalMismatchData;
+
+        // Use items sum as the new total (no reconciliation needed since they match)
+        const correctedTransaction: Transaction = {
+            ...pendingTransaction,
+            total: validationResult.itemsSum,
+            items: parsedItems, // Use original items without adjustment
+        };
+
+        // Continue with the rest of the scan flow
+        continueScanWithTransaction(correctedTransaction);
+        setShowTotalMismatch(false);
+        setTotalMismatchData(null);
+        setToastMessage({ text: t('totalCorrected') || 'Total corregido', type: 'success' });
+    };
+
+    const handleTotalKeepOriginal = () => {
+        if (!totalMismatchData) return;
+        const { pendingTransaction, parsedItems } = totalMismatchData;
+
+        // Keep original total, reconcile items to match
+        const { items: reconciledItems } = reconcileItemsTotal(
+            parsedItems,
+            pendingTransaction.total,
+            lang
+        );
+
+        const transaction: Transaction = {
+            ...pendingTransaction,
+            items: reconciledItems,
+        };
+
+        continueScanWithTransaction(transaction);
+        setShowTotalMismatch(false);
+        setTotalMismatchData(null);
+    };
+
+    const handleTotalMismatchCancel = () => {
+        // Cancel scan entirely
+        setShowTotalMismatch(false);
+        setTotalMismatchData(null);
+        setCurrentTransaction(null);
+        setPendingScan(null);
+        setView('dashboard');
+    };
+
+    // Story 14.24: Conflict dialog handlers
+    const handleConflictClose = () => {
+        // Close dialog without doing anything (stay on current view)
+        setShowConflictDialog(false);
+        setConflictDialogData(null);
+    };
+
+    const handleConflictViewCurrent = () => {
+        // Navigate to the conflicting transaction (in transaction-editor)
+        setShowConflictDialog(false);
+        setConflictDialogData(null);
+        // The pending scan is still active, just navigate to it
+        if (pendingScan?.analyzedTransaction) {
+            setCurrentTransaction(pendingScan.analyzedTransaction);
+        }
+        setTransactionEditorMode('new');
+        setScanButtonState(pendingScan?.status === 'analyzed' ? 'complete' : 'pending');
+        navigateToView('transaction-editor');
+    };
+
+    const handleConflictDiscard = () => {
+        // Discard the conflicting transaction and proceed with the pending action
+        setShowConflictDialog(false);
+
+        // Clear the conflicting pending scan
+        setPendingScan(null);
+        setCurrentTransaction(null);
+        setScanButtonState('idle');
+        setScanImages([]);
+
+        // If we had reserved credits, they're lost (already confirmed to Firestore)
+        // This is expected - user chose to discard knowing they'd lose the credit
+
+        // Now execute the pending action
+        if (conflictDialogData?.pendingAction) {
+            const { mode, transaction } = conflictDialogData.pendingAction;
+            setConflictDialogData(null);
+
+            // Call navigateToTransactionEditor directly without conflict check
+            // (we just cleared the conflict)
+            setTransactionEditorMode(mode);
+            setScanButtonState(mode === 'new' ? 'idle' : (transaction?.thumbnailUrl ? 'complete' : 'idle'));
+            if (transaction) {
+                setCurrentTransaction(transaction as any);
+            } else if (mode === 'new') {
+                setCurrentTransaction({
+                    merchant: '',
+                    date: getSafeDate(null),
+                    total: 0,
+                    category: 'Supermarket',
+                    items: [],
+                    country: defaultCountry,
+                    city: defaultCity,
+                    currency: userPreferences.defaultCurrency || 'CLP',
+                });
+            }
+            navigateToView('transaction-editor');
+        } else {
+            setConflictDialogData(null);
+        }
+    };
+
+    // Helper: Continue scan flow with a transaction (after total mismatch resolution)
+    const continueScanWithTransaction = async (transaction: Transaction) => {
+        // Apply category mappings
+        const { transaction: categorizedTransaction, appliedMappingIds } =
+            applyCategoryMappings(transaction, mappings);
+
+        // Increment mapping usage (fire-and-forget)
+        if (appliedMappingIds.length > 0 && user && services) {
+            appliedMappingIds.forEach(mappingId => {
+                incrementMappingUsage(services.db, user.uid, services.appId, mappingId)
+                    .catch(err => console.error('Failed to increment mapping usage:', err));
+            });
+        }
+
+        // Apply merchant alias mapping
+        let finalTransaction = categorizedTransaction;
+        const merchantMatch = findMerchantMatch(categorizedTransaction.merchant);
+        if (merchantMatch && merchantMatch.confidence > 0.7) {
+            finalTransaction = {
+                ...finalTransaction,
+                alias: merchantMatch.mapping.targetMerchant,
+                merchantSource: 'learned' as const
+            };
+            if (merchantMatch.mapping.id && user && services) {
+                incrementMerchantMappingUsage(services.db, user.uid, services.appId, merchantMatch.mapping.id)
+                    .catch(err => console.error('Failed to increment merchant mapping usage:', err));
+            }
+        }
+
+        // Currency handling: if no currency, use default
+        if (!finalTransaction.currency && userPreferences.defaultCurrency) {
+            finalTransaction = {
+                ...finalTransaction,
+                currency: userPreferences.defaultCurrency,
+            };
+        }
+
+        // Check for currency mismatch
+        const detectedCurrency = finalTransaction.currency;
+        const userDefaultCurrency = userPreferences.defaultCurrency;
+        if (detectedCurrency && userDefaultCurrency && detectedCurrency !== userDefaultCurrency) {
+            setCurrencyMismatchData({
+                detectedCurrency,
+                pendingTransaction: finalTransaction,
+                hasDiscrepancy: false,
+            });
+            setShowCurrencyMismatch(true);
+            return;
+        }
+
+        // Set as current transaction and continue
+        setCurrentTransaction(finalTransaction);
+        if (pendingScan) {
+            setPendingScan({
+                ...pendingScan,
+                analyzedTransaction: finalTransaction,
+                status: 'analyzed'
+            });
+        }
+        setScanButtonState('complete');
+        setScanImages([]);
     };
 
     // Transaction Handlers
@@ -1750,9 +2286,9 @@ function App() {
         }
     };
 
+    // Story 14.24: Removed window.confirm - caller shows styled confirmation dialog
     const deleteTransaction = async (id: string) => {
         if (!services || !user) return;
-        if (!window.confirm('Delete?')) return;
 
         // Fire the delete (don't await)
         firestoreDeleteTransaction(services.db, user.uid, services.appId, id)
@@ -2094,24 +2630,48 @@ function App() {
                     <TransactionEditorView
                         transaction={currentTransaction}
                         mode={transactionEditorMode}
+                        // Story 14.24: Read-only mode for viewing transactions from History
+                        readOnly={isViewingReadOnly}
+                        onRequestEdit={handleRequestEditFromReadOnly}
                         scanButtonState={scanButtonState}
                         isProcessing={isAnalyzing}
                         processingEta={null}
                         scanError={scanError}
                         thumbnailUrl={currentTransaction?.thumbnailUrl || (scanButtonState === 'complete' && scanImages.length > 0 ? scanImages[0] : undefined)}
                         pendingImageUrl={scanButtonState === 'pending' && scanImages.length > 0 ? scanImages[0] : undefined}
-                        onUpdateTransaction={(trans) => setCurrentTransaction(trans as any)}
+                        onUpdateTransaction={(trans) => {
+                            // Story 14.24: Update both currentTransaction and pendingScan for persistence
+                            setCurrentTransaction(trans as any);
+                            // Sync to pendingScan so changes persist across navigation
+                            if (pendingScan && transactionEditorMode === 'new') {
+                                setPendingScan({
+                                    ...pendingScan,
+                                    analyzedTransaction: trans as any,
+                                });
+                            }
+                        }}
                         onSave={async (trans) => {
                             await saveTransaction(trans);
-                            // Reset scan state after save
+                            // Story 14.24: Reset all scan state after successful save
                             setScanButtonState('idle');
                             setScanImages([]);
+                            setScanError(null);
+                            setPendingScan(null);
+                            setCurrentTransaction(null);
+                            setIsViewingReadOnly(false);
+                            setCreditUsedInSession(false);
                         }}
                         onCancel={() => {
                             // Story 14.23: Reset scan state and navigate back
+                            // Story 14.24: Clear pendingScan on explicit discard, reset read-only mode
                             setScanButtonState('idle');
                             setScanImages([]);
+                            setScanError(null);
+                            setPendingScan(null);
+                            setCurrentTransaction(null);
                             setAnimateEditViewItems(false);
+                            setIsViewingReadOnly(false);
+                            setCreditUsedInSession(false);
                             if (batchEditingReceipt) {
                                 setBatchEditingReceipt(null);
                                 setView('batch-review');
@@ -2126,6 +2686,14 @@ function App() {
                                 const base64 = reader.result as string;
                                 setScanImages([base64]);
                                 setScanButtonState('pending');
+                                // Story 14.24: Sync to pendingScan for persistence across navigation
+                                if (pendingScan) {
+                                    setPendingScan({
+                                        ...pendingScan,
+                                        images: [base64],
+                                        status: 'images_added',
+                                    });
+                                }
                             };
                             reader.readAsDataURL(file);
                         }}
@@ -2165,7 +2733,9 @@ function App() {
                         onCreditInfoClick={() => setShowCreditInfoModal(true)}
                         isSaving={false}
                         animateItems={animateEditViewItems}
-                        creditUsed={scanButtonState === 'complete' || scanButtonState === 'error'}
+                        // Story 14.24: Only show credit warning if a credit was actually used in this session
+                        // (not just because an existing transaction has a thumbnail)
+                        creditUsed={creditUsedInSession}
                     />
                 )}
 
@@ -2439,10 +3009,11 @@ function App() {
 
                 {/* Story 14.14: Transaction History View (accessible via profile menu) */}
                 {/* Story 14.21: Added colorTheme prop for unified category colors */}
+                {/* Story 14.27: Uses paginatedTransactions with loadMore for infinite scroll */}
                 {view === 'history' && (
                     <HistoryFiltersProvider initialState={pendingHistoryFilters || undefined}>
                         <HistoryView
-                            historyTrans={transactions as any}
+                            historyTrans={paginatedTransactions as any}
                             historyPage={1}
                             totalHistoryPages={1}
                             theme={theme}
@@ -2455,10 +3026,11 @@ function App() {
                             onBack={navigateBack}
                             onSetHistoryPage={() => {}}
                             onEditTransaction={(tx) => {
-                                // Story 14.23: Use unified TransactionEditorView for existing transactions
-                                navigateToTransactionEditor('existing', tx as any);
+                                // Story 14.24: Navigate to read-only detail view first
+                                // User clicks "Edit" button in detail view to enter edit mode (with conflict check)
+                                navigateToTransactionDetail(tx as Transaction);
                             }}
-                            allTransactions={transactions as any}
+                            allTransactions={paginatedTransactions as any}
                             defaultCity={defaultCity}
                             defaultCountry={defaultCountry}
                             lang={lang}
@@ -2467,6 +3039,10 @@ function App() {
                             userName={user?.displayName || ''}
                             userEmail={user?.email || ''}
                             onNavigateToView={(targetView) => setView(targetView as View)}
+                            hasMoreTransactions={hasMoreTransactions}
+                            onLoadMoreTransactions={loadMoreTransactions}
+                            loadingMoreTransactions={loadingMoreTransactions}
+                            isAtListenerLimit={isAtListenerLimit}
                         />
                     </HistoryFiltersProvider>
                 )}
@@ -2488,12 +3064,15 @@ function App() {
 
             <Nav
                 view={view}
-                setView={(v: string) => setView(v as View)}
+                setView={(v: string) => {
+                    // Story 14.24: Use navigateToView to ensure QuickSaveCard is cleared
+                    navigateToView(v as View);
+                }}
                 onScanClick={() => {
                     // Story 12.3: If processing, go to batch-review to show progress
                     // If ready, go to batch-review to show results
                     if (scanStatus === 'processing' || scanStatus === 'ready') {
-                        setView('batch-review');
+                        navigateToView('batch-review');
                     } else {
                         triggerScan();
                     }
@@ -2501,7 +3080,7 @@ function App() {
                 // Story 12.1: Long-press on camera FAB opens batch capture mode (AC #1)
                 onBatchClick={() => {
                     setIsBatchCaptureMode(true);
-                    setView('batch-capture');
+                    navigateToView('batch-capture');
                 }}
                 onTrendsClick={() => {
                     // Navigation state is now managed by AnalyticsContext
@@ -2909,6 +3488,40 @@ function App() {
                 onCancel={handleCurrencyMismatchCancel}
                 theme={theme as 'light' | 'dark'}
                 t={t}
+            />
+
+            {/* Total Mismatch Dialog (OCR error detection) */}
+            <TotalMismatchDialog
+                isOpen={showTotalMismatch}
+                validationResult={totalMismatchData?.validationResult || {
+                    isValid: true,
+                    extractedTotal: 0,
+                    itemsSum: 0,
+                    discrepancy: 0,
+                    discrepancyPercent: 0,
+                    suggestedTotal: null,
+                    errorType: 'none',
+                }}
+                currency={totalMismatchData?.pendingTransaction?.currency || userPreferences.defaultCurrency || 'CLP'}
+                onUseItemsSum={handleTotalUseItemsSum}
+                onKeepOriginal={handleTotalKeepOriginal}
+                onCancel={handleTotalMismatchCancel}
+                theme={theme as 'light' | 'dark'}
+                t={t}
+            />
+
+            {/* Story 14.24: Transaction Conflict Dialog */}
+            <TransactionConflictDialog
+                isOpen={showConflictDialog}
+                conflictingTransaction={conflictDialogData?.conflictingTransaction || null}
+                conflictReason={conflictDialogData?.conflictReason || null}
+                onContinueCurrent={handleConflictClose}
+                onViewConflicting={handleConflictViewCurrent}
+                onDiscardConflicting={handleConflictDiscard}
+                onClose={handleConflictClose}
+                t={t}
+                lang={lang}
+                formatCurrency={(amount, curr) => formatCurrency(amount, curr)}
             />
         </div>
     );

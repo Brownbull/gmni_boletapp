@@ -3,8 +3,8 @@
 
 metadata:
   created: 2026-01-06T10:30:00Z
-  last_optimization: 2026-01-06T10:30:00Z
-  current_generation: 1
+  last_optimization: 2026-01-07T12:00:00Z
+  current_generation: 2
 
 versions:
   - generation: 1
@@ -17,6 +17,20 @@ versions:
       - "Consolidated 92 patterns in 06-lessons.md into categorized sections"
       - "Removed verbose code examples (reference docs instead)"
       - "Summarized pre-Epic 14 sync history entries"
+
+  - generation: 2
+    timestamp: 2026-01-07T12:00:00Z
+    backup_path: ./backups/v2/
+    token_count_before: 20267
+    token_count_after: 16840
+    optimization_type: full
+    changes_summary:
+      - "Consolidated React Query section in 04-architecture.md (removed verbose code examples, reference docs instead)"
+      - "Summarized Epic progress into table format"
+      - "Consolidated story-specific sections (14.23, 14.16) into compact tables"
+      - "Removed redundant Code Review Learnings (reference 06-lessons.md and story files)"
+      - "Consolidated pre-2026 sync history into epic summaries"
+      - "Updated current development status with React Query completion"
 
 restore_history: []
   # Example entry (added by memory-restore):

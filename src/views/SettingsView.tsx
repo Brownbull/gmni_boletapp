@@ -52,6 +52,9 @@ interface SettingsViewProps {
     // Font color mode
     fontColorMode?: string;
     onSetFontColorMode?: (mode: string) => void;
+    // Font family
+    fontFamily?: string;
+    onSetFontFamily?: (family: string) => void;
     // Default location
     defaultCountry?: string;
     defaultCity?: string;
@@ -79,6 +82,8 @@ interface SettingsViewProps {
     trustedMerchants?: TrustedMerchant[];
     trustedMerchantsLoading?: boolean;
     onRevokeTrust?: (merchantName: string) => Promise<void>;
+    // Clear all learned data
+    onClearAllLearnedData?: () => Promise<void>;
     // Story 14.22: Profile editing
     userEmail?: string;
     displayName?: string;
@@ -88,9 +93,10 @@ interface SettingsViewProps {
     onSetPhoneNumber?: (phone: string) => void;
     onSetBirthDate?: (date: string) => void;
     // Story 14.22: Subscription info
-    plan?: 'free' | 'pro' | 'max';
-    creditsUsed?: number;
-    creditsTotal?: number;
+    plan?: 'freemium' | 'pro' | 'business';
+    creditsRemaining?: number;
+    superCreditsRemaining?: number;
+    daysUntilReset?: number;
     // Story 14.22: Controlled navigation state for breadcrumb in TopHeader
     currentSubview?: SettingsSubView;
     onSubviewChange?: (subview: SettingsSubView) => void;
@@ -119,6 +125,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     onSetColorTheme,
     fontColorMode = 'colorful',
     onSetFontColorMode,
+    fontFamily = 'outfit',
+    onSetFontFamily,
     defaultCountry = '',
     defaultCity = '',
     onSetDefaultCountry,
@@ -140,6 +148,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     trustedMerchants = [],
     trustedMerchantsLoading = false,
     onRevokeTrust,
+    onClearAllLearnedData,
     userEmail = '',
     displayName = '',
     phoneNumber = '',
@@ -147,9 +156,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     onSetDisplayName,
     onSetPhoneNumber,
     onSetBirthDate,
-    plan = 'free',
-    creditsUsed = 0,
-    creditsTotal = 900,
+    plan = 'freemium',
+    creditsRemaining = 0,
+    superCreditsRemaining = 0,
+    daysUntilReset = 15,
     currentSubview,
     onSubviewChange,
 }) => {
@@ -169,7 +179,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     const renderSubView = () => {
         switch (currentView) {
             case 'limites':
-                return <LimitesView t={t} />;
+                return <LimitesView t={t} lang={lang} theme={theme} />;
 
             case 'perfil':
                 return (
@@ -197,12 +207,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         dateFormat={dateFormat}
                         colorTheme={colorTheme}
                         fontColorMode={fontColorMode}
+                        fontFamily={fontFamily}
                         onSetLang={onSetLang}
                         onSetCurrency={onSetCurrency}
                         onSetDateFormat={onSetDateFormat}
                         onSetTheme={onSetTheme}
                         onSetColorTheme={onSetColorTheme}
                         onSetFontColorMode={onSetFontColorMode}
+                        onSetFontFamily={onSetFontFamily}
                     />
                 );
 
@@ -224,10 +236,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 return (
                     <SuscripcionView
                         t={t}
+                        lang={lang}
                         theme={theme}
                         plan={plan}
-                        creditsUsed={creditsUsed}
-                        creditsTotal={creditsTotal}
+                        creditsRemaining={creditsRemaining}
+                        superCreditsRemaining={superCreditsRemaining}
+                        daysUntilReset={daysUntilReset}
                     />
                 );
 
@@ -251,6 +265,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         trustedMerchants={trustedMerchants}
                         trustedMerchantsLoading={trustedMerchantsLoading}
                         onRevokeTrust={onRevokeTrust}
+                        onClearAllLearnedData={onClearAllLearnedData}
                     />
                 );
 
@@ -287,7 +302,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     // Main menu view
     if (currentView === 'main') {
         return (
-            <div className="pb-24 space-y-3">
+            <div className="pb-4 space-y-3">
                 {/* Story 14.22: Header removed - TopHeader handles title with profile avatar */}
 
                 {/* Menu Items - Story 14.22 AC #2 - colors from mockup settings.html */}
@@ -375,5 +390,5 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     }
 
     // Render the active sub-view
-    return <div className="pb-24">{renderSubView()}</div>;
+    return <div className="pb-4">{renderSubView()}</div>;
 };

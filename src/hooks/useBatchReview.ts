@@ -64,10 +64,10 @@ export interface UseBatchReviewReturn {
   updateReceipt: (id: string, transaction: Transaction) => void;
   /** Discard a receipt from the batch */
   discardReceipt: (id: string) => void;
-  /** Save all valid receipts to Firestore */
+  /** Save all valid receipts to Firestore (Story 14.15: also returns saved transactions) */
   saveAll: (
     saveTransaction: (transaction: Transaction) => Promise<string>
-  ) => Promise<{ saved: string[]; failed: string[] }>;
+  ) => Promise<{ saved: string[]; failed: string[]; savedTransactions: Transaction[] }>;
   /** Get a receipt by ID for editing */
   getReceipt: (id: string) => BatchReceipt | undefined;
   /** Check if batch is empty (all discarded) */
@@ -193,16 +193,17 @@ export function useBatchReview(
 
   /**
    * Save all valid receipts to Firestore.
+   * Story 14.15: Also returns saved transactions for batch complete modal.
    */
   const saveAll = useCallback(
     async (
       saveTransaction: (transaction: Transaction) => Promise<string>
-    ): Promise<{ saved: string[]; failed: string[] }> => {
+    ): Promise<{ saved: string[]; failed: string[]; savedTransactions: Transaction[] }> => {
       // Get valid receipts (non-error)
       const validReceipts = receipts.filter((r) => r.status !== 'error');
 
       if (validReceipts.length === 0) {
-        return { saved: [], failed: [] };
+        return { saved: [], failed: [], savedTransactions: [] };
       }
 
       setIsSaving(true);
@@ -210,6 +211,7 @@ export function useBatchReview(
 
       const saved: string[] = [];
       const failed: string[] = [];
+      const savedTransactions: Transaction[] = [];
 
       // Save each receipt sequentially
       for (let i = 0; i < validReceipts.length; i++) {
@@ -218,6 +220,8 @@ export function useBatchReview(
         try {
           const transactionId = await saveTransaction(receipt.transaction);
           saved.push(transactionId);
+          // Story 14.15: Store transaction with ID for batch complete modal
+          savedTransactions.push({ ...receipt.transaction, id: transactionId });
         } catch (error) {
           console.error(`Failed to save receipt ${receipt.id}:`, error);
           failed.push(receipt.id);
@@ -227,7 +231,7 @@ export function useBatchReview(
       }
 
       setIsSaving(false);
-      return { saved, failed };
+      return { saved, failed, savedTransactions };
     },
     [receipts]
   );

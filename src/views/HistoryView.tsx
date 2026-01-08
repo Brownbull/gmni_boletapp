@@ -137,6 +137,15 @@ interface HistoryViewProps {
     userEmail?: string;
     /** General navigation handler for profile dropdown menu items */
     onNavigateToView?: (view: string) => void;
+    // Story 14.27: Pagination props for loading older transactions
+    /** True if more pages are available beyond current transactions */
+    hasMoreTransactions?: boolean;
+    /** Callback to load more transactions from Firestore */
+    onLoadMoreTransactions?: () => void;
+    /** True while loading more transactions */
+    loadingMoreTransactions?: boolean;
+    /** True if at listener limit (100 transactions) - indicates pagination available */
+    isAtListenerLimit?: boolean;
 }
 
 // ============================================================================
@@ -177,6 +186,11 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
     userName = '',
     userEmail = '',
     onNavigateToView,
+    // Story 14.27: Pagination props for loading older transactions
+    hasMoreTransactions = false,
+    onLoadMoreTransactions,
+    loadingMoreTransactions = false,
+    isAtListenerLimit = false,
 }) => {
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     // Story 14.14: Search functionality
@@ -256,6 +270,8 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
     const prefersReducedMotion = useReducedMotion();
     const containerRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLElement | null>(null);
+    // Story 14.27: Track when "load more" completes to scroll to top
+    const wasLoadingMore = useRef(false);
 
     // Story 14.14: Find scroll parent and set up scroll detection for collapsible header
     useEffect(() => {
@@ -374,6 +390,35 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
         }
         prevFilterStateRef.current = currentFilterKey;
     }, [filterState]);
+
+    // Story 14.27: Scroll to top when "load more" completes (like turning to next page in a book)
+    useEffect(() => {
+        // Detect transition from loading -> not loading
+        if (wasLoadingMore.current && !loadingMoreTransactions) {
+            // Loading just finished - scroll to top
+            if (scrollContainerRef.current) {
+                scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+        wasLoadingMore.current = loadingMoreTransactions;
+    }, [loadingMoreTransactions]);
+
+    // Story 14.27: Helper to scroll to top (used for page navigation)
+    const scrollToTop = useCallback(() => {
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }, []);
+
+    // Story 14.27: Navigate to page and scroll to top (like turning pages in a book)
+    const goToPage = useCallback((page: number) => {
+        setCurrentPage(page);
+        scrollToTop();
+    }, [scrollToTop]);
 
     // Paginate filtered results - Story 14.14: Variable page size (15/30/60)
     const totalFilteredPages = Math.max(1, Math.ceil(filteredTransactions.length / pageSize));
@@ -1083,10 +1128,11 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                 {filteredTransactions.length > 0 && (
                     <div className="flex flex-col items-center gap-3 mt-6">
                         {/* Page navigation - Story 14.14: Circular buttons with arrows */}
+                        {/* Story 14.27: Scrolls to top on page change (like turning pages in a book) */}
                         <div className="flex items-center gap-4">
                             <button
                                 disabled={currentPage === 1}
-                                onClick={() => setCurrentPage(p => p - 1)}
+                                onClick={() => goToPage(currentPage - 1)}
                                 className="w-11 h-11 rounded-full flex items-center justify-center disabled:opacity-40 transition-colors"
                                 style={{
                                     backgroundColor: 'var(--surface)',
@@ -1101,7 +1147,7 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                             </span>
                             <button
                                 disabled={currentPage >= totalFilteredPages}
-                                onClick={() => setCurrentPage(p => p + 1)}
+                                onClick={() => goToPage(currentPage + 1)}
                                 className="w-11 h-11 rounded-full flex items-center justify-center disabled:opacity-40 transition-colors"
                                 style={{
                                     backgroundColor: 'var(--surface)',
@@ -1122,7 +1168,7 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                                     key={size}
                                     onClick={() => {
                                         setPageSize(size);
-                                        setCurrentPage(1); // Reset to first page when changing page size
+                                        goToPage(1); // Reset to first page and scroll to top
                                     }}
                                     className={`px-2 py-1 text-xs rounded-md transition-colors ${
                                         pageSize === size ? 'font-semibold' : ''
@@ -1139,6 +1185,42 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                                 </button>
                             ))}
                         </div>
+
+                        {/* Story 14.27: Load more button for pagination */}
+                        {/* Show when at listener limit and on last page of client-side pagination */}
+                        {/* Scrolls to top after loading completes (useEffect watches loadingMoreTransactions) */}
+                        {isAtListenerLimit && hasMoreTransactions && currentPage >= totalFilteredPages && (
+                            <button
+                                onClick={onLoadMoreTransactions}
+                                disabled={loadingMoreTransactions}
+                                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                                style={{
+                                    backgroundColor: 'var(--surface)',
+                                    border: '1px solid var(--border-light)',
+                                    color: 'var(--text-primary)',
+                                }}
+                                data-testid="load-more-transactions"
+                            >
+                                {loadingMoreTransactions ? (
+                                    <>
+                                        <Loader2 size={16} className="animate-spin" />
+                                        <span>{lang === 'es' ? 'Cargando...' : 'Loading...'}</span>
+                                    </>
+                                ) : (
+                                    <span>{lang === 'es' ? 'Cargar más transacciones' : 'Load more transactions'}</span>
+                                )}
+                            </button>
+                        )}
+
+                        {/* Story 14.27: End of history indicator */}
+                        {isAtListenerLimit && !hasMoreTransactions && currentPage >= totalFilteredPages && (
+                            <span
+                                className="text-xs py-2"
+                                style={{ color: 'var(--text-tertiary)' }}
+                            >
+                                {lang === 'es' ? 'Fin del historial' : 'End of history'}
+                            </span>
+                        )}
                     </div>
                 )}
                 </div>

@@ -19,10 +19,161 @@
  */
 
 import React, { useEffect, useRef, useCallback } from 'react';
-import { ChevronLeft, X, ChevronUp, ChevronDown, Receipt } from 'lucide-react';
+import { ChevronLeft, Download, Receipt } from 'lucide-react';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
-import type { TrendDirection, ReportPeriodType, CategoryBreakdown } from '../../types/report';
+import type { TrendDirection, ReportPeriodType, CategoryBreakdown, TransactionGroup, ItemGroup } from '../../types/report';
 import { formatCurrency } from '../../types/report';
+import { CategoryGroupCard } from './CategoryGroupCard';
+import { ItemGroupCard } from './ItemGroupCard';
+import { SpendingDonutChart, type DonutSegment } from './SpendingDonutChart';
+import { formatCategoryName } from '../../utils/reportUtils';
+
+// ============================================================================
+// Print Helper
+// ============================================================================
+
+/** Month abbreviations for filename */
+const MONTH_ABBR = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+/**
+ * Generates a filename for the PDF export based on period type and date range.
+ * Examples:
+ * - Weekly: Gastify_report_2025_Q4_Dic_S52
+ * - Monthly: Gastify_report_2025_Q4_Dic
+ * - Quarterly: Gastify_report_2025_Q4
+ * - Yearly: Gastify_report_2025
+ */
+const generatePdfFilename = (
+  periodType: ReportPeriodType,
+  dateRange: { start: Date; end: Date }
+): string => {
+  const year = dateRange.start.getFullYear();
+  const month = dateRange.start.getMonth(); // 0-indexed
+  const quarter = Math.floor(month / 3) + 1;
+  const monthAbbr = MONTH_ABBR[month];
+
+  // Calculate week number (ISO week)
+  const startOfYear = new Date(year, 0, 1);
+  const days = Math.floor((dateRange.start.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+  const weekNum = Math.ceil((days + startOfYear.getDay() + 1) / 7);
+
+  switch (periodType) {
+    case 'weekly':
+      return `Gastify_report_${year}_Q${quarter}_${monthAbbr}_S${weekNum}`;
+    case 'monthly':
+      return `Gastify_report_${year}_Q${quarter}_${monthAbbr}`;
+    case 'quarterly':
+      return `Gastify_report_${year}_Q${quarter}`;
+    case 'yearly':
+      return `Gastify_report_${year}`;
+    default:
+      return `Gastify_report_${year}`;
+  }
+};
+
+/**
+ * Handles PDF export by cloning report content to a print container
+ * This approach avoids CSS complexity with deeply nested React components
+ */
+const handlePrintReport = (
+  reportContentRef: React.RefObject<HTMLDivElement | null>,
+  reportData: {
+    fullTitle: string;
+    transactionCount: number;
+    periodType: ReportPeriodType;
+    dateRange: { start: Date; end: Date };
+  }
+) => {
+  const reportContent = reportContentRef.current;
+  if (!reportContent) return;
+
+  // Generate filename and set document title (Chrome uses title as default PDF name)
+  const filename = generatePdfFilename(reportData.periodType, reportData.dateRange);
+  const originalTitle = document.title;
+  document.title = filename;
+
+  // Create or get print container
+  let printContainer = document.getElementById('print-container');
+  if (!printContainer) {
+    printContainer = document.createElement('div');
+    printContainer.id = 'print-container';
+    document.body.appendChild(printContainer);
+  }
+
+  // Clone the report content
+  const clone = reportContent.cloneNode(true) as HTMLElement;
+
+  // Create branding header (matches TopHeader wordmark styling with "G" logo circle)
+  const brandingHtml = `
+    <div class="print-branding">
+      <div class="print-logo-circle">G</div>
+      <span class="print-wordmark">Gastify</span>
+    </div>
+  `;
+
+  // Create report header
+  const headerHtml = `
+    <div class="print-report-header">
+      <h1>${reportData.fullTitle}</h1>
+      <p>${reportData.transactionCount} ${reportData.transactionCount === 1 ? 'transacción' : 'transacciones'}</p>
+    </div>
+  `;
+
+  // Create footer with generation info
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('es-CL', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+  const timeStr = now.toLocaleTimeString('es-CL', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+  const footerHtml = `
+    <div class="print-footer">
+      <div class="print-footer-divider"></div>
+      <p class="print-footer-title">Reporte generado automáticamente por Gastify</p>
+      <p class="print-footer-meta">${dateStr}, ${timeStr} · Basado en ${reportData.transactionCount} ${reportData.transactionCount === 1 ? 'transacción' : 'transacciones'}</p>
+      <p class="print-footer-disclaimer">Este reporte es solo para uso personal.</p>
+      <p class="print-footer-url">gastify.cl</p>
+    </div>
+  `;
+
+  // Clear and populate print container
+  printContainer.innerHTML = brandingHtml + headerHtml;
+
+  // Remove the print-only elements from clone (they're now in the container)
+  const printOnlyElements = clone.querySelectorAll('[data-testid="print-app-branding"], [data-testid="print-header"]');
+  printOnlyElements.forEach(el => el.remove());
+
+  // Add cloned content
+  printContainer.appendChild(clone);
+
+  // Add footer at the end
+  printContainer.insertAdjacentHTML('beforeend', footerHtml);
+
+  // Add print-ready class to body
+  document.body.classList.add('printing-report');
+
+  // Print
+  window.print();
+
+  // Cleanup after print dialog closes
+  const cleanup = () => {
+    document.body.classList.remove('printing-report');
+    document.title = originalTitle; // Restore original title
+    if (printContainer) {
+      printContainer.innerHTML = '';
+    }
+  };
+
+  // Use both events to ensure cleanup
+  window.addEventListener('afterprint', cleanup, { once: true });
+  // Fallback timeout in case afterprint doesn't fire
+  setTimeout(cleanup, 1000);
+};
 
 // ============================================================================
 // Types
@@ -62,6 +213,16 @@ export interface ReportDetailData {
   transactionCount: number;
   /** Date range for the period (used for filtering navigation) */
   dateRange: { start: Date; end: Date };
+  /**
+   * Transaction groups for grouped category display (Story 14.16)
+   * Weekly: Top 3 by amount, Monthly+: All sorted alphabetically
+   */
+  transactionGroups?: TransactionGroup[];
+  /**
+   * Item groups for product-level breakdown (Story 14.16)
+   * Weekly: Top 3 by amount, Monthly+: All sorted alphabetically
+   */
+  itemGroups?: ItemGroup[];
 }
 
 export interface ReportDetailOverlayProps {
@@ -117,6 +278,16 @@ const HeroCard: React.FC<HeroCardProps> = ({
     yearly: 'Tu primer año completo',
   }[periodType];
 
+  // Semantic colors for trend - up (more spending) = bad, down (less) = good
+  // Use CSS variables for theme-awareness
+  const trendColor = trend === 'up'
+    ? 'var(--negative-primary)'  // Red - spending increased (bad)
+    : 'var(--positive-primary)'; // Green - spending decreased (good)
+
+  const trendBgColor = trend === 'up'
+    ? 'var(--negative-bg)'
+    : 'var(--positive-bg)';
+
   return (
     <div
       className="rounded-xl p-6 text-center"
@@ -131,15 +302,29 @@ const HeroCard: React.FC<HeroCardProps> = ({
       </div>
       {hasTrend && (
         <div
-          className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm text-white/90"
-          style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold"
+          style={{
+            backgroundColor: trendBgColor,
+            color: trendColor,
+          }}
         >
-          {trend === 'up' ? (
-            <ChevronUp size={14} strokeWidth={2.5} />
-          ) : (
-            <ChevronDown size={14} strokeWidth={2.5} />
-          )}
-          {trend === 'up' ? '+' : ''}{trendPercent}% {comparisonLabel || 'vs período anterior'}
+          {/* Up/down arrow icon */}
+          <svg
+            width={12}
+            height={12}
+            viewBox="0 0 24 24"
+            fill="none"
+            style={{ flexShrink: 0 }}
+          >
+            {trend === 'up' ? (
+              // Up arrow - spending increased (bad)
+              <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            ) : (
+              // Down arrow - spending decreased (good)
+              <path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            )}
+          </svg>
+          {trend === 'up' ? '+' : '-'}{trendPercent}% {comparisonLabel || 'vs período anterior'}
         </div>
       )}
       {isFirst && (
@@ -219,7 +404,7 @@ const HighlightsCard: React.FC<HighlightsCardProps> = ({ highlights, periodType 
 };
 
 /**
- * Category breakdown card
+ * Category breakdown card (for monthly+ reports - flat list)
  */
 interface CategoryBreakdownCardProps {
   categories: CategoryBreakdown[];
@@ -251,7 +436,7 @@ const CategoryBreakdownCard: React.FC<CategoryBreakdownCardProps> = ({ categorie
           {/* Category info */}
           <div className="flex-1">
             <div className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-              {cat.category}
+              {formatCategoryName(cat.category)}
             </div>
             <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
               {cat.transactionCount} {cat.transactionCount === 1 ? 'compra' : 'compras'}
@@ -267,6 +452,102 @@ const CategoryBreakdownCard: React.FC<CategoryBreakdownCardProps> = ({ categorie
     </div>
   </div>
 );
+
+/**
+ * Transaction groups card (Story 14.16 - grouped store types)
+ */
+interface TransactionGroupsCardProps {
+  groups: TransactionGroup[];
+}
+
+const TransactionGroupsCard: React.FC<TransactionGroupsCardProps> = ({ groups }) => {
+  // Build donut segments from groups
+  const donutSegments: DonutSegment[] = groups.map((g) => ({
+    key: g.key,
+    name: g.name,
+    value: g.rawTotalAmount,
+    percent: g.percent,
+    emoji: g.emoji,
+  }));
+
+  return (
+    <div data-testid="transaction-groups-card">
+      {/* Section title */}
+      <div
+        className="text-xs mb-3 px-1"
+        style={{ color: 'var(--text-tertiary)' }}
+      >
+        🏪 Desglose por tipo de tienda
+      </div>
+
+      {/* Donut chart with legend (only show if more than 1 group) */}
+      {groups.length > 1 && (
+        <div className="mb-4">
+          <SpendingDonutChart
+            segments={donutSegments}
+            size={90}
+            isStoreGroups={true}
+          />
+        </div>
+      )}
+
+      {/* Category group cards */}
+      <div className="flex flex-col">
+        {groups.map((group) => (
+          <CategoryGroupCard key={group.key} group={group} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Item groups card (Story 14.16 - grouped product types)
+ */
+interface ItemGroupsCardProps {
+  groups: ItemGroup[];
+}
+
+const ItemGroupsCard: React.FC<ItemGroupsCardProps> = ({ groups }) => {
+  // Build donut segments from groups
+  const donutSegments: DonutSegment[] = groups.map((g) => ({
+    key: g.key,
+    name: g.name,
+    value: g.rawTotalAmount,
+    percent: g.percent,
+    emoji: g.emoji,
+  }));
+
+  return (
+    <div data-testid="item-groups-card">
+      {/* Section title */}
+      <div
+        className="text-xs mb-3 px-1"
+        style={{ color: 'var(--text-tertiary)' }}
+      >
+        🛒 Desglose por tipo de producto
+      </div>
+
+      {/* Donut chart with legend (only show if more than 1 group) */}
+      {groups.length > 1 && (
+        <div className="mb-4">
+          <SpendingDonutChart
+            segments={donutSegments}
+            size={90}
+            isStoreGroups={false}
+          />
+        </div>
+      )}
+
+      {/* Item group cards */}
+      <div className="flex flex-col">
+        {groups.map((group) => (
+          <ItemGroupCard key={group.key} group={group} />
+        ))}
+      </div>
+    </div>
+  );
+};
 
 // ============================================================================
 // Main Component
@@ -287,15 +568,16 @@ export const ReportDetailOverlay: React.FC<ReportDetailOverlayProps> = ({
 }) => {
   const prefersReducedMotion = useReducedMotion();
   const overlayRef = useRef<HTMLDivElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const downloadButtonRef = useRef<HTMLButtonElement>(null);
+  const reportContentRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<Element | null>(null);
 
-  // Focus management
+  // Focus management - focus the overlay itself for accessibility
   useEffect(() => {
     if (isOpen) {
       previousActiveElement.current = document.activeElement;
       setTimeout(() => {
-        closeButtonRef.current?.focus();
+        overlayRef.current?.focus();
       }, 0);
     }
   }, [isOpen]);
@@ -367,6 +649,7 @@ export const ReportDetailOverlay: React.FC<ReportDetailOverlayProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="report-overlay-title"
+        tabIndex={-1}
       >
         {/* Modal Header */}
         <div
@@ -429,22 +712,26 @@ export const ReportDetailOverlay: React.FC<ReportDetailOverlayProps> = ({
             </span>
           </button>
 
-          {/* Close button */}
+          {/* Download as PDF button */}
           <button
-            ref={closeButtonRef}
+            ref={downloadButtonRef}
             type="button"
-            onClick={handleClose}
+            onClick={() => {
+              // Use JS-based print that clones content to a print container
+              handlePrintReport(reportContentRef, reportData);
+            }}
             className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 ml-2"
             style={{ backgroundColor: 'var(--bg-tertiary)' }}
-            aria-label="Cerrar"
-            data-testid="close-button"
+            aria-label="Descargar como PDF"
+            data-testid="download-pdf-button"
           >
-            <X size={18} style={{ color: 'var(--text-secondary)' }} />
+            <Download size={18} style={{ color: 'var(--text-secondary)' }} />
           </button>
         </div>
 
         {/* Scrollable content */}
         <div
+          ref={reportContentRef}
           className="flex-1 overflow-y-auto p-4"
           style={{
             backgroundColor: 'var(--bg-primary, #ffffff)',
@@ -452,6 +739,30 @@ export const ReportDetailOverlay: React.FC<ReportDetailOverlayProps> = ({
           data-testid="report-content"
         >
           <div className="flex flex-col gap-4">
+            {/* Print-only app branding - hidden on screen, visible when printing */}
+            <div
+              className="hidden print:flex items-center justify-center gap-2 pb-2 mb-2 border-b"
+              style={{ borderColor: 'var(--border-light)' }}
+              data-testid="print-app-branding"
+            >
+              <img src="/icon.svg" alt="Gastify" className="w-6 h-6" />
+              <span className="text-lg font-bold" style={{ color: '#2d3a4a', letterSpacing: '-0.5px' }}>
+                Gastify
+              </span>
+            </div>
+
+            {/* Print-only report title - hidden on screen, visible when printing */}
+            <div
+              className="hidden print:block text-center mb-4"
+              style={{ color: 'var(--text-primary)' }}
+              data-testid="print-header"
+            >
+              <h1 className="text-2xl font-bold mb-1">{reportData.fullTitle}</h1>
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                {reportData.transactionCount} {reportData.transactionCount === 1 ? 'transacción' : 'transacciones'}
+              </p>
+            </div>
+
             {/* Hero card */}
             <HeroCard
               amount={reportData.amount}
@@ -475,8 +786,20 @@ export const ReportDetailOverlay: React.FC<ReportDetailOverlayProps> = ({
               />
             )}
 
-            {/* Category breakdown */}
-            {reportData.categories && reportData.categories.length > 0 && (
+            {/* Story 14.16: Show transaction groups with inline donut chart */}
+            {reportData.transactionGroups && reportData.transactionGroups.length > 0 && (
+              <TransactionGroupsCard groups={reportData.transactionGroups} />
+            )}
+
+            {/* Story 14.16: Show item groups with inline donut chart */}
+            {reportData.itemGroups && reportData.itemGroups.length > 0 && (
+              <ItemGroupsCard groups={reportData.itemGroups} />
+            )}
+
+            {/* Fallback to flat category list if no groups available */}
+            {(!reportData.transactionGroups || reportData.transactionGroups.length === 0) &&
+             (!reportData.itemGroups || reportData.itemGroups.length === 0) &&
+             reportData.categories && reportData.categories.length > 0 && (
               <CategoryBreakdownCard categories={reportData.categories} />
             )}
           </div>

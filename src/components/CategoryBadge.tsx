@@ -1,8 +1,8 @@
 import React from 'react';
 import { BookMarked } from 'lucide-react';
 // Story 14.21: Use getCategoryPillColors for badges - always colorful regardless of fontColorMode
-import { getCategoryPillColors } from '../config/categoryColors';
-import { translateCategory, translateSubcategory } from '../utils/categoryTranslations';
+import { getCategoryPillColors, getItemCategoryColors } from '../config/categoryColors';
+import { translateCategory, translateSubcategory, translateItemGroup, getItemCategoryEmoji } from '../utils/categoryTranslations';
 import { getCategoryEmoji } from '../utils/categoryEmoji';
 import type { CategorySource } from '../types/transaction';
 import type { Language } from '../utils/translations';
@@ -21,6 +21,8 @@ interface CategoryBadgeProps {
     showIcon?: boolean;
     /** Story 14.15: Maximum width for text truncation (default: no max) */
     maxWidth?: string;
+    /** Story 14.24: Type of category - 'store' for transaction, 'item' for item categories */
+    type?: 'store' | 'item';
 }
 
 /**
@@ -40,20 +42,29 @@ export const CategoryBadge: React.FC<CategoryBadgeProps> = ({
     lang = 'en',
     showIcon = false,
     maxWidth,
+    type = 'store',
 }) => {
-    // Translate category and subcategory for display (AC #5)
-    const displayCategory = translateCategory(category, lang);
+    // Story 14.24: Use appropriate translation and emoji based on type
+    const displayCategory = type === 'item'
+        ? translateItemGroup(category, lang)
+        : translateCategory(category, lang);
     const displaySubcategory = subcategory ? translateSubcategory(subcategory, lang) : undefined;
-    const emoji = getCategoryEmoji(category);
+    const emoji = type === 'item' ? getItemCategoryEmoji(category) : getCategoryEmoji(category);
+
+    // Story 14.24: Use appropriate colors based on type
+    // Uses individual category colors (not group colors) for distinct appearance
+    const colors = type === 'item'
+        ? getItemCategoryColors(category, 'normal', 'light')
+        : getCategoryPillColors(category);
 
     return (
         <div className="flex flex-wrap gap-1 items-center">
             <span
-                className={`rounded-full font-bold uppercase flex items-center gap-1 ${mini ? 'px-2 py-0.5 text-[8px]' : 'px-2.5 py-1 text-[10px]'}`}
+                className={`rounded-full font-bold uppercase flex items-center gap-1 ${mini ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-[10px]'}`}
                 // Story 14.21: Pills/badges always use colorful colors (not affected by fontColorMode)
                 style={{
-                    backgroundColor: getCategoryPillColors(category).bg,
-                    color: getCategoryPillColors(category).fg,
+                    backgroundColor: colors.bg,
+                    color: colors.fg,
                     maxWidth: maxWidth,
                 }}
             >
@@ -62,7 +73,7 @@ export const CategoryBadge: React.FC<CategoryBadgeProps> = ({
             </span>
             {categorySource === 'learned' && (
                 <span
-                    className={`inline-flex items-center gap-0.5 rounded-md bg-blue-100 text-blue-700 border border-blue-200 ${mini ? 'px-1 py-0.5 text-[8px]' : 'px-1.5 py-0.5 text-[10px]'}`}
+                    className={`inline-flex items-center gap-0.5 rounded-md bg-blue-100 text-blue-700 border border-blue-200 ${mini ? 'px-1 py-0.5 text-[10px]' : 'px-1.5 py-0.5 text-[10px]'}`}
                     title="Auto-categorized from learned preference"
                 >
                     <BookMarked size={mini ? 8 : 10} />
@@ -71,14 +82,14 @@ export const CategoryBadge: React.FC<CategoryBadgeProps> = ({
             )}
             {displaySubcategory && (
                 <span
-                    className={`rounded-md bg-slate-100 text-slate-600 border border-slate-200 truncate ${mini ? 'px-1.5 py-0.5 text-[8px] max-w-[60px]' : 'px-2 py-0.5 text-[10px] max-w-[120px]'}`}
+                    className={`rounded-md bg-slate-100 text-slate-600 border border-slate-200 truncate ${mini ? 'px-1.5 py-0.5 text-[10px] max-w-[80px]' : 'px-2 py-0.5 text-[10px] max-w-[120px]'}`}
                 >
                     {displaySubcategory}
                 </span>
             )}
             {subcategorySource === 'learned' && displaySubcategory && (
                 <span
-                    className={`inline-flex items-center gap-0.5 rounded-md bg-green-100 text-green-700 border border-green-200 ${mini ? 'px-1 py-0.5 text-[8px]' : 'px-1.5 py-0.5 text-[10px]'}`}
+                    className={`inline-flex items-center gap-0.5 rounded-md bg-green-100 text-green-700 border border-green-200 ${mini ? 'px-1 py-0.5 text-[10px]' : 'px-1.5 py-0.5 text-[10px]'}`}
                     title="Subcategory auto-applied from learned preference"
                 >
                     <BookMarked size={mini ? 8 : 10} />

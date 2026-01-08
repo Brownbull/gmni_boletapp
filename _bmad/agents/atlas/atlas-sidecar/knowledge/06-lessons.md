@@ -19,6 +19,8 @@
 | Single Source of Truth Schema | Categories/currencies in shared/schema/ | Story 14.15b |
 | Token Optimization | V3 prompt 21% smaller than V2 | Story 14.15b |
 | Unified View Pattern | Consolidate similar views with mode prop | Story 14.23 |
+| Credit Reserve Pattern | Reserve→Confirm/Refund for async ops | Story 14.24 |
+| localStorage for Ephemeral State | Client-only state separate from React Query | Story 14.24 |
 
 ## What Failed / What to Avoid
 
@@ -76,13 +78,56 @@
 - **Parent-Managed State**: Keep transaction/scan state in App.tsx, pass callbacks to view
 - **Reference**: `src/views/TransactionEditorView.tsx`, `story-14.23-unified-transaction-editor.md`
 
-### Single Active Transaction Pattern (Story 14.24 - Planned)
+### Single Active Transaction Pattern (Story 14.24 - IMPLEMENTED)
 - **One Transaction Rule**: Only one transaction can be in edit mode at any time
-- **Credit Reserve Pattern**: Reserve credit when scan starts, confirm on success, refund on error
-- **State Persistence**: Form changes and images persist across navigation
-- **Conflict Detection**: Show dialog when user tries to edit while another is active
-- **Read-Only First**: Transaction list opens read-only view; "Edit" button to enter edit mode
-- **Reference**: `story-14.24-persistent-transaction-state.md`
+- **Credit Reserve Pattern**: `reserveCredits()` → `confirmReservedCredits()` / `refundReservedCredits()`
+  - Reserve: Deducts locally (UI shows change) but doesn't persist to Firestore
+  - Confirm: Called on scan success - persists to Firestore
+  - Refund: Called on scan error - restores original credits, shows toast
+- **State Persistence**: `pendingScanStorage.ts` stores `PendingScan` in localStorage per-user
+  - Survives page refresh, tab close, navigation
+  - Key: `boletapp_pending_scan_{userId}`
+- **Conflict Detection**: `hasActiveTransactionConflict()` in App.tsx (~lines 691-766)
+  - Checks: scan_in_progress, credit_used, has_unsaved_changes
+  - `TransactionConflictDialog` shows resolution options: view, discard, cancel
+- **Architecture**: localStorage for pending scans is CORRECT - doesn't conflict with React Query
+  - React Query: Server-synced data (transactions, mappings)
+  - localStorage: Client-only ephemeral state (pending scan)
+- **Reference**: `story-14.24-persistent-transaction-state.md`, `src/components/dialogs/TransactionConflictDialog.tsx`
+
+### React Query + Firestore Subscription Pattern (Story 14.29)
+- **Don't Use useQuery with Subscriptions**: useQuery expects queryFn to return data; subscriptions update asynchronously
+- **Pattern**: Use local state + useEffect for subscription lifecycle, React Query cache only for persistence
+- **Prevent Re-render Loops**: Don't call `setData(cached)` on every effect run - use `initializedRef` flag
+- **Reset on Key Change**: Track `lastKeyStringRef` to reset initialization when query key changes (user logout/login)
+- **Refs for Stability**: Store subscribeFn and queryKey in refs to avoid stale closures
+- **Skip Redundant Updates**: Use `dataRef` + JSON comparison to skip `setData` when data unchanged
+- **Avoid useState for Derived Data**: Use `useMemo` instead of useState+useEffect for computed values (e.g., `distinctAliases`)
+- **DevTools in Production**: ReactQueryDevtools guarded by `import.meta.env.DEV` - automatically excluded from production builds
+- **Reference**: `src/hooks/useFirestoreSubscription.ts`, `story-14.29-react-query-migration.md`
+
+### Transaction Pagination Pattern (Story 14.27)
+- **Hybrid Architecture**: Real-time listener for recent 100 + useInfiniteQuery for older pages
+- **Cursor Pagination**: Use `startAfter(lastDoc)` - NOT offset-based (offset fetches all skipped docs)
+- **hasMore Detection**: Fetch `pageSize + 1` docs, check if >pageSize returned
+- **Deduplication**: Merge real-time and paginated by ID, sort by date descending
+- **Query Key Hierarchy**: `['transactions', 'paginated', userId, appId]` for selective invalidation
+- **Virtualization**: Deferred - react-window v2 API changed, simple list acceptable for expected sizes
+- **Tests**: Hook tests need `.tsx` extension when using JSX wrappers
+- **Scroll-to-Top on Page Change**: When navigating pages, scroll to top like turning book pages
+  - Use `useCallback` helper: `scrollToTop()` with `scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })`
+  - For async loads (Firestore pagination): Use `useEffect` watching loading state transition (true→false)
+- **Reference**: `src/hooks/usePaginatedTransactions.ts`, `story-14.27-transaction-pagination.md`
+
+### Fullscreen Modal Pattern (ImageViewer)
+- **Problem**: `position: fixed` inside scrollable containers gets clipped/constrained
+- **Solution**: Use `createPortal(jsx, document.body)` to render at document root level
+- **Z-Index**: Use `z-[100]` or higher to ensure modal is above all content
+- **Nav Bar Visibility**: Set `bottom: calc(70px + env(safe-area-inset-bottom))` to leave nav visible
+- **Background**: Dark overlay `rgba(0, 0, 0, 0.9)` covering content area only
+- **Image Sizing**: `max-w-full max-h-full object-contain` to fit without scrolling
+- **Body Scroll Lock**: `document.body.style.overflow = 'hidden'` on mount, restore on unmount
+- **Reference**: `src/components/ImageViewer.tsx`
 
 ---
 

@@ -1243,9 +1243,366 @@ const [donutViewMode, setDonutViewModeLocal] = useState<DonutViewMode>(() => {
 
 ---
 
-## Story Status: COMPLETE
+## Session Progress Notes (2026-01-06 - Session 6)
 
-All acceptance criteria and additional enhancements have been implemented:
+### UI/UX Refinements for Analytics View
+
+#### 1. "Más" vs "Otro" Category Naming
+**Issue:** The aggregated group of small categories was named "Otro" which conflicted with the actual "Otro" transaction category from the database.
+
+**Solution:** Changed aggregated group name from "Otro" to "Más" (More):
+- `computeTreemapCategories()` now creates "Más" instead of "Otro" for the aggregated group
+- Updated `isOtherCategory` helper to `isAggregatedGroup` - checks for "Más"/"More"
+- All display components updated to translate/display "Más" correctly
+- Real "Otro" category from transaction data now displays properly with its own emoji
+
+#### 2. Category Count Badge for "Más" Group
+**Feature:** Added a badge showing the count of categories inside the "Más" group.
+
+- Added `categoryCount?: number` field to `CategoryData` interface
+- Badge shows as transparent circle with border (same color as text)
+- Added to: AnimatedTreemapCell, DonutChart legend, TrendListItem, breakdown view
+- Styling: `border: '1.5px solid var(--text-secondary)'` with transparent background
+
+#### 3. View Mode Pills Improvements
+- Increased icon size from `text-sm` to `text-lg`
+- Adjusted container height to 32px (matches left button height)
+- Added 6px gap between icons for better spacing
+- Fixed icon centering with `leading-none` class
+
+#### 4. Transaction Count Pill Navigation (Story 14.22)
+**Feature:** Clicking the transaction count pill (📦 icon with number) navigates to History view with filters.
+
+**Changes:**
+- Changed `AnimatedTreemapCell` from `<button>` to `<div role="button">` to fix nested button warning
+- Changed transaction count icon from `Package` to `Receipt` to distinguish from item counts
+- Added `onTransactionCountClick` prop to AnimatedTreemapCell
+- Created `handleTreemapTransactionCountClick` handler in TrendsView
+- Updated DonutChart's `handleTransactionCountClick` with temporal filter support
+
+**Navigation Payload Extended:**
+```typescript
+interface HistoryNavigationPayload {
+    category?: string;        // Store category (e.g., "Supermarket")
+    storeGroup?: string;      // Store group (e.g., "food-dining")
+    itemGroup?: string;       // Item group (e.g., "food-fresh")
+    itemCategory?: string;    // Item category (e.g., "Bakery")
+    temporal?: { ... };
+}
+```
+
+**App.tsx Changes:**
+- `handleNavigateToHistory` now uses `navigateToView('history')` instead of `setView('history')` for proper back navigation
+- Added imports for `expandStoreCategoryGroup` and `expandItemCategoryGroup`
+- Store groups expand to comma-separated store categories
+- Item groups expand to comma-separated item categories
+- Fixed filter clearing logic to preserve filters when navigating to 'history' view
+
+#### 5. Back Navigation Fix
+**Issue:** Pressing back from History view always returned to home screen.
+
+**Solution:** Changed `handleNavigateToHistory` to use `navigateToView('history')` which tracks the previous view, enabling proper back navigation to Analytics.
+
+#### 6. Nested Button Warning Fix
+**Issue:** Chrome showed "button cannot appear as descendant of button" warning.
+
+**Solution:** Changed `AnimatedTreemapCell` outer element from `<button>` to `<div>` with:
+- `role="button"` for accessibility
+- `tabIndex={0}` for keyboard navigation
+- `onKeyDown` handler for Enter/Space activation
+- `cursor-pointer` class for visual feedback
+
+#### 7. Transaction Count Fix (Items → Transactions)
+**Issue:** The count displayed in analytics was showing **item count** (line items), but navigation shows **transactions**. This caused mismatches like "Otros 7" showing only 5 transactions.
+
+**Solution:** Updated `computeItemCategoryData` and `computeSubcategoryData` to count unique transactions:
+- Changed from `count: number` to `transactionIds: Set<string>`
+- Track unique transaction IDs per category using `tx.id`
+- Return `transactionIds.size` as the count
+
+**Code changes in TrendsView.tsx:**
+```typescript
+// Before: counting items
+itemCategoryMap[cat].count += 1;
+
+// After: counting unique transactions
+itemCategoryMap[cat].transactionIds.add(tx.id);
+// ...
+count: data.transactionIds.size
+```
+
+### Known Issues (To Fix in Next Session)
+1. **Item group transaction count double-counting:** When aggregating item categories into item groups (e.g., "Otros"), the current code sums transaction counts from each category. But a single transaction can have items in multiple categories within the same group, causing over-counting.
+   - **Example:** Transaction A has items in categories X and Y, both in group "Otros". Currently counted as 2, should be 1.
+   - **Fix needed:** Compute item groups directly from transactions with unique transaction ID tracking at the group level, not by summing pre-aggregated category counts.
+
+2. **Location:** `itemGroupsData` useMemo in TrendsView.tsx (lines ~837-875) - currently does `groupTotals[group].count += item.count` which sums counts instead of tracking unique transactions.
+
+### Files Modified
+- `src/views/TrendsView.tsx` - All UI refinements, navigation handlers, transaction count fix
+- `src/App.tsx` - Navigation handler, group expansion imports
+
+### Build Status
+- ✅ TypeScript compiles (pre-existing unrelated warning in ScanResultView.tsx)
+- ✅ All 3617 tests pass
+
+---
+
+## Session Progress Notes (2026-01-06 - Session 7)
+
+### Transaction Count Double-Counting Fix
+
+#### Problem
+The "Más" aggregated category group was showing incorrect transaction counts. For example:
+- Badge showed "6" (categories) with pill showing "6" transactions
+- But clicking to view transactions only showed 5
+
+**Root Cause:** When aggregating item categories into the "Más" group, the code was summing counts from each category. If a single transaction has items in multiple categories (e.g., "Dairy" and "Bakery" in the same supermarket trip), it was counted multiple times.
+
+#### Solution: Track Transaction IDs Through Aggregation Pipeline
+
+**1. Extended `CategoryData` interface** (line 112):
+```typescript
+transactionIds?: Set<string>;  // Track unique transactions for accurate aggregation
+```
+
+**2. Updated `computeAllCategoryData()`** (lines 271-301):
+- Changed from `count: number` to `transactionIds: Set<string>`
+- Each transaction ID is added to its category's set
+- Returns `transactionIds` in CategoryData for downstream aggregation
+
+**3. Updated `computeItemCategoryData()`** (lines 308-342):
+- Already tracked transactionIds internally
+- Now returns `transactionIds` in the output for group aggregation
+
+**4. Updated `computeSubcategoryData()`** (lines 350-392):
+- Same pattern: track and return transactionIds
+
+**5. Updated `computeTreemapCategories()` for "Más"** (lines 456-483):
+- Instead of summing counts: `masCount = otroCategories.reduce((sum, c) => sum + c.count, 0)`
+- Now merges transaction ID sets: `masTransactionIds.add(id)` for each category
+- Final count is `masTransactionIds.size` (unique transactions)
+
+**6. Updated `itemGroupsData` useMemo** (both in DonutChart and TrendsView):
+- Changed from `{ value: number; count: number }` to `{ value: number; transactionIds: Set<string> }`
+- Merges transactionIds from each category: `item.transactionIds.forEach(id => groupTotals[group].transactionIds.add(id))`
+- Returns `count: data.transactionIds.size`
+
+#### Why Store Groups Don't Need This Fix
+Store categories don't have double-counting issues because each transaction belongs to exactly ONE store category (a transaction can't be both "Supermercado" and "Restaurante"). Only item categories/groups have this problem since a single transaction can have items in multiple categories.
+
+### Files Modified
+- `src/views/TrendsView.tsx`:
+  - `CategoryData` interface: added `transactionIds?: Set<string>`
+  - `computeAllCategoryData()`: track transactionIds instead of count
+  - `computeItemCategoryData()`: return transactionIds
+  - `computeSubcategoryData()`: return transactionIds
+  - `computeTreemapCategories()`: merge transactionIds for "Más"
+  - `itemGroupsData` useMemo (2 locations): use transactionIds for accurate counting
+
+### Tests Verified
+- All 53 TrendsView tests pass
+- TypeScript compiles without errors
+
+---
+
+### "Más" Navigation Fix (Session 7 Continued)
+
+#### Problem
+When clicking the transaction count pill on the "Más" aggregated group, the app navigated to History view with filter `category=Más`. Since "Más" isn't a real category in the data (it's just a display aggregation), no transactions were found.
+
+#### Solution
+Updated both navigation handlers to expand "Más" into its constituent categories:
+
+**1. `handleTreemapTransactionCountClick`** (TrendsView main component):
+- Checks if `categoryName === 'Más' || categoryName === 'More'`
+- If "Más", extracts category names from `otroCategories` array
+- Joins them with comma: `otroCategories.map(c => c.name).join(',')`
+- For groups, uses `expandStoreCategoryGroup` / `expandItemCategoryGroup` to get all categories
+
+**2. `handleTransactionCountClick`** (DonutChart component):
+- Added `otroCategories` prop to DonutChart interface
+- Uses `parentOtroCategories` at drill-down level 0
+- Uses `drillDownCategorized.otroCategories` at deeper levels
+- Same expansion logic as treemap handler
+
+**3. Imports added**:
+- `expandStoreCategoryGroup`, `expandItemCategoryGroup` from `categoryColors.ts`
+
+### Files Modified
+- `src/views/TrendsView.tsx`:
+  - Added `expandStoreCategoryGroup`, `expandItemCategoryGroup` imports
+  - Added `otroCategories` prop to DonutChart interface and component
+  - Updated `handleTransactionCountClick` to handle "Más" expansion
+  - Updated `handleTreemapTransactionCountClick` to handle "Más" expansion
+
+### Tests Verified
+- All 53 TrendsView tests pass
+- TypeScript compiles without errors
+
+---
+
+### Time Period Persistence Fix (Session 7 Continued)
+
+#### Problem
+When navigating from Analytics to History view and back, the selected time period (e.g., December 2025) would reset to the current month (January 2026). The user expected the month to remain as they selected.
+
+#### Root Cause
+The `currentPeriod` state was initialized with `new Date()` on every component mount. Since the `AnalyticsProvider` key changes based on `analyticsInitialState`, and that state is cleared when leaving trends view, the TrendsView component would remount and reinitialize to the current date.
+
+#### Solution: Persist Time Period to localStorage
+Added localStorage persistence for both `timePeriod` and `currentPeriod`, following the same pattern already used for `donutViewMode`.
+
+**1. Updated `timePeriod` initialization** (lines 1727-1739):
+- Reads from `localStorage.getItem('boletapp-analytics-timeperiod')` on mount
+- Validates it's a valid TimePeriod value
+- Defaults to 'month' if not found
+
+**2. Updated `currentPeriod` initialization** (lines 1744-1767):
+- Reads from `localStorage.getItem('boletapp-analytics-currentperiod')` on mount
+- Parses JSON and validates all required fields (year, month, quarter, week)
+- Defaults to current date if not found or invalid
+
+**3. Updated `setTimePeriod` wrapper** (lines 1843-1850):
+- Persists to localStorage after setting state
+
+**4. Updated `setCurrentPeriod` wrapper** (lines 1881-1888):
+- Persists JSON.stringify(newPeriod) to localStorage after setting state
+
+### Files Modified
+- `src/views/TrendsView.tsx`:
+  - `timePeriod` state: added localStorage initialization
+  - `currentPeriod` state: added localStorage initialization
+  - `setTimePeriod`: added localStorage persistence
+  - `setCurrentPeriod`: added localStorage persistence
+
+### Tests Verified
+- All 53 TrendsView tests pass
+- TypeScript compiles without errors
+
+---
+
+### Item Category Filter Fallback Fix (Session 7 Continued)
+
+#### Problem
+When clicking on "Otros" (Other) item category showing 27 transactions, the History view only showed 12 transactions.
+
+#### Root Cause
+In Analytics, items without a category are counted under "Other" using the fallback: `item.category || 'Other'`
+
+However, the History filter compared `item.category` directly without the fallback:
+```typescript
+item => item.category === filter.group
+```
+
+This meant items with `undefined` or `null` category wouldn't match when filtering by "Other".
+
+#### Solution
+Updated `matchesCategoryFilter` in `historyFilterUtils.ts` to apply the same fallback:
+```typescript
+// Before
+item => item.category === filter.group
+
+// After (with fallback for uncategorized items)
+item => (item.category || 'Other') === filter.group
+```
+
+### Files Modified
+- `src/utils/historyFilterUtils.ts`:
+  - Added `|| 'Other'` fallback in item group filter matching (both single and multi-select cases)
+
+### Tests Verified
+- All 27 historyFilter tests pass
+- TypeScript compiles without errors
+
+---
+
+### Double-Tap Time Period Reset (Session 7 Continued)
+
+#### Feature Request
+When clicking on an already-selected time period pill (Year, Quarter, Month, Week), reset to the current (today's) period. This provides a quick way to return to "now" after navigating through past periods.
+
+#### Implementation
+Added `handleTimePeriodClick` handler that:
+1. Checks if the clicked period is already active
+2. If active: resets `currentPeriod` to today's date values
+3. If not active: switches to the new time period (existing behavior)
+
+```typescript
+const handleTimePeriodClick = useCallback((period: TimePeriod) => {
+    if (timePeriod === period) {
+        // Already on this period - reset to current date
+        const now = new Date();
+        setCurrentPeriod({
+            year: now.getFullYear(),
+            month: now.getMonth() + 1,
+            quarter: Math.ceil((now.getMonth() + 1) / 3),
+            week: Math.ceil(now.getDate() / 7),
+        });
+        setAnimationKey(prev => prev + 1); // Trigger animation
+    } else {
+        setTimePeriod(period);
+    }
+}, [timePeriod, setTimePeriod, setCurrentPeriod]);
+```
+
+#### Example Usage
+- User is viewing December 2025 with "Mes" (Month) selected
+- User clicks "Mes" again
+- View resets to January 2026 (current month)
+
+### Files Modified
+- `src/views/TrendsView.tsx`:
+  - Added `handleTimePeriodClick` handler (lines 2237-2260)
+  - Updated time period pill onClick to use new handler (line 2514)
+
+### Tests Verified
+- All 53 TrendsView tests pass
+- TypeScript compiles without errors
+
+---
+
+### Past Period Visual Indicator (Session 7 Continued)
+
+#### Feature Request
+Add a subtle visual indicator on the time period pill when viewing a past period (not the current date). This invites the user to tap again to return to the current period.
+
+#### Implementation
+
+**1. Added `isViewingCurrentPeriod` memo** (lines 2144-2167):
+Compares the selected period against today's date for the current time dimension:
+- Year: checks if `currentPeriod.year === currentYear`
+- Quarter: checks year + quarter match
+- Month: checks year + month match
+- Week: checks year + month + week match
+
+**2. Added simple dot indicator after the label** (line 2551):
+When the pill is active AND viewing a past period, a middle dot (·) is appended after the label:
+```typescript
+{showPastIndicator && ' ·'}
+```
+
+**Example:**
+- Current period: "Mes" (no dot)
+- Past period: "Mes ·" (dot appears)
+
+This is a very simple, non-distracting indicator that hints something is different about the current selection.
+
+### Files Modified
+- `src/views/TrendsView.tsx`:
+  - Added `isViewingCurrentPeriod` memo
+  - Added `showPastIndicator` variable in pill render
+  - Added conditional dot after label text
+
+### Tests Verified
+- All 53 TrendsView tests pass
+- TypeScript compiles without errors
+
+---
+
+## Story Status: READY FOR REVIEW
+
+All acceptance criteria and enhancements complete.
 
 ### Original ACs
 - ✅ AC #1: Header Redesign
@@ -1264,6 +1621,16 @@ All acceptance criteria and additional enhancements have been implemented:
 - ✅ Currency prop used correctly
 - ✅ Bidirectional sync: view mode ↔ category filter
 - ✅ View mode persistence in localStorage
+- ✅ "Más" naming for aggregated categories
+- ✅ Category count badge
+- ✅ Transaction count pill navigation
+- ✅ Item/subcategory transaction count (fixed)
+- ✅ Item group transaction count (double-counting fixed)
+- ✅ "Más" navigation expands to constituent categories
+- ✅ Time period persists on back navigation (localStorage)
+- ✅ Item category filter fallback for uncategorized items
+- ✅ Double-tap time period pill to reset to current date
+- ✅ Subtle glow indicator when viewing past period
 
 ---
 
@@ -1271,3 +1638,326 @@ All acceptance criteria and additional enhancements have been implemented:
 - ✅ TypeScript compiles without errors
 - ✅ Build succeeds
 - ✅ All TrendsView tests pass (53 tests)
+- ✅ All project tests pass
+
+---
+
+## Session Progress Notes (2026-01-06 - Session 8)
+
+### Time Period Cascade Fix
+
+#### Problem
+When switching from a coarse time granularity to a finer one, the system was using the wrong starting values. For example:
+- User on Q3 2025, clicks "Mes" (Month)
+- Expected: July 2025 (first month of Q3)
+- Actual: January 2025 (first month of year)
+
+#### Solution
+Updated `setTimePeriod` callback to cascade values correctly based on the CURRENT time period:
+
+**Cascade Rules:**
+- **Year → Quarter**: Set to Q1
+- **Year → Month**: Set to January (month 1)
+- **Year → Week**: Set to January, Week 1
+- **Quarter → Month**: Set to **first month of that quarter** (Q3 → July)
+- **Quarter → Week**: Set to first month of quarter, Week 1
+- **Month → Week**: Set to Week 1 of current month
+
+**When drilling up (coarse):**
+- Keep current values, update quarter from month if needed
+
+#### Files Modified
+- `src/views/TrendsView.tsx` - `setTimePeriod` callback (~lines 1840-1943)
+- `_bmad/agents/atlas/atlas-sidecar/knowledge/06-lessons.md` - Added pattern documentation
+
+---
+
+### Category System Analysis - Analytics → History Filter Bug
+
+#### Problem Discovered
+When clicking transaction count pill on Analytics treemap (e.g., "Alimentos Envasados" with 1 transaction), History view shows 0 transactions.
+
+#### Root Cause Analysis
+The codebase has **THREE different category type systems** that are OUT OF SYNC:
+
+| Location | Store Categories | Item Categories |
+|----------|------------------|-----------------|
+| `shared/prompts/types.ts` (Gemini prompt) | 14 categories | 9 categories (OLD) |
+| `src/types/transaction.ts` (App types) | 32 categories | 32 categories |
+| `src/config/categoryColors.ts` (Colors) | Uses transaction.ts types | Uses transaction.ts types |
+
+**Mismatch Examples:**
+- Prompt: `'Fresh Food'` → App expects: `'Produce'`, `'Meat & Seafood'`, etc.
+- Prompt: `'Drinks'` → App expects: `'Beverages'`
+- Prompt: `'Pets'` → App expects: `'Pet Supplies'`
+- Prompt: `'Apparel'` → App expects: `'Clothing'`
+
+When Gemini returns `'Fresh Food'`, but `expandItemCategoryGroup()` returns `['Produce', 'Meat & Seafood', ...]`, the filter doesn't match.
+
+---
+
+### V3 Prompt Creation Plan
+
+#### Goal
+Create a new prompt version (V3) with expanded categories that match `src/types/transaction.ts`.
+
+#### Files Created
+1. **`shared/prompts/types.ts`** - Updated with canonical 32+32 category types
+2. **`shared/prompts/v3-category-standardization.ts`** - NEW prompt file with:
+   - 32 store categories (V3_STORE_CATEGORIES)
+   - 32 item categories (V3_ITEM_CATEGORIES)
+   - Streamlined prompt text
+   - Helper functions: `buildCompleteV3Prompt()`, `getCurrencyContext()`, `getReceiptTypeDescription()`
+
+3. **`docs/sprint-artifacts/epic14/tech-specs/category-standardization.md`** - Tech spec documenting the issue and solution
+
+#### Next Steps (To Complete in Future Session)
+
+**Step 1: Register V3 in prompt-testing**
+```bash
+# Edit: prompt-testing/prompts/index.ts
+# Add:
+import { PROMPT_V3 } from './v3-category-standardization';
+# Add to PROMPT_REGISTRY map
+# Set DEV_PROMPT = PROMPT_V3
+```
+
+**Step 2: Copy to functions folder**
+```bash
+cd functions && npm run prebuild
+```
+
+**Step 3: Deploy to Cloud Function**
+```bash
+cd functions && npm run build
+firebase deploy --only functions
+```
+
+**Step 4: Test with prompt-testing utility**
+```bash
+# Generate expected results with V3
+npm run test:scan:generate -- supermarket/test-receipt
+
+# Run comparison tests
+npm run test:scan
+
+# Compare token costs between versions
+npm run test:scan:compare
+```
+
+**Step 5: Tune prompt if needed**
+- Review test results
+- Adjust prompt wording
+- Iterate until accuracy is acceptable
+
+**Step 6: Promote to production**
+```typescript
+// In prompt-testing/prompts/index.ts
+export const PRODUCTION_PROMPT: PromptConfig = PROMPT_V3;
+```
+
+**Step 7: Document cost analysis**
+- Update `prompt-testing/TOKEN-ANALYSIS.md`
+- Compare V2 vs V3 token counts and costs
+
+#### Migration Considerations
+
+1. **Existing data with legacy categories**: Create normalizer function to map old → new at read time
+2. **Background migration**: Optional script to update Firestore documents
+3. **Filter matching**: May need to normalize categories in `historyFilterUtils.ts`
+
+#### Reference Commands
+```bash
+# Prompt testing quickstart
+npm run test:scan                         # Run all tests
+npm run test:scan:generate -- <path>      # Generate expected.json
+npm run test:scan:validate                # Validate test files
+npm run test:scan:compare                 # Compare token costs
+
+# Deploy workflow
+cd functions && npm run prebuild && npm run build
+firebase deploy --only functions
+```
+
+---
+
+### Files Created This Session
+- `shared/prompts/v3-category-standardization.ts` - V3 prompt with expanded categories
+- `docs/sprint-artifacts/epic14/tech-specs/category-standardization.md` - Tech spec
+
+### Files Modified This Session
+- `src/views/TrendsView.tsx` - Time period cascade fix
+- `shared/prompts/types.ts` - Added canonical 32+32 category types + legacy types
+- `shared/prompts/base.ts` - Updated to 9 categories matching current V1/V2 + added normalizer functions
+- `_bmad/agents/atlas/atlas-sidecar/knowledge/06-lessons.md` - Time period pattern documentation
+
+### Build Status
+- ✅ TypeScript compiles without errors
+- ✅ Build succeeds
+
+---
+
+## Session Progress Notes (2026-01-06 - Session 9)
+
+### V3 Prompt - Unified Schema & Currency Auto-Detection
+
+#### Major Refactoring Completed
+
+This session focused on creating a clean, maintainable architecture for prompt categories and currency handling.
+
+#### 1. Unified Schema Created (`shared/schema/`)
+
+Created a **single source of truth** for all categories and currencies:
+
+```
+shared/schema/
+├── categories.ts   # 35 store + 37 item categories
+├── currencies.ts   # 20+ currencies with usesCents flag
+└── index.ts        # Re-exports everything
+```
+
+**New Store Categories (35 total):**
+- Added: `MusicStore`, `Subscription`, `Government`
+
+**New Item Categories (37 total):**
+- Added: `Prepared Food`, `Musical Instruments`, `Subscription`, `Insurance`, `Loan Payment`
+
+#### 2. Currency System Simplified
+
+Replaced verbose per-currency context strings with a simple `usesCents` boolean flag:
+
+```typescript
+interface CurrencyDefinition {
+  code: string;       // "USD"
+  name: string;       // "US Dollar"
+  symbol: string;     // "$"
+  usesCents: boolean; // true = multiply by 100, false = use as-is
+  decimals: 0 | 2;
+}
+```
+
+**20+ currencies supported:**
+- Americas: CLP, USD, CAD, MXN, BRL, ARS, COP, PEN
+- Europe: EUR, GBP, CHF
+- Asia-Pacific: JPY, CNY, KRW, AUD, NZD, INR
+- Middle East/Africa: AED, ZAR, ILS
+
+#### 3. V3 Prompt - Auto-Detect Currency (IN PROGRESS)
+
+Updated V3 prompt to **auto-detect currency** instead of receiving a hint:
+
+**Old approach (V2):**
+- App sends currency hint (e.g., "CLP")
+- Prompt tells AI what currency to expect
+
+**New approach (V3):**
+- No currency hint sent to prompt
+- AI detects currency from receipt (symbols, text, country clues)
+- AI returns detected currency code or `null` if uncertain
+- App compares AI result with user settings:
+  - If null → use user's default currency
+  - If different → ask user which to use
+  - If same → use detected currency
+
+#### Files Created
+
+| File | Purpose |
+|------|---------|
+| `shared/schema/categories.ts` | 35 store + 37 item categories |
+| `shared/schema/currencies.ts` | 20+ currencies with usesCents flag |
+| `shared/schema/index.ts` | Re-exports everything |
+| `prompt-testing/prompts/v3-category-standardization.ts` | V3 prompt (UPDATED) |
+
+#### Files Modified
+
+| File | Changes |
+|------|---------|
+| `prompt-testing/prompts/output-schema.ts` | Imports from unified schema |
+| `prompt-testing/prompts/input-hints.ts` | Uses new currency system, legacy exports kept |
+| `prompt-testing/prompts/index.ts` | Exports from unified schema, V3 currency handling |
+| `src/types/transaction.ts` | Re-exports types from unified schema |
+| `src/utils/categoryEmoji.ts` | Added emojis for new categories |
+| `src/utils/reportUtils.ts` | Added Spanish translations for new categories |
+| `src/config/categoryColors.ts` | Added colors for new item categories |
+| `prompt-testing/QUICKSTART.md` | Updated for V3 and unified schema |
+| `prompt-testing/ARCHITECTURE.md` | Updated diagrams and documentation |
+
+#### Session 9 Continued - Currency Auto-Detection & Missing Categories
+
+**Completed in this session:**
+
+1. **V3 Currency Auto-Detection - COMPLETE**
+   - Removed `{{currency}}` placeholder from V3 prompt
+   - Added CURRENCY DETECTION instructions to V3 prompt
+   - Updated `buildPrompt()` to skip currency replacement for V3
+   - Updated test harness `scanner.ts` - currency now optional
+   - Updated test harness `generate.ts` - no default currency, not saved to expected.json
+   - Updated Cloud Function `analyzeReceipt.ts` - currency optional in request
+
+2. **Missing Categories Added - COMPLETE**
+   - Store: `Gambling` (casinos, betting shops, lottery vendors)
+   - Item: `Tickets & Events` (theater, concerts, movies, sports)
+   - Item: `Gambling` (lottery tickets, casino chips, betting)
+   - **Total: 36 store + 39 item categories**
+
+3. **Supporting Files Updated - COMPLETE**
+   - `categoryEmoji.ts` - Added 🎰 for Gambling
+   - `reportUtils.ts` - Added "Juegos de Azar" translation
+   - `categoryColors.ts` - Added colors for Gambling, TicketsEvents, GamblingItem
+
+#### Files Modified (Session 9 Continued)
+
+| File | Changes |
+|------|---------|
+| `prompt-testing/prompts/v3-category-standardization.ts` | Removed {{currency}}, added CURRENCY DETECTION |
+| `prompt-testing/prompts/index.ts` | buildPrompt() skips currency for V3 |
+| `prompt-testing/scripts/lib/scanner.ts` | Currency optional (no default) |
+| `prompt-testing/scripts/commands/generate.ts` | Currency optional, not saved unless provided |
+| `functions/src/analyzeReceipt.ts` | Currency optional in request |
+| `shared/schema/categories.ts` | Added Gambling store + Tickets & Events + Gambling items |
+| `src/utils/categoryEmoji.ts` | Added Gambling emoji |
+| `src/utils/reportUtils.ts` | Added Gambling translation |
+| `src/config/categoryColors.ts` | Added colors for new categories |
+
+### Build Status
+- ✅ TypeScript compiles without errors
+- ✅ All changes complete
+
+### Remaining Steps (For Next Session)
+
+**Step 1: Deploy and Test V3**
+```bash
+# Prebuild copies prompts to functions/
+cd functions && npm run prebuild && npm run build
+
+# Deploy Cloud Function
+firebase deploy --only functions
+
+# Test with generate command (no currency hint)
+cd .. && npm run test:scan:generate -- trips/london/british_museum_1 --force
+
+# Verify expected.json has:
+# - NO input.currency field
+# - aiExtraction.currency = "GBP" (AI-detected)
+```
+
+**Step 2: Run Full Test Suite**
+```bash
+npm run test:scan
+npm run test:scan:compare
+```
+
+**Step 3: Handle App-Side Currency Comparison (Future Story)**
+After AI extraction, app should:
+1. Compare `aiResult.currency` with `userSettings.currency`
+2. If null → use user's default
+3. If different → show dialog asking user to choose
+4. If same → proceed normally
+
+### Key Architecture Decisions
+
+1. **Single Source of Truth**: All category/currency definitions in `shared/schema/`
+2. **Currency Auto-Detection**: V3 prompt has no {{currency}} - AI detects from receipt
+3. **Backward Compatibility**: V1/V2 prompts still use currency hint via `getCurrencyContext()`
+4. **usesCents Flag**: Simple boolean replaces verbose per-currency instructions
+5. **36 Store + 39 Item Categories**: Comprehensive coverage including Gambling and Tickets & Events
