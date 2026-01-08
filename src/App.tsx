@@ -925,13 +925,24 @@ function App() {
         // Don't auto-process - wait for user to click the scan button
         setView('scan-result');
         if (fileInputRef.current) fileInputRef.current.value = '';
-        // Auto-trigger scan processing after a brief delay for state to settle
+        // Auto-trigger scan processing - pass images directly to avoid stale closure
+        // The setTimeout allows the view to update before processing starts
         setTimeout(() => {
-            processScan();
+            processScan(updatedImages);
         }, 100);
     };
 
-    const processScan = async () => {
+    const processScan = async (imagesToProcess?: string[]) => {
+        // Fix: Accept images as parameter to avoid stale closure when called immediately after setState
+        const images = imagesToProcess ?? scanImages;
+
+        // Validate images before proceeding
+        if (!images || images.length === 0) {
+            console.error('processScan called with no images');
+            setScanError(t('noImagesToScan') || 'No images to scan');
+            return;
+        }
+
         // Story 9.10 AC#7: Check if user has credits before scanning
         if (userCredits.remaining <= 0) {
             setScanError(t('noCreditsMessage'));
@@ -974,7 +985,7 @@ function App() {
             });
             const result = await Promise.race([
                 analyzeReceipt(
-                    scanImages,
+                    images,
                     scanCurrency,
                     scanStoreType !== 'auto' ? scanStoreType : undefined
                 ),
