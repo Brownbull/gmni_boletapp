@@ -721,6 +721,7 @@ export function formatCategoryName(category: StoreCategory): string {
   const categoryNames: Record<StoreCategory, string> = {
     // Food & Dining
     Supermarket: 'Supermercado',
+    Almacen: 'Almacén',
     Restaurant: 'Restaurantes',
     Bakery: 'Panadería',
     Butcher: 'Carnicería',
