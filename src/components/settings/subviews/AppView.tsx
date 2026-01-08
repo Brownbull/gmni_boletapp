@@ -3,6 +3,7 @@
  * Story 14.22 AC #9: PWA installation and notifications settings
  *
  * Migrates PWASettingsSection and NotificationSettings into dedicated sub-view
+ * Also displays app version number
  */
 
 import React from 'react';
@@ -29,9 +30,9 @@ export const AppView: React.FC<AppViewProps> = ({
     onShowToast,
 }) => {
     return (
-        <div className="space-y-4">
-            {/* PWA Installation Section */}
-            <PWASettingsSection t={t} theme={theme as 'light' | 'dark'} />
+        <div className="space-y-3">
+            {/* PWA Installation Section - includes version badge */}
+            <PWASettingsSection t={t} theme={theme as 'light' | 'dark'} onShowToast={onShowToast} />
 
             {/* Push Notifications Settings */}
             <NotificationSettings

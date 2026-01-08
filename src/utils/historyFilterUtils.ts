@@ -15,6 +15,8 @@ import type {
   LocationFilterState,
   GroupFilterState,
 } from '../contexts/HistoryFiltersContext';
+// Story 14.15b: Category normalization for legacy data compatibility
+import { normalizeItemCategory } from './categoryNormalizer';
 
 // ============================================================================
 // Filter Data Extraction
@@ -71,18 +73,20 @@ export function extractAvailableFilters(transactions: Transaction[]): AvailableF
     }
 
     // Extract item groups and subcategories
+    // Story 14.15b: Normalize legacy category names
     for (const item of tx.items || []) {
       if (item.category) {
+        const normalizedCategory = normalizeItemCategory(item.category);
         if (!groupsByCategory[tx.category]) {
           groupsByCategory[tx.category] = new Set();
         }
-        groupsByCategory[tx.category].add(item.category);
+        groupsByCategory[tx.category].add(normalizedCategory);
 
         if (item.subcategory) {
-          if (!subcategoriesByGroup[item.category]) {
-            subcategoriesByGroup[item.category] = new Set();
+          if (!subcategoriesByGroup[normalizedCategory]) {
+            subcategoriesByGroup[normalizedCategory] = new Set();
           }
-          subcategoriesByGroup[item.category].add(item.subcategory);
+          subcategoriesByGroup[normalizedCategory].add(item.subcategory);
         }
       }
     }
@@ -292,18 +296,23 @@ function matchesCategoryFilter(
 
   // Item group filter - transaction must have at least one item in the group
   // Supports multi-select via comma-separated values
+  // Story 14.14b Session 7: Apply 'Other' fallback for items without category to match TrendsView counting
+  // Story 14.15b: Normalize legacy category names before comparison
+  // Story 14.13: Normalize BOTH sides of comparison - filter values may be in Spanish (e.g., 'Otro')
+  //              while item categories normalize to English (e.g., 'Other')
   if (filter.group) {
-    const groups = filter.group.split(',').map(g => g.trim());
+    const groups = filter.group.split(',').map(g => normalizeItemCategory(g.trim()));
     if (groups.length > 1) {
       // Multi-select: transaction must have at least one item in ANY of the groups
       const hasMatchingGroup = tx.items?.some(
-        item => item.category && groups.includes(item.category)
+        item => groups.includes(normalizeItemCategory(item.category || 'Other'))
       );
       if (!hasMatchingGroup) return false;
     } else {
       // Single select
+      const normalizedFilterGroup = groups[0]; // Already normalized above
       const hasMatchingGroup = tx.items?.some(
-        item => item.category === filter.group
+        item => normalizeItemCategory(item.category || 'Other') === normalizedFilterGroup
       );
       if (!hasMatchingGroup) return false;
     }

@@ -6,7 +6,6 @@ interface DateTimeTagProps {
     time?: string;
     onDateChange: (date: string) => void;
     onTimeChange: (time: string) => void;
-    theme?: 'light' | 'dark';
     t?: (key: string) => string;
 }
 
@@ -22,14 +21,12 @@ export const DateTimeTag: React.FC<DateTimeTagProps> = ({
     time = '',
     onDateChange,
     onTimeChange,
-    theme = 'light',
     t,
 }) => {
     const [isDateOpen, setIsDateOpen] = useState(false);
     const [isTimeOpen, setIsTimeOpen] = useState(false);
     const dateRef = useRef<HTMLDivElement>(null);
     const timeRef = useRef<HTMLDivElement>(null);
-    const isDark = theme === 'dark';
 
     // Close dropdown on click outside
     useEffect(() => {
@@ -66,9 +63,9 @@ export const DateTimeTag: React.FC<DateTimeTagProps> = ({
     };
 
     const inputStyle: React.CSSProperties = {
-        backgroundColor: isDark ? '#1e293b' : '#f8fafc',
-        borderColor: isDark ? '#475569' : '#e2e8f0',
-        color: 'var(--primary)',
+        backgroundColor: 'var(--bg-secondary)',
+        borderColor: 'var(--border-medium)',
+        color: 'var(--text-primary)',
     };
 
     return (
@@ -78,11 +75,11 @@ export const DateTimeTag: React.FC<DateTimeTagProps> = ({
                 <button
                     type="button"
                     onClick={() => { setIsDateOpen(!isDateOpen); setIsTimeOpen(false); }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs transition-colors"
                     style={{
-                        backgroundColor: isDateOpen ? 'var(--primary-light)' : (isDark ? '#1e293b' : '#f1f5f9'),
-                        border: `1px solid ${isDateOpen ? 'var(--primary)' : (isDark ? '#475569' : '#cbd5e1')}`,
-                        color: isDateOpen ? 'var(--primary)' : (isDark ? '#94a3b8' : '#64748b'),
+                        backgroundColor: 'var(--bg-primary)',
+                        border: '1px solid var(--border-medium)',
+                        color: 'var(--text-secondary)',
                     }}
                     aria-expanded={isDateOpen}
                     aria-haspopup="true"
@@ -140,11 +137,11 @@ export const DateTimeTag: React.FC<DateTimeTagProps> = ({
                 <button
                     type="button"
                     onClick={() => { setIsTimeOpen(!isTimeOpen); setIsDateOpen(false); }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs transition-colors"
                     style={{
-                        backgroundColor: isTimeOpen ? 'var(--primary-light)' : (isDark ? '#1e293b' : '#f1f5f9'),
-                        border: `1px solid ${isTimeOpen ? 'var(--primary)' : (isDark ? '#475569' : '#cbd5e1')}`,
-                        color: isTimeOpen ? 'var(--primary)' : (isDark ? '#94a3b8' : '#64748b'),
+                        backgroundColor: 'var(--bg-primary)',
+                        border: '1px solid var(--border-medium)',
+                        color: 'var(--text-secondary)',
                     }}
                     aria-expanded={isTimeOpen}
                     aria-haspopup="true"

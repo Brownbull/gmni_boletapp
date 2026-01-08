@@ -8,6 +8,9 @@ import {
     getDocs,
     onSnapshot,
     serverTimestamp,
+    query,
+    orderBy,
+    limit,
     Firestore,
     Unsubscribe,
 } from 'firebase/firestore';
@@ -17,6 +20,7 @@ import {
     TrustPromptEligibility,
     TRUST_THRESHOLDS,
 } from '../types/trust';
+import { LISTENER_LIMITS } from './firestore';
 
 /**
  * Get the collection path for a user's trusted merchants
@@ -333,6 +337,7 @@ export async function getOnlyTrustedMerchants(
 /**
  * Subscribe to trusted merchants (real-time updates)
  * Story 11.4: AC #6 - Settings management
+ * Story 14.25: LIMITED to 200 merchants to reduce Firestore reads
  */
 export function subscribeToTrustedMerchants(
     db: Firestore,
@@ -343,11 +348,27 @@ export function subscribeToTrustedMerchants(
     const collectionPath = getTrustedMerchantsCollectionPath(appId, userId);
     const colRef = collection(db, collectionPath);
 
-    return onSnapshot(colRef, (snapshot) => {
+    // Story 14.25: Add limit to reduce Firestore reads
+    // Order by scanCount desc to prioritize most-used merchants
+    const q = query(
+        colRef,
+        orderBy('scanCount', 'desc'),
+        limit(LISTENER_LIMITS.TRUSTED_MERCHANTS)
+    );
+
+    return onSnapshot(q, (snapshot) => {
         const merchants = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
         } as TrustedMerchant));
+
+        // Dev-mode logging for snapshot size monitoring (AC #6)
+        if (import.meta.env.DEV && snapshot.size >= LISTENER_LIMITS.TRUSTED_MERCHANTS) {
+            console.warn(
+                `[merchantTrustService] subscribeToTrustedMerchants: ${snapshot.size} docs at limit`
+            );
+        }
+
         callback(merchants);
     });
 }

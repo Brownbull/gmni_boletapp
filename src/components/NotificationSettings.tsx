@@ -1,12 +1,13 @@
 /**
  * Notification Settings Component - Story 9.18
+ * Story 14.22: Updated to match settings.html mockup design
  *
- * Settings UI for push notifications.
+ * Settings UI for push notifications with toggle switches.
  * Shows permission status and enable/disable toggle.
  */
 
 import { useState } from 'react';
-import { Bell, BellOff, Check, AlertCircle, Loader2, Send } from 'lucide-react';
+import { Bell, Clock, Send, AlertCircle, Loader2 } from 'lucide-react';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { Firestore } from 'firebase/firestore';
 
@@ -21,7 +22,64 @@ interface NotificationSettingsProps {
 }
 
 /**
- * Notification Settings - Enable/disable push notifications
+ * Toggle Switch Component - matches mockup .toggle-switch style exactly
+ * Width: 48px, Height: 28px, Knob: 22px
+ */
+interface ToggleSwitchProps {
+  enabled: boolean;
+  onChange: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+}
+
+function ToggleSwitch({ enabled, onChange, disabled = false, loading = false }: ToggleSwitchProps) {
+  return (
+    <button
+      onClick={onChange}
+      disabled={disabled || loading}
+      className="relative transition-colors disabled:opacity-50 flex-shrink-0"
+      style={{
+        width: '48px',
+        height: '28px',
+        borderRadius: '14px',
+        backgroundColor: enabled ? 'var(--primary)' : 'var(--bg-tertiary)',
+        border: enabled ? 'none' : '1px solid var(--border-light)',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+      }}
+      role="switch"
+      aria-checked={enabled}
+    >
+      {loading ? (
+        <Loader2
+          size={14}
+          className="animate-spin absolute"
+          style={{
+            top: '7px',
+            left: enabled ? 'auto' : '7px',
+            right: enabled ? '7px' : 'auto',
+            color: enabled ? 'white' : 'var(--text-secondary)',
+          }}
+        />
+      ) : (
+        <div
+          className="absolute bg-white rounded-full transition-all"
+          style={{
+            width: '22px',
+            height: '22px',
+            top: enabled ? '3px' : '2px',
+            left: enabled ? 'auto' : '3px',
+            right: enabled ? '3px' : 'auto',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+          }}
+        />
+      )}
+    </button>
+  );
+}
+
+/**
+ * Notification Settings - Push notifications with toggle switches
+ * Renders separate cards for each notification type matching mockup design
  */
 export function NotificationSettings({
   t,
@@ -32,6 +90,7 @@ export function NotificationSettings({
   onShowToast
 }: NotificationSettingsProps) {
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const [spendingRemindersEnabled, setSpendingRemindersEnabled] = useState(false);
 
   const {
     isSupported,
@@ -46,7 +105,6 @@ export function NotificationSettings({
     userId,
     appId,
     onNotificationReceived: (title, body) => {
-      // Show toast when foreground notification is received
       if (onShowToast) {
         onShowToast(`${title}: ${body}`);
       }
@@ -55,33 +113,12 @@ export function NotificationSettings({
 
   const isDark = theme === 'dark';
 
-  // Card styling using CSS variables (matches PWASettingsSection pattern)
+  // Card styling matching mockup .settings-row with CSS variables
   const cardStyle: React.CSSProperties = {
     backgroundColor: 'var(--surface)',
-    borderColor: isDark ? '#334155' : '#e2e8f0',
-  };
-
-  // Button styling
-  const getButtonStyle = (variant: 'primary' | 'secondary' | 'success' | 'warning'): React.CSSProperties => {
-    const styles = {
-      primary: {
-        backgroundColor: isDark ? 'rgba(96, 165, 250, 0.3)' : 'rgba(59, 130, 246, 0.2)',
-        color: 'var(--accent)',
-      },
-      secondary: {
-        backgroundColor: isDark ? '#334155' : '#e2e8f0',
-        color: 'var(--secondary)',
-      },
-      success: {
-        backgroundColor: isDark ? 'rgba(74, 222, 128, 0.2)' : 'rgba(34, 197, 94, 0.15)',
-        color: 'var(--success)',
-      },
-      warning: {
-        backgroundColor: isDark ? 'rgba(251, 191, 36, 0.2)' : 'rgba(245, 158, 11, 0.15)',
-        color: isDark ? '#fbbf24' : '#d97706',
-      },
-    };
-    return styles[variant];
+    borderRadius: '12px',
+    padding: '14px 16px',
+    border: '1px solid var(--border-light)',
   };
 
   // Don't render if notifications aren't supported
@@ -89,17 +126,14 @@ export function NotificationSettings({
     return null;
   }
 
-  const isEnabled = permission === 'granted' && token;
+  const isEnabled = permission === 'granted' && !!token;
   const isDenied = permission === 'denied';
 
   const handleTestNotification = async () => {
     setIsSendingTest(true);
     try {
-      // Use unique tag with timestamp so each test shows a new notification
       const uniqueTag = `gastify-test-${Date.now()}`;
 
-      // Use Service Worker for notifications (required on Android)
-      // The Notification constructor doesn't work on Android PWAs
       if ('serviceWorker' in navigator && Notification.permission === 'granted') {
         const registration = await navigator.serviceWorker.ready;
         await registration.showNotification(t('testNotificationTitle'), {
@@ -112,7 +146,6 @@ export function NotificationSettings({
           onShowToast(t('testNotificationSent'));
         }
       } else if ('Notification' in window && Notification.permission === 'granted') {
-        // Fallback for desktop browsers without service worker
         new Notification(t('testNotificationTitle'), {
           body: t('testNotificationBody'),
           icon: '/pwa-192x192.png',
@@ -147,133 +180,161 @@ export function NotificationSettings({
     }
   };
 
-  return (
-    <div className="p-4 rounded-xl border" style={cardStyle}>
-      <div className="flex gap-2 items-center mb-4">
-        <Bell size={24} strokeWidth={2} style={{ color: 'var(--accent)' }} />
-        <span className="font-medium" style={{ color: 'var(--primary)' }}>
-          {t('notifications')}
-        </span>
-      </div>
+  const handleSpendingRemindersToggle = () => {
+    setSpendingRemindersEnabled(!spendingRemindersEnabled);
+    if (onShowToast) {
+      onShowToast(spendingRemindersEnabled ? t('spendingRemindersDisabled') : t('spendingRemindersEnabled'));
+    }
+  };
 
-      <div className="space-y-3">
-        {/* Permission Status and Toggle */}
+  return (
+    <>
+      {/* Push Notifications Card */}
+      <div style={cardStyle}>
         <div className="flex justify-between items-center">
-          <div className="flex-1">
-            <p className="text-sm font-medium" style={{ color: 'var(--primary)' }}>
-              {t('pushNotifications')}
-            </p>
-            <p className="text-xs" style={{ color: 'var(--secondary)' }}>
-              {isDenied
-                ? t('notificationsDeniedHint')
-                : isEnabled
-                  ? t('notificationsEnabledHint')
+          <div className="flex items-center gap-2.5">
+            <Bell
+              size={20}
+              strokeWidth={2}
+              style={{ color: 'var(--text-secondary)' }}
+            />
+            <div>
+              <span
+                className="text-sm font-medium block"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                {t('pushNotifications')}
+              </span>
+              <span
+                className="text-xs"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                {isDenied
+                  ? t('notificationsDeniedHint')
                   : t('notificationsHint')}
-            </p>
+              </span>
+            </div>
           </div>
-          <button
-            onClick={handleToggle}
-            disabled={isLoading || isDenied}
-            className="min-h-11 px-4 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors"
-            style={
-              isDenied
-                ? getButtonStyle('warning')
-                : isEnabled
-                  ? getButtonStyle('success')
-                  : getButtonStyle('primary')
-            }
-            aria-label={isEnabled ? t('disableNotifications') : t('enableNotifications')}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 size={18} className="animate-spin" />
-                {t('loading')}
-              </>
-            ) : isDenied ? (
-              <>
-                <BellOff size={18} />
-                {t('notificationsDenied')}
-              </>
-            ) : isEnabled ? (
-              <>
-                <Check size={18} />
-                {t('enabled')}
-              </>
-            ) : (
-              <>
-                <Bell size={18} />
-                {t('enable')}
-              </>
-            )}
-          </button>
+
+          <ToggleSwitch
+            enabled={isEnabled}
+            onChange={handleToggle}
+            disabled={isDenied}
+            loading={isLoading}
+          />
         </div>
 
-        {/* Test Notification Button - only shown when enabled */}
-        {isEnabled && (
-          <div className="flex justify-between items-center">
-            <div className="flex-1">
-              <p className="text-sm font-medium" style={{ color: 'var(--primary)' }}>
-                {t('testNotification')}
-              </p>
-              <p className="text-xs" style={{ color: 'var(--secondary)' }}>
-                {t('testNotificationHint')}
-              </p>
-            </div>
-            <button
-              onClick={handleTestNotification}
-              disabled={isSendingTest}
-              className="min-h-11 px-4 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors"
-              style={getButtonStyle('primary')}
-              aria-label={t('testNotification')}
-            >
-              {isSendingTest ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />
-                  {t('sending')}
-                </>
-              ) : (
-                <>
-                  <Send size={18} />
-                  {t('test')}
-                </>
-              )}
-            </button>
+        {/* Denied State Instructions */}
+        {isDenied && (
+          <div
+            className="mt-3 p-3 rounded-lg text-xs"
+            style={{
+              backgroundColor: isDark ? 'rgba(251, 191, 36, 0.1)' : 'rgba(245, 158, 11, 0.08)',
+              borderLeft: '3px solid #f59e0b',
+            }}
+          >
+            <p className="font-medium mb-1" style={{ color: isDark ? '#fbbf24' : '#d97706' }}>
+              {t('notificationsDeniedTitle')}
+            </p>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              {t('notificationsDeniedInstructions')}
+            </p>
           </div>
         )}
 
         {/* Error Message */}
         {error && (
           <div
-            className="flex items-center gap-2 p-3 rounded-lg text-xs"
+            className="mt-3 flex items-center gap-2 p-3 rounded-lg text-xs"
             style={{
               backgroundColor: isDark ? 'rgba(248, 113, 113, 0.1)' : 'rgba(239, 68, 68, 0.08)',
-              color: 'var(--error)',
+              color: '#ef4444',
             }}
           >
             <AlertCircle size={16} />
             {error}
           </div>
         )}
-
-        {/* Denied State Instructions */}
-        {isDenied && (
-          <div
-            className="p-3 rounded-lg text-xs"
-            style={{
-              backgroundColor: isDark ? 'rgba(251, 191, 36, 0.1)' : 'rgba(245, 158, 11, 0.08)',
-              border: `1px solid ${isDark ? 'rgba(251, 191, 36, 0.2)' : 'rgba(245, 158, 11, 0.15)'}`,
-            }}
-          >
-            <p className="font-medium mb-2" style={{ color: isDark ? '#fbbf24' : '#d97706' }}>
-              {t('notificationsDeniedTitle')}
-            </p>
-            <p style={{ color: 'var(--secondary)' }}>
-              {t('notificationsDeniedInstructions')}
-            </p>
-          </div>
-        )}
       </div>
-    </div>
+
+      {/* Spending Reminders Card */}
+      <div style={cardStyle}>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2.5">
+            <Clock
+              size={20}
+              strokeWidth={2}
+              style={{ color: 'var(--text-secondary)' }}
+            />
+            <div>
+              <span
+                className="text-sm font-medium block"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                {t('spendingReminders')}
+              </span>
+              <span
+                className="text-xs"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                {t('spendingRemindersHint')}
+              </span>
+            </div>
+          </div>
+
+          <ToggleSwitch
+            enabled={spendingRemindersEnabled}
+            onChange={handleSpendingRemindersToggle}
+            disabled={!isEnabled}
+          />
+        </div>
+      </div>
+
+      {/* Test Notification Card - only shown when notifications are enabled */}
+      {isEnabled && (
+        <div style={cardStyle}>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2.5">
+              <Send
+                size={20}
+                strokeWidth={2}
+                style={{ color: 'var(--text-secondary)' }}
+              />
+              <div>
+                <span
+                  className="text-sm font-medium block"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  {t('testNotification')}
+                </span>
+                <span
+                  className="text-xs"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  {t('testNotificationHint')}
+                </span>
+              </div>
+            </div>
+
+            {/* Secondary Button - uses primary color for text */}
+            <button
+              onClick={handleTestNotification}
+              disabled={isSendingTest}
+              className="px-3.5 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
+              style={{
+                backgroundColor: 'var(--bg-tertiary)',
+                border: '1px solid var(--border-light)',
+                color: 'var(--primary)',
+              }}
+              aria-label={t('testNotification')}
+            >
+              {isSendingTest && <Loader2 size={14} className="animate-spin" />}
+              {t('send')}
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

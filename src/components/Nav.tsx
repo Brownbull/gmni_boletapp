@@ -18,6 +18,7 @@ import React, { useRef, useCallback } from 'react';
 import { Camera, Home, Lightbulb, BarChart3, Bell } from 'lucide-react';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { DURATION, EASING } from './animation/constants';
+import { formatCreditsDisplay, formatSuperCreditsDisplay } from '../services/userCreditsService';
 
 // Story 12.3: Scan status for nav icon indicator
 export type ScanStatus = 'idle' | 'processing' | 'ready';
@@ -33,9 +34,15 @@ interface NavProps {
     t: (key: string) => string;
     // Story 12.3: Scan status for icon color indicator
     scanStatus?: ScanStatus;
+    /** Available normal scan credits to display on camera button (bottom right) */
+    scanCredits?: number;
+    /** Available super credits (tier 2) to display on camera button (bottom left) */
+    superCredits?: number;
+    /** Callback when user taps on credit badges to show credit info */
+    onCreditInfoClick?: () => void;
 }
 
-export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchClick, onTrendsClick, theme, t, scanStatus = 'idle' }) => {
+export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchClick, onTrendsClick, theme, t, scanStatus = 'idle', scanCredits, superCredits, onCreditInfoClick }) => {
     // Story 14.11: Reduced motion preference for AC #5
     const prefersReducedMotion = useReducedMotion();
 
@@ -236,6 +243,48 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
                 >
                     <Camera size={24} strokeWidth={2} />
                 </button>
+                {/* Super credits badge - upper-LEFT of FAB (gold/amber color) - tappable */}
+                {superCredits !== undefined && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation(); // Prevent triggering FAB
+                            onCreditInfoClick?.();
+                        }}
+                        className="absolute px-1 py-px rounded-full text-[10px] font-semibold min-w-[18px] text-center transition-transform active:scale-95"
+                        style={{
+                            bottom: '-2px',
+                            left: '-10px',
+                            backgroundColor: '#fbbf24', // amber-400
+                            color: '#78350f', // amber-900
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
+                            border: '1px solid #f59e0b', // amber-500
+                        }}
+                        aria-label={`${superCredits} ${t('superCreditsAvailable') || 'super credits available'}`}
+                    >
+                        {formatSuperCreditsDisplay(superCredits)}
+                    </button>
+                )}
+                {/* Normal credits badge - upper-RIGHT of FAB (default theme color) - tappable */}
+                {scanCredits !== undefined && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation(); // Prevent triggering FAB
+                            onCreditInfoClick?.();
+                        }}
+                        className="absolute px-1 py-px rounded-full text-[10px] font-semibold min-w-[18px] text-center transition-transform active:scale-95"
+                        style={{
+                            bottom: '-2px',
+                            right: '-10px',
+                            backgroundColor: 'var(--bg)',
+                            color: 'var(--text-primary)',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
+                            border: '1px solid var(--border-light)',
+                        }}
+                        aria-label={`${scanCredits} ${t('creditsAvailable') || 'credits available'}`}
+                    >
+                        {formatCreditsDisplay(scanCredits)}
+                    </button>
+                )}
             </div>
 
             {/* Insights - Story 10a.3: Renamed from Receipts to Insights */}

@@ -117,9 +117,36 @@ function extractMimeType(b64: string): string {
 
 interface AnalyzeReceiptRequest {
   images: string[]
-  currency: string
+  currency?: string  // Optional for V3 (auto-detects), required for V1/V2
   receiptType?: ReceiptType  // Optional hint for document type (defaults to 'auto')
   promptContext?: 'production' | 'development'  // Prompt selection context (defaults to 'production')
+  // Story 14.15b: Re-scan support - if true, images are URLs from Firebase Storage (not base64)
+  isRescan?: boolean
+}
+
+/**
+ * Story 14.15b: Fetch image from URL and return as Buffer
+ * Used for re-scanning transactions with stored images
+ * @param url Image URL (Firebase Storage download URL)
+ * @returns Buffer containing image data
+ */
+async function fetchImageFromUrl(url: string): Promise<Buffer> {
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      `Failed to fetch image from URL: ${response.status} ${response.statusText}`
+    )
+  }
+  const arrayBuffer = await response.arrayBuffer()
+  return Buffer.from(arrayBuffer)
+}
+
+/**
+ * Story 14.15b: Check if a string is a URL (for re-scan detection)
+ */
+function isUrl(str: string): boolean {
+  return str.startsWith('http://') || str.startsWith('https://')
 }
 
 /**
@@ -209,15 +236,22 @@ export const analyzeReceipt = functions.https.onCall(
       )
     }
 
-    if (!data.currency || typeof data.currency !== 'string') {
+    // Currency is optional for V3 (auto-detects from receipt)
+    // For V1/V2 prompts, currency should be provided but we'll allow fallback
+    if (data.currency !== undefined && typeof data.currency !== 'string') {
       throw new functions.https.HttpsError(
         'invalid-argument',
-        'currency string is required'
+        'currency must be a string if provided'
       )
     }
 
-    // Validate image size and count
-    validateImages(data.images)
+    // Story 14.15b: Detect if this is a re-scan (images are URLs, not base64)
+    const isRescan = data.isRescan || (data.images.length > 0 && isUrl(data.images[0]))
+
+    // Only validate base64 images (not URLs)
+    if (!isRescan) {
+      validateImages(data.images)
+    }
 
     // Generate transaction ID upfront (needed for storage path)
     const transactionId = generateTransactionId()
@@ -229,23 +263,40 @@ export const analyzeReceipt = functions.https.onCall(
       // This optimization reduces API costs by ~80% by sending smaller images.
       // Images are resized to max 1200x1600px and compressed to JPEG 80%.
       // The same processed images are reused for storage (no double processing).
+      // Story 14.15b: For re-scans, fetch images from URLs instead of base64.
       // =========================================================================
 
-      // Validate MIME types first (before any processing)
-      data.images.forEach((b64: string) => extractMimeType(b64))
-
-      // Process all images: resize, compress, strip EXIF
       const fullSizeBuffers: Buffer[] = []
-      for (const b64 of data.images) {
-        const inputBuffer = base64ToBuffer(b64)
-        const processed = await resizeAndCompress(inputBuffer)
-        fullSizeBuffers.push(processed.buffer)
+
+      if (isRescan) {
+        // Story 14.15b: Re-scan - fetch images from URLs
+        console.log(`Re-scan: fetching ${data.images.length} images from URLs`)
+        for (const url of data.images) {
+          const imageBuffer = await fetchImageFromUrl(url)
+          const processed = await resizeAndCompress(imageBuffer)
+          fullSizeBuffers.push(processed.buffer)
+        }
+      } else {
+        // Normal scan - process base64 images
+        // Validate MIME types first (before any processing)
+        data.images.forEach((b64: string) => extractMimeType(b64))
+
+        // Process all images: resize, compress, strip EXIF
+        for (const b64 of data.images) {
+          const inputBuffer = base64ToBuffer(b64)
+          const processed = await resizeAndCompress(inputBuffer)
+          fullSizeBuffers.push(processed.buffer)
+        }
       }
 
-      // Generate thumbnail from first image only
-      const firstImageBuffer = base64ToBuffer(data.images[0])
-      const thumbnail = await generateThumbnail(firstImageBuffer)
-      const thumbnailBuffer = thumbnail.buffer
+      // Generate thumbnail from first image only (for new scans)
+      // For re-scans, thumbnail already exists so we skip this
+      let thumbnailBuffer: Buffer | null = null
+      if (!isRescan) {
+        const firstImageBuffer = base64ToBuffer(data.images[0])
+        const thumbnail = await generateThumbnail(firstImageBuffer)
+        thumbnailBuffer = thumbnail.buffer
+      }
 
       // =========================================================================
       // STEP 2: Call Gemini API with optimized images
@@ -300,27 +351,34 @@ export const analyzeReceipt = functions.https.onCall(
 
       // =========================================================================
       // STEP 3: Store pre-processed images (reuse buffers - no double processing)
+      // Story 14.15b: Skip storage for re-scans (images already stored)
       // =========================================================================
       let imageUrls: string[] | undefined
       let thumbnailUrl: string | undefined
 
-      try {
-        // Upload pre-processed images to Firebase Storage (already compressed)
-        const uploadResult = await uploadReceiptImages(
-          userId,
-          transactionId,
-          fullSizeBuffers,
-          thumbnailBuffer
-        )
+      if (!isRescan && thumbnailBuffer) {
+        try {
+          // Upload pre-processed images to Firebase Storage (already compressed)
+          const uploadResult = await uploadReceiptImages(
+            userId,
+            transactionId,
+            fullSizeBuffers,
+            thumbnailBuffer
+          )
 
-        imageUrls = uploadResult.imageUrls
-        thumbnailUrl = uploadResult.thumbnailUrl
+          imageUrls = uploadResult.imageUrls
+          thumbnailUrl = uploadResult.thumbnailUrl
 
-        console.log(`Images stored for transaction ${transactionId}: ${imageUrls.length} images + thumbnail`)
-      } catch (storageError) {
-        // Log storage error but don't fail the transaction
-        console.error(`Image storage failed for transaction ${transactionId}:`, storageError)
-        // Continue without images - transaction data is still valuable
+          console.log(`Images stored for transaction ${transactionId}: ${imageUrls.length} images + thumbnail`)
+        } catch (storageError) {
+          // Log storage error but don't fail the transaction
+          console.error(`Image storage failed for transaction ${transactionId}:`, storageError)
+          // Continue without images - transaction data is still valuable
+        }
+      } else {
+        // For re-scans, return the original URLs (passed in as images)
+        imageUrls = data.images
+        console.log(`Re-scan complete for ${data.images.length} images`)
       }
 
       // Get prompt version for tracking (Story 9.1)
