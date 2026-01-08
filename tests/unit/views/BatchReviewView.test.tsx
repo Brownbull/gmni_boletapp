@@ -312,7 +312,16 @@ describe('BatchReviewView', () => {
 
   describe('save all (AC #6)', () => {
     it('should call saveAll and onSaveComplete on success', async () => {
-      const mockSaveAll = vi.fn().mockResolvedValue({ saved: ['tx-1', 'tx-2'], failed: [] });
+      // Story 14.15: saveAll now returns savedTransactions array
+      const mockSavedTransactions = [
+        { id: 'tx-1', total: 100, date: new Date().toISOString(), items: [] },
+        { id: 'tx-2', total: 200, date: new Date().toISOString(), items: [] },
+      ];
+      const mockSaveAll = vi.fn().mockResolvedValue({
+        saved: ['tx-1', 'tx-2'],
+        failed: [],
+        savedTransactions: mockSavedTransactions,
+      });
       const onSaveComplete = vi.fn();
 
       vi.mocked(useBatchReview).mockReturnValue(
@@ -325,7 +334,8 @@ describe('BatchReviewView', () => {
 
       await waitFor(() => {
         expect(mockSaveAll).toHaveBeenCalledWith(defaultProps.saveTransaction);
-        expect(onSaveComplete).toHaveBeenCalledWith(['tx-1', 'tx-2']);
+        // Story 14.15: onSaveComplete now receives both IDs and transactions
+        expect(onSaveComplete).toHaveBeenCalledWith(['tx-1', 'tx-2'], mockSavedTransactions);
       });
     });
 
