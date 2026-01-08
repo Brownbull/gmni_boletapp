@@ -359,6 +359,11 @@ function App() {
     // Story 14.15 AC #5: Check reduced motion preference for haptic feedback
     const prefersReducedMotion = useReducedMotion();
 
+    // Story 14.15: Scan overlay state machine for non-blocking scan flow (AC #1, #4)
+    const scanOverlay = useScanOverlayState();
+    // Story 14.15 AC #5: Check reduced motion preference for haptic feedback
+    const prefersReducedMotion = useReducedMotion();
+
     // Settings
     const [lang, setLang] = useState<Language>('es');
     const [currency, setCurrency] = useState<Currency>('CLP');
@@ -925,6 +930,10 @@ function App() {
         // Don't auto-process - wait for user to click the scan button
         setView('scan-result');
         if (fileInputRef.current) fileInputRef.current.value = '';
+        // Auto-trigger scan processing after a brief delay for state to settle
+        setTimeout(() => {
+            processScan();
+        }, 100);
     };
 
     const processScan = async () => {
