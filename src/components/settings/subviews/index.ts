@@ -8,6 +8,6 @@ export { PerfilView } from './PerfilView';
 export { PreferenciasView } from './PreferenciasView';
 export { EscaneoView } from './EscaneoView';
 export { SuscripcionView } from './SuscripcionView';
-export { DatosAprendidosView } from './DatosAprendidosView';
+export { LearnedDataView, DatosAprendidosView } from './LearnedDataView';
 export { AppView } from './AppView';
 export { CuentaView } from './CuentaView';

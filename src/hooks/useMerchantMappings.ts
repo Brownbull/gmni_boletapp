@@ -1,6 +1,23 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+/**
+ * useMerchantMappings Hook
+ *
+ * Story 14.29: React Query Migration
+ * Epic 14: Core Implementation
+ *
+ * Real-time subscription to user's merchant mappings with React Query caching.
+ * Provides CRUD operations for merchant learning.
+ *
+ * Migration benefits:
+ * - Settings navigation shows instantly (cached data)
+ * - No loading spinner on return visits
+ * - Shared cache across components
+ */
+
+import { useState, useCallback, useMemo } from 'react'
 import { User } from 'firebase/auth'
 import { Services } from './useAuth'
+import { useFirestoreSubscription } from './useFirestoreSubscription'
+import { QUERY_KEYS } from '../lib/queryKeys'
 import {
     subscribeToMerchantMappings,
     saveMerchantMapping,
@@ -48,33 +65,28 @@ export function useMerchantMappings(
     user: User | null,
     services: Services | null
 ): UseMerchantMappingsReturn {
-    const [mappings, setMappings] = useState<MerchantMapping[]>([])
-    const [loading, setLoading] = useState(true)
     const [error, setError] = useState<Error | null>(null)
+    const enabled = !!user && !!services
 
-    // Subscribe to mappings on mount
-    useEffect(() => {
-        if (!user || !services) {
-            setMappings([])
-            setLoading(false)
-            return
-        }
+    // Create the query key
+    const queryKey = useMemo(
+        () => enabled
+            ? QUERY_KEYS.mappings.merchant(user!.uid, services!.appId)
+            : ['mappings', 'merchant', '', ''],
+        [enabled, user?.uid, services?.appId]
+    )
 
-        setLoading(true)
-        setError(null)
-
-        const unsubscribe = subscribeToMerchantMappings(
-            services.db,
-            user.uid,
-            services.appId,
-            (docs) => {
-                setMappings(docs)
-                setLoading(false)
-            }
-        )
-
-        return unsubscribe
-    }, [user, services])
+    // Subscribe to mappings with React Query caching
+    const { data: mappings = [], isLoading } = useFirestoreSubscription<MerchantMapping[]>(
+        queryKey,
+        (callback) => subscribeToMerchantMappings(
+            services!.db,
+            user!.uid,
+            services!.appId,
+            callback
+        ),
+        { enabled }
+    )
 
     // Save a new mapping or update existing
     const saveMapping = useCallback(
@@ -174,13 +186,13 @@ export function useMerchantMappings(
     return useMemo(
         () => ({
             mappings,
-            loading,
+            loading: isLoading,
             error,
             saveMapping,
             deleteMapping,
             updateMapping,
             findMatch
         }),
-        [mappings, loading, error, saveMapping, deleteMapping, updateMapping, findMatch]
+        [mappings, isLoading, error, saveMapping, deleteMapping, updateMapping, findMatch]
     )
 }

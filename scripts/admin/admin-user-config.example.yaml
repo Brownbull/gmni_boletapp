@@ -1,0 +1,83 @@
+# Admin User Configuration File
+# =============================
+#
+# This file defines credit and subscription changes to apply to users.
+# Run with: npx tsx scripts/admin-apply-config.ts <config-file.yaml>
+#
+# USAGE:
+#   1. Copy this file: cp admin-user-config.example.yaml my-changes.yaml
+#   2. Edit the file with your changes
+#   3. Run: npx tsx scripts/admin-apply-config.ts my-changes.yaml
+#   4. Review the output to confirm all changes were applied
+#
+# STRUCTURE:
+#   Each user entry can have:
+#     - email: User's email address (used to find userId)
+#     - credits: Credit modifications
+#     - subscription: Subscription changes
+#
+# CREDIT MODES:
+#   - "set": Set absolute values (remaining = value)
+#   - "add": Add to existing values (remaining += value)
+#
+# SUBSCRIPTION TIERS:
+#   - free, basic, pro, max
+
+# ============================================================================
+# EXAMPLES
+# ============================================================================
+
+users:
+  # Example 1: Set credits to exact values
+  - email: "user1@example.com"
+    credits:
+      mode: "set"          # "set" = absolute value, "add" = increment
+      normal: 500          # Set normal credits remaining to 500
+      super: 50            # Set super credits remaining to 50
+
+  # Example 2: Add credits to existing balance
+  - email: "user2@example.com"
+    credits:
+      mode: "add"          # Add to existing balance
+      normal: 100          # Add 100 normal credits
+      super: 10            # Add 10 super credits
+
+  # Example 3: Only modify normal credits (super unchanged)
+  - email: "user3@example.com"
+    credits:
+      mode: "add"
+      normal: 50           # Only add normal credits
+
+  # Example 4: Grant subscription
+  - email: "user4@example.com"
+    subscription:
+      tier: "pro"          # free, basic, pro, max
+      days: 30             # Duration in days (omit for lifetime)
+      reason: "Beta tester reward"
+
+  # Example 5: Full user setup (credits + subscription)
+  - email: "vip@example.com"
+    credits:
+      mode: "set"
+      normal: 1000
+      super: 100
+    subscription:
+      tier: "max"
+      days: 365
+      reason: "VIP annual subscription"
+
+  # Example 6: Revoke subscription (set to free)
+  - email: "cancelled@example.com"
+    subscription:
+      tier: "free"
+      reason: "Subscription cancelled - payment failed"
+
+# ============================================================================
+# METADATA (optional)
+# ============================================================================
+
+metadata:
+  admin: "your.name@company.com"    # Who is applying these changes
+  ticket: "SUPPORT-1234"            # Reference ticket number
+  campaign: "Q1 2026 Promo"         # Campaign name if applicable
+  notes: "Applying promotional credits for beta testers"

@@ -17,7 +17,7 @@
  */
 
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, PieChart, LayoutGrid, Plus, Minus, Package } from 'lucide-react';
+import { ChevronLeft, ChevronRight, PieChart, LayoutGrid, Plus, Minus, Receipt } from 'lucide-react';
 // Story 14.13: Animation components
 import { PageTransition } from '../components/animation/PageTransition';
 import { TransitionChild } from '../components/animation/TransitionChild';
@@ -39,9 +39,13 @@ import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useCountUp } from '../hooks/useCountUp';
 // Utilities
-// Story 14.21: Use getCategoryPillColors for charts - ALWAYS colorful regardless of fontColorMode
+// Story 14.21: Use getCategoryColorsAuto for treemap text - respects fontColorMode setting
+// Story 14.21: Use getCategoryPillColors for charts/legends - ALWAYS colorful
 // Story 14.14b: Category group helpers for donut view mode data transformation
+// Story 14.15b: Category normalization for legacy data compatibility
+import { normalizeItemCategory } from '../utils/categoryNormalizer';
 import {
+    getCategoryColorsAuto,
     getCategoryPillColors,
     ALL_STORE_CATEGORY_GROUPS,
     ALL_ITEM_CATEGORY_GROUPS,
@@ -52,17 +56,21 @@ import {
     getItemGroupColors,
     getCurrentTheme,
     getCurrentMode,
+    expandStoreCategoryGroup,
+    expandItemCategoryGroup,
     type StoreCategoryGroup,
     type ItemCategoryGroup,
 } from '../config/categoryColors';
 import { formatCurrency } from '../utils/currency';
 import { getCategoryEmoji } from '../utils/categoryEmoji';
+import { calculateTreemapLayout, categoryDataToTreemapItems } from '../utils/treemapLayout';
 import {
     translateCategory,
     translateStoreCategoryGroup,
     translateItemCategoryGroup,
     getStoreCategoryGroupEmoji,
     getItemCategoryGroupEmoji,
+    getItemCategoryEmoji,
 } from '../utils/categoryTranslations';
 import type { Transaction } from '../types/transaction';
 import type { ColorTheme } from '../types/settings';
@@ -108,6 +116,8 @@ interface CategoryData {
     color: string;
     fgColor: string;  // Story 14.21: Foreground color for text contrast
     percent: number;
+    categoryCount?: number;  // Number of categories aggregated (only for "Más" group)
+    transactionIds?: Set<string>;  // Story 14.14b Session 6: Track unique transactions for accurate aggregation
 }
 
 /** Trend data with sparkline */
@@ -118,7 +128,14 @@ interface TrendData extends CategoryData {
 
 /** Navigation payload for History view */
 export interface HistoryNavigationPayload {
+    /** Store category filter (e.g., "Supermarket", "Restaurant") */
     category?: string;
+    /** Store category group filter (e.g., "Essentials", "Entertainment") */
+    storeGroup?: string;
+    /** Item category group filter (e.g., "Produce", "Beverages") */
+    itemGroup?: string;
+    /** Item category/subcategory filter (e.g., "Fruits", "Soft Drinks") */
+    itemCategory?: string;
     temporal?: {
         level: string;
         year?: string;
@@ -257,17 +274,19 @@ function filterByPeriod(
 
 /**
  * Compute ALL category data from transactions (raw, unsorted by display logic)
+ * Story 14.14b Session 6: Now tracks transaction IDs for accurate aggregation in groups
  */
 function computeAllCategoryData(transactions: Transaction[]): CategoryData[] {
-    const categoryMap: Record<string, { value: number; count: number }> = {};
+    const categoryMap: Record<string, { value: number; transactionIds: Set<string> }> = {};
 
-    transactions.forEach(tx => {
+    transactions.forEach((tx, index) => {
         const cat = tx.category || 'Otro';
         if (!categoryMap[cat]) {
-            categoryMap[cat] = { value: 0, count: 0 };
+            categoryMap[cat] = { value: 0, transactionIds: new Set() };
         }
         categoryMap[cat].value += tx.total;
-        categoryMap[cat].count += 1;
+        // Use tx.id if available, otherwise fallback to index-based ID
+        categoryMap[cat].transactionIds.add(tx.id ?? `tx-${index}`);
     });
 
     const total = Object.values(categoryMap).reduce((sum, c) => sum + c.value, 0);
@@ -280,7 +299,8 @@ function computeAllCategoryData(transactions: Transaction[]): CategoryData[] {
             return {
                 name,
                 value: data.value,
-                count: data.count,
+                count: data.transactionIds.size,
+                transactionIds: data.transactionIds,  // Keep for group aggregation
                 color: pillColors.bg,      // Pastel bg for treemap cell backgrounds
                 fgColor: pillColors.fg,    // Vibrant fg for donut segments & text
                 percent: total > 0 ? Math.round((data.value / total) * 100) : 0,
@@ -292,19 +312,24 @@ function computeAllCategoryData(transactions: Transaction[]): CategoryData[] {
 /**
  * Story 14.14b Session 4: Compute item category data from actual transaction line items.
  * This aggregates real data from tx.items instead of using mock data.
+ * Story 14.14b Session 6: Now returns transactionIds for accurate group aggregation.
  */
 function computeItemCategoryData(transactions: Transaction[]): CategoryData[] {
-    const itemCategoryMap: Record<string, { value: number; count: number }> = {};
+    // Track value per category and which transactions contain each category
+    const itemCategoryMap: Record<string, { value: number; transactionIds: Set<string> }> = {};
 
-    transactions.forEach(tx => {
+    transactions.forEach((tx, index) => {
         // Aggregate line items by their category
         (tx.items || []).forEach(item => {
-            const cat = item.category || 'Other';
+            // Story 14.15b: Normalize legacy category names (V1/V2 -> V3)
+            const cat = normalizeItemCategory(item.category || 'Other');
             if (!itemCategoryMap[cat]) {
-                itemCategoryMap[cat] = { value: 0, count: 0 };
+                itemCategoryMap[cat] = { value: 0, transactionIds: new Set() };
             }
-            itemCategoryMap[cat].value += item.price * (item.qty || 1);
-            itemCategoryMap[cat].count += 1;
+            // Story 14.24: price is total for line item, qty is informational only
+            itemCategoryMap[cat].value += item.price;
+            // Track unique transaction IDs to count transactions, not items
+            itemCategoryMap[cat].transactionIds.add(tx.id ?? `tx-${index}`);
         });
     });
 
@@ -316,7 +341,8 @@ function computeItemCategoryData(transactions: Transaction[]): CategoryData[] {
             return {
                 name,
                 value: data.value,
-                count: data.count,
+                count: data.transactionIds.size, // Count unique transactions, not items
+                transactionIds: data.transactionIds, // Keep for group aggregation
                 color: pillColors.bg,
                 fgColor: pillColors.fg,
                 percent: total > 0 ? Math.round((data.value / total) * 100) : 0,
@@ -328,17 +354,22 @@ function computeItemCategoryData(transactions: Transaction[]): CategoryData[] {
 /**
  * Story 14.14b Session 4: Compute subcategory data from actual transaction line items.
  * Filters items by item category and aggregates by subcategory.
+ * Count represents unique transactions, not individual items.
+ * Story 14.14b Session 6: Now returns transactionIds for accurate group aggregation.
  */
 function computeSubcategoryData(
     transactions: Transaction[],
     itemCategoryFilter?: string
 ): CategoryData[] {
-    const subcategoryMap: Record<string, { value: number; count: number }> = {};
+    const subcategoryMap: Record<string, { value: number; transactionIds: Set<string> }> = {};
 
-    transactions.forEach(tx => {
+    transactions.forEach((tx, index) => {
         (tx.items || []).forEach(item => {
-            // Filter by item category if specified
-            if (itemCategoryFilter && item.category !== itemCategoryFilter) {
+            // Story 14.15b: Normalize legacy category names for comparison
+            const normalizedItemCategory = normalizeItemCategory(item.category || 'Other');
+
+            // Filter by item category if specified (compare normalized)
+            if (itemCategoryFilter && normalizedItemCategory !== itemCategoryFilter) {
                 return;
             }
 
@@ -347,10 +378,12 @@ function computeSubcategoryData(
             if (!subcat) return;
 
             if (!subcategoryMap[subcat]) {
-                subcategoryMap[subcat] = { value: 0, count: 0 };
+                subcategoryMap[subcat] = { value: 0, transactionIds: new Set() };
             }
-            subcategoryMap[subcat].value += item.price * (item.qty || 1);
-            subcategoryMap[subcat].count += 1;
+            // Story 14.24: price is total for line item, qty is informational only
+            subcategoryMap[subcat].value += item.price;
+            // Track unique transaction IDs to count transactions, not items
+            subcategoryMap[subcat].transactionIds.add(tx.id ?? `tx-${index}`);
         });
     });
 
@@ -362,7 +395,8 @@ function computeSubcategoryData(
             return {
                 name,
                 value: data.value,
-                count: data.count,
+                count: data.transactionIds.size, // Count unique transactions, not items
+                transactionIds: data.transactionIds, // Keep for group aggregation
                 color: pillColors.bg,
                 fgColor: pillColors.fg,
                 percent: total > 0 ? Math.round((data.value / total) * 100) : 0,
@@ -401,12 +435,13 @@ function computeTreemapCategories(
         return { displayCategories: [], otroCategories: [], canExpand: false, canCollapse: false };
     }
 
-    // Helper to check if category is "Other" (in any language)
-    const isOtherCategory = (name: string) => name === 'Otro' || name === 'Other';
+    // Helper to check if category is aggregated "Más" group (not the real "Otro" category)
+    // "Más" = aggregated small categories, "Otro"/"Other" = real transaction category
+    const isAggregatedGroup = (name: string) => name === 'Más' || name === 'More';
 
-    // Separate categories by threshold (excluding any existing "Otro" or "Other")
-    const aboveThreshold = allCategories.filter(c => c.percent > 10 && !isOtherCategory(c.name));
-    const belowThreshold = allCategories.filter(c => c.percent <= 10 && !isOtherCategory(c.name));
+    // Separate categories by threshold (excluding aggregated "Más" group from previous computations)
+    const aboveThreshold = allCategories.filter(c => c.percent > 10 && !isAggregatedGroup(c.name));
+    const belowThreshold = allCategories.filter(c => c.percent <= 10 && !isAggregatedGroup(c.name));
 
     // Start with all categories above 10%
     const displayCategories: CategoryData[] = [...aboveThreshold];
@@ -423,32 +458,47 @@ function computeTreemapCategories(
     // Remaining categories go into "Otro"
     const otroCategories = belowThreshold.slice(1 + expandedCount);
 
-    // Find any existing "Other"/"Otro" categories that were in the original data
-    const existingOtroCategories = allCategories.filter(c => isOtherCategory(c.name));
-
-    // Calculate "Otro" totals if there are remaining categories OR existing Other/Otro
-    if (otroCategories.length > 0 || existingOtroCategories.length > 0) {
-        // Include both remaining small categories AND any existing Other/Otro values
-        const allOtroCategories = [...otroCategories, ...existingOtroCategories];
-        const otroValue = allOtroCategories.reduce((sum, c) => sum + c.value, 0);
-        const otroCount = allOtroCategories.reduce((sum, c) => sum + c.count, 0);
+    // If exactly 1 category would go into "Más", show it directly instead
+    if (otroCategories.length === 1) {
+        displayCategories.push(otroCategories[0]);
+    } else if (otroCategories.length > 1) {
+        // Multiple categories: aggregate into "Más" (not "Otro" to avoid conflict with real "Otro" category)
+        const masValue = otroCategories.reduce((sum, c) => sum + c.value, 0);
         const totalValue = allCategories.reduce((sum, c) => sum + c.value, 0);
-        const otroPercent = totalValue > 0 ? Math.round((otroValue / totalValue) * 100) : 0;
+        const masPercent = totalValue > 0 ? Math.round((masValue / totalValue) * 100) : 0;
 
-        // Story 14.21: Use getCategoryPillColors for "Otro" (ALWAYS colorful for charts)
-        const otroColors = getCategoryPillColors('Otro');
+        // Story 14.14b Session 6: Calculate unique transaction count by merging transaction ID sets
+        // This prevents double-counting when a transaction has items in multiple categories within "Más"
+        const masTransactionIds = new Set<string>();
+        otroCategories.forEach(c => {
+            if (c.transactionIds) {
+                c.transactionIds.forEach(id => masTransactionIds.add(id));
+            } else {
+                // Fallback for categories without transactionIds (e.g., store categories counted by count)
+                // In this case, count is already accurate (one tx per category)
+                for (let i = 0; i < c.count; i++) {
+                    masTransactionIds.add(`${c.name}-${i}`);
+                }
+            }
+        });
+        const masCount = masTransactionIds.size;
+
+        // Use gray color for aggregated "Más" group
+        const masColors = getCategoryPillColors('Otro'); // Reuse Otro colors (gray)
         displayCategories.push({
-            name: 'Otro',
-            value: otroValue,
-            count: otroCount,
-            color: otroColors.bg,
-            fgColor: otroColors.fg,
-            percent: otroPercent,
+            name: 'Más',
+            value: masValue,
+            count: masCount,
+            color: masColors.bg,
+            fgColor: masColors.fg,
+            percent: masPercent,
+            categoryCount: otroCategories.length,  // Number of categories inside "Más"
+            transactionIds: masTransactionIds,  // Keep for further aggregation if needed
         });
     }
 
-    // Determine expand/collapse state
-    const canExpand = otroCategories.length > 0;
+    // Determine expand/collapse state (only if 2+ categories would go to Más)
+    const canExpand = otroCategories.length > 1;
     const canCollapse = expandedCount > 0;
 
     return { displayCategories, otroCategories, canExpand, canCollapse };
@@ -529,11 +579,32 @@ const AnimatedTreemapCell: React.FC<{
     locale?: string;
     t?: (key: string) => string;
     viewMode?: DonutViewMode; // Story 14.14b Session 5: View mode for correct translation
-}> = ({ data, isMainCell, onClick, gridRow, gridColumn, animationKey, locale = 'es', t, viewMode = 'store-categories' }) => {
+    onTransactionCountClick?: (categoryName: string) => void; // Story 14.22: Navigate to transactions
+    style?: React.CSSProperties; // Story 14.13: Support squarified treemap absolute positioning
+    cellWidthPercent?: number; // Story 14.13: Cell width % for compact layout detection
+    cellHeightPercent?: number; // Story 14.13: Cell height % for compact layout detection
+}> = ({ data, isMainCell, onClick, gridRow, gridColumn, animationKey, locale = 'es', t, viewMode = 'store-categories', onTransactionCountClick, style, cellWidthPercent = 100, cellHeightPercent = 100 }) => {
     // Animated values using useCountUp hook
     const animatedAmount = useCountUp(Math.round(data.value / 1000), { duration: 1200, startValue: 0, key: animationKey });
     const animatedPercent = useCountUp(Math.round(data.percent), { duration: 1200, startValue: 0, key: animationKey });
     const animatedCount = useCountUp(data.count, { duration: 800, startValue: 0, key: animationKey });
+
+    // Story 14.13: Get text color respecting fontColorMode setting (plain vs colorful)
+    // getCategoryColorsAuto returns plain text (black/white) when fontColorMode is 'plain'
+    // and category-specific colors when fontColorMode is 'colorful'
+    const textColors = getCategoryColorsAuto(data.name);
+    const textColor = textColors.fg;
+
+    // Story 14.13: Detect compact layout needed for small cells
+    // Compact layout stacks all info vertically - works well for narrow cells
+    // Tiny layout shows only emoji + count badge for the very smallest cells
+    const cellArea = cellWidthPercent * cellHeightPercent;
+    // Only use tiny layout for very small cells (area < 100 or width < 10%)
+    // This ensures cells like "Comida" and the pet icon get the compact layout with all info
+    const isTinyCell = cellArea < 100 || cellWidthPercent < 10 || cellHeightPercent < 8;
+    // Use compact (vertical stack) for any non-main cell that isn't tiny
+    // This ensures consistent layout for medium-sized cells like "Hogar", "Productos para Mascotas"
+    const isCompactCell = !isTinyCell && !isMainCell && (cellArea < 2000 || cellWidthPercent < 45);
 
     // Circle sizes - responsive: smaller on narrow screens
     // Main cell: 36px, Small cells: 28px (increased from 24px for better readability)
@@ -543,27 +614,30 @@ const AnimatedTreemapCell: React.FC<{
     const circleFontSize = isMainCell ? undefined : 11;
 
     // Story 14.14b Session 5: Get emoji based on view mode
+    // Story 14.13: Use getItemCategoryEmoji for item-categories view mode
     const emoji = useMemo(() => {
-        if (data.name === 'Otro' || data.name === 'Other') {
-            return '📁'; // Folder emoji for "Other" category
+        // "Más" = aggregated small categories group (expandable)
+        if (data.name === 'Más' || data.name === 'More') {
+            return '📁'; // Folder emoji for aggregated "Más" group
         }
         switch (viewMode) {
             case 'store-groups':
                 return getStoreCategoryGroupEmoji(data.name as StoreCategoryGroup);
             case 'item-groups':
                 return getItemCategoryGroupEmoji(data.name as ItemCategoryGroup);
-            case 'store-categories':
             case 'item-categories':
+                return getItemCategoryEmoji(data.name);
+            case 'store-categories':
             default:
                 return getCategoryEmoji(data.name);
         }
     }, [data.name, viewMode]);
-    const emojiFontSize = isMainCell ? '16px' : '13px';
 
     // Story 14.14b Session 5: Translate name based on view mode
     const displayName = useMemo(() => {
-        if (data.name === 'Otro' || data.name === 'Other') {
-            return t ? t('otherCategory') : 'Otros';
+        // "Más" = aggregated small categories group (expandable)
+        if (data.name === 'Más' || data.name === 'More') {
+            return locale === 'es' ? 'Más' : 'More';
         }
         switch (viewMode) {
             case 'store-groups':
@@ -577,11 +651,147 @@ const AnimatedTreemapCell: React.FC<{
         }
     }, [data.name, viewMode, locale, t]);
 
+    // Story 14.13: Tiny cells show only emoji + transaction count in a centered layout
+    if (isTinyCell) {
+        return (
+            <div
+                key={`${data.name}-${animationKey}`}
+                onClick={onClick}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onClick();
+                    }
+                }}
+                role="button"
+                tabIndex={0}
+                className="rounded-md flex items-center justify-center gap-0.5 overflow-hidden transition-transform hover:scale-[0.98] active:scale-95 cursor-pointer"
+                style={{
+                    backgroundColor: data.color,
+                    padding: '2px',
+                    ...style,
+                }}
+                aria-label={`${displayName}: $${animatedAmount}k, ${data.count} ${locale === 'es' ? 'transacciones' : 'transactions'}`}
+                data-testid={`treemap-cell-${data.name.toLowerCase()}`}
+            >
+                {/* Emoji only - most compact representation */}
+                <span style={{ fontSize: '12px', lineHeight: 1 }}>{emoji}</span>
+                {/* Show count badge only if there's enough width */}
+                {cellWidthPercent >= 12 && (
+                    <span
+                        className="inline-flex items-center justify-center rounded-full"
+                        style={{
+                            backgroundColor: 'rgba(255,255,255,0.9)',
+                            color: textColor,
+                            fontSize: '8px',
+                            fontWeight: 600,
+                            minWidth: '14px',
+                            height: '14px',
+                            padding: '0 2px',
+                        }}
+                    >
+                        {animatedCount}
+                    </span>
+                )}
+            </div>
+        );
+    }
+
+    // Story 14.13: Compact cells show all info stacked vertically in a single column
+    // Layout: Emoji+Name (top), Percentage circle, Transaction count, Amount (bottom)
+    if (isCompactCell) {
+        return (
+            <div
+                key={`${data.name}-${animationKey}`}
+                onClick={onClick}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onClick();
+                    }
+                }}
+                role="button"
+                tabIndex={0}
+                className="rounded-lg flex flex-col justify-between overflow-hidden text-left transition-transform hover:scale-[0.98] active:scale-95 cursor-pointer"
+                style={{
+                    backgroundColor: data.color,
+                    padding: '6px',
+                    ...style,
+                }}
+                aria-label={`${displayName}: $${animatedAmount}k`}
+                data-testid={`treemap-cell-${data.name.toLowerCase()}`}
+            >
+                {/* Top: Emoji + truncated name - using main cell font size (14px) */}
+                <div className="flex items-center gap-1.5 min-w-0">
+                    <span style={{ fontSize: '14px', lineHeight: 1 }}>{emoji}</span>
+                    <span
+                        className="font-bold truncate"
+                        style={{
+                            fontSize: '14px',
+                            color: textColor,
+                            textShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                        }}
+                    >
+                        {displayName}
+                    </span>
+                </div>
+                {/* Bottom section: Percentage, Count, Amount stacked vertically */}
+                <div className="flex flex-col gap-0.5 items-start">
+                    {/* Percentage circle - smaller for compact */}
+                    <CircularProgress
+                        animatedPercent={animatedPercent}
+                        size={24}
+                        strokeWidth={2}
+                        fgColor={textColor}
+                        fontSize={10}
+                    />
+                    {/* Transaction count pill */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onTransactionCountClick?.(data.name);
+                        }}
+                        className="inline-flex items-center gap-[2px] px-[5px] py-[1px] rounded-full transition-opacity hover:opacity-80 active:opacity-60"
+                        style={{
+                            backgroundColor: 'rgba(255,255,255,0.85)',
+                            color: textColor,
+                            fontSize: '10px',
+                        }}
+                        aria-label={`${locale === 'es' ? 'Ver' : 'View'} ${data.count} ${locale === 'es' ? 'transacciones' : 'transactions'}`}
+                    >
+                        <Receipt size={10} strokeWidth={2} />
+                        {animatedCount}
+                    </button>
+                    {/* Amount */}
+                    <div
+                        className="font-bold"
+                        style={{
+                            fontSize: '14px',
+                            color: textColor,
+                            textShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                        }}
+                    >
+                        ${animatedAmount}k
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Standard cell layout (full content)
     return (
-        <button
+        <div
             key={`${data.name}-${animationKey}`}
             onClick={onClick}
-            className="rounded-lg flex flex-col justify-between overflow-hidden text-left transition-transform hover:scale-[0.98] active:scale-95"
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onClick();
+                }
+            }}
+            role="button"
+            tabIndex={0}
+            className="rounded-lg flex flex-col justify-between overflow-hidden text-left transition-transform hover:scale-[0.98] active:scale-95 cursor-pointer"
             style={{
                 backgroundColor: data.color,
                 gridRow: gridRow,
@@ -590,6 +800,8 @@ const AnimatedTreemapCell: React.FC<{
                 // Ensure minimum height when in flex container (scrollable mode)
                 minHeight: isMainCell ? undefined : '60px',
                 flexShrink: 0,
+                // Story 14.13: Merge with passed style for squarified treemap positioning
+                ...style,
             }}
             aria-label={`${displayName}: $${animatedAmount}k`}
             data-testid={`treemap-cell-${data.name.toLowerCase()}`}
@@ -597,58 +809,82 @@ const AnimatedTreemapCell: React.FC<{
             {/* Top row: Emoji + Category name */}
             <div className="flex items-center gap-1.5 min-w-0">
                 {/* Category emoji (no background - card already has category color) */}
-                <span style={{ fontSize: emojiFontSize, lineHeight: 1 }}>{emoji}</span>
-                {/* Category name - Story 14.21: Use fgColor for text contrast */}
+                <span style={{ fontSize: '16px', lineHeight: 1 }}>{emoji}</span>
+                {/* Category name - Story 14.13: Always use 14px font, truncate if needed */}
                 <div
-                    className="font-bold truncate"
+                    className="font-bold truncate flex items-center gap-1"
                     style={{
-                        fontSize: isMainCell ? '14px' : '11px',
-                        color: data.fgColor,
+                        fontSize: '14px',
+                        color: textColor,
                         textShadow: '0 1px 2px rgba(0,0,0,0.1)',
                     }}
                 >
                     {displayName}
+                    {/* Badge showing count of categories inside "Más" group */}
+                    {data.categoryCount && (
+                        <span
+                            className="inline-flex items-center justify-center rounded-full"
+                            style={{
+                                backgroundColor: 'transparent',
+                                border: `1.5px solid ${textColor}`,
+                                color: textColor,
+                                fontSize: '10px',
+                                fontWeight: 600,
+                                minWidth: '18px',
+                                height: '18px',
+                                padding: '0 4px',
+                            }}
+                        >
+                            {data.categoryCount}
+                        </span>
+                    )}
                 </div>
             </div>
 
-            {/* Bottom row: Amount + Transaction count pill + Percentage circle */}
-            <div className="flex items-center justify-between gap-2">
-                {/* Left side: Amount + Transaction count pill */}
-                <div className="flex items-center gap-1.5">
-                    {/* Animated amount spent - Story 14.21: Use fgColor for text contrast */}
+            {/* Bottom section: Transaction count + Amount (left), Percentage circle (bottom right) */}
+            {/* Story 14.13: Unified layout for squarified treemap cells */}
+            <div className="flex items-end justify-between">
+                {/* Left side: count above amount */}
+                <div className="flex flex-col gap-0.5">
+                    {/* Transaction count pill - Story 14.22: Clickable to navigate to transactions */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onTransactionCountClick?.(data.name);
+                        }}
+                        className="inline-flex items-center gap-[2px] px-[5px] py-[1px] rounded-full transition-opacity hover:opacity-80 active:opacity-60 self-start"
+                        style={{
+                            backgroundColor: 'rgba(255,255,255,0.85)',
+                            color: textColor,
+                            fontSize: isMainCell ? '11px' : '10px',
+                        }}
+                        aria-label={`${locale === 'es' ? 'Ver' : 'View'} ${data.count} ${locale === 'es' ? 'transacciones' : 'transactions'}`}
+                    >
+                        <Receipt size={isMainCell ? 11 : 10} strokeWidth={2} />
+                        {animatedCount}
+                    </button>
+                    {/* Amount - left aligned below count */}
                     <div
                         className="font-bold"
                         style={{
-                            fontSize: isMainCell ? '22px' : '14px',
-                            color: data.fgColor,
+                            fontSize: isMainCell ? '22px' : '16px',
+                            color: textColor,
                             textShadow: '0 1px 2px rgba(0,0,0,0.1)',
                         }}
                     >
                         ${animatedAmount}k
                     </div>
-                    {/* Transaction count pill with Package icon */}
-                    <span
-                        className="inline-flex items-center gap-[2px] px-[4px] py-[1px] rounded-full"
-                        style={{
-                            backgroundColor: 'rgba(255,255,255,0.85)',
-                            color: data.fgColor,
-                            fontSize: isMainCell ? '11px' : '10px',
-                        }}
-                    >
-                        <Package size={isMainCell ? 11 : 10} strokeWidth={2} />
-                        {animatedCount}
-                    </span>
                 </div>
-                {/* Right side: Circular progress with animated percentage - Story 14.21: Use fgColor */}
+                {/* Right side: Percentage circle - bottom right */}
                 <CircularProgress
                     animatedPercent={animatedPercent}
                     size={circleSize}
                     strokeWidth={strokeWidth}
-                    fgColor={data.fgColor}
+                    fgColor={textColor}
                     fontSize={circleFontSize}
                 />
             </div>
-        </button>
+        </div>
     );
 };
 
@@ -677,6 +913,8 @@ const DonutChart: React.FC<{
     canExpand: boolean;
     canCollapse: boolean;
     otroCount: number;
+    /** Story 14.14b Session 7: Categories inside "Más" group for navigation expansion */
+    otroCategories: CategoryData[];
     expandedCount: number;
     onExpand: () => void;
     onCollapse: () => void;
@@ -688,6 +926,10 @@ const DonutChart: React.FC<{
     viewMode: DonutViewMode;
     /** Story 14.14b Session 4: Callback when view mode needs reset (drill-down changes) */
     onViewModeReset?: () => void;
+    /** Story 14.22: Time period for navigation filter */
+    timePeriod?: TimePeriod;
+    /** Story 14.22: Current period for navigation filter */
+    currentPeriod?: CurrentPeriod;
 }> = ({
     categoryData,
     allCategoryData,
@@ -701,6 +943,7 @@ const DonutChart: React.FC<{
     canExpand: parentCanExpand,
     canCollapse: parentCanCollapse,
     otroCount: parentOtroCount,
+    otroCategories: parentOtroCategories,
     expandedCount: parentExpandedCount,
     onExpand: parentOnExpand,
     onCollapse: parentOnCollapse,
@@ -708,6 +951,8 @@ const DonutChart: React.FC<{
     onNavigateToHistory,
     viewMode,
     onViewModeReset: _onViewModeReset,
+    timePeriod = 'month',
+    currentPeriod,
 }) => {
     // State for selected segment
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -782,25 +1027,29 @@ const DonutChart: React.FC<{
     }, [transactions]);
 
     // Story 14.14b: Aggregate item categories by item groups
+    // Story 14.14b Session 6: Use transactionIds for accurate counting (prevents double-counting)
     const itemGroupsData = useMemo((): CategoryData[] => {
         const theme = getCurrentTheme();
         const mode = getCurrentMode();
-        const groupTotals: Record<ItemCategoryGroup, { value: number; count: number }> = {
-            'food-fresh': { value: 0, count: 0 },
-            'food-packaged': { value: 0, count: 0 },
-            'health-personal': { value: 0, count: 0 },
-            'household': { value: 0, count: 0 },
-            'nonfood-retail': { value: 0, count: 0 },
-            'services-fees': { value: 0, count: 0 },
-            'other-item': { value: 0, count: 0 },
+        const groupTotals: Record<ItemCategoryGroup, { value: number; transactionIds: Set<string> }> = {
+            'food-fresh': { value: 0, transactionIds: new Set() },
+            'food-packaged': { value: 0, transactionIds: new Set() },
+            'health-personal': { value: 0, transactionIds: new Set() },
+            'household': { value: 0, transactionIds: new Set() },
+            'nonfood-retail': { value: 0, transactionIds: new Set() },
+            'services-fees': { value: 0, transactionIds: new Set() },
+            'other-item': { value: 0, transactionIds: new Set() },
         };
 
-        // Aggregate itemCategoriesData into groups
+        // Aggregate itemCategoriesData into groups using transaction IDs for accurate counting
         for (const item of itemCategoriesData) {
             const itemKey = ITEM_CATEGORY_TO_KEY[item.name as keyof typeof ITEM_CATEGORY_TO_KEY];
             const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
             groupTotals[group].value += item.value;
-            groupTotals[group].count += item.count;
+            // Merge transaction IDs to avoid double-counting
+            if (item.transactionIds) {
+                item.transactionIds.forEach(id => groupTotals[group].transactionIds.add(id));
+            }
         }
 
         const totalValue = Object.values(groupTotals).reduce((sum, g) => sum + g.value, 0);
@@ -812,7 +1061,8 @@ const DonutChart: React.FC<{
                 return {
                     name: groupKey,
                     value: data.value,
-                    count: data.count,
+                    count: data.transactionIds.size,  // Unique transaction count
+                    transactionIds: data.transactionIds,  // Keep for further aggregation
                     color: colors.bg,
                     fgColor: colors.fg,
                     percent: totalValue > 0 ? Math.round((data.value / totalValue) * 100) : 0,
@@ -1024,33 +1274,104 @@ const DonutChart: React.FC<{
     };
 
     // Story 14.14b Session 4+5: Handle transaction count pill click - navigate to HistoryView with filters
+    // Story 14.22: Full support for all view modes and drill-down levels
+    // Story 14.14b Session 7: Handle "Más" aggregated group by expanding to constituent categories
     const handleTransactionCountClick = useCallback((categoryName: string) => {
         if (!onNavigateToHistory) return;
 
-        // Determine the store category to filter by based on viewMode and drill-down path
-        // The goal is to show transactions matching the current context
-        let storeCategory: string | undefined;
+        // Build the navigation payload based on viewMode and drill-down state
+        const payload: HistoryNavigationPayload = {};
 
-        if (viewMode === 'store-categories' && drillDownLevel === 0) {
-            // At store categories level - filter by this store category
-            storeCategory = categoryName;
-        } else if (viewMode === 'store-groups' && drillDownLevel === 1) {
-            // Viewing store categories within a group - filter by this store category
-            storeCategory = categoryName;
-        } else if (viewMode === 'store-categories' && drillDownLevel >= 1 && drillDownPath[0]) {
-            // Drilled down from store category - filter by parent store category
-            storeCategory = drillDownPath[0];
-        } else if (viewMode === 'store-groups' && drillDownLevel >= 2 && drillDownPath[1]) {
-            // Drilled down from store group > store category - filter by store category
-            storeCategory = drillDownPath[1];
+        // Check if this is the "Más" aggregated group - expand to constituent categories
+        const isAggregatedGroup = categoryName === 'Más' || categoryName === 'More';
+        // Use parent's otroCategories at level 0, otherwise use drill-down's otroCategories
+        const currentOtroCategories = drillDownLevel === 0 ? parentOtroCategories : drillDownCategorized.otroCategories;
+
+        // Set the appropriate filter based on view mode and drill-down level
+        if (viewMode === 'store-categories') {
+            if (drillDownLevel === 0) {
+                if (isAggregatedGroup && currentOtroCategories.length > 0) {
+                    // "Más" contains multiple store categories - join them with comma
+                    payload.category = currentOtroCategories.map(c => c.name).join(',');
+                } else {
+                    // At store categories level - filter by store category
+                    payload.category = categoryName;
+                }
+            } else {
+                // Drilled down - filter by parent store category
+                payload.category = drillDownPath[0] || categoryName;
+            }
+        } else if (viewMode === 'store-groups') {
+            if (drillDownLevel === 0) {
+                if (isAggregatedGroup && currentOtroCategories.length > 0) {
+                    // "Más" contains multiple store groups - expand each group and combine
+                    const allCategories = currentOtroCategories.flatMap(c =>
+                        expandStoreCategoryGroup(c.name as StoreCategoryGroup)
+                    );
+                    payload.category = allCategories.join(',');
+                } else {
+                    // At store groups level - filter by store group
+                    payload.storeGroup = categoryName;
+                }
+            } else if (drillDownLevel === 1) {
+                if (isAggregatedGroup && currentOtroCategories.length > 0) {
+                    // "Más" contains multiple store categories - join them with comma
+                    payload.category = currentOtroCategories.map(c => c.name).join(',');
+                } else {
+                    // Viewing store categories within a group - filter by store category
+                    payload.category = categoryName;
+                }
+            } else {
+                // Deeper drill-down - filter by store category from path
+                payload.category = drillDownPath[1] || categoryName;
+            }
+        } else if (viewMode === 'item-groups') {
+            if (drillDownLevel === 0) {
+                if (isAggregatedGroup && currentOtroCategories.length > 0) {
+                    // "Más" contains multiple item groups - expand each group and combine
+                    const allItemCategories = currentOtroCategories.flatMap(c =>
+                        expandItemCategoryGroup(c.name as ItemCategoryGroup)
+                    );
+                    payload.itemCategory = allItemCategories.join(',');
+                } else {
+                    // At item groups level - filter by item group
+                    payload.itemGroup = categoryName;
+                }
+            } else {
+                if (isAggregatedGroup && currentOtroCategories.length > 0) {
+                    // "Más" contains multiple item categories - join them with comma
+                    payload.itemCategory = currentOtroCategories.map(c => c.name).join(',');
+                } else {
+                    // Drilled down - filter by item category
+                    payload.itemCategory = categoryName;
+                }
+            }
+        } else if (viewMode === 'item-categories') {
+            if (isAggregatedGroup && currentOtroCategories.length > 0) {
+                // "Más" contains multiple item categories - join them with comma
+                payload.itemCategory = currentOtroCategories.map(c => c.name).join(',');
+            } else {
+                // At item categories level - filter by item category
+                payload.itemCategory = categoryName;
+            }
         }
-        // Story 14.14b Session 5: For item-groups/item-categories views
-        // Currently, the filter system doesn't support item category filtering
-        // Navigate without filters to show all transactions
-        // TODO: Extend HistoryNavigationPayload to support itemCategory filter in future story
 
-        onNavigateToHistory({ category: storeCategory });
-    }, [onNavigateToHistory, viewMode, drillDownLevel, drillDownPath]);
+        // Story 14.22: Build temporal filter based on current time period selection
+        if (currentPeriod) {
+            payload.temporal = {
+                level: timePeriod,
+                year: String(currentPeriod.year),
+            };
+            if (timePeriod === 'month' || timePeriod === 'week') {
+                payload.temporal.month = `${currentPeriod.year}-${String(currentPeriod.month).padStart(2, '0')}`;
+            }
+            if (timePeriod === 'quarter') {
+                payload.temporal.quarter = `Q${currentPeriod.quarter}`;
+            }
+        }
+
+        onNavigateToHistory(payload);
+    }, [onNavigateToHistory, viewMode, drillDownLevel, drillDownPath, timePeriod, currentPeriod, parentOtroCategories, drillDownCategorized.otroCategories]);
 
     // Story 14.14b Session 4: View mode labels for title display
     const viewModeLabels: Record<DonutViewMode, { es: string; en: string }> = {
@@ -1228,7 +1549,8 @@ const DonutChart: React.FC<{
             <div className="flex flex-col gap-1 px-1 flex-1 overflow-y-auto min-h-0">
                 {displayData.map(cat => {
                     const isSelected = selectedCategory === cat.name;
-                    const isOtro = cat.name === 'Otro' || cat.name === 'Other' || cat.name === 'other' || cat.name === 'other-item';
+                    // "Más" = aggregated small categories group (expandable), not the real "Otro" category
+                    const isMasGroup = cat.name === 'Más' || cat.name === 'More';
 
                     // Story 14.14b: Get display name and emoji based on viewMode and drillDownLevel
                     let displayName: string;
@@ -1246,17 +1568,21 @@ const DonutChart: React.FC<{
                         (viewMode === 'store-groups' && drillDownLevel === 2) ||
                         (viewMode === 'item-groups' && drillDownLevel === 1);
 
-                    // Story 14.14b: Can drill down if not Otro and not at max level
+                    // Story 14.14b: Can drill down if not "Más" group and not at max level
                     // For item categories, also check if subcategories exist
                     const maxLevel = getMaxDrillDownLevel();
-                    let canDrillDownFurther = !isOtro && drillDownLevel < maxLevel;
+                    let canDrillDownFurther = !isMasGroup && drillDownLevel < maxLevel;
 
                     // If showing item categories, only allow drill-down if subcategories exist
                     if (canDrillDownFurther && isShowingItemCategories) {
                         canDrillDownFurther = hasSubcategories(cat.name);
                     }
 
-                    if (isShowingStoreGroups) {
+                    // Handle "Más" aggregated group specially
+                    if (isMasGroup) {
+                        displayName = locale === 'es' ? 'Más' : 'More';
+                        emoji = '📁';
+                    } else if (isShowingStoreGroups) {
                         displayName = translateStoreCategoryGroup(cat.name, locale as 'en' | 'es');
                         emoji = getStoreCategoryGroupEmoji(cat.name);
                     } else if (isShowingStoreCategories) {
@@ -1267,12 +1593,15 @@ const DonutChart: React.FC<{
                         emoji = getItemCategoryGroupEmoji(cat.name);
                     } else if (isShowingItemCategories) {
                         displayName = translateCategory(cat.name, locale as 'en' | 'es');
-                        emoji = getCategoryEmoji(cat.name);
+                        emoji = getItemCategoryEmoji(cat.name);
                     } else {
                         // Subcategories (deepest level) - use as-is
                         displayName = cat.name;
                         emoji = '📄';
                     }
+
+                    // Story 14.13: Get text color respecting fontColorMode setting
+                    const legendTextColor = getCategoryColorsAuto(cat.name).fg;
 
                     return (
                         <div
@@ -1301,14 +1630,34 @@ const DonutChart: React.FC<{
                                 onClick={() => handleSegmentClick(cat.name)}
                                 className="flex-1 flex flex-col items-start min-w-0"
                             >
-                                <span className={`text-sm font-medium truncate ${
-                                    isDark ? 'text-white' : 'text-slate-900'
-                                }`}>
+                                <span
+                                    className="text-sm font-medium truncate flex items-center gap-1"
+                                    style={{ color: legendTextColor }}
+                                >
                                     {displayName}
+                                    {/* Badge showing count of categories inside "Más" group */}
+                                    {cat.categoryCount && (
+                                        <span
+                                            className="inline-flex items-center justify-center rounded-full text-xs"
+                                            style={{
+                                                backgroundColor: 'transparent',
+                                                border: `1.5px solid ${legendTextColor}`,
+                                                color: legendTextColor,
+                                                fontSize: '10px',
+                                                fontWeight: 600,
+                                                minWidth: '18px',
+                                                height: '18px',
+                                                padding: '0 4px',
+                                            }}
+                                        >
+                                            {cat.categoryCount}
+                                        </span>
+                                    )}
                                 </span>
-                                <span className={`text-xs ${
-                                    isDark ? 'text-slate-400' : 'text-slate-500'
-                                }`}>
+                                <span
+                                    className="text-xs"
+                                    style={{ color: legendTextColor, opacity: 0.7 }}
+                                >
                                     {formatCurrency(cat.value, currency)}
                                 </span>
                             </button>
@@ -1327,14 +1676,15 @@ const DonutChart: React.FC<{
                                 aria-label={`${locale === 'es' ? 'Ver' : 'View'} ${cat.count} ${locale === 'es' ? 'transacciones' : 'transactions'}`}
                                 data-testid={`transaction-count-pill-${cat.name.toLowerCase().replace(/\s+/g, '-')}`}
                             >
-                                <Package size={12} />
+                                <Receipt size={12} />
                                 <span>{cat.count}</span>
                             </button>
 
                             {/* Percentage */}
-                            <span className={`text-sm font-semibold ${
-                                isDark ? 'text-slate-300' : 'text-slate-600'
-                            }`}>
+                            <span
+                                className="text-sm font-semibold"
+                                style={{ color: legendTextColor }}
+                            >
                                 {cat.percent}%
                             </span>
 
@@ -1377,7 +1727,8 @@ const TrendListItem: React.FC<{
 
     // Story 14.14b Session 5: Get emoji based on view mode
     const emoji = useMemo(() => {
-        if (data.name === 'Otro' || data.name === 'Other') {
+        // "Más" = aggregated small categories group
+        if (data.name === 'Más' || data.name === 'More') {
             return '📁';
         }
         switch (viewMode) {
@@ -1385,8 +1736,9 @@ const TrendListItem: React.FC<{
                 return getStoreCategoryGroupEmoji(data.name as StoreCategoryGroup);
             case 'item-groups':
                 return getItemCategoryGroupEmoji(data.name as ItemCategoryGroup);
-            case 'store-categories':
             case 'item-categories':
+                return getItemCategoryEmoji(data.name);
+            case 'store-categories':
             default:
                 return getCategoryEmoji(data.name);
         }
@@ -1394,8 +1746,9 @@ const TrendListItem: React.FC<{
 
     // Story 14.14b Session 5: Translate name based on view mode
     const displayName = useMemo(() => {
-        if (data.name === 'Otro' || data.name === 'Other') {
-            return locale === 'es' ? 'Otros' : 'Other';
+        // "Más" = aggregated small categories group
+        if (data.name === 'Más' || data.name === 'More') {
+            return locale === 'es' ? 'Más' : 'More';
         }
         switch (viewMode) {
             case 'store-groups':
@@ -1427,8 +1780,26 @@ const TrendListItem: React.FC<{
 
             {/* Name and count */}
             <div className="flex-1 text-left">
-                <div className={`font-medium ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                <div className={`font-medium flex items-center gap-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>
                     {displayName}
+                    {/* Badge showing count of categories inside "Más" group */}
+                    {data.categoryCount && (
+                        <span
+                            className="inline-flex items-center justify-center rounded-full"
+                            style={{
+                                backgroundColor: 'transparent',
+                                border: '1.5px solid var(--text-secondary)',
+                                color: 'var(--text-secondary)',
+                                fontSize: '10px',
+                                fontWeight: 600,
+                                minWidth: '18px',
+                                height: '18px',
+                                padding: '0 4px',
+                            }}
+                        >
+                            {data.categoryCount}
+                        </span>
+                    )}
                 </div>
                 <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                     {data.count} {countLabel}
@@ -1523,15 +1894,47 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     );
 
     // Time period selection (AC #2)
-    const [timePeriod, setTimePeriodLocal] = useState<TimePeriod>('month');
+    // Story 14.14b Session 7: Persist time period to localStorage so it's retained on back navigation
+    const [timePeriod, setTimePeriodLocal] = useState<TimePeriod>(() => {
+        try {
+            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.getItem) {
+                const saved = localStorage.getItem('boletapp-analytics-timeperiod');
+                if (saved && ['year', 'quarter', 'month', 'week'].includes(saved)) {
+                    return saved as TimePeriod;
+                }
+            }
+        } catch {
+            // localStorage not available
+        }
+        return 'month';
+    });
 
     // Current period navigation (AC #3)
+    // Story 14.14b Session 7: Persist current period to localStorage so it's retained on back navigation
     const now = new Date();
-    const [currentPeriod, setCurrentPeriodLocal] = useState<CurrentPeriod>({
-        year: now.getFullYear(),
-        month: now.getMonth() + 1,
-        quarter: Math.ceil((now.getMonth() + 1) / 3),
-        week: Math.ceil(now.getDate() / 7),
+    const [currentPeriod, setCurrentPeriodLocal] = useState<CurrentPeriod>(() => {
+        try {
+            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.getItem) {
+                const saved = localStorage.getItem('boletapp-analytics-currentperiod');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    // Validate the parsed object has required fields
+                    if (parsed && typeof parsed.year === 'number' && typeof parsed.month === 'number' &&
+                        typeof parsed.quarter === 'number' && typeof parsed.week === 'number') {
+                        return parsed as CurrentPeriod;
+                    }
+                }
+            }
+        } catch {
+            // localStorage not available or invalid JSON
+        }
+        // Default to current date
+        return {
+            year: now.getFullYear(),
+            month: now.getMonth() + 1,
+            quarter: Math.ceil((now.getMonth() + 1) / 3),
+            week: Math.ceil(now.getDate() / 7),
+        };
     });
 
     // Track if we're updating from context to prevent loops
@@ -1604,16 +2007,95 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     }, [filterState.temporal]);
 
     // Wrapped setters that also dispatch to context (sync TO context)
+    // Story 14.14b Session 7: Also persist to localStorage for back navigation
+    // Story 14.14b Session 8: Cascade time period changes properly (e.g., Q3 → Month = July)
     const setTimePeriod = useCallback((newPeriod: TimePeriod) => {
+        // Calculate cascaded values based on current time period and new selection
+        // When drilling down (e.g., Quarter → Month), use first unit of current period
+        // When drilling up (e.g., Month → Year), keep current values
+        let adjustedMonth = currentPeriod.month;
+        let adjustedQuarter = currentPeriod.quarter;
+        let adjustedWeek = currentPeriod.week;
+
+        // Cascade logic: When switching to a finer granularity, set to first unit of current period
+        if (timePeriod === 'year') {
+            // From Year: set to first quarter/month/week
+            if (newPeriod === 'quarter') {
+                adjustedQuarter = 1;
+                adjustedMonth = 1;
+                adjustedWeek = 1;
+            } else if (newPeriod === 'month') {
+                adjustedMonth = 1;
+                adjustedQuarter = 1;
+                adjustedWeek = 1;
+            } else if (newPeriod === 'week') {
+                adjustedMonth = 1;
+                adjustedQuarter = 1;
+                adjustedWeek = 1;
+            }
+        } else if (timePeriod === 'quarter') {
+            // From Quarter: set month to first month of current quarter, week to 1
+            if (newPeriod === 'month') {
+                // Q1=Jan(1), Q2=Apr(4), Q3=Jul(7), Q4=Oct(10)
+                adjustedMonth = (currentPeriod.quarter - 1) * 3 + 1;
+                adjustedWeek = 1;
+            } else if (newPeriod === 'week') {
+                adjustedMonth = (currentPeriod.quarter - 1) * 3 + 1;
+                adjustedWeek = 1;
+            }
+        } else if (timePeriod === 'month') {
+            // From Month: set week to 1
+            if (newPeriod === 'week') {
+                adjustedWeek = 1;
+            }
+            // Update quarter based on current month when going up
+            if (newPeriod === 'quarter' || newPeriod === 'year') {
+                adjustedQuarter = Math.ceil(currentPeriod.month / 3);
+            }
+        } else if (timePeriod === 'week') {
+            // From Week: update quarter based on current month when going up
+            if (newPeriod === 'quarter' || newPeriod === 'year') {
+                adjustedQuarter = Math.ceil(currentPeriod.month / 3);
+            }
+        }
+
+        // Update currentPeriod with adjusted values
+        setCurrentPeriodLocal(prev => {
+            const updated = {
+                ...prev,
+                month: adjustedMonth,
+                quarter: adjustedQuarter,
+                week: adjustedWeek,
+            };
+            // Persist to localStorage
+            try {
+                if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.setItem) {
+                    localStorage.setItem('boletapp-analytics-currentperiod', JSON.stringify(updated));
+                }
+            } catch {
+                // localStorage not available
+            }
+            return updated;
+        });
+
         setTimePeriodLocal(newPeriod);
+
+        // Persist to localStorage
+        try {
+            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.setItem) {
+                localStorage.setItem('boletapp-analytics-timeperiod', newPeriod);
+            }
+        } catch {
+            // localStorage not available
+        }
 
         // Don't dispatch if we're updating from context
         if (isUpdatingFromContext.current) return;
 
-        // Dispatch to context based on new period type
+        // Dispatch to context based on new period type with adjusted values
         const yearStr = String(currentPeriod.year);
-        const monthStr = `${currentPeriod.year}-${String(currentPeriod.month).padStart(2, '0')}`;
-        const quarterStr = `Q${currentPeriod.quarter}`;
+        const monthStr = `${currentPeriod.year}-${String(adjustedMonth).padStart(2, '0')}`;
+        const quarterStr = `Q${adjustedQuarter}`;
 
         switch (newPeriod) {
             case 'year':
@@ -1626,14 +2108,24 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                 filterDispatch({ type: 'SET_TEMPORAL_FILTER', payload: buildMonthFilter(yearStr, monthStr) });
                 break;
             case 'week':
-                filterDispatch({ type: 'SET_TEMPORAL_FILTER', payload: buildWeekFilter(yearStr, monthStr, currentPeriod.week) });
+                filterDispatch({ type: 'SET_TEMPORAL_FILTER', payload: buildWeekFilter(yearStr, monthStr, adjustedWeek) });
                 break;
         }
-    }, [currentPeriod, filterDispatch]);
+    }, [timePeriod, currentPeriod, filterDispatch]);
 
+    // Story 14.14b Session 7: Also persist currentPeriod to localStorage for back navigation
     const setCurrentPeriod = useCallback((updater: CurrentPeriod | ((prev: CurrentPeriod) => CurrentPeriod)) => {
         setCurrentPeriodLocal(prev => {
             const newPeriod = typeof updater === 'function' ? updater(prev) : updater;
+
+            // Persist to localStorage
+            try {
+                if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.setItem) {
+                    localStorage.setItem('boletapp-analytics-currentperiod', JSON.stringify(newPeriod));
+                }
+            } catch {
+                // localStorage not available
+            }
 
             // Don't dispatch if we're updating from context
             if (!isUpdatingFromContext.current) {
@@ -1708,11 +2200,16 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     // Story 14.14b Session 6: Add localStorage persistence for view mode
     const [donutViewMode, setDonutViewModeLocal] = useState<DonutViewMode>(() => {
         // Initialize from localStorage if available
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('boletapp-analytics-viewmode');
-            if (saved && ['store-groups', 'store-categories', 'item-groups', 'item-categories'].includes(saved)) {
-                return saved as DonutViewMode;
+        // Note: Use try-catch for test environments where localStorage may be mocked
+        try {
+            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.getItem) {
+                const saved = localStorage.getItem('boletapp-analytics-viewmode');
+                if (saved && ['store-groups', 'store-categories', 'item-groups', 'item-categories'].includes(saved)) {
+                    return saved as DonutViewMode;
+                }
             }
+        } catch {
+            // localStorage not available (e.g., SSR or test environment)
         }
         return 'store-categories';
     });
@@ -1721,9 +2218,13 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     const setDonutViewMode = useCallback((newMode: DonutViewMode) => {
         setDonutViewModeLocal(newMode);
 
-        // Persist to localStorage
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('boletapp-analytics-viewmode', newMode);
+        // Persist to localStorage (with defensive check for test environments)
+        try {
+            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.setItem) {
+                localStorage.setItem('boletapp-analytics-viewmode', newMode);
+            }
+        } catch {
+            // localStorage not available
         }
 
         // Reverse sync: When switching to "groups" mode, clear category filters
@@ -1785,24 +2286,29 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     }, [filteredTransactions]);
 
     // Aggregate item categories by item groups
+    // Story 14.14b Session 6: Use transactionIds for accurate counting (prevents double-counting)
     const itemGroupsData = useMemo((): CategoryData[] => {
         const theme = getCurrentTheme();
         const mode = getCurrentMode();
-        const groupTotals: Record<ItemCategoryGroup, { value: number; count: number }> = {
-            'food-fresh': { value: 0, count: 0 },
-            'food-packaged': { value: 0, count: 0 },
-            'health-personal': { value: 0, count: 0 },
-            'household': { value: 0, count: 0 },
-            'nonfood-retail': { value: 0, count: 0 },
-            'services-fees': { value: 0, count: 0 },
-            'other-item': { value: 0, count: 0 },
+        const groupTotals: Record<ItemCategoryGroup, { value: number; transactionIds: Set<string> }> = {
+            'food-fresh': { value: 0, transactionIds: new Set() },
+            'food-packaged': { value: 0, transactionIds: new Set() },
+            'health-personal': { value: 0, transactionIds: new Set() },
+            'household': { value: 0, transactionIds: new Set() },
+            'nonfood-retail': { value: 0, transactionIds: new Set() },
+            'services-fees': { value: 0, transactionIds: new Set() },
+            'other-item': { value: 0, transactionIds: new Set() },
         };
 
+        // Aggregate itemCategoriesData into groups using transaction IDs for accurate counting
         for (const item of itemCategoriesData) {
             const itemKey = ITEM_CATEGORY_TO_KEY[item.name as keyof typeof ITEM_CATEGORY_TO_KEY];
             const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
             groupTotals[group].value += item.value;
-            groupTotals[group].count += item.count;
+            // Merge transaction IDs to avoid double-counting
+            if (item.transactionIds) {
+                item.transactionIds.forEach(id => groupTotals[group].transactionIds.add(id));
+            }
         }
 
         const totalValue = Object.values(groupTotals).reduce((sum, g) => sum + g.value, 0);
@@ -1814,7 +2320,8 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                 return {
                     name: groupKey,
                     value: data.value,
-                    count: data.count,
+                    count: data.transactionIds.size,  // Unique transaction count
+                    transactionIds: data.transactionIds,  // Keep for further aggregation
                     color: colors.bg,
                     fgColor: colors.fg,
                     percent: totalValue > 0 ? Math.round((data.value / totalValue) * 100) : 0,
@@ -1873,6 +2380,32 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
         () => getPeriodLabel(timePeriod, currentPeriod, locale),
         [timePeriod, currentPeriod, locale]
     );
+
+    // Story 14.14b Session 7: Check if viewing current period (for visual indicator)
+    // Returns true if the selected period matches today's date for the current time dimension
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const isViewingCurrentPeriod = useMemo(() => {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth() + 1;
+        const currentQuarter = Math.ceil(currentMonth / 3);
+        const currentWeek = Math.ceil(now.getDate() / 7);
+
+        switch (timePeriod) {
+            case 'year':
+                return currentPeriod.year === currentYear;
+            case 'quarter':
+                return currentPeriod.year === currentYear && currentPeriod.quarter === currentQuarter;
+            case 'month':
+                return currentPeriod.year === currentYear && currentPeriod.month === currentMonth;
+            case 'week':
+                return currentPeriod.year === currentYear &&
+                       currentPeriod.month === currentMonth &&
+                       currentPeriod.week === currentWeek;
+            default:
+                return true;
+        }
+    }, [timePeriod, currentPeriod]);
 
     // =========================================================================
     // Event Handlers
@@ -1967,6 +2500,31 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
         setAnimationKey(prev => prev + 1); // Trigger animations on period change
     }, [timePeriod]);
 
+    // Story 14.14b Session 7: Handle time period pill click
+    // If clicking on an already-selected period, reset to current (today's) period
+    // This provides a quick way to return to "now" after navigating through past periods
+    const handleTimePeriodClick = useCallback((period: TimePeriod) => {
+        if (timePeriod === period) {
+            // Already on this period - reset to current date
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth() + 1;
+            const currentQuarter = Math.ceil(currentMonth / 3);
+            const currentWeek = Math.ceil(now.getDate() / 7);
+
+            setCurrentPeriod({
+                year: currentYear,
+                month: currentMonth,
+                quarter: currentQuarter,
+                week: currentWeek,
+            });
+            setAnimationKey(prev => prev + 1); // Trigger animation for the reset
+        } else {
+            // Different period - just switch to it
+            setTimePeriod(period);
+        }
+    }, [timePeriod, setTimePeriod, setCurrentPeriod]);
+
     // Carousel navigation (AC #4) with animation trigger
     const goToPrevSlide = useCallback(() => {
         setCarouselSlide(prev => (prev === 0 ? 1 : 0));
@@ -1991,6 +2549,73 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     const handleCategoryClick = useCallback((category: string) => {
         onNavigateToHistory?.({ category });
     }, [onNavigateToHistory]);
+
+    // Story 14.22: Handle treemap transaction count pill click - navigate to HistoryView with filters
+    // Story 14.14b Session 7: Handle "Más" aggregated group by expanding to constituent categories
+    const handleTreemapTransactionCountClick = useCallback((categoryName: string) => {
+        if (!onNavigateToHistory) return;
+
+        // Build the navigation payload based on view mode
+        const payload: HistoryNavigationPayload = {};
+
+        // Check if this is the "Más" aggregated group - expand to constituent categories
+        const isAggregatedGroup = categoryName === 'Más' || categoryName === 'More';
+
+        // Set the appropriate filter based on view mode
+        if (donutViewMode === 'store-categories') {
+            if (isAggregatedGroup && otroCategories.length > 0) {
+                // "Más" contains multiple store categories - join them with comma
+                payload.category = otroCategories.map(c => c.name).join(',');
+            } else {
+                // Store category (e.g., "Supermarket", "Restaurant")
+                payload.category = categoryName;
+            }
+        } else if (donutViewMode === 'store-groups') {
+            if (isAggregatedGroup && otroCategories.length > 0) {
+                // "Más" contains multiple store groups - expand each group and combine
+                const allCategories = otroCategories.flatMap(c =>
+                    expandStoreCategoryGroup(c.name as StoreCategoryGroup)
+                );
+                payload.category = allCategories.join(',');
+            } else {
+                // Store category group (e.g., "Essentials", "Entertainment")
+                payload.storeGroup = categoryName;
+            }
+        } else if (donutViewMode === 'item-groups') {
+            if (isAggregatedGroup && otroCategories.length > 0) {
+                // "Más" contains multiple item groups - expand each group and combine
+                const allItemCategories = otroCategories.flatMap(c =>
+                    expandItemCategoryGroup(c.name as ItemCategoryGroup)
+                );
+                payload.itemCategory = allItemCategories.join(',');
+            } else {
+                // Item category group (e.g., "Produce", "Beverages")
+                payload.itemGroup = categoryName;
+            }
+        } else if (donutViewMode === 'item-categories') {
+            if (isAggregatedGroup && otroCategories.length > 0) {
+                // "Más" contains multiple item categories - join them with comma
+                payload.itemCategory = otroCategories.map(c => c.name).join(',');
+            } else {
+                // Item category/subcategory (e.g., "Fruits", "Soft Drinks")
+                payload.itemCategory = categoryName;
+            }
+        }
+
+        // Build temporal filter based on current time period selection
+        payload.temporal = {
+            level: timePeriod,
+            year: String(currentPeriod.year),
+        };
+        if (timePeriod === 'month' || timePeriod === 'week') {
+            payload.temporal.month = `${currentPeriod.year}-${String(currentPeriod.month).padStart(2, '0')}`;
+        }
+        if (timePeriod === 'quarter') {
+            payload.temporal.quarter = `Q${currentPeriod.quarter}`;
+        }
+
+        onNavigateToHistory(payload);
+    }, [onNavigateToHistory, donutViewMode, timePeriod, currentPeriod, otroCategories]);
 
     // Note: Filter dropdown functions moved to IconFilterBar component
 
@@ -2112,7 +2737,8 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                     </div>
 
                 {/* Time Period Pills with Animated Selection Indicator (AC #2) */}
-                <div className="px-4 pt-1 pb-0">
+                {/* Story 14.14b Session 7: Reduced horizontal padding to give more space for pill text + dot indicator */}
+                <div className="px-2 pt-1 pb-0">
                     <div
                         className="relative flex justify-center rounded-full p-1"
                         style={{
@@ -2149,11 +2775,13 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                 week: { es: 'Semana', en: 'Week' },
                             };
                             const isActive = timePeriod === period;
+                            // Story 14.14b Session 7: Show dot after label when viewing past period
+                            const showPastIndicator = isActive && !isViewingCurrentPeriod;
                             return (
                                 <button
                                     key={period}
-                                    onClick={() => setTimePeriod(period)}
-                                    className="relative z-10 flex-1 px-3 py-2 rounded-full text-sm font-medium transition-colors"
+                                    onClick={() => handleTimePeriodClick(period)}
+                                    className="relative z-10 flex-1 px-2 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap"
                                     style={{
                                         color: isActive ? 'white' : 'var(--text-secondary)',
                                     }}
@@ -2161,6 +2789,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                     data-testid={`time-pill-${period}`}
                                 >
                                     {locale === 'es' ? labels[period].es : labels[period].en}
+                                    {showPastIndicator && <span className="ml-0.5">·</span>}
                                 </button>
                             );
                         })}
@@ -2286,13 +2915,15 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                         className="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center"
                                         data-testid="viewmode-pills-wrapper"
                                     >
-                                        {/* Outer container pill */}
+                                        {/* Outer container pill - height matches left button (32px) */}
                                         <div
-                                            className="relative flex items-center justify-center rounded-full px-1"
+                                            className="relative flex items-center rounded-full"
                                             style={{
                                                 backgroundColor: 'var(--bg-tertiary, #f1f5f9)',
-                                                height: '32px', // Slightly taller to contain inner pills
+                                                height: '32px',
+                                                padding: '2px 4px',
                                                 border: '1px solid var(--border-light, #e2e8f0)',
+                                                gap: '6px',
                                             }}
                                             role="tablist"
                                             aria-label="View mode selection"
@@ -2300,15 +2931,18 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                         >
                                             {/* Animated selection indicator */}
                                             <div
-                                                className={`absolute top-1 bottom-1 rounded-full transition-all duration-300 ease-out ${
+                                                className={`absolute rounded-full transition-all duration-300 ease-out ${
                                                     prefersReducedMotion ? '' : 'transform'
                                                 }`}
                                                 style={{
                                                     width: '28px',
+                                                    height: '28px',
+                                                    top: '2px',
+                                                    // 4px initial padding + (28px button + 6px gap) * index
                                                     left: donutViewMode === 'store-groups' ? '4px' :
-                                                          donutViewMode === 'store-categories' ? 'calc(4px + 32px)' :
-                                                          donutViewMode === 'item-groups' ? 'calc(4px + 64px)' :
-                                                          'calc(4px + 96px)',
+                                                          donutViewMode === 'store-categories' ? 'calc(4px + 34px)' :
+                                                          donutViewMode === 'item-groups' ? 'calc(4px + 68px)' :
+                                                          'calc(4px + 102px)',
                                                     background: 'var(--primary, #2563eb)',
                                                 }}
                                                 aria-hidden="true"
@@ -2327,8 +2961,9 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                                         onClick={() => setDonutViewMode(mode.value)}
                                                         className="relative z-10 flex items-center justify-center rounded-full transition-colors"
                                                         style={{
-                                                            width: '32px',
+                                                            width: '28px',
                                                             height: '28px',
+                                                            lineHeight: 1,
                                                         }}
                                                         aria-pressed={isActive}
                                                         aria-label={locale === 'es' ? mode.labelEs : mode.labelEn}
@@ -2336,7 +2971,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                                         data-testid={`viewmode-pill-${mode.value}`}
                                                     >
                                                         <span
-                                                            className="text-sm transition-all"
+                                                            className="text-lg leading-none transition-all"
                                                             style={{
                                                                 filter: isActive ? 'brightness(1.2)' : 'none',
                                                             }}
@@ -2397,7 +3032,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                             >
                                 {/* Slide 0: Distribution (AC #5) - Treemap matching Dashboard design */}
                                 {carouselSlide === 0 && distributionView === 'treemap' && (
-                                    <div className="relative flex flex-col h-full">
+                                    <div className="relative flex flex-col">
                                         {/* Story 14.14b Session 5: View mode title above treemap (uppercase to match donut) */}
                                         <div className="text-center pb-2">
                                             <span
@@ -2418,79 +3053,72 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                                 }
                                             </span>
                                         </div>
-                                        {/* Dynamic treemap grid - expands based on category count */}
+                                        {/* Story 14.13: Squarified treemap layout - cells sized proportionally */}
                                         {(() => {
-                                            // Calculate grid layout based on number of categories
-                                            const rightColumnCount = categoryData.length - 1;
-                                            // Use 2-column layout: main cell on left, stacked cells on right
-                                            // When more than 4 categories, allow scrolling in right column
-                                            const showScrollableGrid = rightColumnCount > 4;
-                                            const displayedRightCount = showScrollableGrid ? rightColumnCount : Math.max(rightColumnCount, 1);
+                                            // Convert categoryData to treemap items and calculate layout
+                                            const treemapItems = categoryDataToTreemapItems(categoryData);
+                                            const layout = calculateTreemapLayout(treemapItems);
+
+                                            // Find the largest cell (by area) to mark as main cell for styling
+                                            const largestArea = Math.max(...layout.map(r => r.width * r.height));
+
+                                            // Story 14.13: Predictable height based on category count
+                                            // Use a step function that increases height at specific category thresholds
+                                            // This prevents jumpy resizing when adding/removing categories
+                                            const categoryCount = categoryData.length;
+                                            let dynamicHeight: number;
+                                            if (categoryCount <= 4) {
+                                                dynamicHeight = 320; // Base height for up to 4 categories
+                                            } else if (categoryCount <= 6) {
+                                                dynamicHeight = 400; // Medium height for 5-6 categories
+                                            } else if (categoryCount <= 8) {
+                                                dynamicHeight = 480; // Taller for 7-8 categories
+                                            } else if (categoryCount <= 10) {
+                                                dynamicHeight = 560; // Even taller for 9-10 categories
+                                            } else {
+                                                dynamicHeight = 640; // Max height for 11+ categories
+                                            }
 
                                             return (
                                                 <div
-                                                    className="grid gap-1 flex-1"
-                                                    style={{
-                                                        gridTemplateColumns: '1fr 1fr',
-                                                        gridTemplateRows: showScrollableGrid
-                                                            ? '1fr'
-                                                            : `repeat(${displayedRightCount}, 1fr)`,
-                                                    }}
+                                                    className="relative"
+                                                    style={{ height: `${dynamicHeight}px` }}
                                                     data-testid="treemap-grid"
                                                 >
-                                                    {/* Main cell (left column) - spans all rows with animated values */}
-                                                    {categoryData.length > 0 && (
-                                                        <AnimatedTreemapCell
-                                                            key={`main-${animationKey}`}
-                                                            data={categoryData[0]}
-                                                            isMainCell={true}
-                                                            onClick={() => handleCategoryClick(categoryData[0].name)}
-                                                            currency={currency}
-                                                            gridRow={showScrollableGrid ? '1' : `1 / ${displayedRightCount + 1}`}
-                                                            gridColumn="1"
-                                                            animationKey={animationKey}
-                                                            locale={locale}
-                                                            t={t}
-                                                            viewMode={donutViewMode}
-                                                        />
-                                                    )}
-                                                    {/* Right column - scrollable container when many categories */}
-                                                    {showScrollableGrid ? (
-                                                        <div
-                                                            className="flex flex-col gap-1 overflow-y-auto"
-                                                        >
-                                                            {categoryData.slice(1).map((cat) => (
-                                                                <AnimatedTreemapCell
-                                                                    key={`${cat.name}-${animationKey}`}
-                                                                    data={cat}
-                                                                    isMainCell={false}
-                                                                    onClick={() => handleCategoryClick(cat.name)}
-                                                                    currency={currency}
-                                                                    animationKey={animationKey}
-                                                                    locale={locale}
-                                                                    t={t}
-                                                                    viewMode={donutViewMode}
-                                                                />
-                                                            ))}
-                                                        </div>
-                                                    ) : (
-                                                        // Normal grid layout for ≤4 categories
-                                                        categoryData.slice(1).map((cat, idx) => (
+                                                    {layout.map((rect) => {
+                                                        // originalItem contains the full CategoryData since we passed it through categoryDataToTreemapItems
+                                                        const cat = rect.originalItem as unknown as CategoryData;
+                                                        const cellArea = rect.width * rect.height;
+                                                        // Main cell = largest area (within 10% of max to handle ties)
+                                                        const isMainCell = cellArea >= largestArea * 0.9;
+
+                                                        return (
                                                             <AnimatedTreemapCell
                                                                 key={`${cat.name}-${animationKey}`}
                                                                 data={cat}
-                                                                isMainCell={false}
+                                                                isMainCell={isMainCell}
                                                                 onClick={() => handleCategoryClick(cat.name)}
                                                                 currency={currency}
-                                                                gridRow={`${idx + 1} / ${idx + 2}`}
-                                                                gridColumn="2"
                                                                 animationKey={animationKey}
                                                                 locale={locale}
                                                                 t={t}
                                                                 viewMode={donutViewMode}
+                                                                onTransactionCountClick={handleTreemapTransactionCountClick}
+                                                                // Story 14.13: Pass cell dimensions for compact layout detection
+                                                                cellWidthPercent={rect.width}
+                                                                cellHeightPercent={rect.height}
+                                                                // Squarified layout uses absolute positioning
+                                                                style={{
+                                                                    position: 'absolute',
+                                                                    left: `${rect.x}%`,
+                                                                    top: `${rect.y}%`,
+                                                                    width: `calc(${rect.width}% - 4px)`,
+                                                                    height: `calc(${rect.height}% - 4px)`,
+                                                                    margin: '2px',
+                                                                }}
                                                             />
-                                                        ))
-                                                    )}
+                                                        );
+                                                    })}
                                                 </div>
                                             );
                                         })()}
@@ -2505,12 +3133,13 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                         >
                                             <div className="flex flex-col gap-2 pointer-events-auto">
                                                 {/* Plus button (expand) - on top, always rendered for position stability */}
+                                                {/* Story 14.13: More transparent buttons to reduce visual clutter */}
                                                 <button
                                                     onClick={() => setExpandedCategoryCount(prev => prev + 1)}
                                                     disabled={!canExpand}
                                                     className="relative w-10 h-10 rounded-full flex items-center justify-center transition-all backdrop-blur-md"
                                                     style={{
-                                                        backgroundColor: 'color-mix(in srgb, var(--primary) 70%, transparent)',
+                                                        backgroundColor: 'color-mix(in srgb, var(--primary) 40%, transparent)',
                                                         color: 'white',
                                                         opacity: canExpand ? 1 : 0,
                                                         pointerEvents: canExpand ? 'auto' : 'none',
@@ -2523,7 +3152,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                                     <span
                                                         className="absolute -bottom-1 -right-1 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-bold backdrop-blur-md"
                                                         style={{
-                                                            backgroundColor: 'color-mix(in srgb, var(--primary) 50%, transparent)',
+                                                            backgroundColor: 'color-mix(in srgb, var(--primary) 30%, transparent)',
                                                             color: 'white',
                                                         }}
                                                     >
@@ -2536,7 +3165,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                                     disabled={!canCollapse}
                                                     className="relative w-10 h-10 rounded-full flex items-center justify-center transition-all backdrop-blur-md"
                                                     style={{
-                                                        backgroundColor: 'color-mix(in srgb, var(--primary) 70%, transparent)',
+                                                        backgroundColor: 'color-mix(in srgb, var(--primary) 40%, transparent)',
                                                         color: 'white',
                                                         opacity: canCollapse ? 1 : 0,
                                                         pointerEvents: canCollapse ? 'auto' : 'none',
@@ -2549,7 +3178,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                                     <span
                                                         className="absolute -bottom-1 -right-1 min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[10px] font-bold backdrop-blur-md"
                                                         style={{
-                                                            backgroundColor: 'color-mix(in srgb, var(--primary) 50%, transparent)',
+                                                            backgroundColor: 'color-mix(in srgb, var(--primary) 30%, transparent)',
                                                             color: 'white',
                                                         }}
                                                     >
@@ -2576,12 +3205,15 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                         canExpand={canExpand}
                                         canCollapse={canCollapse}
                                         otroCount={otroCategories.length}
+                                        otroCategories={otroCategories}
                                         expandedCount={expandedCategoryCount}
                                         onExpand={() => setExpandedCategoryCount(prev => prev + 1)}
                                         onCollapse={() => setExpandedCategoryCount(prev => Math.max(0, prev - 1))}
                                         transactions={filteredTransactions}
                                         onNavigateToHistory={onNavigateToHistory}
                                         viewMode={donutViewMode}
+                                        timePeriod={timePeriod}
+                                        currentPeriod={currentPeriod}
                                     />
                                 )}
 
@@ -2614,8 +3246,9 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                         {trendData.slice(0, 5).map(trend => {
                                             // Story 14.14b Session 5: Translate name based on view mode
                                             const displayName = (() => {
-                                                if (trend.name === 'Otro' || trend.name === 'Other') {
-                                                    return locale === 'es' ? 'Otros' : 'Other';
+                                                // "Más" = aggregated small categories group
+                                                if (trend.name === 'Más' || trend.name === 'More') {
+                                                    return locale === 'es' ? 'Más' : 'More';
                                                 }
                                                 switch (donutViewMode) {
                                                     case 'store-groups':
@@ -2631,10 +3264,28 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                             return (
                                                 <div key={trend.name} className="flex items-center gap-3">
                                                     <span
-                                                        className="text-sm w-24 truncate"
+                                                        className="text-sm w-28 truncate flex items-center gap-1"
                                                         style={{ color: 'var(--text-secondary)' }}
                                                     >
                                                         {displayName}
+                                                        {/* Badge showing count of categories inside "Más" group */}
+                                                        {trend.categoryCount && (
+                                                            <span
+                                                                className="inline-flex items-center justify-center rounded-full flex-shrink-0"
+                                                                style={{
+                                                                    backgroundColor: 'transparent',
+                                                                    border: '1.5px solid var(--text-secondary)',
+                                                                    color: 'var(--text-secondary)',
+                                                                    fontSize: '9px',
+                                                                    fontWeight: 600,
+                                                                    minWidth: '16px',
+                                                                    height: '16px',
+                                                                    padding: '0 3px',
+                                                                }}
+                                                            >
+                                                                {trend.categoryCount}
+                                                            </span>
+                                                        )}
                                                     </span>
                                                     <div
                                                         className="flex-1 h-6 rounded-full overflow-hidden"
@@ -2711,6 +3362,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                     </TransitionChild>
                 )}
             </div>
+
         </PageTransition>
     );
 };

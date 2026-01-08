@@ -1,6 +1,6 @@
 # Story 14.13: Analytics Explorer Redesign
 
-**Status:** review
+**Status:** in_progress
 **Points:** 8
 **Epic:** 14 - Core Implementation
 **Dependencies:** Story 14.5, 14.6, 14.7, 14.8, 14.9, 14.12 (DashboardView pattern)
