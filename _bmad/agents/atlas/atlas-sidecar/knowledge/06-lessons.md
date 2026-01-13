@@ -1,209 +1,183 @@
 # Historical Lessons (Retrospectives)
 
 > Section 6 of Atlas Memory
-> Last Sync: 2026-01-07
-> Last Optimized: 2026-01-06 (Generation 1)
-> Sources: Epic retrospectives, code reviews, Story 14.22, Story 14.14b, Story 14.15b, Story 14.23
+> Last Sync: 2026-01-12
+> Last Optimized: 2026-01-12 (Generation 4)
+> Sources: Epic retrospectives, code reviews
 
 ## What Worked Well
 
-| Lesson | Context | Source |
-|--------|---------|--------|
-| PRD + Tech-Spec Workflow | Essential for UX-heavy epics | Epic 7, 9 |
-| Story-to-Story Knowledge Transfer | Dev records enable pattern reuse | Epic 8, 9 |
-| Code Review Discipline | All stories get adversarial reviews | All Epics |
-| High Velocity | 7+ points/day with good planning | Epic 8, 9 |
-| Parallel CI Jobs | 63% faster after Epic 8 optimization | Epic 8 |
-| Mockup-First Workflow | Design before implementation for UX | Epic 13 |
-| Persona-Driven Design | María, Diego, Rosa, Tomás inform decisions | Epic 13 |
-| Single Source of Truth Schema | Categories/currencies in shared/schema/ | Story 14.15b |
-| Token Optimization | V3 prompt 21% smaller than V2 | Story 14.15b |
-| Unified View Pattern | Consolidate similar views with mode prop | Story 14.23 |
-| Credit Reserve Pattern | Reserve→Confirm/Refund for async ops | Story 14.24 |
-| localStorage for Ephemeral State | Client-only state separate from React Query | Story 14.24 |
+| Lesson | Context |
+|--------|---------|
+| PRD + Tech-Spec Workflow | Essential for UX-heavy epics |
+| Story-to-Story Knowledge Transfer | Dev records enable pattern reuse |
+| Code Review Discipline | All stories get adversarial reviews |
+| Parallel CI Jobs | 63% faster after Epic 8 optimization |
+| Mockup-First Workflow | Design before implementation for UX |
+| Single Source of Truth Schema | Categories/currencies in shared/schema/ |
+| Unified View Pattern | Consolidate similar views with mode prop |
+| Versioned Persistence Format | Version field enables safe migrations |
+| Phased Migration | Parallel systems reduce regression risk |
 
-## What Failed / What to Avoid
+## What to Avoid
 
-| Failure | Root Cause | Prevention |
-|---------|------------|------------|
-| Git Branch Divergence | Squash merges create sync issues | Merge commits for sync PRs |
-| Bundle Size Growth | At 2.0 MB, CRITICAL | Code-splitting (deferred to Epic 15) |
-| Unsafe Regex Patterns | ReDoS in sanitize.ts | Use simple non-greedy patterns |
-| API Key Leak | Hardcoded in code | Always use env variables |
-| Scope Creep | Epics grow 7→21 stories | Better upfront scoping |
+| Failure | Prevention |
+|---------|------------|
+| Git Branch Divergence | Merge commits for sync PRs (not squash) |
+| Bundle Size Growth (2.0 MB) | Code-splitting (deferred to Epic 15) |
+| Unsafe Regex Patterns (ReDoS) | Use simple non-greedy patterns |
+| API Key Leaks | Always use env variables |
+| Scope Creep (7→21 stories) | Better upfront scoping |
+| No-op Setter Wrappers | Remove completely when migrating to derived state |
+| State Machine Callback Race Conditions | Pass compound payloads to atomic state transitions (Epic 14d.5) |
+| Missing Asset Files | Always verify static assets exist during implementation (Story 14.18) |
 
-## Hard-Won Wisdom
+---
+
+## Critical Patterns
 
 ### Security
-- **API Key Leaks**: Create fresh branch, don't rewrite history. GitGuardian checks full history.
-- **ReDoS Prevention**: Avoid nested quantifiers. BAD: `(?:(?!<\/script>)<[^<]*)*`. GOOD: `[\s\S]*?`
+- **API Key Leaks**: Create fresh branch, don't rewrite history
+- **ReDoS Prevention**: Avoid nested quantifiers. GOOD: `[\s\S]*?`
+- **Input Sanitization**: `src/utils/sanitize.ts` blocks XSS patterns
 
 ### Git Strategy
-- **3-Branch Workflow**: `feature/* → develop → staging → main`
-- Merge commits for sync PRs (not squash)
-- Hotfixes backported immediately to all branches
+- **3-Branch**: `feature/* → develop → staging → main`
+- Merge commits for sync PRs
+- Hotfixes backported immediately
 
 ### Firestore
-- **Defensive Timestamps**: Always use try/catch with `?.toDate?.()?.getTime?.()`
-- **serverTimestamp()**: Use separate `*Create` interface with `FieldValue` for writes
+- **Defensive Timestamps**: `try/catch` with `?.toDate?.()`
+- **serverTimestamp()**: Use `*Create` interface with `FieldValue`
+- **LISTENER_LIMITS**: Always apply limits to real-time queries
 
-### Time Period Navigation (Story 14.14b)
-- **Cascade on Granularity Change**: When user switches from coarse to fine granularity (e.g., Quarter→Month), set to FIRST unit of current period, not first unit of year
-  - Q3 → Month = **July** (first month of Q3), not January
-  - Year → Quarter = Q1; Year → Month = January
-  - Month → Week = Week 1 of current month
-- **Preserve Context on Drill-Up**: When going from fine to coarse (Month→Year), keep current values
-- **Reference**: `TrendsView.tsx` `setTimePeriod()` callback (~lines 1840-1943)
+### React Query + Firestore
+- **Don't use useQuery with subscriptions** - Use local state + useEffect
+- **Prevent loops**: Use `initializedRef` flag, don't call `setData(cached)` every effect
+- **Refs for stability**: Store subscribeFn in refs to avoid stale closures
+- **Skip redundant updates**: JSON comparison before `setData`
 
-### CI/CD (Story 14.22)
-- **Gitleaks Parallelized**: Separate job runs ~8s alongside setup (~3min)
-- Setup uses shallow clone; only gitleaks needs `fetch-depth: 0`
-- Total PR time: ~6 min
+### Filter Persistence (Story 14.13b)
+- **Context sync**: Use `onStateChange` callback to sync to parent
+- **Navigation-aware clearing**: Clear from outside, preserve within related views
+- **Default month filter**: Current month, not "all time"
+- **Multi-select**: Comma-separated values, check with `.includes(',')` before splitting
 
-### AI Prompt Optimization (Story 14.15b)
-- **V3 Prompt Production**: 21% token reduction (~229 tokens/scan) vs V2
-- **Currency Auto-Detection**: AI detects from receipt symbols/text, no app hint needed
-- **Single Source of Truth**: Categories in `shared/schema/categories.ts` (36 store + 39 item)
-- **Rule #10 Pattern**: "MUST have at least one item" - handles parking, utilities, single-charge receipts
-- **Legacy Normalization**: Map old categories at read time (Fresh Food → Produce, Drinks → Beverages)
-- **Prebuild Pattern**: `functions/package.json` copies prompts + schema, fixes import paths via sed
-- **Cost Savings**: ~$17/month at 1M scans
-- **Reference**: `prompt-testing/TOKEN-ANALYSIS.md`, `story-14.15b-v3-prompt-integration.md`
+### State Machine Migration (Epic 14d)
+- **Remove no-op wrappers**: If setter does nothing after migration, remove it completely
+- **Replace calls with comments**: `// Story 14d: state now derived from scanState.phase`
+- **DEV-gate console warnings**: `if (import.meta.env.DEV) { console.warn(...); }`
+- **setTimeout(0)**: Valid for deferring React state update chains
+- **Batch edit thumbnails**: Set `thumbnailUrl` directly on transaction object, NOT via `setScanImages()` (requires `capturing` phase, but batch edit is in `reviewing` phase)
+- **Story obsolescence pattern**: When later stories implement earlier story's scope, mark earlier as "OBSOLETE - Superseded" rather than re-implementing (Story 14d.10 superseded by 14d.4d + 14d.5e)
+- **Cleanup story scope revision**: Analyze actual codebase before cleanup - original estimates may be stale (Story 14d.11: 31 variables → 1 file, 5 pts → 2 pts)
+- **Component prop interfaces vs duplicates**: Variables passed as props to child components are interfaces, NOT duplicates of context state. Dual-sync is intentional for prop passing (e.g., `batchImages` in App.tsx synced with `scanState.images`)
 
-### Unified View Pattern (Story 14.23)
-- **Mode Prop Pattern**: Use `mode: 'new' | 'existing'` to differentiate behaviors in single component
-- **State Machine for UI**: Scan button states (idle→pending→scanning→complete→error) drive visual feedback
-- **Gradual Migration**: Comment out old views with deprecation notice, don't delete immediately
-- **Preserve Navigation State**: Check `pendingScan.status` to restore correct state when user returns
-- **Parent-Managed State**: Keep transaction/scan state in App.tsx, pass callbacks to view
-- **Reference**: `src/views/TransactionEditorView.tsx`, `story-14.23-unified-transaction-editor.md`
+### Scan State Persistence (Story 14d.4d, 14d.5e, 14d.10)
+- **Versioned format**: `PersistedScanState` with version field
+- **Auto-migration**: `migrateOldFormat()` converts old → new on load
+- **Interrupted scans**: Show toast, clear storage, user retries
+- **Unified batch persistence**: Single storage key, batch fields in ScanState (Story 14d.5e)
+- **Legacy batch migration**: `loadAndMigrateLegacyBatch()` auto-converts PendingBatch → ScanState
+- **No expiration (ADR-020)**: User never loses work - 24h staleness NOT implemented intentionally (Story 14d.10 marked OBSOLETE - superseded by 14d.4d + 14d.5e)
 
-### Single Active Transaction Pattern (Story 14.24 - IMPLEMENTED)
-- **One Transaction Rule**: Only one transaction can be in edit mode at any time
-- **Credit Reserve Pattern**: `reserveCredits()` → `confirmReservedCredits()` / `refundReservedCredits()`
-  - Reserve: Deducts locally (UI shows change) but doesn't persist to Firestore
-  - Confirm: Called on scan success - persists to Firestore
-  - Refund: Called on scan error - restores original credits, shows toast
-- **State Persistence**: `pendingScanStorage.ts` stores `PendingScan` in localStorage per-user
-  - Survives page refresh, tab close, navigation
-  - Key: `boletapp_pending_scan_{userId}`
-- **Conflict Detection**: `hasActiveTransactionConflict()` in App.tsx (~lines 691-766)
-  - Checks: scan_in_progress, credit_used, has_unsaved_changes
-  - `TransactionConflictDialog` shows resolution options: view, discard, cancel
-- **Architecture**: localStorage for pending scans is CORRECT - doesn't conflict with React Query
-  - React Query: Server-synced data (transactions, mappings)
-  - localStorage: Client-only ephemeral state (pending scan)
-- **Reference**: `story-14.24-persistent-transaction-state.md`, `src/components/dialogs/TransactionConflictDialog.tsx`
-
-### React Query + Firestore Subscription Pattern (Story 14.29)
-- **Don't Use useQuery with Subscriptions**: useQuery expects queryFn to return data; subscriptions update asynchronously
-- **Pattern**: Use local state + useEffect for subscription lifecycle, React Query cache only for persistence
-- **Prevent Re-render Loops**: Don't call `setData(cached)` on every effect run - use `initializedRef` flag
-- **Reset on Key Change**: Track `lastKeyStringRef` to reset initialization when query key changes (user logout/login)
-- **Refs for Stability**: Store subscribeFn and queryKey in refs to avoid stale closures
-- **Skip Redundant Updates**: Use `dataRef` + JSON comparison to skip `setData` when data unchanged
-- **Avoid useState for Derived Data**: Use `useMemo` instead of useState+useEffect for computed values (e.g., `distinctAliases`)
-- **DevTools in Production**: ReactQueryDevtools guarded by `import.meta.env.DEV` - automatically excluded from production builds
-- **Reference**: `src/hooks/useFirestoreSubscription.ts`, `story-14.29-react-query-migration.md`
-
-### Transaction Pagination Pattern (Story 14.27)
-- **Hybrid Architecture**: Real-time listener for recent 100 + useInfiniteQuery for older pages
-- **Cursor Pagination**: Use `startAfter(lastDoc)` - NOT offset-based (offset fetches all skipped docs)
-- **hasMore Detection**: Fetch `pageSize + 1` docs, check if >pageSize returned
-- **Deduplication**: Merge real-time and paginated by ID, sort by date descending
-- **Query Key Hierarchy**: `['transactions', 'paginated', userId, appId]` for selective invalidation
-- **Virtualization**: Deferred - react-window v2 API changed, simple list acceptable for expected sizes
-- **Tests**: Hook tests need `.tsx` extension when using JSX wrappers
-- **Scroll-to-Top on Page Change**: When navigating pages, scroll to top like turning book pages
-  - Use `useCallback` helper: `scrollToTop()` with `scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })`
-  - For async loads (Firestore pagination): Use `useEffect` watching loading state transition (true→false)
-- **Reference**: `src/hooks/usePaginatedTransactions.ts`, `story-14.27-transaction-pagination.md`
-
-### Fullscreen Modal Pattern (ImageViewer)
-- **Problem**: `position: fixed` inside scrollable containers gets clipped/constrained
-- **Solution**: Use `createPortal(jsx, document.body)` to render at document root level
-- **Z-Index**: Use `z-[100]` or higher to ensure modal is above all content
-- **Nav Bar Visibility**: Set `bottom: calc(70px + env(safe-area-inset-bottom))` to leave nav visible
-- **Background**: Dark overlay `rgba(0, 0, 0, 0.9)` covering content area only
-- **Image Sizing**: `max-w-full max-h-full object-contain` to fit without scrolling
-- **Body Scroll Lock**: `document.body.style.overflow = 'hidden'` on mount, restore on unmount
-- **Reference**: `src/components/ImageViewer.tsx`
+### Dialog Unification (Story 14d.6)
+- **Data capture pattern**: Capture dialog data BEFORE resolveDialog clears it, pass to callback
+- **Backward compatibility**: `useScanOptional()` with prop fallback for gradual migration
+- **Type constants**: `DIALOG_TYPES` object for string-safe dialog type comparisons
+- **Centralized types**: All dialog data types in `scanStateMachine.ts` (lines 148-232)
+- **Conditional rendering**: Components check `activeDialog?.type` before rendering
 
 ---
 
-## Pattern Reference (92 patterns consolidated)
+## Pattern Quick Reference
 
-### Animation & Motion (#35-48, #56-64)
-| Pattern | Summary |
-|---------|---------|
-| Duration Constants | Use `DURATION.FAST/NORMAL/SLOWER` from constants.ts |
-| No CSS Transition with RAF | requestAnimationFrame provides interpolation; don't double up |
-| Reduced Motion | Check `useReducedMotion()` before all animations |
-| Global CSS Keyframes | Define in index.html, not inline JSX (performance) |
-| Entry Animation | Use `isVisible` state + useEffect with small delay |
-| Staggered Reveal | TransitionChild with indices 0-N, cap at MAX_DURATION |
-| useCountUp Hook | Animates 0→target with ease-out, respects reduced motion |
+### Animation & Motion
+| Pattern | Rule |
+|---------|------|
+| Duration Constants | Use `DURATION.FAST/NORMAL/SLOWER` |
+| No CSS + RAF | Don't double up animation sources |
+| Reduced Motion | Check `useReducedMotion()` before all |
+| Staggered Reveal | Use indices with `maxDurationMs` cap |
 
-### React Patterns (#17-27, #53-55, #67-69)
-| Pattern | Summary |
-|---------|---------|
-| Extract Shared Utils | If >2 components use same logic, create shared util |
-| Single Canonical Type | Define once in hook, re-export from components |
-| useCallback for Convenience | Wrap hook functions with proper deps |
-| Unused State with Refs | Prefix with underscore: `_batchCancelRequested` |
-| Hook Wrapper for Services | Service = pure logic, hook = React state |
-| **Time Period Cascade** | When switching granularity, adjust related values (Q3→Month = July, not January) |
+### React Patterns
+| Pattern | Rule |
+|---------|------|
+| Extract Shared Utils | If >2 components use same logic |
+| Single Canonical Type | Define once in hook, re-export |
+| useCallback | Wrap hook functions with proper deps |
+| Unused State | Prefix with underscore: `_cancelRequested` |
+| Time Period Cascade | Q3→Month = July (first of Q3), not January |
+| Period Comparison Utility | Create reusable `getPreviousPeriod()` in utils/ |
+| ISO Week Handling | Use `getISOWeekNumber()` for week comparison (year boundary safe) |
+| Change Direction Types | 'up' \| 'down' \| 'same' \| 'new' for analytics |
 
-### SVG & Charts (#49-52, #62-64)
-| Pattern | Summary |
-|---------|---------|
-| Unique SVG IDs | Use `useMemo(() => \`prefix-${random}\`, [])` for gradients/filters |
-| Transform Origin | Set `transformOrigin: 'center center'` for scaling |
-| Keyboard Navigation | If onClick exists, add onKeyDown for Enter/Space |
-| Test Keyboard A11y | `fireEvent.keyDown(el, { key: 'Enter' })` must trigger action |
+### CSS & Theming
+| Pattern | Rule |
+|---------|------|
+| Safe Area Insets | `env(safe-area-inset-*)` for fixed elements |
+| Mono Theme | `--accent` MUST be grayscale |
+| Viewport Units | `h-[100dvh]` not `min-h-dvh` |
+| Touch Targets | Minimum 44px |
+| Font Size Scaling | `--font-size-*` CSS variables with `[data-font-size="normal"]` override (Story 14.37) |
+| Theme-Aware Toast | Use `--insight-celebration-bg/icon` for achievement notifications (Story 14.37) |
 
-### CSS & Theming (#70-72, #87-90)
-| Pattern | Summary |
-|---------|---------|
-| Safe Area Insets | `env(safe-area-inset-top/bottom)` for fixed headers/nav |
-| Header Variants | Use variant prop (`home|detail|settings`) not boolean flags |
-| Mono Theme | `--accent` MUST be grayscale (zinc-600/400) |
-| Three Themes | `:root`, `.dark`, `[data-theme="X"]`, `[data-theme="X"].dark` |
-| Viewport Units | Use `h-[100dvh]` not `min-h-dvh` for fixed viewport |
-
-### Testing (#23-27)
-| Pattern | Summary |
-|---------|---------|
-| localStorage Mock | Use `vi.stubGlobal('localStorage', mockObj)` in happy-dom |
-| Timestamp Mock | Create factory with `toDate()`, `seconds`, `nanoseconds` |
-| Test New Components | Every new `.tsx` file needs corresponding test file |
-| Verify App.tsx Integration | Components exist but may be unreachable without routing |
-
-### Mobile/PWA (#20-22, #65-69)
-| Pattern | Summary |
-|---------|---------|
+### Mobile/PWA
+| Pattern | Rule |
+|---------|------|
 | Haptic Feedback | `navigator.vibrate(10)` with reduced motion check |
-| Swipe Direction Lock | Lock after 10px movement to prevent scroll conflict |
-| Long-press Detection | Use pointer events, store timeout in useRef |
+| Swipe Direction Lock | Lock after 10px movement |
+| Long-press | Use pointer events, store timeout in useRef |
+| FAB State Animation | CSS `::after` pseudo-element for shine, `border-radius: inherit` |
 
-### Mockup/Design (#28-34, #74)
-| Pattern | Summary |
-|---------|---------|
-| Gastify Branding | User-facing app is "Gastify", not "Boletapp" |
-| CLP Format | Dot separator: $45.200 (not $45,200) |
-| Carousel Integration | 3-level: container → wrapper (overflow:hidden) → track + indicator |
-| Centered Modal | `top:50%; left:50%; transform:translate(-50%,-50%)` with matching keyframes |
-| Canonical Mockup | Reference home-dashboard.html as source of truth |
+### FAB Visual States (Story 14d.8)
+| Pattern | Rule |
+|---------|------|
+| Color scheme organization | Centralized config file with helper functions (`fabColors.ts`) |
+| Error priority | Error state colors override mode colors (user needs to see problems) |
+| Animation CSS strategy | Inline `<style>` in component for animation keyframes (colocation) |
+| JSDOM gradient limitation | JSDOM strips `linear-gradient()` from style; test via class assertions |
+| Legacy fallback | Keep old props (`isBatchMode`, `scanStatus`) for backward compatibility |
+| useMemo for derived state | Wrap color/icon computation in `useMemo` with mode/phase deps |
 
-### Documentation (#85-86)
-| Pattern | Summary |
-|---------|---------|
-| AC Claims Match Implementation | Update ACs when mockup-driven changes relocate features |
-| Story Artifacts Accuracy | Update file lists, test counts, section headers on review |
+### Celebration System (Story 14.18)
+| Pattern | Rule |
+|---------|------|
+| Multi-sensory feedback | confetti + haptic + sound with graceful degradation |
+| Reduced motion | `prefers-reduced-motion` check; non-visual alternatives (haptic/sound) still trigger |
+| Dual API | Declarative (props) + imperative (ref) for component flexibility |
+| Audio caching | Pre-create Audio elements to avoid playback delays |
+| Asset verification | Verify static assets exist during code review (not just code) |
+
+### Personal Records (Story 14.19)
+| Pattern | Rule |
+|---------|------|
+| ISO week calculation | Use UTC-based calculation for consistent week IDs across timezones |
+| Date string parsing | Parse `YYYY-MM-DD` at noon local time to avoid timezone edge cases |
+| Cooldown system | Session cooldown (30min) + type cooldown (24h) with localStorage |
+| Record detection | Only detect after 2+ weeks of historical data per category |
+| Banner timing | Show banner after 1.5s delay to let confetti play first |
+| Fire-and-forget storage | Store records async without blocking celebration flow |
+| **Hook integration** | Hooks/components MUST be integrated into App.tsx to be visible to users |
+| **Module exports** | New components MUST be exported from domain `index.ts` (e.g., celebrations/index.ts) |
+
+### Testing
+| Pattern | Rule |
+|---------|------|
+| localStorage Mock | `vi.stubGlobal('localStorage', mockObj)` |
+| Timestamp Mock | Factory with `toDate()`, `seconds`, `nanoseconds` |
+| Hook tests | Use `.tsx` extension when JSX wrappers needed |
+| Timer act() wrapping | Wrap `vi.advanceTimersByTime()` in `act()` to avoid React warnings |
+
+### React Strict Mode Dev Warnings (KNOWN - LOW PRIORITY)
+| Warning | Cause | Fix |
+|---------|-------|-----|
+| ECharts `disconnect` undefined | echarts-for-react unmounts twice in StrictMode; ResizeObserver sensor cleanup races | Library issue - cosmetic in DEV only, not in prod. Upgrade echarts-for-react when fix released. |
+| ScanStateMachine PROCESS_START ignored | StrictMode double-render triggers dispatch twice; state already `scanning` | Expected behavior - warning is DEV-gated. Second dispatch is safely ignored by state machine. |
 
 ---
 
-## UX Design Principles (Epics 13-15)
+## UX Design Principles
 
 ### The Gastify Voice
 - **Observes without judging**: "Restaurants up 23%" not "You overspent"
@@ -213,9 +187,12 @@
 
 ### Key Design Patterns
 - **Dynamic Polygon**: 3-6 sided spending shape
-- **Expanding Lava**: Inner polygon = spending, outer = budget (inverted)
 - **"Everything Breathes"**: Motion system with subtle animations
-- **"Intentional or Accidental?"**: Non-judgmental spending prompts
+- **"Intentional or Accidental?"**: Non-judgmental spending prompts (Story 14.17 COMPLETE)
+  - Component: `src/components/insights/IntentionalPrompt.tsx`
+  - Trigger: `shouldShowIntentionalPrompt()` for category_trend/spending_velocity >30% up
+  - Storage: `recordIntentionalResponse()` in insightProfileService
+  - Translations: intentionalPromptTitle, intentionalYes, intentionalNo
 
 ---
 
@@ -231,9 +208,108 @@
 
 ---
 
+## Code Review Learnings
+
+### Story 14.33b - View Switcher & Carousel (2026-01-12)
+
+| Pattern | Detail |
+|---------|--------|
+| Touch Targets | Carousel dots: use 44px button wrapper around 8px visual dot |
+| Gradient CSS | `background` not `backgroundColor` for gradients |
+| Unused Variables | TS6133 error if style variable declared but not applied |
+| Keyboard A11y | Add `tabIndex={0}` + `onKeyDown` for ArrowLeft/Right navigation |
+| Carousel Pattern | CSS transform + translateX for performant sliding |
+| View Persistence | localStorage for view mode preference |
+
+### Story 14.35 - Dynamic Location Data (2026-01-12)
+
+| Pattern | Detail |
+|---------|--------|
+| Query Key Centralization | ALL React Query keys MUST be in `src/lib/queryKeys.ts` - never define locally in hooks |
+| DEV-gated Warnings | Wrap console.warn in `if (import.meta.env.DEV)` per Atlas lessons |
+| Module Cache Testing | Export `_clearCache()` helper for test isolation; call in beforeEach/afterEach |
+| API Fallback Strategy | Sync fallback data for instant render; async API fetch updates cache |
+| Localization Storage | Store English values for backward compatibility; display in user's language |
+| Chilean Coverage | 240+ cities covering all 16 regions including 52 Santiago comunas |
+
+### Story 14.35b - Foreign Location Display (2026-01-12)
+
+| Pattern | Detail |
+|---------|--------|
+| Flag + Localization Coupling | When showing foreign flags, ALWAYS use `useLocationDisplay(lang)` for localized city/country names |
+| Lang Prop Threading | Components displaying location must receive `lang` prop to enable localization |
+| Hook Return Value Testing | Test ALL return values from hooks (countryCode was missing tests initially) |
+| File List Accuracy | Story File List MUST match actual git changes - include ALL modified files |
+| Localization Pattern | `getCityName(englishName)` returns name in user's language via `useLocationDisplay(lang)` |
+
+### Story 14.33c.1 - Airlock Generation & Persistence (2026-01-12)
+
+| Pattern | Detail |
+|---------|--------|
+| Mock Implementation Docs | Document mock behavior in JSDoc when AI/API endpoints are deferred |
+| Test Isolation Exports | Export `_resetMockState()` for module-level state reset in tests |
+| Credit System TODO | Mark CRITICAL TODOs for placeholder implementations that need Firestore persistence |
+| Theme Prop Convention | Keep unused theme props with JSDoc note when CSS variables handle theming |
+| Wildcard Security Rules | `users/{userId}/{document=**}` covers all subcollections including new airlocks |
+| Temporal Filter Coverage | Always create tests for filter components with year/quarter/month/week levels |
+
+### Story 14.37 - Toast Theming & Font Size Scaling (2026-01-13)
+
+| Pattern | Detail |
+|---------|--------|
+| CSS Variable Theming | Replace hardcoded Tailwind colors with CSS vars for runtime theme switching |
+| Icon Container Centering | Use explicit `w-12 h-12 flex items-center justify-center` for consistent icon alignment |
+| Font Size System | CSS custom properties (`--font-size-xs` to `--font-size-3xl`) with data attribute override |
+| Backwards Compatibility | Default to 'small' (current sizes) - 'normal' is opt-in larger sizes |
+| jsdom Style Testing | Use `element.style.property` not `toHaveStyle()` for CSS variable assertions |
+| Incremental Adoption | Font size variables can be adopted by components incrementally |
+
+### Story 14.41 - View Mode Edit Button (2026-01-13)
+
+| Pattern | Detail |
+|---------|--------|
+| Disabled Prop Pattern | Consistent: opacity 0.7, cursor 'default', native `disabled` attribute |
+| Conditional Rendering | Read-only mode: remove interactive wrapper, keep display component |
+| Translation Key Check | Always verify translation keys exist before using `t('key')` |
+| Lang Prop Threading | Localized components (LocationSelect) must receive `lang` prop explicitly |
+| Edit Button Styling | Use accent color to match related "Editar transacción" button |
+
+### Story 14.38 - Item View Toggle (2026-01-13)
+
+| Pattern | Detail |
+|---------|--------|
+| Barrel Export Consistency | New components MUST be exported from domain `index.ts` for import consistency |
+| Empty Ternary Cleanup | Remove no-op `${cond ? '' : ''}` patterns from className templates |
+| InsightsViewSwitcher Pattern | Reusable pill-toggle: sliding indicator + rounded-full + CSS vars for theming |
+| Local State for View Mode | View toggles (grouped/original) use local useState, no persistence needed |
+
+### Story 14.30 - Test Technical Debt Cleanup (2026-01-13)
+
+| Pattern | Detail |
+|---------|--------|
+| CSS Variable Testing | Use `getAttribute('style').toContain('var(--bg)')` not `toHaveClass()` for CSS var theming |
+| Async Dialog Testing | Use `waitFor()` for dialog close verification; query buttons inside `alertdialog` role |
+| Legacy Prompt Versioning | V1/V2 use 13/9 categories (legacy), V3 uses 39/39 (shared/schema/categories.ts) |
+| Task Checkbox Discipline | Mark tasks `[x]` immediately after implementation - don't leave unchecked when complete |
+| Skipped Test Documentation | Use `describe.skip()` with JSDoc explaining WHY skip is necessary and WHERE coverage exists |
+
+### Story 14.32 - Usage & Cost Audit (2026-01-13)
+
+| Pattern | Detail |
+|---------|--------|
+| Cost Figure Accuracy | Document actual vs theoretical costs with clear notes - $0.00175/scan actual vs $0.026 theoretical |
+| File List Completeness | Story File List MUST include ALL modified files discovered via `git status` |
+| Line Number Freshness | Update line references during code review - they drift as code changes |
+| AC Task Status | Use "DEFERRED" not "N/A" when task is punted to future work |
+| Budget Threshold Consistency | Keep threshold values consistent across related documents |
+| Documentation-Only Stories | Audit stories still need adversarial review for accuracy of claims |
+
+---
+
 ## Sync Notes
 
-- **Generation 1 Optimization (2026-01-06)**: Consolidated 92 patterns from 67KB to ~15KB
-- Patterns organized by category with summary tables
-- Full pattern details available in backup: `backups/v1/knowledge/06-lessons.md`
-- Code examples removed (reference source files instead)
+- Generation 3: Consolidated story-specific learnings into pattern tables
+- Generation 4: Added Code Review Learnings section
+- Story 14.37: Font size scaling system and toast theme integration (2026-01-13)
+- Full story details available in `docs/sprint-artifacts/` story files
+- Backup: `backups/v3/knowledge/06-lessons.md`

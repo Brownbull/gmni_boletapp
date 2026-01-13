@@ -17,7 +17,7 @@
  */
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { Inbox, FileText, ChevronLeft, ChevronRight, Camera, BarChart2, Loader2, Download } from 'lucide-react';
+import { Inbox, FileText, ChevronLeft, ChevronRight, Camera, BarChart2, Loader2, Download, AlertTriangle } from 'lucide-react';
 import { ProfileDropdown, ProfileAvatar, getInitials } from '../components/ProfileDropdown';
 import { ImageViewer } from '../components/ImageViewer';
 import { IconFilterBar } from '../components/history/IconFilterBar';
@@ -27,6 +27,9 @@ import { SearchBar } from '../components/history/SearchBar';
 import { TransactionCard } from '../components/transactions';
 import { DateGroupHeader, groupTransactionsByDate, formatDateGroupLabel, calculateGroupTotal } from '../components/history/DateGroupHeader';
 import { FilterChips } from '../components/history/FilterChips';
+// Story 14.31 Session 3: Sort control
+import { SortControl } from '../components/history/SortControl';
+import type { SortOption } from '../components/history/SortControl';
 import { SelectionBar } from '../components/history/SelectionBar';
 import { AssignGroupModal } from '../components/history/AssignGroupModal';
 import { CreateGroupModal } from '../components/history/CreateGroupModal';
@@ -37,7 +40,8 @@ import type { TransactionPreview } from '../components/history/DeleteTransaction
 import type { TransactionGroup } from '../types/transactionGroup';
 import { PageTransition } from '../components/animation/PageTransition';
 import { TransitionChild } from '../components/animation/TransitionChild';
-import { getDuplicateIds } from '../services/duplicateDetectionService';
+// Story 14.13: Duplicate detection for transactions
+import { getDuplicateIds, getDuplicateCount, filterToDuplicatesGrouped } from '../services/duplicateDetectionService';
 import { normalizeTransaction } from '../utils/transactionNormalizer';
 import {
     extractAvailableFilters,
@@ -68,6 +72,76 @@ const PAGE_SIZE_OPTIONS = [15, 30, 60] as const;
 type PageSizeOption = typeof PAGE_SIZE_OPTIONS[number];
 const DEFAULT_PAGE_SIZE: PageSizeOption = 15;
 
+/**
+ * Story 14.31 Session 3: Sort options for History view.
+ * - Date (newest first) - default
+ * - Scan date (when scanned/ingresado)
+ * - Total (highest/lowest)
+ * - Store name (A-Z)
+ */
+// Story 14.31: Removed 'scanDate' option - now has dedicated RecentScansView
+type HistorySortKey = 'date' | 'total' | 'merchant';
+const HISTORY_SORT_OPTIONS: SortOption[] = [
+    { key: 'date', labelEn: 'Date', labelEs: 'Fecha' },
+    { key: 'total', labelEn: 'Total', labelEs: 'Total' },
+    { key: 'merchant', labelEn: 'Store', labelEs: 'Tienda' },
+];
+const DEFAULT_HISTORY_SORT_KEY: HistorySortKey = 'date';
+const DEFAULT_HISTORY_SORT_DIRECTION: 'asc' | 'desc' = 'desc';
+
+/**
+ * Story 14.31 Session 3: Sort transactions within date groups.
+ * When sorting by non-date criteria, items within each date group are sorted.
+ * Note: scanDate sort was moved to dedicated RecentScansView.
+ */
+function sortTransactionsWithinGroups(
+    txs: Transaction[],
+    sortBy: HistorySortKey,
+    direction: 'asc' | 'desc'
+): Transaction[] {
+    if (sortBy === 'date') {
+        // For date sort, sort all transactions by date
+        return [...txs].sort((a, b) => {
+            const comparison = a.date.localeCompare(b.date);
+            return direction === 'desc' ? -comparison : comparison;
+        });
+    }
+
+    // For non-date sorts, group by date first, then sort within groups
+    const grouped = new Map<string, Transaction[]>();
+    for (const tx of txs) {
+        const date = tx.date;
+        if (!grouped.has(date)) {
+            grouped.set(date, []);
+        }
+        grouped.get(date)!.push(tx);
+    }
+
+    // Sort each group by the selected criteria
+    for (const [_date, groupTxs] of grouped) {
+        groupTxs.sort((a, b) => {
+            let comparison = 0;
+            switch (sortBy) {
+                case 'total':
+                    comparison = a.total - b.total;
+                    break;
+                case 'merchant':
+                    comparison = (a.alias || a.merchant).localeCompare(b.alias || b.merchant);
+                    break;
+            }
+            return direction === 'desc' ? -comparison : comparison;
+        });
+    }
+
+    // Flatten back to array, maintaining date order (newest first by default)
+    const sortedDates = Array.from(grouped.keys()).sort((a, b) => b.localeCompare(a));
+    const result: Transaction[] = [];
+    for (const date of sortedDates) {
+        result.push(...grouped.get(date)!);
+    }
+    return result;
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -97,6 +171,8 @@ interface Transaction {
     groupId?: string;
     groupName?: string;
     groupColor?: string;
+    // Story 14.31: Scan date for sorting by when transaction was added
+    createdAt?: any; // Firestore Timestamp or Date
 }
 
 interface HistoryViewProps {
@@ -146,6 +222,10 @@ interface HistoryViewProps {
     loadingMoreTransactions?: boolean;
     /** True if at listener limit (100 transactions) - indicates pagination available */
     isAtListenerLimit?: boolean;
+    /** Story 14.13: Font color mode for category text colors (colorful vs plain) */
+    fontColorMode?: 'colorful' | 'plain';
+    /** Story 14.35b: How to display foreign locations (code or flag) */
+    foreignLocationFormat?: 'code' | 'flag';
 }
 
 // ============================================================================
@@ -191,6 +271,11 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
     onLoadMoreTransactions,
     loadingMoreTransactions = false,
     isAtListenerLimit = false,
+    // Story 14.13: Font color mode - receiving this prop triggers re-render when setting changes
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    fontColorMode: _fontColorMode,
+    // Story 14.35b: Foreign location display format
+    foreignLocationFormat = 'code',
 }) => {
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     // Story 14.14: Search functionality
@@ -225,6 +310,11 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     // Story 14.15c: Export state
     const [isExporting, setIsExporting] = useState(false);
+    // Story 14.31 Session 3: Sort state
+    const [sortBy, setSortBy] = useState<HistorySortKey>(DEFAULT_HISTORY_SORT_KEY);
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(DEFAULT_HISTORY_SORT_DIRECTION);
+    // Story 14.13: Duplicate filter state
+    const [showDuplicatesOnly, setShowDuplicatesOnly] = useState(false);
     // Story 14.15b: Profile dropdown state
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const profileButtonRef = useRef<HTMLButtonElement>(null);
@@ -379,6 +469,21 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
         return result;
     }, [transactionsToFilter, filterState, searchQuery]);
 
+    // Story 14.13: Detect potential duplicate transactions in filtered results
+    const duplicateCount = useMemo(() => {
+        return getDuplicateCount(filteredTransactions as any);
+    }, [filteredTransactions]);
+
+    const hasAnyDuplicates = duplicateCount > 0;
+
+    // Story 14.13: Get duplicate transactions grouped together when filter is active
+    const duplicateTransactions = useMemo(() => {
+        if (showDuplicatesOnly) {
+            return filterToDuplicatesGrouped(filteredTransactions as any);
+        }
+        return [];
+    }, [filteredTransactions, showDuplicatesOnly]);
+
     // Story 9.19 AC #5: Reset pagination when filters change
     // Use a ref to track if this is the first render or an actual filter change
     const prevFilterStateRef = useRef<string | null>(null);
@@ -421,11 +526,16 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
     }, [scrollToTop]);
 
     // Paginate filtered results - Story 14.14: Variable page size (15/30/60)
-    const totalFilteredPages = Math.max(1, Math.ceil(filteredTransactions.length / pageSize));
+    // Story 14.31 Session 3: Apply sorting before pagination
+    // Story 14.13: Use duplicate transactions when filter is active
+    const transactionsToDisplay = showDuplicatesOnly ? duplicateTransactions : filteredTransactions;
+    const totalFilteredPages = Math.max(1, Math.ceil(transactionsToDisplay.length / pageSize));
     const paginatedTransactions = useMemo(() => {
+        // Apply sorting first
+        const sorted = sortTransactionsWithinGroups(transactionsToDisplay as Transaction[], sortBy, sortDirection);
         const startIndex = (currentPage - 1) * pageSize;
-        return filteredTransactions.slice(startIndex, startIndex + pageSize) as Transaction[];
-    }, [filteredTransactions, currentPage, pageSize]);
+        return sorted.slice(startIndex, startIndex + pageSize);
+    }, [transactionsToDisplay, currentPage, pageSize, sortBy, sortDirection]);
 
     // Story 14.14 AC #2: Group transactions by date
     const groupedTransactions = useMemo(() => {
@@ -482,6 +592,13 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
             setIsExporting(false);
         }
     }, [isExporting, filteredTransactions, filterState.temporal]);
+
+    // Story 14.31 Session 3: Handle sort change
+    const handleSortChange = useCallback((key: string, direction: 'asc' | 'desc') => {
+        setSortBy(key as HistorySortKey);
+        setSortDirection(direction);
+        goToPage(1); // Reset to first page when sort changes
+    }, [goToPage]);
 
     // Calculate total item count for stagger animation
     const totalItems = useMemo(() => {
@@ -800,6 +917,7 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                             >
                                 {t('purchases')}
                             </h1>
+                            {/* Story 14.13b: Clear all filters button moved to FilterChips component */}
                         </div>
                         {/* Right side: Filters + Profile */}
                         <div className="flex items-center gap-3 relative">
@@ -832,13 +950,13 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
 
                     {/* Collapsible section: Search bar, Breadcrumbs, Transaction count, Filter chips */}
                     {/* Everything except title bar collapses when scrolling down */}
-                    {/* overflow:hidden prevents ghost artifacts during transition */}
+                    {/* Story 14.31 Session 3: overflow visible when expanded to allow sort dropdown */}
                     <div
                         className="transition-all duration-200 ease-out"
                         style={{
                             maxHeight: isHeaderCollapsed ? '0px' : '300px',
                             opacity: isHeaderCollapsed ? 0 : 1,
-                            overflow: 'hidden',
+                            overflow: isHeaderCollapsed ? 'hidden' : 'visible',
                             // Use pointer-events to prevent interaction when collapsed
                             pointerEvents: isHeaderCollapsed ? 'none' : 'auto',
                         }}
@@ -858,25 +976,61 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                             <TemporalBreadcrumb locale={lang} availableFilters={availableFilters} />
                         </div>
 
-                        {/* Filter count with download button */}
+                        {/* Filter count with duplicate warning, sort control and download button */}
                         <div
                             className="flex items-center justify-between py-2"
                         >
-                            <span
-                                className="text-[11px]"
-                                style={{ color: 'var(--text-tertiary)' }}
-                            >
-                                {hasActiveFilters || searchQuery.trim()
-                                    ? `${lang === 'es' ? 'Mostrando' : 'Showing'} ${filteredTransactions.length} ${lang === 'es' ? 'transacciones' : 'transactions'}`
-                                    : `${transactionsToFilter.length} ${t('transactions').toLowerCase()}`
-                                }
-                            </span>
+                            <div className="flex items-center gap-2">
+                                {/* Story 14.13: Duplicate warning icon */}
+                                {hasAnyDuplicates && (
+                                    <button
+                                        onClick={() => {
+                                            setShowDuplicatesOnly(!showDuplicatesOnly);
+                                            setCurrentPage(1); // Reset to page 1 when toggling
+                                        }}
+                                        className={`flex items-center justify-center w-6 h-6 rounded-full transition-all ${
+                                            showDuplicatesOnly ? 'ring-2 ring-offset-1 ring-amber-500' : ''
+                                        }`}
+                                        style={{
+                                            backgroundColor: 'var(--warning-bg, #fef3c7)',
+                                            color: 'var(--warning-text, #d97706)',
+                                        }}
+                                        aria-label={
+                                            showDuplicatesOnly
+                                                ? (lang === 'es' ? 'Mostrar todas las compras' : 'Show all purchases')
+                                                : (lang === 'es' ? `${duplicateCount} posibles duplicados - click para filtrar` : `${duplicateCount} potential duplicates - click to filter`)
+                                        }
+                                        title={
+                                            showDuplicatesOnly
+                                                ? (lang === 'es' ? 'Mostrar todos' : 'Show all')
+                                                : (lang === 'es' ? `${duplicateCount} posibles duplicados` : `${duplicateCount} potential duplicates`)
+                                        }
+                                    >
+                                        <AlertTriangle size={14} />
+                                    </button>
+                                )}
+                                {/* Transaction count - shows filtered or duplicate count */}
+                                <span
+                                    className="text-sm"
+                                    style={{ color: 'var(--text-tertiary)' }}
+                                >
+                                    {showDuplicatesOnly ? duplicateTransactions.length : filteredTransactions.length} {lang === 'es' ? 'compras' : 'purchases'}
+                                </span>
+                                {/* Story 14.31 Session 3: Sort control */}
+                                <SortControl
+                                    options={HISTORY_SORT_OPTIONS}
+                                    currentSort={sortBy}
+                                    sortDirection={sortDirection}
+                                    onSortChange={handleSortChange}
+                                    lang={lang}
+                                />
+                            </div>
                             {/* Story 14.15c: Download pill - two icons showing type + download action */}
                             {filteredTransactions.length > 0 && (
                                 <button
                                     onClick={handleExport}
                                     disabled={isExporting}
-                                    className="flex items-center gap-1 px-2 py-1 rounded-full transition-colors hover:bg-[var(--bg-tertiary)] disabled:opacity-50"
+                                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-colors hover:bg-[var(--bg-tertiary)] disabled:opacity-50"
                                     style={{
                                         color: 'var(--text-tertiary)',
                                         backgroundColor: 'var(--bg-secondary)',
@@ -892,15 +1046,15 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                                 >
                                     {/* Type icon: BarChart2 for stats, FileText for detailed */}
                                     {isStatisticsExport ? (
-                                        <BarChart2 size={14} />
+                                        <BarChart2 size={16} />
                                     ) : (
-                                        <FileText size={14} />
+                                        <FileText size={16} />
                                     )}
                                     {/* Download icon or spinner */}
                                     {isExporting ? (
-                                        <Loader2 size={14} className="animate-spin" />
+                                        <Loader2 size={16} className="animate-spin" />
                                     ) : (
-                                        <Download size={14} />
+                                        <Download size={16} />
                                     )}
                                 </button>
                             )}
@@ -908,6 +1062,27 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
 
                         {/* Story 14.14 AC #3: Filter chips for active filters */}
                         <FilterChips locale={lang} t={t} />
+
+                        {/* Story 14.13: Duplicate filter chip */}
+                        {showDuplicatesOnly && (
+                            <div className="flex flex-wrap gap-1.5 pb-2">
+                                <button
+                                    onClick={() => {
+                                        setShowDuplicatesOnly(false);
+                                        setCurrentPage(1);
+                                    }}
+                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs"
+                                    style={{
+                                        backgroundColor: 'var(--warning-text, #d97706)',
+                                        color: 'white',
+                                    }}
+                                >
+                                    <AlertTriangle size={10} />
+                                    {lang === 'es' ? 'Duplicados' : 'Duplicates'}
+                                    <span className="text-xs">&times;</span>
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -958,7 +1133,7 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                 )}
 
                 {/* Empty state: No transactions at all */}
-                {filteredTransactions.length === 0 && !hasActiveFilters && (
+                {transactionsToDisplay.length === 0 && !hasActiveFilters && !showDuplicatesOnly && (
                     <TransitionChild index={0} totalItems={1}>
                         <div
                             className="flex flex-col items-center justify-center py-16 text-center"
@@ -994,8 +1169,8 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                     </TransitionChild>
                 )}
 
-                {/* Empty state: No matching filters */}
-                {filteredTransactions.length === 0 && hasActiveFilters && (
+                {/* Empty state: No matching filters or no duplicates */}
+                {transactionsToDisplay.length === 0 && (hasActiveFilters || showDuplicatesOnly) && (
                     <TransitionChild index={0} totalItems={1}>
                         <div
                             className="flex flex-col items-center justify-center py-16 text-center"
@@ -1086,6 +1261,7 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                                                         total: tx.total,
                                                         category: tx.category as any,
                                                         city: normalizedTx.city,
+                                                        country: tx.country,
                                                         currency: displayCurrency,
                                                         thumbnailUrl: tx.thumbnailUrl,
                                                         imageUrls: tx.imageUrls,
@@ -1104,6 +1280,9 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                                                         dateFormat,
                                                     }}
                                                     defaultCurrency={currency}
+                                                    userDefaultCountry={defaultCountry}
+                                                    foreignLocationFormat={foreignLocationFormat}
+                                                    lang={lang}
                                                     isDuplicate={isDuplicate}
                                                     onClick={() => onEditTransaction(tx)}
                                                     onThumbnailClick={() => handleThumbnailClick(tx)}

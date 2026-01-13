@@ -257,7 +257,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                             </div>
                             {/* Show version subtitle on all settings screens */}
                             <span
-                                className="text-[10px]"
+                                className="text-xs"
                                 style={{
                                     color: 'var(--text-tertiary)',
                                     fontFamily: 'var(--font-family)',

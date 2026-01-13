@@ -174,8 +174,10 @@ describe('Shared Prompts Library', () => {
   });
 
   describe('Category constants', () => {
-    it('should have 14 store categories', () => {
-      expect(STORE_CATEGORIES).toHaveLength(14);
+    it('should have 13 store categories', () => {
+      // Legacy V1/V2 prompts use 13 store categories
+      // (V3 prompts in shared/schema/categories.ts have 36)
+      expect(STORE_CATEGORIES).toHaveLength(13);
     });
 
     it('should include common store types', () => {
@@ -186,13 +188,16 @@ describe('Shared Prompts Library', () => {
     });
 
     it('should have 9 item categories', () => {
+      // Legacy V1/V2 prompts use 9 item categories
+      // (V3 prompts in shared/schema/categories.ts have 39)
       expect(ITEM_CATEGORIES).toHaveLength(9);
     });
 
     it('should include common item types', () => {
-      expect(ITEM_CATEGORIES).toContain('Fresh Food');
+      // V1/V2 uses: Produce, Pantry, Beverages, etc.
+      expect(ITEM_CATEGORIES).toContain('Produce');
       expect(ITEM_CATEGORIES).toContain('Pantry');
-      expect(ITEM_CATEGORIES).toContain('Drinks');
+      expect(ITEM_CATEGORIES).toContain('Beverages');
       expect(ITEM_CATEGORIES).toContain('Other');
     });
   });

@@ -11,7 +11,8 @@ import { CategoryMapping } from '../types/categoryMapping';
 import { MerchantMapping } from '../types/merchantMapping';
 import { SubcategoryMapping } from '../types/subcategoryMapping';
 import { TrustedMerchant } from '../types/trust';
-import { SupportedCurrency } from '../services/userPreferencesService';
+import { ItemNameMapping } from '../types/itemNameMapping';
+import { SupportedCurrency, ForeignLocationDisplayFormat } from '../services/userPreferencesService';
 import { Firestore } from 'firebase/firestore';
 import { SettingsSubView } from '../types/settings';
 import {
@@ -22,6 +23,7 @@ import {
     EscaneoView,
     SuscripcionView,
     DatosAprendidosView,
+    GruposView,
     AppView,
     CuentaView,
 } from '../components/settings';
@@ -55,6 +57,9 @@ interface SettingsViewProps {
     // Font family
     fontFamily?: string;
     onSetFontFamily?: (family: string) => void;
+    // Story 14.37: Font size
+    fontSize?: string;
+    onSetFontSize?: (size: string) => void;
     // Default location
     defaultCountry?: string;
     defaultCity?: string;
@@ -68,6 +73,9 @@ interface SettingsViewProps {
     // Default scan currency
     defaultScanCurrency?: SupportedCurrency;
     onSetDefaultScanCurrency?: (currency: SupportedCurrency) => void;
+    // Story 14.35b: Foreign location display format
+    foreignLocationFormat?: ForeignLocationDisplayFormat;
+    onSetForeignLocationFormat?: (format: ForeignLocationDisplayFormat) => void;
     // Subcategory mappings
     subcategoryMappings?: SubcategoryMapping[];
     subcategoryMappingsLoading?: boolean;
@@ -82,6 +90,11 @@ interface SettingsViewProps {
     trustedMerchants?: TrustedMerchant[];
     trustedMerchantsLoading?: boolean;
     onRevokeTrust?: (merchantName: string) => Promise<void>;
+    // Item name mappings (Phase 5)
+    itemNameMappings?: ItemNameMapping[];
+    itemNameMappingsLoading?: boolean;
+    onDeleteItemNameMapping?: (mappingId: string) => Promise<void>;
+    onUpdateItemNameMapping?: (mappingId: string, newTarget: string) => Promise<void>;
     // Clear all learned data
     onClearAllLearnedData?: () => Promise<void>;
     // Story 14.22: Profile editing
@@ -127,6 +140,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     onSetFontColorMode,
     fontFamily = 'outfit',
     onSetFontFamily,
+    fontSize = 'small',
+    onSetFontSize,
     defaultCountry = '',
     defaultCity = '',
     onSetDefaultCountry,
@@ -137,6 +152,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     onEditMerchantMapping,
     defaultScanCurrency = 'CLP',
     onSetDefaultScanCurrency,
+    foreignLocationFormat = 'code',
+    onSetForeignLocationFormat,
     subcategoryMappings = [],
     subcategoryMappingsLoading = false,
     onDeleteSubcategoryMapping,
@@ -148,6 +165,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     trustedMerchants = [],
     trustedMerchantsLoading = false,
     onRevokeTrust,
+    itemNameMappings = [],
+    itemNameMappingsLoading = false,
+    onDeleteItemNameMapping,
+    onUpdateItemNameMapping,
     onClearAllLearnedData,
     userEmail = '',
     displayName = '',
@@ -208,6 +229,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         colorTheme={colorTheme}
                         fontColorMode={fontColorMode}
                         fontFamily={fontFamily}
+                        fontSize={fontSize}
                         onSetLang={onSetLang}
                         onSetCurrency={onSetCurrency}
                         onSetDateFormat={onSetDateFormat}
@@ -215,6 +237,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         onSetColorTheme={onSetColorTheme}
                         onSetFontColorMode={onSetFontColorMode}
                         onSetFontFamily={onSetFontFamily}
+                        onSetFontSize={onSetFontSize}
                     />
                 );
 
@@ -226,9 +249,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         defaultScanCurrency={defaultScanCurrency}
                         defaultCountry={defaultCountry}
                         defaultCity={defaultCity}
+                        foreignLocationFormat={foreignLocationFormat}
                         onSetDefaultScanCurrency={onSetDefaultScanCurrency}
                         onSetDefaultCountry={onSetDefaultCountry}
                         onSetDefaultCity={onSetDefaultCity}
+                        onSetForeignLocationFormat={onSetForeignLocationFormat}
                     />
                 );
 
@@ -265,9 +290,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         trustedMerchants={trustedMerchants}
                         trustedMerchantsLoading={trustedMerchantsLoading}
                         onRevokeTrust={onRevokeTrust}
+                        itemNameMappings={itemNameMappings}
+                        itemNameMappingsLoading={itemNameMappingsLoading}
+                        onDeleteItemNameMapping={onDeleteItemNameMapping}
+                        onUpdateItemNameMapping={onUpdateItemNameMapping}
                         onClearAllLearnedData={onClearAllLearnedData}
                     />
                 );
+
+            case 'grupos':
+                return <GruposView t={t} theme={theme} />;
 
             case 'app':
                 return (
@@ -364,6 +396,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     iconColor="#f59e0b"
                     onClick={() => setCurrentView('datos')}
                     testId="settings-menu-datos"
+                />
+
+                <SettingsMenuItem
+                    title={t('settingsGrupos')}
+                    subtitle={t('settingsGruposDesc')}
+                    icon="users"
+                    iconBgColor="#dbeafe"
+                    iconColor="#3b82f6"
+                    onClick={() => setCurrentView('grupos')}
+                    testId="settings-menu-grupos"
                 />
 
                 <SettingsMenuItem

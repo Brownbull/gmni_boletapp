@@ -36,16 +36,14 @@ describe('Shared Prompts Library', () => {
       expect(ACTIVE_PROMPT.prompt.length).toBeGreaterThan(50);
     });
 
-    it('should contain {{currency}} placeholder', () => {
-      expect(ACTIVE_PROMPT.prompt).toContain('{{currency}}');
-    });
-
     it('should contain {{date}} placeholder', () => {
+      // V3 auto-detects currency so doesn't have {{currency}} placeholder
       expect(ACTIVE_PROMPT.prompt).toContain('{{date}}');
     });
 
-    it('should reference PROMPT_V2 (current active)', () => {
-      expect(ACTIVE_PROMPT).toBe(PROMPT_V2);
+    it('should reference PROMPT_V3 (current active)', () => {
+      // ACTIVE_PROMPT was promoted from V2 to V3
+      expect(ACTIVE_PROMPT.id).toBe('v3-category-standardization');
     });
   });
 
@@ -186,8 +184,9 @@ describe('Shared Prompts Library', () => {
   });
 
   describe('Category constants', () => {
-    it('should have 34 store categories', () => {
-      expect(STORE_CATEGORIES).toHaveLength(34);
+    it('should have 39 store categories', () => {
+      // V3 expanded categories from shared/schema/categories.ts (includes Almacen etc)
+      expect(STORE_CATEGORIES).toHaveLength(39);
     });
 
     it('should include common store types', () => {
@@ -197,8 +196,9 @@ describe('Shared Prompts Library', () => {
       expect(STORE_CATEGORIES).toContain('Other');
     });
 
-    it('should have 32 item categories', () => {
-      expect(ITEM_CATEGORIES).toHaveLength(32);
+    it('should have 39 item categories', () => {
+      // V3 expanded categories from shared/schema/categories.ts
+      expect(ITEM_CATEGORIES).toHaveLength(39);
     });
 
     it('should include common item types', () => {
@@ -427,20 +427,21 @@ describe('Shared Prompts Library', () => {
     });
   });
 
-  describe('Prompt Registry - V2 inclusion', () => {
-    it('should now have 2 prompts registered', () => {
+  describe('Prompt Registry - V3 inclusion', () => {
+    it('should have 3 prompts registered (V1, V2, V3)', () => {
       const prompts = listPrompts();
-      expect(prompts).toHaveLength(2);
+      expect(prompts).toHaveLength(3);
     });
 
-    it('should include both V1 and V2', () => {
+    it('should include V1, V2, and V3', () => {
       const prompts = listPrompts();
       const ids = prompts.map((p) => p.id);
       expect(ids).toContain('v1-original');
       expect(ids).toContain('v2-multi-currency-types');
+      expect(ids).toContain('v3-category-standardization');
     });
 
-    it('error message should list both prompts', () => {
+    it('error message should list all prompts', () => {
       try {
         getPrompt('invalid');
         expect.fail('Should have thrown');
@@ -448,21 +449,16 @@ describe('Shared Prompts Library', () => {
         const message = (error as Error).message;
         expect(message).toContain('v1-original');
         expect(message).toContain('v2-multi-currency-types');
+        expect(message).toContain('v3-category-standardization');
       }
     });
   });
 
   describe('buildPrompt() - Generic Prompt Builder', () => {
-    it('should use ACTIVE_PROMPT by default', () => {
-      const result = buildPrompt({ currency: 'CLP' });
-      // ACTIVE_PROMPT is V2, which has specific structure
-      expect(result).toContain('CURRENCY CONTEXT');
-      expect(result).toContain('Chilean Peso');
-    });
-
-    it('should use default currency (CLP) when not provided', () => {
+    it('should use ACTIVE_PROMPT (V3) by default', () => {
       const result = buildPrompt();
-      expect(result).toContain('Chilean Peso');
+      // ACTIVE_PROMPT is now V3, which auto-detects currency
+      expect(result).toContain('CURRENCY DETECTION');
     });
 
     it('should use today\'s date by default', () => {
@@ -474,12 +470,6 @@ describe('Shared Prompts Library', () => {
     it('should use auto receipt type by default', () => {
       const result = buildPrompt();
       expect(result).toContain('auto-detect');
-    });
-
-    it('should replace currency with provided value', () => {
-      const result = buildPrompt({ currency: 'USD' });
-      expect(result).toContain('US Dollar');
-      expect(result).not.toContain('{{currency}}');
     });
 
     it('should replace date with provided value', () => {
@@ -496,11 +486,10 @@ describe('Shared Prompts Library', () => {
 
     it('should replace ALL placeholders (no leftover {{}})', () => {
       const result = buildPrompt({
-        currency: 'EUR',
         date: '2025-12-12',
         receiptType: 'supermarket',
       });
-      expect(result).not.toContain('{{currency}}');
+      // V3 doesn't have {{currency}} - it auto-detects
       expect(result).not.toContain('{{date}}');
       expect(result).not.toContain('{{receiptType}}');
     });
@@ -511,15 +500,19 @@ describe('Shared Prompts Library', () => {
         date: '2025-12-12',
         promptConfig: PROMPT_V1,
       });
-      // V1 prompt structure is different from V2
-      expect(result).toContain('CLP'); // V1 doesn't expand currency context
+      // V1 prompt structure uses currency placeholder
+      expect(result).toContain('CLP');
       expect(result).toContain('2025-12-12');
     });
 
-    it('should handle unknown currencies with generic message', () => {
-      const result = buildPrompt({ currency: 'XYZ' });
-      expect(result).toContain('XYZ');
-      expect(result).toContain('integer');
+    it('should expand currency context for V1/V2 prompts', () => {
+      // V2 has {{currency}} placeholder that gets expanded
+      const result = buildPrompt({
+        currency: 'USD',
+        promptConfig: PROMPT_V2,
+      });
+      expect(result).toContain('US Dollar');
+      expect(result).not.toContain('{{currency}}');
     });
 
     it('should handle various receipt types', () => {
@@ -536,13 +529,11 @@ describe('Shared Prompts Library', () => {
       });
     });
 
-    it('should handle international currencies', () => {
-      const currencies = ['EUR', 'MXN', 'ARS', 'BRL', 'GBP'];
-
-      currencies.forEach((currency) => {
-        const result = buildPrompt({ currency });
-        expect(result).not.toContain('{{currency}}');
-      });
+    it('should ignore currency param for V3 (auto-detects)', () => {
+      // V3 auto-detects currency, so currency param is ignored
+      const result = buildPrompt({ currency: 'XYZ' });
+      // V3 doesn't have {{currency}} placeholder, so it won't contain XYZ
+      expect(result).toContain('CURRENCY DETECTION');
     });
   });
 });

@@ -1,0 +1,209 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`StatementScanView Component > AC16: Visual Consistency > should match dark theme snapshot 1`] = `
+<div>
+  <div
+    class="min-h-screen flex flex-col"
+    data-testid="statement-scan-view"
+    style="background-color: var(--bg); color: var(--primary);"
+  >
+    <header
+      class="border-b px-4 py-3 flex items-center gap-3"
+      style="background-color: var(--card-bg); border-color: var(--border);"
+    >
+      <button
+        aria-label="Volver"
+        class="p-2 -ml-2 rounded-full transition-colors"
+        data-testid="back-button"
+        style="background-color: transparent;"
+      >
+        <svg
+          class="lucide lucide-arrow-left w-5 h-5"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m12 19-7-7 7-7"
+          />
+          <path
+            d="M19 12H5"
+          />
+        </svg>
+      </button>
+      <h1
+        class="text-lg font-semibold"
+      >
+        Estado de Cuenta
+      </h1>
+    </header>
+    <main
+      class="flex-1 flex flex-col items-center justify-center p-6 text-center"
+    >
+      <div
+        class="rounded-full p-6 mb-6"
+        data-testid="icon-container"
+        style="background-color: rgba(139, 92, 246, 0.2);"
+      >
+        <svg
+          class="lucide lucide-credit-card w-16 h-16"
+          data-testid="credit-card-icon"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          style="color: #8b5cf6;"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect
+            height="14"
+            rx="2"
+            width="20"
+            x="2"
+            y="5"
+          />
+          <line
+            x1="2"
+            x2="22"
+            y1="10"
+            y2="10"
+          />
+        </svg>
+      </div>
+      <h2
+        class="text-2xl font-bold mb-2"
+        style="color: var(--primary);"
+      >
+        Próximamente
+      </h2>
+      <p
+        class="max-w-sm mb-8"
+        style="color: var(--secondary);"
+      >
+        Pronto podrás escanear estados de cuenta de tarjetas de crédito y añadir transacciones automáticamente.
+      </p>
+      <button
+        class="px-6 py-3 rounded-xl font-medium transition-colors"
+        data-testid="return-button"
+        style="background-color: #8b5cf6; color: #ffffff;"
+      >
+        Volver al inicio
+      </button>
+    </main>
+  </div>
+</div>
+`;
+
+exports[`StatementScanView Component > AC16: Visual Consistency > should match light theme snapshot 1`] = `
+<div>
+  <div
+    class="min-h-screen flex flex-col"
+    data-testid="statement-scan-view"
+    style="background-color: #f8fafc; color: #1e293b;"
+  >
+    <header
+      class="border-b px-4 py-3 flex items-center gap-3"
+      style="background-color: #ffffff; border-color: #e2e8f0;"
+    >
+      <button
+        aria-label="Volver"
+        class="p-2 -ml-2 rounded-full transition-colors"
+        data-testid="back-button"
+        style="background-color: transparent;"
+      >
+        <svg
+          class="lucide lucide-arrow-left w-5 h-5"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m12 19-7-7 7-7"
+          />
+          <path
+            d="M19 12H5"
+          />
+        </svg>
+      </button>
+      <h1
+        class="text-lg font-semibold"
+      >
+        Estado de Cuenta
+      </h1>
+    </header>
+    <main
+      class="flex-1 flex flex-col items-center justify-center p-6 text-center"
+    >
+      <div
+        class="rounded-full p-6 mb-6"
+        data-testid="icon-container"
+        style="background-color: #ede9fe;"
+      >
+        <svg
+          class="lucide lucide-credit-card w-16 h-16"
+          data-testid="credit-card-icon"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          style="color: #8b5cf6;"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect
+            height="14"
+            rx="2"
+            width="20"
+            x="2"
+            y="5"
+          />
+          <line
+            x1="2"
+            x2="22"
+            y1="10"
+            y2="10"
+          />
+        </svg>
+      </div>
+      <h2
+        class="text-2xl font-bold mb-2"
+        style="color: #1e293b;"
+      >
+        Próximamente
+      </h2>
+      <p
+        class="max-w-sm mb-8"
+        style="color: #64748b;"
+      >
+        Pronto podrás escanear estados de cuenta de tarjetas de crédito y añadir transacciones automáticamente.
+      </p>
+      <button
+        class="px-6 py-3 rounded-xl font-medium transition-colors"
+        data-testid="return-button"
+        style="background-color: #8b5cf6; color: #ffffff;"
+      >
+        Volver al inicio
+      </button>
+    </main>
+  </div>
+</div>
+`;
