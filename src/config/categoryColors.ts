@@ -885,18 +885,27 @@ export function getItemCategoryGroup(category: ItemCategory | string): ItemCateg
 
 /**
  * Universal function to get colors for any category (store or item).
- * First tries store categories, then item categories.
+ * Story 14.13 Session 9: Also handles Store Groups and Item Groups.
+ * Lookup order: Store Groups → Item Groups → Store Categories → Item Categories → Fallback
  */
 export function getCategoryColors(
   category: string,
   theme: ThemeName = 'normal',
   mode: ModeName = 'light'
 ): CategoryColorSet {
-  // Try store category first
+  // Try store group first (e.g., 'food-dining', 'retail-general')
+  if (category in STORE_GROUP_COLORS) {
+    return getStoreGroupColors(category as StoreCategoryGroup, theme, mode);
+  }
+  // Try item group (e.g., 'food-fresh', 'food-packaged')
+  if (category in ITEM_GROUP_COLORS) {
+    return getItemGroupColors(category as ItemCategoryGroup, theme, mode);
+  }
+  // Try store category (e.g., 'Supermarket', 'Restaurant')
   if (category in STORE_CATEGORY_COLORS) {
     return getStoreCategoryColors(category as StoreCategory, theme, mode);
   }
-  // Try item category
+  // Try item category (e.g., 'Produce', 'Meat & Seafood')
   return getItemCategoryColors(category, theme, mode);
 }
 

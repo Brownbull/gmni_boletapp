@@ -20,6 +20,7 @@ import {
   UserPreferences,
   SupportedCurrency,
   SupportedFontFamily,
+  ForeignLocationDisplayFormat,
 } from '../services/userPreferencesService';
 
 interface UseUserPreferencesResult {
@@ -41,6 +42,8 @@ interface UseUserPreferencesResult {
   setBirthDate: (date: string) => Promise<void>;
   /** Story 14.22: Update font family */
   setFontFamily: (fontFamily: SupportedFontFamily) => Promise<void>;
+  /** Story 14.35b: Update foreign location display format */
+  setForeignLocationFormat: (format: ForeignLocationDisplayFormat) => Promise<void>;
 }
 
 interface FirebaseServices {
@@ -57,6 +60,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   phoneNumber: '',
   birthDate: '',
   fontFamily: 'outfit',
+  foreignLocationFormat: 'code',
 };
 
 /**
@@ -163,6 +167,11 @@ export function useUserPreferences(
     [updatePreference]
   );
 
+  const setForeignLocationFormat = useCallback(
+    (format: ForeignLocationDisplayFormat) => updatePreference('foreignLocationFormat', format),
+    [updatePreference]
+  );
+
   return useMemo(
     () => ({
       preferences,
@@ -174,6 +183,7 @@ export function useUserPreferences(
       setPhoneNumber,
       setBirthDate,
       setFontFamily,
+      setForeignLocationFormat,
     }),
     [
       preferences,
@@ -185,6 +195,7 @@ export function useUserPreferences(
       setPhoneNumber,
       setBirthDate,
       setFontFamily,
+      setForeignLocationFormat,
     ]
   );
 }

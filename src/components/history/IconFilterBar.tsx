@@ -8,13 +8,13 @@
  * Features:
  * - Calendar icon for temporal filter
  * - Tag icon for category filter
- * - Layers icon for custom groups
+ * - Bookmark icon for custom groups
  * - Dropdown menus on click
  * - Active state highlighting
  */
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Calendar, Tag, Layers, ChevronLeft, ChevronRight, X, Check, Package, Trash2 } from 'lucide-react';
+import { Calendar, Filter, Bookmark, ChevronLeft, ChevronRight, ChevronDown, X, Check, Package, Trash2, Receipt, MapPin, FunnelX, FunnelPlus } from 'lucide-react';
 import { useHistoryFilters } from '../../hooks/useHistoryFilters';
 import type { AvailableFilters } from '../../utils/historyFilterUtils';
 import {
@@ -49,6 +49,9 @@ import {
   getItemCategoryGroupEmoji,
 } from '../../utils/categoryTranslations';
 import type { Language } from '../../utils/translations';
+// Story 14.36: Location filter with multi-select
+import { useLocationDisplay } from '../../hooks/useLocations';
+import { CountryFlag } from '../CountryFlag';
 // Story 14.15b: Transaction groups
 import type { TransactionGroup } from '../../types/transactionGroup';
 import { extractGroupEmoji, extractGroupLabel } from '../../types/transactionGroup';
@@ -95,7 +98,7 @@ export function IconFilterBar({
   viewMode: _viewMode, // Story 14.14b Session 5: Reserved for future bidirectional sync
   onViewModeChange,
 }: IconFilterBarProps): React.ReactElement {
-  const { state, dispatch, hasGroupFilter } = useHistoryFilters();
+  const { state, dispatch, hasGroupFilter, hasLocationFilter } = useHistoryFilters();
   const [openDropdown, setOpenDropdown] = useState<DropdownType>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -127,7 +130,10 @@ export function IconFilterBar({
 
   // Check if filters are active
   const hasTemporalFilter = state.temporal.level !== 'all';
-  const hasCategoryFilter = state.category.level !== 'all';
+  // Story 14.13a: Also check drillDownPath for category filter active state
+  const hasCategoryFilter = state.category.level !== 'all' || Boolean(state.category.drillDownPath);
+  // Story 14.36 Enhancement: Combined filter state for Funnel icon (category OR location)
+  const hasCategoryOrLocationFilter = hasCategoryFilter || hasLocationFilter;
 
   return (
     <div ref={containerRef} className="flex items-center gap-2 relative">
@@ -159,13 +165,13 @@ export function IconFilterBar({
         />
       </button>
 
-      {/* Category Filter Button */}
+      {/* Category/Location Filter Button - Story 14.36: FunnelPlus when filter active */}
       <button
         onClick={() => toggleDropdown('category')}
         className={`
           w-9 h-9 rounded-full flex items-center justify-center
           transition-all duration-150
-          ${hasCategoryFilter
+          ${hasCategoryOrLocationFilter
             ? 'bg-[var(--primary-light)]'
             : 'bg-[var(--bg-secondary)]'
           }
@@ -176,15 +182,19 @@ export function IconFilterBar({
         aria-label={t('categoryFilter')}
         aria-expanded={openDropdown === 'category'}
       >
-        <Tag
-          size={20}
-          strokeWidth={1.8}
-          style={{
-            color: hasCategoryFilter
-              ? 'var(--primary)'
-              : 'var(--text-secondary)'
-          }}
-        />
+        {hasCategoryOrLocationFilter ? (
+          <FunnelPlus
+            size={20}
+            strokeWidth={1.8}
+            style={{ color: 'var(--primary)' }}
+          />
+        ) : (
+          <Filter
+            size={20}
+            strokeWidth={1.8}
+            style={{ color: 'var(--text-secondary)' }}
+          />
+        )}
       </button>
 
       {/* Custom Groups Button (Story 14.15b) */}
@@ -204,7 +214,7 @@ export function IconFilterBar({
         aria-label={t('customGroups')}
         aria-expanded={openDropdown === 'custom'}
       >
-        <Layers
+        <Bookmark
           size={20}
           strokeWidth={1.8}
           style={{
@@ -226,16 +236,18 @@ export function IconFilterBar({
         />
       )}
 
-      {/* Category Dropdown */}
+      {/* Category Dropdown - Story 14.36 Enhancement: Now includes Lugar tab */}
       {openDropdown === 'category' && (
         <CategoryFilterDropdownMenu
           state={state.category}
+          locationState={state.location}
           dispatch={dispatch}
           availableFilters={availableFilters}
           t={t}
           locale={locale}
           onClose={() => setOpenDropdown(null)}
           onViewModeChange={onViewModeChange}
+          hasLocationFilter={hasLocationFilter}
         />
       )}
 
@@ -252,6 +264,7 @@ export function IconFilterBar({
           onDeleteGroup={onDeleteGroup}
         />
       )}
+
     </div>
   );
 }
@@ -673,7 +686,27 @@ function TimeSliderRow({
 // ============================================================================
 
 interface CategoryFilterDropdownMenuProps {
-  state: { level: string; category?: string; group?: string; selectedCategories?: string[]; selectedItems?: string[] };
+  state: {
+    level: string;
+    category?: string;
+    group?: string;
+    selectedCategories?: string[];
+    selectedItems?: string[];
+    /** Story 14.13 Session 15: Include drillDownPath for navigation filter sync */
+    drillDownPath?: {
+      storeGroup?: string;
+      storeCategory?: string;
+      itemGroup?: string;
+      itemCategory?: string;
+      subcategory?: string;
+    };
+  };
+  /** Story 14.36 Enhancement: Location filter state for integrated "Lugar" tab */
+  locationState?: {
+    country?: string;
+    city?: string;
+    selectedCities?: string;
+  };
   dispatch: (action: any) => void;
   availableFilters: AvailableFilters;
   t: (key: string) => string;
@@ -681,22 +714,29 @@ interface CategoryFilterDropdownMenuProps {
   locale?: string;
   /** Story 14.14b Session 5: Callback when view mode should change */
   onViewModeChange?: (mode: ViewMode) => void;
+  /** Story 14.36 Enhancement: Whether location filter is currently active */
+  hasLocationFilter?: boolean;
 }
 
 function CategoryFilterDropdownMenu({
   state,
+  locationState,
   dispatch,
-  availableFilters: _availableFilters, // Still in props for backwards compat, but using group helpers now
+  availableFilters, // Now used for location data as well
   t,
   onClose,
   locale = 'es',
   onViewModeChange,
+  hasLocationFilter = false,
 }: CategoryFilterDropdownMenuProps) {
   // Language for translations
   const lang: Language = locale === 'es' ? 'es' : 'en';
 
-  // Tab state: 0 = Transactions, 1 = Items
-  const [activeTab, setActiveTab] = useState<0 | 1>(0);
+  // Story 14.36 Enhancement: Location display hook for localized names
+  const { getCountryName, getCityName } = useLocationDisplay(lang);
+
+  // Story 14.36 Enhancement: Tab state: 0 = Compras, 1 = Productos, 2 = Lugar
+  const [activeTab, setActiveTab] = useState<0 | 1 | 2>(0);
 
   // ============================================================================
   // 3-State Behavior (like time filter)
@@ -706,19 +746,49 @@ function CategoryFilterDropdownMenu({
   // ============================================================================
 
   // Committed state from context (what's actually applied)
+  // Story 14.13a: Also check drillDownPath for multi-dimension filtering
+  // Story 14.13 Session 15: Extract drillDownPath fields as explicit dependencies for proper useMemo tracking
+  const drillDownPath = state.drillDownPath;
+  const drillStoreCategory = drillDownPath?.storeCategory;
+  const drillStoreGroup = drillDownPath?.storeGroup;
+  const drillItemCategory = drillDownPath?.itemCategory;
+  const drillItemGroup = drillDownPath?.itemGroup;
+
   const committedTransactions = useMemo(() => {
+    // First check drillDownPath for store category
+    if (drillStoreCategory) {
+      return new Set([drillStoreCategory]);
+    }
+    // Check drillDownPath for store group - expand to all categories in the group
+    if (drillStoreGroup) {
+      const expandedCategories = expandStoreCategoryGroup(drillStoreGroup as StoreCategoryGroup);
+      return new Set(expandedCategories);
+    }
+    // Fallback to legacy category field
     if (state.level === 'category' && state.category) {
       return new Set(state.category.split(',').map(c => c.trim()));
     }
     return new Set<string>();
-  }, [state.level, state.category]);
+  }, [state.level, state.category, drillStoreCategory, drillStoreGroup]);
 
   const committedItems = useMemo(() => {
+    // Story 14.13a: itemCategory takes priority over itemGroup (more specific)
+    // When user drills from group to specific category, both may be set
+    if (drillItemCategory) {
+      return new Set([drillItemCategory]);
+    }
+    if (drillItemGroup) {
+      // Expand the group to its constituent item categories
+      // This ensures the UI shows all categories in the group as selected
+      const expandedCategories = expandItemCategoryGroup(drillItemGroup as ItemCategoryGroup);
+      return new Set(expandedCategories);
+    }
+    // Fallback to legacy group field
     if (state.level === 'group' && state.group) {
       return new Set(state.group.split(',').map(g => g.trim()));
     }
     return new Set<string>();
-  }, [state.level, state.group]);
+  }, [state.level, state.group, drillItemCategory, drillItemGroup]);
 
   // Pending state - local selections not yet applied
   const [pendingTransactions, setPendingTransactions] = useState<Set<string>>(
@@ -727,6 +797,81 @@ function CategoryFilterDropdownMenu({
   const [pendingItems, setPendingItems] = useState<Set<string>>(
     () => new Set(committedItems)
   );
+
+  // Story 14.13a: Sync pending state when committed state changes
+  // This handles the case when filters change from navigation (e.g., drill-down)
+  // Convert Set to sorted string for stable comparison in dependency array
+  const committedTransactionsKey = useMemo(
+    () => Array.from(committedTransactions).sort().join(','),
+    [committedTransactions]
+  );
+  const committedItemsKey = useMemo(
+    () => Array.from(committedItems).sort().join(','),
+    [committedItems]
+  );
+
+  React.useEffect(() => {
+    setPendingTransactions(new Set(committedTransactions));
+  }, [committedTransactionsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  React.useEffect(() => {
+    setPendingItems(new Set(committedItems));
+  }, [committedItemsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ============================================================================
+  // Story 14.36 Enhancement: Location state management (same pattern as above)
+  // ============================================================================
+
+  // Get country for a city (reverse lookup)
+  const cityToCountry = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const country of availableFilters.countries) {
+      const cities = availableFilters.citiesByCountry[country] || [];
+      for (const city of cities) {
+        map.set(city, country);
+      }
+    }
+    return map;
+  }, [availableFilters.countries, availableFilters.citiesByCountry]);
+
+  // Committed location state (what's actually applied)
+  const committedLocations = useMemo(() => {
+    if (locationState?.selectedCities) {
+      return new Set(locationState.selectedCities.split(',').map(c => c.trim()).filter(Boolean));
+    }
+    if (locationState?.city) {
+      return new Set([locationState.city]);
+    }
+    if (locationState?.country && !locationState.city) {
+      const countryCities = availableFilters.citiesByCountry[locationState.country] || [];
+      return new Set(countryCities);
+    }
+    return new Set<string>();
+  }, [locationState?.selectedCities, locationState?.city, locationState?.country, availableFilters.citiesByCountry]);
+
+  // Pending location state
+  const [pendingLocations, setPendingLocations] = useState<Set<string>>(
+    () => new Set(committedLocations)
+  );
+
+  // Track expanded countries for location tab
+  const [expandedCountries, setExpandedCountries] = useState<Set<string>>(() => {
+    return new Set(
+      availableFilters.countries.filter(
+        country => (availableFilters.citiesByCountry[country]?.length || 0) > 0
+      )
+    );
+  });
+
+  // Sync pending locations when committed state changes
+  const committedLocationsKey = useMemo(
+    () => Array.from(committedLocations).sort().join(','),
+    [committedLocations]
+  );
+
+  React.useEffect(() => {
+    setPendingLocations(new Set(committedLocations));
+  }, [committedLocationsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Check if there are pending changes (different from committed)
   const hasPendingTransactionChanges = useMemo(() => {
@@ -744,6 +889,15 @@ function CategoryFilterDropdownMenu({
     }
     return false;
   }, [pendingItems, committedItems]);
+
+  // Story 14.36 Enhancement: Check pending location changes
+  const hasPendingLocationChanges = useMemo(() => {
+    if (pendingLocations.size !== committedLocations.size) return true;
+    for (const loc of pendingLocations) {
+      if (!committedLocations.has(loc)) return true;
+    }
+    return false;
+  }, [pendingLocations, committedLocations]);
 
   // Toggle transaction category selection (pending state only - no dispatch yet)
   const handleTransactionToggle = (category: string) => {
@@ -771,26 +925,109 @@ function CategoryFilterDropdownMenu({
     });
   };
 
+  // Story 14.36 Enhancement: Toggle city selection (pending state only)
+  const handleCityToggle = (city: string) => {
+    setPendingLocations(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(city)) {
+        newSet.delete(city);
+      } else {
+        newSet.add(city);
+      }
+      return newSet;
+    });
+  };
+
+  // Story 14.36 Enhancement: Toggle all cities in a country
+  const handleCountryToggle = (country: string) => {
+    const countryCities = availableFilters.citiesByCountry[country] || [];
+    setPendingLocations(prev => {
+      const newSet = new Set(prev);
+      const allSelected = countryCities.every(city => newSet.has(city));
+      if (allSelected) {
+        // Deselect all cities in this country
+        countryCities.forEach(city => newSet.delete(city));
+      } else {
+        // Select all cities in this country
+        countryCities.forEach(city => newSet.add(city));
+      }
+      return newSet;
+    });
+  };
+
+  // Story 14.36 Enhancement: Get country selection state
+  const getCountrySelectionState = (country: string): 'all' | 'some' | 'none' => {
+    const countryCities = availableFilters.citiesByCountry[country] || [];
+    if (countryCities.length === 0) return 'none';
+    const selectedInCountry = countryCities.filter(city => pendingLocations.has(city));
+    if (selectedInCountry.length === 0) return 'none';
+    if (selectedInCountry.length === countryCities.length) return 'all';
+    return 'some';
+  };
+
+  // Story 14.36 Enhancement: Toggle country expansion
+  const toggleCountryExpansion = (country: string) => {
+    setExpandedCountries(prev => {
+      const next = new Set(prev);
+      if (next.has(country)) {
+        next.delete(country);
+      } else {
+        next.add(country);
+      }
+      return next;
+    });
+  };
+
   // Apply transaction filter - called when clicking "Transacciones" tab name
   // Story 14.14b Session 5: Sync view mode when applying transaction filter
+  // Story 14.13b: Preserve item filters when applying transaction filter (AC #4)
+  // Story 14.13b-fix: Also include PENDING item selections, not just committed ones
   const applyTransactionFilter = () => {
-    if (pendingTransactions.size === 0) {
+    // Get item filter to preserve - check PENDING items first (for manual multi-tab selection),
+    // then fall back to committed state (from drill-down or previous application)
+    const pendingItemCategory = pendingItems.size > 0
+      ? (pendingItems.size === 1
+          ? Array.from(pendingItems)[0]
+          : Array.from(pendingItems).join(','))
+      : null;
+    const existingItemGroup = pendingItemCategory ||
+      drillDownPath?.itemGroup || drillDownPath?.itemCategory ||
+      (state.level === 'group' ? state.group : undefined);
+
+    if (pendingTransactions.size === 0 && !existingItemGroup) {
+      // No transaction filter AND no item filter → clear all
       dispatch({ type: 'CLEAR_CATEGORY' });
-      // When clearing, switch to store-categories (default for transactions)
       onViewModeChange?.('store-categories');
-    } else if (pendingTransactions.size === 1) {
+    } else if (pendingTransactions.size === 0 && existingItemGroup) {
+      // Clearing transaction filter but keeping item filter
       dispatch({
         type: 'SET_CATEGORY_FILTER',
-        payload: { level: 'category', category: Array.from(pendingTransactions)[0] }
+        payload: {
+          level: 'group',
+          group: existingItemGroup,
+          drillDownPath: { itemCategory: existingItemGroup }
+        }
       });
-      // Single category selected → store-categories mode
       onViewModeChange?.('store-categories');
     } else {
+      // Setting transaction filter - preserve any existing item filter
+      const storeCategory = pendingTransactions.size === 1
+        ? Array.from(pendingTransactions)[0]
+        : Array.from(pendingTransactions).join(',');
+
+      const newDrillDownPath: Record<string, string> = { storeCategory };
+      if (existingItemGroup) {
+        newDrillDownPath.itemCategory = existingItemGroup;
+      }
+
       dispatch({
         type: 'SET_CATEGORY_FILTER',
-        payload: { level: 'category', category: Array.from(pendingTransactions).join(',') }
+        payload: {
+          level: 'category',
+          category: storeCategory,
+          drillDownPath: Object.keys(newDrillDownPath).length > 0 ? newDrillDownPath : undefined
+        }
       });
-      // Multiple categories selected → store-categories mode
       onViewModeChange?.('store-categories');
     }
     onClose();
@@ -798,179 +1035,303 @@ function CategoryFilterDropdownMenu({
 
   // Apply item filter - called when clicking "Ítems" tab name
   // Story 14.14b Session 5: Sync view mode when applying item filter
+  // Story 14.13b: Preserve transaction filters when applying item filter (AC #4)
+  // Story 14.13b-fix: Also include PENDING transaction selections, not just committed ones
   const applyItemFilter = () => {
-    if (pendingItems.size === 0) {
+    // Get store filter to preserve - check PENDING transactions first (for manual multi-tab selection),
+    // then fall back to committed state (from drill-down or previous application)
+    const pendingStoreCategory = pendingTransactions.size > 0
+      ? (pendingTransactions.size === 1
+          ? Array.from(pendingTransactions)[0]
+          : Array.from(pendingTransactions).join(','))
+      : null;
+    const existingStoreCategory = pendingStoreCategory ||
+      drillDownPath?.storeCategory ||
+      (state.level === 'category' ? state.category : undefined);
+
+    if (pendingItems.size === 0 && !existingStoreCategory) {
+      // No item filter AND no store filter → clear all
       dispatch({ type: 'CLEAR_CATEGORY' });
-      // When clearing, switch to item-categories (default for items)
       onViewModeChange?.('item-categories');
-    } else if (pendingItems.size === 1) {
+    } else if (pendingItems.size === 0 && existingStoreCategory) {
+      // Clearing item filter but keeping store filter
       dispatch({
         type: 'SET_CATEGORY_FILTER',
-        payload: { level: 'group', group: Array.from(pendingItems)[0] }
+        payload: {
+          level: 'category',
+          category: existingStoreCategory,
+          drillDownPath: { storeCategory: existingStoreCategory }
+        }
       });
-      // Single item category selected → item-categories mode
       onViewModeChange?.('item-categories');
     } else {
+      // Setting item filter - preserve any existing store filter
+      const itemCategory = pendingItems.size === 1
+        ? Array.from(pendingItems)[0]
+        : Array.from(pendingItems).join(',');
+
+      const newDrillDownPath: Record<string, string> = { itemCategory };
+      if (existingStoreCategory) {
+        newDrillDownPath.storeCategory = existingStoreCategory;
+      }
+
       dispatch({
         type: 'SET_CATEGORY_FILTER',
-        payload: { level: 'group', group: Array.from(pendingItems).join(',') }
+        payload: {
+          level: 'group',
+          group: itemCategory,
+          drillDownPath: Object.keys(newDrillDownPath).length > 0 ? newDrillDownPath : undefined
+        }
       });
-      // Multiple item categories selected → item-categories mode
       onViewModeChange?.('item-categories');
     }
     onClose();
   };
 
-  // Toggle all = clear pending selections and filter
-  const toggleAll = () => {
-    setPendingTransactions(new Set());
-    setPendingItems(new Set());
-    dispatch({ type: 'CLEAR_CATEGORY' });
+  // Story 14.36 Enhancement: Apply location filter - called when clicking "Lugar" tab name
+  const applyLocationFilter = () => {
+    if (pendingLocations.size === 0) {
+      dispatch({ type: 'CLEAR_LOCATION' });
+    } else {
+      // Determine primary country for display
+      const cityArray = Array.from(pendingLocations);
+      const countries = new Set(cityArray.map(c => cityToCountry.get(c)).filter(Boolean));
+      const primaryCountry = countries.size === 1
+        ? Array.from(countries)[0]
+        : (cityArray.length > 0 ? cityToCountry.get(cityArray[0]) : undefined);
+
+      dispatch({
+        type: 'SET_LOCATION_FILTER',
+        payload: {
+          country: primaryCountry,
+          selectedCities: cityArray.join(','),
+        }
+      });
+    }
+    onClose();
   };
 
   const clearFilter = () => {
     setPendingTransactions(new Set());
     setPendingItems(new Set());
+    setPendingLocations(new Set());
     dispatch({ type: 'CLEAR_CATEGORY' });
+    dispatch({ type: 'CLEAR_LOCATION' });
     onClose();
   };
 
-  // Check if all transactions/items are "selected" (no filter = show all)
-  const noFilterActive = state.level === 'all' && pendingTransactions.size === 0 && pendingItems.size === 0;
-  const hasFilter = committedTransactions.size > 0 || committedItems.size > 0;
+  // Check if any filter is active (for showing clear button)
+  const hasFilter = committedTransactions.size > 0 || committedItems.size > 0 || committedLocations.size > 0;
 
   // Determine visual states for tabs
-  const isTransactionsActive = state.level === 'category' && committedTransactions.size > 0;
-  const isItemsActive = state.level === 'group' && committedItems.size > 0;
+  // Story 14.13a: Also check drillDownPath for active state
+  // Story 14.13 Session 15: Use extracted drillDownPath variables for consistency
+  const isTransactionsActive = (state.level === 'category' && committedTransactions.size > 0) ||
+    Boolean(drillStoreCategory || drillStoreGroup);
+  const isItemsActive = (state.level === 'group' && committedItems.size > 0) ||
+    Boolean(drillItemGroup || drillItemCategory);
+  // Story 14.36 Enhancement: Location tab active state
+  const isLocationActive = hasLocationFilter || committedLocations.size > 0;
   const isTransactionsPending = hasPendingTransactionChanges && activeTab === 0;
   const isItemsPending = hasPendingItemChanges && activeTab === 1;
+  const isLocationsPending = hasPendingLocationChanges && activeTab === 2;
+
+  // Story 14.36 Enhancement: Sort countries for display
+  const sortedCountries = useMemo(() => {
+    return [...availableFilters.countries].sort((a, b) =>
+      getCountryName(a).localeCompare(getCountryName(b), lang)
+    );
+  }, [availableFilters.countries, getCountryName, lang]);
 
   return (
     <div
-      className="absolute top-full right-0 mt-2 w-72 rounded-xl overflow-hidden"
+      className="fixed mt-2 rounded-xl overflow-hidden"
       style={{
         zIndex: 70,
         backgroundColor: 'var(--bg-secondary)',
         boxShadow: 'var(--shadow-lg, 0 10px 15px -3px rgba(0,0,0,0.1))',
         border: '1px solid var(--border-light)',
+        // Fixed positioning with margins from viewport edges
+        top: '7rem', // Below header
+        left: '1rem',
+        right: '1rem',
+        maxWidth: '20rem', // Max width for larger screens
+        marginLeft: 'auto', // Push to right on larger screens
       }}
     >
-      {/* Header with tabs and select-all */}
+      {/* Header with tabs - Story 14.36: Full-width tab buttons for easy tapping */}
+      {/* Icon sizes: 22px default (small font), scales with data-font-size="normal" */}
       <div
-        className="px-3 py-2 flex items-center justify-between"
+        className="flex items-stretch"
         style={{ backgroundColor: 'var(--bg-tertiary)' }}
       >
-        <div className="flex items-center gap-2">
-          {/* Transactions Tab - click to switch OR apply if pending */}
-          <button
-            onClick={() => {
-              if (activeTab === 0 && (isTransactionsPending || pendingTransactions.size > 0)) {
-                // Apply filter when clicking on active tab with pending changes
-                applyTransactionFilter();
-              } else {
-                setActiveTab(0);
-              }
-            }}
-            className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all ${isTransactionsPending ? 'pending-pulse' : ''}`}
+        {/* Transactions Tab (Receipt icon) - full height touch target */}
+        <button
+          onClick={() => {
+            if (activeTab === 0 && (isTransactionsPending || pendingTransactions.size > 0)) {
+              applyTransactionFilter();
+            } else {
+              setActiveTab(0);
+            }
+          }}
+          className={`flex-1 py-2.5 flex items-center justify-center transition-all ${isTransactionsPending ? 'pending-pulse' : ''}`}
+          style={{
+            backgroundColor: isTransactionsPending
+              ? 'var(--warning-light, rgba(245, 158, 11, 0.15))'
+              : isTransactionsActive
+                ? 'var(--primary-light)'
+                : activeTab === 0
+                  ? 'var(--bg-secondary)'
+                  : 'transparent',
+            borderBottom: activeTab === 0
+              ? '3px solid var(--primary)'
+              : '3px solid transparent',
+          }}
+          title={isTransactionsPending
+            ? (locale === 'es' ? 'Clic para aplicar filtro' : 'Click to apply filter')
+            : (locale === 'es' ? 'Compras' : 'Purchases')
+          }
+          aria-label={locale === 'es' ? 'Filtrar por compras' : 'Filter by purchases'}
+        >
+          <Receipt
+            className="filter-tab-icon"
+            strokeWidth={1.8}
             style={{
-              backgroundColor: isTransactionsPending
-                ? 'var(--warning-light, rgba(245, 158, 11, 0.15))'
-                : isTransactionsActive
-                  ? 'var(--primary-light)'
-                  : activeTab === 0
-                    ? 'var(--bg-secondary)'
-                    : 'transparent',
               color: isTransactionsPending
                 ? 'var(--warning, #f59e0b)'
-                : isTransactionsActive
+                : isTransactionsActive || activeTab === 0
                   ? 'var(--primary)'
-                  : activeTab === 0
-                    ? 'var(--text-primary)'
-                    : 'var(--text-secondary)',
-              boxShadow: isTransactionsPending
-                ? 'inset 0 0 0 2px var(--warning, #f59e0b)'
-                : 'none',
-            }}
-            title={isTransactionsPending
-              ? (locale === 'es' ? 'Clic para aplicar filtro' : 'Click to apply filter')
-              : undefined
-            }
-          >
-            {locale === 'es' ? 'Compras' : 'Purchases'}
-          </button>
-          {/* Products Tab - click to switch OR apply if pending */}
-          <button
-            onClick={() => {
-              if (activeTab === 1 && (isItemsPending || pendingItems.size > 0)) {
-                // Apply filter when clicking on active tab with pending changes
-                applyItemFilter();
-              } else {
-                setActiveTab(1);
-              }
-            }}
-            className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all ${isItemsPending ? 'pending-pulse' : ''}`}
-            style={{
-              backgroundColor: isItemsPending
-                ? 'var(--warning-light, rgba(245, 158, 11, 0.15))'
-                : isItemsActive
-                  ? 'var(--primary-light)'
-                  : activeTab === 1
-                    ? 'var(--bg-secondary)'
-                    : 'transparent',
-              color: isItemsPending
-                ? 'var(--warning, #f59e0b)'
-                : isItemsActive
-                  ? 'var(--primary)'
-                  : activeTab === 1
-                    ? 'var(--text-primary)'
-                    : 'var(--text-secondary)',
-              boxShadow: isItemsPending
-                ? 'inset 0 0 0 2px var(--warning, #f59e0b)'
-                : 'none',
-            }}
-            title={isItemsPending
-              ? (locale === 'es' ? 'Clic para aplicar filtro' : 'Click to apply filter')
-              : undefined
-            }
-          >
-            {locale === 'es' ? 'Productos' : 'Products'}
-          </button>
-        </div>
-
-        {/* Toggle All - ON when no filter (show all), OFF when filtering */}
-        <button
-          onClick={toggleAll}
-          className="relative inline-flex h-5 w-10 shrink-0 items-center justify-center rounded-full outline-offset-2 focus:outline-2"
-          style={{ outlineColor: 'var(--primary)' }}
-          title={noFilterActive
-            ? (locale === 'es' ? 'Mostrando todo' : 'Showing all')
-            : (locale === 'es' ? 'Mostrar todo' : 'Show all')
-          }
-          role="switch"
-          aria-checked={noFilterActive}
-        >
-          {/* Track */}
-          <span
-            className="absolute mx-auto h-4 w-9 rounded-full transition-colors duration-200 ease-in-out"
-            style={{
-              backgroundColor: noFilterActive ? 'var(--primary)' : 'var(--bg-tertiary)',
-              boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.05)',
-            }}
-          />
-          {/* Knob */}
-          <span
-            className="absolute left-0 size-5 rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out"
-            style={{
-              transform: noFilterActive ? 'translateX(20px)' : 'translateX(0)',
-              border: '1px solid var(--border-light)',
+                  : 'var(--text-secondary)',
             }}
           />
         </button>
+
+        {/* Products Tab (Package icon) - full height touch target */}
+        <button
+          onClick={() => {
+            if (activeTab === 1 && (isItemsPending || pendingItems.size > 0)) {
+              applyItemFilter();
+            } else {
+              setActiveTab(1);
+            }
+          }}
+          className={`flex-1 py-2.5 flex items-center justify-center transition-all ${isItemsPending ? 'pending-pulse' : ''}`}
+          style={{
+            backgroundColor: isItemsPending
+              ? 'var(--warning-light, rgba(245, 158, 11, 0.15))'
+              : isItemsActive
+                ? 'var(--primary-light)'
+                : activeTab === 1
+                  ? 'var(--bg-secondary)'
+                  : 'transparent',
+            borderBottom: activeTab === 1
+              ? '3px solid var(--primary)'
+              : '3px solid transparent',
+          }}
+          title={isItemsPending
+            ? (locale === 'es' ? 'Clic para aplicar filtro' : 'Click to apply filter')
+            : (locale === 'es' ? 'Productos' : 'Products')
+          }
+          aria-label={locale === 'es' ? 'Filtrar por productos' : 'Filter by products'}
+        >
+          <Package
+            className="filter-tab-icon"
+            strokeWidth={1.8}
+            style={{
+              color: isItemsPending
+                ? 'var(--warning, #f59e0b)'
+                : isItemsActive || activeTab === 1
+                  ? 'var(--primary)'
+                  : 'var(--text-secondary)',
+            }}
+          />
+        </button>
+
+        {/* Location Tab (MapPin icon) - full height touch target */}
+        <button
+          onClick={() => {
+            if (activeTab === 2 && (isLocationsPending || pendingLocations.size > 0)) {
+              applyLocationFilter();
+            } else {
+              setActiveTab(2);
+            }
+          }}
+          className={`flex-1 py-2.5 flex items-center justify-center transition-all ${isLocationsPending ? 'pending-pulse' : ''}`}
+          style={{
+            backgroundColor: isLocationsPending
+              ? 'var(--warning-light, rgba(245, 158, 11, 0.15))'
+              : isLocationActive
+                ? 'var(--primary-light)'
+                : activeTab === 2
+                  ? 'var(--bg-secondary)'
+                  : 'transparent',
+            borderBottom: activeTab === 2
+              ? '3px solid var(--primary)'
+              : '3px solid transparent',
+          }}
+          title={isLocationsPending
+            ? (locale === 'es' ? 'Clic para aplicar filtro' : 'Click to apply filter')
+            : (locale === 'es' ? 'Ubicación' : 'Location')
+          }
+          aria-label={locale === 'es' ? 'Filtrar por ubicación' : 'Filter by location'}
+        >
+          <MapPin
+            className="filter-tab-icon"
+            strokeWidth={1.8}
+            style={{
+              color: isLocationsPending
+                ? 'var(--warning, #f59e0b)'
+                : isLocationActive || activeTab === 2
+                  ? 'var(--primary)'
+                  : 'var(--text-secondary)',
+            }}
+          />
+        </button>
+
+        {/* Clear filter button (FunnelX) - only shows when any filter is active */}
+        {hasFilter && (
+          <button
+            onClick={clearFilter}
+            className="px-3 py-2.5 flex items-center justify-center transition-all"
+            style={{
+              backgroundColor: 'var(--bg-secondary)',
+              borderLeft: '1px solid var(--border-light)',
+            }}
+            title={locale === 'es' ? 'Limpiar filtros' : 'Clear filters'}
+            aria-label={locale === 'es' ? 'Limpiar todos los filtros' : 'Clear all filters'}
+          >
+            <FunnelX
+              className="filter-tab-icon-clear"
+              strokeWidth={1.8}
+              style={{ color: 'var(--text-secondary)' }}
+            />
+          </button>
+        )}
       </div>
 
-      {/* Category/Item List */}
+      {/* Icon size styles - responsive to font size setting */}
+      <style>{`
+        .filter-tab-icon {
+          width: 22px;
+          height: 22px;
+        }
+        .filter-tab-icon-clear {
+          width: 20px;
+          height: 20px;
+        }
+        [data-font-size="normal"] .filter-tab-icon {
+          width: 26px;
+          height: 26px;
+        }
+        [data-font-size="normal"] .filter-tab-icon-clear {
+          width: 24px;
+          height: 24px;
+        }
+      `}</style>
+
+      {/* Category/Item/Location List */}
       <div className="max-h-80 overflow-y-auto p-2 space-y-2">
-        {activeTab === 0 ? (
+        {activeTab === 0 && (
           /* Story 14.15c: Hierarchical Store Categories by Group */
           <StoreGroupedCategoriesSection
             selectedCategories={pendingTransactions}
@@ -993,7 +1354,8 @@ function CategoryFilterDropdownMenu({
             lang={lang}
             locale={locale}
           />
-        ) : (
+        )}
+        {activeTab === 1 && (
           /* Story 14.15c: Hierarchical Item Categories by Group */
           <ItemGroupedCategoriesSection
             selectedCategories={pendingItems}
@@ -1017,27 +1379,139 @@ function CategoryFilterDropdownMenu({
             locale={locale}
           />
         )}
+        {activeTab === 2 && (
+          /* Story 14.36 Enhancement: Location selection with Country→City hierarchy */
+          <div className="space-y-1">
+            {sortedCountries.length === 0 ? (
+              <div className="px-4 py-6 text-center text-sm" style={{ color: 'var(--text-tertiary)' }}>
+                {t('noLocationData') || (lang === 'es' ? 'Sin datos de ubicación' : 'No location data')}
+              </div>
+            ) : (
+              sortedCountries.map(country => {
+                const cities = availableFilters.citiesByCountry[country] || [];
+                const isExpanded = expandedCountries.has(country);
+                const selectionState = getCountrySelectionState(country);
+                const hasCities = cities.length > 0;
+
+                return (
+                  <div key={country} className="rounded-lg overflow-hidden">
+                    {/* Country Row */}
+                    <div
+                      className="flex items-center gap-2 p-2.5 rounded-lg cursor-pointer transition-colors hover:bg-[var(--bg-tertiary)]"
+                      onClick={() => hasCities ? toggleCountryExpansion(country) : handleCountryToggle(country)}
+                    >
+                      {/* Expand/Collapse chevron (only if has cities) */}
+                      {hasCities ? (
+                        <ChevronDown
+                          size={16}
+                          className={`transition-transform ${isExpanded ? '' : '-rotate-90'}`}
+                          style={{ color: 'var(--text-tertiary)' }}
+                        />
+                      ) : (
+                        <span className="w-4" />
+                      )}
+
+                      {/* Country flag and name */}
+                      <span
+                        className="flex-1 text-sm font-medium flex items-center gap-1.5"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        <CountryFlag country={country} size="small" />
+                        {getCountryName(country)}
+                      </span>
+
+                      {/* City count badge */}
+                      {hasCities && (
+                        <span
+                          className="px-1.5 py-0.5 rounded text-xs font-medium"
+                          style={{
+                            backgroundColor: 'var(--bg-tertiary)',
+                            color: 'var(--text-tertiary)',
+                          }}
+                        >
+                          {cities.length}
+                        </span>
+                      )}
+
+                      {/* Country checkbox - full/partial/empty */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCountryToggle(country);
+                        }}
+                        className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-colors"
+                        style={{
+                          backgroundColor: selectionState === 'all'
+                            ? 'var(--primary)'
+                            : selectionState === 'some'
+                              ? 'var(--warning, #f59e0b)'
+                              : 'transparent',
+                          border: selectionState !== 'none'
+                            ? 'none'
+                            : '2px solid var(--border-medium)',
+                        }}
+                        aria-label={lang === 'es'
+                          ? `Seleccionar todas las ciudades de ${getCountryName(country)}`
+                          : `Select all cities in ${getCountryName(country)}`
+                        }
+                      >
+                        {selectionState !== 'none' && (
+                          <Check size={12} strokeWidth={3} color="white" />
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Cities (expanded) */}
+                    {isExpanded && hasCities && (
+                      <div className="ml-6 pl-2 border-l space-y-0.5" style={{ borderColor: 'var(--border-light)' }}>
+                        {cities
+                          .sort((a, b) => getCityName(a).localeCompare(getCityName(b), lang))
+                          .map(city => {
+                            const isSelected = pendingLocations.has(city);
+                            return (
+                              <button
+                                key={city}
+                                onClick={() => handleCityToggle(city)}
+                                className="w-full flex items-center gap-2 p-2 rounded-lg text-left transition-colors hover:bg-[var(--bg-tertiary)]"
+                              >
+                                {/* City checkbox */}
+                                <span
+                                  className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-colors"
+                                  style={{
+                                    backgroundColor: isSelected ? 'var(--primary)' : 'transparent',
+                                    border: isSelected ? 'none' : '2px solid var(--border-medium)',
+                                  }}
+                                >
+                                  {isSelected && (
+                                    <Check size={10} strokeWidth={3} color="white" />
+                                  )}
+                                </span>
+
+                                {/* City name */}
+                                <span
+                                  className="text-sm"
+                                  style={{
+                                    color: isSelected ? 'var(--primary)' : 'var(--text-secondary)',
+                                    fontWeight: isSelected ? 500 : 400,
+                                  }}
+                                >
+                                  {getCityName(city)}
+                                </span>
+                              </button>
+                            );
+                          })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Clear Button - only show when a filter is active */}
-      {hasFilter && (
-        <div className="p-2 border-t" style={{ borderColor: 'var(--border-light)' }}>
-          <button
-            onClick={clearFilter}
-            className="w-full py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2"
-            style={{
-              backgroundColor: 'var(--bg-tertiary)',
-              color: 'var(--text-secondary)',
-            }}
-          >
-            <X size={14} />
-            {t('clearFilter') || 'Limpiar filtro'}
-          </button>
-        </div>
-      )}
-
       {/* Pending animation styles - shine sweep effect */}
-      {(isTransactionsPending || isItemsPending) && (
+      {(isTransactionsPending || isItemsPending || isLocationsPending) && (
         <style>{`
           @keyframes pendingShine {
             0% {
@@ -1525,7 +1999,7 @@ function GroupFilterDropdown({
                       }}
                     >
                       <Package size={10} strokeWidth={2} style={{ color: 'var(--text-tertiary)' }} />
-                      <span className="text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>
+                      <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>
                         {group.transactionCount}
                       </span>
                     </span>

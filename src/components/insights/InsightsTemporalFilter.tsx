@@ -275,18 +275,24 @@ export function InsightsTemporalFilter({
     }
   };
 
-  // Styles
+  // Styles - use CSS variables for theme consistency
   const buttonClasses = [
     'flex items-center gap-2 px-3 py-2 rounded-lg',
-    'min-h-11',
+    'min-h-9',
     'text-sm font-medium',
     'transition-all duration-200',
-    isFiltered
-      ? 'bg-accent text-white'
-      : isDark
-        ? 'bg-slate-700 text-slate-200 hover:bg-slate-600'
-        : 'bg-slate-100 text-slate-700 hover:bg-slate-200',
   ].join(' ');
+
+  // Dynamic button styles using CSS variables
+  const buttonStyle: React.CSSProperties = isFiltered
+    ? {
+        backgroundColor: 'var(--primary)',
+        color: 'white',
+      }
+    : {
+        backgroundColor: 'var(--bg-tertiary, #f1f5f9)',
+        color: 'var(--text-secondary)',
+      };
 
   const dropdownClasses = [
     'absolute top-full right-0 mt-1 z-50',
@@ -309,12 +315,26 @@ export function InsightsTemporalFilter({
   ].join(' ');
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative flex items-center" ref={dropdownRef}>
+      {/* Clear Filter Button (when filtered) - positioned before dropdown */}
+      {isFiltered && (
+        <button
+          onClick={handleAllTime}
+          className={`mr-1 p-1.5 rounded-lg transition-colors min-h-9 min-w-9 flex items-center justify-center ${
+            isDark ? 'hover:bg-slate-700 text-red-400' : 'hover:bg-red-50 text-red-500'
+          }`}
+          aria-label={t('clearFilter') || 'Clear filter'}
+        >
+          <X size={16} />
+        </button>
+      )}
+
       {/* Filter Button */}
       <button
         ref={buttonRef}
         onClick={handleToggle}
         className={buttonClasses}
+        style={buttonStyle}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
       >
@@ -322,19 +342,6 @@ export function InsightsTemporalFilter({
         <span>{getFilterLabel()}</span>
         <ChevronDown size={16} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
-
-      {/* Clear Filter Button (when filtered) */}
-      {isFiltered && (
-        <button
-          onClick={handleAllTime}
-          className={`ml-2 p-2 rounded-lg transition-colors min-h-11 min-w-11 flex items-center justify-center ${
-            isDark ? 'hover:bg-slate-700 text-red-400' : 'hover:bg-red-50 text-red-500'
-          }`}
-          aria-label={t('clearFilter') || 'Clear filter'}
-        >
-          <X size={18} />
-        </button>
-      )}
 
       {/* Dropdown */}
       {isOpen && (
