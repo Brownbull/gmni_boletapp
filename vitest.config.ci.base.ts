@@ -99,4 +99,41 @@ export function createGroupConfig(
   return mergeConfig(baseCiConfig, config)
 }
 
+/**
+ * Helper to create a heavy group config (doesn't exclude heavy files)
+ * Story 14.30.8: Heavy tests need their own config without the heavy excludes
+ */
+export function createHeavyGroupConfig(
+  groupName: string,
+  includePatterns: string[]
+): UserConfig {
+  // Create a clean config for heavy tests - explicitly set all properties
+  // to avoid inheriting heavy file excludes from baseCiConfig
+  const heavyBaseConfig: UserConfig = {
+    plugins: baseCiConfig.plugins,
+    define: baseCiConfig.define,
+    test: {
+      globals: true,
+      environment: 'happy-dom',
+      setupFiles: './tests/setup/vitest.setup.ts',
+      name: groupName,
+      include: includePatterns,
+      exclude: [
+        '**/node_modules/**',
+        '**/dist/**',
+      ],
+      // Heavy tests run with single worker to prevent memory issues
+      fileParallelism: false,
+      pool: 'forks',
+      maxWorkers: 1,
+      isolate: true,
+      reporters: ['dot'],
+      watch: false,
+      coverage: baseCiConfig.test?.coverage,
+    },
+  }
+
+  return heavyBaseConfig
+}
+
 export default defineConfig(baseCiConfig)

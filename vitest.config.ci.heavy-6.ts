@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config'
-import { createGroupConfig } from './vitest.config.ci.base'
+import { createHeavyGroupConfig } from './vitest.config.ci.base'
 
 /**
  * Heavy Test Group 6: DrillDownCard + DrillDownGrid
@@ -9,7 +9,7 @@ import { createGroupConfig } from './vitest.config.ci.base'
  * - DrillDownCard.test.tsx (872 lines)
  * - DrillDownGrid.test.tsx (829 lines)
  */
-export default defineConfig(createGroupConfig('heavy-6', [
+export default defineConfig(createHeavyGroupConfig('heavy-6', [
   'tests/unit/analytics/DrillDownCard.test.tsx',
   'tests/unit/analytics/DrillDownGrid.test.tsx',
 ]))

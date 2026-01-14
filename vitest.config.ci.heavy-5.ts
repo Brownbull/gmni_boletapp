@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config'
-import { createGroupConfig } from './vitest.config.ci.base'
+import { createHeavyGroupConfig } from './vitest.config.ci.base'
 
 /**
  * Heavy Test Group 5: csvExport + SessionComplete
@@ -9,7 +9,7 @@ import { createGroupConfig } from './vitest.config.ci.base'
  * - csvExport.test.ts (1061 lines)
  * - SessionComplete.test.tsx (799 lines)
  */
-export default defineConfig(createGroupConfig('heavy-5', [
+export default defineConfig(createHeavyGroupConfig('heavy-5', [
   'tests/unit/csvExport.test.ts',
   'tests/unit/components/session/SessionComplete.test.tsx',
 ]))
