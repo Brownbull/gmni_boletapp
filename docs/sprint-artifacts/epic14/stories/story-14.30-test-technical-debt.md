@@ -295,3 +295,51 @@ Note: Full test suite runs out of memory due to codebase size (3000+ tests). Ind
 | 2026-01-14 | 14.30.6: Heavy test isolation - dedicated jobs for 4 large test files | Dev |
 | 2026-01-14 | 14.30.7: Memory accumulation investigation - root cause identified, OOM in parent process | Dev |
 | 2026-01-14 | 14.30.7: Fixed with fileParallelism: false - tests pass with 2GB heap (was 4.5GB OOM) | Dev |
+| 2026-01-14 | 14.30.7: CI run 21002991025 in progress - monitoring in new session | Dev |
+
+---
+
+## Session Progress: Story 14.30.8 - Explicit Test Groups (2026-01-14)
+
+### Problem Identified
+- Vitest automatic sharding (`--shard=1/5`) was unpredictable
+- test-unit-1 and test-unit-2 consistently timed out (>15 min)
+- Root cause: sharding algorithm doesn't balance by test complexity
+
+### Solution Implemented
+Replaced automatic sharding with explicit module-based test groups:
+
+| Group | Module | Tests | Config File |
+|-------|--------|-------|-------------|
+| test-unit-1 | hooks | 427 | vitest.config.ci.group-hooks.ts |
+| test-unit-2 | services | 274 | vitest.config.ci.group-services.ts |
+| test-unit-3 | utils | 527 | vitest.config.ci.group-utils.ts |
+| test-unit-4 | analytics | 272 | vitest.config.ci.group-analytics.ts |
+| test-unit-5 | views + root | 547 | vitest.config.ci.group-views.ts |
+| test-unit-6 | components/insights | 298 | vitest.config.ci.group-components-insights.ts |
+| test-unit-7 | components/scan | 440 | vitest.config.ci.group-components-scan.ts |
+| test-unit-8 | components/other | 687 | vitest.config.ci.group-components-other.ts |
+
+### Files Created
+- `vitest.config.ci.base.ts` - Shared base config with memory optimizations
+- `vitest.config.ci.group-*.ts` - 8 group-specific configs
+
+### CI Run Status (21004641865)
+- test-unit-1 (hooks): ⏳ in_progress
+- test-unit-2 (services): ✅ success
+- test-unit-3 (utils): ✅ success
+- test-unit-4 (analytics): ✅ success
+- test-unit-5 (views): ❌ failure (investigating)
+- test-unit-6 (components-insights): ✅ success
+- test-unit-7 (components-scan): ✅ success
+- test-unit-8 (components-other): ⏳ in_progress
+- test-unit-heavy-1..4: ✅ all success
+
+### Next Steps
+1. Investigate test-unit-5 failure
+2. Fix any issues and re-run
+3. Monitor for timing improvements
+4. Update story status once all pass
+
+### Key Commits
+- f40b49e: feat(ci): Story 14.30.8 - Explicit test groups for predictable CI

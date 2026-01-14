@@ -79,7 +79,7 @@ Atlas uses **sharded memory** for context efficiency. Knowledge stored in `knowl
 - Architecture conflicts with documented patterns
 - ⚠️ **Bundle size at 2.92 MB** (code splitting needed)
 - Test coverage dropping below 80%
-- ⚠️ **CI shard imbalance**: Shards 1&2 take 13-15 min, need rebalancing (Vitest limitation)
+- ✅ **CI shard imbalance RESOLVED** (Story 14.30.8): Explicit test groups replace automatic sharding
 
 ---
 

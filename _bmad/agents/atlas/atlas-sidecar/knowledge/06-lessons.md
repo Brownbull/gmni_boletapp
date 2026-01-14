@@ -306,6 +306,10 @@
 | **Vitest Memory OOM Fix** | `fileParallelism: false` prevents module cache bloat - reduces memory 10x (2GB vs 4.5GB OOM) |
 | **Vitest 4 Config Migration** | `poolOptions` removed - use top-level `maxWorkers`, `isolate`, `vmMemoryLimit` instead |
 | **Heavy Test Isolation** | Files >800 lines should run in dedicated CI jobs to prevent shard imbalance |
+| **Explicit Test Groups (14.30.8)** | Replace `--shard=1/5` with module-based configs (`vitest.config.ci.group-*.ts`) for predictable CI |
+| **Sharding Unpredictability** | Vitest sharding distributes alphabetically/randomly - doesn't balance by complexity |
+| **Group Config Pattern** | Base config + `createGroupConfig()` helper = clean module-specific test configs |
+| **CI Group Benefits** | Explicit groups: predictable content, easy to identify slow groups, easy to subdivide |
 
 ### Story 14.32 - Usage & Cost Audit (2026-01-13)
 

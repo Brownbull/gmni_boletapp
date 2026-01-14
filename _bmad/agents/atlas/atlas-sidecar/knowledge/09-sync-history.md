@@ -17,7 +17,43 @@
 | 2026-01-11 | Stories 14d.5a-e, 14d.6, 14.13.2, 14.13.3 Sankey in progress |
 | **2026-01-12** | **Epic 14d COMPLETE, 14.17-14.19, 14.33a done, Gen 4 optimization** |
 
-### Latest Session (2026-01-14) - Session 5
+### Latest Session (2026-01-14) - Session 6
+
+**Story 14.30.8 - Explicit Test Groups for Predictable CI**
+
+**Problem Solved:**
+- Vitest automatic sharding (`--shard=1/5`) caused unpredictable test distribution
+- test-unit-1 and test-unit-2 consistently timed out (>15 min)
+- Root cause: sharding algorithm distributes alphabetically, doesn't consider complexity
+
+**Solution Implemented:**
+- Created 8 explicit module-based test group configs
+- `vitest.config.ci.base.ts` - Shared base config
+- `vitest.config.ci.group-*.ts` - Module-specific include patterns
+
+| Group | Module | Tests |
+|-------|--------|-------|
+| test-unit-1 | hooks | 427 |
+| test-unit-2 | services | 274 |
+| test-unit-3 | utils | 527 |
+| test-unit-4 | analytics | 272 |
+| test-unit-5 | views + root | 547 |
+| test-unit-6 | components/insights | 298 |
+| test-unit-7 | components/scan | 440 |
+| test-unit-8 | components/other | 687 |
+
+**CI Run Status (21004641865):**
+- 9/12 jobs passed, test-unit-5 (views) failed
+- Investigation needed for views group failure
+
+**Patterns Added to 06-lessons.md:**
+- Explicit test groups vs automatic sharding
+- createGroupConfig() helper pattern
+- CI group benefits
+
+---
+
+### Session 5 (2026-01-14)
 
 **Story 14.30 Atlas Code Review APPROVED**
 
