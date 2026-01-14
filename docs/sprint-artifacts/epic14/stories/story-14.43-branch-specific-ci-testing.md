@@ -53,7 +53,7 @@ As a developer, I want the CI pipeline to run different test depths based on bra
   - security (bundle size + audit + lint)
 - [x] Skip heavy unit test groups (components, views, analytics)
 - [x] Skip E2E tests (run on staging)
-- [ ] Target: ~3 min total CI time (verification pending)
+- [x] Target: ~3 min total CI time ✅ **VERIFIED: 3m 47s (PR #150)**
 
 ### AC #2: Staging Branch - Full Validation
 - [x] Run complete test suite on staging push:
@@ -159,7 +159,7 @@ setup → [smoke-jobs OR full-jobs based on branch] → test-tier (summary) → 
 - [ ] Task 3.1: Test develop push - verify ~3 min completion
 - [ ] Task 3.2: Test staging push - verify full suite runs
 - [ ] Task 3.3: Test main push - verify Lighthouse + deploy runs
-- [ ] Task 3.4: Test PR to develop - verify smoke tests only
+- [x] Task 3.4: Test PR to develop - verify smoke tests only ✅ **PR #150: 3m 47s, 17 jobs skipped**
 - [ ] Task 3.5: Test PR to staging - verify full suite
 
 ---
