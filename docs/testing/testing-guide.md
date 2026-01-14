@@ -227,7 +227,39 @@ describe('DialogComponent', () => {
 
 **Important:** When using fake timers, use `fireEvent` instead of `userEvent` for clicks/interactions. `userEvent` doesn't work well with fake timers.
 
-#### Pitfall 3: Modal Content Hidden Behind Bottom Navigation
+#### Pitfall 3: useMemo Dependencies in useEffect Cause Infinite Loops
+
+**Problem (Story 14.30.8):** Using a `useMemo` result as a `useEffect` dependency can cause infinite loops if the effect calls `setState`:
+
+```typescript
+// ❌ BAD: initialReceipts can trigger infinite loop
+const initialReceipts = useMemo(() =>
+  createReceipts(processingResults), [processingResults]);
+
+const [localReceipts, setLocalReceipts] = useState(initialReceipts);
+
+useEffect(() => {
+  setLocalReceipts(initialReceipts); // Triggers re-render → useMemo re-evaluates → useEffect runs again
+}, [initialReceipts]); // ← Problematic dependency
+```
+
+**Solution:** Use a ref to track when the source data actually changes:
+
+```typescript
+// ✅ GOOD: Track source data reference to prevent spurious syncs
+const prevProcessingResultsRef = useRef(processingResults);
+
+useEffect(() => {
+  if (processingResults !== prevProcessingResultsRef.current) {
+    prevProcessingResultsRef.current = processingResults;
+    setLocalReceipts(initialReceipts);
+  }
+}, [processingResults, initialReceipts]); // Only syncs when actual data changes
+```
+
+**Real-world example:** `useBatchReview` hook had this exact issue. After `updateReceipt()` called `setLocalReceipts()`, the useEffect would overwrite the update with `initialReceipts`, causing an infinite loop.
+
+#### Pitfall 4: Modal Content Hidden Behind Bottom Navigation
 
 **Problem:** Modal dialogs can be cut off by bottom navigation bars on mobile:
 
