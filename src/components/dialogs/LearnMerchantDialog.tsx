@@ -11,9 +11,16 @@
  * @see Story 9.6: Merchant Learning Prompt
  */
 
-import React, { useEffect, useRef, useCallback, useState } from 'react'
+import React, { useEffect, useRef, useCallback, useState, useMemo } from 'react'
 import { X, BookMarked, Trash2 } from 'lucide-react'
 import type { ItemCategory } from '../../types/transaction'
+
+/**
+ * Story 14.30.8: Stable empty array to prevent infinite render loops.
+ * Using `itemNameChanges = []` as a default parameter creates a new array
+ * reference on every render, which triggers the useEffect infinitely.
+ */
+const EMPTY_ITEM_CHANGES: ItemNameChange[] = []
 
 /** v9.7.0: Item name change to be learned */
 export interface ItemNameChange {
@@ -100,7 +107,7 @@ export const LearnMerchantDialog: React.FC<LearnMerchantDialogProps> = ({
   categoryChanged = false,
   originalCategory,
   newCategory,
-  itemNameChanges = [],
+  itemNameChanges = EMPTY_ITEM_CHANGES, // Story 14.30.8: Use stable reference
   onConfirm,
   onClose,
   t,
@@ -261,7 +268,7 @@ export const LearnMerchantDialog: React.FC<LearnMerchantDialogProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 pb-20"
       onClick={handleClose}
       role="presentation"
     >
@@ -269,13 +276,14 @@ export const LearnMerchantDialog: React.FC<LearnMerchantDialogProps> = ({
       <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
 
       {/* Modal with CSS variable styling */}
+      {/* Story 14.30.8: Added max-h and overflow-y-auto to prevent content being hidden behind bottom nav */}
       <div
         ref={modalRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="learn-merchant-modal-title"
         aria-describedby="learn-merchant-modal-description"
-        className="relative w-full max-w-sm rounded-2xl shadow-xl"
+        className="relative w-full max-w-sm max-h-[calc(100vh-6rem)] overflow-y-auto rounded-2xl shadow-xl"
         style={modalStyle}
         onClick={(e) => e.stopPropagation()}
       >
