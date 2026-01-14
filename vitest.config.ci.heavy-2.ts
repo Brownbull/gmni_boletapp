@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config'
-import { createGroupConfig } from './vitest.config.ci.base'
+import { createHeavyGroupConfig } from './vitest.config.ci.base'
 
 /**
  * Heavy Test Group 2: Nav + useBatchProcessing
@@ -9,7 +9,7 @@ import { createGroupConfig } from './vitest.config.ci.base'
  * - Nav.test.tsx (1623 lines)
  * - useBatchProcessing.test.ts (646 lines)
  */
-export default defineConfig(createGroupConfig('heavy-2', [
+export default defineConfig(createHeavyGroupConfig('heavy-2', [
   'tests/unit/components/Nav.test.tsx',
   'tests/unit/hooks/useBatchProcessing.test.ts',
 ]))

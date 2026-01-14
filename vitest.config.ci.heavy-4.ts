@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config'
-import { createGroupConfig } from './vitest.config.ci.base'
+import { createHeavyGroupConfig } from './vitest.config.ci.base'
 
 /**
  * Heavy Test Group 4: insightGenerators + pendingScanStorage
@@ -9,7 +9,7 @@ import { createGroupConfig } from './vitest.config.ci.base'
  * - insightGenerators.test.ts (1432 lines)
  * - pendingScanStorage.test.ts (786 lines)
  */
-export default defineConfig(createGroupConfig('heavy-4', [
+export default defineConfig(createHeavyGroupConfig('heavy-4', [
   'tests/unit/utils/insightGenerators.test.ts',
   'tests/unit/services/pendingScanStorage.test.ts',
 ]))
