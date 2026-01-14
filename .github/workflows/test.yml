@@ -69,19 +69,19 @@ on:
 # Story 14.30.6: Heavy test isolation (4 large files in dedicated jobs)
 #
 # Job dependency graph (Story 14.30.8 - Explicit Test Groups):
-#   gitleaks (parallel) ────────────────────────────────────────────────────┐
-#   setup ─┬─► test-unit-1 (hooks) ─────┬                                   │
-#          ├─► test-unit-2 (services) ──┤                                   │
-#          ├─► test-unit-3 (utils) ─────┤                                   │
-#          ├─► test-unit-4 (analytics) ─┤                                   │
-#          ├─► test-unit-5 (views) ─────┤                                   │
-#          ├─► test-unit-6 (comp-ins) ──┼─► merge-coverage ─► test-unit ─┬─► test ─┴─► deploy
-#          ├─► test-unit-7 (comp-scan) ─┤       (PR only)                │
-#          ├─► test-unit-8 (comp-other)─┤                                │
-#          ├─► test-unit-heavy-1..4 ────┤  (10 heavy files)              │
-#          ├─► test-integration ─────────────────────────────────────────┤
-#          ├─► test-e2e ─────────────────────────────────────────────────┤
-#          ├─► security ─────────────────────────────────────────────────┘
+#   gitleaks (parallel) ─────────────────────────────────────────────────────────┐
+#   setup ─┬─► test-hooks ──────────────────┬                                    │
+#          ├─► test-services ───────────────┤                                    │
+#          ├─► test-utils ──────────────────┤                                    │
+#          ├─► test-analytics ──────────────┤                                    │
+#          ├─► test-views ──────────────────┤                                    │
+#          ├─► test-components-insights ────┼─► merge-coverage ─► test-unit ─┬─► test ─┴─► deploy
+#          ├─► test-components-scan ────────┤       (PR only)                │
+#          ├─► test-components-other ───────┤                                │
+#          ├─► test-unit-heavy-1..4 ────────┤  (10 heavy files)              │
+#          ├─► test-integration ─────────────────────────────────────────────┤
+#          ├─► test-e2e ─────────────────────────────────────────────────────┤
+#          ├─► security ─────────────────────────────────────────────────────┘
 #          └─► lighthouse (main push only, runs in parallel)
 #
 # Key optimizations (v4 - Story 14.30):
@@ -238,13 +238,16 @@ jobs:
   # Each group also collects coverage data for merging (Story 14.30.1)
   #
   # Groups:
-  #   test-unit-1: hooks (25 files, ~427 tests)
-  #   test-unit-2: services (13 files, ~274 tests)
-  #   test-unit-3: utils (23 files, ~527 tests)
-  #   test-unit-4: analytics (12 files, ~272 tests)
-  #   test-unit-5: views + root + misc (16 files, ~547 tests)
+  #   test-hooks: hooks (25 files, ~427 tests)
+  #   test-services: services (13 files, ~274 tests)
+  #   test-utils: utils (23 files, ~527 tests)
+  #   test-analytics: analytics (12 files, ~272 tests)
+  #   test-views: views + root + misc (16 files, ~547 tests)
+  #   test-components-insights: insights components
+  #   test-components-scan: scan components
+  #   test-components-other: remaining components
   # ============================================================================
-  test-unit-1:
+  test-hooks:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -311,15 +314,15 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
           VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
 
-      - name: Upload coverage artifact (shard 1)
+      - name: Upload coverage artifact (hooks)
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage-shard-1
+          name: coverage-hooks
           path: coverage/coverage-final.json
           retention-days: 1
 
-  test-unit-2:
+  test-services:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -386,15 +389,15 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
           VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
 
-      - name: Upload coverage artifact (shard 2)
+      - name: Upload coverage artifact (services)
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage-shard-2
+          name: coverage-services
           path: coverage/coverage-final.json
           retention-days: 1
 
-  test-unit-3:
+  test-utils:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -461,15 +464,15 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
           VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
 
-      - name: Upload coverage artifact (shard 3)
+      - name: Upload coverage artifact (utils)
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage-shard-3
+          name: coverage-utils
           path: coverage/coverage-final.json
           retention-days: 1
 
-  test-unit-4:
+  test-analytics:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -536,15 +539,15 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
           VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
 
-      - name: Upload coverage artifact (shard 4)
+      - name: Upload coverage artifact (analytics)
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage-shard-4
+          name: coverage-analytics
           path: coverage/coverage-final.json
           retention-days: 1
 
-  test-unit-5:
+  test-views:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -611,18 +614,18 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
           VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
 
-      - name: Upload coverage artifact (shard 5)
+      - name: Upload coverage artifact (views)
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage-shard-5
+          name: coverage-views
           path: coverage/coverage-final.json
           retention-days: 1
 
   # ============================================================================
   # TEST-UNIT COMPONENT GROUPS - Components split into 3 groups (Story 14.30.8)
   # ============================================================================
-  test-unit-6:
+  test-components-insights:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -689,15 +692,15 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
           VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
 
-      - name: Upload coverage artifact (shard 6)
+      - name: Upload coverage artifact (components-insights)
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage-shard-6
+          name: coverage-components-insights
           path: coverage/coverage-final.json
           retention-days: 1
 
-  test-unit-7:
+  test-components-scan:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -764,15 +767,15 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
           VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
 
-      - name: Upload coverage artifact (shard 7)
+      - name: Upload coverage artifact (components-scan)
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage-shard-7
+          name: coverage-components-scan
           path: coverage/coverage-final.json
           retention-days: 1
 
-  test-unit-8:
+  test-components-other:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -839,11 +842,11 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
           VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
 
-      - name: Upload coverage artifact (shard 8)
+      - name: Upload coverage artifact (components-other)
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage-shard-8
+          name: coverage-components-other
           path: coverage/coverage-final.json
           retention-days: 1
 
@@ -1172,37 +1175,37 @@ jobs:
   # TEST-UNIT SUMMARY - Aggregates all shard and heavy test results
   # ============================================================================
   test-unit:
-    needs: [test-unit-1, test-unit-2, test-unit-3, test-unit-4, test-unit-5, test-unit-6, test-unit-7, test-unit-8, test-unit-heavy-1, test-unit-heavy-2, test-unit-heavy-3, test-unit-heavy-4]
+    needs: [test-hooks, test-services, test-utils, test-analytics, test-views, test-components-insights, test-components-scan, test-components-other, test-unit-heavy-1, test-unit-heavy-2, test-unit-heavy-3, test-unit-heavy-4]
     runs-on: ubuntu-latest
     if: always()
     steps:
       - name: Check all unit test groups
         run: |
-          if [ "${{ needs.test-unit-1.result }}" != "success" ] || \
-             [ "${{ needs.test-unit-2.result }}" != "success" ] || \
-             [ "${{ needs.test-unit-3.result }}" != "success" ] || \
-             [ "${{ needs.test-unit-4.result }}" != "success" ] || \
-             [ "${{ needs.test-unit-5.result }}" != "success" ] || \
-             [ "${{ needs.test-unit-6.result }}" != "success" ] || \
-             [ "${{ needs.test-unit-7.result }}" != "success" ] || \
-             [ "${{ needs.test-unit-8.result }}" != "success" ] || \
+          if [ "${{ needs.test-hooks.result }}" != "success" ] || \
+             [ "${{ needs.test-services.result }}" != "success" ] || \
+             [ "${{ needs.test-utils.result }}" != "success" ] || \
+             [ "${{ needs.test-analytics.result }}" != "success" ] || \
+             [ "${{ needs.test-views.result }}" != "success" ] || \
+             [ "${{ needs.test-components-insights.result }}" != "success" ] || \
+             [ "${{ needs.test-components-scan.result }}" != "success" ] || \
+             [ "${{ needs.test-components-other.result }}" != "success" ] || \
              [ "${{ needs.test-unit-heavy-1.result }}" != "success" ] || \
              [ "${{ needs.test-unit-heavy-2.result }}" != "success" ] || \
              [ "${{ needs.test-unit-heavy-3.result }}" != "success" ] || \
              [ "${{ needs.test-unit-heavy-4.result }}" != "success" ]; then
             echo "One or more unit test groups failed"
-            echo "Group 1 (hooks):              ${{ needs.test-unit-1.result }}"
-            echo "Group 2 (services):           ${{ needs.test-unit-2.result }}"
-            echo "Group 3 (utils):              ${{ needs.test-unit-3.result }}"
-            echo "Group 4 (analytics):          ${{ needs.test-unit-4.result }}"
-            echo "Group 5 (views):              ${{ needs.test-unit-5.result }}"
-            echo "Group 6 (components-insights): ${{ needs.test-unit-6.result }}"
-            echo "Group 7 (components-scan):    ${{ needs.test-unit-7.result }}"
-            echo "Group 8 (components-other):   ${{ needs.test-unit-8.result }}"
-            echo "Heavy 1:                      ${{ needs.test-unit-heavy-1.result }}"
-            echo "Heavy 2:                      ${{ needs.test-unit-heavy-2.result }}"
-            echo "Heavy 3:                      ${{ needs.test-unit-heavy-3.result }}"
-            echo "Heavy 4:                      ${{ needs.test-unit-heavy-4.result }}"
+            echo "test-hooks:               ${{ needs.test-hooks.result }}"
+            echo "test-services:            ${{ needs.test-services.result }}"
+            echo "test-utils:               ${{ needs.test-utils.result }}"
+            echo "test-analytics:           ${{ needs.test-analytics.result }}"
+            echo "test-views:               ${{ needs.test-views.result }}"
+            echo "test-components-insights: ${{ needs.test-components-insights.result }}"
+            echo "test-components-scan:     ${{ needs.test-components-scan.result }}"
+            echo "test-components-other:    ${{ needs.test-components-other.result }}"
+            echo "test-unit-heavy-1:        ${{ needs.test-unit-heavy-1.result }}"
+            echo "test-unit-heavy-2:        ${{ needs.test-unit-heavy-2.result }}"
+            echo "test-unit-heavy-3:        ${{ needs.test-unit-heavy-3.result }}"
+            echo "test-unit-heavy-4:        ${{ needs.test-unit-heavy-4.result }}"
             exit 1
           fi
           echo "All 12 unit test jobs passed successfully (8 groups + 4 heavy)"
@@ -1213,7 +1216,7 @@ jobs:
   # Now merges coverage-final.json from each shard + heavy jobs - no duplicate test run
   # ============================================================================
   merge-coverage:
-    needs: [test-unit-1, test-unit-2, test-unit-3, test-unit-4, test-unit-5, test-unit-6, test-unit-7, test-unit-8, test-unit-heavy-1, test-unit-heavy-2, test-unit-heavy-3, test-unit-heavy-4]
+    needs: [test-hooks, test-services, test-utils, test-analytics, test-views, test-components-insights, test-components-scan, test-components-other, test-unit-heavy-1, test-unit-heavy-2, test-unit-heavy-3, test-unit-heavy-4]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     # Only run on PRs - coverage report is informational, not a gate
@@ -1265,7 +1268,7 @@ jobs:
           json-final-path: './coverage/coverage-final.json'
           vite-config-path: './vite.config.ts'
           file-coverage-mode: 'all'
-          name: 'Coverage Report (Merged from 5 shards)'
+          name: 'Coverage Report (Merged from 12 test groups)'
 
   # ============================================================================
   # TEST-INTEGRATION JOB - Integration tests (Story 8.9 AC1)
