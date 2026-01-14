@@ -11,7 +11,7 @@
  * @see Story 9.6: Merchant Learning Prompt
  */
 
-import React, { useEffect, useRef, useCallback, useState, useMemo } from 'react'
+import React, { useEffect, useRef, useCallback, useState } from 'react'
 import { X, BookMarked, Trash2 } from 'lucide-react'
 import type { ItemCategory } from '../../types/transaction'
 
