@@ -287,9 +287,9 @@ jobs:
           done
 
       - name: Run unit tests (shard 1/5)
-        run: node --max-old-space-size=4096 node_modules/vitest/vitest.mjs run --config vitest.config.ci.ts --shard=1/5 --coverage
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.ts --shard=1/5 --coverage
         env:
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
           VITE_GEMINI_API_KEY: test-gemini-key
           VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
@@ -362,9 +362,9 @@ jobs:
           done
 
       - name: Run unit tests (shard 2/5)
-        run: node --max-old-space-size=4096 node_modules/vitest/vitest.mjs run --config vitest.config.ci.ts --shard=2/5 --coverage
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.ts --shard=2/5 --coverage
         env:
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
           VITE_GEMINI_API_KEY: test-gemini-key
           VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
@@ -437,9 +437,9 @@ jobs:
           done
 
       - name: Run unit tests (shard 3/5)
-        run: node --max-old-space-size=4096 node_modules/vitest/vitest.mjs run --config vitest.config.ci.ts --shard=3/5 --coverage
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.ts --shard=3/5 --coverage
         env:
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
           VITE_GEMINI_API_KEY: test-gemini-key
           VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
@@ -512,9 +512,9 @@ jobs:
           done
 
       - name: Run unit tests (shard 4/5)
-        run: node --max-old-space-size=4096 node_modules/vitest/vitest.mjs run --config vitest.config.ci.ts --shard=4/5 --coverage
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.ts --shard=4/5 --coverage
         env:
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
           VITE_GEMINI_API_KEY: test-gemini-key
           VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
@@ -587,9 +587,9 @@ jobs:
           done
 
       - name: Run unit tests (shard 5/5)
-        run: node --max-old-space-size=4096 node_modules/vitest/vitest.mjs run --config vitest.config.ci.ts --shard=5/5 --coverage
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.ts --shard=5/5 --coverage
         env:
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
           VITE_GEMINI_API_KEY: test-gemini-key
           VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
@@ -668,12 +668,12 @@ jobs:
 
       - name: Run heavy unit tests (shard 1/4)
         run: |
-          node --max-old-space-size=4096 node_modules/vitest/vitest.mjs run \
+          node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run \
             --config vitest.config.heavy.ts \
             --shard=1/4 \
             --coverage
         env:
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
           VITE_GEMINI_API_KEY: test-gemini-key
           VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
@@ -747,12 +747,12 @@ jobs:
 
       - name: Run heavy unit tests (shard 2/4)
         run: |
-          node --max-old-space-size=4096 node_modules/vitest/vitest.mjs run \
+          node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run \
             --config vitest.config.heavy.ts \
             --shard=2/4 \
             --coverage
         env:
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
           VITE_GEMINI_API_KEY: test-gemini-key
           VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
@@ -826,12 +826,12 @@ jobs:
 
       - name: Run heavy unit tests (shard 3/4)
         run: |
-          node --max-old-space-size=4096 node_modules/vitest/vitest.mjs run \
+          node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run \
             --config vitest.config.heavy.ts \
             --shard=3/4 \
             --coverage
         env:
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
           VITE_GEMINI_API_KEY: test-gemini-key
           VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
@@ -905,12 +905,12 @@ jobs:
 
       - name: Run heavy unit tests (shard 4/4)
         run: |
-          node --max-old-space-size=4096 node_modules/vitest/vitest.mjs run \
+          node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run \
             --config vitest.config.heavy.ts \
             --shard=4/4 \
             --coverage
         env:
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
           VITE_GEMINI_API_KEY: test-gemini-key
           VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
