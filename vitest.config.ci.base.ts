@@ -70,14 +70,30 @@ export const baseCiConfig: UserConfig = {
 
 /**
  * Helper to create a group-specific config
+ * @param groupName - Name for the test group
+ * @param includePatterns - Glob patterns to include
+ * @param additionalExclude - Additional patterns to exclude (on top of heavy files)
  */
-export function createGroupConfig(groupName: string, includePatterns: string[]): UserConfig {
-  return mergeConfig(baseCiConfig, {
+export function createGroupConfig(
+  groupName: string,
+  includePatterns: string[],
+  additionalExclude?: string[]
+): UserConfig {
+  const config: UserConfig = {
     test: {
       name: groupName,
       include: includePatterns,
     },
-  })
+  }
+
+  if (additionalExclude && additionalExclude.length > 0) {
+    config.test!.exclude = [
+      ...baseCiConfig.test!.exclude as string[],
+      ...additionalExclude,
+    ]
+  }
+
+  return mergeConfig(baseCiConfig, config)
 }
 
 export default defineConfig(baseCiConfig)
