@@ -1,5 +1,6 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import pkg from './package.json'
 
 /**
  * Vitest configuration for UNIT tests only
@@ -14,6 +15,10 @@ import react from '@vitejs/plugin-react'
  */
 export default defineConfig({
   plugins: [react()],
+  // Define global constants (same as vite.config.ts)
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   test: {
     globals: true,
     environment: 'happy-dom',
