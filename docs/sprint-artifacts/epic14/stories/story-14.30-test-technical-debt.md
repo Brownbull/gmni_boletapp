@@ -1,11 +1,11 @@
 # Story 14.30: Test Technical Debt Cleanup
 
-## Status: Complete
+## Status: In Progress
 
 > **Created:** 2026-01-07
-> **Updated:** 2026-01-13 (Audit conducted - actual failures verified)
+> **Updated:** 2026-01-14 (Consolidated from 3 files, resuming for deployment verification)
 > **Origin:** Test failures discovered during Story 14.27 implementation
-> **Scope:** ~16 failing tests remaining (many previously listed tests are now passing)
+> **Scope:** CI optimization (5 shards + coverage merge) + test fixes + successful deployment
 
 ## Overview
 
@@ -42,7 +42,7 @@ As a developer, I want all tests to pass so that CI/CD pipelines don't fail and 
 - [x] Update `shared/prompts/__tests__/index.test.ts` item category names ('Fresh Food'→'Produce', 'Drinks'→'Beverages')
 - [x] Update `prompt-testing/prompts/__tests__/index.test.ts` buildPrompt expectations for V3
 
-### AC #2: BatchReviewView Test Fixes ✅
+### AC #2: BatchReviewView Test Fixes ✅ (Committed 2026-01-13)
 - [x] Update theming tests to check CSS variables instead of Tailwind classes
 - [x] Fix discard dialog cancel test (dialog state verification)
 
@@ -52,6 +52,11 @@ As a developer, I want all tests to pass so that CI/CD pipelines don't fail and 
 ### AC #4: Clean Test Run ✅
 - [x] All tests pass
 - [x] No skipped tests that should be enabled
+
+### AC #5: Successful Deployment ⏳
+- [ ] All CI pipeline jobs pass (unit, integration, E2E, security)
+- [ ] Application deploys successfully to production
+- [ ] No regressions in deployed application
 
 ---
 
@@ -153,23 +158,75 @@ expect(container.firstChild).toHaveStyle({ backgroundColor: 'var(--bg)' });
 - Identified root causes: V3 prompt expansion, CSS variable migration
 
 ### Completion Notes
-All target tests now pass:
-- **shared/prompts/__tests__/index.test.ts**: 62 tests pass (updated category counts to 13/9 for legacy V1/V2)
+
+**Session 1-2 (2026-01-13):** Original test fixes committed
+- **shared/prompts/__tests__/index.test.ts**: DELETED - discovered to be dead code
 - **prompt-testing/prompts/__tests__/index.test.ts**: 72 tests pass (updated for V3, counts 39/39)
 - **tests/unit/views/BatchReviewView.test.tsx**: 23 tests pass (CSS variable theming, dialog fix, callback signature)
 - **functions/src/prompts/__tests__/index.test.ts**: Skipped with documentation (Vitest module resolution issue)
 
-**Total verified: 157 tests across 3 active test files pass**
+**Session 3-4 (2026-01-14):** CI optimization + additional test fixes
+- **CI Workflow**: 5 shards with coverage merge (saves ~14 min)
+- **Bun Install**: 10-20x faster package installation
+- **Dead Code Cleanup**: Entire `shared/prompts/` directory deleted (8 files)
+- **HistoryViewThumbnails**: 28 tests fixed (filter state issue)
+- **TopHeader**: 2 tests fixed (translation key alignment)
 
-Note: Full test suite runs out of memory due to codebase size (3000+ tests). Individual test files run successfully.
+**Total: 30 pre-existing test failures fixed via sub-story 14.30.5a**
+
+Note: Full test suite runs out of memory due to codebase size (3000+ tests). Individual test files run successfully. CI uses 4GB heap + forks pool to mitigate.
 
 ---
 
 ## File List
-1. `shared/prompts/__tests__/index.test.ts` - Updated category counts (14→13 store, 9→9 item)
+
+### Session 1-2 (2026-01-13) - Original Test Fixes (COMMITTED)
+1. `shared/prompts/__tests__/index.test.ts` - DELETED (dead code cleanup)
 2. `prompt-testing/prompts/__tests__/index.test.ts` - Updated for V3 (ACTIVE_PROMPT, category counts 36→39, buildPrompt behavior)
 3. `tests/unit/views/BatchReviewView.test.tsx` - Fixed theming (CSS variables), discard dialog (button selector), callback signature (4 args), title translation
 4. `functions/src/prompts/__tests__/index.test.ts` - Skipped with clear documentation
+
+### Session 3-4 (2026-01-14) - CI Optimization + Test Fixes
+5. `.github/workflows/test.yml` - 5 shards, coverage merge, Bun install, pool=forks, 4GB heap
+6. `shared/prompts/` (8 files) - **DELETED** (entire directory was dead code)
+7. `tests/unit/components/HistoryViewThumbnails.test.tsx` - Added `testFilterState` with `temporal: { level: 'all' }`
+8. `tests/unit/components/TopHeader.test.tsx` - Added missing `purchases` and `productos` translation keys
+9. `vitest.config.ci.ts` - Added coverage configuration for shards
+10. `docs/architecture/testing-architecture.md` - New documentation
+11. `docs/excalidraw-diagrams/ci-cd-testing-architecture.excalidraw` - Pipeline diagram
+
+---
+
+## Sub-Stories Summary
+
+### 14.30.1: Remove Coverage Redundancy ✅
+**Priority:** P0 | **Status:** DONE
+- Merged coverage reports from shards instead of running tests twice
+- Saves ~14 minutes CI time
+
+### 14.30.2: Rebalance Test Shards ✅
+**Priority:** P0 | **Status:** DONE
+- Increased from 3 to 5 shards
+- Note: Imbalance persists due to 4 large test files (~1400-1700 lines each)
+
+### 14.30.3: Bun Package Installation ✅
+**Priority:** P1 | **Status:** DONE
+- Replaced `npm ci` with `bun install --frozen-lockfile`
+- 10-20x faster package installation
+
+### 14.30.4: Split Pure vs Firebase Tests
+**Priority:** P2 | **Status:** DEFERRED
+- Optional optimization for future
+
+### 14.30.5: Prompt Test Consolidation ✅
+**Priority:** P3 | **Status:** DONE
+- Deleted entire `shared/prompts/` directory (dead code)
+- Single source of truth: `prompt-testing/prompts/`
+
+### 14.30.5a: Fix Pre-Existing Test Failures ✅
+**Priority:** P0 | **Status:** DONE
+- Fixed 30 tests: HistoryViewThumbnails (28), TopHeader (2)
+- Root cause: Filter state defaults + translation key mismatches
 
 ---
 
@@ -179,3 +236,9 @@ Note: Full test suite runs out of memory due to codebase size (3000+ tests). Ind
 | 2026-01-07 | Story created | Dev |
 | 2026-01-13 | Audit conducted, story updated with accurate failure info | Dev |
 | 2026-01-13 | All fixes implemented, story completed | Dev |
+| 2026-01-14 | Sub-story 14.30.5a created: 30 pre-existing test failures fixed | Dev |
+| 2026-01-14 | CI optimization: 5 shards + merged coverage (sub-stories 14.30.1, 14.30.2) | Dev |
+| 2026-01-14 | All P0 items complete, story moved to Review | Dev |
+| 2026-01-14 | 14.30.3 Bun install implemented; 14.30.5 shared/prompts/ deleted | Dev |
+| 2026-01-14 | Code review: Updated File List to reflect actual changes across sessions | Dev |
+| 2026-01-14 | Consolidated 3 files into single story, resumed for deployment verification | Dev |

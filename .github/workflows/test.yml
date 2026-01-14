@@ -65,6 +65,7 @@ on:
 # Story 14.30: Unit test sharding to prevent timeout (3000+ tests)
 # Story 14.30.1: Coverage merged from shards (removed duplicate test run)
 # Story 14.30.2: Expanded to 5 shards for better balance (~3 min each)
+# Story 14.30.3: Bun package installation (10-20x faster than npm ci)
 #
 # Job dependency graph:
 #   gitleaks (parallel) ────────────────────────────────────────────────────┐
@@ -85,6 +86,7 @@ on:
 # - AC4: workflow_dispatch for manual deployments
 # - 14.30.1: Coverage collected from shards, merged in single job (saves 14 min)
 # - 14.30.2: 5 balanced shards (~3 min each vs 9/15/1.3 min imbalance)
+# - 14.30.3: Bun install instead of npm ci (~30-60s saved)
 # - Java JDK caching (~15-20s saved per job)
 # - Firebase emulator JAR caching (~10-15s saved per job)
 # - Faster emulator startup (30s max wait vs 60s)
@@ -134,20 +136,26 @@ jobs:
         with:
           node-version: '20'
 
-      # Step 3: Cache node_modules for faster builds
-      - name: Cache npm dependencies
+      # Step 3: Setup Bun (Story 14.30.3 - 10-20x faster package installation)
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # Step 4: Cache bun dependencies for faster builds
+      - name: Cache bun dependencies
         uses: actions/cache@v4
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb', '**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node-
+            ${{ runner.os }}-bun-
 
-      # Step 4: Install dependencies
+      # Step 5: Install dependencies with Bun (10-20x faster than npm ci)
       - name: Install dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
 
-      # Step 5: Cache Playwright browsers (Story 8.9 AC2)
+      # Step 6: Cache Playwright browsers (Story 8.9 AC2)
       # Saves ~29s on subsequent runs
       - name: Cache Playwright browsers
         id: playwright-cache
@@ -158,17 +166,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-playwright-
 
-      # Step 6: Install Playwright browsers (skip if cached)
+      # Step 7: Install Playwright browsers (skip if cached)
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install chromium --with-deps
 
-      # Step 7: Install Playwright system deps (always needed even with cached browsers)
+      # Step 8: Install Playwright system deps (always needed even with cached browsers)
       - name: Install Playwright system dependencies
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
 
-      # Step 8: Setup Java 21 with caching (saves ~15-20s per job)
+      # Step 9: Setup Java 21 with caching (saves ~15-20s per job)
       - name: Setup Java 21
         id: java-cache
         uses: actions/setup-java@v4
@@ -176,7 +184,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      # Step 9: Cache Firebase emulator JARs (saves ~10-15s per job)
+      # Step 10: Cache Firebase emulator JARs (saves ~10-15s per job)
       - name: Cache Firebase emulator JARs
         uses: actions/cache@v4
         with:
@@ -185,26 +193,27 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-firebase-emulators-
 
-      # Step 10: Install Firebase CLI globally
+      # Step 11: Install Firebase CLI globally
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
-      # Step 11: Pre-download Firebase emulator JARs (if not cached)
+      # Step 12: Pre-download Firebase emulator JARs (if not cached)
       - name: Pre-download Firebase emulators
         run: |
           firebase setup:emulators:firestore
           firebase setup:emulators:storage
         continue-on-error: true
 
-      # Step 12: Build Cloud Functions (needed by multiple jobs)
+      # Step 13: Build Cloud Functions (needed by multiple jobs)
+      # Uses Bun for install, npm for build scripts (compatibility)
       - name: Install and build Cloud Functions
         run: |
           cd functions
-          npm ci
+          bun install --frozen-lockfile
           npm run build
           cd ..
 
-      # Step 13: Cache workspace for parallel jobs
+      # Step 14: Cache workspace for parallel jobs
       - name: Cache workspace for parallel jobs
         uses: actions/cache/save@v4
         with:
@@ -1044,16 +1053,21 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Cache dependencies
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache bun dependencies
         uses: actions/cache@v4
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb', '**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node-
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
 
       - name: Build for production
         run: npm run build

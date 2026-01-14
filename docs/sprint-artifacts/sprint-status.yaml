@@ -402,7 +402,8 @@ development_status:
   # ============================================================================
   # 71 failing tests from: React Query migration (missing QueryClientProvider),
   # UI refactoring (inline styles vs Tailwind classes), prompt library changes
-  14-30-test-technical-debt: ready-for-dev  # 3 pts - Fix failing tests from 14.23, 14.29, UI refactoring
+  14-30-test-technical-debt: in-progress  # 3 pts - CI optimization done; resuming for deployment verification
+  14-30-5a-fix-preexisting-test-failures: done  # 2 pts - FIXED: 30 tests fixed (HistoryViewThumbnails filter issue, TopHeader translation keys) - VERIFIED 2026-01-14
   14-31-items-history-view: done  # 8 pts - Items view similar to History view for item-level browsing - COMPLETED 2026-01-12
   14-32-usage-cost-audit: review  # 3 pts - Audit Firestore subscriptions, Cloud Functions, and database operations for cost leakage - AUDIT COMPLETE: No issues found
 

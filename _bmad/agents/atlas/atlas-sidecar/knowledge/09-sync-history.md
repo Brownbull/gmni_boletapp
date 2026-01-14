@@ -17,7 +17,70 @@
 | 2026-01-11 | Stories 14d.5a-e, 14d.6, 14.13.2, 14.13.3 Sankey in progress |
 | **2026-01-12** | **Epic 14d COMPLETE, 14.17-14.19, 14.33a done, Gen 4 optimization** |
 
-### Latest Session (2026-01-13)
+### Latest Session (2026-01-14) - Session 5
+
+**Story 14.30 Atlas Code Review APPROVED**
+
+- Story status: review → **done**
+- File List updated to show Session 1-2 vs Session 3-4 changes
+- Added patterns to Section 6: multi-session file lists, Bun+npm hybrid
+- All ACs verified, all tasks complete
+
+---
+
+### Session 4 (2026-01-14)
+
+**Story 14.30.5a COMPLETED - Test Fixes Verified**
+
+**Fixes Applied & Verified:**
+1. `HistoryViewThumbnails.test.tsx` (30 tests now passing):
+   - **Root Cause**: `HistoryFiltersProvider` defaults to current month (2026-01)
+   - **Issue**: Test transactions had dates in January 2024
+   - **Fix**: Added `testFilterState` with `temporal: { level: 'all' }` to bypass date filtering
+
+2. `TopHeader.test.tsx` (28 tests now passing):
+   - **Root Cause**: `ProfileDropdown` uses `t('purchases')` not `t('transactions')`
+   - **Fix**: Added missing `purchases` and `productos` translation keys to mockT
+
+**Story Status Updates:**
+- 14.30.5a: review → done (verified locally)
+- 14.30: in-progress → review (all P0 items complete)
+
+**Memory Updates:**
+- 05-testing.md: Added 14.30.5a fix patterns
+- 06-lessons.md: Added CI coverage, shard scaling, local verification patterns
+
+---
+
+### Session 3 (2026-01-14)
+
+**Story 14.30 Session 3 - CI Optimization Validation**
+
+**Findings:**
+- 5-shard configuration deployed (commit 37e3c37)
+- **Severe shard imbalance discovered**: Shards 1&2 take 13-15 min, shards 3-5 take ~1 min
+- Root cause: 4 large test files (~1400-1700 lines) cluster in early shards
+- **Pre-existing test failures blocking validation**: 30 tests failing on branch (main passes)
+  - `HistoryViewThumbnails.test.tsx` (28 failures)
+  - `TopHeader.test.tsx` (2 failures)
+
+**New Sub-Story Created:** 14.30.5a - Fix Pre-Existing Test Failures (P0 - BLOCKING) → COMPLETED Session 4
+
+**Dead Code Discovery:** `shared/prompts/` is entirely unused:
+```
+prompt-testing/prompts/  →  (prebuild copy)  →  functions/src/prompts/
+     V1, V2, V3                                    Production code
+
+shared/prompts/  ← DEAD CODE (not imported anywhere)
+```
+
+**Memory Updates:**
+- 05-testing.md: Added 5-shard timing, imbalance documentation, CI history
+- 06-lessons.md: Added dead code, Vitest sharding, branch drift patterns
+
+---
+
+### Session (2026-01-13)
 
 **Story Created: 14.42 Version Upgrade & Auto-Update Detection**
 

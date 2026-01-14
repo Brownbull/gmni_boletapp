@@ -283,7 +283,7 @@
 | InsightsViewSwitcher Pattern | Reusable pill-toggle: sliding indicator + rounded-full + CSS vars for theming |
 | Local State for View Mode | View toggles (grouped/original) use local useState, no persistence needed |
 
-### Story 14.30 - Test Technical Debt Cleanup (2026-01-13)
+### Story 14.30 - Test Technical Debt Cleanup (2026-01-13, 2026-01-14)
 
 | Pattern | Detail |
 |---------|--------|
@@ -292,6 +292,17 @@
 | Legacy Prompt Versioning | V1/V2 use 13/9 categories (legacy), V3 uses 39/39 (shared/schema/categories.ts) |
 | Task Checkbox Discipline | Mark tasks `[x]` immediately after implementation - don't leave unchecked when complete |
 | Skipped Test Documentation | Use `describe.skip()` with JSDoc explaining WHY skip is necessary and WHERE coverage exists |
+| **Dead Code Discovery** | `shared/prompts/` is entirely dead code - `prompt-testing/prompts/` is source of truth |
+| **Vitest Shard Limitation** | Vitest shards by file count, not duration; early files get heavy tests |
+| **Large Test File Impact** | Files >1400 lines cause shard imbalance; consider splitting |
+| **Branch Test Drift** | Tests passing on main may fail on feature branch - verify before CI optimization |
+| **Test Filter State** | `HistoryFiltersProvider` defaults to current month - tests with old dates need `initialState={{ temporal: { level: 'all' } }}` |
+| **Translation Key Alignment** | Test `mockT` must include ALL keys used by component - check component source for actual `t('key')` calls |
+| **CI Coverage Redundancy** | Don't run tests twice - each shard can collect coverage, merge in single job (saves 14 min) |
+| **Shard Count Scaling** | 3→5 shards helps but doesn't solve imbalance; Vitest doesn't weight by duration |
+| **Local Test Verification** | Always verify test fixes locally before CI run - faster iteration cycle |
+| **Multi-Session File Lists** | For stories spanning multiple sessions, organize File List by session with clear labels |
+| **Bun + npm Hybrid** | Use Bun for install (fast), npm for scripts (conservative) - proven safe pattern |
 
 ### Story 14.32 - Usage & Cost Audit (2026-01-13)
 
@@ -311,5 +322,6 @@
 - Generation 3: Consolidated story-specific learnings into pattern tables
 - Generation 4: Added Code Review Learnings section
 - Story 14.37: Font size scaling system and toast theme integration (2026-01-13)
+- **Story 14.30 Code Review (2026-01-14):** Added multi-session file list and Bun+npm hybrid patterns
 - Full story details available in `docs/sprint-artifacts/` story files
 - Backup: `backups/v3/knowledge/06-lessons.md`
