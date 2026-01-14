@@ -5,6 +5,7 @@
  * Story 11.3: Animated Item Reveal
  * Story 14.4: Quick Save Path (Animations)
  * Story 14.15: Redesigned to match mockup design system
+ * Story 14d.4b: Migrated to use ScanContext for scan-specific state
  * Epic 11: Quick Save & Scan Flow Optimization
  * Epic 14: Core Implementation
  *
@@ -23,6 +24,11 @@
  * - Story 11.3: Animated item reveal with staggered timing
  * - Story 14.4: Spring animation on save, success checkmark, reduced motion support
  *
+ * Story 14d.4b Migration:
+ * - Uses useScanOptional() to read dialog state from context
+ * - Falls back to props if context not available (backward compatibility)
+ * - Context provides: transaction, confidence via activeDialog.data
+ *
  * @see docs/sprint-artifacts/epic11/story-11.2-quick-save-card.md
  * @see docs/sprint-artifacts/epic11/story-11.3-animated-item-reveal.md
  * @see docs/sprint-artifacts/epic14/stories/story-14.4-quick-save-path.md
@@ -40,27 +46,50 @@ import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { AnimatedItem } from '../AnimatedItem';
 import { DURATION, EASING } from '../animation/constants';
 import type { Language } from '../../utils/translations';
+import { useScanOptional } from '../../contexts/ScanContext';
+import { DIALOG_TYPES } from '../../types/scanStateMachine';
+import { useIsForeignLocation } from '../../hooks/useIsForeignLocation';
+import { useLocationDisplay } from '../../hooks/useLocations';
+
+// Story 14d.6: Import centralized type from scanStateMachine
+import type { QuickSaveDialogData } from '../../types/scanStateMachine';
+// Re-export for backward compatibility
+export type { QuickSaveDialogData };
 
 export interface QuickSaveCardProps {
-  /** Transaction data from scan result */
-  transaction: Transaction;
-  /** AI extraction confidence score (0-1) */
-  confidence: number;
-  /** Callback when user clicks "Guardar" */
-  onSave: () => Promise<void>;
-  /** Callback when user clicks "Editar" */
-  onEdit: () => void;
-  /** Callback when user clicks "Cancelar" */
-  onCancel: () => void;
-  /** Theme for styling ('light' | 'dark') */
+  /** Theme for styling ('light' | 'dark') - required, from app settings */
   theme: 'light' | 'dark';
-  /** Translation function */
+  /** Translation function - required, from app settings */
   t: (key: string) => string;
-  /** Currency format function */
+  /** Currency format function - required, from app settings */
   formatCurrency: (amount: number, currency: string) => string;
-  /** Currency code */
+  /** Currency code - required, from app settings */
   currency: string;
-  /** Whether save is in progress */
+  /** Story 14.15: Language for category translation - required, from app settings */
+  lang?: Language;
+
+  // === Story 14d.4b: Props below are now optional - can be read from ScanContext ===
+
+  /** Transaction data from scan result - optional if using ScanContext */
+  transaction?: Transaction;
+  /** AI extraction confidence score (0-1) - optional if using ScanContext */
+  confidence?: number;
+  /**
+   * Callback when user clicks "Guardar".
+   * Story 14d.6: Now receives dialog data as parameter for context-based dialog handling.
+   */
+  onSave?: (data?: QuickSaveDialogData) => Promise<void>;
+  /**
+   * Callback when user clicks "Editar".
+   * Story 14d.6: Now receives dialog data as parameter for context-based dialog handling.
+   */
+  onEdit?: (data?: QuickSaveDialogData) => void;
+  /**
+   * Callback when user clicks "Cancelar".
+   * Story 14d.6: Now receives dialog data as parameter for context-based dialog handling.
+   */
+  onCancel?: (data?: QuickSaveDialogData) => void;
+  /** Whether save is in progress - optional if using ScanContext */
   isSaving?: boolean;
   /** Story 11.3: Whether to show item list with animation */
   showItems?: boolean;
@@ -70,33 +99,51 @@ export interface QuickSaveCardProps {
   onSaveComplete?: () => void;
   /** Story 14.4: Whether card is entering (for slide-up animation) */
   isEntering?: boolean;
-  /** Story 14.15: Language for category translation */
-  lang?: Language;
+  /** Story 14.35b: User's default country for foreign location detection */
+  userDefaultCountry?: string;
 }
 
 /**
  * QuickSaveCard displays a summary of scanned receipt data with quick action buttons.
  * Redesigned to match the design-system-final.html mockup.
+ *
+ * Story 14d.4b: Uses ScanContext for scan-specific state with prop fallback.
  */
 export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
-  transaction,
-  confidence,
-  onSave,
-  onEdit,
-  onCancel,
+  transaction: transactionProp,
+  confidence: confidenceProp,
+  onSave: onSaveProp,
+  onEdit: onEditProp,
+  onCancel: onCancelProp,
   theme,
   t,
   formatCurrency,
   currency,
-  isSaving = false,
+  isSaving: isSavingProp = false,
   showItems = true,
   maxVisibleItems = 3,
   onSaveComplete,
   isEntering = true,
   lang = 'es',
+  userDefaultCountry,
 }) => {
   const isDark = theme === 'dark';
   const prefersReducedMotion = useReducedMotion();
+
+  // Story 14d.4b: Get scan context for reading dialog state
+  const scanContext = useScanOptional();
+
+  // Story 14d.4b: Derive values from context or fall back to props
+  const contextDialogData = scanContext?.state.activeDialog?.type === DIALOG_TYPES.QUICKSAVE
+    ? (scanContext.state.activeDialog.data as QuickSaveDialogData)
+    : null;
+
+  // Get transaction and confidence from context or props
+  const transaction = contextDialogData?.transaction ?? transactionProp;
+  const confidence = contextDialogData?.confidence ?? confidenceProp ?? 0;
+
+  // isSaving could come from context's phase === 'saving' in future
+  const isSaving = isSavingProp;
 
   // Story 14.4: Animation states (AC #2)
   const [saveAnimating, setSaveAnimating] = useState(false);
@@ -113,16 +160,49 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
     }
   }, [isEntering, prefersReducedMotion]);
 
+  // Story 14d.6: Create handlers that pass dialog data to callbacks
+  const handleEdit = useCallback(() => {
+    // Capture data before resolveDialog clears it
+    const data = contextDialogData ?? undefined;
+
+    if (scanContext?.resolveDialog) {
+      scanContext.resolveDialog(DIALOG_TYPES.QUICKSAVE, { choice: 'edit' });
+    }
+    // Pass data to callback for context-based dialog handling
+    onEditProp?.(data);
+  }, [scanContext, onEditProp, contextDialogData]);
+
+  const handleCancel = useCallback(() => {
+    // Capture data before dismissDialog clears it
+    const data = contextDialogData ?? undefined;
+
+    if (scanContext?.dismissDialog) {
+      scanContext.dismissDialog();
+    }
+    // Pass data to callback for context-based dialog handling
+    onCancelProp?.(data);
+  }, [scanContext, onCancelProp, contextDialogData]);
+
   // Handle save with animation (Story 14.4 AC #2)
   const handleSave = useCallback(async () => {
     if (isSaving || saveAnimating) return;
+
+    // Capture data before resolveDialog clears it
+    const data = contextDialogData ?? undefined;
 
     if (!prefersReducedMotion) {
       setSaveAnimating(true);
     }
 
     try {
-      await onSave();
+      // Story 14d.6: Dispatch to context if available
+      if (scanContext?.resolveDialog) {
+        scanContext.resolveDialog(DIALOG_TYPES.QUICKSAVE, { choice: 'save' });
+      }
+      // Pass data to callback for context-based dialog handling
+      if (onSaveProp) {
+        await onSaveProp(data);
+      }
       setShowSuccess(true);
 
       const successDuration = prefersReducedMotion ? 0 : DURATION.SLOWER;
@@ -134,22 +214,40 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
     } finally {
       setSaveAnimating(false);
     }
-  }, [onSave, isSaving, saveAnimating, prefersReducedMotion, onSaveComplete]);
+  }, [onSaveProp, isSaving, saveAnimating, prefersReducedMotion, onSaveComplete, scanContext, contextDialogData]);
 
-  // Get display values
-  const merchantName = transaction.alias || transaction.merchant || t('unknown');
-  const total = transaction.total || 0;
-  const items = transaction.items || [];
+  // Get display values (safe even if transaction is undefined)
+  const merchantName = transaction?.alias || transaction?.merchant || t('unknown');
+  const total = transaction?.total || 0;
+  const items = transaction?.items || [];
   const itemCount = items.length;
-  const category = transaction.category || 'Other';
+  const category = transaction?.category || 'Other';
+  // Story 14.34: Use transaction's detected currency if available, otherwise fall back to user's default
+  // This ensures foreign currencies (USD, EUR, GBP) are formatted correctly with cents/decimals
+  const displayCurrency = transaction?.currency || currency;
   const emoji = getCategoryEmoji(category as StoreCategory);
   const categoryColors = getCategoryPillColors(category);
 
-  // Location and date info - use 'as any' for location since it may not be in all Transaction types
-  const txn = transaction as { location?: { city?: string; country?: string } };
-  const location = txn.location;
-  const locationText = location ? `${location.city || ''}, ${location.country || ''}`.replace(/^, |, $/g, '') : '';
-  const transactionDate = transaction.date ? new Date(transaction.date) : new Date();
+  // Location and date info - support both old location object and new city/country fields
+  const txn = transaction as { location?: { city?: string; country?: string } } | undefined;
+  const location = txn?.location;
+  // Get country from transaction.country or fallback to location.country
+  const transactionCountry = transaction?.country || location?.country;
+  // Story 14.35b: Detect foreign location for flag display
+  const { isForeign, flagEmoji } = useIsForeignLocation(transactionCountry, userDefaultCountry);
+  // Story 14.35b: Get localized city/country names
+  const { getLocationString, getCityName, getCountryName } = useLocationDisplay(lang);
+  // Build location text with localized names
+  const cityName = transaction?.city || location?.city || '';
+  const countryName = transactionCountry || '';
+  const locationText = cityName && countryName
+    ? getLocationString(cityName, countryName)
+    : cityName
+      ? getCityName(cityName)
+      : countryName
+        ? getCountryName(countryName)
+        : '';
+  const transactionDate = transaction?.date ? new Date(transaction.date) : new Date();
   const dateStr = transactionDate.toLocaleDateString(lang === 'es' ? 'es-CL' : 'en-US', {
     day: 'numeric',
     month: 'short',
@@ -162,6 +260,8 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
   });
 
   // Story 11.3: Staggered reveal for items
+  // IMPORTANT: This hook must be called unconditionally BEFORE any early returns
+  // to comply with React's Rules of Hooks
   const displayItems = items.slice(0, maxVisibleItems);
   const remainingCount = items.length - maxVisibleItems;
   const { visibleItems, isComplete } = useStaggeredReveal(displayItems, {
@@ -170,12 +270,19 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
     maxDurationMs: 2500,
   });
 
+  // Story 14d.4b: Early return if no transaction available
+  // This can happen during initial render before context/props are set
+  // Note: ALL hooks must be called before this point to comply with React's rules of hooks
+  if (!transaction) {
+    return null;
+  }
+
   // Items detected text
   const itemsDetectedText = `${itemCount} ${itemCount === 1 ? 'Item' : 'Items'} ${t('itemsDetected') || 'detectados'}`;
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity ${
+      className={`fixed inset-0 z-[100] flex items-center justify-center transition-opacity ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
       style={{
@@ -216,7 +323,7 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
             {/* Category Badge */}
             <div className="flex gap-1.5 flex-wrap">
               <span
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold uppercase"
                 style={{
                   backgroundColor: categoryColors.bg,
                   color: categoryColors.fg,
@@ -226,13 +333,14 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
               </span>
             </div>
 
-            {/* Location */}
+            {/* Location - Story 14.35b: Show flag for foreign locations */}
             {locationText && (
               <div
                 className="flex items-center gap-1 text-xs"
                 style={{ color: 'var(--text-tertiary)' }}
               >
                 <MapPin size={12} />
+                {isForeign && <span>{flagEmoji}</span>}
                 <span>{locationText}</span>
               </div>
             )}
@@ -257,7 +365,7 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
                 className="text-xs font-semibold"
                 style={{ color: 'var(--text-tertiary)' }}
               >
-                {currency === 'CLP' ? '$' : currency}
+                {displayCurrency === 'CLP' ? '$' : displayCurrency}
               </span>
             </div>
           </div>
@@ -277,7 +385,7 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
             </div>
             {confidence > 0 && (
               <span
-                className="text-[10px] font-medium"
+                className="text-xs font-medium"
                 style={{ color: 'var(--success)' }}
               >
                 {Math.round(confidence * 100)}% {t('confidence') || 'confianza'}
@@ -304,7 +412,7 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
             className="text-2xl font-bold"
             style={{ color: 'var(--primary)' }}
           >
-            {formatCurrency(total, currency)}
+            {formatCurrency(total, displayCurrency)}
           </span>
         </div>
 
@@ -312,7 +420,7 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
         {showItems && items.length > 0 && (
           <div className="flex-1 min-h-0 mb-4">
             <div
-              className="text-[11px] uppercase tracking-wide mb-2"
+              className="text-xs uppercase tracking-wide mb-2"
               style={{ color: 'var(--text-tertiary)' }}
             >
               {itemsDetectedText}
@@ -348,7 +456,7 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
                         className="text-sm font-semibold"
                         style={{ color: 'var(--text-primary)' }}
                       >
-                        {formatCurrency(item.price, currency)}
+                        {formatCurrency(item.price, displayCurrency)}
                       </span>
                     </div>
                   </div>
@@ -362,7 +470,7 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
                   testId="quick-save-more-items"
                 >
                   <div
-                    className="text-[13px] font-medium px-3 py-2 cursor-pointer"
+                    className="text-sm font-medium px-3 py-2 cursor-pointer"
                     style={{ color: 'var(--primary)' }}
                   >
                     +{remainingCount} items mas...
@@ -405,14 +513,15 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
             {/* Action Buttons - Editar (flex-1) | Guardar (flex-2) */}
             <div className="flex gap-3">
               {/* Edit Button (Secondary) - flex-1 */}
+              {/* Story 14.34: Use theme-aware CSS variables for consistent colors */}
               <button
-                onClick={onEdit}
+                onClick={handleEdit}
                 disabled={isSaving || saveAnimating}
                 data-testid="quick-save-edit-button"
                 className="flex-1 h-12 rounded-xl font-semibold flex items-center justify-center gap-1.5"
                 style={{
-                  backgroundColor: 'var(--secondary-light, #f1f5f9)',
-                  color: 'var(--secondary, #64748b)',
+                  backgroundColor: 'var(--bg-tertiary)',
+                  color: 'var(--text-secondary)',
                   opacity: isSaving || saveAnimating ? 0.5 : 1,
                   cursor: isSaving || saveAnimating ? 'not-allowed' : 'pointer',
                   transition: prefersReducedMotion
@@ -426,14 +535,15 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
               </button>
 
               {/* Save Button (Primary) - flex-2 */}
+              {/* Story 14.34: Use theme-aware CSS variables for consistent colors */}
               <button
                 onClick={handleSave}
                 disabled={isSaving || saveAnimating}
                 data-testid="quick-save-button"
                 className="flex-[2] h-12 rounded-xl font-semibold flex items-center justify-center gap-1.5"
                 style={{
-                  backgroundColor: 'var(--primary-light, #dbeafe)',
-                  color: 'var(--primary, #2563eb)',
+                  backgroundColor: 'var(--primary-light)',
+                  color: 'var(--primary)',
                   opacity: isSaving || saveAnimating ? 0.7 : 1,
                   cursor: isSaving || saveAnimating ? 'not-allowed' : 'pointer',
                   transform: saveAnimating && !prefersReducedMotion ? 'scale(0.98)' : 'scale(1)',
@@ -510,7 +620,7 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
                     {t('goBack') || 'Volver'}
                   </button>
                   <button
-                    onClick={onCancel}
+                    onClick={handleCancel}
                     className="flex-1 py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5"
                     style={{
                       backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)',

@@ -4,18 +4,27 @@
  * Story 10a.4: Insights History View
  * @see docs/sprint-artifacts/epic10a/story-10a.4-insights-history-view.md
  *
+ * Story 14.33a: Insight Card Types & Styling
+ * @see docs/sprint-artifacts/epic14/stories/story-14.33a-insight-card-types-styling.md
+ *
+ * Story 14.33a.1: Theme-Aware Insight Type Colors
+ * @see docs/sprint-artifacts/epic14/stories/story-14.33a.1-insight-theme-colors.md
+ *
  * AC3: Insight Card Display - Shows icon, title, message, date
  * AC6: Backward Compatibility - Falls back to insightId if title/message missing
- *
- * Enhancement: Type-specific icons and colors per insight type
+ * AC1-5 (14.33a): Type-specific styling with 5 visual types
+ * AC1-6 (14.33a.1): Theme-aware colors via CSS variables
  */
 
 import React from 'react';
+import { ChevronRight } from 'lucide-react';
 import { InsightRecord } from '../../types/insight';
 import {
   getInsightConfig,
   getIconByName,
   getInsightFallbackMessage,
+  getVisualType,
+  getVisualConfig,
 } from '../../utils/insightTypeConfig';
 
 interface InsightHistoryCardProps {
@@ -39,7 +48,12 @@ export const InsightHistoryCard: React.FC<InsightHistoryCardProps> = ({
 }) => {
   const isDark = theme === 'dark';
 
-  // Get config based on insight type
+  // Story 14.33a: Get visual type for 5-type styling system
+  // Story 14.33a.1: getVisualConfig now returns CSS variables that auto-adapt to theme/mode
+  const visualType = getVisualType(insight.category, insight.insightId);
+  const visualConfig = getVisualConfig(visualType);
+
+  // Get config based on insight type (for icon fallback)
   const config = getInsightConfig(insight.insightId, insight.category, isDark);
   const IconComponent = getIconByName(insight.icon || config.icon);
 
@@ -75,9 +89,9 @@ export const InsightHistoryCard: React.FC<InsightHistoryCardProps> = ({
   // Use insight-specific fallback message for old records
   const message = insight.message || getInsightFallbackMessage(insight.insightId);
 
-  // Border color based on selection state
+  // Border color based on selection state - uses theme primary for selected
   const getBorderColor = () => {
-    if (isSelected) return '#3b82f6'; // blue-500
+    if (isSelected) return 'var(--primary)';
     return isDark ? '#334155' : '#e2e8f0';
   };
 
@@ -96,27 +110,37 @@ export const InsightHistoryCard: React.FC<InsightHistoryCardProps> = ({
     }
   };
 
+  // Story 14.33a AC2: Hover border color uses type color
+  const getHoverBorderColor = () => visualConfig.iconColor;
+
   return (
     <div
       onClick={onClick}
       onMouseDown={onLongPressStart}
       onMouseUp={onLongPressEnd}
-      onMouseLeave={onLongPressEnd}
       onTouchStart={onLongPressStart}
       onTouchEnd={onLongPressEnd}
       onTouchCancel={onLongPressEnd}
-      className="p-4 rounded-xl border cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99]"
+      // Story 14.33a AC4: Card padding 12px, border-radius matches --radius-md
+      className="p-3 rounded-[10px] border cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99]"
       style={{
         backgroundColor: isSelected
-          ? (isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)')
+          ? 'var(--primary-bg)'
           : 'var(--surface)',
         borderColor: getBorderColor(),
         borderWidth: isSelected ? '2px' : '1px',
       }}
       onMouseEnter={(e) => {
         if (!isSelected && !selectionMode) {
-          e.currentTarget.style.borderColor = config.color;
+          e.currentTarget.style.borderColor = getHoverBorderColor();
         }
+      }}
+      onMouseLeave={(e) => {
+        if (!isSelected && !selectionMode) {
+          e.currentTarget.style.borderColor = getBorderColor();
+        }
+        // Also trigger onLongPressEnd if it exists
+        onLongPressEnd?.();
       }}
       role="button"
       tabIndex={0}
@@ -124,14 +148,15 @@ export const InsightHistoryCard: React.FC<InsightHistoryCardProps> = ({
       aria-label={`${title}${message ? `: ${message}` : ''}${formattedDate ? ` - ${formattedDate}` : ''}`}
       aria-pressed={selectionMode ? isSelected : undefined}
     >
+      {/* Story 14.33a AC4: Layout matches mockup - icon (36x36) | content | chevron */}
       <div className="flex gap-3 items-center">
-        {/* Selection checkbox in selection mode */}
+        {/* Selection checkbox in selection mode - uses theme primary color */}
         {selectionMode && (
           <div
             className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-colors"
             style={{
-              borderColor: isSelected ? '#3b82f6' : (isDark ? '#6b7280' : '#9ca3af'),
-              backgroundColor: isSelected ? '#3b82f6' : 'transparent',
+              borderColor: isSelected ? 'var(--primary)' : (isDark ? '#6b7280' : '#9ca3af'),
+              backgroundColor: isSelected ? 'var(--primary)' : 'transparent',
             }}
             aria-hidden="true"
           >
@@ -143,43 +168,43 @@ export const InsightHistoryCard: React.FC<InsightHistoryCardProps> = ({
           </div>
         )}
 
-        {/* Icon with type-specific color - centered vertically */}
+        {/* Story 14.33a AC2: Icon container uses type background color (36x36 per mockup) */}
         <div
-          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: config.bgColor }}
+          className="w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: visualConfig.bgColor }}
           aria-hidden="true"
+          data-visual-type={visualType}
         >
-          <IconComponent size={20} style={{ color: config.color }} />
+          <IconComponent size={18} style={{ color: visualConfig.iconColor }} />
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          {/* Title row with date on the right */}
-          <div className="flex items-center justify-between gap-2">
-            <div
-              className="font-semibold capitalize truncate"
-              style={{ color: 'var(--primary)' }}
-            >
-              {title}
-            </div>
-            {formattedDate && (
-              <div
-                className="text-xs flex-shrink-0"
-                style={{ color: 'var(--secondary)', opacity: 0.7 }}
-              >
-                {formattedDate}
-              </div>
-            )}
+          {/* Story 14.33a AC4: Title 14px, weight 500, --text-primary */}
+          <div
+            className="text-sm font-medium capitalize truncate"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            {title}
           </div>
+          {/* Story 14.33a AC4: Meta text 12px, --text-tertiary */}
           {message && (
             <div
-              className="text-sm mt-0.5 line-clamp-2"
-              style={{ color: 'var(--secondary)' }}
+              className="text-xs mt-0.5 line-clamp-1"
+              style={{ color: 'var(--text-tertiary)' }}
             >
               {message}
             </div>
           )}
         </div>
+
+        {/* Story 14.33a AC2: Chevron indicator on right side */}
+        <ChevronRight
+          size={16}
+          className="flex-shrink-0"
+          style={{ color: 'var(--text-tertiary)' }}
+          aria-hidden="true"
+        />
       </div>
     </div>
   );

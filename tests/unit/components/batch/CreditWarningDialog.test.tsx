@@ -11,18 +11,24 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { CreditWarningDialog } from '../../../../src/components/batch/CreditWarningDialog';
 import type { CreditCheckResult } from '../../../../src/services/creditService';
 
-// Mock translation function
+// Mock translation function - keys must match actual component usage
 const mockT = (key: string) => {
   const translations: Record<string, string> = {
-    creditWarningTitle: 'Credit Usage',
+    // Header titles
+    batchCreditUsage: 'Credit Usage',
     insufficientCreditsTitle: 'Insufficient Credits',
-    batchWillUse: 'This batch of {count} receipts will use:',
-    creditsRequired: 'Credits required',
-    creditsAvailable: 'Credits available',
-    creditsAfterBatch: 'After batch',
+    // Batch description
+    batchWillUse: 'This batch of {count} receipts will use {credits} credits',
+    // Credit breakdown labels (match component's actual keys)
+    batchCreditsNeeded: 'Credits required',
+    batchCreditsAvailable: 'Credits available',
+    superCreditsAvailable: 'Super credits available',
+    batchCreditsAfter: 'After batch',
+    // Warnings and messages
     lowCreditsWarning: 'This will use all your remaining credits',
     insufficientCreditsMessage: 'You need {required} credits but only have {available} available.',
     canProcessPartial: 'You can process up to {count} receipts with your current credits.',
+    // Buttons
     reduceBatch: 'Reduce Batch',
     getMoreCredits: 'Get more credits',
     continue: 'Continue',

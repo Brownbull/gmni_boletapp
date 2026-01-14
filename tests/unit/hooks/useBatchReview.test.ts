@@ -384,4 +384,209 @@ describe('useBatchReview', () => {
       expect(result.current.totalAmount).toBe(initialTotal - 15000 + 50000);
     });
   });
+
+  // ===========================================================================
+  // Story 14d.5c: Context Mode Tests
+  // ===========================================================================
+
+  describe('context mode (Story 14d.5c)', () => {
+    /**
+     * Helper to create a mock ScanContext for testing context mode.
+     */
+    const createMockScanContext = (batchReceipts: BatchReceipt[] | null = null) => ({
+      state: {
+        batchReceipts,
+      },
+      updateBatchReceipt: vi.fn(),
+      discardBatchReceipt: vi.fn(),
+    });
+
+    /**
+     * Helper to create mock BatchReceipt[] for context mode tests.
+     */
+    const createMockBatchReceipts = (): BatchReceipt[] => [
+      {
+        id: 'ctx-receipt-1',
+        index: 0,
+        transaction: createMockTransaction('Context Store A', 10000),
+        status: 'ready',
+        confidence: 0.92,
+      },
+      {
+        id: 'ctx-receipt-2',
+        index: 1,
+        transaction: createMockTransaction('Context Store B', 20000),
+        status: 'review',
+        confidence: 0.65,
+      },
+    ];
+
+    describe('reading from context', () => {
+      it('should read receipts from scanContext.state.batchReceipts when useContext is true', () => {
+        const contextReceipts = createMockBatchReceipts();
+        const mockScanContext = createMockScanContext(contextReceipts);
+
+        const { result } = renderHook(() =>
+          useBatchReview(
+            [], // Empty processingResults - should be ignored in context mode
+            [],
+            { useContext: true, scanContext: mockScanContext }
+          )
+        );
+
+        expect(result.current.receipts).toEqual(contextReceipts);
+        expect(result.current.receipts).toHaveLength(2);
+        expect(result.current.receipts[0].id).toBe('ctx-receipt-1');
+      });
+
+      it('should fall back to local state when scanContext is null', () => {
+        const localResults = createMockResults();
+
+        const { result } = renderHook(() =>
+          useBatchReview(localResults, [], { useContext: true, scanContext: null })
+        );
+
+        // Should use local state since scanContext is null
+        expect(result.current.receipts).toHaveLength(3);
+        expect(result.current.receipts[0].id).toBe('result-1');
+      });
+
+      it('should compute values from context receipts', () => {
+        const contextReceipts = createMockBatchReceipts();
+        const mockScanContext = createMockScanContext(contextReceipts);
+
+        const { result } = renderHook(() =>
+          useBatchReview([], [], { useContext: true, scanContext: mockScanContext })
+        );
+
+        expect(result.current.totalAmount).toBe(30000); // 10000 + 20000
+        expect(result.current.validCount).toBe(2);
+        expect(result.current.reviewCount).toBe(1);
+      });
+
+      it('should return empty receipts when context.batchReceipts is null', () => {
+        const mockScanContext = createMockScanContext(null);
+
+        const { result } = renderHook(() =>
+          useBatchReview([], [], { useContext: true, scanContext: mockScanContext })
+        );
+
+        expect(result.current.receipts).toEqual([]);
+        expect(result.current.isEmpty).toBe(true);
+      });
+    });
+
+    describe('writing to context', () => {
+      it('should call scanContext.updateBatchReceipt when updating a receipt', () => {
+        const contextReceipts = createMockBatchReceipts();
+        const mockScanContext = createMockScanContext(contextReceipts);
+
+        const { result } = renderHook(() =>
+          useBatchReview([], [], { useContext: true, scanContext: mockScanContext })
+        );
+
+        const updatedTx = createMockTransaction('Updated Context Store', 15000);
+
+        act(() => {
+          result.current.updateReceipt('ctx-receipt-1', updatedTx);
+        });
+
+        expect(mockScanContext.updateBatchReceipt).toHaveBeenCalledTimes(1);
+        expect(mockScanContext.updateBatchReceipt).toHaveBeenCalledWith('ctx-receipt-1', {
+          transaction: updatedTx,
+          status: 'edited',
+          confidence: expect.any(Number),
+        });
+      });
+
+      it('should call scanContext.discardBatchReceipt when discarding a receipt', () => {
+        const contextReceipts = createMockBatchReceipts();
+        const mockScanContext = createMockScanContext(contextReceipts);
+
+        const { result } = renderHook(() =>
+          useBatchReview([], [], { useContext: true, scanContext: mockScanContext })
+        );
+
+        act(() => {
+          result.current.discardReceipt('ctx-receipt-2');
+        });
+
+        expect(mockScanContext.discardBatchReceipt).toHaveBeenCalledTimes(1);
+        expect(mockScanContext.discardBatchReceipt).toHaveBeenCalledWith('ctx-receipt-2');
+      });
+
+      it('should NOT call context methods when useContext is false', () => {
+        const mockScanContext = createMockScanContext(createMockBatchReceipts());
+        const localResults = createMockResults();
+
+        const { result } = renderHook(() =>
+          useBatchReview(localResults, [], { useContext: false, scanContext: mockScanContext })
+        );
+
+        act(() => {
+          result.current.updateReceipt('result-1', createMockTransaction('Local Update', 5000));
+        });
+
+        // Should NOT call context methods in local mode
+        expect(mockScanContext.updateBatchReceipt).not.toHaveBeenCalled();
+
+        act(() => {
+          result.current.discardReceipt('result-2');
+        });
+
+        expect(mockScanContext.discardBatchReceipt).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('saveOne with context mode', () => {
+      it('should call scanContext.discardBatchReceipt after successful save', async () => {
+        const contextReceipts = createMockBatchReceipts();
+        const mockScanContext = createMockScanContext(contextReceipts);
+        const mockSaveTransaction = vi.fn().mockResolvedValue('new-tx-id');
+
+        const { result } = renderHook(() =>
+          useBatchReview([], [], { useContext: true, scanContext: mockScanContext })
+        );
+
+        await act(async () => {
+          await result.current.saveOne('ctx-receipt-1', mockSaveTransaction);
+        });
+
+        expect(mockSaveTransaction).toHaveBeenCalledWith(contextReceipts[0].transaction);
+        expect(mockScanContext.discardBatchReceipt).toHaveBeenCalledWith('ctx-receipt-1');
+      });
+
+      it('should NOT call discardBatchReceipt if save fails', async () => {
+        const contextReceipts = createMockBatchReceipts();
+        const mockScanContext = createMockScanContext(contextReceipts);
+        const mockSaveTransaction = vi.fn().mockRejectedValue(new Error('Save failed'));
+
+        const { result } = renderHook(() =>
+          useBatchReview([], [], { useContext: true, scanContext: mockScanContext })
+        );
+
+        await act(async () => {
+          await result.current.saveOne('ctx-receipt-1', mockSaveTransaction);
+        });
+
+        expect(mockScanContext.discardBatchReceipt).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('getReceipt with context mode', () => {
+      it('should find receipts from context state', () => {
+        const contextReceipts = createMockBatchReceipts();
+        const mockScanContext = createMockScanContext(contextReceipts);
+
+        const { result } = renderHook(() =>
+          useBatchReview([], [], { useContext: true, scanContext: mockScanContext })
+        );
+
+        const receipt = result.current.getReceipt('ctx-receipt-2');
+
+        expect(receipt).toBeDefined();
+        expect(receipt?.transaction.merchant).toBe('Context Store B');
+      });
+    });
+  });
 });

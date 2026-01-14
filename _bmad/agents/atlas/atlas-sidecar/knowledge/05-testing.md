@@ -76,19 +76,54 @@ tests/
 
 ## CI/CD Testing Standards
 
-<!-- Synced from: epic-8-retrospective.md, Story 14.22 CI optimization -->
+<!-- Synced from: epic-8-retrospective.md, Story 14.22/14.30 CI optimization -->
 
-| Job | Target | Max Allowed | Notes |
-|-----|--------|-------------|-------|
-| gitleaks | ~8s | 30s | Runs in parallel with setup (Story 14.22 optimization) |
-| setup | ~3 min | 4 min | Shallow clone, workspace caching |
-| test-unit | ~3 min | 5 min | Firebase emulators required |
-| test-integration | ~1.5 min | 3 min | Parallel with unit tests |
-| test-e2e | ~2.5 min | 5 min | Playwright + emulators |
-| security | ~2 min | 3 min | ESLint security rules |
-| **Total PR** | **~6 min** | **8 min** | Gitleaks parallelized (Story 14.22) |
+### Current Configuration (Story 14.30 - 5 Shards)
 
-### CI/CD Optimizations (Story 14.22)
+| Job | Target | Actual | Notes |
+|-----|--------|--------|-------|
+| gitleaks | ~8s | 8s | Parallel with setup |
+| setup | ~2 min | 1m53s | Shallow clone, workspace caching |
+| test-unit-1 | ~3 min | **13m52s** ⚠️ | Contains large test files |
+| test-unit-2 | ~3 min | **15m16s** ⚠️ | Contains large test files |
+| test-unit-3 | ~3 min | 1m11s | Fast tests |
+| test-unit-4 | ~3 min | 1m17s | Fast tests |
+| test-unit-5 | ~3 min | 1m22s | Fast tests |
+| test-integration | ~1.5 min | 1m29s | Parallel with unit |
+| test-e2e | ~3 min | 2m57s | Playwright + emulators |
+| security | ~2 min | 2m1s | ESLint security rules |
+| merge-coverage | ~1 min | TBD | PR-only, non-blocking |
+
+### ⚠️ Known Issue: Shard Imbalance
+
+**Root Cause:** 4 large test files (~1400-1700 lines each) cluster in shards 1&2:
+- `useScanStateMachine.test.ts` (1680 lines)
+- `Nav.test.tsx` (1623 lines)
+- `insightEngineService.test.ts` (1439 lines)
+- `insightGenerators.test.ts` (1432 lines)
+
+**Vitest Limitation:** Shards by file count, not duration. Early files (alphabetically) get heavy tests.
+
+**Potential Solutions:**
+1. Duration-based sharding (requires Vitest reporter plugin)
+2. Manual file assignment to shards
+3. Split large test files into smaller chunks
+4. Increase shard count to 8-10
+
+### CI/CD Optimizations History
+
+**Story 14.30 (2026-01-14):**
+- **5 shards**: Expanded from 3 to 5 parallel unit test shards
+- **Coverage merge**: Each shard collects coverage, merged in single job (saves ~14 min)
+- **Removed test-coverage job**: Was running all tests twice
+- **Dead code cleanup**: Deleted 62 stale tests from `shared/prompts/__tests__/`
+- **Sub-story 14.30.5a**: Fixed 30 pre-existing test failures (HistoryViewThumbnails filter state, TopHeader translations)
+
+**Test Fix Patterns (14.30.5a):**
+- **Filter State in Tests**: Use `initialState={{ temporal: { level: 'all' } }}` in `HistoryFiltersProvider` for tests with historical dates
+- **Translation Mocks**: Ensure `mockT` includes ALL keys used by components under test, especially nested components (ProfileDropdown uses `t('purchases')` not `t('transactions')`)
+
+**Story 14.22:**
 - **Gitleaks parallelized**: Now runs alongside setup instead of blocking (~30s saved)
 - **Shallow clone for setup**: Only gitleaks needs full history
 - **Security lint fix**: ReDoS vulnerability in sanitize.ts regex fixed

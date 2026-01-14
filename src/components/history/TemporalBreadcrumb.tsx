@@ -208,7 +208,7 @@ function PillButton({ label, isActive, onClick, disabled = false }: PillButtonPr
       onClick={onClick}
       disabled={disabled}
       className={`
-        px-3 py-[6px] rounded-full text-[13px] font-medium
+        px-3 py-[6px] rounded-full text-sm font-medium
         transition-all duration-150 whitespace-nowrap
         ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
       `}

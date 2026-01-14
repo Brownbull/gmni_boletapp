@@ -28,6 +28,8 @@ import { getCategoryPillColors, getItemCategoryGroup, getItemGroupColors } from 
 import { getCategoryEmoji } from '../utils/categoryEmoji';
 // Story 14.22: Normalize item categories for consistent group mapping
 import { normalizeItemCategory } from '../utils/categoryNormalizer';
+// Story 14.38: Item view toggle
+import { ItemViewToggle, type ItemViewMode } from '../components/items/ItemViewToggle';
 // Story 11.3: Animated item reveal
 import { useStaggeredReveal } from '../hooks/useStaggeredReveal';
 import { AnimatedItem } from '../components/AnimatedItem';
@@ -197,6 +199,10 @@ export const EditView: React.FC<EditViewProps> = ({
     superCredits,
     scanCredits,
 }) => {
+    // Use transaction's currency if available, otherwise fall back to user's default currency
+    // This ensures GBP receipts display in £ even if user's default is CLP
+    const displayCurrency = currentTransaction?.currency || currency;
+
     const [showImageViewer, setShowImageViewer] = useState(false);
     // Story 9.3: Debug info section state (AC #5)
     const [showDebugInfo, setShowDebugInfo] = useState(false);
@@ -214,6 +220,8 @@ export const EditView: React.FC<EditViewProps> = ({
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
     // Story 14.22: Collapsed item groups state (all expanded by default)
     const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+    // Story 14.38: Item view mode toggle (grouped vs original order)
+    const [itemViewMode, setItemViewMode] = useState<ItemViewMode>('grouped');
 
     // Story 6.3: Category learning prompt state
     const [showLearningPrompt, setShowLearningPrompt] = useState(false);
@@ -721,7 +729,7 @@ export const EditView: React.FC<EditViewProps> = ({
                             {/* Super credits (gold) */}
                             {superCredits !== undefined && (
                                 <div
-                                    className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                                    className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold"
                                     style={{
                                         backgroundColor: '#fef3c7',
                                         color: '#92400e',
@@ -734,7 +742,7 @@ export const EditView: React.FC<EditViewProps> = ({
                             {/* Normal credits (theme color) */}
                             {scanCredits !== undefined && (
                                 <div
-                                    className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                                    className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold"
                                     style={{
                                         backgroundColor: 'var(--primary-light)',
                                         color: 'var(--primary)',
@@ -1090,7 +1098,7 @@ export const EditView: React.FC<EditViewProps> = ({
                                 aria-label={t('addPhoto')}
                             >
                                 <Camera size={24} strokeWidth={1.5} />
-                                <span className="text-[10px] font-medium">{t('attach')}</span>
+                                <span className="text-xs font-medium">{t('attach')}</span>
                             </button>
                         )}
                     </div>
@@ -1118,18 +1126,23 @@ export const EditView: React.FC<EditViewProps> = ({
                     </button>
                 )}
 
-                {/* ITEMS section - grouped by category */}
+                {/* ITEMS section - Story 14.38: Toggle between grouped and original order */}
                 <div className="mb-4">
-                    <div
-                        className="text-[10px] font-semibold uppercase tracking-wider mb-3"
-                        style={{ color: 'var(--text-tertiary)' }}
-                    >
-                        {t('items')}
-                    </div>
+                    {/* Story 14.38: Full-width item view toggle (replaces "ÍTEMS" subtitle) */}
+                    {currentTransaction.items && currentTransaction.items.length > 0 && (
+                        <div className="mb-3">
+                            <ItemViewToggle
+                                activeView={itemViewMode}
+                                onViewChange={setItemViewMode}
+                                t={t}
+                            />
+                        </div>
+                    )}
 
                     {/* Items grouped by item category GROUP (e.g., "food-fresh", "food-packaged") */}
                     <div className="space-y-3">
-                        {itemsByGroup.map(({ groupKey, items: groupItems, total: groupTotal }) => {
+                        {/* Grouped view */}
+                        {itemViewMode === 'grouped' && itemsByGroup.map(({ groupKey, items: groupItems, total: groupTotal }) => {
                             const isCollapsed = collapsedGroups.has(groupKey);
                             // Use item group colors (not individual category colors)
                             const groupColors = getItemGroupColors(groupKey as any, 'normal', isDark ? 'dark' : 'light');
@@ -1162,7 +1175,7 @@ export const EditView: React.FC<EditViewProps> = ({
                                                 {translatedGroup}
                                             </span>
                                             <span
-                                                className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                                                className="text-xs px-1.5 py-0.5 rounded-full font-medium"
                                                 style={{
                                                     backgroundColor: 'rgba(0,0,0,0.1)',
                                                     color: groupColors.fg,
@@ -1176,7 +1189,7 @@ export const EditView: React.FC<EditViewProps> = ({
                                                 className="text-sm font-bold"
                                                 style={{ color: groupColors.fg }}
                                             >
-                                                {formatCurrency(groupTotal, currency)}
+                                                {formatCurrency(groupTotal, displayCurrency)}
                                             </span>
                                             {isCollapsed ? (
                                                 <ChevronDown size={16} style={{ color: groupColors.fg }} />
@@ -1283,7 +1296,7 @@ export const EditView: React.FC<EditViewProps> = ({
                                                                         className="text-xs font-semibold flex-shrink-0"
                                                                         style={{ color: 'var(--text-primary)' }}
                                                                     >
-                                                                        {formatCurrency(item.price, currency)}
+                                                                        {formatCurrency(item.price, displayCurrency)}
                                                                     </span>
                                                                 </div>
                                                                 {/* Row 2: Category/Subcategory on left, Quantity on right */}
@@ -1297,7 +1310,7 @@ export const EditView: React.FC<EditViewProps> = ({
                                                                         />
                                                                         {item.subcategory && (
                                                                             <span
-                                                                                className="text-[10px] px-1.5 py-0.5 rounded-full"
+                                                                                className="text-xs px-1.5 py-0.5 rounded-full"
                                                                                 style={{
                                                                                     backgroundColor: 'var(--bg-secondary)',
                                                                                     color: 'var(--text-tertiary)',
@@ -1310,7 +1323,7 @@ export const EditView: React.FC<EditViewProps> = ({
                                                                     {/* Right: Quantity - only show if > 1 */}
                                                                     {(item.qty ?? 1) > 1 && (
                                                                         <span
-                                                                            className="text-[11px] font-medium flex-shrink-0"
+                                                                            className="text-xs font-medium flex-shrink-0"
                                                                             style={{ color: 'var(--text-tertiary)' }}
                                                                         >
                                                                             x{Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}
@@ -1327,6 +1340,146 @@ export const EditView: React.FC<EditViewProps> = ({
                                 </div>
                             );
                         })}
+
+                        {/* Original order view - Story 14.38: items in array index order */}
+                        {itemViewMode === 'original' && currentTransaction.items && (
+                            <div
+                                className="rounded-xl overflow-hidden"
+                                style={{
+                                    backgroundColor: 'var(--bg-secondary)',
+                                    border: '1px solid var(--border-light)',
+                                }}
+                            >
+                                <div className="divide-y" style={{ borderColor: 'var(--border-light)' }}>
+                                    {currentTransaction.items.map((item, i) => {
+                                        const isVisible = !shouldAnimate || i < animatedItems.length;
+                                        const animationDelay = shouldAnimate ? i * 100 : 0;
+                                        const ItemContainer = shouldAnimate && !animationPlayedRef.current ? AnimatedItem : React.Fragment;
+                                        const containerProps = shouldAnimate && !animationPlayedRef.current
+                                            ? { delay: animationDelay, index: i, testId: `edit-view-item-original-${i}` }
+                                            : {};
+
+                                        if (!isVisible) return null;
+
+                                        return (
+                                            <ItemContainer key={i} {...containerProps}>
+                                                <div
+                                                    className="px-3 py-2.5 transition-colors"
+                                                    style={{
+                                                        backgroundColor: i % 2 === 1 ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
+                                                    }}
+                                                >
+                                                    {editingItemIndex === i ? (
+                                                        /* Editing state in original view */
+                                                        <div className="space-y-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <span
+                                                                    className="text-xs font-medium w-5 text-center flex-shrink-0"
+                                                                    style={{ color: 'var(--text-tertiary)' }}
+                                                                >
+                                                                    {i + 1}.
+                                                                </span>
+                                                                <input
+                                                                    className="flex-1 p-2 border rounded-lg text-sm"
+                                                                    style={inputStyle}
+                                                                    value={item.name}
+                                                                    onChange={e => handleUpdateItem(i, 'name', e.target.value)}
+                                                                    placeholder={t('itemName')}
+                                                                    autoFocus
+                                                                />
+                                                            </div>
+                                                            <div className="flex items-center gap-2 pl-7">
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.01"
+                                                                    className="w-24 p-2 border rounded-lg text-sm"
+                                                                    style={inputStyle}
+                                                                    value={item.price || ''}
+                                                                    onChange={e => handleUpdateItem(i, 'price', parseFloat(e.target.value) || 0)}
+                                                                    placeholder={t('itemPrice')}
+                                                                />
+                                                                <CategoryBadge category={item.category || 'Other'} lang={language} mini />
+                                                                <div className="flex-1" />
+                                                                <button
+                                                                    onClick={() => handleDeleteItem(i)}
+                                                                    className="min-w-8 min-h-8 p-1 rounded-lg flex items-center justify-center"
+                                                                    style={{ color: 'var(--error)', backgroundColor: isDark ? 'rgba(248, 113, 113, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}
+                                                                    aria-label={t('deleteItem')}
+                                                                >
+                                                                    <Trash2 size={14} strokeWidth={2} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => onSetEditingItemIndex(null)}
+                                                                    className="min-w-8 min-h-8 p-1 rounded-lg flex items-center justify-center"
+                                                                    style={{ color: 'var(--success)', backgroundColor: 'rgba(34, 197, 94, 0.1)' }}
+                                                                    aria-label={t('confirmItem')}
+                                                                >
+                                                                    <Check size={14} strokeWidth={2} />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        /* Display state in original view */
+                                                        <div
+                                                            onClick={() => onSetEditingItemIndex(i)}
+                                                            className="flex items-center gap-2 cursor-pointer"
+                                                        >
+                                                            <span
+                                                                className="text-xs font-medium w-5 text-center flex-shrink-0"
+                                                                style={{ color: 'var(--text-tertiary)' }}
+                                                            >
+                                                                {i + 1}.
+                                                            </span>
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex items-center justify-between gap-2">
+                                                                    <div className="flex items-center gap-1 min-w-0 flex-1">
+                                                                        <span
+                                                                            className="text-xs font-medium truncate"
+                                                                            style={{ color: 'var(--text-primary)' }}
+                                                                            title={item.name}
+                                                                        >
+                                                                            {item.name}
+                                                                        </span>
+                                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="2" style={{ opacity: 0.6, flexShrink: 0 }}>
+                                                                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                                                                        </svg>
+                                                                    </div>
+                                                                    <span
+                                                                        className="text-xs font-semibold flex-shrink-0"
+                                                                        style={{ color: 'var(--text-primary)' }}
+                                                                    >
+                                                                        {formatCurrency(item.price, displayCurrency)}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex items-center gap-1 mt-0.5">
+                                                                    <CategoryBadge category={item.category || 'Other'} lang={language} mini />
+                                                                    {item.subcategory && (
+                                                                        <span
+                                                                            className="text-xs px-1.5 py-0.5 rounded-full"
+                                                                            style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-tertiary)' }}
+                                                                        >
+                                                                            {item.subcategory}
+                                                                        </span>
+                                                                    )}
+                                                                    {(item.qty ?? 1) > 1 && (
+                                                                        <span
+                                                                            className="text-xs font-medium"
+                                                                            style={{ color: 'var(--text-tertiary)' }}
+                                                                        >
+                                                                            x{Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </ItemContainer>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Add Item button - dashed border style */}
@@ -1354,7 +1507,7 @@ export const EditView: React.FC<EditViewProps> = ({
                         {t('total')} ({currentTransaction.items.length} {currentTransaction.items.length === 1 ? 'item' : 'items'})
                     </span>
                     <span className="text-lg font-bold" style={{ color: 'var(--primary)' }}>
-                        {formatCurrency(currentTransaction.total, currency)}
+                        {formatCurrency(currentTransaction.total, displayCurrency)}
                     </span>
                 </div>
 
@@ -1388,7 +1541,7 @@ export const EditView: React.FC<EditViewProps> = ({
                         {showDebugInfo ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </button>
                     {showDebugInfo && (
-                        <div className="mt-3 space-y-2 text-[11px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
+                        <div className="mt-3 space-y-2 text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
                             {/* Merchant from scan (read-only) - moved here */}
                             {currentTransaction.merchant && (
                                 <div className="flex justify-between">

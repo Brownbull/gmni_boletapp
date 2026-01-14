@@ -23,7 +23,13 @@ import {
   getPrevTemporalPeriod,
 } from '../utils/historyFilterUtils';
 // Story 14.15c: Group detection for smart chip labels
-import { detectStoreCategoryGroup, detectItemCategoryGroup } from '../config/categoryColors';
+// Story 14.13a: Import types for drillDownPath handling
+import {
+  detectStoreCategoryGroup,
+  detectItemCategoryGroup,
+  type StoreCategoryGroup,
+  type ItemCategoryGroup,
+} from '../config/categoryColors';
 import {
   translateStoreCategoryGroup,
   getStoreCategoryGroupEmoji,
@@ -111,14 +117,26 @@ export function useHistoryFilters(): UseHistoryFiltersReturn {
   // Memoized selectors to prevent unnecessary recalculations (AC #7)
   const selectors = useMemo(() => {
     const hasTemporalFilter = state.temporal.level !== 'all';
-    const hasCategoryFilter = state.category.level !== 'all';
-    const hasLocationFilter = Boolean(state.location.country);
+    // Story 14.13a: Also check drillDownPath for multi-dimension filtering
+    const hasCategoryFilter = state.category.level !== 'all' || Boolean(state.category.drillDownPath);
+    // Story 14.36: Check for multi-select cities (selectedCities) or legacy country/city
+    const hasLocationFilter = Boolean(state.location.selectedCities) || Boolean(state.location.country);
     // Story 14.15b: Check if group filter is active (multi-select)
     const hasGroupFilter = Boolean(state.group.groupIds);
 
     let activeFilterCount = 0;
     if (hasTemporalFilter) activeFilterCount++;
-    if (hasCategoryFilter) activeFilterCount++;
+    // Story 14.13a: Count store and item filters separately when both present in drillDownPath
+    if (hasCategoryFilter) {
+      const path = state.category.drillDownPath;
+      const hasStoreFilter = path?.storeCategory || path?.storeGroup;
+      const hasItemFilter = path?.itemGroup || path?.itemCategory || path?.subcategory;
+      if (hasStoreFilter && hasItemFilter) {
+        activeFilterCount += 2; // Count as 2 separate filters
+      } else {
+        activeFilterCount++;
+      }
+    }
     if (hasLocationFilter) activeFilterCount++;
     if (hasGroupFilter) activeFilterCount++;
 
@@ -237,11 +255,43 @@ export function getCategoryFilterLabel(
   t: (key: string) => string,
   locale?: string
 ): string {
+  const lang: Language = locale === 'es' ? 'es' : 'en';
+
+  // Story 14.13a: Handle drillDownPath multi-dimension filtering
+  // When drillDownPath is present, display all accumulated dimensions
+  if (category.drillDownPath) {
+    const path = category.drillDownPath;
+    const parts: string[] = [];
+
+    // Add store category (most important for context)
+    if (path.storeCategory) {
+      parts.push(translateStoreCategory(path.storeCategory, lang));
+    } else if (path.storeGroup) {
+      const groupEmoji = getStoreCategoryGroupEmoji(path.storeGroup as StoreCategoryGroup);
+      const groupName = translateStoreCategoryGroup(path.storeGroup as StoreCategoryGroup, lang);
+      parts.push(`${groupEmoji} ${groupName}`);
+    }
+
+    // Add item group or category
+    if (path.itemCategory) {
+      parts.push(translateItemGroup(path.itemCategory, lang));
+    } else if (path.itemGroup) {
+      const groupEmoji = getItemCategoryGroupEmoji(path.itemGroup as ItemCategoryGroup);
+      const groupName = translateItemCategoryGroup(path.itemGroup as ItemCategoryGroup, lang);
+      parts.push(`${groupEmoji} ${groupName}`);
+    }
+
+    // Add subcategory
+    if (path.subcategory) {
+      parts.push(path.subcategory);
+    }
+
+    return parts.length > 0 ? parts.join(' > ') : t('allCategories');
+  }
+
   if (category.level === 'all') {
     return t('allCategories');
   }
-
-  const lang: Language = locale === 'es' ? 'es' : 'en';
 
   // Story 14.15c: Check if multi-select category matches a known group (Store Categories)
   if (category.level === 'category' && category.category) {
@@ -302,21 +352,42 @@ export function getCategoryFilterLabel(
 
 /**
  * Get formatted label for location filter display.
+ * Story 14.36: Extended to support multi-select cities display.
  * @param location - Current location filter state
  * @param t - Translation function
+ * @param locale - Optional locale for display (defaults to 'en')
  * @returns Human-readable label for the filter
  */
 export function getLocationFilterLabel(
   location: LocationFilterState,
-  t: (key: string) => string
+  t: (key: string) => string,
+  locale?: string
 ): string {
+  // Story 14.36: Handle multi-select cities
+  if (location.selectedCities) {
+    const cities = location.selectedCities.split(',').map(c => c.trim()).filter(Boolean);
+    if (cities.length === 0) {
+      return t('allLocations');
+    }
+    if (cities.length === 1) {
+      // Single city selected - show city name
+      return cities[0];
+    }
+    // Multiple cities selected - show count
+    const citiesLabel = locale === 'es' ? 'ciudades' : 'cities';
+    return `${cities.length} ${citiesLabel}`;
+  }
+
+  // Legacy: no location filter
   if (!location.country) {
     return t('allLocations');
   }
 
+  // Legacy: city selection
   if (location.city) {
     return `${location.country} > ${location.city}`;
   }
 
+  // Legacy: country-only selection
   return location.country;
 }

@@ -1,6 +1,7 @@
 /**
  * PreferenciasView Sub-View
  * Story 14.22 AC #5: Language, currency, date format, theme settings
+ * Story 14.37: Font size scaling option added
  *
  * Redesigned to match mockup with custom dropdown selects
  */
@@ -17,6 +18,7 @@ interface PreferenciasViewProps {
     colorTheme?: string;
     fontColorMode?: string;
     fontFamily?: string;
+    fontSize?: string;
     onSetLang: (lang: string) => void;
     onSetCurrency: (currency: string) => void;
     onSetDateFormat: (format: string) => void;
@@ -24,6 +26,7 @@ interface PreferenciasViewProps {
     onSetColorTheme?: (colorTheme: string) => void;
     onSetFontColorMode?: (mode: string) => void;
     onSetFontFamily?: (family: string) => void;
+    onSetFontSize?: (size: string) => void;
 }
 
 export const PreferenciasView: React.FC<PreferenciasViewProps> = ({
@@ -34,12 +37,14 @@ export const PreferenciasView: React.FC<PreferenciasViewProps> = ({
     colorTheme = 'normal',
     fontColorMode = 'colorful',
     fontFamily = 'outfit',
+    fontSize = 'small',
     onSetLang,
     onSetDateFormat,
     onSetTheme,
     onSetColorTheme,
     onSetFontColorMode,
     onSetFontFamily,
+    onSetFontSize,
 }) => {
     // Language options
     const languageOptions: SelectOption[] = [
@@ -76,6 +81,12 @@ export const PreferenciasView: React.FC<PreferenciasViewProps> = ({
     const fontFamilyOptions: SelectOption[] = [
         { value: 'outfit', label: 'Outfit' },
         { value: 'space', label: 'Space Grotesk' },
+    ];
+
+    // Story 14.37: Font size options
+    const fontSizeOptions: SelectOption[] = [
+        { value: 'normal', label: 'Normal' },
+        { value: 'small', label: lang === 'es' ? 'Pequeño' : 'Small' },
     ];
 
     return (
@@ -137,6 +148,18 @@ export const PreferenciasView: React.FC<PreferenciasViewProps> = ({
                     options={fontFamilyOptions}
                     onChange={onSetFontFamily}
                     aria-label={lang === 'es' ? 'Tipografía' : 'Typography'}
+                />
+            )}
+
+            {/* Story 14.37: Font Size - dropUp to avoid going off screen at bottom */}
+            {onSetFontSize && (
+                <SettingsSelect
+                    label={lang === 'es' ? 'Tamaño de Fuente' : 'Font Size'}
+                    value={fontSize}
+                    options={fontSizeOptions}
+                    onChange={onSetFontSize}
+                    aria-label={lang === 'es' ? 'Tamaño de Fuente' : 'Font Size'}
+                    dropUp
                 />
             )}
         </div>
