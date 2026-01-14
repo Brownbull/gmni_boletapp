@@ -152,8 +152,10 @@ jobs:
             ${{ runner.os }}-bun-
 
       # Step 5: Install dependencies with Bun (10-20x faster than npm ci)
+      # Note: Use bun install (not --frozen-lockfile) since bun.lock may not exist
+      # Bun will still respect package-lock.json for version resolution
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install
 
       # Step 6: Cache Playwright browsers (Story 8.9 AC2)
       # Saves ~29s on subsequent runs
@@ -209,7 +211,7 @@ jobs:
       - name: Install and build Cloud Functions
         run: |
           cd functions
-          bun install --frozen-lockfile
+          bun install
           npm run build
           cd ..
 
@@ -1067,7 +1069,7 @@ jobs:
             ${{ runner.os }}-bun-
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install
 
       - name: Build for production
         run: npm run build
