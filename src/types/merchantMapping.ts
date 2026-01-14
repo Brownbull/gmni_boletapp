@@ -1,4 +1,5 @@
 import { Timestamp } from 'firebase/firestore'
+import type { StoreCategory } from './transaction'
 
 /**
  * MerchantMapping represents a user's learned merchant→alias preference.
@@ -7,9 +8,11 @@ import { Timestamp } from 'firebase/firestore'
  * Flow:
  * - merchant = raw name from receipt (e.g., "SUPERMERC JUMBO 123") - stays as-is
  * - alias = user's preferred display name (e.g., "Jumbo") - what we learn
+ * - storeCategory = user's preferred category for this merchant (e.g., "Supermarket")
  *
  * When user edits alias, we save: originalMerchant → targetMerchant (which is the alias)
- * On next scan, we match merchant name and auto-fill the alias.
+ * When user changes category, we save: originalMerchant → storeCategory
+ * On next scan, we match merchant name and auto-fill both alias and category.
  *
  * Simplified model per ADR-1: No merchantPattern field, source always 'user' for MVP.
  */
@@ -22,6 +25,8 @@ export interface MerchantMapping {
     normalizedMerchant: string
     /** User's preferred alias (the value we auto-fill on match) */
     targetMerchant: string
+    /** User's preferred store category for this merchant (optional, v9.6.1+) */
+    storeCategory?: StoreCategory
     /** 1.0 for user-set mappings */
     confidence: number
     /** Source of this mapping - always 'user' for MVP */

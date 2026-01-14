@@ -651,3 +651,118 @@ describe('Story 10.2 Acceptance Criteria', () => {
     expect(updateCall[1].recentInsights).toHaveLength(MAX_RECENT_INSIGHTS);
   });
 });
+
+// ============================================================================
+// Story 14.17: recordIntentionalResponse Tests
+// ============================================================================
+
+describe('recordIntentionalResponse', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should update matching insight with intentional response', async () => {
+    const { recordIntentionalResponse } = await import('../../../src/services/insightProfileService');
+
+    const targetInsight = createInsightRecord('category_trend', 0);
+    const profile = createUserProfile({ recentInsights: [targetInsight] });
+
+    (getDoc as Mock).mockResolvedValueOnce({
+      exists: () => true,
+      data: () => profile,
+    });
+
+    const db = createMockFirestore();
+    await recordIntentionalResponse(
+      db,
+      'user123',
+      'app1',
+      'category_trend',
+      targetInsight.shownAt.seconds,
+      'intentional'
+    );
+
+    const updateCall = (updateDoc as Mock).mock.calls[0];
+    expect(updateCall[1].recentInsights[0].intentionalResponse).toBe('intentional');
+    expect(updateCall[1].recentInsights[0].intentionalResponseAt).toBeDefined();
+  });
+
+  it('should update matching insight with unintentional response', async () => {
+    const { recordIntentionalResponse } = await import('../../../src/services/insightProfileService');
+
+    const targetInsight = createInsightRecord('spending_velocity', 0);
+    const profile = createUserProfile({ recentInsights: [targetInsight] });
+
+    (getDoc as Mock).mockResolvedValueOnce({
+      exists: () => true,
+      data: () => profile,
+    });
+
+    const db = createMockFirestore();
+    await recordIntentionalResponse(
+      db,
+      'user123',
+      'app1',
+      'spending_velocity',
+      targetInsight.shownAt.seconds,
+      'unintentional'
+    );
+
+    const updateCall = (updateDoc as Mock).mock.calls[0];
+    expect(updateCall[1].recentInsights[0].intentionalResponse).toBe('unintentional');
+  });
+
+  it('should store null response when dismissed without answering', async () => {
+    const { recordIntentionalResponse } = await import('../../../src/services/insightProfileService');
+
+    const targetInsight = createInsightRecord('category_trend', 0);
+    const profile = createUserProfile({ recentInsights: [targetInsight] });
+
+    (getDoc as Mock).mockResolvedValueOnce({
+      exists: () => true,
+      data: () => profile,
+    });
+
+    const db = createMockFirestore();
+    await recordIntentionalResponse(
+      db,
+      'user123',
+      'app1',
+      'category_trend',
+      targetInsight.shownAt.seconds,
+      null
+    );
+
+    const updateCall = (updateDoc as Mock).mock.calls[0];
+    expect(updateCall[1].recentInsights[0].intentionalResponse).toBe(null);
+  });
+
+  it('should only update matching insight, leaving others unchanged', async () => {
+    const { recordIntentionalResponse } = await import('../../../src/services/insightProfileService');
+
+    const insight1 = createInsightRecord('category_trend', 1);
+    const insight2 = createInsightRecord('merchant_frequency', 0);
+    const profile = createUserProfile({ recentInsights: [insight1, insight2] });
+
+    (getDoc as Mock).mockResolvedValueOnce({
+      exists: () => true,
+      data: () => profile,
+    });
+
+    const db = createMockFirestore();
+    await recordIntentionalResponse(
+      db,
+      'user123',
+      'app1',
+      'category_trend',
+      insight1.shownAt.seconds,
+      'intentional'
+    );
+
+    const updateCall = (updateDoc as Mock).mock.calls[0];
+    // First insight should be updated
+    expect(updateCall[1].recentInsights[0].intentionalResponse).toBe('intentional');
+    // Second insight should not have intentionalResponse
+    expect(updateCall[1].recentInsights[1].intentionalResponse).toBeUndefined();
+  });
+});

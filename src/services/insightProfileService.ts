@@ -390,3 +390,54 @@ export async function resetInsightProfile(
     firstTransactionDate: profile.firstTransactionDate,
   });
 }
+
+// ============================================================================
+// Story 14.17: Intentional Response Recording
+// ============================================================================
+
+/**
+ * Records the user's response to an intentional prompt.
+ * Updates the insight record in recentInsights with the response.
+ *
+ * @param db - Firestore instance
+ * @param userId - User's auth UID
+ * @param appId - Application ID
+ * @param insightId - The insight that triggered the prompt
+ * @param shownAtSeconds - The timestamp of the insight (for unique identification)
+ * @param response - User's response: 'intentional', 'unintentional', or null if dismissed
+ */
+export async function recordIntentionalResponse(
+  db: Firestore,
+  userId: string,
+  appId: string,
+  insightId: string,
+  shownAtSeconds: number,
+  response: 'intentional' | 'unintentional' | null
+): Promise<void> {
+  const profile = await getOrCreateInsightProfile(db, userId, appId);
+  const profileRef = doc(
+    db,
+    'artifacts',
+    appId,
+    'users',
+    userId,
+    'insightProfile',
+    PROFILE_DOC_ID
+  );
+
+  // Find and update the matching insight record
+  const updatedInsights = profile.recentInsights.map((insight) => {
+    if (insight.insightId === insightId && insight.shownAt.seconds === shownAtSeconds) {
+      return {
+        ...insight,
+        intentionalResponse: response,
+        intentionalResponseAt: Timestamp.now(),
+      };
+    }
+    return insight;
+  });
+
+  await updateDoc(profileRef, {
+    recentInsights: updatedInsights,
+  });
+}

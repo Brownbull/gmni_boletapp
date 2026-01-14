@@ -9,6 +9,7 @@
 import React from 'react';
 import { X, Check, DollarSign, BarChart3, Home } from 'lucide-react';
 import type { Transaction } from '../../types/transaction';
+import type { HistoryNavigationPayload } from '../../utils/analyticsToHistoryFilters';
 
 export interface BatchCompleteModalProps {
   /** List of saved transactions */
@@ -23,8 +24,8 @@ export interface BatchCompleteModalProps {
   t: (key: string) => string;
   /** Called when user dismisses the modal (X button) */
   onDismiss: () => void;
-  /** Called when user clicks "View History" */
-  onViewHistory: () => void;
+  /** Called when user clicks "View History" - navigates to history with current month filter */
+  onNavigateToHistory: (payload: HistoryNavigationPayload) => void;
   /** Called when user clicks "Go Home" */
   onGoHome: () => void;
   /** Format currency for display */
@@ -49,7 +50,7 @@ export const BatchCompleteModal: React.FC<BatchCompleteModalProps> = ({
   theme,
   t,
   onDismiss,
-  onViewHistory,
+  onNavigateToHistory,
   onGoHome,
   formatCurrency,
 }) => {
@@ -65,6 +66,20 @@ export const BatchCompleteModal: React.FC<BatchCompleteModalProps> = ({
     month: 'short',
     year: 'numeric',
   });
+
+  // Handle View History click - navigate to current month's transactions
+  const handleViewHistory = () => {
+    const now = new Date();
+    const year = String(now.getFullYear());
+    const month = `${year}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    onNavigateToHistory({
+      temporal: {
+        level: 'month',
+        year,
+        month,
+      },
+    });
+  };
 
   // Theme-based styling
   const cardBg = isDark ? 'bg-slate-800' : 'bg-white';
@@ -169,7 +184,7 @@ export const BatchCompleteModal: React.FC<BatchCompleteModalProps> = ({
       {/* Action Buttons */}
       <div className="p-5 flex gap-3">
         <button
-          onClick={onViewHistory}
+          onClick={handleViewHistory}
           className={`flex-1 h-12 rounded-xl font-semibold border-2 transition-colors flex items-center justify-center gap-2 ${
             isDark
               ? 'border-slate-600 text-slate-300 hover:bg-slate-700'

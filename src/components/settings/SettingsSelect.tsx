@@ -24,6 +24,8 @@ interface SettingsSelectProps {
     options: SelectOption[];
     onChange: (value: string) => void;
     'aria-label'?: string;
+    /** Story 14.36: When true, dropdown opens upward instead of downward */
+    dropUp?: boolean;
 }
 
 export const SettingsSelect: React.FC<SettingsSelectProps> = ({
@@ -32,6 +34,7 @@ export const SettingsSelect: React.FC<SettingsSelectProps> = ({
     options,
     onChange,
     'aria-label': ariaLabel,
+    dropUp = false,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -103,10 +106,11 @@ export const SettingsSelect: React.FC<SettingsSelectProps> = ({
                     boxShadow: isOpen ? '0 0 0 3px var(--primary-light)' : 'none',
                 }}
             >
+                {/* Story 14.37: Font sizes scale with font size setting */}
                 <div>
                     <div
                         style={{
-                            fontSize: '11px',
+                            fontSize: 'var(--font-size-xs)',
                             fontWeight: 500,
                             color: 'var(--text-tertiary)',
                             textTransform: 'uppercase',
@@ -118,7 +122,7 @@ export const SettingsSelect: React.FC<SettingsSelectProps> = ({
                     </div>
                     <div
                         style={{
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             fontWeight: 500,
                             color: 'var(--text-primary)',
                         }}
@@ -137,22 +141,31 @@ export const SettingsSelect: React.FC<SettingsSelectProps> = ({
                 />
             </div>
 
-            {/* Dropdown */}
+            {/* Dropdown - Story 14.36: Support dropUp for bottom-of-screen selectors */}
             <div
                 role="listbox"
                 aria-label={`${label} options`}
                 style={{
                     position: 'absolute',
-                    top: 'calc(100% + 6px)',
+                    ...(dropUp
+                        ? { bottom: 'calc(100% + 6px)' }
+                        : { top: 'calc(100% + 6px)' }
+                    ),
                     left: 0,
                     right: 0,
                     backgroundColor: 'var(--bg-secondary)',
                     border: '1px solid var(--border-light)',
                     borderRadius: 'var(--radius-lg, 12px)',
-                    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
+                    boxShadow: dropUp
+                        ? '0 -10px 25px -5px rgba(0,0,0,0.1), 0 -8px 10px -6px rgba(0,0,0,0.1)'
+                        : '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
                     opacity: isOpen ? 1 : 0,
                     visibility: isOpen ? 'visible' : 'hidden',
-                    transform: isOpen ? 'translateY(0)' : 'translateY(-8px)',
+                    transform: isOpen
+                        ? 'translateY(0)'
+                        : dropUp
+                            ? 'translateY(8px)'
+                            : 'translateY(-8px)',
                     transition: 'all 0.2s ease',
                     zIndex: 100,
                     maxHeight: '240px',
@@ -173,7 +186,7 @@ export const SettingsSelect: React.FC<SettingsSelectProps> = ({
                             className="flex items-center justify-between cursor-pointer transition-colors"
                             style={{
                                 padding: '12px 16px',
-                                fontSize: '14px',
+                                fontSize: 'var(--font-size-sm)',
                                 fontWeight: 500,
                                 color: isSelected ? 'var(--primary)' : 'var(--text-primary)',
                                 backgroundColor: isSelected ? 'var(--primary-light)' : 'transparent',

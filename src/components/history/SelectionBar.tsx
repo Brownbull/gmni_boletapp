@@ -13,7 +13,7 @@
  */
 
 import React from 'react';
-import { X, Layers, Trash2 } from 'lucide-react';
+import { X, Bookmark, Trash2 } from 'lucide-react';
 
 // ============================================================================
 // Types
@@ -106,13 +106,13 @@ export const SelectionBar: React.FC<SelectionBarProps> = ({
           aria-label={t('assignToGroup') || 'Assign to group'}
           data-testid="selection-bar-group"
         >
-          <Layers
+          <Bookmark
             size={20}
             strokeWidth={1.8}
             style={{ color: 'white' }}
           />
           <span
-            className="text-[10px] font-medium"
+            className="text-xs font-medium"
             style={{ color: 'rgba(255, 255, 255, 0.9)' }}
           >
             {lang === 'es' ? 'Grupo' : 'Group'}
@@ -133,7 +133,7 @@ export const SelectionBar: React.FC<SelectionBarProps> = ({
             style={{ color: 'white' }}
           />
           <span
-            className="text-[10px] font-medium"
+            className="text-xs font-medium"
             style={{ color: 'rgba(255, 255, 255, 0.9)' }}
           >
             {lang === 'es' ? 'Eliminar' : 'Delete'}

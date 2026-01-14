@@ -138,12 +138,35 @@ async function readFileAsDataUrl(file: File): Promise<string> {
  * Hook for managing batch image capture state.
  *
  * @param maxImages - Maximum allowed images (default: 10)
+ * @param initialDataUrls - Optional initial images as data URLs (for restoring state)
+ * @param onImagesChange - Optional callback when images change (for syncing to parent)
  * @returns Batch capture state and handlers
  */
-export function useBatchCapture(maxImages = MAX_BATCH_CAPTURE_IMAGES): UseBatchCaptureReturn {
-  const [images, setImages] = useState<CapturedImage[]>([]);
+export function useBatchCapture(
+  maxImages = MAX_BATCH_CAPTURE_IMAGES,
+  initialDataUrls?: string[],
+  onImagesChange?: (dataUrls: string[]) => void
+): UseBatchCaptureReturn {
+  // Initialize with any provided data URLs
+  const [images, setImages] = useState<CapturedImage[]>(() => {
+    if (initialDataUrls && initialDataUrls.length > 0) {
+      return initialDataUrls.map((dataUrl, index) => ({
+        id: `restored_${index}_${Date.now()}`,
+        file: new File([], `restored_${index}.jpg`), // Placeholder file
+        dataUrl,
+        thumbnailUrl: dataUrl, // Use same URL for thumbnail
+        addedAt: new Date(),
+      }));
+    }
+    return [];
+  });
   // Keep track of object URLs to revoke on cleanup
   const objectUrlsRef = useRef<Set<string>>(new Set());
+  // Story 12.1 v9.7.0: Store callback in ref to avoid re-triggering effect
+  const onImagesChangeRef = useRef(onImagesChange);
+  onImagesChangeRef.current = onImagesChange;
+  // Track if this is initial mount with restored images (skip first callback)
+  const isInitialMountRef = useRef(initialDataUrls && initialDataUrls.length > 0);
 
   /**
    * Cleanup: Revoke all object URLs when component unmounts.
@@ -156,6 +179,23 @@ export function useBatchCapture(maxImages = MAX_BATCH_CAPTURE_IMAGES): UseBatchC
       objectUrlsRef.current.clear();
     };
   }, []);
+
+  /**
+   * Story 12.1 v9.7.0: Notify parent when images change for persistence
+   * Uses ref for callback to avoid infinite loops when parent passes inline function
+   * Skips initial mount if images were restored from props (to avoid circular updates)
+   */
+  useEffect(() => {
+    // Skip the first effect run if we initialized with images from props
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      return;
+    }
+    if (onImagesChangeRef.current) {
+      const dataUrls = images.map(img => img.dataUrl);
+      onImagesChangeRef.current(dataUrls);
+    }
+  }, [images]); // Only depend on images, not the callback
 
   /**
    * Add a single image to the batch.

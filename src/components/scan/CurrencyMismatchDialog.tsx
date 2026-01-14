@@ -2,6 +2,7 @@
  * CurrencyMismatchDialog Component
  *
  * Story 14.15b: V3 Prompt Production Integration
+ * Story 14d.4b: Migrated to use ScanContext for scan-specific state
  *
  * Displays when AI-detected currency differs from user's default currency.
  * Allows user to choose which currency to use for the transaction.
@@ -13,29 +14,54 @@
  * - Dark mode support
  * - Accessibility features (ARIA labels, keyboard navigation)
  *
+ * Story 14d.4b Migration:
+ * - Uses useScanOptional() to read dialog state from context
+ * - Falls back to props if context not available (backward compatibility)
+ * - Calls resolveDialog() on user choice, which App.tsx bridge observes
+ *
  * @see docs/sprint-artifacts/epic14/stories/story-14.15b-v3-prompt-integration.md
+ * @see docs/sprint-artifacts/epic14d/stories/story-14d.4b-consumer-migration.md
  */
 
 import React, { useCallback, useEffect, useRef } from 'react';
 import { AlertCircle, ArrowRight, X } from 'lucide-react';
+import { useScanOptional } from '../../contexts/ScanContext';
+import { DIALOG_TYPES } from '../../types/scanStateMachine';
+
+// Story 14d.6: Import centralized type from scanStateMachine
+import type { CurrencyMismatchDialogData } from '../../types/scanStateMachine';
+// Re-export for backward compatibility
+export type { CurrencyMismatchDialogData };
 
 export interface CurrencyMismatchDialogProps {
-  /** AI-detected currency code (e.g., "GBP", "EUR") */
-  detectedCurrency: string;
-  /** User's default currency code (e.g., "CLP", "USD") */
+  /** User's default currency code (e.g., "CLP", "USD") - required, comes from user preferences */
   userCurrency: string;
-  /** Callback when user chooses detected currency */
-  onUseDetected: () => void;
-  /** Callback when user chooses their default currency */
-  onUseDefault: () => void;
-  /** Callback when user cancels */
-  onCancel: () => void;
-  /** Theme for styling */
+  /** Theme for styling - required, comes from app settings */
   theme: 'light' | 'dark';
-  /** Translation function */
+  /** Translation function - required, comes from app settings */
   t: (key: string) => string;
-  /** Whether dialog is visible */
-  isOpen: boolean;
+
+  // === Story 14d.4b: Props below are now optional - can be read from ScanContext ===
+
+  /** AI-detected currency code (e.g., "GBP", "EUR") - optional if using ScanContext */
+  detectedCurrency?: string;
+  /** Whether dialog is visible - optional if using ScanContext (derived from activeDialog.type) */
+  isOpen?: boolean;
+  /**
+   * Callback when user chooses detected currency.
+   * Story 14d.6: Now receives dialog data as parameter for context-based dialog handling.
+   */
+  onUseDetected?: (data?: CurrencyMismatchDialogData) => void;
+  /**
+   * Callback when user chooses their default currency.
+   * Story 14d.6: Now receives dialog data as parameter for context-based dialog handling.
+   */
+  onUseDefault?: (data?: CurrencyMismatchDialogData) => void;
+  /**
+   * Callback when user cancels.
+   * Story 14d.6: Now receives dialog data as parameter for context-based dialog handling.
+   */
+  onCancel?: (data?: CurrencyMismatchDialogData) => void;
 }
 
 /**
@@ -76,28 +102,82 @@ function getCurrencyDisplayName(code: string): string {
 
 /**
  * CurrencyMismatchDialog displays when AI detects a different currency than user's default.
+ *
+ * Story 14d.4b: Uses ScanContext for scan-specific state with prop fallback for backward compatibility.
  */
 export const CurrencyMismatchDialog: React.FC<CurrencyMismatchDialogProps> = ({
-  detectedCurrency,
+  detectedCurrency: detectedCurrencyProp,
   userCurrency,
-  onUseDetected,
-  onUseDefault,
-  onCancel,
+  onUseDetected: onUseDetectedProp,
+  onUseDefault: onUseDefaultProp,
+  onCancel: onCancelProp,
   theme,
   t,
-  isOpen,
+  isOpen: isOpenProp,
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   const isDark = theme === 'dark';
+
+  // Story 14d.4b: Get scan context for reading dialog state
+  const scanContext = useScanOptional();
+
+  // Story 14d.4b: Derive values from context or fall back to props
+  // Context takes precedence when available - this allows gradual migration
+  const contextDialogData = scanContext?.state.activeDialog?.type === DIALOG_TYPES.CURRENCY_MISMATCH
+    ? (scanContext.state.activeDialog.data as CurrencyMismatchDialogData)
+    : null;
+
+  // Determine if dialog should be open
+  const isOpen = contextDialogData !== null || isOpenProp === true;
+
+  // Get detected currency from context or props
+  const detectedCurrency = contextDialogData?.detectedCurrency ?? detectedCurrencyProp ?? '';
+
+  // Story 14d.6: Create handlers that pass dialog data to callbacks
+  // DESIGN DECISION: We capture dialog data BEFORE calling resolveDialog (which clears it),
+  // then pass the data to the prop callback. This enables context-based dialog handling
+  // where App.tsx reads data from the callback parameter instead of local state.
+  const handleUseDetected = useCallback(() => {
+    // Capture data before resolveDialog clears it
+    const data = contextDialogData ?? undefined;
+
+    if (scanContext?.resolveDialog) {
+      scanContext.resolveDialog(DIALOG_TYPES.CURRENCY_MISMATCH, { choice: 'detected' });
+    }
+    // Pass data to callback for context-based dialog handling
+    onUseDetectedProp?.(data);
+  }, [scanContext, onUseDetectedProp, contextDialogData]);
+
+  const handleUseDefault = useCallback(() => {
+    // Capture data before resolveDialog clears it
+    const data = contextDialogData ?? undefined;
+
+    if (scanContext?.resolveDialog) {
+      scanContext.resolveDialog(DIALOG_TYPES.CURRENCY_MISMATCH, { choice: 'default' });
+    }
+    // Pass data to callback for context-based dialog handling
+    onUseDefaultProp?.(data);
+  }, [scanContext, onUseDefaultProp, contextDialogData]);
+
+  const handleCancel = useCallback(() => {
+    // Capture data before dismissDialog clears it
+    const data = contextDialogData ?? undefined;
+
+    if (scanContext?.dismissDialog) {
+      scanContext.dismissDialog();
+    }
+    // Pass data to callback for context-based dialog handling
+    onCancelProp?.(data);
+  }, [scanContext, onCancelProp, contextDialogData]);
 
   // Handle escape key
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onCancel();
+        handleCancel();
       }
     },
-    [onCancel]
+    [handleCancel]
   );
 
   // Focus trap and keyboard handling
@@ -121,15 +201,15 @@ export const CurrencyMismatchDialog: React.FC<CurrencyMismatchDialogProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="currency-mismatch-title"
     >
-      {/* Backdrop */}
+      {/* Backdrop - v9.7.0: No onClick to prevent accidental dismissal */}
+      {/* User must explicitly choose an option or press X/Escape */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onCancel}
         aria-hidden="true"
       />
 
@@ -146,7 +226,7 @@ export const CurrencyMismatchDialog: React.FC<CurrencyMismatchDialogProps> = ({
       >
         {/* Close button */}
         <button
-          onClick={onCancel}
+          onClick={handleCancel}
           className={`absolute top-4 right-4 p-2 rounded-full transition-colors ${
             isDark
               ? 'text-gray-400 hover:text-white hover:bg-gray-700'
@@ -232,7 +312,7 @@ export const CurrencyMismatchDialog: React.FC<CurrencyMismatchDialogProps> = ({
         <div className="space-y-3">
           {/* Use detected currency (primary) */}
           <button
-            onClick={onUseDetected}
+            onClick={handleUseDetected}
             className="w-full py-3 px-4 rounded-xl font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors"
           >
             {t('useDetectedCurrency').replace('{currency}', detectedCurrency)}
@@ -240,7 +320,7 @@ export const CurrencyMismatchDialog: React.FC<CurrencyMismatchDialogProps> = ({
 
           {/* Use default currency (secondary) */}
           <button
-            onClick={onUseDefault}
+            onClick={handleUseDefault}
             className={`w-full py-3 px-4 rounded-xl font-medium transition-colors ${
               isDark
                 ? 'bg-gray-700 text-white hover:bg-gray-600'

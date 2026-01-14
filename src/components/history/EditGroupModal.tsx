@@ -299,7 +299,7 @@ export const EditGroupModal: React.FC<EditGroupModalProps> = ({
                                 {lang === 'es' ? 'Editar Grupo' : 'Edit Group'}
                             </div>
                             <div
-                                className="text-[11px]"
+                                className="text-xs"
                                 style={{ color: 'var(--text-secondary)' }}
                             >
                                 {group.transactionCount} {lang === 'es' ? 'transacciones' : 'transactions'}
@@ -322,7 +322,7 @@ export const EditGroupModal: React.FC<EditGroupModalProps> = ({
                     {/* Input with floating label */}
                     <div className="relative">
                         <label
-                            className="absolute -top-2 left-[10px] px-1 text-[11px] font-medium z-10"
+                            className="absolute -top-2 left-[10px] px-1 text-xs font-medium z-10"
                             style={{
                                 backgroundColor: 'var(--bg)',
                                 color: 'var(--primary)',
@@ -352,7 +352,7 @@ export const EditGroupModal: React.FC<EditGroupModalProps> = ({
 
                     {/* Icon Selector */}
                     <div className="mt-4">
-                        <div className="text-[11px] font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                        <div className="text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                             {lang === 'es' ? 'Icono' : 'Icon'}
                         </div>
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -423,7 +423,7 @@ export const EditGroupModal: React.FC<EditGroupModalProps> = ({
 
                     {/* Color Selector */}
                     <div className="mt-3">
-                        <div className="text-[11px] font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                        <div className="text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                             {lang === 'es' ? 'Color' : 'Color'}
                         </div>
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -500,7 +500,7 @@ export const EditGroupModal: React.FC<EditGroupModalProps> = ({
                     {/* Error message */}
                     {error && (
                         <div
-                            className="mt-3 text-[11px]"
+                            className="mt-3 text-xs"
                             style={{ color: 'var(--error)' }}
                             role="alert"
                         >
@@ -515,7 +515,7 @@ export const EditGroupModal: React.FC<EditGroupModalProps> = ({
                     <button
                         onClick={handleClose}
                         disabled={isSaving}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-[13px] font-medium rounded-lg transition-colors disabled:opacity-40"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-sm font-medium rounded-lg transition-colors disabled:opacity-40"
                         style={{
                             backgroundColor: 'var(--bg-secondary)',
                             border: '1px solid var(--border-light)',
@@ -531,7 +531,7 @@ export const EditGroupModal: React.FC<EditGroupModalProps> = ({
                     <button
                         onClick={handleSave}
                         disabled={isSaving || !groupName.trim()}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-[13px] font-semibold rounded-lg transition-colors disabled:opacity-40"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-sm font-semibold rounded-lg transition-colors disabled:opacity-40"
                         style={{
                             backgroundColor: 'var(--primary)',
                             color: 'white',

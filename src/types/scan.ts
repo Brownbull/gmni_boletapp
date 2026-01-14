@@ -3,22 +3,31 @@
  *
  * Types for managing scan state that persists across navigation.
  * This ensures users don't lose scanned receipts when navigating away.
+ *
+ * Story 14d.4e: PendingScan interface is DEPRECATED.
+ * Use ScanState from types/scanStateMachine.ts instead.
+ * The old PendingScan was replaced by the ScanContext state machine.
  */
 
 import { Transaction } from './transaction';
 
 /**
  * Status of a pending scan session.
- * - images_added: User has added images but not yet processed
- * - analyzing: AI analysis is in progress
- * - analyzed: AI has returned results, transaction ready for editing
- * - error: An error occurred during analysis
+ * @deprecated Story 14d.4e: Use ScanPhase from types/scanStateMachine.ts instead.
+ * Status mapping:
+ * - 'images_added' → 'capturing'
+ * - 'analyzing' → 'scanning'
+ * - 'analyzed' → 'reviewing'
+ * - 'error' → 'error'
  */
 export type PendingScanStatus = 'images_added' | 'analyzing' | 'analyzed' | 'error';
 
 /**
  * Represents an in-progress receipt scan that persists across view navigation.
  * The scan is only cleared when the user explicitly saves or cancels the transaction.
+ *
+ * @deprecated Story 14d.4e: Use ScanState from types/scanStateMachine.ts instead.
+ * This interface is kept for backwards compatibility with pendingScanStorage.ts migration code.
  */
 export interface PendingScan {
   /** Unique identifier for this scan session */
@@ -81,6 +90,8 @@ export function generateScanSessionId(): string {
 
 /**
  * Create a new empty PendingScan with generated session ID.
+ * @deprecated Story 14d.4e: Use ScanContext from contexts/ScanContext.tsx instead.
+ * The startScanContext action replaces this function.
  */
 export function createPendingScan(): PendingScan {
   return {
