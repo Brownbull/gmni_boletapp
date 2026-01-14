@@ -67,6 +67,10 @@ on:
 # Story 14.30.2: Expanded to 5 shards for better balance (~3 min each)
 # Story 14.30.3: Bun package installation (10-20x faster than npm ci)
 # Story 14.30.6: Heavy test isolation (4 large files in dedicated jobs)
+# Story 14.43: Branch-specific CI testing tiers
+#   - develop: Smoke tests (~3 min) - gitleaks, hooks-scan, services, integration, security
+#   - staging: Full validation (~8 min) - All 18 unit test groups + integration + E2E + security
+#   - main: Production release (~10 min) - Full tests + Lighthouse + Deploy
 #
 # Job dependency graph (Story 14.30.8 - Explicit Test Groups):
 #   gitleaks (parallel) ─────────────────────────────────────────────────────────┐
@@ -258,7 +262,11 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 8
-    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+    # Story 14.43: Skip on develop branch (smoke tests only)
+    if: |
+      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) &&
+      (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'staging' || github.base_ref == 'main')))
 
     steps:
       - name: Checkout repository
@@ -408,7 +416,11 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+    # Story 14.43: Skip on develop branch (smoke tests only)
+    if: |
+      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) &&
+      (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'staging' || github.base_ref == 'main')))
 
     steps:
       - name: Checkout repository
@@ -558,7 +570,11 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+    # Story 14.43: Skip on develop branch (smoke tests only)
+    if: |
+      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) &&
+      (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'staging' || github.base_ref == 'main')))
 
     steps:
       - name: Checkout repository
@@ -633,7 +649,11 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+    # Story 14.43: Skip on develop branch (smoke tests only)
+    if: |
+      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) &&
+      (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'staging' || github.base_ref == 'main')))
 
     steps:
       - name: Checkout repository
@@ -708,7 +728,11 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+    # Story 14.43: Skip on develop branch (smoke tests only)
+    if: |
+      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) &&
+      (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'staging' || github.base_ref == 'main')))
 
     steps:
       - name: Checkout repository
@@ -781,12 +805,17 @@ jobs:
 
   # ============================================================================
   # TEST-UNIT COMPONENT GROUPS - Components split into 3 groups (Story 14.30.8)
+  # Story 14.43: Component tests only run on staging/main (develop uses smoke tests)
   # ============================================================================
   test-components-insights:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+    # Story 14.43: Skip on develop branch (smoke tests only)
+    if: |
+      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) &&
+      (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'staging' || github.base_ref == 'main')))
 
     steps:
       - name: Checkout repository
@@ -861,7 +890,11 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+    # Story 14.43: Skip on develop branch (smoke tests only)
+    if: |
+      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) &&
+      (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'staging' || github.base_ref == 'main')))
 
     steps:
       - name: Checkout repository
@@ -936,7 +969,11 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 8
-    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+    # Story 14.43: Skip on develop branch (smoke tests only)
+    if: |
+      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) &&
+      (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'staging' || github.base_ref == 'main')))
 
     steps:
       - name: Checkout repository
@@ -1011,7 +1048,11 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 8
-    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+    # Story 14.43: Skip on develop branch (smoke tests only)
+    if: |
+      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) &&
+      (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'staging' || github.base_ref == 'main')))
 
     steps:
       - name: Checkout repository
@@ -1086,7 +1127,11 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 8
-    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+    # Story 14.43: Skip on develop branch (smoke tests only)
+    if: |
+      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) &&
+      (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'staging' || github.base_ref == 'main')))
 
     steps:
       - name: Checkout repository
@@ -1161,7 +1206,11 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 8
-    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+    # Story 14.43: Skip on develop branch (smoke tests only)
+    if: |
+      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) &&
+      (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'staging' || github.base_ref == 'main')))
 
     steps:
       - name: Checkout repository
@@ -1236,7 +1285,11 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+    # Story 14.43: Skip on develop branch (smoke tests only)
+    if: |
+      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) &&
+      (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'staging' || github.base_ref == 'main')))
 
     steps:
       - name: Checkout repository
@@ -1311,12 +1364,17 @@ jobs:
   # HEAVY TEST JOBS - Dedicated jobs for large test files (Story 14.30.6)
   # These 4 files are 1400-1700 lines each and cause shard imbalance
   # Running them in dedicated jobs ensures predictable ~3-5 min timing
+  # Story 14.43: Heavy tests only run on staging/main (develop uses smoke tests)
   # ============================================================================
   test-unit-heavy-1:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+    # Story 14.43: Skip on develop branch (smoke tests only)
+    if: |
+      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) &&
+      (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'staging' || github.base_ref == 'main')))
 
     steps:
       - name: Checkout repository
@@ -1394,7 +1452,11 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+    # Story 14.43: Skip on develop branch (smoke tests only)
+    if: |
+      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) &&
+      (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'staging' || github.base_ref == 'main')))
 
     steps:
       - name: Checkout repository
@@ -1472,7 +1534,11 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+    # Story 14.43: Skip on develop branch (smoke tests only)
+    if: |
+      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) &&
+      (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'staging' || github.base_ref == 'main')))
 
     steps:
       - name: Checkout repository
@@ -1550,7 +1616,11 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+    # Story 14.43: Skip on develop branch (smoke tests only)
+    if: |
+      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) &&
+      (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'staging' || github.base_ref == 'main')))
 
     steps:
       - name: Checkout repository
@@ -1629,7 +1699,11 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+    # Story 14.43: Skip on develop branch (smoke tests only)
+    if: |
+      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) &&
+      (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'staging' || github.base_ref == 'main')))
 
     steps:
       - name: Checkout repository
@@ -1707,7 +1781,11 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+    # Story 14.43: Skip on develop branch (smoke tests only)
+    if: |
+      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) &&
+      (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'staging' || github.base_ref == 'main')))
 
     steps:
       - name: Checkout repository
@@ -1783,45 +1861,161 @@ jobs:
 
   # ============================================================================
   # TEST-UNIT SUMMARY - Aggregates all shard and heavy test results
+  # Story 14.43: Updated to handle tiered testing (skipped jobs are OK on develop)
   # ============================================================================
   test-unit:
     needs: [test-hooks-batch, test-hooks-scan, test-hooks-other, test-services, test-utils, test-analytics, test-views, test-components-insights, test-components-scan, test-components-history, test-components-charts, test-components-forms, test-components-celebrations, test-components-misc, test-unit-heavy-1, test-unit-heavy-2, test-unit-heavy-3, test-unit-heavy-4, test-unit-heavy-5, test-unit-heavy-6]
     runs-on: ubuntu-latest
     if: always()
     steps:
-      - name: Check all unit test groups
+      - name: Determine test tier
+        id: tier
         run: |
+          # Story 14.43: Determine which tier of tests ran
+          IS_DEVELOP="${{ github.ref == 'refs/heads/develop' || (github.event_name == 'pull_request' && github.base_ref == 'develop') }}"
+          IS_STAGING="${{ github.ref == 'refs/heads/staging' || (github.event_name == 'pull_request' && github.base_ref == 'staging') }}"
+          IS_MAIN="${{ github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && github.base_ref == 'main') }}"
+
+          if [ "$IS_DEVELOP" = "true" ]; then
+            echo "tier=smoke" >> $GITHUB_OUTPUT
+            echo "tier_name=Smoke Tests (develop)" >> $GITHUB_OUTPUT
+          elif [ "$IS_STAGING" = "true" ]; then
+            echo "tier=full" >> $GITHUB_OUTPUT
+            echo "tier_name=Full Tests (staging)" >> $GITHUB_OUTPUT
+          elif [ "$IS_MAIN" = "true" ]; then
+            echo "tier=production" >> $GITHUB_OUTPUT
+            echo "tier_name=Full Tests (main)" >> $GITHUB_OUTPUT
+          else
+            echo "tier=unknown" >> $GITHUB_OUTPUT
+            echo "tier_name=Unknown Branch" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check unit test results
+        run: |
+          echo "=============================================="
+          echo "Test Tier: ${{ steps.tier.outputs.tier_name }}"
+          echo "=============================================="
+
           FAILED=false
-          # Hooks groups
-          [ "${{ needs.test-hooks-batch.result }}" != "success" ] && echo "test-hooks-batch: ${{ needs.test-hooks-batch.result }}" && FAILED=true
-          [ "${{ needs.test-hooks-scan.result }}" != "success" ] && echo "test-hooks-scan: ${{ needs.test-hooks-scan.result }}" && FAILED=true
-          [ "${{ needs.test-hooks-other.result }}" != "success" ] && echo "test-hooks-other: ${{ needs.test-hooks-other.result }}" && FAILED=true
-          # Core groups
-          [ "${{ needs.test-services.result }}" != "success" ] && echo "test-services: ${{ needs.test-services.result }}" && FAILED=true
-          [ "${{ needs.test-utils.result }}" != "success" ] && echo "test-utils: ${{ needs.test-utils.result }}" && FAILED=true
-          [ "${{ needs.test-analytics.result }}" != "success" ] && echo "test-analytics: ${{ needs.test-analytics.result }}" && FAILED=true
-          [ "${{ needs.test-views.result }}" != "success" ] && echo "test-views: ${{ needs.test-views.result }}" && FAILED=true
-          # Component groups
-          [ "${{ needs.test-components-insights.result }}" != "success" ] && echo "test-components-insights: ${{ needs.test-components-insights.result }}" && FAILED=true
-          [ "${{ needs.test-components-scan.result }}" != "success" ] && echo "test-components-scan: ${{ needs.test-components-scan.result }}" && FAILED=true
-          [ "${{ needs.test-components-history.result }}" != "success" ] && echo "test-components-history: ${{ needs.test-components-history.result }}" && FAILED=true
-          [ "${{ needs.test-components-charts.result }}" != "success" ] && echo "test-components-charts: ${{ needs.test-components-charts.result }}" && FAILED=true
-          [ "${{ needs.test-components-forms.result }}" != "success" ] && echo "test-components-forms: ${{ needs.test-components-forms.result }}" && FAILED=true
-          [ "${{ needs.test-components-celebrations.result }}" != "success" ] && echo "test-components-celebrations: ${{ needs.test-components-celebrations.result }}" && FAILED=true
-          [ "${{ needs.test-components-misc.result }}" != "success" ] && echo "test-components-misc: ${{ needs.test-components-misc.result }}" && FAILED=true
-          # Heavy groups
-          [ "${{ needs.test-unit-heavy-1.result }}" != "success" ] && echo "test-unit-heavy-1: ${{ needs.test-unit-heavy-1.result }}" && FAILED=true
-          [ "${{ needs.test-unit-heavy-2.result }}" != "success" ] && echo "test-unit-heavy-2: ${{ needs.test-unit-heavy-2.result }}" && FAILED=true
-          [ "${{ needs.test-unit-heavy-3.result }}" != "success" ] && echo "test-unit-heavy-3: ${{ needs.test-unit-heavy-3.result }}" && FAILED=true
-          [ "${{ needs.test-unit-heavy-4.result }}" != "success" ] && echo "test-unit-heavy-4: ${{ needs.test-unit-heavy-4.result }}" && FAILED=true
-          [ "${{ needs.test-unit-heavy-5.result }}" != "success" ] && echo "test-unit-heavy-5: ${{ needs.test-unit-heavy-5.result }}" && FAILED=true
-          [ "${{ needs.test-unit-heavy-6.result }}" != "success" ] && echo "test-unit-heavy-6: ${{ needs.test-unit-heavy-6.result }}" && FAILED=true
+          SKIPPED_COUNT=0
+          SUCCESS_COUNT=0
+          TIER="${{ steps.tier.outputs.tier }}"
+
+          # CRITICAL TESTS - Must always run (smoke tier)
+          # These jobs run on ALL branches including develop
+          echo ""
+          echo "--- Critical Tests (always run) ---"
+
+          # test-hooks-scan (always required)
+          if [ "${{ needs.test-hooks-scan.result }}" = "success" ]; then
+            echo "✅ test-hooks-scan: success"
+            SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+          else
+            echo "❌ test-hooks-scan: ${{ needs.test-hooks-scan.result }}"
+            FAILED=true
+          fi
+
+          # test-services (always required)
+          if [ "${{ needs.test-services.result }}" = "success" ]; then
+            echo "✅ test-services: success"
+            SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+          else
+            echo "❌ test-services: ${{ needs.test-services.result }}"
+            FAILED=true
+          fi
+
+          # FULL TESTS - Only run on staging/main (skipped on develop)
+          echo ""
+          echo "--- Full Tests (staging/main only) ---"
+
+          # Process each full-only job inline to avoid function scope issues
+          for job_result in \
+            "test-hooks-batch:${{ needs.test-hooks-batch.result }}" \
+            "test-hooks-other:${{ needs.test-hooks-other.result }}" \
+            "test-utils:${{ needs.test-utils.result }}" \
+            "test-analytics:${{ needs.test-analytics.result }}" \
+            "test-views:${{ needs.test-views.result }}"
+          do
+            name="${job_result%%:*}"
+            result="${job_result##*:}"
+            if [ "$result" = "success" ]; then
+              echo "✅ $name: success"
+              SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+            elif [ "$result" = "skipped" ] && [ "$TIER" = "smoke" ]; then
+              echo "⏭️  $name: skipped (expected on smoke tier)"
+              SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
+            else
+              echo "❌ $name: $result"
+              FAILED=true
+            fi
+          done
+
+          echo ""
+          echo "--- Component Tests (staging/main only) ---"
+
+          for job_result in \
+            "test-components-insights:${{ needs.test-components-insights.result }}" \
+            "test-components-scan:${{ needs.test-components-scan.result }}" \
+            "test-components-history:${{ needs.test-components-history.result }}" \
+            "test-components-charts:${{ needs.test-components-charts.result }}" \
+            "test-components-forms:${{ needs.test-components-forms.result }}" \
+            "test-components-celebrations:${{ needs.test-components-celebrations.result }}" \
+            "test-components-misc:${{ needs.test-components-misc.result }}"
+          do
+            name="${job_result%%:*}"
+            result="${job_result##*:}"
+            if [ "$result" = "success" ]; then
+              echo "✅ $name: success"
+              SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+            elif [ "$result" = "skipped" ] && [ "$TIER" = "smoke" ]; then
+              echo "⏭️  $name: skipped (expected on smoke tier)"
+              SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
+            else
+              echo "❌ $name: $result"
+              FAILED=true
+            fi
+          done
+
+          echo ""
+          echo "--- Heavy Tests (staging/main only) ---"
+
+          for job_result in \
+            "test-unit-heavy-1:${{ needs.test-unit-heavy-1.result }}" \
+            "test-unit-heavy-2:${{ needs.test-unit-heavy-2.result }}" \
+            "test-unit-heavy-3:${{ needs.test-unit-heavy-3.result }}" \
+            "test-unit-heavy-4:${{ needs.test-unit-heavy-4.result }}" \
+            "test-unit-heavy-5:${{ needs.test-unit-heavy-5.result }}" \
+            "test-unit-heavy-6:${{ needs.test-unit-heavy-6.result }}"
+          do
+            name="${job_result%%:*}"
+            result="${job_result##*:}"
+            if [ "$result" = "success" ]; then
+              echo "✅ $name: success"
+              SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+            elif [ "$result" = "skipped" ] && [ "$TIER" = "smoke" ]; then
+              echo "⏭️  $name: skipped (expected on smoke tier)"
+              SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
+            else
+              echo "❌ $name: $result"
+              FAILED=true
+            fi
+          done
+
+          echo ""
+          echo "=============================================="
+          echo "Summary: $SUCCESS_COUNT passed, $SKIPPED_COUNT skipped"
+          echo "=============================================="
 
           if [ "$FAILED" = "true" ]; then
-            echo "One or more unit test groups failed"
+            echo "❌ One or more required test groups failed"
             exit 1
           fi
-          echo "All 18 unit test jobs passed successfully (14 groups + 4 heavy)"
+
+          if [ "$TIER" = "smoke" ]; then
+            echo "✅ Smoke tests passed (develop tier - 2 critical jobs)"
+          else
+            echo "✅ All 20 unit test jobs passed (full tier)"
+          fi
 
   # ============================================================================
   # MERGE-COVERAGE JOB - Merges coverage from all shards (Story 14.30.1)
@@ -1956,12 +2150,17 @@ jobs:
 
   # ============================================================================
   # TEST-E2E JOB - End-to-end tests (Story 8.9 AC1)
+  # Story 14.43: Only run on staging/main (skip develop for faster feedback)
   # ============================================================================
   test-e2e:
     needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+    # Story 14.43: E2E tests only on staging/main (develop uses smoke tests)
+    if: |
+      !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) &&
+      (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'staging' || github.base_ref == 'main')))
 
     steps:
       - name: Checkout repository
@@ -2207,6 +2406,7 @@ jobs:
   # ============================================================================
   # TEST SUMMARY JOB - Required for branch protection compatibility
   # This job aggregates all test results into a single status check named "test"
+  # Story 14.43: Updated to handle tiered testing (E2E skipped on develop)
   # ============================================================================
   test:
     name: test
@@ -2214,17 +2414,94 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     steps:
-      - name: Check all test results
+      - name: Determine test tier and check results
         run: |
-          if [ "${{ needs.gitleaks.result }}" != "success" ] || \
-             [ "${{ needs.test-unit.result }}" != "success" ] || \
-             [ "${{ needs.test-integration.result }}" != "success" ] || \
-             [ "${{ needs.test-e2e.result }}" != "success" ] || \
-             [ "${{ needs.security.result }}" != "success" ]; then
-            echo "One or more test jobs failed"
+          # Story 14.43: Determine which tier of tests ran
+          IS_DEVELOP="${{ github.ref == 'refs/heads/develop' || (github.event_name == 'pull_request' && github.base_ref == 'develop') }}"
+          IS_STAGING="${{ github.ref == 'refs/heads/staging' || (github.event_name == 'pull_request' && github.base_ref == 'staging') }}"
+          IS_MAIN="${{ github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && github.base_ref == 'main') }}"
+
+          if [ "$IS_DEVELOP" = "true" ]; then
+            TIER="smoke"
+            echo "🧪 Test Tier: SMOKE (develop)"
+            echo "   Running: gitleaks, hooks-scan, services, integration, security"
+            echo "   Skipping: E2E, heavy unit tests, component tests"
+          elif [ "$IS_STAGING" = "true" ]; then
+            TIER="full"
+            echo "🧪 Test Tier: FULL (staging)"
+            echo "   Running: All tests including E2E"
+          elif [ "$IS_MAIN" = "true" ]; then
+            TIER="production"
+            echo "🧪 Test Tier: PRODUCTION (main)"
+            echo "   Running: All tests + Lighthouse + Deploy"
+          else
+            TIER="unknown"
+            echo "🧪 Test Tier: UNKNOWN"
+          fi
+
+          echo ""
+          FAILED=false
+
+          # Check required jobs (always must pass)
+          echo "Checking required jobs..."
+          if [ "${{ needs.gitleaks.result }}" != "success" ]; then
+            echo "❌ gitleaks: ${{ needs.gitleaks.result }}"
+            FAILED=true
+          else
+            echo "✅ gitleaks: success"
+          fi
+
+          if [ "${{ needs.test-unit.result }}" != "success" ]; then
+            echo "❌ test-unit: ${{ needs.test-unit.result }}"
+            FAILED=true
+          else
+            echo "✅ test-unit: success"
+          fi
+
+          if [ "${{ needs.test-integration.result }}" != "success" ]; then
+            echo "❌ test-integration: ${{ needs.test-integration.result }}"
+            FAILED=true
+          else
+            echo "✅ test-integration: success"
+          fi
+
+          if [ "${{ needs.security.result }}" != "success" ]; then
+            echo "❌ security: ${{ needs.security.result }}"
+            FAILED=true
+          else
+            echo "✅ security: success"
+          fi
+
+          # Check E2E (only required on staging/main)
+          E2E_RESULT="${{ needs.test-e2e.result }}"
+          if [ "$TIER" = "smoke" ]; then
+            if [ "$E2E_RESULT" = "skipped" ]; then
+              echo "⏭️  test-e2e: skipped (expected on develop)"
+            elif [ "$E2E_RESULT" = "success" ]; then
+              echo "✅ test-e2e: success (ran anyway)"
+            else
+              echo "⚠️  test-e2e: $E2E_RESULT (unexpected on develop)"
+            fi
+          else
+            if [ "$E2E_RESULT" != "success" ]; then
+              echo "❌ test-e2e: $E2E_RESULT"
+              FAILED=true
+            else
+              echo "✅ test-e2e: success"
+            fi
+          fi
+
+          echo ""
+          if [ "$FAILED" = "true" ]; then
+            echo "❌ One or more required test jobs failed"
             exit 1
           fi
-          echo "All test jobs passed successfully"
+
+          if [ "$TIER" = "smoke" ]; then
+            echo "✅ All smoke tests passed (develop tier - ~3 min)"
+          else
+            echo "✅ All test jobs passed (full tier)"
+          fi
 
   # ============================================================================
   # DEPLOYMENT JOB - Story 6.0: CI/CD Auto-Deploy to Firebase
