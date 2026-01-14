@@ -118,6 +118,44 @@ npx tsx scripts/testing/reset-test-data.ts
 
 ---
 
+---
+
+### Root Scripts - Data Migrations
+
+One-time migration scripts located in the root `scripts/` folder.
+
+| Script | Description |
+|--------|-------------|
+| `migrate-createdAt-admin.js` | Standardize `createdAt` field format in transactions |
+
+#### migrate-createdAt-admin.js
+
+**Story 14.31:** Fix inconsistent `createdAt` formats that break "Últimos Escaneados" and "Ingresado" sort.
+
+**Problem:** Some transactions have:
+- Firestore Timestamps (correct)
+- Date strings like "January 12, 2026 at 3:00:..." (wrong - sorts alphabetically)
+- `null` values (excluded from orderBy queries)
+
+**Usage:**
+```bash
+# Dry run - see what would change
+node scripts/migrate-createdAt-admin.js
+
+# Dry run for specific user
+node scripts/migrate-createdAt-admin.js --user=USER_ID
+
+# Execute migration
+node scripts/migrate-createdAt-admin.js --execute
+
+# Execute for specific user
+node scripts/migrate-createdAt-admin.js --user=USER_ID --execute
+```
+
+**Prerequisites:** Requires Firebase Admin authentication (see below).
+
+---
+
 ## Prerequisites
 
 Most TypeScript scripts require:
@@ -132,4 +170,22 @@ export FIREBASE_PROJECT_ID="boletapp-prod"
 # For testing scripts (uses emulator)
 export FIRESTORE_EMULATOR_HOST="localhost:8080"
 export FIREBASE_AUTH_EMULATOR_HOST="localhost:9099"
+```
+
+### Firebase Admin Authentication (for migration scripts)
+
+**Option A: Service Account Key (Recommended)**
+1. Go to Firebase Console → Project Settings → Service Accounts
+2. Click "Generate new private key"
+3. Save as `scripts/serviceAccountKey.json`
+4. **Never commit this file** (it's in .gitignore)
+
+**Option B: Google Cloud CLI**
+```bash
+gcloud auth application-default login
+```
+
+**Option C: Environment Variable**
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/serviceAccountKey.json"
 ```

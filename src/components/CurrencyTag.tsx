@@ -16,6 +16,8 @@ interface CurrencyTagProps {
     currency: string;
     onCurrencyChange: (currency: string) => void;
     t?: (key: string) => string;
+    /** Story 14.41: Disable the currency selector in read-only mode */
+    disabled?: boolean;
 }
 
 /**
@@ -29,6 +31,7 @@ export const CurrencyTag: React.FC<CurrencyTagProps> = ({
     currency,
     onCurrencyChange,
     t,
+    disabled = false,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -59,15 +62,19 @@ export const CurrencyTag: React.FC<CurrencyTagProps> = ({
     return (
         <div className="relative" ref={dropdownRef}>
             {/* Clickable tag */}
+            {/* Story 14.41: Disabled state for read-only mode */}
             <button
                 type="button"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => !disabled && setIsOpen(!isOpen)}
+                disabled={disabled}
                 className="inline-flex items-center justify-center px-2.5 py-1.5 rounded-full text-xs font-semibold transition-colors"
                 style={{
                     backgroundColor: 'var(--bg-primary)',
                     border: '1px solid var(--border-medium)',
                     color: 'var(--text-secondary)',
                     minWidth: '40px',
+                    opacity: disabled ? 0.7 : 1,
+                    cursor: disabled ? 'default' : 'pointer',
                 }}
                 aria-expanded={isOpen}
                 aria-haspopup="true"
@@ -88,7 +95,7 @@ export const CurrencyTag: React.FC<CurrencyTagProps> = ({
                     <div className="p-3 space-y-3">
                         <div className="relative">
                             <label
-                                className="absolute -top-2 left-2.5 px-1 text-[10px] font-medium z-10"
+                                className="absolute -top-2 left-2.5 px-1 text-xs font-medium z-10"
                                 style={{
                                     backgroundColor: 'var(--bg-secondary, #ffffff)',
                                     color: 'var(--primary, #2563eb)',

@@ -291,6 +291,68 @@ describe('QuickSaveCard', () => {
     });
   });
 
+  // Story 14.34: Currency Formatting Tests
+  describe('Story 14.34: currency handling', () => {
+    it('uses transaction.currency when available (foreign receipt scenario)', () => {
+      // Mock formatCurrency that verifies the correct currency is passed
+      const mockFormatCurrencyWithTracking = vi.fn((amount: number, curr: string) => {
+        // This simulates the real formatCurrency behavior
+        if (curr === 'USD') {
+          return `$${(amount / 100).toFixed(2)}`; // Convert cents to dollars
+        }
+        return `$${amount.toLocaleString()}`; // CLP doesn't divide
+      });
+
+      renderCard({
+        transaction: { ...mockTransaction, total: 1899, currency: 'USD' },
+        currency: 'CLP', // User's default is CLP
+        formatCurrency: mockFormatCurrencyWithTracking,
+      });
+
+      // Verify formatCurrency was called with USD (transaction currency), not CLP (default)
+      expect(mockFormatCurrencyWithTracking).toHaveBeenCalledWith(1899, 'USD');
+      // Display should show formatted USD amount
+      expect(screen.getByText('$18.99')).toBeInTheDocument();
+    });
+
+    it('falls back to prop currency when transaction.currency is undefined', () => {
+      const mockFormatCurrencyWithTracking = vi.fn((amount: number, _curr: string) => {
+        return `$${amount.toLocaleString()}`;
+      });
+
+      renderCard({
+        transaction: { ...mockTransaction, total: 25000, currency: undefined },
+        currency: 'CLP',
+        formatCurrency: mockFormatCurrencyWithTracking,
+      });
+
+      // Verify formatCurrency was called with CLP (fallback)
+      expect(mockFormatCurrencyWithTracking).toHaveBeenCalledWith(25000, 'CLP');
+    });
+
+    it('displays correct currency indicator for foreign currency', () => {
+      renderCard({
+        transaction: { ...mockTransaction, total: 1899, currency: 'USD' },
+        currency: 'CLP',
+      });
+
+      // Currency indicator should show USD, not CLP
+      expect(screen.getByText('USD')).toBeInTheDocument();
+    });
+
+    it('displays peso symbol for CLP transactions', () => {
+      renderCard({
+        transaction: { ...mockTransaction, total: 25000, currency: 'CLP' },
+        currency: 'CLP',
+      });
+
+      // CLP should display as "$" not "CLP"
+      // Note: The component shows "$" for CLP and the code for other currencies
+      const currencyIndicators = screen.getAllByText('$');
+      expect(currencyIndicators.length).toBeGreaterThan(0);
+    });
+  });
+
   // Story 14.4: Animation Tests
   describe('Story 14.4: animations', () => {
     beforeEach(() => {

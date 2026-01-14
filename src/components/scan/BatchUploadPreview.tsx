@@ -142,7 +142,7 @@ export const BatchUploadPreview: React.FC<BatchUploadPreviewProps> = ({
                     className="w-full h-full object-cover"
                   />
                   {/* Image number badge */}
-                  <div className="absolute bottom-0.5 left-0.5 w-4 h-4 bg-[var(--primary)] text-white rounded flex items-center justify-center text-[10px] font-semibold">
+                  <div className="absolute bottom-0.5 left-0.5 w-4 h-4 bg-[var(--primary)] text-white rounded flex items-center justify-center text-xs font-semibold">
                     {index + 1}
                   </div>
                   {/* Remove button on hover */}

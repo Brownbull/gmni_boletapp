@@ -2,7 +2,13 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { TopHeader } from '../../../src/components/TopHeader';
 
-// Mock translations
+/**
+ * Mock translations
+ *
+ * Story 14.30.5a: Updated to match actual translation keys used by ProfileDropdown.
+ * - ProfileDropdown uses t('purchases') not t('transactions')
+ * - ProfileDropdown uses t('productos') for Items menu
+ */
 const mockT = (key: string) => {
     const translations: Record<string, string> = {
         home: 'Inicio',
@@ -12,6 +18,10 @@ const mockT = (key: string) => {
         transaction: 'Transacción',
         gastify: 'Gastify',
         transactions: 'Transacciones',
+        // Story 14.30.5a: ProfileDropdown uses 'purchases' key, not 'transactions'
+        purchases: 'Compras',
+        // Story 14.31: ProfileDropdown uses 'productos' for Items menu
+        productos: 'Productos',
         reports: 'Reportes',
         goals: 'Metas',
         comingSoon: 'Próximamente',
@@ -140,8 +150,10 @@ describe('TopHeader', () => {
 
             fireEvent.click(screen.getByTestId('profile-avatar'));
 
+            // Story 14.30.5a: ProfileDropdown uses 'purchases' key → 'Compras'
             await waitFor(() => {
-                expect(screen.getByText('Transacciones')).toBeInTheDocument();
+                expect(screen.getByText('Compras')).toBeInTheDocument();
+                expect(screen.getByText('Productos')).toBeInTheDocument();
                 expect(screen.getByText('Reportes')).toBeInTheDocument();
                 expect(screen.getByText('Metas')).toBeInTheDocument();
                 expect(screen.getByText('Configuración')).toBeInTheDocument();

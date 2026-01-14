@@ -60,7 +60,7 @@ export const CategoryBadge: React.FC<CategoryBadgeProps> = ({
     return (
         <div className="flex flex-wrap gap-1 items-center">
             <span
-                className={`rounded-full font-bold uppercase flex items-center gap-1 ${mini ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-[10px]'}`}
+                className={`rounded-full font-bold uppercase flex items-center gap-1 ${mini ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs'}`}
                 // Story 14.21: Pills/badges always use colorful colors (not affected by fontColorMode)
                 style={{
                     backgroundColor: colors.bg,
@@ -68,12 +68,12 @@ export const CategoryBadge: React.FC<CategoryBadgeProps> = ({
                     maxWidth: maxWidth,
                 }}
             >
-                {showIcon && <span className={mini ? 'text-[10px]' : 'text-xs'}>{emoji}</span>}
+                {showIcon && <span className={mini ? 'text-xs' : 'text-xs'}>{emoji}</span>}
                 <span className={maxWidth ? 'truncate' : ''}>{displayCategory}</span>
             </span>
             {categorySource === 'learned' && (
                 <span
-                    className={`inline-flex items-center gap-0.5 rounded-md bg-blue-100 text-blue-700 border border-blue-200 ${mini ? 'px-1 py-0.5 text-[10px]' : 'px-1.5 py-0.5 text-[10px]'}`}
+                    className={`inline-flex items-center gap-0.5 rounded-md bg-blue-100 text-blue-700 border border-blue-200 ${mini ? 'px-1 py-0.5 text-xs' : 'px-1.5 py-0.5 text-xs'}`}
                     title="Auto-categorized from learned preference"
                 >
                     <BookMarked size={mini ? 8 : 10} />
@@ -82,14 +82,14 @@ export const CategoryBadge: React.FC<CategoryBadgeProps> = ({
             )}
             {displaySubcategory && (
                 <span
-                    className={`rounded-md bg-slate-100 text-slate-600 border border-slate-200 truncate ${mini ? 'px-1.5 py-0.5 text-[10px] max-w-[80px]' : 'px-2 py-0.5 text-[10px] max-w-[120px]'}`}
+                    className={`rounded-md bg-slate-100 text-slate-600 border border-slate-200 truncate ${mini ? 'px-1.5 py-0.5 text-xs max-w-[80px]' : 'px-2 py-0.5 text-xs max-w-[120px]'}`}
                 >
                     {displaySubcategory}
                 </span>
             )}
             {subcategorySource === 'learned' && displaySubcategory && (
                 <span
-                    className={`inline-flex items-center gap-0.5 rounded-md bg-green-100 text-green-700 border border-green-200 ${mini ? 'px-1 py-0.5 text-[10px]' : 'px-1.5 py-0.5 text-[10px]'}`}
+                    className={`inline-flex items-center gap-0.5 rounded-md bg-green-100 text-green-700 border border-green-200 ${mini ? 'px-1 py-0.5 text-xs' : 'px-1.5 py-0.5 text-xs'}`}
                     title="Subcategory auto-applied from learned preference"
                 >
                     <BookMarked size={mini ? 8 : 10} />

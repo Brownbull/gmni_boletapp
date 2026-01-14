@@ -1,6 +1,6 @@
 # Story 14.19: Personal Records Detection
 
-**Status:** ready-for-dev
+**Status:** done
 **Points:** 3
 **Epic:** 14 - Core Implementation
 **Dependencies:** Story 14.1 (Animation Framework), Story 14.18 (Celebration System)
@@ -24,43 +24,45 @@ so that **I'm recognized for positive financial behaviors**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create RecordsService (AC: #1)
-  - [ ] Create `src/services/recordsService.ts`
-  - [ ] Define record types (lowest_week, consecutive_days, etc.)
-  - [ ] Implement detection algorithms
-  - [ ] Export detection functions
+- [x] Task 1: Create RecordsService (AC: #1)
+  - [x] Create `src/services/recordsService.ts`
+  - [x] Define record types (lowest_week, consecutive_days, etc.)
+  - [x] Implement detection algorithms
+  - [x] Export detection functions
 
-- [ ] Task 2: Implement lowest category detection (AC: #2)
-  - [ ] Compare current week to historical weeks
-  - [ ] Track per-category weekly totals
-  - [ ] Generate message: "Tu semana más baja en [category] en [X] meses!"
-  - [ ] Handle edge cases (first week, no data)
+- [x] Task 2: Implement lowest category detection (AC: #2)
+  - [x] Compare current week to historical weeks
+  - [x] Track per-category weekly totals
+  - [x] Generate message: "Tu semana más baja en [category] en [X] meses!"
+  - [x] Handle edge cases (first week, no data)
 
-- [ ] Task 3: Create PersonalRecordBanner component (AC: #3)
-  - [ ] Create `src/components/celebrations/PersonalRecordBanner.tsx`
-  - [ ] Trophy/medal icon with animation
-  - [ ] Record description text
-  - [ ] Dismiss button
+- [x] Task 3: Create PersonalRecordBanner component (AC: #3)
+  - [x] Create `src/components/celebrations/PersonalRecordBanner.tsx`
+  - [x] Trophy/medal icon with animation
+  - [x] Record description text
+  - [x] Dismiss button
 
-- [ ] Task 4: Implement record storage (AC: #4)
-  - [ ] Define PersonalRecord interface
-  - [ ] Store in Firestore personalRecords collection
-  - [ ] Include type, date, value, category
+- [x] Task 4: Implement record storage (AC: #4)
+  - [x] Define PersonalRecord interface
+  - [x] Store in Firestore personalRecords collection
+  - [x] Include type, date, value, category
 
-- [ ] Task 5: Integrate with Celebration System (AC: #5)
-  - [ ] Trigger celebrateBig on new record
-  - [ ] Use CelebrationTrigger component
-  - [ ] Show banner after confetti
+- [x] Task 5: Integrate with Celebration System (AC: #5)
+  - [x] Trigger celebrateBig on new record
+  - [x] Use CelebrationTrigger component
+  - [x] Show banner after confetti
 
-- [ ] Task 6: Add cooldown logic (AC: #6)
-  - [ ] Maximum one record celebration per session
-  - [ ] Minimum 24h between same record type
-  - [ ] Store last celebration timestamp
+- [x] Task 6: Add cooldown logic (AC: #6)
+  - [x] Maximum one record celebration per session
+  - [x] Minimum 24h between same record type
+  - [x] Store last celebration timestamp
 
-- [ ] Task 7: Write tests
-  - [ ] Test record detection algorithms
-  - [ ] Test storage operations
-  - [ ] Test cooldown logic
+- [x] Task 7: Write tests
+  - [x] Test record detection algorithms (25 tests)
+  - [x] Test storage operations
+  - [x] Test cooldown logic
+  - [x] Test PersonalRecordBanner component (15 tests)
+  - [x] Test usePersonalRecords hook (6 tests)
 
 ## Dev Notes
 
@@ -232,12 +234,80 @@ function canShowRecord(
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
-_To be filled during implementation_
+1. **Type definitions**: Created `src/types/personalRecord.ts` with:
+   - `PersonalRecordType` union type for record types
+   - `PersonalRecord` interface for detected records
+   - `StoredPersonalRecord` interface for Firestore storage
+   - `RecordCooldowns` interface for session/type cooldowns
+   - `WeeklyTotal` and `RecordDetectionResult` helper types
+
+2. **RecordsService**: Created `src/services/recordsService.ts` with:
+   - ISO week calculation utilities (getCurrentWeekId, getWeekStart, getWeekEnd)
+   - Weekly totals calculation (getWeeklyTotalsForCategory)
+   - Record detection (detectLowestCategoryWeek, detectLowestTotalWeek, detectAllRecords)
+   - Spanish message generation (generateRecordMessage)
+   - Cooldown management (canShowRecord, getRecordCooldowns, setRecordCooldowns)
+   - Firestore storage (storePersonalRecord, getRecentPersonalRecords, hasRecentSimilarRecord)
+   - Main entry point (detectAndFilterRecords)
+
+3. **PersonalRecordBanner**: Created `src/components/celebrations/PersonalRecordBanner.tsx` with:
+   - Trophy icon from Lucide
+   - Slide-down entry animation
+   - Amber/gold gradient styling matching celebration theme
+   - Auto-dismiss with configurable delay
+   - Compact variant for inline use
+   - Full accessibility support (role="status", aria-live)
+
+4. **usePersonalRecords hook**: Created `src/hooks/usePersonalRecords.ts` with:
+   - checkForRecords() for post-transaction detection
+   - Integration with Celebration System via delayed banner display
+   - Fire-and-forget Firestore storage
+   - Week-based duplicate detection prevention
+
+5. **Cooldown system**:
+   - Session-based cooldown (max 1 celebration per 30-minute session)
+   - Type-based cooldown (24 hours between same record type)
+   - localStorage persistence
+
+6. **Tests**: 46 tests total, all passing
+   - recordsService.test.ts: 25 tests for detection, cooldowns, week calculations
+   - PersonalRecordBanner.test.tsx: 15 tests for rendering, dismissal, animation
+   - usePersonalRecords.test.ts: 6 tests for hook initialization and state management
 
 ### File List
 
-_To be filled during implementation_
+**New Files:**
+- `src/types/personalRecord.ts` - Type definitions
+- `src/services/recordsService.ts` - Core service
+- `src/components/celebrations/PersonalRecordBanner.tsx` - Banner component
+- `src/hooks/usePersonalRecords.ts` - Integration hook
+- `tests/unit/services/recordsService.test.ts` - Service tests
+- `tests/unit/components/celebrations/PersonalRecordBanner.test.tsx` - Component tests
+- `tests/unit/hooks/usePersonalRecords.test.ts` - Hook tests
+
+**Modified Files:**
+- `docs/sprint-artifacts/sprint-status.yaml` - Updated story status
+- `docs/sprint-artifacts/epic14/stories/story-14.19-personal-records-detection.md` - This file
+- `src/App.tsx` - Integrated usePersonalRecords hook and PersonalRecordBanner (code review fix)
+- `src/components/celebrations/index.ts` - Added PersonalRecordBanner export (code review fix)
+
+### Code Review Fixes (2026-01-12)
+
+**HIGH-1**: Integrated `usePersonalRecords` hook into App.tsx
+- Added import for hook and component
+- Initialized hook with Firebase services
+- Added useEffect to check for records when transactions change
+- Rendered PersonalRecordBanner component
+
+**HIGH-2**: Exported PersonalRecordBanner from celebrations module
+- Added export to `src/components/celebrations/index.ts`
+
+**MEDIUM-1**: Fixed act() warnings in tests
+- Wrapped timer advances in `act()` blocks
+
+**MEDIUM-2**: Added eslint-disable comment for intentional dependency omission
+- handleDismiss intentionally omitted from auto-dismiss useEffect

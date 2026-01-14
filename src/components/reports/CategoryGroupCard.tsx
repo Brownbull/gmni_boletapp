@@ -116,7 +116,7 @@ const TrendChange: React.FC<TrendChangeProps> = ({ trend, trendPercent, size = '
       ? 'var(--negative-primary)'
       : 'var(--positive-primary)';
 
-  const fontSize = size === 'md' ? 'text-[11px]' : 'text-[10px]';
+  const fontSize = size === 'md' ? 'text-xs' : 'text-xs';
   const iconSize = size === 'md' ? 12 : 10;
 
   return (
@@ -199,13 +199,13 @@ export const CategoryGroupCard: React.FC<CategoryGroupCardProps> = ({
         <div className="flex items-center gap-2">
           <span className="text-base">{group.emoji}</span>
           <span
-            className="text-[13px] font-semibold"
+            className="text-sm font-semibold"
             style={{ color: colors.fg }}
           >
             {group.name}
           </span>
           <span
-            className="text-[11px] font-medium px-1.5 py-0.5 rounded"
+            className="text-xs font-medium px-1.5 py-0.5 rounded"
             style={{
               backgroundColor: 'rgba(255, 255, 255, 0.6)',
               color: colors.fg,
@@ -258,7 +258,7 @@ export const CategoryGroupCard: React.FC<CategoryGroupCardProps> = ({
                 {cat.name}
               </div>
               <div
-                className="text-[10px]"
+                className="text-xs"
                 style={{ color: 'var(--text-tertiary)' }}
               >
                 {cat.count}
@@ -269,7 +269,7 @@ export const CategoryGroupCard: React.FC<CategoryGroupCardProps> = ({
             <div className="flex items-center gap-2 shrink-0">
               {/* Percentage badge */}
               <span
-                className="text-[10px] font-medium px-1.5 py-0.5 rounded"
+                className="text-xs font-medium px-1.5 py-0.5 rounded"
                 style={{
                   backgroundColor: 'rgba(0, 0, 0, 0.05)',
                   color: 'var(--text-secondary)',

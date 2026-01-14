@@ -2,6 +2,7 @@
  * Insight Type Configuration
  *
  * Story 10a.4: Insights History View
+ * Story 14.33a: Insight Card Types & Styling
  *
  * Centralized configuration for insight type icons, colors, and fallback messages.
  * Used by InsightHistoryCard and InsightDetailModal components.
@@ -18,11 +19,29 @@ import { InsightCategory } from '../types/insight';
 
 export type LucideIcon = ComponentType<LucideProps>;
 
+/**
+ * Story 14.33a: Visual insight types for card styling
+ * Maps to distinct color schemes and icons per mockup
+ */
+export type InsightVisualType = 'quirky' | 'celebration' | 'actionable' | 'tradeoff' | 'trend';
+
 export interface InsightTypeStyle {
   icon: string;
   color: string;
   bgColor: string;
   darkBgColor: string;
+}
+
+/**
+ * Story 14.33a: Visual config for each insight type
+ * Story 14.33a.1: Updated to use theme-aware CSS variables
+ * Per mockup: insights.html
+ */
+export interface InsightVisualConfig {
+  /** CSS variable for background color (theme-aware) */
+  bgColor: string;
+  /** CSS variable for icon color (theme-aware) */
+  iconColor: string;
 }
 
 export interface InsightFallbackInfo {
@@ -77,6 +96,48 @@ export const CATEGORY_CONFIG: Record<InsightCategory, InsightTypeStyle> = {
   ACTIONABLE: { icon: 'Lightbulb', color: '#2563eb', bgColor: '#dbeafe', darkBgColor: '#1e3a5f' },
   CELEBRATORY: { icon: 'PartyPopper', color: '#d97706', bgColor: '#fef3c7', darkBgColor: '#78350f' },
   QUIRKY_FIRST: { icon: 'Sparkles', color: '#8b5cf6', bgColor: '#f3e8ff', darkBgColor: '#5b21b6' },
+};
+
+// ============================================================================
+// Story 14.33a: Visual Type Configuration
+// ============================================================================
+
+/**
+ * Story 14.33a: 5-type visual config per mockup (insights.html)
+ * Story 14.33a.1: Now uses theme-aware CSS variables for all themes
+ *
+ * | Type        | Use Case                          |
+ * |-------------|-----------------------------------|
+ * | quirky      | Fun patterns ("Snacker Nocturno") |
+ * | celebration | Milestones ("Carrito Lleno")      |
+ * | actionable  | Opportunities ("Tu Hora Favorita")|
+ * | tradeoff    | Trade-off insights                |
+ * | trend       | Trend patterns ("Dia Favorito")   |
+ *
+ * CSS variables are defined in index.html for each theme (Normal, Professional, Mono)
+ * with both light and dark mode variants.
+ */
+export const INSIGHT_VISUAL_CONFIG: Record<InsightVisualType, InsightVisualConfig> = {
+  quirky: {
+    bgColor: 'var(--insight-quirky-bg)',
+    iconColor: 'var(--insight-quirky-icon)',
+  },
+  celebration: {
+    bgColor: 'var(--insight-celebration-bg)',
+    iconColor: 'var(--insight-celebration-icon)',
+  },
+  actionable: {
+    bgColor: 'var(--insight-actionable-bg)',
+    iconColor: 'var(--insight-actionable-icon)',
+  },
+  tradeoff: {
+    bgColor: 'var(--insight-tradeoff-bg)',
+    iconColor: 'var(--insight-tradeoff-icon)',
+  },
+  trend: {
+    bgColor: 'var(--insight-trend-bg)',
+    iconColor: 'var(--insight-trend-icon)',
+  },
 };
 
 // ============================================================================
@@ -188,4 +249,67 @@ export function getInsightFallbackInfo(insightId: string): InsightFallbackInfo {
  */
 export function getInsightFallbackMessage(insightId: string): string {
   return INSIGHT_SIMPLE_FALLBACK_MESSAGES[insightId] || '';
+}
+
+// ============================================================================
+// Story 14.33a: Visual Type Helper Functions
+// ============================================================================
+
+/**
+ * Story 14.33a: Determines the visual type for an insight based on:
+ * 1. Specific insightId patterns (for trend/tradeoff)
+ * 2. InsightCategory fallback
+ * 3. Default to 'actionable' for backward compatibility
+ *
+ * @param category - The InsightCategory (QUIRKY_FIRST, CELEBRATORY, ACTIONABLE)
+ * @param insightId - The insight identifier (e.g., "merchant_frequency")
+ * @returns The InsightVisualType for styling
+ */
+export function getVisualType(category?: InsightCategory, insightId?: string): InsightVisualType {
+  // Check insightId for specific mappings (trend and tradeoff)
+  if (insightId) {
+    // Trend insights - patterns, favorite days/times
+    if (
+      insightId.includes('trend') ||
+      insightId.includes('favorite_day') ||
+      insightId.includes('day_pattern') ||
+      insightId.includes('time_pattern') ||
+      insightId.includes('spending_pattern')
+    ) {
+      return 'trend';
+    }
+
+    // Tradeoff insights - varied, comparison, trade-off related
+    if (
+      insightId.includes('tradeoff') ||
+      insightId.includes('varied') ||
+      insightId.includes('category_variety')
+    ) {
+      return 'tradeoff';
+    }
+  }
+
+  // Fall back to category
+  switch (category) {
+    case 'QUIRKY_FIRST':
+      return 'quirky';
+    case 'CELEBRATORY':
+      return 'celebration';
+    case 'ACTIONABLE':
+      return 'actionable';
+    default:
+      return 'actionable'; // AC5: Backward compatibility default
+  }
+}
+
+/**
+ * Story 14.33a: Gets the visual config for an insight based on its visual type.
+ * Story 14.33a.1: Simplified - no longer needs isDark parameter since CSS variables
+ * automatically adapt to theme and mode via index.html definitions.
+ *
+ * @param visualType - The InsightVisualType
+ * @returns The visual styling configuration (CSS variables)
+ */
+export function getVisualConfig(visualType: InsightVisualType): InsightVisualConfig {
+  return INSIGHT_VISUAL_CONFIG[visualType] || INSIGHT_VISUAL_CONFIG.actionable;
 }

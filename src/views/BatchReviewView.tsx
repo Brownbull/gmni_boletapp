@@ -12,17 +12,22 @@
  * - Save all button (AC #6)
  * - Scroll navigation for large batches (AC #8)
  *
+ * Story 14d.5: Optional ScanContext integration for state machine migration.
+ * Component reads from ScanContext when available, falls back to props.
+ *
  * @see docs/sprint-artifacts/epic12/story-12.3-batch-review-queue.md
  */
 
-import React, { useState, useCallback } from 'react';
-import { ArrowLeft, Save, Loader2, AlertCircle, Check, X } from 'lucide-react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { ChevronLeft, Save, Loader2, AlertCircle, Check, X, Trash2, RotateCcw, Zap, Camera, Info, Layers } from 'lucide-react';
+import { formatCreditsDisplay } from '../services/userCreditsService';
 import { useBatchReview, BatchReceipt } from '../hooks/useBatchReview';
 import { BatchSummaryCard } from '../components/batch/BatchSummaryCard';
 import { ProcessingResult, ImageProcessingState } from '../services/batchProcessingService';
 import { Transaction } from '../types/transaction';
 import { formatCurrency } from '../utils/currency';
 import type { Currency } from '../types/settings';
+import { useScanOptional } from '../contexts/ScanContext';
 
 /**
  * Props for processing state display.
@@ -39,6 +44,14 @@ export interface ProcessingStateProps {
   onCancelProcessing?: () => void;
 }
 
+/** Credit information for header display */
+export interface BatchReviewCredits {
+  /** Remaining normal scan credits */
+  remaining: number;
+  /** Remaining super credits */
+  superRemaining: number;
+}
+
 export interface BatchReviewViewProps {
   /** Processing results from Story 12.2 */
   processingResults: ProcessingResult[];
@@ -53,11 +66,13 @@ export interface BatchReviewViewProps {
   /** Format currency function */
   formatCurrencyFn?: typeof formatCurrency;
   /** Called when user wants to edit a receipt */
-  onEditReceipt: (receipt: BatchReceipt, batchIndex: number, batchTotal: number) => void;
+  onEditReceipt: (receipt: BatchReceipt, batchIndex: number, batchTotal: number, allReceipts: BatchReceipt[]) => void;
   /** Called when receipt is updated from edit view */
   onReceiptUpdated?: (receiptId: string, transaction: Transaction) => void;
   /** Called when user cancels and returns to batch capture */
   onBack: () => void;
+  /** Called when X button is pressed to cancel/discard all (shows confirmation) */
+  onCancel?: () => void;
   /** Called when all receipts are saved successfully. Story 14.15: Now includes saved transactions. */
   onSaveComplete: (savedTransactionIds: string[], savedTransactions: Transaction[]) => void;
   /** Function to save a transaction to Firestore */
@@ -66,6 +81,10 @@ export interface BatchReviewViewProps {
   onRetryReceipt?: (receipt: BatchReceipt) => void;
   /** Story 12.3: Processing state props for inline progress display */
   processingState?: ProcessingStateProps;
+  /** Story 12.1 v9.7.0: Credit information for header display */
+  credits?: BatchReviewCredits;
+  /** Called when user taps credit badges */
+  onCreditInfoClick?: () => void;
 }
 
 /**
@@ -89,17 +108,45 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onReceiptUpdated: _onReceiptUpdated, // Reserved for parent integration
   onBack,
+  onCancel,
   onSaveComplete,
   saveTransaction,
   onRetryReceipt,
-  processingState,
+  processingState: processingStateProp,
+  credits,
+  onCreditInfoClick,
 }) => {
+  // Story 14d.5: Optional ScanContext consumption for state machine migration
+  // When context is available and in batch mode, prefer context state over props
+  const scanContext = useScanOptional();
+
+  // Story 14d.5c: Determine if we should use context mode
+  // Use context when context is available AND has batch receipts (or we're in batch reviewing phase)
+  const useContextMode = scanContext !== null && scanContext.isBatchReviewing;
+
+  // Derive processing state from context when available
+  // This allows the component to work during migration when App.tsx still manages local state
+  const processingState = scanContext?.isBatchProcessing
+    ? {
+        isProcessing: true,
+        progress: scanContext.batchProgress
+          ? { current: scanContext.batchProgress.current, total: scanContext.batchProgress.total }
+          : { current: 0, total: 0 },
+        states: [], // States are managed internally by useBatchProcessing hook
+        onCancelProcessing: processingStateProp?.onCancelProcessing,
+      }
+    : processingStateProp;
+
   const isDark = theme === 'dark';
 
-  // Use batch review hook
+  // Story 14d.5c: Use batch review hook with context mode option
+  // When context mode is active, receipts are read from/written to ScanContext
+  // When not active (tests), receipts are managed locally
+  // Pass scanContext as injection to avoid module resolution issues in tests
   const {
     receipts,
     totalAmount,
+    detectedCurrency,
     validCount,
     reviewCount,
     errorCount,
@@ -109,11 +156,39 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
     updateReceipt: _updateReceipt, // Exposed via hook for parent integration
     discardReceipt,
     saveAll,
+    saveOne,
     isEmpty,
-  } = useBatchReview(processingResults, imageDataUrls);
+  } = useBatchReview(processingResults, imageDataUrls, {
+    useContext: useContextMode,
+    scanContext: useContextMode ? scanContext : null,
+  });
+
+  // Use detected currency from receipts if available, otherwise fall back to user's currency
+  const displayCurrency = detectedCurrency || currency;
 
   // State for discard confirmation
   const [confirmDiscardId, setConfirmDiscardId] = useState<string | null>(null);
+
+  // Track if we had receipts before (to detect when all are saved/discarded)
+  const hadReceiptsRef = useRef(false);
+  const previousReceiptsCountRef = useRef(0);
+
+  // Story 12.1 v9.7.0: Auto-navigate back when all receipts are saved/discarded
+  useEffect(() => {
+    // Only track after we've had receipts (not on initial empty state)
+    if (receipts.length > 0) {
+      hadReceiptsRef.current = true;
+      previousReceiptsCountRef.current = receipts.length;
+    }
+
+    // If we had receipts and now it's empty, complete the batch
+    // This happens when all receipts were saved individually or discarded
+    if (hadReceiptsRef.current && isEmpty && !processingState?.isProcessing) {
+      // Call onSaveComplete with empty arrays to signal batch is done
+      // This bypasses the discard confirmation since user already acted on all receipts
+      onSaveComplete([], []);
+    }
+  }, [isEmpty, receipts.length, onSaveComplete, processingState?.isProcessing]);
 
   // Note: Receipt updates are handled via the updateReceipt function from the hook
   // The onReceiptUpdated callback is called by the parent component after editing
@@ -122,7 +197,7 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
   const handleEdit = useCallback(
     (receipt: BatchReceipt) => {
       const batchIndex = receipts.findIndex((r) => r.id === receipt.id);
-      onEditReceipt(receipt, batchIndex + 1, receipts.length);
+      onEditReceipt(receipt, batchIndex + 1, receipts.length, receipts);
     },
     [receipts, onEditReceipt]
   );
@@ -166,42 +241,112 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
     [onRetryReceipt]
   );
 
-  // Theme-based styling
-  const bgColor = isDark ? 'bg-slate-900' : 'bg-slate-50';
+  // Theme-based styling - Story 12.1 v9.7.0: Use CSS variables to match BatchCaptureView
   const textPrimary = isDark ? 'text-white' : 'text-slate-900';
   const textSecondary = isDark ? 'text-slate-400' : 'text-slate-600';
-  const headerBg = isDark ? 'bg-slate-800' : 'bg-white';
   const borderColor = isDark ? 'border-slate-700' : 'border-slate-200';
 
-  // Format total amount
-  const formattedTotal = formatCurrencyFn(totalAmount, currency);
+  // Format total amount using detected currency from receipts
+  const formattedTotal = formatCurrencyFn(totalAmount, displayCurrency);
 
   return (
-    <div className={`flex flex-col h-full ${bgColor}`}>
-      {/* Header */}
-      <header
-        className={`flex items-center gap-3 px-4 py-3 ${headerBg} border-b ${borderColor}`}
+    <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--bg)' }}>
+      {/* Header - Story 12.1 v9.7.0: Matches TransactionEditorView style */}
+      <div
+        className="sticky px-4"
+        style={{
+          top: 0,
+          zIndex: 50,
+          backgroundColor: 'var(--bg)',
+        }}
       >
-        <button
-          onClick={onBack}
-          className={`p-2 rounded-lg transition-colors ${
-            isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'
-          }`}
-          aria-label={t('back')}
-          disabled={isSaving}
+        <div
+          className="flex items-center justify-between"
+          style={{
+            height: '72px',
+            paddingTop: 'max(env(safe-area-inset-top, 0px), 8px)',
+          }}
         >
-          <ArrowLeft size={20} className={textPrimary} />
-        </button>
-        <h1 className={`text-lg font-semibold ${textPrimary}`}>
-          {t('batchReviewTitle')}
-        </h1>
-      </header>
+          {/* Left side: Back button + Title + Batch icon */}
+          <div className="flex items-center gap-0">
+            <button
+              onClick={onBack}
+              className="min-w-10 min-h-10 flex items-center justify-center -ml-1"
+              aria-label={t('back')}
+              style={{ color: 'var(--text-primary)' }}
+              disabled={isSaving}
+            >
+              <ChevronLeft size={28} strokeWidth={2.5} />
+            </button>
+            <h1
+              className="font-semibold whitespace-nowrap"
+              style={{
+                fontFamily: 'var(--font-family)',
+                color: 'var(--text-primary)',
+                fontWeight: 700,
+                fontSize: '20px',
+              }}
+            >
+              {t('batchResult')}
+            </h1>
+            {/* Batch mode indicator icon - same color as title, no background */}
+            <Layers
+              size={20}
+              strokeWidth={2}
+              className="ml-2 flex-shrink-0"
+              style={{ color: 'var(--text-primary)' }}
+            />
+          </div>
+
+          {/* Right side: Credit badges + Close button */}
+          <div className="flex items-center gap-2">
+            {/* Credit badges */}
+            {credits && (
+              <button
+                onClick={onCreditInfoClick}
+                className="flex items-center gap-1.5 px-2 py-1 rounded-full transition-all active:scale-95"
+                style={{
+                  backgroundColor: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-light)',
+                }}
+                aria-label={t('creditInfo')}
+              >
+                <div
+                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold"
+                  style={{ backgroundColor: '#fef3c7', color: '#92400e' }}
+                >
+                  <Zap size={10} strokeWidth={2.5} />
+                  <span>{formatCreditsDisplay(credits.superRemaining)}</span>
+                </div>
+                <div
+                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold"
+                  style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)' }}
+                >
+                  <Camera size={10} strokeWidth={2.5} />
+                  <span>{formatCreditsDisplay(credits.remaining)}</span>
+                </div>
+                <Info size={12} style={{ color: 'var(--text-tertiary)' }} />
+              </button>
+            )}
+            {/* Close button - triggers cancel/discard confirmation */}
+            <button
+              onClick={onCancel || onBack}
+              className="min-w-10 min-h-10 flex items-center justify-center"
+              aria-label={t('cancel')}
+              style={{ color: 'var(--text-primary)' }}
+              disabled={isSaving}
+            >
+              <X size={24} strokeWidth={2} />
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Story 12.3: Show processing progress when active */}
       {processingState?.isProcessing ? (
         <>
           {/* Processing header */}
-          <div className={`px-4 py-3 ${headerBg} border-b ${borderColor}`}>
+          <div className={`px-4 py-3 border-b ${borderColor}`} style={{ backgroundColor: 'var(--bg-secondary)' }}>
             <div className="flex items-center justify-between">
               <span className={`text-base font-medium ${textPrimary}`}>
                 {t('batchProcessing')} ({processingState.progress.current}/{processingState.progress.total})
@@ -275,8 +420,8 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
 
           {/* Cancel button during processing */}
           <div
-            className={`px-4 py-4 ${headerBg} border-t ${borderColor}`}
-            style={{ paddingBottom: 'calc(1rem + var(--safe-bottom, 0px))' }}
+            className={`px-4 py-4 border-t ${borderColor}`}
+            style={{ backgroundColor: 'var(--bg-secondary)', paddingBottom: 'calc(1rem + var(--safe-bottom, 0px))' }}
           >
             <button
               onClick={processingState.onCancelProcessing}
@@ -291,26 +436,41 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
           </div>
         </>
       ) : (
-        <>
-          {/* Summary header (AC #5) */}
-          <div className={`px-4 py-3 ${headerBg} border-b ${borderColor}`}>
+        /* Story 12.1 v9.7.0: Main content area - matches BatchCaptureView layout */
+        /* Story 14d.5: pb-32 (128px) to account for save button + nav bar so last card is visible */
+        <div className="flex-1 overflow-y-auto px-3 pb-32">
+          {/* Summary card - styled like BatchCaptureView main card */}
+          <div
+            className="rounded-2xl p-4 mb-3"
+            style={{
+              backgroundColor: 'var(--bg-secondary)',
+              border: '2px solid var(--border-light)',
+            }}
+          >
             <div className="flex items-center justify-between">
-              <span className={`text-base font-medium ${textPrimary}`}>
-                {validCount} {t(validCount === 1 ? 'receipt' : 'receipts')} • {formattedTotal}{' '}
-                {t('total')}
-              </span>
-              {reviewCount > 0 && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                  <AlertCircle size={12} />
-                  {reviewCount} {t('batchNeedReview')}
+              {/* Left: Receipt count + review warning */}
+              <div className="flex items-center gap-2">
+                <span className="text-base font-medium" style={{ color: 'var(--text-primary)' }}>
+                  {validCount} {t(validCount === 1 ? 'receipt' : 'receipts')}
                 </span>
-              )}
+                {reviewCount > 0 && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                    <AlertCircle size={12} />
+                    {reviewCount} {t('batchNeedReview')}
+                  </span>
+                )}
+              </div>
+              {/* Right: Total */}
+              <div className="text-right">
+                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{t('total')}</span>
+                <span className="ml-2 text-base font-semibold" style={{ color: 'var(--text-primary)' }}>{formattedTotal}</span>
+              </div>
             </div>
           </div>
 
           {/* Receipt cards (AC #1, #2, #3, #8) */}
           <div
-            className="flex-1 overflow-y-auto p-4 space-y-3"
+            className="space-y-3"
             role="list"
             aria-label={t('batchReviewList')}
           >
@@ -326,6 +486,9 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
                   theme={theme}
                   currency={currency}
                   t={t}
+                  onSave={async () => {
+                    await saveOne(receipt.id, saveTransaction);
+                  }}
                   onEdit={() => handleEdit(receipt)}
                   onDiscard={() => handleDiscard(receipt)}
                   onRetry={
@@ -337,14 +500,15 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
               ))
             )}
           </div>
-        </>
+        </div>
       )}
 
       {/* Save all button (AC #6) - only show when not processing */}
+      {/* Story 14d.5: Account for nav bar height (~80px) + safe area so button is visible above nav */}
       {!isEmpty && !processingState?.isProcessing && (
         <div
-          className={`px-4 py-4 ${headerBg} border-t ${borderColor}`}
-          style={{ paddingBottom: 'calc(1rem + var(--safe-bottom, 0px))' }}
+          className="px-4 py-4"
+          style={{ backgroundColor: 'var(--bg)', paddingBottom: 'calc(80px + var(--safe-bottom, 0px))' }}
         >
           <button
             onClick={handleSaveAll}
@@ -403,19 +567,21 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
             <div className="flex gap-3">
               <button
                 onClick={handleConfirmDiscard}
-                className="flex-1 py-2.5 px-4 rounded-lg font-medium text-white bg-red-500 hover:bg-red-600 transition-colors"
+                className="flex-1 py-2.5 px-4 rounded-lg font-medium text-white bg-red-500 hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
               >
+                <Trash2 size={16} />
                 {t('batchDiscardConfirmYes')}
               </button>
               <button
                 onClick={handleCancelDiscard}
-                className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-colors ${
+                className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
                   isDark
                     ? 'bg-slate-700 hover:bg-slate-600 text-slate-300'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
                 }`}
               >
-                {t('cancel')}
+                <RotateCcw size={16} />
+                {t('batchDiscardConfirmNo')}
               </button>
             </div>
           </div>

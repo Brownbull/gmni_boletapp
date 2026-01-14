@@ -165,7 +165,7 @@ export const ReportRow: React.FC<ReportRowProps> = ({
           <span>{title}</span>
           {transactionCount !== undefined && transactionCount > 0 && (
             <span
-              className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full"
+              className="flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded-full"
               style={{
                 backgroundColor: 'var(--bg-tertiary)',
                 color: 'var(--text-secondary)',
@@ -219,7 +219,7 @@ export const ReportRow: React.FC<ReportRowProps> = ({
         {/* Persona hook (quarterly/yearly) */}
         {personaHook && (
           <div
-            className="text-[10px] mt-0.5 italic"
+            className="text-xs mt-0.5 italic"
             style={{ color: 'var(--text-secondary)' }}
             data-testid="report-persona-hook"
           >

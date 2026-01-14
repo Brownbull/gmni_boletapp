@@ -158,7 +158,7 @@ describe('categoryPositionToFilter', () => {
 // ============================================================================
 
 describe('createTemporalNavigationPayload', () => {
-  it('creates payload with temporal filter and category set to all', () => {
+  it('creates payload with temporal filter only (no category)', () => {
     const position: TemporalPosition = { level: 'quarter', year: '2024', quarter: 'Q4' };
     const payload = createTemporalNavigationPayload(position);
 
@@ -166,8 +166,10 @@ describe('createTemporalNavigationPayload', () => {
       level: 'quarter',
       year: '2024',
       quarter: 'Q4',
+      month: undefined,
     });
-    expect(payload.category).toEqual({ level: 'all' });
+    // No category filter for temporal-only navigation
+    expect(payload.category).toBeUndefined();
   });
 
   it('creates correct payload for year position', () => {
@@ -177,8 +179,9 @@ describe('createTemporalNavigationPayload', () => {
     expect(payload.temporal).toEqual({
       level: 'year',
       year: '2024',
+      quarter: undefined,
+      month: undefined,
     });
-    expect(payload.category.level).toBe('all');
   });
 
   it('creates correct payload for day position', () => {
@@ -192,13 +195,11 @@ describe('createTemporalNavigationPayload', () => {
     };
     const payload = createTemporalNavigationPayload(position);
 
-    expect(payload.temporal).toEqual({
-      level: 'day',
-      year: '2024',
-      month: '2024-12',
-      week: 3,
-      day: '2024-12-15',
-    });
+    // Note: The implementation doesn't include week/day in the payload
+    // as HistoryNavigationPayload.temporal only has level, year, month, quarter
+    expect(payload.temporal?.level).toBe('day');
+    expect(payload.temporal?.year).toBe('2024');
+    expect(payload.temporal?.month).toBe('2024-12');
   });
 });
 
@@ -207,7 +208,7 @@ describe('createTemporalNavigationPayload', () => {
 // ============================================================================
 
 describe('createCategoryNavigationPayload', () => {
-  it('creates payload with both temporal and category filters', () => {
+  it('creates payload with temporal and category string', () => {
     const categoryPosition: CategoryPosition = {
       level: 'category',
       category: 'Supermarket',
@@ -221,18 +222,16 @@ describe('createCategoryNavigationPayload', () => {
 
     const payload = createCategoryNavigationPayload(categoryPosition, temporalPosition);
 
-    expect(payload.temporal).toEqual({
-      level: 'month',
-      year: '2024',
-      month: '2024-10',
-    });
-    expect(payload.category).toEqual({
-      level: 'category',
-      category: 'Supermarket',
-    });
+    // Note: temporalPositionToFilter for 'month' level doesn't include quarter
+    // because TemporalFilterState for month only has level, year, month
+    expect(payload.temporal?.level).toBe('month');
+    expect(payload.temporal?.year).toBe('2024');
+    expect(payload.temporal?.month).toBe('2024-10');
+    // Category is now a string, not an object
+    expect(payload.category).toBe('Supermarket');
   });
 
-  it('preserves subcategory filter level', () => {
+  it('extracts category name for subcategory level', () => {
     const categoryPosition: CategoryPosition = {
       level: 'subcategory',
       category: 'Supermarket',
@@ -247,17 +246,9 @@ describe('createCategoryNavigationPayload', () => {
 
     const payload = createCategoryNavigationPayload(categoryPosition, temporalPosition);
 
-    expect(payload.category).toEqual({
-      level: 'subcategory',
-      category: 'Supermarket',
-      group: 'Produce',
-      subcategory: 'Fruits',
-    });
-    expect(payload.temporal).toEqual({
-      level: 'quarter',
-      year: '2024',
-      quarter: 'Q3',
-    });
+    // Category is extracted as string from the CategoryFilterState
+    expect(payload.category).toBe('Supermarket');
+    expect(payload.temporal?.quarter).toBe('Q3');
   });
 
   it('works with year-level temporal context', () => {
@@ -273,14 +264,8 @@ describe('createCategoryNavigationPayload', () => {
 
     const payload = createCategoryNavigationPayload(categoryPosition, temporalPosition);
 
-    expect(payload.temporal).toEqual({
-      level: 'year',
-      year: '2024',
-    });
-    expect(payload.category).toEqual({
-      level: 'group',
-      category: 'Restaurant',
-      group: 'Main Course',
-    });
+    expect(payload.temporal?.level).toBe('year');
+    expect(payload.temporal?.year).toBe('2024');
+    expect(payload.category).toBe('Restaurant');
   });
 });

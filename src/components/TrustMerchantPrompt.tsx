@@ -56,10 +56,9 @@ export const TrustMerchantPrompt: React.FC<TrustMerchantPromptProps> = ({
     scanCount,
     onAccept,
     onDecline,
-    theme,
+    theme: _theme, // Theme prop kept for API compatibility; colors come from CSS variables
     t,
 }) => {
-    const isDark = theme === 'dark';
     const [isProcessing, setIsProcessing] = useState(false);
 
     // Handle accept with loading state
@@ -105,25 +104,22 @@ export const TrustMerchantPrompt: React.FC<TrustMerchantPromptProps> = ({
             aria-describedby="trust-merchant-message"
         >
             <div
-                className={`
-                    w-full max-w-sm rounded-2xl p-6 shadow-xl
-                    animate-slide-up
-                    ${isDark
-                        ? 'bg-slate-800 text-white border border-slate-700'
-                        : 'bg-white text-slate-900 border border-slate-200'
-                    }
-                `}
+                className="w-full max-w-sm rounded-2xl p-6 shadow-xl animate-slide-up"
+                style={{
+                    backgroundColor: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--border-light)',
+                }}
             >
                 {/* Header with handshake icon */}
                 <div className="flex items-center gap-3 mb-4">
                     <div
-                        className={`
-                            w-12 h-12 rounded-full flex items-center justify-center
-                            ${isDark ? 'bg-blue-500/20' : 'bg-blue-100'}
-                        `}
+                        className="w-12 h-12 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: 'var(--primary-light)' }}
                     >
                         <Handshake
-                            className={`w-6 h-6 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
+                            className="w-6 h-6"
+                            style={{ color: 'var(--primary)' }}
                         />
                     </div>
                     <h2
@@ -137,46 +133,42 @@ export const TrustMerchantPrompt: React.FC<TrustMerchantPromptProps> = ({
                 {/* Message */}
                 <p
                     id="trust-merchant-message"
-                    className={`mb-6 text-sm leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}
+                    className="mb-6 text-sm leading-relaxed"
+                    style={{ color: 'var(--text-secondary)' }}
                 >
                     {message}
                 </p>
 
                 {/* Action buttons */}
                 <div className="flex gap-3">
-                    {/* Accept button (AC #4) */}
+                    {/* Accept button (AC #4) - Uses theme primary color */}
                     <button
                         onClick={handleAccept}
                         disabled={isProcessing}
-                        className={`
-                            flex-1 py-3 px-4 rounded-xl font-semibold text-white
-                            flex items-center justify-center gap-2
-                            transition-all duration-200
-                            ${isProcessing
-                                ? 'bg-green-400 cursor-not-allowed'
-                                : 'bg-green-600 hover:bg-green-700 active:scale-[0.98]'
-                            }
-                        `}
+                        className="flex-1 py-3 px-4 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200"
+                        style={{
+                            backgroundColor: isProcessing ? 'var(--primary-hover)' : 'var(--primary)',
+                            opacity: isProcessing ? 0.7 : 1,
+                            cursor: isProcessing ? 'not-allowed' : 'pointer',
+                        }}
                         aria-label={t('trustMerchantConfirm') || 'Sí, confiar'}
                     >
                         <Check className="w-5 h-5" />
                         {t('trustMerchantConfirm') || 'Sí, confiar'}
                     </button>
 
-                    {/* Decline button (AC #4) */}
+                    {/* Decline button (AC #4) - Uses theme secondary/neutral color */}
                     <button
                         onClick={handleDecline}
                         disabled={isProcessing}
-                        className={`
-                            flex-1 py-3 px-4 rounded-xl font-medium
-                            flex items-center justify-center gap-2
-                            border-2 transition-all duration-200
-                            ${isDark
-                                ? 'border-slate-600 text-slate-300 hover:bg-slate-700'
-                                : 'border-slate-300 text-slate-700 hover:bg-slate-50'
-                            }
-                            ${isProcessing ? 'opacity-50 cursor-not-allowed' : 'active:scale-[0.98]'}
-                        `}
+                        className="flex-1 py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2 transition-all duration-200"
+                        style={{
+                            backgroundColor: 'var(--bg-tertiary)',
+                            color: 'var(--text-secondary)',
+                            border: '1px solid var(--border-light)',
+                            opacity: isProcessing ? 0.5 : 1,
+                            cursor: isProcessing ? 'not-allowed' : 'pointer',
+                        }}
                         aria-label={t('trustMerchantDecline') || 'No ahora'}
                     >
                         <X className="w-4 h-4" />

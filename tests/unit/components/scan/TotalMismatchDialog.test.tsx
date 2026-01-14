@@ -123,13 +123,15 @@ describe('TotalMismatchDialog', () => {
     expect(defaultProps.onCancel).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onCancel when backdrop is clicked', () => {
+  it('does NOT call onCancel when backdrop is clicked (v9.7.0 - prevent accidental dismissal)', () => {
     render(<TotalMismatchDialog {...defaultProps} />);
-    // Backdrop is the first element with bg-black/50 class
+    // v9.7.0: Backdrop no longer has onClick to prevent accidental dismissal
+    // User must explicitly choose an option or press X/Escape
     const backdrop = document.querySelector('.bg-black\\/50');
     if (backdrop) {
       fireEvent.click(backdrop);
-      expect(defaultProps.onCancel).toHaveBeenCalledTimes(1);
+      // Should NOT be called - backdrop click is intentionally disabled
+      expect(defaultProps.onCancel).not.toHaveBeenCalled();
     }
   });
 
@@ -143,5 +145,91 @@ describe('TotalMismatchDialog', () => {
   it('shows discrepancy percentage', () => {
     render(<TotalMismatchDialog {...defaultProps} />);
     expect(screen.getByText(/90%/)).toBeInTheDocument();
+  });
+
+  // Story 14.34: Currency handling tests
+  // TotalMismatchDialog uses es-CL locale for all formatting, so USD shows as "US$18,99"
+  describe('Story 14.34: currency handling', () => {
+    it('formats USD amounts correctly (divides by 100)', () => {
+      const usdValidation: TotalValidationResult = {
+        isValid: false,
+        extractedTotal: 1899, // $18.99 in cents
+        itemsSum: 2550, // $25.50 in cents
+        discrepancy: 6.51,
+        discrepancyPercent: 34,
+        suggestedTotal: 2550,
+        errorType: 'unknown',
+      };
+
+      render(
+        <TotalMismatchDialog
+          {...defaultProps}
+          validationResult={usdValidation}
+          currency="USD"
+        />
+      );
+
+      // USD should show US$18,99 and US$25,50 (divided by 100, es-CL locale)
+      // Use getAllByText since amounts appear in both comparison display and buttons
+      const amount1899 = screen.getAllByText(/18,99/);
+      const amount2550 = screen.getAllByText(/25,50/);
+      expect(amount1899.length).toBeGreaterThanOrEqual(1);
+      expect(amount2550.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('formats CLP amounts correctly (no division)', () => {
+      const clpValidation: TotalValidationResult = {
+        isValid: false,
+        extractedTotal: 15990,
+        itemsSum: 25000,
+        discrepancy: 9010,
+        discrepancyPercent: 56,
+        suggestedTotal: 25000,
+        errorType: 'unknown',
+      };
+
+      render(
+        <TotalMismatchDialog
+          {...defaultProps}
+          validationResult={clpValidation}
+          currency="CLP"
+        />
+      );
+
+      // CLP should show $15.990 and $25.000 (Chilean format, no cents division)
+      // Use getAllByText since amounts appear in both comparison display and buttons
+      const amount15990 = screen.getAllByText(/15\.990/);
+      const amount25000 = screen.getAllByText(/25\.000/);
+      expect(amount15990.length).toBeGreaterThanOrEqual(1);
+      expect(amount25000.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('formats EUR amounts correctly (divides by 100)', () => {
+      const eurValidation: TotalValidationResult = {
+        isValid: false,
+        extractedTotal: 9999, // €99.99 in cents
+        itemsSum: 12500, // €125.00 in cents
+        discrepancy: 25.01,
+        discrepancyPercent: 25,
+        suggestedTotal: 12500,
+        errorType: 'unknown',
+      };
+
+      render(
+        <TotalMismatchDialog
+          {...defaultProps}
+          validationResult={eurValidation}
+          currency="EUR"
+        />
+      );
+
+      // EUR should show €99.99 and €125.00 (divided by 100)
+      // Use getAllByText since amounts appear in both comparison display and buttons
+      // EUR uses comma for decimals in es-CL locale
+      const amount9999 = screen.getAllByText(/99,99/);
+      const amount12500 = screen.getAllByText(/125,00/);
+      expect(amount9999.length).toBeGreaterThanOrEqual(1);
+      expect(amount12500.length).toBeGreaterThanOrEqual(1);
+    });
   });
 });
