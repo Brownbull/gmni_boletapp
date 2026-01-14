@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '../setup/test-utils'
 import React from 'react'
 import { CategoryLearningPrompt } from '../../src/components/CategoryLearningPrompt'
 import { EditView } from '../../src/views/EditView'

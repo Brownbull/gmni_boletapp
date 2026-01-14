@@ -299,7 +299,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                                 {lang === 'es' ? 'Nuevo Grupo' : 'New Group'}
                             </div>
                             <div
-                                className="text-[11px]"
+                                className="text-xs"
                                 style={{ color: 'var(--text-secondary)' }}
                             >
                                 {getCountText()}
@@ -322,7 +322,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                     {/* Input with floating label */}
                     <div className="relative">
                         <label
-                            className="absolute -top-2 left-[10px] px-1 text-[11px] font-medium z-10"
+                            className="absolute -top-2 left-[10px] px-1 text-xs font-medium z-10"
                             style={{
                                 backgroundColor: 'var(--bg)',
                                 color: 'var(--primary)',
@@ -352,7 +352,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
 
                     {/* Story 14.15b: Icon Selector */}
                     <div className="mt-4">
-                        <div className="text-[11px] font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                        <div className="text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                             {lang === 'es' ? 'Icono' : 'Icon'}
                         </div>
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -424,7 +424,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
 
                     {/* Story 14.15b: Color Selector */}
                     <div className="mt-3">
-                        <div className="text-[11px] font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                        <div className="text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                             {lang === 'es' ? 'Color' : 'Color'}
                         </div>
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -502,7 +502,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                     {/* Error message */}
                     {error && (
                         <div
-                            className="mt-3 text-[11px]"
+                            className="mt-3 text-xs"
                             style={{ color: 'var(--error)' }}
                             role="alert"
                         >
@@ -517,7 +517,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                     <button
                         onClick={onBack}
                         disabled={isCreating}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-[13px] font-medium rounded-lg transition-colors disabled:opacity-40"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-sm font-medium rounded-lg transition-colors disabled:opacity-40"
                         style={{
                             backgroundColor: 'var(--bg-secondary)',
                             border: '1px solid var(--border-light)',
@@ -533,7 +533,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                     <button
                         onClick={handleCreate}
                         disabled={isCreating || !groupName.trim()}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-[13px] font-semibold rounded-lg transition-colors disabled:opacity-40"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-sm font-semibold rounded-lg transition-colors disabled:opacity-40"
                         style={{
                             backgroundColor: 'var(--primary)',
                             color: 'white',

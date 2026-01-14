@@ -96,19 +96,21 @@ describe('useBatchProcessing', () => {
     });
 
     it('should not start if already processing', async () => {
-      // Create a long-running mock
+      // Story 14.30.8: Use pending promise instead of setTimeout to avoid real delay in CI
+      // The test verifies that a second call returns [] while first is still processing
+      let resolveProcessing: (value: batchProcessingService.ProcessingResult[]) => void;
       mockProcessImagesInParallel.mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve([]), 1000))
+        () => new Promise((resolve) => { resolveProcessing = resolve; })
       );
 
       const { result } = renderHook(() => useBatchProcessing());
 
-      // Start first processing
+      // Start first processing (will be pending)
       act(() => {
         result.current.startProcessing(['data:image/jpeg;base64,test'], 'CLP');
       });
 
-      // Try to start second processing
+      // Try to start second processing while first is still running
       let secondResult: batchProcessingService.ProcessingResult[] = [];
       await act(async () => {
         secondResult = await result.current.startProcessing(
@@ -117,10 +119,15 @@ describe('useBatchProcessing', () => {
         );
       });
 
-      // Second call should return empty
+      // Second call should return empty (blocked by isProcessing guard)
       expect(secondResult).toEqual([]);
       // Should only have been called once
       expect(mockProcessImagesInParallel).toHaveBeenCalledTimes(1);
+
+      // Cleanup: resolve the pending promise to avoid hanging test
+      await act(async () => {
+        resolveProcessing([]);
+      });
     });
 
     it('should pass receiptType to service', async () => {
@@ -151,12 +158,14 @@ describe('useBatchProcessing', () => {
 
   describe('cancel', () => {
     it('should abort processing when cancel is called', async () => {
+      // Story 14.30.8: Use pending promise instead of setTimeout to avoid delay in CI
       let abortSignal: AbortSignal | undefined;
+      let resolveProcessing: () => void;
 
       mockProcessImagesInParallel.mockImplementation(async (images, options, onStatus, onProgress, signal) => {
         abortSignal = signal;
-        // Simulate a delay
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        // Create a promise that we control - no real delay needed
+        await new Promise<void>((resolve) => { resolveProcessing = resolve; });
         return [];
       });
 
@@ -166,14 +175,18 @@ describe('useBatchProcessing', () => {
         result.current.startProcessing(['data:image/jpeg;base64,test'], 'CLP');
       });
 
+      // Cancel should set aborted immediately (synchronous)
       act(() => {
         result.current.cancel();
       });
 
-      // Wait a bit for the abort to be processed
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
+      // The abort signal should be set immediately after cancel()
       expect(abortSignal?.aborted).toBe(true);
+
+      // Cleanup: resolve the pending promise
+      await act(async () => {
+        resolveProcessing();
+      });
     });
   });
 
@@ -417,6 +430,230 @@ describe('useBatchProcessing', () => {
         expect.any(Function),
         expect.any(Object)
       );
+    });
+  });
+
+  /**
+   * Story 14d.5b: Callback integration tests for ScanContext integration.
+   * These test that the callbacks are called correctly during processing.
+   */
+  describe('callbacks (Story 14d.5b)', () => {
+    it('should call onItemStart when processing begins for an item', async () => {
+      const tx = createMockTransaction('Store', 1000);
+      const onItemStart = vi.fn();
+
+      mockProcessImagesInParallel.mockImplementation(async (images, options, onStatus) => {
+        // Simulate item starting
+        onStatus?.([
+          { id: 'test-1', index: 0, status: 'processing', progress: 0 },
+          { id: 'test-2', index: 1, status: 'pending', progress: 0 },
+        ]);
+        // Simulate item completing
+        onStatus?.([
+          { id: 'test-1', index: 0, status: 'ready', progress: 100, result: tx },
+          { id: 'test-2', index: 1, status: 'processing', progress: 0 },
+        ]);
+        return [
+          { id: 'test-1', index: 0, success: true, result: tx },
+          { id: 'test-2', index: 1, success: true, result: tx },
+        ];
+      });
+
+      const { result } = renderHook(() => useBatchProcessing());
+
+      await act(async () => {
+        await result.current.startProcessing(
+          ['data:image/jpeg;base64,test1', 'data:image/jpeg;base64,test2'],
+          'CLP',
+          undefined,
+          { onItemStart }
+        );
+      });
+
+      // Should be called once for each item when it starts processing
+      expect(onItemStart).toHaveBeenCalledWith(0);
+      expect(onItemStart).toHaveBeenCalledWith(1);
+    });
+
+    it('should call onItemSuccess when processing succeeds for an item', async () => {
+      const tx1 = createMockTransaction('Store 1', 1000);
+      const tx2 = createMockTransaction('Store 2', 2000);
+      const onItemSuccess = vi.fn();
+
+      mockProcessImagesInParallel.mockImplementation(async (images, options, onStatus) => {
+        onStatus?.([
+          { id: 'test-1', index: 0, status: 'ready', progress: 100, result: tx1 },
+          { id: 'test-2', index: 1, status: 'ready', progress: 100, result: tx2 },
+        ]);
+        return [
+          { id: 'test-1', index: 0, success: true, result: tx1 },
+          { id: 'test-2', index: 1, success: true, result: tx2 },
+        ];
+      });
+
+      const { result } = renderHook(() => useBatchProcessing());
+
+      await act(async () => {
+        await result.current.startProcessing(
+          ['data:image/jpeg;base64,test1', 'data:image/jpeg;base64,test2'],
+          'CLP',
+          undefined,
+          { onItemSuccess }
+        );
+      });
+
+      expect(onItemSuccess).toHaveBeenCalledWith(0, tx1);
+      expect(onItemSuccess).toHaveBeenCalledWith(1, tx2);
+    });
+
+    it('should call onItemError when processing fails for an item', async () => {
+      const tx = createMockTransaction('Store', 1000);
+      const onItemError = vi.fn();
+
+      mockProcessImagesInParallel.mockImplementation(async (images, options, onStatus) => {
+        onStatus?.([
+          { id: 'test-1', index: 0, status: 'ready', progress: 100, result: tx },
+          { id: 'test-2', index: 1, status: 'error', progress: 0, error: 'API Error' },
+        ]);
+        return [
+          { id: 'test-1', index: 0, success: true, result: tx },
+          { id: 'test-2', index: 1, success: false, error: 'API Error' },
+        ];
+      });
+
+      const { result } = renderHook(() => useBatchProcessing());
+
+      await act(async () => {
+        await result.current.startProcessing(
+          ['data:image/jpeg;base64,test1', 'data:image/jpeg;base64,test2'],
+          'CLP',
+          undefined,
+          { onItemError }
+        );
+      });
+
+      expect(onItemError).toHaveBeenCalledWith(1, 'API Error');
+      expect(onItemError).not.toHaveBeenCalledWith(0, expect.anything());
+    });
+
+    it('should call onComplete with results and images when all processing finishes', async () => {
+      const tx = createMockTransaction('Store', 1000);
+      const onComplete = vi.fn();
+      const testImage = 'data:image/jpeg;base64,test';
+
+      mockProcessImagesInParallel.mockImplementation(async (images, options, onStatus) => {
+        onStatus?.([
+          { id: 'test-1', index: 0, status: 'ready', progress: 100, result: tx },
+        ]);
+        return [{ id: 'test-1', index: 0, success: true, result: tx }];
+      });
+
+      const { result } = renderHook(() => useBatchProcessing());
+
+      await act(async () => {
+        await result.current.startProcessing(
+          [testImage],
+          'CLP',
+          undefined,
+          { onComplete }
+        );
+      });
+
+      expect(onComplete).toHaveBeenCalledTimes(1);
+      // Story 14d.5: onComplete now receives (results, images) for atomic batchReceipts creation
+      expect(onComplete).toHaveBeenCalledWith(
+        [{ id: 'test-1', index: 0, success: true, result: tx }],
+        [testImage]
+      );
+    });
+
+    it('should only call each callback once per item (deduplication)', async () => {
+      const tx = createMockTransaction('Store', 1000);
+      const onItemStart = vi.fn();
+      const onItemSuccess = vi.fn();
+
+      mockProcessImagesInParallel.mockImplementation(async (images, options, onStatus) => {
+        // Simulate multiple state updates for the same item
+        onStatus?.([{ id: 'test-1', index: 0, status: 'processing', progress: 0 }]);
+        onStatus?.([{ id: 'test-1', index: 0, status: 'processing', progress: 50 }]);
+        onStatus?.([{ id: 'test-1', index: 0, status: 'ready', progress: 100, result: tx }]);
+        onStatus?.([{ id: 'test-1', index: 0, status: 'ready', progress: 100, result: tx }]); // Duplicate
+        return [{ id: 'test-1', index: 0, success: true, result: tx }];
+      });
+
+      const { result } = renderHook(() => useBatchProcessing());
+
+      await act(async () => {
+        await result.current.startProcessing(
+          ['data:image/jpeg;base64,test'],
+          'CLP',
+          undefined,
+          { onItemStart, onItemSuccess }
+        );
+      });
+
+      // Should only be called once per item despite multiple status updates
+      expect(onItemStart).toHaveBeenCalledTimes(1);
+      expect(onItemSuccess).toHaveBeenCalledTimes(1);
+    });
+
+    it('should work with all callbacks provided', async () => {
+      const tx = createMockTransaction('Store', 1000);
+      const onItemStart = vi.fn();
+      const onItemSuccess = vi.fn();
+      const onItemError = vi.fn();
+      const onComplete = vi.fn();
+
+      mockProcessImagesInParallel.mockImplementation(async (images, options, onStatus) => {
+        onStatus?.([
+          { id: 'test-1', index: 0, status: 'processing', progress: 0 },
+          { id: 'test-2', index: 1, status: 'pending', progress: 0 },
+        ]);
+        onStatus?.([
+          { id: 'test-1', index: 0, status: 'ready', progress: 100, result: tx },
+          { id: 'test-2', index: 1, status: 'error', progress: 0, error: 'Failed' },
+        ]);
+        return [
+          { id: 'test-1', index: 0, success: true, result: tx },
+          { id: 'test-2', index: 1, success: false, error: 'Failed' },
+        ];
+      });
+
+      const { result } = renderHook(() => useBatchProcessing());
+
+      await act(async () => {
+        await result.current.startProcessing(
+          ['data:image/jpeg;base64,test1', 'data:image/jpeg;base64,test2'],
+          'CLP',
+          undefined,
+          { onItemStart, onItemSuccess, onItemError, onComplete }
+        );
+      });
+
+      expect(onItemStart).toHaveBeenCalledWith(0);
+      expect(onItemSuccess).toHaveBeenCalledWith(0, tx);
+      expect(onItemError).toHaveBeenCalledWith(1, 'Failed');
+      expect(onComplete).toHaveBeenCalledTimes(1);
+    });
+
+    it('should work without callbacks (backward compatibility)', async () => {
+      const tx = createMockTransaction('Store', 1000);
+
+      mockProcessImagesInParallel.mockImplementation(async (images, options, onStatus) => {
+        onStatus?.([{ id: 'test-1', index: 0, status: 'ready', progress: 100, result: tx }]);
+        return [{ id: 'test-1', index: 0, success: true, result: tx }];
+      });
+
+      const { result } = renderHook(() => useBatchProcessing());
+
+      // Should not throw when no callbacks provided
+      await act(async () => {
+        const results = await result.current.startProcessing(
+          ['data:image/jpeg;base64,test'],
+          'CLP'
+        );
+        expect(results).toHaveLength(1);
+      });
     });
   });
 });

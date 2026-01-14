@@ -4,7 +4,14 @@
  * Story 10a.4: Insights History View
  * @see docs/sprint-artifacts/epic10a/story-10a.4-insights-history-view.md
  *
+ * Story 14.33b: View Switcher & Carousel Mode
+ * @see docs/sprint-artifacts/epic14/stories/story-14.33b-view-switcher-carousel.md
+ *
+ * Story 14.33c.1: Airlock Generation & Persistence
+ * @see docs/sprint-artifacts/epic14/stories/story-14.33c.1-airlock-generation-persistence.md
+ *
  * Displays chronological list of past insights with temporal filtering.
+ * Now includes 4-mode view switcher: List, Carousel, Airlock, Celebration.
  *
  * AC1: Insights list renders with icon, title, message, date
  * AC2: Grouped by week (This Week, Last Week, Earlier)
@@ -13,28 +20,57 @@
  * AC5: Empty state with suggestion to scan
  * AC6: Backward compatibility for old records
  *
+ * Story 14.33b:
+ * AC1: View switcher with 4 buttons (Lista, Destacados, Airlock, Logro)
+ * AC2: View state management with localStorage persistence
+ * AC3: Carousel view for highlighted insights
+ * AC6: Placeholder views for Airlock and Celebration
+ *
+ * Story 14.33c.1:
+ * AC2: Generate Airlock Button with credit integration
+ * AC5: Airlock History List
+ * AC6: Airlock Card opens AirlockSequence
+ *
  * Enhancement: Temporal filters + Detail modal on click
  */
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { ArrowLeft, Lightbulb, Trash2, X } from 'lucide-react';
+import { ChevronLeft, Lightbulb, Trash2, X } from 'lucide-react';
 import { getUserInsightProfile } from '../services/insightEngineService';
 import { InsightHistoryCard } from '../components/insights/InsightHistoryCard';
 import { InsightDetailModal } from '../components/insights/InsightDetailModal';
 import {
   InsightsTemporalFilter,
-  InsightTemporalFilter,
+  type InsightTemporalFilter,
 } from '../components/insights/InsightsTemporalFilter';
+import {
+  InsightsViewSwitcher,
+  InsightsViewMode,
+} from '../components/insights/InsightsViewSwitcher';
+import { InsightsCarousel, selectHighlightedInsights } from '../components/insights/InsightsCarousel';
+import { CelebrationView } from '../components/insights/CelebrationView';
 import { InsightRecord } from '../types/insight';
 import { useAuth } from '../hooks/useAuth';
 import { useInsightProfile } from '../hooks/useInsightProfile';
 import { getISOWeekNumber, LONG_PRESS_DELAY_MS } from '../utils/dateHelpers';
+import { ProfileDropdown, ProfileAvatar, getInitials } from '../components/ProfileDropdown';
+
+// localStorage key for view preference persistence
+const INSIGHTS_VIEW_KEY = 'boletapp_insights_view';
 
 interface InsightsViewProps {
+  /** Navigate back to dashboard */
   onBack: () => void;
   onEditTransaction: (transactionId: string) => void;
+  /** Navigate to other views (for profile dropdown) */
+  onNavigateToView?: (view: string) => void;
+  /** Navigate to settings (for profile dropdown) */
+  onMenuClick?: () => void;
   theme: string;
   t: (key: string) => string;
+  /** User info for profile avatar */
+  userName?: string;
+  userEmail?: string;
 }
 
 // Group insights by week (AC2)
@@ -143,11 +179,46 @@ function getInsightKey(insight: InsightRecord): InsightKey {
   return `${insight.insightId}:${insight.shownAt?.seconds ?? 0}`;
 }
 
+/**
+ * Load saved view preference from localStorage
+ */
+function loadSavedView(): InsightsViewMode {
+  try {
+    const saved = localStorage.getItem(INSIGHTS_VIEW_KEY);
+    // Valid views: list, airlock, celebration (carousel was merged into list)
+    if (saved && ['list', 'airlock', 'celebration'].includes(saved)) {
+      return saved as InsightsViewMode;
+    }
+    // If user had 'carousel' saved, redirect to 'list' (now includes highlighted section)
+    if (saved === 'carousel') {
+      return 'list';
+    }
+  } catch {
+    // localStorage unavailable
+  }
+  return 'list';
+}
+
+/**
+ * Save view preference to localStorage
+ */
+function saveViewPreference(view: InsightsViewMode): void {
+  try {
+    localStorage.setItem(INSIGHTS_VIEW_KEY, view);
+  } catch {
+    // localStorage unavailable
+  }
+}
+
 export const InsightsView: React.FC<InsightsViewProps> = ({
   onBack,
   onEditTransaction,
+  onNavigateToView,
+  onMenuClick,
   theme,
   t,
+  userName = '',
+  userEmail = '',
 }) => {
   const { user, services } = useAuth();
   const { removeInsight, removeInsights } = useInsightProfile(user, services);
@@ -156,12 +227,42 @@ export const InsightsView: React.FC<InsightsViewProps> = ({
   const [temporalFilter, setTemporalFilter] = useState<InsightTemporalFilter>({ level: 'all' });
   const [selectedInsight, setSelectedInsight] = useState<InsightRecord | null>(null);
 
-  // Batch selection state
+  // Story 14.33b: View switcher state with localStorage persistence (AC2)
+  const [activeView, setActiveView] = useState<InsightsViewMode>(loadSavedView);
+
+  // Batch selection state (only for list view)
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState<Set<InsightKey>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggeredRef = useRef(false);
+
+  // Profile dropdown state
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Handle profile navigation
+  const handleProfileNavigate = useCallback((view: string) => {
+    if (view === 'settings' && onMenuClick) {
+      onMenuClick();
+    } else if (onNavigateToView) {
+      onNavigateToView(view);
+    }
+  }, [onMenuClick, onNavigateToView]);
+
+  const initials = getInitials(userName);
+
+  // Story 14.33b: Handle view change with persistence
+  const handleViewChange = useCallback((view: InsightsViewMode) => {
+    setActiveView(view);
+    saveViewPreference(view);
+    // Exit selection mode when switching views
+    if (selectionMode) {
+      setSelectionMode(false);
+      setSelectedKeys(new Set());
+    }
+  }, [selectionMode]);
+
 
   useEffect(() => {
     async function loadInsights() {
@@ -317,21 +418,63 @@ export const InsightsView: React.FC<InsightsViewProps> = ({
   // Loading state
   if (loading) {
     return (
-      <div className="pb-24">
-        <button
-          onClick={onBack}
-          className="mb-4 min-w-11 min-h-11 flex items-center justify-center"
-          style={{ color: 'var(--primary)' }}
+      <div className="flex flex-col h-full">
+        {/* Fixed Header - matching Settings style */}
+        <header
+          className="fixed top-0 left-0 right-0 z-50 flex items-center"
+          style={{
+            height: '72px',
+            paddingTop: 'max(env(safe-area-inset-top, 0px), 8px)',
+            paddingLeft: '16px',
+            paddingRight: '16px',
+            backgroundColor: 'var(--bg)',
+          }}
         >
-          <ArrowLeft size={24} strokeWidth={2} />
-        </button>
-        <h1
-          className="text-2xl font-bold mb-6"
-          style={{ color: 'var(--primary)' }}
-        >
-          {t('insights')}
-        </h1>
-        <div className="flex items-center justify-center py-16">
+          <div className="w-full flex items-center justify-between">
+            {/* Left: Back button + Title */}
+            <div className="flex items-center gap-0">
+              <button
+                onClick={onBack}
+                className="min-w-10 min-h-10 flex items-center justify-center -ml-1"
+                aria-label={t('back') || 'Go back'}
+                style={{ color: 'var(--text-primary)' }}
+              >
+                <ChevronLeft size={28} strokeWidth={2.5} />
+              </button>
+              <span
+                className="font-semibold"
+                style={{
+                  fontFamily: 'var(--font-family)',
+                  color: 'var(--text-primary)',
+                  fontWeight: 700,
+                  fontSize: '20px',
+                }}
+              >
+                {t('insights')}
+              </span>
+            </div>
+            {/* Right: Profile Avatar */}
+            <div className="flex items-center justify-end min-w-[48px] relative">
+              <ProfileAvatar
+                ref={profileButtonRef}
+                initials={initials}
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+              />
+              <ProfileDropdown
+                isOpen={isProfileOpen}
+                onClose={() => setIsProfileOpen(false)}
+                userName={userName}
+                userEmail={userEmail}
+                onNavigate={handleProfileNavigate}
+                theme={theme}
+                t={t}
+                triggerRef={profileButtonRef}
+              />
+            </div>
+          </div>
+        </header>
+        {/* Content with top padding for fixed header */}
+        <div className="flex-1 pt-[72px] flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
         </div>
       </div>
@@ -339,34 +482,72 @@ export const InsightsView: React.FC<InsightsViewProps> = ({
   }
 
   return (
-    <div className="pb-24">
-      {/* Header with back button */}
-      <button
-        onClick={onBack}
-        className="mb-4 min-w-11 min-h-11 flex items-center justify-center"
-        style={{ color: 'var(--primary)' }}
+    <div className="flex flex-col h-full">
+      {/* Fixed Header - matching Settings style */}
+      <header
+        className="fixed top-0 left-0 right-0 z-50 flex items-center"
+        style={{
+          height: '72px',
+          paddingTop: 'max(env(safe-area-inset-top, 0px), 8px)',
+          paddingLeft: '16px',
+          paddingRight: '16px',
+          backgroundColor: 'var(--bg)',
+        }}
       >
-        <ArrowLeft size={24} strokeWidth={2} />
-      </button>
+        <div className="w-full flex items-center justify-between">
+          {/* Left: Back button + Title */}
+          <div className="flex items-center gap-0">
+            <button
+              onClick={onBack}
+              className="min-w-10 min-h-10 flex items-center justify-center -ml-1"
+              aria-label={t('back') || 'Go back'}
+              style={{ color: 'var(--text-primary)' }}
+            >
+              <ChevronLeft size={28} strokeWidth={2.5} />
+            </button>
+            <span
+              className="font-semibold"
+              style={{
+                fontFamily: 'var(--font-family)',
+                color: 'var(--text-primary)',
+                fontWeight: 700,
+                fontSize: '20px',
+              }}
+            >
+              {t('insights')}
+            </span>
+          </div>
+          {/* Right: Profile Avatar */}
+          <div className="flex items-center justify-end min-w-[48px] relative">
+            <ProfileAvatar
+              ref={profileButtonRef}
+              initials={initials}
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+            />
+            <ProfileDropdown
+              isOpen={isProfileOpen}
+              onClose={() => setIsProfileOpen(false)}
+              userName={userName}
+              userEmail={userEmail}
+              onNavigate={handleProfileNavigate}
+              theme={theme}
+              t={t}
+              triggerRef={profileButtonRef}
+            />
+          </div>
+        </div>
+      </header>
 
-      {/* Title row with filter on right */}
-      <div className="flex items-center justify-between mb-6">
-        <h1
-          className="text-2xl font-bold"
-          style={{ color: 'var(--primary)' }}
-        >
-          {t('insights')}
-        </h1>
-        {insights.length > 0 && (
-          <InsightsTemporalFilter
-            insights={insights}
-            filter={temporalFilter}
-            onFilterChange={setTemporalFilter}
-            theme={theme}
+      {/* Content area with top padding for fixed header and bottom padding for nav */}
+      <div className="flex-1 pt-[72px] pb-24 px-3 overflow-y-auto">
+        {/* Story 14.33b AC1: View Switcher - pill-style buttons */}
+        <div className="mb-4">
+          <InsightsViewSwitcher
+            activeView={activeView}
+            onViewChange={handleViewChange}
             t={t}
           />
-        )}
-      </div>
+        </div>
 
       {/* Selection Mode Toolbar */}
       {/* Story 11.6: Position above nav bar accounting for safe area (AC #3) */}
@@ -412,95 +593,180 @@ export const InsightsView: React.FC<InsightsViewProps> = ({
         </div>
       )}
 
-      {/* AC5: Empty state */}
-      {insights.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Lightbulb
-            size={48}
-            className="mb-4 opacity-50"
-            style={{ color: 'var(--secondary)' }}
-          />
-          <p
-            className="text-lg font-medium mb-2"
-            style={{ color: 'var(--primary)' }}
-          >
-            {t('noInsightsYet')}
-          </p>
-          <p className="text-sm" style={{ color: 'var(--secondary)' }}>
-            {t('scanMoreReceipts')}
-          </p>
-        </div>
-      ) : filteredInsights.length === 0 ? (
-        /* No results for current filter */
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Lightbulb
-            size={48}
-            className="mb-4 opacity-50"
-            style={{ color: 'var(--secondary)' }}
-          />
-          <p
-            className="text-lg font-medium mb-2"
-            style={{ color: 'var(--primary)' }}
-          >
-            {t('noInsightsForPeriod') || 'No insights for this period'}
-          </p>
-          <p className="text-sm" style={{ color: 'var(--secondary)' }}>
-            {t('tryDifferentFilter') || 'Try selecting a different time period'}
-          </p>
-        </div>
-      ) : (
-        /* AC1 & AC2: Grouped insights list */
-        <div className="space-y-6">
-          {groupedInsights.map((group, groupIdx) => (
-            <div key={group.labelKey}>
-              <div className="flex items-center justify-between mb-3">
-                <h2
-                  className="text-sm font-semibold uppercase tracking-wide"
-                  style={{ color: 'var(--secondary)' }}
-                >
-                  {group.label}
-                </h2>
-                {/* Show Select All only on first group when in selection mode */}
-                {selectionMode && groupIdx === 0 && (
-                  <button
-                    onClick={allSelected ? handleCancelSelection : handleSelectAll}
-                    className="text-sm font-medium"
-                    style={{ color: '#3b82f6' }}
-                  >
-                    {allSelected ? (t('deselectAll') || 'Deselect All') : (t('selectAll') || 'Select All')}
-                  </button>
-                )}
-              </div>
-              <div className="space-y-3">
-                {group.insights.map((insight, idx) => (
-                  <InsightHistoryCard
-                    key={`${insight.insightId}-${idx}`}
-                    insight={insight}
-                    onClick={() => handleInsightClick(insight)}
-                    onLongPressStart={() => handleLongPressStart(insight)}
-                    onLongPressEnd={handleLongPressEnd}
-                    isSelected={selectedKeys.has(getInsightKey(insight))}
-                    selectionMode={selectionMode}
-                    theme={theme}
-                  />
-                ))}
-              </div>
+      {/* Story 14.33b: Conditional view rendering based on activeView */}
+
+      {/* VIEW: LIST (Default) - Now includes highlighted section at top */}
+      {activeView === 'list' && (
+        <>
+          {/* AC5: Empty state */}
+          {insights.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Lightbulb
+                size={48}
+                className="mb-4 opacity-50"
+                style={{ color: 'var(--secondary)' }}
+              />
+              <p
+                className="text-lg font-medium mb-2"
+                style={{ color: 'var(--primary)' }}
+              >
+                {t('noInsightsYet')}
+              </p>
+              <p className="text-sm" style={{ color: 'var(--secondary)' }}>
+                {t('scanMoreReceipts')}
+              </p>
             </div>
-          ))}
+          ) : filteredInsights.length === 0 ? (
+            /* No results for current filter */
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Lightbulb
+                size={48}
+                className="mb-4 opacity-50"
+                style={{ color: 'var(--secondary)' }}
+              />
+              <p
+                className="text-lg font-medium mb-2"
+                style={{ color: 'var(--primary)' }}
+              >
+                {t('noInsightsForPeriod') || 'No insights for this period'}
+              </p>
+              <p className="text-sm" style={{ color: 'var(--secondary)' }}>
+                {t('tryDifferentFilter') || 'Try selecting a different time period'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Highlighted insights section (merged from Destacados) */}
+              {selectHighlightedInsights(insights).length > 0 && !selectionMode && (
+                <div className="mb-2">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2
+                      className="text-sm font-semibold uppercase tracking-wide"
+                      style={{ color: 'var(--secondary)' }}
+                    >
+                      {t('highlighted') || 'Destacados'}
+                    </h2>
+                    <InsightsTemporalFilter
+                      insights={insights}
+                      filter={temporalFilter}
+                      onFilterChange={setTemporalFilter}
+                      theme={theme}
+                      t={t}
+                    />
+                  </div>
+                  <InsightsCarousel
+                    insights={insights}
+                    theme={theme}
+                    t={t}
+                  />
+                </div>
+              )}
+
+              {/* AC1 & AC2: Grouped insights list */}
+              {groupedInsights.map((group, groupIdx) => (
+                <div key={group.labelKey}>
+                  <div className="flex items-center justify-between mb-3">
+                    <h2
+                      className="text-sm font-semibold uppercase tracking-wide"
+                      style={{ color: 'var(--secondary)' }}
+                    >
+                      {group.label}
+                    </h2>
+                    {/* Show Select All only on first group when in selection mode */}
+                    {selectionMode && groupIdx === 0 && (
+                      <button
+                        onClick={allSelected ? handleCancelSelection : handleSelectAll}
+                        className="text-sm font-medium"
+                        style={{ color: 'var(--primary)' }}
+                      >
+                        {allSelected ? (t('deselectAll') || 'Deselect All') : (t('selectAll') || 'Select All')}
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-3">
+                    {group.insights.map((insight, idx) => (
+                      <InsightHistoryCard
+                        key={`${insight.insightId}-${idx}`}
+                        insight={insight}
+                        onClick={() => handleInsightClick(insight)}
+                        onLongPressStart={() => handleLongPressStart(insight)}
+                        onLongPressEnd={handleLongPressEnd}
+                        isSelected={selectedKeys.has(getInsightKey(insight))}
+                        selectionMode={selectionMode}
+                        theme={theme}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* VIEW: AIRLOCK - PLACEHOLDER: AI Insights feature for future release */}
+      {activeView === 'airlock' && (
+        <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+          <div
+            className="w-20 h-20 rounded-full flex items-center justify-center mb-4"
+            style={{ backgroundColor: 'var(--bg-tertiary)' }}
+          >
+            <span style={{ fontSize: '40px' }}>🔮</span>
+          </div>
+          <p
+            className="text-lg font-semibold mb-2"
+            style={{
+              color: 'var(--text-primary)',
+              fontFamily: 'var(--font-family)',
+            }}
+          >
+            Insights con IA
+          </p>
+          <p
+            className="text-sm mb-4 max-w-xs"
+            style={{
+              color: 'var(--text-secondary)',
+              fontFamily: 'var(--font-family)',
+            }}
+          >
+            Estamos desarrollando análisis inteligente de tus gastos con inteligencia artificial para darte recomendaciones personalizadas.
+          </p>
+          <p
+            className="text-xs"
+            style={{
+              color: 'var(--text-tertiary)',
+              fontFamily: 'var(--font-family)',
+            }}
+          >
+            Próximamente disponible
+          </p>
         </div>
       )}
 
-      {/* Detail Modal */}
-      {selectedInsight && (
-        <InsightDetailModal
-          insight={selectedInsight}
-          onClose={handleCloseModal}
-          onNavigateToTransaction={handleNavigateToTransaction}
-          onDelete={handleDeleteInsight}
+      {/* VIEW: CELEBRATION (Achievement) - Story 14.33d: Celebration & Personal Records Display */}
+      {activeView === 'celebration' && (
+        <CelebrationView
+          onBack={onBack}
           theme={theme}
           t={t}
+          db={services?.db ?? null}
+          userId={user?.uid ?? null}
+          appId={services?.appId ?? null}
         />
       )}
+
+        {/* Detail Modal */}
+        {selectedInsight && (
+          <InsightDetailModal
+            insight={selectedInsight}
+            onClose={handleCloseModal}
+            onNavigateToTransaction={handleNavigateToTransaction}
+            onDelete={handleDeleteInsight}
+            theme={theme}
+            t={t}
+          />
+        )}
+      </div>
     </div>
   );
 };

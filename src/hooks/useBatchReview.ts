@@ -5,41 +5,40 @@
  * React hook for managing batch review state, including editing,
  * discarding, and saving all receipts.
  *
+ * Story 14d.5c: Context Integration
+ * The hook now supports two modes:
+ * 1. Standalone mode: Manages local state from processingResults (for tests)
+ * 2. Context mode: Reads/writes from ScanContext (production)
+ *
+ * When `useContext: true` is passed in options, the hook delegates all
+ * state management to ScanContext, enabling proper state machine tracking.
+ *
  * @see docs/sprint-artifacts/epic12/story-12.3-batch-review-queue.md
+ * @see docs/sprint-artifacts/epic14d/stories/story-14d.5c-review-flow-migration.md
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Transaction } from '../types/transaction';
+// Story 14d.5c: Import BatchReceipt from types file to avoid circular dependency
+import type { BatchReceipt, BatchReceiptStatus } from '../types/batchReceipt';
+// Re-export for backwards compatibility
+export type { BatchReceipt, BatchReceiptStatus };
 import { ImageProcessingState, ProcessingResult } from '../services/batchProcessingService';
 import { calculateConfidence, QUICK_SAVE_CONFIDENCE_THRESHOLD } from '../utils/confidenceCheck';
 
 /**
- * Status of a receipt in the batch review queue.
- * - ready: High confidence, no action needed
- * - review: Low confidence, user should review
- * - edited: User made changes
- * - error: Processing failed
+ * Story 14d.5c: Minimal interface for ScanContext integration.
+ *
+ * We define this locally instead of importing from ScanContext to avoid
+ * module resolution issues during test execution. The actual ScanContextValue
+ * is a superset of this interface.
  */
-export type BatchReceiptStatus = 'ready' | 'review' | 'edited' | 'error';
-
-/**
- * A receipt in the batch review queue.
- */
-export interface BatchReceipt {
-  /** Unique identifier for this receipt */
-  id: string;
-  /** Original index in the batch */
-  index: number;
-  /** Image data URL (for display) */
-  imageUrl?: string;
-  /** Extracted transaction data */
-  transaction: Transaction;
-  /** Current status */
-  status: BatchReceiptStatus;
-  /** Confidence score (0-1) */
-  confidence: number;
-  /** Error message (if status is 'error') */
-  error?: string;
+interface ScanContextForBatchReview {
+  state: {
+    batchReceipts: BatchReceipt[] | null;
+  };
+  updateBatchReceipt: (id: string, updates: Partial<BatchReceipt>) => void;
+  discardBatchReceipt: (id: string) => void;
 }
 
 /**
@@ -50,6 +49,8 @@ export interface UseBatchReviewReturn {
   receipts: BatchReceipt[];
   /** Total amount across all valid receipts */
   totalAmount: number;
+  /** Detected currency from receipts (if all same), otherwise undefined */
+  detectedCurrency: string | undefined;
   /** Count of valid (non-error) receipts */
   validCount: number;
   /** Count of receipts needing review */
@@ -68,6 +69,11 @@ export interface UseBatchReviewReturn {
   saveAll: (
     saveTransaction: (transaction: Transaction) => Promise<string>
   ) => Promise<{ saved: string[]; failed: string[]; savedTransactions: Transaction[] }>;
+  /** Story 12.1 v9.7.0: Save a single receipt and remove from batch */
+  saveOne: (
+    id: string,
+    saveTransaction: (transaction: Transaction) => Promise<string>
+  ) => Promise<{ transactionId: string | null; transaction: Transaction | null }>;
   /** Get a receipt by ID for editing */
   getReceipt: (id: string) => BatchReceipt | undefined;
   /** Check if batch is empty (all discarded) */
@@ -100,86 +106,176 @@ function determineReceiptStatus(
 }
 
 /**
+ * Story 14d.5c: Create BatchReceipt[] from ProcessingResult[].
+ *
+ * This is the transformation function used when batch processing completes.
+ * It converts the raw ProcessingResult[] into BatchReceipt[] with status
+ * and confidence metadata for the review UI.
+ *
+ * @param processingResults - Results from useBatchProcessing
+ * @param imageDataUrls - Original image data URLs for display
+ * @returns BatchReceipt[] ready for review
+ */
+export function createBatchReceiptsFromResults(
+  processingResults: ProcessingResult[],
+  imageDataUrls: string[] = []
+): BatchReceipt[] {
+  return processingResults.map((result) => {
+    const transaction = result.result || {
+      merchant: '',
+      date: new Date().toISOString().split('T')[0],
+      total: 0,
+      category: 'Other' as const,
+      items: [],
+    };
+
+    const status = determineReceiptStatus(result);
+    const confidence = result.success && result.result
+      ? calculateConfidence(result.result)
+      : 0;
+
+    return {
+      id: result.id,
+      index: result.index,
+      imageUrl: imageDataUrls[result.index],
+      transaction,
+      status,
+      confidence,
+      error: result.error,
+    };
+  });
+}
+
+/**
+ * Story 14d.5c: Options for useBatchReview hook.
+ */
+export interface UseBatchReviewOptions {
+  /**
+   * When true, the hook reads from and writes to ScanContext.
+   * When false (default), the hook manages local state.
+   *
+   * Use false for tests, true for production.
+   */
+  useContext?: boolean;
+
+  /**
+   * Story 14d.5c: Injected ScanContext value.
+   *
+   * When provided, this context is used instead of importing useScanOptional.
+   * This is the preferred way to integrate with context as it avoids
+   * module resolution issues during tests.
+   *
+   * In production, pass the result of useScan() or useScanOptional().
+   * In tests without context, simply omit this option.
+   */
+  scanContext?: ScanContextForBatchReview | null;
+}
+
+/**
  * Hook for managing batch review state.
+ *
+ * Story 14d.5c: Now supports context mode for state machine integration.
  *
  * @param processingResults - Results from parallel processing (Story 12.2)
  * @param imageDataUrls - Original image data URLs for display
+ * @param options - Configuration options (see UseBatchReviewOptions)
  * @returns Batch review state and handlers
  *
  * @example
  * ```tsx
- * const {
- *   receipts,
- *   totalAmount,
- *   updateReceipt,
- *   discardReceipt,
- *   saveAll
- * } = useBatchReview(processingResults, imageDataUrls);
+ * // Production usage (context mode)
+ * const review = useBatchReview(processingResults, imageDataUrls, { useContext: true });
+ *
+ * // Test usage (standalone mode)
+ * const review = useBatchReview(processingResults, imageDataUrls);
  * ```
  */
 export function useBatchReview(
   processingResults: ProcessingResult[],
-  imageDataUrls: string[] = []
+  imageDataUrls: string[] = [],
+  options: UseBatchReviewOptions = {}
 ): UseBatchReviewReturn {
-  // Initialize receipts from processing results
+  const { useContext: useContextMode = false, scanContext = null } = options;
+
+  // Story 14d.5c: Use injected context if provided, otherwise default to null
+  // This avoids importing useScanOptional which can cause module resolution issues in tests
+  const isContextModeActive = useContextMode && scanContext !== null;
+
+  // Initialize receipts from processing results (used for local state)
   const initialReceipts = useMemo<BatchReceipt[]>(() => {
-    return processingResults.map((result) => {
-      const transaction = result.result || {
-        merchant: '',
-        date: new Date().toISOString().split('T')[0],
-        total: 0,
-        category: 'Other' as const,
-        items: [],
-      };
-
-      const status = determineReceiptStatus(result);
-      const confidence = result.success && result.result
-        ? calculateConfidence(result.result)
-        : 0;
-
-      return {
-        id: result.id,
-        index: result.index,
-        imageUrl: imageDataUrls[result.index],
-        transaction,
-        status,
-        confidence,
-        error: result.error,
-      };
-    });
+    return createBatchReceiptsFromResults(processingResults, imageDataUrls);
   }, [processingResults, imageDataUrls]);
 
-  // State
-  const [receipts, setReceipts] = useState<BatchReceipt[]>(initialReceipts);
+  // Local state (used when not in context mode)
+  const [localReceipts, setLocalReceipts] = useState<BatchReceipt[]>(initialReceipts);
   const [isSaving, setIsSaving] = useState(false);
   const [saveProgress, setSaveProgress] = useState(0);
+
+  // Story 14d.5c: Determine which receipts to use based on mode
+  // Context mode: read from scanContext.state.batchReceipts
+  // Local mode: use local state
+  const receipts = isContextModeActive
+    ? (scanContext.state.batchReceipts ?? [])
+    : localReceipts;
+
+  // Story 14.30.8: Track processingResults reference to detect actual changes
+  // Using a ref prevents infinite loops caused by initialReceipts dependency
+  const prevProcessingResultsRef = useRef<ProcessingResult[]>(processingResults);
+
+  // Sync local receipts when processingResults actually changes (local mode only)
+  // Story 14.30.8: Only sync when the processingResults array reference changes,
+  // NOT when initialReceipts changes (which would cause infinite loop after updateReceipt)
+  useEffect(() => {
+    if (!isContextModeActive && processingResults !== prevProcessingResultsRef.current) {
+      prevProcessingResultsRef.current = processingResults;
+      if (processingResults.length > 0) {
+        setLocalReceipts(initialReceipts);
+      }
+    }
+  }, [isContextModeActive, processingResults, initialReceipts]);
 
   /**
    * Update a receipt's transaction data.
    * Marks the receipt as 'edited' and recalculates confidence.
+   *
+   * Story 14d.5c: In context mode, dispatches to ScanContext.
    */
   const updateReceipt = useCallback((id: string, transaction: Transaction) => {
-    setReceipts((prev) =>
-      prev.map((receipt) => {
-        if (receipt.id !== id) return receipt;
+    const confidence = calculateConfidence(transaction);
+    const updates: Partial<BatchReceipt> = {
+      transaction,
+      status: 'edited' as const,
+      confidence,
+    };
 
-        const confidence = calculateConfidence(transaction);
-        return {
-          ...receipt,
-          transaction,
-          status: 'edited' as const,
-          confidence,
-        };
-      })
-    );
-  }, []);
+    if (isContextModeActive && scanContext) {
+      // Context mode: update via ScanContext
+      scanContext.updateBatchReceipt(id, updates);
+    } else {
+      // Local mode: update local state
+      setLocalReceipts((prev) =>
+        prev.map((receipt) => {
+          if (receipt.id !== id) return receipt;
+          return { ...receipt, ...updates };
+        })
+      );
+    }
+  }, [isContextModeActive, scanContext]);
 
   /**
    * Discard a receipt from the batch.
+   *
+   * Story 14d.5c: In context mode, dispatches to ScanContext.
    */
   const discardReceipt = useCallback((id: string) => {
-    setReceipts((prev) => prev.filter((receipt) => receipt.id !== id));
-  }, []);
+    if (isContextModeActive && scanContext) {
+      // Context mode: discard via ScanContext
+      scanContext.discardBatchReceipt(id);
+    } else {
+      // Local mode: update local state
+      setLocalReceipts((prev) => prev.filter((receipt) => receipt.id !== id));
+    }
+  }, [isContextModeActive, scanContext]);
 
   /**
    * Get a receipt by ID for editing.
@@ -236,6 +332,41 @@ export function useBatchReview(
     [receipts]
   );
 
+  /**
+   * Story 12.1 v9.7.0: Save a single receipt and remove it from the batch.
+   *
+   * Story 14d.5c: In context mode, uses context's discard method after save.
+   */
+  const saveOne = useCallback(
+    async (
+      id: string,
+      saveTransaction: (transaction: Transaction) => Promise<string>
+    ): Promise<{ transactionId: string | null; transaction: Transaction | null }> => {
+      const receipt = receipts.find((r) => r.id === id);
+      if (!receipt || receipt.status === 'error') {
+        return { transactionId: null, transaction: null };
+      }
+
+      try {
+        const transactionId = await saveTransaction(receipt.transaction);
+        // Remove from batch after successful save
+        if (isContextModeActive && scanContext) {
+          scanContext.discardBatchReceipt(id);
+        } else {
+          setLocalReceipts((prev) => prev.filter((r) => r.id !== id));
+        }
+        return {
+          transactionId,
+          transaction: { ...receipt.transaction, id: transactionId },
+        };
+      } catch (error) {
+        console.error(`Failed to save receipt ${id}:`, error);
+        return { transactionId: null, transaction: null };
+      }
+    },
+    [receipts, isContextModeActive, scanContext]
+  );
+
   // Computed values
   const validReceipts = useMemo(
     () => receipts.filter((r) => r.status !== 'error'),
@@ -246,6 +377,22 @@ export function useBatchReview(
     () => validReceipts.reduce((sum, r) => sum + (r.transaction.total || 0), 0),
     [validReceipts]
   );
+
+  // Detect the predominant currency from receipts (for display purposes)
+  // If all receipts have the same currency, use that; otherwise undefined
+  const detectedCurrency = useMemo(() => {
+    const currencies = validReceipts
+      .map((r) => r.transaction.currency)
+      .filter((c): c is string => Boolean(c));
+
+    if (currencies.length === 0) return undefined;
+
+    // Check if all currencies are the same
+    const firstCurrency = currencies[0];
+    const allSame = currencies.every((c) => c === firstCurrency);
+
+    return allSame ? firstCurrency : undefined;
+  }, [validReceipts]);
 
   const validCount = validReceipts.length;
 
@@ -264,6 +411,7 @@ export function useBatchReview(
   return {
     receipts,
     totalAmount,
+    detectedCurrency,
     validCount,
     reviewCount,
     errorCount,
@@ -272,6 +420,7 @@ export function useBatchReview(
     updateReceipt,
     discardReceipt,
     saveAll,
+    saveOne,
     getReceipt,
     isEmpty,
   };

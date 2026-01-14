@@ -19,10 +19,25 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Search } from 'lucide-react';
-import { translateStoreCategory, translateItemGroup, ITEM_GROUP_TRANSLATIONS, getItemCategoryEmoji } from '../utils/categoryTranslations';
-import { getCategoryPillColors, getItemCategoryColors } from '../config/categoryColors';
+import { translateStoreCategory, translateItemGroup, ITEM_GROUP_TRANSLATIONS, getItemCategoryEmoji, translateStoreCategoryGroup, translateItemCategoryGroup } from '../utils/categoryTranslations';
+import { getCategoryPillColors, getItemCategoryColors, STORE_CATEGORY_GROUPS, ITEM_CATEGORY_GROUPS, ITEM_CATEGORY_TO_KEY, STORE_GROUP_INFO, ITEM_GROUP_INFO, type StoreCategoryGroup, type ItemCategoryGroup } from '../config/categoryColors';
 import { getCategoryEmoji } from '../utils/categoryEmoji';
 import type { Language } from '../utils/translations';
+
+/** Category with display info */
+interface CategoryItem {
+  value: string;
+  label: string;
+  emoji: string;
+}
+
+/** Group of categories */
+interface CategoryGroup {
+  key: string;
+  name: string;
+  emoji: string;
+  categories: CategoryItem[];
+}
 
 interface CategorySelectorOverlayProps {
   /** Type of selector - 'store' for transaction categories, 'item' for item categories */
@@ -57,27 +72,83 @@ export const CategorySelectorOverlay: React.FC<CategorySelectorOverlayProps> = (
   const searchInputRef = useRef<HTMLInputElement>(null);
   const isDark = theme === 'dark';
 
-  // Get all categories based on type
-  const allCategories = useMemo(() => {
+  // Get categories organized into groups
+  const groupedCategories = useMemo((): CategoryGroup[] => {
+    const locale = language === 'es' ? 'es' : 'en';
+
     if (type === 'store') {
-      return categories.map(cat => ({
-        value: cat,
-        label: translateStoreCategory(cat, language),
-        emoji: getCategoryEmoji(cat),
-      }));
+      // Group store categories by their group
+      const groupMap = new Map<StoreCategoryGroup, CategoryItem[]>();
+
+      // Initialize groups in display order
+      const groupOrder: StoreCategoryGroup[] = ['food-dining', 'health-wellness', 'retail-general', 'retail-specialty', 'automotive', 'services', 'hospitality', 'other'];
+      groupOrder.forEach(g => groupMap.set(g, []));
+
+      // Populate groups
+      categories.forEach(cat => {
+        const groupKey = STORE_CATEGORY_GROUPS[cat as keyof typeof STORE_CATEGORY_GROUPS];
+        if (groupKey && groupMap.has(groupKey)) {
+          groupMap.get(groupKey)!.push({
+            value: cat,
+            label: translateStoreCategory(cat, language),
+            emoji: getCategoryEmoji(cat),
+          });
+        }
+      });
+
+      // Sort categories alphabetically within each group and build result
+      return groupOrder
+        .filter(groupKey => groupMap.get(groupKey)!.length > 0)
+        .map(groupKey => ({
+          key: groupKey,
+          name: translateStoreCategoryGroup(groupKey, language),
+          emoji: STORE_GROUP_INFO[groupKey].emoji,
+          categories: groupMap.get(groupKey)!.sort((a, b) =>
+            a.label.localeCompare(b.label, locale)
+          ),
+        }));
     } else {
-      // Item categories from ITEM_GROUP_TRANSLATIONS
+      // Group item categories by their group
+      const groupMap = new Map<ItemCategoryGroup, CategoryItem[]>();
+
+      // Initialize groups in display order
+      const groupOrder: ItemCategoryGroup[] = ['food-fresh', 'food-packaged', 'health-personal', 'household', 'nonfood-retail', 'services-fees', 'other-item'];
+      groupOrder.forEach(g => groupMap.set(g, []));
+
+      // Populate groups from ITEM_GROUP_TRANSLATIONS
       const itemCats = Object.keys(ITEM_GROUP_TRANSLATIONS);
-      return itemCats
-        .map(cat => ({
-          value: cat,
-          label: translateItemGroup(cat, language),
-          // Story 14.24: Use specific emoji for each item category
-          emoji: getItemCategoryEmoji(cat),
-        }))
-        .sort((a, b) => a.label.localeCompare(b.label, language === 'es' ? 'es' : 'en'));
+      itemCats.forEach(cat => {
+        const categoryKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
+        if (categoryKey) {
+          const groupKey = ITEM_CATEGORY_GROUPS[categoryKey];
+          if (groupKey && groupMap.has(groupKey)) {
+            groupMap.get(groupKey)!.push({
+              value: cat,
+              label: translateItemGroup(cat, language),
+              emoji: getItemCategoryEmoji(cat),
+            });
+          }
+        }
+      });
+
+      // Sort categories alphabetically within each group and build result
+      return groupOrder
+        .filter(groupKey => groupMap.get(groupKey)!.length > 0)
+        .map(groupKey => ({
+          key: groupKey,
+          name: translateItemCategoryGroup(groupKey, language),
+          emoji: ITEM_GROUP_INFO[groupKey].emoji,
+          categories: groupMap.get(groupKey)!.sort((a, b) =>
+            a.label.localeCompare(b.label, locale)
+          ),
+        }));
     }
   }, [type, categories, language]);
+
+  // Flatten for search filtering (preserve original flat behavior for search)
+  const allCategories = useMemo(() => {
+    return groupedCategories.flatMap(g => g.categories);
+  }, [groupedCategories]);
 
   // Filter categories based on search
   const filteredCategories = useMemo(() => {
@@ -202,7 +273,7 @@ export const CategorySelectorOverlay: React.FC<CategorySelectorOverlayProps> = (
         </div>
       </div>
 
-      {/* Categories grid */}
+      {/* Categories grid - grouped when no search, flat when searching */}
       <div
         className="flex-1 overflow-y-auto p-4"
         style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc' }}
@@ -214,11 +285,11 @@ export const CategorySelectorOverlay: React.FC<CategorySelectorOverlayProps> = (
           >
             {language === 'es' ? 'Sin resultados' : 'No results'}
           </div>
-        ) : (
+        ) : searchText.trim() ? (
+          /* Flat list when searching */
           <div className="flex flex-wrap gap-2">
             {filteredCategories.map(cat => {
               const isSelected = cat.value === value;
-              // Story 14.24: Use individual category colors (not group colors) for distinct appearance
               const colors = type === 'store'
                 ? getCategoryPillColors(cat.value)
                 : getItemCategoryColors(cat.value, 'normal', isDark ? 'dark' : 'light');
@@ -227,7 +298,7 @@ export const CategorySelectorOverlay: React.FC<CategorySelectorOverlayProps> = (
                 <button
                   key={cat.value}
                   onClick={() => handleSelect(cat.value)}
-                  className="rounded-full px-2.5 py-1.5 text-[11px] font-bold uppercase flex items-center gap-1 transition-all min-h-[36px]"
+                  className="rounded-full px-2.5 py-1.5 text-xs font-bold uppercase flex items-center gap-1 transition-all min-h-[36px]"
                   style={{
                     backgroundColor: colors.bg,
                     color: colors.fg,
@@ -241,6 +312,54 @@ export const CategorySelectorOverlay: React.FC<CategorySelectorOverlayProps> = (
                 </button>
               );
             })}
+          </div>
+        ) : (
+          /* Grouped display when not searching */
+          <div className="space-y-4">
+            {groupedCategories.map(group => (
+              <div key={group.key}>
+                {/* Group header */}
+                <div
+                  className="flex items-center gap-2 mb-2 pb-1 border-b"
+                  style={{ borderColor: isDark ? '#334155' : '#e2e8f0' }}
+                >
+                  <span className="text-base">{group.emoji}</span>
+                  <span
+                    className="text-xs font-semibold uppercase tracking-wide"
+                    style={{ color: isDark ? '#94a3b8' : '#64748b' }}
+                  >
+                    {group.name}
+                  </span>
+                </div>
+                {/* Categories in this group */}
+                <div className="flex flex-wrap gap-2">
+                  {group.categories.map(cat => {
+                    const isSelected = cat.value === value;
+                    const colors = type === 'store'
+                      ? getCategoryPillColors(cat.value)
+                      : getItemCategoryColors(cat.value, 'normal', isDark ? 'dark' : 'light');
+
+                    return (
+                      <button
+                        key={cat.value}
+                        onClick={() => handleSelect(cat.value)}
+                        className="rounded-full px-2.5 py-1.5 text-xs font-bold uppercase flex items-center gap-1 transition-all min-h-[36px]"
+                        style={{
+                          backgroundColor: colors.bg,
+                          color: colors.fg,
+                          outline: isSelected ? '2px solid var(--primary)' : 'none',
+                          outlineOffset: '1px',
+                          transform: isSelected ? 'scale(1.03)' : 'scale(1)',
+                        }}
+                      >
+                        <span className="text-xs">{cat.emoji}</span>
+                        <span>{cat.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
