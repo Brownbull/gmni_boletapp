@@ -58,11 +58,13 @@ export default defineConfig({
     pool: 'forks',
     poolOptions: {
       forks: {
-        // Limit concurrent forks to reduce memory pressure (GitHub runners have 7GB RAM)
-        maxForks: 2,
+        // Reduced to 1 fork to prevent memory accumulation (GitHub runners have 7GB RAM)
+        maxForks: 1,
         minForks: 1,
         // Isolate each test file to prevent memory accumulation
         isolate: true,
+        // Recycle worker after each test file to free memory
+        singleFork: true,
       },
     },
     // Limit concurrent test files
