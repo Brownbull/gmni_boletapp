@@ -17,7 +17,7 @@
  * @see docs/sprint-artifacts/epic14d/stories/story-14d.5c-review-flow-migration.md
  */
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Transaction } from '../types/transaction';
 // Story 14d.5c: Import BatchReceipt from types file to avoid circular dependency
 import type { BatchReceipt, BatchReceiptStatus } from '../types/batchReceipt';
@@ -218,12 +218,21 @@ export function useBatchReview(
     ? (scanContext.state.batchReceipts ?? [])
     : localReceipts;
 
-  // Sync local receipts when processingResults changes (local mode only)
+  // Story 14.30.8: Track processingResults reference to detect actual changes
+  // Using a ref prevents infinite loops caused by initialReceipts dependency
+  const prevProcessingResultsRef = useRef<ProcessingResult[]>(processingResults);
+
+  // Sync local receipts when processingResults actually changes (local mode only)
+  // Story 14.30.8: Only sync when the processingResults array reference changes,
+  // NOT when initialReceipts changes (which would cause infinite loop after updateReceipt)
   useEffect(() => {
-    if (!isContextModeActive && processingResults.length > 0) {
-      setLocalReceipts(initialReceipts);
+    if (!isContextModeActive && processingResults !== prevProcessingResultsRef.current) {
+      prevProcessingResultsRef.current = processingResults;
+      if (processingResults.length > 0) {
+        setLocalReceipts(initialReceipts);
+      }
     }
-  }, [isContextModeActive, processingResults.length, initialReceipts]);
+  }, [isContextModeActive, processingResults, initialReceipts]);
 
   /**
    * Update a receipt's transaction data.
