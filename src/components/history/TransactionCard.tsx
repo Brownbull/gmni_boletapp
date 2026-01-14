@@ -19,6 +19,7 @@ import React, { useState } from 'react';
 import { ChevronDown, AlertTriangle, Receipt, Package, Check } from 'lucide-react';
 import { getCategoryEmoji } from '../../utils/categoryEmoji';
 import { getCategoryColors, getCategoryColorsAuto, type ThemeName, type ModeName } from '../../config/categoryColors';
+import { useIsForeignLocation } from '../../hooks/useIsForeignLocation';
 
 // ============================================================================
 // Types
@@ -52,6 +53,8 @@ export interface TransactionCardProps {
   city?: string;
   /** Country */
   country?: string;
+  /** Story 14.35b: User's default country for foreign location detection */
+  userDefaultCountry?: string;
   /** Currency code */
   currency?: string;
   /** Thumbnail URL */
@@ -221,7 +224,7 @@ interface MetaPillProps {
 
 const MetaPill: React.FC<MetaPillProps> = ({ children }) => (
   <span
-    className="inline-flex items-center gap-[3px] px-[6px] py-[3px] rounded-full text-[11px]"
+    className="inline-flex items-center gap-[3px] px-[6px] py-[3px] rounded-full text-xs"
     style={{
       backgroundColor: 'var(--bg-tertiary)',
       color: 'var(--text-secondary)',
@@ -244,6 +247,8 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
   total,
   category,
   city,
+  country,
+  userDefaultCountry,
   currency = 'CLP',
   thumbnailUrl,
   imageUrls,
@@ -269,6 +274,9 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
   const isDark = theme === 'dark';
   // Story 14.21: Map theme mode to ModeName for unified color system
   const mode: ModeName = isDark ? 'dark' : 'light';
+
+  // Story 14.35b: Detect foreign location for flag display
+  const { isForeign, flagEmoji } = useIsForeignLocation(country, userDefaultCountry);
 
   // Format display values
   const displayName = alias || merchant;
@@ -423,7 +431,13 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
             <div className="flex justify-between items-center">
               <div className="flex flex-wrap gap-1 items-center">
                 <MetaPill>{getTimeDisplay()}</MetaPill>
-                {city && <MetaPill>{city}</MetaPill>}
+                {city && (
+                  <MetaPill>
+                    {/* Story 14.35b: Show flag before city for foreign locations */}
+                    {isForeign && <span className="mr-0.5">{flagEmoji}</span>}
+                    {city}
+                  </MetaPill>
+                )}
                 {hasItems && (
                   <MetaPill>
                     <Package size={12} strokeWidth={2} />
@@ -483,13 +497,13 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
             {visibleItems.map((item, index) => (
               <div
                 key={index}
-                className="flex justify-between items-center py-1 text-[11px]"
+                className="flex justify-between items-center py-1 text-xs"
               >
                 <span style={{ color: 'var(--text-secondary)' }}>{item.name}</span>
                 {/* Story 14.15b: Show quantity if > 1 */}
                 <div className="flex items-center gap-1">
                   {(item.qty ?? 1) > 1 && (
-                    <span className="text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>
+                    <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>
                       x{item.qty}
                     </span>
                   )}
@@ -506,7 +520,7 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
             {remainingCount > 0 && (
               <div className="mt-2 pt-2 border-t border-dashed" style={{ borderColor: 'var(--border-light)' }}>
                 <button
-                  className="flex items-center justify-center gap-1 w-full text-[11px] font-medium"
+                  className="flex items-center justify-center gap-1 w-full text-xs font-medium"
                   style={{ color: '#059669' }}
                   onClick={(e) => {
                     e.stopPropagation();

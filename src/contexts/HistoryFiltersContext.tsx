@@ -8,7 +8,7 @@
  * @see docs/sprint-artifacts/epic9/story-9.19-history-transaction-filters.md
  */
 
-import React, { createContext, useReducer, useMemo } from 'react';
+import React, { createContext, useReducer, useMemo, useEffect } from 'react';
 
 // ============================================================================
 // Types
@@ -34,21 +34,45 @@ export interface TemporalFilterState {
 /**
  * Category filter state for filtering by spending category.
  * Hierarchical: All → Store Category → Item Group → Subcategory
+ *
+ * Story 14.13a: Extended to support multi-level drill-down filters.
+ * - drillDownPath: Accumulated context from analytics drill-down navigation
+ * - Allows filtering by store category AND item group simultaneously
  */
 export interface CategoryFilterState {
   level: 'all' | 'category' | 'group' | 'subcategory';
   category?: string;    // Store category (e.g., "Supermarket")
   group?: string;       // Item group (e.g., "Produce")
   subcategory?: string; // Item subcategory (e.g., "Fruits")
+
+  /**
+   * Story 14.13a: Accumulated drill-down path from TrendsView navigation.
+   * Contains all filter dimensions from the drill-down hierarchy.
+   * When present, enables multi-dimension filtering (e.g., items in "Supermercado" + "Alimentos Frescos").
+   */
+  drillDownPath?: {
+    storeGroup?: string;     // Store category group (e.g., "food-dining")
+    storeCategory?: string;  // Store category (e.g., "Supermercado")
+    itemGroup?: string;      // Item category group (e.g., "food-fresh")
+    itemCategory?: string;   // Item category (e.g., "Carnes y Mariscos")
+    subcategory?: string;    // Subcategory (e.g., "Res")
+  };
 }
 
 /**
  * Location filter state for filtering by country/city.
  * Two-level hierarchy: Country → City
+ *
+ * Story 14.36: Extended to support multi-select cities from multiple countries.
+ * - selectedCities: Comma-separated city codes (e.g., "santiago,mendoza,lima")
+ * - When selectedCities is present, it takes priority over legacy city field
+ * - country field is used for display purposes (primary country)
  */
 export interface LocationFilterState {
-  country?: string;   // "Chile"
-  city?: string;      // "Santiago"
+  country?: string;   // "Chile" - Primary country for display
+  city?: string;      // "Santiago" - Legacy single-city selection
+  /** Story 14.36: Comma-separated city codes for multi-select */
+  selectedCities?: string;
 }
 
 /**
@@ -110,11 +134,29 @@ export const HistoryFiltersContext = createContext<HistoryFiltersContextValue | 
 // ============================================================================
 
 /**
- * Get default filter state - all filters cleared.
+ * Get the current month in YYYY-MM format.
+ * Used as the default temporal filter.
+ */
+function getCurrentMonth(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+}
+
+/**
+ * Get default filter state.
+ * Story 14.13b: Default temporal filter is current month (not "all time").
+ * Users must explicitly clear the temporal filter to see all transactions.
  */
 export function getDefaultFilterState(): HistoryFilterState {
+  const currentMonth = getCurrentMonth();
   return {
-    temporal: { level: 'all' },
+    temporal: {
+      level: 'month',
+      year: currentMonth.split('-')[0],
+      month: currentMonth,
+    },
     category: { level: 'all' },
     location: {},
     group: {},
@@ -204,6 +246,12 @@ interface HistoryFiltersProviderProps {
    * Optional initial state for testing purposes.
    */
   initialState?: HistoryFilterState;
+  /**
+   * Story 14.13b: Callback when filter state changes.
+   * Used to sync filter state to parent (App.tsx) for persistence across navigation.
+   * This allows filters to persist when viewing a transaction detail and coming back.
+   */
+  onStateChange?: (state: HistoryFilterState) => void;
 }
 
 /**
@@ -219,11 +267,19 @@ interface HistoryFiltersProviderProps {
 export function HistoryFiltersProvider({
   children,
   initialState,
+  onStateChange,
 }: HistoryFiltersProviderProps): React.ReactElement {
   const [state, dispatch] = useReducer(
     historyFiltersReducer,
     initialState ?? getDefaultFilterState()
   );
+
+  // Story 14.13b: Sync state changes to parent for persistence across navigation
+  useEffect(() => {
+    if (onStateChange) {
+      onStateChange(state);
+    }
+  }, [state, onStateChange]);
 
   // Memoize context value to prevent unnecessary re-renders
   const contextValue = useMemo<HistoryFiltersContextValue>(

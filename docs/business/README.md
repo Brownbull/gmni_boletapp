@@ -1,7 +1,7 @@
 # Business Documentation
 
 **Location:** `docs/business/`
-**Last Updated:** 2025-11-29
+**Last Updated:** 2026-01-13
 
 ---
 
@@ -22,6 +22,12 @@ Detailed breakdown of infrastructure costs by component (storage, API, compute).
 ### [Revenue Projections](./revenue-projections.md)
 Scenario modeling at different user scales and price points.
 
+### [Cost Optimization Opportunities](./cost-optimization-opportunities.md)
+Analysis of AI provider alternatives, compression strategies, and hybrid architectures to reduce per-scan costs. **Key finding:** Document AI hybrid approach could reduce costs by 77%.
+
+### [Admin Procedures](./admin-procedures.md)
+Firebase console procedures for administrative tasks.
+
 ---
 
 ## Key Decisions Log
@@ -32,6 +38,8 @@ Scenario modeling at different user scales and price points.
 | 2025-11-29 | 12-month rolling retention for paid tiers | Balances storage costs with user value |
 | 2025-11-29 | Scan = Image Storage (unified) | Simplifies mental model, ensures consistency |
 | 2025-11-29 | CLP pricing (Chilean Pesos) | Target market is Chile via Mercado Pago |
+| 2026-01-13 | Story 14.32 audit confirms healthy costs | No leakage found, Firestore 95% optimized |
+| 2026-01-13 | Gemini API = 97% of variable costs | Document AI hybrid identified as best optimization path |
 
 ---
 

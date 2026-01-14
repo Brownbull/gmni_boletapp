@@ -127,6 +127,10 @@ export interface InsightRecord {
   category?: InsightCategory;
   /** Lucide icon name for display */
   icon?: string;
+  /** Story 14.17: User's intentional/unintentional response (null if dismissed) */
+  intentionalResponse?: 'intentional' | 'unintentional' | null;
+  /** Story 14.17: When the intentional response was recorded */
+  intentionalResponseAt?: Timestamp;
 }
 
 // ============================================================================

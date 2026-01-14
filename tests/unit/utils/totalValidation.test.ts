@@ -43,12 +43,15 @@ describe('calculateItemsSum', () => {
     expect(calculateItemsSum(items)).toBe(6000);
   });
 
-  it('calculates sum correctly for items with explicit quantities', () => {
+  it('calculates sum correctly for items with explicit quantities (price is line total)', () => {
+    // NOTE: AI returns price as line total (already multiplied by qty)
+    // So 2 items at $500/each = $1000 line total
+    // And 3 items at $500/each = $1500 line total
     const items: TransactionItem[] = [
-      { name: 'Item 1', price: 1000, qty: 2 },
-      { name: 'Item 2', price: 500, qty: 3 },
+      { name: 'Item 1', price: 1000, qty: 2 }, // $1000 is the line total
+      { name: 'Item 2', price: 1500, qty: 3 }, // $1500 is the line total
     ];
-    expect(calculateItemsSum(items)).toBe(3500); // 2000 + 1500
+    expect(calculateItemsSum(items)).toBe(2500); // Sum of line totals: 1000 + 1500
   });
 
   it('handles empty items array', () => {
@@ -60,7 +63,8 @@ describe('calculateItemsSum', () => {
     expect(calculateItemsSum(undefined as any)).toBe(0);
   });
 
-  it('treats qty of 0 as 1 (default)', () => {
+  it('ignores qty when summing (price is already line total)', () => {
+    // qty is informational only - price is the line total
     const items: TransactionItem[] = [{ name: 'Item', price: 1000, qty: 0 }];
     expect(calculateItemsSum(items)).toBe(1000);
   });
@@ -179,16 +183,17 @@ describe('validateTotal', () => {
     expect(result.suggestedTotal).toBe(4000); // suggests items sum
   });
 
-  it('handles transaction with quantity multipliers', () => {
+  it('handles transaction with quantities (price is line total)', () => {
+    // AI returns price as line total, qty is just informational
     const transaction = createTransaction(10000, [
-      { name: 'Item 1', price: 2500, qty: 2 }, // 5000
-      { name: 'Item 2', price: 5000, qty: 1 }, // 5000
+      { name: 'Item 1', price: 5000, qty: 2 }, // $5000 line total (2 × $2500)
+      { name: 'Item 2', price: 5000, qty: 1 }, // $5000 line total
     ]);
 
     const result = validateTotal(transaction);
 
     expect(result.isValid).toBe(true);
-    expect(result.itemsSum).toBe(10000);
+    expect(result.itemsSum).toBe(10000); // Sum of line totals: 5000 + 5000
   });
 });
 
@@ -230,30 +235,30 @@ describe('TOTAL_DISCREPANCY_THRESHOLD', () => {
 describe('super_lider receipt scenario', () => {
   it('correctly identifies the missing digit in the real receipt', () => {
     // This is the actual scenario from the super_lider.expected.json
-    // AI extracted total: 10205
-    // Items sum should be ~102,052
+    // AI extracted total: 10205 (missing last digit, should be ~102,052)
+    // NOTE: prices are LINE TOTALS (already multiplied by qty)
     const transaction = createTransaction(10205, [
       { name: 'SUPER8 HALLO', price: 1890 },
       { name: 'PAN CIA RUST', price: 3125 },
-      { name: 'GALL DONUTS ORANGE', price: 1980, qty: 2 },
-      { name: 'GALL DONUTS COCO', price: 2970, qty: 3 },
+      { name: 'GALL DONUTS ORANGE', price: 3960, qty: 2 },  // Line total for 2 items
+      { name: 'GALL DONUTS COCO', price: 8910, qty: 3 },    // Line total for 3 items
       { name: 'PACK SALSA T', price: 3890 },
       { name: 'PAN DULCE', price: 2390 },
       { name: 'PIZZA JAMON', price: 7250 },
-      { name: 'R CEBOLLIN GRANEL', price: 1780, qty: 2 },
+      { name: 'R CEBOLLIN GRANEL', price: 3560, qty: 2 },   // Line total for 2 items
       { name: 'JAMON ACARA', price: 2693 },
-      { name: 'V POSTA NECRA ESCA', price: 12780, qty: 2 },
+      { name: 'V POSTA NECRA ESCA', price: 25560, qty: 2 }, // Line total for 2 items
       { name: 'NATUR MAIZ N', price: 430 },
       { name: 'NIK BLCK', price: 1490 },
       { name: 'PLATANO', price: 3844 },
-      { name: 'QUESO RALLADO SOBR', price: 7160, qty: 4 },
-      { name: 'PIMIENTO VERDE 2UN', price: 2380, qty: 2 },
+      { name: 'QUESO RALLADO SOBR', price: 28640, qty: 4 }, // Line total for 4 items
+      { name: 'PIMIENTO VERDE 2UN', price: 4760, qty: 2 },  // Line total for 2 items
       { name: 'PATO DISCO F', price: 4190 },
       { name: 'ROLLITOS ACE', price: 1790 },
       { name: 'MANZ VERDE', price: 1890 },
       { name: 'LYSO 2X495', price: 7490 },
-      { name: 'CEPILLO WC', price: 5100, qty: 2 },
-      { name: 'SDY EXTRA FRESH 90', price: 10580, qty: 2 },
+      { name: 'CEPILLO WC', price: 10200, qty: 2 },         // Line total for 2 items
+      { name: 'SDY EXTRA FRESH 90', price: 21160, qty: 2 }, // Line total for 2 items
       { name: 'ESPONJA ACAN', price: 2150 },
       { name: 'PAPEL HIG', price: 12690 },
       { name: 'CONFORT X12', price: 10750 },
@@ -262,8 +267,9 @@ describe('super_lider receipt scenario', () => {
 
     const result = validateTotal(transaction);
 
-    // Calculate what the items sum should be
+    // Calculate what the items sum should be (sum of line totals)
     const expectedItemsSum = calculateItemsSum(transaction.items);
+    // Sum = 1890+3125+3960+8910+3890+2390+7250+3560+2693+25560+430+1490+3844+28640+4760+4190+1790+1890+7490+10200+21160+2150+12690+10750+2190 = 176,892
 
     expect(result.isValid).toBe(false);
     expect(result.extractedTotal).toBe(10205);

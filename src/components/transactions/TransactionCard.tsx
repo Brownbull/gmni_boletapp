@@ -20,6 +20,10 @@ import { ChevronDown, AlertTriangle, Receipt, Package, Check } from 'lucide-reac
 import { Transaction, TransactionItem as TransactionItemType } from '../../types/transaction';
 import { getCategoryEmoji } from '../../utils/categoryEmoji';
 import { getCategoryColors, getCategoryColorsAuto, type ThemeName, type ModeName } from '../../config/categoryColors';
+import { useIsForeignLocation } from '../../hooks/useIsForeignLocation';
+import { useLocationDisplay } from '../../hooks/useLocations';
+import type { ForeignLocationDisplayFormat } from '../../services/userPreferencesService';
+import type { Language } from '../../types/settings';
 
 // ============================================================================
 // Types
@@ -75,6 +79,12 @@ export interface TransactionCardProps {
   theme: TransactionCardTheme;
   /** Default currency if not specified in transaction */
   defaultCurrency?: string;
+  /** Story 14.35b: User's default country for foreign location detection */
+  userDefaultCountry?: string;
+  /** Story 14.35b: How to display foreign location (code or flag emoji) */
+  foreignLocationFormat?: ForeignLocationDisplayFormat;
+  /** Story 14.35b: Language for localized city/country names */
+  lang?: Language;
   /** Whether this transaction is a potential duplicate */
   isDuplicate?: boolean;
   /** Click handler for editing the transaction */
@@ -213,7 +223,7 @@ interface MetaPillProps {
 
 const MetaPill: React.FC<MetaPillProps> = ({ children }) => (
   <span
-    className="inline-flex items-center gap-[3px] px-[6px] py-[3px] rounded-full text-[11px]"
+    className="inline-flex items-center gap-[3px] px-[6px] py-[3px] rounded-full text-xs"
     style={{
       backgroundColor: 'var(--bg-tertiary)',
       color: 'var(--text-secondary)',
@@ -232,6 +242,9 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
   formatters,
   theme,
   defaultCurrency = 'CLP',
+  userDefaultCountry,
+  foreignLocationFormat = 'code',
+  lang = 'es',
   isDuplicate = false,
   onClick,
   onThumbnailClick,
@@ -249,12 +262,36 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
     total,
     category,
     city,
+    country,
     currency,
     thumbnailUrl,
     imageUrls,
     items = [],
     groupColor,
   } = transaction;
+
+  // Story 14.35b: Detect foreign location for flag/code display
+  const { isForeign, countryCode } = useIsForeignLocation(country, userDefaultCountry);
+
+  // Story 14.35b: Get localized city/country names
+  const { getCityName } = useLocationDisplay(lang);
+
+  // Story 14.35b: Render the foreign location indicator based on user preference
+  const renderForeignLocationIndicator = (): React.ReactNode => {
+    if (!isForeign || !countryCode) return null;
+    if (foreignLocationFormat === 'flag') {
+      // Use flag-icons library: fi fi-{lowercase-country-code}
+      return (
+        <span
+          className={`fi fi-${countryCode.toLowerCase()}`}
+          style={{ fontSize: '12px', marginRight: '2px' }}
+          aria-label={countryCode}
+        />
+      );
+    }
+    // Default: show two-letter country code
+    return <span className="mr-0.5">{countryCode}</span>;
+  };
 
   // Destructure formatters
   const { formatCurrency, formatDate, t } = formatters;
@@ -421,7 +458,14 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
             <div className="flex justify-between items-center">
               <div className="flex flex-wrap gap-1 items-center">
                 <MetaPill>{getTimeDisplay()}</MetaPill>
-                {city && <MetaPill>{city}</MetaPill>}
+                {city && (
+                  <MetaPill>
+                    {/* Story 14.35b: Show country indicator (flag or code) before city for foreign locations */}
+                    {isForeign && renderForeignLocationIndicator()}
+                    {/* Story 14.35b: Display city in user's language */}
+                    {getCityName(city)}
+                  </MetaPill>
+                )}
                 {hasItems && (
                   <MetaPill>
                     <Package size={12} strokeWidth={2} />
@@ -481,13 +525,13 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
             {visibleItems.map((item, index) => (
               <div
                 key={index}
-                className="flex justify-between items-center py-1 text-[11px]"
+                className="flex justify-between items-center py-1 text-xs"
               >
                 <span style={{ color: 'var(--text-secondary)' }}>{item.name}</span>
                 {/* Story 14.15b: Show quantity if > 1 */}
                 <div className="flex items-center gap-1">
                   {(item.qty ?? 1) > 1 && (
-                    <span className="text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>
+                    <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>
                       x{item.qty}
                     </span>
                   )}
@@ -504,7 +548,7 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
             {remainingCount > 0 && (
               <div className="mt-2 pt-2 border-t border-dashed" style={{ borderColor: 'var(--border-light)' }}>
                 <button
-                  className="flex items-center justify-center gap-1 w-full text-[11px] font-medium"
+                  className="flex items-center justify-center gap-1 w-full text-xs font-medium"
                   style={{ color: '#059669' }}
                   onClick={(e) => {
                     e.stopPropagation();

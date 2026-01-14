@@ -2,6 +2,7 @@
  * TransactionEditorView Component
  *
  * Story 14.23: Unified Transaction Editor
+ * Story 14d.4b: Added ScanContext integration for scan state
  * Epic 14: Core Implementation
  *
  * Unified transaction editor that combines ScanResultView and EditView functionality.
@@ -16,6 +17,11 @@
  * - Item editing with category grouping
  * - Re-scan support for existing transactions
  * - Parent-managed state via onUpdateTransaction callback
+ *
+ * Story 14d.4b Migration:
+ * - Uses useScanOptional() to read scan state from context
+ * - Falls back to props if context not available (backward compatibility)
+ * - Context provides: isProcessing, hasError, state.error
  *
  * @see /home/khujta/.claude/plans/fancy-doodling-island.md
  * @see docs/sprint-artifacts/epic14/stories/story-14.23-unified-transaction-editor.md
@@ -33,9 +39,12 @@ import {
   Camera,
   RefreshCw,
   ChevronLeft,
+  ChevronRight,
   Zap,
   Info,
   Pencil,
+  Layers,
+  Receipt,
 } from 'lucide-react';
 import { formatCreditsDisplay } from '../services/userCreditsService';
 import { CategoryBadge } from '../components/CategoryBadge';
@@ -43,7 +52,12 @@ import { CategorySelectorOverlay } from '../components/CategorySelectorOverlay';
 import { ImageViewer } from '../components/ImageViewer';
 import { CategoryLearningPrompt } from '../components/CategoryLearningPrompt';
 import { SubcategoryLearningPrompt } from '../components/SubcategoryLearningPrompt';
-import { LearnMerchantDialog } from '../components/dialogs/LearnMerchantDialog';
+import { LearnMerchantDialog, type LearnMerchantSelection, type ItemNameChange } from '../components/dialogs/LearnMerchantDialog';
+import { ItemNameSuggestionDialog } from '../components/dialogs/ItemNameSuggestionDialog';
+import { ItemNameSuggestionIndicator } from '../components/ItemNameSuggestionIndicator';
+import { normalizeMerchantName } from '../services/merchantMappingService';
+import { normalizeItemName } from '../services/itemNameMappingService';
+import type { ItemNameMapping } from '../types/itemNameMapping';
 import { LocationSelect } from '../components/LocationSelect';
 import { DateTimeTag } from '../components/DateTimeTag';
 import { CurrencyTag } from '../components/CurrencyTag';
@@ -67,10 +81,12 @@ import {
 } from '../types/transaction';
 import type { UserCredits } from '../types/scan';
 import type { Language } from '../utils/translations';
-import { translateItemCategoryGroup, getItemCategoryGroupEmoji } from '../utils/categoryTranslations';
+import { translateItemCategoryGroup, getItemCategoryGroupEmoji, translateStoreCategory } from '../utils/categoryTranslations';
 import { getCategoryPillColors, getItemCategoryGroup, getItemGroupColors } from '../config/categoryColors';
 import { getCategoryEmoji } from '../utils/categoryEmoji';
 import { normalizeItemCategory } from '../utils/categoryNormalizer';
+import { useScanOptional } from '../contexts/ScanContext';
+import { ItemViewToggle, type ItemViewMode } from '../components/items/ItemViewToggle';
 
 /**
  * Scan button state machine
@@ -112,6 +128,8 @@ export interface TransactionEditorViewProps {
   processingEta?: number | null;
   /** Error message from scan processing */
   scanError?: string | null;
+  /** v9.7.0: Skip showing ScanCompleteModal (e.g., when coming from QuickSaveCard edit) */
+  skipScanCompleteModal?: boolean;
 
   // Images
   /** Receipt image thumbnail URL (after successful scan or existing transaction) */
@@ -142,10 +160,12 @@ export interface TransactionEditorViewProps {
   // Learning callbacks
   /** Save category mapping function */
   onSaveMapping?: (item: string, category: StoreCategory, source?: 'user' | 'ai') => Promise<string>;
-  /** Save merchant mapping function */
-  onSaveMerchantMapping?: (originalMerchant: string, targetMerchant: string) => Promise<string>;
+  /** Save merchant mapping function - v9.6.1: Now accepts optional storeCategory */
+  onSaveMerchantMapping?: (originalMerchant: string, targetMerchant: string, storeCategory?: StoreCategory) => Promise<string>;
   /** Save subcategory mapping function */
   onSaveSubcategoryMapping?: (item: string, subcategory: string, source?: 'user' | 'ai') => Promise<string>;
+  /** v9.7.0: Save item name mapping function (per-store item name learning) */
+  onSaveItemNameMapping?: (normalizedMerchant: string, originalItemName: string, targetItemName: string, targetCategory?: ItemCategory) => Promise<string>;
   /** Show toast notification */
   onShowToast?: (text: string) => void;
 
@@ -170,6 +190,10 @@ export interface TransactionEditorViewProps {
   // Context
   /** Batch context for editing from batch review queue */
   batchContext?: { index: number; total: number } | null;
+  /** Callback to navigate to previous receipt in batch */
+  onBatchPrevious?: () => void;
+  /** Callback to navigate to next receipt in batch */
+  onBatchNext?: () => void;
   /** Default city from settings */
   defaultCity?: string;
   /** Default country from settings */
@@ -184,6 +208,14 @@ export interface TransactionEditorViewProps {
   animateItems?: boolean;
   /** Whether a credit was already used for this scan */
   creditUsed?: boolean;
+
+  // Phase 4: Cross-Store Suggestions
+  /** All item name mappings for cross-store suggestions */
+  itemNameMappings?: ItemNameMapping[];
+
+  // Batch mode
+  /** Callback when user clicks batch scan button */
+  onBatchModeClick?: () => void;
 }
 
 // Note: Item categories are used via CategoryCombobox component which handles the full list internally
@@ -201,6 +233,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   isProcessing,
   processingEta,
   scanError: _scanError, // Used for error state detection in thumbnail area
+  skipScanCompleteModal = false, // v9.7.0: Skip modal when coming from QuickSaveCard
   thumbnailUrl,
   pendingImageUrl,
   onUpdateTransaction,
@@ -215,6 +248,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   onSaveMapping,
   onSaveMerchantMapping,
   onSaveSubcategoryMapping,
+  onSaveItemNameMapping,
   onShowToast,
   theme,
   t,
@@ -225,17 +259,37 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   storeCategories,
   distinctAliases = [],
   batchContext = null,
+  onBatchPrevious,
+  onBatchNext,
   defaultCity = '',
   defaultCountry = '',
   onCreditInfoClick,
   isSaving = false,
   animateItems = false,
   creditUsed = false,
+  // Phase 4: Cross-Store Suggestions
+  itemNameMappings = [],
+  // Batch mode
+  onBatchModeClick,
 }) => {
   const isDark = theme === 'dark';
   const prefersReducedMotion = useReducedMotion();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
+
+  // Story 14d.4b: Get scan context for reading scan state
+  // Uses optional hook since TransactionEditorView might be rendered outside ScanProvider
+  const scanContext = useScanOptional();
+
+  // Story 14d.4b: Derive scan state from context or fall back to props
+  // Context takes precedence when available - this allows gradual migration
+  // Note: These "effective" variables merge context state with props for backward compatibility
+  const effectiveIsProcessing = scanContext?.isProcessing ?? isProcessing;
+  // Story 14d.4c: effectiveScanError removed - error display uses scanButtonState derived from phase
+
+  // Use transaction's currency if available, otherwise fall back to user's default currency
+  // This ensures GBP receipts display in £ even if user's default is CLP
+  const displayCurrency = transaction?.currency || currency;
 
   // UI state
   const [showImageViewer, setShowImageViewer] = useState(false);
@@ -248,9 +302,18 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   // Story 14.24: Track which item's category overlay is open (null = none, number = item index)
   const [showItemCategoryOverlay, setShowItemCategoryOverlay] = useState<number | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  // Story 14.38: Item view mode toggle (grouped vs original order)
+  const [itemViewMode, setItemViewMode] = useState<ItemViewMode>('grouped');
 
   // ScanCompleteModal state (for new transactions only)
   const [showScanCompleteModal, setShowScanCompleteModal] = useState(false);
+
+  // Story 14.13 Session 6: Swipe gesture state for multi-transaction navigation
+  const [swipeTouchStart, setSwipeTouchStart] = useState<number | null>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  // Track transaction ID to detect changes and trigger fade-in animation
+  const [fadeInKey, setFadeInKey] = useState(0);
+  const prevTransactionIdRef = useRef<string | undefined>(transaction?.id);
 
   // Learning prompt states
   const [showLearningPrompt, setShowLearningPrompt] = useState(false);
@@ -259,6 +322,22 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   const [subcategoriesToLearn, setSubcategoriesToLearn] = useState<Array<{ itemName: string; newSubcategory: string }>>([]);
   const [showMerchantLearningPrompt, setShowMerchantLearningPrompt] = useState(false);
   const [savingMappings, setSavingMappings] = useState(false);
+
+  // Phase 4: Cross-Store Suggestions state
+  // Track which items have cross-store suggestions (item index -> suggestion data)
+  const [itemSuggestions, setItemSuggestions] = useState<Map<number, {
+    suggestedName: string;
+    fromMerchant: string;
+    fromNormalizedMerchant: string;
+  }>>(new Map());
+  // State for showing suggestion dialog
+  const [activeSuggestion, setActiveSuggestion] = useState<{
+    itemIndex: number;
+    originalName: string;
+    suggestedName: string;
+    fromMerchant: string;
+    fromNormalizedMerchant: string;
+  } | null>(null);
 
   // Item edit modal state (inline editing uses editingItemIndex, modal editing uses editingItem)
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
@@ -271,6 +350,8 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
 
   // Track original values for learning prompts
   const originalAliasRef = useRef<string | null>(null);
+  // v9.6.1: Track original store category for learning
+  const originalStoreCategoryRef = useRef<StoreCategory | null>(null);
   const originalItemGroupsRef = useRef<{
     items: Array<{ name: string; category: string; subcategory: string }>;
     capturedForTransactionKey: string | null;
@@ -297,15 +378,17 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
     // Only show modal if we transitioned from a non-complete state to complete
     // This prevents the modal from appearing when mounting with state already at 'complete'
     // (e.g., when navigating from QuickSaveCard's "Edit" button)
+    // v9.7.0: Also skip if skipScanCompleteModal is true (coming from QuickSaveCard edit)
     if (
       mode === 'new' &&
       scanButtonState === 'complete' &&
       prevState !== 'complete' &&
-      transaction
+      transaction &&
+      !skipScanCompleteModal
     ) {
       setShowScanCompleteModal(true);
     }
-  }, [mode, scanButtonState, transaction]);
+  }, [mode, scanButtonState, transaction, skipScanCompleteModal]);
 
   // Capture original item groups on mount
   useEffect(() => {
@@ -335,6 +418,15 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
     }
   }, [transaction?.merchant, transaction?.alias]);
 
+  // v9.6.1: Capture original store category on mount
+  useEffect(() => {
+    if (!transaction) return;
+    const hasData = transaction.merchant || transaction.category;
+    if (hasData && originalStoreCategoryRef.current === null) {
+      originalStoreCategoryRef.current = (transaction.category as StoreCategory) || null;
+    }
+  }, [transaction?.merchant, transaction?.category]);
+
   // Capture initial transaction state for cancel confirmation
   useEffect(() => {
     if (!transaction) return;
@@ -342,6 +434,15 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
     if (!initialTransactionRef.current ||
         (initialTransactionRef.current.id || 'new') !== transactionKey) {
       initialTransactionRef.current = JSON.parse(JSON.stringify(transaction));
+    }
+  }, [transaction?.id]);
+
+  // Story 14.13 Session 6: Detect transaction change and trigger fade-in animation
+  useEffect(() => {
+    if (transaction?.id !== prevTransactionIdRef.current) {
+      prevTransactionIdRef.current = transaction?.id;
+      // Increment key to trigger CSS animation
+      setFadeInKey(prev => prev + 1);
     }
   }, [transaction?.id]);
 
@@ -395,6 +496,155 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
       }));
   }, [transaction?.items]);
 
+  /**
+   * Phase 4: Cross-Store Suggestion Detection
+   *
+   * For each item in the transaction, check if there's a learned name at another store.
+   * Only show suggestions if:
+   * 1. The item doesn't already have a learned name at the current merchant
+   * 2. Another merchant has a mapping with the same normalized item name
+   */
+  const findCrossStoreSuggestion = useCallback((
+    itemName: string,
+    currentNormalizedMerchant: string
+  ): { suggestedName: string; fromMerchant: string; fromNormalizedMerchant: string } | null => {
+    if (!itemName || !currentNormalizedMerchant || itemNameMappings.length === 0) {
+      return null;
+    }
+
+    const normalizedItem = normalizeItemName(itemName);
+
+    // Skip very short item names to avoid false matches
+    if (normalizedItem.length < 3) {
+      return null;
+    }
+
+    // First, check if current merchant already has a mapping for this item
+    const hasCurrentMerchantMapping = itemNameMappings.some(
+      m => m.normalizedMerchant === currentNormalizedMerchant &&
+           m.normalizedItemName === normalizedItem
+    );
+
+    // If current merchant already has a mapping, no suggestion needed
+    if (hasCurrentMerchantMapping) {
+      return null;
+    }
+
+    // Find mappings from OTHER merchants that match this item name
+    // Prioritize by usage count (most used mapping first)
+    const crossStoreMappings = itemNameMappings
+      .filter(m =>
+        m.normalizedMerchant !== currentNormalizedMerchant &&
+        m.normalizedItemName === normalizedItem
+      )
+      .sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0));
+
+    if (crossStoreMappings.length === 0) {
+      return null;
+    }
+
+    const bestMatch = crossStoreMappings[0];
+    return {
+      suggestedName: bestMatch.targetItemName,
+      fromMerchant: bestMatch.normalizedMerchant, // Display the merchant alias/name
+      fromNormalizedMerchant: bestMatch.normalizedMerchant,
+    };
+  }, [itemNameMappings]);
+
+  // Compute cross-store suggestions for all items when transaction or mappings change
+  useEffect(() => {
+    if (!transaction?.merchant || !transaction?.items || itemNameMappings.length === 0) {
+      // Clear suggestions if no transaction or mappings
+      if (itemSuggestions.size > 0) {
+        setItemSuggestions(new Map());
+      }
+      return;
+    }
+
+    const currentNormalizedMerchant = normalizeMerchantName(transaction.merchant);
+    const newSuggestions = new Map<number, {
+      suggestedName: string;
+      fromMerchant: string;
+      fromNormalizedMerchant: string;
+    }>();
+
+    transaction.items.forEach((item, index) => {
+      if (!item.name) return;
+
+      const suggestion = findCrossStoreSuggestion(item.name, currentNormalizedMerchant);
+      if (suggestion) {
+        newSuggestions.set(index, suggestion);
+      }
+    });
+
+    // Only update state if suggestions actually changed
+    const currentKeys = Array.from(itemSuggestions.keys()).sort().join(',');
+    const newKeys = Array.from(newSuggestions.keys()).sort().join(',');
+    if (currentKeys !== newKeys) {
+      setItemSuggestions(newSuggestions);
+    }
+  }, [transaction?.merchant, transaction?.items, itemNameMappings, findCrossStoreSuggestion, itemSuggestions]);
+
+  // Handle applying a cross-store suggestion
+  const handleApplySuggestion = useCallback(() => {
+    if (!activeSuggestion || !transaction) return;
+
+    const { itemIndex, suggestedName } = activeSuggestion;
+
+    // Update the item name in the transaction
+    const newItems = [...transaction.items];
+    if (newItems[itemIndex]) {
+      newItems[itemIndex] = {
+        ...newItems[itemIndex],
+        name: suggestedName,
+      };
+      onUpdateTransaction({ ...transaction, items: newItems });
+    }
+
+    // Remove suggestion for this item (since name is now updated)
+    setItemSuggestions(prev => {
+      const next = new Map(prev);
+      next.delete(itemIndex);
+      return next;
+    });
+
+    // Optionally save a new mapping for the current merchant
+    // This makes the suggestion permanent at this store too
+    if (onSaveItemNameMapping && transaction.merchant) {
+      const currentNormalizedMerchant = normalizeMerchantName(transaction.merchant);
+      const originalItemName = activeSuggestion.originalName;
+      const targetCategory = newItems[itemIndex]?.category as ItemCategory | undefined;
+
+      // Fire-and-forget: save mapping in background
+      onSaveItemNameMapping(
+        currentNormalizedMerchant,
+        originalItemName,
+        suggestedName,
+        targetCategory
+      ).catch(err => console.error('Failed to save cross-store suggestion mapping:', err));
+    }
+
+    // Close the dialog
+    setActiveSuggestion(null);
+
+    // Show toast feedback
+    onShowToast?.(t('suggestionApplied') || 'Name updated from suggestion');
+  }, [activeSuggestion, transaction, onUpdateTransaction, onSaveItemNameMapping, onShowToast, t]);
+
+  // Handle clicking the suggestion indicator
+  const handleShowSuggestion = useCallback((itemIndex: number, item: TransactionItem) => {
+    const suggestion = itemSuggestions.get(itemIndex);
+    if (!suggestion) return;
+
+    setActiveSuggestion({
+      itemIndex,
+      originalName: item.name,
+      suggestedName: suggestion.suggestedName,
+      fromMerchant: suggestion.fromMerchant,
+      fromNormalizedMerchant: suggestion.fromNormalizedMerchant,
+    });
+  }, [itemSuggestions]);
+
   // Animation handling
   const animationPlayedRef = useRef(false);
   const shouldAnimate = animateItems && !animationPlayedRef.current;
@@ -415,8 +665,9 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   // - hasUnsavedChanges: User made changes to transaction fields
   // - thumbnailUrl for new transactions: Photo selected but not saved
   // Note: For existing transactions, thumbnailUrl is already saved so it doesn't indicate unsaved work
+  // Story 14.13 Session 6: Never warn in read-only mode (just viewing, no edits possible)
   const hasNewThumbnail = mode === 'new' && !!thumbnailUrl;
-  const shouldWarnOnCancel = creditUsed || hasUnsavedChanges || hasNewThumbnail;
+  const shouldWarnOnCancel = !readOnly && (creditUsed || hasUnsavedChanges || hasNewThumbnail);
 
   // Handle file input change
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -440,6 +691,54 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
       onCancel();
     }
   }, [shouldWarnOnCancel, onCancel]);
+
+  // Story 14.13 Session 6: Swipe gesture handlers for multi-transaction navigation
+  // Only enable when batchContext is present (navigating through multiple transactions)
+  const canSwipePrevious = batchContext && batchContext.index > 1 && onBatchPrevious;
+  const canSwipeNext = batchContext && batchContext.index < batchContext.total && onBatchNext;
+  const canSwipe = canSwipePrevious || canSwipeNext;
+  const minSwipeDistance = 50;
+
+  const handleSwipeTouchStart = useCallback((e: React.TouchEvent) => {
+    if (!canSwipe) return;
+    setSwipeTouchStart(e.targetTouches[0].clientX);
+    setSwipeOffset(0);
+  }, [canSwipe]);
+
+  const handleSwipeTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!canSwipe || swipeTouchStart === null) return;
+    const currentX = e.targetTouches[0].clientX;
+    let offset = currentX - swipeTouchStart;
+
+    // Apply resistance at boundaries (20% movement when can't swipe that direction)
+    if (offset > 0 && !canSwipePrevious) {
+      offset = offset * 0.2;
+    } else if (offset < 0 && !canSwipeNext) {
+      offset = offset * 0.2;
+    }
+
+    setSwipeOffset(offset);
+  }, [canSwipe, swipeTouchStart, canSwipePrevious, canSwipeNext]);
+
+  const handleSwipeTouchEnd = useCallback(() => {
+    if (!canSwipe || swipeTouchStart === null) {
+      setSwipeTouchStart(null);
+      setSwipeOffset(0);
+      return;
+    }
+
+    const distance = -swipeOffset; // Negative offset = left swipe = next
+
+    if (distance > minSwipeDistance && canSwipeNext && onBatchNext) {
+      onBatchNext();
+    } else if (distance < -minSwipeDistance && canSwipePrevious && onBatchPrevious) {
+      onBatchPrevious();
+    }
+
+    // Reset touch state
+    setSwipeTouchStart(null);
+    setSwipeOffset(0);
+  }, [canSwipe, swipeTouchStart, swipeOffset, canSwipeNext, canSwipePrevious, onBatchNext, onBatchPrevious]);
 
   // Toggle group collapse
   const toggleGroupCollapse = (groupKey: string) => {
@@ -531,9 +830,55 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
     return currentAlias !== originalAlias && currentAlias.length > 0;
   };
 
+  // v9.6.1: Check if store category changed
+  const hasStoreCategoryChanged = (): boolean => {
+    if (!transaction?.merchant) return false;
+    const currentCategory = transaction.category as StoreCategory;
+    const originalCategory = originalStoreCategoryRef.current;
+    return currentCategory !== originalCategory && !!currentCategory;
+  };
+
+  // v9.7.0: Find all item name changes (comparing original names to current names)
+  const findAllChangedItemNames = (): ItemNameChange[] => {
+    if (!transaction) return [];
+    const originalItems = originalItemGroupsRef.current.items;
+    const changedItems: ItemNameChange[] = [];
+
+    for (let i = 0; i < transaction.items.length; i++) {
+      const currentItem = transaction.items[i];
+      const originalItem = originalItems[i];
+      // Skip if no original item or current item name is empty
+      if (!originalItem || !currentItem.name) continue;
+
+      const currentName = currentItem.name.trim();
+      const originalName = originalItem.name.trim();
+
+      // Check if name actually changed and both are non-empty
+      if (currentName && originalName && currentName !== originalName) {
+        changedItems.push({
+          originalName,
+          newName: currentName,
+          category: currentItem.category as ItemCategory | undefined,
+        });
+      }
+    }
+    return changedItems;
+  };
+
+  // v9.7.0: Check if any item names have changed
+  const hasItemNameChanges = (): boolean => {
+    return findAllChangedItemNames().length > 0;
+  };
+
+  // v9.6.1: Check if any merchant-level learning should happen (alias OR category OR item names)
+  const hasMerchantLearningChanges = (): boolean => {
+    return hasMerchantAliasChanged() || hasStoreCategoryChanged() || hasItemNameChanges();
+  };
+
   // Learning prompt chain
+  // v9.6.1: Updated to check for both alias and category changes
   const proceedToMerchantLearningOrSave = async () => {
-    if (hasMerchantAliasChanged() && onSaveMerchantMapping) {
+    if (hasMerchantLearningChanges() && onSaveMerchantMapping) {
       setShowMerchantLearningPrompt(true);
     } else {
       await handleFinalSave();
@@ -633,14 +978,52 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
     await proceedToMerchantLearningOrSave();
   };
 
-  const handleLearnMerchantConfirm = async () => {
-    if (onSaveMerchantMapping && transaction?.merchant) {
-      try {
-        await onSaveMerchantMapping(transaction.merchant, transaction.alias || '');
+  // v9.6.1: Updated to accept selection - user can choose which items to learn
+  // v9.7.0: Now also handles item name mappings
+  const handleLearnMerchantConfirm = async (selection: LearnMerchantSelection) => {
+    if (transaction?.merchant) {
+      // Only save if user selected at least one item to learn
+      const shouldLearnAlias = selection.learnAlias && hasMerchantAliasChanged();
+      const shouldLearnCategory = selection.learnCategory && hasStoreCategoryChanged();
+      const hasItemsToLearn = selection.itemNamesToLearn && selection.itemNamesToLearn.length > 0;
+
+      // Save merchant mapping (alias and/or category)
+      if (onSaveMerchantMapping && (shouldLearnAlias || shouldLearnCategory)) {
+        try {
+          // Pass alias only if learning it, otherwise use empty string (won't overwrite existing)
+          const aliasToSave = shouldLearnAlias ? (transaction.alias || '') : '';
+          // Pass category only if learning it
+          const categoryToSave = shouldLearnCategory
+            ? (transaction.category as StoreCategory)
+            : undefined;
+
+          await onSaveMerchantMapping(transaction.merchant, aliasToSave, categoryToSave);
+        } catch (error) {
+          console.error('Failed to save merchant mapping:', error);
+        }
+      }
+
+      // v9.7.0: Save item name mappings
+      if (onSaveItemNameMapping && hasItemsToLearn) {
+        const normalizedMerchant = normalizeMerchantName(transaction.merchant);
+        try {
+          for (const itemChange of selection.itemNamesToLearn) {
+            await onSaveItemNameMapping(
+              normalizedMerchant,
+              itemChange.originalName,
+              itemChange.newName,
+              itemChange.category
+            );
+          }
+        } catch (error) {
+          console.error('Failed to save item name mappings:', error);
+        }
+      }
+
+      // Show success feedback if anything was saved
+      if (shouldLearnAlias || shouldLearnCategory || hasItemsToLearn) {
         celebrateSuccess();
         onShowToast?.(t('learnMerchantSuccess'));
-      } catch (error) {
-        console.error('Failed to save merchant mapping:', error);
       }
     }
     setShowMerchantLearningPrompt(false);
@@ -754,6 +1137,10 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
             50% { opacity: 0.8; }
             100% { left: 100%; opacity: 0.4; }
           }
+          @keyframes transaction-fade-in {
+            0% { opacity: 0; transform: translateX(0); }
+            100% { opacity: 1; transform: translateX(0); }
+          }
         `}
       </style>
 
@@ -794,11 +1181,6 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
             >
               {mode === 'new' ? (t('scanViewTitle') || 'Escanea') : t('myPurchase')}
             </h1>
-            {batchContext && (
-              <span className="text-xs ml-2" style={{ color: 'var(--text-secondary)' }}>
-                ({batchContext.index}/{batchContext.total})
-              </span>
-            )}
           </div>
 
           {/* Right side: Credit badges + Close/Delete button */}
@@ -815,14 +1197,14 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                 aria-label={t('creditInfo')}
               >
                 <div
-                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold"
                   style={{ backgroundColor: '#fef3c7', color: '#92400e' }}
                 >
                   <Zap size={10} strokeWidth={2.5} />
                   <span>{formatCreditsDisplay(credits.superRemaining)}</span>
                 </div>
                 <div
-                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold"
                   style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)' }}
                 >
                   <Camera size={10} strokeWidth={2.5} />
@@ -854,11 +1236,75 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
         </div>
       </div>
 
+      {/* Batch counter pill with navigation - shown between header and main content when editing from batch */}
+      {batchContext && (
+        <div className="px-4 pb-2 flex justify-center items-center gap-2">
+          {/* Previous button */}
+          <button
+            onClick={onBatchPrevious}
+            disabled={!onBatchPrevious || batchContext.index <= 1}
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{
+              backgroundColor: 'var(--bg-tertiary)',
+              border: '1px solid var(--border-light)',
+              color: 'var(--text-secondary)',
+            }}
+            aria-label={t('previous')}
+          >
+            <ChevronLeft size={18} strokeWidth={2.5} />
+          </button>
+
+          {/* Counter pill */}
+          <span
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
+            style={{
+              backgroundColor: 'var(--bg-tertiary)',
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--border-light)',
+            }}
+          >
+            <Receipt size={14} strokeWidth={2} />
+            {batchContext.index} {t('batchOfMax')} {batchContext.total}
+          </span>
+
+          {/* Next button */}
+          <button
+            onClick={onBatchNext}
+            disabled={!onBatchNext || batchContext.index >= batchContext.total}
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{
+              backgroundColor: 'var(--bg-tertiary)',
+              border: '1px solid var(--border-light)',
+              color: 'var(--text-secondary)',
+            }}
+            aria-label={t('next')}
+          >
+            <ChevronRight size={18} strokeWidth={2.5} />
+          </button>
+        </div>
+      )}
+
       {/* Main content */}
-      <div className="px-3 pb-4 relative">
+      {/* Story 14.13 Session 6: Swipe gesture support for multi-transaction navigation */}
+      {/* Crossfade effect: opacity decreases as swipe distance increases, fade-in on transaction change */}
+      <div
+        key={`transaction-content-${fadeInKey}`}
+        className="px-3 pb-4 relative"
+        onTouchStart={handleSwipeTouchStart}
+        onTouchMove={handleSwipeTouchMove}
+        onTouchEnd={handleSwipeTouchEnd}
+        style={{
+          transform: `translateX(${swipeOffset}px)`,
+          // Fade out as user swipes: full opacity at 0, fades to 0.3 at ±150px
+          opacity: Math.max(0.3, 1 - Math.abs(swipeOffset) / 150),
+          transition: swipeTouchStart === null ? 'transform 0.2s ease-out, opacity 0.2s ease-out' : 'none',
+          // Fade-in animation when transaction changes (via key change)
+          animation: batchContext && fadeInKey > 0 ? 'transaction-fade-in 0.25s ease-out' : undefined,
+        }}
+      >
         {/* ProcessingOverlay */}
         <ProcessingOverlay
-          visible={isProcessing}
+          visible={effectiveIsProcessing}
           theme={theme}
           t={t}
           eta={processingEta}
@@ -894,7 +1340,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                   className="text-xl font-bold w-full bg-transparent border-none outline-none mb-2"
                   style={{ color: 'var(--text-primary)' }}
                   autoFocus
-                  disabled={isProcessing}
+                  disabled={effectiveIsProcessing}
                 />
               ) : readOnly ? (
                 // Read-only mode: Just display the name, no edit button
@@ -910,13 +1356,13 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
               ) : (
                 <button
                   onClick={() => {
-                    if (!isProcessing) {
+                    if (!effectiveIsProcessing) {
                       setIsEditingTitle(true);
                       setTimeout(() => titleInputRef.current?.focus(), 0);
                     }
                   }}
                   className="flex items-center gap-2 mb-2 text-left w-full group"
-                  disabled={isProcessing}
+                  disabled={effectiveIsProcessing}
                 >
                   <span
                     className="text-xl font-bold truncate"
@@ -941,9 +1387,9 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                   />
                 ) : (
                   <button
-                    onClick={() => !isProcessing && setShowCategoryDropdown(!showCategoryDropdown)}
+                    onClick={() => !effectiveIsProcessing && setShowCategoryDropdown(!showCategoryDropdown)}
                     className="cursor-pointer"
-                    disabled={isProcessing}
+                    disabled={effectiveIsProcessing}
                   >
                     <CategoryBadge
                       category={displayTransaction.category || 'Other'}
@@ -986,7 +1432,8 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                 )}
               </div>
 
-              {/* Location */}
+              {/* Location - Story 14.35b: Pass userDefaultCountry for foreign flag display */}
+              {/* Story 14.41: Disabled in read-only mode */}
               <LocationSelect
                 country={displayTransaction.country || ''}
                 city={displayTransaction.city || ''}
@@ -995,9 +1442,13 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                 inputStyle={inputStyle}
                 theme={theme}
                 t={t}
+                lang={lang}
+                userDefaultCountry={defaultCountry}
+                disabled={readOnly}
               />
 
               {/* Date, Time, Currency */}
+              {/* Story 14.41: Disabled in read-only mode */}
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 <DateTimeTag
                   date={displayTransaction.date}
@@ -1005,20 +1456,27 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                   onDateChange={date => transaction && onUpdateTransaction({ ...transaction, date })}
                   onTimeChange={time => transaction && onUpdateTransaction({ ...transaction, time })}
                   t={t}
+                  disabled={readOnly}
                 />
                 <CurrencyTag
                   currency={displayTransaction.currency || 'CLP'}
                   onCurrencyChange={currency => transaction && onUpdateTransaction({ ...transaction, currency })}
                   t={t}
+                  disabled={readOnly}
                 />
               </div>
             </div>
 
             {/* Right: Thumbnail area with scan button state machine */}
             <div
-              className="relative flex-shrink-0"
-              style={{ width: '88px', height: '110px' }}
+              className="flex flex-col items-center flex-shrink-0 gap-1.5"
+              style={{ width: '88px' }}
             >
+              {/* Thumbnail container */}
+              <div
+                className="relative w-full"
+                style={{ height: '90px' }}
+              >
               {scanButtonState === 'complete' && displayImageUrl ? (
                 /* SUCCESS STATE - Show thumbnail with checkmark */
                 <button
@@ -1061,7 +1519,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                     >
                       <X size={18} className="text-white" strokeWidth={2.5} />
                     </div>
-                    <span className="text-[9px] font-bold uppercase text-white">
+                    <span className="text-xs font-bold uppercase text-white">
                       {t('retry')}
                     </span>
                   </div>
@@ -1098,16 +1556,17 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                         animation: !prefersReducedMotion ? 'processing-spin 1s linear infinite' : 'none',
                       }}
                     />
-                    <span className="text-[9px] font-semibold uppercase text-white">
+                    <span className="text-xs font-semibold uppercase text-white">
                       {t('processing')}
                     </span>
                   </div>
                 </div>
               ) : scanButtonState === 'pending' && pendingImageUrl ? (
-                /* PENDING STATE - Photo selected, ready to scan */
+                // PENDING STATE - Photo selected, ready to scan
+                // Story 14d.5: Added effectiveIsProcessing to prevent double-click during state transition
                 <button
-                  onClick={hasCredits ? onProcessScan : undefined}
-                  disabled={!hasCredits}
+                  onClick={hasCredits && !effectiveIsProcessing ? onProcessScan : undefined}
+                  disabled={!hasCredits || effectiveIsProcessing}
                   className="w-full h-full rounded-xl overflow-hidden relative cursor-pointer"
                   style={{
                     border: '2px solid var(--success)',
@@ -1146,7 +1605,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                         marginTop: '-2px',
                       }}
                     >
-                      <span className="text-[11px] font-semibold text-white relative z-10">
+                      <span className="text-xs font-semibold text-white relative z-10">
                         {hasCredits ? t('scan') : t('noCredits')}
                       </span>
                     </div>
@@ -1179,12 +1638,12 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                 /* IDLE STATE - Empty, show add photo button */
                 <button
                   onClick={handleOpenFilePicker}
-                  disabled={isProcessing}
+                  disabled={effectiveIsProcessing}
                   className="w-full h-full rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all"
                   style={{
                     backgroundColor: 'var(--bg-tertiary)',
                     border: '2px dashed var(--primary)',
-                    animation: !prefersReducedMotion && !isProcessing ? 'scan-pulse-border 2s ease-in-out infinite' : 'none',
+                    animation: !prefersReducedMotion && !effectiveIsProcessing ? 'scan-pulse-border 2s ease-in-out infinite' : 'none',
                   }}
                   aria-label={t('attach')}
                 >
@@ -1192,54 +1651,94 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                     className="w-10 h-10 rounded-full flex items-center justify-center"
                     style={{
                       backgroundColor: 'var(--primary-light)',
-                      animation: !prefersReducedMotion && !isProcessing ? 'scan-breathe 2s ease-in-out infinite' : 'none',
+                      animation: !prefersReducedMotion && !effectiveIsProcessing ? 'scan-breathe 2s ease-in-out infinite' : 'none',
                     }}
                   >
                     <Camera size={20} style={{ color: 'var(--primary)' }} strokeWidth={2} />
                   </div>
                   <span
-                    className="text-[10px] font-semibold tracking-wide"
+                    className="text-xs font-semibold tracking-wide"
                     style={{ color: 'var(--primary)' }}
                   >
                     {t('attach')}
                   </span>
                 </button>
               )}
+              </div>
+
+              {/* Story 14.41: Edit button (view mode only) - same position as re-scan button */}
+              {/* Uses accent color to match bottom "Editar transacción" button */}
+              {mode === 'existing' && readOnly && onRequestEdit && (
+                <button
+                  onClick={onRequestEdit}
+                  className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+                  style={{
+                    backgroundColor: 'var(--accent)',
+                    color: 'white',
+                  }}
+                  aria-label={t('edit')}
+                  title={t('edit')}
+                >
+                  <Pencil size={16} strokeWidth={2} />
+                </button>
+              )}
+
+              {/* Re-scan button (existing transactions in edit mode only, icon only) */}
+              {mode === 'existing' && transaction?.id && onRescan && hasImages && !readOnly && (
+                <button
+                  onClick={handleRescanClick}
+                  disabled={isRescanning || !hasCredits}
+                  className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+                  style={{
+                    backgroundColor: isRescanning || !hasCredits ? 'var(--bg-tertiary)' : 'var(--primary-light)',
+                    color: isRescanning || !hasCredits ? 'var(--text-tertiary)' : 'var(--primary)',
+                    opacity: isRescanning ? 0.7 : 1,
+                    cursor: isRescanning || !hasCredits ? 'not-allowed' : 'pointer',
+                  }}
+                  aria-label={isRescanning ? t('rescanning') : t('rescan')}
+                  title={isRescanning ? t('rescanning') : t('rescan')}
+                >
+                  <RefreshCw size={16} strokeWidth={2} className={isRescanning ? 'animate-spin' : ''} />
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Re-scan button (existing transactions only, hidden in read-only mode) */}
-          {mode === 'existing' && transaction?.id && onRescan && hasImages && !readOnly && (
+          {/* Batch Scan button - shown in new mode when idle or after successful scan */}
+          {mode === 'new' && onBatchModeClick && !readOnly && !effectiveIsProcessing &&
+           (scanButtonState === 'idle' || scanButtonState === 'complete') && (
             <button
-              onClick={handleRescanClick}
-              disabled={isRescanning || !hasCredits}
-              className="w-full p-2.5 rounded-lg border mb-4 flex items-center justify-center gap-2 transition-all"
+              onClick={onBatchModeClick}
+              className="w-full p-2.5 rounded-lg border mb-4 flex items-center justify-center gap-2 transition-all hover:bg-amber-50 dark:hover:bg-amber-900/10"
               style={{
-                borderColor: isRescanning || !hasCredits ? 'var(--border-light)' : 'var(--primary)',
-                color: isRescanning || !hasCredits ? 'var(--text-tertiary)' : 'var(--primary)',
+                borderColor: '#f59e0b', // amber-500
+                color: '#d97706', // amber-600
                 backgroundColor: 'transparent',
-                opacity: isRescanning ? 0.7 : 1,
-                cursor: isRescanning || !hasCredits ? 'not-allowed' : 'pointer',
               }}
             >
-              <RefreshCw size={16} strokeWidth={2} className={isRescanning ? 'animate-spin' : ''} />
+              <Layers size={16} strokeWidth={2} />
               <span className="text-sm font-medium">
-                {isRescanning ? t('rescanning') : t('rescan')}
+                {t('batchScan') || 'Escanear Lote'}
               </span>
             </button>
           )}
 
-          {/* Items section - grouped by category */}
+          {/* Items section - Story 14.38: Toggle between grouped and original order */}
           <div className="mb-4">
-            <div
-              className="text-[10px] font-semibold uppercase tracking-wider mb-3"
-              style={{ color: 'var(--text-tertiary)' }}
-            >
-              {t('items')}
-            </div>
+            {/* Story 14.38: Full-width item view toggle (replaces "ÍTEMS" subtitle) */}
+            {transaction?.items && transaction.items.length > 0 && (
+              <div className="mb-3">
+                <ItemViewToggle
+                  activeView={itemViewMode}
+                  onViewChange={setItemViewMode}
+                  t={t}
+                />
+              </div>
+            )}
 
             <div className="space-y-3">
-              {itemsByGroup.map(({ groupKey, items: groupItems, total: groupTotal }) => {
+              {/* Grouped view - items organized by category */}
+              {itemViewMode === 'grouped' && itemsByGroup.map(({ groupKey, items: groupItems, total: groupTotal }) => {
                 const isCollapsed = collapsedGroups.has(groupKey);
                 const groupColors = getItemGroupColors(groupKey as any, 'normal', isDark ? 'dark' : 'light');
                 const groupEmoji = getItemCategoryGroupEmoji(groupKey);
@@ -1267,7 +1766,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                           {translatedGroup}
                         </span>
                         <span
-                          className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                          className="text-xs px-1.5 py-0.5 rounded-full font-medium"
                           style={{ backgroundColor: 'rgba(0,0,0,0.1)', color: groupColors.fg }}
                         >
                           {groupItems.length}
@@ -1275,7 +1774,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold" style={{ color: groupColors.fg }}>
-                          {formatCurrency(groupTotal, currency)}
+                          {formatCurrency(groupTotal, displayCurrency)}
                         </span>
                         {isCollapsed ? (
                           <ChevronDown size={16} style={{ color: groupColors.fg }} />
@@ -1454,7 +1953,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                               ) : (
                                 /* Display state - Story 14.24: disable clicking in read-only mode */
                                 <div
-                                  onClick={() => !isProcessing && !readOnly && setEditingItemIndex(i)}
+                                  onClick={() => !effectiveIsProcessing && !readOnly && setEditingItemIndex(i)}
                                   className={`px-2.5 py-2 rounded-lg transition-colors ${readOnly ? '' : 'cursor-pointer'}`}
                                   style={{ backgroundColor: 'var(--bg-tertiary)' }}
                                 >
@@ -1466,6 +1965,15 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                                       >
                                         {item.name}
                                       </span>
+                                      {/* Phase 4: Cross-store suggestion indicator */}
+                                      {!readOnly && itemSuggestions.has(i) && (
+                                        <ItemNameSuggestionIndicator
+                                          suggestedName={itemSuggestions.get(i)!.suggestedName}
+                                          fromStore={itemSuggestions.get(i)!.fromMerchant}
+                                          onClick={() => handleShowSuggestion(i, item)}
+                                          theme={theme}
+                                        />
+                                      )}
                                       {/* Story 14.24: Hide pencil icon in read-only mode */}
                                       {!readOnly && <Pencil size={10} style={{ color: 'var(--text-tertiary)', opacity: 0.6, flexShrink: 0 }} />}
                                     </div>
@@ -1473,7 +1981,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                                       className="text-xs font-semibold flex-shrink-0"
                                       style={{ color: 'var(--text-primary)' }}
                                     >
-                                      {formatCurrency(item.price, currency)}
+                                      {formatCurrency(item.price, displayCurrency)}
                                     </span>
                                   </div>
                                   <div className="flex justify-between items-center">
@@ -1481,7 +1989,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                                       <CategoryBadge category={item.category || 'Other'} lang={lang} mini type="item" />
                                       {item.subcategory && (
                                         <span
-                                          className="text-[10px] px-1.5 py-0.5 rounded-full"
+                                          className="text-xs px-1.5 py-0.5 rounded-full"
                                           style={{
                                             backgroundColor: 'var(--bg-secondary)',
                                             color: 'var(--text-tertiary)',
@@ -1493,7 +2001,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                                     </div>
                                     {(item.qty ?? 1) > 1 && (
                                       <span
-                                        className="text-[11px] font-medium flex-shrink-0"
+                                        className="text-xs font-medium flex-shrink-0"
                                         style={{ color: 'var(--text-tertiary)' }}
                                       >
                                         x{Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}
@@ -1510,13 +2018,176 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                   </div>
                 );
               })}
+
+              {/* Original order view - Story 14.38: items in array index order */}
+              {itemViewMode === 'original' && transaction?.items && (
+                <div
+                  className="rounded-xl overflow-hidden"
+                  style={{
+                    backgroundColor: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-light)',
+                  }}
+                >
+                  <div className="divide-y" style={{ borderColor: 'var(--border-light)' }}>
+                    {transaction.items.map((item, i) => {
+                      const isVisible = !shouldAnimate || i < animatedItems.length;
+                      const animationDelay = shouldAnimate ? i * 100 : 0;
+                      const ItemContainer = shouldAnimate && !animationPlayedRef.current ? AnimatedItem : React.Fragment;
+                      const containerProps = shouldAnimate && !animationPlayedRef.current
+                        ? { delay: animationDelay, index: i, testId: `edit-view-item-original-${i}` }
+                        : {};
+
+                      if (!isVisible) return null;
+
+                      return (
+                        <ItemContainer key={i} {...containerProps}>
+                          <div
+                            className="px-3 py-2.5 transition-colors"
+                            style={{
+                              backgroundColor: i % 2 === 1 ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
+                            }}
+                          >
+                            {editingItemIndex === i ? (
+                              /* Editing state in original view */
+                              <div className="space-y-1.5">
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className="text-xs font-medium w-5 text-center flex-shrink-0"
+                                    style={{ color: 'var(--text-tertiary)' }}
+                                  >
+                                    {i + 1}.
+                                  </span>
+                                  <input
+                                    className="flex-1 px-2 py-1.5 border rounded-lg text-xs"
+                                    style={inputStyle}
+                                    value={item.name}
+                                    onChange={e => handleUpdateItem(i, 'name', e.target.value)}
+                                    placeholder={t('itemName')}
+                                    autoFocus
+                                  />
+                                </div>
+                                <div className="flex items-center gap-2 pl-7">
+                                  <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    className="w-24 px-2 py-1.5 border rounded-lg text-xs"
+                                    style={inputStyle}
+                                    defaultValue={item.price || ''}
+                                    key={`price-original-${i}-${editingItemIndex}`}
+                                    onFocus={e => e.target.select()}
+                                    onChange={e => {
+                                      const cleaned = e.target.value.replace(/[^0-9.]/g, '');
+                                      const parts = cleaned.split('.');
+                                      const sanitized = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : cleaned;
+                                      if (sanitized !== e.target.value) e.target.value = sanitized;
+                                    }}
+                                    onBlur={e => {
+                                      const val = parseFloat(e.target.value);
+                                      if (!isNaN(val) && val >= 0) handleUpdateItem(i, 'price', val);
+                                    }}
+                                    placeholder={t('itemPrice')}
+                                  />
+                                  <button
+                                    onClick={() => {
+                                      setShowItemCategoryOverlay(i);
+                                      setEditingItemIndex(null);
+                                    }}
+                                    className="px-2 py-1 rounded-lg text-xs"
+                                    style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
+                                  >
+                                    <CategoryBadge category={item.category || 'Other'} lang={lang} mini type="item" />
+                                  </button>
+                                  <div className="flex-1" />
+                                  <button
+                                    onClick={() => handleDeleteItem(i)}
+                                    className="min-w-8 min-h-8 p-1 rounded-lg flex items-center justify-center"
+                                    style={{ color: 'var(--error)', backgroundColor: isDark ? 'rgba(248, 113, 113, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}
+                                  >
+                                    <Trash2 size={14} strokeWidth={2} />
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingItemIndex(null)}
+                                    className="min-w-8 min-h-8 p-1 rounded-lg flex items-center justify-center"
+                                    style={{ color: 'var(--success)', backgroundColor: 'rgba(34, 197, 94, 0.1)' }}
+                                  >
+                                    <Check size={14} strokeWidth={2} />
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              /* Display state in original view */
+                              <div
+                                onClick={() => !effectiveIsProcessing && !readOnly && setEditingItemIndex(i)}
+                                className={`flex items-center gap-2 ${readOnly ? '' : 'cursor-pointer'}`}
+                              >
+                                <span
+                                  className="text-xs font-medium w-5 text-center flex-shrink-0"
+                                  style={{ color: 'var(--text-tertiary)' }}
+                                >
+                                  {i + 1}.
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-1 min-w-0 flex-1">
+                                      <span
+                                        className="text-xs font-medium truncate"
+                                        style={{ color: 'var(--text-primary)' }}
+                                      >
+                                        {item.name}
+                                      </span>
+                                      {!readOnly && itemSuggestions.has(i) && (
+                                        <ItemNameSuggestionIndicator
+                                          suggestedName={itemSuggestions.get(i)!.suggestedName}
+                                          fromStore={itemSuggestions.get(i)!.fromMerchant}
+                                          onClick={() => handleShowSuggestion(i, item)}
+                                          theme={theme}
+                                        />
+                                      )}
+                                      {!readOnly && <Pencil size={10} style={{ color: 'var(--text-tertiary)', opacity: 0.6, flexShrink: 0 }} />}
+                                    </div>
+                                    <span
+                                      className="text-xs font-semibold flex-shrink-0"
+                                      style={{ color: 'var(--text-primary)' }}
+                                    >
+                                      {formatCurrency(item.price, displayCurrency)}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-1 mt-0.5">
+                                    <CategoryBadge category={item.category || 'Other'} lang={lang} mini type="item" />
+                                    {item.subcategory && (
+                                      <span
+                                        className="text-xs px-1.5 py-0.5 rounded-full"
+                                        style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-tertiary)' }}
+                                      >
+                                        {item.subcategory}
+                                      </span>
+                                    )}
+                                    {(item.qty ?? 1) > 1 && (
+                                      <span
+                                        className="text-xs font-medium"
+                                        style={{ color: 'var(--text-tertiary)' }}
+                                      >
+                                        x{Number.isInteger(item.qty) ? item.qty : item.qty?.toFixed(1)}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </ItemContainer>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Add Item button - Story 14.24: hidden in read-only mode */}
             {!readOnly && (
               <button
                 onClick={handleAddItem}
-                disabled={isProcessing}
+                disabled={effectiveIsProcessing}
                 className="w-full p-2.5 mt-3 rounded-lg border-2 border-dashed flex items-center justify-center gap-1.5 transition-colors"
                 style={{
                   borderColor: 'var(--border-light)',
@@ -1539,7 +2210,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
               {t('total')} ({displayTransaction.items.length} {displayTransaction.items.length === 1 ? 'item' : 'items'})
             </span>
             <span className="text-lg font-bold" style={{ color: 'var(--primary)' }}>
-              {formatCurrency(calculatedTotal, currency)}
+              {formatCurrency(calculatedTotal, displayCurrency)}
             </span>
           </div>
 
@@ -1558,11 +2229,11 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
           ) : (
             <button
               onClick={handleSaveWithLearning}
-              disabled={isSaving || isProcessing || !canSave}
+              disabled={isSaving || effectiveIsProcessing || !canSave}
               className="w-full py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-transform hover:scale-[1.01] active:scale-[0.99]"
               style={{
-                backgroundColor: (isSaving || isProcessing || !canSave) ? 'var(--success-muted, #86efac)' : 'var(--success)',
-                opacity: (isSaving || isProcessing || !canSave) ? 0.5 : 1,
+                backgroundColor: (isSaving || effectiveIsProcessing || !canSave) ? 'var(--success-muted, #86efac)' : 'var(--success)',
+                opacity: (isSaving || effectiveIsProcessing || !canSave) ? 0.5 : 1,
                 cursor: !canSave ? 'not-allowed' : 'pointer',
               }}
             >
@@ -1590,7 +2261,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
               {showDebugInfo ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
             {showDebugInfo && (
-              <div className="mt-3 space-y-2 text-[11px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
+              <div className="mt-3 space-y-2 text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
                 {displayTransaction.merchant && (
                   <div className="flex justify-between">
                     <span>{t('merchantFromScan')}:</span>
@@ -1685,13 +2356,31 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
         isLoading={savingMappings}
       />
 
-      {/* Merchant Learning Prompt */}
+      {/* Merchant Learning Prompt - v9.6.1: Now handles both alias and category changes */}
+      {/* v9.7.0: Also handles item name changes */}
       <LearnMerchantDialog
         isOpen={showMerchantLearningPrompt}
         originalMerchant={displayTransaction.merchant}
         correctedMerchant={displayTransaction.alias || ''}
+        aliasChanged={hasMerchantAliasChanged()}
+        categoryChanged={hasStoreCategoryChanged()}
+        originalCategory={originalStoreCategoryRef.current ? translateStoreCategory(originalStoreCategoryRef.current, lang) : undefined}
+        newCategory={displayTransaction.category ? translateStoreCategory(displayTransaction.category, lang) : undefined}
+        itemNameChanges={findAllChangedItemNames()}
         onConfirm={handleLearnMerchantConfirm}
         onClose={handleLearnMerchantDismiss}
+        t={t}
+        theme={theme}
+      />
+
+      {/* Phase 4: Cross-Store Item Name Suggestion Dialog */}
+      <ItemNameSuggestionDialog
+        isOpen={activeSuggestion !== null}
+        originalItemName={activeSuggestion?.originalName || ''}
+        suggestedItemName={activeSuggestion?.suggestedName || ''}
+        fromMerchant={activeSuggestion?.fromMerchant || ''}
+        onApply={handleApplySuggestion}
+        onDismiss={() => setActiveSuggestion(null)}
         t={t}
         theme={theme}
       />

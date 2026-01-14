@@ -26,6 +26,14 @@ export type SupportedCurrency = 'CLP' | 'USD' | 'EUR';
 export type SupportedFontFamily = 'outfit' | 'space';
 
 /**
+ * Foreign location display format preference
+ * Story 14.35b: How to display foreign country indicators
+ * - 'code': Two-letter country code (e.g., "US Orlando")
+ * - 'flag': Flag emoji (e.g., "🇺🇸 Orlando")
+ */
+export type ForeignLocationDisplayFormat = 'code' | 'flag';
+
+/**
  * User preferences stored in Firestore
  * Story 14.22: Extended to include location settings for cloud persistence
  */
@@ -44,6 +52,8 @@ export interface UserPreferences {
   birthDate?: string;
   /** Font family preference (Story 14.22: Typography selection) */
   fontFamily?: SupportedFontFamily;
+  /** Story 14.35b: Foreign location display format ('code' or 'flag') */
+  foreignLocationFormat?: ForeignLocationDisplayFormat;
   /** Timestamp when preferences were last updated */
   updatedAt?: any;
 }
@@ -51,10 +61,12 @@ export interface UserPreferences {
 /**
  * Default preferences for new users
  * Story 14.22: Added fontFamily default to 'outfit'
+ * Story 14.35b: Added foreignLocationFormat default to 'code'
  */
 const DEFAULT_PREFERENCES: UserPreferences = {
   defaultCurrency: 'CLP',
   fontFamily: 'outfit',
+  foreignLocationFormat: 'code',
 };
 
 /**
@@ -93,6 +105,8 @@ export async function getUserPreferences(
         birthDate: data.birthDate || '',
         // Story 14.22: Font family preference (defaults to 'outfit')
         fontFamily: data.fontFamily || DEFAULT_PREFERENCES.fontFamily,
+        // Story 14.35b: Foreign location display format (defaults to 'code')
+        foreignLocationFormat: data.foreignLocationFormat || DEFAULT_PREFERENCES.foreignLocationFormat,
         updatedAt: data.updatedAt,
       };
     }

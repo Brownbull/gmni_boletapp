@@ -5,14 +5,18 @@
  * Levels: All Locations → Country → City
  *
  * Story 9.19: History Transaction Filters (AC #4)
+ * Story 14.35: Added localization support for countries and cities
+ *
  * @see docs/sprint-artifacts/epic9/story-9.19-history-transaction-filters.md
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { MapPin, ChevronLeft } from 'lucide-react';
 import { useHistoryFilters } from '../../hooks/useHistoryFilters';
+import { useLocationDisplay } from '../../hooks/useLocations';
 import type { LocationFilterState } from '../../contexts/HistoryFiltersContext';
 import type { AvailableFilters } from '../../utils/historyFilterUtils';
+import type { Language } from '../../types/settings';
 
 // ============================================================================
 // Types
@@ -27,6 +31,8 @@ interface LocationFilterDropdownProps {
   theme?: string;
   /** Translation function */
   t: (key: string) => string;
+  /** Language for localization (default: 'es') */
+  lang?: Language;
 }
 
 // ============================================================================
@@ -37,6 +43,7 @@ export function LocationFilterDropdown({
   availableFilters,
   theme = 'light',
   t,
+  lang = 'es',
 }: LocationFilterDropdownProps): React.ReactElement {
   const { location, dispatch } = useHistoryFilters();
   const [isOpen, setIsOpen] = useState(false);
@@ -44,6 +51,9 @@ export function LocationFilterDropdown({
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Story 14.35: Use localized display
+  const { getCountryName, getCityName } = useLocationDisplay(lang);
 
   const isDark = theme === 'dark';
 
@@ -123,12 +133,12 @@ export function LocationFilterDropdown({
     setSelectedCountry(null);
   }, []);
 
-  // Get current filter label for button
-  const getButtonLabel = (): string => {
+  // Get current filter label for button (Story 14.35: localized)
+  const getButtonLabel = useCallback((): string => {
     if (!location.country) return t('allLocations');
-    if (location.city) return location.city;
-    return location.country;
-  };
+    if (location.city) return getCityName(location.city);
+    return getCountryName(location.country);
+  }, [location.country, location.city, t, getCountryName, getCityName]);
 
   // ============================================================================
   // Styling
@@ -185,6 +195,22 @@ export function LocationFilterDropdown({
   // AC #4: Show helpful message if no location data exists
   const hasLocationData = availableFilters.countries.length > 0;
 
+  // Memoize localized country names for sorting (Story 14.35)
+  const sortedCountries = useMemo(() => {
+    return [...availableFilters.countries].sort((a, b) =>
+      getCountryName(a).localeCompare(getCountryName(b), lang)
+    );
+  }, [availableFilters.countries, getCountryName, lang]);
+
+  // Memoize localized city names for the selected country
+  const sortedCities = useMemo(() => {
+    if (!selectedCountry) return [];
+    const cities = availableFilters.citiesByCountry[selectedCountry] || [];
+    return [...cities].sort((a, b) =>
+      getCityName(a).localeCompare(getCityName(b), lang)
+    );
+  }, [selectedCountry, availableFilters.citiesByCountry, getCityName, lang]);
+
   const renderContent = () => {
     if (!hasLocationData) {
       return (
@@ -206,8 +232,8 @@ export function LocationFilterDropdown({
             >
               {t('allLocations')}
             </button>
-            {/* Countries */}
-            {availableFilters.countries.map(country => (
+            {/* Countries - Story 14.35: display localized names */}
+            {sortedCountries.map(country => (
               <button
                 key={country}
                 onClick={() => handleCountrySelect(country)}
@@ -218,7 +244,7 @@ export function LocationFilterDropdown({
                   location.country === country && !location.city
                 )}
               >
-                <span>{country}</span>
+                <span>{getCountryName(country)}</span>
                 {availableFilters.citiesByCountry[country]?.length > 0 && (
                   <span className="text-xs opacity-60">{'>'}</span>
                 )}
@@ -229,26 +255,25 @@ export function LocationFilterDropdown({
 
       case 'country':
         if (!selectedCountry) return null;
-        const cities = availableFilters.citiesByCountry[selectedCountry] || [];
         return (
           <>
             <button onClick={handleBack} className={backButtonClasses}>
               <ChevronLeft size={16} />
               {t('back')}
             </button>
-            {/* Select this country option */}
+            {/* Select this country option - Story 14.35: display localized name */}
             <button
               onClick={handleApplyCountry}
               className={optionClasses()}
               style={{ color: 'var(--accent)' }}
             >
-              {t('selectCountry')}: {selectedCountry}
+              {t('selectCountry')}: {getCountryName(selectedCountry)}
             </button>
-            {cities.length > 0 && (
+            {sortedCities.length > 0 && (
               <>
                 <div className="border-t my-1" style={{ borderColor: isDark ? '#334155' : '#e2e8f0' }} />
-                {/* Cities */}
-                {cities.map(city => (
+                {/* Cities - Story 14.35: display localized names */}
+                {sortedCities.map(city => (
                   <button
                     key={city}
                     onClick={() => handleCitySelect(city)}
@@ -259,7 +284,7 @@ export function LocationFilterDropdown({
                       location.country === selectedCountry && location.city === city
                     )}
                   >
-                    {city}
+                    {getCityName(city)}
                   </button>
                 ))}
               </>

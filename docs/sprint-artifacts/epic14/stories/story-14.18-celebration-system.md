@@ -1,6 +1,6 @@
 # Story 14.18: Celebration System
 
-**Status:** ready-for-dev
+**Status:** done
 **Points:** 3
 **Epic:** 14 - Core Implementation
 **Dependencies:** Story 14.1 (Animation Framework)
@@ -24,45 +24,45 @@ so that **I feel rewarded and motivated to continue tracking**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create CelebrationTrigger component (AC: #1)
-  - [ ] Create `src/components/celebrations/CelebrationTrigger.tsx`
-  - [ ] Orchestrate confetti, haptic, sound effects
-  - [ ] Accept trigger configuration
+- [x] Task 1: Create CelebrationTrigger component (AC: #1)
+  - [x] Create `src/components/celebrations/CelebrationTrigger.tsx`
+  - [x] Orchestrate confetti, haptic, sound effects
+  - [x] Accept trigger configuration
 
-- [ ] Task 2: Enhance confetti integration (AC: #2)
-  - [ ] Use existing `src/utils/confetti.ts`
-  - [ ] Add `celebrateSmall` for minor achievements
-  - [ ] Configure colors per celebration type
-  - [ ] Respect disableForReducedMotion
+- [x] Task 2: Enhance confetti integration (AC: #2)
+  - [x] Use existing `src/utils/confetti.ts`
+  - [x] Add `celebrateSmall` for minor achievements
+  - [x] Configure colors per celebration type
+  - [x] Respect disableForReducedMotion
 
-- [ ] Task 3: Implement haptic feedback (AC: #3)
-  - [ ] Create haptic utility function
-  - [ ] Pattern for small: [50]
-  - [ ] Pattern for big: [100, 50, 100]
-  - [ ] Check navigator.vibrate availability
+- [x] Task 3: Implement haptic feedback (AC: #3)
+  - [x] Create haptic utility function
+  - [x] Pattern for small: [50]
+  - [x] Pattern for big: [100, 50, 100]
+  - [x] Check navigator.vibrate availability
 
-- [ ] Task 4: Add optional sound effects (AC: #4)
-  - [ ] Create sound utility with audio files
-  - [ ] Small celebration: subtle chime
-  - [ ] Big celebration: triumphant sound
-  - [ ] Check user audio preference in settings
+- [x] Task 4: Add optional sound effects (AC: #4)
+  - [x] Create sound utility with audio files
+  - [x] Small celebration: subtle chime
+  - [x] Big celebration: triumphant sound
+  - [x] Check user audio preference in settings
 
-- [ ] Task 5: Define celebration triggers (AC: #5)
-  - [ ] Milestone: savings goal reached
-  - [ ] Personal record: lowest category week
-  - [ ] Streak: consecutive tracking days
-  - [ ] First scan: welcome celebration
+- [x] Task 5: Define celebration triggers (AC: #5)
+  - [x] Milestone: savings goal reached
+  - [x] Personal record: lowest category week
+  - [x] Streak: consecutive tracking days
+  - [x] First scan: welcome celebration
 
-- [ ] Task 6: Add reduced motion support (AC: #6)
-  - [ ] Skip confetti animation
-  - [ ] Still provide haptic feedback
-  - [ ] Still play sound if enabled
-  - [ ] Show static "success" indicator instead
+- [x] Task 6: Add reduced motion support (AC: #6)
+  - [x] Skip confetti animation
+  - [x] Still provide haptic feedback
+  - [x] Still play sound if enabled
+  - [x] Show static "success" indicator instead
 
-- [ ] Task 7: Write tests
-  - [ ] Test celebration orchestration
-  - [ ] Test haptic patterns
-  - [ ] Test reduced motion behavior
+- [x] Task 7: Write tests
+  - [x] Test celebration orchestration
+  - [x] Test haptic patterns
+  - [x] Test reduced motion behavior
 
 ## Dev Notes
 
@@ -202,12 +202,87 @@ async function onTransactionSaved(transaction: Transaction) {
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
-_To be filled during implementation_
+1. **Task 1**: Created CelebrationTrigger component with both declarative (via props) and imperative (via ref) APIs. Component orchestrates confetti, haptic, and sound effects based on configuration. Also created SuccessIndicator for reduced motion fallback.
+
+2. **Task 2**: Enhanced `src/utils/confetti.ts` with:
+   - Added `celebrateSmall()` function for minor achievements (40 particles, faster gravity)
+   - Added `triggerConfetti()` unified function accepting celebration type
+   - Added `CELEBRATION_COLORS` object with themed color palettes (milestone gold, streak green, personal purple)
+   - All functions accept optional `readonly string[]` colors parameter
+
+3. **Task 3**: Created `src/utils/haptic.ts` with:
+   - `isHapticAvailable()` to check navigator.vibrate support
+   - `triggerHaptic(type)` using patterns: small=[50], big=[100,50,100]
+   - `triggerHapticPattern()` for custom patterns
+   - `cancelHaptic()` to stop ongoing vibration
+   - All functions gracefully handle unsupported environments
+
+4. **Task 4**: Created `src/utils/celebrationSounds.ts` with:
+   - Audio element caching for instant playback
+   - `playCelebrationSound()` respecting user preference
+   - `preloadCelebrationSounds()` for initialization
+   - Volume set to 50% for non-intrusive feedback
+   - Graceful handling of autoplay policies
+
+5. **Task 5**: Defined 5 celebration presets in CELEBRATION_PRESETS:
+   - `milestone`: big, all effects (savings goal reached)
+   - `personalRecord`: big, all effects (lowest category week)
+   - `quickSave`: small, no sound (standard save)
+   - `firstScan`: big, all effects (welcome celebration)
+   - `streak`: small, no sound (consecutive tracking)
+
+6. **Task 6**: Reduced motion support:
+   - Confetti skipped when prefers-reduced-motion detected
+   - Haptic feedback still triggered (non-visual)
+   - Sound still plays if enabled (non-visual)
+   - SuccessIndicator component provides static feedback
+   - CelebrationResult.reducedMotionApplied tracks status
+
+7. **Task 7**: Wrote 105 comprehensive tests:
+   - CelebrationTrigger.test.tsx (23 tests): declarative/imperative triggers, presets, disables, sounds, reduced motion
+   - useCelebration.test.ts (27 tests): hook API, presets, sound behavior, reduced motion
+   - confetti.test.ts (20 tests): all functions, colors, disableForReducedMotion
+   - haptic.test.ts (15 tests): availability, patterns, error handling
+   - celebrationSounds.test.ts (20 tests): playback, caching, preloading, availability
 
 ### File List
 
-_To be filled during implementation_
+**New Files Created:**
+- `src/types/celebration.ts` - Type definitions (CelebrationType, CelebrationConfig, etc.)
+- `src/utils/haptic.ts` - Haptic feedback utilities
+- `src/utils/celebrationSounds.ts` - Sound effect utilities
+- `src/components/celebrations/CelebrationTrigger.tsx` - Main component + SuccessIndicator
+- `src/components/celebrations/useCelebration.ts` - React hook for celebrations
+- `src/components/celebrations/index.ts` - Module exports
+- `public/sounds/chime.mp3` - Small celebration sound (placeholder)
+- `public/sounds/triumph.mp3` - Big celebration sound (placeholder)
+- `tests/unit/utils/haptic.test.ts` - Haptic tests
+- `tests/unit/utils/celebrationSounds.test.ts` - Sound tests
+- `tests/unit/utils/confetti.test.ts` - Confetti tests
+- `tests/unit/components/celebrations/CelebrationTrigger.test.tsx` - Component tests
+- `tests/unit/components/celebrations/useCelebration.test.ts` - Hook tests
+
+**Modified Files:**
+- `src/utils/confetti.ts` - Added celebrateSmall, triggerConfetti, CELEBRATION_COLORS
+
+### Change Log
+
+- 2026-01-12: Story implementation complete
+  - Created celebration types and presets
+  - Implemented haptic feedback with small/big patterns
+  - Implemented sound effects with caching and preloading
+  - Enhanced confetti with small variant and themed colors
+  - Created CelebrationTrigger component with declarative/imperative APIs
+  - Created useCelebration hook for programmatic use
+  - Added SuccessIndicator for reduced motion users
+  - Wrote 105 unit tests covering all functionality
+
+- 2026-01-12: Code review fixes applied
+  - [HIGH-1] Added missing sound asset files (`public/sounds/chime.mp3`, `public/sounds/triumph.mp3`)
+  - [MEDIUM-1] Removed unused `celebratePresetFn` from useImperativeHandle dependencies
+  - [MEDIUM-2] Memoized `overrides` object with useMemo to prevent unnecessary effect re-runs
+  - All 105 tests passing after fixes
