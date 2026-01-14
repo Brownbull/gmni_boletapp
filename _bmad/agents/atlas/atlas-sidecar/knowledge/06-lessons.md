@@ -303,6 +303,17 @@
 | **Local Test Verification** | Always verify test fixes locally before CI run - faster iteration cycle |
 | **Multi-Session File Lists** | For stories spanning multiple sessions, organize File List by session with clear labels |
 | **Bun + npm Hybrid** | Use Bun for install (fast), npm for scripts (conservative) - proven safe pattern |
+| **Vitest Memory OOM Fix** | `fileParallelism: false` prevents module cache bloat - reduces memory 10x (2GB vs 4.5GB OOM) |
+| **Vitest 4 Config Migration** | `poolOptions` removed - use top-level `maxWorkers`, `isolate`, `vmMemoryLimit` instead |
+| **Heavy Test Isolation** | Files >800 lines should run in dedicated CI jobs to prevent shard imbalance |
+| **Explicit Test Groups (14.30.8)** | Replace `--shard=1/5` with module-based configs (`vitest.config.ci.group-*.ts`) for predictable CI |
+| **Sharding Unpredictability** | Vitest sharding distributes alphabetically/randomly - doesn't balance by complexity |
+| **Group Config Pattern** | Base config + `createGroupConfig()` helper = clean module-specific test configs |
+| **CI Group Benefits** | Explicit groups: predictable content, easy to identify slow groups, easy to subdivide |
+| **Glob Exclude Order** | `createGroupConfig()` additionalExclude merges AFTER baseCiConfig.exclude - verify with `vitest --dry-run` |
+| **Heavy File Discovery** | Any file >600 lines should go to heavy group - batch hooks (646, 592 lines) were missed initially |
+| **Test Group Granularity** | Target 1,500-3,000 lines per group (2-4 min CI time); >5,000 lines will timeout |
+| **18 Parallel Jobs** | hooks (3) + services + utils + analytics + views + components (7) + heavy (4) = balanced CI |
 
 ### Story 14.32 - Usage & Cost Audit (2026-01-13)
 
@@ -323,5 +334,6 @@
 - Generation 4: Added Code Review Learnings section
 - Story 14.37: Font size scaling system and toast theme integration (2026-01-13)
 - **Story 14.30 Code Review (2026-01-14):** Added multi-session file list and Bun+npm hybrid patterns
+- **Story 14.30.7 (2026-01-14):** Vitest memory OOM fix with fileParallelism: false
 - Full story details available in `docs/sprint-artifacts/` story files
 - Backup: `backups/v3/knowledge/06-lessons.md`

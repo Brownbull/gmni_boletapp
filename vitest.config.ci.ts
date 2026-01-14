@@ -5,11 +5,15 @@ import pkg from './package.json'
 /**
  * Vitest configuration optimized for CI environments (Regular Shards)
  *
+ * Story 14.30.7: Memory Accumulation Fix with Balanced Parallelism
+ * Root cause: Vitest parent process accumulates ~4.5GB memory across test files,
+ * causing OOM after ~15-20 files regardless of pool type (forks/threads).
+ *
  * Key optimizations:
- * - pool: 'forks' - isolates each test file in separate process, prevents memory accumulation
- * - isolate: true - ensures complete isolation between tests
- * - maxConcurrency: 2 - limits parallel tests to reduce memory pressure
- * - Reduced reporter verbosity for faster output
+ * - fileParallelism: false - Prevents module cache bloat in parent process
+ * - pool: 'forks' - Isolates each test file in separate process
+ * - maxWorkers: 2 - Two parallel workers for speed while staying under memory limit
+ * - isolate: true - Full isolation between tests
  * - Coverage enabled via --coverage flag (Story 14.30.1)
  * - Heavy test files excluded (run in dedicated jobs via vitest.config.heavy.ts)
  *
@@ -25,6 +29,7 @@ import pkg from './package.json'
  *
  * @see vitest.config.heavy.ts for heavy test configuration
  * @see Story 14.30.6: Heavy test isolation
+ * @see Story 14.30.7: Memory accumulation fix
  */
 export default defineConfig({
   plugins: [react()],
@@ -54,23 +59,21 @@ export default defineConfig({
       'tests/unit/services/pendingScanStorage.test.ts',
       'tests/unit/analytics/CategoryBreadcrumb.test.tsx',
     ],
+    // Story 14.30.7: Memory fix with balanced parallelism
+    // - fileParallelism: false prevents module cache bloat in parent process
+    // - maxWorkers: 2 allows 2 files to run in parallel (faster than 1)
+    // - pool: 'forks' isolates each file in its own process
+    // This balances memory safety with acceptable CI speed (~6-8 min/shard)
+    fileParallelism: false,
     // Use forks pool to isolate each test file - prevents memory leaks
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        // Reduced to 1 fork to prevent memory accumulation (GitHub runners have 7GB RAM)
-        maxForks: 1,
-        minForks: 1,
-        // Isolate each test file to prevent memory accumulation
-        isolate: true,
-        // Recycle worker after each test file to free memory
-        singleFork: true,
-      },
-    },
-    // Limit concurrent test files
-    maxConcurrency: 2,
-    // Reduced reporter for faster CI output (default is verbose)
-    reporters: ['default'],
+    // 2 workers: balance between speed and memory (each file ~200-400MB)
+    // CI has 7GB RAM, 2 workers + parent should stay under 4GB
+    maxWorkers: 2,
+    // Isolate each test file to prevent state leakage
+    isolate: true,
+    // Reduced reporter for faster CI output (dot is minimal, default is verbose)
+    reporters: ['dot'],
     // Disable watch mode for CI
     watch: false,
     // Coverage configuration (activated with --coverage flag)

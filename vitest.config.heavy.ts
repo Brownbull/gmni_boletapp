@@ -5,7 +5,9 @@ import pkg from './package.json'
 /**
  * Vitest configuration for HEAVY test files only
  *
+ * Story 14.30.7: Memory Accumulation Fix
  * These test files are significantly larger than others and cause shard imbalance.
+ * Same memory optimizations as vitest.config.ci.ts apply here.
  *
  * Tier 1 (1400-1700 lines each):
  * - tests/unit/hooks/useScanStateMachine.test.ts (1680 lines)
@@ -21,6 +23,15 @@ import pkg from './package.json'
  * - tests/unit/services/pendingScanStorage.test.ts (786 lines)
  * - tests/unit/analytics/CategoryBreadcrumb.test.tsx (772 lines)
  *
+ * Tier 3 (500-700 lines each - Story 14.30.8):
+ * - tests/unit/hooks/useBatchProcessing.test.ts (646 lines)
+ * - tests/unit/hooks/useBatchReview.test.ts (592 lines)
+ *
+ * Key optimizations:
+ * - fileParallelism: false - Process one file at a time to prevent module cache bloat
+ * - pool: 'forks' - Isolates each test file in separate process
+ * - maxWorkers: 1 - Single worker to minimize parent process memory overhead
+ *
  * Strategy:
  * - Run heavy tests in 4 dedicated jobs (sharded 1/4, 2/4, 3/4, 4/4)
  * - Regular shards exclude these files for balanced timing (~2-3 min each)
@@ -29,6 +40,7 @@ import pkg from './package.json'
  * - CI: test-unit-heavy-1 through test-unit-heavy-4 jobs
  *
  * @see Story 14.30.6: Heavy test isolation
+ * @see Story 14.30.7: Memory accumulation fix
  */
 export default defineConfig({
   plugins: [react()],
@@ -40,7 +52,7 @@ export default defineConfig({
     globals: true,
     environment: 'happy-dom',
     setupFiles: './tests/setup/vitest.setup.ts',
-    // Include all heavy test files (Tier 1 + Tier 2)
+    // Include all heavy test files (Tier 1 + Tier 2 + Tier 3)
     include: [
       // Tier 1: 1400-1700 lines
       'tests/unit/hooks/useScanStateMachine.test.ts',
@@ -54,25 +66,25 @@ export default defineConfig({
       'tests/unit/components/session/SessionComplete.test.tsx',
       'tests/unit/services/pendingScanStorage.test.ts',
       'tests/unit/analytics/CategoryBreadcrumb.test.tsx',
+      // Tier 3: 500-700 lines (Story 14.30.8)
+      'tests/unit/hooks/useBatchProcessing.test.ts',
+      'tests/unit/hooks/useBatchReview.test.ts',
     ],
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
     ],
+    // Story 14.30.7: Disable file parallelism to prevent module cache bloat
+    fileParallelism: false,
     // Use forks pool to isolate each test file - prevents memory leaks
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        // Limit concurrent forks to reduce memory pressure
-        maxForks: 2,
-        minForks: 1,
-        isolate: true,
-      },
-    },
-    // Limit concurrent test files
-    maxConcurrency: 2,
-    // Reduced reporter for faster CI output
-    reporters: ['default'],
+    // Vitest 4: poolOptions removed - options are now top-level
+    // Single worker to minimize memory overhead
+    maxWorkers: 1,
+    // Isolate each test file to prevent state leakage
+    isolate: true,
+    // Reduced reporter for faster CI output (dot is minimal)
+    reporters: ['dot'],
     // Disable watch mode for CI
     watch: false,
     // Coverage configuration (activated with --coverage flag)
