@@ -432,7 +432,7 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
               >
                 {/* Super credits (gold) */}
                 <div
-                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold"
                   style={{
                     backgroundColor: '#fef3c7', // amber-100
                     color: '#92400e', // amber-800
@@ -443,7 +443,7 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
                 </div>
                 {/* Normal credits (theme color) */}
                 <div
-                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold"
                   style={{
                     backgroundColor: 'var(--primary-light)',
                     color: 'var(--primary)',
@@ -585,7 +585,7 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
                       {/* Floating label input */}
                       <div className="relative mb-3">
                         <label
-                          className="absolute -top-2 left-2.5 px-1 text-[10px] font-medium z-10"
+                          className="absolute -top-2 left-2.5 px-1 text-xs font-medium z-10"
                           style={{
                             backgroundColor: 'var(--bg-secondary)',
                             color: 'var(--primary)',
@@ -645,7 +645,7 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
                       {/* Floating label input */}
                       <div className="relative mb-3">
                         <label
-                          className="absolute -top-2 left-2.5 px-1 text-[10px] font-medium z-10"
+                          className="absolute -top-2 left-2.5 px-1 text-xs font-medium z-10"
                           style={{
                             backgroundColor: 'var(--bg-secondary)',
                             color: 'var(--primary)',
@@ -704,7 +704,7 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
                       {/* Floating label select */}
                       <div className="relative mb-3">
                         <label
-                          className="absolute -top-2 left-2.5 px-1 text-[10px] font-medium z-10"
+                          className="absolute -top-2 left-2.5 px-1 text-xs font-medium z-10"
                           style={{
                             backgroundColor: 'var(--bg-secondary)',
                             color: 'var(--primary)',
@@ -841,7 +841,7 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
                     >
                       <X size={18} className="text-white" strokeWidth={2.5} />
                     </div>
-                    <span className="text-[9px] font-bold uppercase text-white drop-shadow-sm">
+                    <span className="text-xs font-bold uppercase text-white drop-shadow-sm">
                       {t('retry') || 'Reintentar'}
                     </span>
                   </div>
@@ -877,7 +877,7 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
                           }}
                         />
                         <span
-                          className="text-[9px] font-semibold uppercase text-white"
+                          className="text-xs font-semibold uppercase text-white"
                           style={{ fontFamily: 'var(--font-family)' }}
                         >
                           {t('processing') || 'Procesando'}
@@ -912,7 +912,7 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
                           style={{ backgroundColor: 'var(--success)', marginTop: '-2px' }}
                         >
                           <span
-                            className="text-[11px] font-semibold text-white relative z-10"
+                            className="text-xs font-semibold text-white relative z-10"
                             style={{ fontFamily: 'var(--font-family)' }}
                           >
                             {t('scan') || 'Escanear'}
@@ -960,7 +960,7 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
                     />
                   </div>
                   <span
-                    className="text-[10px] font-semibold tracking-wide"
+                    className="text-xs font-semibold tracking-wide"
                     style={{ color: 'var(--primary)', fontFamily: 'var(--font-family)' }}
                   >
                     {t('attach') || 'Adjuntar'}
@@ -1135,7 +1135,7 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
             <div className="mb-4">
               <div className="relative">
                 <label
-                  className="absolute -top-2 left-2.5 px-1 text-[10px] font-medium z-10"
+                  className="absolute -top-2 left-2.5 px-1 text-xs font-medium z-10"
                   style={{
                     backgroundColor: 'var(--bg-secondary)',
                     color: 'var(--primary)',
@@ -1163,7 +1163,7 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
             <div className="mb-4">
               <div className="relative">
                 <label
-                  className="absolute -top-2 left-2.5 px-1 text-[10px] font-medium z-10"
+                  className="absolute -top-2 left-2.5 px-1 text-xs font-medium z-10"
                   style={{
                     backgroundColor: 'var(--bg-secondary)',
                     color: 'var(--primary)',
@@ -1191,7 +1191,7 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
             <div className="mb-4">
               <div className="relative">
                 <label
-                  className="absolute -top-2 left-2.5 px-1 text-[10px] font-medium z-10"
+                  className="absolute -top-2 left-2.5 px-1 text-xs font-medium z-10"
                   style={{
                     backgroundColor: 'var(--bg-secondary)',
                     color: 'var(--primary)',
@@ -1210,7 +1210,7 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
                   }}
                 >
                   <span
-                    className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase"
+                    className="rounded-full px-2.5 py-1 text-xs font-bold uppercase"
                     style={{
                       backgroundColor: getItemCategoryColors(newItemCategory).bg,
                       color: getItemCategoryColors(newItemCategory).fg,
@@ -1227,7 +1227,7 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
             <div className="mb-4">
               <div className="relative">
                 <label
-                  className="absolute -top-2 left-2.5 px-1 text-[10px] font-medium z-10"
+                  className="absolute -top-2 left-2.5 px-1 text-xs font-medium z-10"
                   style={{
                     backgroundColor: 'var(--bg-secondary)',
                     color: 'var(--primary)',
@@ -1323,7 +1323,7 @@ export const ScanResultView: React.FC<ScanResultViewProps> = ({
                   <button
                     key={cat}
                     type="button"
-                    className="rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase transition-all"
+                    className="rounded-full px-2.5 py-0.5 text-xs font-bold uppercase transition-all"
                     style={{
                       backgroundColor: getItemCategoryColors(cat).bg,
                       color: getItemCategoryColors(cat).fg,

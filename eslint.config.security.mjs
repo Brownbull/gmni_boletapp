@@ -11,7 +11,14 @@ export default [
   ...tseslint.configs.recommended,
   {
     // Ignore files with react-hooks eslint-disable comments (security lint doesn't have that plugin)
-    ignores: ['src/hooks/useChangeDetection.ts']
+    // ESLint v9 errors on unknown rules in disable comments, even with reportUnusedDisableDirectives: 'off'
+    ignores: [
+      'src/hooks/useChangeDetection.ts',
+      'src/hooks/useScanStateBridge.ts',
+      'src/components/celebrations/PersonalRecordBanner.tsx',
+      'src/components/history/IconFilterBar.tsx',
+      'src/views/ItemsView.tsx',
+    ]
   },
   {
     files: ['src/**/*.{js,ts,jsx,tsx}'],

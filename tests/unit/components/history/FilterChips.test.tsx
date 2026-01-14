@@ -101,13 +101,16 @@ describe('FilterChips', () => {
       expect(screen.getByRole('button', { name: 'Limpiar todos los filtros' })).toBeInTheDocument();
     });
 
-    it('does not show Clear All when only one filter active', () => {
+    // Story 14.13b: Clear All button now shows whenever ANY filter is active
+    // (moved from header to FilterChips for consistent UX)
+    it('shows Clear All button when only one filter active (Story 14.13b)', () => {
       renderWithProvider({
         ...defaultInitialState,
         temporal: { level: 'year', year: '2024' },
       });
 
-      expect(screen.queryByRole('button', { name: 'Limpiar todos los filtros' })).not.toBeInTheDocument();
+      // Button should be present - it now appears whenever any filter is active
+      expect(screen.getByRole('button', { name: 'Limpiar todos los filtros' })).toBeInTheDocument();
     });
   });
 

@@ -327,7 +327,7 @@ export const TransactionConflictDialog: React.FC<TransactionConflictDialogProps>
             </div>
             {conflictingTransaction.creditUsed && (
               <div
-                className="text-[11px] mt-1"
+                className="text-xs mt-1"
                 style={{ color: 'var(--warning, #F59E0B)' }}
               >
                 {lang === 'es' ? '1 credito usado' : '1 credit used'}

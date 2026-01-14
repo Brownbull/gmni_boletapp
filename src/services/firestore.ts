@@ -58,6 +58,16 @@ export async function addTransaction(
         collection(db, 'artifacts', appId, 'users', userId, 'transactions'),
         { ...cleanedTransaction, createdAt: serverTimestamp() }
     );
+    // Story 14.31: Debug logging for transaction save
+    if (import.meta.env.DEV) {
+        console.log('[firestore] addTransaction SUCCESS:', {
+            id: docRef.id,
+            merchant: transaction.merchant,
+            date: transaction.date,
+            currency: (transaction as any).currency,
+            path: `artifacts/${appId}/users/${userId}/transactions/${docRef.id}`
+        });
+    }
     return docRef.id;
 }
 
@@ -94,6 +104,8 @@ export async function deleteTransaction(
 export const LISTENER_LIMITS = {
     /** Transaction listener: 100 most recent transactions */
     TRANSACTIONS: 100,
+    /** Recent scans listener: 10 most recently scanned (by createdAt) */
+    RECENT_SCANS: 10,
     /** Groups listener: 50 groups (most users have <20) */
     GROUPS: 50,
     /** Trusted merchants listener: 200 merchants */
@@ -144,6 +156,69 @@ export function subscribeToTransactions(
         }
 
         callback(txs);
+    });
+}
+
+/**
+ * Subscribe to user's most recently SCANNED transactions (by createdAt).
+ *
+ * v9.7.0 Bugfix: Separate query for "Últimos Escaneados" carousel.
+ * The main subscribeToTransactions orders by transaction date (date field),
+ * which excludes recently scanned receipts with old transaction dates.
+ *
+ * This query orders by createdAt (scan timestamp) to ensure newly scanned
+ * receipts appear immediately in the "Últimos Escaneados" section regardless
+ * of their transaction date.
+ *
+ * @param db Firestore instance
+ * @param userId User ID
+ * @param appId App ID
+ * @param callback Callback receiving recent scans list
+ * @returns Unsubscribe function
+ */
+export function subscribeToRecentScans(
+    db: Firestore,
+    userId: string,
+    appId: string,
+    callback: (transactions: Transaction[]) => void
+): Unsubscribe {
+    const collectionRef = collection(db, 'artifacts', appId, 'users', userId, 'transactions');
+
+    // Order by createdAt (scan timestamp) descending, limit to 10
+    const q = query(
+        collectionRef,
+        orderBy('createdAt', 'desc'),
+        limit(LISTENER_LIMITS.RECENT_SCANS)
+    );
+
+    return onSnapshot(q, (snapshot) => {
+        const txs = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        } as Transaction));
+
+        // Sort client-side as backup (Firestore should already sort, but ensure order)
+        // createdAt can be a Firestore Timestamp (with .seconds) or a Date string
+        const sortedTxs = [...txs].sort((a, b) => {
+            const getTime = (tx: Transaction): number => {
+                const ca = tx.createdAt;
+                if (!ca) return 0;
+                // Firestore Timestamp has seconds/nanoseconds
+                if (typeof ca === 'object' && 'seconds' in ca) {
+                    return ca.seconds * 1000 + (ca.nanoseconds || 0) / 1000000;
+                }
+                // Fallback to Date parsing
+                return new Date(ca).getTime();
+            };
+            return getTime(b) - getTime(a); // Descending order
+        });
+
+        callback(sortedTxs);
+    }, (error) => {
+        // Log errors - likely missing index
+        console.error('[firestore] subscribeToRecentScans error:', error);
+        // Return empty array on error to prevent UI crash
+        callback([]);
     });
 }
 
