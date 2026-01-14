@@ -310,6 +310,10 @@
 | **Sharding Unpredictability** | Vitest sharding distributes alphabetically/randomly - doesn't balance by complexity |
 | **Group Config Pattern** | Base config + `createGroupConfig()` helper = clean module-specific test configs |
 | **CI Group Benefits** | Explicit groups: predictable content, easy to identify slow groups, easy to subdivide |
+| **Glob Exclude Order** | `createGroupConfig()` additionalExclude merges AFTER baseCiConfig.exclude - verify with `vitest --dry-run` |
+| **Heavy File Discovery** | Any file >600 lines should go to heavy group - batch hooks (646, 592 lines) were missed initially |
+| **Test Group Granularity** | Target 1,500-3,000 lines per group (2-4 min CI time); >5,000 lines will timeout |
+| **18 Parallel Jobs** | hooks (3) + services + utils + analytics + views + components (7) + heavy (4) = balanced CI |
 
 ### Story 14.32 - Usage & Cost Audit (2026-01-13)
 
