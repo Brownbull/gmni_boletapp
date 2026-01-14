@@ -228,6 +228,23 @@ Note: Full test suite runs out of memory due to codebase size (3000+ tests). Ind
 - Fixed 30 tests: HistoryViewThumbnails (28), TopHeader (2)
 - Root cause: Filter state defaults + translation key mismatches
 
+### 14.30.5b: Additional Test Fixes ✅
+**Priority:** P0 | **Status:** DONE
+- Fixed __APP_VERSION__ not defined error in vitest configs
+- Fixed CreditWarningDialog.test.tsx translation key mismatches
+- Added `define: { __APP_VERSION__ }` to vitest.config.ci.ts and vitest.config.unit.ts
+
+### 14.30.6: Heavy Test Isolation ✅
+**Priority:** P0 | **Status:** DONE
+- Created vitest.config.heavy.ts for 4 large test files
+- Heavy files excluded from regular shards to prevent 13-15 min shard times
+- Added test-unit-heavy-1 and test-unit-heavy-2 CI jobs
+- Heavy tests (1400-1700 lines each):
+  - useScanStateMachine.test.ts (1680 lines)
+  - Nav.test.tsx (1623 lines)
+  - insightEngineService.test.ts (1439 lines)
+  - insightGenerators.test.ts (1432 lines)
+
 ---
 
 ## Change Log
@@ -242,3 +259,5 @@ Note: Full test suite runs out of memory due to codebase size (3000+ tests). Ind
 | 2026-01-14 | 14.30.3 Bun install implemented; 14.30.5 shared/prompts/ deleted | Dev |
 | 2026-01-14 | Code review: Updated File List to reflect actual changes across sessions | Dev |
 | 2026-01-14 | Consolidated 3 files into single story, resumed for deployment verification | Dev |
+| 2026-01-14 | 14.30.5b: Fixed __APP_VERSION__ and CreditWarningDialog test issues | Dev |
+| 2026-01-14 | 14.30.6: Heavy test isolation - dedicated jobs for 4 large test files | Dev |
