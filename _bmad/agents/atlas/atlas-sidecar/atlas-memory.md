@@ -1,7 +1,7 @@
 # Atlas Memory - Application Knowledge Base
 
 > **Architecture:** Sharded Knowledge Fragments
-> **Last Sync:** 2026-01-13 (Story 14.40 - Category Statistics Popup)
+> **Last Sync:** 2026-01-14 (Story 14.30 - Atlas Code Review APPROVED)
 > **Last Optimized:** 2026-01-12 (Generation 4)
 > **Project:** BoletApp
 
@@ -40,13 +40,14 @@ Atlas uses **sharded memory** for context efficiency. Knowledge stored in `knowl
 
 | Metric | Value |
 |--------|-------|
-| **Epic 14** | 25/26 stories done |
+| **Epic 14** | 26/27 stories done |
 | **Epic 14d** | ✅ **11/11 stories done (COMPLETE)** |
 | **Tests** | 3,146+ (84%+ coverage) |
 | **Bundle** | 2.92 MB (**ALERT: needs optimization**) |
 
-### Latest Completed (2026-01-13)
-- **14.40:** Category Statistics Popup (modal with min/max/avg/median on category tap)
+### Latest Completed (2026-01-14)
+- **14.30:** ✅ Test Technical Debt - CI optimization + 30 test fixes (Atlas Code Review APPROVED)
+- **14.30.5a:** ✅ Pre-Existing Test Failures fixed (filter state + translation keys)
 
 ### Epic 14d: Scan Architecture Refactor
 
@@ -78,6 +79,7 @@ Atlas uses **sharded memory** for context efficiency. Knowledge stored in `knowl
 - Architecture conflicts with documented patterns
 - ⚠️ **Bundle size at 2.92 MB** (code splitting needed)
 - Test coverage dropping below 80%
+- ⚠️ **CI shard imbalance**: Shards 1&2 take 13-15 min, need rebalancing (Vitest limitation)
 
 ---
 
