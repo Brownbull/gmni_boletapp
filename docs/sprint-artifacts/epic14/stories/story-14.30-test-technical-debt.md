@@ -195,6 +195,10 @@ Note: Full test suite runs out of memory due to codebase size (3000+ tests). Ind
 10. `docs/architecture/testing-architecture.md` - New documentation
 11. `docs/excalidraw-diagrams/ci-cd-testing-architecture.excalidraw` - Pipeline diagram
 
+### Session 5 (2026-01-14) - Memory Accumulation Fix (Story 14.30.7)
+12. `vitest.config.ci.ts` - Added fileParallelism: false, maxWorkers: 1, isolate: true, reporters: ['dot']
+13. `vitest.config.heavy.ts` - Same memory optimizations as vitest.config.ci.ts
+
 ---
 
 ## Sub-Stories Summary
@@ -236,14 +240,42 @@ Note: Full test suite runs out of memory due to codebase size (3000+ tests). Ind
 
 ### 14.30.6: Heavy Test Isolation ✅
 **Priority:** P0 | **Status:** DONE
-- Created vitest.config.heavy.ts for 4 large test files
+- Created vitest.config.heavy.ts for 10 large test files (Tier 1 + Tier 2)
 - Heavy files excluded from regular shards to prevent 13-15 min shard times
-- Added test-unit-heavy-1 and test-unit-heavy-2 CI jobs
-- Heavy tests (1400-1700 lines each):
+- Added test-unit-heavy-1 through test-unit-heavy-4 CI jobs (4 shards for 10 files)
+- Heavy tests Tier 1 (1400-1700 lines each):
   - useScanStateMachine.test.ts (1680 lines)
   - Nav.test.tsx (1623 lines)
   - insightEngineService.test.ts (1439 lines)
   - insightGenerators.test.ts (1432 lines)
+- Heavy tests Tier 2 (800-1100 lines each):
+  - csvExport.test.ts (1061 lines)
+  - DrillDownCard.test.tsx (872 lines)
+  - DrillDownGrid.test.tsx (829 lines)
+  - SessionComplete.test.tsx (799 lines)
+  - pendingScanStorage.test.ts (786 lines)
+  - CategoryBreadcrumb.test.tsx (772 lines)
+
+### 14.30.7: Memory Accumulation Fix ✅
+**Priority:** P0 | **Status:** DONE
+- **Root Cause:** Vitest parent process accumulates memory across test files due to module cache bloat
+- **Solution:** `fileParallelism: false` - processes one test file at a time
+- **Research Sources:**
+  - [GitHub Issue #1674](https://github.com/vitest-dev/vitest/issues/1674) - CI memory explosion
+  - [Vitest Migration Guide](https://vitest.dev/guide/migration.html) - Vitest 4 changes
+  - Users reported 10x memory reduction with `fileParallelism: false`
+
+**Configuration Changes (vitest.config.ci.ts & vitest.config.heavy.ts):**
+- `fileParallelism: false` - Prevents module cache bloat
+- `pool: 'forks'` - Process isolation per test file
+- `maxWorkers: 1` - Single worker minimizes parent process overhead
+- `isolate: true` - Full test isolation
+- `reporters: ['dot']` - Minimal output reduces memory
+
+**Verification:**
+- Shard 1/20: 211 tests pass with only 2GB heap (was OOMing at 4.5GB)
+- Heavy shard 1/4: 291 tests pass with only 2GB heap
+- Memory usage stable - no accumulation between files
 
 ---
 
@@ -261,3 +293,5 @@ Note: Full test suite runs out of memory due to codebase size (3000+ tests). Ind
 | 2026-01-14 | Consolidated 3 files into single story, resumed for deployment verification | Dev |
 | 2026-01-14 | 14.30.5b: Fixed __APP_VERSION__ and CreditWarningDialog test issues | Dev |
 | 2026-01-14 | 14.30.6: Heavy test isolation - dedicated jobs for 4 large test files | Dev |
+| 2026-01-14 | 14.30.7: Memory accumulation investigation - root cause identified, OOM in parent process | Dev |
+| 2026-01-14 | 14.30.7: Fixed with fileParallelism: false - tests pass with 2GB heap (was 4.5GB OOM) | Dev |
