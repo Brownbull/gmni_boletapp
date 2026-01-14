@@ -237,20 +237,27 @@ jobs:
   # This replaces automatic sharding for predictable, debuggable CI runs
   # Each group also collects coverage data for merging (Story 14.30.1)
   #
-  # Groups:
-  #   test-hooks: hooks (25 files, ~427 tests)
-  #   test-services: services (13 files, ~274 tests)
-  #   test-utils: utils (23 files, ~527 tests)
-  #   test-analytics: analytics (12 files, ~272 tests)
-  #   test-views: views + root + misc (16 files, ~547 tests)
+  # Groups (16 total):
+  #   test-hooks-batch: batch hooks (~70 tests)
+  #   test-hooks-scan: scan hooks (~50 tests)
+  #   test-hooks-other: remaining hooks (~300 tests)
+  #   test-services: services (~274 tests)
+  #   test-utils: utils (~527 tests)
+  #   test-analytics: analytics (~272 tests)
+  #   test-views: views (~547 tests)
   #   test-components-insights: insights components
   #   test-components-scan: scan components
-  #   test-components-other: remaining components
+  #   test-components-history: history components
+  #   test-components-charts: charts + polygon
+  #   test-components-forms: items + settings + reports
+  #   test-components-celebrations: celebrations + analytics
+  #   test-components-misc: root-level components
+  #   test-unit-heavy-1..4: 10 large test files
   # ============================================================================
-  test-hooks:
+  test-hooks-batch:
     needs: setup
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 8
     if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
 
     steps:
@@ -300,8 +307,8 @@ jobs:
             sleep 1
           done
 
-      - name: Run unit tests - hooks
-        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-hooks.ts --coverage
+      - name: Run unit tests - hooks-batch
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-hooks-batch.ts --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
@@ -314,11 +321,161 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
           VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
 
-      - name: Upload coverage artifact (hooks)
+      - name: Upload coverage artifact (hooks-batch)
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage-hooks
+          name: coverage-hooks-batch
+          path: coverage/coverage-final.json
+          retention-days: 1
+
+  test-hooks-scan:
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Restore workspace cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            functions/node_modules
+            functions/lib
+          key: ${{ runner.os }}-workspace-${{ github.sha }}
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Restore Firebase emulator cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: ${{ runner.os }}-firebase-emulators-v1
+          restore-keys: |
+            ${{ runner.os }}-firebase-emulators-
+
+      - name: Start Firebase emulators
+        run: |
+          firebase emulators:start --only auth,firestore,storage --project boletapp-d609f &
+          for i in {1..30}; do
+            if curl -sf http://localhost:4000 > /dev/null && curl -sf http://localhost:8080 > /dev/null; then
+              echo "Firebase emulators ready in ${i}s!"
+              sleep 2
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Run unit tests - hooks-scan
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-hooks-scan.ts --coverage
+        env:
+          NODE_OPTIONS: "--max-old-space-size=6144"
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+          VITE_GEMINI_API_KEY: test-gemini-key
+          VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
+          VITE_FIREBASE_API_KEY: test-api-key
+          VITE_FIREBASE_AUTH_DOMAIN: test-project.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: boletapp-d609f
+          VITE_FIREBASE_STORAGE_BUCKET: test-project.firebasestorage.app
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
+          VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
+
+      - name: Upload coverage artifact (hooks-scan)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-hooks-scan
+          path: coverage/coverage-final.json
+          retention-days: 1
+
+  test-hooks-other:
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Restore workspace cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            functions/node_modules
+            functions/lib
+          key: ${{ runner.os }}-workspace-${{ github.sha }}
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Restore Firebase emulator cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: ${{ runner.os }}-firebase-emulators-v1
+          restore-keys: |
+            ${{ runner.os }}-firebase-emulators-
+
+      - name: Start Firebase emulators
+        run: |
+          firebase emulators:start --only auth,firestore,storage --project boletapp-d609f &
+          for i in {1..30}; do
+            if curl -sf http://localhost:4000 > /dev/null && curl -sf http://localhost:8080 > /dev/null; then
+              echo "Firebase emulators ready in ${i}s!"
+              sleep 2
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Run unit tests - hooks-other
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-hooks-other.ts --coverage
+        env:
+          NODE_OPTIONS: "--max-old-space-size=6144"
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+          VITE_GEMINI_API_KEY: test-gemini-key
+          VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
+          VITE_FIREBASE_API_KEY: test-api-key
+          VITE_FIREBASE_AUTH_DOMAIN: test-project.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: boletapp-d609f
+          VITE_FIREBASE_STORAGE_BUCKET: test-project.firebasestorage.app
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
+          VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
+
+      - name: Upload coverage artifact (hooks-other)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-hooks-other
           path: coverage/coverage-final.json
           retention-days: 1
 
@@ -775,10 +932,10 @@ jobs:
           path: coverage/coverage-final.json
           retention-days: 1
 
-  test-components-other:
+  test-components-history:
     needs: setup
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 8
     if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
 
     steps:
@@ -828,8 +985,8 @@ jobs:
             sleep 1
           done
 
-      - name: Run unit tests - components-other
-        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-components-other.ts --coverage
+      - name: Run unit tests - components-history
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-components-history.ts --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
@@ -842,11 +999,311 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
           VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
 
-      - name: Upload coverage artifact (components-other)
+      - name: Upload coverage artifact (components-history)
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage-components-other
+          name: coverage-components-history
+          path: coverage/coverage-final.json
+          retention-days: 1
+
+  test-components-charts:
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Restore workspace cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            functions/node_modules
+            functions/lib
+          key: ${{ runner.os }}-workspace-${{ github.sha }}
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Restore Firebase emulator cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: ${{ runner.os }}-firebase-emulators-v1
+          restore-keys: |
+            ${{ runner.os }}-firebase-emulators-
+
+      - name: Start Firebase emulators
+        run: |
+          firebase emulators:start --only auth,firestore,storage --project boletapp-d609f &
+          for i in {1..30}; do
+            if curl -sf http://localhost:4000 > /dev/null && curl -sf http://localhost:8080 > /dev/null; then
+              echo "Firebase emulators ready in ${i}s!"
+              sleep 2
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Run unit tests - components-charts
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-components-charts.ts --coverage
+        env:
+          NODE_OPTIONS: "--max-old-space-size=6144"
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+          VITE_GEMINI_API_KEY: test-gemini-key
+          VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
+          VITE_FIREBASE_API_KEY: test-api-key
+          VITE_FIREBASE_AUTH_DOMAIN: test-project.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: boletapp-d609f
+          VITE_FIREBASE_STORAGE_BUCKET: test-project.firebasestorage.app
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
+          VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
+
+      - name: Upload coverage artifact (components-charts)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-components-charts
+          path: coverage/coverage-final.json
+          retention-days: 1
+
+  test-components-forms:
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Restore workspace cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            functions/node_modules
+            functions/lib
+          key: ${{ runner.os }}-workspace-${{ github.sha }}
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Restore Firebase emulator cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: ${{ runner.os }}-firebase-emulators-v1
+          restore-keys: |
+            ${{ runner.os }}-firebase-emulators-
+
+      - name: Start Firebase emulators
+        run: |
+          firebase emulators:start --only auth,firestore,storage --project boletapp-d609f &
+          for i in {1..30}; do
+            if curl -sf http://localhost:4000 > /dev/null && curl -sf http://localhost:8080 > /dev/null; then
+              echo "Firebase emulators ready in ${i}s!"
+              sleep 2
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Run unit tests - components-forms
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-components-forms.ts --coverage
+        env:
+          NODE_OPTIONS: "--max-old-space-size=6144"
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+          VITE_GEMINI_API_KEY: test-gemini-key
+          VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
+          VITE_FIREBASE_API_KEY: test-api-key
+          VITE_FIREBASE_AUTH_DOMAIN: test-project.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: boletapp-d609f
+          VITE_FIREBASE_STORAGE_BUCKET: test-project.firebasestorage.app
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
+          VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
+
+      - name: Upload coverage artifact (components-forms)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-components-forms
+          path: coverage/coverage-final.json
+          retention-days: 1
+
+  test-components-celebrations:
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Restore workspace cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            functions/node_modules
+            functions/lib
+          key: ${{ runner.os }}-workspace-${{ github.sha }}
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Restore Firebase emulator cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: ${{ runner.os }}-firebase-emulators-v1
+          restore-keys: |
+            ${{ runner.os }}-firebase-emulators-
+
+      - name: Start Firebase emulators
+        run: |
+          firebase emulators:start --only auth,firestore,storage --project boletapp-d609f &
+          for i in {1..30}; do
+            if curl -sf http://localhost:4000 > /dev/null && curl -sf http://localhost:8080 > /dev/null; then
+              echo "Firebase emulators ready in ${i}s!"
+              sleep 2
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Run unit tests - components-celebrations
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-components-celebrations.ts --coverage
+        env:
+          NODE_OPTIONS: "--max-old-space-size=6144"
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+          VITE_GEMINI_API_KEY: test-gemini-key
+          VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
+          VITE_FIREBASE_API_KEY: test-api-key
+          VITE_FIREBASE_AUTH_DOMAIN: test-project.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: boletapp-d609f
+          VITE_FIREBASE_STORAGE_BUCKET: test-project.firebasestorage.app
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
+          VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
+
+      - name: Upload coverage artifact (components-celebrations)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-components-celebrations
+          path: coverage/coverage-final.json
+          retention-days: 1
+
+  test-components-misc:
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Restore workspace cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            functions/node_modules
+            functions/lib
+          key: ${{ runner.os }}-workspace-${{ github.sha }}
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Restore Firebase emulator cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: ${{ runner.os }}-firebase-emulators-v1
+          restore-keys: |
+            ${{ runner.os }}-firebase-emulators-
+
+      - name: Start Firebase emulators
+        run: |
+          firebase emulators:start --only auth,firestore,storage --project boletapp-d609f &
+          for i in {1..30}; do
+            if curl -sf http://localhost:4000 > /dev/null && curl -sf http://localhost:8080 > /dev/null; then
+              echo "Firebase emulators ready in ${i}s!"
+              sleep 2
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Run unit tests - components-misc
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-components-misc.ts --coverage
+        env:
+          NODE_OPTIONS: "--max-old-space-size=6144"
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+          VITE_GEMINI_API_KEY: test-gemini-key
+          VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
+          VITE_FIREBASE_API_KEY: test-api-key
+          VITE_FIREBASE_AUTH_DOMAIN: test-project.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: boletapp-d609f
+          VITE_FIREBASE_STORAGE_BUCKET: test-project.firebasestorage.app
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
+          VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
+
+      - name: Upload coverage artifact (components-misc)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-components-misc
           path: coverage/coverage-final.json
           retention-days: 1
 
@@ -1175,40 +1632,41 @@ jobs:
   # TEST-UNIT SUMMARY - Aggregates all shard and heavy test results
   # ============================================================================
   test-unit:
-    needs: [test-hooks, test-services, test-utils, test-analytics, test-views, test-components-insights, test-components-scan, test-components-other, test-unit-heavy-1, test-unit-heavy-2, test-unit-heavy-3, test-unit-heavy-4]
+    needs: [test-hooks-batch, test-hooks-scan, test-hooks-other, test-services, test-utils, test-analytics, test-views, test-components-insights, test-components-scan, test-components-history, test-components-charts, test-components-forms, test-components-celebrations, test-components-misc, test-unit-heavy-1, test-unit-heavy-2, test-unit-heavy-3, test-unit-heavy-4]
     runs-on: ubuntu-latest
     if: always()
     steps:
       - name: Check all unit test groups
         run: |
-          if [ "${{ needs.test-hooks.result }}" != "success" ] || \
-             [ "${{ needs.test-services.result }}" != "success" ] || \
-             [ "${{ needs.test-utils.result }}" != "success" ] || \
-             [ "${{ needs.test-analytics.result }}" != "success" ] || \
-             [ "${{ needs.test-views.result }}" != "success" ] || \
-             [ "${{ needs.test-components-insights.result }}" != "success" ] || \
-             [ "${{ needs.test-components-scan.result }}" != "success" ] || \
-             [ "${{ needs.test-components-other.result }}" != "success" ] || \
-             [ "${{ needs.test-unit-heavy-1.result }}" != "success" ] || \
-             [ "${{ needs.test-unit-heavy-2.result }}" != "success" ] || \
-             [ "${{ needs.test-unit-heavy-3.result }}" != "success" ] || \
-             [ "${{ needs.test-unit-heavy-4.result }}" != "success" ]; then
+          FAILED=false
+          # Hooks groups
+          [ "${{ needs.test-hooks-batch.result }}" != "success" ] && echo "test-hooks-batch: ${{ needs.test-hooks-batch.result }}" && FAILED=true
+          [ "${{ needs.test-hooks-scan.result }}" != "success" ] && echo "test-hooks-scan: ${{ needs.test-hooks-scan.result }}" && FAILED=true
+          [ "${{ needs.test-hooks-other.result }}" != "success" ] && echo "test-hooks-other: ${{ needs.test-hooks-other.result }}" && FAILED=true
+          # Core groups
+          [ "${{ needs.test-services.result }}" != "success" ] && echo "test-services: ${{ needs.test-services.result }}" && FAILED=true
+          [ "${{ needs.test-utils.result }}" != "success" ] && echo "test-utils: ${{ needs.test-utils.result }}" && FAILED=true
+          [ "${{ needs.test-analytics.result }}" != "success" ] && echo "test-analytics: ${{ needs.test-analytics.result }}" && FAILED=true
+          [ "${{ needs.test-views.result }}" != "success" ] && echo "test-views: ${{ needs.test-views.result }}" && FAILED=true
+          # Component groups
+          [ "${{ needs.test-components-insights.result }}" != "success" ] && echo "test-components-insights: ${{ needs.test-components-insights.result }}" && FAILED=true
+          [ "${{ needs.test-components-scan.result }}" != "success" ] && echo "test-components-scan: ${{ needs.test-components-scan.result }}" && FAILED=true
+          [ "${{ needs.test-components-history.result }}" != "success" ] && echo "test-components-history: ${{ needs.test-components-history.result }}" && FAILED=true
+          [ "${{ needs.test-components-charts.result }}" != "success" ] && echo "test-components-charts: ${{ needs.test-components-charts.result }}" && FAILED=true
+          [ "${{ needs.test-components-forms.result }}" != "success" ] && echo "test-components-forms: ${{ needs.test-components-forms.result }}" && FAILED=true
+          [ "${{ needs.test-components-celebrations.result }}" != "success" ] && echo "test-components-celebrations: ${{ needs.test-components-celebrations.result }}" && FAILED=true
+          [ "${{ needs.test-components-misc.result }}" != "success" ] && echo "test-components-misc: ${{ needs.test-components-misc.result }}" && FAILED=true
+          # Heavy groups
+          [ "${{ needs.test-unit-heavy-1.result }}" != "success" ] && echo "test-unit-heavy-1: ${{ needs.test-unit-heavy-1.result }}" && FAILED=true
+          [ "${{ needs.test-unit-heavy-2.result }}" != "success" ] && echo "test-unit-heavy-2: ${{ needs.test-unit-heavy-2.result }}" && FAILED=true
+          [ "${{ needs.test-unit-heavy-3.result }}" != "success" ] && echo "test-unit-heavy-3: ${{ needs.test-unit-heavy-3.result }}" && FAILED=true
+          [ "${{ needs.test-unit-heavy-4.result }}" != "success" ] && echo "test-unit-heavy-4: ${{ needs.test-unit-heavy-4.result }}" && FAILED=true
+
+          if [ "$FAILED" = "true" ]; then
             echo "One or more unit test groups failed"
-            echo "test-hooks:               ${{ needs.test-hooks.result }}"
-            echo "test-services:            ${{ needs.test-services.result }}"
-            echo "test-utils:               ${{ needs.test-utils.result }}"
-            echo "test-analytics:           ${{ needs.test-analytics.result }}"
-            echo "test-views:               ${{ needs.test-views.result }}"
-            echo "test-components-insights: ${{ needs.test-components-insights.result }}"
-            echo "test-components-scan:     ${{ needs.test-components-scan.result }}"
-            echo "test-components-other:    ${{ needs.test-components-other.result }}"
-            echo "test-unit-heavy-1:        ${{ needs.test-unit-heavy-1.result }}"
-            echo "test-unit-heavy-2:        ${{ needs.test-unit-heavy-2.result }}"
-            echo "test-unit-heavy-3:        ${{ needs.test-unit-heavy-3.result }}"
-            echo "test-unit-heavy-4:        ${{ needs.test-unit-heavy-4.result }}"
             exit 1
           fi
-          echo "All 12 unit test jobs passed successfully (8 groups + 4 heavy)"
+          echo "All 18 unit test jobs passed successfully (14 groups + 4 heavy)"
 
   # ============================================================================
   # MERGE-COVERAGE JOB - Merges coverage from all shards (Story 14.30.1)
@@ -1216,7 +1674,7 @@ jobs:
   # Now merges coverage-final.json from each shard + heavy jobs - no duplicate test run
   # ============================================================================
   merge-coverage:
-    needs: [test-hooks, test-services, test-utils, test-analytics, test-views, test-components-insights, test-components-scan, test-components-other, test-unit-heavy-1, test-unit-heavy-2, test-unit-heavy-3, test-unit-heavy-4]
+    needs: [test-hooks-batch, test-hooks-scan, test-hooks-other, test-services, test-utils, test-analytics, test-views, test-components-insights, test-components-scan, test-components-history, test-components-charts, test-components-forms, test-components-celebrations, test-components-misc, test-unit-heavy-1, test-unit-heavy-2, test-unit-heavy-3, test-unit-heavy-4]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     # Only run on PRs - coverage report is informational, not a gate
