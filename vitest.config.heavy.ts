@@ -23,6 +23,10 @@ import pkg from './package.json'
  * - tests/unit/services/pendingScanStorage.test.ts (786 lines)
  * - tests/unit/analytics/CategoryBreadcrumb.test.tsx (772 lines)
  *
+ * Tier 3 (500-700 lines each - Story 14.30.8):
+ * - tests/unit/hooks/useBatchProcessing.test.ts (646 lines)
+ * - tests/unit/hooks/useBatchReview.test.ts (592 lines)
+ *
  * Key optimizations:
  * - fileParallelism: false - Process one file at a time to prevent module cache bloat
  * - pool: 'forks' - Isolates each test file in separate process
@@ -48,7 +52,7 @@ export default defineConfig({
     globals: true,
     environment: 'happy-dom',
     setupFiles: './tests/setup/vitest.setup.ts',
-    // Include all heavy test files (Tier 1 + Tier 2)
+    // Include all heavy test files (Tier 1 + Tier 2 + Tier 3)
     include: [
       // Tier 1: 1400-1700 lines
       'tests/unit/hooks/useScanStateMachine.test.ts',
@@ -62,6 +66,9 @@ export default defineConfig({
       'tests/unit/components/session/SessionComplete.test.tsx',
       'tests/unit/services/pendingScanStorage.test.ts',
       'tests/unit/analytics/CategoryBreadcrumb.test.tsx',
+      // Tier 3: 500-700 lines (Story 14.30.8)
+      'tests/unit/hooks/useBatchProcessing.test.ts',
+      'tests/unit/hooks/useBatchReview.test.ts',
     ],
     exclude: [
       '**/node_modules/**',
