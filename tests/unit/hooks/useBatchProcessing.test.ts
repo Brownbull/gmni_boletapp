@@ -96,19 +96,21 @@ describe('useBatchProcessing', () => {
     });
 
     it('should not start if already processing', async () => {
-      // Create a long-running mock
+      // Story 14.30.8: Use pending promise instead of setTimeout to avoid real delay in CI
+      // The test verifies that a second call returns [] while first is still processing
+      let resolveProcessing: (value: batchProcessingService.ProcessingResult[]) => void;
       mockProcessImagesInParallel.mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve([]), 1000))
+        () => new Promise((resolve) => { resolveProcessing = resolve; })
       );
 
       const { result } = renderHook(() => useBatchProcessing());
 
-      // Start first processing
+      // Start first processing (will be pending)
       act(() => {
         result.current.startProcessing(['data:image/jpeg;base64,test'], 'CLP');
       });
 
-      // Try to start second processing
+      // Try to start second processing while first is still running
       let secondResult: batchProcessingService.ProcessingResult[] = [];
       await act(async () => {
         secondResult = await result.current.startProcessing(
@@ -117,10 +119,15 @@ describe('useBatchProcessing', () => {
         );
       });
 
-      // Second call should return empty
+      // Second call should return empty (blocked by isProcessing guard)
       expect(secondResult).toEqual([]);
       // Should only have been called once
       expect(mockProcessImagesInParallel).toHaveBeenCalledTimes(1);
+
+      // Cleanup: resolve the pending promise to avoid hanging test
+      await act(async () => {
+        resolveProcessing([]);
+      });
     });
 
     it('should pass receiptType to service', async () => {
@@ -151,12 +158,14 @@ describe('useBatchProcessing', () => {
 
   describe('cancel', () => {
     it('should abort processing when cancel is called', async () => {
+      // Story 14.30.8: Use pending promise instead of setTimeout to avoid delay in CI
       let abortSignal: AbortSignal | undefined;
+      let resolveProcessing: () => void;
 
       mockProcessImagesInParallel.mockImplementation(async (images, options, onStatus, onProgress, signal) => {
         abortSignal = signal;
-        // Simulate a delay
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        // Create a promise that we control - no real delay needed
+        await new Promise<void>((resolve) => { resolveProcessing = resolve; });
         return [];
       });
 
@@ -166,14 +175,18 @@ describe('useBatchProcessing', () => {
         result.current.startProcessing(['data:image/jpeg;base64,test'], 'CLP');
       });
 
+      // Cancel should set aborted immediately (synchronous)
       act(() => {
         result.current.cancel();
       });
 
-      // Wait a bit for the abort to be processed
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
+      // The abort signal should be set immediately after cancel()
       expect(abortSignal?.aborted).toBe(true);
+
+      // Cleanup: resolve the pending promise
+      await act(async () => {
+        resolveProcessing();
+      });
     });
   });
 

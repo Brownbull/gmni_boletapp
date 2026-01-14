@@ -195,6 +195,10 @@ Note: Full test suite runs out of memory due to codebase size (3000+ tests). Ind
 10. `docs/architecture/testing-architecture.md` - New documentation
 11. `docs/excalidraw-diagrams/ci-cd-testing-architecture.excalidraw` - Pipeline diagram
 
+### Session 5 (2026-01-14) - Memory Accumulation Fix (Story 14.30.7)
+12. `vitest.config.ci.ts` - Added fileParallelism: false, maxWorkers: 1, isolate: true, reporters: ['dot']
+13. `vitest.config.heavy.ts` - Same memory optimizations as vitest.config.ci.ts
+
 ---
 
 ## Sub-Stories Summary
@@ -236,14 +240,42 @@ Note: Full test suite runs out of memory due to codebase size (3000+ tests). Ind
 
 ### 14.30.6: Heavy Test Isolation ✅
 **Priority:** P0 | **Status:** DONE
-- Created vitest.config.heavy.ts for 4 large test files
+- Created vitest.config.heavy.ts for 10 large test files (Tier 1 + Tier 2)
 - Heavy files excluded from regular shards to prevent 13-15 min shard times
-- Added test-unit-heavy-1 and test-unit-heavy-2 CI jobs
-- Heavy tests (1400-1700 lines each):
+- Added test-unit-heavy-1 through test-unit-heavy-4 CI jobs (4 shards for 10 files)
+- Heavy tests Tier 1 (1400-1700 lines each):
   - useScanStateMachine.test.ts (1680 lines)
   - Nav.test.tsx (1623 lines)
   - insightEngineService.test.ts (1439 lines)
   - insightGenerators.test.ts (1432 lines)
+- Heavy tests Tier 2 (800-1100 lines each):
+  - csvExport.test.ts (1061 lines)
+  - DrillDownCard.test.tsx (872 lines)
+  - DrillDownGrid.test.tsx (829 lines)
+  - SessionComplete.test.tsx (799 lines)
+  - pendingScanStorage.test.ts (786 lines)
+  - CategoryBreadcrumb.test.tsx (772 lines)
+
+### 14.30.7: Memory Accumulation Fix ✅
+**Priority:** P0 | **Status:** DONE
+- **Root Cause:** Vitest parent process accumulates memory across test files due to module cache bloat
+- **Solution:** `fileParallelism: false` - processes one test file at a time
+- **Research Sources:**
+  - [GitHub Issue #1674](https://github.com/vitest-dev/vitest/issues/1674) - CI memory explosion
+  - [Vitest Migration Guide](https://vitest.dev/guide/migration.html) - Vitest 4 changes
+  - Users reported 10x memory reduction with `fileParallelism: false`
+
+**Configuration Changes (vitest.config.ci.ts & vitest.config.heavy.ts):**
+- `fileParallelism: false` - Prevents module cache bloat
+- `pool: 'forks'` - Process isolation per test file
+- `maxWorkers: 1` - Single worker minimizes parent process overhead
+- `isolate: true` - Full test isolation
+- `reporters: ['dot']` - Minimal output reduces memory
+
+**Verification:**
+- Shard 1/20: 211 tests pass with only 2GB heap (was OOMing at 4.5GB)
+- Heavy shard 1/4: 291 tests pass with only 2GB heap
+- Memory usage stable - no accumulation between files
 
 ---
 
@@ -261,3 +293,109 @@ Note: Full test suite runs out of memory due to codebase size (3000+ tests). Ind
 | 2026-01-14 | Consolidated 3 files into single story, resumed for deployment verification | Dev |
 | 2026-01-14 | 14.30.5b: Fixed __APP_VERSION__ and CreditWarningDialog test issues | Dev |
 | 2026-01-14 | 14.30.6: Heavy test isolation - dedicated jobs for 4 large test files | Dev |
+| 2026-01-14 | 14.30.7: Memory accumulation investigation - root cause identified, OOM in parent process | Dev |
+| 2026-01-14 | 14.30.7: Fixed with fileParallelism: false - tests pass with 2GB heap (was 4.5GB OOM) | Dev |
+| 2026-01-14 | 14.30.7: CI run 21002991025 in progress - monitoring in new session | Dev |
+
+---
+
+## Session Progress: Story 14.30.8 - Explicit Test Groups (2026-01-14)
+
+### Problem Identified
+- Vitest automatic sharding (`--shard=1/5`) was unpredictable
+- test-unit-1 and test-unit-2 consistently timed out (>15 min)
+- Root cause: sharding algorithm doesn't balance by test complexity
+
+### Solution Implemented
+Replaced automatic sharding with explicit module-based test groups:
+
+| Group | Module | Tests | Config File |
+|-------|--------|-------|-------------|
+| test-unit-1 | hooks | 427 | vitest.config.ci.group-hooks.ts |
+| test-unit-2 | services | 274 | vitest.config.ci.group-services.ts |
+| test-unit-3 | utils | 527 | vitest.config.ci.group-utils.ts |
+| test-unit-4 | analytics | 272 | vitest.config.ci.group-analytics.ts |
+| test-unit-5 | views + root | 547 | vitest.config.ci.group-views.ts |
+| test-unit-6 | components/insights | 298 | vitest.config.ci.group-components-insights.ts |
+| test-unit-7 | components/scan | 440 | vitest.config.ci.group-components-scan.ts |
+| test-unit-8 | components/other | 687 | vitest.config.ci.group-components-other.ts |
+
+### Files Created
+- `vitest.config.ci.base.ts` - Shared base config with memory optimizations
+- `vitest.config.ci.group-*.ts` - 8 group-specific configs
+
+### CI Run Status (21004641865) - CANCELLED
+Run was cancelled due to test-hooks and test-components-other running 7+ minutes.
+
+| Job | Status | Duration | Notes |
+|-----|--------|----------|-------|
+| test-hooks | ⏳ stuck | 7+ min | Too many tests (568) |
+| test-services | ✅ success | ~2 min | Fast |
+| test-utils | ✅ success | ~2 min | Fast |
+| test-analytics | ✅ success | ~2 min | Fast |
+| test-views | ❌ failure | 23s | Snapshot mismatch (lucide-react aria-hidden) |
+| test-components-insights | ✅ success | ~2 min | Fast |
+| test-components-scan | ✅ success | ~2 min | Fast |
+| test-components-other | ⏳ stuck | 7+ min | Too many tests (895) |
+| test-unit-heavy-1..4 | ✅ all success | ~3 min each | Heavy isolation working |
+
+### Issues Found & Fixed
+
+#### 1. test-views Snapshot Failure ✅ FIXED
+- **Root cause:** `lucide-react` library updated to include `aria-hidden="true"` on SVG icons
+- **Solution:** Updated snapshots in `StatementScanView.test.tsx`
+- **Impact:** 2 tests fixed
+
+#### 2. Job Naming ✅ FIXED
+- **Problem:** Generic names like `test-unit-1` made CI hard to debug
+- **Solution:** Renamed to descriptive names (`test-hooks`, `test-services`, etc.)
+- **Impact:** Better CI visibility and debugging
+
+#### 3. Slow Groups - Analysis Complete
+- **test-hooks:** 24 files, ~568 tests, 9,789 lines total
+- **test-components-other:** 37 files, ~895 tests, 10,990 lines total
+- **Conclusion:** Groups too large for single CI job, need splitting
+
+### Next Steps (Priority Order)
+1. ✅ Rename CI jobs to descriptive names - DONE
+2. ✅ Fix snapshot tests - DONE
+3. ⏳ Commit and push changes - IN PROGRESS
+4. 🔜 Split test-components-other into smaller groups
+5. 🔜 Split test-hooks into hooks-scan and hooks-other
+6. 🔜 Monitor deployment and verify all jobs pass
+
+### Test Consolidation Analysis
+
+**Hooks group (568 tests):** Well-structured, no consolidation needed. Split by functionality instead.
+- `useScanStateMachine.test.ts` (105 tests) - Already in heavy group
+- `useItems.test.ts` (43 tests) - Keep
+- Remaining ~420 tests across 23 files
+
+**Components-other group (895 tests):** Some potential consolidation:
+- Settings tests (3 files, 19 tests) → Could merge
+- Polygon mode tests (2 files, 27 tests) → Could merge
+- **Recommended:** Split by domain rather than consolidate
+
+### Key Commits
+- f40b49e: feat(ci): Story 14.30.8 - Explicit test groups for predictable CI
+- 2c0da95: chore(ci): Story 14.30.8 - Rename jobs + fix snapshots
+- 86e6bd8: test(consolidation): Merge Settings + Polygon test files
+- 38e6a50: feat(ci): Story 14.30.8 - Split slow test groups for parallel CI
+
+### CI Run Status (21005897693) - IN PROGRESS
+Most jobs completing in 2-4 minutes. Two slow jobs identified:
+
+| Job | Status | Issue |
+|-----|--------|-------|
+| test-hooks-batch | ⏳ slow | 1,481 lines (useBatchProcessing 646, useBatchReview 592) |
+| test-components-misc | ⏳ slow | 5,531 lines - Nav.test.tsx (1,623) being included incorrectly! |
+
+**Root Cause for test-components-misc:**
+- `Nav.test.tsx` (1,623 lines) should be in heavy group but glob `*.test.tsx` is including it
+- Base config exclude isn't being applied correctly to this group
+
+### Remaining Work (Priority Order)
+1. 🔴 Fix Nav.test.tsx exclusion from components-misc (it's in heavy already)
+2. 🔴 Move useBatchProcessing.test.ts and useBatchReview.test.ts to heavy group
+3. 🟡 Verify all 18 test jobs pass in <8 minutes each
+4. 🟢 Update Atlas memory with CI lessons
