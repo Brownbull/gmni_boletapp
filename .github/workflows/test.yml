@@ -59,30 +59,36 @@ on:
         required: false
 
 # ============================================================================
-# Story 8.9: CI/CD Pipeline Optimization (v2 - December 2024)
+# Story 8.9: CI/CD Pipeline Optimization (v3 - January 2025)
 # Story 9.15: Added path filtering to skip CI for docs-only changes
 # Story 14.22: Further parallelization - gitleaks runs alongside setup
+# Story 14.30: Unit test sharding to prevent timeout (3000+ tests)
 # Restructured from sequential (~11 min) to parallel (~4-5 min)
 #
 # Job dependency graph:
-#   gitleaks (parallel) ──────────────────────────────┐
-#   setup ─┬─► test-unit ─────────┬─► test ──────────┴─► deploy (main only)
-#          ├─► test-integration ──┤
-#          ├─► test-e2e ──────────┤
-#          ├─► security ──────────┘
+#   gitleaks (parallel) ──────────────────────────────────────────┐
+#   setup ─┬─► test-unit-1 ─────────┬                             │
+#          ├─► test-unit-2 ─────────┼─► test-unit ─┬─► test ──────┴─► deploy
+#          ├─► test-unit-3 ─────────┤              │
+#          ├─► test-coverage (PR only, non-blocking)
+#          ├─► test-integration ───────────────────┤
+#          ├─► test-e2e ───────────────────────────┤
+#          ├─► security ───────────────────────────┘
 #          └─► lighthouse (main push only, runs in parallel)
 #
-# Key optimizations (v2):
+# Key optimizations (v3):
 # - AC1: Parallel test jobs (unit, integration, e2e run concurrently)
 # - AC2: Playwright browser caching (~30s saved)
 # - AC3: Lighthouse only on main branch pushes (~4.5 min saved on PRs)
 # - AC4: workflow_dispatch for manual deployments
-# - AC5: Combined unit tests with coverage (eliminates duplicate run)
-# - NEW: Java JDK caching (~15-20s saved per job)
-# - NEW: Firebase emulator JAR caching (~10-15s saved per job)
-# - NEW: Faster emulator startup (30s max wait vs 60s)
-# - NEW: Path filtering skips CI for docs/README changes (~5 min saved)
-# - NEW: Gitleaks runs in parallel with setup (~30-60s saved)
+# - NEW: Unit test sharding (3 parallel shards, ~3-5 min each vs 10+ min)
+# - NEW: Coverage runs separately (non-blocking, PR-only)
+# - NEW: Optimized vitest CI config for faster execution
+# - Java JDK caching (~15-20s saved per job)
+# - Firebase emulator JAR caching (~10-15s saved per job)
+# - Faster emulator startup (30s max wait vs 60s)
+# - Path filtering skips CI for docs/README changes (~5 min saved)
+# - Gitleaks runs in parallel with setup (~30-60s saved)
 # ============================================================================
 
 jobs:
@@ -206,14 +212,14 @@ jobs:
           key: ${{ runner.os }}-workspace-${{ github.sha }}
 
   # ============================================================================
-  # TEST-UNIT JOB - Unit tests with coverage (Story 8.9 AC1, AC5)
-  # Combines unit tests + coverage to eliminate duplicate test runs
+  # TEST-UNIT SHARDS - Unit tests split across 3 parallel runners (Story 14.30)
+  # Each shard runs ~1/3 of unit tests using Vitest's built-in sharding
+  # This prevents timeout issues with 3000+ tests
   # ============================================================================
-  test-unit:
+  test-unit-1:
     needs: setup
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    # Skip tests if workflow_dispatch with skip_tests=true
+    timeout-minutes: 15
     if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
 
     steps:
@@ -225,7 +231,6 @@ jobs:
         with:
           node-version: '20'
 
-      # Restore cached workspace
       - name: Restore workspace cache
         uses: actions/cache/restore@v4
         with:
@@ -235,18 +240,15 @@ jobs:
             functions/lib
           key: ${{ runner.os }}-workspace-${{ github.sha }}
 
-      # Install Firebase CLI (required for emulators)
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
-      # Setup Java with caching
       - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      # Restore Firebase emulator JARs cache
       - name: Restore Firebase emulator cache
         uses: actions/cache/restore@v4
         with:
@@ -255,12 +257,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-firebase-emulators-
 
-      # Start emulators with optimized wait
       - name: Start Firebase emulators
         run: |
           firebase emulators:start --only auth,firestore,storage --project boletapp-d609f &
-          echo "Waiting for Firebase emulators..."
-          # Optimized: Check ports in parallel, reduce max wait
           for i in {1..30}; do
             if curl -sf http://localhost:4000 > /dev/null && curl -sf http://localhost:8080 > /dev/null; then
               echo "Firebase emulators ready in ${i}s!"
@@ -270,8 +269,232 @@ jobs:
             sleep 1
           done
 
-      # Run unit tests with coverage (Story 8.9 AC5 - combined, not separate)
-      - name: Run unit tests with coverage
+      - name: Run unit tests (shard 1/3)
+        run: npx vitest run --config vitest.config.ci.ts --shard=1/3
+        env:
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+          VITE_GEMINI_API_KEY: test-gemini-key
+          VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
+          VITE_FIREBASE_API_KEY: test-api-key
+          VITE_FIREBASE_AUTH_DOMAIN: test-project.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: boletapp-d609f
+          VITE_FIREBASE_STORAGE_BUCKET: test-project.firebasestorage.app
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
+          VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
+
+  test-unit-2:
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Restore workspace cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            functions/node_modules
+            functions/lib
+          key: ${{ runner.os }}-workspace-${{ github.sha }}
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Restore Firebase emulator cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: ${{ runner.os }}-firebase-emulators-v1
+          restore-keys: |
+            ${{ runner.os }}-firebase-emulators-
+
+      - name: Start Firebase emulators
+        run: |
+          firebase emulators:start --only auth,firestore,storage --project boletapp-d609f &
+          for i in {1..30}; do
+            if curl -sf http://localhost:4000 > /dev/null && curl -sf http://localhost:8080 > /dev/null; then
+              echo "Firebase emulators ready in ${i}s!"
+              sleep 2
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Run unit tests (shard 2/3)
+        run: npx vitest run --config vitest.config.ci.ts --shard=2/3
+        env:
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+          VITE_GEMINI_API_KEY: test-gemini-key
+          VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
+          VITE_FIREBASE_API_KEY: test-api-key
+          VITE_FIREBASE_AUTH_DOMAIN: test-project.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: boletapp-d609f
+          VITE_FIREBASE_STORAGE_BUCKET: test-project.firebasestorage.app
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
+          VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
+
+  test-unit-3:
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Restore workspace cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            functions/node_modules
+            functions/lib
+          key: ${{ runner.os }}-workspace-${{ github.sha }}
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Restore Firebase emulator cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: ${{ runner.os }}-firebase-emulators-v1
+          restore-keys: |
+            ${{ runner.os }}-firebase-emulators-
+
+      - name: Start Firebase emulators
+        run: |
+          firebase emulators:start --only auth,firestore,storage --project boletapp-d609f &
+          for i in {1..30}; do
+            if curl -sf http://localhost:4000 > /dev/null && curl -sf http://localhost:8080 > /dev/null; then
+              echo "Firebase emulators ready in ${i}s!"
+              sleep 2
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Run unit tests (shard 3/3)
+        run: npx vitest run --config vitest.config.ci.ts --shard=3/3
+        env:
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+          VITE_GEMINI_API_KEY: test-gemini-key
+          VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
+          VITE_FIREBASE_API_KEY: test-api-key
+          VITE_FIREBASE_AUTH_DOMAIN: test-project.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: boletapp-d609f
+          VITE_FIREBASE_STORAGE_BUCKET: test-project.firebasestorage.app
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
+          VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
+
+  # ============================================================================
+  # TEST-UNIT SUMMARY - Aggregates all shard results
+  # ============================================================================
+  test-unit:
+    needs: [test-unit-1, test-unit-2, test-unit-3]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check all unit test shards
+        run: |
+          if [ "${{ needs.test-unit-1.result }}" != "success" ] || \
+             [ "${{ needs.test-unit-2.result }}" != "success" ] || \
+             [ "${{ needs.test-unit-3.result }}" != "success" ]; then
+            echo "One or more unit test shards failed"
+            echo "Shard 1: ${{ needs.test-unit-1.result }}"
+            echo "Shard 2: ${{ needs.test-unit-2.result }}"
+            echo "Shard 3: ${{ needs.test-unit-3.result }}"
+            exit 1
+          fi
+          echo "All unit test shards passed successfully"
+
+  # ============================================================================
+  # TEST-COVERAGE JOB - Coverage collection (separate, non-blocking for PRs)
+  # Runs in parallel with test shards, posts report to PR but doesn't block merge
+  # ============================================================================
+  test-coverage:
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Only run on PRs - coverage report is informational, not a gate
+    if: github.event_name == 'pull_request'
+    continue-on-error: true  # Don't block merge on coverage failures
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Restore workspace cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            functions/node_modules
+            functions/lib
+          key: ${{ runner.os }}-workspace-${{ github.sha }}
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Restore Firebase emulator cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: ${{ runner.os }}-firebase-emulators-v1
+          restore-keys: |
+            ${{ runner.os }}-firebase-emulators-
+
+      - name: Start Firebase emulators
+        run: |
+          firebase emulators:start --only auth,firestore,storage --project boletapp-d609f &
+          for i in {1..30}; do
+            if curl -sf http://localhost:4000 > /dev/null && curl -sf http://localhost:8080 > /dev/null; then
+              echo "Firebase emulators ready in ${i}s!"
+              sleep 2
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Run tests with coverage
         run: npm run test:coverage
         env:
           FIRESTORE_EMULATOR_HOST: localhost:8080
@@ -284,7 +507,6 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
           VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
 
-      # Upload coverage reports
       - name: Upload coverage report (HTML)
         uses: actions/upload-artifact@v4
         if: always()
@@ -301,10 +523,9 @@ jobs:
           path: coverage/coverage-final.json
           retention-days: 30
 
-      # Post coverage to PR
       - name: Post coverage report to PR
         uses: davelosert/vitest-coverage-report-action@v2
-        if: github.event_name == 'pull_request'
+        if: always()
         with:
           json-summary-path: './coverage/coverage-summary.json'
           json-final-path: './coverage/coverage-final.json'
