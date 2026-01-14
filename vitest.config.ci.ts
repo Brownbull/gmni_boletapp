@@ -41,11 +41,18 @@ export default defineConfig({
       '**/node_modules/**',
       '**/dist/**',
       // Heavy test files - run in dedicated jobs (vitest.config.heavy.ts)
-      // These 4 files are 1400-1700 lines each and cause shard imbalance
+      // Tier 1: 1400-1700 lines each (original 4)
       'tests/unit/hooks/useScanStateMachine.test.ts',
       'tests/unit/components/Nav.test.tsx',
       'tests/unit/services/insightEngineService.test.ts',
       'tests/unit/utils/insightGenerators.test.ts',
+      // Tier 2: 800-1100 lines each (additional 6)
+      'tests/unit/csvExport.test.ts',
+      'tests/unit/analytics/DrillDownCard.test.tsx',
+      'tests/unit/analytics/DrillDownGrid.test.tsx',
+      'tests/unit/components/session/SessionComplete.test.tsx',
+      'tests/unit/services/pendingScanStorage.test.ts',
+      'tests/unit/analytics/CategoryBreadcrumb.test.tsx',
     ],
     // Use forks pool to isolate each test file - prevents memory leaks
     pool: 'forks',
