@@ -404,6 +404,13 @@ development_status:
   # UI refactoring (inline styles vs Tailwind classes), prompt library changes
   14-30-test-technical-debt: in-progress  # 3 pts - CI optimization done; resuming for deployment verification
   14-30-5a-fix-preexisting-test-failures: done  # 2 pts - FIXED: 30 tests fixed (HistoryViewThumbnails filter issue, TopHeader translation keys) - VERIFIED 2026-01-14
+  # Story 14.30.8: Fix test-components-misc timeout (LearnMerchantDialog infinite render loop)
+  # ROOT CAUSE: Component used `itemNameChanges = []` default parameter which creates new array
+  # reference each render, causing useEffect infinite loop. Fixed both component and test.
+  # - Component: Use EMPTY_ITEM_CHANGES constant for stable reference
+  # - Test: Use fake timers + stable array + fireEvent (not userEvent)
+  # Result: components-misc now completes in ~8s instead of timing out at 7+ minutes
+  14-30-8-components-misc-timeout: done  # 1 pt - Fix LearnMerchantDialog infinite loop causing CI timeout - 2026-01-14
   14-31-items-history-view: done  # 8 pts - Items view similar to History view for item-level browsing - COMPLETED 2026-01-12
   14-32-usage-cost-audit: review  # 3 pts - Audit Firestore subscriptions, Cloud Functions, and database operations for cost leakage - AUDIT COMPLETE: No issues found
 
