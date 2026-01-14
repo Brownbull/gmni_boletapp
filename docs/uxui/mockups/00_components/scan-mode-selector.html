@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan Mode Selector & FAB States - Epic 14d</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        outfit: ['Outfit', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* ============================================
+           EPIC 14d: SCAN MODE SELECTOR & FAB STATES
+           Mockup for Stories 14d.7 and 14d.8
+           ============================================ */
+
+        /* ============================================
+           CSS CUSTOM PROPERTIES - 3 THEMES x 2 MODES
+           ============================================ */
+        :root {
+            --font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+            --fab-single: #4a7c59;
+            --fab-batch: #f59e0b;
+            --fab-statement: #7c3aed;
+            --fab-error: #dc2626;
+        }
+
+        /* Theme 1: Ni No Kuni / Ghibli (Default) - LIGHT */
+        [data-theme="ninokuni"] {
+            --primary: #4a7c59;
+            --primary-hover: #3d6b4a;
+            --primary-light: #d4e5d9;
+            --bg: #f5f0e8;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1dbb6;
+            --text-primary: #2d3a4a;
+            --text-secondary: #4a5568;
+            --text-tertiary: #7d9b5f;
+            --border-light: #e3bba1;
+            --border-medium: #d4a574;
+        }
+
+        [data-theme="ninokuni"][data-mode="dark"] {
+            --primary: #6fa882;
+            --primary-hover: #5a9470;
+            --primary-light: #2d4a38;
+            --bg: #1a2420;
+            --bg-secondary: #243028;
+            --bg-tertiary: #2d3a30;
+            --text-primary: #e8f0eb;
+            --text-secondary: #a8c0ac;
+            --text-tertiary: #7d9b5f;
+            --border-light: #3d4a3f;
+            --border-medium: #4a5a4c;
+        }
+
+        /* Theme 2: Professional Blue */
+        [data-theme="professional"] {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #dbeafe;
+            --bg: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #94a3b8;
+            --border-light: #e2e8f0;
+            --border-medium: #cbd5e1;
+        }
+
+        [data-theme="professional"][data-mode="dark"] {
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --primary-light: #1e3a5f;
+            --bg: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-tertiary: #64748b;
+            --border-light: #334155;
+            --border-medium: #475569;
+        }
+
+        /* Theme 3: Monochrome */
+        [data-theme="mono"] {
+            --primary: #18181b;
+            --primary-hover: #27272a;
+            --primary-light: #f4f4f5;
+            --bg: #fafafa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f4f4f5;
+            --text-primary: #18181b;
+            --text-secondary: #52525b;
+            --text-tertiary: #a1a1aa;
+            --border-light: #e4e4e7;
+            --border-medium: #d4d4d8;
+        }
+
+        [data-theme="mono"][data-mode="dark"] {
+            --primary: #e4e4e7;
+            --primary-hover: #d4d4d8;
+            --primary-light: #27272a;
+            --bg: #09090b;
+            --bg-secondary: #18181b;
+            --bg-tertiary: #27272a;
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-tertiary: #71717a;
+            --border-light: #27272a;
+            --border-medium: #3f3f46;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: var(--bg);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* ============================================
+           PHONE FRAME
+           ============================================ */
+        .phone-frame {
+            width: 320px;
+            height: 580px;
+            background: var(--bg);
+            border-radius: 32px;
+            border: 8px solid #1a1a1a;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+        }
+
+        /* FAB Gradients */
+        .fab--single { background: linear-gradient(135deg, var(--primary), var(--primary-hover)); }
+        .fab--batch { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+        .fab--statement { background: linear-gradient(135deg, #a78bfa, #7c3aed); }
+        .fab--error { background: linear-gradient(135deg, #f87171, #dc2626); }
+
+        /* Shine Animation */
+        .fab--processing::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+            background-size: 200% 100%;
+            animation: shine 1.5s infinite;
+        }
+
+        @keyframes shine {
+            0% { background-position: -100% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* Mode Selector Popup */
+        .mode-selector-popup {
+            position: absolute;
+            bottom: 72px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+            min-width: 200px;
+            animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 100;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        .mode-selector-popup::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: var(--bg-secondary);
+        }
+
+        /* Control Bar Option Active States */
+        .control-option.active { background: var(--primary) !important; color: white !important; border-color: var(--primary) !important; }
+
+        /* Theme colors for control bars */
+        .theme-badge-ninokuni { background: linear-gradient(135deg, #4a7c59 50%, #f1dbb6 50%); }
+        .theme-badge-professional { background: linear-gradient(135deg, #2563eb 50%, #f1f5f9 50%); }
+        .theme-badge-mono { background: linear-gradient(135deg, #18181b 50%, #f4f4f5 50%); }
+
+        @media (prefers-reduced-motion: reduce) {
+            .fab--processing::after, .mode-selector-popup { animation: none; }
+        }
+
+        /* Speed Dial slide up animation */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Radial Arc animations */
+        @keyframes arcLeft {
+            from { opacity: 0; transform: translate(50px, 30px) scale(0.5); }
+            to { opacity: 1; transform: translate(0, 0) scale(1); }
+        }
+
+        @keyframes arcTop {
+            from { opacity: 0; transform: translateY(50px) scale(0.5); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes arcRight {
+            from { opacity: 0; transform: translate(-50px, 30px) scale(0.5); }
+            to { opacity: 1; transform: translate(0, 0) scale(1); }
+        }
+    </style>
+</head>
+<body data-theme="ninokuni" data-mode="light" class="font-outfit min-h-screen">
+
+    <!-- ============================================
+         CONTROL BAR: Theme, Mode, FAB State, Popup Style
+         ============================================ -->
+    <div class="sticky top-0 z-50 border-b shadow-md p-4" style="background: var(--bg-secondary); border-color: var(--border-light);">
+        <div class="max-w-6xl mx-auto flex flex-wrap items-center gap-6">
+            <!-- Theme -->
+            <div class="flex flex-col gap-1.5">
+                <span class="text-[10px] font-semibold uppercase tracking-wide" style="color: var(--text-tertiary);">Theme</span>
+                <div class="flex gap-2">
+                    <button onclick="setTheme('ninokuni')" class="w-8 h-8 rounded-lg theme-badge-ninokuni border-2 hover:scale-110 transition-transform" style="border-color: var(--primary);" title="Ni No Kuni"></button>
+                    <button onclick="setTheme('professional')" class="w-8 h-8 rounded-lg theme-badge-professional border-2 hover:scale-110 transition-transform" style="border-color: transparent;" title="Professional"></button>
+                    <button onclick="setTheme('mono')" class="w-8 h-8 rounded-lg theme-badge-mono border-2 hover:scale-110 transition-transform" style="border-color: transparent;" title="Monochrome"></button>
+                </div>
+            </div>
+
+            <!-- Mode -->
+            <div class="flex flex-col gap-1.5">
+                <span class="text-[10px] font-semibold uppercase tracking-wide" style="color: var(--text-tertiary);">Mode</span>
+                <div class="flex rounded-full p-1" style="background: var(--bg-tertiary);">
+                    <button onclick="setMode('light')" class="px-4 py-1.5 rounded-full text-xs font-medium transition-all" style="background: var(--bg-secondary); color: var(--primary);">Light</button>
+                    <button onclick="setMode('dark')" class="px-4 py-1.5 rounded-full text-xs font-medium transition-all" style="color: var(--text-secondary);">Dark</button>
+                </div>
+            </div>
+
+            <!-- FAB State -->
+            <div class="flex flex-col gap-1.5">
+                <span class="text-[10px] font-semibold uppercase tracking-wide" style="color: var(--text-tertiary);">FAB State</span>
+                <div class="flex flex-wrap gap-1.5">
+                    <button onclick="setFabState('single-idle')" class="px-3 py-1 rounded-full text-xs font-medium border transition-all" style="background: var(--primary); color: white; border-color: var(--primary);">Single</button>
+                    <button onclick="setFabState('single-processing')" class="px-3 py-1 rounded-full text-xs font-medium border transition-all" style="background: var(--bg-tertiary); border-color: var(--border-light); color: var(--text-secondary);">Processing</button>
+                    <button onclick="setFabState('batch-idle')" class="px-3 py-1 rounded-full text-xs font-medium border transition-all" style="background: var(--bg-tertiary); border-color: var(--border-light); color: var(--text-secondary);">Batch</button>
+                    <button onclick="setFabState('statement-idle')" class="px-3 py-1 rounded-full text-xs font-medium border transition-all" style="background: var(--bg-tertiary); border-color: var(--border-light); color: var(--text-secondary);">Statement</button>
+                    <button onclick="setFabState('error')" class="px-3 py-1 rounded-full text-xs font-medium border transition-all" style="background: var(--bg-tertiary); border-color: var(--border-light); color: var(--text-secondary);">Error</button>
+                </div>
+            </div>
+
+            <div class="h-8 w-px" style="background: var(--border-light);"></div>
+
+            <!-- Popup Style Selector -->
+            <div class="flex flex-col gap-1.5">
+                <span class="text-[10px] font-semibold uppercase tracking-wide" style="color: var(--text-tertiary);">Popup Style</span>
+                <select onchange="setPopupStyle(this.value)" class="text-sm rounded-lg px-3 py-1.5 border" style="background: var(--bg-tertiary); border-color: var(--border-light); color: var(--text-primary);">
+                    <optgroup label="Original Styles">
+                        <option value="1">1. Cards with Icons</option>
+                        <option value="2">2. Compact Horizontal</option>
+                        <option value="3">3. Colored Pills</option>
+                        <option value="4">4. Icon Grid</option>
+                        <option value="5">5. Minimal List</option>
+                        <option value="6">6. Full-width Drawer</option>
+                        <option value="7">7. Speed Dial (FAB Expand)</option>
+                        <option value="8">8. Segmented Control</option>
+                        <option value="9">9. Floating Chips</option>
+                        <option value="10">10. Radial Arc Menu</option>
+                    </optgroup>
+                    <optgroup label="Drawer Variations (6)">
+                        <option value="11">11. Drawer Compact</option>
+                        <option value="12">12. Drawer Colored BGs</option>
+                        <option value="13">13. Drawer Glass Morphism</option>
+                        <option value="17">17. Drawer Mini Icons</option>
+                    </optgroup>
+                    <optgroup label="Segmented Variations (8)">
+                        <option value="14">14. Segmented Large</option>
+                        <option value="15">15. Segmented Pills</option>
+                        <option value="16">16. Segmented Color Dots</option>
+                        <option value="18">18. Segmented Vertical</option>
+                    </optgroup>
+                    <optgroup label="Floating Card + Credits">
+                        <option value="19">19. Card Compact + Credits</option>
+                        <option value="20">20. Card Large + Credits</option>
+                        <option value="21">21. Card Minimal + Credits</option>
+                        <option value="22">22. Card Dark Glass</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <!-- Toggle Popup -->
+            <button onclick="togglePopup()" class="px-4 py-2 rounded-lg text-sm font-medium border transition-all hover:scale-105" style="background: var(--primary); color: white; border-color: var(--primary);">
+                Toggle Popup
+            </button>
+        </div>
+    </div>
+
+    <!-- ============================================
+         PAGE HEADER
+         ============================================ -->
+    <div class="text-center py-8 px-6">
+        <h1 class="text-2xl font-bold" style="color: var(--text-primary);">Scan Mode Selector & FAB States</h1>
+        <p class="mt-2 text-sm" style="color: var(--text-secondary);">Epic 14d - Stories 14d.7 & 14d.8 | 22 Popup Style Options</p>
+    </div>
+
+    <!-- ============================================
+         PHONE DEMO
+         ============================================ -->
+    <div class="flex justify-center pb-32">
+        <div class="phone-frame">
+            <div class="h-full flex flex-col relative">
+                <!-- Phone Content -->
+                <div class="flex-1 p-4 overflow-hidden">
+                    <div class="flex justify-between items-center py-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm" style="color: var(--text-secondary);">Total del mes</span>
+                            <span class="px-2 py-0.5 rounded-full text-xs font-semibold text-white" style="background: var(--primary);">10</span>
+                            <span class="text-xs" style="color: var(--text-tertiary);">8/31</span>
+                        </div>
+                        <span class="text-xl font-bold" style="color: var(--text-primary);">$162.671</span>
+                    </div>
+
+                    <div class="rounded-xl p-3 mt-2 border" style="background: var(--bg-secondary); border-color: var(--border-light);">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-semibold" style="color: var(--text-primary);">Últimos Escaneados</span>
+                            <span class="text-xs" style="color: var(--primary);">Ver todo →</span>
+                        </div>
+
+                        <!-- Transaction Items -->
+                        <div class="flex items-center gap-3 py-2 border-b" style="border-color: var(--border-light);">
+                            <div class="w-9 h-9 rounded-lg flex items-center justify-center text-lg" style="background: var(--bg-tertiary);">🥚</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-sm font-semibold truncate" style="color: var(--text-primary);">Hueveria Jenny</div>
+                                <div class="text-[10px] flex gap-1" style="color: var(--text-tertiary);">06/01 17:45 · Villarrica</div>
+                            </div>
+                            <span class="text-sm font-semibold" style="color: var(--text-primary);">$25.920</span>
+                        </div>
+
+                        <div class="flex items-center gap-3 py-2 border-b" style="border-color: var(--border-light);">
+                            <div class="w-9 h-9 rounded-lg flex items-center justify-center text-lg" style="background: var(--bg-tertiary);">🏪</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-sm font-semibold truncate" style="color: var(--text-primary);">Eltit</div>
+                                <div class="text-[10px] flex gap-1" style="color: var(--text-tertiary);">06/01 18:57 · 15 items</div>
+                            </div>
+                            <span class="text-sm font-semibold" style="color: var(--text-primary);">$33.259</span>
+                        </div>
+
+                        <div class="flex items-center gap-3 py-2">
+                            <div class="w-9 h-9 rounded-lg flex items-center justify-center text-lg" style="background: var(--bg-tertiary);">🍎</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-sm font-semibold truncate" style="color: var(--text-primary);">FRUTERIA VILLA</div>
+                                <div class="text-[10px] flex gap-1" style="color: var(--text-tertiary);">06/01 19:12 · 4 items</div>
+                            </div>
+                            <span class="text-sm font-semibold" style="color: var(--text-primary);">$5.146</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Backdrop -->
+                <div class="absolute inset-0 bg-black/30 hidden z-40" id="backdrop" onclick="togglePopup()"></div>
+
+                <!-- ============================================
+                     POPUP STYLE 1: Cards with Icons (Original)
+                     ============================================ -->
+                <div class="mode-selector-popup hidden" id="popup1">
+                    <div onclick="selectMode('single')" class="flex items-center gap-3 px-4 py-3 cursor-pointer border-b hover:opacity-80 transition" style="border-color: var(--border-light); background: var(--bg-secondary);">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background: rgba(74, 124, 89, 0.15);">📷</div>
+                        <div>
+                            <div class="font-semibold text-sm" style="color: var(--text-primary);">Escaneo único</div>
+                            <div class="text-xs" style="color: var(--text-secondary);">Escanear un recibo</div>
+                        </div>
+                    </div>
+                    <div onclick="selectMode('batch')" class="flex items-center gap-3 px-4 py-3 cursor-pointer border-b hover:opacity-80 transition" style="border-color: var(--border-light); background: var(--bg-secondary);">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background: rgba(245, 158, 11, 0.15);">📚</div>
+                        <div>
+                            <div class="font-semibold text-sm" style="color: var(--text-primary);">Escaneo múltiple</div>
+                            <div class="text-xs" style="color: var(--text-secondary);">Escanear varios recibos</div>
+                        </div>
+                    </div>
+                    <div onclick="selectMode('statement')" class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:opacity-80 transition" style="background: var(--bg-secondary);">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background: rgba(124, 58, 237, 0.15);">💳</div>
+                        <div>
+                            <div class="font-semibold text-sm" style="color: var(--text-primary);">Estado de cuenta</div>
+                            <div class="text-xs" style="color: var(--text-secondary);">Próximamente</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 2: Compact Horizontal
+                     ============================================ -->
+                <div class="mode-selector-popup hidden" id="popup2" style="min-width: 280px;">
+                    <div class="flex gap-2 p-3" style="background: var(--bg-secondary);">
+                        <button onclick="selectMode('single')" class="flex-1 flex flex-col items-center gap-1 py-2 px-3 rounded-xl hover:opacity-80 transition" style="background: var(--bg-tertiary);">
+                            <span class="text-2xl">📷</span>
+                            <span class="text-[10px] font-semibold" style="color: var(--text-primary);">Único</span>
+                        </button>
+                        <button onclick="selectMode('batch')" class="flex-1 flex flex-col items-center gap-1 py-2 px-3 rounded-xl hover:opacity-80 transition" style="background: var(--bg-tertiary);">
+                            <span class="text-2xl">📚</span>
+                            <span class="text-[10px] font-semibold" style="color: var(--text-primary);">Múltiple</span>
+                        </button>
+                        <button onclick="selectMode('statement')" class="flex-1 flex flex-col items-center gap-1 py-2 px-3 rounded-xl hover:opacity-80 transition" style="background: var(--bg-tertiary);">
+                            <span class="text-2xl">💳</span>
+                            <span class="text-[10px] font-semibold" style="color: var(--text-primary);">Cuenta</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 3: Colored Pills
+                     ============================================ -->
+                <div class="mode-selector-popup hidden" id="popup3" style="min-width: auto;">
+                    <div class="flex flex-col gap-2 p-3" style="background: var(--bg-secondary);">
+                        <button onclick="selectMode('single')" class="flex items-center gap-2 px-4 py-2.5 rounded-full text-white font-semibold text-sm hover:opacity-90 transition shadow-md" style="background: linear-gradient(135deg, var(--primary), var(--primary-hover));">
+                            <span>📷</span>
+                            <span>Escaneo único</span>
+                        </button>
+                        <button onclick="selectMode('batch')" class="flex items-center gap-2 px-4 py-2.5 rounded-full text-white font-semibold text-sm hover:opacity-90 transition shadow-md" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);">
+                            <span>📚</span>
+                            <span>Escaneo múltiple</span>
+                        </button>
+                        <button onclick="selectMode('statement')" class="flex items-center gap-2 px-4 py-2.5 rounded-full text-white font-semibold text-sm hover:opacity-90 transition shadow-md" style="background: linear-gradient(135deg, #a78bfa, #7c3aed);">
+                            <span>💳</span>
+                            <span>Estado de cuenta</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 4: Icon Grid (Square Buttons)
+                     ============================================ -->
+                <div class="mode-selector-popup hidden" id="popup4" style="min-width: auto;">
+                    <div class="grid grid-cols-3 gap-1 p-2" style="background: var(--bg-secondary);">
+                        <button onclick="selectMode('single')" class="flex flex-col items-center justify-center gap-1 w-16 h-16 rounded-xl hover:scale-105 transition" style="background: rgba(74, 124, 89, 0.15);">
+                            <span class="text-2xl">📷</span>
+                            <span class="text-[9px] font-semibold" style="color: var(--primary);">Único</span>
+                        </button>
+                        <button onclick="selectMode('batch')" class="flex flex-col items-center justify-center gap-1 w-16 h-16 rounded-xl hover:scale-105 transition" style="background: rgba(245, 158, 11, 0.15);">
+                            <span class="text-2xl">📚</span>
+                            <span class="text-[9px] font-semibold" style="color: #d97706;">Múltiple</span>
+                        </button>
+                        <button onclick="selectMode('statement')" class="flex flex-col items-center justify-center gap-1 w-16 h-16 rounded-xl hover:scale-105 transition" style="background: rgba(124, 58, 237, 0.15);">
+                            <span class="text-2xl">💳</span>
+                            <span class="text-[9px] font-semibold" style="color: #7c3aed;">Cuenta</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 5: Minimal List
+                     ============================================ -->
+                <div class="mode-selector-popup hidden" id="popup5" style="min-width: 160px;">
+                    <div class="py-1" style="background: var(--bg-secondary);">
+                        <button onclick="selectMode('single')" class="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium hover:opacity-80 transition text-left" style="color: var(--text-primary);">
+                            <span class="w-5 h-5 rounded-full flex items-center justify-center text-xs" style="background: var(--primary); color: white;">📷</span>
+                            Único
+                        </button>
+                        <button onclick="selectMode('batch')" class="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium hover:opacity-80 transition text-left" style="color: var(--text-primary);">
+                            <span class="w-5 h-5 rounded-full flex items-center justify-center text-xs" style="background: #f59e0b; color: white;">📚</span>
+                            Múltiple
+                        </button>
+                        <button onclick="selectMode('statement')" class="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium hover:opacity-80 transition text-left" style="color: var(--text-primary);">
+                            <span class="w-5 h-5 rounded-full flex items-center justify-center text-xs" style="background: #7c3aed; color: white;">💳</span>
+                            Cuenta
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 6: Full-width Drawer (Bottom Sheet)
+                     ============================================ -->
+                <div class="hidden absolute bottom-16 left-0 right-0 z-[100] rounded-t-2xl shadow-2xl border-t" id="popup6" style="background: var(--bg-secondary); border-color: var(--border-light);">
+                    <!-- Handle bar -->
+                    <div class="flex justify-center py-2">
+                        <div class="w-10 h-1 rounded-full" style="background: var(--border-light);"></div>
+                    </div>
+                    <div class="px-4 pb-4">
+                        <div class="text-xs font-semibold uppercase tracking-wide mb-3" style="color: var(--text-tertiary);">Seleccionar modo</div>
+                        <div class="space-y-2">
+                            <button onclick="selectMode('single')" class="w-full flex items-center gap-4 p-3 rounded-xl hover:opacity-80 transition" style="background: var(--bg-tertiary);">
+                                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background: rgba(74, 124, 89, 0.2);">📷</div>
+                                <div class="text-left flex-1">
+                                    <div class="font-semibold" style="color: var(--text-primary);">Escaneo único</div>
+                                    <div class="text-xs" style="color: var(--text-secondary);">Escanear un recibo</div>
+                                </div>
+                                <svg class="w-5 h-5" style="color: var(--text-tertiary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </button>
+                            <button onclick="selectMode('batch')" class="w-full flex items-center gap-4 p-3 rounded-xl hover:opacity-80 transition" style="background: var(--bg-tertiary);">
+                                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background: rgba(245, 158, 11, 0.2);">📚</div>
+                                <div class="text-left flex-1">
+                                    <div class="font-semibold" style="color: var(--text-primary);">Escaneo múltiple</div>
+                                    <div class="text-xs" style="color: var(--text-secondary);">Escanear varios recibos a la vez</div>
+                                </div>
+                                <svg class="w-5 h-5" style="color: var(--text-tertiary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </button>
+                            <button onclick="selectMode('statement')" class="w-full flex items-center gap-4 p-3 rounded-xl hover:opacity-80 transition" style="background: var(--bg-tertiary);">
+                                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background: rgba(124, 58, 237, 0.2);">💳</div>
+                                <div class="text-left flex-1">
+                                    <div class="font-semibold" style="color: var(--text-primary);">Estado de cuenta</div>
+                                    <div class="text-xs" style="color: var(--text-secondary);">Próximamente</div>
+                                </div>
+                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full" style="background: var(--primary-light); color: var(--primary);">Pronto</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 7: Speed Dial (FAB Expansion)
+                     ============================================ -->
+                <div class="hidden absolute bottom-[72px] left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-3" id="popup7">
+                    <!-- Statement option (top) -->
+                    <div class="flex items-center gap-2 animate-[slideUp_0.2s_ease-out]" style="animation-delay: 0.1s;">
+                        <span class="text-xs font-medium px-2 py-1 rounded-lg shadow-sm whitespace-nowrap" style="background: var(--bg-secondary); color: var(--text-secondary);">Estado de cuenta</span>
+                        <button onclick="selectMode('statement')" class="w-11 h-11 rounded-full text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform" style="background: linear-gradient(135deg, #a78bfa, #7c3aed);">
+                            <span class="text-lg">💳</span>
+                        </button>
+                    </div>
+                    <!-- Batch option (middle) -->
+                    <div class="flex items-center gap-2 animate-[slideUp_0.2s_ease-out]" style="animation-delay: 0.05s;">
+                        <span class="text-xs font-medium px-2 py-1 rounded-lg shadow-sm whitespace-nowrap" style="background: var(--bg-secondary); color: var(--text-secondary);">Múltiple</span>
+                        <button onclick="selectMode('batch')" class="w-11 h-11 rounded-full text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);">
+                            <span class="text-lg">📚</span>
+                        </button>
+                    </div>
+                    <!-- Single option (bottom, closest to FAB) -->
+                    <div class="flex items-center gap-2 animate-[slideUp_0.2s_ease-out]">
+                        <span class="text-xs font-medium px-2 py-1 rounded-lg shadow-sm whitespace-nowrap" style="background: var(--bg-secondary); color: var(--text-secondary);">Único</span>
+                        <button onclick="selectMode('single')" class="w-11 h-11 rounded-full text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform" style="background: linear-gradient(135deg, var(--primary), var(--primary-hover));">
+                            <span class="text-lg">📷</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 8: Segmented Control (iOS Style)
+                     ============================================ -->
+                <div class="mode-selector-popup hidden" id="popup8" style="min-width: auto;">
+                    <div class="p-1.5 rounded-xl" style="background: var(--bg-tertiary);">
+                        <div class="flex rounded-lg overflow-hidden" style="background: var(--bg-secondary);">
+                            <button onclick="selectMode('single')" class="flex-1 flex flex-col items-center gap-1 py-3 px-4 border-r transition-all hover:bg-opacity-50" style="border-color: var(--border-light); background: var(--primary); color: white;">
+                                <span class="text-xl">📷</span>
+                                <span class="text-[10px] font-semibold">Único</span>
+                            </button>
+                            <button onclick="selectMode('batch')" class="flex-1 flex flex-col items-center gap-1 py-3 px-4 border-r transition-all hover:bg-opacity-80" style="border-color: var(--border-light); color: var(--text-primary);">
+                                <span class="text-xl">📚</span>
+                                <span class="text-[10px] font-semibold">Múltiple</span>
+                            </button>
+                            <button onclick="selectMode('statement')" class="flex-1 flex flex-col items-center gap-1 py-3 px-4 transition-all hover:bg-opacity-80" style="color: var(--text-tertiary);">
+                                <span class="text-xl">💳</span>
+                                <span class="text-[10px] font-semibold">Cuenta</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 9: Floating Chips (Bubble)
+                     ============================================ -->
+                <div class="hidden absolute bottom-[68px] left-1/2 -translate-x-1/2 z-[100]" id="popup9">
+                    <div class="flex gap-2 p-2 rounded-full shadow-xl border" style="background: var(--bg-secondary); border-color: var(--border-light);">
+                        <button onclick="selectMode('single')" class="flex items-center gap-1.5 pl-2 pr-3 py-2 rounded-full text-white text-xs font-semibold hover:scale-105 transition-transform shadow-md" style="background: linear-gradient(135deg, var(--primary), var(--primary-hover));">
+                            <span>📷</span>
+                            <span>Único</span>
+                        </button>
+                        <button onclick="selectMode('batch')" class="flex items-center gap-1.5 pl-2 pr-3 py-2 rounded-full text-white text-xs font-semibold hover:scale-105 transition-transform shadow-md" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);">
+                            <span>📚</span>
+                            <span>Múltiple</span>
+                        </button>
+                        <button onclick="selectMode('statement')" class="flex items-center gap-1.5 pl-2 pr-3 py-2 rounded-full text-white text-xs font-semibold hover:scale-105 transition-transform shadow-md" style="background: linear-gradient(135deg, #a78bfa, #7c3aed);">
+                            <span>💳</span>
+                            <span>Cuenta</span>
+                        </button>
+                    </div>
+                    <!-- Arrow pointing to FAB -->
+                    <div class="flex justify-center">
+                        <div class="w-3 h-3 rotate-45 -mt-1.5 border-r border-b" style="background: var(--bg-secondary); border-color: var(--border-light);"></div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 10: Radial Arc Menu
+                     ============================================ -->
+                <div class="hidden absolute bottom-[56px] left-1/2 -translate-x-1/2 z-[100]" id="popup10" style="width: 200px; height: 120px;">
+                    <!-- Single (left arc position) -->
+                    <button onclick="selectMode('single')" class="absolute left-0 bottom-0 flex flex-col items-center gap-1 hover:scale-110 transition-transform" style="animation: arcLeft 0.3s ease-out;">
+                        <div class="w-12 h-12 rounded-full text-white flex items-center justify-center shadow-lg text-xl" style="background: linear-gradient(135deg, var(--primary), var(--primary-hover));">📷</div>
+                        <span class="text-[10px] font-semibold" style="color: var(--text-primary);">Único</span>
+                    </button>
+                    <!-- Batch (center top position) -->
+                    <button onclick="selectMode('batch')" class="absolute left-1/2 -translate-x-1/2 top-0 flex flex-col items-center gap-1 hover:scale-110 transition-transform" style="animation: arcTop 0.3s ease-out;">
+                        <div class="w-12 h-12 rounded-full text-white flex items-center justify-center shadow-lg text-xl" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);">📚</div>
+                        <span class="text-[10px] font-semibold" style="color: var(--text-primary);">Múltiple</span>
+                    </button>
+                    <!-- Statement (right arc position) -->
+                    <button onclick="selectMode('statement')" class="absolute right-0 bottom-0 flex flex-col items-center gap-1 hover:scale-110 transition-transform" style="animation: arcRight 0.3s ease-out;">
+                        <div class="w-12 h-12 rounded-full text-white flex items-center justify-center shadow-lg text-xl" style="background: linear-gradient(135deg, #a78bfa, #7c3aed);">💳</div>
+                        <span class="text-[10px] font-semibold" style="color: var(--text-primary);">Cuenta</span>
+                    </button>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 11: Drawer Compact (Smaller icons, horizontal layout)
+                     ============================================ -->
+                <div class="hidden absolute bottom-16 left-0 right-0 z-[100] rounded-t-2xl shadow-2xl border-t" id="popup11" style="background: var(--bg-secondary); border-color: var(--border-light);">
+                    <div class="flex justify-center py-2">
+                        <div class="w-8 h-1 rounded-full" style="background: var(--border-light);"></div>
+                    </div>
+                    <div class="px-3 pb-3">
+                        <div class="flex gap-2">
+                            <button onclick="selectMode('single')" class="flex-1 flex items-center gap-2 p-2.5 rounded-xl hover:opacity-80 transition" style="background: var(--bg-tertiary);">
+                                <div class="w-9 h-9 rounded-lg flex items-center justify-center text-lg" style="background: rgba(74, 124, 89, 0.2);">📷</div>
+                                <div class="text-left">
+                                    <div class="text-xs font-semibold" style="color: var(--text-primary);">Único</div>
+                                    <div class="text-[10px]" style="color: var(--text-tertiary);">1 recibo</div>
+                                </div>
+                            </button>
+                            <button onclick="selectMode('batch')" class="flex-1 flex items-center gap-2 p-2.5 rounded-xl hover:opacity-80 transition" style="background: var(--bg-tertiary);">
+                                <div class="w-9 h-9 rounded-lg flex items-center justify-center text-lg" style="background: rgba(245, 158, 11, 0.2);">📚</div>
+                                <div class="text-left">
+                                    <div class="text-xs font-semibold" style="color: var(--text-primary);">Múltiple</div>
+                                    <div class="text-[10px]" style="color: var(--text-tertiary);">Varios</div>
+                                </div>
+                            </button>
+                            <button onclick="selectMode('statement')" class="flex-1 flex items-center gap-2 p-2.5 rounded-xl hover:opacity-80 transition" style="background: var(--bg-tertiary);">
+                                <div class="w-9 h-9 rounded-lg flex items-center justify-center text-lg" style="background: rgba(124, 58, 237, 0.2);">💳</div>
+                                <div class="text-left">
+                                    <div class="text-xs font-semibold" style="color: var(--text-primary);">Cuenta</div>
+                                    <div class="text-[10px]" style="color: var(--text-tertiary);">Pronto</div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 12: Drawer with Colored Backgrounds
+                     ============================================ -->
+                <div class="hidden absolute bottom-16 left-0 right-0 z-[100] rounded-t-3xl shadow-2xl" id="popup12" style="background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);">
+                    <div class="flex justify-center py-3">
+                        <div class="w-12 h-1.5 rounded-full" style="background: var(--border-medium);"></div>
+                    </div>
+                    <div class="px-4 pb-5">
+                        <div class="space-y-2">
+                            <button onclick="selectMode('single')" class="w-full flex items-center gap-4 p-4 rounded-2xl text-white hover:scale-[1.02] transition-transform shadow-lg" style="background: linear-gradient(135deg, #4a7c59 0%, #3d6b4a 100%);">
+                                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl bg-white/20 backdrop-blur-sm">📷</div>
+                                <div class="text-left flex-1">
+                                    <div class="font-bold text-base">Escaneo único</div>
+                                    <div class="text-sm opacity-80">Captura un recibo rápido</div>
+                                </div>
+                            </button>
+                            <button onclick="selectMode('batch')" class="w-full flex items-center gap-4 p-4 rounded-2xl text-white hover:scale-[1.02] transition-transform shadow-lg" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl bg-white/20 backdrop-blur-sm">📚</div>
+                                <div class="text-left flex-1">
+                                    <div class="font-bold text-base">Escaneo múltiple</div>
+                                    <div class="text-sm opacity-80">Varios recibos a la vez</div>
+                                </div>
+                            </button>
+                            <button onclick="selectMode('statement')" class="w-full flex items-center gap-4 p-4 rounded-2xl text-white hover:scale-[1.02] transition-transform shadow-lg opacity-70" style="background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);">
+                                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl bg-white/20 backdrop-blur-sm">💳</div>
+                                <div class="text-left flex-1">
+                                    <div class="font-bold text-base">Estado de cuenta</div>
+                                    <div class="text-sm opacity-80">Próximamente</div>
+                                </div>
+                                <span class="text-[10px] font-bold px-2 py-1 rounded-full bg-white/30">PRONTO</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 13: Drawer Glass Morphism
+                     ============================================ -->
+                <div class="hidden absolute bottom-16 left-0 right-0 z-[100] rounded-t-2xl shadow-2xl border-t backdrop-blur-xl" id="popup13" style="background: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.3);">
+                    <div class="flex justify-center py-2">
+                        <div class="w-10 h-1 rounded-full bg-gray-300"></div>
+                    </div>
+                    <div class="px-4 pb-4">
+                        <div class="text-[10px] font-bold uppercase tracking-widest mb-3 text-gray-400">Modo de escaneo</div>
+                        <div class="space-y-1.5">
+                            <button onclick="selectMode('single')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/60 transition backdrop-blur-sm" style="background: rgba(74, 124, 89, 0.1); border: 1px solid rgba(74, 124, 89, 0.2);">
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-sm" style="background: linear-gradient(135deg, #4a7c59, #3d6b4a);">
+                                    <span class="text-white text-sm">📷</span>
+                                </div>
+                                <div class="flex-1 text-left">
+                                    <div class="font-semibold text-sm text-gray-800">Único</div>
+                                </div>
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </button>
+                            <button onclick="selectMode('batch')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/60 transition backdrop-blur-sm" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2);">
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-sm" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);">
+                                    <span class="text-white text-sm">📚</span>
+                                </div>
+                                <div class="flex-1 text-left">
+                                    <div class="font-semibold text-sm text-gray-800">Múltiple</div>
+                                </div>
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </button>
+                            <button onclick="selectMode('statement')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/60 transition backdrop-blur-sm" style="background: rgba(124, 58, 237, 0.1); border: 1px solid rgba(124, 58, 237, 0.2);">
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-sm" style="background: linear-gradient(135deg, #a78bfa, #7c3aed);">
+                                    <span class="text-white text-sm">💳</span>
+                                </div>
+                                <div class="flex-1 text-left">
+                                    <div class="font-semibold text-sm text-gray-800">Cuenta</div>
+                                </div>
+                                <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-violet-100 text-violet-600">Pronto</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 14: Segmented Large with Icons
+                     ============================================ -->
+                <div class="mode-selector-popup hidden" id="popup14" style="min-width: 280px;">
+                    <div class="p-2 rounded-2xl" style="background: var(--bg-tertiary);">
+                        <div class="flex rounded-xl overflow-hidden shadow-inner" style="background: var(--bg-secondary);">
+                            <button onclick="selectMode('single')" class="flex-1 flex flex-col items-center gap-2 py-4 px-3 transition-all" style="background: var(--primary); color: white;">
+                                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-2xl bg-white/20">📷</div>
+                                <span class="text-xs font-bold">Único</span>
+                            </button>
+                            <button onclick="selectMode('batch')" class="flex-1 flex flex-col items-center gap-2 py-4 px-3 transition-all border-x" style="border-color: var(--border-light); color: var(--text-primary);">
+                                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-2xl" style="background: var(--bg-tertiary);">📚</div>
+                                <span class="text-xs font-bold">Múltiple</span>
+                            </button>
+                            <button onclick="selectMode('statement')" class="flex-1 flex flex-col items-center gap-2 py-4 px-3 transition-all" style="color: var(--text-tertiary);">
+                                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-2xl" style="background: var(--bg-tertiary);">💳</div>
+                                <span class="text-xs font-bold">Cuenta</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 15: Segmented Pills (Rounded)
+                     ============================================ -->
+                <div class="mode-selector-popup hidden" id="popup15" style="min-width: auto;">
+                    <div class="p-1 rounded-full shadow-lg" style="background: var(--bg-tertiary);">
+                        <div class="flex gap-1">
+                            <button onclick="selectMode('single')" class="flex items-center gap-1.5 py-2.5 px-4 rounded-full transition-all text-white font-semibold text-xs" style="background: var(--primary);">
+                                <span>📷</span>
+                                <span>Único</span>
+                            </button>
+                            <button onclick="selectMode('batch')" class="flex items-center gap-1.5 py-2.5 px-4 rounded-full transition-all font-semibold text-xs hover:bg-white/50" style="color: var(--text-primary);">
+                                <span>📚</span>
+                                <span>Múltiple</span>
+                            </button>
+                            <button onclick="selectMode('statement')" class="flex items-center gap-1.5 py-2.5 px-4 rounded-full transition-all font-semibold text-xs hover:bg-white/50" style="color: var(--text-tertiary);">
+                                <span>💳</span>
+                                <span>Cuenta</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 16: Segmented with Color Indicators
+                     ============================================ -->
+                <div class="mode-selector-popup hidden" id="popup16" style="min-width: 260px;">
+                    <div class="p-1.5 rounded-xl shadow-lg border" style="background: var(--bg-secondary); border-color: var(--border-light);">
+                        <div class="flex gap-1">
+                            <button onclick="selectMode('single')" class="flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-lg transition-all" style="background: rgba(74, 124, 89, 0.15);">
+                                <div class="w-2 h-2 rounded-full" style="background: #4a7c59;"></div>
+                                <span class="text-xl">📷</span>
+                                <span class="text-[10px] font-bold" style="color: #4a7c59;">Único</span>
+                            </button>
+                            <button onclick="selectMode('batch')" class="flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-lg transition-all hover:bg-amber-50">
+                                <div class="w-2 h-2 rounded-full" style="background: #f59e0b;"></div>
+                                <span class="text-xl">📚</span>
+                                <span class="text-[10px] font-bold" style="color: var(--text-secondary);">Múltiple</span>
+                            </button>
+                            <button onclick="selectMode('statement')" class="flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-lg transition-all hover:bg-violet-50">
+                                <div class="w-2 h-2 rounded-full" style="background: #7c3aed;"></div>
+                                <span class="text-xl">💳</span>
+                                <span class="text-[10px] font-bold" style="color: var(--text-tertiary);">Cuenta</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 17: Drawer Mini (Icon-only row)
+                     ============================================ -->
+                <div class="hidden absolute bottom-16 left-0 right-0 z-[100] rounded-t-xl shadow-xl border-t" id="popup17" style="background: var(--bg-secondary); border-color: var(--border-light);">
+                    <div class="flex justify-center py-1.5">
+                        <div class="w-6 h-0.5 rounded-full" style="background: var(--border-light);"></div>
+                    </div>
+                    <div class="flex justify-center gap-4 px-4 pb-3">
+                        <button onclick="selectMode('single')" class="flex flex-col items-center gap-1 hover:scale-110 transition-transform">
+                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-md" style="background: linear-gradient(135deg, var(--primary), var(--primary-hover));">
+                                <span class="text-white">📷</span>
+                            </div>
+                            <span class="text-[10px] font-semibold" style="color: var(--text-primary);">Único</span>
+                        </button>
+                        <button onclick="selectMode('batch')" class="flex flex-col items-center gap-1 hover:scale-110 transition-transform">
+                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-md" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);">
+                                <span class="text-white">📚</span>
+                            </div>
+                            <span class="text-[10px] font-semibold" style="color: var(--text-primary);">Múltiple</span>
+                        </button>
+                        <button onclick="selectMode('statement')" class="flex flex-col items-center gap-1 hover:scale-110 transition-transform">
+                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-md" style="background: linear-gradient(135deg, #a78bfa, #7c3aed);">
+                                <span class="text-white">💳</span>
+                            </div>
+                            <span class="text-[10px] font-semibold" style="color: var(--text-primary);">Cuenta</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 18: Segmented Vertical Stack
+                     ============================================ -->
+                <div class="mode-selector-popup hidden" id="popup18" style="min-width: 200px;">
+                    <div class="p-1 rounded-xl" style="background: var(--bg-tertiary);">
+                        <div class="flex flex-col gap-0.5">
+                            <button onclick="selectMode('single')" class="flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all text-white" style="background: var(--primary);">
+                                <span class="text-lg">📷</span>
+                                <span class="text-sm font-semibold flex-1 text-left">Único</span>
+                                <svg class="w-4 h-4 opacity-80" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            </button>
+                            <button onclick="selectMode('batch')" class="flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all hover:bg-white/80" style="background: var(--bg-secondary); color: var(--text-primary);">
+                                <span class="text-lg">📚</span>
+                                <span class="text-sm font-semibold flex-1 text-left">Múltiple</span>
+                            </button>
+                            <button onclick="selectMode('statement')" class="flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all hover:bg-white/80" style="background: var(--bg-secondary); color: var(--text-tertiary);">
+                                <span class="text-lg">💳</span>
+                                <span class="text-sm font-semibold flex-1 text-left">Cuenta</span>
+                                <span class="text-[8px] font-bold px-1.5 py-0.5 rounded" style="background: var(--primary-light); color: var(--primary);">PRONTO</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 19: Floating Card with Credits (V1 - Compact)
+                     ============================================ -->
+                <div class="hidden absolute bottom-[72px] left-3 right-3 z-[100] rounded-2xl shadow-2xl border overflow-hidden" id="popup19" style="background: var(--bg-secondary); border-color: var(--border-light);">
+                    <!-- Header with credits -->
+                    <div class="flex items-center justify-between px-4 py-2 border-b" style="background: var(--bg-tertiary); border-color: var(--border-light);">
+                        <span class="text-xs font-semibold uppercase tracking-wide" style="color: var(--text-tertiary);">Modo de escaneo</span>
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 border border-amber-300">
+                                <svg class="w-3 h-3 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/></svg>
+                                <span class="text-[10px] font-bold text-amber-700">96</span>
+                            </div>
+                            <div class="flex items-center gap-1 px-2 py-0.5 rounded-full border" style="background: var(--bg-secondary); border-color: var(--border-light);">
+                                <svg class="w-3 h-3" style="color: var(--text-tertiary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                                <span class="text-[10px] font-bold" style="color: var(--text-secondary);">1K</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Options -->
+                    <div class="p-3 space-y-2">
+                        <!-- Single Scan - Uses normal credits (1K) -->
+                        <button onclick="selectMode('single')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:scale-[1.01] transition-transform" style="background: var(--bg-tertiary);">
+                            <div class="w-11 h-11 rounded-xl flex items-center justify-center shadow-sm" style="background: linear-gradient(135deg, var(--primary), var(--primary-hover));">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            </div>
+                            <div class="flex-1 text-left">
+                                <div class="font-semibold text-sm" style="color: var(--text-primary);">Escaneo único</div>
+                                <div class="text-[11px]" style="color: var(--text-tertiary);">Un recibo a la vez</div>
+                            </div>
+                            <div class="flex items-center gap-1 px-2 py-1 rounded-full border" style="background: var(--bg-secondary); border-color: var(--border-light);">
+                                <span class="text-[10px] font-semibold" style="color: var(--text-secondary);">1 crédito</span>
+                            </div>
+                        </button>
+                        <!-- Batch Scan - Uses super credits (96) -->
+                        <button onclick="selectMode('batch')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:scale-[1.01] transition-transform" style="background: var(--bg-tertiary);">
+                            <div class="w-11 h-11 rounded-xl flex items-center justify-center shadow-sm" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                            </div>
+                            <div class="flex-1 text-left">
+                                <div class="font-semibold text-sm" style="color: var(--text-primary);">Escaneo múltiple</div>
+                                <div class="text-[11px]" style="color: var(--text-tertiary);">Varios recibos a la vez</div>
+                            </div>
+                            <div class="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-100 border border-amber-300">
+                                <svg class="w-3 h-3 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/></svg>
+                                <span class="text-[10px] font-semibold text-amber-700">1 super</span>
+                            </div>
+                        </button>
+                        <!-- Statement - Uses super credits -->
+                        <button onclick="selectMode('statement')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:scale-[1.01] transition-transform opacity-80" style="background: var(--bg-tertiary);">
+                            <div class="w-11 h-11 rounded-xl flex items-center justify-center shadow-sm" style="background: linear-gradient(135deg, #a78bfa, #7c3aed);">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                            </div>
+                            <div class="flex-1 text-left">
+                                <div class="font-semibold text-sm" style="color: var(--text-primary);">Estado de cuenta</div>
+                                <div class="text-[11px]" style="color: var(--text-tertiary);">Próximamente</div>
+                            </div>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded-full" style="background: var(--primary-light); color: var(--primary);">Pronto</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 20: Floating Card with Credits (V2 - Larger icons)
+                     ============================================ -->
+                <div class="hidden absolute bottom-[72px] left-4 right-4 z-[100] rounded-3xl shadow-2xl border overflow-hidden" id="popup20" style="background: var(--bg-secondary); border-color: var(--border-light);">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between px-4 py-3" style="background: var(--bg-tertiary);">
+                        <span class="text-sm font-bold" style="color: var(--text-primary);">Seleccionar modo</span>
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200">
+                                <svg class="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/></svg>
+                                <span class="text-xs font-bold text-amber-600">96</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style="background: var(--bg-secondary); border: 1px solid var(--border-light);">
+                                <svg class="w-3.5 h-3.5" style="color: var(--primary);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                                <span class="text-xs font-bold" style="color: var(--text-primary);">1K</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Options -->
+                    <div class="p-4 space-y-3">
+                        <!-- Single -->
+                        <button onclick="selectMode('single')" class="w-full flex items-center gap-4 p-4 rounded-2xl hover:scale-[1.02] transition-transform border" style="background: var(--bg-tertiary); border-color: var(--border-light);">
+                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg" style="background: linear-gradient(135deg, var(--primary), var(--primary-hover));">
+                                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            </div>
+                            <div class="flex-1 text-left">
+                                <div class="font-bold" style="color: var(--text-primary);">Escaneo único</div>
+                                <div class="text-xs mt-0.5" style="color: var(--text-secondary);">Captura un recibo rápidamente</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs font-semibold" style="color: var(--primary);">1 crédito</div>
+                            </div>
+                        </button>
+                        <!-- Batch -->
+                        <button onclick="selectMode('batch')" class="w-full flex items-center gap-4 p-4 rounded-2xl hover:scale-[1.02] transition-transform border" style="background: var(--bg-tertiary); border-color: var(--border-light);">
+                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);">
+                                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                            </div>
+                            <div class="flex-1 text-left">
+                                <div class="font-bold" style="color: var(--text-primary);">Escaneo múltiple</div>
+                                <div class="text-xs mt-0.5" style="color: var(--text-secondary);">Varios recibos a la vez</div>
+                            </div>
+                            <div class="text-right flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/></svg>
+                                <span class="text-xs font-semibold text-amber-600">1 super</span>
+                            </div>
+                        </button>
+                        <!-- Statement -->
+                        <button onclick="selectMode('statement')" class="w-full flex items-center gap-4 p-4 rounded-2xl hover:scale-[1.02] transition-transform border opacity-70" style="background: var(--bg-tertiary); border-color: var(--border-light);">
+                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg" style="background: linear-gradient(135deg, #a78bfa, #7c3aed);">
+                                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                            </div>
+                            <div class="flex-1 text-left">
+                                <div class="font-bold" style="color: var(--text-primary);">Estado de cuenta</div>
+                                <div class="text-xs mt-0.5" style="color: var(--text-secondary);">Importar extracto bancario</div>
+                            </div>
+                            <span class="text-[10px] font-bold px-2.5 py-1 rounded-full" style="background: var(--primary-light); color: var(--primary);">Pronto</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 21: Floating Card Minimal (V3 - Clean)
+                     ============================================ -->
+                <div class="hidden absolute bottom-[72px] left-3 right-3 z-[100] rounded-2xl shadow-2xl overflow-hidden" id="popup21" style="background: var(--bg-secondary);">
+                    <!-- Credits bar -->
+                    <div class="flex items-center justify-center gap-4 px-4 py-2.5 border-b" style="border-color: var(--border-light);">
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center">
+                                <svg class="w-3 h-3 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/></svg>
+                            </div>
+                            <span class="text-xs font-bold" style="color: var(--text-primary);">96 super</span>
+                        </div>
+                        <div class="w-px h-4" style="background: var(--border-light);"></div>
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-5 h-5 rounded-full flex items-center justify-center" style="background: var(--primary-light);">
+                                <svg class="w-3 h-3" style="color: var(--primary);" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                            </div>
+                            <span class="text-xs font-bold" style="color: var(--text-primary);">1K normal</span>
+                        </div>
+                    </div>
+                    <!-- Options as simple rows -->
+                    <div class="divide-y" style="border-color: var(--border-light);">
+                        <button onclick="selectMode('single')" class="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-black/5 transition">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, var(--primary), var(--primary-hover));">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            </div>
+                            <div class="flex-1 text-left">
+                                <span class="font-semibold text-sm" style="color: var(--text-primary);">Único</span>
+                            </div>
+                            <span class="text-xs" style="color: var(--text-tertiary);">1 crédito</span>
+                            <svg class="w-4 h-4" style="color: var(--text-tertiary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                        <button onclick="selectMode('batch')" class="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-black/5 transition">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                            </div>
+                            <div class="flex-1 text-left">
+                                <span class="font-semibold text-sm" style="color: var(--text-primary);">Múltiple</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <svg class="w-3 h-3 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/></svg>
+                                <span class="text-xs text-amber-600">1 super</span>
+                            </div>
+                            <svg class="w-4 h-4" style="color: var(--text-tertiary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                        <button onclick="selectMode('statement')" class="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-black/5 transition opacity-60">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #a78bfa, #7c3aed);">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                            </div>
+                            <div class="flex-1 text-left">
+                                <span class="font-semibold text-sm" style="color: var(--text-primary);">Cuenta</span>
+                            </div>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background: var(--primary-light); color: var(--primary);">Pronto</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ============================================
+                     POPUP STYLE 22: Floating Card Dark Glass
+                     ============================================ -->
+                <div class="hidden absolute bottom-[72px] left-2 right-2 z-[100] rounded-3xl shadow-2xl overflow-hidden backdrop-blur-xl" id="popup22" style="background: rgba(30,30,30,0.95);">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
+                        <span class="text-sm font-semibold text-white/90">Seleccionar modo</span>
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/20">
+                                <svg class="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/></svg>
+                                <span class="text-[10px] font-bold text-amber-400">96</span>
+                            </div>
+                            <div class="flex items-center gap-1 px-2 py-1 rounded-full bg-white/10">
+                                <svg class="w-3 h-3 text-white/60" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                                <span class="text-[10px] font-bold text-white/80">1K</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Options -->
+                    <div class="p-3 space-y-2">
+                        <button onclick="selectMode('single')" class="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-white/10 transition">
+                            <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #4a7c59, #3d6b4a);">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            </div>
+                            <div class="flex-1 text-left">
+                                <div class="font-semibold text-white">Escaneo único</div>
+                                <div class="text-xs text-white/50">Un recibo</div>
+                            </div>
+                            <span class="text-xs text-white/40">1 crédito</span>
+                        </button>
+                        <button onclick="selectMode('batch')" class="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-white/10 transition">
+                            <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #fbbf24, #d97706);">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                            </div>
+                            <div class="flex-1 text-left">
+                                <div class="font-semibold text-white">Escaneo múltiple</div>
+                                <div class="text-xs text-white/50">Varios recibos</div>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <svg class="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/></svg>
+                                <span class="text-xs text-amber-400">1</span>
+                            </div>
+                        </button>
+                        <button onclick="selectMode('statement')" class="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-white/10 transition opacity-50">
+                            <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #a78bfa, #7c3aed);">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                            </div>
+                            <div class="flex-1 text-left">
+                                <div class="font-semibold text-white">Estado de cuenta</div>
+                                <div class="text-xs text-white/50">Próximamente</div>
+                            </div>
+                            <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-violet-500/30 text-violet-300">PRONTO</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bottom Navigation -->
+                <nav class="flex items-end justify-around py-2 px-4 pb-3 border-t" style="background: var(--bg); border-color: var(--border-medium);">
+                    <button class="flex flex-col items-center gap-0.5 px-2 py-1" style="color: var(--primary);">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 22V12h6v10"/></svg>
+                        <span class="text-[10px] font-semibold">Inicio</span>
+                    </button>
+
+                    <button class="flex flex-col items-center gap-0.5 px-2 py-1" style="color: var(--text-tertiary);">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                        <span class="text-[10px] font-medium">Analíticas</span>
+                    </button>
+
+                    <!-- FAB -->
+                    <div class="relative -mt-10">
+                        <button id="fabButton" onclick="togglePopup()" class="fab--single w-[52px] h-[52px] rounded-full text-white flex items-center justify-center shadow-lg relative overflow-hidden">
+                            <svg id="fabIconCamera" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            <svg id="fabIconLayers" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                            <svg id="fabIconCard" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                            <svg id="fabIconAlert" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        </button>
+                        <span class="absolute -bottom-0.5 -left-2.5 px-1 py-px rounded-full text-[10px] font-semibold bg-amber-400 text-amber-900 border border-amber-500 shadow-sm">96</span>
+                        <span class="absolute -bottom-0.5 -right-2.5 px-1 py-px rounded-full text-[10px] font-semibold border shadow-sm" style="background: var(--bg); color: var(--text-primary); border-color: var(--border-light);">1K</span>
+                    </div>
+
+                    <button class="flex flex-col items-center gap-0.5 px-2 py-1" style="color: var(--text-tertiary);">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 18h6M10 22h4M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>
+                        <span class="text-[10px] font-medium">Ideas</span>
+                    </button>
+
+                    <button class="flex flex-col items-center gap-0.5 px-2 py-1" style="color: var(--text-tertiary);">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        <span class="text-[10px] font-medium">Alertas</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'light';
+        let currentPopupStyle = '1';
+
+        function setTheme(theme) {
+            document.body.setAttribute('data-theme', theme);
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.body.setAttribute('data-mode', mode);
+        }
+
+        function toggleMode() {
+            setMode(currentMode === 'light' ? 'dark' : 'light');
+        }
+
+        function setFabState(state) {
+            const fab = document.getElementById('fabButton');
+            const icons = ['fabIconCamera', 'fabIconLayers', 'fabIconCard', 'fabIconAlert'];
+            icons.forEach(id => document.getElementById(id).classList.add('hidden'));
+
+            fab.className = 'w-[52px] h-[52px] rounded-full text-white flex items-center justify-center shadow-lg relative overflow-hidden';
+
+            switch (state) {
+                case 'single-idle':
+                    fab.classList.add('fab--single');
+                    document.getElementById('fabIconCamera').classList.remove('hidden');
+                    break;
+                case 'single-processing':
+                    fab.classList.add('fab--single', 'fab--processing');
+                    document.getElementById('fabIconCamera').classList.remove('hidden');
+                    break;
+                case 'batch-idle':
+                    fab.classList.add('fab--batch');
+                    document.getElementById('fabIconLayers').classList.remove('hidden');
+                    break;
+                case 'batch-processing':
+                    fab.classList.add('fab--batch', 'fab--processing');
+                    document.getElementById('fabIconLayers').classList.remove('hidden');
+                    break;
+                case 'statement-idle':
+                    fab.classList.add('fab--statement');
+                    document.getElementById('fabIconCard').classList.remove('hidden');
+                    break;
+                case 'error':
+                    fab.classList.add('fab--error');
+                    document.getElementById('fabIconAlert').classList.remove('hidden');
+                    break;
+            }
+        }
+
+        function setPopupStyle(style) {
+            currentPopupStyle = style;
+            // Hide all popups first
+            for (let i = 1; i <= 22; i++) {
+                const popup = document.getElementById('popup' + i);
+                if (popup) popup.classList.add('hidden');
+            }
+        }
+
+        function togglePopup() {
+            const popup = document.getElementById('popup' + currentPopupStyle);
+            const backdrop = document.getElementById('backdrop');
+
+            if (!popup) return;
+
+            const isHidden = popup.classList.contains('hidden');
+
+            // Hide all popups first
+            for (let i = 1; i <= 22; i++) {
+                const p = document.getElementById('popup' + i);
+                if (p) p.classList.add('hidden');
+            }
+
+            // Show the selected one
+            popup.classList.toggle('hidden', !isHidden);
+            backdrop.classList.toggle('hidden', !isHidden);
+        }
+
+        function selectMode(mode) {
+            togglePopup();
+            if (mode === 'single') setFabState('single-idle');
+            else if (mode === 'batch') setFabState('batch-idle');
+            else if (mode === 'statement') setFabState('statement-idle');
+        }
+    </script>
+</body>
+</html>

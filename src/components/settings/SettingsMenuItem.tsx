@@ -1,6 +1,7 @@
 /**
  * SettingsMenuItem Component
  * Story 14.22: Reusable menu item for the hierarchical settings view
+ * Story 14.37: Font size scaling support
  *
  * Displays an icon, title, subtitle, and chevron for navigation
  * Matches the design from settings.html mockup
@@ -11,6 +12,7 @@ import {
     ChevronRight,
     CircleAlert,
     User,
+    Users,
     Settings,
     Camera,
     CreditCard,
@@ -25,7 +27,7 @@ export interface SettingsMenuItemProps {
     /** Translation key for the subtitle */
     subtitle: string;
     /** Lucide icon name - matches mockup settings.html */
-    icon: 'circle-alert' | 'user' | 'settings' | 'camera' | 'credit-card' | 'book-open' | 'smartphone' | 'database';
+    icon: 'circle-alert' | 'user' | 'users' | 'settings' | 'camera' | 'credit-card' | 'book-open' | 'smartphone' | 'database';
     /** Background color for the icon container */
     iconBgColor: string;
     /** Icon stroke color */
@@ -40,6 +42,7 @@ export interface SettingsMenuItemProps {
 const iconMap = {
     'circle-alert': CircleAlert,
     'user': User,
+    'users': Users,
     'settings': Settings,
     'camera': Camera,
     'credit-card': CreditCard,
@@ -83,17 +86,23 @@ export const SettingsMenuItem: React.FC<SettingsMenuItemProps> = ({
                 <IconComponent size={20} color={iconColor} strokeWidth={2} />
             </div>
 
-            {/* Title and subtitle */}
+            {/* Title and subtitle - Story 14.37: Font size scaling */}
             <div className="flex-1 text-left">
                 <div
-                    className="text-sm font-semibold"
-                    style={{ color: 'var(--text-primary)' }}
+                    className="font-semibold"
+                    style={{
+                        color: 'var(--text-primary)',
+                        fontSize: 'var(--font-size-sm)',
+                    }}
                 >
                     {title}
                 </div>
                 <div
-                    className="text-xs mt-0.5"
-                    style={{ color: 'var(--text-secondary)' }}
+                    className="mt-0.5"
+                    style={{
+                        color: 'var(--text-secondary)',
+                        fontSize: 'var(--font-size-xs)',
+                    }}
                 >
                     {subtitle}
                 </div>

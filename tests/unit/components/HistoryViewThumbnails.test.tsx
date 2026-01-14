@@ -11,12 +11,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '../../setup/test-utils'
 import { HistoryView } from '../../../src/views/HistoryView'
-import { HistoryFiltersProvider } from '../../../src/contexts/HistoryFiltersContext'
+import { HistoryFiltersProvider, type HistoryFilterState } from '../../../src/contexts/HistoryFiltersContext'
+
+/**
+ * Story 14.30.5a: Fixed temporal filter issue.
+ *
+ * The default filter state uses the current month, but test transactions
+ * have dates in January 2024. We need to set the temporal filter to 'all'
+ * so transactions from any date are displayed.
+ */
+const testFilterState: HistoryFilterState = {
+  temporal: { level: 'all' },
+  category: { level: 'all' },
+  location: {},
+  group: {},
+}
 
 // Helper to render HistoryView with required provider
 const renderHistoryView = (props: React.ComponentProps<typeof HistoryView>) => {
   return render(
-    <HistoryFiltersProvider>
+    <HistoryFiltersProvider initialState={testFilterState}>
       <HistoryView {...props} />
     </HistoryFiltersProvider>
   )

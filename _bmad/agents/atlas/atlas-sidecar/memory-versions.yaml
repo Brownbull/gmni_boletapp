@@ -3,8 +3,9 @@
 
 metadata:
   created: 2026-01-06T10:30:00Z
-  last_optimization: 2026-01-07T12:00:00Z
-  current_generation: 2
+  last_optimization: 2026-01-12T18:45:00Z
+  last_sync: 2026-01-12T18:45:00Z
+  current_generation: 4
 
 versions:
   - generation: 1
@@ -31,6 +32,32 @@ versions:
       - "Removed redundant Code Review Learnings (reference 06-lessons.md and story files)"
       - "Consolidated pre-2026 sync history into epic summaries"
       - "Updated current development status with React Query completion"
+
+  - generation: 3
+    timestamp: 2026-01-10T12:00:00Z
+    backup_path: ./backups/v3/
+    token_count_before: 36800
+    token_count_after: 11900
+    optimization_type: full
+    changes_summary:
+      - "04-architecture.md: 59KB→8KB - Removed verbose code review learnings, consolidated patterns"
+      - "02-features.md: 13KB→5KB - Collapsed completed epic story tables"
+      - "06-lessons.md: 18KB→6KB - Consolidated story-specific learnings into pattern tables"
+      - "08-workflow-chains.md: 16KB→6KB - Simplified workflow diagrams"
+      - "09-sync-history.md: 11KB→4KB - Consolidated 111 daily entries into weekly summaries"
+      - "Protected: Core identity facts, pattern tables, decision rationale"
+
+  - generation: 4
+    timestamp: 2026-01-12T18:45:00Z
+    backup_path: ./backups/v4/
+    token_count_before: 14400
+    token_count_after: 10200
+    optimization_type: full
+    changes_summary:
+      - "04-architecture.md: Removed duplicate Epic Progress Summary section, consolidated Epic 14d ~150 lines → ~40 lines"
+      - "09-sync-history.md: Consolidated Jan 11-12 verbose session details (~230 lines → ~50 lines)"
+      - "02-features.md: Marked Epic 14d COMPLETE, collapsed story details"
+      - "Protected: Core identity facts, pattern tables, ADR decisions, critical workflow chains"
 
 restore_history: []
   # Example entry (added by memory-restore):

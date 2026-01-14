@@ -108,21 +108,10 @@ describe('ScanOverlay', () => {
       expect(screen.getByText('45%')).toBeInTheDocument();
     });
 
-    it('should show cancel button', () => {
+    // Story 14d.4e: Cancel button removed during uploading to prevent credit exploits
+    it('should NOT show cancel button during uploading (credit already deducted)', () => {
       renderOverlay({ state: 'uploading', progress: 45 });
-      expect(screen.getByRole('button', { name: /cancelar/i })).toBeInTheDocument();
-    });
-
-    it('should call onCancel when cancel clicked', async () => {
-      vi.useRealTimers();
-      const onCancel = vi.fn();
-      renderOverlay({ state: 'uploading', progress: 45, onCancel });
-
-      const user = userEvent.setup();
-      await user.click(screen.getByRole('button', { name: /cancelar/i }));
-
-      expect(onCancel).toHaveBeenCalledTimes(1);
-      vi.useFakeTimers();
+      expect(screen.queryByRole('button', { name: /cancelar/i })).not.toBeInTheDocument();
     });
 
     it('should clamp progress between 0 and 100', () => {
@@ -160,9 +149,10 @@ describe('ScanOverlay', () => {
       expect(screen.getByText('Puedes navegar mientras procesamos')).toBeInTheDocument();
     });
 
-    it('should show cancel button', () => {
+    // Story 14d.4e: Cancel button removed during processing to prevent credit exploits
+    it('should NOT show cancel button during processing (credit already deducted)', () => {
       renderOverlay({ state: 'processing' });
-      expect(screen.getByRole('button', { name: /cancelar/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /cancelar/i })).not.toBeInTheDocument();
     });
   });
 

@@ -2,6 +2,7 @@
  * InsightDetailModal - Modal showing insight details
  *
  * Story 10a.4 Enhancement: Insight detail view on click
+ * Story 14.33a.1: Theme-aware insight type colors
  *
  * Shows full insight information with option to navigate to transaction.
  * Simplified design: X close only, centered View Transaction button.
@@ -14,6 +15,8 @@ import {
   getInsightConfig,
   getIconByName,
   getInsightFallbackInfo,
+  getVisualType,
+  getVisualConfig,
 } from '../../utils/insightTypeConfig';
 
 interface InsightDetailModalProps {
@@ -49,6 +52,10 @@ export const InsightDetailModal: React.FC<InsightDetailModalProps> = ({
   // Get config based on insight type
   const config = getInsightConfig(insight.insightId, insight.category, isDark);
   const IconComponent = getIconByName(insight.icon || config.icon);
+
+  // Story 14.33a.1: Get theme-aware visual config for consistent styling
+  const visualType = getVisualType(insight.category, insight.insightId);
+  const visualConfig = getVisualConfig(visualType);
 
   // Format date
   const formatDate = (timestamp: { toDate?: () => Date }) => {
@@ -132,13 +139,13 @@ export const InsightDetailModal: React.FC<InsightDetailModalProps> = ({
 
         {/* Content */}
         <div className="p-6 pt-12 text-center">
-          {/* Icon with type-specific color */}
+          {/* Story 14.33a.1: Icon with theme-aware type-specific color */}
           <div
             className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{ backgroundColor: config.bgColor }}
+            style={{ backgroundColor: visualConfig.bgColor }}
             aria-hidden="true"
           >
-            <IconComponent size={32} style={{ color: config.color }} />
+            <IconComponent size={32} style={{ color: visualConfig.iconColor }} />
           </div>
 
           {/* Title */}
@@ -180,11 +187,12 @@ export const InsightDetailModal: React.FC<InsightDetailModalProps> = ({
                 <span className="text-xs opacity-70">{t('oldInsightData') || 'This insight was recorded before detailed tracking'}</span>
               </div>
             ) : (
+              // Story 14.33a.1: Button uses theme-aware insight type color
               <button
                 onClick={onNavigateToTransaction}
                 className="w-full py-3 px-4 rounded-xl font-medium transition-colors min-h-12 flex items-center justify-center gap-2 mb-3"
                 style={{
-                  backgroundColor: config.color,
+                  backgroundColor: visualConfig.iconColor,
                   color: 'white',
                 }}
               >

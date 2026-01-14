@@ -14,6 +14,7 @@ import { StoreCategory } from '../types/transaction';
 const CATEGORY_EMOJI_MAP: Record<StoreCategory, string> = {
   // Food & Dining
   Supermarket: '🛒',
+  Almacen: '🏪',
   Restaurant: '🍽️',
   Bakery: '🥐',
   Butcher: '🥩',

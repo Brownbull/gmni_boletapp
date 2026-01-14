@@ -27,6 +27,7 @@ import {
 } from '../services/merchantMappingService'
 import { findMerchantMatch } from '../services/merchantMatcherService'
 import { MerchantMapping, MerchantMatchResult, NewMerchantMapping } from '../types/merchantMapping'
+import type { StoreCategory } from '../types/transaction'
 
 /**
  * Capitalize each word in a string (Title Case)
@@ -47,8 +48,8 @@ export interface UseMerchantMappingsReturn {
     loading: boolean
     /** Error state */
     error: Error | null
-    /** Save a new merchant mapping (or update existing) */
-    saveMapping: (originalMerchant: string, targetMerchant: string) => Promise<string>
+    /** Save a new merchant mapping (or update existing), optionally with store category */
+    saveMapping: (originalMerchant: string, targetMerchant: string, storeCategory?: StoreCategory) => Promise<string>
     /** Delete a merchant mapping */
     deleteMapping: (mappingId: string) => Promise<void>
     /** Update an existing mapping's target merchant name (Story 9.7) */
@@ -89,8 +90,9 @@ export function useMerchantMappings(
     )
 
     // Save a new mapping or update existing
+    // v9.6.1: Now accepts optional storeCategory to learn both alias and category
     const saveMapping = useCallback(
-        async (originalMerchant: string, targetMerchant: string): Promise<string> => {
+        async (originalMerchant: string, targetMerchant: string, storeCategory?: StoreCategory): Promise<string> => {
             if (!user || !services) {
                 throw new Error('User must be authenticated to save mappings')
             }
@@ -102,6 +104,8 @@ export function useMerchantMappings(
                 originalMerchant,
                 normalizedMerchant: normalizeMerchantName(originalMerchant),
                 targetMerchant: capitalizedTarget,
+                // v9.6.1: Include storeCategory if provided
+                ...(storeCategory && { storeCategory }),
                 confidence: 1.0, // Always 1.0 for user-set mappings
                 source: 'user', // Always 'user' for MVP
                 usageCount: 0

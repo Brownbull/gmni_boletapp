@@ -179,7 +179,7 @@ export function PWASettingsSection({ t, theme, onShowToast }: PWASettingsSection
                   {t('updateApp')}
                 </span>
                 <span
-                  className="text-[10px] px-1.5 py-0.5 rounded"
+                  className="text-xs px-1.5 py-0.5 rounded"
                   style={{
                     backgroundColor: 'var(--bg-tertiary)',
                     color: 'var(--text-tertiary)',

@@ -65,6 +65,7 @@ export type StoreCategoryGroup =
 export const STORE_CATEGORY_GROUPS: Record<StoreCategory, StoreCategoryGroup> = {
   // Food & Dining
   Supermarket: 'food-dining',
+  Almacen: 'food-dining',
   Restaurant: 'food-dining',
   Bakery: 'food-dining',
   Butcher: 'food-dining',
@@ -240,6 +241,12 @@ export const STORE_CATEGORY_COLORS: Record<StoreCategory, ThemeModeColors> = {
     normal: { light: { fg: '#15803d', bg: '#dcfce7' }, dark: { fg: '#86efac', bg: '#14532d' } },
     professional: { light: { fg: '#16a34a', bg: '#dcfce7' }, dark: { fg: '#4ade80', bg: '#166534' } },
     mono: { light: { fg: '#2d8c50', bg: '#e0f2e8' }, dark: { fg: '#6dc792', bg: '#1e4a30' } },
+  },
+  Almacen: {
+    // Corner store - earthy brown tones
+    normal: { light: { fg: '#78350f', bg: '#fef3c7' }, dark: { fg: '#fde68a', bg: '#451a03' } },
+    professional: { light: { fg: '#92400e', bg: '#fef3c7' }, dark: { fg: '#fcd34d', bg: '#78350f' } },
+    mono: { light: { fg: '#8a5a20', bg: '#f8f0d8' }, dark: { fg: '#c4a050', bg: '#3a2808' } },
   },
   Restaurant: {
     normal: { light: { fg: '#c2410c', bg: '#ffedd5' }, dark: { fg: '#fdba74', bg: '#7c2d12' } },
@@ -878,18 +885,27 @@ export function getItemCategoryGroup(category: ItemCategory | string): ItemCateg
 
 /**
  * Universal function to get colors for any category (store or item).
- * First tries store categories, then item categories.
+ * Story 14.13 Session 9: Also handles Store Groups and Item Groups.
+ * Lookup order: Store Groups → Item Groups → Store Categories → Item Categories → Fallback
  */
 export function getCategoryColors(
   category: string,
   theme: ThemeName = 'normal',
   mode: ModeName = 'light'
 ): CategoryColorSet {
-  // Try store category first
+  // Try store group first (e.g., 'food-dining', 'retail-general')
+  if (category in STORE_GROUP_COLORS) {
+    return getStoreGroupColors(category as StoreCategoryGroup, theme, mode);
+  }
+  // Try item group (e.g., 'food-fresh', 'food-packaged')
+  if (category in ITEM_GROUP_COLORS) {
+    return getItemGroupColors(category as ItemCategoryGroup, theme, mode);
+  }
+  // Try store category (e.g., 'Supermarket', 'Restaurant')
   if (category in STORE_CATEGORY_COLORS) {
     return getStoreCategoryColors(category as StoreCategory, theme, mode);
   }
-  // Try item category
+  // Try item category (e.g., 'Produce', 'Meat & Seafood')
   return getItemCategoryColors(category, theme, mode);
 }
 

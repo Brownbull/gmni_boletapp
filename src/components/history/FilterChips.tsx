@@ -12,8 +12,10 @@
  */
 
 import React from 'react';
-import { X, Calendar, Tag, MapPin } from 'lucide-react';
+import { X, Calendar, Tag, MapPin, ShoppingBag } from 'lucide-react';
 import { useHistoryFilters, getTemporalFilterLabel, getCategoryFilterLabel, getLocationFilterLabel } from '../../hooks/useHistoryFilters';
+import { translateStoreCategory, translateItemGroup, translateItemCategoryGroup, getItemCategoryGroupEmoji } from '../../utils/categoryTranslations';
+import type { ItemCategoryGroup } from '../../config/categoryColors';
 import type { Language } from '../../utils/translations';
 
 // ============================================================================
@@ -46,7 +48,6 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
     hasCategoryFilter,
     hasLocationFilter,
     hasActiveFilters,
-    activeFilterCount,
   } = useHistoryFilters();
 
   if (!hasActiveFilters) {
@@ -92,10 +93,10 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
     color: 'var(--primary)',
   };
 
-  const clearButtonStyle: React.CSSProperties = {
-    backgroundColor: 'var(--bg-tertiary)',
-    borderColor: 'transparent',
-    color: 'var(--text-secondary)',
+  // Story 14.36: Stop touch event propagation to prevent temporal swipe navigation
+  // when user is scrolling through filter chips horizontally
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
   };
 
   return (
@@ -103,7 +104,23 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
       className="flex items-center gap-2 py-2 overflow-x-auto flex-nowrap scrollbar-hide"
       role="group"
       aria-label={t('activeFilters')}
+      onTouchStart={handleTouchStart}
+      onTouchMove={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
     >
+      {/* Story 14.13b: Clear All Button at start (left side) - always visible when filters active */}
+      <button
+        onClick={clearAll}
+        className="flex items-center justify-center w-7 h-7 rounded-full transition-all duration-150 cursor-pointer hover:bg-[var(--bg-tertiary)] flex-shrink-0"
+        style={{
+          color: 'var(--text-secondary)',
+        }}
+        aria-label={t('clearAllFilters') || (locale === 'es' ? 'Limpiar todos los filtros' : 'Clear all filters')}
+        data-testid="clear-all-filters-button"
+      >
+        <X size={16} strokeWidth={2.5} />
+      </button>
+
       {/* Temporal Filter Chip */}
       {hasTemporalFilter && (
         <button
@@ -118,8 +135,71 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
         </button>
       )}
 
-      {/* Category Filter Chip - Story 14.15c: Pass locale for group detection */}
-      {hasCategoryFilter && (
+      {/* Story 14.13a: When drillDownPath has both store and item filters, show separate chips */}
+      {hasCategoryFilter && category.drillDownPath && (category.drillDownPath.storeCategory || category.drillDownPath.storeGroup) && (category.drillDownPath.itemGroup || category.drillDownPath.itemCategory) ? (
+        <>
+          {/* Store Category Chip */}
+          <button
+            onClick={() => {
+              // Clear only the store part, keep item filter
+              dispatch({
+                type: 'SET_CATEGORY_FILTER',
+                payload: {
+                  level: 'all',
+                  drillDownPath: {
+                    itemGroup: category.drillDownPath?.itemGroup,
+                    itemCategory: category.drillDownPath?.itemCategory,
+                    subcategory: category.drillDownPath?.subcategory,
+                  },
+                },
+              });
+            }}
+            className={chipBase}
+            style={activeChipStyle}
+            aria-label={`${t('remove')} ${translateStoreCategory(category.drillDownPath.storeCategory || category.drillDownPath.storeGroup || '', locale as Language)}`}
+          >
+            <Tag size={14} />
+            <span style={labelStyle}>
+              {translateStoreCategory(category.drillDownPath.storeCategory || category.drillDownPath.storeGroup || '', locale as Language)}
+            </span>
+            <X size={12} className="ml-0.5" />
+          </button>
+          {/* Item Group/Category Chip */}
+          <button
+            onClick={() => {
+              // Clear only the item part, keep store filter
+              dispatch({
+                type: 'SET_CATEGORY_FILTER',
+                payload: {
+                  level: 'all',
+                  drillDownPath: {
+                    storeGroup: category.drillDownPath?.storeGroup,
+                    storeCategory: category.drillDownPath?.storeCategory,
+                  },
+                },
+              });
+            }}
+            className={chipBase}
+            style={activeChipStyle}
+            aria-label={`${t('remove')} ${category.drillDownPath.itemCategory || category.drillDownPath.itemGroup}`}
+          >
+            <ShoppingBag size={14} />
+            <span style={labelStyle}>
+              {category.drillDownPath.itemCategory
+                ? (
+                    // Translate item category (handles comma-separated multi-select)
+                    category.drillDownPath.itemCategory.includes(',')
+                      ? category.drillDownPath.itemCategory.split(',').map(c => translateItemGroup(c.trim(), locale as Language)).join(', ')
+                      : translateItemGroup(category.drillDownPath.itemCategory, locale as Language)
+                  )
+                : `${getItemCategoryGroupEmoji(category.drillDownPath.itemGroup as ItemCategoryGroup)} ${translateItemCategoryGroup(category.drillDownPath.itemGroup as ItemCategoryGroup, locale as Language)}`
+              }
+            </span>
+            <X size={12} className="ml-0.5" />
+          </button>
+        </>
+      ) : hasCategoryFilter && (
+        /* Single category filter chip (legacy or single-dimension) */
         <button
           onClick={clearCategory}
           className={chipBase}
@@ -132,31 +212,22 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
         </button>
       )}
 
-      {/* Location Filter Chip */}
+      {/* Location Filter Chip - Story 14.36: Updated to support multi-select display */}
       {hasLocationFilter && (
         <button
           onClick={clearLocation}
           className={chipBase}
           style={activeChipStyle}
-          aria-label={`${t('remove')} ${getLocationFilterLabel(location, t)}`}
+          aria-label={`${t('remove')} ${getLocationFilterLabel(location, t, locale)}`}
+          data-testid="location-filter-chip"
         >
           <MapPin size={14} />
-          <span style={labelStyle}>{getLocationFilterLabel(location, t)}</span>
+          <span style={labelStyle}>{getLocationFilterLabel(location, t, locale)}</span>
           <X size={12} className="ml-0.5" />
         </button>
       )}
 
-      {/* Clear All Button - X icon in circle */}
-      {activeFilterCount > 1 && (
-        <button
-          onClick={clearAll}
-          className="flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-150 cursor-pointer hover:opacity-80 flex-shrink-0"
-          style={clearButtonStyle}
-          aria-label={t('clearAllFilters')}
-        >
-          <X size={16} />
-        </button>
-      )}
+      {/* Story 14.13b: Clear All button moved to start of chips */}
     </div>
   );
 };

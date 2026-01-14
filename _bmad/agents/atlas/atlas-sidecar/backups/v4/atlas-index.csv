@@ -1,0 +1,10 @@
+id,section,name,description,tags,fragment_file
+purpose,1,App Purpose & Core Principles,"Application mission statement, core principles, target market, value proposition","purpose,mission,principles,identity",knowledge/01-purpose.md
+features,2,Feature Inventory + Intent,"Feature catalog with intent, connections, and dependencies","features,inventory,capabilities",knowledge/02-features.md
+personas,3,User Personas & Goals,"User personas, goals, behaviors, pain points, and mental models","personas,users,ux,goals",knowledge/03-personas.md
+architecture,4,Architectural Decisions & Patterns,"System boundaries, data flows, tech stack, patterns adopted","architecture,patterns,decisions,tech",knowledge/04-architecture.md
+testing,5,Testing Patterns & Coverage,"Test strategies, seed data patterns, workflow validations, coverage expectations","testing,e2e,coverage,seeds",knowledge/05-testing.md
+lessons,6,Historical Lessons (Retrospectives),"What worked, what failed, patterns to avoid, hard-won wisdom","retrospectives,lessons,wisdom,failures",knowledge/06-lessons.md
+process,7,Process & Strategy,"Branching strategy, testing approach, team decisions, deployment patterns","process,strategy,branching,deployment",knowledge/07-process.md
+chains,8,Workflow Chains,"User journeys mapped to component steps, upstream/downstream dependencies","workflows,chains,journeys,dependencies",knowledge/08-workflow-chains.md
+sync-history,9,Sync History,"Document sync timestamps, sources checked, drift detection","sync,history,updates,drift",knowledge/09-sync-history.md

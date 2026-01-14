@@ -18,7 +18,7 @@
  */
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { Plus, Inbox, ArrowUpDown, Filter, ChevronRight, ChevronLeft, ChevronDown, Minus, Package, X, Layers, Trash2 } from 'lucide-react';
+import { Inbox, ArrowUpDown, Filter, ChevronLeft, ChevronRight, Receipt, Package, X, Layers, Trash2 } from 'lucide-react';
 import { ImageViewer } from '../components/ImageViewer';
 // Story 10a.1: Filter bar for consolidated home view (AC #2)
 import { HistoryFilterBar } from '../components/history/HistoryFilterBar';
@@ -51,9 +51,42 @@ import { useReducedMotion } from '../hooks/useReducedMotion';
 // Story 14.21: Use unified category colors (both fg and bg for text contrast)
 // getCategoryColorsAuto - respects fontColorMode (colorful/plain) for general text
 // getCategoryPillColors - ALWAYS colorful for pills/badges/legends
-import { getCategoryColorsAuto, getCategoryBackgroundAuto, getCategoryPillColors, type ThemeName } from '../config/categoryColors';
+// Story 14.13 Session 4: Added imports for view mode groups and item categories
+import {
+    getCategoryColorsAuto,
+    getCategoryBackgroundAuto,
+    getCategoryPillColors,
+    getStoreGroupColors,
+    getItemGroupColors,
+    getCurrentTheme,
+    getCurrentMode,
+    ALL_STORE_CATEGORY_GROUPS,
+    ALL_ITEM_CATEGORY_GROUPS,
+    STORE_CATEGORY_GROUPS,
+    ITEM_CATEGORY_GROUPS,
+    ITEM_CATEGORY_TO_KEY,
+    expandStoreCategoryGroup,  // Story 14.13 Session 13: For "Más" expansion
+    expandItemCategoryGroup,   // Story 14.13 Session 13: For "Más" expansion
+    type StoreCategoryGroup,
+    type ItemCategoryGroup,
+    type ThemeName,
+} from '../config/categoryColors';
 import { getCategoryEmoji } from '../utils/categoryEmoji';
+// Story 14.13 Session 4: Category translations for view mode labels
+import {
+    translateStoreCategoryGroup,
+    translateItemCategoryGroup,
+    getStoreCategoryGroupEmoji,
+    getItemCategoryGroupEmoji,
+    getItemCategoryEmoji,
+} from '../utils/categoryTranslations';
+// Story 14.15b: Category normalization for legacy data compatibility
+import { normalizeItemCategory } from '../utils/categoryNormalizer';
+// Story 14.13: Import normalizeItemNameForGrouping for consistent unique product counting
+import { normalizeItemNameForGrouping } from '../hooks/useItems';
 import { calculateTreemapLayout } from '../utils/treemapLayout';
+// Story 14.13 Session 4: Navigation payload for treemap cell clicks
+import { HistoryNavigationPayload, DrillDownPath } from '../utils/analyticsToHistoryFilters';
 // Story 14.15b: Use consolidated TransactionCard from shared transactions folder
 import { TransactionCard } from '../components/transactions';
 // Story 14.12: Radar chart uses inline SVG (matching mockup hexagonal design)
@@ -111,6 +144,8 @@ interface DashboardViewProps {
     lang?: Language;
     /** Story 14.12: Navigate to history view */
     onViewHistory?: () => void;
+    /** Story 14.13 Session 4: Navigate to history with category filter (for treemap cell clicks) */
+    onNavigateToHistory?: (payload: HistoryNavigationPayload) => void;
     /** Story 14.14: Color theme for unified category colors */
     colorTheme?: ThemeName;
     // Story 14.15b: Selection mode props for Dashboard
@@ -120,6 +155,20 @@ interface DashboardViewProps {
     appId?: string;
     /** Callback when transactions are deleted */
     onTransactionsDeleted?: (deletedIds: string[]) => void;
+    /**
+     * v9.7.0: Recent scans for "Últimos Escaneados" carousel.
+     * Separate Firestore query ordered by createdAt (scan timestamp) instead of date.
+     * Ensures recently scanned receipts with old transaction dates appear.
+     */
+    recentScans?: Transaction[];
+    /** Story 14.13: Font color mode for category text colors (colorful vs plain) */
+    fontColorMode?: 'colorful' | 'plain';
+    /** Story 14.31: Navigate to recent scans view (Ver todo) */
+    onViewRecentScans?: () => void;
+    /** Story 14.35b: User's default country for foreign location detection */
+    defaultCountry?: string;
+    /** Story 14.35b: How to display foreign locations (code or flag) */
+    foreignLocationFormat?: 'code' | 'flag';
 }
 
 // Story 14.12: Number of recent transactions to show (collapsed/expanded)
@@ -130,6 +179,28 @@ const RECENT_TRANSACTIONS_EXPANDED = 10;
 type CarouselSlide = 0 | 1 | 2;
 // CAROUSEL_TITLES keys for translation lookup
 const CAROUSEL_TITLE_KEYS = ['thisMonthCarousel', 'monthToMonth', 'lastFourMonths'] as const;
+
+/**
+ * Story 14.13 Session 4: Treemap view mode - controls what data level is displayed
+ * - 'store-groups': Transaction category groups (Food & Dining, Health & Wellness, etc.)
+ * - 'store-categories': Transaction categories (Supermercado, Restaurante, etc.) - DEFAULT
+ * - 'item-groups': Item category groups (Fresh Food, Packaged Food, etc.)
+ * - 'item-categories': Item categories (Carnes y Mariscos, Lácteos, etc.)
+ */
+type TreemapViewMode = 'store-groups' | 'store-categories' | 'item-groups' | 'item-categories';
+
+// Story 14.13 Session 4: View mode configuration for pill selector
+const VIEW_MODE_CONFIG: Array<{
+    value: TreemapViewMode;
+    emoji: string;
+    labelEs: string;
+    labelEn: string;
+}> = [
+    { value: 'store-groups', emoji: '🏪', labelEs: 'Grupos de Compras', labelEn: 'Purchase Groups' },
+    { value: 'store-categories', emoji: '🛒', labelEs: 'Categorías de Compras', labelEn: 'Purchase Categories' },
+    { value: 'item-groups', emoji: '📦', labelEs: 'Grupos de Productos', labelEn: 'Product Groups' },
+    { value: 'item-categories', emoji: '🏷️', labelEs: 'Categorías de Productos', labelEn: 'Product Categories' },
+];
 
 // Story 14.21: Get category colors for treemap using unified color system
 // Returns both bg (background) and fg (text) colors for proper contrast
@@ -142,10 +213,6 @@ const getTreemapColors = (category: string): { bg: string; fg: string } => {
 const MONTH_SHORT_KEYS = [
     'monthJan', 'monthFeb', 'monthMar', 'monthApr', 'monthMay', 'monthJun',
     'monthJul', 'monthAug', 'monthSep', 'monthOct', 'monthNov', 'monthDec'
-] as const;
-const MONTH_FULL_KEYS = [
-    'monthJanFull', 'monthFebFull', 'monthMarFull', 'monthAprFull', 'monthMayFull', 'monthJunFull',
-    'monthJulFull', 'monthAugFull', 'monthSepFull', 'monthOctFull', 'monthNovFull', 'monthDecFull'
 ] as const;
 
 // Story 14.12: Circular progress ring component for percentage display with text inside
@@ -218,8 +285,9 @@ const CircularProgress: React.FC<CircularProgressProps> = ({ animatedPercent, si
 // Story 14.12: Animated treemap card with count-up effect and circular progress
 // Story 14.21: Updated to use both bg and fg colors for proper contrast
 // Story 14.14: Category emoji in top row, transaction count moved to bottom right
+// Story 14.13 Session 13: Added categoryCount for "Más" aggregated group badge
 interface AnimatedTreemapCardProps {
-    cat: { name: string; amount: number; percent: number; count: number; bgColor: string; fgColor: string };
+    cat: { name: string; amount: number; percent: number; count: number; itemCount: number; bgColor: string; fgColor: string; categoryCount?: number };
     displayName: string; // Translated category name
     isMainCell: boolean;
     gridRow?: string;
@@ -227,6 +295,10 @@ interface AnimatedTreemapCardProps {
     animationKey: number;
     getValueFontSize: (percent: number, isMainCell: boolean) => string;
     style?: React.CSSProperties; // Story 14.13: Support squarified treemap absolute positioning
+    emoji?: string; // Story 14.13 Session 4: Optional emoji override for view mode
+    onClick?: () => void; // Story 14.13 Session 4: Click handler for category navigation
+    iconType?: 'receipt' | 'package'; // Story 14.13 Session 10: Receipt for transactions, Package for items
+    countMode?: 'transactions' | 'items'; // Story 14.13 Session 10: Which count to display
 }
 
 const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
@@ -237,13 +309,25 @@ const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
     gridColumn,
     animationKey,
     getValueFontSize,
-    style
+    style,
+    emoji: emojiProp,
+    onClick,
+    iconType = 'receipt', // Story 14.13 Session 10: Default to receipt icon
+    countMode = 'transactions', // Story 14.13 Session 10: Default to transactions
 }) => {
     // Pass animationKey to useCountUp to re-trigger animation when carousel slides
     const animatedAmount = useCountUp(Math.round(cat.amount / 1000), { duration: 1200, startValue: 0, key: animationKey });
     const animatedPercent = useCountUp(Math.round(cat.percent), { duration: 1200, startValue: 0, key: animationKey });
-    // Animated count for the badge
-    const animatedCount = useCountUp(cat.count, { duration: 800, startValue: 0, key: animationKey });
+    // Story 14.13 Session 10: Display itemCount when in items mode, otherwise transaction count
+    const displayCount = countMode === 'items' ? (cat.itemCount || 0) : cat.count;
+    const animatedCount = useCountUp(displayCount, { duration: 800, startValue: 0, key: animationKey });
+
+    // Story 14.13 Session 8: Get text color at render time respecting fontColorMode setting
+    // getCategoryColorsAuto returns plain text (black/white) when fontColorMode is 'plain'
+    // and category-specific colors when fontColorMode is 'colorful'
+    // This matches the TrendsView pattern and ensures reactivity to settings changes
+    const textColors = getCategoryColorsAuto(cat.name);
+    const textColor = textColors.fg;
 
     // Circle sizes - responsive: smaller on narrow screens
     // Main cell: 36px, Small cells: 28px (increased from 24px for better readability)
@@ -253,13 +337,14 @@ const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
     const circleFontSize = isMainCell ? undefined : 11;
 
     // Story 14.14: Get category emoji for display
-    const emoji = getCategoryEmoji(cat.name);
+    // Story 14.13 Session 4: Use provided emoji prop if available, otherwise fallback to getCategoryEmoji
+    const emoji = emojiProp ?? getCategoryEmoji(cat.name);
     const emojiFontSize = isMainCell ? '16px' : '13px';
 
     return (
         <div
             key={`${cat.name}-${animationKey}`}
-            className="rounded-lg flex flex-col justify-between overflow-hidden"
+            className="rounded-lg flex flex-col justify-between overflow-hidden cursor-pointer hover:opacity-90 active:scale-[0.98] transition-all"
             style={{
                 backgroundColor: cat.bgColor,
                 gridRow: gridRow,
@@ -270,32 +355,72 @@ const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
                 // Story 14.13: Merge with passed style for squarified treemap positioning
                 ...style,
             }}
+            // Story 14.13 Session 4: Handle click for category navigation
+            onClick={(e) => {
+                e.stopPropagation(); // Prevent triggering parent treemap click
+                onClick?.();
+            }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onClick?.();
+                }
+            }}
         >
-            {/* Top row: Emoji + Category name */}
+            {/* Top row: Emoji + Category name (+ categoryCount badge for "Más") */}
             {/* Story 14.13: Unified layout for squarified treemap cells */}
+            {/* Story 14.13 Session 13: Added categoryCount badge for "Más" aggregated group */}
             <div className="flex items-center gap-1.5 min-w-0">
                 <span style={{ fontSize: emojiFontSize, lineHeight: 1 }}>{emoji}</span>
-                <div className="font-bold truncate" style={{ fontSize: isMainCell ? '14px' : '11px', color: cat.fgColor, lineHeight: 1.2 }}>{displayName}</div>
+                {/* Story 14.37: Category name scales with font size setting */}
+                <div className="font-bold truncate flex items-center gap-1" style={{ fontSize: isMainCell ? 'var(--font-size-sm)' : 'var(--font-size-xs)', color: textColor, lineHeight: 1.2 }}>
+                    {displayName}
+                    {/* Badge showing count of categories inside "Más" group */}
+                    {cat.categoryCount && (
+                        <span
+                            className="inline-flex items-center justify-center rounded-full flex-shrink-0"
+                            style={{
+                                backgroundColor: 'transparent',
+                                border: `1.5px solid ${textColor}`,
+                                color: textColor,
+                                fontSize: isMainCell ? '10px' : '9px',
+                                fontWeight: 600,
+                                minWidth: isMainCell ? '18px' : '16px',
+                                height: isMainCell ? '18px' : '16px',
+                                padding: '0 3px',
+                            }}
+                        >
+                            {cat.categoryCount}
+                        </span>
+                    )}
+                </div>
             </div>
 
-            {/* Bottom section: Transaction count + Amount (left), Percentage circle (bottom right) */}
+            {/* Bottom section: Count + Amount (left), Percentage circle (bottom right) */}
+            {/* Story 14.13 Session 5: Receipt icon for transactions, Package icon for items */}
             <div className="flex items-end justify-between">
                 {/* Left side: count above amount */}
                 <div className="flex flex-col gap-0.5">
-                    {/* Transaction count pill */}
+                    {/* Count pill - Receipt for transactions, Package for items */}
                     <span
                         className="inline-flex items-center gap-[2px] px-[5px] py-[1px] rounded-full self-start"
                         style={{
                             backgroundColor: 'var(--bg)',
-                            color: cat.fgColor,
+                            color: textColor,
                             fontSize: isMainCell ? '11px' : '10px',
                         }}
                     >
-                        <Package size={isMainCell ? 11 : 10} strokeWidth={2} />
+                        {iconType === 'package' ? (
+                            <Package size={isMainCell ? 11 : 10} strokeWidth={2} />
+                        ) : (
+                            <Receipt size={isMainCell ? 11 : 10} strokeWidth={2} />
+                        )}
                         {animatedCount}
                     </span>
                     {/* Amount - left aligned below count */}
-                    <div className="font-bold" style={{ fontSize: getValueFontSize(cat.percent, isMainCell), color: cat.fgColor, lineHeight: 1 }}>
+                    <div className="font-bold" style={{ fontSize: getValueFontSize(cat.percent, isMainCell), color: textColor, lineHeight: 1 }}>
                         ${animatedAmount}k
                     </div>
                 </div>
@@ -305,7 +430,7 @@ const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
                     size={circleSize}
                     strokeWidth={strokeWidth}
                     fontSize={circleFontSize}
-                    fgColor={cat.fgColor}
+                    fgColor={textColor}
                 />
             </div>
         </div>
@@ -328,12 +453,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     // Story 9.12: Language for translations
     lang = 'en',
     onViewHistory,
+    // Story 14.13 Session 4: Navigate to history with category filter
+    onNavigateToHistory,
     // Story 14.14: Color theme for unified category colors
     colorTheme = 'normal',
     // Story 14.15b: Selection mode props
     userId = null,
     appId = 'boletapp',
     onTransactionsDeleted,
+    // v9.7.0: Recent scans for "Últimos Escaneados" carousel
+    recentScans = [],
+    // Story 14.13: Font color mode - receiving this prop triggers re-render when setting changes
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    fontColorMode: _fontColorMode,
+    // Story 14.31: Navigate to recent scans view (Ver todo)
+    onViewRecentScans,
+    // Story 14.35b: Foreign location display settings
+    defaultCountry = '',
+    foreignLocationFormat = 'code',
 }) => {
     // Story 7.12: Theme-aware styling using CSS variables (AC #1, #2, #8)
     const isDark = theme === 'dark';
@@ -364,7 +501,68 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
     // Story 14.12: Carousel state (3 slides: treemap, polygon, bump chart)
     const [carouselSlide, setCarouselSlide] = useState<CarouselSlide>(0);
-    const [carouselCollapsed, setCarouselCollapsed] = useState(false);
+    const [carouselCollapsed] = useState(false); // Toggle function removed, but state still used for layout
+    // Story 14.13 Session 4: Treemap view mode state - persisted to localStorage
+    // Story 14.13 Session 9: Synced with Analytics view using shared localStorage key
+    const [treemapViewMode, setTreemapViewMode] = useState<TreemapViewMode>(() => {
+        // Restore from localStorage if available (shared with TrendsView for sync)
+        try {
+            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.getItem) {
+                const saved = localStorage.getItem('boletapp-analytics-viewmode');
+                if (saved && ['store-groups', 'store-categories', 'item-groups', 'item-categories'].includes(saved)) {
+                    return saved as TreemapViewMode;
+                }
+            }
+        } catch {
+            // localStorage not available (e.g., SSR or test environment)
+        }
+        return 'store-categories';
+    });
+
+    // Story 14.13 Session 9: Persist view mode to localStorage (shared with TrendsView)
+    useEffect(() => {
+        try {
+            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.setItem) {
+                localStorage.setItem('boletapp-analytics-viewmode', treemapViewMode);
+            }
+        } catch {
+            // localStorage not available
+        }
+    }, [treemapViewMode]);
+
+    // Story 14.13 Session 10: Count mode toggle - transactions vs items (synced with TrendsView)
+    // 'transactions' = count transactions, navigate to Compras (Receipt icon)
+    // 'items' = count items/products, navigate to Productos (Package icon)
+    const [countMode, setCountMode] = useState<'transactions' | 'items'>(() => {
+        try {
+            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.getItem) {
+                const saved = localStorage.getItem('boletapp-analytics-countmode');
+                if (saved === 'transactions' || saved === 'items') {
+                    return saved;
+                }
+            }
+        } catch {
+            // localStorage not available
+        }
+        return 'transactions';
+    });
+
+    // Story 14.13 Session 10: Persist count mode to localStorage (shared with TrendsView)
+    useEffect(() => {
+        try {
+            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage?.setItem) {
+                localStorage.setItem('boletapp-analytics-countmode', countMode);
+            }
+        } catch {
+            // localStorage not available
+        }
+    }, [countMode]);
+
+    // Story 14.13 Session 10: Toggle count mode between transactions and items
+    const toggleCountMode = useCallback(() => {
+        setCountMode(prev => prev === 'transactions' ? 'items' : 'transactions');
+    }, []);
+
     const [showMonthPicker, setShowMonthPicker] = useState(false);
     const monthPickerRef = useRef<HTMLDivElement>(null);
     const monthPickerToggleRef = useRef<HTMLButtonElement>(null);
@@ -383,16 +581,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     const [bumpTooltip, setBumpTooltip] = useState<{ category: string; month: string; amount: number; color: string } | null>(null);
     // Story 14.12: Slide direction for carousel transition animation
     const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
-    // Story 14.12: Swipe gesture tracking for carousel
+    // Story 14.12: Swipe gesture tracking for carousel with live animation
     const [touchStart, setTouchStart] = useState<number | null>(null);
     const [touchEnd, setTouchEnd] = useState<number | null>(null);
+    const [carouselSwipeOffset, setCarouselSwipeOffset] = useState(0);
+    // Story 14.13: Month swipe navigation touch state with live animation
+    const [monthTouchStart, setMonthTouchStart] = useState<number | null>(null);
+    const [monthSwipeOffset, setMonthSwipeOffset] = useState(0);
     // Story 14.12: Animation trigger key - increments when slide changes to restart animations
     const [animationKey, setAnimationKey] = useState(0);
-    // Story 14.12: Temporary state for picker (only applied when "Aplicar" is clicked)
-    const [pickerMonth, setPickerMonth] = useState(() => {
-        const now = new Date();
-        return { year: now.getFullYear(), month: now.getMonth() };
-    });
+    // Story 14d.4c: pickerMonth removed - picker functions were unused
 
     // Story 10a.1: Pagination state (AC #3)
     const [historyPage, setHistoryPage] = useState(1);
@@ -506,78 +704,484 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
     // Story 14.12: Calculate categories for treemap (AC #1)
     // Story 14.21: Updated to use both bgColor and fgColor for proper contrast
-    // Display: All categories >10% + first category ≤10% + "Otro" aggregating rest
-    const treemapCategories = useMemo(() => {
-        // Aggregate by category
-        const categoryTotals: Record<string, { amount: number; count: number }> = {};
-        monthTransactions.forEach(tx => {
+    // Story 14.13 Session 10: Added itemCount for unique products per category
+    // Story 14.13 Session 13: Changed "Otro" → "Más", added categoryCount, returns otroCategories for expansion
+    // Display: All categories >10% + first category ≤10% + "Más" aggregating rest
+    const treemapCategoriesResult = useMemo(() => {
+        // Aggregate by category - track unique transactions and unique products
+        // Story 14.13 Session 14: Changed to use transactionIds Set for accurate unique transaction counting
+        // This matches TrendsView pattern and prevents double-counting
+        const categoryTotals: Record<string, { amount: number; transactionIds: Set<string>; uniqueProducts: Set<string> }> = {};
+        monthTransactions.forEach((tx, index) => {
             const cat = tx.category || 'Otro';
             if (!categoryTotals[cat]) {
-                categoryTotals[cat] = { amount: 0, count: 0 };
+                categoryTotals[cat] = { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() };
             }
             categoryTotals[cat].amount += tx.total;
-            categoryTotals[cat].count += 1;
+            // Track unique transaction IDs (fallback to index if no id)
+            categoryTotals[cat].transactionIds.add(tx.id ?? `tx-${index}`);
+            // Count unique products by normalized name + merchant
+            // Story 14.13: Use normalizeItemNameForGrouping for consistent counting with ItemsView
+            (tx.items || []).forEach(item => {
+                const normalizedName = normalizeItemNameForGrouping(item.name || '');
+                const normalizedMerchant = normalizeItemNameForGrouping(tx.merchant || '');
+                const productKey = `${normalizedName}::${normalizedMerchant}`;
+                categoryTotals[cat].uniqueProducts.add(productKey);
+            });
         });
+
+        // Category data type with optional categoryCount for "Más" aggregation
+        // Story 14.13 Session 14: Added transactionIds for accurate "Más" aggregation
+        type CategoryEntry = {
+            name: string;
+            amount: number;
+            count: number;
+            itemCount: number;
+            bgColor: string;
+            fgColor: string;
+            percent: number;
+            categoryCount?: number;
+            transactionIds?: Set<string>;  // For unique transaction count in "Más" aggregation
+        };
 
         // Convert to array and sort by amount (highest first)
         // Story 14.21: Include both bg and fg colors for proper text contrast
-        const sorted = Object.entries(categoryTotals)
+        const sorted: CategoryEntry[] = Object.entries(categoryTotals)
             .map(([name, data]) => {
                 const colors = getTreemapColors(name);
                 return {
                     name,
                     amount: data.amount,
-                    count: data.count,
+                    count: data.transactionIds.size,  // Use Set size for unique count
+                    itemCount: data.uniqueProducts.size,
                     bgColor: colors.bg,
                     fgColor: colors.fg,
                     percent: monthTotal > 0 ? (data.amount / monthTotal) * 100 : 0,
+                    transactionIds: data.transactionIds,  // Keep for "Más" aggregation
                 };
             })
             .sort((a, b) => b.amount - a.amount);
 
         // Apply selection criteria:
-        // 1. All categories >10% (excluding 'Otro'/'Other' which will be merged into aggregated Otro)
-        // 2. First category ≤10% (highest below threshold, excluding 'Otro'/'Other')
-        // 3. Everything else goes to "Otro" (including any existing 'Otro'/'Other' transactions)
-        const isOtroCategory = (name: string) => name === 'Otro' || name === 'Other';
-        const aboveThreshold = sorted.filter(c => c.percent > 10 && !isOtroCategory(c.name));
-        const belowThreshold = sorted.filter(c => c.percent <= 10 && !isOtroCategory(c.name));
-        const existingOtro = sorted.find(c => isOtroCategory(c.name));
+        // 1. All categories >10% (excluding aggregated "Más" group)
+        // 2. First category ≤10% (highest below threshold)
+        // 3. Everything else goes to "Más" (aggregated group)
+        // Helper to check if category is aggregated "Más" group
+        const isAggregatedGroup = (name: string) => name === 'Más' || name === 'More';
+        const aboveThreshold = sorted.filter(c => c.percent > 10 && !isAggregatedGroup(c.name));
+        const belowThreshold = sorted.filter(c => c.percent <= 10 && !isAggregatedGroup(c.name));
 
-        const result = [...aboveThreshold];
+        const result: CategoryEntry[] = [...aboveThreshold];
 
         // Add first category ≤10% if exists
         if (belowThreshold.length > 0) {
             result.push(belowThreshold[0]);
         }
 
-        // Aggregate remaining into "Otro" (skip the first below-threshold which we already added)
-        // Also include any existing 'Otro'/'Other' category transactions
-        const remaining = belowThreshold.slice(1);
-        let otroAmount = remaining.reduce((sum, cat) => sum + cat.amount, 0);
-        let otroCount = remaining.reduce((sum, cat) => sum + cat.count, 0);
+        // Remaining categories that would go into "Más"
+        const otroCategories = belowThreshold.slice(1);
 
-        // Merge existing 'Otro'/'Other' category into aggregated Otro
-        if (existingOtro) {
-            otroAmount += existingOtro.amount;
-            otroCount += existingOtro.count;
-        }
+        // If exactly 1 category would go into "Más", show it directly instead
+        if (otroCategories.length === 1) {
+            result.push(otroCategories[0]);
+        } else if (otroCategories.length > 1) {
+            // Multiple categories: aggregate into "Más" (not "Otro" to avoid conflict with real "Otro" category)
+            const masAmount = otroCategories.reduce((sum, cat) => sum + cat.amount, 0);
+            // Story 14.13 Session 14: Merge transactionIds Sets for unique count (prevents double-counting)
+            const masTransactionIds = new Set<string>();
+            otroCategories.forEach(cat => {
+                if (cat.transactionIds) {
+                    cat.transactionIds.forEach(id => masTransactionIds.add(id));
+                }
+            });
+            const masCount = masTransactionIds.size;
+            const masItemCount = otroCategories.reduce((sum, cat) => sum + cat.itemCount, 0);
+            const masPercent = monthTotal > 0 ? (masAmount / monthTotal) * 100 : 0;
 
-        if (otroAmount > 0 || otroCount > 0) {
-            const otroColors = getTreemapColors('Otro');
+            // Use gray color for aggregated "Más" group
+            const masColors = getTreemapColors('Otro');
             result.push({
-                name: 'Otro',
-                amount: otroAmount,
-                count: otroCount,
-                bgColor: otroColors.bg,
-                fgColor: otroColors.fg,
-                percent: monthTotal > 0 ? (otroAmount / monthTotal) * 100 : 0,
+                name: 'Más',
+                amount: masAmount,
+                count: masCount,
+                itemCount: masItemCount,
+                bgColor: masColors.bg,
+                fgColor: masColors.fg,
+                percent: masPercent,
+                categoryCount: otroCategories.length,  // Number of categories inside "Más"
             });
         }
 
-        return result;
+        return { displayCategories: result, otroCategories };
     }, [monthTransactions, monthTotal]);
 
+    // Extract display categories and otroCategories for expansion
+    const treemapCategories = treemapCategoriesResult.displayCategories;
+    const storeCategoriesOtro = treemapCategoriesResult.otroCategories;
+
+    // Story 14.13 Session 4: Calculate store groups data for treemap
+    // Story 14.13 Session 10: Added itemCount for unique products per group
+    // Story 14.13 Session 13: Added "Más" aggregation with categoryCount
+    // Story 14.13 Session 14: Changed to use transactionIds Set for accurate unique transaction counting
+    const storeGroupsDataResult = useMemo(() => {
+        const theme = getCurrentTheme();
+        const mode = getCurrentMode();
+        const groupTotals: Record<StoreCategoryGroup, { amount: number; transactionIds: Set<string>; uniqueProducts: Set<string> }> = {
+            'food-dining': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+            'health-wellness': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+            'retail-general': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+            'retail-specialty': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+            'automotive': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+            'services': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+            'hospitality': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+            'other': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+        };
+
+        monthTransactions.forEach((tx, index) => {
+            const cat = tx.category || 'Otro';
+            const group = STORE_CATEGORY_GROUPS[cat as keyof typeof STORE_CATEGORY_GROUPS] || 'other';
+            groupTotals[group].amount += tx.total;
+            groupTotals[group].transactionIds.add(tx.id ?? `tx-${index}`);
+            // Count unique products by normalized name + merchant
+            // Story 14.13: Use normalizeItemNameForGrouping for consistent counting with ItemsView
+            (tx.items || []).forEach(item => {
+                const normalizedName = normalizeItemNameForGrouping(item.name || '');
+                const normalizedMerchant = normalizeItemNameForGrouping(tx.merchant || '');
+                const productKey = `${normalizedName}::${normalizedMerchant}`;
+                groupTotals[group].uniqueProducts.add(productKey);
+            });
+        });
+
+        // Category data type with optional categoryCount for "Más" aggregation
+        type GroupEntry = {
+            name: string;
+            amount: number;
+            count: number;
+            itemCount: number;
+            bgColor: string;
+            fgColor: string;
+            percent: number;
+            categoryCount?: number;
+            transactionIds?: Set<string>;
+        };
+
+        const sorted: GroupEntry[] = ALL_STORE_CATEGORY_GROUPS
+            .map(groupKey => {
+                const data = groupTotals[groupKey];
+                const colors = getStoreGroupColors(groupKey, theme, mode);
+                return {
+                    name: groupKey,
+                    amount: data.amount,
+                    count: data.transactionIds.size,
+                    itemCount: data.uniqueProducts.size,
+                    bgColor: colors.bg,
+                    fgColor: colors.fg,
+                    percent: monthTotal > 0 ? (data.amount / monthTotal) * 100 : 0,
+                    transactionIds: data.transactionIds,
+                };
+            })
+            .filter(g => g.amount > 0)
+            .sort((a, b) => b.amount - a.amount);
+
+        // Apply "Más" aggregation: >10% + first ≤10% + "Más" for rest
+        const isAggregatedGroup = (name: string) => name === 'Más' || name === 'More';
+        const aboveThreshold = sorted.filter(c => c.percent > 10 && !isAggregatedGroup(c.name));
+        const belowThreshold = sorted.filter(c => c.percent <= 10 && !isAggregatedGroup(c.name));
+
+        const result: GroupEntry[] = [...aboveThreshold];
+        if (belowThreshold.length > 0) {
+            result.push(belowThreshold[0]);
+        }
+
+        const otroCategories = belowThreshold.slice(1);
+        if (otroCategories.length === 1) {
+            result.push(otroCategories[0]);
+        } else if (otroCategories.length > 1) {
+            const masAmount = otroCategories.reduce((sum, cat) => sum + cat.amount, 0);
+            // Merge transactionIds Sets for unique count
+            const masTransactionIds = new Set<string>();
+            otroCategories.forEach(cat => {
+                if (cat.transactionIds) {
+                    cat.transactionIds.forEach(id => masTransactionIds.add(id));
+                }
+            });
+            const masCount = masTransactionIds.size;
+            const masItemCount = otroCategories.reduce((sum, cat) => sum + cat.itemCount, 0);
+            const masPercent = monthTotal > 0 ? (masAmount / monthTotal) * 100 : 0;
+            const masColors = getTreemapColors('Otro');
+            result.push({
+                name: 'Más',
+                amount: masAmount,
+                count: masCount,
+                itemCount: masItemCount,
+                bgColor: masColors.bg,
+                fgColor: masColors.fg,
+                percent: masPercent,
+                categoryCount: otroCategories.length,
+            });
+        }
+
+        return { displayCategories: result, otroCategories };
+    }, [monthTransactions, monthTotal]);
+
+    const storeGroupsData = storeGroupsDataResult.displayCategories;
+    const storeGroupsOtro = storeGroupsDataResult.otroCategories;
+
+    // Story 14.13 Session 4: Calculate item categories data from transaction line items
+    // Story 14.13 Session 10: Added itemCount for unique products per item category
+    // Story 14.13 Session 13: Added "Más" aggregation with categoryCount
+    // Story 14.13 Session 14: Changed to use transactionIds Set for accurate unique transaction counting
+    const itemCategoriesDataResult = useMemo(() => {
+        const itemCategoryMap: Record<string, { amount: number; transactionIds: Set<string>; uniqueProducts: Set<string> }> = {};
+
+        monthTransactions.forEach((tx, index) => {
+            (tx.items || []).forEach(item => {
+                const cat = normalizeItemCategory(item.category || 'Other');
+                if (!itemCategoryMap[cat]) {
+                    itemCategoryMap[cat] = { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() };
+                }
+                itemCategoryMap[cat].amount += item.price;
+                // Track unique transaction IDs to count transactions, not items
+                itemCategoryMap[cat].transactionIds.add(tx.id ?? `tx-${index}`);
+                // Count unique products by normalized name + merchant
+                // Story 14.13: Use normalizeItemNameForGrouping for consistent counting with ItemsView
+                const normalizedName = normalizeItemNameForGrouping(item.name || '');
+                const normalizedMerchant = normalizeItemNameForGrouping(tx.merchant || '');
+                const productKey = `${normalizedName}::${normalizedMerchant}`;
+                itemCategoryMap[cat].uniqueProducts.add(productKey);
+            });
+        });
+
+        const total = Object.values(itemCategoryMap).reduce((sum, c) => sum + c.amount, 0);
+
+        // Category data type with optional categoryCount for "Más" aggregation
+        type ItemCatEntry = {
+            name: string;
+            amount: number;
+            count: number;
+            itemCount: number;
+            bgColor: string;
+            fgColor: string;
+            percent: number;
+            categoryCount?: number;
+            transactionIds?: Set<string>;
+        };
+
+        const sorted: ItemCatEntry[] = Object.entries(itemCategoryMap)
+            .map(([name, data]) => {
+                const colors = getCategoryPillColors(name);
+                return {
+                    name,
+                    amount: data.amount,
+                    count: data.transactionIds.size,  // Count unique transactions
+                    itemCount: data.uniqueProducts.size,
+                    bgColor: colors.bg,
+                    fgColor: colors.fg,
+                    percent: total > 0 ? (data.amount / total) * 100 : 0,
+                    transactionIds: data.transactionIds,
+                };
+            })
+            .sort((a, b) => b.amount - a.amount);
+
+        // Apply "Más" aggregation: >10% + first ≤10% + "Más" for rest
+        const isAggregatedGroup = (name: string) => name === 'Más' || name === 'More';
+        const aboveThreshold = sorted.filter(c => c.percent > 10 && !isAggregatedGroup(c.name));
+        const belowThreshold = sorted.filter(c => c.percent <= 10 && !isAggregatedGroup(c.name));
+
+        const result: ItemCatEntry[] = [...aboveThreshold];
+        if (belowThreshold.length > 0) {
+            result.push(belowThreshold[0]);
+        }
+
+        const otroCategories = belowThreshold.slice(1);
+        if (otroCategories.length === 1) {
+            result.push(otroCategories[0]);
+        } else if (otroCategories.length > 1) {
+            const masAmount = otroCategories.reduce((sum, cat) => sum + cat.amount, 0);
+            // Merge transactionIds Sets for unique count
+            const masTransactionIds = new Set<string>();
+            otroCategories.forEach(cat => {
+                if (cat.transactionIds) {
+                    cat.transactionIds.forEach(id => masTransactionIds.add(id));
+                }
+            });
+            const masCount = masTransactionIds.size;
+            const masItemCount = otroCategories.reduce((sum, cat) => sum + cat.itemCount, 0);
+            const masPercent = total > 0 ? (masAmount / total) * 100 : 0;
+            const masColors = getTreemapColors('Otro');
+            result.push({
+                name: 'Más',
+                amount: masAmount,
+                count: masCount,
+                itemCount: masItemCount,
+                bgColor: masColors.bg,
+                fgColor: masColors.fg,
+                percent: masPercent,
+                categoryCount: otroCategories.length,
+            });
+        }
+
+        return { displayCategories: result, otroCategories };
+    }, [monthTransactions]);
+
+    const itemCategoriesData = itemCategoriesDataResult.displayCategories;
+    const itemCategoriesOtro = itemCategoriesDataResult.otroCategories;
+
+    // Story 14.13 Session 4: Calculate item groups data
+    // Story 14.13 Session 10: Added itemCount - computed directly from transactions to avoid double-counting
+    // Story 14.13 Session 13: Added "Más" aggregation with categoryCount
+    // Story 14.13 Session 14: Changed to use transactionIds Set for accurate unique transaction counting
+    const itemGroupsDataResult = useMemo(() => {
+        const theme = getCurrentTheme();
+        const mode = getCurrentMode();
+        const groupTotals: Record<ItemCategoryGroup, { amount: number; transactionIds: Set<string>; uniqueProducts: Set<string> }> = {
+            'food-fresh': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+            'food-packaged': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+            'health-personal': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+            'household': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+            'nonfood-retail': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+            'services-fees': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+            'other-item': { amount: 0, transactionIds: new Set(), uniqueProducts: new Set() },
+        };
+
+        // Compute directly from transactions to get accurate unique product counts
+        monthTransactions.forEach((tx, index) => {
+            (tx.items || []).forEach(item => {
+                const cat = normalizeItemCategory(item.category || 'Other');
+                const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
+                const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
+                groupTotals[group].amount += item.price;
+                groupTotals[group].transactionIds.add(tx.id ?? `tx-${index}`);
+                // Count unique products by normalized name + merchant
+                // Story 14.13: Use normalizeItemNameForGrouping for consistent counting with ItemsView
+                const normalizedName = normalizeItemNameForGrouping(item.name || '');
+                const normalizedMerchant = normalizeItemNameForGrouping(tx.merchant || '');
+                const productKey = `${normalizedName}::${normalizedMerchant}`;
+                groupTotals[group].uniqueProducts.add(productKey);
+            });
+        });
+
+        const total = Object.values(groupTotals).reduce((sum, g) => sum + g.amount, 0);
+
+        // Category data type with optional categoryCount for "Más" aggregation
+        type ItemGroupEntry = {
+            name: string;
+            amount: number;
+            count: number;
+            itemCount: number;
+            bgColor: string;
+            fgColor: string;
+            percent: number;
+            categoryCount?: number;
+            transactionIds?: Set<string>;
+        };
+
+        const sorted: ItemGroupEntry[] = ALL_ITEM_CATEGORY_GROUPS
+            .map(groupKey => {
+                const data = groupTotals[groupKey];
+                const colors = getItemGroupColors(groupKey, theme, mode);
+                return {
+                    name: groupKey,
+                    amount: data.amount,
+                    count: data.transactionIds.size,
+                    itemCount: data.uniqueProducts.size,
+                    bgColor: colors.bg,
+                    fgColor: colors.fg,
+                    percent: total > 0 ? (data.amount / total) * 100 : 0,
+                    transactionIds: data.transactionIds,
+                };
+            })
+            .filter(g => g.amount > 0)
+            .sort((a, b) => b.amount - a.amount);
+
+        // Apply "Más" aggregation: >10% + first ≤10% + "Más" for rest
+        const isAggregatedGroup = (name: string) => name === 'Más' || name === 'More';
+        const aboveThreshold = sorted.filter(c => c.percent > 10 && !isAggregatedGroup(c.name));
+        const belowThreshold = sorted.filter(c => c.percent <= 10 && !isAggregatedGroup(c.name));
+
+        const result: ItemGroupEntry[] = [...aboveThreshold];
+        if (belowThreshold.length > 0) {
+            result.push(belowThreshold[0]);
+        }
+
+        const otroCategories = belowThreshold.slice(1);
+        if (otroCategories.length === 1) {
+            result.push(otroCategories[0]);
+        } else if (otroCategories.length > 1) {
+            const masAmount = otroCategories.reduce((sum, cat) => sum + cat.amount, 0);
+            // Merge transactionIds Sets for unique count
+            const masTransactionIds = new Set<string>();
+            otroCategories.forEach(cat => {
+                if (cat.transactionIds) {
+                    cat.transactionIds.forEach(id => masTransactionIds.add(id));
+                }
+            });
+            const masCount = masTransactionIds.size;
+            const masItemCount = otroCategories.reduce((sum, cat) => sum + cat.itemCount, 0);
+            const masPercent = total > 0 ? (masAmount / total) * 100 : 0;
+            const masColors = getTreemapColors('Otro');
+            result.push({
+                name: 'Más',
+                amount: masAmount,
+                count: masCount,
+                itemCount: masItemCount,
+                bgColor: masColors.bg,
+                fgColor: masColors.fg,
+                percent: masPercent,
+                categoryCount: otroCategories.length,
+            });
+        }
+
+        return { displayCategories: result, otroCategories };
+    }, [monthTransactions]);
+
+    const itemGroupsData = itemGroupsDataResult.displayCategories;
+    const itemGroupsOtro = itemGroupsDataResult.otroCategories;
+
+    // Story 14.13 Session 4: Get treemap data based on current view mode
+    const currentTreemapData = useMemo(() => {
+        switch (treemapViewMode) {
+            case 'store-groups':
+                return storeGroupsData;
+            case 'store-categories':
+                return treemapCategories;
+            case 'item-groups':
+                return itemGroupsData;
+            case 'item-categories':
+                return itemCategoriesData;
+            default:
+                return treemapCategories;
+        }
+    }, [treemapViewMode, treemapCategories, storeGroupsData, itemGroupsData, itemCategoriesData]);
+
+    // Story 14.13 Session 4: Get emoji for treemap cell based on view mode
+    const getTreemapEmoji = useCallback((name: string) => {
+        switch (treemapViewMode) {
+            case 'store-groups':
+                return getStoreCategoryGroupEmoji(name as StoreCategoryGroup);
+            case 'item-groups':
+                return getItemCategoryGroupEmoji(name as ItemCategoryGroup);
+            case 'item-categories':
+                return getItemCategoryEmoji(name);
+            case 'store-categories':
+            default:
+                return getCategoryEmoji(name);
+        }
+    }, [treemapViewMode]);
+
+    // Story 14.13 Session 4: Translate category name based on view mode
+    const translateTreemapName = useCallback((name: string) => {
+        switch (treemapViewMode) {
+            case 'store-groups':
+                return translateStoreCategoryGroup(name as StoreCategoryGroup, lang as 'en' | 'es');
+            case 'item-groups':
+                return translateItemCategoryGroup(name as ItemCategoryGroup, lang as 'en' | 'es');
+            case 'store-categories':
+            case 'item-categories':
+            default:
+                return translateCategory(name, lang as 'en' | 'es');
+        }
+    }, [treemapViewMode, lang]);
 
     // Story 14.12: Carousel navigation (wraps around) with slide animation
     const goToPrevSlide = () => {
@@ -596,16 +1200,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         setBumpTooltip(null);
     };
 
-    // Story 14.12: Swipe gesture handlers for carousel
+    // Story 14.12: Swipe gesture handlers for carousel with live animation
     const minSwipeDistance = 50; // Minimum distance to trigger swipe
 
     const onTouchStart = (e: React.TouchEvent) => {
-        setTouchEnd(null); // Reset
+        setTouchEnd(null);
         setTouchStart(e.targetTouches[0].clientX);
+        setCarouselSwipeOffset(0);
     };
 
     const onTouchMove = (e: React.TouchEvent) => {
-        setTouchEnd(e.targetTouches[0].clientX);
+        if (touchStart === null) return;
+        const currentX = e.targetTouches[0].clientX;
+        setTouchEnd(currentX);
+        setCarouselSwipeOffset(currentX - touchStart);
     };
 
     const onTouchEnd = () => {
@@ -623,11 +1231,120 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         // Reset touch state
         setTouchStart(null);
         setTouchEnd(null);
+        setCarouselSwipeOffset(0);
     };
 
-    // Story 14.12: Toggle carousel collapse
-    const toggleCarouselCollapse = () => {
-        setCarouselCollapsed(prev => !prev);
+    // Story 14.13: Navigate to previous month
+    const goToPrevMonth = useCallback(() => {
+        setSelectedMonth(prev => {
+            const newMonth = prev.month === 0 ? 11 : prev.month - 1;
+            const newYear = prev.month === 0 ? prev.year - 1 : prev.year;
+            return { year: newYear, month: newMonth };
+        });
+        setAnimationKey(prev => prev + 1);
+        setSelectedRadarCategory(null);
+        setBumpTooltip(null);
+    }, []);
+
+    // Story 14.13: Navigate to next month
+    const goToNextMonth = useCallback(() => {
+        const now = new Date();
+        setSelectedMonth(prev => {
+            const newMonth = prev.month === 11 ? 0 : prev.month + 1;
+            const newYear = prev.month === 11 ? prev.year + 1 : prev.year;
+            // Don't go beyond current month
+            const isFuture = newYear > now.getFullYear() ||
+                (newYear === now.getFullYear() && newMonth > now.getMonth());
+            if (isFuture) return prev;
+            return { year: newYear, month: newMonth };
+        });
+        setAnimationKey(prev => prev + 1);
+        setSelectedRadarCategory(null);
+        setBumpTooltip(null);
+    }, []);
+
+    // Story 14.31: Return to current month when tapping on the month title (if not current)
+    const goToCurrentMonth = useCallback(() => {
+        const now = new Date();
+        setSelectedMonth({ year: now.getFullYear(), month: now.getMonth() });
+        setAnimationKey(prev => prev + 1);
+        setSelectedRadarCategory(null);
+        setBumpTooltip(null);
+    }, []);
+
+    // Story 14.31: Check if currently viewing current month
+    const isViewingCurrentMonth = useMemo(() => {
+        const now = new Date();
+        return selectedMonth.year === now.getFullYear() && selectedMonth.month === now.getMonth();
+    }, [selectedMonth]);
+
+    // Story 14.13: Check if we can navigate to next month
+    const canGoToNextMonth = useMemo(() => {
+        const now = new Date();
+        const nextMonth = selectedMonth.month === 11 ? 0 : selectedMonth.month + 1;
+        const nextYear = selectedMonth.month === 11 ? selectedMonth.year + 1 : selectedMonth.year;
+        return !(nextYear > now.getFullYear() ||
+            (nextYear === now.getFullYear() && nextMonth > now.getMonth()));
+    }, [selectedMonth]);
+
+    // Story 14.13: Format month for display (e.g., "Ene '26")
+    const formatMonth = useCallback((month: number, year: number) => {
+        const monthNames = lang === 'es'
+            ? ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sept', 'Oct', 'Nov', 'Dic']
+            : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+        const shortYear = year.toString().slice(-2);
+        return `${monthNames[month]} '${shortYear}`;
+    }, [lang]);
+
+    const formattedMonthName = useMemo(() => {
+        return formatMonth(selectedMonth.month, selectedMonth.year);
+    }, [selectedMonth, formatMonth]);
+
+    // Story 14.13: Get prev/next month names for swipe animation
+    const prevMonthName = useMemo(() => {
+        const prevMonth = selectedMonth.month === 0 ? 11 : selectedMonth.month - 1;
+        const prevYear = selectedMonth.month === 0 ? selectedMonth.year - 1 : selectedMonth.year;
+        return formatMonth(prevMonth, prevYear);
+    }, [selectedMonth, formatMonth]);
+
+    const nextMonthName = useMemo(() => {
+        const nextMonth = selectedMonth.month === 11 ? 0 : selectedMonth.month + 1;
+        const nextYear = selectedMonth.month === 11 ? selectedMonth.year + 1 : selectedMonth.year;
+        return formatMonth(nextMonth, nextYear);
+    }, [selectedMonth, formatMonth]);
+
+    // Story 14.13: Month swipe gesture handlers
+    const onMonthTouchStart = (e: React.TouchEvent) => {
+        setMonthTouchStart(e.targetTouches[0].clientX);
+        setMonthSwipeOffset(0);
+    };
+
+    const onMonthTouchMove = (e: React.TouchEvent) => {
+        if (monthTouchStart === null) return;
+        const currentX = e.targetTouches[0].clientX;
+        const offset = currentX - monthTouchStart;
+        // Resistance effect when at current month
+        if (offset < 0 && !canGoToNextMonth) {
+            setMonthSwipeOffset(offset * 0.2);
+        } else {
+            setMonthSwipeOffset(offset);
+        }
+    };
+
+    const onMonthTouchEnd = () => {
+        if (monthTouchStart === null) return;
+        const distance = -monthSwipeOffset;
+        const isLeftSwipe = distance > minSwipeDistance;
+        const isRightSwipe = distance < -minSwipeDistance;
+
+        if (isLeftSwipe && canGoToNextMonth) {
+            goToNextMonth();
+        } else if (isRightSwipe) {
+            goToPrevMonth();
+        }
+
+        setMonthTouchStart(null);
+        setMonthSwipeOffset(0);
     };
 
     // Story 14.12: Recientes carousel navigation with slide animation
@@ -635,32 +1352,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         setRecientesSlideDirection(direction);
         setRecientesSlide(targetSlide);
         setRecientesAnimKey(prev => prev + 1); // Re-trigger staggered item animations
-    };
-
-    // Story 14.12: Toggle month picker and sync picker state
-    const toggleMonthPicker = () => {
-        if (!showMonthPicker) {
-            // Opening picker - sync picker state with current selection
-            setPickerMonth({ ...selectedMonth });
-        }
-        setShowMonthPicker(!showMonthPicker);
-    };
-
-    // Story 14.12: Apply picker selection to actual state and trigger animations
-    const applyPickerSelection = () => {
-        // Only trigger animations if month actually changed
-        if (pickerMonth.year !== selectedMonth.year || pickerMonth.month !== selectedMonth.month) {
-            setAnimationKey(prev => prev + 1); // Trigger all carousel animations
-            setSelectedRadarCategory(null); // Clear radar selection
-            setBumpTooltip(null); // Clear bump tooltip
-        }
-        setSelectedMonth({ ...pickerMonth });
-        setShowMonthPicker(false);
-    };
-
-    // Story 14.12: Update picker state (temporary, not applied until "Aplicar")
-    const updatePickerMonth = (year: number, month: number) => {
-        setPickerMonth({ year, month });
     };
 
     // Story 14.12: Close month picker when clicking outside (exclude toggle button)
@@ -696,6 +1387,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     // Criteria: Categories >10% + first category ≤10% + "Otro" catch-all
     // - 3 categories = triangle, 4 = diamond, 5 = pentagon, 6 = hexagon (max)
     // - Minimum 3 categories required
+    // Story 14.13 Session 4: Now responds to treemapViewMode for different data groupings
     const radarChartData = useMemo(() => {
         // Get previous month
         const prevMonth = selectedMonth.month === 0 ? 11 : selectedMonth.month - 1;
@@ -706,34 +1398,119 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         const currMonthTx = monthTransactions;
         const prevMonthTx = allTx.filter(tx => tx.date.startsWith(prevMonthStr));
 
-        // Aggregate by category for both months
+        // Story 14.13 Session 4: Helper to get emoji and color based on view mode
+        const getEmojiForMode = (name: string): string => {
+            switch (treemapViewMode) {
+                case 'store-groups':
+                    return getStoreCategoryGroupEmoji(name as StoreCategoryGroup);
+                case 'item-groups':
+                    return getItemCategoryGroupEmoji(name as ItemCategoryGroup);
+                case 'item-categories':
+                    return getItemCategoryEmoji(name);
+                case 'store-categories':
+                default:
+                    return getCategoryEmoji(name);
+            }
+        };
+
+        const getColorForMode = (name: string): string => {
+            const theme = getCurrentTheme();
+            const mode = getCurrentMode();
+            switch (treemapViewMode) {
+                case 'store-groups':
+                    return getStoreGroupColors(name as StoreCategoryGroup, theme, mode).bg;
+                case 'item-groups':
+                    return getItemGroupColors(name as ItemCategoryGroup, theme, mode).bg;
+                case 'store-categories':
+                case 'item-categories':
+                default:
+                    return getCategoryBackgroundAuto(name);
+            }
+        };
+
+        // Aggregate data based on view mode
         const currTotals: Record<string, number> = {};
         const prevTotals: Record<string, number> = {};
         let totalCurrMonth = 0;
         let totalPrevMonth = 0;
 
-        currMonthTx.forEach(tx => {
-            const cat = tx.category || 'Otro';
-            currTotals[cat] = (currTotals[cat] || 0) + tx.total;
-            totalCurrMonth += tx.total;
-        });
-
-        prevMonthTx.forEach(tx => {
-            const cat = tx.category || 'Otro';
-            prevTotals[cat] = (prevTotals[cat] || 0) + tx.total;
-            totalPrevMonth += tx.total;
-        });
+        if (treemapViewMode === 'store-categories') {
+            // Original behavior: aggregate by transaction category
+            currMonthTx.forEach(tx => {
+                const cat = tx.category || 'Otro';
+                currTotals[cat] = (currTotals[cat] || 0) + tx.total;
+                totalCurrMonth += tx.total;
+            });
+            prevMonthTx.forEach(tx => {
+                const cat = tx.category || 'Otro';
+                prevTotals[cat] = (prevTotals[cat] || 0) + tx.total;
+                totalPrevMonth += tx.total;
+            });
+        } else if (treemapViewMode === 'store-groups') {
+            // Aggregate by store category groups
+            currMonthTx.forEach(tx => {
+                const cat = tx.category || 'Otro';
+                const group = STORE_CATEGORY_GROUPS[cat as keyof typeof STORE_CATEGORY_GROUPS] || 'other';
+                currTotals[group] = (currTotals[group] || 0) + tx.total;
+                totalCurrMonth += tx.total;
+            });
+            prevMonthTx.forEach(tx => {
+                const cat = tx.category || 'Otro';
+                const group = STORE_CATEGORY_GROUPS[cat as keyof typeof STORE_CATEGORY_GROUPS] || 'other';
+                prevTotals[group] = (prevTotals[group] || 0) + tx.total;
+                totalPrevMonth += tx.total;
+            });
+        } else if (treemapViewMode === 'item-categories') {
+            // Aggregate by item categories from line items
+            currMonthTx.forEach(tx => {
+                (tx.items || []).forEach(item => {
+                    const cat = normalizeItemCategory(item.category || 'Other');
+                    currTotals[cat] = (currTotals[cat] || 0) + item.price;
+                    totalCurrMonth += item.price;
+                });
+            });
+            prevMonthTx.forEach(tx => {
+                (tx.items || []).forEach(item => {
+                    const cat = normalizeItemCategory(item.category || 'Other');
+                    prevTotals[cat] = (prevTotals[cat] || 0) + item.price;
+                    totalPrevMonth += item.price;
+                });
+            });
+        } else if (treemapViewMode === 'item-groups') {
+            // Aggregate by item category groups from line items
+            currMonthTx.forEach(tx => {
+                (tx.items || []).forEach(item => {
+                    const cat = normalizeItemCategory(item.category || 'Other');
+                    const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
+                    const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
+                    currTotals[group] = (currTotals[group] || 0) + item.price;
+                    totalCurrMonth += item.price;
+                });
+            });
+            prevMonthTx.forEach(tx => {
+                (tx.items || []).forEach(item => {
+                    const cat = normalizeItemCategory(item.category || 'Other');
+                    const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
+                    const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
+                    prevTotals[group] = (prevTotals[group] || 0) + item.price;
+                    totalPrevMonth += item.price;
+                });
+            });
+        }
 
         // Get all unique categories with their percentage of current month budget
         const allCategories = new Set([...Object.keys(currTotals), ...Object.keys(prevTotals)]);
+        const otherKey = treemapViewMode === 'item-groups' ? 'other-item' :
+                         treemapViewMode === 'store-groups' ? 'other' : 'Otro';
+
         const allCategoriesWithData = Array.from(allCategories)
             .map(name => ({
                 name,
                 currAmount: currTotals[name] || 0,
                 prevAmount: prevTotals[name] || 0,
                 percent: totalCurrMonth > 0 ? ((currTotals[name] || 0) / totalCurrMonth) * 100 : 0,
-                emoji: getCategoryEmoji(name),
-                color: getCategoryBackgroundAuto(name),
+                emoji: getEmojiForMode(name),
+                color: getColorForMode(name),
             }))
             .sort((a, b) => b.currAmount - a.currAmount);
 
@@ -741,8 +1518,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         // 1. All categories >10%
         // 2. First category ≤10%
         // 3. Everything else goes to "Otro"
-        const significant = allCategoriesWithData.filter(c => c.percent > 10 && c.name !== 'Otro');
-        const belowThreshold = allCategoriesWithData.filter(c => c.percent <= 10 && c.name !== 'Otro');
+        const isOtherCategory = (name: string) => name === otherKey || name === 'Otro' || name === 'Other';
+        const significant = allCategoriesWithData.filter(c => c.percent > 10 && !isOtherCategory(c.name));
+        const belowThreshold = allCategoriesWithData.filter(c => c.percent <= 10 && !isOtherCategory(c.name));
 
         let selectedCategories = [...significant];
 
@@ -753,10 +1531,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         // Aggregate remaining into "Otro" (exclude already selected categories)
         const selectedNames = new Set(selectedCategories.map(c => c.name));
-        const remaining = allCategoriesWithData.filter(c => !selectedNames.has(c.name) && c.name !== 'Otro');
+        const remaining = allCategoriesWithData.filter(c => !selectedNames.has(c.name) && !isOtherCategory(c.name));
 
         // Calculate "Otro" totals from remaining categories + any existing "Otro" transactions
-        const existingOtro = allCategoriesWithData.find(c => c.name === 'Otro');
+        const existingOtro = allCategoriesWithData.find(c => isOtherCategory(c.name));
         let otroAmount = remaining.reduce((sum, c) => sum + c.currAmount, 0);
         let otroPrevAmount = remaining.reduce((sum, c) => sum + c.prevAmount, 0);
         if (existingOtro) {
@@ -767,11 +1545,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         // Always include "Otro" if there's any remaining data
         if (otroAmount > 0 || otroPrevAmount > 0) {
             selectedCategories.push({
-                name: 'Otro',
+                name: otherKey,
                 currAmount: otroAmount,
                 prevAmount: otroPrevAmount,
                 percent: totalCurrMonth > 0 ? (otroAmount / totalCurrMonth) * 100 : 0,
-                emoji: getCategoryEmoji('Otro'),
+                emoji: getEmojiForMode(otherKey),
                 color: '#9ca3af', // Gray for "Otro"
             });
         }
@@ -807,7 +1585,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             currentMonthIdx: selectedMonth.month,
             prevMonthIdx: prevMonth,
         };
-    }, [monthTransactions, allTx, selectedMonth]);
+    }, [monthTransactions, allTx, selectedMonth, treemapViewMode]);
 
     // Story 14.12: Translate month labels for radar chart (outside useMemo to access t)
     const radarCurrentMonthLabel = t(MONTH_SHORT_KEYS[radarChartData.currentMonthIdx]);
@@ -815,6 +1593,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
 
     // Story 14.12: Bump chart data for "Ultimos 4 Meses" view
+    // Story 14.13 Session 4: Now responds to treemapViewMode for different data groupings
     const bumpChartData = useMemo(() => {
         // Get last 4 months including current
         const months: { year: number; month: number; isCurrentMonth: boolean }[] = [];
@@ -836,27 +1615,71 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             }
         }
 
+        // Story 14.13 Session 4: Helper to get color based on view mode
+        const getColorForMode = (name: string): string => {
+            const theme = getCurrentTheme();
+            const mode = getCurrentMode();
+            switch (treemapViewMode) {
+                case 'store-groups':
+                    return getStoreGroupColors(name as StoreCategoryGroup, theme, mode).fg;
+                case 'item-groups':
+                    return getItemGroupColors(name as ItemCategoryGroup, theme, mode).fg;
+                case 'store-categories':
+                case 'item-categories':
+                default:
+                    return getCategoryPillColors(name).fg;
+            }
+        };
+
         // Calculate category totals per month
         const categoryRankings: Record<string, { amounts: number[]; color: string }> = {};
+        const otherKey = treemapViewMode === 'item-groups' ? 'other-item' :
+                         treemapViewMode === 'store-groups' ? 'other' : 'Otro';
 
         months.forEach((m, idx) => {
             const monthStr = `${m.year}-${String(m.month + 1).padStart(2, '0')}`;
             const monthTx = allTx.filter(tx => tx.date.startsWith(monthStr));
 
-            // Aggregate by category
+            // Aggregate based on view mode
             const totals: Record<string, number> = {};
-            monthTx.forEach(tx => {
-                const cat = tx.category || 'Otro';
-                totals[cat] = (totals[cat] || 0) + tx.total;
-            });
+
+            if (treemapViewMode === 'store-categories') {
+                // Original behavior: aggregate by transaction category
+                monthTx.forEach(tx => {
+                    const cat = tx.category || 'Otro';
+                    totals[cat] = (totals[cat] || 0) + tx.total;
+                });
+            } else if (treemapViewMode === 'store-groups') {
+                // Aggregate by store category groups
+                monthTx.forEach(tx => {
+                    const cat = tx.category || 'Otro';
+                    const group = STORE_CATEGORY_GROUPS[cat as keyof typeof STORE_CATEGORY_GROUPS] || 'other';
+                    totals[group] = (totals[group] || 0) + tx.total;
+                });
+            } else if (treemapViewMode === 'item-categories') {
+                // Aggregate by item categories from line items
+                monthTx.forEach(tx => {
+                    (tx.items || []).forEach(item => {
+                        const cat = normalizeItemCategory(item.category || 'Other');
+                        totals[cat] = (totals[cat] || 0) + item.price;
+                    });
+                });
+            } else if (treemapViewMode === 'item-groups') {
+                // Aggregate by item category groups from line items
+                monthTx.forEach(tx => {
+                    (tx.items || []).forEach(item => {
+                        const cat = normalizeItemCategory(item.category || 'Other');
+                        const itemKey = ITEM_CATEGORY_TO_KEY[cat as keyof typeof ITEM_CATEGORY_TO_KEY];
+                        const group = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
+                        totals[group] = (totals[group] || 0) + item.price;
+                    });
+                });
+            }
 
             // Update rankings
-            // Story 14.21: Use fg colors (vibrant) for line charts/legends (always colorful)
-            // Use getCategoryPillColors to ignore fontColorMode - charts/legends always colorful
             Object.entries(totals).forEach(([cat, amount]) => {
                 if (!categoryRankings[cat]) {
-                    const colors = getCategoryPillColors(cat);
-                    categoryRankings[cat] = { amounts: [0, 0, 0, 0], color: colors.fg };
+                    categoryRankings[cat] = { amounts: [0, 0, 0, 0], color: getColorForMode(cat) };
                 }
                 categoryRankings[cat].amounts[idx] = amount;
             });
@@ -876,7 +1699,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         });
 
         // Return top 4 categories + "Otro" (max 5 categories)
+        const isOtherCategory = (name: string) => name === otherKey || name === 'Otro' || name === 'Other';
         const sortedCategories = Object.entries(categoryRankings)
+            .filter(([cat]) => !isOtherCategory(cat)) // Exclude "other" categories from sorting
             .map(([cat, data]) => ({
                 name: cat,
                 color: data.color,
@@ -889,12 +1714,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         const top4 = sortedCategories.slice(0, 4);
         const rest = sortedCategories.slice(4);
 
+        // Get existing "other" category data if any
+        const existingOther = Object.entries(categoryRankings).find(([cat]) => isOtherCategory(cat));
+
         // Aggregate remaining categories into "Otro"
         let categoryTotals = top4;
-        if (rest.length > 0) {
+        const hasRemainingOrOther = rest.length > 0 || existingOther;
+
+        if (hasRemainingOrOther) {
             const otroAmounts = rest.reduce(
                 (sums, cat) => sums.map((s, i) => s + cat.amounts[i]),
-                [0, 0, 0, 0]
+                existingOther ? [...existingOther[1].amounts] : [0, 0, 0, 0]
             );
             const otroTotal = otroAmounts.reduce((sum, a) => sum + a, 0);
 
@@ -905,14 +1735,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 return sorted.indexOf(otroAmounts[monthIdx]) + 1;
             });
 
-            // Story 14.21: Use fg color for "Otro" from unified color system
-            // Use getCategoryPillColors - charts/legends always colorful
-            const otroColors = getCategoryPillColors('Otro');
             categoryTotals = [
                 ...top4,
                 {
-                    name: 'Otro',
-                    color: otroColors.fg,
+                    name: otherKey,
+                    color: getColorForMode(otherKey),
                     amounts: otroAmounts,
                     ranks: otroRanks,
                     total: otroTotal
@@ -932,7 +1759,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         }
 
         return { monthData: months, categories: categoryTotals };
-    }, [allTx, selectedMonth]);
+    }, [allTx, selectedMonth, treemapViewMode]);
 
     // Story 14.12: Translate bump chart month labels (outside useMemo to access t)
     const bumpChartMonthLabels = bumpChartData.monthData.map(m =>
@@ -982,16 +1809,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
     // Story 14.12: Recent transactions by SCAN date (sorted by createdAt/scan order)
     // NOTE: NOT filtered by month - shows globally recent scans
+    // v9.7.0: Uses dedicated recentScans prop (separate Firestore query by createdAt)
+    // This ensures recently scanned receipts with old transaction dates appear
     const recentTransactionsByScan = useMemo(() => {
-        // Sort ALL transactions by createdAt descending (most recently scanned first)
-        const sorted = [...filteredTransactions].sort((a, b) => {
-            const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return bDate - aDate;
-        });
+        // recentScans is already ordered by createdAt desc from Firestore
         const limit = recientesExpanded ? RECENT_TRANSACTIONS_EXPANDED : RECENT_TRANSACTIONS_COLLAPSED;
-        return sorted.slice(0, limit);
-    }, [filteredTransactions, recientesExpanded]);
+        return recentScans.slice(0, limit);
+    }, [recentScans, recientesExpanded]);
 
     // Story 14.12: Recent transactions by TRANSACTION date (sorted by date field)
     // NOTE: NOT filtered by month - shows globally recent transactions
@@ -1050,12 +1874,125 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         onViewTrends(selectedMonthString);
     };
 
-    // Story 14.12: Handle View All click (AC #3)
+    // Story 14.13 Session 4: Handle treemap cell click to navigate to filtered transactions
+    // Story 14.13 Session 10: Navigate to Items view when countMode is 'items'
+    // Story 14.13 Session 11: Aligned with TrendsView - add drillDownPath for proper filtering
+    // Story 14.13 Session 13: Added "Más" expansion to constituent categories
+    const handleTreemapCellClick = useCallback((categoryName: string) => {
+        if (!onNavigateToHistory) return;
+
+        // Build payload based on current view mode
+        const payload: HistoryNavigationPayload = {
+            // Story 14.13 Session 10: Target view based on countMode toggle
+            targetView: countMode === 'items' ? 'items' : 'history',
+            // Include temporal filter for the selected month
+            temporal: {
+                level: 'month',
+                year: String(selectedMonth.year),
+                month: selectedMonthString,
+            },
+            // Story 14.13 Session 11: Add sourceDistributionView for back-navigation context
+            sourceDistributionView: 'treemap',
+        };
+
+        // Story 14.13 Session 13: Check if this is the "Más" aggregated group
+        const isAggregatedGroup = categoryName === 'Más' || categoryName === 'More';
+
+        // Add category filter based on view mode
+        // Story 14.13 Session 13: Expand "Más" to constituent categories
+        switch (treemapViewMode) {
+            case 'store-groups':
+                if (isAggregatedGroup && storeGroupsOtro.length > 0) {
+                    // "Más" contains multiple store groups - expand each group and combine
+                    const allCategories = storeGroupsOtro.flatMap(c =>
+                        expandStoreCategoryGroup(c.name as StoreCategoryGroup)
+                    );
+                    payload.category = allCategories.join(',');
+                } else {
+                    payload.storeGroup = categoryName;
+                }
+                break;
+            case 'store-categories':
+                if (isAggregatedGroup && storeCategoriesOtro.length > 0) {
+                    // "Más" contains multiple store categories - join them with comma
+                    payload.category = storeCategoriesOtro.map(c => c.name).join(',');
+                } else {
+                    payload.category = categoryName;
+                }
+                break;
+            case 'item-groups':
+                if (isAggregatedGroup && itemGroupsOtro.length > 0) {
+                    // "Más" contains multiple item groups - expand each group and combine
+                    const allItemCategories = itemGroupsOtro.flatMap(c =>
+                        expandItemCategoryGroup(c.name as ItemCategoryGroup)
+                    );
+                    payload.itemCategory = allItemCategories.join(',');
+                } else {
+                    payload.itemGroup = categoryName;
+                }
+                break;
+            case 'item-categories':
+                if (isAggregatedGroup && itemCategoriesOtro.length > 0) {
+                    // "Más" contains multiple item categories - join them with comma
+                    payload.itemCategory = itemCategoriesOtro.map(c => c.name).join(',');
+                } else {
+                    payload.itemCategory = categoryName;
+                }
+                break;
+        }
+
+        // Story 14.13 Session 11: Build semantic drill-down path for proper multi-level filtering
+        // Story 14.13 Session 13: Skip drillDownPath for aggregated "Más" - already expanded above
+        if (!isAggregatedGroup) {
+            const dashboardPath: DrillDownPath = {};
+            switch (treemapViewMode) {
+                case 'store-groups':
+                    dashboardPath.storeGroup = categoryName;
+                    break;
+                case 'store-categories':
+                    dashboardPath.storeCategory = categoryName;
+                    break;
+                case 'item-groups':
+                    dashboardPath.itemGroup = categoryName;
+                    break;
+                case 'item-categories':
+                    dashboardPath.itemCategory = categoryName;
+                    break;
+            }
+            if (Object.keys(dashboardPath).length > 0) {
+                payload.drillDownPath = dashboardPath;
+            }
+        }
+
+        onNavigateToHistory(payload);
+    }, [onNavigateToHistory, treemapViewMode, selectedMonth.year, selectedMonthString, countMode, storeCategoriesOtro, storeGroupsOtro, itemCategoriesOtro, itemGroupsOtro]);
+
+    // Story 14.31: Handle View All click - navigate based on current slide
+    // Slide 0 (Últimos Escaneados): Navigate to RecentScansView (by scan date)
+    // Slide 1 (Por Fecha): Navigate to HistoryView with current month filter (by transaction date)
     const handleViewAll = () => {
-        if (onViewHistory) {
-            onViewHistory();
+        if (recientesSlide === 0) {
+            // "Últimos Escaneados" slide - show recent scans by scan date
+            if (onViewRecentScans) {
+                onViewRecentScans();
+            } else if (onViewHistory) {
+                onViewHistory();
+            } else {
+                setShowFullList(true);
+            }
         } else {
-            setShowFullList(true);
+            // "Por Fecha" slide - show transactions filtered by current month
+            if (onNavigateToHistory) {
+                onNavigateToHistory({
+                    temporal: {
+                        level: 'month',
+                        year: String(selectedMonth.year),
+                        month: selectedMonthString,
+                    },
+                });
+            } else {
+                setShowFullList(true);
+            }
         }
     };
 
@@ -1167,6 +2104,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         total: transaction.total,
                         category: transaction.category as any,
                         city: transaction.city,
+                        country: transaction.country,
                         currency: transaction.currency || currency,
                         thumbnailUrl: transaction.thumbnailUrl,
                         imageUrls: transaction.imageUrls,
@@ -1185,6 +2123,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         dateFormat,
                     }}
                     defaultCurrency={currency}
+                    userDefaultCountry={defaultCountry}
+                    foreignLocationFormat={foreignLocationFormat}
                     isDuplicate={isDuplicate}
                     onClick={() => onEditTransaction(transaction)}
                     onThumbnailClick={() => handleThumbnailClick(transaction)}
@@ -1342,169 +2282,190 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         style={cardStyle}
                         data-testid="carousel-card"
                     >
-                        {/* Carousel Header with title, expand/collapse, and navigation */}
-                        <div className="flex justify-between items-center p-3 pb-0">
-                            <div className="flex items-center gap-2 relative">
-                                {/* Title with month picker dropdown trigger (toggle on click) */}
-                                <button
-                                    ref={monthPickerToggleRef}
-                                    onClick={toggleMonthPicker}
-                                    className="flex items-center gap-1 font-semibold hover:opacity-80 transition-opacity"
-                                    style={{ color: 'var(--text-primary)' }}
-                                    data-testid="carousel-title"
+                        {/* Carousel Header with swipeable month and slide arrows */}
+                        {/* Story 14.13 Session 4: Restructured for true center alignment of view mode selector */}
+                        {/* Story 14.13.3: All elements aligned to 32px height (matching count toggle button) */}
+                        <div className="relative flex justify-between items-center p-3 pb-0">
+                            {/* Story 14.31: Left-aligned month with swipe navigation and chevron hints */}
+                            {/* Tap on text returns to current month when viewing past months */}
+                            <div
+                                className="relative flex items-center cursor-pointer select-none"
+                                style={{
+                                    touchAction: 'pan-y',
+                                    height: '24px',
+                                    marginLeft: '-4px',
+                                }}
+                                data-testid="carousel-title"
+                                onTouchStart={onMonthTouchStart}
+                                onTouchMove={onMonthTouchMove}
+                                onTouchEnd={onMonthTouchEnd}
+                                onClick={!isViewingCurrentMonth ? goToCurrentMonth : undefined}
+                            >
+                                {/* Left chevron hint */}
+                                <ChevronLeft
+                                    size={12}
+                                    strokeWidth={2}
+                                    style={{
+                                        color: 'var(--text-tertiary)',
+                                        opacity: 0.4,
+                                    }}
+                                />
+                                {/* Month text container with sliding animation */}
+                                <div
+                                    className="relative overflow-hidden flex items-center justify-center"
+                                    style={{ width: '54px', height: '100%' }}
                                 >
-                                    <span>{t(CAROUSEL_TITLE_KEYS[carouselSlide])}</span>
-                                    <ChevronDown size={14} className={`transition-transform ${showMonthPicker ? 'rotate-180' : ''}`} />
-                                </button>
-
-                                {/* Month/Year Picker Dropdown - Two rows with left/right navigation + Apply button */}
-                                {showMonthPicker && (
-                                    <div
-                                        ref={monthPickerRef}
-                                        className="absolute top-full left-0 mt-2 z-50 rounded-lg border shadow-lg p-3 min-w-[180px]"
+                                    {/* Previous month (slides in from left when swiping right) */}
+                                    <span
+                                        className="absolute font-semibold whitespace-nowrap text-sm"
                                         style={{
-                                            backgroundColor: 'var(--surface)',
-                                            borderColor: isDark ? '#334155' : '#e2e8f0'
+                                            color: 'var(--text-primary)',
+                                            transform: `translateX(${monthSwipeOffset - 54}px)`,
+                                            transition: monthTouchStart === null ? 'transform 0.2s ease-out' : 'none',
+                                            opacity: monthSwipeOffset > 0 ? Math.min(monthSwipeOffset / 50, 1) : 0,
                                         }}
-                                        data-testid="month-picker"
                                     >
-                                        {/* Year Row - left/right navigation */}
-                                        <div className="flex items-center justify-between mb-2">
-                                            <button
-                                                onClick={() => updatePickerMonth(pickerMonth.year - 1, pickerMonth.month)}
-                                                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                                                aria-label="Previous year"
-                                                data-testid="prev-year-btn"
-                                            >
-                                                <ChevronLeft size={16} style={{ color: 'var(--secondary)' }} />
-                                            </button>
-                                            <span className="font-semibold text-sm min-w-[60px] text-center" style={{ color: 'var(--text-primary)' }}>
-                                                {pickerMonth.year}
-                                            </span>
-                                            <button
-                                                onClick={() => {
-                                                    const now = new Date();
-                                                    // Don't allow going past current year
-                                                    if (pickerMonth.year < now.getFullYear()) {
-                                                        updatePickerMonth(pickerMonth.year + 1, pickerMonth.month);
-                                                    }
-                                                }}
-                                                disabled={pickerMonth.year >= new Date().getFullYear()}
-                                                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                                                aria-label="Next year"
-                                                data-testid="next-year-btn"
-                                            >
-                                                <ChevronRight size={16} style={{ color: 'var(--secondary)' }} />
-                                            </button>
-                                        </div>
-
-                                        {/* Month Row - left/right navigation */}
-                                        <div className="flex items-center justify-between mb-3">
-                                            <button
-                                                onClick={() => {
-                                                    const newMonth = pickerMonth.month === 0 ? 11 : pickerMonth.month - 1;
-                                                    const newYear = pickerMonth.month === 0 ? pickerMonth.year - 1 : pickerMonth.year;
-                                                    updatePickerMonth(newYear, newMonth);
-                                                }}
-                                                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                                                aria-label="Previous month"
-                                                data-testid="prev-month-picker-btn"
-                                            >
-                                                <ChevronLeft size={16} style={{ color: 'var(--secondary)' }} />
-                                            </button>
-                                            <span className="font-medium text-sm min-w-[80px] text-center" style={{ color: 'var(--text-primary)' }}>
-                                                {t(MONTH_FULL_KEYS[pickerMonth.month])}
-                                            </span>
-                                            <button
-                                                onClick={() => {
-                                                    const now = new Date();
-                                                    const newMonth = pickerMonth.month === 11 ? 0 : pickerMonth.month + 1;
-                                                    const newYear = pickerMonth.month === 11 ? pickerMonth.year + 1 : pickerMonth.year;
-                                                    // Don't allow going past current month
-                                                    const isFuture = newYear > now.getFullYear() ||
-                                                        (newYear === now.getFullYear() && newMonth > now.getMonth());
-                                                    if (!isFuture) {
-                                                        updatePickerMonth(newYear, newMonth);
-                                                    }
-                                                }}
-                                                disabled={(() => {
-                                                    const now = new Date();
-                                                    const newMonth = pickerMonth.month === 11 ? 0 : pickerMonth.month + 1;
-                                                    const newYear = pickerMonth.month === 11 ? pickerMonth.year + 1 : pickerMonth.year;
-                                                    return newYear > now.getFullYear() ||
-                                                        (newYear === now.getFullYear() && newMonth > now.getMonth());
-                                                })()}
-                                                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                                                aria-label="Next month"
-                                                data-testid="next-month-picker-btn"
-                                            >
-                                                <ChevronRight size={16} style={{ color: 'var(--secondary)' }} />
-                                            </button>
-                                        </div>
-
-                                        {/* Apply Button */}
-                                        <button
-                                            onClick={applyPickerSelection}
-                                            className="w-full py-2 rounded-lg text-sm font-medium text-white transition-colors hover:opacity-90"
-                                            style={{ backgroundColor: 'var(--primary)' }}
-                                            data-testid="apply-month-picker-btn"
-                                        >
-                                            {t('apply')}
-                                        </button>
-                                    </div>
-                                )}
-
-                                {/* Expand/Collapse Button */}
-                                <button
-                                    onClick={toggleCarouselCollapse}
-                                    className="w-5 h-5 rounded-full border flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                                    style={{ borderColor: 'var(--border-medium)' }}
-                                    aria-label={carouselCollapsed ? 'Expand carousel' : 'Collapse carousel'}
-                                    data-testid="carousel-collapse-btn"
-                                >
-                                    {carouselCollapsed ? (
-                                        <Plus size={12} style={{ color: 'var(--secondary)' }} />
-                                    ) : (
-                                        <Minus size={12} style={{ color: 'var(--secondary)' }} />
-                                    )}
-                                </button>
+                                        {prevMonthName}
+                                    </span>
+                                    {/* Current month */}
+                                    <span
+                                        className="absolute font-semibold whitespace-nowrap text-sm"
+                                        style={{
+                                            color: 'var(--text-primary)',
+                                            transform: `translateX(${monthSwipeOffset}px)`,
+                                            transition: monthTouchStart === null ? 'transform 0.2s ease-out' : 'none',
+                                        }}
+                                    >
+                                        {formattedMonthName}
+                                        {/* Dot indicator when not on current month */}
+                                        {!isViewingCurrentMonth && (
+                                            <span style={{ marginLeft: '2px', color: 'var(--primary)' }}>·</span>
+                                        )}
+                                    </span>
+                                    {/* Next month (slides in from right when swiping left) */}
+                                    <span
+                                        className="absolute font-semibold whitespace-nowrap text-sm"
+                                        style={{
+                                            color: 'var(--text-primary)',
+                                            transform: `translateX(${monthSwipeOffset + 54}px)`,
+                                            transition: monthTouchStart === null ? 'transform 0.2s ease-out' : 'none',
+                                            opacity: monthSwipeOffset < 0 ? Math.min(-monthSwipeOffset / 50, 1) : 0,
+                                        }}
+                                    >
+                                        {nextMonthName}
+                                    </span>
+                                </div>
+                                {/* Right chevron hint */}
+                                <ChevronRight
+                                    size={12}
+                                    strokeWidth={2}
+                                    style={{
+                                        color: 'var(--text-tertiary)',
+                                        opacity: canGoToNextMonth ? 0.4 : 0.15,
+                                    }}
+                                />
                             </div>
 
-                            {/* Navigation Arrows - press squish effect per design system */}
-                            <div className="flex items-center gap-1">
-                                <button
-                                    onClick={goToPrevSlide}
-                                    className="w-6 h-6 rounded-full border flex items-center justify-center focus:outline-none select-none"
+                            {/* Story 14.13 Session 4: View mode selector - absolutely centered for all slides */}
+                            {/* Story 14.13.3: Height increased to 32px to match count toggle button */}
+                            <div
+                                className="absolute left-1/2 transform -translate-x-1/2 flex items-center"
+                                style={{ top: '12px' }}
+                            >
+                                <div
+                                    className="relative flex items-center rounded-full"
                                     style={{
-                                        borderColor: 'var(--border-medium)',
-                                        WebkitTapHighlightColor: 'transparent'
+                                        backgroundColor: 'var(--bg-tertiary, #f1f5f9)',
+                                        height: '32px',
+                                        padding: '2px 4px',
+                                        border: '1px solid var(--border-light, #e2e8f0)',
+                                        gap: '4px',
                                     }}
-                                    onTouchStart={(e) => (e.currentTarget.style.transform = 'scale(0.9)')}
-                                    onTouchEnd={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-                                    onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.9)')}
-                                    onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-                                    onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-                                    aria-label="Previous slide"
-                                    data-testid="prev-slide-btn"
+                                    role="tablist"
+                                    aria-label="View mode selection"
+                                    data-testid="viewmode-pills-container"
                                 >
-                                    <ChevronLeft size={14} style={{ color: 'var(--secondary)' }} />
-                                </button>
+                                    {/* Animated selection indicator */}
+                                    <div
+                                        className="absolute rounded-full transition-all duration-300 ease-out"
+                                        style={{
+                                            width: '28px',
+                                            height: '28px',
+                                            top: '2px',
+                                            // 4px initial padding + (28px button + 4px gap) * index
+                                            left: treemapViewMode === 'store-groups' ? '4px' :
+                                                  treemapViewMode === 'store-categories' ? 'calc(4px + 32px)' :
+                                                  treemapViewMode === 'item-groups' ? 'calc(4px + 64px)' :
+                                                  'calc(4px + 96px)',
+                                            background: 'var(--primary, #2563eb)',
+                                        }}
+                                        aria-hidden="true"
+                                    />
+                                    {/* View mode pills with icons only */}
+                                    {VIEW_MODE_CONFIG.map((mode) => {
+                                        const isActive = treemapViewMode === mode.value;
+                                        return (
+                                            <button
+                                                key={mode.value}
+                                                onClick={() => {
+                                                    setTreemapViewMode(mode.value);
+                                                    setAnimationKey(prev => prev + 1);
+                                                }}
+                                                className="relative z-10 flex items-center justify-center rounded-full transition-colors"
+                                                style={{
+                                                    width: '28px',
+                                                    height: '28px',
+                                                    lineHeight: 1,
+                                                }}
+                                                aria-pressed={isActive}
+                                                aria-label={lang === 'es' ? mode.labelEs : mode.labelEn}
+                                                title={lang === 'es' ? mode.labelEs : mode.labelEn}
+                                                data-testid={`viewmode-pill-${mode.value}`}
+                                            >
+                                                <span
+                                                    className="text-base leading-none transition-all"
+                                                    style={{
+                                                        filter: isActive ? 'brightness(1.2)' : 'none',
+                                                    }}
+                                                >
+                                                    {mode.emoji}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Story 14.13 Session 11: Count Mode Toggle (arrows removed - swipe navigation only) */}
+                            <div className="flex items-center gap-1 z-10">
+                                {/* Count Mode Toggle - Receipt (transactions) or Package (items) */}
                                 <button
-                                    onClick={goToNextSlide}
-                                    className="w-6 h-6 rounded-full border flex items-center justify-center focus:outline-none select-none"
+                                    onClick={toggleCountMode}
+                                    className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200"
+                                    aria-label={countMode === 'transactions'
+                                        ? (lang === 'es' ? 'Contando compras (clic para contar productos)' : 'Counting purchases (click to count products)')
+                                        : (lang === 'es' ? 'Contando productos (clic para contar compras)' : 'Counting products (click to count purchases)')
+                                    }
+                                    title={countMode === 'transactions'
+                                        ? (lang === 'es' ? 'Contando compras' : 'Counting purchases')
+                                        : (lang === 'es' ? 'Contando productos' : 'Counting products')
+                                    }
+                                    data-testid="count-mode-toggle"
                                     style={{
-                                        borderColor: 'var(--border-medium)',
-                                        WebkitTapHighlightColor: 'transparent'
+                                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                                        backgroundColor: countMode === 'items'
+                                            ? 'var(--primary)'
+                                            : 'var(--bg-tertiary)',
+                                        color: countMode === 'items'
+                                            ? 'white'
+                                            : 'var(--text-secondary)',
                                     }}
-                                    onTouchStart={(e) => (e.currentTarget.style.transform = 'scale(0.9)')}
-                                    onTouchEnd={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-                                    onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.9)')}
-                                    onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-                                    onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-                                    aria-label="Next slide"
-                                    data-testid="next-slide-btn"
                                 >
-                                    <ChevronRight size={14} style={{ color: 'var(--secondary)' }} />
+                                    {countMode === 'transactions' ? (
+                                        <Receipt size={16} className="transition-opacity duration-150" />
+                                    ) : (
+                                        <Package size={16} className="transition-opacity duration-150" />
+                                    )}
                                 </button>
                             </div>
                         </div>
@@ -1528,6 +2489,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     <div
                                         className="h-full flex flex-col"
                                         style={{
+                                            transform: `translateX(${carouselSwipeOffset}px)`,
+                                            transition: touchStart === null ? 'transform 0.2s ease-out' : 'none',
                                             animation: slideDirection ? `slideIn${slideDirection === 'left' ? 'FromRight' : 'FromLeft'} 0.25s ease-out` : undefined
                                         }}
                                         onAnimationEnd={() => setSlideDirection(null)}
@@ -1540,11 +2503,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                             data-testid="treemap-grid"
                                             style={{ overflow: 'hidden' }}
                                         >
-                                        {treemapCategories.length > 0 ? (
+                                        {currentTreemapData.length > 0 ? (
                                             (() => {
                                                 // Story 14.13: Squarified treemap layout - cells sized proportionally
                                                 // Show up to 5 categories for dashboard
-                                                const displayCategories = treemapCategories.slice(0, 5);
+                                                const displayCategories = currentTreemapData.slice(0, 5);
 
                                                 // Calculate proportional font sizes based on percentage
                                                 const getValueFontSize = (percent: number, isMainCell: boolean) => {
@@ -1572,9 +2535,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                             const cellArea = rect.width * rect.height;
                                                             // Main cell = largest area (within 10% of max to handle ties)
                                                             const isMainCell = cellArea >= largestArea * 0.9;
+                                                            // Story 14.13 Session 4: Use view mode-aware translation
                                                             const displayName = cat.name === 'Otro' || cat.name === 'Other'
                                                                 ? t('otherCategory')
-                                                                : translateCategory(cat.name, lang);
+                                                                : translateTreemapName(cat.name);
 
                                                             return (
                                                                 <AnimatedTreemapCard
@@ -1584,6 +2548,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                                     isMainCell={isMainCell}
                                                                     animationKey={animationKey}
                                                                     getValueFontSize={getValueFontSize}
+                                                                    // Story 14.13 Session 4: Use view mode-aware emoji
+                                                                    emoji={getTreemapEmoji(cat.name)}
+                                                                    // Story 14.13 Session 4: Click to navigate to filtered transactions
+                                                                    onClick={() => handleTreemapCellClick(cat.name)}
+                                                                    // Story 14.13 Session 10: Icon based on countMode toggle
+                                                                    iconType={countMode === 'items' ? 'package' : 'receipt'}
+                                                                    countMode={countMode}
                                                                     style={{
                                                                         position: 'absolute',
                                                                         left: `${rect.x}%`,
@@ -1607,62 +2578,45 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         )}
                                         </div>
                                         {/* Footer with total, transaction count, and month progress */}
-                                        {/* Layout: Total del mes | [count badge] | Progress bar | days | Amount */}
+                                        {/* Story 14.13 Session 4: Clickable footer to view month transactions */}
+                                        {/* Layout: Total del mes | [receipt icon + count] | Progress bar | days | Amount */}
                                         <div
                                             className="pt-3 mt-3 border-t flex-shrink-0"
                                             style={{ borderColor: isDark ? '#334155' : '#e2e8f0' }}
                                         >
                                             <div className="flex items-center gap-2">
-                                                {/* Total label */}
-                                                <span className="text-xs whitespace-nowrap" style={{ color: 'var(--secondary)' }}>
-                                                    Total del mes
-                                                </span>
-                                                {/* Transaction count badge with tooltip on click */}
-                                                <div className="relative">
-                                                    <button
-                                                        onClick={() => setShowCountTooltip(!showCountTooltip)}
-                                                        className="flex items-center justify-center font-bold cursor-pointer transition-transform hover:scale-110"
+                                                {/* Total label + transaction count - clickable to view month transactions */}
+                                                <button
+                                                    onClick={() => {
+                                                        // Story 14.13 Session 4: Navigate to transaction view filtered by this month
+                                                        if (onNavigateToHistory) {
+                                                            onNavigateToHistory({
+                                                                temporal: {
+                                                                    level: 'month',
+                                                                    year: String(selectedMonth.year),
+                                                                    month: selectedMonthString,
+                                                                },
+                                                            });
+                                                        }
+                                                    }}
+                                                    className="flex items-center gap-1.5 text-xs whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity"
+                                                    style={{ color: 'var(--secondary)', background: 'none', border: 'none', padding: 0 }}
+                                                    aria-label={`Ver ${monthTransactions.length} transacciones del mes`}
+                                                >
+                                                    <span>Total del mes</span>
+                                                    {/* Receipt icon + transaction count badge */}
+                                                    <span
+                                                        className="inline-flex items-center gap-[2px] px-1.5 py-0.5 rounded-full font-semibold"
                                                         style={{
-                                                            width: 20,
-                                                            height: 20,
-                                                            borderRadius: '50%',
                                                             backgroundColor: 'var(--primary)',
                                                             color: 'white',
-                                                            fontSize: '12px',
-                                                            lineHeight: 1,
-                                                            flexShrink: 0,
-                                                            border: 'none',
-                                                            padding: 0
+                                                            fontSize: '11px',
                                                         }}
-                                                        aria-label="Total transacciones"
                                                     >
+                                                        <Receipt size={10} strokeWidth={2} />
                                                         {animatedMonthCount}
-                                                    </button>
-                                                    {/* Tooltip popup */}
-                                                    {showCountTooltip && (
-                                                        <div
-                                                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 rounded text-xs whitespace-nowrap z-50 animate-in fade-in slide-in-from-bottom-1 duration-150"
-                                                            style={{
-                                                                backgroundColor: isDark ? '#1e293b' : '#0f172a',
-                                                                color: 'white',
-                                                                boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-                                                            }}
-                                                        >
-                                                            Total transacciones
-                                                            {/* Tooltip arrow */}
-                                                            <div
-                                                                className="absolute top-full left-1/2 -translate-x-1/2"
-                                                                style={{
-                                                                    width: 0,
-                                                                    height: 0,
-                                                                    borderLeft: '5px solid transparent',
-                                                                    borderRight: '5px solid transparent',
-                                                                    borderTop: `5px solid ${isDark ? '#1e293b' : '#0f172a'}`
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                    </span>
+                                                </button>
                                                 {/* Month progress bar */}
                                                 <div className="flex-1 flex items-center gap-1.5">
                                                     <div
@@ -1677,7 +2631,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                             }}
                                                         />
                                                     </div>
-                                                    <span className="text-[10px] whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>
+                                                    <span className="text-xs whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>
                                                         {animatedDaysElapsed}/{monthProgress.daysInMonth}
                                                     </span>
                                                 </div>
@@ -1698,6 +2652,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         className="relative h-full flex flex-col"
                                         data-testid="radar-view"
                                         style={{
+                                            transform: `translateX(${carouselSwipeOffset}px)`,
+                                            transition: touchStart === null ? 'transform 0.2s ease-out' : 'none',
                                             animation: slideDirection ? `slideIn${slideDirection === 'left' ? 'FromRight' : 'FromLeft'} 0.25s ease-out` : undefined
                                         }}
                                         onAnimationEnd={() => setSlideDirection(null)}
@@ -1991,15 +2947,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                 {/* Left/Right comparison overlays when category selected */}
                                                 {/* Reading order: Left = Previous month, Right = Current month */}
                                                 {/* Key forces re-animation when category changes */}
+                                                {/* Story 14.13 Session 4: Increased font sizes for better readability */}
                                                 {selectedRadarCategory && (
                                                     <React.Fragment key={selectedRadarCategory.name}>
                                                         {/* Left side - Previous month (secondary) */}
                                                         <div
                                                             className="absolute left-0 top-1 flex flex-col items-start animate-comparison-left"
-                                                            style={{ maxWidth: '80px' }}
+                                                            style={{ maxWidth: '90px' }}
                                                         >
                                                             <div
-                                                                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-medium shadow-sm"
+                                                                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-medium shadow-sm"
                                                                 style={{
                                                                     backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
                                                                     color: 'var(--secondary)'
@@ -2009,24 +2966,30 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                                 <span>${Math.round(selectedRadarCategory.prevAmount / 1000)}k</span>
                                                             </div>
                                                             <div
-                                                                className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
+                                                                className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-xs font-semibold"
                                                                 style={{
                                                                     backgroundColor: selectedRadarCategory.color + '25',
                                                                     color: 'var(--primary)'
                                                                 }}
                                                             >
                                                                 <span>{selectedRadarCategory.emoji}</span>
-                                                                <span className="truncate" style={{ maxWidth: '55px' }}>{selectedRadarCategory.name === 'Otro' || selectedRadarCategory.name === 'Other' ? t('otherCategory') : translateCategory(selectedRadarCategory.name, lang)}</span>
+                                                                <span className="truncate" style={{ maxWidth: '60px' }}>{
+                                                                    // Story 14.13 Session 4: Use view mode-aware translation for category names
+                                                                    selectedRadarCategory.name === 'Otro' || selectedRadarCategory.name === 'Other' ||
+                                                                    selectedRadarCategory.name === 'other' || selectedRadarCategory.name === 'other-item'
+                                                                        ? t('otherCategory')
+                                                                        : translateTreemapName(selectedRadarCategory.name)
+                                                                }</span>
                                                             </div>
                                                         </div>
 
                                                         {/* Right side - Current month (primary) + change */}
                                                         <div
                                                             className="absolute right-0 top-1 flex flex-col items-end animate-comparison-right"
-                                                            style={{ maxWidth: '80px' }}
+                                                            style={{ maxWidth: '90px' }}
                                                         >
                                                             <div
-                                                                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-bold shadow-sm"
+                                                                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-bold shadow-sm"
                                                                 style={{
                                                                     backgroundColor: 'var(--primary)',
                                                                     color: 'var(--bg)'
@@ -2043,7 +3006,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                                 const isUp = change >= 0;
                                                                 return (
                                                                     <span
-                                                                        className="inline-flex items-center mt-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                                                                        className="inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-xs font-bold"
                                                                         style={{
                                                                             backgroundColor: isUp ? 'var(--negative-bg)' : 'var(--positive-bg)',
                                                                             color: isUp ? 'var(--negative-primary)' : 'var(--positive-primary)'
@@ -2074,6 +3037,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         className="h-full"
                                         data-testid="bump-chart-view"
                                         style={{
+                                            transform: `translateX(${carouselSwipeOffset}px)`,
+                                            transition: touchStart === null ? 'transform 0.2s ease-out' : 'none',
                                             animation: slideDirection ? `slideIn${slideDirection === 'left' ? 'FromRight' : 'FromLeft'} 0.25s ease-out` : undefined
                                         }}
                                         onAnimationEnd={() => setSlideDirection(null)}
@@ -2202,9 +3167,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                                                 animationDelay: `${800 + idx * 100}ms`
                                                             }}
                                                         >
-                                                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
+                                                            {/* Story 14.13 Session 4: Use category emoji instead of dot */}
+                                                            <span className="text-sm">{getTreemapEmoji(cat.name)}</span>
                                                             <span style={{ color: cat.color }}>
-                                                                {cat.name === 'Otro' || cat.name === 'Other' ? t('otherCategory') : translateCategory(cat.name, lang)} #{idx + 1}
+                                                                {/* Story 14.13 Session 4: Use view mode-aware translation */}
+                                                                {cat.name === 'Otro' || cat.name === 'Other' || cat.name === 'other' || cat.name === 'other-item'
+                                                                    ? t('otherCategory')
+                                                                    : translateTreemapName(cat.name)} #{idx + 1}
                                                             </span>
                                                         </div>
                                                     ))}
@@ -2283,19 +3252,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     <h2 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
                                         {recientesSlide === 0 ? 'Últimos Escaneados' : 'Por Fecha'}
                                     </h2>
-                                    {canExpand && (
-                                        <button
-                                            onClick={() => setRecientesExpanded(!recientesExpanded)}
-                                            className="w-5 h-5 rounded-full border flex items-center justify-center"
-                                            style={{ borderColor: 'var(--border-medium)' }}
-                                            aria-label={recientesExpanded ? 'Colapsar' : 'Expandir'}
-                                            data-testid="expand-recientes-btn"
-                                        >
-                                            <span className="text-xs" style={{ color: 'var(--secondary)' }}>
-                                                {recientesExpanded ? '−' : '+'}
-                                            </span>
-                                        </button>
-                                    )}
+                                    {/* Story 14.41b: Removed expand button - now using "See More" card at end of list */}
                                 </div>
                                 {/* Selection mode: X button + count */}
                                 <div
@@ -2422,6 +3379,31 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                             {renderTransactionItem(tx, index)}
                                         </div>
                                     ))}
+                                    {/* Story 14.41b: "See More" / "See Less" link at end of list - styled like "Ver todo" */}
+                                    {canExpand && (
+                                        <div
+                                            key={`see-more-less-${recientesAnimKey}`}
+                                            className="flex justify-center pt-2 pb-1 animate-fade-in-left"
+                                            style={{
+                                                opacity: 0,
+                                                animationDelay: `${recentTransactions.length * 80}ms`
+                                            }}
+                                        >
+                                            <button
+                                                onClick={() => setRecientesExpanded(!recientesExpanded)}
+                                                className="text-sm font-medium flex items-center gap-1"
+                                                style={{ color: 'var(--primary)' }}
+                                                data-testid={recientesExpanded ? 'show-less-card' : 'see-more-card'}
+                                            >
+                                                <span>
+                                                    {recientesExpanded
+                                                        ? (t('showLess') || 'Ver menos')
+                                                        : (t('seeMore') || 'Ver más')}
+                                                </span>
+                                                <span className="text-base font-bold">{recientesExpanded ? '−' : '+'}</span>
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

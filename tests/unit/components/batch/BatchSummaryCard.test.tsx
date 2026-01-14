@@ -20,13 +20,17 @@ describe('BatchSummaryCard', () => {
       items: 'items',
       item: 'item',
       receipt: 'receipt',
-      batchReviewReady: 'Ready',
+      batchItemReady: 'Ready',
       batchReviewEdited: 'Edited',
       batchReviewNeeded: 'Review',
       batchReviewError: 'Error',
       batchReviewEdit: 'Edit',
       batchReviewDiscard: 'Discard',
       batchRetry: 'Retry',
+      save: 'Save',
+      collapse: 'Collapse',
+      expand: 'Expand',
+      more: 'more',
     };
     return translations[key] || key;
   };
@@ -83,7 +87,8 @@ describe('BatchSummaryCard', () => {
     it('should render item count', () => {
       render(<BatchSummaryCard {...defaultProps} />);
 
-      expect(screen.getByText('2 items')).toBeInTheDocument();
+      // Story 12.1 v9.7.0: Item count is now displayed as just a number in a MetaPill
+      expect(screen.getByText('2')).toBeInTheDocument();
     });
 
     it('should render singular item for single item', () => {
@@ -96,7 +101,8 @@ describe('BatchSummaryCard', () => {
 
       render(<BatchSummaryCard {...defaultProps} receipt={receipt} />);
 
-      expect(screen.getByText('1 item')).toBeInTheDocument();
+      // Story 12.1 v9.7.0: Item count is now displayed as just a number in a MetaPill
+      expect(screen.getByText('1')).toBeInTheDocument();
     });
 
     it('should render category emoji', () => {
@@ -195,12 +201,13 @@ describe('BatchSummaryCard', () => {
       expect(screen.getByRole('button', { name: /discard/i })).toBeInTheDocument();
     });
 
-    it('should NOT show Edit button for error receipts', () => {
+    it('should still show Edit button for error receipts (Story 12.1 v9.7.0 change)', () => {
+      // Story 12.1 v9.7.0: Edit button is now always shown regardless of status
       const receipt = createMockReceipt({ status: 'error' });
 
       render(<BatchSummaryCard {...defaultProps} receipt={receipt} />);
 
-      expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /edit/i })).toBeInTheDocument();
     });
 
     it('should show Retry button for error receipts when onRetry provided', () => {
@@ -256,15 +263,21 @@ describe('BatchSummaryCard', () => {
 
   describe('theming', () => {
     it('should render with light theme styles', () => {
+      // Story 12.1 v9.7.0: Component now uses CSS variables for theming instead of Tailwind classes
       const { container } = render(<BatchSummaryCard {...defaultProps} theme="light" />);
 
-      expect(container.firstChild).toHaveClass('bg-white');
+      // Check that the component uses CSS variable for background
+      expect(container.firstChild).toHaveAttribute('style');
+      expect((container.firstChild as HTMLElement).getAttribute('style')).toContain('var(--bg-secondary)');
     });
 
     it('should render with dark theme styles', () => {
+      // Story 12.1 v9.7.0: Component now uses CSS variables for theming instead of Tailwind classes
       const { container } = render(<BatchSummaryCard {...defaultProps} theme="dark" />);
 
-      expect(container.firstChild).toHaveClass('bg-slate-800');
+      // Check that the component uses CSS variable for background
+      expect(container.firstChild).toHaveAttribute('style');
+      expect((container.firstChild as HTMLElement).getAttribute('style')).toContain('var(--bg-secondary)');
     });
   });
 
@@ -300,17 +313,18 @@ describe('BatchSummaryCard', () => {
     });
 
     it('should format USD currency correctly', () => {
+      // USD currency uses cents as base unit (like most non-CLP currencies)
       const receipt = createMockReceipt({
         transaction: {
           ...createMockReceipt().transaction,
-          total: 150,
+          total: 15000, // $150.00 in cents
         },
       });
 
       render(<BatchSummaryCard {...defaultProps} receipt={receipt} currency="USD" />);
 
-      // USD shows $150 (without .00 for round numbers based on formatCurrency implementation)
-      expect(screen.getByText('$150')).toBeInTheDocument();
+      // USD formats 15000 cents as $150.00
+      expect(screen.getByText('$150.00')).toBeInTheDocument();
     });
   });
 });

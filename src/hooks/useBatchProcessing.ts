@@ -24,6 +24,23 @@ import { Transaction } from '../types/transaction';
 import { ReceiptType } from '../services/gemini';
 
 /**
+ * Story 14d.5b: Callbacks for ScanContext integration.
+ * These callbacks allow App.tsx to dispatch actions to ScanContext during processing.
+ */
+export interface BatchProcessingCallbacks {
+  /** Called when processing starts for an image (by index) */
+  onItemStart?: (index: number) => void;
+  /** Called when an image is successfully processed */
+  onItemSuccess?: (index: number, result: Transaction) => void;
+  /** Called when an image fails to process */
+  onItemError?: (index: number, error: string) => void;
+  /** Called when all images have been processed.
+   * Story 14d.5: Now passes results and images for atomic batchReceipts creation.
+   */
+  onComplete?: (results: ProcessingResult[], images: string[]) => void;
+}
+
+/**
  * Return type for the useBatchProcessing hook.
  */
 export interface UseBatchProcessingReturn {
@@ -33,8 +50,13 @@ export interface UseBatchProcessingReturn {
   isProcessing: boolean;
   /** Overall progress (current/total) */
   progress: { current: number; total: number };
-  /** Start processing a batch of images */
-  startProcessing: (images: string[], currency: string, receiptType?: ReceiptType) => Promise<ProcessingResult[]>;
+  /** Start processing a batch of images. Story 14d.5b: Now accepts optional callbacks. */
+  startProcessing: (
+    images: string[],
+    currency: string,
+    receiptType?: ReceiptType,
+    callbacks?: BatchProcessingCallbacks
+  ) => Promise<ProcessingResult[]>;
   /** Cancel ongoing processing (AC #5) */
   cancel: () => void;
   /** Retry a specific failed image (AC #6) */
@@ -99,16 +121,20 @@ export function useBatchProcessing(concurrencyLimit = 3): UseBatchProcessingRetu
 
   /**
    * Start processing a batch of images.
+   * Story 14d.5b: Now accepts optional callbacks for ScanContext integration.
    */
   const startProcessing = useCallback(
     async (
       images: string[],
       currency: string,
-      receiptType?: ReceiptType
+      receiptType?: ReceiptType,
+      callbacks?: BatchProcessingCallbacks
     ): Promise<ProcessingResult[]> => {
       // Don't start if already processing
       if (isProcessing) {
-        console.warn('Batch processing already in progress');
+        if (import.meta.env.DEV) {
+          console.warn('Batch processing already in progress');
+        }
         return [];
       }
 
@@ -130,16 +156,65 @@ export function useBatchProcessing(concurrencyLimit = 3): UseBatchProcessingRetu
         receiptType,
       };
 
+      // Story 14d.5b: Track which items have had callbacks called to prevent duplicates
+      const callbacksCalled = {
+        started: new Set<number>(),
+        succeeded: new Set<number>(),
+        failed: new Set<number>(),
+      };
+
       try {
         const processingResults = await processImagesInParallel(
           images,
           options,
-          (newStates) => setStates([...newStates]),
+          // Story 14d.5b: Enhanced state callback to also dispatch to ScanContext
+          (newStates) => {
+            setStates([...newStates]);
+
+            // Call context callbacks for state transitions (only once per item)
+            if (callbacks) {
+              newStates.forEach((state, index) => {
+                // Track which items have started - only call onItemStart once per item
+                if (
+                  state.status === 'processing' &&
+                  !callbacksCalled.started.has(index)
+                ) {
+                  callbacksCalled.started.add(index);
+                  callbacks.onItemStart?.(index);
+                }
+
+                // Track completed items - only call once when status changes to ready
+                if (
+                  state.status === 'ready' &&
+                  state.result &&
+                  !callbacksCalled.succeeded.has(index)
+                ) {
+                  callbacksCalled.succeeded.add(index);
+                  callbacks.onItemSuccess?.(index, state.result);
+                }
+
+                // Track failed items - only call once when status changes to error
+                if (
+                  state.status === 'error' &&
+                  state.error &&
+                  !callbacksCalled.failed.has(index)
+                ) {
+                  callbacksCalled.failed.add(index);
+                  callbacks.onItemError?.(index, state.error);
+                }
+              });
+            }
+          },
           (current, total) => setProgress({ current, total }),
           abortControllerRef.current.signal
         );
 
         setResults(processingResults);
+
+        // Story 14d.5b: Call onComplete after all processing finishes
+        // Story 14d.5: Now passes results and images for atomic batchReceipts creation
+        callbacks?.onComplete?.(processingResults, images);
+
         return processingResults;
       } finally {
         setIsProcessing(false);

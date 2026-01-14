@@ -221,7 +221,7 @@ export const DeleteGroupModal: React.FC<DeleteGroupModalProps> = ({
                                 {label || group.name}
                             </div>
                             <div
-                                className="text-[11px]"
+                                className="text-xs"
                                 style={{ color: 'var(--text-secondary)' }}
                             >
                                 {group.transactionCount} {lang === 'es' ? 'transacciones' : 'transactions'}
@@ -249,7 +249,7 @@ export const DeleteGroupModal: React.FC<DeleteGroupModalProps> = ({
                         ref={cancelButtonRef}
                         onClick={handleClose}
                         disabled={isDeleting}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-[13px] font-medium rounded-lg transition-colors disabled:opacity-40"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-sm font-medium rounded-lg transition-colors disabled:opacity-40"
                         style={{
                             backgroundColor: 'var(--bg-secondary)',
                             border: '1px solid var(--border-light)',
@@ -265,7 +265,7 @@ export const DeleteGroupModal: React.FC<DeleteGroupModalProps> = ({
                     <button
                         onClick={onConfirm}
                         disabled={isDeleting}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-[13px] font-semibold rounded-lg transition-colors disabled:opacity-40"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-sm font-semibold rounded-lg transition-colors disabled:opacity-40"
                         style={{
                             backgroundColor: '#ef4444',
                             color: 'white',

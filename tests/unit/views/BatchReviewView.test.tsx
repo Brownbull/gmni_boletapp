@@ -25,6 +25,7 @@ describe('BatchReviewView', () => {
   const mockT = (key: string) => {
     const translations: Record<string, string> = {
       back: 'Back',
+      batchResult: 'Batch Result',
       batchReviewTitle: 'Review Batch',
       receipts: 'receipts',
       receipt: 'receipt',
@@ -38,6 +39,7 @@ describe('BatchReviewView', () => {
       batchDiscardConfirmTitle: 'Discard this receipt?',
       batchDiscardConfirmMessage: 'This receipt has high confidence and will not be saved.',
       batchDiscardConfirmYes: 'Discard',
+      batchDiscardConfirmNo: 'Cancel',
       cancel: 'Cancel',
       items: 'items',
       batchReviewReady: 'Ready',
@@ -145,7 +147,8 @@ describe('BatchReviewView', () => {
       render(<BatchReviewView {...defaultProps} />);
 
       expect(screen.getByRole('button', { name: /back/i })).toBeInTheDocument();
-      expect(screen.getByText('Review Batch')).toBeInTheDocument();
+      // Title changed from 'Review Batch' to 'Batch Result' in Story 12.1 v9.7.0
+      expect(screen.getByText('Batch Result')).toBeInTheDocument();
     });
 
     it('should render summary header with count and total (AC #5)', () => {
@@ -221,10 +224,12 @@ describe('BatchReviewView', () => {
       fireEvent.click(editButtons[0]);
 
       expect(onEditReceipt).toHaveBeenCalledTimes(1);
+      // Signature changed: (receipt, batchIndex, batchTotal, allReceipts)
       expect(onEditReceipt).toHaveBeenCalledWith(
         expect.objectContaining({ id: 'result-1' }),
         1, // batchIndex (1-indexed)
-        2  // batchTotal
+        2, // batchTotal
+        expect.any(Array) // allReceipts array
       );
     });
 
@@ -290,7 +295,7 @@ describe('BatchReviewView', () => {
       expect(mockDiscardReceipt).toHaveBeenCalledWith('result-1');
     });
 
-    it('should cancel discard dialog', () => {
+    it('should cancel discard dialog', async () => {
       const mockDiscardReceipt = vi.fn();
       vi.mocked(useBatchReview).mockReturnValue(
         createMockHookReturn({ discardReceipt: mockDiscardReceipt })
@@ -302,11 +307,21 @@ describe('BatchReviewView', () => {
       const discardButtons = screen.getAllByRole('button', { name: /discard/i });
       fireEvent.click(discardButtons[0]);
 
-      // Cancel
-      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+      // Verify dialog appeared
+      expect(screen.getByText('Discard this receipt?')).toBeInTheDocument();
+
+      // Find the Cancel button inside the dialog (it's the second button - first is Discard)
+      const dialog = screen.getByRole('alertdialog');
+      const dialogButtons = dialog.querySelectorAll('button');
+      // Dialog has 2 buttons: Discard (red) and Cancel. Cancel is the second one.
+      const cancelButton = dialogButtons[1] as HTMLElement;
+      fireEvent.click(cancelButton);
 
       expect(mockDiscardReceipt).not.toHaveBeenCalled();
-      expect(screen.queryByText('Discard this receipt?')).not.toBeInTheDocument();
+      // Wait for dialog to close
+      await waitFor(() => {
+        expect(screen.queryByText('Discard this receipt?')).not.toBeInTheDocument();
+      });
     });
   });
 
@@ -394,20 +409,22 @@ describe('BatchReviewView', () => {
   });
 
   describe('theming', () => {
-    it('should apply light theme styles', () => {
+    it('should apply theme via CSS variable', () => {
       const { container } = render(<BatchReviewView {...defaultProps} theme="light" />);
 
-      // Check for light theme background class on main container
+      // Component uses CSS variable for theming instead of Tailwind classes
+      // style={{ backgroundColor: 'var(--bg)' }}
       const mainContainer = container.firstChild as HTMLElement;
-      expect(mainContainer).toHaveClass('bg-slate-50');
+      // Check that style attribute contains the CSS variable
+      expect(mainContainer.getAttribute('style')).toContain('background-color: var(--bg)');
     });
 
-    it('should apply dark theme styles', () => {
+    it('should have flex column layout', () => {
       const { container } = render(<BatchReviewView {...defaultProps} theme="dark" />);
 
-      // Check for dark theme background class on main container
+      // Main container has flex flex-col h-full layout
       const mainContainer = container.firstChild as HTMLElement;
-      expect(mainContainer).toHaveClass('bg-slate-900');
+      expect(mainContainer).toHaveClass('flex', 'flex-col', 'h-full');
     });
   });
 

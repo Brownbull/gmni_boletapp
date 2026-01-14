@@ -351,9 +351,13 @@ development_status:
   # ============================================================================
   # These make the mockups visible in the app - BLOCKED by 14.10 + 14.11
   14-12-home-dashboard-refresh: deployed  # 5 pts - Update DashboardView with new design [MOCKUP: home-dashboard.html] - DEPLOYED 2026-01-03 (PR #135, #136, #137 UI refinements)
-  14-13-analytics-explorer-redesign: in-progress  # 8 pts - Complete TrendsView redesign to "Explora" [MOCKUP: analytics-polygon.html] - Resumed 2026-01-07: fixing treemap proportional widths
+  14-13-analytics-explorer-redesign: done  # 8 pts - Complete TrendsView redesign to "Explora" [MOCKUP: analytics-polygon.html] - COMPLETE 2026-01-11 (21 sessions)
+  14-13-2-tendencia-slide-redesign: done  # 8 pts (13→8 reduced scope) - Period comparison for Tendencia slide; Sankey + drill-down deferred - 2026-01-11
+  14-13-3-tendencia-sankey-diagram: done  # 8 pts - Sankey flow diagram alternate view (Store Cats → Item Cats) - COMPLETED 2026-01-12
+  14-13a-multi-level-filter-support: done  # 5 pts - Track drill-down path, multi-dimension filtering - Atlas Code Review APPROVED 2026-01-09
+  14-13b-header-clear-filter-buttons: done  # 3 pts - Clear "✕" button on Compras/Productos titles when filters active, multi-level manual filtering, filter persistence - Atlas Code Review APPROVED 2026-01-10
   14-14-transaction-list-redesign: done  # 3 pts - Update HistoryView with card design [MOCKUP: transaction-list.html] - Completed 2026-01-04
-  14-14b-donut-chart-redesign: in-progress  # 13 pts - Donut chart with drill-down navigation [MOCKUP: analytics-polygon.html]
+  14-14b-donut-chart-redesign: done  # 13 pts - Donut chart with drill-down navigation [MOCKUP: analytics-polygon.html] - Completed 2026-01-12
   14-15-scan-flow-integration: done  # 3 pts - Wire ScanOverlay + QuickSaveCard into ScanView [MOCKUP: scan-overlay.html] - Completed 2026-01-06
   14-15b-selection-mode-groups: done  # 5 pts - Transaction selection mode & groups [MOCKUP: transaction-list.html states 3-6] - Completed 2026-01-05
   14-15c-category-group-filters: done  # 3 pts - Category group filters in IconFilterBar [EXTENDS: 14.14, 14.21] - Completed 2026-01-05
@@ -362,21 +366,21 @@ development_status:
   # PHASE 4: REPORTS & INSIGHTS
   # ============================================================================
   14-16-weekly-report-story-format: done  # 5 pts - Instagram-style cards [MOCKUP: reports.html] - Completed 2026-01-07, Atlas Code Review APPROVED
-  14-16b-semantic-color-system: review  # 5 pts - Apply semantic colors (trends, charts) across app [DEPENDS: 14.21] - Implementation complete 2026-01-05, pending visual verification
-  14-17-intentional-or-accidental-pattern: ready-for-dev  # 2 pts - Non-judgmental prompts [EXTENDS: Insight Gen #5]
+  14-16b-semantic-color-system: done  # 5 pts - Apply semantic colors (trends, charts) across app [DEPENDS: 14.21] - Completed 2026-01-12
+  14-17-intentional-or-accidental-pattern: done  # 2 pts - Non-judgmental prompts [EXTENDS: Insight Gen #5] - Atlas Code Review APPROVED 2026-01-12
 
   # ============================================================================
   # PHASE 5: CELEBRATIONS & ENGAGEMENT
   # ============================================================================
-  14-18-celebration-system: ready-for-dev  # 3 pts - Confetti, haptics, sounds [NEW FEATURE: Celebrations]
-  14-19-personal-records-detection: ready-for-dev  # 3 pts - "Lowest restaurant week!" [EXTENDS: Insight Gen #5]
-  14-20-session-completion-messaging: ready-for-dev  # 2 pts - "Great check-in today" [NEW FEATURE: Session UX]
+  14-18-celebration-system: done  # 3 pts - Confetti, haptics, sounds [NEW FEATURE: Celebrations] - Atlas Code Review APPROVED 2026-01-12
+  14-19-personal-records-detection: done  # 3 pts - "Lowest restaurant week!" [EXTENDS: Insight Gen #5] - Atlas Code Review APPROVED 2026-01-12
+  14-20-session-completion-messaging: done  # 2 pts - "Great check-in today" [NEW FEATURE: Session UX] - Atlas Code Review APPROVED 2026-01-12
 
   # Design System Consolidation
   14-21-category-color-consolidation: done  # 5 pts - Unified category colors for all themes/modes [TECH DEBT: Design System] - Completed 2026-01-04
 
   # Settings Redesign
-  14-22-settings-view-redesign: ready-for-dev  # 8 pts - Hierarchical settings with sub-views [MOCKUP: settings.html]
+  14-22-settings-view-redesign: done  # 8 pts - Hierarchical settings with sub-views + Custom Groups placeholder [MOCKUP: settings.html] - COMPLETE 2026-01-12
 
   # Transaction Editor Improvements
   14-23-unified-transaction-editor: done  # 5 pts - Unified editor for new/existing transactions - Completed 2026-01-06
@@ -398,7 +402,39 @@ development_status:
   # ============================================================================
   # 71 failing tests from: React Query migration (missing QueryClientProvider),
   # UI refactoring (inline styles vs Tailwind classes), prompt library changes
-  14-30-test-technical-debt: ready-for-dev  # 3 pts - Fix failing tests from 14.23, 14.29, UI refactoring
+  14-30-test-technical-debt: in-progress  # 3 pts - CI optimization done; resuming for deployment verification
+  14-30-5a-fix-preexisting-test-failures: done  # 2 pts - FIXED: 30 tests fixed (HistoryViewThumbnails filter issue, TopHeader translation keys) - VERIFIED 2026-01-14
+  14-31-items-history-view: done  # 8 pts - Items view similar to History view for item-level browsing - COMPLETED 2026-01-12
+  14-32-usage-cost-audit: review  # 3 pts - Audit Firestore subscriptions, Cloud Functions, and database operations for cost leakage - AUDIT COMPLETE: No issues found
+
+  # ============================================================================
+  # PHASE 9: SCAN FLOW & LOCATION IMPROVEMENTS
+  # ============================================================================
+  # Bug fixes and UX improvements identified during 14.31 completion
+  14-34-quicksave-currency-formatting: done  # 2 pts - Fix foreign currency display (USD/EUR/GBP) showing wrong decimals - COMPLETED 2026-01-12
+  14-35-dynamic-location-data: done  # 5 pts - Fetch countries/cities from API, show localized names - Atlas Code Review APPROVED 2026-01-12
+  14-35b-foreign-location-display: done  # 3 pts - Show country flag emoji for foreign transactions (city from different country than user's configured country) - COMPLETED 2026-01-12
+  14-36-location-filter-hierarchy: done  # 5 pts - Add Location filter section to IconFilterBar with Country→City hierarchy - COMPLETED 2026-01-12
+  14-37-toast-theming-font-scaling: done  # 5 pts - Toast theme integration + font size scaling system - Atlas Code Review PASSED 2026-01-13
+  14-38-item-view-toggle: done  # 3 pts - Toggle grouped vs original order view in transaction editor - Atlas Code Review PASSED 2026-01-13
+  14-39-dollar-sign-ocr-improvement: cancelled  # 2 pts - CANCELLED: V3 prompt already handles $ recognition correctly (tested 2026-01-13)
+  14-40-category-statistics-popup: done  # 5 pts - Statistics popup when tapping category in treemap/donut/trend (min/max/avg/median prices) - Code reviewed 2026-01-13
+  14-41-view-mode-edit-button: done  # 2 pts - Lock metadata fields in view mode, add edit button below thumbnail - Code reviewed 2026-01-13
+  14-42-version-upgrade-auto-update: ready-for-dev  # 3 pts - Version bump to 1.0.0-beta.1, top banner update prompt with Update/Dismiss buttons
+
+  # ============================================================================
+  # PHASE 8: INSIGHTS VIEW REDESIGN (~14 points)
+  # ============================================================================
+  # Implement insights.html mockup - View switcher, carousel, airlock, celebrations
+  # Gap identified: Epic 13 mockup exists but no implementation story was created
+  # Backend ready: 14.17 (intentional prompts), 14.18 (celebrations), 14.19 (personal records)
+  # Mockup: docs/uxui/mockups/01_views/insights.html
+  14-33a-insight-card-types-styling: done  # 3 pts - 5 insight types (quirky/celebration/actionable/tradeoff/trend) with distinct styling - Atlas Code Review APPROVED 2026-01-12
+  14-33a.1-insight-theme-colors: done  # 2 pts - Theme-aware CSS variables for all 5 insight types across 3 themes (Normal/Professional/Mono) - COMPLETED 2026-01-12
+  14-33b-view-switcher-carousel: done  # 5 pts - View switcher (Lista/Destacados/Airlock/Logro) + carousel mode [DEPENDS: 14.33a] - Atlas Code Review APPROVED 2026-01-12 (5 fixes applied)
+  14-33c-airlock-sequence: done  # 3 pts - 3-step progressive reveal UI (Curiosity → Brace → Reveal) [DEPENDS: 14.33b] - Atlas Code Review APPROVED 2026-01-12
+  14-33c.1-airlock-generation-persistence: done  # 5 pts - Generate airlock with super credit, persist to Firestore, history list [DEPENDS: 14.33c] - Atlas Code Review APPROVED 2026-01-12 (77 tests, 7 issues fixed)
+  14-33d-celebration-records-display: done  # 3 pts - Celebration cards + badge unlock display [DEPENDS: 14.33b, 14.18, 14.19] - COMPLETED 2026-01-12 (49 tests)
 
   epic-14-retrospective: optional
 
@@ -427,6 +463,50 @@ development_status:
   14c-10-household-settings-ui: backlog  # 2 pts - Edit name, regenerate code, manage members
 
   epic-14c-retrospective: optional
+
+  # ============================================================================
+  # EPIC 14d: SCAN ARCHITECTURE REFACTOR (~52 points)
+  # ============================================================================
+  # Refactor 31 scan state variables into unified state machine
+  # Enables: Multi-mode scanning (single, batch, statement), clear FAB feedback
+  # Planning Document: docs/sprint-artifacts/epic14d/scan-architecture-refactor-plan.md
+  # Epic Document: docs/sprint-artifacts/epic14d/epic-14d-scan-architecture-refactor.md
+  # Created: 2026-01-08 via Atlas planning session
+  epic-14d-scan-architecture-refactor: done  # Started 2026-01-08, COMPLETED 2026-01-12 (11/11 stories)
+
+  # Phase 1: State Machine Foundation (11 pts)
+  14d-1-scan-state-machine-hook: done  # 5 pts - useScanStateMachine with useReducer pattern - 74 tests passing (code review complete 2026-01-08)
+  14d-2-scan-context-provider: done  # 3 pts - App-wide ScanContext - 23 tests passing, Atlas Code Review APPROVED 2026-01-09
+  14d-3-hybrid-navigation-blocking: done  # 3 pts - Custom Nav guard + browser back blocker - 40 tests (18 Nav + 22 NavigationBlocker)
+
+  # Phase 2: Migrate Existing Flows (21 pts → 39 pts after 14d.4 breakdown)
+  # Story 14d.4 DIVIDED into 4 sub-stories (2026-01-09) - ~107 setter usages required phased approach
+  # See: docs/sprint-artifacts/epic14d/stories/story-14d.4-analysis.md
+  14d-4-single-scan-refactor: done  # 8→18 pts - All 5 sub-stories complete + FAB icon fix (Camera for single, Layers for batch) 2026-01-12
+  14d-4a-state-bridge-layer: done  # 3 pts - Foundation: useScanStateBridge hook - Atlas Code Review APPROVED 2026-01-09
+  14d-4b-consumer-migration: done  # 5 pts - Migrate views/dialogs to use ScanContext - QA VERIFIED 2026-01-09 (fixed race conditions + theme colors)
+  14d-4c-state-variable-removal: done  # 5 pts - Remove 8 state variables from App.tsx - Atlas Code Review PASSED 2026-01-10
+  14d-4d-pending-scan-migration: done  # 5 pts - Storage migration complete, Atlas Code Review APPROVED 2026-01-10
+  14d-4e-pendingscan-cleanup: done  # 3 pts - Full pendingScan removal (~35 usages) + credit exploit prevention - E2E VERIFIED 2026-01-10
+  14d-5-batch-scan-refactor: done  # 8→21 pts - All sub-stories complete + race condition fix (batchReceipts atomic with BATCH_COMPLETE) 2026-01-12
+  14d-5a-core-state-migration: done  # 5 pts - Phase 0-1 complete: imageUtils.ts extracted, BatchCaptureView uses ScanContext
+  14d-5a-phase2-app-migration: done  # 3 pts - isBatchCaptureMode state REMOVED, all setters migrated to context - Atlas Code Review APPROVED 2026-01-11
+  14d-5b-processing-integration: done  # 5 pts - Wire useBatchProcessing to dispatch ScanContext actions - Atlas Code Review PASSED 2026-01-11
+  14d-5c-review-flow-migration: done  # 5 pts - Migrate batchReviewResults → ScanContext.results - Atlas Code Review PASSED 2026-01-11
+  14d-5d-edit-dialog-state: done  # 3 pts - Migrate batchEditingReceipt, confirmation dialogs - Atlas Code Review PASSED 2026-01-11
+  14d-5e-persistence-migration: done  # 3 pts - Migrate pendingBatch → ScanContext persistence - Unified batch persistence 2026-01-11
+  14d-6-unified-dialog-handling: done  # 5 pts - Consolidate currency/total/quicksave dialogs - COMPLETED 2026-01-11
+
+  # Phase 3: FAB & Mode Selection UX (12 pts)
+  14d-7-mode-selector-popup: done  # 5 pts - Long-press FAB popup with 3 options - COMPLETED 2026-01-12
+  14d-8-fab-visual-states: done  # 5 pts - Color + icon + shine animation per mode - Atlas Code Review APPROVED 2026-01-12
+  14d-9-statement-placeholder-view: done  # 2 pts - "Próximamente" placeholder - Atlas Code Review PASSED 2026-01-12
+
+  # Phase 4: Polish & Extension (8 pts)
+  14d-10-state-machine-persistence: done  # 3 pts - OBSOLETE: Superseded by 14d.4d + 14d.5e (no-expiration architecture decision)
+  14d-11-app-tsx-cleanup: done  # 2 pts (revised) - Deleted pendingBatchStorage.ts; other variables are component interfaces (see story) - Atlas Code Review PASSED 2026-01-12
+
+  epic-14d-retrospective: optional
 
   # Epic 15: Advanced Features (~38 points - revised after mockup verification 2025-12-31)
   # Goals system, learned thresholds, out-of-character detection, treemap, themeable skins

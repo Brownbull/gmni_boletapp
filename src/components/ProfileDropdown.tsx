@@ -15,7 +15,7 @@
  */
 
 import React, { useRef, useEffect } from 'react';
-import { CreditCard, FileText, Target, Settings } from 'lucide-react';
+import { Receipt, FileText, Target, Settings, Package } from 'lucide-react';
 
 export interface ProfileDropdownProps {
   /** Whether the dropdown is open */
@@ -88,8 +88,10 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   if (!isOpen) return null;
 
   // Menu items - consistent across all screens
+  // Story 14.31: Added "items" menu item for Items History View
   const menuItems = [
-    { key: 'transactions', icon: CreditCard, label: t('transactions'), action: () => onNavigate('history') },
+    { key: 'transactions', icon: Receipt, label: t('purchases'), action: () => onNavigate('history') },
+    { key: 'items', icon: Package, label: t('productos'), action: () => onNavigate('items') },
     { key: 'reports', icon: FileText, label: t('reports'), action: () => onNavigate('reports') },
     { key: 'goals', icon: Target, label: t('goals'), action: () => onNavigate('goals'), disabled: true, badge: t('comingSoon') },
   ];
@@ -143,7 +145,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
           />
           <span className="text-sm font-medium flex-1">{item.label}</span>
           {item.badge && (
-            <span className="text-[10px]" style={{ color: 'var(--text-tertiary, #94a3b8)' }}>
+            <span className="text-xs" style={{ color: 'var(--text-tertiary, #94a3b8)' }}>
               {item.badge}
             </span>
           )}
