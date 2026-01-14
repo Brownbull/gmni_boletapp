@@ -5,8 +5,9 @@ import react from '@vitejs/plugin-react'
  * Vitest configuration optimized for CI environments
  *
  * Key optimizations:
- * - fileParallelism: true (parallel test execution within each shard)
- * - pool: 'threads' with optimized thread count
+ * - pool: 'forks' - isolates each test file in separate process, prevents memory accumulation
+ * - isolate: true - ensures complete isolation between tests
+ * - maxConcurrency: 2 - limits parallel tests to reduce memory pressure
  * - Reduced reporter verbosity for faster output
  * - No coverage by default (separate job handles coverage)
  *
@@ -24,17 +25,19 @@ export default defineConfig({
       '**/node_modules/**',
       '**/dist/**',
     ],
-    // Enable parallelization - CI shards handle file distribution
-    fileParallelism: true,
-    // Use threads pool for better CI performance
-    pool: 'threads',
+    // Use forks pool to isolate each test file - prevents memory leaks
+    pool: 'forks',
     poolOptions: {
-      threads: {
-        // GitHub Actions runners have 2 cores, use all available
-        maxThreads: 4,
-        minThreads: 1,
+      forks: {
+        // Limit concurrent forks to reduce memory pressure (GitHub runners have 7GB RAM)
+        maxForks: 2,
+        minForks: 1,
+        // Isolate each test file to prevent memory accumulation
+        isolate: true,
       },
     },
+    // Limit concurrent test files
+    maxConcurrency: 2,
     // Reduced reporter for faster CI output (default is verbose)
     reporters: ['default'],
     // Disable watch mode for CI
