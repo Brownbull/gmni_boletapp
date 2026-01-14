@@ -35,8 +35,8 @@ export default defineConfig({
         minThreads: 1,
       },
     },
-    // Reduced reporter for faster CI output
-    reporters: ['basic'],
+    // Reduced reporter for faster CI output (default is verbose)
+    reporters: ['default'],
     // Disable watch mode for CI
     watch: false,
   },
