@@ -378,4 +378,24 @@ Run was cancelled due to test-hooks and test-components-other running 7+ minutes
 
 ### Key Commits
 - f40b49e: feat(ci): Story 14.30.8 - Explicit test groups for predictable CI
-- PENDING: chore(ci): Rename jobs + fix snapshots
+- 2c0da95: chore(ci): Story 14.30.8 - Rename jobs + fix snapshots
+- 86e6bd8: test(consolidation): Merge Settings + Polygon test files
+- 38e6a50: feat(ci): Story 14.30.8 - Split slow test groups for parallel CI
+
+### CI Run Status (21005897693) - IN PROGRESS
+Most jobs completing in 2-4 minutes. Two slow jobs identified:
+
+| Job | Status | Issue |
+|-----|--------|-------|
+| test-hooks-batch | ⏳ slow | 1,481 lines (useBatchProcessing 646, useBatchReview 592) |
+| test-components-misc | ⏳ slow | 5,531 lines - Nav.test.tsx (1,623) being included incorrectly! |
+
+**Root Cause for test-components-misc:**
+- `Nav.test.tsx` (1,623 lines) should be in heavy group but glob `*.test.tsx` is including it
+- Base config exclude isn't being applied correctly to this group
+
+### Remaining Work (Priority Order)
+1. 🔴 Fix Nav.test.tsx exclusion from components-misc (it's in heavy already)
+2. 🔴 Move useBatchProcessing.test.ts and useBatchReview.test.ts to heavy group
+3. 🟡 Verify all 18 test jobs pass in <8 minutes each
+4. 🟢 Update Atlas memory with CI lessons
