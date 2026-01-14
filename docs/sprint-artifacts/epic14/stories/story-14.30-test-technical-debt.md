@@ -324,22 +324,58 @@ Replaced automatic sharding with explicit module-based test groups:
 - `vitest.config.ci.base.ts` - Shared base config with memory optimizations
 - `vitest.config.ci.group-*.ts` - 8 group-specific configs
 
-### CI Run Status (21004641865)
-- test-unit-1 (hooks): ⏳ in_progress
-- test-unit-2 (services): ✅ success
-- test-unit-3 (utils): ✅ success
-- test-unit-4 (analytics): ✅ success
-- test-unit-5 (views): ❌ failure (investigating)
-- test-unit-6 (components-insights): ✅ success
-- test-unit-7 (components-scan): ✅ success
-- test-unit-8 (components-other): ⏳ in_progress
-- test-unit-heavy-1..4: ✅ all success
+### CI Run Status (21004641865) - CANCELLED
+Run was cancelled due to test-hooks and test-components-other running 7+ minutes.
 
-### Next Steps
-1. Investigate test-unit-5 failure
-2. Fix any issues and re-run
-3. Monitor for timing improvements
-4. Update story status once all pass
+| Job | Status | Duration | Notes |
+|-----|--------|----------|-------|
+| test-hooks | ⏳ stuck | 7+ min | Too many tests (568) |
+| test-services | ✅ success | ~2 min | Fast |
+| test-utils | ✅ success | ~2 min | Fast |
+| test-analytics | ✅ success | ~2 min | Fast |
+| test-views | ❌ failure | 23s | Snapshot mismatch (lucide-react aria-hidden) |
+| test-components-insights | ✅ success | ~2 min | Fast |
+| test-components-scan | ✅ success | ~2 min | Fast |
+| test-components-other | ⏳ stuck | 7+ min | Too many tests (895) |
+| test-unit-heavy-1..4 | ✅ all success | ~3 min each | Heavy isolation working |
+
+### Issues Found & Fixed
+
+#### 1. test-views Snapshot Failure ✅ FIXED
+- **Root cause:** `lucide-react` library updated to include `aria-hidden="true"` on SVG icons
+- **Solution:** Updated snapshots in `StatementScanView.test.tsx`
+- **Impact:** 2 tests fixed
+
+#### 2. Job Naming ✅ FIXED
+- **Problem:** Generic names like `test-unit-1` made CI hard to debug
+- **Solution:** Renamed to descriptive names (`test-hooks`, `test-services`, etc.)
+- **Impact:** Better CI visibility and debugging
+
+#### 3. Slow Groups - Analysis Complete
+- **test-hooks:** 24 files, ~568 tests, 9,789 lines total
+- **test-components-other:** 37 files, ~895 tests, 10,990 lines total
+- **Conclusion:** Groups too large for single CI job, need splitting
+
+### Next Steps (Priority Order)
+1. ✅ Rename CI jobs to descriptive names - DONE
+2. ✅ Fix snapshot tests - DONE
+3. ⏳ Commit and push changes - IN PROGRESS
+4. 🔜 Split test-components-other into smaller groups
+5. 🔜 Split test-hooks into hooks-scan and hooks-other
+6. 🔜 Monitor deployment and verify all jobs pass
+
+### Test Consolidation Analysis
+
+**Hooks group (568 tests):** Well-structured, no consolidation needed. Split by functionality instead.
+- `useScanStateMachine.test.ts` (105 tests) - Already in heavy group
+- `useItems.test.ts` (43 tests) - Keep
+- Remaining ~420 tests across 23 files
+
+**Components-other group (895 tests):** Some potential consolidation:
+- Settings tests (3 files, 19 tests) → Could merge
+- Polygon mode tests (2 files, 27 tests) → Could merge
+- **Recommended:** Split by domain rather than consolidate
 
 ### Key Commits
 - f40b49e: feat(ci): Story 14.30.8 - Explicit test groups for predictable CI
+- PENDING: chore(ci): Rename jobs + fix snapshots

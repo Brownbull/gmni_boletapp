@@ -18,6 +18,7 @@ exports[`StatementScanView Component > AC16: Visual Consistency > should match d
         style="background-color: transparent;"
       >
         <svg
+          aria-hidden="true"
           class="lucide lucide-arrow-left w-5 h-5"
           fill="none"
           height="24"
@@ -52,6 +53,7 @@ exports[`StatementScanView Component > AC16: Visual Consistency > should match d
         style="background-color: rgba(139, 92, 246, 0.2);"
       >
         <svg
+          aria-hidden="true"
           class="lucide lucide-credit-card w-16 h-16"
           data-testid="credit-card-icon"
           fill="none"
@@ -122,6 +124,7 @@ exports[`StatementScanView Component > AC16: Visual Consistency > should match l
         style="background-color: transparent;"
       >
         <svg
+          aria-hidden="true"
           class="lucide lucide-arrow-left w-5 h-5"
           fill="none"
           height="24"
@@ -156,6 +159,7 @@ exports[`StatementScanView Component > AC16: Visual Consistency > should match l
         style="background-color: #ede9fe;"
       >
         <svg
+          aria-hidden="true"
           class="lucide lucide-credit-card w-16 h-16"
           data-testid="credit-card-icon"
           fill="none"
