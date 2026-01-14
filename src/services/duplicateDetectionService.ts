@@ -235,3 +235,134 @@ export function getDuplicateIds(transactions: Transaction[]): Set<string> {
   const duplicateMap = findDuplicates(transactions);
   return new Set(duplicateMap.keys());
 }
+
+/**
+ * Story 14.13: Get the count of transactions that have potential duplicates.
+ *
+ * @param transactions - Array of transactions to check
+ * @returns Count of transactions with potential duplicates
+ */
+export function getDuplicateCount(transactions: Transaction[]): number {
+  return getDuplicateIds(transactions).size;
+}
+
+/**
+ * Story 14.13: Filter transactions to show only those with potential duplicates.
+ *
+ * @param transactions - Array of transactions
+ * @returns Array of transactions that have potential duplicates
+ */
+export function filterToDuplicateTransactions(transactions: Transaction[]): Transaction[] {
+  const duplicateIds = getDuplicateIds(transactions);
+  return transactions.filter(tx => tx.id && duplicateIds.has(tx.id));
+}
+
+/**
+ * Story 14.13: Filter and GROUP transactions by their duplicate relationships.
+ * Returns transactions sorted so that duplicates appear next to each other.
+ *
+ * This makes it easy to compare duplicate transactions side-by-side.
+ *
+ * @param transactions - Array of transactions
+ * @returns Array of transactions with duplicates grouped together
+ */
+export function filterToDuplicatesGrouped(transactions: Transaction[]): Transaction[] {
+  const duplicateMap = findDuplicates(transactions);
+
+  // If no duplicates, return empty
+  if (duplicateMap.size === 0) return [];
+
+  // Build groups of related duplicates using Union-Find approach
+  const txIdToGroup = new Map<string, Set<string>>();
+
+  // Initialize each transaction with its own group
+  for (const [txId, duplicateIds] of duplicateMap) {
+    // Get or create group for this transaction
+    let group = txIdToGroup.get(txId);
+    if (!group) {
+      group = new Set([txId]);
+      txIdToGroup.set(txId, group);
+    }
+
+    // Add all duplicates to the same group
+    for (const dupId of duplicateIds) {
+      // Check if duplicate already has a group
+      const existingGroup = txIdToGroup.get(dupId);
+      if (existingGroup && existingGroup !== group) {
+        // Merge groups
+        for (const id of existingGroup) {
+          group.add(id);
+          txIdToGroup.set(id, group);
+        }
+      } else {
+        group.add(dupId);
+        txIdToGroup.set(dupId, group);
+      }
+    }
+  }
+
+  // Get unique groups
+  const uniqueGroups = new Set<Set<string>>();
+  for (const group of txIdToGroup.values()) {
+    uniqueGroups.add(group);
+  }
+
+  // Create transaction lookup
+  const txById = new Map<string, Transaction>();
+  for (const tx of transactions) {
+    if (tx.id) {
+      txById.set(tx.id, tx);
+    }
+  }
+
+  // Build result array with duplicates grouped together
+  const result: Transaction[] = [];
+  const addedIds = new Set<string>();
+
+  // Sort groups by date (newest first) then merchant name
+  const sortedGroups = Array.from(uniqueGroups).sort((a, b) => {
+    const aFirst = txById.get(Array.from(a)[0]);
+    const bFirst = txById.get(Array.from(b)[0]);
+
+    // Sort by date descending
+    const aDate = aFirst?.date || '';
+    const bDate = bFirst?.date || '';
+    if (aDate !== bDate) return bDate.localeCompare(aDate);
+
+    // Then by merchant name
+    const aMerchant = (aFirst?.merchant || '').toLowerCase().trim();
+    const bMerchant = (bFirst?.merchant || '').toLowerCase().trim();
+    return aMerchant.localeCompare(bMerchant);
+  });
+
+  // Add transactions group by group
+  for (const group of sortedGroups) {
+    // Sort transactions within group by time for consistent ordering
+    const groupTxs = Array.from(group)
+      .map(id => txById.get(id))
+      .filter((tx): tx is Transaction => tx !== undefined && !addedIds.has(tx.id!))
+      .sort((a, b) => {
+        // Sort by time within same date
+        const aTime = a.time || '00:00';
+        const bTime = b.time || '00:00';
+        return aTime.localeCompare(bTime);
+      });
+
+    for (const tx of groupTxs) {
+      result.push(tx);
+      addedIds.add(tx.id!);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Story 14.13: Check if there are any potential duplicates in the transaction list.
+ *
+ * @param transactions - Array of transactions to check
+ * @returns true if there are any potential duplicates
+ */
+export function hasPotentialDuplicates(transactions: Transaction[]): boolean {
+  return getDuplicateCount(transactions) > 0;
+}

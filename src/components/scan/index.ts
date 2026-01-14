@@ -61,5 +61,13 @@ export type { ProcessingOverlayProps } from './ProcessingOverlay';
 export { ScanCompleteModal } from './ScanCompleteModal';
 export type { ScanCompleteModalProps } from './ScanCompleteModal';
 
+// Story 12.1 v9.7.0: Batch Processing Overlay
+export { BatchProcessingOverlay } from './BatchProcessingOverlay';
+export type { BatchProcessingOverlayProps } from './BatchProcessingOverlay';
+
+// Story 14d.7: Mode Selector Popup
+export { ScanModeSelector } from './ScanModeSelector';
+export type { ScanModeSelectorProps, ScanModeId } from './ScanModeSelector';
+
 // Default export
 export { ScanStatusIndicator as default } from './ScanStatusIndicator';

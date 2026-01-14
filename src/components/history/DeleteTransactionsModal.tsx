@@ -287,7 +287,7 @@ export const DeleteTransactionsModal: React.FC<DeleteTransactionsModalProps> = (
                     {/* Show "and X more" if there are more transactions */}
                     {remainingCount > 0 && (
                         <div
-                            className="pt-2 text-[11px] text-center"
+                            className="pt-2 text-xs text-center"
                             style={{ color: 'var(--text-tertiary)' }}
                         >
                             {lang === 'es'
@@ -324,7 +324,7 @@ export const DeleteTransactionsModal: React.FC<DeleteTransactionsModalProps> = (
                         ref={cancelButtonRef}
                         onClick={handleClose}
                         disabled={isDeleting}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-[13px] font-medium rounded-lg transition-colors disabled:opacity-40"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-sm font-medium rounded-lg transition-colors disabled:opacity-40"
                         style={{
                             backgroundColor: 'var(--bg-secondary)',
                             border: '1px solid var(--border-light)',
@@ -340,7 +340,7 @@ export const DeleteTransactionsModal: React.FC<DeleteTransactionsModalProps> = (
                     <button
                         onClick={handleDelete}
                         disabled={isDeleting}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-[13px] font-semibold rounded-lg transition-colors disabled:opacity-40"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-sm font-semibold rounded-lg transition-colors disabled:opacity-40"
                         style={{
                             backgroundColor: 'var(--error)',
                             color: 'white',

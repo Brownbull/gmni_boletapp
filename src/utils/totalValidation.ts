@@ -33,7 +33,14 @@ export interface TotalValidationResult {
 }
 
 /**
- * Calculate the sum of all items (price × quantity).
+ * Calculate the sum of all items.
+ *
+ * NOTE: The AI returns `price` as the LINE TOTAL (already multiplied by quantity),
+ * not the unit price. So we just sum the prices directly without multiplying by qty.
+ *
+ * Example: Receipt shows "180 EXTRA COLOR × $144 = $25,920"
+ * AI returns: { name: "EXTRA COLOR", price: 25920, quantity: 180 }
+ * We should sum: 25920 (not 25920 × 180)
  *
  * @param items - Array of transaction items
  * @returns Total sum of all items
@@ -43,10 +50,10 @@ export function calculateItemsSum(items: TransactionItem[]): number {
     return 0;
   }
 
+  // Price is already the line total (qty × unit price), so just sum prices
   return items.reduce((sum, item) => {
     const price = typeof item.price === 'number' ? item.price : 0;
-    const quantity = typeof item.qty === 'number' && item.qty > 0 ? item.qty : 1;
-    return sum + price * quantity;
+    return sum + price;
   }, 0);
 }
 

@@ -1,16 +1,20 @@
 # Cost Analysis
 
-**Version:** 2.0
-**Last Updated:** 2025-12-19
-**Status:** Updated with actual production data (Dec 2025)
+**Version:** 3.0
+**Last Updated:** 2026-01-13
+**Status:** Updated with Story 14.32 audit findings and Jan 2026 data
 
 ---
 
 ## Executive Summary
 
-Boletapp's infrastructure costs remain highly efficient. Based on **actual production data** (Dec 1-18, 2025: 31 scans = $0.049 USD), per-user costs range from **$0.055/month (Free tier)** to **$1.66/month (Max tier)**. This enables healthy margins (83-97%) across all paid tiers.
+Boletapp's infrastructure costs remain highly efficient. Based on **actual production data** (Dec 2025 - Jan 2026), per-user costs range from **$0.055/month (Free tier)** to **$1.70/month (Max tier)**. This enables healthy margins (83-97%) across all paid tiers.
 
-> **Key Finding:** Actual per-scan cost is ~$0.00175 (vs original estimate of $0.0002), primarily due to higher image token consumption than initially estimated. Margins remain excellent.
+> **Key Findings (Story 14.32 Audit - 2026-01-13):**
+> - **Gemini API is 97% of variable costs** (~$0.026/scan with current model)
+> - **Firestore costs reduced 95%** after Stories 14.25-14.29 optimization (~$1/week → ~$4/month)
+> - **No cost leakage detected** - all subscriptions properly limited and cleaned up
+> - **Cloud Functions healthy** - no cascade triggers, rate limiting working
 
 ---
 
@@ -55,6 +59,14 @@ Actual data: 31 scans = $0.049 USD (Dec 1-18, 2025)
 ACTUAL PER SCAN: $0.00158 (~0.16 cents)
 Rounded estimate: $0.00175/scan
 ```
+
+> **⚠️ Cost Discrepancy Note (Story 14.32 Review):**
+> The cost-optimization-opportunities.md document cites ~$0.026/scan based on a theoretical calculation assuming ~260K input tokens per image. The actual measured cost ($0.00158/scan) is significantly lower because:
+> 1. Actual image token counts are ~7,500-10,000 (not 260K)
+> 2. Google AI Studio's efficient image encoding
+> 3. Our image compression (1200x1600 JPEG @ 80%)
+>
+> **Use $0.00175/scan for financial planning** (actual measured data).
 
 **Theoretical calculation (validates actual):**
 ```
@@ -330,3 +342,49 @@ If only 30% of users actively scan (realistic):
 | 2025-11-29 | 1.0 | Initial cost analysis from Epic 4 retrospective |
 | 2025-12-19 | 2.0 | Updated with actual production data - per-scan cost revised from $0.0002 to $0.00175 based on 31 scans = $0.049 USD |
 | 2025-12-19 | 2.1 | Added MVP Free Tier Capacity Planning section - $100 budget cap analysis with Free-10/15/20/30/50 options |
+| 2026-01-13 | 3.0 | Story 14.32 audit - confirmed no cost leakage, updated Gemini cost to ~$0.026/scan, added Firestore optimization results |
+
+---
+
+## Story 14.32 Audit Results (2026-01-13)
+
+### Infrastructure Health: ✅ HEALTHY
+
+A comprehensive audit of all Firestore subscriptions, Cloud Functions, and database operations found **no critical issues**.
+
+### Firestore Subscriptions (8 total)
+
+All subscriptions use `LISTENER_LIMITS` constant and proper cleanup:
+
+| Service | Limit | Status |
+|---------|-------|--------|
+| Transactions | 100 docs | ✅ |
+| Recent Scans | 10 docs | ✅ |
+| Groups | 50 docs | ✅ |
+| Trusted Merchants | 200 docs | ✅ |
+| Category Mappings | 500 docs | ✅ |
+| Merchant Mappings | 500 docs | ✅ |
+| Subcategory Mappings | 500 docs | ✅ |
+| Item Name Mappings | 500 docs | ✅ |
+
+### Cloud Functions (2 total)
+
+| Function | Trigger | Cascade Risk |
+|----------|---------|--------------|
+| `analyzeReceipt` | HTTP (user action) | None |
+| `onTransactionDeleted` | Firestore onDelete | None |
+
+### React Query Configuration
+
+- `staleTime`: 5 minutes ✅
+- `gcTime`: 30 minutes ✅
+- `refetchOnMount`: false ✅ (key for cost reduction)
+- `refetchOnWindowFocus`: true ✅
+
+### Cost Optimization Status
+
+**Before Stories 14.25-14.29:** ~$19/week
+**After Stories 14.25-14.29:** ~$1/week
+**Savings:** 95% reduction
+
+For detailed audit findings, see: `docs/sprint-artifacts/epic14/stories/story-14.32-usage-cost-audit.md`

@@ -1,6 +1,8 @@
 /**
  * TotalMismatchDialog Component
  *
+ * Story 14d.4b: Migrated to use ScanContext for scan-specific state
+ *
  * Displays when the extracted total doesn't match the sum of items.
  * Allows user to choose between the extracted total or the calculated items sum.
  *
@@ -11,29 +13,53 @@
  * - Follows modal overlay pattern from CurrencyMismatchDialog
  * - Dark mode support
  * - Accessibility features (ARIA labels, keyboard navigation)
+ *
+ * Story 14d.4b Migration:
+ * - Uses useScanOptional() to read dialog state from context
+ * - Falls back to props if context not available (backward compatibility)
+ * - Calls resolveDialog() on user choice
  */
 
 import React, { useCallback, useEffect, useRef } from 'react';
 import { AlertTriangle, Calculator, ArrowRight, X } from 'lucide-react';
 import { TotalValidationResult } from '../../utils/totalValidation';
+import { useScanOptional } from '../../contexts/ScanContext';
+import { DIALOG_TYPES } from '../../types/scanStateMachine';
+
+// Story 14d.6: Import centralized type from scanStateMachine
+import type { TotalMismatchDialogData } from '../../types/scanStateMachine';
+// Re-export for backward compatibility
+export type { TotalMismatchDialogData };
 
 export interface TotalMismatchDialogProps {
-  /** Validation result from totalValidation utility */
-  validationResult: TotalValidationResult;
-  /** Currency code for formatting */
-  currency: string;
-  /** Callback when user chooses to use the items sum */
-  onUseItemsSum: () => void;
-  /** Callback when user chooses to keep the extracted total */
-  onKeepOriginal: () => void;
-  /** Callback when user cancels */
-  onCancel: () => void;
-  /** Theme for styling */
+  /** Theme for styling - required, comes from app settings */
   theme: 'light' | 'dark';
-  /** Translation function */
+  /** Translation function - required, comes from app settings */
   t: (key: string) => string;
-  /** Whether dialog is visible */
-  isOpen: boolean;
+
+  // === Story 14d.4b: Props below are now optional - can be read from ScanContext ===
+
+  /** Validation result from totalValidation utility - optional if using ScanContext */
+  validationResult?: TotalValidationResult;
+  /** Currency code for formatting - optional if using ScanContext */
+  currency?: string;
+  /** Whether dialog is visible - optional if using ScanContext */
+  isOpen?: boolean;
+  /**
+   * Callback when user chooses to use the items sum.
+   * Story 14d.6: Now receives dialog data as parameter for context-based dialog handling.
+   */
+  onUseItemsSum?: (data?: TotalMismatchDialogData) => void;
+  /**
+   * Callback when user chooses to keep the extracted total.
+   * Story 14d.6: Now receives dialog data as parameter for context-based dialog handling.
+   */
+  onKeepOriginal?: (data?: TotalMismatchDialogData) => void;
+  /**
+   * Callback when user cancels.
+   * Story 14d.6: Now receives dialog data as parameter for context-based dialog handling.
+   */
+  onCancel?: (data?: TotalMismatchDialogData) => void;
 }
 
 /**
@@ -57,30 +83,95 @@ function formatCurrency(amount: number, currency: string): string {
   }
 }
 
+// Default validation result for when no data is available
+const DEFAULT_VALIDATION_RESULT: TotalValidationResult = {
+  isValid: true,
+  extractedTotal: 0,
+  itemsSum: 0,
+  discrepancy: 0,
+  discrepancyPercent: 0,
+  suggestedTotal: null,
+  errorType: 'none',
+};
+
 /**
  * TotalMismatchDialog displays when extracted total doesn't match items sum.
+ *
+ * Story 14d.4b: Uses ScanContext for scan-specific state with prop fallback.
  */
 export const TotalMismatchDialog: React.FC<TotalMismatchDialogProps> = ({
-  validationResult,
-  currency,
-  onUseItemsSum,
-  onKeepOriginal,
-  onCancel,
+  validationResult: validationResultProp,
+  currency: currencyProp,
+  onUseItemsSum: onUseItemsSumProp,
+  onKeepOriginal: onKeepOriginalProp,
+  onCancel: onCancelProp,
   theme,
   t,
-  isOpen,
+  isOpen: isOpenProp,
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   const isDark = theme === 'dark';
+
+  // Story 14d.4b: Get scan context for reading dialog state
+  const scanContext = useScanOptional();
+
+  // Story 14d.4b: Derive values from context or fall back to props
+  const contextDialogData = scanContext?.state.activeDialog?.type === DIALOG_TYPES.TOTAL_MISMATCH
+    ? (scanContext.state.activeDialog.data as TotalMismatchDialogData)
+    : null;
+
+  // Determine if dialog should be open
+  const isOpen = contextDialogData !== null || isOpenProp === true;
+
+  // Get validation result from context or props
+  const validationResult = contextDialogData?.validationResult ?? validationResultProp ?? DEFAULT_VALIDATION_RESULT;
+
+  // Story 14.34: Use transaction's detected currency if available, otherwise fall back to prop/default
+  // This ensures foreign currencies (USD, EUR, GBP) are formatted correctly with cents/decimals
+  const currency = contextDialogData?.pendingTransaction?.currency ?? currencyProp ?? 'CLP';
+
+  // Story 14d.6: Create handlers that pass dialog data to callbacks
+  const handleUseItemsSum = useCallback(() => {
+    // Capture data before resolveDialog clears it
+    const data = contextDialogData ?? undefined;
+
+    if (scanContext?.resolveDialog) {
+      scanContext.resolveDialog(DIALOG_TYPES.TOTAL_MISMATCH, { choice: 'items_sum' });
+    }
+    // Pass data to callback for context-based dialog handling
+    onUseItemsSumProp?.(data);
+  }, [scanContext, onUseItemsSumProp, contextDialogData]);
+
+  const handleKeepOriginal = useCallback(() => {
+    // Capture data before resolveDialog clears it
+    const data = contextDialogData ?? undefined;
+
+    if (scanContext?.resolveDialog) {
+      scanContext.resolveDialog(DIALOG_TYPES.TOTAL_MISMATCH, { choice: 'original' });
+    }
+    // Pass data to callback for context-based dialog handling
+    onKeepOriginalProp?.(data);
+  }, [scanContext, onKeepOriginalProp, contextDialogData]);
+
+  const handleCancel = useCallback(() => {
+    // Capture data before dismissDialog clears it
+    const data = contextDialogData ?? undefined;
+
+    if (scanContext?.dismissDialog) {
+      scanContext.dismissDialog();
+    }
+    // Pass data to callback for context-based dialog handling
+    onCancelProp?.(data);
+  }, [scanContext, onCancelProp, contextDialogData]);
 
   // Handle escape key
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onCancel();
+        handleCancel();
       }
     },
-    [onCancel]
+    [handleCancel]
   );
 
   // Focus trap and keyboard handling
@@ -118,15 +209,14 @@ export const TotalMismatchDialog: React.FC<TotalMismatchDialogProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="total-mismatch-title"
     >
-      {/* Backdrop */}
+      {/* Backdrop - v9.7.0: No onClick to prevent accidental dismissal */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onCancel}
         aria-hidden="true"
       />
 
@@ -143,7 +233,7 @@ export const TotalMismatchDialog: React.FC<TotalMismatchDialogProps> = ({
       >
         {/* Close button */}
         <button
-          onClick={onCancel}
+          onClick={handleCancel}
           className={`absolute top-4 right-4 p-2 rounded-full transition-colors ${
             isDark
               ? 'text-gray-400 hover:text-white hover:bg-gray-700'
@@ -256,7 +346,7 @@ export const TotalMismatchDialog: React.FC<TotalMismatchDialogProps> = ({
         <div className="space-y-3">
           {/* Use items sum (primary - recommended) */}
           <button
-            onClick={onUseItemsSum}
+            onClick={handleUseItemsSum}
             className="w-full py-3 px-4 rounded-xl font-medium bg-green-600 text-white hover:bg-green-700 transition-colors"
           >
             {t('useItemsSum').replace('{total}', formattedItemsSum)}
@@ -264,7 +354,7 @@ export const TotalMismatchDialog: React.FC<TotalMismatchDialogProps> = ({
 
           {/* Keep original (secondary) */}
           <button
-            onClick={onKeepOriginal}
+            onClick={handleKeepOriginal}
             className={`w-full py-3 px-4 rounded-xl font-medium transition-colors ${
               isDark
                 ? 'bg-gray-700 text-white hover:bg-gray-600'

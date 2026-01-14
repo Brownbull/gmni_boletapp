@@ -1,11 +1,21 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { MapPin } from 'lucide-react';
-import { COUNTRIES, getCitiesForCountry } from '../data/locations';
+import type { Language } from '../types/settings';
+import {
+    useLocalizedCountries,
+    useLocalizedCities,
+    useLocationDisplay,
+} from '../hooks/useLocations';
+import { useIsForeignLocation } from '../hooks/useIsForeignLocation';
 
 interface LocationSelectProps {
+    /** Country value (stored as English name) */
     country: string;
+    /** City value (stored as English name) */
     city: string;
+    /** Callback when country changes (receives English name for storage) */
     onCountryChange: (country: string) => void;
+    /** Callback when city changes (receives English name for storage) */
     onCityChange: (city: string) => void;
     inputStyle: React.CSSProperties;
     /** Optional placeholder for country select */
@@ -16,14 +26,23 @@ interface LocationSelectProps {
     theme?: 'light' | 'dark';
     /** Translation function */
     t?: (key: string) => string;
+    /** Language for localization (default: 'es') */
+    lang?: Language;
+    /** Story 14.35b: User's default country for foreign location detection */
+    userDefaultCountry?: string;
+    /** Story 14.41: Disable the location selector in read-only mode */
+    disabled?: boolean;
 }
 
 /**
  * Location selection component with dropdown panel
  * Story 14.14b Session 4: Updated to match scan-overlay mockup with floating labels
+ * Story 14.35: Added localization support for countries and cities
  *
- * - Shows clickable tag with city + country (e.g., "Las Condes, Chile")
+ * - Shows clickable tag with city + country in user's language
  * - Opens dropdown panel with floating label selects for País and Ciudad
+ * - Stores values in English for backward compatibility
+ * - Displays values in user's language (Spanish/English)
  * - Changing country resets city if current city isn't in new country
  */
 export const LocationSelect: React.FC<LocationSelectProps> = ({
@@ -37,10 +56,20 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({
     // theme kept for API compatibility but not used (colors now use CSS variables)
     theme: _theme = 'light',
     t,
+    lang = 'es',
+    userDefaultCountry,
+    disabled = false,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const cities = getCitiesForCountry(country);
+
+    // Story 14.35: Use localized data
+    const { countries } = useLocalizedCountries({ lang });
+    const { cities } = useLocalizedCities(country, { lang });
+    const { getLocationString, getCountryName, getCityName } = useLocationDisplay(lang);
+
+    // Story 14.35b: Detect foreign location for flag display
+    const { isForeign, flagEmoji } = useIsForeignLocation(country, userDefaultCountry);
 
     // Close dropdown on click outside
     useEffect(() => {
@@ -55,11 +84,16 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({
         }
     }, [isOpen]);
 
-    const handleCountryChange = (newCountry: string) => {
-        onCountryChange(newCountry);
+    // Find city English names for the current country (for validation)
+    const cityEnglishNames = useMemo(
+        () => new Set(cities.map((c) => c.names.en)),
+        [cities]
+    );
+
+    const handleCountryChange = (newCountryEn: string) => {
+        onCountryChange(newCountryEn);
         // Reset city if it's not valid for the new country
-        const newCities = getCitiesForCountry(newCountry);
-        if (city && !newCities.includes(city)) {
+        if (city && !cityEnglishNames.has(city)) {
             onCityChange('');
         }
     };
@@ -68,27 +102,38 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({
         setIsOpen(false);
     };
 
-    // Display text: "City, Country" or just one if only one is set
-    const displayText = city && country
-        ? `${city}, ${country}`
-        : city || country || (t ? t('selectLocation') : 'Seleccionar ubicación');
+    // Display text: "City, Country" in user's language
+    const displayText = useMemo(() => {
+        if (city && country) {
+            return getLocationString(city, country);
+        }
+        if (city) return getCityName(city);
+        if (country) return getCountryName(country);
+        return t ? t('selectLocation') : 'Seleccionar ubicación';
+    }, [city, country, getLocationString, getCityName, getCountryName, t]);
 
     return (
         <div className="relative" ref={dropdownRef}>
             {/* Clickable tag - matches other pill styling */}
+            {/* Story 14.35b: Show flag for foreign locations */}
+            {/* Story 14.41: Disabled state for read-only mode */}
             <button
                 type="button"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => !disabled && setIsOpen(!isOpen)}
+                disabled={disabled}
                 className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs transition-colors"
                 style={{
                     backgroundColor: 'var(--bg-primary)',
                     border: '1px solid var(--border-medium)',
                     color: 'var(--text-secondary)',
+                    opacity: disabled ? 0.7 : 1,
+                    cursor: disabled ? 'default' : 'pointer',
                 }}
                 aria-expanded={isOpen}
                 aria-haspopup="true"
             >
                 <MapPin size={12} />
+                {isForeign && <span>{flagEmoji}</span>}
                 <span className="max-w-[150px] truncate">{displayText}</span>
             </button>
 
@@ -106,7 +151,7 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({
                         {/* Country select with floating label */}
                         <div className="relative">
                             <label
-                                className="absolute -top-2 left-2.5 px-1 text-[10px] font-medium z-10"
+                                className="absolute -top-2 left-2.5 px-1 text-xs font-medium z-10"
                                 style={{
                                     backgroundColor: 'var(--bg-secondary, #ffffff)',
                                     color: 'var(--primary, #2563eb)',
@@ -124,12 +169,14 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({
                                     backgroundPosition: 'right 10px center',
                                 }}
                                 value={country}
-                                onChange={e => handleCountryChange(e.target.value)}
+                                onChange={(e) => handleCountryChange(e.target.value)}
                                 aria-label={countryPlaceholder}
                             >
                                 <option value="">—</option>
-                                {COUNTRIES.map(c => (
-                                    <option key={c} value={c}>{c}</option>
+                                {countries.map((c) => (
+                                    <option key={c.code} value={c.names.en}>
+                                        {c.names[lang]}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -137,7 +184,7 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({
                         {/* City select with floating label */}
                         <div className="relative">
                             <label
-                                className="absolute -top-2 left-2.5 px-1 text-[10px] font-medium z-10"
+                                className="absolute -top-2 left-2.5 px-1 text-xs font-medium z-10"
                                 style={{
                                     backgroundColor: 'var(--bg-secondary, #ffffff)',
                                     color: 'var(--primary, #2563eb)',
@@ -155,13 +202,15 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({
                                     backgroundPosition: 'right 10px center',
                                 }}
                                 value={city}
-                                onChange={e => onCityChange(e.target.value)}
+                                onChange={(e) => onCityChange(e.target.value)}
                                 disabled={!country}
                                 aria-label={cityPlaceholder}
                             >
                                 <option value="">—</option>
-                                {cities.map(c => (
-                                    <option key={c} value={c}>{c}</option>
+                                {cities.map((c) => (
+                                    <option key={c.id} value={c.names.en}>
+                                        {c.names[lang]}
+                                    </option>
                                 ))}
                             </select>
                         </div>

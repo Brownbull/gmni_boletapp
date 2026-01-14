@@ -144,6 +144,106 @@ describe('Receipt Analysis', () => {
 });
 ```
 
+### Common Pitfalls & Solutions
+
+#### Pitfall 1: Default Array/Object Parameters Cause Infinite Loops
+
+**Problem (Story 14.30.8):** React components with default array/object parameters can cause infinite render loops in tests:
+
+```typescript
+// ❌ BAD: Creates new array reference on every render
+const MyComponent = ({ items = [] }) => {
+  useEffect(() => {
+    // This runs INFINITELY because [] !== [] (different references)
+    processItems(items);
+  }, [items]);
+  // ...
+}
+```
+
+**Root Cause:** In JavaScript, `[] !== []` because each `[]` creates a new object reference. When used as a default parameter, every render creates a new array, which triggers useEffect dependencies, causing re-renders, ad infinitum.
+
+**Solution - In Components:**
+```typescript
+// ✅ GOOD: Use a stable constant for default arrays/objects
+const EMPTY_ITEMS: Item[] = [];
+
+const MyComponent = ({ items = EMPTY_ITEMS }) => {
+  useEffect(() => {
+    processItems(items);
+  }, [items]); // Now stable - won't trigger infinite loops
+  // ...
+}
+```
+
+**Solution - In Tests (if you can't modify component):**
+```typescript
+// ✅ GOOD: Provide stable reference in test props
+const STABLE_EMPTY_ARRAY: never[] = [];
+
+const defaultProps = {
+  items: STABLE_EMPTY_ARRAY, // CRITICAL: Must be stable reference
+  // ... other props
+};
+```
+
+**How to Detect:** If a test hangs during render (not during assertions), check for:
+1. Default array/object parameters in component props
+2. useEffect dependencies that include those props
+3. State updates inside useEffects that could cause re-renders
+
+#### Pitfall 2: setTimeout in Components Causes Test Hangs
+
+**Problem:** Components using `setTimeout` for focus management, animations, or debouncing can hang in tests:
+
+```typescript
+// Component with setTimeout
+useEffect(() => {
+  if (isOpen) {
+    setTimeout(() => closeButtonRef.current?.focus(), 0);
+  }
+}, [isOpen]);
+```
+
+**Solution:** Use fake timers and advance them after render:
+
+```typescript
+describe('DialogComponent', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('should render dialog', () => {
+    render(<DialogComponent isOpen={true} />);
+    act(() => { vi.runAllTimers(); }); // Process setTimeout calls
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+});
+```
+
+**Important:** When using fake timers, use `fireEvent` instead of `userEvent` for clicks/interactions. `userEvent` doesn't work well with fake timers.
+
+#### Pitfall 3: Modal Content Hidden Behind Bottom Navigation
+
+**Problem:** Modal dialogs can be cut off by bottom navigation bars on mobile:
+
+**Solution:** Add proper constraints to modal containers:
+```typescript
+// ❌ BAD: No height constraint
+<div className="fixed inset-0 flex items-center justify-center p-4">
+
+// ✅ GOOD: Account for bottom nav and allow scrolling
+<div className="fixed inset-0 flex items-center justify-center p-4 pb-20">
+  <div className="max-h-[calc(100vh-6rem)] overflow-y-auto">
+    {/* Modal content */}
+  </div>
+</div>
+```
+
 ## Writing Integration Tests
 
 Integration tests verify that React components render correctly and interact with each other properly.

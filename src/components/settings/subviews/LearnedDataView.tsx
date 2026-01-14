@@ -8,15 +8,17 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ChevronDown, ChevronUp, BookOpen, Home, Tag, CheckCircle2, Trash2, ChevronRight, X, AlertTriangle } from 'lucide-react';
+import { ChevronDown, ChevronUp, BookOpen, Home, Tag, CheckCircle2, Trash2, ChevronRight, X, AlertTriangle, Package } from 'lucide-react';
 import { CategoryMappingsList } from '../../CategoryMappingsList';
 import { MerchantMappingsList } from '../../MerchantMappingsList';
 import { SubcategoryMappingsList } from '../../SubcategoryMappingsList';
 import { TrustedMerchantsList } from '../../TrustedMerchantsList';
+import { ItemNameMappingsList } from '../../ItemNameMappingsList';
 import type { CategoryMapping } from '../../../types/categoryMapping';
 import type { MerchantMapping } from '../../../types/merchantMapping';
 import type { SubcategoryMapping } from '../../../types/subcategoryMapping';
 import type { TrustedMerchant } from '../../../types/trust';
+import type { ItemNameMapping } from '../../../types/itemNameMapping';
 
 interface LearnedDataViewProps {
     t: (key: string) => string;
@@ -40,6 +42,11 @@ interface LearnedDataViewProps {
     trustedMerchants?: TrustedMerchant[];
     trustedMerchantsLoading?: boolean;
     onRevokeTrust?: (merchantName: string) => Promise<void>;
+    // Item name mappings (Phase 5)
+    itemNameMappings?: ItemNameMapping[];
+    itemNameMappingsLoading?: boolean;
+    onDeleteItemNameMapping?: (mappingId: string) => Promise<void>;
+    onUpdateItemNameMapping?: (mappingId: string, newTarget: string) => Promise<void>;
     // Clear all learned data
     onClearAllLearnedData?: () => Promise<void>;
 }
@@ -72,6 +79,7 @@ interface ClearDataConfirmDialogProps {
     merchantCount: number;
     subcategoryCount: number;
     trustedCount: number;
+    itemNameCount: number;
 }
 
 const ClearDataConfirmDialog: React.FC<ClearDataConfirmDialogProps> = ({
@@ -85,6 +93,7 @@ const ClearDataConfirmDialog: React.FC<ClearDataConfirmDialogProps> = ({
     merchantCount,
     subcategoryCount,
     trustedCount,
+    itemNameCount,
 }) => {
     const modalRef = useRef<HTMLDivElement>(null);
     const cancelButtonRef = useRef<HTMLButtonElement>(null);
@@ -133,7 +142,7 @@ const ClearDataConfirmDialog: React.FC<ClearDataConfirmDialogProps> = ({
 
     if (!isOpen) return null;
 
-    const totalItems = categoryCount + merchantCount + subcategoryCount + trustedCount;
+    const totalItems = categoryCount + merchantCount + subcategoryCount + trustedCount + itemNameCount;
 
     return (
         <div
@@ -204,6 +213,9 @@ const ClearDataConfirmDialog: React.FC<ClearDataConfirmDialogProps> = ({
                             )}
                             {trustedCount > 0 && (
                                 <li>• {t('trustedMerchants')}: <strong>{trustedCount}</strong></li>
+                            )}
+                            {itemNameCount > 0 && (
+                                <li>• {t('learnedItemNames')}: <strong>{itemNameCount}</strong></li>
                             )}
                         </ul>
                         <p className="mt-3 text-xs" style={{ color: '#22c55e' }}>
@@ -350,6 +362,10 @@ export const LearnedDataView: React.FC<LearnedDataViewProps> = ({
     trustedMerchants = [],
     trustedMerchantsLoading = false,
     onRevokeTrust,
+    itemNameMappings = [],
+    itemNameMappingsLoading = false,
+    onDeleteItemNameMapping,
+    onUpdateItemNameMapping,
     onClearAllLearnedData,
 }) => {
     const isDark = theme === 'dark';
@@ -358,6 +374,7 @@ export const LearnedDataView: React.FC<LearnedDataViewProps> = ({
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
         categories: false,
         merchants: false,
+        itemNames: false,
         subcategories: false,
         trusted: false,
     });
@@ -399,6 +416,7 @@ export const LearnedDataView: React.FC<LearnedDataViewProps> = ({
     const SECTION_COLORS = {
         categories: '#22c55e',   // Green - for groups/categories
         merchants: '#8b5cf6',    // Purple - for merchants
+        itemNames: '#3b82f6',    // Blue - for item names
         subcategories: '#f59e0b', // Amber - for subcategories
         trusted: '#10b981',      // Emerald/teal - for trusted merchants
     };
@@ -447,6 +465,30 @@ export const LearnedDataView: React.FC<LearnedDataViewProps> = ({
                         loading={merchantMappingsLoading}
                         onDeleteMapping={onDeleteMerchantMapping}
                         onEditMapping={onEditMerchantMapping}
+                        t={t}
+                        theme={theme as 'light' | 'dark'}
+                    />
+                </ExpandableSection>
+            )}
+
+            {/* Learned Item Names (Phase 5) */}
+            {onDeleteItemNameMapping && onUpdateItemNameMapping && (
+                <ExpandableSection
+                    title={t('learnedItemNames')}
+                    description={formatItemCount(itemNameMappings.length, 'learnedItemNames')}
+                    icon={<Package size={20} />}
+                    iconColor={SECTION_COLORS.itemNames}
+                    count={itemNameMappings.length}
+                    isExpanded={expandedSections.itemNames}
+                    onToggle={() => toggleSection('itemNames')}
+                    theme={theme}
+                    t={t}
+                >
+                    <ItemNameMappingsList
+                        mappings={itemNameMappings}
+                        loading={itemNameMappingsLoading}
+                        onDeleteMapping={onDeleteItemNameMapping}
+                        onEditMapping={onUpdateItemNameMapping}
                         t={t}
                         theme={theme as 'light' | 'dark'}
                     />
@@ -538,6 +580,7 @@ export const LearnedDataView: React.FC<LearnedDataViewProps> = ({
                 merchantCount={merchantMappings.length}
                 subcategoryCount={subcategoryMappings.length}
                 trustedCount={trustedMerchants.length}
+                itemNameCount={itemNameMappings.length}
             />
         </div>
     );

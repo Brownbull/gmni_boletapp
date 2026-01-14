@@ -258,19 +258,10 @@ export const ScanOverlay: React.FC<ScanOverlayProps> = ({
                 </div>
               </div>
 
-              {/* Cancel button */}
-              <button
-                onClick={onCancel}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isDark
-                    ? 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-                aria-label={t('cancel')}
-              >
-                <X size={16} />
-                {t('cancel')}
-              </button>
+              {/* Story 14d.4e: Cancel button removed during uploading state
+                  Credit is deducted immediately on scan start to prevent exploits.
+                  Users cannot cancel once scan begins - they must wait for result.
+                  Credit is only refunded if API returns an error. */}
             </>
           )}
 
@@ -334,19 +325,10 @@ export const ScanOverlay: React.FC<ScanOverlayProps> = ({
                 )}
               </div>
 
-              {/* Cancel button */}
-              <button
-                onClick={onCancel}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isDark
-                    ? 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-                aria-label={t('cancel')}
-              >
-                <X size={16} />
-                {t('cancel')}
-              </button>
+              {/* Story 14d.4e: Cancel button removed during processing state
+                  Credit is deducted immediately on scan start to prevent exploits.
+                  Users cannot cancel once scan begins - they must wait for result.
+                  Credit is only refunded if API returns an error. */}
             </>
           )}
 

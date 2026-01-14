@@ -7,6 +7,8 @@ interface DateTimeTagProps {
     onDateChange: (date: string) => void;
     onTimeChange: (time: string) => void;
     t?: (key: string) => string;
+    /** Story 14.41: Disable the date/time selectors in read-only mode */
+    disabled?: boolean;
 }
 
 /**
@@ -22,6 +24,7 @@ export const DateTimeTag: React.FC<DateTimeTagProps> = ({
     onDateChange,
     onTimeChange,
     t,
+    disabled = false,
 }) => {
     const [isDateOpen, setIsDateOpen] = useState(false);
     const [isTimeOpen, setIsTimeOpen] = useState(false);
@@ -71,15 +74,19 @@ export const DateTimeTag: React.FC<DateTimeTagProps> = ({
     return (
         <div className="flex items-center gap-2 flex-wrap">
             {/* Date Tag */}
+            {/* Story 14.41: Disabled state for read-only mode */}
             <div className="relative" ref={dateRef}>
                 <button
                     type="button"
-                    onClick={() => { setIsDateOpen(!isDateOpen); setIsTimeOpen(false); }}
+                    onClick={() => !disabled && (setIsDateOpen(!isDateOpen), setIsTimeOpen(false))}
+                    disabled={disabled}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs transition-colors"
                     style={{
                         backgroundColor: 'var(--bg-primary)',
                         border: '1px solid var(--border-medium)',
                         color: 'var(--text-secondary)',
+                        opacity: disabled ? 0.7 : 1,
+                        cursor: disabled ? 'default' : 'pointer',
                     }}
                     aria-expanded={isDateOpen}
                     aria-haspopup="true"
@@ -100,7 +107,7 @@ export const DateTimeTag: React.FC<DateTimeTagProps> = ({
                         <div className="p-3 space-y-3">
                             <div className="relative">
                                 <label
-                                    className="absolute -top-2 left-2.5 px-1 text-[10px] font-medium z-10"
+                                    className="absolute -top-2 left-2.5 px-1 text-xs font-medium z-10"
                                     style={{
                                         backgroundColor: 'var(--bg-secondary, #ffffff)',
                                         color: 'var(--primary, #2563eb)',
@@ -133,15 +140,19 @@ export const DateTimeTag: React.FC<DateTimeTagProps> = ({
             </div>
 
             {/* Time Tag */}
+            {/* Story 14.41: Disabled state for read-only mode */}
             <div className="relative" ref={timeRef}>
                 <button
                     type="button"
-                    onClick={() => { setIsTimeOpen(!isTimeOpen); setIsDateOpen(false); }}
+                    onClick={() => !disabled && (setIsTimeOpen(!isTimeOpen), setIsDateOpen(false))}
+                    disabled={disabled}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs transition-colors"
                     style={{
                         backgroundColor: 'var(--bg-primary)',
                         border: '1px solid var(--border-medium)',
                         color: 'var(--text-secondary)',
+                        opacity: disabled ? 0.7 : 1,
+                        cursor: disabled ? 'default' : 'pointer',
                     }}
                     aria-expanded={isTimeOpen}
                     aria-haspopup="true"
@@ -162,7 +173,7 @@ export const DateTimeTag: React.FC<DateTimeTagProps> = ({
                         <div className="p-3 space-y-3">
                             <div className="relative">
                                 <label
-                                    className="absolute -top-2 left-2.5 px-1 text-[10px] font-medium z-10"
+                                    className="absolute -top-2 left-2.5 px-1 text-xs font-medium z-10"
                                     style={{
                                         backgroundColor: 'var(--bg-secondary, #ffffff)',
                                         color: 'var(--primary, #2563eb)',

@@ -2,6 +2,7 @@
  * ScanCompleteModal Component
  *
  * Story 14.23: Unified Transaction Editor
+ * Story 14d.4b: Migrated to use ScanContext for scan-specific state
  * Epic 14: Core Implementation
  *
  * Centered modal displayed after a NEW transaction scan completes.
@@ -16,10 +17,15 @@
  *
  * Note: Only shown for NEW transactions. Re-scans go straight to edit mode.
  *
+ * Story 14d.4b Migration:
+ * - Uses useScanOptional() to read dialog state from context
+ * - Falls back to props if context not available (backward compatibility)
+ * - Context provides: transaction via activeDialog.data
+ *
  * @see /home/khujta/.claude/plans/fancy-doodling-island.md
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Check, Pencil, X, Receipt } from 'lucide-react';
 import { Transaction } from '../../types/transaction';
 import { getCategoryEmoji } from '../../utils/categoryEmoji';
@@ -27,54 +33,107 @@ import { translateCategory } from '../../utils/categoryTranslations';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { DURATION, EASING } from '../animation/constants';
 import type { Language } from '../../utils/translations';
+import { useScanOptional } from '../../contexts/ScanContext';
+import { DIALOG_TYPES } from '../../types/scanStateMachine';
+
+/**
+ * Story 14d.4b: Data structure for scan_complete dialog in ScanContext.
+ */
+export interface ScanCompleteDialogData {
+  transaction: Transaction;
+}
 
 /**
  * Props for ScanCompleteModal component
  */
 export interface ScanCompleteModalProps {
-  /** Whether the modal is visible */
-  visible: boolean;
-  /** Transaction data from scan result */
-  transaction: Transaction | null;
-  /** Callback when user clicks "Guardar" (Save) */
-  onSave: () => void;
-  /** Callback when user clicks "Editar" (Edit) */
-  onEdit: () => void;
-  /** Callback when user clicks backdrop or X button */
-  onDismiss?: () => void;
-  /** Theme for styling */
+  /** Theme for styling - required, from app settings */
   theme: 'light' | 'dark';
-  /** Translation function */
+  /** Translation function - required, from app settings */
   t: (key: string) => string;
-  /** Currency format function */
+  /** Currency format function - required, from app settings */
   formatCurrency: (amount: number, currency: string) => string;
-  /** Currency code */
+  /** Currency code - required, from app settings */
   currency: string;
-  /** Language for category translation */
+  /** Language for category translation - required, from app settings */
   lang?: Language;
-  /** Whether save is in progress */
+
+  // === Story 14d.4b: Props below are now optional - can be read from ScanContext ===
+
+  /** Whether the modal is visible - optional if using ScanContext */
+  visible?: boolean;
+  /** Transaction data from scan result - optional if using ScanContext */
+  transaction?: Transaction | null;
+  /** Callback when user clicks "Guardar" (Save) - optional if using ScanContext */
+  onSave?: () => void;
+  /** Callback when user clicks "Editar" (Edit) - optional if using ScanContext */
+  onEdit?: () => void;
+  /** Callback when user clicks backdrop or X button - optional if using ScanContext */
+  onDismiss?: () => void;
+  /** Whether save is in progress - optional if using ScanContext */
   isSaving?: boolean;
 }
 
 /**
  * ScanCompleteModal - Centered modal for "Save now or Edit?" choice
+ *
+ * Story 14d.4b: Uses ScanContext for scan-specific state with prop fallback.
  */
 export const ScanCompleteModal: React.FC<ScanCompleteModalProps> = ({
-  visible,
-  transaction,
-  onSave,
-  onEdit,
-  onDismiss,
+  visible: visibleProp,
+  transaction: transactionProp,
+  onSave: onSaveProp,
+  onEdit: onEditProp,
+  onDismiss: onDismissProp,
   theme,
   t,
   formatCurrency,
   currency,
   lang = 'es',
-  isSaving = false,
+  isSaving: isSavingProp = false,
 }) => {
   const isDark = theme === 'dark';
   const prefersReducedMotion = useReducedMotion();
   const [isAnimatingIn, setIsAnimatingIn] = useState(false);
+
+  // Story 14d.4b: Get scan context for reading dialog state
+  const scanContext = useScanOptional();
+
+  // Story 14d.4b: Derive values from context or fall back to props
+  const contextDialogData = scanContext?.state.activeDialog?.type === DIALOG_TYPES.SCAN_COMPLETE
+    ? (scanContext.state.activeDialog.data as ScanCompleteDialogData)
+    : null;
+
+  // Determine if modal should be visible
+  const visible = contextDialogData !== null || visibleProp === true;
+
+  // Get transaction from context or props
+  const transaction = contextDialogData?.transaction ?? transactionProp;
+
+  // isSaving could come from context in future
+  const isSaving = isSavingProp;
+
+  // Story 14d.4b: Create wrapped handlers that dispatch to context and call props
+  const handleSave = useCallback(() => {
+    if (scanContext?.resolveDialog) {
+      scanContext.resolveDialog(DIALOG_TYPES.SCAN_COMPLETE, { choice: 'save' });
+    }
+    onSaveProp?.();
+  }, [scanContext, onSaveProp]);
+
+  const handleEdit = useCallback(() => {
+    if (scanContext?.resolveDialog) {
+      scanContext.resolveDialog(DIALOG_TYPES.SCAN_COMPLETE, { choice: 'edit' });
+    }
+    onEditProp?.();
+  }, [scanContext, onEditProp]);
+
+  const handleDismiss = useCallback(() => {
+    if (scanContext?.dismissDialog) {
+      scanContext.dismissDialog();
+    }
+    onDismissProp?.();
+  }, [scanContext, onDismissProp]);
 
   // Handle visibility animation
   useEffect(() => {
@@ -104,17 +163,16 @@ export const ScanCompleteModal: React.FC<ScanCompleteModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="scan-complete-title"
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity ${
+      className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-opacity ${
         isAnimatingIn ? 'opacity-100' : 'opacity-0'
       }`}
       style={{
         transitionDuration: prefersReducedMotion ? '0ms' : `${DURATION.NORMAL}ms`,
       }}
     >
-      {/* Backdrop */}
+      {/* Backdrop - v9.7.0: No onClick to prevent accidental dismissal */}
       <div
         className={`absolute inset-0 ${isDark ? 'bg-black/60' : 'bg-black/40'} backdrop-blur-sm`}
-        onClick={onDismiss}
       />
 
       {/* Modal content */}
@@ -129,9 +187,9 @@ export const ScanCompleteModal: React.FC<ScanCompleteModalProps> = ({
       >
         {/* Header with close button */}
         <div className={`relative px-6 pt-6 pb-4 ${isDark ? 'border-slate-700' : 'border-slate-100'}`}>
-          {onDismiss && (
+          {(onDismissProp || scanContext?.dismissDialog) && (
             <button
-              onClick={onDismiss}
+              onClick={handleDismiss}
               className={`absolute top-4 right-4 p-2 rounded-full transition-colors ${
                 isDark
                   ? 'hover:bg-slate-700 text-slate-400'
@@ -212,7 +270,7 @@ export const ScanCompleteModal: React.FC<ScanCompleteModalProps> = ({
         <div className="px-6 py-5 space-y-3">
           {/* Primary: Save */}
           <button
-            onClick={onSave}
+            onClick={handleSave}
             disabled={isSaving}
             className={`w-full py-3.5 px-4 rounded-xl font-semibold text-base flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed ${
               isDark
@@ -240,7 +298,7 @@ export const ScanCompleteModal: React.FC<ScanCompleteModalProps> = ({
 
           {/* Secondary: Edit */}
           <button
-            onClick={onEdit}
+            onClick={handleEdit}
             disabled={isSaving}
             className={`w-full py-3.5 px-4 rounded-xl font-semibold text-base flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-60 ${
               isDark

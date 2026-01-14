@@ -42,3 +42,6 @@ export { DeleteGroupModal } from './DeleteGroupModal';
 export type { DeleteGroupModalProps } from './DeleteGroupModal';
 export { DeleteTransactionsModal } from './DeleteTransactionsModal';
 export type { DeleteTransactionsModalProps, TransactionPreview } from './DeleteTransactionsModal';
+// Story 14.31 Session 3: Sort control for ItemsView and HistoryView
+export { SortControl } from './SortControl';
+export type { SortControlProps, SortOption } from './SortControl';

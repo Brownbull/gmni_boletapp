@@ -54,7 +54,7 @@ export interface SwipeNavigationOptions {
 /**
  * Return value from useSwipeNavigation hook
  *
- * @note Visual feedback (isSwiping, swipeDirection, swipeProgress) is provided for consumers
+ * @note Visual feedback (isSwiping, swipeDirection, swipeProgress, swipeOffset) is provided for consumers
  * to render swipe indicators. Consumers should check useReducedMotion() and skip animations
  * when reduced motion is preferred - this hook provides data but does not enforce motion settings.
  */
@@ -71,6 +71,8 @@ export interface SwipeNavigationResult {
   swipeDirection: 'left' | 'right' | null;
   /** Swipe progress as 0-1 value (relative to threshold). Use for opacity/transform when !prefersReducedMotion */
   swipeProgress: number;
+  /** Story 14.13 Session 6: Raw pixel offset for live transform feedback (positive = right, negative = left) */
+  swipeOffset: number;
 }
 
 // ============================================================================
@@ -125,6 +127,8 @@ export function useSwipeNavigation(
     null
   );
   const [swipeProgress, setSwipeProgress] = useState(0);
+  // Story 14.13 Session 6: Raw pixel offset for live transform
+  const [swipeOffset, setSwipeOffset] = useState(0);
 
   /**
    * Handle touch start - record initial position
@@ -193,6 +197,9 @@ export function useSwipeNavigation(
         // Update progress (0-1, capped at 1)
         const progress = Math.min(Math.abs(diffX) / threshold, 1);
         setSwipeProgress(progress);
+
+        // Story 14.13 Session 6: Update raw pixel offset for live transform
+        setSwipeOffset(diffX);
       }
     },
     [enabled, threshold]
@@ -238,6 +245,7 @@ export function useSwipeNavigation(
       setIsSwiping(false);
       setSwipeDirection(null);
       setSwipeProgress(0);
+      setSwipeOffset(0);
     },
     [enabled, threshold, onSwipeLeft, onSwipeRight, hapticEnabled]
   );
@@ -249,5 +257,6 @@ export function useSwipeNavigation(
     isSwiping,
     swipeDirection,
     swipeProgress,
+    swipeOffset,
   };
 }

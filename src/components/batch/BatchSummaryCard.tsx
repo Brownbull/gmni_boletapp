@@ -2,18 +2,23 @@
  * BatchSummaryCard Component
  *
  * Story 12.3: Batch Review Queue (AC #2, #3, #4, #7)
- * Displays a summary card for a single receipt in the batch review queue.
+ * Story 12.1 v9.7.0: Redesigned to match transaction list card style
  *
- * Shows: emoji, merchant, total, item count, confidence indicator.
- * Actions: Edit, Discard (with retry for error state).
+ * Displays a transaction card for batch review that matches the HistoryView style:
+ * - Receipt thumbnail on left with category badge
+ * - Merchant name (colored) and amount on first row
+ * - Meta pills (date, time, location, item count) on second row
+ * - Expandable items section (first 5 items)
+ * - Edit and Discard buttons
  *
  * @see docs/sprint-artifacts/epic12/story-12.3-batch-review-queue.md
  */
 
-import React from 'react';
-import { Check, AlertTriangle, X, Edit2, Trash2, RefreshCw } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, Edit2, Trash2, RefreshCw, Check, AlertTriangle, Receipt, Package, Clock, MapPin, Save, Loader2 } from 'lucide-react';
 import { BatchReceipt, BatchReceiptStatus } from '../../hooks/useBatchReview';
 import { getCategoryEmoji } from '../../utils/categoryEmoji';
+import { getCategoryColorsAuto } from '../../config/categoryColors';
 import { formatCurrency } from '../../utils/currency';
 import type { Currency } from '../../types/settings';
 
@@ -26,6 +31,8 @@ export interface BatchSummaryCardProps {
   currency: Currency;
   /** Translation function */
   t: (key: string) => string;
+  /** Called when Save button is clicked - Story 12.1 v9.7.0 */
+  onSave?: () => Promise<void>;
   /** Called when Edit button is clicked */
   onEdit: () => void;
   /** Called when Discard button is clicked */
@@ -34,8 +41,11 @@ export interface BatchSummaryCardProps {
   onRetry?: () => void;
 }
 
+/** Maximum items to show in expanded section */
+const MAX_VISIBLE_ITEMS = 5;
+
 /**
- * Get status configuration for display.
+ * Get status badge configuration
  */
 function getStatusConfig(
   status: BatchReceiptStatus,
@@ -48,165 +58,308 @@ function getStatusConfig(
 } {
   switch (status) {
     case 'ready':
+      // Story 12.1 v9.7.0: Use primary (blue) colors for ready status
       return {
-        icon: <Check size={14} className="text-green-500" />,
-        label: 'batchReviewReady',
-        bgColor: isDark ? 'bg-green-900/20' : 'bg-green-50',
-        textColor: isDark ? 'text-green-400' : 'text-green-700',
+        icon: <Check size={12} />,
+        label: 'batchItemReady',
+        bgColor: isDark ? 'rgba(37, 99, 235, 0.2)' : '#dbeafe', // primary-light
+        textColor: isDark ? '#93c5fd' : '#2563eb', // primary
       };
     case 'edited':
       return {
-        icon: <Edit2 size={14} className="text-blue-500" />,
+        icon: <Edit2 size={12} />,
         label: 'batchReviewEdited',
-        bgColor: isDark ? 'bg-blue-900/20' : 'bg-blue-50',
-        textColor: isDark ? 'text-blue-400' : 'text-blue-700',
+        bgColor: isDark ? 'rgba(59, 130, 246, 0.2)' : '#dbeafe',
+        textColor: isDark ? '#93c5fd' : '#1d4ed8',
       };
     case 'review':
       return {
-        icon: <AlertTriangle size={14} className="text-amber-500" />,
+        icon: <AlertTriangle size={12} />,
         label: 'batchReviewNeeded',
-        bgColor: isDark ? 'bg-amber-900/20' : 'bg-amber-50',
-        textColor: isDark ? 'text-amber-400' : 'text-amber-700',
+        bgColor: isDark ? 'rgba(245, 158, 11, 0.2)' : '#fef3c7',
+        textColor: isDark ? '#fcd34d' : '#b45309',
       };
     case 'error':
       return {
-        icon: <X size={14} className="text-red-500" />,
+        icon: <AlertTriangle size={12} />,
         label: 'batchReviewError',
-        bgColor: isDark ? 'bg-red-900/20' : 'bg-red-50',
-        textColor: isDark ? 'text-red-400' : 'text-red-700',
+        bgColor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2',
+        textColor: isDark ? '#fca5a5' : '#dc2626',
       };
   }
 }
 
 /**
+ * Meta pill component - small rounded badge for metadata
+ */
+const MetaPill: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <span
+    className="inline-flex items-center gap-[3px] px-[6px] py-[3px] rounded-full text-xs"
+    style={{
+      backgroundColor: 'var(--bg-tertiary)',
+      color: 'var(--text-secondary)',
+    }}
+  >
+    {children}
+  </span>
+);
+
+/**
  * BatchSummaryCard Component
  *
- * Displays a receipt summary with:
- * - Category emoji and merchant name
- * - Total amount
- * - Item count
- * - Confidence indicator (ready/review/edited/error)
- * - Edit and Discard actions
+ * Redesigned to match the TransactionCard style from HistoryView
  */
 export const BatchSummaryCard: React.FC<BatchSummaryCardProps> = ({
   receipt,
   theme,
   currency,
   t,
+  onSave,
   onEdit,
   onDiscard,
   onRetry,
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const isDark = theme === 'dark';
-  const { transaction, status, error } = receipt;
+  const { transaction, status, error, imageUrl } = receipt;
 
   // Get status configuration
   const statusConfig = getStatusConfig(status, isDark);
 
-  // Get category emoji
+  // Get category info
   const categoryEmoji = getCategoryEmoji(transaction.category);
+  const categoryColors = getCategoryColorsAuto(transaction.category);
 
-  // Get merchant display name
-  const merchantName = transaction.alias || transaction.merchant || t('unknown');
+  // Display values - use transaction's currency if available (for multi-currency receipts like GBP)
+  const displayName = transaction.alias || transaction.merchant || t('unknown');
+  const displayCurrency = transaction.currency || currency;
+  const formattedTotal = formatCurrency(transaction.total || 0, displayCurrency);
+  const items = transaction.items || [];
+  const hasItems = items.length > 0;
+  const visibleItems = items.slice(0, MAX_VISIBLE_ITEMS);
+  const remainingCount = items.length - MAX_VISIBLE_ITEMS;
 
-  // Get item count
-  const itemCount = transaction.items?.length || 0;
+  // Format date/time
+  const formatDateTime = () => {
+    if (!transaction.date) return null;
+    const dateStr = transaction.date;
+    const timeStr = transaction.time;
 
-  // Get top 3 items by price for preview (Story 12.3 enhancement)
-  const topItems = transaction.items
-    ? [...transaction.items]
-        .sort((a, b) => (b.price || 0) - (a.price || 0))
-        .slice(0, Math.min(3, itemCount))
-    : [];
+    try {
+      const date = new Date(dateStr);
+      const formatted = date.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' });
+      return timeStr ? `${formatted}, ${timeStr}` : formatted;
+    } catch {
+      return dateStr;
+    }
+  };
 
-  // Format total
-  const formattedTotal = formatCurrency(transaction.total || 0, currency);
+  const dateTimeDisplay = formatDateTime();
 
-  // Card styling
-  const cardBg = isDark ? 'bg-slate-800' : 'bg-white';
-  const cardBorder = isDark ? 'border-slate-700' : 'border-slate-200';
-  const textPrimary = isDark ? 'text-white' : 'text-slate-900';
-  const textSecondary = isDark ? 'text-slate-400' : 'text-slate-600';
+  // Toggle expand
+  const handleToggleExpand = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsExpanded(!isExpanded);
+  };
+
+  // Story 12.1 v9.7.0: Handle individual save
+  const handleSave = async () => {
+    if (!onSave || isSaving) return;
+    setIsSaving(true);
+    try {
+      await onSave();
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div
-      className={`rounded-lg border ${cardBorder} ${cardBg} p-4 shadow-sm transition-all duration-200`}
+      className="rounded-xl overflow-hidden border"
+      style={{
+        backgroundColor: 'var(--bg-secondary)',
+        borderColor: status === 'error'
+          ? (isDark ? '#fca5a5' : '#dc2626')
+          : status === 'review'
+            ? (isDark ? '#fcd34d' : '#f59e0b')
+            : 'var(--border-light)',
+        borderWidth: status === 'error' || status === 'review' ? '2px' : '1px',
+      }}
       role="article"
-      aria-label={`${t('receipt')}: ${merchantName}`}
+      aria-label={`${t('receipt')}: ${displayName}`}
     >
-      {/* Main content row */}
-      <div className="flex items-start gap-3">
-        {/* Category emoji */}
-        <span className="text-2xl flex-shrink-0" aria-hidden="true">
-          {categoryEmoji}
-        </span>
-
-        {/* Receipt info */}
-        <div className="flex-1 min-w-0">
-          {/* Merchant and total */}
-          <div className="flex items-center justify-between gap-2">
-            <h3 className={`font-medium truncate ${textPrimary}`}>
-              {merchantName}
-            </h3>
-            <span className={`font-semibold flex-shrink-0 ${textPrimary}`}>
-              {formattedTotal}
-            </span>
-          </div>
-
-          {/* Item count and status */}
-          <div className="flex items-center justify-between mt-1">
-            <span className={`text-sm ${textSecondary}`}>
-              {itemCount} {t(itemCount === 1 ? 'item' : 'items')}
-            </span>
-
-            {/* Status badge */}
-            <span
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${statusConfig.bgColor} ${statusConfig.textColor}`}
+      {/* Main Card Content */}
+      <div className="p-3">
+        <div className="flex gap-[10px] items-start">
+          {/* Receipt Thumbnail with Category Badge */}
+          <div className="relative flex-shrink-0 w-10 h-[46px]">
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt={`Receipt from ${displayName}`}
+                className="w-10 h-[46px] object-cover rounded-md border"
+                style={{ borderColor: 'var(--border-light)' }}
+              />
+            ) : (
+              <div
+                className="w-full h-full rounded-md flex items-center justify-center border"
+                style={{
+                  background: 'linear-gradient(135deg, var(--bg-tertiary) 0%, var(--border-light) 100%)',
+                  borderColor: 'var(--border-light)',
+                }}
+              >
+                <Receipt size={18} strokeWidth={1.2} style={{ color: 'var(--text-tertiary)', opacity: 0.7 }} />
+              </div>
+            )}
+            {/* Category badge */}
+            <div
+              className="absolute -bottom-0.5 -right-0.5 w-7 h-7 rounded-full flex items-center justify-center text-sm shadow-sm"
+              style={{ backgroundColor: categoryColors.bg }}
+              aria-hidden="true"
             >
-              {statusConfig.icon}
-              {t(statusConfig.label)}
-            </span>
+              {categoryEmoji}
+            </div>
           </div>
 
-          {/* Top items preview (Story 12.3 enhancement) */}
-          {topItems.length > 0 && (
-            <div className={`mt-2 text-xs ${textSecondary}`}>
-              {topItems.map((item, idx) => (
-                <div key={idx} className="flex justify-between gap-2 truncate">
-                  <span className="truncate">{item.name}</span>
-                  {/* Story 14.15b: Show quantity if > 1 */}
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    {(item.qty ?? 1) > 1 && (
-                      <span className="opacity-60">x{item.qty}</span>
-                    )}
-                    <span>{formatCurrency(item.price || 0, currency)}</span>
-                  </div>
-                </div>
-              ))}
-              {itemCount > 3 && (
-                <span className="text-xs opacity-60">+{itemCount - 3} {t('more')}</span>
+          {/* Info Section */}
+          <div className="flex-1 min-w-0">
+            {/* Row 1: Merchant + Amount */}
+            <div className="flex justify-between items-start mb-1">
+              <span
+                className="font-semibold text-sm truncate"
+                style={{ color: categoryColors.fg }}
+              >
+                {displayName}
+              </span>
+              <span
+                className="font-semibold text-sm whitespace-nowrap flex-shrink-0 ml-2"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                {formattedTotal}
+              </span>
+            </div>
+
+            {/* Row 2: Meta pills + Chevron */}
+            <div className="flex justify-between items-center">
+              <div className="flex flex-wrap gap-1 items-center">
+                {dateTimeDisplay && (
+                  <MetaPill>
+                    <Clock size={10} strokeWidth={2} />
+                    {dateTimeDisplay}
+                  </MetaPill>
+                )}
+                {transaction.city && (
+                  <MetaPill>
+                    <MapPin size={10} strokeWidth={2} />
+                    {transaction.city}
+                  </MetaPill>
+                )}
+                {hasItems && (
+                  <MetaPill>
+                    <Package size={12} strokeWidth={2} />
+                    {items.length}
+                  </MetaPill>
+                )}
+                {/* Status badge */}
+                <span
+                  className="inline-flex items-center gap-1 px-[6px] py-[3px] rounded-full text-xs font-medium"
+                  style={{
+                    backgroundColor: statusConfig.bgColor,
+                    color: statusConfig.textColor,
+                  }}
+                >
+                  {statusConfig.icon}
+                  {t(statusConfig.label)}
+                </span>
+              </div>
+
+              {/* Expand/Collapse chevron (only if has items) */}
+              {hasItems && (
+                <button
+                  onClick={handleToggleExpand}
+                  className="p-1 -m-1 transition-transform duration-150"
+                  style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                  aria-expanded={isExpanded}
+                  aria-label={isExpanded ? t('collapse') : t('expand')}
+                >
+                  <ChevronDown
+                    size={16}
+                    strokeWidth={2}
+                    style={{ color: 'var(--text-tertiary)' }}
+                  />
+                </button>
               )}
             </div>
-          )}
 
-          {/* Error message (if error status) */}
-          {status === 'error' && error && (
-            <p className="mt-2 text-xs text-red-500 truncate">{error}</p>
-          )}
+            {/* Error message */}
+            {status === 'error' && error && (
+              <p className="text-xs mt-1.5" style={{ color: isDark ? '#fca5a5' : '#dc2626' }}>
+                {error}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Action buttons */}
-      <div className="flex items-center justify-end gap-2 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+      {/* Expandable Items Section */}
+      {hasItems && (
+        <div
+          className="overflow-hidden transition-all duration-200"
+          style={{
+            maxHeight: isExpanded ? '300px' : '0px',
+          }}
+        >
+          <div
+            className="px-3 py-2.5 border-t"
+            style={{
+              backgroundColor: 'var(--bg-tertiary)',
+              borderColor: 'var(--border-light)',
+            }}
+          >
+            {visibleItems.map((item, index) => (
+              <div
+                key={index}
+                className="flex justify-between items-center py-1 text-xs"
+              >
+                <span className="truncate" style={{ color: 'var(--text-secondary)' }}>
+                  {item.name}
+                </span>
+                <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                  {(item.qty ?? 1) > 1 && (
+                    <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>
+                      x{item.qty}
+                    </span>
+                  )}
+                  <span style={{ color: 'var(--text-secondary)' }}>
+                    {formatCurrency(item.price || 0, displayCurrency)}
+                  </span>
+                </div>
+              </div>
+            ))}
+            {remainingCount > 0 && (
+              <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
+                +{remainingCount} {t('more')}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Action Buttons - Always visible */}
+      <div
+        className="flex items-center justify-end gap-2 px-3 py-2.5 border-t"
+        style={{ borderColor: 'var(--border-light)' }}
+      >
         {/* Retry button (only for error state) */}
         {status === 'error' && onRetry && (
           <button
             onClick={onRetry}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              isDark
-                ? 'bg-amber-600/20 hover:bg-amber-600/30 text-amber-400'
-                : 'bg-amber-100 hover:bg-amber-200 text-amber-700'
-            }`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+            style={{
+              backgroundColor: isDark ? 'rgba(245, 158, 11, 0.2)' : '#fef3c7',
+              color: isDark ? '#fcd34d' : '#b45309',
+            }}
             aria-label={t('batchRetry')}
           >
             <RefreshCw size={14} />
@@ -214,30 +367,57 @@ export const BatchSummaryCard: React.FC<BatchSummaryCardProps> = ({
           </button>
         )}
 
-        {/* Edit button (not for error state) */}
-        {status !== 'error' && (
+        {/* Story 12.1 v9.7.0: Save button - save individual receipt */}
+        {/* Uses primary (blue) colors - same as what Edit used to have */}
+        {onSave && status !== 'error' && (
           <button
-            onClick={onEdit}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              isDark
-                ? 'bg-blue-600/20 hover:bg-blue-600/30 text-blue-400'
-                : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
-            }`}
-            aria-label={t('batchReviewEdit')}
+            onClick={handleSave}
+            disabled={isSaving}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+            style={{
+              backgroundColor: isSaving
+                ? 'var(--primary-light)'
+                : 'var(--primary-light)',
+              color: 'var(--primary)',
+              opacity: isSaving ? 0.7 : 1,
+            }}
+            aria-label={t('save')}
           >
-            <Edit2 size={14} />
-            {t('batchReviewEdit')}
+            {isSaving ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Save size={14} />
+            )}
+            {t('save')}
           </button>
         )}
+
+        {/* Edit button - Story 12.1 v9.7.0: Uses neutral colors */}
+        <button
+          onClick={onEdit}
+          disabled={isSaving}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+          style={{
+            backgroundColor: isDark ? '#2a2824' : '#f4f2f0',
+            color: isDark ? '#b8b0a8' : '#7a7268',
+            opacity: isSaving ? 0.5 : 1,
+          }}
+          aria-label={t('batchReviewEdit')}
+        >
+          <Edit2 size={14} />
+          {t('batchReviewEdit')}
+        </button>
 
         {/* Discard button */}
         <button
           onClick={onDiscard}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-            isDark
-              ? 'bg-red-600/20 hover:bg-red-600/30 text-red-400'
-              : 'bg-red-100 hover:bg-red-200 text-red-700'
-          }`}
+          disabled={isSaving}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+          style={{
+            backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2',
+            color: isDark ? '#fca5a5' : '#dc2626',
+            opacity: isSaving ? 0.5 : 1,
+          }}
           aria-label={t('batchReviewDiscard')}
         >
           <Trash2 size={14} />

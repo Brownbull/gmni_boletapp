@@ -30,6 +30,15 @@ export const QUERY_KEYS = {
         ['transactions', 'paginated', userId, appId] as const,
 
     /**
+     * v9.7.0: Recent scans for "Últimos Escaneados" carousel
+     * Key: ['transactions', 'recentScans', userId, appId]
+     * Orders by createdAt (scan timestamp) instead of date (transaction date)
+     * to show recently scanned receipts regardless of their transaction date.
+     */
+    recentScans: (userId: string, appId: string) =>
+        ['transactions', 'recentScans', userId, appId] as const,
+
+    /**
      * Mapping queries - hierarchical for partial invalidation
      * All mappings: ['mappings', userId, appId]
      * Specific type: ['mappings', type, userId, appId]
@@ -47,6 +56,9 @@ export const QUERY_KEYS = {
         /** Subcategory mappings */
         subcategory: (userId: string, appId: string) =>
             ['mappings', 'subcategory', userId, appId] as const,
+        /** Item name mappings (v9.7.0: per-store item name learning) */
+        itemName: (userId: string, appId: string) =>
+            ['mappings', 'itemName', userId, appId] as const,
     },
 
     /**
@@ -73,6 +85,14 @@ export const QUERY_KEYS = {
         ['userPreferences', userId, appId] as const,
 
     /**
+     * Story 14.31: Derived items from transactions
+     * Key: ['items', 'derived', userId, appId]
+     * Items are flattened from transactions, cached via React Query select transform.
+     */
+    items: (userId: string, appId: string) =>
+        ['items', 'derived', userId, appId] as const,
+
+    /**
      * Future: Household sharing (Epic 14c)
      * Structured for multi-user real-time sync
      */
@@ -87,6 +107,24 @@ export const QUERY_KEYS = {
         members: (householdId: string) =>
             ['household', householdId, 'members'] as const,
     },
+
+    /**
+     * Story 14.35: Localized location data
+     * Not user-specific - same data for all users
+     * Key: ['locations', 'countries']
+     */
+    locations: {
+        /** All countries with translations */
+        countries: () => ['locations', 'countries'] as const,
+    },
+
+    /**
+     * Story 14.33c.1: Airlock Generation & Persistence
+     * AI-generated spending insights
+     * Key: ['airlocks', userId, appId]
+     */
+    airlocks: (userId: string, appId: string) =>
+        ['airlocks', userId, appId] as const,
 } as const;
 
 /**

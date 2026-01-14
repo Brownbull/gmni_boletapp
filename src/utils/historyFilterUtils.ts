@@ -17,6 +17,17 @@ import type {
 } from '../contexts/HistoryFiltersContext';
 // Story 14.15b: Category normalization for legacy data compatibility
 import { normalizeItemCategory } from './categoryNormalizer';
+// Story 14.13a: Category group expansion for multi-dimension filtering
+// Story 14.13 Session 15: Added getItemCategoryGroup and getStoreCategoryGroup for proper 'other' group filtering
+import {
+  expandStoreCategoryGroup,
+  expandItemCategoryGroup,
+  getItemCategoryGroup,
+  getStoreCategoryGroup,
+  type StoreCategoryGroup,
+  type ItemCategoryGroup,
+} from '../config/categoryColors';
+import type { StoreCategory } from '../types/transaction';
 
 // ============================================================================
 // Filter Data Extraction
@@ -270,11 +281,115 @@ function matchesTemporalFilter(
 /**
  * Check if a transaction matches a category filter.
  * Supports multi-select via comma-separated values in category and group fields.
+ * Story 14.13a: Extended to support drillDownPath for multi-dimension filtering.
  */
 function matchesCategoryFilter(
   tx: Transaction,
   filter: CategoryFilterState
 ): boolean {
+  // Story 14.13a: When drillDownPath is present, use ONLY drillDownPath filtering
+  // This takes priority over legacy single-dimension filters (category, group, subcategory)
+  // because drillDownPath contains the full multi-dimension context from TrendsView
+  if (filter.drillDownPath) {
+    const path = filter.drillDownPath;
+
+    // Filter by store group (expand to all categories in the group)
+    // Only if storeCategory is not set (storeCategory is more specific)
+    // Story 14.13 Session 15: Special handling for 'other' group to match Dashboard counting
+    if (path.storeGroup && !path.storeCategory) {
+      const targetGroup = path.storeGroup as StoreCategoryGroup;
+
+      if (targetGroup === 'other') {
+        // For 'other' group, include transactions whose category doesn't map to any known group
+        // This matches how Dashboard counts transactions in the 'other' group
+        const txCategory = tx.category as StoreCategory;
+        const storeGroup = getStoreCategoryGroup(txCategory);
+        if (storeGroup !== 'other') {
+          return false;
+        }
+      } else {
+        // For other groups, use the standard expansion approach
+        const groupCategories = expandStoreCategoryGroup(targetGroup);
+        const txCategoryLower = tx.category?.toLowerCase();
+        if (!groupCategories.some(cat => cat.toLowerCase() === txCategoryLower)) {
+          return false;
+        }
+      }
+    }
+
+    // Filter by store category (supports multi-select via comma-separated values)
+    if (path.storeCategory) {
+      const txCategoryLower = tx.category?.toLowerCase();
+      // Check if it's a multi-select (comma-separated)
+      if (path.storeCategory.includes(',')) {
+        const selectedCategories = path.storeCategory.split(',').map(c => c.trim().toLowerCase());
+        if (!selectedCategories.some(cat => cat === txCategoryLower)) {
+          return false;
+        }
+      } else {
+        // Single category: exact match
+        if (txCategoryLower !== path.storeCategory.toLowerCase()) {
+          return false;
+        }
+      }
+    }
+
+    // Filter by item group (expand to all item categories in the group)
+    // Only if itemCategory is not set (itemCategory is more specific)
+    // Story 14.13 Session 15: Special handling for 'other-item' group to match Dashboard counting
+    if (path.itemGroup && !path.itemCategory) {
+      const targetGroup = path.itemGroup as ItemCategoryGroup;
+
+      if (targetGroup === 'other-item') {
+        // For 'other-item' group, include transactions with items whose category doesn't map to any known group
+        // This matches how Dashboard counts items in the 'other-item' group
+        const hasMatchingItem = tx.items?.some(item => {
+          const normalizedCategory = normalizeItemCategory(item.category || 'Other');
+          const itemGroup = getItemCategoryGroup(normalizedCategory);
+          return itemGroup === 'other-item';
+        });
+        if (!hasMatchingItem) return false;
+      } else {
+        // For other groups, use the standard expansion approach
+        const itemCategories = expandItemCategoryGroup(targetGroup);
+        const hasMatchingItem = tx.items?.some(item => {
+          const normalizedCategory = normalizeItemCategory(item.category || 'Other');
+          return itemCategories.some(cat =>
+            cat.toLowerCase() === normalizedCategory.toLowerCase()
+          );
+        });
+        if (!hasMatchingItem) return false;
+      }
+    }
+
+    // Filter by item category (supports multi-select via comma-separated values)
+    if (path.itemCategory) {
+      // Check if it's a multi-select (comma-separated)
+      const isMultiSelect = path.itemCategory.includes(',');
+      const selectedCategories = isMultiSelect
+        ? path.itemCategory.split(',').map(c => c.trim().toLowerCase())
+        : [path.itemCategory.toLowerCase()];
+
+      const hasMatchingItem = tx.items?.some(item => {
+        const normalizedCategory = normalizeItemCategory(item.category || 'Other').toLowerCase();
+        return selectedCategories.some(cat => cat === normalizedCategory);
+      });
+      if (!hasMatchingItem) return false;
+    }
+
+    // Filter by subcategory
+    if (path.subcategory) {
+      const hasMatchingSubcategory = tx.items?.some(
+        item => item.subcategory?.toLowerCase() === path.subcategory!.toLowerCase()
+      );
+      if (!hasMatchingSubcategory) return false;
+    }
+
+    return true;
+  }
+
+  // Legacy single-dimension filtering (when drillDownPath not present)
+  // Early return for "all" level with no other filters
   if (filter.level === 'all') return true;
 
   // Store category filter (supports multi-select via comma-separated values)
@@ -336,11 +451,28 @@ function matchesCategoryFilter(
 /**
  * Check if a transaction matches a location filter.
  * AC #4: Gracefully handles transactions without location data.
+ *
+ * Story 14.36: Extended to support multi-select cities from multiple countries.
+ * When selectedCities is present, it takes priority over legacy city/country fields.
  */
 function matchesLocationFilter(
   tx: Transaction,
   filter: LocationFilterState
 ): boolean {
+  // Story 14.36: Multi-select city filter takes priority
+  if (filter.selectedCities) {
+    // Transaction has no city data - exclude when filtering by city
+    if (!tx.city) return false;
+
+    // Parse comma-separated city codes
+    const selectedCities = filter.selectedCities.split(',').map(c => c.trim().toLowerCase()).filter(Boolean);
+    if (selectedCities.length === 0) return true;
+
+    // Transaction's city must be in the selected cities
+    return selectedCities.includes(tx.city.toLowerCase());
+  }
+
+  // Legacy single-selection filtering
   // No location filter applied
   if (!filter.country) return true;
 

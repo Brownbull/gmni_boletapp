@@ -61,7 +61,7 @@ export const CuentaView: React.FC<CuentaViewProps> = ({
                     </div>
                     <div className="flex-1">
                         <div
-                            className="text-[15px] font-semibold"
+                            className="text-base font-semibold"
                             style={{ color: 'var(--text-primary)' }}
                         >
                             {t('localUser')}
@@ -89,7 +89,7 @@ export const CuentaView: React.FC<CuentaViewProps> = ({
                                 {t('exportData')}
                             </span>
                             <span
-                                className="text-[11px]"
+                                className="text-xs"
                                 style={{ color: 'var(--text-secondary)' }}
                             >
                                 {t('exportDataDesc')}
@@ -99,7 +99,7 @@ export const CuentaView: React.FC<CuentaViewProps> = ({
                     <button
                         onClick={onExportAll}
                         disabled={exporting}
-                        className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-medium transition-colors"
+                        className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors"
                         style={{
                             backgroundColor: isDark
                                 ? 'rgba(59, 130, 246, 0.2)'
@@ -134,7 +134,7 @@ export const CuentaView: React.FC<CuentaViewProps> = ({
                                 {t('importData')}
                             </span>
                             <span
-                                className="text-[11px]"
+                                className="text-xs"
                                 style={{ color: 'var(--text-secondary)' }}
                             >
                                 {t('importDataDesc')}
@@ -145,7 +145,7 @@ export const CuentaView: React.FC<CuentaViewProps> = ({
                         onClick={() => {
                             // TODO: Implement import functionality
                         }}
-                        className="flex items-center justify-center px-3.5 py-2 rounded-lg text-[13px] font-medium transition-colors"
+                        className="flex items-center justify-center px-3.5 py-2 rounded-lg text-sm font-medium transition-colors"
                         style={{
                             backgroundColor: isDark
                                 ? 'rgba(34, 197, 94, 0.2)'
@@ -171,7 +171,7 @@ export const CuentaView: React.FC<CuentaViewProps> = ({
                                 {t('cloudSync')}
                             </span>
                             <span
-                                className="text-[11px]"
+                                className="text-xs"
                                 style={{ color: 'var(--text-secondary)' }}
                             >
                                 {t('cloudSyncDesc')}
@@ -179,7 +179,7 @@ export const CuentaView: React.FC<CuentaViewProps> = ({
                         </div>
                     </div>
                     <span
-                        className="text-[10px] px-2 py-0.5 rounded-full"
+                        className="text-xs px-2 py-0.5 rounded-full"
                         style={{
                             backgroundColor: 'var(--bg-tertiary)',
                             color: 'var(--text-tertiary)',
@@ -215,7 +215,7 @@ export const CuentaView: React.FC<CuentaViewProps> = ({
                                 {t('resetAll')}
                             </span>
                             <span
-                                className="text-[11px]"
+                                className="text-xs"
                                 style={{ color: 'var(--text-secondary)' }}
                             >
                                 {t('resetAllDesc')}
@@ -225,7 +225,7 @@ export const CuentaView: React.FC<CuentaViewProps> = ({
                     <button
                         onClick={onWipeDB}
                         disabled={wiping}
-                        className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-medium transition-colors"
+                        className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors"
                         style={{
                             backgroundColor: isDark ? '#7f1d1d' : '#fef2f2',
                             borderWidth: 1,
@@ -257,7 +257,7 @@ export const CuentaView: React.FC<CuentaViewProps> = ({
                                 {t('signout')}
                             </span>
                             <span
-                                className="text-[11px]"
+                                className="text-xs"
                                 style={{ color: 'var(--text-secondary)' }}
                             >
                                 {t('signOutDesc')}
@@ -266,7 +266,7 @@ export const CuentaView: React.FC<CuentaViewProps> = ({
                     </div>
                     <button
                         onClick={onSignOut}
-                        className="flex items-center justify-center px-3.5 py-2 rounded-lg text-[13px] font-medium transition-colors"
+                        className="flex items-center justify-center px-3.5 py-2 rounded-lg text-sm font-medium transition-colors"
                         style={{
                             backgroundColor: isDark ? '#334155' : '#e2e8f0',
                             color: 'var(--text-primary)',
