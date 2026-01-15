@@ -711,49 +711,184 @@ console.log(result);
 
 ## Firebase Cloud Functions
 
+### Function Inventory
+
+| Function | Type | Location | Purpose |
+|----------|------|----------|---------|
+| `analyzeReceipt` | HTTPS Callable | `functions/src/analyzeReceipt.ts` | Receipt OCR, image processing, storage |
+| `onTransactionDeleted` | Firestore Trigger | `functions/src/deleteTransactionImages.ts` | Cascade delete images |
+
+---
+
 ### analyzeReceipt Function
 
 **Purpose:** Server-side Gemini API proxy to protect API key and process images
 **Endpoint:** `https://us-central1-{projectId}.cloudfunctions.net/analyzeReceipt`
-**Method:** POST (via Firebase callable function)
+**Method:** Firebase Callable (`httpsCallable`)
+**Model:** Gemini 2.0 Flash (`gemini-2.0-flash`)
 
-**Request:**
+#### Request Contract
+
 ```typescript
 interface AnalyzeReceiptRequest {
-    images: string[];          // Base64 encoded images
-    currency: string;          // e.g., "CLP", "USD"
-    defaultCity?: string;      // Default location hint
-    defaultCountry?: string;   // Default country hint
+    images: string[];              // Base64 images OR URLs (for re-scan)
+    currency?: string;             // Optional for V3 (auto-detects from receipt)
+    receiptType?: ReceiptType;     // 'auto' | 'receipt' | 'invoice' | 'statement'
+    promptContext?: 'production' | 'development';
+    isRescan?: boolean;            // True when re-scanning stored images (Story 14.15b)
 }
+
+type ReceiptType = 'auto' | 'receipt' | 'invoice' | 'statement' | 'ticket';
 ```
 
-**Response:**
+#### Response Contract
+
 ```typescript
 interface AnalyzeReceiptResponse {
-    transaction: {
-        merchant: string;
-        date: string;
-        total: number;
-        category: string;
-        items: Array<{
-            name: string;
-            price: number;
-            category: string;
-            subcategory?: string;
-        }>;
+    // Transaction data (from Gemini)
+    transactionId: string;         // Pre-generated Firestore document ID
+    merchant: string;              // Store name
+    date: string;                  // YYYY-MM-DD format
+    total: number;                 // Integer (CLP) or cents (USD)
+    category: string;              // Store category
+    items: Array<{
+        name: string;
+        price: number;
+        category?: string;
+        quantity?: number;
+        subcategory?: string;
+    }>;
+
+    // V3 extended fields (auto-detected)
+    time?: string;                 // HH:MM format
+    currency?: string;             // Detected currency code (e.g., "CLP", "USD")
+    country?: string;              // Country name or null
+    city?: string;                 // City name or null
+    metadata?: {
+        receiptType?: string;      // Detected document type
+        confidence?: number;       // 0.0-1.0 confidence score
     };
-    imageUrls: string[];       // Firebase Storage URLs
-    thumbnailUrl: string;      // Thumbnail URL
+
+    // Storage URLs
+    imageUrls?: string[];          // Full-size image Firebase Storage URLs
+    thumbnailUrl?: string;         // Thumbnail URL (120x160)
+
+    // Tracking fields (Story 9.1)
+    promptVersion: string;         // e.g., "3.0.0"
+    merchantSource: 'scan';        // Always 'scan' for new receipts
+    receiptType?: string;          // Flattened from metadata
 }
 ```
 
-**Security:**
-- Requires Firebase Authentication
-- Rate limited: 10 requests/minute per user
-- Image validation: max 10MB per image, 5 images per request
-- API key stored in Firebase Functions config (not exposed to client)
+#### Security & Validation
 
-**Implementation:** `functions/src/analyzeReceipt.ts`
+| Check | Requirement | Error Code |
+|-------|-------------|------------|
+| Authentication | `context.auth` must exist | `unauthenticated` |
+| Rate Limit | Max 10 requests/minute per user | `resource-exhausted` |
+| Image Count | Max 5 images per request | `invalid-argument` |
+| Image Size | Max 10MB per image | `invalid-argument` |
+| Image Format | JPEG, PNG, WebP, HEIC, HEIF | `invalid-argument` |
+
+#### Processing Pipeline
+
+```
+Request received
+    │
+    ├─► 1. Validate authentication
+    ├─► 2. Check rate limit (10/min per user)
+    ├─► 3. Validate image count and size
+    │
+    ├─► 4. Pre-process images
+    │      ├─► If isRescan: fetch from URLs
+    │      └─► Else: decode base64, resize (1200x1600), compress (JPEG 80%)
+    │
+    ├─► 5. Call Gemini 2.0 Flash API
+    │      ├─► Build prompt from prompts library
+    │      └─► Send optimized images
+    │
+    ├─► 6. Parse JSON response
+    │
+    ├─► 7. Upload to Firebase Storage (skip for re-scans)
+    │      ├─► Full-size images
+    │      └─► Generate thumbnail (120x160)
+    │
+    └─► 8. Return combined response
+```
+
+#### Error Handling
+
+| Scenario | Error Code | Message |
+|----------|------------|---------|
+| Not logged in | `unauthenticated` | "Must be logged in to analyze receipts" |
+| Rate limited | `resource-exhausted` | "Rate limit exceeded. Maximum 10 requests per minute." |
+| No images | `invalid-argument` | "images array is required and must not be empty" |
+| Image too large | `invalid-argument` | "Image X is too large (YMB). Maximum size is 10MB" |
+| Invalid format | `invalid-argument` | "Unsupported image format: X" |
+| Gemini failure | `internal` | "Failed to analyze receipt. Please try again or enter manually." |
+
+---
+
+### onTransactionDeleted Function
+
+**Purpose:** Cascade delete receipt images when transaction is deleted
+**Trigger:** Firestore `onDelete` at `artifacts/{appId}/users/{userId}/transactions/{transactionId}`
+**Location:** `functions/src/deleteTransactionImages.ts`
+
+#### Trigger Contract
+
+```typescript
+// Automatically triggered when document is deleted
+// Path params extracted from context.params
+interface TriggerParams {
+    appId: string;
+    userId: string;
+    transactionId: string;
+}
+```
+
+#### Behavior
+
+1. Transaction document deleted → trigger fires
+2. Extract `userId` and `transactionId` from path
+3. Delete Storage folder: `users/{userId}/receipts/{transactionId}/`
+4. Log completion (errors don't propagate - orphans acceptable)
+
+#### Storage Cleanup
+
+```
+Deleted files:
+├── users/{userId}/receipts/{transactionId}/image-0.jpg
+├── users/{userId}/receipts/{transactionId}/image-1.jpg
+├── users/{userId}/receipts/{transactionId}/image-2.jpg
+└── users/{userId}/receipts/{transactionId}/thumbnail.jpg
+```
+
+**Error Policy:** Storage errors are logged but don't fail. Orphaned images can be cleaned up by maintenance job.
+
+---
+
+### Supporting Modules
+
+| Module | Location | Purpose |
+|--------|----------|---------|
+| `imageProcessing.ts` | `functions/src/` | Sharp-based resize, compress, EXIF strip, thumbnail |
+| `storageService.ts` | `functions/src/` | Firebase Storage upload/delete operations |
+| `prompts/` | `functions/src/prompts/` | Versioned prompt library (V1, V2, V3) |
+
+#### Prompt System
+
+```typescript
+// Get active prompt based on context
+const prompt = buildPrompt({
+    currency: 'CLP',           // Optional for V3
+    receiptType: 'auto',       // Document type hint
+    context: 'production',     // 'production' or 'development'
+});
+
+// Prompt versions available
+const versions = ['1.0.0', '2.0.0', '3.0.0'];  // V3 is current
+```
 
 ---
 
@@ -790,4 +925,4 @@ const { data, isLoading, error } = useFirestoreSubscription<Transaction[]>(
 ---
 
 **Generated by BMAD Document Project Workflow**
-*Last Updated: 2026-01-07 (Epic 14 - React Query Migration)*
+*Last Updated: 2026-01-15 (Epic 14c - Household Sharing + Cloud Functions)*

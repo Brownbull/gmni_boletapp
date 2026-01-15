@@ -22,3 +22,6 @@ export const STORE_CATEGORIES = [
 ] as const;
 
 export const ITEMS_PER_PAGE = 20;
+
+// Story 14c.1: Re-export shared group limits from type definition
+export { SHARED_GROUP_LIMITS } from '../types/sharedGroup';

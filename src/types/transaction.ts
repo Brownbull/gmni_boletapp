@@ -85,6 +85,12 @@ export interface Transaction {
     groupName?: string;
     /** Denormalized group color for display (hex code, e.g., "#10b981") */
     groupColor?: string;
+
+    // Story 14c.1: Shared Groups
+    /** Array of shared group IDs this transaction belongs to (max 5) */
+    sharedGroupIds?: string[];
+    /** Soft delete timestamp for shared group sync (null = not deleted) */
+    deletedAt?: any; // Firestore Timestamp
 }
 
 /**
