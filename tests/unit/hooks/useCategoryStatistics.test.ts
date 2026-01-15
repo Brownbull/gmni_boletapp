@@ -186,18 +186,20 @@ describe('useCategoryStatistics', () => {
   });
 
   describe('item-category filtering', () => {
+    // Story 14.44: categoryName must be in English (matching computeItemCategoryData output)
+    // Items are stored with Spanish names, but normalizeItemCategory converts them to English
     it('filters transactions containing matching item category', () => {
       const { result } = renderHook(() =>
         useCategoryStatistics({
           transactions: mockTransactions,
-          categoryName: 'Carnes y Mariscos',
+          categoryName: 'Meat & Seafood', // English - normalized from 'Carnes y Mariscos'
           categoryType: 'item-category',
           totalSpentAllCategories,
         })
       );
 
       expect(result.current).not.toBeNull();
-      // 2 transactions have "Carnes y Mariscos" items: tx-2 and tx-4
+      // 2 transactions have items normalized to "Meat & Seafood": tx-2 and tx-4
       expect(result.current!.transactionCount).toBe(2);
     });
 
@@ -205,17 +207,34 @@ describe('useCategoryStatistics', () => {
       const { result } = renderHook(() =>
         useCategoryStatistics({
           transactions: mockTransactions,
-          categoryName: 'Carnes y Mariscos',
+          categoryName: 'Meat & Seafood', // English - normalized from 'Carnes y Mariscos'
           categoryType: 'item-category',
           totalSpentAllCategories,
         })
       );
 
       expect(result.current).not.toBeNull();
-      // 2 items: Chicken (12000) and Beef (15000)
+      // 2 items: Chicken (12000) and Beef (15000) - both stored as 'Carnes y Mariscos'
       expect(result.current!.itemCount).toBe(2);
       expect(result.current!.minItemPrice).toBe(12000);
       expect(result.current!.maxItemPrice).toBe(15000);
+    });
+
+    // Story 14.44: Verify normalization handles Spanish item categories correctly
+    it('normalizes Spanish item categories to English for matching', () => {
+      const { result } = renderHook(() =>
+        useCategoryStatistics({
+          transactions: mockTransactions,
+          categoryName: 'Prepared Food', // English for 'Comida Preparada'
+          categoryType: 'item-category',
+          totalSpentAllCategories,
+        })
+      );
+
+      expect(result.current).not.toBeNull();
+      // tx-3 has 2 items with 'Comida Preparada' (Burger and Fries)
+      expect(result.current!.transactionCount).toBe(1);
+      expect(result.current!.itemCount).toBe(2);
     });
   });
 
