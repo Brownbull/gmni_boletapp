@@ -331,6 +331,17 @@
 | Budget Threshold Consistency | Keep threshold values consistent across related documents |
 | Documentation-Only Stories | Audit stories still need adversarial review for accuracy of claims |
 
+### Story 14.44 - Category Statistics Data Fix (2026-01-14)
+
+| Pattern | Detail |
+|---------|--------|
+| **Category Name Language Mismatch** | Item categories may be stored in Spanish (e.g., 'Carnes y Mariscos') but passed to hooks in English (e.g., 'Meat & Seafood') - normalize before comparison |
+| **Test Data Language Consistency** | Mock items should use Spanish categories (simulating Firestore), but hook calls should use English (matching production flow) |
+| **normalizeItemCategory Usage** | Apply normalization wherever item.category is compared with English category names - both in data aggregation AND in filtering |
+| **Duplicate Code Blocks** | Watch for duplicate JSDoc/code blocks when adding Story comments - delete the original, don't keep both |
+| **Story Status Before Commit** | NEVER commit code with story status still "Ready for Dev" - update to "In Progress" or "Done" before committing |
+| **Run Tests Before Commit** | Always run affected tests locally before committing - failing tests indicate incomplete implementation |
+
 ---
 
 ## Sync Notes
@@ -342,5 +353,6 @@
 - **Story 14.30.7 (2026-01-14):** Vitest memory OOM fix with fileParallelism: false
 - **Story 14.30.8 (2026-01-14):** useBatchReview infinite loop fix (useMemo in useEffect deps) - DEPLOYED TO PRODUCTION
 - **Deployment Lesson (2026-01-14):** PR merges may miss commits if branch diverged - verify with diff, cherry-pick if needed
+- **Story 14.44 Code Review (2026-01-14):** Category name language mismatch patterns, test data consistency
 - Full story details available in `docs/sprint-artifacts/` story files
 - Backup: `backups/v3/knowledge/06-lessons.md`
