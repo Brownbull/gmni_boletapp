@@ -17,7 +17,28 @@
 | 2026-01-11 | Stories 14d.5a-e, 14d.6, 14.13.2, 14.13.3 Sankey in progress |
 | **2026-01-12** | **Epic 14d COMPLETE, 14.17-14.19, 14.33a done, Gen 4 optimization** |
 
-### Latest Session (2026-01-14) - Session 6
+### Latest Session (2026-01-14) - Session 7
+
+**Story 14.44 - Category Statistics Data Fix (Atlas Code Review)**
+
+**Problem Solved:**
+- Category statistics popup showing "Sin Datos" for item categories like "Prepared Food"
+- Root cause: item.category stored in Spanish (e.g., "Comida Preparada") but compared with English categoryName
+
+**Atlas Code Review Findings:**
+- 2 CRITICAL: Tests failing, story not updated
+- 2 HIGH: Duplicate JSDoc, missing test coverage
+- All fixed in code review session
+
+**Patterns Added to 06-lessons.md:**
+- Category name language mismatch handling
+- Test data language consistency (Spanish items, English hook calls)
+- normalizeItemCategory usage pattern
+- Story status discipline before commit
+
+---
+
+### Session 6 (2026-01-14)
 
 **Story 14.30.8 - Explicit Test Groups for Predictable CI**
 
