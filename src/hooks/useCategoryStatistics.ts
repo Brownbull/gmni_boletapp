@@ -100,9 +100,6 @@ const transactionMatchesCategory = (
 
 /**
  * Check if an item matches the category filter
- */
-/**
- * Check if an item matches the category filter
  *
  * Story 14.44: Item categories may be stored in Spanish (e.g., "Comida Preparada")
  * but categoryName is passed in English (e.g., "Prepared Food"). We must normalize
