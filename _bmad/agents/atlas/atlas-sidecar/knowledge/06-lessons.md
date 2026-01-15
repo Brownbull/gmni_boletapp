@@ -314,6 +314,11 @@
 | **Heavy File Discovery** | Any file >600 lines should go to heavy group - batch hooks (646, 592 lines) were missed initially |
 | **Test Group Granularity** | Target 1,500-3,000 lines per group (2-4 min CI time); >5,000 lines will timeout |
 | **18 Parallel Jobs** | hooks (3) + services + utils + analytics + views + components (7) + heavy (4) = balanced CI |
+| **useMemo in useEffect deps** | If useEffect calls setState and has useMemo result as dependency, use ref to track source data changes (Story 14.30.8 - useBatchReview fix) |
+| **Default Array Param Pitfall** | `function Foo({ items = [] })` creates new reference each render - use module-level `const EMPTY = []` instead |
+| **Infinite Loop Detection** | Test hangs at first describe block often indicate useEffect/useCallback infinite loop in hook under test |
+| **PR Merge vs Branch Merge** | PR merges (gh pr merge) may not include all commits if branch has diverged - verify with `git diff origin/develop origin/staging` after merge |
+| **Cherry-pick Missing Commits** | If staging CI fails after PR merge to develop, check if commits are missing and cherry-pick from develop to staging |
 
 ### Story 14.32 - Usage & Cost Audit (2026-01-13)
 
@@ -326,6 +331,17 @@
 | Budget Threshold Consistency | Keep threshold values consistent across related documents |
 | Documentation-Only Stories | Audit stories still need adversarial review for accuracy of claims |
 
+### Story 14.44 - Category Statistics Data Fix (2026-01-14)
+
+| Pattern | Detail |
+|---------|--------|
+| **Category Name Language Mismatch** | Item categories may be stored in Spanish (e.g., 'Carnes y Mariscos') but passed to hooks in English (e.g., 'Meat & Seafood') - normalize before comparison |
+| **Test Data Language Consistency** | Mock items should use Spanish categories (simulating Firestore), but hook calls should use English (matching production flow) |
+| **normalizeItemCategory Usage** | Apply normalization wherever item.category is compared with English category names - both in data aggregation AND in filtering |
+| **Duplicate Code Blocks** | Watch for duplicate JSDoc/code blocks when adding Story comments - delete the original, don't keep both |
+| **Story Status Before Commit** | NEVER commit code with story status still "Ready for Dev" - update to "In Progress" or "Done" before committing |
+| **Run Tests Before Commit** | Always run affected tests locally before committing - failing tests indicate incomplete implementation |
+
 ---
 
 ## Sync Notes
@@ -335,5 +351,8 @@
 - Story 14.37: Font size scaling system and toast theme integration (2026-01-13)
 - **Story 14.30 Code Review (2026-01-14):** Added multi-session file list and Bun+npm hybrid patterns
 - **Story 14.30.7 (2026-01-14):** Vitest memory OOM fix with fileParallelism: false
+- **Story 14.30.8 (2026-01-14):** useBatchReview infinite loop fix (useMemo in useEffect deps) - DEPLOYED TO PRODUCTION
+- **Deployment Lesson (2026-01-14):** PR merges may miss commits if branch diverged - verify with diff, cherry-pick if needed
+- **Story 14.44 Code Review (2026-01-14):** Category name language mismatch patterns, test data consistency
 - Full story details available in `docs/sprint-artifacts/` story files
 - Backup: `backups/v3/knowledge/06-lessons.md`

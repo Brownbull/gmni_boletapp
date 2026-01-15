@@ -34,8 +34,10 @@ interface CategoryStatisticsPopupProps {
   emoji: string;
   /** Category name (translated) */
   categoryName: string;
-  /** Category color for theming */
+  /** Category background color for theming */
   categoryColor: string;
+  /** Story 14.44: Category foreground/text color - respects colorful/plain mode */
+  categoryFgColor?: string;
   /** Statistics data */
   statistics: CategoryStatistics | null;
   /** Currency code for formatting */
@@ -121,6 +123,7 @@ export const CategoryStatisticsPopup: React.FC<CategoryStatisticsPopupProps> = (
   emoji,
   categoryName,
   categoryColor,
+  categoryFgColor = 'white',
   statistics,
   currency,
   theme,
@@ -211,11 +214,12 @@ export const CategoryStatisticsPopup: React.FC<CategoryStatisticsPopupProps> = (
         </button>
 
         {/* Header with emoji, category name, and period label */}
+        {/* Story 14.44: Use categoryFgColor for text (respects colorful/plain mode) */}
         <div
           className="px-6 pt-6 pb-4 text-center flex-shrink-0"
           style={{
             backgroundColor: categoryColor,
-            color: 'white',
+            color: categoryFgColor,
           }}
         >
           <div
@@ -357,6 +361,7 @@ export const CategoryStatisticsPopup: React.FC<CategoryStatisticsPopupProps> = (
         </div>
 
         {/* Fixed footer with View History Button - always visible */}
+        {/* Story 14.44: Use categoryFgColor for button text (respects colorful/plain mode) */}
         <div
           className="px-6 py-4 flex-shrink-0"
           style={{
@@ -369,7 +374,7 @@ export const CategoryStatisticsPopup: React.FC<CategoryStatisticsPopupProps> = (
             className="w-full py-3 px-4 rounded-xl font-medium transition-colors min-h-12 flex items-center justify-center gap-2"
             style={{
               backgroundColor: categoryColor,
-              color: 'white',
+              color: categoryFgColor,
             }}
           >
             <Receipt size={18} />
