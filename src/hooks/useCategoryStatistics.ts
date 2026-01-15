@@ -18,7 +18,9 @@ import { calculateBasicStats, findMostFrequent } from '../utils/statisticsUtils'
 import {
   STORE_CATEGORY_GROUPS,
   ITEM_CATEGORY_TO_KEY,
+  ITEM_CATEGORY_GROUPS,
 } from '../config/categoryColors';
+import { normalizeItemCategory } from '../utils/categoryNormalizer';
 
 /**
  * Statistics for a category in the current time period
@@ -99,22 +101,35 @@ const transactionMatchesCategory = (
 /**
  * Check if an item matches the category filter
  */
+/**
+ * Check if an item matches the category filter
+ *
+ * Story 14.44: Item categories may be stored in Spanish (e.g., "Comida Preparada")
+ * but categoryName is passed in English (e.g., "Prepared Food"). We must normalize
+ * item.category to English before comparison.
+ */
 const itemMatchesCategory = (
   item: TransactionItem,
   categoryName: string,
   categoryType: CategoryFilterType
 ): boolean => {
   switch (categoryType) {
-    case 'item-category':
-      // TransactionItem uses 'category' for item category
-      return item.category === categoryName;
+    case 'item-category': {
+      // Story 14.44: Normalize item category to English before comparison
+      // Item categories may be stored in Spanish/translated form
+      const normalizedItemCategory = normalizeItemCategory(item.category || '');
+      return normalizedItemCategory === categoryName;
+    }
 
     case 'item-group': {
       // categoryName is the group key like 'food-fresh'
-      // Get the item's group key from ITEM_CATEGORY_TO_KEY
+      // Story 14.44: Normalize item category first, then look up its group
       if (!item.category) return false;
-      const itemGroupKey = ITEM_CATEGORY_TO_KEY[item.category as keyof typeof ITEM_CATEGORY_TO_KEY];
-      return itemGroupKey === categoryName;
+      const normalizedItemCategory = normalizeItemCategory(item.category);
+      // Look up group from the normalized (English) category name
+      const itemKey = ITEM_CATEGORY_TO_KEY[normalizedItemCategory as keyof typeof ITEM_CATEGORY_TO_KEY];
+      const itemGroup = itemKey ? ITEM_CATEGORY_GROUPS[itemKey as keyof typeof ITEM_CATEGORY_GROUPS] : 'other-item';
+      return itemGroup === categoryName;
     }
 
     case 'store-category':
