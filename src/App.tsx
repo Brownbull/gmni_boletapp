@@ -4251,7 +4251,8 @@ function App() {
             )}
 
             {/* Story 9.14: PWA update notification */}
-            <PWAUpdatePrompt />
+            {/* Story 14.42: Updated to top banner with language prop */}
+            <PWAUpdatePrompt language={lang} />
 
             {/* Story 14.15 Session 10: Credit Info Modal (triggered by Nav credit badges) */}
             {showCreditInfoModal && (
