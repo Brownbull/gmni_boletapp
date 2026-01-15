@@ -1,7 +1,7 @@
 # Historical Lessons (Retrospectives)
 
 > Section 6 of Atlas Memory
-> Last Sync: 2026-01-12
+> Last Sync: 2026-01-15 (Story 14c.1 patterns added)
 > Last Optimized: 2026-01-12 (Generation 4)
 > Sources: Epic retrospectives, code reviews
 
@@ -18,19 +18,28 @@
 | Unified View Pattern | Consolidate similar views with mode prop |
 | Versioned Persistence Format | Version field enables safe migrations |
 | Phased Migration | Parallel systems reduce regression risk |
+| **Atlas Agent Integration** | Consistent code reviews + architectural memory (Retro 2026-01-15) |
+| **Design-First Workflow (Mockups)** | HTML mockups as source of truth guided Epic 14 (Retro 2026-01-15) |
+| **Prompt Iteration Workflow** | Fast feedback loop using Epic 8 test harness - core differentiator (Retro 2026-01-15) |
+| **Tiered CI/CD** | develop=smoke ~3min, main=full ~5min after Story 14.43 (Retro 2026-01-15) |
 
 ## What to Avoid
 
 | Failure | Prevention |
 |---------|------------|
 | Git Branch Divergence | Merge commits for sync PRs (not squash) |
-| Bundle Size Growth (2.0 MB) | Code-splitting (deferred to Epic 15) |
+| Bundle Size Growth (2.92 MB) | Code-splitting (deferred to Epic 14E) |
 | Unsafe Regex Patterns (ReDoS) | Use simple non-greedy patterns |
 | API Key Leaks | Always use env variables |
 | Scope Creep (7→21 stories) | Better upfront scoping |
 | No-op Setter Wrappers | Remove completely when migrating to derived state |
 | State Machine Callback Race Conditions | Pass compound payloads to atomic state transitions (Epic 14d.5) |
 | Missing Asset Files | Always verify static assets exist during implementation (Story 14.18) |
+| **Large File Sprawl** | Modularize before files exceed 500 lines - ripple effects (Retro 2026-01-15) |
+| **Legacy Code Extension** | Refactor FIRST before extending (Epic 14d taught this) (Retro 2026-01-15) |
+| **Cost Monitoring Gap** | Set up Firebase budget alerts proactively (already done) (Retro 2026-01-15) |
+| **Infinite Loop in useEffect** | Use refs to track data changes, not useMemo results (Story 14.30.8) |
+| **Default Array Parameters** | `{ items = [] }` creates new reference - use module-level const (Retro 2026-01-15) |
 
 ---
 
@@ -342,6 +351,45 @@
 | **Story Status Before Commit** | NEVER commit code with story status still "Ready for Dev" - update to "In Progress" or "Done" before committing |
 | **Run Tests Before Commit** | Always run affected tests locally before committing - failing tests indicate incomplete implementation |
 
+### Story 14c.1 - Create Shared Group (2026-01-15)
+
+| Pattern | Detail |
+|---------|--------|
+| **Top-level Collection for Cross-user Access** | `sharedGroups/{groupId}` at top-level (not under user path) for member array queries |
+| **Security Rule Helper Functions** | `isGroupMember()`, `isGroupOwner()`, `isValidNewGroup()` for readable rules |
+| **Members Array Creation Rule** | On create, `members.hasOnly([request.auth.uid])` ensures only owner in initial array |
+| **Nanoid for Share Codes** | 16-char nanoid provides URL-safe, collision-resistant share codes |
+| **7-day Share Code Expiry** | Balance between usability and security - `shareCodeExpiresAt` field |
+| **Hooks Using Hooks Internally** | GruposView uses `useGroups()` and `useSharedGroups()` internally - parent passes userId/appId |
+| **Test Security Rules via Proper Flow** | Can't setDoc to bypass create rules; create first, then update to add members |
+| **Web Share API Check** | Use `'share' in navigator` not `navigator.share` for TypeScript condition |
+| **Type Definitions for Future Stories** | Define `UserSharedGroupMembership` type in 14c.1 even though populated in 14c.2 |
+| **Constants Re-export Pattern** | Define in type file, re-export from constants.ts for convenience - NOT duplication |
+| **Function Signature Overloads** | Same-name utils can coexist with different signatures (group vs timestamp) with JSDoc notes |
+| **Story File List MUST Match Git** | Empty File List is a critical code review failure - always populate |
+| **Unit Tests for New Hooks/Components** | Atlas pattern requires tests for new hooks - even subscription-based hooks need tests |
+
+### Story 14c.10 - Empty States & Loading (2026-01-15)
+
+| Pattern | Detail |
+|---------|--------|
+| **Skeleton Component Pattern** | Use `animate-pulse` + `role="status"` + `aria-label` for accessible loading states |
+| **Context-Aware Empty States** | Check `memberCount <= 1` to show "invite" vs "scan receipt" CTAs |
+| **Barrel Exports for Component Domains** | Export components from `index.ts` (e.g., `SharedGroups/index.ts`) for clean imports |
+| **Translation Key Organization** | Group related translations under story comments for easy tracking |
+| **Test Count Per Component** | Aim for 10-17 tests per component covering rendering, interactions, edge cases |
+
+### Story 14c.2 - Accept/Decline Invitation (2026-01-15)
+
+| Pattern | Detail |
+|---------|--------|
+| **Firestore Composite Indexes** | Multi-field queries (where + where + orderBy) require composite index in firestore.indexes.json |
+| **useMemo Code Smell** | If useMemo just returns input unchanged, remove it - creates false impression of transformation |
+| **Hook vs Component Tests** | Separate test files: hooks test subscription logic, components test UI interactions |
+| **Email-Based Security Rules** | Use `request.auth.token.email.lower()` for case-insensitive email comparison in rules |
+| **Status-Only Updates** | `affectedKeys().hasOnly(['status'])` pattern ensures users can only modify allowed fields |
+| **Invitation Audit Trail** | `allow delete: if false` keeps invitations for audit - use status field instead |
+
 ---
 
 ## Sync Notes
@@ -354,5 +402,12 @@
 - **Story 14.30.8 (2026-01-14):** useBatchReview infinite loop fix (useMemo in useEffect deps) - DEPLOYED TO PRODUCTION
 - **Deployment Lesson (2026-01-14):** PR merges may miss commits if branch diverged - verify with diff, cherry-pick if needed
 - **Story 14.44 Code Review (2026-01-14):** Category name language mismatch patterns, test data consistency
+- **Story 14c.1 (2026-01-15):** Create Shared Group - top-level collection pattern, security rules, share code generation
+- **Story 14c.1 Code Review (2026-01-15):** Added type definition patterns, constants re-export, function overload documentation, file list discipline
+- **Story 14c.10 (2026-01-15):** Empty States & Loading - skeleton components, context-aware empty states, component testing patterns
+- **Story 14c.2 Code Review (2026-01-15):** Accept/Decline Invitation patterns:
+  - Firestore composite indexes required for multi-field queries (invitedEmail + status + orderBy createdAt)
+  - Remove redundant useMemo wrappers that don't transform data
+  - Component tests separate from hook tests per Atlas Section 5 standards (26 component + 11 hook tests)
 - Full story details available in `docs/sprint-artifacts/` story files
 - Backup: `backups/v3/knowledge/06-lessons.md`

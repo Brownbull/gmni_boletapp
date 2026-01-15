@@ -19,7 +19,47 @@
 | 2026-01-14 | Story 14.44, 14.30 Test Debt, CI group configs |
 | **2026-01-15** | **Combined Retrospective: Epics 12, 13, 14, 14d all COMPLETE** |
 
-### Latest Session (2026-01-15) - Epic 14c Code Reviews
+### Latest Session (2026-01-15) - Architecture Documentation Update
+
+**Documentation Refresh via Atlas + Architect Analysis**
+
+**Problem:** Architecture documentation significantly outdated:
+- Cloud Functions undocumented (analyzeReceipt, onTransactionDeleted)
+- Epic 14c collections (sharedGroups, pendingInvitations) not in data-models.md
+- Services layer showed 2 files (actual: 25 files)
+- Hooks layer showed 15+ files (actual: 49 files)
+
+**Files Updated:**
+| File | Changes |
+|------|---------|
+| `docs/architecture/architecture.md` | Added Cloud Functions section, ADR-011 (Household Sharing) |
+| `docs/architecture/data-models.md` | Added sharedGroups + pendingInvitations schemas |
+| `docs/architecture/api-contracts.md` | Complete analyzeReceipt/onTransactionDeleted contracts |
+| `docs/architecture/source-tree-analysis.md` | Updated file counts (25 services, 49 hooks), added functions/ |
+| `atlas-sidecar/knowledge/04-architecture.md` | Added Epic 14c + Cloud Functions sections |
+
+**Key Documentation Additions:**
+1. **Cloud Functions:**
+   - `analyzeReceipt`: HTTPS Callable, rate limiting (10/min), image validation
+   - `onTransactionDeleted`: Firestore trigger for cascade delete
+
+2. **ADR-011:** Household Sharing Architecture
+   - Top-level collections for cross-user access
+   - Security rules helper functions documented
+
+3. **New Collections:**
+   - `/sharedGroups/{groupId}` with members array, owner pattern
+   - `/pendingInvitations/{invitationId}` with email-based workflow
+
+**Document Versions Updated:**
+- architecture.md: 5.0 → 6.0
+- data-models.md: Epic 14 → Epic 14c
+- api-contracts.md: Epic 14 → Epic 14c
+- source-tree-analysis.md: 3.0 → 4.0
+
+---
+
+### Previous Session (2026-01-15) - Epic 14c Code Reviews
 
 **Story 14c.10 - Empty States & Loading (Atlas Code Review)**
 

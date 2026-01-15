@@ -943,6 +943,159 @@ AFTER:  Browser → Cloud Function → Gemini API (API key server-side)
 
 ---
 
+## Firebase Cloud Functions
+
+### Overview
+
+BoletApp uses Firebase Cloud Functions (2nd Gen) for server-side operations that require secure API keys, heavy processing, or Firestore triggers.
+
+**Runtime:** Node.js 18
+**Region:** us-central1
+**Deployment:** `firebase deploy --only functions`
+
+### Function Inventory
+
+| Function | Type | Trigger | Purpose |
+|----------|------|---------|---------|
+| `analyzeReceipt` | HTTPS Callable | `onCall` | Receipt OCR via Gemini AI, image processing, Storage upload |
+| `onTransactionDeleted` | Firestore Trigger | `onDelete` | Cascade delete images when transaction deleted |
+
+### analyzeReceipt Function
+
+**Location:** `functions/src/analyzeReceipt.ts`
+**Endpoint:** `https://us-central1-{projectId}.cloudfunctions.net/analyzeReceipt`
+
+**Request:**
+```typescript
+interface AnalyzeReceiptRequest {
+  images: string[];              // Base64 images or URLs (for re-scan)
+  currency?: string;             // Optional - V3 auto-detects from receipt
+  receiptType?: ReceiptType;     // 'auto' | 'receipt' | 'invoice' | etc.
+  promptContext?: 'production' | 'development';
+  isRescan?: boolean;            // True if re-scanning stored images
+}
+```
+
+**Response:**
+```typescript
+interface AnalyzeReceiptResponse {
+  transactionId: string;         // Pre-generated Firestore document ID
+  merchant: string;
+  date: string;                  // YYYY-MM-DD
+  total: number;
+  category: string;
+  items: Array<{ name, price, category?, subcategory? }>;
+  time?: string;                 // HH:MM (V3)
+  currency?: string;             // Detected currency code (V3)
+  country?: string;              // Detected country (V3)
+  city?: string;                 // Detected city (V3)
+  imageUrls?: string[];          // Firebase Storage URLs
+  thumbnailUrl?: string;         // Thumbnail URL (120x160)
+  promptVersion: string;         // e.g., "3.0.0"
+  merchantSource: 'scan';
+  receiptType?: string;
+}
+```
+
+**Security & Rate Limiting:**
+- **Authentication:** Requires Firebase Auth (`context.auth` must exist)
+- **Rate Limit:** 10 requests/minute per user (in-memory tracking)
+- **Image Validation:** Max 10MB per image, max 5 images per request
+- **Supported Formats:** JPEG, PNG, WebP, HEIC, HEIF
+
+**Processing Pipeline:**
+```
+1. Validate auth + rate limit
+2. Pre-process images (resize to 1200x1600, compress JPEG 80%)
+3. Call Gemini 2.0 Flash API with optimized images
+4. Parse JSON response
+5. Upload images to Firebase Storage
+6. Generate thumbnail (120x160)
+7. Return combined response
+```
+
+### onTransactionDeleted Function
+
+**Location:** `functions/src/deleteTransactionImages.ts`
+**Trigger Path:** `artifacts/{appId}/users/{userId}/transactions/{transactionId}`
+
+**Purpose:** Automatically deletes receipt images from Firebase Storage when a transaction document is deleted, preventing orphaned files.
+
+**Flow:**
+```
+Transaction deleted → Firestore onDelete trigger
+    → Extract userId, transactionId from path
+    → Delete Storage folder: users/{userId}/receipts/{transactionId}/
+    → Log completion (errors logged but don't block)
+```
+
+### Supporting Modules
+
+| Module | Purpose |
+|--------|---------|
+| `imageProcessing.ts` | Sharp-based resize, compress, thumbnail generation |
+| `storageService.ts` | Firebase Storage upload operations |
+| `prompts/` | Prompt library (V1, V2, V3) with versioning |
+
+---
+
+### ADR-011: Household Sharing Architecture (Epic 14c)
+
+**Decision:** Implement shared groups using top-level Firestore collections with membership-based access control
+**Context:** Users need to share expense tracking with family members while maintaining data isolation
+**Date:** 2026-01-15 (Epic 14c)
+
+**Architecture Pattern (Hybrid Model - Option 4):**
+```
+Top-level collections (cross-user access):
+├── /sharedGroups/{groupId}           ← Group metadata + member list
+└── /pendingInvitations/{invitationId} ← Email-based invitations
+
+User-level collections (isolated):
+└── /artifacts/{appId}/users/{userId}/transactions/{txId}
+    └── groupIds?: string[]           ← References to shared groups
+```
+
+**Key Design Decisions:**
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Collection Location | Top-level | Enables cross-user read access for members |
+| Membership Model | UID array in document | Simple queries, Firestore rules compatible |
+| Invitation Flow | Email-based + pending status | Supports inviting non-registered users |
+| Max Members | 10 per group | Performance + UI complexity limits |
+
+**Security Rules Pattern:**
+```javascript
+// sharedGroups - Members can read, only owner can write
+match /sharedGroups/{groupId} {
+  allow create: if isValidNewGroup();      // Owner creating with self as only member
+  allow read: if isGroupMember();          // UID in members array
+  allow update: if isGroupOwner() || isJoiningGroup();  // Owner or user accepting invite
+  allow delete: if isGroupOwner();         // Only owner can delete
+}
+
+// pendingInvitations - Invited user can accept/decline
+match /pendingInvitations/{invitationId} {
+  allow create: if invitedByUserId == auth.uid;
+  allow read: if invitedEmail == auth.token.email;
+  allow update: if isInvitedUser() && statusUpdateOnly();
+  allow delete: if false;  // Kept for audit trail
+}
+```
+
+**Consequences:**
+- ✅ Family members can view shared expenses
+- ✅ Owner controls group membership
+- ✅ Invitation flow works for non-registered users
+- ✅ Security rules enforce access control
+- ⚠️ Requires careful handling of user deletion (orphan prevention)
+- ⚠️ Group transactions appear in multiple users' views
+
+**Status:** Accepted (Epic 14c In Progress)
+
+---
+
 ## Conclusion
 
 Boletapp's architecture has evolved from a **rapid MVP prototype** (single-file SPA) to a **production-ready modular application** while maintaining its core strengths: simplicity, serverless infrastructure, and AI-powered intelligence.
@@ -1019,6 +1172,6 @@ Component → useFirestoreSubscription → React Query Cache + Firestore onSnaps
 
 ---
 
-**Document Version:** 5.0
-**Last Updated:** 2026-01-07
-**Epic:** Post-Epic 14 (React Query Migration + Performance Optimizations)
+**Document Version:** 6.0
+**Last Updated:** 2026-01-15
+**Epic:** Epic 14c (Household Sharing) + Cloud Functions Documentation

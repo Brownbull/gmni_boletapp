@@ -49,6 +49,7 @@
     "flag-icons": "^7.5.0",
     "fuse.js": "^7.1.0",
     "lucide-react": "^0.562.0",
+    "nanoid": "^5.1.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-window": "^2.2.4",
