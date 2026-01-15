@@ -3364,7 +3364,8 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     const [statsPopupCategory, setStatsPopupCategory] = useState<{
         name: string;
         emoji: string;
-        color: string;
+        color: string;       // Background color
+        fgColor: string;     // Story 14.44: Foreground/text color for header
         type: 'store-category' | 'store-group' | 'item-category' | 'item-group';
     } | null>(null);
 
@@ -4529,7 +4530,11 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
             }
         }
 
-        setStatsPopupCategory({ name: categoryName, emoji, color, type });
+        // Story 14.44: Get foreground color respecting fontColorMode (colorful vs plain)
+        const categoryColors = getCategoryColorsAuto(categoryName);
+        const fgColor = categoryColors.fg;
+
+        setStatsPopupCategory({ name: categoryName, emoji, color, fgColor, type });
         setStatsPopupOpen(true);
     }, [donutViewMode, treemapDrillDownLevel]);
 
@@ -5453,7 +5458,8 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                             );
                                         })()}
 
-                                        {/* Floating Expand/Collapse buttons - fixed pixel position from top, left aligned */}
+                                        {/* Story 14.44: Floating Expand/Collapse buttons - bottom center, horizontal layout */}
+                                        {/* Moved from top-left to avoid blocking category icon clicks */}
                                         {/* Story 14.13 Session 17: Use drill-down state when in drill-down mode */}
                                         {(() => {
                                             const currentCanExpand = treemapDrillDownLevel > 0
@@ -5475,16 +5481,15 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                                 ? () => setTreemapDrillDownExpandedCount(prev => Math.max(0, prev - 1))
                                                 : () => setExpandedCategoryCount(prev => Math.max(0, prev - 1));
 
+                                            // Only show if there's something to expand or collapse
+                                            if (!currentCanExpand && !currentCanCollapse) return null;
+
                                             return (
                                                 <div
-                                                    className="absolute left-2 z-20 pointer-events-none"
-                                                    style={{
-                                                        // Fixed pixel position - buttons stay in place regardless of container height
-                                                        top: '80px',
-                                                    }}
+                                                    className="absolute left-1/2 -translate-x-1/2 bottom-2 z-20 pointer-events-none"
                                                 >
-                                                    <div className="flex flex-col gap-2 pointer-events-auto">
-                                                        {/* Plus button (expand) - on top, always rendered for position stability */}
+                                                    <div className="flex flex-row gap-4 pointer-events-auto">
+                                                        {/* Plus button (expand) - on left */}
                                                         {/* Story 14.13: More transparent buttons to reduce visual clutter */}
                                                         <button
                                                             onClick={handleExpand}
@@ -5511,7 +5516,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                                                 {currentOtroCategories.length}
                                                             </span>
                                                         </button>
-                                                        {/* Minus button (collapse) - below, always rendered for position stability */}
+                                                        {/* Minus button (collapse) - on right */}
                                                         <button
                                                             onClick={handleCollapse}
                                                             disabled={!currentCanCollapse}
@@ -5639,7 +5644,8 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                             ))}
                                         </div>
 
-                                        {/* Story 14.13.2: Floating Expand/Collapse buttons - matches TreeMap positioning */}
+                                        {/* Story 14.44: Floating Expand/Collapse buttons - bottom center, horizontal layout */}
+                                        {/* Moved from top-left to avoid blocking category icon clicks */}
                                         {(() => {
                                             const handleTrendExpand = trendDrillDownLevel > 0
                                                 ? () => setTrendDrillDownExpandedCount(prev => prev + 1)
@@ -5648,16 +5654,15 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                                 ? () => setTrendDrillDownExpandedCount(prev => Math.max(0, prev - 1))
                                                 : () => setTrendExpandedCount(prev => Math.max(0, prev - 1));
 
+                                            // Only show if there's something to expand or collapse
+                                            if (!trendCanExpand && !trendCanCollapse) return null;
+
                                             return (
                                                 <div
-                                                    className="absolute left-2 z-20 pointer-events-none"
-                                                    style={{
-                                                        // Fixed pixel position - matches TreeMap button positioning
-                                                        top: '80px',
-                                                    }}
+                                                    className="absolute left-1/2 -translate-x-1/2 bottom-2 z-20 pointer-events-none"
                                                 >
-                                                    <div className="flex flex-col gap-2 pointer-events-auto">
-                                                        {/* Plus button (expand) - on top */}
+                                                    <div className="flex flex-row gap-4 pointer-events-auto">
+                                                        {/* Plus button (expand) - on left */}
                                                         <button
                                                             onClick={handleTrendExpand}
                                                             disabled={!trendCanExpand}
@@ -5683,7 +5688,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                                                 {otroTrendCategories.length}
                                                             </span>
                                                         </button>
-                                                        {/* Minus button (collapse) - below */}
+                                                        {/* Minus button (collapse) - on right */}
                                                         <button
                                                             onClick={handleTrendCollapse}
                                                             disabled={!trendCanCollapse}
@@ -5892,6 +5897,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                     ? getTranslatedCategoryName(statsPopupCategory.name, statsPopupCategory.type)
                     : ''}
                 categoryColor={statsPopupCategory?.color ?? 'var(--primary)'}
+                categoryFgColor={statsPopupCategory?.fgColor ?? 'white'}
                 statistics={categoryStatistics}
                 currency={currency}
                 theme={theme}
