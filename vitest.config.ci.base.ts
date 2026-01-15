@@ -1,5 +1,6 @@
 import { defineConfig, mergeConfig, UserConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 import pkg from './package.json'
 
 /**
@@ -24,6 +25,12 @@ export const baseCiConfig: UserConfig = {
   plugins: [react()],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
+  },
+  // Story 14.42: Alias for virtual PWA module that only exists during Vite build
+  resolve: {
+    alias: {
+      'virtual:pwa-register/react': path.resolve(__dirname, 'tests/mocks/pwa-register.ts'),
+    },
   },
   test: {
     globals: true,

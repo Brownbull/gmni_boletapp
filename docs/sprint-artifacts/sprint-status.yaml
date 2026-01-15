@@ -430,7 +430,7 @@ development_status:
   14-39-dollar-sign-ocr-improvement: cancelled  # 2 pts - CANCELLED: V3 prompt already handles $ recognition correctly (tested 2026-01-13)
   14-40-category-statistics-popup: done  # 5 pts - Statistics popup when tapping category in treemap/donut/trend (min/max/avg/median prices) - Code reviewed 2026-01-13
   14-41-view-mode-edit-button: done  # 2 pts - Lock metadata fields in view mode, add edit button below thumbnail - Code reviewed 2026-01-13
-  14-42-version-upgrade-auto-update: ready-for-dev  # 3 pts - Version bump to 1.0.0-beta.1, top banner update prompt with Update/Dismiss buttons
+  14-42-version-upgrade-auto-update: done  # 3 pts - Version bump to 1.0.0-beta.1, top banner update prompt with Update/Dismiss buttons - Code Review APPROVED 2026-01-14
   14-43-branch-specific-ci-testing: done  # 4 pts - Branch-specific CI tiers: develop=smoke (~3min), main=full (~5min) - Atlas Code Review PASSED, DEPLOYED 2026-01-14
   14-44-category-statistics-data-fix: done  # 3 pts - Fix category statistics for translated item categories - Atlas Code Review PASSED, DEPLOYED 2026-01-14
 
