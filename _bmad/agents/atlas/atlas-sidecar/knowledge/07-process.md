@@ -82,6 +82,7 @@ backlog → drafted → ready-for-dev → in-progress → review → done
 
 | Story | Date | Environment | Notes |
 |-------|------|-------------|-------|
+| **Story 14.30.8 CI Fix** | 2026-01-14 | Production | PR #148→#149 - Fixed useBatchReview & LearnMerchantDialog infinite loops. heavy-1 tests: 1m vs 10m timeout. 18 parallel CI jobs. |
 | **Story 14.12 UI Refinements** | 2026-01-03 | Production | PR #136→#137 - Header sizing (72px), treemap badges with count-up, polygon dark mode fix, Recientes padding reduction, responsive 320px+ |
 | **Story 14.12 Home Dashboard** | 2026-01-03 | Production | PR #135 - Carousel with 3 views (treemap, polygon, bump chart), month picker, 3 themes |
 | **Epic 14 Stories 14.1-14.11** | 2026-01-02 | Production | PR #134 - Animation framework, screen transitions, polygon components, nav redesign |
