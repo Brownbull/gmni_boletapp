@@ -768,7 +768,12 @@ export const TRANSLATIONS = {
         viewItems: "View Items",
         // Story 14.41b: See more / Show less for carousel expansion
         seeMore: "See more",
-        showLess: "Show less"
+        showLess: "Show less",
+        // Story 14.42: Update banner
+        updateBannerTitle: "Update Available",
+        updateBannerMessage: "There is an update available. Do you want to update?",
+        updateNow: "Update",
+        updateLater: "Later"
     },
     es: {
         overview: "Resumen", welcome: "Rastreo Inteligente", totalSpent: "Total Gastado",
@@ -1539,7 +1544,12 @@ export const TRANSLATIONS = {
         viewItems: "Ver Ítems",
         // Story 14.41b: See more / Show less for carousel expansion
         seeMore: "Ver más",
-        showLess: "Ver menos"
+        showLess: "Ver menos",
+        // Story 14.42: Update banner
+        updateBannerTitle: "Actualización Disponible",
+        updateBannerMessage: "Hay una actualización disponible. ¿Quieres actualizar?",
+        updateNow: "Actualizar",
+        updateLater: "Después"
     }
 };
 
