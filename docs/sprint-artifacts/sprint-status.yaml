@@ -402,7 +402,7 @@ development_status:
   # ============================================================================
   # 71 failing tests from: React Query migration (missing QueryClientProvider),
   # UI refactoring (inline styles vs Tailwind classes), prompt library changes
-  14-30-test-technical-debt: in-progress  # 3 pts - CI optimization done; resuming for deployment verification
+  14-30-test-technical-debt: done  # 3 pts - CI optimization complete, tiered testing (14.43), all tests passing - DEPLOYED 2026-01-14
   14-30-5a-fix-preexisting-test-failures: done  # 2 pts - FIXED: 30 tests fixed (HistoryViewThumbnails filter issue, TopHeader translation keys) - VERIFIED 2026-01-14
   # Story 14.30.8: Fix test-components-misc timeout (LearnMerchantDialog infinite render loop)
   # ROOT CAUSE: Component used `itemNameChanges = []` default parameter which creates new array
@@ -415,7 +415,7 @@ development_status:
   # Result: heavy-1 tests complete in ~1s instead of timing out
   # Deployed: PR #148 → develop → staging (PR #149) → main (production)
   14-31-items-history-view: done  # 8 pts - Items view similar to History view for item-level browsing - COMPLETED 2026-01-12
-  14-32-usage-cost-audit: review  # 3 pts - Audit Firestore subscriptions, Cloud Functions, and database operations for cost leakage - AUDIT COMPLETE: No issues found
+  14-32-usage-cost-audit: done  # 3 pts - Audit Firestore subscriptions, Cloud Functions, and database operations for cost leakage - AUDIT COMPLETE: No issues found
 
   # ============================================================================
   # PHASE 9: SCAN FLOW & LOCATION IMPROVEMENTS
@@ -431,6 +431,8 @@ development_status:
   14-40-category-statistics-popup: done  # 5 pts - Statistics popup when tapping category in treemap/donut/trend (min/max/avg/median prices) - Code reviewed 2026-01-13
   14-41-view-mode-edit-button: done  # 2 pts - Lock metadata fields in view mode, add edit button below thumbnail - Code reviewed 2026-01-13
   14-42-version-upgrade-auto-update: ready-for-dev  # 3 pts - Version bump to 1.0.0-beta.1, top banner update prompt with Update/Dismiss buttons
+  14-43-branch-specific-ci-testing: done  # 4 pts - Branch-specific CI tiers: develop=smoke (~3min), main=full (~5min) - Atlas Code Review PASSED, DEPLOYED 2026-01-14
+  14-44-category-statistics-data-fix: done  # 3 pts - Fix category statistics for translated item categories - Atlas Code Review PASSED, DEPLOYED 2026-01-14
 
   # ============================================================================
   # PHASE 8: INSIGHTS VIEW REDESIGN (~14 points)
