@@ -1,7 +1,7 @@
 # Atlas Memory - Application Knowledge Base
 
 > **Architecture:** Sharded Knowledge Fragments
-> **Last Sync:** 2026-01-14 (Story 14.44 - Atlas Code Review COMPLETE)
+> **Last Sync:** 2026-01-15 (Story 14c.10 Code Review)
 > **Last Optimized:** 2026-01-12 (Generation 4)
 > **Project:** BoletApp
 
@@ -14,7 +14,7 @@ Atlas uses **sharded memory** for context efficiency. Knowledge stored in `knowl
 | Section | File | Content |
 |---------|------|---------|
 | 01 | [01-purpose.md](knowledge/01-purpose.md) | App mission, target market, currency |
-| 02 | [02-features.md](knowledge/02-features.md) | Feature inventory, Epic 14 + 14d status |
+| 02 | [02-features.md](knowledge/02-features.md) | Feature inventory, Epic status |
 | 03 | [03-personas.md](knowledge/03-personas.md) | Chilean Family persona, Abuelita Test |
 | 04 | [04-architecture.md](knowledge/04-architecture.md) | Tech stack, ADRs, key patterns |
 | 05 | [05-testing.md](knowledge/05-testing.md) | Test metrics (3,100+ tests), CI/CD |
@@ -36,21 +36,32 @@ Atlas uses **sharded memory** for context efficiency. Knowledge stored in `knowl
 | **Core Value** | "Help Chilean families answer 'Where did my money go?'" | ux-design-specification.md:12 |
 | **Payment Provider** | Mercado Pago (Chile) | pricing-model.md:163 |
 
-### Current Project Status
+### Current Project Status (2026-01-15)
 
 | Metric | Value |
 |--------|-------|
-| **Epic 14** | 26/27 stories done |
-| **Epic 14d** | ✅ **11/11 stories done (COMPLETE)** |
+| **Epic 12** | ✅ COMPLETE (6/6 stories) |
+| **Epic 13** | ✅ COMPLETE (14/14 stories) |
+| **Epic 14** | ✅ COMPLETE (50+ stories) |
+| **Epic 14d** | ✅ COMPLETE (11/11 stories) |
 | **Tests** | 3,146+ (84%+ coverage) |
 | **Bundle** | 2.92 MB (**ALERT: needs optimization**) |
+| **Velocity** | ~8.6 pts/day (216 pts in 25 days) |
 
-### Latest Completed (2026-01-14)
-- **14.44:** ✅ Category Statistics Data Fix - Item category normalization (Atlas Code Review COMPLETE)
-- **14.30:** ✅ Test Technical Debt - CI optimization + 30 test fixes (Atlas Code Review APPROVED)
-- **14.30.5a:** ✅ Pre-Existing Test Failures fixed (filter state + translation keys)
+### Latest Milestone (2026-01-15)
+- **Combined Retrospective:** Epics 12, 13, 14, 14d all complete with retros done
+- **Retro Document:** docs/sprint-artifacts/epic12-13-14-retro-2026-01-15.md
+- **Version:** 1.0.0-beta.1 (ready for controlled beta)
 
-### Epic 14d: Scan Architecture Refactor
+### Next Epics Roadmap
+
+| Epic | Theme | Prep Required |
+|------|-------|---------------|
+| **14C** | Household Sharing | Brainstorming session |
+| **14E** | Codebase Refactoring | Architecture review |
+| **14F** | Invite-Only Access | Requirements definition |
+
+### Epic 14d: Scan Architecture Refactor (COMPLETE)
 
 **Key Design:** State machine with request precedence + persistence
 - Request Precedence: Active request blocks ALL new requests

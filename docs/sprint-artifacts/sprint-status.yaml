@@ -274,7 +274,7 @@ development_status:
   12-4-credit-warning-system: done  # 3 pts - PARALLEL with 12.1 - Pre-batch credit check - Code Review APPROVED 2025-12-22, DEPLOYED
   12-5-batch-save-and-insights: done  # 3 pts - Depends on 12.3 - Save all + aggregate insight - Code Review APPROVED 2025-12-23
   12-99-epic-release-deployment: done  # 2 pts - Production deployment - DEPLOYED 2025-12-23, Atlas Code Review APPROVED 2025-12-23
-  epic-12-retrospective: optional
+  epic-12-retrospective: done  # Combined retro 2026-01-15 (Epics 12, 13, 14)
 
   # ============================================================================
   # REVISED EPIC 13-15 ROADMAP (from Brainstorming Session 2025-12-22)
@@ -314,7 +314,7 @@ development_status:
 
   # Review Gate
   13-14-design-review-approval-gate: done  # 1 pt - Design consistency review - APPROVED 2025-12-31
-  epic-13-retrospective: optional
+  epic-13-retrospective: done  # Combined retro 2026-01-15 (Epics 12, 13, 14)
 
   # Epic 14: Core Implementation (~48 points)
   # Implement approved mockups with animation framework
@@ -322,7 +322,7 @@ development_status:
   # UNBLOCKED by Epic 13 completion (2025-12-31) - Ready for development
   # Atlas Feature Mapping: Animation system, Polygon visualization, Celebrations
   # Workflow Chains: Extends Scan Flow (#1), Analytics (#2), Quick Save (#6)
-  epic-14: in-progress  # Started 2025-12-31 after Epic 13 approval
+  epic-14: done  # Started 2025-12-31, COMPLETED 2026-01-15 - All stories done
 
   # Foundation Layer (must be completed first)
   14-1-animation-framework: done  # 5 pts - Core animation utilities - Atlas Code Review APPROVED 2025-12-31
@@ -448,31 +448,39 @@ development_status:
   14-33c.1-airlock-generation-persistence: done  # 5 pts - Generate airlock with super credit, persist to Firestore, history list [DEPENDS: 14.33c] - Atlas Code Review APPROVED 2026-01-12 (77 tests, 7 issues fixed)
   14-33d-celebration-records-display: done  # 3 pts - Celebration cards + badge unlock display [DEPENDS: 14.33b, 14.18, 14.19] - COMPLETED 2026-01-12 (49 tests)
 
-  epic-14-retrospective: optional
+  epic-14-retrospective: done  # Combined retro 2026-01-15 (Epics 12, 13, 14)
 
   # ============================================================================
-  # EPIC 14c: HOUSEHOLD SHARING (~34 points)
+  # EPIC 14C: SHARED GROUPS (~46 points)
   # ============================================================================
-  # Multi-user households (2-10 members), shared transactions
-  # PREREQUISITE: Story 14.29 (React Query Migration)
-  # See: docs/sprint-artifacts/epic14/epic-14c-household-sharing.md
-  epic-14c-household-sharing: backlog
+  # Multi-user shared groups (2-10 members), symmetric visibility
+  # PREREQUISITE: Story 14.29 (React Query Migration) - ✅ COMPLETE
+  # Brainstorming: docs/analysis/brainstorming-session-2026-01-15.md
+  # Epic Doc: docs/sprint-artifacts/epic14/epic-14c-household-sharing.md
+  # Architecture: Option 4 Hybrid (shared group doc + user transactions)
+  epic-14c: contexted  # Stories drafted 2026-01-15
 
-  # Foundation (Infrastructure) - 6 pts
-  14c-1-household-crud-service: backlog  # 3 pts - createHousehold, getHousehold, deleteHousehold, invite codes
-  14c-2-membership-service: backlog  # 3 pts - joinHousehold, leaveHousehold, getMembers, max 10 limit
+  # Phase 1: Foundation (Can Start Without Mockups) - 15 pts
+  14c-1-create-shared-group: done  # 8 pts - Data model + security rules + create UI + invite by email - Code review PASSED ✅
+  14c-2-accept-decline-invitation: done  # 4 pts - Pending invitations UI + accept/decline flow + notification badge - Code Review PASSED ✅
+  14c-3-leave-manage-group: ready-for-dev  # 3 pts - Soft/hard leave + ownership transfer
 
-  # Core Features - 21 pts
-  14c-3-create-household-ui: backlog  # 5 pts - Create flow in Settings, show invite code
-  14c-4-join-household-ui: backlog  # 3 pts - 6-char code input, validation, confirmation
-  14c-5-share-transaction: backlog  # 5 pts - Share to household, bulk share, auto-share toggle
-  14c-6-household-transactions-view: backlog  # 5 pts - Combined view, filter by member, totals
-  14c-7-member-spending-breakdown: backlog  # 3 pts - Pie chart, per-member totals, percentages
+  # Phase 2: Core UX (After Mockups) - 16 pts
+  14c-4-view-mode-switcher: ready-for-dev  # 5 pts - Logo icon tap → group selector → filter all views
+  14c-5-shared-group-transactions-view: ready-for-dev  # 8 pts - Cross-member queries + caching + delta sync
+  14c-6-transaction-ownership-indicators: ready-for-dev  # 3 pts - Profile icon on cards + view-only mode
 
-  # Real-time & Polish - 7 pts
-  14c-8-realtime-sync: backlog  # 3 pts - Firestore listener + React Query invalidation
-  14c-9-leave-delete-household: backlog  # 2 pts - Leave, delete, ownership transfer
-  14c-10-household-settings-ui: backlog  # 2 pts - Edit name, regenerate code, manage members
+  # Phase 3: Features - 10 pts
+  14c-7-tag-transactions-to-groups: ready-for-dev  # 3 pts - Custom group selector in Edit view
+  14c-8-auto-tag-on-scan: ready-for-dev  # 2 pts - In group view, new scans auto-tagged
+  14c-9-shared-group-analytics: ready-for-dev  # 5 pts - Polygon, sparkline, insights for group data
+
+  # Phase 4: Polish - 4 pts
+  14c-10-empty-states-loading: done  # 2 pts - Skeleton UI, empty states, loading feedback
+  14c-11-error-handling: ready-for-dev  # 2 pts - User not found, network errors, quota exceeded
+
+  # Phase 5: Release - 2 pts
+  14c-99-epic-release-deployment: ready-for-dev  # 2 pts - Version bump (minor beta), CI/CD verification, staging/prod deployment
 
   epic-14c-retrospective: optional
 
@@ -518,7 +526,7 @@ development_status:
   14d-10-state-machine-persistence: done  # 3 pts - OBSOLETE: Superseded by 14d.4d + 14d.5e (no-expiration architecture decision)
   14d-11-app-tsx-cleanup: done  # 2 pts (revised) - Deleted pendingBatchStorage.ts; other variables are component interfaces (see story) - Atlas Code Review PASSED 2026-01-12
 
-  epic-14d-retrospective: optional
+  epic-14d-retrospective: done  # Combined retro 2026-01-15 (Epics 12, 13, 14, 14d)
 
   # Epic 15: Advanced Features (~38 points - revised after mockup verification 2025-12-31)
   # Goals system, learned thresholds, out-of-character detection, treemap, themeable skins
