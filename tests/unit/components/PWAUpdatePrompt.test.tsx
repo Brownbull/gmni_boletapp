@@ -227,7 +227,7 @@ describe('PWAUpdatePrompt Component', () => {
       // Should call update immediately
       expect(mockUpdate).toHaveBeenCalled()
 
-      // Should reload after 500ms timeout
+      // Should reload after SW_ACTIVATION_DELAY_MS (500ms) timeout
       vi.advanceTimersByTime(500)
       expect(mockReload).toHaveBeenCalled()
     })

@@ -19,6 +19,9 @@ import { TRANSLATIONS, type Language } from '../utils/translations';
 /** Session storage key for dismiss state */
 const DISMISS_KEY = 'pwa-update-dismissed-session';
 
+/** Delay before reload to allow service worker activation (ms) */
+const SW_ACTIVATION_DELAY_MS = 500;
+
 interface PWAUpdatePromptProps {
   /** Current language setting */
   language?: Language;
@@ -61,24 +64,17 @@ export function PWAUpdatePrompt({ language = 'es' }: PWAUpdatePromptProps) {
    * Handle update - triggers service worker update and forces page reload
    * Story 14.42: Fixed to ensure page actually reloads after update
    */
-  const handleUpdate = useCallback(async () => {
+  const handleUpdate = useCallback(() => {
     setUpdating(true);
 
-    try {
-      // Call the update function from usePWAUpdate
-      update();
+    // Call the update function from usePWAUpdate
+    update();
 
-      // Wait a moment for service worker to activate, then force reload
-      // The reload ensures the new service worker takes control
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
-    } catch (error) {
-      console.error('[PWA] Update failed:', error);
-      setUpdating(false);
-      // Still try to reload even if update() had an issue
+    // Wait a moment for service worker to activate, then force reload
+    // The reload ensures the new service worker takes control
+    setTimeout(() => {
       window.location.reload();
-    }
+    }, SW_ACTIVATION_DELAY_MS);
   }, [update]);
 
   // Show nothing if:
