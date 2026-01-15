@@ -27,6 +27,9 @@ import { useInsightProfile } from './hooks/useInsightProfile';
 import { useBatchSession } from './hooks/useBatchSession';
 // Story 14.19: Personal records detection and celebration
 import { usePersonalRecords } from './hooks/usePersonalRecords';
+// Story 14c.2: Pending invitations for shared groups
+import { usePendingInvitations } from './hooks/usePendingInvitations';
+import { PendingInvitationsSection } from './components/SharedGroups/PendingInvitationsSection';
 // Story 12.2: Parallel batch processing hook
 import { useBatchProcessing } from './hooks/useBatchProcessing';
 // Story 12.3: Batch review type for edit flow
@@ -372,6 +375,9 @@ function App() {
         userId: user?.uid ?? null,
         appId: services?.appId ?? null,
     });
+
+    // Story 14c.2: Pending invitations for notification badge on Alerts
+    const { pendingInvitations, pendingCount: pendingInvitationsCount } = usePendingInvitations(user?.email);
 
     // Story 14d.4c: Access ScanContext for scan state management
     // ScanProvider is now in main.tsx, allowing direct useScan() access
@@ -3958,41 +3964,59 @@ function App() {
                     />
                 )}
 
-                {/* Story 14.11: Alerts View - placeholder for future alerts/notifications feature */}
+                {/* Story 14.11: Alerts View - Story 14c.2: Shows pending invitations */}
                 {view === 'alerts' && (
-                    <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-                        <div
-                            className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-                            style={{ backgroundColor: 'var(--bg-tertiary, #f1f5f9)' }}
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="32"
-                                height="32"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                style={{ color: 'var(--text-secondary, #64748b)' }}
-                            >
-                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                            </svg>
-                        </div>
-                        <h2
-                            className="text-lg font-semibold mb-2"
-                            style={{ color: 'var(--text-primary, #0f172a)' }}
-                        >
-                            {t('alerts')}
-                        </h2>
-                        <p
-                            className="text-sm"
-                            style={{ color: 'var(--text-secondary, #64748b)' }}
-                        >
-                            {t('comingSoon')}
-                        </p>
+                    <div className="flex-1 flex flex-col p-4 overflow-y-auto">
+                        {/* Story 14c.2: Pending Invitations Section */}
+                        {pendingInvitations.length > 0 && user?.uid && services?.appId && (
+                            <PendingInvitationsSection
+                                invitations={pendingInvitations}
+                                userId={user.uid}
+                                appId={services.appId}
+                                t={t}
+                                theme={theme}
+                                lang={lang}
+                                onShowToast={(message, type) => setToastMessage({ text: message, type: type === 'error' ? 'info' : (type || 'success') })}
+                            />
+                        )}
+
+                        {/* Empty State - No pending alerts */}
+                        {pendingInvitations.length === 0 && (
+                            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+                                <div
+                                    className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+                                    style={{ backgroundColor: 'var(--bg-tertiary, #f1f5f9)' }}
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="32"
+                                        height="32"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        style={{ color: 'var(--text-secondary, #64748b)' }}
+                                    >
+                                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                                    </svg>
+                                </div>
+                                <h2
+                                    className="text-lg font-semibold mb-2"
+                                    style={{ color: 'var(--text-primary, #0f172a)' }}
+                                >
+                                    {t('alerts')}
+                                </h2>
+                                <p
+                                    className="text-sm"
+                                    style={{ color: 'var(--text-secondary, #64748b)' }}
+                                >
+                                    {t('noPendingInvitations')}
+                                </p>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -4219,6 +4243,8 @@ function App() {
                 // Context tracks batch state across all phases (capturing, processing, reviewing)
                 // Story 14d.5c AC5: Use hasBatchReceipts (context) instead of batchReviewResults
                 isBatchMode={isBatchModeFromContext || hasBatchReceipts}
+                // Story 14c.2: Badge count for alerts (pending invitations)
+                alertsBadgeCount={pendingInvitationsCount}
             />
 
             {/* Toast notification for feedback (AC#6, AC#7) - Story 14.22: Theme-aware styling */}

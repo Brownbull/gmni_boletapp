@@ -1,7 +1,7 @@
 # Architectural Decisions & Patterns
 
 > Section 4 of Atlas Memory
-> Last Sync: 2026-01-12
+> Last Sync: 2026-01-15
 > Last Optimized: 2026-01-12 (Generation 4)
 > Sources: architecture.md, ADRs, tech-spec documents
 
@@ -249,8 +249,51 @@ Functions: `sanitizeMerchantName`, `sanitizeItemName`, `sanitizeLocation`, `sani
 
 ---
 
+## Epic 14c: Household Sharing (2026-01-15)
+
+**Pattern:** Top-level Firestore collections for cross-user access
+
+**New Collections:**
+- `/sharedGroups/{groupId}` - Shared household groups
+- `/pendingInvitations/{invitationId}` - Email-based invitations
+
+**ADR-011:** Hybrid Model Architecture
+- Top-level collections enable cross-user read access
+- Members array with max 10 members per group
+- Owner controls group settings, members can only add themselves
+
+**Security Rules Helper Functions:**
+- `isGroupMember()` - UID in members array
+- `isGroupOwner()` - UID matches ownerId
+- `isJoiningGroup()` - User accepting invitation
+- `isInvitedUser()` - Email matches auth token
+
+**Reference:** `docs/architecture/architecture.md` (ADR-011)
+
+---
+
+## Firebase Cloud Functions (Documented 2026-01-15)
+
+**Functions:**
+| Function | Type | Purpose |
+|----------|------|---------|
+| `analyzeReceipt` | HTTPS Callable | Receipt OCR, image processing, storage |
+| `onTransactionDeleted` | Firestore Trigger | Cascade delete images |
+
+**analyzeReceipt Details:**
+- Rate limit: 10/min per user
+- Image validation: 10MB max, 5 images max
+- Gemini model: `gemini-2.0-flash`
+- Prompt versioning: V1, V2, V3 (V3 current)
+
+**Reference:** `docs/architecture/api-contracts.md`
+
+---
+
 ## Sync Notes
 
 - Generation 4: Consolidated Epic 14d verbose details
+- 2026-01-15: Added Epic 14c Household Sharing architecture
+- 2026-01-15: Added Cloud Functions documentation
 - Code review learnings in 06-lessons.md
 - Story details in docs/sprint-artifacts/
