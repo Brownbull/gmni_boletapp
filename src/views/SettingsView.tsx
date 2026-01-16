@@ -305,6 +305,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         theme={theme}
                         userId={userId}
                         userEmail={userEmail}
+                        userDisplayName={displayName}
                         appId={appId || 'boletapp'}
                         lang={lang as 'en' | 'es'}
                         onShowToast={onShowToast}

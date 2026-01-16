@@ -249,41 +249,43 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
     };
 
     // Use portal to render at document body level, bypassing parent overflow constraints
+    // Full-screen modal with fixed header/footer and scrollable content
     return createPortal(
         <div
-            className="fixed inset-0 z-[200]"
-            onClick={handleClose}
+            className="fixed inset-0 z-[9999] flex flex-col"
             role="presentation"
             data-testid="create-group-modal-overlay"
         >
             {/* Backdrop - covers full screen */}
             <div
-                className="fixed inset-0 bg-black/40"
+                className="fixed inset-0 bg-black/50"
                 aria-hidden="true"
+                onClick={handleClose}
             />
 
-            {/* Centering container - uses fixed positioning for true center */}
-            <div className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none">
-                {/* Modal Card */}
+            {/* Full-screen Modal */}
+            <div
+                ref={modalRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="create-group-title"
+                className="relative z-10 flex flex-col h-full"
+                style={{ backgroundColor: 'var(--bg)' }}
+                onClick={(e) => e.stopPropagation()}
+                data-testid="create-group-modal"
+            >
+                {/* Fixed Header */}
                 <div
-                    ref={modalRef}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="create-group-title"
-                    className="relative w-full max-w-[343px] rounded-xl shadow-xl pointer-events-auto"
-                    style={{ backgroundColor: 'var(--bg)' }}
-                    onClick={(e) => e.stopPropagation()}
-                    data-testid="create-group-modal"
+                    className="flex-shrink-0 flex justify-between items-center p-4 border-b"
+                    style={{ borderColor: 'var(--border-light)' }}
                 >
-                {/* Header */}
-                <div className="flex justify-between items-center p-3 pb-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                         {/* Icon preview - shows selected icon and color */}
                         <div
-                            className="w-11 h-11 rounded-lg flex items-center justify-center text-xl transition-all"
+                            className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl transition-all"
                             style={{
                                 backgroundColor: selectedColor,
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                             }}
                             data-testid="header-icon-preview"
                         >
@@ -293,13 +295,13 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                         <div>
                             <div
                                 id="create-group-title"
-                                className="text-sm font-semibold"
+                                className="text-base font-semibold"
                                 style={{ color: 'var(--text-primary)' }}
                             >
                                 {lang === 'es' ? 'Nuevo Grupo' : 'New Group'}
                             </div>
                             <div
-                                className="text-xs"
+                                className="text-sm"
                                 style={{ color: 'var(--text-secondary)' }}
                             >
                                 {getCountText()}
@@ -309,16 +311,17 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                     {/* Close button */}
                     <button
                         onClick={handleClose}
-                        className="p-1 rounded-full hover:bg-opacity-10 transition-colors"
+                        className="p-2 rounded-full transition-colors"
+                        style={{ backgroundColor: 'var(--bg-tertiary)' }}
                         aria-label={t('close') || 'Close'}
                         data-testid="create-group-close"
                     >
-                        <X size={18} strokeWidth={2} style={{ color: 'var(--text-secondary)' }} />
+                        <X size={20} strokeWidth={2} style={{ color: 'var(--text-secondary)' }} />
                     </button>
                 </div>
 
-                {/* Body */}
-                <div className="p-3 pt-4">
+                {/* Scrollable Body */}
+                <div className="flex-1 overflow-y-auto p-4">
                     {/* Input with floating label */}
                     <div className="relative">
                         <label
@@ -340,7 +343,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                             }}
                             onKeyDown={handleKeyDown}
                             placeholder={lang === 'es' ? 'Ej: Regalos Navidad' : 'e.g. Holiday Gifts'}
-                            className="w-full h-11 px-3 text-sm rounded-lg border outline-none transition-colors"
+                            className="w-full h-12 px-3 text-sm rounded-lg border outline-none transition-colors"
                             style={{
                                 backgroundColor: 'var(--bg-secondary)',
                                 borderColor: error ? 'var(--error)' : 'var(--border-medium)',
@@ -351,18 +354,18 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                     </div>
 
                     {/* Story 14.15b: Icon Selector */}
-                    <div className="mt-4">
-                        <div className="text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                    <div className="mt-5">
+                        <div className="text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                             {lang === 'es' ? 'Icono' : 'Icon'}
                         </div>
-                        <div className="flex items-center gap-1.5 flex-wrap">
+                        <div className="flex items-center gap-2 flex-wrap">
                             {/* Quick pick icons - first 5 from list */}
                             {['🏠', '🛒', '🎄', '💼', '🏖️'].map((icon) => (
                                 <button
                                     key={icon}
                                     type="button"
                                     onClick={() => setSelectedIcon(icon)}
-                                    className="w-10 h-10 rounded-lg flex items-center justify-center text-lg transition-all"
+                                    className="w-11 h-11 rounded-lg flex items-center justify-center text-xl transition-all"
                                     style={{
                                         backgroundColor: selectedIcon === icon ? selectedColor : 'var(--bg-tertiary)',
                                         border: selectedIcon === icon ? 'none' : '1px solid var(--border-light)',
@@ -379,62 +382,65 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                                     setShowIconPicker(!showIconPicker);
                                     setShowColorPicker(false);
                                 }}
-                                className="w-10 h-10 rounded-lg flex items-center justify-center transition-all"
+                                className="w-11 h-11 rounded-lg flex items-center justify-center transition-all"
                                 style={{
-                                    backgroundColor: showIconPicker ? 'var(--primary)' : 'var(--bg-tertiary)',
-                                    border: showIconPicker ? 'none' : '1px dashed var(--border-medium)',
+                                    backgroundColor: showIconPicker ? 'var(--primary-light)' : 'var(--bg-tertiary)',
+                                    border: showIconPicker ? '2px solid var(--primary)' : '1px dashed var(--border-medium)',
                                 }}
                                 aria-label={lang === 'es' ? 'Más iconos' : 'More icons'}
                                 aria-expanded={showIconPicker}
                                 data-testid="icon-expand"
                             >
-                                <Plus size={16} strokeWidth={2} style={{ color: showIconPicker ? 'white' : 'var(--text-tertiary)' }} />
+                                <Plus size={18} strokeWidth={2} style={{ color: showIconPicker ? 'var(--primary)' : 'var(--text-tertiary)' }} />
                             </button>
                         </div>
-                        {/* Expanded Icon Picker - 7x7 grid */}
+                        {/* Expanded Icon Picker - scrollable container with 7 columns */}
                         {showIconPicker && (
                             <div
-                                className="mt-2 p-2 rounded-lg border grid grid-cols-7 gap-0.5"
+                                className="mt-3 p-3 rounded-xl border overflow-y-auto"
                                 style={{
                                     backgroundColor: 'var(--bg-secondary)',
                                     borderColor: 'var(--border-light)',
+                                    maxHeight: '200px',
                                 }}
                             >
-                                {ALL_ICONS.map((icon) => (
-                                    <button
-                                        key={icon}
-                                        type="button"
-                                        onClick={() => {
-                                            setSelectedIcon(icon);
-                                            setShowIconPicker(false);
-                                        }}
-                                        className="w-full aspect-square rounded-md flex items-center justify-center text-lg transition-all"
-                                        style={{
-                                            backgroundColor: selectedIcon === icon ? 'var(--primary-light)' : 'transparent',
-                                            outline: selectedIcon === icon ? '2px solid var(--primary)' : 'none',
-                                            outlineOffset: '1px',
-                                        }}
-                                    >
-                                        {icon}
-                                    </button>
-                                ))}
+                                <div className="grid grid-cols-7 gap-2">
+                                    {ALL_ICONS.map((icon) => (
+                                        <button
+                                            key={icon}
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedIcon(icon);
+                                                setShowIconPicker(false);
+                                            }}
+                                            className="w-full aspect-square rounded-lg flex items-center justify-center text-xl transition-all"
+                                            style={{
+                                                backgroundColor: selectedIcon === icon ? 'var(--primary-light)' : 'transparent',
+                                                outline: selectedIcon === icon ? '2px solid var(--primary)' : 'none',
+                                                outlineOffset: '1px',
+                                            }}
+                                        >
+                                            {icon}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>
 
                     {/* Story 14.15b: Color Selector */}
-                    <div className="mt-3">
-                        <div className="text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                    <div className="mt-5">
+                        <div className="text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                             {lang === 'es' ? 'Color' : 'Color'}
                         </div>
-                        <div className="flex items-center gap-1.5 flex-wrap">
+                        <div className="flex items-center gap-2 flex-wrap">
                             {/* Quick pick colors - first 5 from DEFAULT_COLORS */}
                             {DEFAULT_COLORS.slice(0, 5).map((color) => (
                                 <button
                                     key={color}
                                     type="button"
                                     onClick={() => setSelectedColor(color)}
-                                    className="w-10 h-10 rounded-full flex items-center justify-center transition-all"
+                                    className="w-11 h-11 rounded-full flex items-center justify-center transition-all"
                                     style={{
                                         backgroundColor: color,
                                         outline: selectedColor === color ? `2px solid ${color}` : 'none',
@@ -443,7 +449,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                                     data-testid={`color-quick-${color}`}
                                 >
                                     {selectedColor === color && (
-                                        <Check size={16} strokeWidth={3} style={{ color: 'white' }} />
+                                        <Check size={18} strokeWidth={3} style={{ color: 'white' }} />
                                     )}
                                 </button>
                             ))}
@@ -454,47 +460,50 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                                     setShowColorPicker(!showColorPicker);
                                     setShowIconPicker(false);
                                 }}
-                                className="w-10 h-10 rounded-full flex items-center justify-center transition-all"
+                                className="w-11 h-11 rounded-full flex items-center justify-center transition-all"
                                 style={{
-                                    backgroundColor: showColorPicker ? 'var(--primary)' : 'var(--bg-tertiary)',
-                                    border: showColorPicker ? 'none' : '1px dashed var(--border-medium)',
+                                    backgroundColor: showColorPicker ? 'var(--primary-light)' : 'var(--bg-tertiary)',
+                                    border: showColorPicker ? '2px solid var(--primary)' : '1px dashed var(--border-medium)',
                                 }}
                                 aria-label={lang === 'es' ? 'Más colores' : 'More colors'}
                                 aria-expanded={showColorPicker}
                                 data-testid="color-expand"
                             >
-                                <Plus size={16} strokeWidth={2} style={{ color: showColorPicker ? 'white' : 'var(--text-tertiary)' }} />
+                                <Plus size={18} strokeWidth={2} style={{ color: showColorPicker ? 'var(--primary)' : 'var(--text-tertiary)' }} />
                             </button>
                         </div>
-                        {/* Expanded Color Picker */}
+                        {/* Expanded Color Picker - scrollable container */}
                         {showColorPicker && (
                             <div
-                                className="mt-2 p-2 rounded-lg border grid grid-cols-8 gap-1.5"
+                                className="mt-3 p-3 rounded-xl border overflow-y-auto"
                                 style={{
                                     backgroundColor: 'var(--bg-secondary)',
                                     borderColor: 'var(--border-light)',
+                                    maxHeight: '150px',
                                 }}
                             >
-                                {ALL_COLORS.map((color) => (
-                                    <button
-                                        key={color}
-                                        type="button"
-                                        onClick={() => {
-                                            setSelectedColor(color);
-                                            setShowColorPicker(false);
-                                        }}
-                                        className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
-                                        style={{
-                                            backgroundColor: color,
-                                            outline: selectedColor === color ? `2px solid ${color}` : 'none',
-                                            outlineOffset: '2px',
-                                        }}
-                                    >
-                                        {selectedColor === color && (
-                                            <Check size={12} strokeWidth={3} style={{ color: 'white' }} />
-                                        )}
-                                    </button>
-                                ))}
+                                <div className="grid grid-cols-8 gap-2">
+                                    {ALL_COLORS.map((color) => (
+                                        <button
+                                            key={color}
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedColor(color);
+                                                setShowColorPicker(false);
+                                            }}
+                                            className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
+                                            style={{
+                                                backgroundColor: color,
+                                                outline: selectedColor === color ? `2px solid ${color}` : 'none',
+                                                outlineOffset: '2px',
+                                            }}
+                                        >
+                                            {selectedColor === color && (
+                                                <Check size={14} strokeWidth={3} style={{ color: 'white' }} />
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -502,7 +511,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                     {/* Error message */}
                     {error && (
                         <div
-                            className="mt-3 text-xs"
+                            className="mt-4 text-sm"
                             style={{ color: 'var(--error)' }}
                             role="alert"
                         >
@@ -511,13 +520,16 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                     )}
                 </div>
 
-                {/* Footer */}
-                <div className="flex gap-2 p-3 pt-2">
+                {/* Fixed Footer */}
+                <div
+                    className="flex-shrink-0 flex gap-3 p-4 border-t"
+                    style={{ borderColor: 'var(--border-light)' }}
+                >
                     {/* Back button */}
                     <button
                         onClick={onBack}
                         disabled={isCreating}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-sm font-medium rounded-lg transition-colors disabled:opacity-40"
+                        className="flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-medium rounded-xl transition-colors disabled:opacity-40"
                         style={{
                             backgroundColor: 'var(--bg-secondary)',
                             border: '1px solid var(--border-light)',
@@ -525,7 +537,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                         }}
                         data-testid="create-group-back"
                     >
-                        <ArrowLeft size={14} strokeWidth={2} />
+                        <ArrowLeft size={16} strokeWidth={2} />
                         <span>{lang === 'es' ? 'Volver' : 'Back'}</span>
                     </button>
 
@@ -533,14 +545,14 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                     <button
                         onClick={handleCreate}
                         disabled={isCreating || !groupName.trim()}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-sm font-semibold rounded-lg transition-colors disabled:opacity-40"
+                        className="flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-semibold rounded-xl transition-colors disabled:opacity-40"
                         style={{
                             backgroundColor: 'var(--primary)',
                             color: 'white',
                         }}
                         data-testid="create-group-confirm"
                     >
-                        <Check size={14} strokeWidth={2} />
+                        <Check size={16} strokeWidth={2} />
                         <span>
                             {isCreating
                                 ? (lang === 'es' ? 'Creando...' : 'Creating...')
@@ -549,7 +561,6 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                         </span>
                     </button>
                 </div>
-            </div>
             </div>
         </div>,
         document.body

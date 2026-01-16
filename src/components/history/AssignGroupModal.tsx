@@ -16,7 +16,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Tag, Plus, Check, Trash2, Package } from 'lucide-react';
+import { X, Tag, Plus, Check, Trash2, Package, XCircle } from 'lucide-react';
 import type { TransactionGroup } from '../../types/transactionGroup';
 import { extractGroupEmoji, extractGroupLabel } from '../../types/transactionGroup';
 
@@ -43,6 +43,8 @@ export interface AssignGroupModalProps {
     onEditGroup?: (group: TransactionGroup) => void;
     /** Callback when "Delete group" is clicked */
     onDeleteGroup?: (group: TransactionGroup) => void;
+    /** Callback when "Remove from group" is clicked - removes group tag from transactions */
+    onRemoveFromGroup?: () => void;
     /** Translation function */
     t: (key: string) => string;
     /** Language for pluralization */
@@ -63,6 +65,7 @@ export const AssignGroupModal: React.FC<AssignGroupModalProps> = ({
     onCreateNew,
     onEditGroup: _onEditGroup,
     onDeleteGroup,
+    onRemoveFromGroup,
     t,
     lang = 'es',
 }) => {
@@ -165,9 +168,17 @@ export const AssignGroupModal: React.FC<AssignGroupModalProps> = ({
             : `${selectedCount} transactions`;
     };
 
-    // Handle assign
+    // Handle assign or remove
     const handleAssign = () => {
         if (!selectedGroupId) return;
+
+        // Handle remove from group
+        if (selectedGroupId === '__remove__' && onRemoveFromGroup) {
+            onRemoveFromGroup();
+            return;
+        }
+
+        // Handle assign to group
         const group = groups.find((g) => g.id === selectedGroupId);
         if (group && group.id) {
             onAssign(group.id, group.name);
@@ -257,7 +268,7 @@ export const AssignGroupModal: React.FC<AssignGroupModalProps> = ({
                             >
                                 {lang === 'es' ? 'Cargando...' : 'Loading...'}
                             </div>
-                        ) : groups.length === 0 ? (
+                        ) : groups.length === 0 && !onRemoveFromGroup ? (
                             <div
                                 className="p-4 text-center text-sm"
                                 style={{ color: 'var(--text-secondary)' }}
@@ -265,7 +276,50 @@ export const AssignGroupModal: React.FC<AssignGroupModalProps> = ({
                                 {lang === 'es' ? 'No hay grupos' : 'No groups'}
                             </div>
                         ) : (
-                            groups.map((group) => {
+                            <>
+                                {/* Remove from group option */}
+                                {onRemoveFromGroup && (
+                                    <div
+                                        className={`flex items-center gap-2 p-2 cursor-pointer transition-colors ${
+                                            selectedGroupId === '__remove__' ? '' : 'hover:bg-opacity-50'
+                                        }`}
+                                        style={{
+                                            backgroundColor: selectedGroupId === '__remove__' ? 'rgba(239, 68, 68, 0.1)' : 'transparent',
+                                            borderBottom: '1px solid var(--border-light)',
+                                        }}
+                                        onClick={() => setSelectedGroupId('__remove__')}
+                                        data-testid="remove-from-group-option"
+                                    >
+                                        {/* Remove icon */}
+                                        <div
+                                            className="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0"
+                                            style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)' }}
+                                        >
+                                            <XCircle size={20} style={{ color: '#ef4444' }} />
+                                        </div>
+
+                                        {/* Label */}
+                                        <div className="flex-1 min-w-0">
+                                            <div
+                                                className="text-sm font-medium truncate"
+                                                style={{ color: '#ef4444' }}
+                                            >
+                                                {lang === 'es' ? 'Quitar de grupo' : 'Remove from group'}
+                                            </div>
+                                        </div>
+
+                                        {/* Selection indicator */}
+                                        {selectedGroupId === '__remove__' && (
+                                            <div
+                                                className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                                                style={{ backgroundColor: '#ef4444' }}
+                                            >
+                                                <Check size={14} strokeWidth={3} style={{ color: 'white' }} />
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                {groups.map((group) => {
                                 const emoji = extractGroupEmoji(group.name);
                                 const label = extractGroupLabel(group.name);
                                 const isSelected = selectedGroupId === group.id;
@@ -347,7 +401,8 @@ export const AssignGroupModal: React.FC<AssignGroupModalProps> = ({
                                         )}
                                     </div>
                                 );
-                            })
+                            })}
+                            </>
                         )}
                     </div>
 

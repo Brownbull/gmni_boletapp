@@ -46,8 +46,10 @@ service cloud.firestore {
       // CREATE: Authenticated user creating a group they own
       allow create: if isValidNewGroup();
 
-      // READ: Must be a member of the group
-      allow read: if isGroupMember();
+      // READ: Members can read, OR authenticated users can query by shareCode to join
+      // The shareCode query is needed for the "join by code" flow
+      allow read: if isGroupMember()
+          || (isAuthenticated() && resource.data.shareCode != null);
 
       // Helper: Check if user is being added as a member (accepting invitation)
       // Allows adding the current user to members array if they're not already a member

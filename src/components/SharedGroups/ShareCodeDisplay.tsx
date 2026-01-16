@@ -50,6 +50,7 @@ export const ShareCodeDisplay: React.FC<ShareCodeDisplayProps> = ({
     // Note: _t is intentionally unused - this component uses inline
     // Spanish/English strings via the lang prop for simplicity
     const [isCopied, setIsCopied] = useState(false);
+    const [isCodeCopied, setIsCodeCopied] = useState(false);
     const [isRegenerating, setIsRegenerating] = useState(false);
 
     // Format expiry date
@@ -63,7 +64,7 @@ export const ShareCodeDisplay: React.FC<ShareCodeDisplayProps> = ({
         return date.toLocaleDateString(lang === 'es' ? 'es-CL' : 'en-US', options);
     };
 
-    // Copy to clipboard
+    // Copy link to clipboard
     const handleCopy = useCallback(async () => {
         try {
             await navigator.clipboard.writeText(shareLink);
@@ -82,6 +83,26 @@ export const ShareCodeDisplay: React.FC<ShareCodeDisplayProps> = ({
             setTimeout(() => setIsCopied(false), 2000);
         }
     }, [shareLink]);
+
+    // Copy just the code to clipboard
+    const handleCopyCode = useCallback(async () => {
+        try {
+            await navigator.clipboard.writeText(shareCode);
+            setIsCodeCopied(true);
+            setTimeout(() => setIsCodeCopied(false), 2000);
+        } catch (err) {
+            console.error('[ShareCodeDisplay] Copy code failed:', err);
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = shareCode;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            setIsCodeCopied(true);
+            setTimeout(() => setIsCodeCopied(false), 2000);
+        }
+    }, [shareCode]);
 
     // Native share
     const handleShare = useCallback(async () => {
@@ -127,7 +148,7 @@ export const ShareCodeDisplay: React.FC<ShareCodeDisplayProps> = ({
                     border: `1px solid ${isExpired ? 'var(--error)' : 'var(--border-light)'}`,
                 }}
             >
-                {/* Code Display */}
+                {/* Code Display - clickable to copy */}
                 <div className="text-center mb-3">
                     <div
                         className="text-xs font-medium mb-1"
@@ -135,16 +156,20 @@ export const ShareCodeDisplay: React.FC<ShareCodeDisplayProps> = ({
                     >
                         {lang === 'es' ? 'Código para compartir' : 'Share Code'}
                     </div>
-                    <div
-                        className="font-mono text-2xl font-bold tracking-wider"
+                    <button
+                        onClick={handleCopyCode}
+                        disabled={isExpired}
+                        className="font-mono text-2xl font-bold tracking-wider px-3 py-1 rounded-lg transition-all cursor-pointer hover:opacity-80"
                         style={{
-                            color: isExpired ? 'var(--error)' : 'var(--primary)',
+                            color: isCodeCopied ? 'white' : (isExpired ? 'var(--error)' : 'var(--primary)'),
+                            backgroundColor: isCodeCopied ? '#10b981' : 'transparent',
                             letterSpacing: '0.1em',
                         }}
                         data-testid="share-code"
+                        title={lang === 'es' ? 'Clic para copiar código' : 'Click to copy code'}
                     >
-                        {shareCode}
-                    </div>
+                        {isCodeCopied ? (lang === 'es' ? '¡Copiado!' : 'Copied!') : shareCode}
+                    </button>
                 </div>
 
                 {/* Expiry Info */}
@@ -230,15 +255,16 @@ export const ShareCodeDisplay: React.FC<ShareCodeDisplayProps> = ({
                     )}
                 </div>
 
-                {/* Regenerate Button (for expired codes) */}
-                {isExpired && onRegenerate && (
+                {/* Regenerate Button - always available for owners */}
+                {onRegenerate && (
                     <button
                         onClick={handleRegenerate}
                         disabled={isRegenerating}
                         className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 px-3 text-sm font-medium rounded-lg transition-colors"
                         style={{
-                            backgroundColor: 'var(--primary)',
-                            color: 'white',
+                            backgroundColor: isExpired ? 'var(--primary)' : 'var(--bg-tertiary)',
+                            color: isExpired ? 'white' : 'var(--text-secondary)',
+                            border: isExpired ? 'none' : '1px solid var(--border-light)',
                             opacity: isRegenerating ? 0.6 : 1,
                         }}
                         data-testid="share-regenerate-btn"

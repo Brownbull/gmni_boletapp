@@ -390,6 +390,18 @@
 | **Status-Only Updates** | `affectedKeys().hasOnly(['status'])` pattern ensures users can only modify allowed fields |
 | **Invitation Audit Trail** | `allow delete: if false` keeps invitations for audit - use status field instead |
 
+### Story 14c.3 - Leave/Manage Group (2026-01-15)
+
+| Pattern | Detail |
+|---------|--------|
+| **Story Completion Discipline** | Tasks MUST be `[x]` when done - status "done" with unchecked tasks is critical failure |
+| **File List Documentation** | MUST be populated before story marked done - empty File List with git changes is blocking |
+| **Dev Agent Record** | Agent model placeholder (`{{agent_model}}`) MUST be replaced with actual model used |
+| **Batch Write Chunking** | 500 operations max per Firestore batch - use multiple commits for large transaction sets |
+| **Typed Error Codes** | Use specific codes (GROUP_NOT_FOUND, OWNER_CANNOT_LEAVE) for actionable error handling |
+| **Feature Folder Organization** | Place dialogs in feature folder (SharedGroups/) not generic (dialogs/) for better cohesion |
+| **Component Test Coverage** | Each new dialog component should have dedicated test file - 4/6 without tests is a gap |
+
 ---
 
 ## Sync Notes
@@ -409,5 +421,30 @@
   - Firestore composite indexes required for multi-field queries (invitedEmail + status + orderBy createdAt)
   - Remove redundant useMemo wrappers that don't transform data
   - Component tests separate from hook tests per Atlas Section 5 standards (26 component + 11 hook tests)
+- **Story 14c.3 Code Review (2026-01-15):** Leave/Manage Group patterns:
+  - Task checkboxes MUST be marked `[x]` when complete - story status "done" with unchecked tasks is a critical failure
+  - File List MUST be populated before story marked done - empty File List with git changes is blocking
+  - Agent model MUST be recorded in Dev Agent Record section - placeholders are not acceptable
+  - Batch write chunking: 500 operations max per Firestore batch - use multiple commits for large transaction untagging
+  - Typed error system: Use specific error codes (GROUP_NOT_FOUND, OWNER_CANNOT_LEAVE) for actionable error handling
+  - Dialog component organization: Place in feature folder (SharedGroups/) not generic (dialogs/) for better cohesion
+  - Component test coverage: New dialog components should have dedicated tests - 4/6 dialogs without tests is a gap
+- **Story 14c.4 Code Review (2026-01-15):** View Mode Switcher patterns:
+  - Barrel export enforcement: New components MUST be exported from domain `index.ts` (ViewModeSwitcher was missing from SharedGroups/index.ts)
+  - Test all public API functions: `updateGroupData` was exposed in context but had no test coverage
+  - Provider placement: ViewModeProvider placed inside QueryClientProvider, outside ScanProvider - correct order for React Query support
+  - DEV-gated logging: Console.log statements wrapped in `if (import.meta.env.DEV)` - acceptable pattern
+- **Story 14c.4 Atlas Code Review (2026-01-15):** Final review patterns:
+  - Barrel export batch fix: Added 7 missing exports (PendingInvitationsSection, GroupMembersManager, LeaveGroupDialog, DeleteGroupDialog, TransferOwnershipDialog, OwnerLeaveWarningDialog, RemoveMemberDialog)
+  - Dialog test coverage gap: 5/6 dialog components lack unit tests (only LeaveGroupDialog has tests) - functional testing done manually
+  - Multi-session story tracking: Stories spanning 4+ sessions need organized Dev Agent Record with clear session labels
+  - Deferred tasks documentation: Task 5 correctly marked incomplete with "Deferred to Story X" note - acceptable pattern for intentional deferrals
+- **Story 14c.4 Manual Testing Fixes (2026-01-15):** Critical integration lessons:
+  - **Firestore rules deployment**: Local rules file changes are NOT automatically deployed - must run `firebase deploy --only firestore:rules`
+  - **Component integration checklist**: New components need: (1) imports in App.tsx, (2) hooks called, (3) state declared, (4) props passed to parent, (5) component rendered
+  - **TopHeader props**: `onLogoClick`, `viewMode`, `activeGroup` must all be passed for ViewModeSwitcher to work
+  - **Icon consistency**: Use Bookmark icon for group assignment (not Layers) - matches lucide.dev/icons/bookmark spec
+  - **Personal group management**: Reuse existing EditGroupModal and DeleteGroupDialog components - don't create new dialogs
+  - **Expand/collapse pattern**: Follow shared groups pattern - button with ChevronRight rotation, expanded content below
 - Full story details available in `docs/sprint-artifacts/` story files
 - Backup: `backups/v3/knowledge/06-lessons.md`
