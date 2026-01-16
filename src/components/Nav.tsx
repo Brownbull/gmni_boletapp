@@ -73,9 +73,11 @@ interface NavProps {
     onShowToast?: (message: string) => void;
     /** Story 14c.2: Badge count for alerts tab (pending invitations, etc.) */
     alertsBadgeCount?: number;
+    /** Story 14c.4: Active group color for top border accent when in group mode */
+    activeGroupColor?: string;
 }
 
-export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchClick, onStatementClick, onTrendsClick, theme, t, scanStatus = 'idle', scanCredits, superCredits, onCreditInfoClick, isBatchMode = false, onShowToast, alertsBadgeCount = 0 }) => {
+export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchClick, onStatementClick, onTrendsClick, theme, t, scanStatus = 'idle', scanCredits, superCredits, onCreditInfoClick, isBatchMode = false, onShowToast, alertsBadgeCount = 0, activeGroupColor }) => {
     // Story 14.11: Reduced motion preference for AC #5
     const prefersReducedMotion = useReducedMotion();
 
@@ -252,8 +254,13 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
 
     // Story 14.11 AC #1: Nav bar styling from mockup
     // Story 14.12: Use --bg to match header, --border-medium for accent top border (1px to match button outlines)
+    // Story 14c.4: Subtle gradient from bottom (theme bg) to top (group color) when in group mode
     const navStyle: React.CSSProperties = {
-        backgroundColor: 'var(--bg)',
+        // When in group mode, use gradient background from bottom to top
+        // 70% from bottom is normal bg color, then gradient to group color at top
+        background: activeGroupColor
+            ? `linear-gradient(to top, var(--bg) 0%, var(--bg) 70%, ${activeGroupColor}20 100%)`
+            : 'var(--bg)',
         borderTop: '1px solid var(--border-medium)',
     };
 

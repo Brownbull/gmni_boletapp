@@ -30,6 +30,11 @@ import { usePersonalRecords } from './hooks/usePersonalRecords';
 // Story 14c.2: Pending invitations for shared groups
 import { usePendingInvitations } from './hooks/usePendingInvitations';
 import { PendingInvitationsSection } from './components/SharedGroups/PendingInvitationsSection';
+// Story 14c.4: View Mode Switcher for personal/group views
+import { useViewMode } from './contexts/ViewModeContext';
+import { useUserSharedGroups } from './hooks/useUserSharedGroups';
+import { ViewModeSwitcher } from './components/SharedGroups/ViewModeSwitcher';
+import { getFirestore } from 'firebase/firestore';
 // Story 12.2: Parallel batch processing hook
 import { useBatchProcessing } from './hooks/useBatchProcessing';
 // Story 12.3: Batch review type for edit flow
@@ -378,6 +383,12 @@ function App() {
 
     // Story 14c.2: Pending invitations for notification badge on Alerts
     const { pendingInvitations, pendingCount: pendingInvitationsCount } = usePendingInvitations(user?.email);
+
+    // Story 14c.4: View Mode Switcher - context and shared groups
+    const { mode: viewMode, group: activeGroup } = useViewMode();
+    const db = getFirestore();
+    const { groups: userSharedGroups, isLoading: sharedGroupsLoading } = useUserSharedGroups(db, user?.uid);
+    const [showViewModeSwitcher, setShowViewModeSwitcher] = useState(false);
 
     // Story 14d.4c: Access ScanContext for scan state management
     // ScanProvider is now in main.tsx, allowing direct useScan() access
@@ -3334,7 +3345,30 @@ function App() {
                     userEmail={user?.email || ''}
                     theme={theme}
                     t={t}
+                    // Story 14c.4: View Mode Switcher props
+                    onLogoClick={() => setShowViewModeSwitcher(true)}
+                    viewMode={viewMode}
+                    activeGroup={activeGroup ? {
+                        id: activeGroup.id!,
+                        name: activeGroup.name,
+                        icon: activeGroup.icon || undefined,
+                        color: activeGroup.color,
+                        members: activeGroup.members,
+                    } : undefined}
                 />
+            )}
+
+            {/* Story 14c.4: View Mode Switcher dropdown */}
+            {view !== 'settings' && (
+                <div className="fixed top-0 left-4 z-[60]" style={{ marginTop: 'calc(72px + max(env(safe-area-inset-top, 0px), 8px))' }}>
+                    <ViewModeSwitcher
+                        isOpen={showViewModeSwitcher}
+                        onClose={() => setShowViewModeSwitcher(false)}
+                        groups={userSharedGroups}
+                        isLoading={sharedGroupsLoading}
+                        t={t}
+                    />
+                </div>
             )}
 
             {/* Story 11.6: Main content area with flex-1 and overflow (AC #2, #4, #5) */}
@@ -4245,6 +4279,8 @@ function App() {
                 isBatchMode={isBatchModeFromContext || hasBatchReceipts}
                 // Story 14c.2: Badge count for alerts (pending invitations)
                 alertsBadgeCount={pendingInvitationsCount}
+                // Story 14c.4: Pass active group color for nav bar top border
+                activeGroupColor={viewMode === 'group' && activeGroup ? activeGroup.color : undefined}
             />
 
             {/* Toast notification for feedback (AC#6, AC#7) - Story 14.22: Theme-aware styling */}

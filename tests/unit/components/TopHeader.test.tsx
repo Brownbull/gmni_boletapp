@@ -523,4 +523,186 @@ describe('TopHeader', () => {
             expect(screen.getByTestId('profile-avatar')).toHaveTextContent('JP');
         });
     });
+
+    /**
+     * Story 14c.4: View Mode Switcher Tests
+     * Tests for tappable logo and group mode visual states
+     */
+    describe('View Mode Switcher (Story 14c.4)', () => {
+        describe('Tappable Logo (AC1)', () => {
+            it('should make logo area tappable when onLogoClick is provided', () => {
+                const onLogoClick = vi.fn();
+                render(
+                    <TopHeader
+                        variant="home"
+                        onMenuClick={() => {}}
+                        onLogoClick={onLogoClick}
+                        theme="light"
+                        t={mockT}
+                    />
+                );
+
+                const logoButton = screen.getByTestId('app-logo-button');
+                expect(logoButton).toBeInTheDocument();
+            });
+
+            it('should call onLogoClick when logo is clicked', () => {
+                const onLogoClick = vi.fn();
+                render(
+                    <TopHeader
+                        variant="home"
+                        onMenuClick={() => {}}
+                        onLogoClick={onLogoClick}
+                        theme="light"
+                        t={mockT}
+                    />
+                );
+
+                const logoButton = screen.getByTestId('app-logo-button');
+                fireEvent.click(logoButton);
+
+                expect(onLogoClick).toHaveBeenCalledTimes(1);
+            });
+
+            it('should not be tappable when onLogoClick is not provided', () => {
+                render(
+                    <TopHeader
+                        variant="home"
+                        onMenuClick={() => {}}
+                        theme="light"
+                        t={mockT}
+                    />
+                );
+
+                // Should render logo but not as a button
+                expect(screen.getByTestId('app-logo')).toBeInTheDocument();
+                expect(screen.queryByTestId('app-logo-button')).not.toBeInTheDocument();
+            });
+        });
+
+        describe('Personal Mode Appearance (AC3)', () => {
+            it('should show default Boletapp logo in personal mode', () => {
+                render(
+                    <TopHeader
+                        variant="home"
+                        onMenuClick={() => {}}
+                        viewMode="personal"
+                        theme="light"
+                        t={mockT}
+                    />
+                );
+
+                const logo = screen.getByTestId('app-logo');
+                expect(logo).toBeInTheDocument();
+                expect(logo).toHaveTextContent('G');
+            });
+        });
+
+        describe('Group Mode Appearance (AC4)', () => {
+            it('should show group icon when in group mode', () => {
+                render(
+                    <TopHeader
+                        variant="home"
+                        onMenuClick={() => {}}
+                        viewMode="group"
+                        activeGroup={{
+                            id: 'group-123',
+                            name: 'Familia Martinez',
+                            icon: '👨‍👩‍👧',
+                            color: '#10b981',
+                            members: ['user-1', 'user-2'],
+                        }}
+                        theme="light"
+                        t={mockT}
+                    />
+                );
+
+                const groupIcon = screen.getByTestId('group-mode-icon');
+                expect(groupIcon).toBeInTheDocument();
+                expect(groupIcon).toHaveTextContent('👨‍👩‍👧');
+            });
+
+            it('should show group name in header when in group mode', () => {
+                render(
+                    <TopHeader
+                        variant="home"
+                        onMenuClick={() => {}}
+                        viewMode="group"
+                        activeGroup={{
+                            id: 'group-123',
+                            name: 'Familia Martinez',
+                            icon: '👨‍👩‍👧',
+                            color: '#10b981',
+                            members: ['user-1', 'user-2'],
+                        }}
+                        theme="light"
+                        t={mockT}
+                    />
+                );
+
+                expect(screen.getByText('Familia Martinez')).toBeInTheDocument();
+            });
+
+            it('should show group mode icon with group color in header', () => {
+                render(
+                    <TopHeader
+                        variant="home"
+                        onMenuClick={() => {}}
+                        viewMode="group"
+                        activeGroup={{
+                            id: 'group-123',
+                            name: 'Familia',
+                            color: '#10b981',
+                            members: ['user-1'],
+                        }}
+                        theme="light"
+                        t={mockT}
+                    />
+                );
+
+                // Group mode icon should be displayed with the group's color
+                const groupModeIcon = screen.getByTestId('group-mode-icon');
+                expect(groupModeIcon).toBeInTheDocument();
+                expect(groupModeIcon).toHaveStyle({ background: '#10b981' });
+            });
+        });
+
+        describe('Visual Mode Indicator (AC7)', () => {
+            it('should show group name indicator when in group mode', () => {
+                render(
+                    <TopHeader
+                        variant="home"
+                        onMenuClick={() => {}}
+                        viewMode="group"
+                        activeGroup={{
+                            id: 'group-123',
+                            name: 'Familia Martinez',
+                            color: '#10b981',
+                            members: ['user-1', 'user-2'],
+                        }}
+                        theme="light"
+                        t={mockT}
+                    />
+                );
+
+                // Should have a clear visual indicator
+                const indicator = screen.getByTestId('group-mode-indicator');
+                expect(indicator).toBeInTheDocument();
+            });
+
+            it('should not show group indicator in personal mode', () => {
+                render(
+                    <TopHeader
+                        variant="home"
+                        onMenuClick={() => {}}
+                        viewMode="personal"
+                        theme="light"
+                        t={mockT}
+                    />
+                );
+
+                expect(screen.queryByTestId('group-mode-indicator')).not.toBeInTheDocument();
+            });
+        });
+    });
 });

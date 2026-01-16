@@ -34,6 +34,7 @@ import {
     getDocs,
     updateDoc,
     deleteDoc,
+    deleteField,
     onSnapshot,
     serverTimestamp,
     Timestamp,
@@ -45,6 +46,7 @@ import {
     Unsubscribe,
     writeBatch,
     arrayUnion,
+    arrayRemove,
 } from 'firebase/firestore';
 import type {
     SharedGroup,
@@ -131,7 +133,8 @@ export async function createSharedGroup(
     db: Firestore,
     userId: string,
     appId: string,
-    input: CreateSharedGroupInput
+    input: CreateSharedGroupInput,
+    ownerProfile?: { displayName?: string; email?: string; photoURL?: string }
 ): Promise<SharedGroup> {
     const collectionRef = collection(db, SHARED_GROUPS_COLLECTION);
 
@@ -139,7 +142,7 @@ export async function createSharedGroup(
     const shareCodeExpiresAt = getShareCodeExpiry();
     const now = serverTimestamp();
 
-    const groupData = {
+    const groupData: Record<string, unknown> = {
         ownerId: userId,
         appId,
         name: input.name.trim(),
@@ -157,6 +160,17 @@ export async function createSharedGroup(
         createdAt: now,
         updatedAt: now,
     };
+
+    // Store owner's profile if provided
+    if (ownerProfile) {
+        groupData.memberProfiles = {
+            [userId]: {
+                displayName: ownerProfile.displayName || null,
+                email: ownerProfile.email || null,
+                photoURL: ownerProfile.photoURL || null,
+            },
+        };
+    }
 
     const docRef = await addDoc(collectionRef, groupData);
 
@@ -261,6 +275,108 @@ export async function getSharedGroupPreview(
         memberCount: group.members.length,
         isExpired: isShareCodeExpired(group.shareCodeExpiresAt),
     };
+}
+
+/**
+ * Error types for join operations.
+ */
+export type JoinError =
+    | 'CODE_NOT_FOUND'
+    | 'CODE_EXPIRED'
+    | 'GROUP_FULL'
+    | 'ALREADY_MEMBER';
+
+/**
+ * Join a shared group using a share code.
+ *
+ * Story 14c.4: Join by share code (alternative to link-based join)
+ * Uses batch write to atomically:
+ * 1. Add user to group.members[]
+ * 2. Add groupId to user's memberOfSharedGroups[] profile field
+ * 3. Set group.memberUpdates[userId] timestamp
+ *
+ * @param db Firestore instance
+ * @param userId User ID of the person joining
+ * @param appId App ID (e.g., 'boletapp')
+ * @param shareCode 16-character share code
+ * @returns The group name on success
+ * @throws Error with JoinError type message
+ */
+export async function joinByShareCode(
+    db: Firestore,
+    userId: string,
+    appId: string,
+    shareCode: string,
+    userProfile?: { displayName?: string; email?: string; photoURL?: string }
+): Promise<{ groupName: string; groupId: string }> {
+    // 1. Trim whitespace from share code (dashes are valid nanoid characters)
+    const normalizedCode = shareCode.trim();
+
+    // 2. Find the group by share code
+    const group = await getSharedGroupByShareCode(db, normalizedCode);
+
+    if (!group) {
+        throw new Error('CODE_NOT_FOUND');
+    }
+
+    // 3. Check if code is expired
+    if (isShareCodeExpired(group.shareCodeExpiresAt)) {
+        throw new Error('CODE_EXPIRED');
+    }
+
+    // 4. Check if user is already a member
+    if (group.members.includes(userId)) {
+        throw new Error('ALREADY_MEMBER');
+    }
+
+    // 5. Check if group is full
+    if (group.members.length >= SHARED_GROUP_LIMITS.MAX_MEMBERS_PER_GROUP) {
+        throw new Error('GROUP_FULL');
+    }
+
+    // 6. Perform batch write
+    const batch = writeBatch(db);
+
+    // 6a. Add user to group members and store their profile
+    const groupRef = doc(db, SHARED_GROUPS_COLLECTION, group.id!);
+    const updateData: Record<string, unknown> = {
+        members: arrayUnion(userId),
+        [`memberUpdates.${userId}`]: {
+            lastSyncAt: serverTimestamp(),
+            unreadCount: 0,
+        },
+        updatedAt: serverTimestamp(),
+    };
+
+    // Store member profile if provided
+    if (userProfile) {
+        updateData[`memberProfiles.${userId}`] = {
+            displayName: userProfile.displayName || null,
+            email: userProfile.email || null,
+            photoURL: userProfile.photoURL || null,
+        };
+    }
+
+    batch.update(groupRef, updateData);
+
+    // 6b. Add groupId to user's profile (memberOfSharedGroups)
+    const profileRef = doc(db, `artifacts/${appId}/users/${userId}/preferences/settings`);
+    batch.set(profileRef, {
+        memberOfSharedGroups: arrayUnion(group.id),
+    }, { merge: true });
+
+    await batch.commit();
+
+    // Log in dev mode
+    if (import.meta.env.DEV) {
+        console.log('[sharedGroupService] joinByShareCode SUCCESS:', {
+            userId,
+            groupId: group.id,
+            groupName: group.name,
+        });
+    }
+
+    return { groupName: group.name, groupId: group.id! };
 }
 
 /**
@@ -724,4 +840,422 @@ export async function createPendingInvitation(
     }
 
     return docRef.id;
+}
+
+// ============================================================================
+// Story 14c.3: Leave Group / Manage Group
+// ============================================================================
+
+/**
+ * Error types for leave/manage group operations.
+ */
+export type LeaveGroupError =
+    | 'GROUP_NOT_FOUND'
+    | 'NOT_A_MEMBER'
+    | 'OWNER_CANNOT_LEAVE'
+    | 'NOT_OWNER'
+    | 'CANNOT_TRANSFER_TO_SELF'
+    | 'TARGET_NOT_MEMBER';
+
+/**
+ * Leave a shared group with SOFT leave mode.
+ *
+ * Story 14c.3 AC2: Soft leave
+ * - Removes user from group.members[]
+ * - Removes user's memberUpdates entry
+ * - Updates user's memberOfSharedGroups[] profile field
+ * - Transactions remain tagged with sharedGroupIds[] (read-only to others)
+ *
+ * @param db Firestore instance
+ * @param userId User ID of the member leaving
+ * @param appId App ID (e.g., 'boletapp')
+ * @param groupId Shared group document ID
+ * @throws Error with LeaveGroupError type message
+ */
+export async function leaveGroupSoft(
+    db: Firestore,
+    userId: string,
+    appId: string,
+    groupId: string
+): Promise<void> {
+    // 1. Get the group
+    const group = await getSharedGroup(db, groupId);
+
+    if (!group) {
+        throw new Error('GROUP_NOT_FOUND');
+    }
+
+    // 2. Check user is a member
+    if (!group.members.includes(userId)) {
+        throw new Error('NOT_A_MEMBER');
+    }
+
+    // 3. Owner cannot leave (must transfer ownership first)
+    if (group.ownerId === userId) {
+        throw new Error('OWNER_CANNOT_LEAVE');
+    }
+
+    // 4. Perform batch write
+    const batch = writeBatch(db);
+
+    // 4a. Remove user from group members and memberUpdates
+    const groupRef = doc(db, SHARED_GROUPS_COLLECTION, groupId);
+    batch.update(groupRef, {
+        members: arrayRemove(userId),
+        [`memberUpdates.${userId}`]: deleteField(),
+        updatedAt: serverTimestamp(),
+    });
+
+    // 4b. Remove groupId from user's profile
+    const profileRef = doc(db, `artifacts/${appId}/users/${userId}/preferences/settings`);
+    batch.set(profileRef, {
+        memberOfSharedGroups: arrayRemove(groupId),
+    }, { merge: true });
+
+    await batch.commit();
+
+    // Log in dev mode
+    if (import.meta.env.DEV) {
+        console.log('[sharedGroupService] leaveGroupSoft SUCCESS:', {
+            userId,
+            groupId,
+            groupName: group.name,
+        });
+    }
+}
+
+/**
+ * Leave a shared group with HARD leave mode.
+ *
+ * Story 14c.3 AC3: Hard leave
+ * - Removes user from group.members[]
+ * - Removes user's memberUpdates entry
+ * - Updates user's memberOfSharedGroups[] profile field
+ * - Removes groupId from ALL user's transactions' sharedGroupIds[]
+ *
+ * @param db Firestore instance
+ * @param userId User ID of the member leaving
+ * @param appId App ID (e.g., 'boletapp')
+ * @param groupId Shared group document ID
+ * @throws Error with LeaveGroupError type message
+ */
+export async function leaveGroupHard(
+    db: Firestore,
+    userId: string,
+    appId: string,
+    groupId: string
+): Promise<void> {
+    // 1. Get the group
+    const group = await getSharedGroup(db, groupId);
+
+    if (!group) {
+        throw new Error('GROUP_NOT_FOUND');
+    }
+
+    // 2. Check user is a member
+    if (!group.members.includes(userId)) {
+        throw new Error('NOT_A_MEMBER');
+    }
+
+    // 3. Owner cannot leave (must transfer ownership first)
+    if (group.ownerId === userId) {
+        throw new Error('OWNER_CANNOT_LEAVE');
+    }
+
+    // 4. First, remove the groupId from user's transactions
+    await untagUserTransactions(db, userId, appId, groupId);
+
+    // 5. Perform batch write for group and profile updates
+    const batch = writeBatch(db);
+
+    // 5a. Remove user from group members and memberUpdates
+    const groupRef = doc(db, SHARED_GROUPS_COLLECTION, groupId);
+    batch.update(groupRef, {
+        members: arrayRemove(userId),
+        [`memberUpdates.${userId}`]: deleteField(),
+        updatedAt: serverTimestamp(),
+    });
+
+    // 5b. Remove groupId from user's profile
+    const profileRef = doc(db, `artifacts/${appId}/users/${userId}/preferences/settings`);
+    batch.set(profileRef, {
+        memberOfSharedGroups: arrayRemove(groupId),
+    }, { merge: true });
+
+    await batch.commit();
+
+    // Log in dev mode
+    if (import.meta.env.DEV) {
+        console.log('[sharedGroupService] leaveGroupHard SUCCESS:', {
+            userId,
+            groupId,
+            groupName: group.name,
+        });
+    }
+}
+
+/**
+ * Helper: Remove a groupId from all user's transactions' sharedGroupIds[].
+ * Used for hard leave and when owner deletes group.
+ *
+ * Note: This may need to handle batching for users with many transactions.
+ * Firestore batch limit is 500 operations.
+ *
+ * @param db Firestore instance
+ * @param userId User ID
+ * @param appId App ID
+ * @param groupId Group ID to remove from transactions
+ */
+async function untagUserTransactions(
+    db: Firestore,
+    userId: string,
+    appId: string,
+    groupId: string
+): Promise<void> {
+    // Query all user's transactions that have this groupId in sharedGroupIds
+    const transactionsRef = collection(db, `artifacts/${appId}/users/${userId}/transactions`);
+    const q = query(
+        transactionsRef,
+        where('sharedGroupIds', 'array-contains', groupId)
+    );
+
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+        return; // No transactions to update
+    }
+
+    // Process in batches of 500 (Firestore batch limit)
+    const BATCH_SIZE = 500;
+    let batch = writeBatch(db);
+    let operationCount = 0;
+
+    for (const docSnapshot of snapshot.docs) {
+        batch.update(docSnapshot.ref, {
+            sharedGroupIds: arrayRemove(groupId),
+        });
+        operationCount++;
+
+        // Commit batch if we hit the limit
+        if (operationCount >= BATCH_SIZE) {
+            await batch.commit();
+            batch = writeBatch(db);
+            operationCount = 0;
+        }
+    }
+
+    // Commit any remaining operations
+    if (operationCount > 0) {
+        await batch.commit();
+    }
+
+    // Log in dev mode
+    if (import.meta.env.DEV) {
+        console.log('[sharedGroupService] untagUserTransactions SUCCESS:', {
+            userId,
+            groupId,
+            transactionsUpdated: snapshot.size,
+        });
+    }
+}
+
+/**
+ * Transfer ownership of a shared group to another member.
+ *
+ * Story 14c.3 AC5: Ownership transfer
+ * - Validates current user is owner
+ * - Validates new owner is a member
+ * - Updates ownerId to new owner
+ * - Current owner becomes a regular member
+ *
+ * @param db Firestore instance
+ * @param currentOwnerId Current owner's user ID
+ * @param newOwnerId New owner's user ID
+ * @param groupId Shared group document ID
+ * @throws Error with LeaveGroupError type message
+ */
+export async function transferOwnership(
+    db: Firestore,
+    currentOwnerId: string,
+    newOwnerId: string,
+    groupId: string
+): Promise<void> {
+    // 1. Get the group
+    const group = await getSharedGroup(db, groupId);
+
+    if (!group) {
+        throw new Error('GROUP_NOT_FOUND');
+    }
+
+    // 2. Validate current user is owner
+    if (group.ownerId !== currentOwnerId) {
+        throw new Error('NOT_OWNER');
+    }
+
+    // 3. Cannot transfer to self
+    if (currentOwnerId === newOwnerId) {
+        throw new Error('CANNOT_TRANSFER_TO_SELF');
+    }
+
+    // 4. Validate new owner is a member
+    if (!group.members.includes(newOwnerId)) {
+        throw new Error('TARGET_NOT_MEMBER');
+    }
+
+    // 5. Update the group document
+    const groupRef = doc(db, SHARED_GROUPS_COLLECTION, groupId);
+    await updateDoc(groupRef, {
+        ownerId: newOwnerId,
+        updatedAt: serverTimestamp(),
+    });
+
+    // Log in dev mode
+    if (import.meta.env.DEV) {
+        console.log('[sharedGroupService] transferOwnership SUCCESS:', {
+            groupId,
+            groupName: group.name,
+            previousOwner: currentOwnerId,
+            newOwner: newOwnerId,
+        });
+    }
+}
+
+/**
+ * Remove a member from a shared group (owner only).
+ * Performs a soft leave on their behalf.
+ *
+ * Story 14c.3 AC6: Owner can remove members
+ * - Validates requester is owner
+ * - Removes member from group.members[]
+ * - Updates removed member's profile
+ * - Transactions stay shared (soft leave behavior)
+ *
+ * @param db Firestore instance
+ * @param ownerId Owner's user ID (requester)
+ * @param memberId Member's user ID to remove
+ * @param appId App ID (e.g., 'boletapp')
+ * @param groupId Shared group document ID
+ * @throws Error with LeaveGroupError type message
+ */
+export async function removeMember(
+    db: Firestore,
+    ownerId: string,
+    memberId: string,
+    _appId: string, // Kept for API consistency; previously used for profile updates
+    groupId: string
+): Promise<void> {
+    // 1. Get the group
+    const group = await getSharedGroup(db, groupId);
+
+    if (!group) {
+        throw new Error('GROUP_NOT_FOUND');
+    }
+
+    // 2. Validate requester is owner
+    if (group.ownerId !== ownerId) {
+        throw new Error('NOT_OWNER');
+    }
+
+    // 3. Cannot remove self (owner) - must transfer or delete
+    if (ownerId === memberId) {
+        throw new Error('OWNER_CANNOT_LEAVE');
+    }
+
+    // 4. Validate member exists in group
+    if (!group.members.includes(memberId)) {
+        throw new Error('NOT_A_MEMBER');
+    }
+
+    // 5. Remove member from group
+    // Note: We only update the sharedGroup document, NOT the removed member's profile
+    // The removed member's memberOfSharedGroups will be stale but that's okay -
+    // they won't see the group in queries since they're no longer in members[].
+    // We can't update another user's profile due to security rules.
+    const groupRef = doc(db, SHARED_GROUPS_COLLECTION, groupId);
+    await updateDoc(groupRef, {
+        members: arrayRemove(memberId),
+        [`memberUpdates.${memberId}`]: deleteField(),
+        [`memberProfiles.${memberId}`]: deleteField(),
+        updatedAt: serverTimestamp(),
+    });
+
+    // Log in dev mode
+    if (import.meta.env.DEV) {
+        console.log('[sharedGroupService] removeMember SUCCESS:', {
+            groupId,
+            groupName: group.name,
+            removedMember: memberId,
+            removedBy: ownerId,
+        });
+    }
+}
+
+/**
+ * Delete a shared group entirely (owner only).
+ *
+ * Story 14c.3 AC4: Owner can delete group
+ * - Validates requester is owner
+ * - Removes groupId from all members' profiles
+ * - Optionally untags all transactions (based on removeTransactionTags parameter)
+ * - Deletes the group document
+ *
+ * @param db Firestore instance
+ * @param ownerId Owner's user ID (requester)
+ * @param appId App ID (e.g., 'boletapp')
+ * @param groupId Shared group document ID
+ * @param removeTransactionTags If true, removes groupId from all members' transactions
+ * @throws Error with LeaveGroupError type message
+ */
+export async function deleteSharedGroupWithCleanup(
+    db: Firestore,
+    ownerId: string,
+    appId: string,
+    groupId: string,
+    removeTransactionTags: boolean = false
+): Promise<void> {
+    // 1. Get the group
+    const group = await getSharedGroup(db, groupId);
+
+    if (!group) {
+        throw new Error('GROUP_NOT_FOUND');
+    }
+
+    // 2. Validate requester is owner
+    if (group.ownerId !== ownerId) {
+        throw new Error('NOT_OWNER');
+    }
+
+    // 3. Optionally untag all members' transactions
+    if (removeTransactionTags) {
+        for (const memberId of group.members) {
+            await untagUserTransactions(db, memberId, appId, groupId);
+        }
+    }
+
+    // 4. Remove groupId from all members' profiles and delete group
+    const batch = writeBatch(db);
+
+    // 4a. Update each member's profile
+    for (const memberId of group.members) {
+        const profileRef = doc(db, `artifacts/${appId}/users/${memberId}/preferences/settings`);
+        batch.set(profileRef, {
+            memberOfSharedGroups: arrayRemove(groupId),
+        }, { merge: true });
+    }
+
+    // 4b. Delete the group document
+    const groupRef = doc(db, SHARED_GROUPS_COLLECTION, groupId);
+    batch.delete(groupRef);
+
+    await batch.commit();
+
+    // Log in dev mode
+    if (import.meta.env.DEV) {
+        console.log('[sharedGroupService] deleteSharedGroupWithCleanup SUCCESS:', {
+            groupId,
+            groupName: group.name,
+            membersAffected: group.members.length,
+            transactionsUntagged: removeTransactionTags,
+        });
+    }
 }
