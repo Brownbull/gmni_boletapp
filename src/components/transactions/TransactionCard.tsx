@@ -356,26 +356,29 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
     }
   };
 
-  // Determine border color - group color takes precedence over default, duplicate over group
+  // Determine border color - duplicate warning takes precedence
   const getBorderColor = () => {
     if (isDuplicate) {
       return isDark ? '#fbbf24' : '#f59e0b';
     }
-    if (groupColor) {
-      return groupColor;
-    }
     return 'var(--border-light)';
   };
 
-  // Use thicker border when group is assigned (similar to duplicate styling)
-  const hasBorderEmphasis = isDuplicate || groupColor;
+  // Use thicker border when duplicate
+  const hasBorderEmphasis = isDuplicate;
+
+  // Show group-colored left border when transaction belongs to a shared group
+  const hasGroupAccent = !!groupColor;
 
   return (
     <div
-      className={`rounded-lg overflow-hidden border transition-colors ${hasBorderEmphasis ? 'border-2' : 'border'}`}
+      className={`rounded-lg overflow-hidden transition-colors ${hasBorderEmphasis ? 'border-2' : 'border'}`}
       style={{
         backgroundColor: 'var(--surface)',
         borderColor: getBorderColor(),
+        // Group-colored left border for shared group transactions
+        borderLeftWidth: hasGroupAccent ? '4px' : undefined,
+        borderLeftColor: hasGroupAccent ? groupColor : undefined,
       }}
       data-testid="transaction-card"
       data-id={id}

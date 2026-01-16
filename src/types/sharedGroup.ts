@@ -64,6 +64,20 @@ export interface MemberUpdate {
 }
 
 /**
+ * Public profile info for a group member.
+ * Stored in SharedGroup.memberProfiles for display purposes.
+ * Story 14c.4: Allow members to see each other's names/emails.
+ */
+export interface MemberProfile {
+    /** Display name from Firebase Auth or user preferences */
+    displayName?: string;
+    /** Email address (for identification) */
+    email?: string;
+    /** Profile photo URL */
+    photoURL?: string;
+}
+
+/**
  * A shared group that allows multiple users to see each other's transactions.
  *
  * Stored at top-level: sharedGroups/{groupId}
@@ -99,6 +113,9 @@ export interface SharedGroup {
 
     /** Per-member sync status for delta sync optimization */
     memberUpdates: Record<string, MemberUpdate>;
+
+    /** Public profile info for each member (userId -> MemberProfile) */
+    memberProfiles?: Record<string, MemberProfile>;
 
     /** Timestamp when the group was created */
     createdAt: Timestamp;

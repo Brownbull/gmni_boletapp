@@ -458,15 +458,25 @@ development_status:
   # Brainstorming: docs/analysis/brainstorming-session-2026-01-15.md
   # Epic Doc: docs/sprint-artifacts/epic14/epic-14c-household-sharing.md
   # Architecture: Option 4 Hybrid (shared group doc + user transactions)
+# # BMAD custom commands
+# | Command | Description |
+# |---------|-------------|
+# | `/bmad:bmm:workflows:atlas-code-review` | ADVERSARIAL code review with Atlas validation |
+# | `/bmad:bmm:workflows:atlas-dev-story` | Story implementation with pattern guidance |
+# | `/bmad:bmm:workflows:atlas-correct-course` | Course correction during sprints |
+# | `/bmad:bmm:workflows:atlas-deploy-story` | Story deployment with validation |
+# | `/bmad:bmm:workflows:atlas-epic-tech-context` | Epic technical context preparation |
+# | `/bmad:bmm:workflows:atlas-story-context` | Story context loading |
+# | `/bmad:bmm:workflows:atlas-e2e` | Persona-driven E2E test generation |
   epic-14c: contexted  # Stories drafted 2026-01-15
 
   # Phase 1: Foundation (Can Start Without Mockups) - 15 pts
   14c-1-create-shared-group: done  # 8 pts - Data model + security rules + create UI + invite by email - Code review PASSED ✅
   14c-2-accept-decline-invitation: done  # 4 pts - Pending invitations UI + accept/decline flow + notification badge - Code Review PASSED ✅
-  14c-3-leave-manage-group: ready-for-dev  # 3 pts - Soft/hard leave + ownership transfer
+  14c-3-leave-manage-group: done  # 3 pts - Soft/hard leave + ownership transfer
 
   # Phase 2: Core UX (After Mockups) - 16 pts
-  14c-4-view-mode-switcher: ready-for-dev  # 5 pts - Logo icon tap → group selector → filter all views
+  14c-4-view-mode-switcher: done  # 5 pts - Logo icon tap → group selector → filter all views - Code Review PASSED ✅
   14c-5-shared-group-transactions-view: ready-for-dev  # 8 pts - Cross-member queries + caching + delta sync
   14c-6-transaction-ownership-indicators: ready-for-dev  # 3 pts - Profile icon on cards + view-only mode
 

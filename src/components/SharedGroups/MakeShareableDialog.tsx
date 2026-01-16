@@ -172,27 +172,28 @@ export const MakeShareableDialog: React.FC<MakeShareableDialogProps> = ({
 
     return createPortal(
         <div
-            className="fixed inset-0 z-[200]"
-            onClick={handleClose}
+            className="fixed inset-0 z-[9999] flex items-center justify-center"
             role="presentation"
             data-testid="make-shareable-dialog-overlay"
         >
-            {/* Backdrop */}
-            <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
+            {/* Full-screen backdrop - covers entire viewport including nav */}
+            <div
+                className="fixed inset-0 bg-black/50"
+                aria-hidden="true"
+                onClick={handleClose}
+            />
 
-            {/* Centering container */}
-            <div className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none">
-                {/* Modal Card */}
-                <div
-                    ref={modalRef}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="make-shareable-title"
-                    className="relative w-full max-w-[380px] rounded-xl shadow-xl pointer-events-auto"
-                    style={{ backgroundColor: 'var(--bg)' }}
-                    onClick={(e) => e.stopPropagation()}
-                    data-testid="make-shareable-dialog"
-                >
+            {/* Modal Card */}
+            <div
+                ref={modalRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="make-shareable-title"
+                className="relative z-10 w-full max-w-[380px] mx-4 rounded-xl shadow-xl"
+                style={{ backgroundColor: 'var(--bg)' }}
+                onClick={(e) => e.stopPropagation()}
+                data-testid="make-shareable-dialog"
+            >
                     {/* Header */}
                     <div className="flex justify-between items-center p-4 pb-0">
                         <div className="flex items-center gap-3">
@@ -363,7 +364,7 @@ export const MakeShareableDialog: React.FC<MakeShareableDialogProps> = ({
                                 <button
                                     onClick={handleClose}
                                     disabled={isCreating}
-                                    className="flex-1 py-2.5 px-3 text-sm font-medium rounded-lg transition-colors"
+                                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 text-sm font-medium rounded-lg transition-colors"
                                     style={{
                                         backgroundColor: 'var(--bg-secondary)',
                                         border: '1px solid var(--border-light)',
@@ -371,7 +372,8 @@ export const MakeShareableDialog: React.FC<MakeShareableDialogProps> = ({
                                     }}
                                     data-testid="make-shareable-cancel"
                                 >
-                                    {lang === 'es' ? 'Cancelar' : 'Cancel'}
+                                    <X size={14} strokeWidth={2} />
+                                    <span>{lang === 'es' ? 'Cancelar' : 'Cancel'}</span>
                                 </button>
 
                                 {/* Confirm button */}
@@ -412,7 +414,6 @@ export const MakeShareableDialog: React.FC<MakeShareableDialogProps> = ({
                         )}
                     </div>
                 </div>
-            </div>
         </div>,
         document.body
     );
