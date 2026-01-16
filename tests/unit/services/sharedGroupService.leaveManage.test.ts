@@ -256,10 +256,9 @@ describe('sharedGroupService - Leave/Manage Functions', () => {
         it('removes member when owner requests valid removal', async () => {
             await removeMember(mockDb, 'owner-user-id', 'member-1', 'boletapp', 'group-123')
 
-            expect(writeBatch).toHaveBeenCalledWith(mockDb)
-            expect(mockBatch.update).toHaveBeenCalled()
-            expect(mockBatch.set).toHaveBeenCalled()
-            expect(mockBatch.commit).toHaveBeenCalled()
+            // removeMember uses updateDoc directly (single document update)
+            // not writeBatch since we only update the group document
+            expect(updateDoc).toHaveBeenCalled()
         })
     })
 
