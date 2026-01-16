@@ -1,6 +1,6 @@
 # Story 14c.3: Leave/Manage Group
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -72,58 +72,58 @@ so that I can control my participation and my transactions' visibility.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Leave Group Service Functions (AC: #2, #3, #8)
-  - [ ] 1.1 Implement `leaveGroupSoft(db, userId, appId, groupId)` - removes from members, keeps transactions
-  - [ ] 1.2 Implement `leaveGroupHard(db, userId, appId, groupId)` - removes from members + untags transactions
-  - [ ] 1.3 Update user profile `memberOfSharedGroups` on leave
-  - [ ] 1.4 Use batch writes for atomic operations
-  - [ ] 1.5 Handle error cases (not a member, already left)
+- [x] Task 1: Leave Group Service Functions (AC: #2, #3, #8)
+  - [x] 1.1 Implement `leaveGroupSoft(db, userId, appId, groupId)` - removes from members, keeps transactions
+  - [x] 1.2 Implement `leaveGroupHard(db, userId, appId, groupId)` - removes from members + untags transactions
+  - [x] 1.3 Update user profile `memberOfSharedGroups` on leave
+  - [x] 1.4 Use batch writes for atomic operations
+  - [x] 1.5 Handle error cases (not a member, already left)
 
-- [ ] Task 2: Ownership Management Functions (AC: #4, #5)
-  - [ ] 2.1 Implement `transferOwnership(db, currentOwnerId, newOwnerId, groupId)`
-  - [ ] 2.2 Validate current user is owner before transfer
-  - [ ] 2.3 Update `ownerId` field on group document
-  - [ ] 2.4 Block owner from leaving without transfer
+- [x] Task 2: Ownership Management Functions (AC: #4, #5)
+  - [x] 2.1 Implement `transferOwnership(db, currentOwnerId, newOwnerId, groupId)`
+  - [x] 2.2 Validate current user is owner before transfer
+  - [x] 2.3 Update `ownerId` field on group document
+  - [x] 2.4 Block owner from leaving without transfer
 
-- [ ] Task 3: Member Removal Functions (AC: #6)
-  - [ ] 3.1 Implement `removeMember(db, ownerId, memberId, groupId)`
-  - [ ] 3.2 Validate requester is owner
-  - [ ] 3.3 Perform soft leave for removed member
-  - [ ] 3.4 Update removed user's profile
+- [x] Task 3: Member Removal Functions (AC: #6)
+  - [x] 3.1 Implement `removeMember(db, ownerId, memberId, groupId)`
+  - [x] 3.2 Validate requester is owner
+  - [x] 3.3 Perform soft leave for removed member
+  - [x] 3.4 Update removed user's profile
 
-- [ ] Task 4: Leave Group UI (AC: #1, #7)
-  - [ ] 4.1 Add "Leave Group" button to group detail view (non-owners)
-  - [ ] 4.2 Create `LeaveGroupDialog.tsx` with soft/hard options
-  - [ ] 4.3 Show consequence explanation for each option
-  - [ ] 4.4 Add loading state during leave operation
-  - [ ] 4.5 Navigate away from group after successful leave
+- [x] Task 4: Leave Group UI (AC: #1, #7)
+  - [x] 4.1 Add "Leave Group" button to group detail view (non-owners)
+  - [x] 4.2 Create `LeaveGroupDialog.tsx` with soft/hard options
+  - [x] 4.3 Show consequence explanation for each option
+  - [x] 4.4 Add loading state during leave operation
+  - [x] 4.5 Navigate away from group after successful leave
 
-- [ ] Task 5: Group Management UI (AC: #4, #5, #6)
-  - [ ] 5.1 Create `GroupMembersManager.tsx` - list view with actions
-  - [ ] 5.2 Add "Transfer Ownership" option per member (owner only)
-  - [ ] 5.3 Add "Remove" option per member (owner only)
-  - [ ] 5.4 Create `TransferOwnershipDialog.tsx`
-  - [ ] 5.5 Create `RemoveMemberDialog.tsx`
-  - [ ] 5.6 Show owner badge on current owner
+- [x] Task 5: Group Management UI (AC: #4, #5, #6)
+  - [x] 5.1 Create `GroupMembersManager.tsx` - list view with actions
+  - [x] 5.2 Add "Transfer Ownership" option per member (owner only)
+  - [x] 5.3 Add "Remove" option per member (owner only)
+  - [x] 5.4 Create `TransferOwnershipDialog.tsx`
+  - [x] 5.5 Create `RemoveMemberDialog.tsx`
+  - [x] 5.6 Show owner badge on current owner
 
-- [ ] Task 6: Delete Group Functionality (AC: #4)
-  - [ ] 6.1 Implement `deleteSharedGroup(db, ownerId, groupId)`
-  - [ ] 6.2 Remove groupId from all members' profiles
-  - [ ] 6.3 Optionally untag all transactions (or leave tagged for history)
-  - [ ] 6.4 Create `DeleteGroupDialog.tsx` with confirmation
-  - [ ] 6.5 Navigate to personal view after deletion
+- [x] Task 6: Delete Group Functionality (AC: #4)
+  - [x] 6.1 Implement `deleteSharedGroupWithCleanup(db, ownerId, appId, groupId, removeTransactionTags)`
+  - [x] 6.2 Remove groupId from all members' profiles
+  - [x] 6.3 Optionally untag all transactions (or leave tagged for history)
+  - [x] 6.4 Create `DeleteGroupDialog.tsx` with confirmation
+  - [x] 6.5 Navigate to personal view after deletion
 
-- [ ] Task 7: i18n Translations
-  - [ ] 7.1 Add all dialog strings in English and Spanish
-  - [ ] 7.2 Include consequence explanations
-  - [ ] 7.3 Add error messages
+- [x] Task 7: i18n Translations
+  - [x] 7.1 Add all dialog strings in English and Spanish
+  - [x] 7.2 Include consequence explanations
+  - [x] 7.3 Add error messages
 
-- [ ] Task 8: Component Tests
-  - [ ] 8.1 Test soft leave removes from members but keeps transactions
-  - [ ] 8.2 Test hard leave removes from members and untags transactions
-  - [ ] 8.3 Test ownership transfer updates ownerId
-  - [ ] 8.4 Test owner cannot leave without transfer
-  - [ ] 8.5 Test member removal (owner only)
+- [x] Task 8: Component Tests
+  - [x] 8.1 Test soft leave removes from members but keeps transactions
+  - [x] 8.2 Test hard leave removes from members and untags transactions
+  - [x] 8.3 Test ownership transfer updates ownerId
+  - [x] 8.4 Test owner cannot leave without transfer
+  - [x] 8.5 Test member removal (owner only)
 
 ## Dev Notes
 
@@ -313,9 +313,53 @@ As owner, you must either:
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
+**Implementation Summary (2026-01-15):**
+
+1. **Service Functions:** Implemented 5 core functions in `sharedGroupService.ts`:
+   - `leaveGroupSoft()` - Removes user from members[], keeps transactions tagged
+   - `leaveGroupHard()` - Removes user + untags all their transactions
+   - `transferOwnership()` - Updates ownerId, validates ownership
+   - `removeMember()` - Owner removes another member (soft leave)
+   - `deleteSharedGroupWithCleanup()` - Deletes group, updates all member profiles
+
+2. **Batch Processing:** Transaction untagging uses 500-operation batch chunking to handle users with many transactions within Firestore limits.
+
+3. **Dialog Components:** Created 6 WCAG 2.1 AA compliant dialogs:
+   - All have focus trap, escape key close, body scroll lock
+   - Loading states during async operations
+   - Clear consequence explanations per AC #7
+
+4. **Error Handling:** Typed error system with specific error codes:
+   - `GROUP_NOT_FOUND`, `NOT_A_MEMBER`, `OWNER_CANNOT_LEAVE`
+   - `NOT_OWNER`, `CANNOT_TRANSFER_TO_SELF`, `TARGET_NOT_MEMBER`
+
+5. **Translations:** Added 34 translation keys (English + Spanish) covering all dialog strings.
+
+6. **Testing:** 41 tests total (20 service + 21 component) covering all AC scenarios.
+
+**Architecture Decisions:**
+- Components placed in `src/components/SharedGroups/` (better organization than `dialogs/`)
+- Profile path: `artifacts/{appId}/users/{userId}/preferences/settings` for `memberOfSharedGroups`
+- `OwnerLeaveWarningDialog` created for AC #4 (not in original plan but necessary for UX)
+
 ### File List
+
+**New Files Created:**
+- `src/components/SharedGroups/LeaveGroupDialog.tsx` - Soft/hard leave options dialog
+- `src/components/SharedGroups/GroupMembersManager.tsx` - Members list with actions
+- `src/components/SharedGroups/TransferOwnershipDialog.tsx` - Transfer confirmation
+- `src/components/SharedGroups/RemoveMemberDialog.tsx` - Remove member confirmation
+- `src/components/SharedGroups/OwnerLeaveWarningDialog.tsx` - Owner warning dialog
+- `src/components/SharedGroups/DeleteGroupDialog.tsx` - Delete group confirmation
+- `tests/unit/services/sharedGroupService.leaveManage.test.ts` - Service tests (20 tests)
+- `tests/unit/components/SharedGroups/LeaveGroupDialog.test.tsx` - Dialog tests (21 tests)
+
+**Modified Files:**
+- `src/services/sharedGroupService.ts` - Added leave/transfer/remove/delete functions (~420 lines)
+- `src/components/settings/subviews/GruposView.tsx` - Integrated GroupMembersManager + handlers
+- `src/utils/translations.ts` - Added 34 translation keys (lines 809-842, 1652-1685)
 

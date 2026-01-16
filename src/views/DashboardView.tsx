@@ -18,7 +18,7 @@
  */
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { Inbox, ArrowUpDown, Filter, ChevronLeft, ChevronRight, Receipt, Package, X, Layers, Trash2 } from 'lucide-react';
+import { Inbox, ArrowUpDown, Filter, ChevronLeft, ChevronRight, Receipt, Package, X, Bookmark, Trash2 } from 'lucide-react';
 import { ImageViewer } from '../components/ImageViewer';
 // Story 10a.1: Filter bar for consolidated home view (AC #2)
 import { HistoryFilterBar } from '../components/history/HistoryFilterBar';
@@ -29,7 +29,7 @@ import { DeleteTransactionsModal } from '../components/history/DeleteTransaction
 import type { TransactionPreview } from '../components/history/DeleteTransactionsModal';
 import { useSelectionMode } from '../hooks/useSelectionMode';
 import { useGroups } from '../hooks/useGroups';
-import { assignTransactionsToGroup, createGroup } from '../services/groupService';
+import { assignTransactionsToGroup, createGroup, clearGroupFromTransactions } from '../services/groupService';
 import { deleteTransactionsBatch } from '../services/firestore';
 import { getFirestore } from 'firebase/firestore';
 // Story 9.12: Category translations
@@ -2047,6 +2047,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         }
     };
 
+    // Story 14c.4: Handle removing group from selected transactions
+    const handleRemoveFromGroup = async () => {
+        if (!userId || selectedIds.size === 0) return;
+
+        const db = getFirestore();
+        const selectedTxIds = Array.from(selectedIds);
+
+        try {
+            await clearGroupFromTransactions(db, userId, appId, selectedTxIds);
+            setShowAssignGroupModal(false);
+            exitSelectionMode();
+        } catch (error) {
+            console.error('Error removing from group:', error);
+        }
+    };
+
     const handleConfirmDelete = async () => {
         if (!userId || selectedIds.size === 0) return;
 
@@ -3314,7 +3330,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         aria-label="Asignar grupo"
                                         disabled={selectedIds.size === 0}
                                     >
-                                        <Layers size={16} style={{ color: 'white' }} />
+                                        <Bookmark size={16} style={{ color: 'white' }} />
                                     </button>
                                     <button
                                         onClick={handleOpenDelete}
@@ -3464,6 +3480,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             setShowAssignGroupModal(false);
                             setShowCreateGroupModal(true);
                         }}
+                        onRemoveFromGroup={handleRemoveFromGroup}
                         selectedCount={selectedIds.size}
                         t={t}
                     />

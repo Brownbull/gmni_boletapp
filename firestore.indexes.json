@@ -23,16 +23,6 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "shareCode",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "sharedGroups",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
           "fieldPath": "members",
           "arrayConfig": "CONTAINS"
         },

@@ -758,6 +758,47 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
         }
     }, [userId, appId, addGroup, getSelectedTransactions, exitSelectionMode]);
 
+    // Story 14c.4: Handle removing group from selected transactions
+    const handleRemoveFromGroup = useCallback(async () => {
+        if (!userId) {
+            console.error('[HistoryView] Cannot remove from group: User not authenticated');
+            return;
+        }
+
+        const selectedTxs = getSelectedTransactions();
+        const transactionIds = selectedTxs.map((tx) => tx.id);
+
+        try {
+            const db = getFirestore();
+
+            // First, decrement counts on the previous groups
+            const txsByPreviousGroup = new Map<string, { ids: string[]; totals: Map<string, number> }>();
+            for (const tx of selectedTxs) {
+                if (tx.groupId) {
+                    if (!txsByPreviousGroup.has(tx.groupId)) {
+                        txsByPreviousGroup.set(tx.groupId, { ids: [], totals: new Map() });
+                    }
+                    const groupData = txsByPreviousGroup.get(tx.groupId)!;
+                    groupData.ids.push(tx.id);
+                    groupData.totals.set(tx.id, tx.total);
+                }
+            }
+
+            // Remove from previous groups (decrements counts)
+            for (const [prevGroupId, { ids, totals }] of txsByPreviousGroup) {
+                await removeTransactionsFromGroup(db, userId, appId, ids, prevGroupId, totals);
+            }
+
+            // Clear group fields from transactions
+            await clearGroupFromTransactions(db, userId, appId, transactionIds);
+
+            setShowGroupModal(false);
+            exitSelectionMode();
+        } catch (err) {
+            console.error('[HistoryView] Failed to remove from group:', err);
+        }
+    }, [userId, appId, getSelectedTransactions, exitSelectionMode]);
+
     // Story 14.15: Handle batch delete
     const handleDeleteTransactions = useCallback(async () => {
         if (!userId) {
@@ -1427,6 +1468,7 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                     }}
                     onEditGroup={handleEditGroup}
                     onDeleteGroup={handleDeleteGroup}
+                    onRemoveFromGroup={handleRemoveFromGroup}
                     t={t}
                     lang={lang as 'en' | 'es'}
                 />

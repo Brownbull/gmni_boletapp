@@ -25,3 +25,20 @@ export type { SharedGroupEmptyStateProps } from './SharedGroupEmptyState';
 
 export { InviteMembersPrompt } from './InviteMembersPrompt';
 export type { InviteMembersPromptProps } from './InviteMembersPrompt';
+
+// Story 14c.4: View Mode Switcher
+export { ViewModeSwitcher } from './ViewModeSwitcher';
+export type { ViewModeSwitcherProps } from './ViewModeSwitcher';
+
+// Story 14c.2: Pending Invitations
+export { PendingInvitationsSection } from './PendingInvitationsSection';
+
+// Story 14c.3: Leave/Manage Group
+export { GroupMembersManager } from './GroupMembersManager';
+export { LeaveGroupDialog } from './LeaveGroupDialog';
+export type { LeaveGroupDialogProps, LeaveMode } from './LeaveGroupDialog';
+export { DeleteGroupDialog } from './DeleteGroupDialog';
+export type { DeleteGroupDialogProps } from './DeleteGroupDialog';
+export { TransferOwnershipDialog } from './TransferOwnershipDialog';
+export { OwnerLeaveWarningDialog } from './OwnerLeaveWarningDialog';
+export { RemoveMemberDialog } from './RemoveMemberDialog';
