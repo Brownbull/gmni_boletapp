@@ -140,10 +140,6 @@ export interface TopHeaderProps {
      */
     activeGroup?: ActiveGroupInfo;
 
-    /**
-     * Sign out handler for profile dropdown
-     */
-    onSignOut?: () => void;
 }
 
 /**
@@ -237,7 +233,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     onLogoClick,
     viewMode = 'personal',
     activeGroup,
-    onSignOut,
 }) => {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const profileButtonRef = useRef<HTMLButtonElement>(null);
@@ -460,7 +455,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                                 theme={theme}
                                 t={t}
                                 triggerRef={profileButtonRef}
-                                onSignOut={onSignOut}
                             />
                         </>
                     )}

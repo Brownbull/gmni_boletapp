@@ -3519,7 +3519,6 @@ function App() {
                         color: activeGroup.color,
                         members: activeGroup.members,
                     } : undefined}
-                    onSignOut={signOut}
                 />
             )}
 

@@ -17,6 +17,7 @@ import { Firestore } from 'firebase/firestore';
 import { SettingsSubView } from '../types/settings';
 import {
     SettingsMenuItem,
+    SignOutDialog,
     LimitesView,
     PerfilView,
     PreferenciasView,
@@ -195,6 +196,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             setInternalView(view);
         }
     };
+
+    // Sign out confirmation dialog state
+    const [showSignOutDialog, setShowSignOutDialog] = useState(false);
 
     // Render the appropriate sub-view based on current navigation state
     const renderSubView = () => {
@@ -451,8 +455,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     icon="log-out"
                     iconBgColor="#fee2e2"
                     iconColor="#ef4444"
-                    onClick={onSignOut}
+                    onClick={() => setShowSignOutDialog(true)}
                     testId="settings-menu-signout"
+                />
+
+                {/* Sign Out Confirmation Dialog */}
+                <SignOutDialog
+                    isOpen={showSignOutDialog}
+                    onConfirm={() => {
+                        setShowSignOutDialog(false);
+                        onSignOut();
+                    }}
+                    onCancel={() => setShowSignOutDialog(false)}
+                    t={t}
+                    lang={lang as 'en' | 'es'}
                 />
             </div>
         );

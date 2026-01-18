@@ -15,7 +15,7 @@
  */
 
 import React, { useRef, useEffect } from 'react';
-import { Receipt, FileText, Target, Settings, Package, LogOut } from 'lucide-react';
+import { Receipt, FileText, Target, Settings, Package } from 'lucide-react';
 
 export interface ProfileDropdownProps {
   /** Whether the dropdown is open */
@@ -34,8 +34,6 @@ export interface ProfileDropdownProps {
   t: (key: string) => string;
   /** Reference to the trigger button (for click outside detection) */
   triggerRef: React.RefObject<HTMLButtonElement | null>;
-  /** Sign out handler (optional - if not provided, sign out won't be shown) */
-  onSignOut?: () => void;
 }
 
 /**
@@ -50,7 +48,6 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
   theme,
   t,
   triggerRef,
-  onSignOut,
 }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isDark = theme === 'dark';
@@ -173,22 +170,6 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
           <Settings size={18} strokeWidth={2} style={{ color: 'var(--text-secondary, #475569)' }} />
           <span className="text-sm font-medium">{t('settings')}</span>
         </button>
-
-        {/* Sign Out */}
-        {onSignOut && (
-          <button
-            onClick={() => {
-              onSignOut();
-              onClose();
-            }}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-            role="menuitem"
-            style={{ color: '#ef4444' }}
-          >
-            <LogOut size={18} strokeWidth={2} style={{ color: '#ef4444' }} />
-            <span className="text-sm font-medium">{t('signout')}</span>
-          </button>
-        )}
       </div>
     </div>
   );
