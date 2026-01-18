@@ -492,7 +492,7 @@ development_status:
   # Decision Doc: docs/sprint-artifacts/epic14c/BRAINSTORM-REALTIME-SYNC-DECISION.md
   # NOTE: 14c.12 RESOLVES cache invalidation issues from 14c.5 - this is the missing piece for cross-user sync
   14c-12-realtime-sync-complete-circuit: done  # 5 pts - onSnapshot + memberUpdates + cache invalidation - Atlas Code Review PASSED 2026-01-17 (4631 tests, security rules tightened, +20 new utility tests)
-  14c-13-fcm-push-notifications: deployed  # 8 pts - Closed-app notifications + token management [DEPENDS: 14c.12] - PR #163 2026-01-18
+  14c-13-fcm-push-notifications: in-progress  # 8 pts - Closed-app notifications + token management [DEPENDS: 14c.12] - PR #163 2026-01-18, pending production testing
 
   # Phase 5: Polish - 4 pts
   14c-10-empty-states-loading: done  # 2 pts - Skeleton UI, empty states, loading feedback

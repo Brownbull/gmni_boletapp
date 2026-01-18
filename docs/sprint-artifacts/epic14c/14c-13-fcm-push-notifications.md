@@ -1,6 +1,6 @@
 # Story 14c.13: FCM Push Notifications for Shared Groups
 
-**Status**: deployed
+**Status**: in-progress
 **Points**: 8
 **Priority**: Medium
 **Dependencies**: 14c.12 (real-time sync)
