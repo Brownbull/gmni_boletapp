@@ -54,9 +54,19 @@ export async function addTransaction(
 ): Promise<string> {
     // Clean undefined values before sending to Firestore
     const cleanedTransaction = removeUndefined(transaction as Record<string, unknown>);
+
+    // Story 14c.5: Always include sharedGroupIds (default empty array)
+    // This ensures ALL transactions have the field, enabling proper security rules
+    // for collection group queries that check resource.data.sharedGroupIds.size() > 0
+    const transactionWithDefaults = {
+        ...cleanedTransaction,
+        sharedGroupIds: (cleanedTransaction as any).sharedGroupIds ?? [],
+        createdAt: serverTimestamp(),
+    };
+
     const docRef = await addDoc(
         collection(db, 'artifacts', appId, 'users', userId, 'transactions'),
-        { ...cleanedTransaction, createdAt: serverTimestamp() }
+        transactionWithDefaults
     );
     // Story 14.31: Debug logging for transaction save
     if (import.meta.env.DEV) {

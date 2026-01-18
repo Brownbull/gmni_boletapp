@@ -6,10 +6,11 @@
  *
  * Features:
  * - Personal mode option with description
- * - Group options with icon, name, and member count
+ * - Group options with icon, name, and member count with mini avatars
  * - Checkmark on currently active mode
  * - Loading skeleton while fetching groups
  * - Keyboard navigation and accessibility
+ * - Larger icons (48px) for better visibility
  *
  * @example
  * ```tsx
@@ -141,7 +142,7 @@ export const ViewModeSwitcher: React.FC<ViewModeSwitcherProps> = ({
           <ViewModeOption
             testId="view-mode-option-personal"
             isActive={currentMode === 'personal'}
-            icon={<User size={20} />}
+            icon={<User size={24} style={{ color: 'var(--text-primary, #0f172a)' }} />}
             name={t('personal')}
             description={t('viewModePersonalDescription')}
             onClick={handleSelectPersonal}
@@ -152,7 +153,7 @@ export const ViewModeSwitcher: React.FC<ViewModeSwitcherProps> = ({
             <div data-testid="view-mode-switcher-skeleton" className="px-4 py-3">
               <div className="flex items-center gap-3">
                 <div
-                  className="w-10 h-10 rounded-full animate-pulse"
+                  className="w-12 h-12 rounded-full animate-pulse"
                   style={{ backgroundColor: 'var(--bg-skeleton, #e2e8f0)' }}
                 />
                 <div className="flex-1 space-y-2">
@@ -161,7 +162,7 @@ export const ViewModeSwitcher: React.FC<ViewModeSwitcherProps> = ({
                     style={{ backgroundColor: 'var(--bg-skeleton, #e2e8f0)' }}
                   />
                   <div
-                    className="h-3 w-16 rounded animate-pulse"
+                    className="h-3 w-32 rounded animate-pulse"
                     style={{ backgroundColor: 'var(--bg-skeleton, #e2e8f0)' }}
                   />
                 </div>
@@ -177,14 +178,22 @@ export const ViewModeSwitcher: React.FC<ViewModeSwitcherProps> = ({
                 testId={`view-mode-option-${group.id}`}
                 isActive={currentMode === 'group' && currentGroupId === group.id}
                 icon={
-                  <span className="text-xl" role="img" aria-label={group.name}>
+                  <span
+                    className="text-2xl"
+                    role="img"
+                    aria-label={group.name}
+                    style={{
+                      fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", sans-serif',
+                      lineHeight: 1,
+                    }}
+                  >
                     {group.icon || '👥'}
                   </span>
                 }
                 name={group.name}
-                description={`${group.members.length} ${t('members')}`}
                 color={group.color}
                 onClick={() => handleSelectGroup(group)}
+                memberCount={group.members.length}
               />
             ))}
         </div>
@@ -202,9 +211,11 @@ interface ViewModeOptionProps {
   isActive: boolean;
   icon: React.ReactNode;
   name: string;
-  description: string;
+  description?: string;
   color?: string;
   onClick: () => void;
+  /** Member count for display */
+  memberCount?: number;
 }
 
 const ViewModeOption: React.FC<ViewModeOptionProps> = ({
@@ -215,6 +226,7 @@ const ViewModeOption: React.FC<ViewModeOptionProps> = ({
   description,
   color,
   onClick,
+  memberCount,
 }) => {
   return (
     <button
@@ -227,31 +239,41 @@ const ViewModeOption: React.FC<ViewModeOptionProps> = ({
         backgroundColor: isActive ? 'var(--primary-bg, #eff6ff)' : 'transparent',
       }}
     >
-      {/* Icon container */}
+      {/* Icon container - larger 48px for better visibility */}
       <div
-        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+        className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
         style={{
-          backgroundColor: color ? `${color}20` : 'var(--bg-muted, #f1f5f9)',
-          color: color || 'var(--text-primary, #0f172a)',
+          backgroundColor: color || 'var(--bg-muted, #f1f5f9)',
         }}
       >
         {icon}
       </div>
 
       {/* Text content */}
-      <div className="flex-1 text-left">
+      <div className="flex-1 text-left min-w-0">
         <div
-          className="font-medium text-sm"
+          className="font-medium text-sm truncate"
           style={{ color: 'var(--text-primary, #0f172a)' }}
         >
           {name}
         </div>
-        <div
-          className="text-xs"
-          style={{ color: 'var(--text-tertiary, #94a3b8)' }}
-        >
-          {description}
-        </div>
+
+        {/* Member count OR description */}
+        {memberCount !== undefined ? (
+          <div
+            className="text-xs"
+            style={{ color: 'var(--text-tertiary, #94a3b8)' }}
+          >
+            {memberCount} {memberCount === 1 ? 'miembro' : 'miembros'}
+          </div>
+        ) : description ? (
+          <div
+            className="text-xs"
+            style={{ color: 'var(--text-tertiary, #94a3b8)' }}
+          >
+            {description}
+          </div>
+        ) : null}
       </div>
 
       {/* Checkmark for active option */}

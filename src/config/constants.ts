@@ -1,4 +1,10 @@
 /**
+ * Application ID used for Firestore collection paths.
+ * This should match the Firebase project ID.
+ */
+export const APP_ID = 'boletapp';
+
+/**
  * Store categories for the app UI.
  * IMPORTANT: Keep in sync with prompt-testing/prompts/output-schema.ts STORE_CATEGORIES
  */

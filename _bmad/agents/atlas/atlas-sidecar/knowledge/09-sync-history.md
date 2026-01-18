@@ -1,7 +1,7 @@
 # Sync History
 
 > Section 9 of Atlas Memory
-> Last Optimized: 2026-01-12 (Generation 4)
+> Last Optimized: 2026-01-17 (Generation 5)
 > Tracks knowledge synchronizations
 
 ## Sync Log Summary
@@ -12,440 +12,75 @@
 |--------|-------------|
 | 2025-12-18 to 12-31 | Epics 10-13: Insight engine, QuickSave, batch processing, design system |
 | 2026-01-01 to 01-05 | Epic 14 Phase 1-3: Animation, polygon, dashboard |
-| 2026-01-06 to 01-07 | Gen 1+2 optimization, unified editor, React Query |
-| 2026-01-08 to 01-10 | Epic 14d stories 14d.1-14d.6, Gen 3 optimization |
-| 2026-01-11 | Stories 14d.5a-e, 14d.6, 14.13.2, 14.13.3 Sankey in progress |
-| 2026-01-12 | Epic 14d COMPLETE, 14.17-14.19, 14.33a done, Gen 4 optimization |
-| 2026-01-14 | Story 14.44, 14.30 Test Debt, CI group configs |
+| 2026-01-06 to 01-10 | Gen 1+2 optimization, unified editor, React Query |
+| 2026-01-11 to 01-12 | Epic 14d COMPLETE (11 stories), Gen 4 optimization |
+| 2026-01-13 to 01-14 | Story 14.30 Test Debt, CI explicit groups, 14.44 Category Fix |
 | **2026-01-15** | **Combined Retrospective: Epics 12, 13, 14, 14d all COMPLETE** |
-
-### Latest Session (2026-01-15) - Architecture Documentation Update
-
-**Documentation Refresh via Atlas + Architect Analysis**
-
-**Problem:** Architecture documentation significantly outdated:
-- Cloud Functions undocumented (analyzeReceipt, onTransactionDeleted)
-- Epic 14c collections (sharedGroups, pendingInvitations) not in data-models.md
-- Services layer showed 2 files (actual: 25 files)
-- Hooks layer showed 15+ files (actual: 49 files)
-
-**Files Updated:**
-| File | Changes |
-|------|---------|
-| `docs/architecture/architecture.md` | Added Cloud Functions section, ADR-011 (Household Sharing) |
-| `docs/architecture/data-models.md` | Added sharedGroups + pendingInvitations schemas |
-| `docs/architecture/api-contracts.md` | Complete analyzeReceipt/onTransactionDeleted contracts |
-| `docs/architecture/source-tree-analysis.md` | Updated file counts (25 services, 49 hooks), added functions/ |
-| `atlas-sidecar/knowledge/04-architecture.md` | Added Epic 14c + Cloud Functions sections |
-
-**Key Documentation Additions:**
-1. **Cloud Functions:**
-   - `analyzeReceipt`: HTTPS Callable, rate limiting (10/min), image validation
-   - `onTransactionDeleted`: Firestore trigger for cascade delete
-
-2. **ADR-011:** Household Sharing Architecture
-   - Top-level collections for cross-user access
-   - Security rules helper functions documented
-
-3. **New Collections:**
-   - `/sharedGroups/{groupId}` with members array, owner pattern
-   - `/pendingInvitations/{invitationId}` with email-based workflow
-
-**Document Versions Updated:**
-- architecture.md: 5.0 → 6.0
-- data-models.md: Epic 14 → Epic 14c
-- api-contracts.md: Epic 14 → Epic 14c
-- source-tree-analysis.md: 3.0 → 4.0
+| **2026-01-15 to 01-16** | **Epic 14c Phase 1-2: Stories 14c.1-14c.10 (Shared Groups)** |
 
 ---
 
-### Previous Session (2026-01-15) - Epic 14c Code Reviews
+## Current Project Status (2026-01-17)
 
-**Story 14c.10 - Empty States & Loading (Atlas Code Review)**
+| Metric | Value |
+|--------|-------|
+| **Epic 12** | ✅ COMPLETE (6/6) - Batch Mode |
+| **Epic 13** | ✅ COMPLETE (14/14) - UX Design & Mockups |
+| **Epic 14** | ✅ COMPLETE (50+) - Core Implementation |
+| **Epic 14d** | ✅ COMPLETE (11/11) - Scan Architecture Refactor |
+| **Epic 14c** | 🔄 IN PROGRESS (10/11) - Household Sharing |
+| **Tests** | 3,146+ (84%+ coverage) |
+| **Bundle** | 2.92 MB ⚠️ |
+| **Velocity** | ~8.6 pts/day |
+| **Version** | 1.0.0-beta.1 |
 
-**Status:** ✅ APPROVED
+### Epic 14c Progress (Household Sharing)
 
-| Issue | Severity | Fix |
-|-------|----------|-----|
-| Secondary button missing hover/focus states | MEDIUM | Added `hover:opacity-80 focus:outline-none focus:underline` |
-| No defensive test for negative memberCount | MEDIUM | Added edge case test (memberCount=-1 treated as solo member) |
-| Hardcoded fallback color concern | LOW | Verified `#dbeafe` is consistent codebase pattern (not a bug) |
+| Story | Status | Description |
+|-------|--------|-------------|
+| 14c.1 | ✅ Done | Create Shared Group |
+| 14c.2 | ✅ Done | Accept/Decline Invitation |
+| 14c.3 | ✅ Done | Leave/Manage Group |
+| 14c.4 | ✅ Done | View Mode Switcher |
+| 14c.5 | ✅ Done | Shared Group Transactions View |
+| 14c.6 | ✅ Done | Transaction Ownership Indicators |
+| 14c.7 | ✅ Done | Tag Transactions to Groups |
+| 14c.8 | ✅ Done | Auto-Tag on Scan |
+| 14c.9 | ✅ Done | Member Filter Bar |
+| 14c.10 | ✅ Done | Empty States & Loading |
+| 14c.11 | 📋 Ready | Real-time Sync |
 
-**Files Modified:**
-- `src/components/SharedGroups/SharedGroupEmptyState.tsx` - Added hover/focus states
-- `tests/unit/components/SharedGroups/SharedGroupEmptyState.test.tsx` - Added defensive test (18 tests total)
-- `docs/sprint-artifacts/epic14c/14c-10-empty-states-loading.md` - Added Code Review Fixes section
+### Next Epics Roadmap
 
-**Atlas Validation:**
-- ✅ Architecture compliance: Uses CSS variables per Section 4 patterns
-- ✅ Pattern compliance: animate-pulse + role/aria per Section 5/6 patterns
-- ✅ Workflow impact: No breaking changes to existing flows
-
-**Patterns Verified:**
-- Skeleton components: `animate-pulse` + `role="status"` + `aria-label`
-- Context-aware empty states: `memberCount <= 1` for invite vs scan CTAs
-- CSS variable fallbacks: Consistent `var(--primary-light, #dbeafe)` pattern
-
----
-
-### Previous Session (2026-01-15) - Combined Retrospective
-
-**Epics 12, 13, 14, 14d - Combined Retrospective**
-
-**Scope:** ~216 story points across ~70 stories in 25 days
-
-**Key Achievements:**
-- Epic 12: Batch Mode (6 stories, ~25 pts)
-- Epic 13: UX Design & Mockups (14 stories, ~41 pts)
-- Epic 14: Core Implementation (50+ stories, ~150 pts)
-- Epic 14d: Scan Architecture Refactor (11 stories, ~52 pts)
-
-**What Worked Well (from Gabe):**
-1. Atlas agent integration for consistent reviews
-2. Design-first workflow (mockups → implementation)
-3. Prompt iteration workflow for scanning
-4. CI/CD testing resolution after infinite loop fixes
-
-**Challenges Identified:**
-1. Testing infrastructure pain (infinite loops hard to detect)
-2. Cost monitoring gap (Firebase $19/week spike caught reactively)
-3. Scan architecture technical debt (31 scattered state variables)
-4. Large file sprawl causing ripple effects
-
-**Process Improvements Adopted:**
-1. Epic Completion Checklist (cost audit, test health, bundle size)
-2. Infinite Loop Detection patterns
-3. Refactor-First Policy for legacy code
-4. Codebase Modularization ongoing
-
-**Next Epics Roadmap:**
-| Epic | Theme | Prep |
-|------|-------|------|
-| 14C | Household Sharing | Brainstorm |
-| 14E | Codebase Refactoring | Architecture Review |
-| 14F | Invite-Only Access | Requirements |
-
-**Retro Document:** docs/sprint-artifacts/epic12-13-14-retro-2026-01-15.md
-
-**Sprint Status Updates:**
-- epic-12-retrospective: optional → done
-- epic-13-retrospective: optional → done
-- epic-14-retrospective: optional → done
-- epic-14d-retrospective: optional → done
-- epic-14: in-progress → done
+| Epic | Theme | Status | Prep Required |
+|------|-------|--------|---------------|
+| **14c** | Household Sharing | In Progress | 1 story remaining |
+| **14E** | Codebase Refactoring | New | Architecture review |
+| **14F** | Invite-Only Access | New | Requirements definition |
+| **15** | Advanced Features | Backlog | Blocked by 14C/E/F |
 
 ---
 
-### Previous Session (2026-01-14) - Session 7
-
-**Story 14.44 - Category Statistics Data Fix (Atlas Code Review)**
-
-**Problem Solved:**
-- Category statistics popup showing "Sin Datos" for item categories like "Prepared Food"
-- Root cause: item.category stored in Spanish (e.g., "Comida Preparada") but compared with English categoryName
-
-**Atlas Code Review Findings:**
-- 2 CRITICAL: Tests failing, story not updated
-- 2 HIGH: Duplicate JSDoc, missing test coverage
-- All fixed in code review session
-
-**Patterns Added to 06-lessons.md:**
-- Category name language mismatch handling
-- Test data language consistency (Spanish items, English hook calls)
-- normalizeItemCategory usage pattern
-- Story status discipline before commit
-
----
-
-### Session 6 (2026-01-14)
-
-**Story 14.30.8 - Explicit Test Groups for Predictable CI**
-
-**Problem Solved:**
-- Vitest automatic sharding (`--shard=1/5`) caused unpredictable test distribution
-- test-unit-1 and test-unit-2 consistently timed out (>15 min)
-- Root cause: sharding algorithm distributes alphabetically, doesn't consider complexity
-
-**Solution Implemented:**
-- Created 8 explicit module-based test group configs
-- `vitest.config.ci.base.ts` - Shared base config
-- `vitest.config.ci.group-*.ts` - Module-specific include patterns
-
-| Group | Module | Tests |
-|-------|--------|-------|
-| test-unit-1 | hooks | 427 |
-| test-unit-2 | services | 274 |
-| test-unit-3 | utils | 527 |
-| test-unit-4 | analytics | 272 |
-| test-unit-5 | views + root | 547 |
-| test-unit-6 | components/insights | 298 |
-| test-unit-7 | components/scan | 440 |
-| test-unit-8 | components/other | 687 |
-
-**CI Run Status (21004641865):**
-- 9/12 jobs passed, test-unit-5 (views) failed
-- Investigation needed for views group failure
-
-**Patterns Added to 06-lessons.md:**
-- Explicit test groups vs automatic sharding
-- createGroupConfig() helper pattern
-- CI group benefits
-
----
-
-### Session 5 (2026-01-14)
-
-**Story 14.30 Atlas Code Review APPROVED**
-
-- Story status: review → **done**
-- File List updated to show Session 1-2 vs Session 3-4 changes
-- Added patterns to Section 6: multi-session file lists, Bun+npm hybrid
-- All ACs verified, all tasks complete
-
----
-
-### Session 4 (2026-01-14)
-
-**Story 14.30.5a COMPLETED - Test Fixes Verified**
-
-**Fixes Applied & Verified:**
-1. `HistoryViewThumbnails.test.tsx` (30 tests now passing):
-   - **Root Cause**: `HistoryFiltersProvider` defaults to current month (2026-01)
-   - **Issue**: Test transactions had dates in January 2024
-   - **Fix**: Added `testFilterState` with `temporal: { level: 'all' }` to bypass date filtering
-
-2. `TopHeader.test.tsx` (28 tests now passing):
-   - **Root Cause**: `ProfileDropdown` uses `t('purchases')` not `t('transactions')`
-   - **Fix**: Added missing `purchases` and `productos` translation keys to mockT
-
-**Story Status Updates:**
-- 14.30.5a: review → done (verified locally)
-- 14.30: in-progress → review (all P0 items complete)
-
-**Memory Updates:**
-- 05-testing.md: Added 14.30.5a fix patterns
-- 06-lessons.md: Added CI coverage, shard scaling, local verification patterns
-
----
-
-### Session 3 (2026-01-14)
-
-**Story 14.30 Session 3 - CI Optimization Validation**
-
-**Findings:**
-- 5-shard configuration deployed (commit 37e3c37)
-- **Severe shard imbalance discovered**: Shards 1&2 take 13-15 min, shards 3-5 take ~1 min
-- Root cause: 4 large test files (~1400-1700 lines) cluster in early shards
-- **Pre-existing test failures blocking validation**: 30 tests failing on branch (main passes)
-  - `HistoryViewThumbnails.test.tsx` (28 failures)
-  - `TopHeader.test.tsx` (2 failures)
-
-**New Sub-Story Created:** 14.30.5a - Fix Pre-Existing Test Failures (P0 - BLOCKING) → COMPLETED Session 4
-
-**Dead Code Discovery:** `shared/prompts/` is entirely unused:
-```
-prompt-testing/prompts/  →  (prebuild copy)  →  functions/src/prompts/
-     V1, V2, V3                                    Production code
-
-shared/prompts/  ← DEAD CODE (not imported anywhere)
-```
-
-**Memory Updates:**
-- 05-testing.md: Added 5-shard timing, imbalance documentation, CI history
-- 06-lessons.md: Added dead code, Vitest sharding, branch drift patterns
-
----
-
-### Session (2026-01-13)
-
-**Story Created: 14.42 Version Upgrade & Auto-Update Detection**
-
-Final story for Epic 14. User requested:
-1. Version bump from 9.6.1 to 1.0.0-beta.1 (pre-launch beta for expanded test users)
-2. Automatic update detection with top banner prompt
-3. "Hay una actualización disponible. ¿Quieres actualizar?" message
-4. Update/Dismiss buttons
-
-**Story Location:** `docs/sprint-artifacts/epic14/stories/story-14.42-version-upgrade-auto-update.md`
-
-**Files to Modify:**
-- `package.json` - Version bump
-- `src/components/PWAUpdatePrompt.tsx` - Reposition to top, translations
-- `src/utils/translations.ts` - Update banner translations
-
-**Existing Infrastructure:** `usePWAUpdate.ts` hook already handles SW update detection
-
----
-
-**Code Review: 14.38 Item View Toggle**
-
-**Status:** ✅ APPROVED
-
-| Issue | Severity | Fix |
-|-------|----------|-----|
-| Missing barrel export | MEDIUM | Added `ItemViewToggle` export to `src/components/items/index.ts` |
-| Empty ternary branch | LOW | Removed no-op `${cond ? '' : ''}` from className |
-
-**Files Modified:**
-- `src/components/items/index.ts` - Added barrel export
-- `src/views/TransactionEditorView.tsx` - Removed empty ternary
-
-**Patterns Adopted:** InsightsViewSwitcher pill-toggle pattern, local useState for view mode
-
----
-
-**Code Review: 14.41 View Mode Edit Button**
-
-**Status:** ✅ APPROVED
-
-| Issue | Severity | Fix |
-|-------|----------|-----|
-| Missing `edit` translation key | MEDIUM | Added to en/es translations |
-| Missing `lang` prop to LocationSelect | MEDIUM | Added explicit prop threading |
-| No TransactionEditorView tests | LOW | Noted as coverage gap (individual component tests pass) |
-
-**Files Modified:**
-- `src/utils/translations.ts` - Added `edit` key
-- `src/views/TransactionEditorView.tsx` - Added `lang={lang}` to LocationSelect
-
-**Learnings:** Always verify translation keys exist; localized components need explicit lang prop
-
----
-
-**Code Review: 14.30 Test Technical Debt Cleanup**
-
-**Status:** ✅ APPROVED
-
-| Issue | Severity | Fix |
-|-------|----------|-----|
-| Story tasks all unchecked | MEDIUM | Marked all 8 tasks `[x]` |
-| AC items unchecked | MEDIUM | Marked all 8 ACs `[x]` |
-| AC headers outdated | LOW | Changed `✅→Pending` to `✅` |
-
-**Tests Verified:**
-- `shared/prompts/__tests__/index.test.ts`: 62 pass
-- `prompt-testing/prompts/__tests__/index.test.ts`: 72 pass
-- `tests/unit/views/BatchReviewView.test.tsx`: 23 pass
-- `functions/src/prompts/__tests__/index.test.ts`: Skipped (documented)
-
-**Patterns Added to Section 6:**
-- CSS variable testing strategy
-- Async dialog testing pattern
-- Legacy prompt versioning (V1/V2 vs V3)
-- Task checkbox discipline
-- Skipped test documentation
-
----
-
-**Code Review: 14.40 Category Statistics Popup**
-
-**Status:** ✅ APPROVED
-
-| Issue | Severity | Fix |
-|-------|----------|-----|
-| Missing useCategoryStatistics hook test | HIGH | Created 14 tests covering all category types |
-| AC4 Price Trend not implemented | MEDIUM | Marked as deferred (returns null) |
-| Story ACs all unmarked | MEDIUM | Updated 26 ACs to reflect implementation |
-| Definition of Done unmarked | MEDIUM | Updated all 7 DoD items |
-
-**Files Added:**
-- `tests/unit/hooks/useCategoryStatistics.test.ts` (14 tests)
-
-**Learnings:** Store categories use English enum keys (e.g., 'Supermarket' not 'Supermercado') in STORE_CATEGORY_GROUPS
-
----
-
-**Code Review: 14.32 Usage & Cost Audit**
-
-**Status:** ✅ APPROVED
-
-| Issue | Severity | Fix |
-|-------|----------|-----|
-| AC #5 Budget Alerts marked N/A | HIGH | Changed to "DEFERRED - see Optional Future Improvements" |
-| File List missing README.md | HIGH | Added `docs/business/README.md` to Files Modified |
-| Cost discrepancy $0.00175 vs $0.026 | HIGH | Added clarification note to cost-analysis.md |
-| Stale line reference (208→179) | MEDIUM | Updated firestore.ts line reference |
-| Budget threshold inconsistency | LOW | Updated to $50/$100/$500 |
-
-**Files Modified:**
-- `docs/sprint-artifacts/epic14/stories/story-14.32-usage-cost-audit.md`
-- `docs/business/cost-analysis.md` - Added cost discrepancy clarification
-
-**Key Learning:** Documentation-only audit stories need adversarial review for accuracy. Actual measured costs ($0.00175/scan) differ significantly from theoretical calculations ($0.026/scan) due to efficient image tokenization.
-
-**Patterns Added to Section 6:** Cost figure accuracy, file list completeness, line number freshness, AC task status conventions
-
----
-
-### Session (2026-01-12) - Summary
-
-**Epic 14d:** ✅ All 11 stories COMPLETE
-- 14d.5: Race condition + thumbnail hotfix
-- 14d.7-8: Mode selector + FAB visual states
-- 14d.9: Statement placeholder view
-- 14d.10: OBSOLETE (superseded by 14d.4d+5e)
-- 14d.11: App.tsx cleanup, pendingBatchStorage.ts deleted
-
-**Epic 14:**
-- 14.17: "Intentional or Accidental?" prompt ✅
-- 14.18: Celebration system (confetti+haptic+sound) ✅
-- 14.19: Personal records detection ✅
-- 14.16b: Semantic colors ✅
-- 14.33a: Insight card types (5 visual types, 74 tests) ✅
-- **14.33d: Insights Section Refactor** ✅
-- **14.34: QuickSave Currency Formatting** ✅
-
-**Story 14.33d Insights Section Changes:**
-- Tab reduction: 4 → 3 (Lista, Airlock, Logro)
-- Destacados merged into Lista as top carousel section
-- Airlock & Logro tabs → "Próximamente" placeholders
-- Confetti: localStorage tracking (shows once per record)
-- Theme colors: Selection uses `var(--primary)` not hardcoded blue
-
-**Key Bugs Fixed:**
-1. Atomic state update pattern for BATCH_COMPLETE (race condition)
-2. Batch edit thumbnail via transaction.thumbnailUrl (not setScanImages)
-3. Confetti showing repeatedly on every Logro tab visit
-
-### Story 14.13.3 Sankey - IN PROGRESS
-
-| Fixed | Pending |
-|-------|---------|
-| Height 380px, node opacity, title+% | Icon nodes positioning, click-to-highlight |
-
-**Session Notes:** `docs/sprint-artifacts/epic14/stories/story-14.13.3-session-notes.md`
-
-### Code Review: 14.33b View Switcher & Carousel
-
-**Status:** ✅ APPROVED (5 fixes applied)
-
-| Issue | Fix |
-|-------|-----|
-| buttonStyle unused (TS6133) | Applied to InsightsTemporalFilter button |
-| 8px dot touch targets | 44px wrapper around visual dot |
-| No keyboard nav | ArrowLeft/Right + tabIndex |
-| backgroundColor gradient | Changed to background |
-| carousel translation | Added EN/ES key |
-
-**Lessons added to Section 6**
-
-### Code Review: 14.35 Dynamic Location Data
-
-**Status:** ✅ APPROVED (4 fixes + 1 enhancement)
-
-| Issue | Severity | Fix |
-|-------|----------|-----|
-| Query keys not in queryKeys.ts | HIGH | Moved to centralized `QUERY_KEYS.locations.countries()` |
-| Module cache test pollution | MEDIUM | Added `_clearLocationCache()` helper in beforeEach/afterEach |
-| console.warn in production | LOW | DEV-gated with `import.meta.env.DEV` |
-| File List incomplete | MEDIUM | Updated story to include all modified files |
-
-**Enhancement:** Expanded Chilean city coverage from 97 to 240+ cities
-- All 52 comunas of Santiago metropolitan area
-- All 16 regions of Chile covered
-- Includes coastal cities, tourist destinations, and regional capitals
-
-**Lessons added to Section 6**
+## Latest Session Summary (2026-01-16)
+
+### Epic 14c Stories 14c.5-14c.8 Code Reviews
+
+**Key Patterns Discovered:**
+- Firestore collection group queries CANNOT use `resource.data.*` conditions
+- Portal pattern required for modals inside scrollable containers
+- Left border accent pattern for group colors on TransactionCard
+- Internal hook usage for group data (not props) for consistent rendering
+
+**Architecture Updates:**
+- docs/architecture/architecture.md v6.0 (Cloud Functions, ADR-011)
+- docs/architecture/data-models.md (sharedGroups, pendingInvitations)
+- firestore.indexes.json (composite indexes for array-contains + orderBy)
+
+**Files Created (Epic 14c):**
+- src/components/SharedGroups/* (12+ components)
+- src/hooks/useAllUserGroups.ts, useSharedGroupTransactions.ts
+- src/services/sharedGroupService.ts, sharedGroupTransactionService.ts
+- tests/unit/components/SharedGroups/* (18+ test files)
 
 ---
 
@@ -457,38 +92,6 @@ Final story for Epic 14. User requested:
 | Architecture | docs/architecture/architecture.md |
 | UX Design | docs/ux-design-specification.md |
 | Sprint Status | docs/sprint-artifacts/sprint-status.yaml |
-
----
-
-## Current Project Status (2026-01-15)
-
-| Metric | Value |
-|--------|-------|
-| **Epic 12** | ✅ COMPLETE (6/6) - Batch Mode |
-| **Epic 13** | ✅ COMPLETE (14/14) - UX Design & Mockups |
-| **Epic 14** | ✅ COMPLETE (50+) - Core Implementation |
-| **Epic 14d** | ✅ COMPLETE (11/11) - Scan Architecture Refactor |
-| **Tests** | 3,146+ (84%+ coverage) |
-| **Bundle** | 2.92 MB ⚠️ |
-| **Velocity** | ~8.6 pts/day |
-| **Version** | 1.0.0-beta.1 |
-
-### Next Epics (Roadmap)
-
-| Epic | Theme | Status | Prep Required |
-|------|-------|--------|---------------|
-| **14C** | Household Sharing | Backlog | Brainstorm session |
-| **14E** | Codebase Refactoring | New | Architecture review |
-| **14F** | Invite-Only Access | New | Requirements definition |
-| **15** | Advanced Features | Backlog | Blocked by 14C/E/F |
-
-### Key Deliverables Shipped (Epics 12-14d)
-- Batch Mode (parallel processing, up to 10 receipts)
-- Design System (10 HTML mockups, motion specs)
-- Animation Framework (breathing, transitions, celebrations)
-- Dynamic Polygon (3-6 sided spending visualization)
-- Scan State Machine (31 variables → unified architecture)
-- Tiered CI/CD (develop=smoke, main=full)
 
 ---
 
@@ -508,5 +111,7 @@ All critical facts verified with direct quotes from source documents.
 
 ## Sync Notes
 
-- Generation 4: Consolidated Jan 11-12 verbose session details
-- Previous generations in backups/v1-v3/
+- **Generation 5 (2026-01-17):** Archived verbose session details (Jan 11-16)
+- **Reduction:** 527 → ~130 lines (~75% smaller)
+- Previous generations in backups/v1-v5/
+- Detailed session logs available in story files under `docs/sprint-artifacts/`

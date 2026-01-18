@@ -510,14 +510,16 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
           className="px-4 py-4"
           style={{ backgroundColor: 'var(--bg)', paddingBottom: 'calc(80px + var(--safe-bottom, 0px))' }}
         >
+          {/* Story 14c.8 Code Review: Use theme-aware primary color instead of hardcoded green */}
           <button
             onClick={handleSaveAll}
             disabled={isSaving || validCount === 0}
-            className={`w-full py-3 px-4 rounded-xl font-semibold text-white transition-colors flex items-center justify-center gap-2 ${
-              isSaving || validCount === 0
-                ? 'bg-green-400 cursor-not-allowed'
-                : 'bg-green-600 hover:bg-green-700'
-            }`}
+            className="w-full py-3 px-4 rounded-xl font-semibold text-white transition-colors flex items-center justify-center gap-2"
+            style={{
+              backgroundColor: 'var(--primary)',
+              cursor: isSaving || validCount === 0 ? 'not-allowed' : 'pointer',
+              opacity: isSaving || validCount === 0 ? 0.7 : 1,
+            }}
             aria-label={t('batchSaveAll')}
           >
             {isSaving ? (

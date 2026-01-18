@@ -1225,23 +1225,26 @@ export async function deleteSharedGroupWithCleanup(
         throw new Error('NOT_OWNER');
     }
 
-    // 3. Optionally untag all members' transactions
+    // 3. Optionally untag owner's transactions only
+    // Note: We can only untag the owner's transactions due to security rules.
+    // Other members' transactions will retain the groupId but the group won't exist,
+    // so they'll be filtered out naturally (stale reference handling).
     if (removeTransactionTags) {
-        for (const memberId of group.members) {
-            await untagUserTransactions(db, memberId, appId, groupId);
-        }
+        await untagUserTransactions(db, ownerId, appId, groupId);
     }
 
-    // 4. Remove groupId from all members' profiles and delete group
+    // 4. Remove groupId from owner's profile and delete group
+    // Note: We only update the owner's profile here. Other members' profiles
+    // will be cleaned up when they next access their groups (stale group references
+    // are filtered out in useUserSharedGroups hook).
+    // This avoids permission issues since users can only write to their own profiles.
     const batch = writeBatch(db);
 
-    // 4a. Update each member's profile
-    for (const memberId of group.members) {
-        const profileRef = doc(db, `artifacts/${appId}/users/${memberId}/preferences/settings`);
-        batch.set(profileRef, {
-            memberOfSharedGroups: arrayRemove(groupId),
-        }, { merge: true });
-    }
+    // 4a. Update owner's profile only
+    const ownerProfileRef = doc(db, `artifacts/${appId}/users/${ownerId}/preferences/settings`);
+    batch.set(ownerProfileRef, {
+        memberOfSharedGroups: arrayRemove(groupId),
+    }, { merge: true });
 
     // 4b. Delete the group document
     const groupRef = doc(db, SHARED_GROUPS_COLLECTION, groupId);
@@ -1257,5 +1260,65 @@ export async function deleteSharedGroupWithCleanup(
             membersAffected: group.members.length,
             transactionsUntagged: removeTransactionTags,
         });
+    }
+}
+
+// ============================================================================
+// Story 14c.7: Tag Transactions to Groups - Update memberUpdates timestamp
+// ============================================================================
+
+/**
+ * Update memberUpdates timestamps for affected shared groups when a transaction's
+ * sharedGroupIds changes.
+ *
+ * This should be called after saving a transaction that has sharedGroupIds.
+ * It updates the memberUpdates[userId].lastSyncAt timestamp for all groups that
+ * were added to or removed from the transaction, enabling other members to detect
+ * changes via delta sync.
+ *
+ * @param db Firestore instance
+ * @param userId User ID of the transaction owner
+ * @param newGroupIds New sharedGroupIds on the transaction
+ * @param previousGroupIds Previous sharedGroupIds (before edit)
+ */
+export async function updateMemberTimestampsForTransaction(
+    db: Firestore,
+    userId: string,
+    newGroupIds: string[],
+    previousGroupIds: string[]
+): Promise<void> {
+    // Find all affected groups (union of new and previous)
+    const allAffectedGroups = new Set([...newGroupIds, ...previousGroupIds]);
+
+    if (allAffectedGroups.size === 0) {
+        return; // No groups to update
+    }
+
+    const batch = writeBatch(db);
+    const now = serverTimestamp();
+
+    for (const groupId of allAffectedGroups) {
+        const groupRef = doc(db, SHARED_GROUPS_COLLECTION, groupId);
+        batch.update(groupRef, {
+            [`memberUpdates.${userId}.lastSyncAt`]: now,
+            updatedAt: now,
+        });
+    }
+
+    try {
+        await batch.commit();
+
+        if (import.meta.env.DEV) {
+            console.log('[sharedGroupService] updateMemberTimestampsForTransaction:', {
+                userId,
+                affectedGroups: Array.from(allAffectedGroups),
+                added: newGroupIds.filter(id => !previousGroupIds.includes(id)),
+                removed: previousGroupIds.filter(id => !newGroupIds.includes(id)),
+            });
+        }
+    } catch (error) {
+        // Don't fail the transaction save if timestamp update fails
+        // This is a non-critical optimization for delta sync
+        console.warn('[sharedGroupService] Failed to update memberUpdates timestamps:', error);
     }
 }
