@@ -37,8 +37,8 @@ const db = admin.firestore();
 // Constants
 // ============================================================================
 
-/** App ID for Firestore paths */
-const APP_ID = 'boletapp';
+/** App ID for Firestore paths - matches firebaseConfig.projectId used in client */
+const APP_ID = 'boletapp-d609f';
 
 /** Token staleness threshold in days */
 const STALE_TOKEN_DAYS = 60;

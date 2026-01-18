@@ -50,6 +50,9 @@ interface TransactionData {
     currency?: string;
 }
 
+/** Type of notification to send */
+type NotificationType = 'TRANSACTION_ADDED' | 'TRANSACTION_REMOVED';
+
 interface SharedGroupData {
     name: string;
     icon?: string;
@@ -119,28 +122,48 @@ export const sendSharedGroupNotification = functions.firestore
 
         // Find newly added groups (groups not in before but in after)
         const addedGroups = newGroupIds.filter(gid => !oldGroupIds.includes(gid));
+        // Find removed groups (groups in before but not in after)
+        const removedGroups = oldGroupIds.filter(gid => !newGroupIds.includes(gid));
 
-        logger.info(`[sendSharedGroupNotification] newGroupIds:`, newGroupIds, `oldGroupIds:`, oldGroupIds, `addedGroups:`, addedGroups);
+        logger.info(`[sendSharedGroupNotification] newGroupIds:`, newGroupIds, `oldGroupIds:`, oldGroupIds, `addedGroups:`, addedGroups, `removedGroups:`, removedGroups);
 
-        // No new groups tagged - no notification
-        if (addedGroups.length === 0) {
-            logger.info(`[sendSharedGroupNotification] Skipping: no new groups tagged`);
+        // No changes to groups - no notification
+        if (addedGroups.length === 0 && removedGroups.length === 0) {
+            logger.info(`[sendSharedGroupNotification] Skipping: no group changes`);
             return;
         }
 
-        logger.info(`[sendSharedGroupNotification] Transaction ${transactionId} tagged to groups:`, addedGroups);
-
-        // Task 5.3 & 5.4: Process each new group
+        // Task 5.3 & 5.4: Process each added group
         for (const groupId of addedGroups) {
             try {
+                logger.info(`[sendSharedGroupNotification] Transaction ${transactionId} added to group:`, groupId);
                 await processGroupNotification(
                     groupId,
                     userId,
                     transactionId,
-                    after
+                    after,
+                    'TRANSACTION_ADDED'
                 );
             } catch (error) {
-                logger.error(`[sendSharedGroupNotification] Error processing group ${groupId}:`, error);
+                logger.error(`[sendSharedGroupNotification] Error processing added group ${groupId}:`, error);
+                // Continue with other groups even if one fails
+            }
+        }
+
+        // Process each removed group - notify members that transaction was removed
+        for (const groupId of removedGroups) {
+            try {
+                logger.info(`[sendSharedGroupNotification] Transaction ${transactionId} removed from group:`, groupId);
+                // Use before data since after no longer has the group context
+                await processGroupNotification(
+                    groupId,
+                    userId,
+                    transactionId,
+                    before!,
+                    'TRANSACTION_REMOVED'
+                );
+            } catch (error) {
+                logger.error(`[sendSharedGroupNotification] Error processing removed group ${groupId}:`, error);
                 // Continue with other groups even if one fails
             }
         }
@@ -160,7 +183,8 @@ async function processGroupNotification(
     groupId: string,
     ownerId: string,
     transactionId: string,
-    transaction: TransactionData
+    transaction: TransactionData,
+    notificationType: NotificationType
 ): Promise<void> {
     // Fetch group document
     const groupDoc = await db.doc(`sharedGroups/${groupId}`).get();
@@ -173,8 +197,14 @@ async function processGroupNotification(
     const groupData = groupDoc.data() as SharedGroupData;
     const members = groupData.members || [];
 
+    // Log member filtering details for debugging
+    logger.info(`[sendSharedGroupNotification] Group ${groupId} members:`, members);
+    logger.info(`[sendSharedGroupNotification] Transaction owner (excluded):`, ownerId);
+
     // Get other members (exclude the transaction owner)
     const otherMembers = members.filter(memberId => memberId !== ownerId);
+
+    logger.info(`[sendSharedGroupNotification] Recipients (other members):`, otherMembers);
 
     if (otherMembers.length === 0) {
         logger.info(`[sendSharedGroupNotification] No other members in group ${groupId}`);
@@ -194,8 +224,11 @@ async function processGroupNotification(
 
         // Get member's FCM tokens
         const memberTokens = await getMemberTokens(memberId);
+        logger.info(`[sendSharedGroupNotification] Tokens for member ${memberId}:`, memberTokens.length);
         tokens.push(...memberTokens);
     }
+
+    logger.info(`[sendSharedGroupNotification] Total tokens collected:`, tokens.length);
 
     if (tokens.length === 0) {
         logger.info(`[sendSharedGroupNotification] No valid FCM tokens for group ${groupId}`);
@@ -203,7 +236,7 @@ async function processGroupNotification(
     }
 
     // Build notification content
-    const { title, body } = buildNotificationContent(groupData, transaction, ownerId);
+    const { title, body } = buildNotificationContent(groupData, transaction, ownerId, notificationType);
 
     // Task 5.4: Send FCM notification
     await sendNotification(tokens, {
@@ -212,6 +245,7 @@ async function processGroupNotification(
         groupId,
         transactionId,
         groupIcon: groupData.icon || '',
+        notificationType,
     });
 
     // Update rate limit timestamps
@@ -241,12 +275,14 @@ async function getMemberTokens(userId: string): Promise<string[]> {
  *
  * Format:
  * - Title: Group name with icon (e.g., "🏠 Casa")
- * - Body: "Partner added Walmart - $45.00"
+ * - Body (added): "Partner added Walmart - $45.00"
+ * - Body (removed): "Partner removed Walmart - $45.00"
  */
 function buildNotificationContent(
     group: SharedGroupData,
     transaction: TransactionData,
-    ownerId: string
+    ownerId: string,
+    notificationType: NotificationType
 ): { title: string; body: string } {
     // Get owner's display name from group member profiles
     const ownerProfile = group.memberProfiles?.[ownerId];
@@ -262,9 +298,10 @@ function buildNotificationContent(
         ? `${group.icon} ${group.name.replace(/^[^\s]+\s/, '')}` // Remove emoji from name if present, use icon
         : group.name;
 
-    // Build body
+    // Build body based on notification type
     const merchant = transaction.merchant || 'a transaction';
-    const body = `${ownerName} added ${merchant} - ${formattedAmount}`;
+    const action = notificationType === 'TRANSACTION_ADDED' ? 'added' : 'removed';
+    const body = `${ownerName} ${action} ${merchant} - ${formattedAmount}`;
 
     return { title, body };
 }
@@ -282,13 +319,14 @@ async function sendNotification(
         groupId: string;
         transactionId: string;
         groupIcon: string;
+        notificationType: NotificationType;
     }
 ): Promise<void> {
     // Send data-only message (service worker will display notification)
     const message: admin.messaging.MulticastMessage = {
         tokens,
         data: {
-            type: 'TRANSACTION_ADDED',
+            type: data.notificationType,
             title: data.title,
             body: data.body,
             groupId: data.groupId,
@@ -314,8 +352,10 @@ async function sendNotification(
             `[sendSharedGroupNotification] Sent ${response.successCount}/${tokens.length} notifications`
         );
 
-        // Log failures for debugging
+        // Log failures and delete invalid tokens
         if (response.failureCount > 0) {
+            const tokensToDelete: string[] = [];
+
             response.responses.forEach((resp, idx) => {
                 if (!resp.success) {
                     logger.warn(
@@ -323,12 +363,51 @@ async function sendNotification(
                         resp.error?.code,
                         resp.error?.message
                     );
+
+                    // Collect invalid tokens for deletion
+                    if (resp.error?.code === 'messaging/registration-token-not-registered' ||
+                        resp.error?.code === 'messaging/invalid-registration-token') {
+                        tokensToDelete.push(tokens[idx]);
+                    }
                 }
             });
+
+            // Delete invalid tokens asynchronously (don't block notification flow)
+            if (tokensToDelete.length > 0) {
+                deleteInvalidTokens(tokensToDelete).catch(err => {
+                    logger.error('[sendSharedGroupNotification] Error deleting invalid tokens:', err);
+                });
+            }
         }
     } catch (error) {
         logger.error('[sendSharedGroupNotification] FCM send error:', error);
         throw error;
+    }
+}
+
+/**
+ * Delete invalid FCM tokens from Firestore.
+ * Uses collection group query to find and delete tokens across all users.
+ */
+async function deleteInvalidTokens(tokens: string[]): Promise<void> {
+    logger.info(`[sendSharedGroupNotification] Deleting ${tokens.length} invalid tokens...`);
+
+    for (const token of tokens) {
+        try {
+            // Query all users for this token using collection group query
+            const snapshot = await db.collectionGroup('fcmTokens')
+                .where('token', '==', token)
+                .get();
+
+            if (!snapshot.empty) {
+                const batch = db.batch();
+                snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+                logger.info(`[sendSharedGroupNotification] Deleted invalid token (found in ${snapshot.size} docs)`);
+            }
+        } catch (error) {
+            logger.error(`[sendSharedGroupNotification] Error deleting token:`, error);
+        }
     }
 }
 
