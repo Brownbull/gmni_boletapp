@@ -333,7 +333,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         exporting={exporting}
                         onExportAll={onExportAll}
                         onWipeDB={onWipeDB}
-                        onSignOut={onSignOut}
                     />
                 );
 
@@ -437,6 +436,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     iconColor="#ec4899"
                     onClick={() => setCurrentView('cuenta')}
                     testId="settings-menu-cuenta"
+                />
+
+                {/* Divider before sign out */}
+                <div
+                    className="h-px mx-2 my-1"
+                    style={{ backgroundColor: 'var(--border-light)' }}
+                />
+
+                {/* Sign Out - Always visible at bottom of settings */}
+                <SettingsMenuItem
+                    title={t('signout')}
+                    subtitle={t('signOutDesc')}
+                    icon="log-out"
+                    iconBgColor="#fee2e2"
+                    iconColor="#ef4444"
+                    onClick={onSignOut}
+                    testId="settings-menu-signout"
                 />
             </div>
         );

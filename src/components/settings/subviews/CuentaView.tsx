@@ -1,6 +1,6 @@
 /**
  * CuentaView Sub-View (now "Mis Datos" / "My Data")
- * Story 14.22 AC #10: Data export, import, storage info, factory reset, and sign out
+ * Story 14.22 AC #10: Data export, import, storage info, factory reset
  *
  * Redesigned to match settings.html mockup with:
  * - Local User card
@@ -8,7 +8,8 @@
  * - Export/Import Data rows
  * - Cloud Sync placeholder
  * - Destructive reset action
- * - Sign out
+ *
+ * Note: Sign out moved to main Settings menu and ProfileDropdown for easier access
  */
 
 import React from 'react';
@@ -18,7 +19,6 @@ import {
     Upload,
     RefreshCw,
     Trash2,
-    LogOut,
     Loader2,
 } from 'lucide-react';
 
@@ -29,7 +29,6 @@ interface CuentaViewProps {
     exporting: boolean;
     onExportAll: () => void;
     onWipeDB: () => Promise<void>;
-    onSignOut: () => void;
 }
 
 export const CuentaView: React.FC<CuentaViewProps> = ({
@@ -39,7 +38,6 @@ export const CuentaView: React.FC<CuentaViewProps> = ({
     exporting,
     onExportAll,
     onWipeDB,
-    onSignOut,
 }) => {
     const isDark = theme === 'dark';
 
@@ -240,39 +238,6 @@ export const CuentaView: React.FC<CuentaViewProps> = ({
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         ) : null}
                         {t('resetAllBtn')}
-                    </button>
-                </div>
-            </div>
-
-            {/* Sign Out Row */}
-            <div className="p-4 rounded-xl border" style={cardStyle}>
-                <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2.5">
-                        <LogOut size={20} style={{ color: 'var(--text-secondary)' }} />
-                        <div>
-                            <span
-                                className="text-sm font-medium block"
-                                style={{ color: 'var(--text-primary)' }}
-                            >
-                                {t('signout')}
-                            </span>
-                            <span
-                                className="text-xs"
-                                style={{ color: 'var(--text-secondary)' }}
-                            >
-                                {t('signOutDesc')}
-                            </span>
-                        </div>
-                    </div>
-                    <button
-                        onClick={onSignOut}
-                        className="flex items-center justify-center px-3.5 py-2 rounded-lg text-sm font-medium transition-colors"
-                        style={{
-                            backgroundColor: isDark ? '#334155' : '#e2e8f0',
-                            color: 'var(--text-primary)',
-                        }}
-                    >
-                        {t('signOutBtn')}
                     </button>
                 </div>
             </div>
