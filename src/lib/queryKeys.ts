@@ -62,13 +62,6 @@ export const QUERY_KEYS = {
     },
 
     /**
-     * Groups queries
-     * Key: ['groups', userId, appId]
-     */
-    groups: (userId: string, appId: string) =>
-        ['groups', userId, appId] as const,
-
-    /**
      * Trusted merchants queries
      * Key: ['trustedMerchants', userId, appId]
      */
@@ -93,19 +86,30 @@ export const QUERY_KEYS = {
         ['items', 'derived', userId, appId] as const,
 
     /**
-     * Future: Household sharing (Epic 14c)
+     * Story 14c.5: Shared Group Transactions
+     * Multi-member transaction queries with IndexedDB caching
+     * Key: ['sharedGroupTransactions', groupId, startDate, endDate]
+     */
+    sharedGroupTransactions: (groupId: string, startDate: string, endDate: string) =>
+        ['sharedGroupTransactions', groupId, startDate, endDate] as const,
+
+    /**
+     * Story 14c.1: Shared Groups
      * Structured for multi-user real-time sync
      */
-    household: {
-        /** All household data */
-        all: (householdId: string) =>
-            ['household', householdId] as const,
-        /** Household transactions */
-        transactions: (householdId: string) =>
-            ['household', householdId, 'transactions'] as const,
-        /** Household members */
-        members: (householdId: string) =>
-            ['household', householdId, 'members'] as const,
+    sharedGroups: {
+        /** All shared groups for a user */
+        all: (userId: string) =>
+            ['sharedGroups', userId] as const,
+        /** Single shared group */
+        single: (groupId: string) =>
+            ['sharedGroups', 'single', groupId] as const,
+        /** Shared group transactions (alias for sharedGroupTransactions) */
+        transactions: (groupId: string, startDate: string, endDate: string) =>
+            ['sharedGroupTransactions', groupId, startDate, endDate] as const,
+        /** Shared group members */
+        members: (groupId: string) =>
+            ['sharedGroups', groupId, 'members'] as const,
     },
 
     /**

@@ -22,6 +22,37 @@ import { render, screen, fireEvent, waitFor } from '../../setup/test-utils';
 import { DashboardView } from '../../../src/views/DashboardView';
 import { HistoryFiltersProvider } from '../../../src/contexts/HistoryFiltersContext';
 
+// Group consolidation: Mock firebase/firestore for getFirestore calls
+vi.mock('firebase/firestore', () => ({
+  getFirestore: vi.fn(() => ({})),
+  collection: vi.fn(),
+  doc: vi.fn(),
+  updateDoc: vi.fn(() => Promise.resolve()),
+  deleteDoc: vi.fn(() => Promise.resolve()),
+  writeBatch: vi.fn(() => ({
+    delete: vi.fn(),
+    commit: vi.fn(() => Promise.resolve()),
+  })),
+}));
+
+// Group consolidation: Mock firestore service for updateTransaction
+vi.mock('../../../src/services/firestore', () => ({
+  deleteTransactionsBatch: vi.fn(() => Promise.resolve()),
+  updateTransaction: vi.fn(() => Promise.resolve()),
+}));
+
+// Group consolidation: Mock useAllUserGroups hook
+vi.mock('../../../src/hooks/useAllUserGroups', () => ({
+  useAllUserGroups: vi.fn(() => ({
+    groups: [],
+    isLoading: false,
+    error: undefined,
+    hasGroups: false,
+    sharedGroupCount: 0,
+    personalGroupCount: 0,
+  })),
+}));
+
 // Helper to format month in short format (e.g., "Jan '26")
 const formatShortMonth = (month: number, year: number) => {
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];

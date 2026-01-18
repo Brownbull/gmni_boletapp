@@ -1041,9 +1041,9 @@ Transaction deleted → Firestore onDelete trigger
 
 ### ADR-011: Household Sharing Architecture (Epic 14c)
 
-**Decision:** Implement shared groups using top-level Firestore collections with membership-based access control
+**Decision:** Implement shared groups using top-level Firestore collections with Cloud Function for secure cross-user transaction queries
 **Context:** Users need to share expense tracking with family members while maintaining data isolation
-**Date:** 2026-01-15 (Epic 14c)
+**Date:** 2026-01-15 (Epic 14c), **Updated:** 2026-01-17 (Security hardening)
 
 **Architecture Pattern (Hybrid Model - Option 4):**
 ```
@@ -1053,7 +1053,7 @@ Top-level collections (cross-user access):
 
 User-level collections (isolated):
 └── /artifacts/{appId}/users/{userId}/transactions/{txId}
-    └── groupIds?: string[]           ← References to shared groups
+    └── sharedGroupIds?: string[]     ← References to shared groups (max 5)
 ```
 
 **Key Design Decisions:**
@@ -1064,23 +1064,53 @@ User-level collections (isolated):
 | Membership Model | UID array in document | Simple queries, Firestore rules compatible |
 | Invitation Flow | Email-based + pending status | Supports inviting non-registered users |
 | Max Members | 10 per group | Performance + UI complexity limits |
+| Cross-User Queries | **Cloud Function** | Server-side membership validation (see below) |
+
+**Critical Security Decision (2026-01-17):**
+
+Firestore collection group queries **CANNOT** evaluate `resource.data.*` conditions. This is a fundamental platform limitation that prevents client-side membership validation for cross-user transaction queries.
+
+**Solution:** Cloud Function with server-side validation
+
+```
+Client Request
+     │
+     ▼
+┌─────────────────────────────────────┐
+│  getSharedGroupTransactions (CF)    │
+│  1. Validate auth token             │
+│  2. Fetch group, check membership   │
+│  3. Execute query (admin SDK)       │
+│  4. Return transactions w/ _ownerId │
+└─────────────────────────────────────┘
+     │
+     ▼
+Firestore (admin SDK bypasses rules)
+```
+
+**Detailed Documentation:** See [Shared Groups Architecture](./shared-groups-architecture.md)
 
 **Security Rules Pattern:**
 ```javascript
 // sharedGroups - Members can read, only owner can write
 match /sharedGroups/{groupId} {
-  allow create: if isValidNewGroup();      // Owner creating with self as only member
-  allow read: if isGroupMember();          // UID in members array
-  allow update: if isGroupOwner() || isJoiningGroup();  // Owner or user accepting invite
-  allow delete: if isGroupOwner();         // Only owner can delete
+  allow create: if isValidNewGroup();
+  allow read: if isGroupMember() || (isAuthenticated() && resource.data.shareCode != null);
+  allow update: if isGroupOwner() || isJoiningGroup();
+  allow delete: if isGroupOwner();
 }
 
 // pendingInvitations - Invited user can accept/decline
 match /pendingInvitations/{invitationId} {
   allow create: if invitedByUserId == auth.uid;
-  allow read: if invitedEmail == auth.token.email;
+  allow read: if invitedEmail == auth.token.email.lower();
   allow update: if isInvitedUser() && statusUpdateOnly();
   allow delete: if false;  // Kept for audit trail
+}
+
+// Collection group queries - DENIED (handled by Cloud Function)
+match /{path=**}/transactions/{transactionId} {
+  allow read: if false;
 }
 ```
 
@@ -1088,11 +1118,12 @@ match /pendingInvitations/{invitationId} {
 - ✅ Family members can view shared expenses
 - ✅ Owner controls group membership
 - ✅ Invitation flow works for non-registered users
-- ✅ Security rules enforce access control
+- ✅ **Proper security** via server-side membership validation
+- ✅ Cloud Function free tier covers MVP scale
 - ⚠️ Requires careful handling of user deletion (orphan prevention)
-- ⚠️ Group transactions appear in multiple users' views
+- ⚠️ Slight latency increase (~100-200ms) vs direct Firestore queries
 
-**Status:** Accepted (Epic 14c In Progress)
+**Status:** Accepted (Epic 14c Complete)
 
 ---
 

@@ -18,20 +18,22 @@
  */
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { Inbox, ArrowUpDown, Filter, ChevronLeft, ChevronRight, Receipt, Package, X, Bookmark, Trash2 } from 'lucide-react';
+import { Inbox, ArrowUpDown, Filter, ChevronLeft, ChevronRight, Receipt, Package, X, Bookmark, Trash2, CheckSquare } from 'lucide-react';
 import { ImageViewer } from '../components/ImageViewer';
 // Story 10a.1: Filter bar for consolidated home view (AC #2)
 import { HistoryFilterBar } from '../components/history/HistoryFilterBar';
-// Story 14.15b: Selection mode and group modals for Dashboard
-import { AssignGroupModal } from '../components/history/AssignGroupModal';
-import { CreateGroupModal } from '../components/history/CreateGroupModal';
+// Story 14.15b: Selection mode and modals for Dashboard
+// Group consolidation: Replaced personal group modals with TransactionGroupSelector
 import { DeleteTransactionsModal } from '../components/history/DeleteTransactionsModal';
 import type { TransactionPreview } from '../components/history/DeleteTransactionsModal';
+import { TransactionGroupSelector } from '../components/SharedGroups/TransactionGroupSelector';
 import { useSelectionMode } from '../hooks/useSelectionMode';
-import { useGroups } from '../hooks/useGroups';
-import { assignTransactionsToGroup, createGroup, clearGroupFromTransactions } from '../services/groupService';
-import { deleteTransactionsBatch } from '../services/firestore';
+import { useAllUserGroups } from '../hooks/useAllUserGroups';
+import { deleteTransactionsBatch, updateTransaction } from '../services/firestore';
 import { getFirestore } from 'firebase/firestore';
+import { useQueryClient } from '@tanstack/react-query';
+// Story 14c.5 Bug Fix: Clear IndexedDB cache when group assignments change
+import { clearGroupCacheById } from '../lib/sharedGroupCache';
 // Story 9.12: Category translations
 import type { Language } from '../utils/translations';
 import { translateCategory } from '../utils/categoryTranslations';
@@ -117,10 +119,8 @@ interface Transaction {
     currency?: string;
     // Story 11.1: createdAt for sort by scan date
     createdAt?: any; // Firestore Timestamp or Date
-    // Story 14.15b: Group display fields
-    groupId?: string;
-    groupName?: string;
-    groupColor?: string;
+    // Group consolidation: Shared group IDs (replaces legacy groupId/groupName/groupColor)
+    sharedGroupIds?: string[];
 }
 
 interface DashboardViewProps {
@@ -169,6 +169,8 @@ interface DashboardViewProps {
     defaultCountry?: string;
     /** Story 14.35b: How to display foreign locations (code or flag) */
     foreignLocationFormat?: 'code' | 'flag';
+    /** Group consolidation: Shared groups for dynamic group color lookup */
+    sharedGroups?: Array<{ id: string; color: string }>;
 }
 
 // Story 14.12: Number of recent transactions to show (collapsed/expanded)
@@ -471,6 +473,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     // Story 14.35b: Foreign location display settings
     defaultCountry = '',
     foreignLocationFormat = 'code',
+    // Group consolidation: Shared groups for dynamic color lookup (DEPRECATED - now using useAllUserGroups internally)
+    sharedGroups: _sharedGroups = [],
 }) => {
     // Story 7.12: Theme-aware styling using CSS variables (AC #1, #2, #8)
     const isDark = theme === 'dark';
@@ -605,6 +609,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     const [showFullList, setShowFullList] = useState(false);
 
     // Story 14.15b: Selection mode state and hooks for Dashboard Recientes
+    // Story 14c.8: Added selectAll and clearSelection for "Select All" feature
     const {
         isSelectionMode,
         selectedIds,
@@ -612,14 +617,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         enterSelectionMode,
         exitSelectionMode,
         isSelected,
+        selectAll,
+        clearSelection,
     } = useSelectionMode();
 
-    // Story 14.15b: Groups hook for group assignment
-    const { groups } = useGroups(userId, appId);
+    // Group consolidation: Shared groups for group assignment
+    const { groups, isLoading: groupsLoading } = useAllUserGroups(userId || undefined);
 
-    // Story 14.15b: Modal states
-    const [showAssignGroupModal, setShowAssignGroupModal] = useState(false);
-    const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
+    // Story 14c.5: Query client for cache invalidation when groups are assigned/unassigned
+    const queryClient = useQueryClient();
+
+    // Story 14c.8: Helper to lookup group color from sharedGroupIds using loaded groups
+    const getGroupColorForTransaction = useCallback((tx: Transaction): string | undefined => {
+        if (!tx.sharedGroupIds?.length || !groups.length) return undefined;
+        const group = groups.find(g => tx.sharedGroupIds?.includes(g.id));
+        return group?.color;
+    }, [groups]);
+
+    // Group consolidation: Modal states
+    const [showGroupSelector, setShowGroupSelector] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     // Story 14.15b: Long-press state for selection mode entry
@@ -1833,6 +1849,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     // Story 14.12: Active transactions based on recientes carousel slide
     const recentTransactions = recientesSlide === 0 ? recentTransactionsByScan : recentTransactionsByDate;
 
+    // Story 14c.8: Get visible transaction IDs for "Select All" in Recientes section
+    const visibleRecientesIds = useMemo(() => {
+        return recentTransactions.map(tx => (tx as Transaction).id).filter((id): id is string => !!id);
+    }, [recentTransactions]);
+
+    // Story 14c.8: Handle Select All toggle for Recientes section
+    const handleRecientesSelectAllToggle = useCallback(() => {
+        const allVisibleSelected = visibleRecientesIds.length > 0 &&
+            visibleRecientesIds.every(id => selectedIds.has(id));
+        if (allVisibleSelected) {
+            clearSelection();
+        } else {
+            selectAll(visibleRecientesIds);
+        }
+    }, [visibleRecientesIds, selectedIds, selectAll, clearSelection]);
+
     // Story 14.12: Total transaction count (for determining if expand is useful)
     // NOTE: Uses ALL transactions, not month-filtered
     const totalTransactionsCount = filteredTransactions.length;
@@ -1996,70 +2028,69 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         }
     };
 
-    // Story 14.15b: Modal handlers for selection mode
-    const handleOpenAssignGroup = () => {
-        if (selectedIds.size > 0) {
-            setShowAssignGroupModal(true);
-        }
-    };
+    // Group consolidation: Modal handlers for selection mode
+    // Note: No need for selectedIds.size check here - buttons are already disabled when size is 0
+    const handleOpenAssignGroup = useCallback(() => {
+        console.log('[DashboardView] handleOpenAssignGroup called, selectedIds.size:', selectedIds.size);
+        setShowGroupSelector(true);
+    }, [selectedIds.size]);
 
-    const handleOpenDelete = () => {
-        if (selectedIds.size > 0) {
-            setShowDeleteModal(true);
-        }
-    };
+    const handleOpenDelete = useCallback(() => {
+        console.log('[DashboardView] handleOpenDelete called, selectedIds.size:', selectedIds.size);
+        setShowDeleteModal(true);
+    }, [selectedIds.size]);
 
-    // Story 14.15b: Handle group assignment from AssignGroupModal
-    const handleAssignGroup = async (groupId: string, groupName: string) => {
+    // Group consolidation: Handle group assignment using TransactionGroupSelector
+    // Updates sharedGroupIds on all selected transactions
+    const handleGroupSelect = async (groupIds: string[]) => {
         if (!userId || selectedIds.size === 0) return;
 
-        const db = getFirestore();
         const selectedTxIds = Array.from(selectedIds);
+        const db = getFirestore();
 
-        // Find the group to get its color
-        const group = groups.find(g => g.id === groupId);
-        const groupColor = group?.color || '#10b981';
-
-        // Build transaction totals map
-        const transactionTotals = new Map<string, number>();
+        // Story 14c.5: Collect all affected groups for cache invalidation
+        // Get previous group IDs from selected transactions
+        const previousGroupIds = new Set<string>();
         recentTransactions.forEach(tx => {
             const transaction = tx as Transaction;
             if (selectedIds.has(transaction.id)) {
-                transactionTotals.set(transaction.id, transaction.total);
+                (transaction.sharedGroupIds || []).forEach(gid => previousGroupIds.add(gid));
             }
         });
 
+        // All affected groups = union of previous and new
+        const affectedGroupIds = new Set([...previousGroupIds, ...groupIds]);
+
         try {
-            await assignTransactionsToGroup(
-                db,
-                userId,
-                appId,
-                selectedTxIds,
-                groupId,
-                groupName,
-                groupColor,
-                transactionTotals
+            // Update each selected transaction with the new sharedGroupIds
+            await Promise.all(
+                selectedTxIds.map(txId =>
+                    updateTransaction(db, userId, appId, txId, {
+                        sharedGroupIds: groupIds.length > 0 ? groupIds : [],
+                    })
+                )
             );
-            setShowAssignGroupModal(false);
+
+            // Story 14c.5 Bug Fix: Clear IndexedDB cache and invalidate React Query
+            // This ensures untagged transactions don't appear in stale cache
+            affectedGroupIds.forEach(groupId => {
+                // Clear IndexedDB cache (async, fire and forget)
+                clearGroupCacheById(groupId).catch(err => {
+                    console.warn('[DashboardView] Failed to clear IndexedDB cache:', err);
+                });
+                // Invalidate React Query in-memory cache
+                queryClient.invalidateQueries({
+                    queryKey: ['sharedGroupTransactions', groupId],
+                    exact: false, // Invalidate all date ranges for this group
+                });
+            });
+
+            console.log('[DashboardView] Cleared IndexedDB and invalidated React Query for groups:', Array.from(affectedGroupIds));
+
+            setShowGroupSelector(false);
             exitSelectionMode();
         } catch (error) {
-            console.error('Error assigning group:', error);
-        }
-    };
-
-    // Story 14c.4: Handle removing group from selected transactions
-    const handleRemoveFromGroup = async () => {
-        if (!userId || selectedIds.size === 0) return;
-
-        const db = getFirestore();
-        const selectedTxIds = Array.from(selectedIds);
-
-        try {
-            await clearGroupFromTransactions(db, userId, appId, selectedTxIds);
-            setShowAssignGroupModal(false);
-            exitSelectionMode();
-        } catch (error) {
-            console.error('Error removing from group:', error);
+            console.error('Error assigning groups:', error);
         }
     };
 
@@ -2125,9 +2156,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         thumbnailUrl: transaction.thumbnailUrl,
                         imageUrls: transaction.imageUrls,
                         items: transaction.items || [],
-                        groupName: transaction.groupName,
-                        groupColor: transaction.groupColor,
+                        sharedGroupIds: transaction.sharedGroupIds,
                     }}
+                    groupColor={getGroupColorForTransaction(transaction)}
                     formatters={{
                         formatCurrency,
                         formatDate,
@@ -3314,6 +3345,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     </button>
                                 </div>
                                 {/* Selection mode: Action buttons */}
+                                {/* Story 14c.8: Added Select All button */}
                                 <div
                                     className="flex items-center gap-2 transition-opacity duration-150"
                                     style={{
@@ -3323,6 +3355,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         right: isSelectionMode ? undefined : '0.625rem',
                                     }}
                                 >
+                                    {/* Story 14c.8: Select All / Deselect All button */}
+                                    <button
+                                        onClick={handleRecientesSelectAllToggle}
+                                        className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                                        style={{ backgroundColor: 'var(--secondary)' }}
+                                        aria-label={visibleRecientesIds.every(id => selectedIds.has(id)) ? 'Deseleccionar todo' : 'Seleccionar todo'}
+                                        data-testid="recientes-select-all"
+                                    >
+                                        <CheckSquare
+                                            size={16}
+                                            style={{ color: 'white' }}
+                                            fill={visibleRecientesIds.length > 0 && visibleRecientesIds.every(id => selectedIds.has(id)) ? 'rgba(255, 255, 255, 0.3)' : 'none'}
+                                        />
+                                    </button>
                                     <button
                                         onClick={handleOpenAssignGroup}
                                         className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
@@ -3470,42 +3516,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 )}
 
                 {/* Story 14.15b: Group Assignment Modal */}
-                {showAssignGroupModal && (
-                    <AssignGroupModal
-                        isOpen={showAssignGroupModal}
-                        onClose={() => setShowAssignGroupModal(false)}
+                {/* Group consolidation: TransactionGroupSelector replaces AssignGroupModal + CreateGroupModal */}
+                {showGroupSelector && (
+                    <TransactionGroupSelector
                         groups={groups}
-                        onAssign={handleAssignGroup}
-                        onCreateNew={() => {
-                            setShowAssignGroupModal(false);
-                            setShowCreateGroupModal(true);
-                        }}
-                        onRemoveFromGroup={handleRemoveFromGroup}
-                        selectedCount={selectedIds.size}
+                        selectedIds={[]}
+                        onSelect={handleGroupSelect}
+                        onClose={() => setShowGroupSelector(false)}
                         t={t}
-                    />
-                )}
-
-                {/* Story 14.15b: Create Group Modal */}
-                {showCreateGroupModal && userId && (
-                    <CreateGroupModal
-                        isOpen={showCreateGroupModal}
-                        selectedCount={selectedIds.size}
-                        onClose={() => setShowCreateGroupModal(false)}
-                        onCreate={async (name: string, color: string) => {
-                            // Create the group and assign selected transactions
-                            const db = getFirestore();
-                            const groupId = await createGroup(db, userId, appId, { name, color });
-                            if (groupId) {
-                                await handleAssignGroup(groupId, name);
-                            }
-                            setShowCreateGroupModal(false);
-                        }}
-                        onBack={() => {
-                            setShowCreateGroupModal(false);
-                            setShowAssignGroupModal(true);
-                        }}
-                        t={t}
+                        theme={theme === 'dark' ? 'dark' : 'light'}
+                        isLoading={groupsLoading}
                     />
                 )}
 

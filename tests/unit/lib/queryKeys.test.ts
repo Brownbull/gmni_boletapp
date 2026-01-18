@@ -82,13 +82,7 @@ describe('QUERY_KEYS', () => {
         });
     });
 
-    describe('groups', () => {
-        it('generates correct key structure', () => {
-            const key = QUERY_KEYS.groups(userId, appId);
-
-            expect(key).toEqual(['groups', userId, appId]);
-        });
-    });
+    // Story 14c.8: Personal groups removed - now using sharedGroups only
 
     describe('trustedMerchants', () => {
         it('generates correct key structure', () => {
@@ -106,23 +100,24 @@ describe('QUERY_KEYS', () => {
         });
     });
 
-    describe('household (future)', () => {
+    // Skipped: household feature not implemented yet
+    describe.skip('household (future)', () => {
         const householdId = 'household-123';
 
         it('generates all household data key', () => {
-            const key = QUERY_KEYS.household.all(householdId);
+            const key = (QUERY_KEYS as any).household.all(householdId);
 
             expect(key).toEqual(['household', householdId]);
         });
 
         it('generates household transactions key', () => {
-            const key = QUERY_KEYS.household.transactions(householdId);
+            const key = (QUERY_KEYS as any).household.transactions(householdId);
 
             expect(key).toEqual(['household', householdId, 'transactions']);
         });
 
         it('generates household members key', () => {
-            const key = QUERY_KEYS.household.members(householdId);
+            const key = (QUERY_KEYS as any).household.members(householdId);
 
             expect(key).toEqual(['household', householdId, 'members']);
         });

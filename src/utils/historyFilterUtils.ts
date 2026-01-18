@@ -509,8 +509,10 @@ function matchesGroupFilter(
   const selectedGroupIds = filter.groupIds.split(',').map(id => id.trim()).filter(Boolean);
   if (selectedGroupIds.length === 0) return true;
 
-  // Transaction must belong to one of the selected groups
-  return tx.groupId ? selectedGroupIds.includes(tx.groupId) : false;
+  // Transaction must belong to one of the selected groups (Story 14c consolidation)
+  // Check sharedGroupIds array instead of legacy groupId field
+  const txGroupIds = tx.sharedGroupIds || [];
+  return txGroupIds.some(id => selectedGroupIds.includes(id));
 }
 
 // ============================================================================

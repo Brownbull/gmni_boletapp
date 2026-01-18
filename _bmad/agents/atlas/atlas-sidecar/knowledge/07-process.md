@@ -1,7 +1,8 @@
 # Process & Strategy
 
 > Section 7 of Atlas Memory
-> Last Sync: 2025-12-31
+> Last Sync: 2026-01-17
+> Last Optimized: 2026-01-17 (Generation 5)
 > Sources: retrospectives, CI/CD docs, sprint-status.yaml
 
 ## Development Workflow
@@ -11,7 +12,7 @@
 3. **Code Review:** Required before merge, adversarial review style
 4. **Deployment:** CI/CD auto-deploys to Firebase Hosting on main merge
 
-## Branching Strategy (Current: 3-Branch)
+## Branching Strategy (3-Branch)
 
 | Branch | Purpose | Merges To |
 |--------|---------|-----------|
@@ -33,14 +34,14 @@
 
 | Environment | URL | Deploy Trigger |
 |-------------|-----|----------------|
-| Production | Firebase Hosting | Push to `main` |
+| Production | https://boletapp-d609f.web.app | Push to `main` |
 | Preview | Firebase Hosting Preview | PR created |
 
 **CI/CD Pipeline:**
-- ~4 minute pipeline time
-- Parallelized jobs for speed
+- ~5 minute pipeline time (18 parallel jobs)
 - Browser caching for E2E tests
 - Lighthouse CI for performance monitoring (main only)
+- Tiered testing: develop=smoke, main=full
 
 ## Sprint Status Tracking
 
@@ -51,26 +52,42 @@
 backlog → drafted → ready-for-dev → in-progress → review → done
 ```
 
+---
+
+## Recent Deployments
+
+| Story/Epic | Date | Notes |
+|------------|------|-------|
+| **Epic 14c Phase 2** | 2026-01-16 | Stories 14c.5-14c.10 (Shared Groups UI) |
+| **Epic 14c Phase 1** | 2026-01-15 | Stories 14c.1-14c.4 (Core sharing) |
+| **Combined Retro** | 2026-01-15 | Epics 12, 13, 14, 14d all COMPLETE |
+| **Story 14.30.8 CI Fix** | 2026-01-14 | Explicit test groups, 18 parallel jobs |
+| **Epic 14d Complete** | 2026-01-12 | Scan state machine refactor |
+| **Epic 14 Complete** | 2026-01-12 | Animation, polygon, React Query |
+| **Epic 13 Complete** | 2025-12-31 | 10 HTML mockups, design system |
+| **Epic 12 Complete** | 2025-12-23 | Batch mode, parallel processing |
+
+---
+
 ## Team Decisions
 
 | Decision | Date | Reason |
 |----------|------|--------|
-| 3-Branch Strategy | Epic 10 | Restored conventional workflow (develop → staging → main) |
+| 3-Branch Strategy | Epic 10 | Restored conventional workflow |
 | Adversarial Code Review | Epic 7 | Quality gate, find issues early |
 | Context Files per Story | Epic 9 | Accelerate development, preserve knowledge |
 | Parallel CI Jobs | Epic 8 | 63% faster pipelines |
-| Lighthouse on Main Only | Epic 8 | PR speed optimization |
+| Explicit Test Groups | Story 14.30.8 | Predictable CI, no shard imbalance |
+| Top-level Collections | Epic 14c | Cross-user access for shared groups |
 
 ## Sprint Cadence
 
 - **Epic Duration:** Variable (typically 1-2 weeks)
 - **Story Points:** 1-5 scale
-- **Velocity Target:** 7+ points/day (achievable with planning)
+- **Velocity Target:** ~8.6 points/day (achieved in Epics 12-14)
 - **Epic Completion:** Always ends with deployment story + retrospective
 
 ## Payment Provider
-
-<!-- Synced from: pricing-model.md:163 -->
 
 - **Chile Market:** Mercado Pago integration (future)
 - **Currency:** Chilean Pesos (CLP) primary, USD for reference
@@ -78,47 +95,10 @@ backlog → drafted → ready-for-dev → in-progress → review → done
 
 ---
 
-## Recent Deployments
-
-| Story | Date | Environment | Notes |
-|-------|------|-------------|-------|
-| **Story 14.30.8 CI Fix** | 2026-01-14 | Production | PR #148→#149 - Fixed useBatchReview & LearnMerchantDialog infinite loops. heavy-1 tests: 1m vs 10m timeout. 18 parallel CI jobs. |
-| **Story 14.12 UI Refinements** | 2026-01-03 | Production | PR #136→#137 - Header sizing (72px), treemap badges with count-up, polygon dark mode fix, Recientes padding reduction, responsive 320px+ |
-| **Story 14.12 Home Dashboard** | 2026-01-03 | Production | PR #135 - Carousel with 3 views (treemap, polygon, bump chart), month picker, 3 themes |
-| **Epic 14 Stories 14.1-14.11** | 2026-01-02 | Production | PR #134 - Animation framework, screen transitions, polygon components, nav redesign |
-| **Epic 12 Complete (12.5, 12.99)** | 2025-12-23 | Production | v9.7.0 - Batch insights with aggregate summary, 2799 tests |
-| **Epic 12 Stories 12.1-12.4** | 2025-12-22 | Production | v9.6.0 - Batch Mode: Multi-image capture, parallel processing, batch review queue, credit warning. PR #127. 43 files, 8925 insertions, 200+ tests |
-| **Stories 11.2-11.6** | 2025-12-22 | Production | v9.5.0 - Quick Save Card, Animated Item Reveal, Trust Merchants, Scan Status, Viewport Adaptation. PRs #119→#120→#121. 46 files, 5576 insertions |
-| **Story 11.1** | 2025-12-21 | Production | v9.4.0 - Batch processing, 49 new tests, PR #116→#117→#118 |
-| **v9.1.0 Duplicate Fix** | 2025-12-20 | Production | PR #106 - Simplified duplicate detection (date/merchant/amount/country), new duplicate_detected insight |
-| **Epic 10 Complete** | 2025-12-19 | Production | PR #102 - Full Insight Engine: 12 generators, phase-based selection, batch mode |
-
-## Epic 13 Documentation (2025-12-31)
-
-| Deliverable | Status |
-|-------------|--------|
-| 10 HTML Mockups | ✅ Complete |
-| Motion Design System | ✅ Complete |
-| Voice & Tone Guidelines | ✅ Complete |
-| Design System Reference | ✅ Complete |
-| Critical Use Cases (E2E) | ✅ Complete |
-
-## Epic 14 Ready-for-Dev (2025-12-31)
-
-All 14 stories created with Atlas workflow analysis:
-- Animation Framework (5 pts)
-- Dynamic Polygon (11 pts)
-- Celebrations (8 pts)
-- Weekly Reports (5 pts)
-- Enhanced Charts (6 pts)
-
----
-
 ## Sync Notes
 
-- 3-branch strategy restored in Epic 10 (develop → staging → main)
-- CI/CD standards from Epic 8 retrospective
+- **Generation 5 (2026-01-17):** Updated deployment history through Epic 14c
+- 3-branch strategy restored in Epic 10
+- CI/CD optimized to ~5 min with 18 parallel jobs
 - Sprint status tracking active since Epic 7
-- **Epic 13 complete (2025-12-31):** Design phase with 10 HTML mockups
-- **Epic 14 Phase 3 in progress (2026-01-03):** Story 14.12 UI refinements deployed. Phase 3 View Integration complete.
-- **Next:** Story 14.13 Analytics Polygon Integration ready-for-dev
+- Version: 1.0.0-beta.1

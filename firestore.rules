@@ -2,7 +2,73 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // User isolation: Each user can only access their own data
+    // ============================================================================
+    // Story 14c.5: Shared Group Transaction Access
+    // Epic 14c: Household Sharing
+    //
+    // Allow reading another user's transactions if:
+    // 1. The transaction is tagged to a shared group (has sharedGroupIds)
+    // 2. The requesting user is a member of that group
+    //
+    // This enables cross-user transaction visibility within shared groups.
+    // Write access is still restricted to the transaction owner.
+    //
+    // NOTE: This rule MUST come before the general user/{userId}/{document=**} rule
+    // because Firestore evaluates rules in order and more specific paths override.
+    // ============================================================================
+    match /artifacts/{appId}/users/{userId}/transactions/{transactionId} {
+      // Owner can always read and write their own transactions
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Group members can read transactions shared to their group
+      // Uses get() to check if user is member of the group this transaction is shared to
+      allow read: if request.auth != null
+          && resource.data.sharedGroupIds != null
+          && resource.data.sharedGroupIds.size() > 0
+          && isGroupMemberForTransaction(request.auth.uid, resource.data.sharedGroupIds);
+    }
+
+    // Helper function: Check if user is member of any of the provided groups
+    // Limited to first 3 groups due to Firestore get() quota (10 per rule evaluation)
+    // NOTE: members is an array, so we use hasAny() to check membership
+    function isGroupMemberForTransaction(userId, groupIds) {
+      return (groupIds.size() >= 1
+              && exists(/databases/$(database)/documents/sharedGroups/$(groupIds[0]))
+              && get(/databases/$(database)/documents/sharedGroups/$(groupIds[0])).data.members.hasAny([userId]))
+          || (groupIds.size() >= 2
+              && exists(/databases/$(database)/documents/sharedGroups/$(groupIds[1]))
+              && get(/databases/$(database)/documents/sharedGroups/$(groupIds[1])).data.members.hasAny([userId]))
+          || (groupIds.size() >= 3
+              && exists(/databases/$(database)/documents/sharedGroups/$(groupIds[2]))
+              && get(/databases/$(database)/documents/sharedGroups/$(groupIds[2])).data.members.hasAny([userId]));
+    }
+
+    // ============================================================================
+    // Collection Group Query Support for Shared Transactions
+    //
+    // SECURITY UPDATE (2026-01-17):
+    // Client-side collection group queries have been DISABLED for security.
+    //
+    // PROBLEM: Firestore collection group queries cannot evaluate resource.data.*
+    // conditions, which meant we relied on UUID obscurity for security. If an
+    // attacker obtained a groupId, they could query all transactions in that group.
+    //
+    // SOLUTION: Cloud Function with server-side membership validation.
+    // - See: functions/src/getSharedGroupTransactions.ts
+    // - Cloud Function validates user is member before executing query
+    // - Uses admin SDK which bypasses these rules
+    //
+    // This rule is now DENIED for client-side queries.
+    // The Cloud Function handles shared group transaction fetching securely.
+    // ============================================================================
+    match /{path=**}/transactions/{transactionId} {
+      // DENIED: Collection group queries now handled by Cloud Function
+      // This prevents the UUID-obscurity security vulnerability
+      allow read: if false;
+    }
+
+    // User isolation: Each user can only access their own data (non-transactions)
+    // This covers all subcollections except transactions (handled above)
     match /artifacts/{appId}/users/{userId}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
@@ -61,8 +127,28 @@ service cloud.firestore {
             && resource.data.members.size() < 10; // MAX_MEMBERS_PER_GROUP
       }
 
-      // UPDATE: Owner can update anything, or user can add themselves as member
-      allow update: if isGroupOwner() || isJoiningGroup();
+      // Helper: Check if member is updating only their own memberUpdates timestamp
+      // Story 14c.12: Real-time sync requires members to update their lastSyncAt
+      // Security Fix (Code Review 2026-01-17): Validate user can only update their OWN
+      // memberUpdates entry, not other members' entries
+      function isMemberUpdatingOwnTimestamp() {
+        return isGroupMember()
+            && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['memberUpdates', 'updatedAt'])
+            // Ensure only the current user's memberUpdates entry is being modified
+            && (
+                // Case 1: memberUpdates didn't exist before, user is creating their entry
+                (!('memberUpdates' in resource.data)
+                    && request.resource.data.memberUpdates.keys().hasOnly([request.auth.uid]))
+                // Case 2: memberUpdates exists, only current user's entry can change
+                || ('memberUpdates' in resource.data
+                    && request.resource.data.memberUpdates.diff(resource.data.memberUpdates)
+                        .affectedKeys().hasOnly([request.auth.uid]))
+            );
+      }
+
+      // UPDATE: Owner can update anything, user can join, or member can update their timestamp
+      allow update: if isGroupOwner() || isJoiningGroup() || isMemberUpdatingOwnTimestamp();
 
       // DELETE: Only owner can delete the group
       allow delete: if isGroupOwner();

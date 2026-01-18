@@ -293,3 +293,40 @@ export function getInvitationTimeRemaining(invitation: PendingInvitation): { day
 
     return { days, hours };
 }
+
+// ============================================================================
+// Group Name Utility Functions
+// (Moved from transactionGroup.ts during Story 14.15 removal)
+// ============================================================================
+
+/**
+ * Extract emoji from group name if present at the start.
+ * Returns empty string if no emoji found.
+ *
+ * @example
+ * extractGroupEmoji('🎄 Navidad 2024') // '🎄'
+ * extractGroupEmoji('Gastos del Hogar') // ''
+ */
+export function extractGroupEmoji(name: string): string {
+    // Match emoji at the start of the string
+    // This regex matches most common emoji patterns
+    const emojiRegex = /^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)/u;
+    const match = name.match(emojiRegex);
+    return match ? match[0] : '';
+}
+
+/**
+ * Extract group name without emoji prefix.
+ *
+ * @example
+ * extractGroupLabel('🎄 Navidad 2024') // 'Navidad 2024'
+ * extractGroupLabel('Gastos del Hogar') // 'Gastos del Hogar'
+ */
+export function extractGroupLabel(name: string): string {
+    const emoji = extractGroupEmoji(name);
+    if (emoji) {
+        // Remove emoji and any leading whitespace
+        return name.slice(emoji.length).trimStart();
+    }
+    return name;
+}

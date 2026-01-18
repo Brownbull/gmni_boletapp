@@ -530,3 +530,17 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 **Files Modified (Session 5 - Code Review):**
 - `src/components/SharedGroups/index.ts` - Added 7 missing barrel exports
 
+15. **ViewModeSwitcher UI Improvements (2026-01-16 Session 6)**
+    - **Larger Icons:** Group icons increased from 40px to 48px (w-12 h-12) for better visibility
+    - **Solid Background Colors:** Icon containers now use solid group color instead of translucent (removed `${color}20` opacity)
+    - **Simplified Member Display:** Changed from mini avatar stack to simple "N miembros" text (matches screenshot design)
+    - **Emoji Font Fix:** Added proper emoji font family for consistent cross-platform rendering:
+      `"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", sans-serif`
+    - **TopHeader Group Icon:** Increased from 36px to 44px when in group mode
+    - **Title Without Emoji:** Group mode title now shows only the text label (via `extractGroupLabel()`) - emoji displayed in logo only
+    - **Removed unused code:** Cleaned up helper functions (getProfileColor, getInitial) that were added for mini avatars but no longer needed
+
+**Files Modified (Session 6 - UI Improvements):**
+- `src/components/SharedGroups/ViewModeSwitcher.tsx` - Larger icons, solid colors, member count text, emoji font
+- `src/components/TopHeader.tsx` - Larger group icon, extractGroupLabel for title, emoji font
+
