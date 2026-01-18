@@ -1,11 +1,19 @@
 /**
- * Push Notifications Hook - Story 9.18
+ * Push Notifications Hook
+ *
+ * Story 9.18: Initial push notification setup
+ * Story 14c.13: FCM Push Notifications for Shared Groups
  *
  * Hook for managing push notification state and functionality.
  * Handles permission requests, FCM token management, and foreground messages.
+ *
+ * Story 14c.13 enhancements:
+ * - Uses saveFCMTokenWithTracking for localStorage sync
+ * - Updates token lastUsedAt on app startup
+ * - Supports deleteAllFCMTokensWithTracking for clean disable
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   isPushSupported,
   getNotificationPermission,
@@ -14,7 +22,13 @@ import {
   onForegroundMessage,
   showInAppNotification
 } from '../services/pushNotifications';
-import { saveFCMToken, deleteFCMToken } from '../services/fcmTokenService';
+import {
+  saveFCMTokenWithTracking,
+  deleteAllFCMTokensWithTracking,
+  updateTokenLastUsed,
+  isNotificationsEnabledLocal,
+  getStoredFCMToken,
+} from '../services/fcmTokenService';
 import { Firestore } from 'firebase/firestore';
 
 export interface PushNotificationState {
@@ -80,16 +94,39 @@ export function usePushNotifications({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Story 14c.13: Track initialization to prevent duplicate token updates
+  const initializedRef = useRef(false);
+
   // Check support and initial permission on mount
   useEffect(() => {
     let mounted = true;
 
     async function checkSupport() {
       const supported = await isPushSupported();
+      console.log('[usePushNotifications] checkSupport:', { supported });
+
       if (mounted) {
         setIsSupported(supported);
         if (supported) {
-          setPermission(getNotificationPermission());
+          const currentPermission = getNotificationPermission();
+          console.log('[usePushNotifications] currentPermission:', currentPermission);
+          setPermission(currentPermission);
+
+          // Story 14c.13: Only restore token if permission is actually granted
+          // This prevents showing toggle as enabled when permission was revoked
+          if (currentPermission === 'granted') {
+            const wasEnabled = isNotificationsEnabledLocal();
+            const storedToken = getStoredFCMToken();
+            console.log('[usePushNotifications] localStorage state:', { wasEnabled, hasStoredToken: !!storedToken });
+            if (wasEnabled && storedToken) {
+              setToken(storedToken);
+            }
+          } else {
+            // Permission not granted, clear any stale localStorage state
+            // Token will be null, so toggles will show as disabled
+            console.log('[usePushNotifications] Permission not granted, clearing token state');
+            setToken(null);
+          }
         }
       }
     }
@@ -97,6 +134,23 @@ export function usePushNotifications({
     checkSupport();
     return () => { mounted = false; };
   }, []);
+
+  // Story 14c.13 Task 1.6: Update token lastUsedAt on app startup
+  useEffect(() => {
+    if (!db || !userId || !appId || initializedRef.current) return;
+
+    const storedToken = getStoredFCMToken();
+    if (storedToken && isNotificationsEnabledLocal()) {
+      initializedRef.current = true;
+
+      // Update lastUsedAt in background (non-blocking)
+      updateTokenLastUsed(db, userId, appId, storedToken).catch(err => {
+        if (import.meta.env.DEV) {
+          console.warn('[usePushNotifications] Failed to update token lastUsedAt:', err);
+        }
+      });
+    }
+  }, [db, userId, appId]);
 
   // Subscribe to foreground messages
   useEffect(() => {
@@ -121,26 +175,52 @@ export function usePushNotifications({
   }, [isSupported, permission, onNotificationReceived]);
 
   // Try to get token if permission is already granted
+  // Story 14c.13: This effect ensures token is saved to Firestore when db/userId/appId become available
   useEffect(() => {
     let mounted = true;
 
+    console.log('[usePushNotifications] getExistingToken effect running:', {
+      isSupported,
+      permission,
+      hasDb: !!db,
+      hasUserId: !!userId,
+      hasAppId: !!appId
+    });
+
     async function getExistingToken() {
       if (!isSupported || permission !== 'granted') {
+        console.log('[usePushNotifications] Skipping getExistingToken - not supported or not granted');
         return;
       }
 
       try {
+        console.log('[usePushNotifications] Getting FCM token...');
         const fcmToken = await getFCMToken();
+        console.log('[usePushNotifications] Got FCM token:', fcmToken ? 'yes (length: ' + fcmToken.length + ')' : 'no');
+
         if (mounted && fcmToken) {
           setToken(fcmToken);
 
-          // Save to Firestore if we have the required services
+          // Story 14c.13: Save to Firestore with localStorage tracking
+          // This is critical - without saving to Firestore, notifications won't work
           if (db && userId && appId) {
-            await saveFCMToken(db, userId, appId, fcmToken);
+            console.log('[usePushNotifications] Saving token to Firestore for user:', userId);
+            await saveFCMTokenWithTracking(db, userId, appId, fcmToken);
+            console.log('[usePushNotifications] Token saved successfully');
+          } else {
+            console.warn('[usePushNotifications] Cannot save token - missing db/userId/appId:', {
+              hasDb: !!db,
+              hasUserId: !!userId,
+              hasAppId: !!appId
+            });
           }
         }
       } catch (err) {
-        console.error('Failed to get existing FCM token:', err);
+        console.error('[usePushNotifications] Failed to get existing FCM token:', err);
+        // Story 14c.13: Clear token state on error so toggle reflects reality
+        if (mounted) {
+          setToken(null);
+        }
       }
     }
 
@@ -179,9 +259,9 @@ export function usePushNotifications({
 
       setToken(fcmToken);
 
-      // Save to Firestore
+      // Story 14c.13: Save to Firestore with localStorage tracking
       if (db && userId && appId) {
-        await saveFCMToken(db, userId, appId, fcmToken);
+        await saveFCMTokenWithTracking(db, userId, appId, fcmToken);
       }
 
       return true;
@@ -195,10 +275,13 @@ export function usePushNotifications({
   }, [isSupported, db, userId, appId]);
 
   /**
-   * Disable notifications by removing the FCM token
+   * Disable notifications by removing all FCM tokens
+   *
+   * Story 14c.13: Uses deleteAllFCMTokensWithTracking to clear
+   * both Firestore tokens and localStorage flags
    */
   const disableNotifications = useCallback(async (): Promise<void> => {
-    if (!token || !db || !userId || !appId) {
+    if (!db || !userId || !appId) {
       return;
     }
 
@@ -206,7 +289,8 @@ export function usePushNotifications({
     setError(null);
 
     try {
-      await deleteFCMToken(db, userId, appId, token);
+      // Story 14c.13: Delete all tokens and clear localStorage
+      await deleteAllFCMTokensWithTracking(db, userId, appId);
       setToken(null);
     } catch (err) {
       console.error('Failed to disable notifications:', err);
@@ -214,7 +298,7 @@ export function usePushNotifications({
     } finally {
       setIsLoading(false);
     }
-  }, [token, db, userId, appId]);
+  }, [db, userId, appId]);
 
   return {
     isSupported,

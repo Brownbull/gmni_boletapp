@@ -20,8 +20,36 @@ import { Mail, Clock, Check, X, AlertCircle, Loader2 } from 'lucide-react';
 import { getFirestore } from 'firebase/firestore';
 import type { PendingInvitation } from '../../types/sharedGroup';
 import { isInvitationExpired, getInvitationTimeRemaining } from '../../types/sharedGroup';
-import { extractGroupEmoji, extractGroupLabel } from '../../types/transactionGroup';
 import { acceptInvitation, declineInvitation } from '../../services/sharedGroupService';
+
+// ============================================================================
+// Local Helper Functions (Story 14c.8: Group Consolidation)
+// ============================================================================
+
+/**
+ * Extract emoji from group name (e.g., "🏠 Family" → "🏠")
+ */
+function extractGroupEmoji(name: string): string | null {
+    if (!name) return null;
+    const firstChar = name.codePointAt(0);
+    if (firstChar && firstChar > 0x1F300) {
+        const match = name.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u);
+        return match ? match[0] : null;
+    }
+    return null;
+}
+
+/**
+ * Extract label from group name (e.g., "🏠 Family" → "Family")
+ */
+function extractGroupLabel(name: string): string {
+    if (!name) return '';
+    const emoji = extractGroupEmoji(name);
+    if (emoji) {
+        return name.slice(emoji.length).trim();
+    }
+    return name;
+}
 
 export interface PendingInvitationsSectionProps {
     /** Pending invitations to display */

@@ -31,13 +31,10 @@ import { FilterChips } from '../components/history/FilterChips';
 import { SortControl } from '../components/history/SortControl';
 import type { SortOption } from '../components/history/SortControl';
 import { SelectionBar } from '../components/history/SelectionBar';
-import { AssignGroupModal } from '../components/history/AssignGroupModal';
-import { CreateGroupModal } from '../components/history/CreateGroupModal';
-import { EditGroupModal } from '../components/history/EditGroupModal';
-import { DeleteGroupModal } from '../components/history/DeleteGroupModal';
+// Group consolidation: Replaced personal group modals with TransactionGroupSelector
+import { TransactionGroupSelector } from '../components/SharedGroups/TransactionGroupSelector';
 import { DeleteTransactionsModal } from '../components/history/DeleteTransactionsModal';
 import type { TransactionPreview } from '../components/history/DeleteTransactionsModal';
-import type { TransactionGroup } from '../types/transactionGroup';
 import { PageTransition } from '../components/animation/PageTransition';
 import { TransitionChild } from '../components/animation/TransitionChild';
 // Story 14.13: Duplicate detection for transactions
@@ -51,10 +48,10 @@ import { useHistoryFilters } from '../hooks/useHistoryFilters';
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useSelectionMode } from '../hooks/useSelectionMode';
-import { useGroups } from '../hooks/useGroups';
+// Group consolidation: Use useAllUserGroups instead of useGroups for shared groups
+import { useAllUserGroups } from '../hooks/useAllUserGroups';
 import { getFirestore } from 'firebase/firestore';
-import { deleteTransactionsBatch } from '../services/firestore';
-import { assignTransactionsToGroup, removeTransactionsFromGroup, updateGroup, deleteGroup, updateGroupOnTransactions, clearGroupFromTransactions } from '../services/groupService';
+import { deleteTransactionsBatch, updateTransaction } from '../services/firestore';
 // Story 9.12: Category translations (AC #1, #2)
 import type { Language } from '../utils/translations';
 // Story 14.15c: CSV Export utilities
@@ -167,12 +164,12 @@ interface Transaction {
     city?: string;
     country?: string;
     currency?: string;
-    // Story 14.15b: Group display fields
-    groupId?: string;
-    groupName?: string;
-    groupColor?: string;
+    // Group consolidation: Shared group IDs (replaces legacy groupId/groupName/groupColor)
+    sharedGroupIds?: string[];
     // Story 14.31: Scan date for sorting by when transaction was added
     createdAt?: any; // Firestore Timestamp or Date
+    // Story 14c.6: Transaction owner ID (for shared group transactions)
+    _ownerId?: string;
 }
 
 interface HistoryViewProps {
@@ -226,6 +223,13 @@ interface HistoryViewProps {
     fontColorMode?: 'colorful' | 'plain';
     /** Story 14.35b: How to display foreign locations (code or flag) */
     foreignLocationFormat?: 'code' | 'flag';
+    /** Story 14c.6: Active shared group (for member profile lookup) */
+    activeGroup?: {
+        id: string;
+        memberProfiles?: Record<string, { displayName?: string; photoURL?: string }>;
+    } | null;
+    /** Shared groups for dynamic group color lookup */
+    sharedGroups?: Array<{ id: string; color: string }>;
 }
 
 // ============================================================================
@@ -276,6 +280,10 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
     fontColorMode: _fontColorMode,
     // Story 14.35b: Foreign location display format
     foreignLocationFormat = 'code',
+    // Story 14c.6: Active shared group for ownership display
+    activeGroup = null,
+    // Shared groups for dynamic color lookup (DEPRECATED - now using useAllUserGroups internally)
+    sharedGroups: _sharedGroups = [],
 }) => {
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     // Story 14.14: Search functionality
@@ -287,6 +295,7 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
     // Story 14.14: Collapsible header state
     const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
     // Story 14.15: Selection mode for batch operations
+    // Story 14c.8: Added selectAll and clearSelection for "Select All" feature
     const {
         isSelectionMode,
         selectedIds,
@@ -294,19 +303,15 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
         enterSelectionMode: _enterSelectionMode,
         exitSelectionMode,
         toggleSelection,
+        selectAll,
+        clearSelection,
         isSelected,
         handleLongPressStart,
         handleLongPressEnd,
         handleLongPressMove,
     } = useSelectionMode();
-    // Story 14.15: Modal states for group assignment and delete confirmation
-    const [showGroupModal, setShowGroupModal] = useState(false);
-    const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
-    const [showEditGroupModal, setShowEditGroupModal] = useState(false);
-    const [editingGroup, setEditingGroup] = useState<TransactionGroup | null>(null);
-    const [showDeleteGroupModal, setShowDeleteGroupModal] = useState(false);
-    const [deletingGroup, setDeletingGroup] = useState<TransactionGroup | null>(null);
-    const [isDeletingGroup, setIsDeletingGroup] = useState(false);
+    // Group consolidation: Modal states for group assignment and delete confirmation
+    const [showGroupSelector, setShowGroupSelector] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     // Story 14.15c: Export state
     const [isExporting, setIsExporting] = useState(false);
@@ -327,27 +332,22 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
         }
     }, [onNavigateToView]);
 
-    // Story 14.15: Groups hook for group assignment
-    const { groups, loading: groupsLoading, addGroup, recalculateCounts } = useGroups(userId, appId);
+    // Group consolidation: Use shared groups hook instead of personal groups
+    const { groups, isLoading: groupsLoading } = useAllUserGroups(userId || undefined);
 
-    // Story 14.15b: Recalculate group counts on initial load to fix any corrupted counts
-    const hasRecalculated = useRef(false);
-    useEffect(() => {
-        if (!groupsLoading && groups.length > 0 && allTransactions.length > 0 && !hasRecalculated.current) {
-            hasRecalculated.current = true;
-            // Recalculate in background without blocking UI
-            recalculateCounts(allTransactions).catch((err) => {
-                console.warn('[HistoryView] Failed to recalculate group counts:', err);
-            });
-        }
-    }, [groupsLoading, groups.length, allTransactions.length, recalculateCounts]);
+    // Story 14c.8: Helper to lookup group color from sharedGroupIds using loaded groups
+    const getGroupColorForTransaction = useCallback((tx: Transaction): string | undefined => {
+        if (!tx.sharedGroupIds?.length || !groups.length) return undefined;
+        const group = groups.find(g => tx.sharedGroupIds?.includes(g.id));
+        return group?.color;
+    }, [groups]);
+
     const lastScrollY = useRef(0);
     const scrollThreshold = 80; // Pixels to scroll before collapsing (increased for stability)
     const scrollDeltaThreshold = 15; // Minimum scroll delta to trigger state change
     const lastCollapseTime = useRef(0); // Debounce timer
     const {
         state: filterState,
-        dispatch: filterDispatch,
         hasActiveFilters,
         goNextPeriod,
         goPrevPeriod,
@@ -547,6 +547,22 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
         return getDuplicateIds(transactionsToFilter as any);
     }, [transactionsToFilter]);
 
+    // Story 14c.8: Get visible transaction IDs for "Select All" functionality
+    const visibleTransactionIds = useMemo(() => {
+        return paginatedTransactions.map(tx => tx.id).filter((id): id is string => !!id);
+    }, [paginatedTransactions]);
+
+    // Story 14c.8: Handle Select All toggle - selects all visible or clears selection
+    const handleSelectAllToggle = useCallback(() => {
+        const allVisibleSelected = visibleTransactionIds.length > 0 &&
+            visibleTransactionIds.every(id => selectedIds.has(id));
+        if (allVisibleSelected) {
+            clearSelection();
+        } else {
+            selectAll(visibleTransactionIds);
+        }
+    }, [visibleTransactionIds, selectedIds, selectAll, clearSelection]);
+
     // Story 9.11 AC #1, #2: Normalize transactions with defaults
     const userDefaults = useMemo(() => ({
         city: defaultCity,
@@ -639,165 +655,32 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
         }));
     }, [getSelectedTransactions, currency]);
 
-    // Story 14.15: Handle group assignment
-    const handleAssignGroup = useCallback(async (groupId: string, groupName: string) => {
+    // Group consolidation: Handle group assignment using TransactionGroupSelector
+    // Updates sharedGroupIds on all selected transactions
+    const handleGroupSelect = useCallback(async (groupIds: string[]) => {
         if (!userId) {
             console.error('[HistoryView] Cannot assign group: User not authenticated');
             return;
         }
 
-        const selectedTxs = getSelectedTransactions();
-        // Note: transactionIds computed but not used directly - kept for debugging/future use
-        const _transactionIds = selectedTxs.map((tx) => tx.id);
-        void _transactionIds; // Suppress unused warning
-        const transactionTotals = new Map<string, number>();
-        selectedTxs.forEach((tx) => transactionTotals.set(tx.id, tx.total));
+        const selectedTxIds = Array.from(selectedIds);
+        const db = getFirestore();
 
         try {
-            const db = getFirestore();
-
-            // Story 14.15b: First, remove transactions from their previous groups (if any)
-            // Group transactions by their current groupId to batch the removals
-            const txsByPreviousGroup = new Map<string, { ids: string[]; totals: Map<string, number> }>();
-            for (const tx of selectedTxs) {
-                if (tx.groupId && tx.groupId !== groupId) {
-                    if (!txsByPreviousGroup.has(tx.groupId)) {
-                        txsByPreviousGroup.set(tx.groupId, { ids: [], totals: new Map() });
-                    }
-                    const groupData = txsByPreviousGroup.get(tx.groupId)!;
-                    groupData.ids.push(tx.id);
-                    groupData.totals.set(tx.id, tx.total);
-                }
-            }
-
-            // Remove from previous groups
-            for (const [prevGroupId, { ids, totals }] of txsByPreviousGroup) {
-                await removeTransactionsFromGroup(db, userId, appId, ids, prevGroupId, totals);
-            }
-
-            // Story 14.15b: Filter out transactions already in the target group
-            // Only assign transactions that are NOT already in this group to avoid double-counting
-            const txsToAssign = selectedTxs.filter((tx) => tx.groupId !== groupId);
-            if (txsToAssign.length > 0) {
-                const idsToAssign = txsToAssign.map((tx) => tx.id);
-                const totalsToAssign = new Map<string, number>();
-                txsToAssign.forEach((tx) => totalsToAssign.set(tx.id, tx.total));
-
-                // Find group color from groups list
-                const group = groups.find((g) => g.id === groupId);
-                const groupColor = group?.color || '#10b981';
-                await assignTransactionsToGroup(
-                    db,
-                    userId,
-                    appId,
-                    idsToAssign,
-                    groupId,
-                    groupName,
-                    groupColor,
-                    totalsToAssign
-                );
-            }
-            setShowGroupModal(false);
-            exitSelectionMode();
-        } catch (err) {
-            console.error('[HistoryView] Failed to assign group:', err);
-        }
-    }, [userId, appId, getSelectedTransactions, exitSelectionMode, groups]);
-
-    // Story 14.15: Handle create new group
-    const handleCreateGroup = useCallback(async (name: string, color: string) => {
-        if (!userId) {
-            throw new Error('User not authenticated');
-        }
-
-        try {
-            const groupId = await addGroup({ name, color });
-            // Get the selected transactions for assignment
-            const selectedTxs = getSelectedTransactions();
-            const transactionIds = selectedTxs.map((tx) => tx.id);
-            const transactionTotals = new Map<string, number>();
-            selectedTxs.forEach((tx) => transactionTotals.set(tx.id, tx.total));
-
-            const db = getFirestore();
-
-            // Story 14.15b: First, remove transactions from their previous groups (if any)
-            // Group transactions by their current groupId to batch the removals
-            const txsByPreviousGroup = new Map<string, { ids: string[]; totals: Map<string, number> }>();
-            for (const tx of selectedTxs) {
-                if (tx.groupId) {
-                    if (!txsByPreviousGroup.has(tx.groupId)) {
-                        txsByPreviousGroup.set(tx.groupId, { ids: [], totals: new Map() });
-                    }
-                    const groupData = txsByPreviousGroup.get(tx.groupId)!;
-                    groupData.ids.push(tx.id);
-                    groupData.totals.set(tx.id, tx.total);
-                }
-            }
-
-            // Remove from previous groups
-            for (const [prevGroupId, { ids, totals }] of txsByPreviousGroup) {
-                await removeTransactionsFromGroup(db, userId, appId, ids, prevGroupId, totals);
-            }
-
-            await assignTransactionsToGroup(
-                db,
-                userId,
-                appId,
-                transactionIds,
-                groupId,
-                name,
-                color,
-                transactionTotals
+            // Update each selected transaction with the new sharedGroupIds
+            await Promise.all(
+                selectedTxIds.map(txId =>
+                    updateTransaction(db, userId, appId, txId, {
+                        sharedGroupIds: groupIds.length > 0 ? groupIds : [],
+                    })
+                )
             );
-            setShowCreateGroupModal(false);
-            setShowGroupModal(false);
+            setShowGroupSelector(false);
             exitSelectionMode();
         } catch (err) {
-            console.error('[HistoryView] Failed to create group:', err);
-            throw err; // Re-throw so modal can show error
+            console.error('[HistoryView] Failed to assign groups:', err);
         }
-    }, [userId, appId, addGroup, getSelectedTransactions, exitSelectionMode]);
-
-    // Story 14c.4: Handle removing group from selected transactions
-    const handleRemoveFromGroup = useCallback(async () => {
-        if (!userId) {
-            console.error('[HistoryView] Cannot remove from group: User not authenticated');
-            return;
-        }
-
-        const selectedTxs = getSelectedTransactions();
-        const transactionIds = selectedTxs.map((tx) => tx.id);
-
-        try {
-            const db = getFirestore();
-
-            // First, decrement counts on the previous groups
-            const txsByPreviousGroup = new Map<string, { ids: string[]; totals: Map<string, number> }>();
-            for (const tx of selectedTxs) {
-                if (tx.groupId) {
-                    if (!txsByPreviousGroup.has(tx.groupId)) {
-                        txsByPreviousGroup.set(tx.groupId, { ids: [], totals: new Map() });
-                    }
-                    const groupData = txsByPreviousGroup.get(tx.groupId)!;
-                    groupData.ids.push(tx.id);
-                    groupData.totals.set(tx.id, tx.total);
-                }
-            }
-
-            // Remove from previous groups (decrements counts)
-            for (const [prevGroupId, { ids, totals }] of txsByPreviousGroup) {
-                await removeTransactionsFromGroup(db, userId, appId, ids, prevGroupId, totals);
-            }
-
-            // Clear group fields from transactions
-            await clearGroupFromTransactions(db, userId, appId, transactionIds);
-
-            setShowGroupModal(false);
-            exitSelectionMode();
-        } catch (err) {
-            console.error('[HistoryView] Failed to remove from group:', err);
-        }
-    }, [userId, appId, getSelectedTransactions, exitSelectionMode]);
+    }, [userId, appId, selectedIds, exitSelectionMode]);
 
     // Story 14.15: Handle batch delete
     const handleDeleteTransactions = useCallback(async () => {
@@ -818,89 +701,6 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
             throw err; // Re-throw so modal can show error
         }
     }, [userId, appId, selectedIds, exitSelectionMode, onTransactionsDeleted]);
-
-    // Story 14.15b: Handle edit group - open edit modal
-    const handleEditGroup = useCallback((group: TransactionGroup) => {
-        setEditingGroup(group);
-        setShowEditGroupModal(true);
-    }, []);
-
-    // Story 14.15b: Handle save group changes
-    const handleSaveGroup = useCallback(async (groupId: string, name: string, color: string) => {
-        if (!userId) {
-            throw new Error('User not authenticated');
-        }
-
-        try {
-            const db = getFirestore();
-            // Update the group document
-            await updateGroup(db, userId, appId, groupId, { name, color });
-
-            // Find transactions that belong to this group and update their denormalized fields
-            const transactionsInGroup = allTransactions?.filter(tx => tx.groupId === groupId) || [];
-            if (transactionsInGroup.length > 0) {
-                const transactionIds = transactionsInGroup.map(tx => tx.id);
-                await updateGroupOnTransactions(db, userId, appId, groupId, name, color, transactionIds);
-            }
-
-            setShowEditGroupModal(false);
-            setEditingGroup(null);
-        } catch (err) {
-            console.error('[HistoryView] Failed to save group:', err);
-            throw err;
-        }
-    }, [userId, appId, allTransactions]);
-
-    // Story 14.15b: Handle delete group - open confirmation modal
-    // Close any open modals first, then show the delete confirmation
-    const handleDeleteGroup = useCallback((group: TransactionGroup) => {
-        // Close ALL other modals to prevent any confusion
-        setShowGroupModal(false);
-        setShowCreateGroupModal(false);
-        setShowEditGroupModal(false);
-        setShowDeleteModal(false); // Important: ensure transaction delete modal is closed
-        setDeletingGroup(group);
-        setShowDeleteGroupModal(true);
-    }, []);
-
-    // Story 14.15b: Confirm group deletion - only removes group, not transactions
-    const handleConfirmDeleteGroup = useCallback(async () => {
-        if (!userId || !deletingGroup?.id) {
-            return;
-        }
-
-        setIsDeletingGroup(true);
-
-        try {
-            const db = getFirestore();
-
-            // Find transactions that belong to this group and clear their group references
-            const transactionsInGroup = allTransactions?.filter(tx => tx.groupId === deletingGroup.id) || [];
-            if (transactionsInGroup.length > 0) {
-                const transactionIds = transactionsInGroup.map(tx => tx.id);
-                await clearGroupFromTransactions(db, userId, appId, transactionIds);
-            }
-
-            // Delete the group document
-            await deleteGroup(db, userId, appId, deletingGroup.id);
-
-            // Story 14.15b: Clear group filter if the deleted group was being filtered
-            // This resets the view to show all transactions
-            if (filterState.group.groupIds?.includes(deletingGroup.id)) {
-                filterDispatch({ type: 'CLEAR_GROUP' });
-            }
-
-            // Exit selection mode if active (user was selecting transactions)
-            exitSelectionMode();
-
-            setShowDeleteGroupModal(false);
-            setDeletingGroup(null);
-        } catch (err) {
-            console.error('[HistoryView] Failed to delete group:', err);
-        } finally {
-            setIsDeletingGroup(false);
-        }
-    }, [userId, appId, allTransactions, deletingGroup, filterState.group.groupIds, filterDispatch, exitSelectionMode]);
 
     return (
         <PageTransition viewKey="history" direction="forward">
@@ -966,9 +766,8 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                                 availableFilters={availableFilters}
                                 t={t}
                                 locale={lang}
-                                groups={groups}
+                                groups={groups as any}
                                 groupsLoading={groupsLoading}
-                                onDeleteGroup={handleDeleteGroup}
                             />
                             {/* Profile Avatar with Dropdown */}
                             <ProfileAvatar
@@ -1130,13 +929,16 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                 {/* Content area with horizontal padding - matches header padding */}
                 <div className="px-3">
                     {/* Story 14.15: Selection Bar (shown when selection mode is active) */}
+                    {/* Story 14c.8: Added onSelectAll and totalVisible for "Select All" button */}
                     {isSelectionMode && (
                         <div className="mb-3">
                             <SelectionBar
                             selectedCount={selectedCount}
                             onClose={exitSelectionMode}
-                            onGroup={() => setShowGroupModal(true)}
+                            onGroup={() => setShowGroupSelector(true)}
                             onDelete={() => setShowDeleteModal(true)}
+                            onSelectAll={handleSelectAllToggle}
+                            totalVisible={visibleTransactionIds.length}
                             t={t}
                             theme={theme as 'light' | 'dark'}
                             lang={lang as 'en' | 'es'}
@@ -1307,9 +1109,9 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                                                         thumbnailUrl: tx.thumbnailUrl,
                                                         imageUrls: tx.imageUrls,
                                                         items: tx.items || [],
-                                                        groupName: tx.groupName,
-                                                        groupColor: tx.groupColor,
+                                                        sharedGroupIds: tx.sharedGroupIds,
                                                     }}
+                                                    groupColor={getGroupColorForTransaction(tx)}
                                                     formatters={{
                                                         formatCurrency,
                                                         formatDate,
@@ -1332,6 +1134,12 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                                                         isSelected: isSelected(tx.id),
                                                         onToggleSelect: () => toggleSelection(tx.id),
                                                     }}
+                                                    // Story 14c.6: Ownership for shared group transactions
+                                                    ownership={tx._ownerId && userId ? {
+                                                        ownerId: tx._ownerId,
+                                                        isOwn: tx._ownerId === userId,
+                                                        ownerProfile: activeGroup?.memberProfiles?.[tx._ownerId],
+                                                    } : undefined}
                                                 />
                                             </div>
                                         </TransitionChild>
@@ -1454,65 +1262,18 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                     />
                 )}
 
-                {/* Story 14.15: Assign Group Modal */}
-                <AssignGroupModal
-                    isOpen={showGroupModal}
-                    selectedCount={selectedCount}
-                    groups={groups}
-                    groupsLoading={groupsLoading}
-                    onClose={() => setShowGroupModal(false)}
-                    onAssign={handleAssignGroup}
-                    onCreateNew={() => {
-                        setShowGroupModal(false);
-                        setShowCreateGroupModal(true);
-                    }}
-                    onEditGroup={handleEditGroup}
-                    onDeleteGroup={handleDeleteGroup}
-                    onRemoveFromGroup={handleRemoveFromGroup}
-                    t={t}
-                    lang={lang as 'en' | 'es'}
-                />
-
-                {/* Story 14.15: Create Group Modal */}
-                <CreateGroupModal
-                    isOpen={showCreateGroupModal}
-                    selectedCount={selectedCount}
-                    onClose={() => setShowCreateGroupModal(false)}
-                    onCreate={handleCreateGroup}
-                    onBack={() => {
-                        setShowCreateGroupModal(false);
-                        setShowGroupModal(true);
-                    }}
-                    t={t}
-                    lang={lang as 'en' | 'es'}
-                />
-
-                {/* Story 14.15b: Edit Group Modal */}
-                <EditGroupModal
-                    isOpen={showEditGroupModal}
-                    group={editingGroup}
-                    onClose={() => {
-                        setShowEditGroupModal(false);
-                        setEditingGroup(null);
-                    }}
-                    onSave={handleSaveGroup}
-                    t={t}
-                    lang={lang as 'en' | 'es'}
-                />
-
-                {/* Story 14.15b: Delete Group Modal */}
-                <DeleteGroupModal
-                    isOpen={showDeleteGroupModal}
-                    group={deletingGroup}
-                    isDeleting={isDeletingGroup}
-                    onClose={() => {
-                        setShowDeleteGroupModal(false);
-                        setDeletingGroup(null);
-                    }}
-                    onConfirm={handleConfirmDeleteGroup}
-                    t={t}
-                    lang={lang as 'en' | 'es'}
-                />
+                {/* Group consolidation: TransactionGroupSelector replaces personal group modals */}
+                {showGroupSelector && (
+                    <TransactionGroupSelector
+                        groups={groups}
+                        selectedIds={[]}
+                        onSelect={handleGroupSelect}
+                        onClose={() => setShowGroupSelector(false)}
+                        t={t}
+                        theme={theme === 'dark' ? 'dark' : 'light'}
+                        isLoading={groupsLoading}
+                    />
+                )}
 
                 {/* Story 14.15: Delete Transactions Modal */}
                 <DeleteTransactionsModal

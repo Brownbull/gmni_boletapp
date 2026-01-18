@@ -21,6 +21,31 @@ import React, { useState, useRef } from 'react';
 import { ArrowLeft, ChevronLeft } from 'lucide-react';
 import { ProfileDropdown, ProfileAvatar, getInitials } from './ProfileDropdown';
 
+/**
+ * Helper to extract emoji from group name (e.g., "🏠 Family" → "🏠")
+ */
+function extractGroupEmoji(name: string): string | null {
+    if (!name) return null;
+    const firstChar = name.codePointAt(0);
+    if (firstChar && firstChar > 0x1F300) {
+        const match = name.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u);
+        return match ? match[0] : null;
+    }
+    return null;
+}
+
+/**
+ * Helper to extract label from group name (e.g., "🏠 Family" → "Family")
+ */
+function extractGroupLabel(name: string): string {
+    if (!name) return '';
+    const emoji = extractGroupEmoji(name);
+    if (emoji) {
+        return name.slice(emoji.length).trim();
+    }
+    return name;
+}
+
 export type HeaderVariant = 'home' | 'detail' | 'settings';
 
 // View-specific titles for the home variant (when showing logo + title)
@@ -139,21 +164,22 @@ const AppLogo: React.FC<AppLogoProps> = ({ viewMode, activeGroup }) => {
     // In group mode, uses the group's color instead
 
     if (isGroupMode) {
-        // Group mode: Show group icon with group color
+        // Group mode: Show group icon with group color - larger 44px for visibility
         return (
             <div
                 data-testid="group-mode-icon"
                 className="rounded-full flex items-center justify-center flex-shrink-0 transition-colors duration-300"
                 style={{
-                    width: '36px',
-                    height: '36px',
+                    width: '44px',
+                    height: '44px',
                     background: activeGroup.color || 'var(--primary, #2563eb)',
                 }}
             >
                 <span
-                    className="text-white"
                     style={{
-                        fontSize: '18px',
+                        fontSize: '24px',
+                        fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", sans-serif',
+                        lineHeight: 1,
                     }}
                     role="img"
                     aria-label={activeGroup.name}
@@ -375,7 +401,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 {/* Center: Title/Wordmark (not for settings - title is in left section) */}
                 {variant !== 'settings' && (
                     <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-col items-center">
-                        {/* Story 14c.4: Show group name as title when in group mode */}
+                        {/* Story 14c.4: Show group name as title when in group mode (without emoji) */}
                         {viewMode === 'group' && activeGroup ? (
                             <div data-testid="group-mode-indicator" className="flex flex-col items-center">
                                 <span
@@ -391,7 +417,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                                         whiteSpace: 'nowrap',
                                     }}
                                 >
-                                    {activeGroup.name}
+                                    {extractGroupLabel(activeGroup.name)}
                                 </span>
                             </div>
                         ) : (

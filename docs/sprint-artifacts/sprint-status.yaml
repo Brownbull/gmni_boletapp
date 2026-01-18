@@ -451,13 +451,15 @@ development_status:
   epic-14-retrospective: done  # Combined retro 2026-01-15 (Epics 12, 13, 14)
 
   # ============================================================================
-  # EPIC 14C: SHARED GROUPS (~46 points)
+  # EPIC 14C: SHARED GROUPS (~59 points) - Updated 2026-01-17
   # ============================================================================
   # Multi-user shared groups (2-10 members), symmetric visibility
   # PREREQUISITE: Story 14.29 (React Query Migration) - ✅ COMPLETE
   # Brainstorming: docs/analysis/brainstorming-session-2026-01-15.md
+  # Real-Time Sync Decision: docs/sprint-artifacts/epic14c/BRAINSTORM-REALTIME-SYNC-DECISION.md
   # Epic Doc: docs/sprint-artifacts/epic14/epic-14c-household-sharing.md
   # Architecture: Option 4 Hybrid (shared group doc + user transactions)
+  # Real-Time Sync: Hybrid Approach A+C (memberUpdates listener + FCM push)
 # # BMAD custom commands
 # | Command | Description |
 # |---------|-------------|
@@ -477,19 +479,29 @@ development_status:
 
   # Phase 2: Core UX (After Mockups) - 16 pts
   14c-4-view-mode-switcher: done  # 5 pts - Logo icon tap → group selector → filter all views - Code Review PASSED ✅
-  14c-5-shared-group-transactions-view: ready-for-dev  # 8 pts - Cross-member queries + caching + delta sync
-  14c-6-transaction-ownership-indicators: ready-for-dev  # 3 pts - Profile icon on cards + view-only mode
+  14c-5-shared-group-transactions-view: done  # 8 pts - Infrastructure complete (Tasks 1-10). Cache staleness issues resolved by 14c.12
+  14c-6-transaction-ownership-indicators: done  # 3 pts - Profile icon on cards + view-only mode - Atlas Code Review PASSED 2026-01-16
 
   # Phase 3: Features - 10 pts
-  14c-7-tag-transactions-to-groups: ready-for-dev  # 3 pts - Custom group selector in Edit view
-  14c-8-auto-tag-on-scan: ready-for-dev  # 2 pts - In group view, new scans auto-tagged
-  14c-9-shared-group-analytics: ready-for-dev  # 5 pts - Polygon, sparkline, insights for group data
+  14c-7-tag-transactions-to-groups: done  # 3 pts - Custom group selector in Edit view - 34 tests passing
+  14c-8-auto-tag-on-scan: done  # 2 pts - In group view, new scans auto-tagged - Atlas Code Review PASSED 2026-01-16
+  14c-9-shared-group-analytics: done  # 5 pts - Polygon, sparkline, insights for group data - Atlas Code Review PASSED 2026-01-17 (46 tests, AC4 chart integrated into TrendsView)
 
-  # Phase 4: Polish - 4 pts
+  # Phase 4: Real-Time Sync (2026-01-17 Brainstorming Decision) - 13 pts
+  # Decision: Hybrid Approach A+C - memberUpdates listener + FCM push notifications
+  # Decision Doc: docs/sprint-artifacts/epic14c/BRAINSTORM-REALTIME-SYNC-DECISION.md
+  # NOTE: 14c.12 RESOLVES cache invalidation issues from 14c.5 - this is the missing piece for cross-user sync
+  14c-12-realtime-sync-complete-circuit: done  # 5 pts - onSnapshot + memberUpdates + cache invalidation - Atlas Code Review PASSED 2026-01-17 (4631 tests, security rules tightened, +20 new utility tests)
+  14c-13-fcm-push-notifications: deployed  # 8 pts - Closed-app notifications + token management [DEPENDS: 14c.12] - PR #163 2026-01-18
+
+  # Phase 5: Polish - 4 pts
   14c-10-empty-states-loading: done  # 2 pts - Skeleton UI, empty states, loading feedback
   14c-11-error-handling: ready-for-dev  # 2 pts - User not found, network errors, quota exceeded
 
-  # Phase 5: Release - 2 pts
+  # Phase 7: Tech Debt - 2 pts
+  14c-14-tech-debt-functions-config-migration: backlog  # 2 pts - Migrate functions.config() to env vars before March 2026
+
+  # Phase 6: Release - 2 pts
   14c-99-epic-release-deployment: ready-for-dev  # 2 pts - Version bump (minor beta), CI/CD verification, staging/prod deployment
 
   epic-14c-retrospective: optional

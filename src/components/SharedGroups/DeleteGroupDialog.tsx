@@ -5,15 +5,16 @@
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * Confirmation dialog for deleting a shared group entirely.
- * Only the owner can delete a group. Offers option to keep or remove
- * all members' transactions from the group.
+ * Only the owner can delete a group.
  *
- * AC4: Owner can delete group (soft/hard delete options)
- * AC7: Confirmation dialogs show consequences
+ * When deleting a group:
+ * - The group label is removed from all transactions
+ * - Other members can no longer see shared transactions
+ * - Each user keeps their own transactions (they just become private)
  */
 
 import React, { useEffect, useRef, useCallback, useState } from 'react';
-import { X, Trash2, Loader2, AlertTriangle, FileText, ShieldOff } from 'lucide-react';
+import { X, Trash2, Loader2, AlertTriangle } from 'lucide-react';
 
 export interface DeleteGroupDialogProps {
     /** Whether the modal is currently open */
@@ -26,7 +27,7 @@ export interface DeleteGroupDialogProps {
     groupIcon?: string;
     /** Number of members in the group */
     memberCount: number;
-    /** Callback when user confirms deletion */
+    /** Callback when user confirms deletion (always removes transaction tags) */
     onConfirm: (removeTransactionTags: boolean) => Promise<void>;
     /** Callback when dialog is closed/canceled */
     onClose: () => void;
@@ -52,14 +53,11 @@ export const DeleteGroupDialog: React.FC<DeleteGroupDialogProps> = ({
 }) => {
     const modalRef = useRef<HTMLDivElement>(null);
     const closeButtonRef = useRef<HTMLButtonElement>(null);
-
-    const [removeTransactionTags, setRemoveTransactionTags] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
     // Reset state when dialog opens
     useEffect(() => {
         if (isOpen) {
-            setRemoveTransactionTags(false);
             setIsDeleting(false);
             setTimeout(() => closeButtonRef.current?.focus(), 0);
         }
@@ -94,15 +92,15 @@ export const DeleteGroupDialog: React.FC<DeleteGroupDialogProps> = ({
         return () => { document.body.style.overflow = ''; };
     }, [isOpen]);
 
-    // Handle confirm
+    // Handle confirm - always removes transaction tags
     const handleConfirm = useCallback(async () => {
         setIsDeleting(true);
         try {
-            await onConfirm(removeTransactionTags);
+            await onConfirm(true); // Always remove transaction tags
         } finally {
             setIsDeleting(false);
         }
-    }, [onConfirm, removeTransactionTags]);
+    }, [onConfirm]);
 
     if (!isOpen) return null;
 
@@ -112,21 +110,19 @@ export const DeleteGroupDialog: React.FC<DeleteGroupDialogProps> = ({
         warning: t('deleteGroupWarning') || (lang === 'es'
             ? 'Esta acción es permanente y no se puede deshacer.'
             : 'This action is permanent and cannot be undone.'),
-        membersAffected: t('deleteGroupMembersAffected') || (lang === 'es'
-            ? `${memberCount} miembros perderán acceso`
-            : `${memberCount} members will lose access`),
-        keepTransactions: t('deleteGroupKeepTx') || (lang === 'es'
-            ? 'Mantener transacciones visibles'
-            : 'Keep transactions visible'),
-        keepTransactionsDesc: t('deleteGroupKeepTxDesc') || (lang === 'es'
-            ? 'Las transacciones permanecen en el grupo eliminado'
-            : 'Transactions remain tagged with deleted group'),
-        removeTransactions: t('deleteGroupRemoveTx') || (lang === 'es'
-            ? 'Remover transacciones del grupo'
-            : 'Remove transactions from group'),
-        removeTransactionsDesc: t('deleteGroupRemoveTxDesc') || (lang === 'es'
-            ? 'Todas las transacciones se vuelven privadas'
-            : 'All transactions become private again'),
+        membersAffected: (t('deleteGroupMembersAffected') || (lang === 'es'
+            ? '{count} miembros perderán acceso'
+            : '{count} members will lose access')).replace('{count}', String(memberCount)),
+        whatHappens: lang === 'es' ? '¿Qué sucederá?' : 'What will happen?',
+        consequence1: lang === 'es'
+            ? 'Se eliminará la etiqueta del grupo de todas las transacciones'
+            : 'The group label will be removed from all transactions',
+        consequence2: lang === 'es'
+            ? 'Los otros miembros ya no podrán ver las transacciones compartidas'
+            : 'Other members will no longer see shared transactions',
+        consequence3: lang === 'es'
+            ? 'Cada usuario conserva sus propias transacciones (se vuelven privadas)'
+            : 'Each user keeps their own transactions (they become private)',
         cancel: t('cancel') || (lang === 'es' ? 'Cancelar' : 'Cancel'),
         confirm: t('deleteGroup') || (lang === 'es' ? 'Eliminar grupo' : 'Delete Group'),
         deleting: t('deleting') || (lang === 'es' ? 'Eliminando...' : 'Deleting...'),
@@ -138,7 +134,7 @@ export const DeleteGroupDialog: React.FC<DeleteGroupDialogProps> = ({
             role="presentation"
             data-testid="delete-group-dialog-backdrop"
         >
-            {/* Full-screen backdrop - covers entire viewport including nav */}
+            {/* Full-screen backdrop */}
             <div
                 className="fixed inset-0 bg-black/50"
                 aria-hidden="true"
@@ -171,8 +167,13 @@ export const DeleteGroupDialog: React.FC<DeleteGroupDialogProps> = ({
                     {/* Warning Icon with Group */}
                     <div className="relative mx-auto mb-4 w-16 h-16">
                         <div
-                            className="w-16 h-16 rounded-full flex items-center justify-center text-2xl"
-                            style={{ backgroundColor: groupColor }}
+                            className="w-16 h-16 rounded-full flex items-center justify-center"
+                            style={{
+                                backgroundColor: groupColor,
+                                fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", sans-serif',
+                                fontSize: '2rem',
+                                lineHeight: 1,
+                            }}
                         >
                             {groupIcon || <Trash2 className="text-white" size={28} />}
                         </div>
@@ -190,7 +191,7 @@ export const DeleteGroupDialog: React.FC<DeleteGroupDialogProps> = ({
                     <h2
                         id="delete-group-title"
                         className="text-xl font-bold mb-1"
-                        style={{ color: 'var(--primary)' }}
+                        style={{ color: 'var(--text-primary)' }}
                     >
                         {texts.title}
                     </h2>
@@ -229,100 +230,54 @@ export const DeleteGroupDialog: React.FC<DeleteGroupDialogProps> = ({
                         )}
                     </div>
 
-                    {/* Transaction handling options */}
-                    <div className="space-y-3 mb-6">
-                        {/* Keep transactions */}
-                        <button
-                            onClick={() => setRemoveTransactionTags(false)}
-                            disabled={isDeleting}
-                            className={`w-full p-4 rounded-xl text-left transition-all ${
-                                !removeTransactionTags ? 'ring-2 ring-offset-2' : ''
-                            }`}
-                            style={{
-                                backgroundColor: !removeTransactionTags
-                                    ? 'rgba(16, 185, 129, 0.1)'
-                                    : 'var(--bg-tertiary)',
-                                // ringColor handled by Tailwind ring-* classes
-                            }}
-                            data-testid="delete-keep-tx-option"
+                    {/* What happens explanation */}
+                    <div
+                        className="rounded-lg p-3 mb-4 text-left"
+                        style={{
+                            backgroundColor: 'var(--bg-tertiary)',
+                            border: '1px solid var(--border-light)',
+                        }}
+                    >
+                        <p
+                            className="text-xs font-semibold uppercase tracking-wide mb-2"
+                            style={{ color: 'var(--text-secondary)' }}
                         >
-                            <div className="flex items-start gap-3">
-                                <FileText
-                                    size={24}
-                                    style={{ color: !removeTransactionTags ? '#10b981' : 'var(--secondary)' }}
-                                />
-                                <div>
-                                    <div
-                                        className="font-medium"
-                                        style={{ color: 'var(--primary)' }}
-                                    >
-                                        {texts.keepTransactions}
-                                    </div>
-                                    <div
-                                        className="text-sm mt-0.5"
-                                        style={{ color: 'var(--secondary)' }}
-                                    >
-                                        {texts.keepTransactionsDesc}
-                                    </div>
-                                </div>
-                            </div>
-                        </button>
-
-                        {/* Remove transactions */}
-                        <button
-                            onClick={() => setRemoveTransactionTags(true)}
-                            disabled={isDeleting}
-                            className={`w-full p-4 rounded-xl text-left transition-all ${
-                                removeTransactionTags ? 'ring-2 ring-offset-2' : ''
-                            }`}
-                            style={{
-                                backgroundColor: removeTransactionTags
-                                    ? 'rgba(239, 68, 68, 0.1)'
-                                    : 'var(--bg-tertiary)',
-                                // ringColor handled by Tailwind ring-* classes
-                            }}
-                            data-testid="delete-remove-tx-option"
-                        >
-                            <div className="flex items-start gap-3">
-                                <ShieldOff
-                                    size={24}
-                                    style={{ color: removeTransactionTags ? '#ef4444' : 'var(--secondary)' }}
-                                />
-                                <div>
-                                    <div
-                                        className="font-medium"
-                                        style={{ color: 'var(--primary)' }}
-                                    >
-                                        {texts.removeTransactions}
-                                    </div>
-                                    <div
-                                        className="text-sm mt-0.5"
-                                        style={{ color: 'var(--secondary)' }}
-                                    >
-                                        {texts.removeTransactionsDesc}
-                                    </div>
-                                </div>
-                            </div>
-                        </button>
+                            {texts.whatHappens}
+                        </p>
+                        <ul className="space-y-2">
+                            {[texts.consequence1, texts.consequence2, texts.consequence3].map((text, i) => (
+                                <li
+                                    key={i}
+                                    className="flex items-start gap-2 text-xs"
+                                    style={{ color: 'var(--text-secondary)' }}
+                                >
+                                    <span
+                                        className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0"
+                                        style={{ backgroundColor: 'var(--text-tertiary)' }}
+                                    />
+                                    {text}
+                                </li>
+                            ))}
+                        </ul>
                     </div>
 
                     {/* Action buttons */}
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-2">
                         <button
                             onClick={handleConfirm}
                             disabled={isDeleting}
-                            className="w-full py-3 px-4 rounded-xl text-white font-semibold shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                            className="w-full py-2.5 px-4 rounded-xl text-white text-sm font-medium shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                             style={{ backgroundColor: '#ef4444' }}
                             data-testid="delete-confirm-btn"
                         >
                             {isDeleting ? (
                                 <>
-                                    <Loader2 className="animate-spin" size={18} />
+                                    <Loader2 className="animate-spin" size={16} />
                                     {texts.deleting}
                                 </>
                             ) : (
                                 <>
-                                    <Trash2 size={18} />
+                                    <Trash2 size={16} />
                                     {texts.confirm}
                                 </>
                             )}
@@ -331,14 +286,13 @@ export const DeleteGroupDialog: React.FC<DeleteGroupDialogProps> = ({
                         <button
                             onClick={handleClose}
                             disabled={isDeleting}
-                            className="w-full py-3 px-4 rounded-xl border font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                            className="w-full py-2.5 px-4 rounded-xl border text-sm font-medium transition-colors disabled:opacity-50"
                             style={{
                                 borderColor: 'var(--border-light)',
                                 color: 'var(--text-primary)',
                                 backgroundColor: 'var(--bg-secondary)',
                             }}
                         >
-                            <X size={18} />
                             {texts.cancel}
                         </button>
                     </div>

@@ -49,6 +49,8 @@ export interface GroupMembersManagerProps {
     t: (key: string) => string;
     /** Language */
     lang?: 'en' | 'es';
+    /** Hide the header (when parent provides its own) */
+    hideHeader?: boolean;
 }
 
 /**
@@ -67,6 +69,7 @@ export const GroupMembersManager: React.FC<GroupMembersManagerProps> = ({
     memberPhotos = {},
     t,
     lang = 'es',
+    hideHeader = false,
 }) => {
     void _appId; // Silence unused warning - appId passed through parent callbacks
     const isOwner = group.ownerId === currentUserId;
@@ -171,15 +174,17 @@ export const GroupMembersManager: React.FC<GroupMembersManagerProps> = ({
 
     return (
         <div className="space-y-4" data-testid="group-members-manager">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <h3
-                    className="font-semibold text-sm"
-                    style={{ color: 'var(--text-primary)' }}
-                >
-                    {texts.members} ({group.members.length})
-                </h3>
-            </div>
+            {/* Header (optional) */}
+            {!hideHeader && (
+                <div className="flex items-center justify-between">
+                    <h3
+                        className="font-semibold text-sm"
+                        style={{ color: 'var(--text-primary)' }}
+                    >
+                        {texts.members} ({group.members.length})
+                    </h3>
+                </div>
+            )}
 
             {/* Members List */}
             <div className="space-y-2">
@@ -305,7 +310,7 @@ export const GroupMembersManager: React.FC<GroupMembersManagerProps> = ({
             {/* Leave Group Button */}
             <button
                 onClick={handleLeaveClick}
-                className="w-full py-3 px-4 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
+                className="w-full py-2.5 px-4 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
                 style={{
                     backgroundColor: 'rgba(239, 68, 68, 0.1)',
                     color: '#ef4444',
@@ -313,7 +318,7 @@ export const GroupMembersManager: React.FC<GroupMembersManagerProps> = ({
                 }}
                 data-testid="leave-group-btn"
             >
-                <LogOut size={18} />
+                <LogOut size={16} />
                 {texts.leaveGroup}
             </button>
 

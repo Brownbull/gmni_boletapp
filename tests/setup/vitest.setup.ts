@@ -26,5 +26,36 @@ vi.mock('virtual:pwa-register/react', () => ({
   })),
 }));
 
+// Story 14c.5: Mock react-i18next for internationalized components
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, fallback?: string) => fallback || key,
+    i18n: { language: 'en' },
+  }),
+  Trans: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+// Group consolidation: Mock useAllUserGroups hook for tests
+// This hook is used by DashboardView and HistoryView after migration from useGroups
+vi.mock('../src/hooks/useAllUserGroups', () => ({
+  useAllUserGroups: vi.fn(() => ({
+    groups: [],
+    isLoading: false,
+    error: undefined,
+    hasGroups: false,
+    sharedGroupCount: 0,
+    personalGroupCount: 0,
+  })),
+}));
+
+// Group consolidation: Mock useUserSharedGroups hook (used by useAllUserGroups)
+vi.mock('../src/hooks/useUserSharedGroups', () => ({
+  useUserSharedGroups: vi.fn(() => ({
+    groups: [],
+    isLoading: false,
+    error: undefined,
+  })),
+}));
+
 // Note: Individual test files should call setupFirebaseEmulator() from
 // firebase-emulator.ts in their beforeAll() hooks if they need Firebase
