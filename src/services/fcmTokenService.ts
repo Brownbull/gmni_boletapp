@@ -13,6 +13,7 @@
 import {
   Firestore,
   collection,
+  collectionGroup,
   doc,
   setDoc,
   deleteDoc,
@@ -257,9 +258,78 @@ export async function getUserFCMTokens(
 }
 
 /**
+ * Remove an FCM token from ALL users except the specified one.
+ *
+ * This is critical for handling account switching on the same device.
+ * FCM tokens are device-specific, so when a user logs in on a device
+ * that was previously used by another account, we need to remove
+ * the token from the old account to prevent mis-delivered notifications.
+ *
+ * Uses collection group query to find the token across all users.
+ *
+ * @param db Firestore instance
+ * @param currentUserId The user who should KEEP the token
+ * @param token FCM token to clean up from other users
+ */
+async function removeTokenFromOtherUsers(
+  db: Firestore,
+  currentUserId: string,
+  token: string
+): Promise<number> {
+  try {
+    // Query all fcmTokens collections for this token
+    const tokenQuery = query(
+      collectionGroup(db, 'fcmTokens'),
+      where('token', '==', token)
+    );
+
+    const snapshot = await getDocs(tokenQuery);
+
+    if (snapshot.empty) {
+      return 0;
+    }
+
+    let deletedCount = 0;
+    const batch = writeBatch(db);
+
+    for (const tokenDoc of snapshot.docs) {
+      // Extract userId from the document path
+      // Path format: artifacts/{appId}/users/{userId}/fcmTokens/{tokenId}
+      const pathParts = tokenDoc.ref.path.split('/');
+      const userIdIndex = pathParts.indexOf('users') + 1;
+      const docUserId = pathParts[userIdIndex];
+
+      // Only delete if it belongs to a DIFFERENT user
+      if (docUserId && docUserId !== currentUserId) {
+        batch.delete(tokenDoc.ref);
+        deletedCount++;
+
+        if (import.meta.env.DEV) {
+          console.log(`[fcmTokenService] Removing token from other user: ${docUserId}`);
+        }
+      }
+    }
+
+    if (deletedCount > 0) {
+      await batch.commit();
+      if (import.meta.env.DEV) {
+        console.log(`[fcmTokenService] Removed token from ${deletedCount} other user(s)`);
+      }
+    }
+
+    return deletedCount;
+  } catch (error) {
+    // Log but don't fail - token registration should still proceed
+    console.error('[fcmTokenService] Error removing token from other users:', error);
+    return 0;
+  }
+}
+
+/**
  * Save FCM token with localStorage tracking.
  *
  * Extended version of saveFCMToken that also:
+ * - Removes the token from other users (handles account switching)
  * - Stores token in localStorage for quick comparison
  * - Updates lastUsedAt timestamp
  *
@@ -274,6 +344,10 @@ export async function saveFCMTokenWithTracking(
   appId: string,
   token: string
 ): Promise<void> {
+  // IMPORTANT: First remove this token from any other users
+  // This handles the case where the same device was previously used by another account
+  await removeTokenFromOtherUsers(db, userId, token);
+
   const collectionPath = getTokensCollectionPath(appId, userId);
   const tokenDocRef = doc(db, collectionPath, hashToken(token));
 
