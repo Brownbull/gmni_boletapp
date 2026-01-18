@@ -14,9 +14,9 @@ import {
 import { getFirestore, Firestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { firebaseConfig } from '../config/firebase';
 import {
-    getStoredFCMToken,
-    deleteFCMToken,
-} from '../services/fcmTokenService';
+    disableWebPushNotifications,
+    WEB_PUSH_CONSTANTS,
+} from '../services/webPushService';
 
 export interface Services {
     auth: Auth;
@@ -130,25 +130,21 @@ export function useAuth(): UseAuthReturn {
     const signOut = async () => {
         if (!services) return;
 
-        // Story 14c.13: Delete FCM token before signing out
+        // Story 14c.13-WP: Delete web push subscription before signing out
         // This is CRITICAL for proper notification routing when users share devices
-        // If we don't delete the token, notifications will be sent to the wrong user
+        // If we don't delete the subscription, notifications will be sent to the wrong user
         try {
-            const currentUserId = services.auth.currentUser?.uid;
-            if (currentUserId) {
-                // Get the current device's token from localStorage
-                const storedToken = getStoredFCMToken();
+            // Check if user had notifications enabled
+            const wasEnabled = localStorage.getItem(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_KEY) === 'true';
 
-                if (storedToken) {
-                    // Delete just this device's token (not all tokens for the user)
-                    // This allows the user to stay logged in on other devices
-                    await deleteFCMToken(services.db, currentUserId, services.appId, storedToken);
-                    console.log('[useAuth] Deleted FCM token on sign out');
-                }
+            if (wasEnabled) {
+                // Disable web push notifications (unsubscribes and deletes from server)
+                await disableWebPushNotifications();
+                console.log('[useAuth] Disabled web push notifications on sign out');
             }
         } catch (error) {
-            // Don't block sign-out if token deletion fails
-            console.error('[useAuth] Failed to delete FCM token on sign out:', error);
+            // Don't block sign-out if subscription deletion fails
+            console.error('[useAuth] Failed to disable web push on sign out:', error);
         }
 
         await firebaseSignOut(services.auth);

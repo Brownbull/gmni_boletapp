@@ -2,6 +2,7 @@
  * Cloud Function: sendSharedGroupNotification
  *
  * Story 14c.13: FCM Push Notifications for Shared Groups
+ * Story 14c.13-WP: Migrated to Web Push (VAPID) for better Android support
  * Epic 14c: Household Sharing
  *
  * Firestore trigger that sends push notifications when a transaction
@@ -12,8 +13,8 @@
  * Logic:
  * 1. Check if transaction has sharedGroupIds (new or updated)
  * 2. For each shared group, fetch group members
- * 3. Get FCM tokens for each member (excluding the transaction owner)
- * 4. Send notification with group name and transaction details
+ * 3. Get push subscriptions for each member (excluding the transaction owner)
+ * 4. Send notification with group name and transaction details via web-push
  *
  * Rate Limiting (AC8):
  * - Tracks last notification timestamp per group per user
@@ -27,6 +28,7 @@
 
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import webpush from 'web-push';
 
 // Use functions.logger for better Cloud Logging visibility
 const logger = functions.logger;
@@ -37,6 +39,17 @@ if (admin.apps.length === 0) {
 }
 
 const db = admin.firestore();
+
+// ============================================================================
+// VAPID Configuration (Web Push)
+// ============================================================================
+
+const VAPID_PUBLIC_KEY = 'BASuONCHNOt_Vzw6Pm5ab8WdcP59y7EmDCGkvjaG4HmCrD38Ls0iEi5UTnQR8_y3pjXIQ_lYHnxjv45whnPjou8';
+const VAPID_PRIVATE_KEY = 'ZuJXbXCU_sZIm1YegbUL4dS5Pqtyy4XOA7Id3z9JgWc';
+const VAPID_SUBJECT = 'mailto:notifications@boletapp.com';
+
+// Configure web-push with VAPID details
+webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
 // ============================================================================
 // Types
@@ -61,10 +74,15 @@ interface SharedGroupData {
     memberProfiles?: Record<string, { displayName?: string; email?: string }>;
 }
 
-interface FCMTokenDoc {
-    token: string;
-    platform: string;
-    lastUsedAt?: admin.firestore.Timestamp;
+/** Push subscription stored in Firestore */
+interface PushSubscriptionDoc {
+    endpoint: string;
+    keys: {
+        p256dh: string;
+        auth: string;
+    };
+    createdAt?: admin.firestore.Timestamp;
+    updatedAt?: admin.firestore.Timestamp;
 }
 
 // ============================================================================
@@ -176,8 +194,8 @@ export const sendSharedGroupNotification = functions.firestore
 /**
  * Process notification for a single group.
  *
- * Task 5.3: Fetch group members and member FCM tokens
- * Task 5.4: Send FCM notification
+ * Task 5.3: Fetch group members and member push subscriptions
+ * Task 5.4: Send web push notification
  */
 async function processGroupNotification(
     groupId: string,
@@ -211,8 +229,8 @@ async function processGroupNotification(
         return;
     }
 
-    // Task 5.3: Fetch FCM tokens for each member
-    const tokens: string[] = [];
+    // Task 5.3: Fetch push subscriptions for each member
+    const subscriptions: PushSubscriptionDoc[] = [];
 
     for (const memberId of otherMembers) {
         // Check rate limit for this member + group combination
@@ -222,24 +240,24 @@ async function processGroupNotification(
             continue;
         }
 
-        // Get member's FCM tokens
-        const memberTokens = await getMemberTokens(memberId);
-        logger.info(`[sendSharedGroupNotification] Tokens for member ${memberId}:`, memberTokens.length);
-        tokens.push(...memberTokens);
+        // Get member's push subscriptions
+        const memberSubs = await getMemberSubscriptions(memberId);
+        logger.info(`[sendSharedGroupNotification] Subscriptions for member ${memberId}:`, memberSubs.length);
+        subscriptions.push(...memberSubs);
     }
 
-    logger.info(`[sendSharedGroupNotification] Total tokens collected:`, tokens.length);
+    logger.info(`[sendSharedGroupNotification] Total subscriptions collected:`, subscriptions.length);
 
-    if (tokens.length === 0) {
-        logger.info(`[sendSharedGroupNotification] No valid FCM tokens for group ${groupId}`);
+    if (subscriptions.length === 0) {
+        logger.info(`[sendSharedGroupNotification] No valid push subscriptions for group ${groupId}`);
         return;
     }
 
     // Build notification content
     const { title, body } = buildNotificationContent(groupData, transaction, ownerId, notificationType);
 
-    // Task 5.4: Send FCM notification
-    await sendNotification(tokens, {
+    // Task 5.4: Send web push notification
+    await sendNotification(subscriptions, {
         title,
         body,
         groupId,
@@ -255,19 +273,20 @@ async function processGroupNotification(
 }
 
 /**
- * Get FCM tokens for a user.
+ * Get push subscriptions for a user.
+ * Returns array of subscription objects for web-push library.
  */
-async function getMemberTokens(userId: string): Promise<string[]> {
-    const tokensRef = db.collection(`artifacts/${APP_ID}/users/${userId}/fcmTokens`);
-    const snapshot = await tokensRef.get();
+async function getMemberSubscriptions(userId: string): Promise<PushSubscriptionDoc[]> {
+    const subsRef = db.collection(`artifacts/${APP_ID}/users/${userId}/pushSubscriptions`);
+    const snapshot = await subsRef.get();
 
     if (snapshot.empty) {
         return [];
     }
 
     return snapshot.docs
-        .map(doc => (doc.data() as FCMTokenDoc).token)
-        .filter(Boolean);
+        .map(doc => doc.data() as PushSubscriptionDoc)
+        .filter(sub => sub.endpoint && sub.keys?.p256dh && sub.keys?.auth);
 }
 
 /**
@@ -307,12 +326,12 @@ function buildNotificationContent(
 }
 
 /**
- * Send FCM notification to multiple tokens.
+ * Send web push notification to multiple subscriptions.
  *
- * Uses data-only message for maximum compatibility with service worker.
+ * Uses web-push library with VAPID for reliable delivery.
  */
 async function sendNotification(
-    tokens: string[],
+    subscriptions: PushSubscriptionDoc[],
     data: {
         title: string;
         body: string;
@@ -322,91 +341,92 @@ async function sendNotification(
         notificationType: NotificationType;
     }
 ): Promise<void> {
-    // Send data-only message (service worker will display notification)
-    const message: admin.messaging.MulticastMessage = {
-        tokens,
+    const payload = JSON.stringify({
+        title: data.title,
+        body: data.body,
+        icon: '/pwa-192x192.png',
+        badge: '/badge-72.png',
+        url: data.groupId ? `/?view=group&groupId=${data.groupId}` : '/',
+        tag: data.groupId ? `shared-group-${data.groupId}` : 'gastify-notification',
         data: {
             type: data.notificationType,
-            title: data.title,
-            body: data.body,
             groupId: data.groupId,
             transactionId: data.transactionId,
-            icon: data.groupIcon,
         },
-        // Android-specific options
-        android: {
-            priority: 'high',
-        },
-        // Web push options
-        webpush: {
-            headers: {
-                Urgency: 'high',
-            },
-        },
-    };
+    });
 
-    try {
-        const response = await admin.messaging().sendEachForMulticast(message);
+    let successCount = 0;
+    let failureCount = 0;
+    const subscriptionsToDelete: string[] = [];
 
-        logger.info(
-            `[sendSharedGroupNotification] Sent ${response.successCount}/${tokens.length} notifications`
-        );
-
-        // Log failures and delete invalid tokens
-        if (response.failureCount > 0) {
-            const tokensToDelete: string[] = [];
-
-            response.responses.forEach((resp, idx) => {
-                if (!resp.success) {
-                    logger.warn(
-                        `[sendSharedGroupNotification] Failed to send to token ${idx}:`,
-                        resp.error?.code,
-                        resp.error?.message
-                    );
-
-                    // Collect invalid tokens for deletion
-                    if (resp.error?.code === 'messaging/registration-token-not-registered' ||
-                        resp.error?.code === 'messaging/invalid-registration-token') {
-                        tokensToDelete.push(tokens[idx]);
-                    }
+    for (const sub of subscriptions) {
+        try {
+            await webpush.sendNotification(
+                {
+                    endpoint: sub.endpoint,
+                    keys: {
+                        p256dh: sub.keys.p256dh,
+                        auth: sub.keys.auth,
+                    },
+                },
+                payload,
+                {
+                    TTL: 86400, // 24 hours
+                    urgency: 'high',
                 }
-            });
+            );
+            successCount++;
+        } catch (error: unknown) {
+            failureCount++;
+            const webPushError = error as { statusCode?: number; body?: string };
 
-            // Delete invalid tokens asynchronously (don't block notification flow)
-            if (tokensToDelete.length > 0) {
-                deleteInvalidTokens(tokensToDelete).catch(err => {
-                    logger.error('[sendSharedGroupNotification] Error deleting invalid tokens:', err);
-                });
+            logger.warn(
+                `[sendSharedGroupNotification] Failed to send:`,
+                webPushError.statusCode,
+                webPushError.body
+            );
+
+            // Collect expired/invalid subscriptions for deletion
+            if (webPushError.statusCode === 410 || webPushError.statusCode === 404) {
+                subscriptionsToDelete.push(sub.endpoint);
             }
         }
-    } catch (error) {
-        logger.error('[sendSharedGroupNotification] FCM send error:', error);
-        throw error;
+    }
+
+    logger.info(
+        `[sendSharedGroupNotification] Sent ${successCount}/${subscriptions.length} notifications`
+    );
+
+    // Delete invalid subscriptions asynchronously
+    if (subscriptionsToDelete.length > 0) {
+        deleteInvalidSubscriptions(subscriptionsToDelete).catch(err => {
+            logger.error('[sendSharedGroupNotification] Error deleting invalid subscriptions:', err);
+        });
     }
 }
 
 /**
- * Delete invalid FCM tokens from Firestore.
- * Uses collection group query to find and delete tokens across all users.
+ * Delete invalid push subscriptions from Firestore.
+ * Uses collection group query to find and delete subscriptions across all users.
  */
-async function deleteInvalidTokens(tokens: string[]): Promise<void> {
-    logger.info(`[sendSharedGroupNotification] Deleting ${tokens.length} invalid tokens...`);
+async function deleteInvalidSubscriptions(endpoints: string[]): Promise<void> {
+    logger.info(`[sendSharedGroupNotification] Deleting ${endpoints.length} invalid subscriptions...`);
 
-    for (const token of tokens) {
+    for (const endpoint of endpoints) {
         try {
-            // Query all users for this token using collection group query
-            const snapshot = await db.collectionGroup('fcmTokens')
-                .where('token', '==', token)
+            // Query all users for this endpoint using collection group query
+            const snapshot = await db.collectionGroup('pushSubscriptions')
+                .where('endpoint', '==', endpoint)
                 .get();
 
             if (!snapshot.empty) {
                 const batch = db.batch();
                 snapshot.docs.forEach(doc => batch.delete(doc.ref));
                 await batch.commit();
-                logger.info(`[sendSharedGroupNotification] Deleted invalid token (found in ${snapshot.size} docs)`);
+                logger.info(`[sendSharedGroupNotification] Deleted invalid subscription (found in ${snapshot.size} docs)`);
             }
         } catch (error) {
-            logger.error(`[sendSharedGroupNotification] Error deleting token:`, error);
+            logger.error(`[sendSharedGroupNotification] Error deleting subscription:`, error);
         }
     }
 }

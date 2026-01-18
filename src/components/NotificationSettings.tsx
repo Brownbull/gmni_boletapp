@@ -14,9 +14,9 @@ import { Bell, Clock, Send, AlertCircle, Loader2, Users } from 'lucide-react';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { Firestore } from 'firebase/firestore';
 import {
-  isNotificationsEnabledLocal,
-  FCM_TOKEN_CONSTANTS,
-} from '../services/fcmTokenService';
+  isWebPushEnabledLocal,
+  WEB_PUSH_CONSTANTS,
+} from '../services/webPushService';
 
 interface NotificationSettingsProps {
   t: (key: string) => string;
@@ -126,7 +126,7 @@ export function NotificationSettings({
   // Story 14c.13: Shared group notifications depend on main push being enabled
   // Only show as enabled if main push is enabled AND localStorage flag is true
   useEffect(() => {
-    const localEnabled = isNotificationsEnabledLocal();
+    const localEnabled = isWebPushEnabledLocal();
     // Shared group notifications require main push to be working
     // isEnabled = permission === 'granted' && !!token
     const effectiveEnabled = localEnabled && permission === 'granted' && !!token;
@@ -210,9 +210,9 @@ export function NotificationSettings({
   // Story 14c.13: Handle shared group notifications toggle
   const handleSharedGroupNotificationsToggle = async () => {
     if (sharedGroupNotificationsEnabled) {
-      // Disable - just update localStorage (tokens are managed by main push toggle)
+      // Disable - just update localStorage (subscriptions are managed by main push toggle)
       try {
-        localStorage.setItem(FCM_TOKEN_CONSTANTS.LOCAL_STORAGE_KEY, 'false');
+        localStorage.setItem(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_KEY, 'false');
       } catch {
         // Ignore localStorage errors
       }
@@ -230,7 +230,7 @@ export function NotificationSettings({
         }
       }
       try {
-        localStorage.setItem(FCM_TOKEN_CONSTANTS.LOCAL_STORAGE_KEY, 'true');
+        localStorage.setItem(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_KEY, 'true');
       } catch {
         // Ignore localStorage errors
       }
