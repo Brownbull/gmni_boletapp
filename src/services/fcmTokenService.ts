@@ -25,6 +25,7 @@ import {
   limit,
   updateDoc,
 } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 /**
  * Device type for FCM token.
@@ -259,9 +260,26 @@ export async function getUserFCMTokens(
 /**
  * Save FCM token with localStorage tracking.
  *
- * Extended version of saveFCMToken that also:
- * - Stores token in localStorage for quick comparison
- * - Updates lastUsedAt timestamp
+ * IMPORTANT: This function implements a "single device per user" policy:
+ * - First deletes ALL existing FCM tokens for this user
+ * - Then saves the new token for the current device
+ * - Also cleans up this token from OTHER users' accounts (cross-user cleanup)
+ *
+ * This ensures that notifications are only delivered to the device
+ * where the user most recently logged in or enabled notifications.
+ *
+ * Why single device policy:
+ * - FCM tokens are device-specific but get registered to user accounts
+ * - If user logs into multiple devices, all devices would get notifications
+ * - When users share devices (account switching), old tokens linger
+ * - Single device ensures predictable notification delivery
+ *
+ * Why cross-user cleanup:
+ * - When users share a device (family tablet, shared computer), the same
+ *   FCM token can end up registered to multiple user accounts
+ * - Without cleanup, User B would receive notifications on User A's device
+ *   if User B once logged in on that device
+ * - Cloud Function handles cross-user cleanup (requires admin SDK)
  *
  * @param db Firestore instance
  * @param userId User ID
@@ -274,6 +292,43 @@ export async function saveFCMTokenWithTracking(
   appId: string,
   token: string
 ): Promise<void> {
+  // STEP 1: Delete ALL existing tokens for this user
+  // This ensures only the current device receives notifications
+  try {
+    await deleteAllFCMTokens(db, userId, appId);
+    if (import.meta.env.DEV) {
+      console.log('[fcmTokenService] Deleted all existing tokens for user');
+    }
+  } catch (error) {
+    // Log but continue - saving new token is more important
+    console.warn('[fcmTokenService] Failed to delete existing tokens:', error);
+  }
+
+  // STEP 2: Clean up this token from OTHER users' accounts
+  // This is critical for shared device scenarios
+  // Uses Cloud Function because client can't query other users' data
+  try {
+    const functions = getFunctions();
+    const cleanupCrossUserFcmToken = httpsCallable<
+      { token: string },
+      { success: boolean; deletedCount: number }
+    >(functions, 'cleanupCrossUserFcmToken');
+
+    const result = await cleanupCrossUserFcmToken({ token });
+
+    if (import.meta.env.DEV) {
+      console.log(
+        '[fcmTokenService] Cross-user cleanup result:',
+        result.data.deletedCount,
+        'tokens deleted from other users'
+      );
+    }
+  } catch (error) {
+    // Log but continue - this is a cleanup operation, not critical for saving
+    console.warn('[fcmTokenService] Failed to cleanup cross-user tokens:', error);
+  }
+
+  // STEP 3: Save the new token for this device
   const collectionPath = getTokensCollectionPath(appId, userId);
   const tokenDocRef = doc(db, collectionPath, hashToken(token));
 
@@ -295,7 +350,7 @@ export async function saveFCMTokenWithTracking(
   }
 
   if (import.meta.env.DEV) {
-    console.log('[fcmTokenService] Saved FCM token with tracking');
+    console.log('[fcmTokenService] Saved FCM token (single device policy with cross-user cleanup)');
   }
 }
 

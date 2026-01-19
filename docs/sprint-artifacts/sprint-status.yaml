@@ -488,18 +488,20 @@ development_status:
   14c-9-shared-group-analytics: done  # 5 pts - Polygon, sparkline, insights for group data - Atlas Code Review PASSED 2026-01-17 (46 tests, AC4 chart integrated into TrendsView)
 
   # Phase 4: Real-Time Sync (2026-01-17 Brainstorming Decision) - 13 pts
-  # Decision: Hybrid Approach A+C - memberUpdates listener + FCM push notifications
+  # Decision: Hybrid Approach A+C - memberUpdates listener + VAPID Web Push notifications
   # Decision Doc: docs/sprint-artifacts/epic14c/BRAINSTORM-REALTIME-SYNC-DECISION.md
   # NOTE: 14c.12 RESOLVES cache invalidation issues from 14c.5 - this is the missing piece for cross-user sync
+  # NOTE: 14c.13 pivoted from FCM to VAPID Web Push for reliable Android PWA background delivery
   14c-12-realtime-sync-complete-circuit: done  # 5 pts - onSnapshot + memberUpdates + cache invalidation - Atlas Code Review PASSED 2026-01-17 (4631 tests, security rules tightened, +20 new utility tests)
-  14c-13-fcm-push-notifications: deployed  # 8 pts - Closed-app notifications + token management [DEPENDS: 14c.12] - PR #163 2026-01-18
+  14c-13-push-notifications: done  # 8 pts - VAPID Web Push for closed-app notifications + in-app notification history [DEPENDS: 14c.12] - 2026-01-18, Atlas Code Review APPROVED
 
   # Phase 5: Polish - 4 pts
   14c-10-empty-states-loading: done  # 2 pts - Skeleton UI, empty states, loading feedback
   14c-11-error-handling: ready-for-dev  # 2 pts - User not found, network errors, quota exceeded
 
-  # Phase 7: Tech Debt - 2 pts
+  # Phase 7: Tech Debt - 4 pts
   14c-14-tech-debt-functions-config-migration: backlog  # 2 pts - Migrate functions.config() to env vars before March 2026
+  14c-15-notification-tech-debt: backlog  # 2 pts - Consolidate NotificationClickData interface + VAPID public key to env var [FROM: 14c.13 code review]
 
   # Phase 6: Release - 2 pts
   14c-99-epic-release-deployment: ready-for-dev  # 2 pts - Version bump (minor beta), CI/CD verification, staging/prod deployment

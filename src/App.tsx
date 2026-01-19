@@ -29,13 +29,16 @@ import { useBatchSession } from './hooks/useBatchSession';
 import { usePersonalRecords } from './hooks/usePersonalRecords';
 // Story 14c.2: Pending invitations for shared groups
 import { usePendingInvitations } from './hooks/usePendingInvitations';
-import { PendingInvitationsSection } from './components/SharedGroups/PendingInvitationsSection';
+// Story 14c.13: In-app notifications for shared groups
+import { useInAppNotifications } from './hooks/useInAppNotifications';
 // Story 14c.4: View Mode Switcher for personal/group views
 import { useViewMode } from './contexts/ViewModeContext';
 import { useUserSharedGroups } from './hooks/useUserSharedGroups';
 import { ViewModeSwitcher } from './components/SharedGroups/ViewModeSwitcher';
 // Story 14c.5: Shared group transactions hook for group mode
-import { useSharedGroupTransactions } from './hooks/useSharedGroupTransactions';
+// Story 14c.13: Delta fetch on notification click (Option C)
+import { useSharedGroupTransactions, useNotificationDeltaFetch } from './hooks/useSharedGroupTransactions';
+import type { SharedGroup } from './types/sharedGroup';
 import { getFirestore } from 'firebase/firestore';
 import { useQueryClient } from '@tanstack/react-query';
 // Story 14c.7: Tag transactions to groups
@@ -69,6 +72,8 @@ import { DashboardView } from './views/DashboardView';
 import { TrendsView } from './views/TrendsView';
 // Story 10a.4: Insights History View (replaces HistoryView in insights tab)
 import { InsightsView } from './views/InsightsView';
+// Story 14c.13: Notifications view with ProfileDropdown
+import { NotificationsView } from './views/NotificationsView';
 // Story 14.14: Transaction List View (accessible via profile menu)
 import { HistoryView } from './views/HistoryView';
 // Story 14.31: Items History View (accessible via profile menu or item category clicks)
@@ -401,8 +406,18 @@ function App() {
     const { pendingInvitations, pendingCount: pendingInvitationsCount } = usePendingInvitations(user?.email);
 
     // Story 14c.4: View Mode Switcher - context and shared groups
-    const { mode: viewMode, group: activeGroup } = useViewMode();
+    const { mode: viewMode, group: activeGroup, setGroupMode } = useViewMode();
     const db = getFirestore();
+
+    // Story 14c.13: In-app notifications for shared groups (must be after db is defined)
+    const {
+        notifications: inAppNotifications,
+        unreadCount: inAppNotificationsUnreadCount,
+        markAsRead: markNotificationAsRead,
+        markAllAsRead: markAllNotificationsAsRead,
+        deleteNotification: deleteInAppNotification,
+        deleteAllNotifications: deleteAllInAppNotifications,
+    } = useInAppNotifications(db, user?.uid || null, services?.appId || null);
     const queryClient = useQueryClient();
     const { groups: userSharedGroups, isLoading: sharedGroupsLoading } = useUserSharedGroups(db, user?.uid);
     const [showViewModeSwitcher, setShowViewModeSwitcher] = useState(false);
@@ -1064,6 +1079,21 @@ function App() {
             setPendingDistributionView(null);
         }
     }, [view]); // Only depend on view, not pendingDistributionView
+
+    // Story 14c.13: Delta fetch on notification click (Option C - cost efficient)
+    // Triggers delta fetch and navigation when user taps a push notification
+    // Must be after setView and setGroupMode are available
+    useNotificationDeltaFetch(
+        db,
+        services?.appId || '',
+        userSharedGroups,
+        queryClient,
+        useCallback((group: SharedGroup) => {
+            // Switch to group mode and navigate to dashboard
+            setGroupMode(group.id!, group);
+            setView('dashboard');
+        }, [setGroupMode])
+    );
 
     // Note: Theme is applied synchronously during render (before JSX return)
     // to ensure CSS variables are available when children compute memoized data
@@ -3476,7 +3506,7 @@ function App() {
             {/* Story 14d.9: statement-scan has its own header */}
             {/* Story 14.31: recent-scans has its own header */}
             {/* Story 14.33b: insights has its own header matching settings style */}
-            {view !== 'trends' && view !== 'history' && view !== 'reports' && view !== 'items' && view !== 'scan-result' && view !== 'edit' && view !== 'transaction-editor' && view !== 'batch-capture' && view !== 'batch-review' && view !== 'statement-scan' && view !== 'recent-scans' && view !== 'insights' && (
+            {view !== 'trends' && view !== 'history' && view !== 'reports' && view !== 'items' && view !== 'scan-result' && view !== 'edit' && view !== 'transaction-editor' && view !== 'batch-capture' && view !== 'batch-review' && view !== 'statement-scan' && view !== 'recent-scans' && view !== 'insights' && view !== 'alerts' && (
                 <TopHeader
                     variant={
                         view === 'settings' ? 'settings' :
@@ -3484,7 +3514,6 @@ function App() {
                     }
                     viewTitle={
                         view === 'dashboard' ? 'gastify' :
-                        view === 'alerts' ? 'alerts' :
                         undefined
                     }
                     title={undefined}
@@ -3549,10 +3578,10 @@ function App() {
             {/* Story 14.31: Added recent-scans to full-screen views */}
             <main
                 ref={mainRef}
-                className={`flex-1 overflow-y-auto ${(view === 'reports' || view === 'history' || view === 'items' || view === 'trends' || view === 'scan-result' || view === 'edit' || view === 'transaction-editor' || view === 'batch-capture' || view === 'batch-review' || view === 'statement-scan' || view === 'recent-scans' || view === 'insights') ? '' : 'p-3'}`}
+                className={`flex-1 overflow-y-auto ${(view === 'reports' || view === 'history' || view === 'items' || view === 'trends' || view === 'scan-result' || view === 'edit' || view === 'transaction-editor' || view === 'batch-capture' || view === 'batch-review' || view === 'statement-scan' || view === 'recent-scans' || view === 'insights' || view === 'alerts') ? '' : 'p-3'}`}
                 style={{
-                    paddingBottom: (view === 'reports' || view === 'history' || view === 'items' || view === 'trends' || view === 'scan-result' || view === 'edit' || view === 'transaction-editor' || view === 'batch-capture' || view === 'batch-review' || view === 'statement-scan' || view === 'recent-scans' || view === 'insights') ? '0' : 'calc(6rem + var(--safe-bottom, 0px))',
-                    paddingTop: (view === 'history' || view === 'items' || view === 'reports' || view === 'trends' || view === 'scan-result' || view === 'edit' || view === 'transaction-editor' || view === 'batch-capture' || view === 'batch-review' || view === 'statement-scan' || view === 'recent-scans' || view === 'insights')
+                    paddingBottom: (view === 'reports' || view === 'history' || view === 'items' || view === 'trends' || view === 'scan-result' || view === 'edit' || view === 'transaction-editor' || view === 'batch-capture' || view === 'batch-review' || view === 'statement-scan' || view === 'recent-scans' || view === 'insights' || view === 'alerts') ? '0' : 'calc(6rem + var(--safe-bottom, 0px))',
+                    paddingTop: (view === 'history' || view === 'items' || view === 'reports' || view === 'trends' || view === 'scan-result' || view === 'edit' || view === 'transaction-editor' || view === 'batch-capture' || view === 'batch-review' || view === 'statement-scan' || view === 'recent-scans' || view === 'insights' || view === 'alerts')
                         ? '0'
                         : 'calc(5rem + env(safe-area-inset-top, 0px))'
                 }}
@@ -4309,60 +4338,27 @@ function App() {
                     />
                 )}
 
-                {/* Story 14.11: Alerts View - Story 14c.2: Shows pending invitations */}
+                {/* Story 14.11: Notifications View - Story 14c.2: Shows pending invitations */}
+                {/* Story 14c.13: Now also shows shared group notifications */}
                 {view === 'alerts' && (
-                    <div className="flex-1 flex flex-col p-4 overflow-y-auto">
-                        {/* Story 14c.2: Pending Invitations Section */}
-                        {pendingInvitations.length > 0 && user?.uid && services?.appId && (
-                            <PendingInvitationsSection
-                                invitations={pendingInvitations}
-                                userId={user.uid}
-                                appId={services.appId}
-                                t={t}
-                                theme={theme}
-                                lang={lang}
-                                onShowToast={(message, type) => setToastMessage({ text: message, type: type === 'error' ? 'info' : (type || 'success') })}
-                            />
-                        )}
-
-                        {/* Empty State - No pending alerts */}
-                        {pendingInvitations.length === 0 && (
-                            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-                                <div
-                                    className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-                                    style={{ backgroundColor: 'var(--bg-tertiary, #f1f5f9)' }}
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="32"
-                                        height="32"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        style={{ color: 'var(--text-secondary, #64748b)' }}
-                                    >
-                                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                                    </svg>
-                                </div>
-                                <h2
-                                    className="text-lg font-semibold mb-2"
-                                    style={{ color: 'var(--text-primary, #0f172a)' }}
-                                >
-                                    {t('alerts')}
-                                </h2>
-                                <p
-                                    className="text-sm"
-                                    style={{ color: 'var(--text-secondary, #64748b)' }}
-                                >
-                                    {t('noPendingInvitations')}
-                                </p>
-                            </div>
-                        )}
-                    </div>
+                    <NotificationsView
+                        user={user}
+                        navigateToView={(v: string) => navigateToView(v as View)}
+                        setView={(v: string) => setView(v as View)}
+                        t={t}
+                        theme={theme}
+                        pendingInvitations={pendingInvitations}
+                        services={services}
+                        lang={lang as 'en' | 'es'}
+                        setToastMessage={(msg) => setToastMessage({ text: msg.text, type: msg.type as 'success' | 'info' })}
+                        inAppNotifications={inAppNotifications}
+                        userSharedGroups={userSharedGroups}
+                        setGroupMode={setGroupMode}
+                        markNotificationAsRead={markNotificationAsRead}
+                        markAllNotificationsAsRead={markAllNotificationsAsRead}
+                        deleteInAppNotification={deleteInAppNotification}
+                        deleteAllInAppNotifications={deleteAllInAppNotifications}
+                    />
                 )}
 
                 {/* Story 14d.9: Statement Scan Placeholder View */}
@@ -4598,7 +4594,7 @@ function App() {
                 // Story 14d.5c AC5: Use hasBatchReceipts (context) instead of batchReviewResults
                 isBatchMode={isBatchModeFromContext || hasBatchReceipts}
                 // Story 14c.2: Badge count for alerts (pending invitations)
-                alertsBadgeCount={pendingInvitationsCount}
+                alertsBadgeCount={pendingInvitationsCount + inAppNotificationsUnreadCount}
                 // Story 14c.4: Pass active group color for nav bar top border
                 activeGroupColor={viewMode === 'group' && activeGroup ? activeGroup.color : undefined}
             />
