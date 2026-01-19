@@ -12,6 +12,11 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      // Use injectManifest to allow custom service worker with push handlers
+      // Story 14c.13: VAPID web push notifications
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {
@@ -41,11 +46,8 @@ export default defineConfig({
           }
         ]
       },
-      workbox: {
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        // Don't cache API calls - only static assets
-        // Firebase SDK handles its own caching
-        runtimeCaching: [],
         // Increase max file size limit for PWA precache (4MB to accommodate growing bundle)
         // TODO Epic 15: Implement code-splitting to reduce bundle size below 2MB
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024

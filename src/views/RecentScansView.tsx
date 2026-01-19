@@ -2,21 +2,26 @@
  * RecentScansView Component
  *
  * Story 14.31: Dedicated view for latest scanned transactions.
+ * Story 14c.8: Added selection mode with "Select All" functionality.
  *
  * Features:
  * - Shows transactions sorted by createdAt (scan date) descending
  * - Simple design: back button + transaction list
  * - Pagination with 15/30/60 items per page
  * - No filters (dedicated to showing most recent scans)
+ * - Selection mode for batch operations (group assignment, delete)
  *
  * This view is accessed from "Ver todo →" link in DashboardView's
  * "Últimos Escaneados" section.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { Transaction } from '../types/transaction';
 import { TransactionCard } from '../components/transactions';
+import { SelectionBar } from '../components/history/SelectionBar';
+import { useAllUserGroups } from '../hooks/useAllUserGroups';
+import { useSelectionMode } from '../hooks/useSelectionMode';
 
 // ============================================================================
 // Types
@@ -47,6 +52,12 @@ interface RecentScansViewProps {
     defaultCountry?: string;
     /** Story 14.35b: How to display foreign locations (code or flag) */
     foreignLocationFormat?: 'code' | 'flag';
+    /** Story 14c.8: User ID for loading shared groups */
+    userId?: string | null;
+    /** Story 14c.8: Callback when group assignment is requested for selected transactions */
+    onGroupSelected?: (selectedIds: string[]) => void;
+    /** Story 14c.8: Callback when delete is requested for selected transactions */
+    onDeleteSelected?: (selectedIds: string[]) => void;
 }
 
 // Page size options
@@ -143,10 +154,63 @@ export function RecentScansView({
     lang = 'es',
     defaultCountry = '',
     foreignLocationFormat = 'code',
+    userId = null,
+    onGroupSelected,
+    onDeleteSelected,
 }: RecentScansViewProps) {
     // Pagination state
     const [pageSize, setPageSize] = useState<PageSize>(15);
     const [currentPage, setCurrentPage] = useState(1);
+
+    // Story 14c.8: Selection mode for batch operations
+    const {
+        isSelectionMode,
+        selectedIds,
+        selectedCount,
+        enterSelectionMode,
+        exitSelectionMode,
+        toggleSelection,
+        selectAll,
+        clearSelection,
+        isSelected,
+    } = useSelectionMode();
+
+    // Story 14c.8: Long-press state for selection mode entry
+    const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const longPressMoved = useRef(false);
+    const LONG_PRESS_DURATION = 500; // ms
+
+    // Story 14c.8: Long-press handlers
+    const handleLongPressStart = useCallback((txId: string) => {
+        longPressMoved.current = false;
+        longPressTimerRef.current = setTimeout(() => {
+            if (!longPressMoved.current) {
+                enterSelectionMode(txId);
+            }
+        }, LONG_PRESS_DURATION);
+    }, [enterSelectionMode]);
+
+    const handleLongPressEnd = useCallback(() => {
+        if (longPressTimerRef.current) {
+            clearTimeout(longPressTimerRef.current);
+            longPressTimerRef.current = null;
+        }
+    }, []);
+
+    const handleLongPressMove = useCallback(() => {
+        longPressMoved.current = true;
+        handleLongPressEnd();
+    }, [handleLongPressEnd]);
+
+    // Story 14c.8: Load shared groups for color lookup
+    const { groups } = useAllUserGroups(userId || undefined);
+
+    // Story 14c.8: Helper to lookup group color from sharedGroupIds
+    const getGroupColorForTransaction = useCallback((tx: Transaction): string | undefined => {
+        if (!tx.sharedGroupIds?.length || !groups.length) return undefined;
+        const group = groups.find(g => tx.sharedGroupIds?.includes(g.id));
+        return group?.color;
+    }, [groups]);
 
     // Sort transactions by createdAt descending
     const sortedTransactions = useMemo(
@@ -159,6 +223,37 @@ export function RecentScansView({
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
     const paginatedTransactions = sortedTransactions.slice(startIndex, endIndex);
+
+    // Story 14c.8: Get visible transaction IDs for "Select All" functionality
+    const visibleTransactionIds = useMemo(() => {
+        return paginatedTransactions.map(tx => tx.id).filter((id): id is string => !!id);
+    }, [paginatedTransactions]);
+
+    // Story 14c.8: Handle Select All toggle
+    const handleSelectAllToggle = useCallback(() => {
+        const allVisibleSelected = visibleTransactionIds.length > 0 &&
+            visibleTransactionIds.every(id => selectedIds.has(id));
+        if (allVisibleSelected) {
+            clearSelection();
+        } else {
+            selectAll(visibleTransactionIds);
+        }
+    }, [visibleTransactionIds, selectedIds, selectAll, clearSelection]);
+
+    // Story 14c.8: Handle group assignment for selected transactions
+    const handleGroupAction = useCallback(() => {
+        if (onGroupSelected && selectedCount > 0) {
+            onGroupSelected(Array.from(selectedIds));
+        }
+    }, [onGroupSelected, selectedIds, selectedCount]);
+
+    // Story 14c.8: Handle delete for selected transactions
+    const handleDeleteAction = useCallback(() => {
+        if (onDeleteSelected && selectedCount > 0) {
+            onDeleteSelected(Array.from(selectedIds));
+            exitSelectionMode();
+        }
+    }, [onDeleteSelected, selectedIds, selectedCount, exitSelectionMode]);
 
     // Reset to page 1 when page size changes
     const handlePageSizeChange = (newSize: PageSize) => {
@@ -251,20 +346,48 @@ export function RecentScansView({
                 </div>
             </div>
 
+            {/* Story 14c.8: Selection Bar (shown when selection mode is active) */}
+            {isSelectionMode && (
+                <div className="px-4 py-2">
+                    <SelectionBar
+                        selectedCount={selectedCount}
+                        onClose={exitSelectionMode}
+                        onGroup={handleGroupAction}
+                        onDelete={handleDeleteAction}
+                        onSelectAll={handleSelectAllToggle}
+                        totalVisible={visibleTransactionIds.length}
+                        t={t}
+                        theme={theme as 'light' | 'dark'}
+                        lang={lang as 'en' | 'es'}
+                    />
+                </div>
+            )}
+
             {/* Transaction count */}
-            <div className="px-4 py-2">
-                <span
-                    className="text-sm"
-                    style={{ color: 'var(--text-secondary)' }}
-                >
-                    {sortedTransactions.length} {lang === 'es' ? 'transacciones' : 'transactions'}
-                </span>
-            </div>
+            {!isSelectionMode && (
+                <div className="px-4 py-2">
+                    <span
+                        className="text-sm"
+                        style={{ color: 'var(--text-secondary)' }}
+                    >
+                        {sortedTransactions.length} {lang === 'es' ? 'transacciones' : 'transactions'}
+                    </span>
+                </div>
+            )}
 
             {/* Transaction list */}
             <div className="px-4 space-y-3">
                 {paginatedTransactions.map((tx, index) => (
-                    <div key={tx.id || index} className="relative">
+                    <div
+                        key={tx.id || index}
+                        className="relative"
+                        onTouchStart={() => tx.id && handleLongPressStart(tx.id)}
+                        onTouchEnd={handleLongPressEnd}
+                        onTouchMove={handleLongPressMove}
+                        onMouseDown={() => tx.id && handleLongPressStart(tx.id)}
+                        onMouseUp={handleLongPressEnd}
+                        onMouseLeave={handleLongPressEnd}
+                    >
                         {/* Scan time badge */}
                         <div
                             className="absolute -top-1 right-2 z-10 px-2 py-0.5 rounded-full text-xs"
@@ -283,7 +406,19 @@ export function RecentScansView({
                             defaultCurrency={currency}
                             userDefaultCountry={defaultCountry}
                             foreignLocationFormat={foreignLocationFormat}
-                            onClick={() => onEditTransaction(tx)}
+                            onClick={() => {
+                                if (isSelectionMode && tx.id) {
+                                    toggleSelection(tx.id);
+                                } else {
+                                    onEditTransaction(tx);
+                                }
+                            }}
+                            groupColor={getGroupColorForTransaction(tx)}
+                            selection={isSelectionMode ? {
+                                isSelectionMode,
+                                isSelected: tx.id ? isSelected(tx.id) : false,
+                                onToggleSelect: () => tx.id && toggleSelection(tx.id),
+                            } : undefined}
                         />
                     </div>
                 ))}

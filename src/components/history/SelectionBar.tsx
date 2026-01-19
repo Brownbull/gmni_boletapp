@@ -13,7 +13,7 @@
  */
 
 import React from 'react';
-import { X, Bookmark, Trash2 } from 'lucide-react';
+import { X, Bookmark, Trash2, CheckSquare } from 'lucide-react';
 
 // ============================================================================
 // Types
@@ -34,6 +34,10 @@ export interface SelectionBarProps {
   theme?: 'light' | 'dark';
   /** Language for pluralization */
   lang?: 'en' | 'es';
+  /** Story 14c.8: Callback when Select All is clicked */
+  onSelectAll?: () => void;
+  /** Story 14c.8: Total number of visible/selectable transactions */
+  totalVisible?: number;
 }
 
 // ============================================================================
@@ -47,7 +51,12 @@ export const SelectionBar: React.FC<SelectionBarProps> = ({
   onDelete,
   t,
   lang = 'es',
+  onSelectAll,
+  totalVisible = 0,
 }) => {
+  // Story 14c.8: Determine if all visible items are selected
+  const allSelected = totalVisible > 0 && selectedCount === totalVisible;
+
   // Format selection count text
   const getSelectionText = () => {
     if (lang === 'es') {
@@ -98,6 +107,30 @@ export const SelectionBar: React.FC<SelectionBarProps> = ({
 
       {/* Right side: Action buttons - icons on top, labels below */}
       <div className="flex items-center gap-4">
+        {/* Story 14c.8: Select All / Deselect All button */}
+        {onSelectAll && totalVisible > 0 && (
+          <button
+            onClick={onSelectAll}
+            className="flex flex-col items-center gap-0.5 transition-opacity"
+            aria-label={allSelected ? t('deselectAll') : t('selectAll')}
+            data-testid="selection-bar-select-all"
+          >
+            <CheckSquare
+              size={20}
+              strokeWidth={1.8}
+              style={{ color: 'white' }}
+              fill={allSelected ? 'rgba(255, 255, 255, 0.3)' : 'none'}
+            />
+            {/* Story 14c.8 Code Review: Use translation keys instead of hardcoded strings */}
+            <span
+              className="text-xs font-medium"
+              style={{ color: 'rgba(255, 255, 255, 0.9)' }}
+            >
+              {allSelected ? t('none') : t('selectAll')}
+            </span>
+          </button>
+        )}
+
         {/* Group button - icon on top, label below */}
         <button
           onClick={onGroup}
@@ -111,11 +144,12 @@ export const SelectionBar: React.FC<SelectionBarProps> = ({
             strokeWidth={1.8}
             style={{ color: 'white' }}
           />
+          {/* Story 14c.8 Code Review: Use translation keys instead of hardcoded strings */}
           <span
             className="text-xs font-medium"
             style={{ color: 'rgba(255, 255, 255, 0.9)' }}
           >
-            {lang === 'es' ? 'Grupo' : 'Group'}
+            {t('groupLabel')}
           </span>
         </button>
 
@@ -132,11 +166,12 @@ export const SelectionBar: React.FC<SelectionBarProps> = ({
             strokeWidth={1.8}
             style={{ color: 'white' }}
           />
+          {/* Story 14c.8 Code Review: Use translation keys instead of hardcoded strings */}
           <span
             className="text-xs font-medium"
             style={{ color: 'rgba(255, 255, 255, 0.9)' }}
           >
-            {lang === 'es' ? 'Eliminar' : 'Delete'}
+            {t('delete')}
           </span>
         </button>
       </div>

@@ -14,7 +14,7 @@
  */
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Calendar, Filter, Bookmark, ChevronLeft, ChevronRight, ChevronDown, X, Check, Package, Trash2, Receipt, MapPin, FunnelX, FunnelPlus } from 'lucide-react';
+import { Calendar, Filter, Bookmark, ChevronLeft, ChevronRight, ChevronDown, X, Check, Package, Receipt, MapPin, FunnelX, FunnelPlus, Users } from 'lucide-react';
 import { useHistoryFilters } from '../../hooks/useHistoryFilters';
 import type { AvailableFilters } from '../../utils/historyFilterUtils';
 import {
@@ -52,9 +52,8 @@ import type { Language } from '../../utils/translations';
 // Story 14.36: Location filter with multi-select
 import { useLocationDisplay } from '../../hooks/useLocations';
 import { CountryFlag } from '../CountryFlag';
-// Story 14.15b: Transaction groups
-import type { TransactionGroup } from '../../types/transactionGroup';
-import { extractGroupEmoji, extractGroupLabel } from '../../types/transactionGroup';
+// Story 14c.8: Consolidated group type (shared groups only)
+import type { GroupWithMeta } from '../../hooks/useAllUserGroups';
 
 // ============================================================================
 // Types
@@ -70,12 +69,10 @@ interface IconFilterBarProps {
   t: (key: string) => string;
   /** Locale for date formatting */
   locale?: string;
-  /** Story 14.15b: User's transaction groups for filtering */
-  groups?: TransactionGroup[];
-  /** Story 14.15b: Whether groups are loading */
+  /** Story 14c.8: User's groups for filtering (shared groups via useAllUserGroups) */
+  groups?: GroupWithMeta[];
+  /** Story 14c.8: Whether groups are loading */
   groupsLoading?: boolean;
-  /** Story 14.15b: Callback to delete an empty group */
-  onDeleteGroup?: (group: TransactionGroup) => void;
   /** Story 14.14b Session 5: Current view mode from TrendsView for sync */
   viewMode?: ViewMode;
   /** Story 14.14b Session 5: Callback when view mode should change */
@@ -94,7 +91,6 @@ export function IconFilterBar({
   locale = 'es',
   groups = [],
   groupsLoading = false,
-  onDeleteGroup,
   viewMode: _viewMode, // Story 14.14b Session 5: Reserved for future bidirectional sync
   onViewModeChange,
 }: IconFilterBarProps): React.ReactElement {
@@ -251,7 +247,7 @@ export function IconFilterBar({
         />
       )}
 
-      {/* Story 14.15b: Custom Groups Dropdown */}
+      {/* Story 14c.8: Custom Groups Dropdown (shared groups only) */}
       {openDropdown === 'custom' && (
         <GroupFilterDropdown
           currentGroupIds={state.group.groupIds}
@@ -261,7 +257,6 @@ export function IconFilterBar({
           t={t}
           onClose={() => setOpenDropdown(null)}
           lang={locale}
-          onDeleteGroup={onDeleteGroup}
         />
       )}
 
@@ -1852,14 +1847,12 @@ function ItemGroupedCategoriesSection({
 
 interface GroupFilterDropdownProps {
   currentGroupIds?: string;
-  groups: TransactionGroup[];
+  groups: GroupWithMeta[];
   loading: boolean;
   dispatch: (action: any) => void;
   t: (key: string) => string;
   onClose: () => void;
   lang?: string;
-  /** Callback to delete an empty group */
-  onDeleteGroup?: (group: TransactionGroup) => void;
 }
 
 function GroupFilterDropdown({
@@ -1869,7 +1862,6 @@ function GroupFilterDropdown({
   dispatch,
   t,
   lang = 'es',
-  onDeleteGroup,
 }: GroupFilterDropdownProps): React.ReactElement {
   // Parse current selections into a Set for multi-select
   const selectedIds = useMemo(() => {
@@ -1951,20 +1943,31 @@ function GroupFilterDropdown({
 
             {/* Group options - multi-select checkboxes */}
             {groups.map(group => {
-              const isSelected = selectedIds.has(group.id!);
-              const emoji = extractGroupEmoji(group.name);
-              const label = extractGroupLabel(group.name);
+              const isSelected = selectedIds.has(group.id);
+              // Extract emoji from name (e.g., "🏠 Family" → "🏠")
+              const emoji = group.icon || (() => {
+                const firstChar = group.name?.codePointAt(0);
+                if (firstChar && firstChar > 0x1F300) {
+                  const match = group.name.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u);
+                  return match ? match[0] : null;
+                }
+                return null;
+              })();
+              // Extract label from name (e.g., "🏠 Family" → "Family")
+              const label = emoji && typeof emoji === 'string' && group.name.startsWith(emoji)
+                ? group.name.slice(emoji.length).trim()
+                : group.name;
 
               return (
                 <div
                   key={group.id}
                   role="button"
                   tabIndex={0}
-                  onClick={() => handleToggleGroup(group.id!)}
+                  onClick={() => handleToggleGroup(group.id)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      handleToggleGroup(group.id!);
+                      handleToggleGroup(group.id);
                     }
                   }}
                   className="w-full px-4 py-2 flex items-center gap-3 text-left transition-colors hover:bg-[var(--bg-tertiary)] cursor-pointer"
@@ -1981,16 +1984,30 @@ function GroupFilterDropdown({
                       <Check size={12} strokeWidth={3} style={{ color: 'white' }} />
                     )}
                   </span>
-                  {/* Group label with emoji */}
+                  {/* Group color circle with emoji icon inside */}
                   <span
-                    className="text-sm flex items-center gap-1.5 flex-1"
+                    className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: group.color }}
+                  >
+                    <span
+                      style={{
+                        fontSize: '1rem',
+                        lineHeight: 1,
+                        fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif',
+                      }}
+                    >
+                      {emoji || '📁'}
+                    </span>
+                  </span>
+                  {/* Group label (without duplicate emoji) */}
+                  <span
+                    className="text-sm flex-1"
                     style={{ color: isSelected ? 'var(--primary)' : 'var(--text-primary)' }}
                   >
-                    {emoji && <span>{emoji}</span>}
                     <span className={isSelected ? 'font-medium' : ''}>{label}</span>
                   </span>
-                  {/* Transaction count pill OR delete button for empty groups */}
-                  {group.transactionCount > 0 ? (
+                  {/* Member count for shared groups */}
+                  {group.isShared && group.memberCount !== undefined && group.memberCount > 1 && (
                     <span
                       className="flex items-center gap-1 px-1.5 py-0.5 rounded-full"
                       style={{
@@ -1998,24 +2015,12 @@ function GroupFilterDropdown({
                         border: '1px solid var(--border-light)',
                       }}
                     >
-                      <Package size={10} strokeWidth={2} style={{ color: 'var(--text-tertiary)' }} />
+                      <Users size={10} strokeWidth={2} style={{ color: 'var(--text-tertiary)' }} />
                       <span className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>
-                        {group.transactionCount}
+                        {group.memberCount}
                       </span>
                     </span>
-                  ) : onDeleteGroup ? (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteGroup(group);
-                      }}
-                      className="p-1 rounded-md transition-colors hover:bg-[var(--bg-tertiary)]"
-                      style={{ color: 'var(--error, #ef4444)' }}
-                      aria-label={lang === 'es' ? 'Eliminar grupo' : 'Delete group'}
-                    >
-                      <Trash2 size={14} strokeWidth={2} />
-                    </button>
-                  ) : null}
+                  )}
                 </div>
               );
             })}

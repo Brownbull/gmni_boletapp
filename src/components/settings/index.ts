@@ -12,5 +12,8 @@ export type { SettingsBackHeaderProps } from './SettingsBackHeader';
 export { SettingsSelect } from './SettingsSelect';
 export type { SelectOption } from './SettingsSelect';
 
+export { SignOutDialog } from './SignOutDialog';
+export type { SignOutDialogProps } from './SignOutDialog';
+
 // Sub-views
 export * from './subviews';

@@ -1,78 +1,79 @@
 /**
- * Push Notifications Hook - Story 9.18
+ * Push Notifications Hook
+ *
+ * Story 9.18: Initial push notification setup
+ * Story 14c.13: FCM Push Notifications for Shared Groups
+ * Story 14c.13-WP: Migrated to Web Push (VAPID) for better Android support
  *
  * Hook for managing push notification state and functionality.
- * Handles permission requests, FCM token management, and foreground messages.
+ * Uses the native Push API with VAPID keys instead of FCM for
+ * reliable notification delivery when the app is closed.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  isPushSupported,
+  isWebPushSupported,
   getNotificationPermission,
   requestNotificationPermission,
-  getFCMToken,
-  onForegroundMessage,
-  showInAppNotification
-} from '../services/pushNotifications';
-import { saveFCMToken, deleteFCMToken } from '../services/fcmTokenService';
-import { Firestore } from 'firebase/firestore';
+  subscribeToWebPush,
+  saveSubscriptionToServer,
+  disableWebPushNotifications,
+  isWebPushEnabledLocal,
+  WEB_PUSH_CONSTANTS,
+} from '../services/webPushService';
 
 export interface PushNotificationState {
   /** Whether push notifications are supported in this browser */
   isSupported: boolean;
   /** Current notification permission status */
   permission: NotificationPermission;
-  /** The FCM token for this device (null if not available) */
+  /** The push subscription endpoint (indicates subscription exists) */
   token: string | null;
-  /** Whether we're currently requesting permission or token */
+  /** Whether we're currently requesting permission or subscribing */
   isLoading: boolean;
   /** Error message if something went wrong */
   error: string | null;
-  /** Request notification permission and get FCM token */
+  /** Request notification permission and subscribe to web push */
   enableNotifications: () => Promise<boolean>;
-  /** Remove FCM token (disable notifications) */
+  /** Unsubscribe from web push */
   disableNotifications: () => Promise<void>;
 }
 
+/** Data passed to notification click callback */
+export interface NotificationClickData {
+  /** Type of notification (e.g., 'TRANSACTION_ADDED', 'TRANSACTION_REMOVED') */
+  type?: string;
+  /** Group ID if this is a shared group notification */
+  groupId?: string;
+  /** Transaction ID if applicable */
+  transactionId?: string;
+  /** URL to navigate to */
+  url?: string;
+}
+
 interface UsePushNotificationsOptions {
-  /** Firestore instance */
-  db: Firestore | null;
-  /** User ID */
+  /** Firestore instance (kept for API compatibility) */
+  db: unknown;
+  /** User ID (kept for API compatibility) */
   userId: string | null;
-  /** App ID */
+  /** App ID (kept for API compatibility) */
   appId: string | null;
   /** Callback when a foreground notification is received */
   onNotificationReceived?: (title: string, body: string) => void;
+  /** Callback when a notification is clicked (Story 14c.13: for delta fetch) */
+  onNotificationClick?: (data: NotificationClickData) => void;
 }
 
 /**
- * Hook for managing push notifications.
+ * Hook for managing push notifications using Web Push (VAPID).
  *
  * @param options Configuration options
  * @returns PushNotificationState
- *
- * @example
- * ```tsx
- * function NotificationSettings() {
- *   const { permission, enableNotifications, disableNotifications } = usePushNotifications({
- *     db: services?.db,
- *     userId: user?.uid,
- *     appId: services?.appId
- *   });
- *
- *   if (permission === 'granted') {
- *     return <button onClick={disableNotifications}>Disable</button>;
- *   }
- *
- *   return <button onClick={enableNotifications}>Enable</button>;
- * }
- * ```
  */
 export function usePushNotifications({
-  db,
   userId,
-  appId,
-  onNotificationReceived
+  onNotificationReceived,
+  onNotificationClick
 }: UsePushNotificationsOptions): PushNotificationState {
   const [isSupported, setIsSupported] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>('default');
@@ -80,73 +81,82 @@ export function usePushNotifications({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Track initialization to prevent duplicate operations
+  const initializedRef = useRef(false);
+
   // Check support and initial permission on mount
   useEffect(() => {
-    let mounted = true;
+    const supported = isWebPushSupported();
+    console.log('[usePushNotifications] isSupported:', supported);
+    setIsSupported(supported);
 
-    async function checkSupport() {
-      const supported = await isPushSupported();
-      if (mounted) {
-        setIsSupported(supported);
-        if (supported) {
-          setPermission(getNotificationPermission());
-        }
+    if (supported) {
+      const currentPermission = getNotificationPermission();
+      console.log('[usePushNotifications] currentPermission:', currentPermission);
+      setPermission(currentPermission);
+
+      // Restore token state from localStorage if permission is granted
+      if (currentPermission === 'granted' && isWebPushEnabledLocal()) {
+        // Set a placeholder token to indicate enabled state
+        // The actual subscription is managed by the service worker
+        setToken('web-push-enabled');
       }
     }
-
-    checkSupport();
-    return () => { mounted = false; };
   }, []);
 
-  // Subscribe to foreground messages
+  // Listen for service worker messages (for foreground notifications and notification clicks)
   useEffect(() => {
-    if (!isSupported || permission !== 'granted') {
-      return;
-    }
+    if (!isSupported) return;
+    if (!onNotificationReceived && !onNotificationClick) return;
 
-    const unsubscribe = onForegroundMessage((payload) => {
-      const title = payload.notification?.title || 'Gastify';
-      const body = payload.notification?.body || '';
-
-      // Call the callback if provided
-      if (onNotificationReceived) {
-        onNotificationReceived(title, body);
-      } else {
-        // Default behavior: show in-app notification
-        showInAppNotification(title, body);
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'NOTIFICATION_CLICK') {
+        // Story 14c.13: Notification clicked - trigger delta fetch callback
+        console.log('[usePushNotifications] Notification clicked:', event.data);
+        if (onNotificationClick) {
+          const data = event.data.data || {};
+          onNotificationClick({
+            type: data.type,
+            groupId: data.groupId,
+            transactionId: data.transactionId,
+            url: event.data.url,
+          });
+        }
+      } else if (event.data?.type === 'PUSH_RECEIVED') {
+        // Foreground push received
+        const { title, body } = event.data;
+        if (title && body && onNotificationReceived) {
+          onNotificationReceived(title, body);
+        }
       }
-    });
+    };
 
-    return unsubscribe;
-  }, [isSupported, permission, onNotificationReceived]);
+    navigator.serviceWorker?.addEventListener('message', handleServiceWorkerMessage);
+    return () => {
+      navigator.serviceWorker?.removeEventListener('message', handleServiceWorkerMessage);
+    };
+  }, [isSupported, onNotificationReceived, onNotificationClick]);
 
-  // Try to get token if permission is already granted
+  // Auto-subscribe on mount if user is authenticated and was previously enabled
   useEffect(() => {
-    let mounted = true;
+    if (!isSupported || !userId || initializedRef.current) return;
+    if (permission !== 'granted' || !isWebPushEnabledLocal()) return;
 
-    async function getExistingToken() {
-      if (!isSupported || permission !== 'granted') {
-        return;
-      }
+    initializedRef.current = true;
 
+    // Re-subscribe to ensure subscription is saved to server
+    (async () => {
       try {
-        const fcmToken = await getFCMToken();
-        if (mounted && fcmToken) {
-          setToken(fcmToken);
-
-          // Save to Firestore if we have the required services
-          if (db && userId && appId) {
-            await saveFCMToken(db, userId, appId, fcmToken);
-          }
+        const subscription = await subscribeToWebPush();
+        if (subscription) {
+          await saveSubscriptionToServer(subscription);
+          console.log('[usePushNotifications] Re-subscribed on mount');
         }
       } catch (err) {
-        console.error('Failed to get existing FCM token:', err);
+        console.warn('[usePushNotifications] Failed to re-subscribe on mount:', err);
       }
-    }
-
-    getExistingToken();
-    return () => { mounted = false; };
-  }, [isSupported, permission, db, userId, appId]);
+    })();
+  }, [isSupported, userId, permission]);
 
   /**
    * Request permission and enable notifications
@@ -170,51 +180,58 @@ export function usePushNotifications({
         return false;
       }
 
-      // Get FCM token
-      const fcmToken = await getFCMToken();
-      if (!fcmToken) {
-        setError('Failed to get notification token');
+      // Subscribe to web push
+      const subscription = await subscribeToWebPush();
+      if (!subscription) {
+        setError('Failed to create push subscription');
         return false;
       }
 
-      setToken(fcmToken);
+      // Save to server
+      const saved = await saveSubscriptionToServer(subscription);
+      if (!saved) {
+        setError('Failed to save subscription to server');
+        return false;
+      }
 
-      // Save to Firestore
-      if (db && userId && appId) {
-        await saveFCMToken(db, userId, appId, fcmToken);
+      // Update state
+      setToken('web-push-enabled');
+
+      // Store in localStorage
+      try {
+        localStorage.setItem(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_KEY, 'true');
+        localStorage.setItem(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_ENDPOINT_KEY, subscription.endpoint);
+      } catch {
+        // Ignore localStorage errors
       }
 
       return true;
     } catch (err) {
-      console.error('Failed to enable notifications:', err);
+      console.error('[usePushNotifications] Failed to enable:', err);
       setError('Failed to enable notifications');
       return false;
     } finally {
       setIsLoading(false);
     }
-  }, [isSupported, db, userId, appId]);
+  }, [isSupported]);
 
   /**
-   * Disable notifications by removing the FCM token
+   * Disable notifications
    */
   const disableNotifications = useCallback(async (): Promise<void> => {
-    if (!token || !db || !userId || !appId) {
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
 
     try {
-      await deleteFCMToken(db, userId, appId, token);
+      await disableWebPushNotifications();
       setToken(null);
     } catch (err) {
-      console.error('Failed to disable notifications:', err);
+      console.error('[usePushNotifications] Failed to disable:', err);
       setError('Failed to disable notifications');
     } finally {
       setIsLoading(false);
     }
-  }, [token, db, userId, appId]);
+  }, []);
 
   return {
     isSupported,

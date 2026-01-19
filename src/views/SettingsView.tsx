@@ -17,6 +17,7 @@ import { Firestore } from 'firebase/firestore';
 import { SettingsSubView } from '../types/settings';
 import {
     SettingsMenuItem,
+    SignOutDialog,
     LimitesView,
     PerfilView,
     PreferenciasView,
@@ -196,6 +197,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         }
     };
 
+    // Sign out confirmation dialog state
+    const [showSignOutDialog, setShowSignOutDialog] = useState(false);
+
     // Render the appropriate sub-view based on current navigation state
     const renderSubView = () => {
         switch (currentView) {
@@ -299,7 +303,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 );
 
             case 'grupos':
-                return <GruposView t={t} theme={theme} />;
+                return (
+                    <GruposView
+                        t={t}
+                        theme={theme}
+                        userId={userId}
+                        userEmail={userEmail}
+                        userDisplayName={displayName}
+                        appId={appId || 'boletapp'}
+                        lang={lang as 'en' | 'es'}
+                        onShowToast={onShowToast}
+                    />
+                );
 
             case 'app':
                 return (
@@ -322,7 +337,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         exporting={exporting}
                         onExportAll={onExportAll}
                         onWipeDB={onWipeDB}
-                        onSignOut={onSignOut}
                     />
                 );
 
@@ -426,6 +440,35 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     iconColor="#ec4899"
                     onClick={() => setCurrentView('cuenta')}
                     testId="settings-menu-cuenta"
+                />
+
+                {/* Divider before sign out */}
+                <div
+                    className="h-px mx-2 my-1"
+                    style={{ backgroundColor: 'var(--border-light)' }}
+                />
+
+                {/* Sign Out - Always visible at bottom of settings */}
+                <SettingsMenuItem
+                    title={t('signout')}
+                    subtitle={t('signOutDesc')}
+                    icon="log-out"
+                    iconBgColor="#fee2e2"
+                    iconColor="#ef4444"
+                    onClick={() => setShowSignOutDialog(true)}
+                    testId="settings-menu-signout"
+                />
+
+                {/* Sign Out Confirmation Dialog */}
+                <SignOutDialog
+                    isOpen={showSignOutDialog}
+                    onConfirm={() => {
+                        setShowSignOutDialog(false);
+                        onSignOut();
+                    }}
+                    onCancel={() => setShowSignOutDialog(false)}
+                    t={t}
+                    lang={lang as 'en' | 'es'}
                 />
             </div>
         );

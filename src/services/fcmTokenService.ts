@@ -1,8 +1,13 @@
 /**
- * FCM Token Service - Story 9.18
+ * FCM Token Service
+ *
+ * Story 9.18: Initial FCM token storage
+ * Story 14c.13: FCM Push Notifications for Shared Groups
  *
  * Manages FCM token storage in Firestore.
  * Stores tokens in user's subcollection for sending push notifications.
+ *
+ * Collection: artifacts/{appId}/users/{userId}/fcmTokens/{tokenId}
  */
 
 import {
@@ -17,19 +22,53 @@ import {
   serverTimestamp,
   Timestamp,
   writeBatch,
-  limit
+  limit,
+  updateDoc,
 } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+
+/**
+ * Device type for FCM token.
+ * Currently 'web' only; Android/iOS for native apps.
+ */
+export type FcmDeviceType = 'web' | 'android' | 'ios';
 
 /**
  * FCM Token document stored in Firestore
+ *
+ * Story 14c.13: Extended with deviceType and lastUsedAt for token management
  */
 export interface FCMTokenDoc {
+  /** Firestore document ID */
+  id?: string;
+  /** The FCM registration token string */
   token: string;
+  /** Timestamp when token was first created */
   createdAt: Timestamp;
+  /** Timestamp when token was last updated */
   updatedAt: Timestamp;
+  /** Timestamp when token was last used (updated on app startup) */
+  lastUsedAt?: Timestamp;
+  /** Browser/device user agent */
   userAgent: string;
-  platform: 'web';
+  /** Device platform */
+  platform: FcmDeviceType;
 }
+
+/**
+ * Constants for FCM token management
+ * Story 14c.13: Token staleness threshold for cleanup
+ */
+export const FCM_TOKEN_CONSTANTS = {
+  /** LocalStorage key for notification enabled state */
+  LOCAL_STORAGE_KEY: 'fcm_notifications_enabled',
+  /** LocalStorage key for current token (for comparison) */
+  LOCAL_STORAGE_TOKEN_KEY: 'fcm_current_token',
+  /** Token staleness threshold in days (cleanup tokens older than this) */
+  STALE_TOKEN_DAYS: 60,
+  /** Rate limit for notifications (ms) - 1 notification per minute per group per user */
+  RATE_LIMIT_MS: 60 * 1000,
+} as const;
 
 /**
  * Get the collection path for FCM tokens
@@ -149,4 +188,227 @@ function hashToken(token: string): string {
   // FCM tokens are typically 150+ chars, so this creates a manageable doc ID
   if (token.length <= 30) return token;
   return `${token.slice(0, 20)}_${token.slice(-10)}`;
+}
+
+// ============================================================================
+// Story 14c.13: Additional FCM Token Management Functions
+// ============================================================================
+
+/**
+ * Update the lastUsedAt timestamp for a token.
+ *
+ * Task 1.6: Update lastUsedAt on app startup if token exists
+ *
+ * Should be called on app startup to keep tokens fresh and
+ * allow the cleanup function to identify stale tokens.
+ *
+ * @param db Firestore instance
+ * @param userId User ID
+ * @param appId App ID
+ * @param token FCM token string to update
+ */
+export async function updateTokenLastUsed(
+  db: Firestore,
+  userId: string,
+  appId: string,
+  token: string
+): Promise<void> {
+  const collectionPath = getTokensCollectionPath(appId, userId);
+  const tokenDocRef = doc(db, collectionPath, hashToken(token));
+
+  try {
+    await updateDoc(tokenDocRef, {
+      lastUsedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+
+    if (import.meta.env.DEV) {
+      console.log('[fcmTokenService] Updated token lastUsedAt on startup');
+    }
+  } catch (error) {
+    // Token may not exist yet, which is fine
+    if (import.meta.env.DEV) {
+      console.log('[fcmTokenService] Token not found for lastUsedAt update (may be new device)');
+    }
+  }
+}
+
+/**
+ * Get all FCM tokens for a user.
+ * Used for debugging and token management UI.
+ *
+ * @param db Firestore instance
+ * @param userId User ID
+ * @param appId App ID
+ * @returns Array of FCM token documents
+ */
+export async function getUserFCMTokens(
+  db: Firestore,
+  userId: string,
+  appId: string
+): Promise<FCMTokenDoc[]> {
+  const collectionPath = getTokensCollectionPath(appId, userId);
+  const tokensRef = collection(db, collectionPath);
+  const snapshot = await getDocs(tokensRef);
+
+  return snapshot.docs.map(d => ({
+    id: d.id,
+    ...d.data(),
+  } as FCMTokenDoc));
+}
+
+/**
+ * Save FCM token with localStorage tracking.
+ *
+ * IMPORTANT: This function implements a "single device per user" policy:
+ * - First deletes ALL existing FCM tokens for this user
+ * - Then saves the new token for the current device
+ * - Also cleans up this token from OTHER users' accounts (cross-user cleanup)
+ *
+ * This ensures that notifications are only delivered to the device
+ * where the user most recently logged in or enabled notifications.
+ *
+ * Why single device policy:
+ * - FCM tokens are device-specific but get registered to user accounts
+ * - If user logs into multiple devices, all devices would get notifications
+ * - When users share devices (account switching), old tokens linger
+ * - Single device ensures predictable notification delivery
+ *
+ * Why cross-user cleanup:
+ * - When users share a device (family tablet, shared computer), the same
+ *   FCM token can end up registered to multiple user accounts
+ * - Without cleanup, User B would receive notifications on User A's device
+ *   if User B once logged in on that device
+ * - Cloud Function handles cross-user cleanup (requires admin SDK)
+ *
+ * @param db Firestore instance
+ * @param userId User ID
+ * @param appId App ID
+ * @param token FCM token to save
+ */
+export async function saveFCMTokenWithTracking(
+  db: Firestore,
+  userId: string,
+  appId: string,
+  token: string
+): Promise<void> {
+  // STEP 1: Delete ALL existing tokens for this user
+  // This ensures only the current device receives notifications
+  try {
+    await deleteAllFCMTokens(db, userId, appId);
+    if (import.meta.env.DEV) {
+      console.log('[fcmTokenService] Deleted all existing tokens for user');
+    }
+  } catch (error) {
+    // Log but continue - saving new token is more important
+    console.warn('[fcmTokenService] Failed to delete existing tokens:', error);
+  }
+
+  // STEP 2: Clean up this token from OTHER users' accounts
+  // This is critical for shared device scenarios
+  // Uses Cloud Function because client can't query other users' data
+  try {
+    const functions = getFunctions();
+    const cleanupCrossUserFcmToken = httpsCallable<
+      { token: string },
+      { success: boolean; deletedCount: number }
+    >(functions, 'cleanupCrossUserFcmToken');
+
+    const result = await cleanupCrossUserFcmToken({ token });
+
+    if (import.meta.env.DEV) {
+      console.log(
+        '[fcmTokenService] Cross-user cleanup result:',
+        result.data.deletedCount,
+        'tokens deleted from other users'
+      );
+    }
+  } catch (error) {
+    // Log but continue - this is a cleanup operation, not critical for saving
+    console.warn('[fcmTokenService] Failed to cleanup cross-user tokens:', error);
+  }
+
+  // STEP 3: Save the new token for this device
+  const collectionPath = getTokensCollectionPath(appId, userId);
+  const tokenDocRef = doc(db, collectionPath, hashToken(token));
+
+  await setDoc(tokenDocRef, {
+    token,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    lastUsedAt: serverTimestamp(),
+    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+    platform: 'web' as FcmDeviceType,
+  }, { merge: true });
+
+  // Store token in localStorage for comparison
+  try {
+    localStorage.setItem(FCM_TOKEN_CONSTANTS.LOCAL_STORAGE_TOKEN_KEY, token);
+    localStorage.setItem(FCM_TOKEN_CONSTANTS.LOCAL_STORAGE_KEY, 'true');
+  } catch {
+    // Ignore localStorage errors (e.g., private browsing)
+  }
+
+  if (import.meta.env.DEV) {
+    console.log('[fcmTokenService] Saved FCM token (single device policy with cross-user cleanup)');
+  }
+}
+
+/**
+ * Delete all FCM tokens for a user and clear localStorage.
+ *
+ * Extended version that also clears localStorage flags.
+ * Used when user disables notifications.
+ *
+ * @param db Firestore instance
+ * @param userId User ID
+ * @param appId App ID
+ */
+export async function deleteAllFCMTokensWithTracking(
+  db: Firestore,
+  userId: string,
+  appId: string
+): Promise<void> {
+  // Delete from Firestore
+  await deleteAllFCMTokens(db, userId, appId);
+
+  // Clear localStorage
+  try {
+    localStorage.removeItem(FCM_TOKEN_CONSTANTS.LOCAL_STORAGE_TOKEN_KEY);
+    localStorage.removeItem(FCM_TOKEN_CONSTANTS.LOCAL_STORAGE_KEY);
+  } catch {
+    // Ignore localStorage errors
+  }
+
+  if (import.meta.env.DEV) {
+    console.log('[fcmTokenService] Deleted all FCM tokens and cleared localStorage');
+  }
+}
+
+/**
+ * Check if notifications are enabled in localStorage.
+ * Used for quick UI state without Firestore query.
+ *
+ * @returns true if notifications were previously enabled
+ */
+export function isNotificationsEnabledLocal(): boolean {
+  try {
+    return localStorage.getItem(FCM_TOKEN_CONSTANTS.LOCAL_STORAGE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get the stored FCM token from localStorage.
+ * Used for quick comparison without Firestore query.
+ *
+ * @returns The stored token or null
+ */
+export function getStoredFCMToken(): string | null {
+  try {
+    return localStorage.getItem(FCM_TOKEN_CONSTANTS.LOCAL_STORAGE_TOKEN_KEY);
+  } catch {
+    return null;
+  }
 }

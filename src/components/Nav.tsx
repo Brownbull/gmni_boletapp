@@ -71,9 +71,13 @@ interface NavProps {
     isBatchMode?: boolean;
     /** Story 14d.7: Toast message callback for "scan in progress" */
     onShowToast?: (message: string) => void;
+    /** Story 14c.2: Badge count for alerts tab (pending invitations, etc.) */
+    alertsBadgeCount?: number;
+    /** Story 14c.4: Active group color for top border accent when in group mode */
+    activeGroupColor?: string;
 }
 
-export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchClick, onStatementClick, onTrendsClick, theme, t, scanStatus = 'idle', scanCredits, superCredits, onCreditInfoClick, isBatchMode = false, onShowToast }) => {
+export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchClick, onStatementClick, onTrendsClick, theme, t, scanStatus = 'idle', scanCredits, superCredits, onCreditInfoClick, isBatchMode = false, onShowToast, alertsBadgeCount = 0, activeGroupColor }) => {
     // Story 14.11: Reduced motion preference for AC #5
     const prefersReducedMotion = useReducedMotion();
 
@@ -226,9 +230,10 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
     }, [setView, triggerHaptic, shouldBlockNavigation, prefersReducedMotion]);
 
     // Story 14.11 AC #2: Nav item styling with CSS variables
+    // Story 14c.13: Removed labels - icons only, reduced padding for smaller bar
     const getNavItemClasses = (_v: string): string => {
         // Note: v is available if view-specific classes are needed
-        const baseClasses = 'flex flex-col items-center gap-1 py-1.5 px-2.5 cursor-pointer select-none';
+        const baseClasses = 'flex items-center justify-center py-2 px-4 cursor-pointer select-none';
 
         // Story 14.11 AC #5: Active state animation with scale
         const transitionClasses = prefersReducedMotion
@@ -250,8 +255,13 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
 
     // Story 14.11 AC #1: Nav bar styling from mockup
     // Story 14.12: Use --bg to match header, --border-medium for accent top border (1px to match button outlines)
+    // Story 14c.4: Subtle gradient from bottom (theme bg) to top (group color) when in group mode
     const navStyle: React.CSSProperties = {
-        backgroundColor: 'var(--bg)',
+        // When in group mode, use gradient background from bottom to top
+        // 70% from bottom is normal bg color, then gradient to group color at top
+        background: activeGroupColor
+            ? `linear-gradient(to top, var(--bg) 0%, var(--bg) 70%, ${activeGroupColor}20 100%)`
+            : 'var(--bg)',
         borderTop: '1px solid var(--border-medium)',
     };
 
@@ -400,59 +410,55 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
             }
         `}</style>
         <nav
-            className="fixed bottom-0 left-0 right-0 flex items-end justify-around z-50 flex-shrink-0"
+            className="fixed bottom-0 left-0 right-0 flex items-end z-50 flex-shrink-0"
             style={{
                 ...navStyle,
                 // Story 14.11 AC #1: Padding from mockup CSS - explicit to allow paddingBottom override
-                paddingTop: '8px',
-                paddingLeft: '16px',
-                paddingRight: '16px',
+                // Story 14c.13: Reduced padding for smaller icon-only nav bar
+                paddingTop: '4px',
+                paddingLeft: '8px',
+                paddingRight: '8px',
                 // Story 14.11 AC #4: Safe area bottom padding for iOS home indicator
-                paddingBottom: 'calc(12px + var(--safe-bottom, env(safe-area-inset-bottom, 0px)))',
+                paddingBottom: 'calc(8px + var(--safe-bottom, env(safe-area-inset-bottom, 0px)))',
             }}
             role="navigation"
             aria-label={t('mainNavigation') || 'Main navigation'}
         >
-            {/* Home */}
-            <button
-                onClick={() => handleNavClick('dashboard')}
-                className={getNavItemClasses('dashboard')}
-                style={getNavItemStyle('dashboard')}
-                aria-current={view === 'dashboard' ? 'page' : undefined}
-            >
-                <Home size={24} strokeWidth={1.8} />
-                <span
-                    className="text-xs"
-                    style={{ fontWeight: view === 'dashboard' ? 600 : 500 }}
+            {/* Left side icons - takes equal space */}
+            <div className="flex-1 flex justify-around items-center">
+                {/* Home */}
+                <button
+                    onClick={() => handleNavClick('dashboard')}
+                    className={getNavItemClasses('dashboard')}
+                    style={getNavItemStyle('dashboard')}
+                    aria-current={view === 'dashboard' ? 'page' : undefined}
+                    aria-label={t('home')}
                 >
-                    {t('home')}
-                </span>
-            </button>
+                    <Home size={24} strokeWidth={1.8} />
+                </button>
 
-            {/* Analytics */}
-            <button
-                onClick={() => handleNavClick('trends', onTrendsClick)}
-                className={getNavItemClasses('trends')}
-                style={getNavItemStyle('trends')}
-                aria-current={view === 'trends' ? 'page' : undefined}
-            >
-                <BarChart3 size={24} strokeWidth={1.8} />
-                {/* Story 7.10 AC #9: UX spec label is "Analytics" */}
-                <span
-                    className="text-xs"
-                    style={{ fontWeight: view === 'trends' ? 600 : 500 }}
+                {/* Analytics */}
+                <button
+                    onClick={() => handleNavClick('trends', onTrendsClick)}
+                    className={getNavItemClasses('trends')}
+                    style={getNavItemStyle('trends')}
+                    aria-current={view === 'trends' ? 'page' : undefined}
+                    aria-label={t('analytics')}
                 >
-                    {t('analytics')}
-                </span>
-            </button>
+                    <BarChart3 size={24} strokeWidth={1.8} />
+                </button>
+            </div>
 
             {/* Center FAB - Story 14.11 AC #3: Elevated scan button */}
             {/* Story 12.1 + 14d.7: Long-press opens mode selector popup */}
             <div
-                className="relative"
+                className="relative flex-shrink-0"
                 style={{
-                    // Story 14.11 AC #3: FAB elevation matching mockup (margin-top: -56px → -40px for 52px button)
-                    marginTop: '-40px',
+                    // Story 14.11 AC #3: FAB elevation matching mockup
+                    // Story 14c.13: Adjusted for smaller nav bar, extra horizontal margin
+                    marginTop: '-36px',
+                    marginLeft: '16px',
+                    marginRight: '16px',
                     padding: 0,
                 }}
             >
@@ -544,37 +550,45 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
                 )}
             </div>
 
-            {/* Insights - Story 10a.3: Renamed from Receipts to Insights */}
-            <button
-                onClick={() => handleNavClick('insights')}
-                className={getNavItemClasses('insights')}
-                style={getNavItemStyle('insights')}
-                aria-current={view === 'insights' ? 'page' : undefined}
-            >
-                <Lightbulb size={24} strokeWidth={1.8} />
-                <span
-                    className="text-xs"
-                    style={{ fontWeight: view === 'insights' ? 600 : 500 }}
+            {/* Right side icons - takes equal space */}
+            <div className="flex-1 flex justify-around items-center">
+                {/* Insights - Story 10a.3: Renamed from Receipts to Insights */}
+                <button
+                    onClick={() => handleNavClick('insights')}
+                    className={getNavItemClasses('insights')}
+                    style={getNavItemStyle('insights')}
+                    aria-current={view === 'insights' ? 'page' : undefined}
+                    aria-label={t('insights')}
                 >
-                    {t('insights')}
-                </span>
-            </button>
+                    <Lightbulb size={24} strokeWidth={1.8} />
+                </button>
 
-            {/* Alerts - Story 14.11: Per mockup, 5th nav item is Alerts not Settings */}
-            <button
-                onClick={() => handleNavClick('alerts')}
-                className={getNavItemClasses('alerts')}
-                style={getNavItemStyle('alerts')}
-                aria-current={view === 'alerts' ? 'page' : undefined}
-            >
-                <Bell size={24} strokeWidth={1.8} />
-                <span
-                    className="text-xs"
-                    style={{ fontWeight: view === 'alerts' ? 600 : 500 }}
+                {/* Alerts - Story 14.11: Per mockup, 5th nav item is Alerts not Settings */}
+                {/* Story 14c.2: Added badge count for pending invitations */}
+                <button
+                    onClick={() => handleNavClick('alerts')}
+                    className={getNavItemClasses('alerts')}
+                    style={getNavItemStyle('alerts')}
+                    aria-current={view === 'alerts' ? 'page' : undefined}
+                    aria-label={t('alerts')}
                 >
-                    {t('alerts')}
-                </span>
-            </button>
+                    <div className="relative">
+                        <Bell size={24} strokeWidth={1.8} />
+                        {/* Story 14c.2 AC2: Notification badge for pending invitations */}
+                        {alertsBadgeCount > 0 && (
+                            <span
+                                className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 flex items-center justify-center text-[10px] font-semibold rounded-full"
+                                style={{
+                                    backgroundColor: '#ef4444',
+                                    color: 'white',
+                                }}
+                            >
+                                {alertsBadgeCount > 9 ? '9+' : alertsBadgeCount}
+                            </span>
+                        )}
+                    </div>
+                </button>
+            </div>
 
             {/* Story 14d.3 AC #4: Visual feedback when navigation is blocked */}
             {showBlockedFeedback && (

@@ -38,8 +38,8 @@ import { TransitionChild } from '../components/animation/TransitionChild';
 import { useDerivedItems } from '../hooks/useDerivedItems';
 import { useHistoryFilters } from '../hooks/useHistoryFilters';
 import { useReducedMotion } from '../hooks/useReducedMotion';
-// Story 14.31 Session 2: Groups for custom groups filter (Layers icon)
-import { useGroups } from '../hooks/useGroups';
+// Story 14c.8: Groups for custom groups filter (shared groups only)
+import { useAllUserGroups } from '../hooks/useAllUserGroups';
 // Story 14.31 Session 2: Item aggregation (group same products together)
 // Story 14.31 Session 3: Added sortAggregatedItems for sort control
 import { aggregateItems, sortAggregatedItems, sortItemsByPrice, sortItemsByName, sortItemsByDate } from '../hooks/useItems';
@@ -214,9 +214,9 @@ export const ItemsView: React.FC<ItemsViewProps> = ({
     onNavigateToView,
     initialCategory,
     initialSearchTerm,
-    // Story 14.31 Session 2: User and app IDs for groups
+    // Story 14c.8: User ID for groups (appId no longer needed after consolidation)
     userId = null,
-    appId = 'boletapp',
+    appId: _appId = 'boletapp',
     // Story 14.13: Font color mode - receiving this prop triggers re-render when setting changes
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     fontColorMode: _fontColorMode,
@@ -257,8 +257,8 @@ export const ItemsView: React.FC<ItemsViewProps> = ({
         hasActiveFilters: hasTemporalOrCategoryFilters,
     } = useHistoryFilters();
 
-    // Story 14.31 Session 2: Groups hook for custom groups filter (Layers icon)
-    const { groups, loading: groupsLoading } = useGroups(userId, appId);
+    // Story 14c.8: Groups hook for custom groups filter (shared groups only)
+    const { groups, isLoading: groupsLoading } = useAllUserGroups(userId);
 
     // Items hook - uses React Query caching for derived items
     const {

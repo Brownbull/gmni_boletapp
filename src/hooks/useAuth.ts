@@ -13,6 +13,10 @@ import {
 } from 'firebase/auth';
 import { getFirestore, Firestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { firebaseConfig } from '../config/firebase';
+import {
+    disableWebPushNotifications,
+    WEB_PUSH_CONSTANTS,
+} from '../services/webPushService';
 
 export interface Services {
     auth: Auth;
@@ -125,6 +129,24 @@ export function useAuth(): UseAuthReturn {
 
     const signOut = async () => {
         if (!services) return;
+
+        // Story 14c.13-WP: Delete web push subscription before signing out
+        // This is CRITICAL for proper notification routing when users share devices
+        // If we don't delete the subscription, notifications will be sent to the wrong user
+        try {
+            // Check if user had notifications enabled
+            const wasEnabled = localStorage.getItem(WEB_PUSH_CONSTANTS.LOCAL_STORAGE_KEY) === 'true';
+
+            if (wasEnabled) {
+                // Disable web push notifications (unsubscribes and deletes from server)
+                await disableWebPushNotifications();
+                console.log('[useAuth] Disabled web push notifications on sign out');
+            }
+        } catch (error) {
+            // Don't block sign-out if subscription deletion fails
+            console.error('[useAuth] Failed to disable web push on sign out:', error);
+        }
+
         await firebaseSignOut(services.auth);
     };
 

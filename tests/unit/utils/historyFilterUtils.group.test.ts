@@ -2,6 +2,7 @@
  * History Filter Utils - Group Filter Tests
  *
  * Story 14.15b: Transaction Selection Mode & Groups (AC #7)
+ * Group consolidation: Updated to use sharedGroupIds array instead of groupId string
  * Tests for group-based transaction filtering.
  */
 
@@ -43,8 +44,8 @@ describe('filterTransactionsByHistoryFilters - Group Filter', () => {
   describe('Basic Filtering', () => {
     it('includes all transactions when no group filter is applied', () => {
       const transactions = [
-        createTransaction({ id: 'tx-1', groupId: 'group-1' }),
-        createTransaction({ id: 'tx-2', groupId: 'group-2' }),
+        createTransaction({ id: 'tx-1', sharedGroupIds: ['group-1'] }),
+        createTransaction({ id: 'tx-2', sharedGroupIds: ['group-2'] }),
         createTransaction({ id: 'tx-3' }), // No group
       ];
 
@@ -57,9 +58,9 @@ describe('filterTransactionsByHistoryFilters - Group Filter', () => {
 
     it('filters to only transactions in specified group', () => {
       const transactions = [
-        createTransaction({ id: 'tx-1', groupId: 'group-1' }),
-        createTransaction({ id: 'tx-2', groupId: 'group-2' }),
-        createTransaction({ id: 'tx-3', groupId: 'group-1' }),
+        createTransaction({ id: 'tx-1', sharedGroupIds: ['group-1'] }),
+        createTransaction({ id: 'tx-2', sharedGroupIds: ['group-2'] }),
+        createTransaction({ id: 'tx-3', sharedGroupIds: ['group-1'] }),
         createTransaction({ id: 'tx-4' }), // No group
       ];
 
@@ -76,9 +77,9 @@ describe('filterTransactionsByHistoryFilters - Group Filter', () => {
 
     it('excludes transactions without a group when filtering by group', () => {
       const transactions = [
-        createTransaction({ id: 'tx-1', groupId: 'group-1' }),
+        createTransaction({ id: 'tx-1', sharedGroupIds: ['group-1'] }),
         createTransaction({ id: 'tx-2' }), // No group
-        createTransaction({ id: 'tx-3', groupId: undefined }), // Explicitly undefined
+        createTransaction({ id: 'tx-3', sharedGroupIds: undefined }), // Explicitly undefined
       ];
 
       const filters: HistoryFilterState = {
@@ -94,8 +95,8 @@ describe('filterTransactionsByHistoryFilters - Group Filter', () => {
 
     it('returns empty array when no transactions match group filter', () => {
       const transactions = [
-        createTransaction({ id: 'tx-1', groupId: 'group-1' }),
-        createTransaction({ id: 'tx-2', groupId: 'group-2' }),
+        createTransaction({ id: 'tx-1', sharedGroupIds: ['group-1'] }),
+        createTransaction({ id: 'tx-2', sharedGroupIds: ['group-2'] }),
       ];
 
       const filters: HistoryFilterState = {
@@ -110,9 +111,9 @@ describe('filterTransactionsByHistoryFilters - Group Filter', () => {
 
     it('supports multi-select - filters to transactions in any of selected groups', () => {
       const transactions = [
-        createTransaction({ id: 'tx-1', groupId: 'group-1' }),
-        createTransaction({ id: 'tx-2', groupId: 'group-2' }),
-        createTransaction({ id: 'tx-3', groupId: 'group-3' }),
+        createTransaction({ id: 'tx-1', sharedGroupIds: ['group-1'] }),
+        createTransaction({ id: 'tx-2', sharedGroupIds: ['group-2'] }),
+        createTransaction({ id: 'tx-3', sharedGroupIds: ['group-3'] }),
         createTransaction({ id: 'tx-4' }), // No group
       ];
 
@@ -127,14 +128,31 @@ describe('filterTransactionsByHistoryFilters - Group Filter', () => {
       expect(result.map(t => t.id)).toContain('tx-1');
       expect(result.map(t => t.id)).toContain('tx-2');
     });
+
+    it('matches transactions that have multiple sharedGroupIds', () => {
+      const transactions = [
+        createTransaction({ id: 'tx-1', sharedGroupIds: ['group-1', 'group-2'] }),
+        createTransaction({ id: 'tx-2', sharedGroupIds: ['group-3'] }),
+      ];
+
+      const filters: HistoryFilterState = {
+        ...createDefaultFilters(),
+        group: { groupIds: 'group-1' },
+      };
+
+      const result = filterTransactionsByHistoryFilters(transactions, filters);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('tx-1'); // Has group-1 in its sharedGroupIds array
+    });
   });
 
   describe('Combined Filters', () => {
     it('combines group filter with temporal filter', () => {
       const transactions = [
-        createTransaction({ id: 'tx-1', date: '2024-12-28', groupId: 'group-1' }),
-        createTransaction({ id: 'tx-2', date: '2024-11-15', groupId: 'group-1' }),
-        createTransaction({ id: 'tx-3', date: '2024-12-28', groupId: 'group-2' }),
+        createTransaction({ id: 'tx-1', date: '2024-12-28', sharedGroupIds: ['group-1'] }),
+        createTransaction({ id: 'tx-2', date: '2024-11-15', sharedGroupIds: ['group-1'] }),
+        createTransaction({ id: 'tx-3', date: '2024-12-28', sharedGroupIds: ['group-2'] }),
       ];
 
       const filters: HistoryFilterState = {
@@ -152,9 +170,9 @@ describe('filterTransactionsByHistoryFilters - Group Filter', () => {
 
     it('combines group filter with category filter', () => {
       const transactions = [
-        createTransaction({ id: 'tx-1', category: 'Supermarket' as any, groupId: 'group-1' }),
-        createTransaction({ id: 'tx-2', category: 'Restaurant' as any, groupId: 'group-1' }),
-        createTransaction({ id: 'tx-3', category: 'Supermarket' as any, groupId: 'group-2' }),
+        createTransaction({ id: 'tx-1', category: 'Supermarket' as any, sharedGroupIds: ['group-1'] }),
+        createTransaction({ id: 'tx-2', category: 'Restaurant' as any, sharedGroupIds: ['group-1'] }),
+        createTransaction({ id: 'tx-3', category: 'Supermarket' as any, sharedGroupIds: ['group-2'] }),
       ];
 
       const filters: HistoryFilterState = {
@@ -172,9 +190,9 @@ describe('filterTransactionsByHistoryFilters - Group Filter', () => {
 
     it('combines group filter with location filter', () => {
       const transactions = [
-        createTransaction({ id: 'tx-1', country: 'Chile', groupId: 'group-1' }),
-        createTransaction({ id: 'tx-2', country: 'Argentina', groupId: 'group-1' }),
-        createTransaction({ id: 'tx-3', country: 'Chile', groupId: 'group-2' }),
+        createTransaction({ id: 'tx-1', country: 'Chile', sharedGroupIds: ['group-1'] }),
+        createTransaction({ id: 'tx-2', country: 'Argentina', sharedGroupIds: ['group-1'] }),
+        createTransaction({ id: 'tx-3', country: 'Chile', sharedGroupIds: ['group-2'] }),
       ];
 
       const filters: HistoryFilterState = {
@@ -197,35 +215,35 @@ describe('filterTransactionsByHistoryFilters - Group Filter', () => {
           date: '2024-12-28',
           category: 'Supermarket' as any,
           country: 'Chile',
-          groupId: 'group-1',
+          sharedGroupIds: ['group-1'],
         }),
         createTransaction({
           id: 'tx-2',
           date: '2024-12-28',
           category: 'Supermarket' as any,
           country: 'Chile',
-          groupId: 'group-2', // Wrong group
+          sharedGroupIds: ['group-2'], // Wrong group
         }),
         createTransaction({
           id: 'tx-3',
           date: '2024-11-28', // Wrong month
           category: 'Supermarket' as any,
           country: 'Chile',
-          groupId: 'group-1',
+          sharedGroupIds: ['group-1'],
         }),
         createTransaction({
           id: 'tx-4',
           date: '2024-12-28',
           category: 'Restaurant' as any, // Wrong category
           country: 'Chile',
-          groupId: 'group-1',
+          sharedGroupIds: ['group-1'],
         }),
         createTransaction({
           id: 'tx-5',
           date: '2024-12-28',
           category: 'Supermarket' as any,
           country: 'Argentina', // Wrong country
-          groupId: 'group-1',
+          sharedGroupIds: ['group-1'],
         }),
       ];
 
@@ -255,10 +273,10 @@ describe('filterTransactionsByHistoryFilters - Group Filter', () => {
       expect(result).toHaveLength(0);
     });
 
-    it('handles transactions with null groupId', () => {
+    it('handles transactions with empty sharedGroupIds array', () => {
       const transactions = [
-        createTransaction({ id: 'tx-1', groupId: null as any }),
-        createTransaction({ id: 'tx-2', groupId: 'group-1' }),
+        createTransaction({ id: 'tx-1', sharedGroupIds: [] }),
+        createTransaction({ id: 'tx-2', sharedGroupIds: ['group-1'] }),
       ];
 
       const filters: HistoryFilterState = {
@@ -274,8 +292,8 @@ describe('filterTransactionsByHistoryFilters - Group Filter', () => {
 
     it('handles empty groupIds in filter (no filter applied)', () => {
       const transactions = [
-        createTransaction({ id: 'tx-1', groupId: 'group-1' }),
-        createTransaction({ id: 'tx-2', groupId: 'group-2' }),
+        createTransaction({ id: 'tx-1', sharedGroupIds: ['group-1'] }),
+        createTransaction({ id: 'tx-2', sharedGroupIds: ['group-2'] }),
         createTransaction({ id: 'tx-3' }),
       ];
 
