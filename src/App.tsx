@@ -440,6 +440,7 @@ function App() {
     const {
         transactions: sharedGroupTransactions,
         allTransactions: _sharedGroupAllTransactions,
+        rawTransactions: sharedGroupRawTransactions,
         isLoading: _sharedGroupTransactionsLoading,
         total: _sharedGroupTotal,
         spendingByMember: sharedGroupSpendingByMember,
@@ -3447,11 +3448,14 @@ function App() {
     // Story 14c.5: Data source switching for personal vs group mode
     // When in group mode, use shared group transactions; otherwise use personal transactions
     const isGroupMode = viewMode === 'group' && !!activeGroup;
-    const activeTransactions = isGroupMode ? sharedGroupTransactions : transactions;
+    // Story 14c.16: Use rawTransactions for group mode to enable cross-year navigation
+    // sharedGroupTransactions is date-filtered (current month), rawTransactions has all data
+    const activeTransactions = isGroupMode ? sharedGroupRawTransactions : transactions;
     // Story 14c.5 Bug Fix: Sort shared group transactions by createdAt for recent scans carousel
     // This ensures recently scanned receipts appear first (consistent with personal mode behavior)
+    // Story 14c.16: Use rawTransactions for consistent data source
     const activeRecentTransactions = isGroupMode
-        ? [...sharedGroupTransactions]
+        ? [...sharedGroupRawTransactions]
             .sort((a, b) => {
                 // Sort by createdAt descending (most recently scanned first)
                 const getTime = (tx: Transaction): number => {
@@ -4399,7 +4403,7 @@ function App() {
                                 // User clicks "Edit" button in detail view to enter edit mode (with conflict check)
                                 navigateToTransactionDetail(tx as Transaction);
                             }}
-                            allTransactions={(isGroupMode ? sharedGroupTransactions : transactionsWithRecentScans) as any}
+                            allTransactions={(isGroupMode ? sharedGroupRawTransactions : transactionsWithRecentScans) as any}
                             defaultCity={defaultCity}
                             defaultCountry={defaultCountry}
                             lang={lang}
