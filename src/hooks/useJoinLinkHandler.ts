@@ -207,11 +207,15 @@ export function useJoinLinkHandler({
 
         hasProcessedUrl.current = true;
 
+        // Clear URL path immediately to prevent double-processing on page reload
+        if (urlCode) {
+            clearJoinUrlPath();
+        }
+
         if (!isAuthenticated) {
             // Store code for after auth if we have a URL code
             if (urlCode) {
                 setPendingJoinCode(urlCode);
-                clearJoinUrlPath();
             }
             setShareCode(codeToProcess);
             setState('pending_auth');
