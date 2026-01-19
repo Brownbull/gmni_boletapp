@@ -50,6 +50,8 @@ import { useScanOptional } from '../../contexts/ScanContext';
 import { DIALOG_TYPES } from '../../types/scanStateMachine';
 import { useIsForeignLocation } from '../../hooks/useIsForeignLocation';
 import { useLocationDisplay } from '../../hooks/useLocations';
+// Story 14c.8: Auto-tag indicator for group mode
+import { AutoTagIndicator } from '../SharedGroups/AutoTagIndicator';
 
 // Story 14d.6: Import centralized type from scanStateMachine
 import type { QuickSaveDialogData } from '../../types/scanStateMachine';
@@ -101,6 +103,21 @@ export interface QuickSaveCardProps {
   isEntering?: boolean;
   /** Story 14.35b: User's default country for foreign location detection */
   userDefaultCountry?: string;
+  /**
+   * Story 14c.8: Active group info for auto-tag indicator.
+   * When provided, shows indicator that transaction will be shared to this group.
+   */
+  activeGroup?: {
+    id: string;
+    name: string;
+    color: string;
+    icon?: string;
+  } | null;
+  /**
+   * Story 14c.8: Callback when user removes the auto-tag.
+   * If not provided, the remove button is hidden.
+   */
+  onRemoveGroupTag?: () => void;
 }
 
 /**
@@ -126,6 +143,8 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
   isEntering = true,
   lang = 'es',
   userDefaultCountry,
+  activeGroup,
+  onRemoveGroupTag,
 }) => {
   const isDark = theme === 'dark';
   const prefersReducedMotion = useReducedMotion();
@@ -478,6 +497,22 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
                 </AnimatedItem>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Story 14c.8: Auto-tag indicator for group mode (AC#2) */}
+        {activeGroup && (
+          <div className="mb-4">
+            <AutoTagIndicator
+              groupId={activeGroup.id}
+              groupName={activeGroup.name}
+              groupColor={activeGroup.color}
+              groupIcon={activeGroup.icon}
+              onRemove={onRemoveGroupTag}
+              showRemove={!!onRemoveGroupTag}
+              t={t}
+              size="small"
+            />
           </div>
         )}
 

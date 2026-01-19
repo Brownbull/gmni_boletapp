@@ -1,0 +1,2295 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="mono" data-font="outfit" data-mode="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gastify - Shared Groups (Epic 14C)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Baloo+2:wght@700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       DESIGN TOKENS FROM REFERENCE
+       ============================================ */
+    :root {
+      /* Primary Palette */
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --primary-dark: #1e40af;
+      /* Secondary */
+      --secondary: #64748b;
+      --secondary-light: #f1f5f9;
+      --accent: #0ea5e9;
+      /* Backgrounds */
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --bg-inverse: #0f172a;
+      /* Text */
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --text-inverse: #f8fafc;
+      /* Borders */
+      --border-light: #e2e8f0;
+      --border-medium: #cbd5e1;
+      --border-dark: #94a3b8;
+      /* Semantic */
+      --success: #22c55e;
+      --success-light: #dcfce7;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --error: #ef4444;
+      --error-light: #fee2e2;
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      /* Spacing */
+      --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+      --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+      /* Radii */
+      --radius-sm: 6px; --radius-md: 10px; --radius-lg: 12px;
+      --radius-xl: 16px; --radius-2xl: 20px; --radius-full: 9999px;
+      /* Typography */
+      --font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+      --transition-fast: 150ms ease;
+      --transition-normal: 200ms ease;
+      --transition-slow: 300ms ease;
+      /* Group Colors */
+      --group-emerald: #10b981;
+      --group-blue: #3b82f6;
+      --group-purple: #8b5cf6;
+      --group-pink: #ec4899;
+      --group-orange: #f97316;
+    }
+
+    /* THEME 1: Professional Blue (Default) */
+    [data-theme="professional"] {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --primary-dark: #1e40af;
+      --secondary: #64748b;
+      --secondary-light: #f1f5f9;
+      --accent: #0ea5e9;
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --bg-inverse: #0f172a;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --border-light: #e2e8f0;
+      --border-medium: #cbd5e1;
+    }
+
+    /* THEME 2: Monochrome Minimal */
+    [data-theme="mono"] {
+      --primary: #18181b;
+      --primary-hover: #27272a;
+      --primary-light: #f4f4f5;
+      --primary-dark: #09090b;
+      --secondary: #52525b;
+      --secondary-light: #e4e4e7;
+      --accent: #3b82f6;
+      --bg-primary: #fafafa;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f4f4f5;
+      --bg-inverse: #18181b;
+      --text-primary: #18181b;
+      --text-secondary: #52525b;
+      --text-tertiary: #a1a1aa;
+      --border-light: #e4e4e7;
+      --border-medium: #d4d4d8;
+    }
+
+    /* THEME 3: Ni No Kuni / Studio Ghibli */
+    [data-theme="ninokuni"] {
+      --primary: #4a7c59;
+      --primary-hover: #3d6b4a;
+      --primary-light: #d4e5d9;
+      --primary-dark: #2d5438;
+      --secondary: #5b8fa8;
+      --secondary-light: #d5e8f0;
+      --accent: #e8a87c;
+      --bg-primary: #f5f0e8;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1dbb6;
+      --bg-inverse: #2d3a4a;
+      --text-primary: #2d3a4a;
+      --text-secondary: #4a5568;
+      --text-tertiary: #7d9b5f;
+      --border-light: #e3bba1;
+      --border-medium: #d4a574;
+      --success: #7d9b5f;
+      --success-light: #d4e5d9;
+    }
+
+    /* ============================================
+       DARK MODE VARIANTS
+       ============================================ */
+    [data-theme="professional"][data-mode="dark"] {
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --primary-light: #1e3a5f;
+      --primary-dark: #60a5fa;
+      --secondary: #94a3b8;
+      --secondary-light: #334155;
+      --accent: #38bdf8;
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --bg-inverse: #f8fafc;
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-tertiary: #64748b;
+      --text-inverse: #0f172a;
+      --border-light: #334155;
+      --border-medium: #475569;
+      --border-dark: #64748b;
+      --success: #22c55e;
+      --success-light: #14532d;
+      --warning: #f59e0b;
+      --warning-light: #78350f;
+      --error: #ef4444;
+      --error-light: #7f1d1d;
+    }
+
+    [data-theme="mono"][data-mode="dark"] {
+      --primary: #a1a1aa;
+      --primary-hover: #d4d4d8;
+      --primary-light: #27272a;
+      --primary-dark: #e4e4e7;
+      --secondary: #71717a;
+      --secondary-light: #3f3f46;
+      --accent: #60a5fa;
+      --bg-primary: #09090b;
+      --bg-secondary: #18181b;
+      --bg-tertiary: #27272a;
+      --bg-inverse: #fafafa;
+      --text-primary: #fafafa;
+      --text-secondary: #d4d4d8;
+      --text-tertiary: #71717a;
+      --text-inverse: #09090b;
+      --border-light: #27272a;
+      --border-medium: #3f3f46;
+      --success: #22c55e;
+      --success-light: #14532d;
+      --warning: #f59e0b;
+      --warning-light: #78350f;
+      --error: #ef4444;
+      --error-light: #7f1d1d;
+    }
+
+    [data-theme="ninokuni"][data-mode="dark"] {
+      --primary: #6b9e7a;
+      --primary-hover: #5a8a68;
+      --primary-light: #2d3d32;
+      --primary-dark: #8fbf9c;
+      --secondary: #7ba8be;
+      --secondary-light: #2d3d4a;
+      --accent: #d4a574;
+      --bg-primary: #1a2420;
+      --bg-secondary: #243028;
+      --bg-tertiary: #2d3d32;
+      --bg-inverse: #f5f0e8;
+      --text-primary: #e8e4dc;
+      --text-secondary: #b8c4a8;
+      --text-tertiary: #6b8b5f;
+      --text-inverse: #2d3a4a;
+      --border-light: #3d4d42;
+      --border-medium: #4d5d52;
+      --success: #8fbf9c;
+      --success-light: #2d3d32;
+      --warning: #e8a87c;
+      --warning-light: #4a3628;
+      --error: #e87c7c;
+      --error-light: #4a2828;
+    }
+
+    /* Font Definitions */
+    body[data-font="outfit"] { --font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif; }
+    body[data-font="space"] { --font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; }
+
+    /* Logo Style Definitions - Paired with themes */
+    body[data-theme="professional"] .g-logo-circle { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important; }
+    body[data-theme="mono"] .g-logo-circle { background: linear-gradient(135deg, #18181b 0%, #3f3f46 100%) !important; }
+    body[data-theme="ninokuni"] .g-logo-circle { background: linear-gradient(135deg, #4a7c59 0%, #5b8fa8 100%) !important; }
+
+    /* Logo Style Definitions - Dark Mode Variants */
+    body[data-theme="professional"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important; }
+    body[data-theme="mono"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #a1a1aa 0%, #71717a 100%) !important; }
+    body[data-theme="ninokuni"][data-mode="dark"] .g-logo-circle { background: linear-gradient(135deg, #6b9e7a 0%, #7ba8be 100%) !important; }
+
+    /* Reset */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-family);
+      background: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    /* Page Layout */
+    .page-title {
+      color: #f8fafc;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .page-subtitle {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    /* State Tabs */
+    .state-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .state-tab {
+      padding: 8px 16px;
+      background: #334155;
+      border: none;
+      border-radius: 8px;
+      color: #94a3b8;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .state-tab:hover { background: #475569; }
+    .state-tab.active { background: var(--primary); color: white; }
+
+    /* Phones Container */
+    .phones-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    /* Phone Frame */
+    .phone-frame {
+      width: 375px;
+      min-height: 812px;
+      background: #1e293b;
+      border-radius: 54px;
+      padding: 14px;
+      box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25),
+        inset 0 0 0 2px #334155, inset 0 0 0 4px #475569;
+    }
+    .phone-label {
+      color: #94a3b8;
+      font-size: 12px;
+      text-align: center;
+      margin-top: 12px;
+      font-weight: 500;
+    }
+    .phone-screen {
+      width: 100%;
+      height: 784px;
+      background: var(--bg-primary);
+      border-radius: 44px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px 8px;
+      background: var(--bg-primary);
+      flex-shrink: 0;
+    }
+    .status-time { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .status-icons { display: flex; gap: 4px; align-items: center; }
+
+    /* App Header Bar (Logo, Wordmark, Profile) */
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px 12px;
+      background: var(--bg-primary);
+      flex-shrink: 0;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+    }
+    .g-logo-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .g-logo-circle:hover {
+      transform: scale(1.05);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .g-logo-circle.group-mode {
+      background: var(--group-emerald) !important;
+    }
+    .header-wordmark {
+      color: var(--text-primary);
+      font-weight: 700;
+      font-size: 22px;
+      font-family: 'Baloo 2', sans-serif;
+    }
+    .profile-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--border-light);
+      cursor: pointer;
+    }
+    .profile-avatar span {
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* Group Selector Dropdown (appears from logo) */
+    .logo-dropdown {
+      position: absolute;
+      top: 40px;
+      left: 0;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-light);
+      min-width: 220px;
+      z-index: 100;
+      overflow: hidden;
+    }
+    .logo-dropdown-header {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-tertiary);
+    }
+
+    /* Back Header (for sub-screens) */
+    .header {
+      display: flex;
+      align-items: center;
+      padding: 8px 16px 16px;
+      gap: 12px;
+      background: var(--bg-primary);
+    }
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--bg-tertiary);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-primary);
+    }
+    .header-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      flex: 1;
+    }
+
+    /* Content */
+    .content {
+      flex: 1;
+      padding: 0 16px 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Settings Menu Item (from settings.html pattern) */
+    .settings-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      border: 1px solid var(--border-light);
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    .settings-menu-item:hover {
+      background: var(--bg-tertiary);
+    }
+
+    /* View Mode Switcher (Logo area) */
+    .view-mode-switcher {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .view-mode-switcher:hover {
+      background: var(--bg-tertiary);
+    }
+    .view-mode-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: white;
+    }
+    .view-mode-logo.personal {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    }
+    .view-mode-logo.group {
+      background: var(--group-emerald);
+    }
+    .view-mode-info {
+      flex: 1;
+    }
+    .view-mode-label {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .view-mode-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .view-mode-chevron {
+      color: var(--text-tertiary);
+    }
+
+    /* Group Selector Dropdown */
+    .group-selector {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+    .group-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: background var(--transition-fast);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .group-option:last-child {
+      border-bottom: none;
+    }
+    .group-option:hover {
+      background: var(--bg-tertiary);
+    }
+    .group-option.active {
+      background: var(--primary-light);
+    }
+    .group-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: white;
+    }
+    .group-details {
+      flex: 1;
+    }
+    .group-name {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .group-members {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    .group-check {
+      color: var(--primary);
+    }
+
+    /* Section */
+    .section {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .section-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .section-subtitle {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+
+    /* Custom Group Item */
+    .custom-group-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-light);
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    .custom-group-item:last-child {
+      border-bottom: none;
+    }
+    .custom-group-item:hover {
+      background: var(--bg-tertiary);
+    }
+    .custom-group-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: white;
+    }
+    .custom-group-info {
+      flex: 1;
+    }
+    .custom-group-name {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .custom-group-stats {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    .shared-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      background: var(--success-light);
+      color: var(--success);
+      font-size: 11px;
+      font-weight: 500;
+      border-radius: var(--radius-full);
+    }
+    .chevron {
+      color: var(--text-tertiary);
+    }
+
+    /* Share Code Display */
+    .share-code-section {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      text-align: center;
+    }
+    .share-code-label {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+    .share-code {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: 4px;
+      font-family: 'Space Grotesk', monospace;
+      margin-bottom: 8px;
+    }
+    .share-code-expiry {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-bottom: 16px;
+    }
+    .share-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      margin-bottom: 16px;
+    }
+    .share-link-text {
+      flex: 1;
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-align: left;
+      word-break: break-all;
+    }
+    .share-link-copy {
+      padding: 8px 12px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .share-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .share-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .share-btn.primary {
+      background: var(--primary);
+      color: white;
+    }
+    .share-btn.secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    /* Join Group Screen */
+    .join-illustration {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 24px;
+      background: var(--primary-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+    }
+    .join-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .join-subtitle {
+      font-size: 14px;
+      color: var(--text-tertiary);
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .join-group-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-md);
+    }
+    .join-group-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: white;
+    }
+    .join-group-info {
+      flex: 1;
+    }
+    .join-group-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .join-group-members-list {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    .join-btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-lg);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .join-cancel {
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      color: var(--text-tertiary);
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    /* Transaction Card with Profile Indicator */
+    .transaction-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      display: flex;
+      gap: 12px;
+      position: relative;
+    }
+    .transaction-thumbnail {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius-md);
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .transaction-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .transaction-merchant {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .transaction-date {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    .transaction-amount {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-align: right;
+    }
+    .profile-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--bg-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: white;
+      font-weight: 600;
+    }
+    .view-only-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 4px 8px;
+      background: var(--bg-tertiary);
+      color: var(--text-tertiary);
+      font-size: 10px;
+      font-weight: 500;
+      border-radius: var(--radius-full);
+    }
+
+    /* Make Shareable Dialog */
+    .dialog-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .dialog {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      width: 100%;
+      max-width: 320px;
+    }
+    .dialog-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      background: var(--primary-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+    .dialog-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .dialog-text {
+      font-size: 14px;
+      color: var(--text-secondary);
+      text-align: center;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .dialog-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .dialog-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .dialog-btn.primary {
+      background: var(--primary);
+      color: white;
+    }
+    .dialog-btn.secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    /* Error State */
+    .error-card {
+      background: var(--error-light);
+      border: 1px solid var(--error);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      text-align: center;
+    }
+    .error-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+    .error-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--error);
+      margin-bottom: 4px;
+    }
+    .error-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* Member Avatars */
+    .member-avatars {
+      display: flex;
+      margin-left: 8px;
+    }
+    .member-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--bg-secondary);
+      margin-left: -8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: white;
+      font-weight: 600;
+    }
+    .member-avatar:first-child {
+      margin-left: 0;
+    }
+
+    /* ============================================
+       BOTTOM NAVIGATION
+       ============================================ */
+    .bottom-nav {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      padding: 8px 16px 24px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-light);
+      flex-shrink: 0;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    .nav-item svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--text-tertiary);
+      fill: none;
+      stroke-width: 1.8;
+    }
+    .nav-item span {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+    }
+    .nav-item.active svg { stroke: var(--primary); }
+    .nav-item.active span { color: var(--primary); font-weight: 600; }
+    .scan-center { margin-top: -56px; padding: 0; }
+    .scan-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    .scan-btn svg {
+      width: 24px;
+      height: 24px;
+      stroke: white;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* ============================================
+       GLOBAL CONTROLS PANEL
+       ============================================ */
+    .global-controls {
+      background: rgba(30, 41, 59, 0.95);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      padding: 12px 20px;
+      display: flex;
+      gap: 24px;
+      border: 1px solid rgba(255,255,255,0.1);
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .control-group { display: flex; align-items: center; gap: 10px; }
+    .control-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      white-space: nowrap;
+    }
+    .control-options { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* Theme Swatches */
+    .theme-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 150ms ease;
+    }
+    .theme-swatch:hover { transform: scale(1.1); }
+    .theme-swatch.active {
+      border-color: white;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+    }
+    .theme-swatch[data-theme="professional"] { background: linear-gradient(135deg, #2563eb 50%, #64748b 50%); }
+    .theme-swatch[data-theme="mono"] { background: linear-gradient(135deg, #18181b 50%, #52525b 50%); }
+    .theme-swatch[data-theme="ninokuni"] { background: linear-gradient(135deg, #4a7c59 50%, #5b8fa8 50%); }
+
+    /* Dark Mode Toggle Button */
+    .mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: #94a3b8;
+      transition: all 150ms ease;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .mode-toggle:hover { background: rgba(255,255,255,0.1); }
+    .mode-toggle.active {
+      background: #1e293b;
+      border-color: #3b82f6;
+      color: #f1f5f9;
+    }
+    .mode-toggle svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* Font Pills */
+    .font-pill {
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: #94a3b8;
+      transition: all 150ms ease;
+    }
+    .font-pill:hover { background: rgba(255,255,255,0.1); }
+    .font-pill.active {
+      background: white;
+      color: #0f172a;
+      border-color: white;
+    }
+  </style>
+</head>
+<body data-theme="mono" data-font="outfit" data-mode="light">
+  <h1 class="page-title">Epic 14C: Shared Groups</h1>
+  <p class="page-subtitle">Multi-user transaction sharing with symmetric visibility</p>
+
+  <!-- Global Controls -->
+  <div class="global-controls">
+    <div class="control-group">
+      <span class="control-label">Theme</span>
+      <div class="control-options">
+        <div class="theme-swatch" data-theme="professional" onclick="setTheme('professional', this)"></div>
+        <div class="theme-swatch active" data-theme="mono" onclick="setTheme('mono', this)"></div>
+        <div class="theme-swatch" data-theme="ninokuni" onclick="setTheme('ninokuni', this)"></div>
+      </div>
+    </div>
+    <div class="control-group">
+      <span class="control-label">Mode</span>
+      <div class="control-options">
+        <button class="mode-toggle" id="darkModeToggle" onclick="toggleDarkMode(this)">
+          <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          Dark
+        </button>
+      </div>
+    </div>
+    <div class="control-group">
+      <span class="control-label">Font</span>
+      <div class="control-options">
+        <button class="font-pill active" data-font="outfit" onclick="setFont('outfit', this)">Outfit</button>
+        <button class="font-pill" data-font="space" onclick="setFont('space', this)">Space</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="state-tabs">
+    <button class="state-tab active" onclick="showState('view-switcher')">Personal Mode</button>
+    <button class="state-tab" onclick="showState('group-selector')">Logo Dropdown</button>
+    <button class="state-tab" onclick="showState('custom-groups-empty')">Groups (Empty)</button>
+    <button class="state-tab" onclick="showState('custom-groups-filled')">Groups (Filled)</button>
+    <button class="state-tab" onclick="showState('share-code')">Share Code Display</button>
+    <button class="state-tab" onclick="showState('join-group')">Join Confirmation</button>
+    <button class="state-tab" onclick="showState('shared-transactions')">Group Mode</button>
+    <button class="state-tab" onclick="showState('make-shareable')">Make Shareable Dialog</button>
+    <button class="state-tab" onclick="showState('error-states')">Error States</button>
+  </div>
+
+  <div class="phones-container">
+
+    <!-- State 1: Personal Mode - Normal Home Screen -->
+    <div class="phone-frame" id="view-switcher">
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icons">
+            <svg width="18" height="12" fill="var(--text-primary)"><rect x="0" y="2" width="3" height="8" rx="1"/><rect x="5" y="1" width="3" height="10" rx="1"/><rect x="10" y="0" width="3" height="12" rx="1"/><rect x="15" y="3" width="3" height="6" rx="1"/></svg>
+          </div>
+        </div>
+
+        <!-- App Header Bar - Personal Mode -->
+        <div class="header-bar">
+          <!-- Left: Logo (tappable) -->
+          <div class="g-logo-circle">
+            <span style="color: white; font-weight: 700; font-size: 18px; font-family: 'Baloo 2', sans-serif;">G</span>
+          </div>
+          <!-- Center: Wordmark -->
+          <span class="header-wordmark">Gastify</span>
+          <!-- Right: Profile Avatar -->
+          <div class="profile-avatar">
+            <span>GC</span>
+          </div>
+        </div>
+
+        <div class="content">
+          <!-- Month Selector Row -->
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0;">
+            <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Ene '26</span>
+            <div style="display: flex; gap: 8px;">
+              <div style="width: 28px; height: 28px; background: var(--group-emerald); border-radius: 6px;"></div>
+              <div style="width: 28px; height: 28px; background: var(--primary); border-radius: 6px;"></div>
+              <div style="width: 28px; height: 28px; background: var(--group-orange); border-radius: 6px;"></div>
+            </div>
+          </div>
+
+          <!-- Simplified Treemap Placeholder -->
+          <div style="background: var(--bg-secondary); border-radius: var(--radius-lg); padding: 12px; border: 1px solid var(--border-light);">
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px; height: 120px;">
+              <div style="background: linear-gradient(135deg, #4a7c59, #3d6b4a); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; justify-content: space-between;">
+                <span style="font-size: 11px; color: rgba(255,255,255,0.8);">Automotriz</span>
+                <span style="font-size: 18px; font-weight: 700; color: white;">$309k</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="flex: 1; background: #10b981; border-radius: 8px; padding: 8px;">
+                  <span style="font-size: 10px; color: white;">Supermercado</span>
+                </div>
+                <div style="flex: 1; background: #f59e0b; border-radius: 8px; padding: 8px;">
+                  <span style="font-size: 10px; color: white;">Vendedor</span>
+                </div>
+              </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-light);">
+              <span style="font-size: 12px; color: var(--text-tertiary);">Total del mes</span>
+              <span style="font-size: 16px; font-weight: 700; color: var(--text-primary);">$730,071</span>
+            </div>
+          </div>
+
+          <!-- Recent Transactions -->
+          <div style="margin-top: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Ultimos Escaneados</span>
+              <span style="font-size: 12px; color: var(--primary);">Ver todo</span>
+            </div>
+            <div class="transaction-card">
+              <div class="transaction-thumbnail" style="background: #dcfce7;"><span>🛒</span></div>
+              <div class="transaction-info">
+                <div class="transaction-merchant">Disam</div>
+                <div class="transaction-date">13/01/2026, 12:53</div>
+              </div>
+              <div class="transaction-amount">$309,100</div>
+            </div>
+          </div>
+
+          <!-- Tap Logo Hint -->
+          <div style="margin-top: 16px; padding: 12px; background: var(--primary-light); border-radius: var(--radius-md); border: 1px dashed var(--primary);">
+            <p style="font-size: 12px; color: var(--primary); text-align: center; margin: 0;">
+              <strong>Tap the G logo</strong> in the header to switch to a shared group view
+            </p>
+          </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav" role="navigation" aria-label="Navegación principal">
+          <div class="nav-item active">
+            <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Inicio</span>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            <span>Analíticas</span>
+          </div>
+          <div class="scan-center">
+            <div class="scan-btn">
+              <svg viewBox="0 0 24 24">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                <circle cx="12" cy="13" r="3"/>
+              </svg>
+            </div>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <span>Ideas</span>
+          </div>
+          <div class="nav-item" style="position: relative;">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+            <span>Alertas</span>
+          </div>
+        </nav>
+      </div>
+      <div class="phone-label">Personal Mode - Tap Logo (14c.4)</div>
+    </div>
+
+    <!-- State 2: Group Selector Dropdown (from Logo) -->
+    <div class="phone-frame" id="group-selector" style="display: none;">
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icons">
+            <svg width="18" height="12" fill="var(--text-primary)"><rect x="0" y="2" width="3" height="8" rx="1"/><rect x="5" y="1" width="3" height="10" rx="1"/><rect x="10" y="0" width="3" height="12" rx="1"/><rect x="15" y="3" width="3" height="6" rx="1"/></svg>
+          </div>
+        </div>
+
+        <!-- App Header Bar with Dropdown Open -->
+        <div class="header-bar">
+          <div class="header-left">
+            <!-- Logo (active/pressed state) -->
+            <div class="g-logo-circle" style="position: relative; box-shadow: 0 0 0 3px var(--primary-light);">
+              <span style="color: white; font-weight: 700; font-size: 18px; font-family: 'Baloo 2', sans-serif;">G</span>
+            </div>
+
+            <!-- Dropdown Menu (positioned from logo) -->
+            <div class="logo-dropdown">
+              <div class="logo-dropdown-header">Select View</div>
+
+              <!-- Personal Option (active) -->
+              <div class="group-option active">
+                <div class="group-icon" style="background: linear-gradient(135deg, var(--primary), var(--primary-hover)); width: 32px; height: 32px; border-radius: 50%;">
+                  <span style="color: white; font-weight: 700; font-size: 14px; font-family: 'Baloo 2', sans-serif;">G</span>
+                </div>
+                <div class="group-details">
+                  <div class="group-name">Personal</div>
+                  <div class="group-members">Only your transactions</div>
+                </div>
+                <span class="group-check">
+                  <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                </span>
+              </div>
+
+              <!-- Divider -->
+              <div style="border-top: 1px solid var(--border-light); margin: 4px 0;"></div>
+              <div style="padding: 8px 14px 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary);">Shared Groups</div>
+
+              <!-- Shared Group 1 -->
+              <div class="group-option">
+                <div class="group-icon" style="background: var(--group-emerald); width: 32px; height: 32px; border-radius: 50%;">
+                  <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/></svg>
+                </div>
+                <div class="group-details">
+                  <div class="group-name">Familia Martinez</div>
+                  <div class="group-members">3 members</div>
+                </div>
+              </div>
+
+              <!-- Shared Group 2 -->
+              <div class="group-option">
+                <div class="group-icon" style="background: var(--group-purple); width: 32px; height: 32px; border-radius: 50%;">
+                  <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/></svg>
+                </div>
+                <div class="group-details">
+                  <div class="group-name">Roommates</div>
+                  <div class="group-members">2 members</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Center: Wordmark -->
+          <span class="header-wordmark">Gastify</span>
+          <!-- Right: Profile Avatar -->
+          <div class="profile-avatar">
+            <span>JD</span>
+          </div>
+        </div>
+
+        <div class="content" style="padding-top: 80px;">
+          <div style="padding: 16px; background: var(--bg-tertiary); border-radius: var(--radius-lg);">
+            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+              <strong>Story 14c.4:</strong> Dropdown appears from the logo when tapped. Shows Personal + all shared groups user has joined. Active selection has checkmark. Tap outside to dismiss.
+            </p>
+          </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav" role="navigation" aria-label="Navegación principal">
+          <div class="nav-item active">
+            <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Inicio</span>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            <span>Analíticas</span>
+          </div>
+          <div class="scan-center">
+            <div class="scan-btn">
+              <svg viewBox="0 0 24 24">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                <circle cx="12" cy="13" r="3"/>
+              </svg>
+            </div>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <span>Ideas</span>
+          </div>
+          <div class="nav-item" style="position: relative;">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+            <span>Alertas</span>
+          </div>
+        </nav>
+      </div>
+      <div class="phone-label">Logo Dropdown Open (14c.4)</div>
+    </div>
+
+    <!-- State 3a: Custom Groups in Settings (Empty State) -->
+    <div class="phone-frame" id="custom-groups-empty" style="display: none;">
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icons">
+            <svg width="18" height="12" fill="var(--text-primary)"><rect x="0" y="2" width="3" height="8" rx="1"/><rect x="5" y="1" width="3" height="10" rx="1"/><rect x="10" y="0" width="3" height="12" rx="1"/><rect x="15" y="3" width="3" height="6" rx="1"/></svg>
+          </div>
+        </div>
+
+        <!-- Settings-style Header with breadcrumb -->
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 16px 12px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="back-btn" style="width: 32px; height: 32px;">
+              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 14px; color: var(--text-tertiary);">Settings</span>
+              <svg width="16" height="16" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+              <span style="font-size: 16px; font-weight: 600; color: var(--text-primary);">Groups</span>
+            </div>
+          </div>
+          <div class="profile-avatar" style="width: 32px; height: 32px;">
+            <span style="font-size: 12px;">GC</span>
+          </div>
+        </div>
+
+        <div class="content" style="gap: 20px;">
+          <!-- Section 1: My Custom Groups -->
+          <div class="settings-menu-item" style="flex-direction: column; align-items: stretch; padding: 16px;">
+            <!-- Section Header -->
+            <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px;">
+              <div style="width: 40px; height: 40px; background: var(--primary-light); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                <svg width="20" height="20" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </div>
+              <div style="flex: 1;">
+                <div style="font-size: 15px; font-weight: 600; color: var(--text-primary);">My Custom Groups</div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Organize transactions by custom groups</div>
+              </div>
+            </div>
+
+            <!-- Empty State (matching real app) -->
+            <div style="text-align: center; padding: 24px 16px;">
+              <svg width="48" height="48" fill="none" stroke="var(--text-tertiary)" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 12px;">
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="19" cy="7" r="3"/>
+                <path d="M23 21v-2a3 3 0 0 0-2-2.83"/>
+              </svg>
+              <p style="font-size: 13px; color: var(--text-tertiary); margin-bottom: 16px;">No custom groups created yet</p>
+              <button style="background: var(--primary); color: white; border: none; border-radius: var(--radius-md); padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                Create Group
+              </button>
+              <p style="font-size: 11px; color: var(--text-tertiary); margin-top: 8px;">Coming soon</p>
+            </div>
+          </div>
+
+          <!-- Section 2: Share Groups (Future Feature) -->
+          <div class="settings-menu-item" style="flex-direction: column; align-items: stretch; padding: 16px;">
+            <!-- Section Header -->
+            <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
+              <div style="width: 40px; height: 40px; background: #dcfce7; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                <svg width="20" height="20" fill="none" stroke="#22c55e" stroke-width="2" viewBox="0 0 24 24">
+                  <circle cx="18" cy="5" r="3"/>
+                  <circle cx="6" cy="12" r="3"/>
+                  <circle cx="18" cy="19" r="3"/>
+                  <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/>
+                </svg>
+              </div>
+              <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 15px; font-weight: 600; color: var(--text-primary);">Share Groups</span>
+                  <span style="background: #fef3c7; color: #d97706; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px;">SOON</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Share groups with family or friends</div>
+              </div>
+            </div>
+
+            <!-- Feature Preview -->
+            <div style="background: var(--bg-tertiary); border-radius: var(--radius-md); padding: 12px; margin-top: 4px;">
+              <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Coming soon: Share your expense groups with others</p>
+              <ul style="margin: 0; padding-left: 16px; font-size: 12px; color: var(--text-secondary); line-height: 1.8;">
+                <li>Assign transactions to shared groups</li>
+                <li>Invite family or friends to view</li>
+                <li>Track shared expenses together</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Section 3: Pending Invitations -->
+          <div class="settings-menu-item" style="flex-direction: column; align-items: stretch; padding: 16px;">
+            <!-- Section Header -->
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+              <div style="width: 40px; height: 40px; background: #fef3c7; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                <svg width="20" height="20" fill="none" stroke="#f59e0b" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </div>
+              <div style="flex: 1;">
+                <div style="font-size: 15px; font-weight: 600; color: var(--text-primary);">Pending Invitations</div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">No pending invitations</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav" role="navigation" aria-label="Navegación principal">
+          <div class="nav-item active">
+            <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Inicio</span>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            <span>Analíticas</span>
+          </div>
+          <div class="scan-center">
+            <div class="scan-btn">
+              <svg viewBox="0 0 24 24">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                <circle cx="12" cy="13" r="3"/>
+              </svg>
+            </div>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <span>Ideas</span>
+          </div>
+          <div class="nav-item" style="position: relative;">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+            <span>Alertas</span>
+          </div>
+        </nav>
+      </div>
+      <div class="phone-label">Custom Groups - Empty (14c.1)</div>
+    </div>
+
+    <!-- State 3b: Custom Groups in Settings (Filled State) -->
+    <div class="phone-frame" id="custom-groups-filled" style="display: none;">
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icons">
+            <svg width="18" height="12" fill="var(--text-primary)"><rect x="0" y="2" width="3" height="8" rx="1"/><rect x="5" y="1" width="3" height="10" rx="1"/><rect x="10" y="0" width="3" height="12" rx="1"/><rect x="15" y="3" width="3" height="6" rx="1"/></svg>
+          </div>
+        </div>
+
+        <!-- Settings-style Header with breadcrumb -->
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 16px 12px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="back-btn" style="width: 32px; height: 32px;">
+              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 14px; color: var(--text-tertiary);">Settings</span>
+              <svg width="16" height="16" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+              <span style="font-size: 16px; font-weight: 600; color: var(--text-primary);">Groups</span>
+            </div>
+          </div>
+          <div class="profile-avatar" style="width: 32px; height: 32px;">
+            <span style="font-size: 12px;">GC</span>
+          </div>
+        </div>
+
+        <div class="content" style="gap: 20px;">
+          <!-- Section 1: My Custom Groups (Filled) -->
+          <div class="settings-menu-item" style="flex-direction: column; align-items: stretch; padding: 16px;">
+            <!-- Section Header -->
+            <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px;">
+              <div style="width: 40px; height: 40px; background: var(--primary-light); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                <svg width="20" height="20" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </div>
+              <div style="flex: 1;">
+                <div style="font-size: 15px; font-weight: 600; color: var(--text-primary);">My Custom Groups</div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">3 groups • 42 transactions</div>
+              </div>
+              <button style="background: var(--primary); color: white; border: none; border-radius: var(--radius-md); padding: 8px 12px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                New
+              </button>
+            </div>
+
+            <!-- Group Items -->
+            <div style="border-top: 1px solid var(--border-light);">
+              <!-- Group 1: Familia Martinez (Shared) -->
+              <div class="custom-group-item">
+                <div class="custom-group-icon" style="background: var(--group-emerald);">🏠</div>
+                <div class="custom-group-info">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="custom-group-name">Familia Martinez</span>
+                    <span class="shared-badge">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                        <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/>
+                      </svg>
+                      Shared
+                    </span>
+                  </div>
+                  <div class="custom-group-stats">18 transactions • 3 members</div>
+                </div>
+                <div class="member-avatars" style="margin-left: 0;">
+                  <div class="member-avatar" style="background: #3b82f6; margin-left: 0;">G</div>
+                  <div class="member-avatar" style="background: #ec4899;">M</div>
+                  <div class="member-avatar" style="background: #f97316;">P</div>
+                </div>
+                <span class="chevron">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                </span>
+              </div>
+
+              <!-- Group 2: Viaje Cancún -->
+              <div class="custom-group-item">
+                <div class="custom-group-icon" style="background: var(--group-blue);">✈️</div>
+                <div class="custom-group-info">
+                  <div class="custom-group-name">Viaje Cancún</div>
+                  <div class="custom-group-stats">12 transactions • Personal</div>
+                </div>
+                <span class="chevron">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                </span>
+              </div>
+
+              <!-- Group 3: Proyecto Casa -->
+              <div class="custom-group-item">
+                <div class="custom-group-icon" style="background: var(--group-purple);">🔨</div>
+                <div class="custom-group-info">
+                  <div class="custom-group-name">Proyecto Casa</div>
+                  <div class="custom-group-stats">12 transactions • Personal</div>
+                </div>
+                <span class="chevron">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Share Groups (Future Feature) -->
+          <div class="settings-menu-item" style="flex-direction: column; align-items: stretch; padding: 16px;">
+            <!-- Section Header -->
+            <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
+              <div style="width: 40px; height: 40px; background: #dcfce7; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                <svg width="20" height="20" fill="none" stroke="#22c55e" stroke-width="2" viewBox="0 0 24 24">
+                  <circle cx="18" cy="5" r="3"/>
+                  <circle cx="6" cy="12" r="3"/>
+                  <circle cx="18" cy="19" r="3"/>
+                  <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/>
+                </svg>
+              </div>
+              <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 15px; font-weight: 600; color: var(--text-primary);">Share Groups</span>
+                  <span style="background: #fef3c7; color: #d97706; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px;">SOON</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Share groups with family or friends</div>
+              </div>
+            </div>
+
+            <!-- Feature Preview -->
+            <div style="background: var(--bg-tertiary); border-radius: var(--radius-md); padding: 12px; margin-top: 4px;">
+              <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Coming soon: Share your expense groups with others</p>
+              <ul style="margin: 0; padding-left: 16px; font-size: 12px; color: var(--text-secondary); line-height: 1.8;">
+                <li>Assign transactions to shared groups</li>
+                <li>Invite family or friends to view</li>
+                <li>Track shared expenses together</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Section 3: Pending Invitations (with invitation) -->
+          <div class="settings-menu-item" style="flex-direction: column; align-items: stretch; padding: 16px;">
+            <!-- Section Header -->
+            <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
+              <div style="width: 40px; height: 40px; background: #fef3c7; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; position: relative;">
+                <svg width="20" height="20" fill="none" stroke="#f59e0b" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                <!-- Badge -->
+                <div style="position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; background: var(--error); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">1</div>
+              </div>
+              <div style="flex: 1;">
+                <div style="font-size: 15px; font-weight: 600; color: var(--text-primary);">Pending Invitations</div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">1 invitation waiting</div>
+              </div>
+            </div>
+
+            <!-- Pending Invitation Item -->
+            <div style="border-top: 1px solid var(--border-light); padding-top: 12px;">
+              <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-tertiary); border-radius: var(--radius-md);">
+                <div style="width: 44px; height: 44px; background: var(--group-pink); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: white;">🏢</div>
+                <div style="flex: 1;">
+                  <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Office Expenses</div>
+                  <div style="font-size: 12px; color: var(--text-tertiary);">Invited by Carlos</div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button style="width: 36px; height: 36px; background: var(--success); border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                    <svg width="18" height="18" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                  </button>
+                  <button style="width: 36px; height: 36px; background: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                    <svg width="18" height="18" fill="none" stroke="var(--text-tertiary)" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav" role="navigation" aria-label="Navegación principal">
+          <div class="nav-item active">
+            <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Inicio</span>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            <span>Analíticas</span>
+          </div>
+          <div class="scan-center">
+            <div class="scan-btn">
+              <svg viewBox="0 0 24 24">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                <circle cx="12" cy="13" r="3"/>
+              </svg>
+            </div>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <span>Ideas</span>
+          </div>
+          <div class="nav-item" style="position: relative;">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+            <span>Alertas</span>
+          </div>
+        </nav>
+      </div>
+      <div class="phone-label">Custom Groups - Filled (14c.1)</div>
+    </div>
+
+    <!-- State 4: Share Code Display -->
+    <div class="phone-frame" id="share-code" style="display: none;">
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icons">
+            <svg width="18" height="12" fill="var(--text-primary)"><rect x="0" y="2" width="3" height="8" rx="1"/><rect x="5" y="1" width="3" height="10" rx="1"/><rect x="10" y="0" width="3" height="12" rx="1"/><rect x="15" y="3" width="3" height="6" rx="1"/></svg>
+          </div>
+        </div>
+
+        <div class="header">
+          <button class="back-btn">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <span class="header-title">Familia Martinez</span>
+        </div>
+
+        <div class="content">
+          <div class="share-code-section">
+            <div class="share-code-label">Invite Code</div>
+            <div class="share-code">X7K9M2N4P8Q1R5T3</div>
+            <div class="share-code-expiry">Expires in 6 days</div>
+
+            <div class="share-link">
+              <span class="share-link-text">https://boletapp.web.app/join/X7K9M2N4P8Q1R5T3</span>
+              <button class="share-link-copy">Copy</button>
+            </div>
+
+            <div class="share-actions">
+              <button class="share-btn primary">
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20"><path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z"/></svg>
+                Share Link
+              </button>
+              <button class="share-btn secondary">
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
+                Regenerate
+              </button>
+            </div>
+          </div>
+
+          <!-- Members Section -->
+          <div class="section" style="margin-top: 16px;">
+            <div class="section-header">
+              <div class="section-title">Members (3/10)</div>
+            </div>
+            <div class="custom-group-item">
+              <div class="member-avatar" style="background: #3b82f6; width: 40px; height: 40px; margin: 0; font-size: 14px;">G</div>
+              <div class="custom-group-info">
+                <div class="custom-group-name">Gabriel (You)</div>
+                <div class="custom-group-stats">Owner</div>
+              </div>
+            </div>
+            <div class="custom-group-item">
+              <div class="member-avatar" style="background: #ec4899; width: 40px; height: 40px; margin: 0; font-size: 14px;">M</div>
+              <div class="custom-group-info">
+                <div class="custom-group-name">Maria</div>
+                <div class="custom-group-stats">Joined 3 days ago</div>
+              </div>
+            </div>
+            <div class="custom-group-item">
+              <div class="member-avatar" style="background: #f97316; width: 40px; height: 40px; margin: 0; font-size: 14px;">P</div>
+              <div class="custom-group-info">
+                <div class="custom-group-name">Pablo</div>
+                <div class="custom-group-stats">Joined today</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 16px; padding: 16px; background: var(--bg-tertiary); border-radius: var(--radius-lg);">
+            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+              <strong>Story 14c.1:</strong> Share code display with 16-char nanoid, 7-day expiry, copy button, and native share. Shows member list with Owner badge.
+            </p>
+          </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav" role="navigation" aria-label="Navegación principal">
+          <div class="nav-item active">
+            <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Inicio</span>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            <span>Analíticas</span>
+          </div>
+          <div class="scan-center">
+            <div class="scan-btn">
+              <svg viewBox="0 0 24 24">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                <circle cx="12" cy="13" r="3"/>
+              </svg>
+            </div>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <span>Ideas</span>
+          </div>
+          <div class="nav-item" style="position: relative;">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+            <span>Alertas</span>
+          </div>
+        </nav>
+      </div>
+      <div class="phone-label">Share Code Display (14c.1)</div>
+    </div>
+
+    <!-- State 5: Join Group Confirmation -->
+    <div class="phone-frame" id="join-group" style="display: none;">
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icons">
+            <svg width="18" height="12" fill="var(--text-primary)"><rect x="0" y="2" width="3" height="8" rx="1"/><rect x="5" y="1" width="3" height="10" rx="1"/><rect x="10" y="0" width="3" height="12" rx="1"/><rect x="15" y="3" width="3" height="6" rx="1"/></svg>
+          </div>
+        </div>
+
+        <div class="content" style="padding-top: 40px; justify-content: center;">
+          <div class="join-illustration">
+            <svg width="48" height="48" fill="var(--primary)" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/></svg>
+          </div>
+          <div class="join-title">Join Shared Group?</div>
+          <div class="join-subtitle">You've been invited to join a shared expense group</div>
+
+          <div class="join-group-card">
+            <div class="join-group-icon" style="background: var(--group-emerald);">
+              <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/></svg>
+            </div>
+            <div class="join-group-info">
+              <div class="join-group-name">Familia Martinez</div>
+              <div class="join-group-members-list">Gabriel, Maria + 1 other</div>
+            </div>
+          </div>
+
+          <button class="join-btn">Join Group</button>
+          <button class="join-cancel">Cancel</button>
+
+          <div style="margin-top: 24px; padding: 16px; background: var(--bg-tertiary); border-radius: var(--radius-lg);">
+            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+              <strong>Story 14c.2:</strong> Join confirmation screen shows group name, member preview. Deep link via /join/{shareCode}. If not logged in, redirects to auth first.
+            </p>
+          </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav" role="navigation" aria-label="Navegación principal">
+          <div class="nav-item active">
+            <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Inicio</span>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            <span>Analíticas</span>
+          </div>
+          <div class="scan-center">
+            <div class="scan-btn">
+              <svg viewBox="0 0 24 24">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                <circle cx="12" cy="13" r="3"/>
+              </svg>
+            </div>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <span>Ideas</span>
+          </div>
+          <div class="nav-item" style="position: relative;">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+            <span>Alertas</span>
+          </div>
+        </nav>
+      </div>
+      <div class="phone-label">Join Confirmation (14c.2)</div>
+    </div>
+
+    <!-- State 6: Shared Transactions with Profile Indicators -->
+    <div class="phone-frame" id="shared-transactions" style="display: none;">
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icons">
+            <svg width="18" height="12" fill="var(--text-primary)"><rect x="0" y="2" width="3" height="8" rx="1"/><rect x="5" y="1" width="3" height="10" rx="1"/><rect x="10" y="0" width="3" height="12" rx="1"/><rect x="15" y="3" width="3" height="6" rx="1"/></svg>
+          </div>
+        </div>
+
+        <!-- App Header Bar - Group Mode (Logo shows group icon) -->
+        <div class="header-bar">
+          <div class="header-left">
+            <!-- Logo in Group Mode - shows group icon with group color -->
+            <div class="g-logo-circle group-mode" style="position: relative;">
+              <svg width="16" height="16" fill="white" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/></svg>
+            </div>
+            <!-- Group name badge next to logo -->
+            <div style="display: flex; flex-direction: column;">
+              <span style="font-size: 10px; color: var(--text-tertiary); font-weight: 500;">Viewing</span>
+              <span style="font-size: 13px; color: var(--text-primary); font-weight: 600;">Familia Martinez</span>
+            </div>
+          </div>
+          <!-- Member avatars instead of wordmark when in group mode -->
+          <div class="member-avatars" style="margin-left: 0;">
+            <div class="member-avatar" style="background: #3b82f6; width: 26px; height: 26px; font-size: 10px; margin-left: 0;">G</div>
+            <div class="member-avatar" style="background: #ec4899; width: 26px; height: 26px; font-size: 10px;">M</div>
+            <div class="member-avatar" style="background: #f97316; width: 26px; height: 26px; font-size: 10px;">P</div>
+          </div>
+          <!-- Right: Profile Avatar -->
+          <div class="profile-avatar">
+            <span>JD</span>
+          </div>
+        </div>
+
+        <div class="content" style="gap: 12px;">
+          <p style="font-size: 12px; color: var(--text-tertiary);">Today</p>
+
+          <!-- My transaction (no profile indicator) -->
+          <div class="transaction-card">
+            <div class="transaction-thumbnail" style="background: #fef3c7;">
+              <span>🛒</span>
+            </div>
+            <div class="transaction-info">
+              <div class="transaction-merchant">Jumbo</div>
+              <div class="transaction-date">Today at 15:30</div>
+            </div>
+            <div class="transaction-amount">$45,200</div>
+          </div>
+
+          <!-- Maria's transaction (with profile indicator) -->
+          <div class="transaction-card">
+            <div class="transaction-thumbnail" style="background: #fee2e2;">
+              <span>🍕</span>
+            </div>
+            <div class="transaction-info">
+              <div class="transaction-merchant">Pizza Hut</div>
+              <div class="transaction-date">Today at 13:15</div>
+            </div>
+            <div class="transaction-amount">$18,500</div>
+            <div class="profile-indicator" style="background: #ec4899;">M</div>
+            <div class="view-only-badge">View only</div>
+          </div>
+
+          <!-- Pablo's transaction -->
+          <div class="transaction-card">
+            <div class="transaction-thumbnail" style="background: #dbeafe;">
+              <span>⛽</span>
+            </div>
+            <div class="transaction-info">
+              <div class="transaction-merchant">Shell</div>
+              <div class="transaction-date">Today at 10:45</div>
+            </div>
+            <div class="transaction-amount">$32,000</div>
+            <div class="profile-indicator" style="background: #f97316;">P</div>
+            <div class="view-only-badge">View only</div>
+          </div>
+
+          <p style="font-size: 12px; color: var(--text-tertiary); margin-top: 8px;">Yesterday</p>
+
+          <!-- My transaction -->
+          <div class="transaction-card">
+            <div class="transaction-thumbnail" style="background: #dcfce7;">
+              <span>💊</span>
+            </div>
+            <div class="transaction-info">
+              <div class="transaction-merchant">Farmacias Ahumada</div>
+              <div class="transaction-date">Yesterday at 18:20</div>
+            </div>
+            <div class="transaction-amount">$12,800</div>
+          </div>
+
+          <div style="margin-top: 16px; padding: 16px; background: var(--bg-tertiary); border-radius: var(--radius-lg);">
+            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+              <strong>Story 14c.5 & 14c.6:</strong> Shared transactions view shows all members' transactions. Profile indicator (avatar) appears on others' transactions. "View only" badge indicates read-only.
+            </p>
+          </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav" role="navigation" aria-label="Navegación principal">
+          <div class="nav-item active">
+            <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Inicio</span>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            <span>Analíticas</span>
+          </div>
+          <div class="scan-center">
+            <div class="scan-btn">
+              <svg viewBox="0 0 24 24">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                <circle cx="12" cy="13" r="3"/>
+              </svg>
+            </div>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <span>Ideas</span>
+          </div>
+          <div class="nav-item" style="position: relative;">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+            <span>Alertas</span>
+          </div>
+        </nav>
+      </div>
+      <div class="phone-label">Group Mode - Home Screen (14c.5, 14c.6)</div>
+    </div>
+
+    <!-- State 7: Make Shareable Dialog -->
+    <div class="phone-frame" id="make-shareable" style="display: none;">
+      <div class="phone-screen" style="position: relative;">
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icons">
+            <svg width="18" height="12" fill="var(--text-primary)"><rect x="0" y="2" width="3" height="8" rx="1"/><rect x="5" y="1" width="3" height="10" rx="1"/><rect x="10" y="0" width="3" height="12" rx="1"/><rect x="15" y="3" width="3" height="6" rx="1"/></svg>
+          </div>
+        </div>
+
+        <div class="dialog-overlay">
+          <div class="dialog">
+            <div class="dialog-icon">
+              <svg width="28" height="28" fill="var(--primary)" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/></svg>
+            </div>
+            <div class="dialog-title">Make Group Shareable?</div>
+            <div class="dialog-text">
+              This will create an invite link so others can join this group. Members will be able to see all transactions tagged to this group.
+            </div>
+            <div class="dialog-actions">
+              <button class="dialog-btn primary">Make Shareable</button>
+              <button class="dialog-btn secondary">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Navigation (behind overlay) -->
+        <nav class="bottom-nav" role="navigation" aria-label="Navegación principal" style="opacity: 0.3;">
+          <div class="nav-item active">
+            <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Inicio</span>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            <span>Analíticas</span>
+          </div>
+          <div class="scan-center">
+            <div class="scan-btn">
+              <svg viewBox="0 0 24 24">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                <circle cx="12" cy="13" r="3"/>
+              </svg>
+            </div>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <span>Ideas</span>
+          </div>
+          <div class="nav-item" style="position: relative;">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+            <span>Alertas</span>
+          </div>
+        </nav>
+      </div>
+      <div class="phone-label">Make Shareable Dialog (14c.1)</div>
+    </div>
+
+    <!-- State 8: Error States -->
+    <div class="phone-frame" id="error-states" style="display: none;">
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span class="status-time">9:41</span>
+          <div class="status-icons">
+            <svg width="18" height="12" fill="var(--text-primary)"><rect x="0" y="2" width="3" height="8" rx="1"/><rect x="5" y="1" width="3" height="10" rx="1"/><rect x="10" y="0" width="3" height="12" rx="1"/><rect x="15" y="3" width="3" height="6" rx="1"/></svg>
+          </div>
+        </div>
+
+        <div class="content" style="padding-top: 16px; gap: 12px;">
+          <p style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">Error States (Story 14c.11)</p>
+
+          <!-- Error 1: Invalid Invite Code - Card style with icon circle -->
+          <div style="background: var(--bg-secondary); border-radius: var(--radius-xl); padding: 16px; border: 1px solid var(--border-light);" role="alert">
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+              <!-- Icon Circle -->
+              <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--error-light); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg width="20" height="20" fill="none" stroke="var(--error)" stroke-width="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M15 9l-6 6M9 9l6 6"/>
+                </svg>
+              </div>
+              <!-- Content -->
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 14px; font-weight: 600; color: var(--error); margin-bottom: 4px;">Invalid Invite Code</div>
+                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.4;">This code doesn't match any group. Check the code and try again.</div>
+              </div>
+            </div>
+            <!-- Action Button -->
+            <button style="width: 100%; margin-top: 12px; padding: 10px 16px; background: var(--bg-tertiary); border: none; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+              Try Again
+            </button>
+          </div>
+
+          <!-- Error 2: Code Expired - Warning style -->
+          <div style="background: var(--bg-secondary); border-radius: var(--radius-xl); padding: 16px; border: 1px solid var(--border-light);" role="alert">
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+              <!-- Icon Circle -->
+              <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--warning-light); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg width="20" height="20" fill="none" stroke="var(--warning)" stroke-width="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </div>
+              <!-- Content -->
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 14px; font-weight: 600; color: var(--warning); margin-bottom: 4px;">Code Expired</div>
+                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.4;">This invite link has expired. Ask the group owner for a new link.</div>
+              </div>
+            </div>
+            <!-- Action Button -->
+            <button style="width: 100%; margin-top: 12px; padding: 10px 16px; background: var(--warning); border: none; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              Request New Link
+            </button>
+          </div>
+
+          <!-- Error 3: Group Full - Info/Secondary style -->
+          <div style="background: var(--bg-secondary); border-radius: var(--radius-xl); padding: 16px; border: 1px solid var(--border-light);" role="alert">
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+              <!-- Icon Circle -->
+              <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary-light); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg width="20" height="20" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </div>
+              <!-- Content -->
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 14px; font-weight: 600; color: var(--primary); margin-bottom: 4px;">Group is Full</div>
+                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.4;">This group has reached the maximum of 10 members.</div>
+              </div>
+            </div>
+            <!-- Action Button -->
+            <button style="width: 100%; margin-top: 12px; padding: 10px 16px; background: var(--bg-tertiary); border: none; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+              Go Back
+            </button>
+          </div>
+
+          <!-- Error 4: Network Error - Neutral/Gray style -->
+          <div style="background: var(--bg-secondary); border-radius: var(--radius-xl); padding: 16px; border: 1px solid var(--border-light);" role="alert">
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+              <!-- Icon Circle -->
+              <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg width="20" height="20" fill="none" stroke="var(--text-tertiary)" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+                  <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+                  <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+                  <line x1="12" y1="20" x2="12.01" y2="20"/>
+                </svg>
+              </div>
+              <!-- Content -->
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">Connection Error</div>
+                <div style="font-size: 13px; color: var(--text-tertiary); line-height: 1.4;">Unable to connect. Check your internet and try again.</div>
+              </div>
+            </div>
+            <!-- Action Buttons Row -->
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+              <button style="flex: 1; padding: 10px 16px; background: var(--primary); border: none; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+                Retry
+              </button>
+              <button style="flex: 1; padding: 10px 16px; background: var(--bg-tertiary); border: none; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; color: var(--text-secondary); cursor: pointer;">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav" role="navigation" aria-label="Navegación principal">
+          <div class="nav-item active">
+            <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            <span>Inicio</span>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            <span>Analíticas</span>
+          </div>
+          <div class="scan-center">
+            <div class="scan-btn">
+              <svg viewBox="0 0 24 24">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                <circle cx="12" cy="13" r="3"/>
+              </svg>
+            </div>
+          </div>
+          <div class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <span>Ideas</span>
+          </div>
+          <div class="nav-item" style="position: relative;">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <div style="position: absolute; top: 2px; right: 8px; min-width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; border: 2px solid var(--bg-secondary);">4</div>
+            <span>Alertas</span>
+          </div>
+        </nav>
+      </div>
+      <div class="phone-label">Error States (14c.11)</div>
+    </div>
+
+  </div>
+
+  <script>
+    // State Tab Switcher
+    function showState(stateId) {
+      // Hide all phones
+      document.querySelectorAll('.phone-frame').forEach(phone => {
+        phone.style.display = 'none';
+      });
+      // Show selected
+      document.getElementById(stateId).style.display = 'block';
+      // Update tabs
+      document.querySelectorAll('.state-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      event.target.classList.add('active');
+    }
+
+    // Theme Switcher - set on both html and body for CSS compatibility
+    function setTheme(theme, el) {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.body.setAttribute('data-theme', theme);
+      document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    // Dark Mode Toggle - works independently of theme selection
+    function toggleDarkMode(el) {
+      var isDark = document.body.getAttribute('data-mode') === 'dark';
+      var newMode = isDark ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-mode', newMode);
+      document.body.setAttribute('data-mode', newMode);
+
+      if (newMode === 'dark') {
+        el.classList.add('active');
+        el.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2m11-11h-2M3 12H1m17.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m12.73 0l-1.41-1.41M6.34 6.34L4.93 4.93"/></svg> Light';
+      } else {
+        el.classList.remove('active');
+        el.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Dark';
+      }
+    }
+
+    // Font Switcher - set on both html and body for CSS compatibility
+    function setFont(font, el) {
+      document.documentElement.setAttribute('data-font', font);
+      document.body.setAttribute('data-font', font);
+      document.querySelectorAll('.font-pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+    }
+  </script>
+</body>
+</html>

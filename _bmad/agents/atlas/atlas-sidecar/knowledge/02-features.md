@@ -1,8 +1,8 @@
 # Feature Inventory + Intent
 
 > Section 2 of Atlas Memory
-> Last Sync: 2026-01-12
-> Last Optimized: 2026-01-12 (Generation 4)
+> Last Sync: 2026-01-17
+> Last Optimized: 2026-01-17 (Generation 5)
 > Sources: sprint-status.yaml, epics.md, PRD documents
 
 ## Core Features (Implemented)
@@ -23,6 +23,7 @@
 | Quick Save | 85% confidence threshold, weighted scoring | Epic 11 |
 | Trust Merchant | Auto-categorization for trusted merchants | Epic 11 |
 | Batch Processing | Multi-receipt capture, parallel API calls | Epic 12 |
+| **Household Sharing** | Multi-user groups with transaction tagging | Epic 14c |
 
 ## Completed Epics Summary
 
@@ -33,125 +34,47 @@
 | Epic 11 | 7 | 2025-12-22 | QuickSaveCard, trust merchants, PWA viewport |
 | Epic 12 | 6 | 2025-12-23 | Batch capture, parallel processing, 2799 tests |
 | Epic 13 | 15 | 2025-12-31 | 10 HTML mockups, design system, motion system |
+| **Epic 14** | **50+** | **2026-01-15** | Animation, polygon, analytics, React Query |
+| **Epic 14d** | **11** | **2026-01-12** | Scan state machine, navigation blocking |
 
-## Current Development: Epic 14 (IN PROGRESS)
+---
 
-**Status:** 24 of 26 stories done | **Points:** ~70 | **Last Deployed:** 2026-01-12
+## Current Development: Epic 14c (Household Sharing)
 
-### Completed Stories
-14.1-14.11 (Animation, Polygon, Nav), 14.12-14.14 (Dashboard, Analytics, History), 14.14b (Donut), 14.15b-15c (Selection, Filters), 14.16-14.16b (Reports, Semantic Colors), 14.17-14.20 (Intentional Prompts, Celebrations, Records, Session Messaging), 14.21-14.22 (Colors, Settings), 14.23-14.29 (Unified Editor, Firestore, React Query), **14.13a-14.13b-14.13.3** (Multi-Level Filters, Sankey), **14.31** (Items View), **14.33a** (Insight Card Types), **14.33d** (Celebration Records - placeholder), **14.34** (QuickSave Currency Formatting)
+**Status:** 10/11 stories done | **Points:** ~55 | **Started:** 2026-01-15
 
-### Story 14.33a: Insight Card Types & Styling (COMPLETE)
+### Core Features Delivered
+- **Shared Groups:** Create, join via share code, manage members
+- **View Mode Switcher:** Toggle between personal/shared group views
+- **Transaction Tagging:** Tag transactions to groups manually or auto-tag on scan
+- **Ownership Indicators:** Visual display of transaction owners with avatars
+- **Member Filtering:** Filter shared group transactions by member
+- **Empty States:** Context-aware empty states and loading skeletons
 
-**Features:**
-- 5 visual insight types: `quirky`, `celebration`, `actionable`, `tradeoff`, `trend`
-- Type-specific background colors and icon colors
-- Full dark mode support with distinct dark variants
-- Chevron indicator on cards, hover border animation
-- Backward compatible - defaults to `actionable` for old records
+### Story Status
 
-**Key Files:**
-- `src/utils/insightTypeConfig.ts` - Visual config, `getVisualType()`, `getVisualConfig()`
-- `src/components/insights/InsightHistoryCard.tsx` - Updated styling per mockup
+| Story | Status | Description |
+|-------|--------|-------------|
+| 14c.1 | ✅ Done | Create Shared Group (top-level collection, share codes) |
+| 14c.2 | ✅ Done | Accept/Decline Invitation (email-based workflow) |
+| 14c.3 | ✅ Done | Leave/Manage Group (member management, owner transfer) |
+| 14c.4 | ✅ Done | View Mode Switcher (personal/group toggle) |
+| 14c.5 | ✅ Done | Shared Group Transactions View (merged feed) |
+| 14c.6 | ✅ Done | Transaction Ownership Indicators (avatars, colors) |
+| 14c.7 | ✅ Done | Tag Transactions to Groups (manual assignment) |
+| 14c.8 | ✅ Done | Auto-Tag on Scan (default group assignment) |
+| 14c.9 | ✅ Done | Member Filter Bar (filter by household member) |
+| 14c.10 | ✅ Done | Empty States & Loading (skeleton + context CTAs) |
+| 14c.11 | 📋 Ready | Real-time Sync (onSnapshot listeners) |
 
-**Test Coverage:** 74 tests (39 config + 35 component)
+### Key Architecture (ADR-011)
+- **Top-level collections:** `/sharedGroups/{groupId}`, `/pendingInvitations/{invitationId}`
+- **Security helpers:** `isGroupMember()`, `isGroupOwner()`, `isJoiningGroup()`
+- **Query pattern:** Collection group queries with auth-only + limit rules
 
-### Story 14.33d: Insights Section Refactor (COMPLETE)
+---
 
-**Changes Made (2026-01-12):**
-- **Tab Reduction:** 4 tabs → 3 tabs (Lista, Airlock, Logro)
-- **Destacados Merged:** Carousel moved to top section of Lista view with temporal filter
-- **Airlock Tab:** Now placeholder ("Insights con IA - Próximamente disponible")
-- **Logro Tab:** Now placeholder ("Logros y Records - Próximamente disponible")
-- **Confetti Fix:** Shows only once per celebration (localStorage tracking)
-- **Theme Colors:** Selection checkmarks + "Seleccionar Todo" use `var(--primary)` instead of hardcoded blue
-
-**Key Files Modified:**
-- `src/views/InsightsView.tsx` - Merged views, removed Airlock hooks/state
-- `src/components/insights/InsightsViewSwitcher.tsx` - 3 tabs instead of 4
-- `src/components/insights/CelebrationView.tsx` - Simplified to placeholder
-- `src/components/insights/InsightHistoryCard.tsx` - Theme-consistent selection colors
-
-### Story 14.34: QuickSave Currency Formatting (COMPLETE)
-
-Currency formatting in QuickSave card follows app's CLP formatting standard.
-
-### Remaining Stories
-| Story | Name | Points | Status |
-|-------|------|--------|--------|
-| 14.33b | View Switcher & Carousel | 5 | MERGED into 14.33d |
-| 14.33c | Airlock Sequence | 3 | DEFERRED (placeholder) |
-
-### Multi-Level Filter Architecture (Stories 14.13a + 14.13b)
-
-**Data Flow:**
-```
-TrendsView drill-down → drillDownPath → matchesCategoryFilter() → Multi-dimension filtering
-```
-
-**Key Features:**
-- `drillDownPath` tracks storeGroup → storeCategory → itemGroup → itemCategory
-- Clear All button in FilterChips row
-- Filter persistence when switching transaction/item tabs
-- Default temporal filter: current month
-
-**Reference**: `src/utils/historyFilterUtils.ts`, `src/contexts/HistoryFiltersContext.tsx`
-
-### Period Comparison Analytics (Story 14.13.2)
-
-**Period-over-Period Comparison:**
-```
-Week mode:    Current week vs Previous week
-Month mode:   Current month vs Previous month
-Quarter mode: Current quarter vs Previous quarter
-Year mode:    Current year vs Previous year
-```
-
-**Key Features:**
-- `getPreviousPeriod()` utility handles year boundary edge cases
-- ISO week number calculation for week-level comparison
-- Change direction types: 'up' | 'down' | 'same' | 'new'
-- Semantic colors: red = spending up (bad), green = spending down (good)
-- "nuevo" badge for categories with no previous period data
-
-**Reference**: `src/utils/periodComparison.ts`, `TrendListItem` in `TrendsView.tsx`
-
-### Sankey Flow Diagram (Story 14.13.3) - IN PROGRESS
-
-**Purpose:** Visualize spending flow from store categories to item categories
-
-**Architecture:**
-```
-TrendsView → SankeyChart → SankeyIconNode (Phase 5)
-                ↓
-         ECharts (flow lines) + React overlay (icon nodes)
-```
-
-**Key Components:**
-- `src/components/analytics/SankeyChart.tsx` - Main chart with hybrid rendering
-- `src/components/analytics/SankeyIconNode.tsx` - Icon nodes with progress-ring borders
-- `src/utils/sankeyDataBuilder.ts` - Data transformation (29 tests)
-
-**Hierarchy Modes:**
-- `2-level`: Store Categories → Item Categories (default)
-- `3-level-groups`: Store Groups → Store Cats → Item Groups
-- `3-level-categories`: Store Cats → Item Groups → Item Cats
-- `4-level`: Full hierarchy (Store Groups → Store Cats → Item Groups → Item Cats)
-
-**Phase 5 Features (2026-01-11):**
-- Icon nodes with progress-ring borders (conic-gradient)
-- Dynamic title shows clicked category + percentage
-- No navigation on click (self-contained exploration)
-- 2-icon view mode selector
-
-**Current Issues Being Fixed:**
-1. Diagram height too compressed (400px → 500px)
-2. Node bars overlapping (nodeGap 12 → 20)
-3. Title with percentage not displaying (props not passed)
-
-**Reference**: `docs/sprint-artifacts/epic14/stories/story-14.13.3-tendencia-sankey-diagram.md`
-
-## Epic 14d: Scan Architecture Refactor - ✅ COMPLETE
+## Epic 14d: Scan Architecture Refactor (COMPLETE)
 
 **Status:** 11/11 stories done (2026-01-12) | **Points:** ~45
 
@@ -172,14 +95,20 @@ TrendsView → SankeyChart → SankeyIconNode (Phase 5)
 
 **Spec:** `docs/sprint-artifacts/epic14d/scan-request-lifecycle.md`
 
+---
+
 ## Future Roadmap (Epics 15-18)
 
 | Epic | Name | Focus | Status |
 |------|------|-------|--------|
-| 15 | Advanced Features | Goals/GPS, learned thresholds, Themeable Skins | Backlog |
+| 14E | Codebase Refactoring | Bundle optimization, modularization | Planning |
+| 14F | Invite-Only Access | Controlled beta rollout | Planning |
+| 15 | Advanced Features | Goals/GPS, learned thresholds | Backlog |
 | 16 | Onboarding | <60 second time-to-value | Backlog |
 | 17 | Tags & Grouping | User-defined tags for project/trip tracking | Backlog |
 | 18 | Achievements | Ethical gamification, milestones | Backlog |
+
+---
 
 ## Feature Dependencies
 
@@ -198,11 +127,17 @@ User Edit → Learning Prompt → Mapping Saved → Future Scans Auto-Apply
 Transactions → FilteringService → AnalyticsContext → Charts → Drill-down
 ```
 
+### Household Sharing (Epic 14c)
+```
+Create Group → Share Code → Accept Invite → View Mode Switch → Merged Feed
+```
+
 ---
 
 ## Sync Notes
 
-- Generation 3 optimization: Consolidated completed epic details
-- Test count: 3,100+ unit tests
-- Versions v9.3.0 through v10.x.x deployed
-- Epic 14d key decisions documented for scan refactor
+- **Generation 5 (2026-01-17):** Updated for Epic 14c progress
+- Epic 14 and 14d marked COMPLETE
+- Epic 14c at 10/11 stories (91%)
+- Test count: 3,146+ unit tests
+- Version: 1.0.0-beta.1

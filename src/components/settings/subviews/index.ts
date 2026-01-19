@@ -1,6 +1,7 @@
 /**
  * Settings Sub-Views
  * Story 14.22: Barrel export for all settings sub-view components
+ * Story 14c.13: Added NotificacionesView for push notification settings
  */
 
 export { LimitesView } from './LimitesView';
@@ -12,3 +13,4 @@ export { LearnedDataView, DatosAprendidosView } from './LearnedDataView';
 export { GruposView } from './GruposView';
 export { AppView } from './AppView';
 export { CuentaView } from './CuentaView';
+export { NotificacionesView } from './NotificacionesView';

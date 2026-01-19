@@ -71,9 +71,13 @@ interface NavProps {
     isBatchMode?: boolean;
     /** Story 14d.7: Toast message callback for "scan in progress" */
     onShowToast?: (message: string) => void;
+    /** Story 14c.2: Badge count for alerts tab (pending invitations, etc.) */
+    alertsBadgeCount?: number;
+    /** Story 14c.4: Active group color for top border accent when in group mode */
+    activeGroupColor?: string;
 }
 
-export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchClick, onStatementClick, onTrendsClick, theme, t, scanStatus = 'idle', scanCredits, superCredits, onCreditInfoClick, isBatchMode = false, onShowToast }) => {
+export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchClick, onStatementClick, onTrendsClick, theme, t, scanStatus = 'idle', scanCredits, superCredits, onCreditInfoClick, isBatchMode = false, onShowToast, alertsBadgeCount = 0, activeGroupColor }) => {
     // Story 14.11: Reduced motion preference for AC #5
     const prefersReducedMotion = useReducedMotion();
 
@@ -250,8 +254,13 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
 
     // Story 14.11 AC #1: Nav bar styling from mockup
     // Story 14.12: Use --bg to match header, --border-medium for accent top border (1px to match button outlines)
+    // Story 14c.4: Subtle gradient from bottom (theme bg) to top (group color) when in group mode
     const navStyle: React.CSSProperties = {
-        backgroundColor: 'var(--bg)',
+        // When in group mode, use gradient background from bottom to top
+        // 70% from bottom is normal bg color, then gradient to group color at top
+        background: activeGroupColor
+            ? `linear-gradient(to top, var(--bg) 0%, var(--bg) 70%, ${activeGroupColor}20 100%)`
+            : 'var(--bg)',
         borderTop: '1px solid var(--border-medium)',
     };
 
@@ -561,13 +570,28 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
             </button>
 
             {/* Alerts - Story 14.11: Per mockup, 5th nav item is Alerts not Settings */}
+            {/* Story 14c.2: Added badge count for pending invitations */}
             <button
                 onClick={() => handleNavClick('alerts')}
                 className={getNavItemClasses('alerts')}
                 style={getNavItemStyle('alerts')}
                 aria-current={view === 'alerts' ? 'page' : undefined}
             >
-                <Bell size={24} strokeWidth={1.8} />
+                <div className="relative">
+                    <Bell size={24} strokeWidth={1.8} />
+                    {/* Story 14c.2 AC2: Notification badge for pending invitations */}
+                    {alertsBadgeCount > 0 && (
+                        <span
+                            className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 flex items-center justify-center text-[10px] font-semibold rounded-full"
+                            style={{
+                                backgroundColor: '#ef4444',
+                                color: 'white',
+                            }}
+                        >
+                            {alertsBadgeCount > 9 ? '9+' : alertsBadgeCount}
+                        </span>
+                    )}
+                </div>
                 <span
                     className="text-xs"
                     style={{ fontWeight: view === 'alerts' ? 600 : 500 }}

@@ -34,7 +34,9 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  Bookmark,
   BookMarked,
+  BookmarkPlus,
   X,
   Camera,
   RefreshCw,
@@ -87,6 +89,7 @@ import { getCategoryEmoji } from '../utils/categoryEmoji';
 import { normalizeItemCategory } from '../utils/categoryNormalizer';
 import { useScanOptional } from '../contexts/ScanContext';
 import { ItemViewToggle, type ItemViewMode } from '../components/items/ItemViewToggle';
+import { TransactionGroupSelector, type GroupWithMeta } from '../components/SharedGroups';
 
 /**
  * Scan button state machine
@@ -118,6 +121,23 @@ export interface TransactionEditorViewProps {
   readOnly?: boolean;
   /** Callback when user clicks Edit button in read-only mode */
   onRequestEdit?: () => void;
+
+  /**
+   * Story 14c.6: Transaction belongs to another user (in shared group view)
+   * When true:
+   * - Strict read-only mode (no Edit button shown at all)
+   * - Owner info displayed in header
+   * - Prevents any edit attempts
+   */
+  isOtherUserTransaction?: boolean;
+  /** Story 14c.6: Owner profile info for display when isOtherUserTransaction is true */
+  ownerProfile?: { displayName?: string; photoURL?: string | null } | null;
+  /** Story 14c.6: Owner's user ID for profile color in header ProfileIndicator
+   * NOTE: Currently unused - prop is passed but not rendered. AC #4 specifies
+   * "owner's profile icon appears in the top-left" but current implementation
+   * shows text "Added by [Name]" instead. Keeping prop for future enhancement.
+   */
+  ownerId?: string;
 
   // Scan state
   /** Current state of the scan button */
@@ -216,6 +236,14 @@ export interface TransactionEditorViewProps {
   // Batch mode
   /** Callback when user clicks batch scan button */
   onBatchModeClick?: () => void;
+
+  // Story 14c.7: Shared Groups - Tag transactions to groups
+  /** Available shared groups for selection */
+  availableGroups?: GroupWithMeta[];
+  /** Whether groups are loading */
+  groupsLoading?: boolean;
+  /** Callback when sharedGroupIds changes */
+  onGroupsChange?: (groupIds: string[]) => void;
 }
 
 // Note: Item categories are used via CategoryCombobox component which handles the full list internally
@@ -229,6 +257,10 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   // Story 14.24: Read-only mode for viewing transactions from History
   readOnly = false,
   onRequestEdit,
+  // Story 14c.6: Other user's transaction (strict read-only, no edit option)
+  isOtherUserTransaction = false,
+  ownerProfile,
+  ownerId: _ownerId, // Reserved for future ProfileIndicator in header
   scanButtonState,
   isProcessing,
   processingEta,
@@ -271,6 +303,10 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   itemNameMappings = [],
   // Batch mode
   onBatchModeClick,
+  // Story 14c.7: Shared Groups
+  availableGroups = [],
+  groupsLoading = false,
+  onGroupsChange,
 }) => {
   const isDark = theme === 'dark';
   const prefersReducedMotion = useReducedMotion();
@@ -304,6 +340,8 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   // Story 14.38: Item view mode toggle (grouped vs original order)
   const [itemViewMode, setItemViewMode] = useState<ItemViewMode>('grouped');
+  // Story 14c.7: Group selector modal state
+  const [showGroupSelector, setShowGroupSelector] = useState(false);
 
   // ScanCompleteModal state (for new transactions only)
   const [showScanCompleteModal, setShowScanCompleteModal] = useState(false);
@@ -1668,7 +1706,8 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
 
               {/* Story 14.41: Edit button (view mode only) - same position as re-scan button */}
               {/* Uses accent color to match bottom "Editar transacción" button */}
-              {mode === 'existing' && readOnly && onRequestEdit && (
+              {/* Story 14c.6: Hide edit button for other users' transactions */}
+              {mode === 'existing' && readOnly && onRequestEdit && !isOtherUserTransaction && (
                 <button
                   onClick={onRequestEdit}
                   className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
@@ -1701,6 +1740,76 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                   <RefreshCw size={16} strokeWidth={2} className={isRescanning ? 'animate-spin' : ''} />
                 </button>
               )}
+
+              {/* Story 14c.8: Groups button */}
+              {/* View mode (readOnly): Only show if transaction HAS groups - displays group indicator */}
+              {/* Edit mode: Show button to add/modify groups */}
+              {(() => {
+                const hasAssignedGroups = (displayTransaction.sharedGroupIds || []).length > 0;
+                const shouldShow = readOnly ? hasAssignedGroups : (availableGroups.length > 0 || hasAssignedGroups);
+
+                if (!shouldShow) return null;
+
+                return (
+                  <button
+                    onClick={() => setShowGroupSelector(true)}
+                    className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95"
+                    style={{
+                      backgroundColor: hasAssignedGroups
+                        ? (availableGroups.find(g => g.id === displayTransaction.sharedGroupIds?.[0])?.color || 'var(--primary)')
+                        : 'var(--bg-tertiary)',
+                      cursor: 'pointer',
+                    }}
+                    aria-label={t('selectGroups')}
+                    title={hasAssignedGroups
+                      ? (displayTransaction.sharedGroupIds || []).map(id => availableGroups.find(g => g.id === id)?.name).filter(Boolean).join(', ')
+                      : t('selectGroups')
+                    }
+                  >
+                    {hasAssignedGroups ? (
+                      /* Show group icon/emoji or bookmark icon with count badge */
+                      <div className="relative flex items-center justify-center">
+                        {(() => {
+                          const firstGroup = availableGroups.find(g => g.id === displayTransaction.sharedGroupIds?.[0]);
+                          const groupCount = (displayTransaction.sharedGroupIds || []).length;
+                          return (
+                            <>
+                              {firstGroup?.icon ? (
+                                <span
+                                  style={{
+                                    fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif',
+                                    fontSize: '1.125rem',
+                                    lineHeight: 1,
+                                  }}
+                                >
+                                  {firstGroup.icon}
+                                </span>
+                              ) : (
+                                <Bookmark size={18} strokeWidth={2} className="text-white" fill="white" />
+                              )}
+                              {groupCount > 1 && (
+                                <div
+                                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold"
+                                  style={{
+                                    backgroundColor: 'var(--bg)',
+                                    color: 'var(--text-primary)',
+                                    border: '1px solid var(--border-light)',
+                                  }}
+                                >
+                                  {groupCount}
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+                    ) : (
+                      /* Empty state: BookmarkPlus icon (edit mode only) */
+                      <BookmarkPlus size={16} style={{ color: 'var(--text-tertiary)' }} />
+                    )}
+                  </button>
+                );
+              })()}
             </div>
           </div>
 
@@ -2215,7 +2324,21 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
           </div>
 
           {/* Story 14.24: Show Edit button in read-only mode, Save button otherwise */}
-          {readOnly ? (
+          {/* Story 14c.6: Show "Added by [name]" for other users' transactions, no edit option */}
+          {readOnly && isOtherUserTransaction ? (
+            <div
+              className="w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2"
+              style={{
+                backgroundColor: 'var(--bg-tertiary)',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              {t('addedBy') || 'Added by'}{' '}
+              <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {ownerProfile?.displayName || t('unknownUser') || 'Unknown'}
+              </span>
+            </div>
+          ) : readOnly ? (
             <button
               onClick={onRequestEdit}
               className="w-full py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-transform hover:scale-[1.01] active:scale-[0.99]"
@@ -2548,6 +2671,27 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Story 14c.7: Group Selector Modal */}
+      {showGroupSelector && (
+        <TransactionGroupSelector
+          groups={availableGroups}
+          selectedIds={displayTransaction.sharedGroupIds || []}
+          onSelect={(groupIds) => {
+            if (transaction && onGroupsChange) {
+              // Deduplicate group IDs to prevent duplicates in array
+              const uniqueGroupIds = [...new Set(groupIds)];
+              onGroupsChange(uniqueGroupIds);
+              onUpdateTransaction({ ...transaction, sharedGroupIds: uniqueGroupIds });
+            }
+          }}
+          onClose={() => setShowGroupSelector(false)}
+          t={t}
+          theme={theme}
+          isLoading={groupsLoading}
+          readOnly={readOnly}
+        />
       )}
     </div>
   );

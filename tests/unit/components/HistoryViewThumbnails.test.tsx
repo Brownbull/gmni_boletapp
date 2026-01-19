@@ -13,6 +13,37 @@ import { render, screen, fireEvent } from '../../setup/test-utils'
 import { HistoryView } from '../../../src/views/HistoryView'
 import { HistoryFiltersProvider, type HistoryFilterState } from '../../../src/contexts/HistoryFiltersContext'
 
+// Group consolidation: Mock firebase/firestore for getFirestore calls
+vi.mock('firebase/firestore', () => ({
+  getFirestore: vi.fn(() => ({})),
+  collection: vi.fn(),
+  doc: vi.fn(),
+  updateDoc: vi.fn(() => Promise.resolve()),
+  deleteDoc: vi.fn(() => Promise.resolve()),
+  writeBatch: vi.fn(() => ({
+    delete: vi.fn(),
+    commit: vi.fn(() => Promise.resolve()),
+  })),
+}));
+
+// Group consolidation: Mock firestore service for updateTransaction
+vi.mock('../../../src/services/firestore', () => ({
+  deleteTransactionsBatch: vi.fn(() => Promise.resolve()),
+  updateTransaction: vi.fn(() => Promise.resolve()),
+}));
+
+// Group consolidation: Mock useAllUserGroups hook
+vi.mock('../../../src/hooks/useAllUserGroups', () => ({
+  useAllUserGroups: vi.fn(() => ({
+    groups: [],
+    isLoading: false,
+    error: undefined,
+    hasGroups: false,
+    sharedGroupCount: 0,
+    personalGroupCount: 0,
+  })),
+}));
+
 /**
  * Story 14.30.5a: Fixed temporal filter issue.
  *

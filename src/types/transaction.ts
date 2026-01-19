@@ -78,13 +78,19 @@ export interface Transaction {
     /** Source of the merchant name (scan, learned, or user) */
     merchantSource?: MerchantSource;
 
-    // Story 14.15: Transaction Groups
-    /** Reference to the transaction group document ID */
-    groupId?: string;
-    /** Denormalized group name for display (updated when group is renamed) */
-    groupName?: string;
-    /** Denormalized group color for display (hex code, e.g., "#10b981") */
-    groupColor?: string;
+    // Story 14c.1: Shared Groups (consolidated from Story 14.15)
+    /** Array of shared group IDs this transaction belongs to (max 5) */
+    sharedGroupIds?: string[];
+    /** Soft delete timestamp for shared group sync (null = not deleted) */
+    deletedAt?: any; // Firestore Timestamp
+
+    // Story 14c.6: Transaction Ownership (client-side only)
+    /**
+     * Owner's user ID - set client-side when merging transactions from multiple members.
+     * Not stored in Firestore (derived from transaction's document path).
+     * Used to determine if current user can edit (own) or only view (other's).
+     */
+    _ownerId?: string;
 }
 
 /**
@@ -99,4 +105,22 @@ export function hasTransactionImages(transaction: Transaction): boolean {
  */
 export function hasTransactionThumbnail(transaction: Transaction): boolean {
     return Boolean(transaction.thumbnailUrl)
+}
+
+/**
+ * Story 14c.6: Check if a transaction belongs to the current user.
+ *
+ * A transaction is considered "owned" by the user if:
+ * - No _ownerId is set (personal mode - all transactions are user's own)
+ * - _ownerId matches the current user's ID
+ *
+ * @param transaction Transaction to check
+ * @param currentUserId Current user's ID
+ * @returns true if the user owns this transaction
+ */
+export function isOwnTransaction(transaction: Transaction, currentUserId: string): boolean {
+    // If _ownerId is not set, the transaction is the user's own (personal mode)
+    if (!transaction._ownerId) return true;
+    // In shared group mode, compare owner ID with current user
+    return transaction._ownerId === currentUserId;
 }

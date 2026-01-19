@@ -299,7 +299,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 );
 
             case 'grupos':
-                return <GruposView t={t} theme={theme} />;
+                return (
+                    <GruposView
+                        t={t}
+                        theme={theme}
+                        userId={userId}
+                        userEmail={userEmail}
+                        userDisplayName={displayName}
+                        appId={appId || 'boletapp'}
+                        lang={lang as 'en' | 'es'}
+                        onShowToast={onShowToast}
+                    />
+                );
 
             case 'app':
                 return (

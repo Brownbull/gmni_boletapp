@@ -1,5 +1,6 @@
 /**
  * Story 14.10: Top Header Bar Component
+ * Story 14c.4: Added View Mode Switcher support
  *
  * A consistent top header bar across all views with:
  * - Home variant: Logo (left) | Wordmark (center) | Profile Avatar (right)
@@ -13,17 +14,54 @@
  * - 44px minimum touch targets for accessibility
  * - CSS variables for theming
  * - Profile dropdown menu with user info and navigation (shared component)
+ * - Story 14c.4: Tappable logo for view mode switching (personal/group)
  */
 
 import React, { useState, useRef } from 'react';
 import { ArrowLeft, ChevronLeft } from 'lucide-react';
 import { ProfileDropdown, ProfileAvatar, getInitials } from './ProfileDropdown';
 
+/**
+ * Helper to extract emoji from group name (e.g., "🏠 Family" → "🏠")
+ */
+function extractGroupEmoji(name: string): string | null {
+    if (!name) return null;
+    const firstChar = name.codePointAt(0);
+    if (firstChar && firstChar > 0x1F300) {
+        const match = name.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u);
+        return match ? match[0] : null;
+    }
+    return null;
+}
+
+/**
+ * Helper to extract label from group name (e.g., "🏠 Family" → "Family")
+ */
+function extractGroupLabel(name: string): string {
+    if (!name) return '';
+    const emoji = extractGroupEmoji(name);
+    if (emoji) {
+        return name.slice(emoji.length).trim();
+    }
+    return name;
+}
+
 export type HeaderVariant = 'home' | 'detail' | 'settings';
 
 // View-specific titles for the home variant (when showing logo + title)
 // Story 14.11: Added 'alerts' for the new alerts view
 export type ViewTitle = 'home' | 'analytics' | 'history' | 'insights' | 'alerts' | 'gastify';
+
+/**
+ * Story 14c.4: Active group info for group mode display
+ */
+export interface ActiveGroupInfo {
+    id: string;
+    name: string;
+    icon?: string;
+    color: string;
+    members: string[];
+}
 
 export interface TopHeaderProps {
     /**
@@ -86,19 +124,73 @@ export interface TopHeaderProps {
      * Translation function
      */
     t: (key: string) => string;
+
+    /**
+     * Story 14c.4: Handler for logo click to open view mode switcher
+     */
+    onLogoClick?: () => void;
+
+    /**
+     * Story 14c.4: Current view mode ('personal' or 'group')
+     */
+    viewMode?: 'personal' | 'group';
+
+    /**
+     * Story 14c.4: Active group info when in group mode
+     */
+    activeGroup?: ActiveGroupInfo;
 }
 
 /**
  * App Logo Component
+ * Story 14c.4: Enhanced to support group mode icons
  * Renders the "G" logo in a circle with theme-aware colors
  * Uses CSS variables so theme switching works automatically
  * Sized for mobile visibility: 36x36px circle
  */
-const AppLogo: React.FC<{ theme: string }> = () => {
+interface AppLogoProps {
+    theme: string;
+    viewMode?: 'personal' | 'group';
+    activeGroup?: ActiveGroupInfo;
+}
+
+const AppLogo: React.FC<AppLogoProps> = ({ viewMode, activeGroup }) => {
+    const isGroupMode = viewMode === 'group' && activeGroup;
+
     // Logo uses --primary color which changes per theme:
     // - Professional: blue (#2563eb)
     // - Mono: black (#18181b)
     // - Ni No Kuni: green (#4a7c59)
+    // In group mode, uses the group's color instead
+
+    if (isGroupMode) {
+        // Group mode: Show group icon with group color - larger 44px for visibility
+        return (
+            <div
+                data-testid="group-mode-icon"
+                className="rounded-full flex items-center justify-center flex-shrink-0 transition-colors duration-300"
+                style={{
+                    width: '44px',
+                    height: '44px',
+                    background: activeGroup.color || 'var(--primary, #2563eb)',
+                }}
+            >
+                <span
+                    style={{
+                        fontSize: '24px',
+                        fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", sans-serif',
+                        lineHeight: 1,
+                    }}
+                    role="img"
+                    aria-label={activeGroup.name}
+                >
+                    {activeGroup.icon || '👥'}
+                </span>
+            </div>
+        );
+    }
+
+    // Personal mode: Show default "G" logo
     return (
         <div
             data-testid="app-logo"
@@ -137,6 +229,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     userEmail = '',
     theme,
     t,
+    onLogoClick,
+    viewMode = 'personal',
+    activeGroup,
 }) => {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const profileButtonRef = useRef<HTMLButtonElement>(null);
@@ -272,7 +367,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                     </div>
                 ) : (
                     /* Other variants: Logo or back button in left column */
-                    <div className="flex items-center min-w-[48px]">
+                    <div className="flex items-center min-w-[48px] relative">
                         {showBackButton && onBack && (
                             <button
                                 onClick={onBack}
@@ -284,24 +379,60 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                             </button>
                         )}
 
-                        {showLogo && <AppLogo theme={theme} />}
+                        {/* Story 14c.4: Logo is tappable when onLogoClick is provided */}
+                        {showLogo && (
+                            onLogoClick ? (
+                                <button
+                                    data-testid="app-logo-button"
+                                    onClick={onLogoClick}
+                                    className="flex items-center focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-full"
+                                    aria-label="Switch view mode"
+                                    aria-haspopup="true"
+                                >
+                                    <AppLogo theme={theme} viewMode={viewMode} activeGroup={activeGroup} />
+                                </button>
+                            ) : (
+                                <AppLogo theme={theme} viewMode={viewMode} activeGroup={activeGroup} />
+                            )
+                        )}
                     </div>
                 )}
 
                 {/* Center: Title/Wordmark (not for settings - title is in left section) */}
                 {variant !== 'settings' && (
-                    <div className="absolute left-1/2 transform -translate-x-1/2">
-                        <span
-                            className="font-semibold"
-                            style={{
-                                fontFamily: isWordmark ? "var(--font-family-wordmark, 'Baloo 2', cursive)" : 'var(--font-family)',
-                                color: 'var(--text-primary, #0f172a)',
-                                fontWeight: 700,
-                                fontSize: isWordmark ? '28px' : '20px',
-                            }}
-                        >
-                            {getDisplayTitle()}
-                        </span>
+                    <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-col items-center">
+                        {/* Story 14c.4: Show group name as title when in group mode (without emoji) */}
+                        {viewMode === 'group' && activeGroup ? (
+                            <div data-testid="group-mode-indicator" className="flex flex-col items-center">
+                                <span
+                                    className="font-semibold"
+                                    style={{
+                                        fontFamily: 'var(--font-family)',
+                                        color: 'var(--text-primary, #0f172a)',
+                                        fontWeight: 700,
+                                        fontSize: '18px',
+                                        maxWidth: '180px',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                    }}
+                                >
+                                    {extractGroupLabel(activeGroup.name)}
+                                </span>
+                            </div>
+                        ) : (
+                            <span
+                                className="font-semibold"
+                                style={{
+                                    fontFamily: isWordmark ? "var(--font-family-wordmark, 'Baloo 2', cursive)" : 'var(--font-family)',
+                                    color: 'var(--text-primary, #0f172a)',
+                                    fontWeight: 700,
+                                    fontSize: isWordmark ? '28px' : '20px',
+                                }}
+                            >
+                                {getDisplayTitle()}
+                            </span>
+                        )}
                     </div>
                 )}
 

@@ -2,9 +2,199 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // User isolation: Each user can only access their own data
+    // ============================================================================
+    // Story 14c.5: Shared Group Transaction Access
+    // Epic 14c: Household Sharing
+    //
+    // Allow reading another user's transactions if:
+    // 1. The transaction is tagged to a shared group (has sharedGroupIds)
+    // 2. The requesting user is a member of that group
+    //
+    // This enables cross-user transaction visibility within shared groups.
+    // Write access is still restricted to the transaction owner.
+    //
+    // NOTE: This rule MUST come before the general user/{userId}/{document=**} rule
+    // because Firestore evaluates rules in order and more specific paths override.
+    // ============================================================================
+    match /artifacts/{appId}/users/{userId}/transactions/{transactionId} {
+      // Owner can always read and write their own transactions
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Group members can read transactions shared to their group
+      // Uses get() to check if user is member of the group this transaction is shared to
+      allow read: if request.auth != null
+          && resource.data.sharedGroupIds != null
+          && resource.data.sharedGroupIds.size() > 0
+          && isGroupMemberForTransaction(request.auth.uid, resource.data.sharedGroupIds);
+    }
+
+    // Helper function: Check if user is member of any of the provided groups
+    // Limited to first 3 groups due to Firestore get() quota (10 per rule evaluation)
+    // NOTE: members is an array, so we use hasAny() to check membership
+    function isGroupMemberForTransaction(userId, groupIds) {
+      return (groupIds.size() >= 1
+              && exists(/databases/$(database)/documents/sharedGroups/$(groupIds[0]))
+              && get(/databases/$(database)/documents/sharedGroups/$(groupIds[0])).data.members.hasAny([userId]))
+          || (groupIds.size() >= 2
+              && exists(/databases/$(database)/documents/sharedGroups/$(groupIds[1]))
+              && get(/databases/$(database)/documents/sharedGroups/$(groupIds[1])).data.members.hasAny([userId]))
+          || (groupIds.size() >= 3
+              && exists(/databases/$(database)/documents/sharedGroups/$(groupIds[2]))
+              && get(/databases/$(database)/documents/sharedGroups/$(groupIds[2])).data.members.hasAny([userId]));
+    }
+
+    // ============================================================================
+    // Collection Group Query Support for Shared Transactions
+    //
+    // SECURITY UPDATE (2026-01-17):
+    // Client-side collection group queries have been DISABLED for security.
+    //
+    // PROBLEM: Firestore collection group queries cannot evaluate resource.data.*
+    // conditions, which meant we relied on UUID obscurity for security. If an
+    // attacker obtained a groupId, they could query all transactions in that group.
+    //
+    // SOLUTION: Cloud Function with server-side membership validation.
+    // - See: functions/src/getSharedGroupTransactions.ts
+    // - Cloud Function validates user is member before executing query
+    // - Uses admin SDK which bypasses these rules
+    //
+    // This rule is now DENIED for client-side queries.
+    // The Cloud Function handles shared group transaction fetching securely.
+    // ============================================================================
+    match /{path=**}/transactions/{transactionId} {
+      // DENIED: Collection group queries now handled by Cloud Function
+      // This prevents the UUID-obscurity security vulnerability
+      allow read: if false;
+    }
+
+    // User isolation: Each user can only access their own data (non-transactions)
+    // This covers all subcollections except transactions (handled above)
     match /artifacts/{appId}/users/{userId}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ============================================================================
+    // Story 14c.1: Shared Groups (top-level collection)
+    // Epic 14c: Household Sharing
+    //
+    // Architecture: Option 4 - Hybrid Model
+    // - SharedGroup documents stored at top-level for cross-user access
+    // - Members can read, only owner can write/delete
+    // ============================================================================
+    match /sharedGroups/{groupId} {
+      // Helper: Check if user is authenticated
+      function isAuthenticated() {
+        return request.auth != null;
+      }
+
+      // Helper: Check if user is a member of this group
+      function isGroupMember() {
+        return isAuthenticated()
+            && request.auth.uid in resource.data.members;
+      }
+
+      // Helper: Check if user is the owner of this group
+      function isGroupOwner() {
+        return isAuthenticated()
+            && request.auth.uid == resource.data.ownerId;
+      }
+
+      // Helper: Validate new group creation
+      // - User must be owner
+      // - Members array must contain only the creator
+      function isValidNewGroup() {
+        return isAuthenticated()
+            && request.resource.data.ownerId == request.auth.uid
+            && request.resource.data.members.hasOnly([request.auth.uid])
+            && request.resource.data.members.size() == 1;
+      }
+
+      // CREATE: Authenticated user creating a group they own
+      allow create: if isValidNewGroup();
+
+      // READ: Members can read, OR authenticated users can query by shareCode to join
+      // The shareCode query is needed for the "join by code" flow
+      allow read: if isGroupMember()
+          || (isAuthenticated() && resource.data.shareCode != null);
+
+      // Helper: Check if user is being added as a member (accepting invitation)
+      // Allows adding the current user to members array if they're not already a member
+      function isJoiningGroup() {
+        return isAuthenticated()
+            && !(request.auth.uid in resource.data.members)
+            && request.auth.uid in request.resource.data.members
+            && request.resource.data.members.size() == resource.data.members.size() + 1
+            && resource.data.members.size() < 10; // MAX_MEMBERS_PER_GROUP
+      }
+
+      // Helper: Check if member is updating only their own memberUpdates timestamp
+      // Story 14c.12: Real-time sync requires members to update their lastSyncAt
+      // Security Fix (Code Review 2026-01-17): Validate user can only update their OWN
+      // memberUpdates entry, not other members' entries
+      function isMemberUpdatingOwnTimestamp() {
+        return isGroupMember()
+            && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['memberUpdates', 'updatedAt'])
+            // Ensure only the current user's memberUpdates entry is being modified
+            && (
+                // Case 1: memberUpdates didn't exist before, user is creating their entry
+                (!('memberUpdates' in resource.data)
+                    && request.resource.data.memberUpdates.keys().hasOnly([request.auth.uid]))
+                // Case 2: memberUpdates exists, only current user's entry can change
+                || ('memberUpdates' in resource.data
+                    && request.resource.data.memberUpdates.diff(resource.data.memberUpdates)
+                        .affectedKeys().hasOnly([request.auth.uid]))
+            );
+      }
+
+      // UPDATE: Owner can update anything, user can join, or member can update their timestamp
+      allow update: if isGroupOwner() || isJoiningGroup() || isMemberUpdatingOwnTimestamp();
+
+      // DELETE: Only owner can delete the group
+      allow delete: if isGroupOwner();
+    }
+
+    // ============================================================================
+    // Story 14c.2: Pending Invitations (top-level collection)
+    // Epic 14c: Household Sharing
+    //
+    // Pending invitations are email-based invitations to join shared groups.
+    // - Invited user can read invitations addressed to their email
+    // - Group owner/member can create invitations
+    // - Invited user can accept/decline (update status only)
+    // ============================================================================
+    match /pendingInvitations/{invitationId} {
+      // Helper: Check if user is authenticated
+      function isAuthenticated() {
+        return request.auth != null;
+      }
+
+      // Helper: Check if the invitation is addressed to the current user's email
+      function isInvitedUser() {
+        return isAuthenticated()
+            && request.auth.token.email != null
+            && resource.data.invitedEmail == request.auth.token.email.lower();
+      }
+
+      // Helper: Check if user is updating only the status field (accept/decline)
+      function isStatusUpdateOnly() {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+            && request.resource.data.status in ['accepted', 'declined'];
+      }
+
+      // CREATE: Any authenticated user can create invitations
+      // In practice, the app restricts this to group owners/members
+      allow create: if isAuthenticated()
+          && request.resource.data.invitedByUserId == request.auth.uid;
+
+      // READ: User can read invitations addressed to their email
+      allow read: if isInvitedUser();
+
+      // UPDATE: Invited user can accept/decline (only status field)
+      allow update: if isInvitedUser() && isStatusUpdateOnly();
+
+      // DELETE: Not allowed (invitations are kept for audit trail)
+      allow delete: if false;
     }
 
     // Deny all other paths by default
