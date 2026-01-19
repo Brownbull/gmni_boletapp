@@ -305,11 +305,21 @@ Functions: `sanitizeMerchantName`, `sanitizeItemName`, `sanitizeLocation`, `sani
 
 ---
 
+**View Mode Persistence (Story 14c.18):**
+- Firestore path: `artifacts/{appId}/users/{userId}/preferences/settings.viewModePreference`
+- Schema: `{ mode: 'personal' | 'group', groupId?: string, updatedAt?: Timestamp }`
+- Coordination hook: `useViewModePreferencePersistence` orchestrates context + Firestore + validation
+- Debounced save: 1-second setTimeout for Firestore, localStorage immediate
+- Group validation: `validateAndRestoreMode(groups)` verifies membership before restoring group mode
+
+---
+
 ## Sync Notes
 
 - Generation 4: Consolidated Epic 14d verbose details
 - 2026-01-15: Added Epic 14c Household Sharing architecture
 - 2026-01-15: Added Cloud Functions documentation
 - 2026-01-19: Added Story 14c.17 Share Link Deep Linking pattern
+- 2026-01-19: Added Story 14c.18 View Mode Persistence pattern
 - Code review learnings in 06-lessons.md
 - Story details in docs/sprint-artifacts/
