@@ -58,6 +58,8 @@ backlog → drafted → ready-for-dev → in-progress → review → done
 
 | Story/Epic | Date | Notes |
 |------------|------|-------|
+| **Story 14c.16 Follow-up** | 2026-01-19 | rawTransactions wiring fix for year picker |
+| **Story 14c.16** | 2026-01-19 | Cache architecture fix, client-side filtering |
 | **Epic 14c Phase 2** | 2026-01-16 | Stories 14c.5-14c.10 (Shared Groups UI) |
 | **Epic 14c Phase 1** | 2026-01-15 | Stories 14c.1-14c.4 (Core sharing) |
 | **Combined Retro** | 2026-01-15 | Epics 12, 13, 14, 14d all COMPLETE |
