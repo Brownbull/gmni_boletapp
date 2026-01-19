@@ -3,3 +3,5 @@ lib/
 src/prompts/
 .runtimeconfig.json
 src/shared/
+.env.local
+.env

@@ -139,6 +139,7 @@ export interface TopHeaderProps {
      * Story 14c.4: Active group info when in group mode
      */
     activeGroup?: ActiveGroupInfo;
+
 }
 
 /**

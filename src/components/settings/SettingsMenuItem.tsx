@@ -19,6 +19,7 @@ import {
     BookOpen,
     Smartphone,
     Database,
+    LogOut,
 } from 'lucide-react';
 
 export interface SettingsMenuItemProps {
@@ -27,7 +28,7 @@ export interface SettingsMenuItemProps {
     /** Translation key for the subtitle */
     subtitle: string;
     /** Lucide icon name - matches mockup settings.html */
-    icon: 'circle-alert' | 'user' | 'users' | 'settings' | 'camera' | 'credit-card' | 'book-open' | 'smartphone' | 'database';
+    icon: 'circle-alert' | 'user' | 'users' | 'settings' | 'camera' | 'credit-card' | 'book-open' | 'smartphone' | 'database' | 'log-out';
     /** Background color for the icon container */
     iconBgColor: string;
     /** Icon stroke color */
@@ -49,6 +50,7 @@ const iconMap = {
     'book-open': BookOpen,
     'smartphone': Smartphone,
     'database': Database,
+    'log-out': LogOut,
 };
 
 export const SettingsMenuItem: React.FC<SettingsMenuItemProps> = ({

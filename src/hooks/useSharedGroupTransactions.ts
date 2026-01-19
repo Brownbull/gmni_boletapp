@@ -28,7 +28,7 @@
  * ```
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Firestore } from 'firebase/firestore';
 import type { SharedGroup } from '../types/sharedGroup';
@@ -55,6 +55,88 @@ import {
     isIndexedDBAvailable,
     type SyncMetadata,
 } from '../lib/sharedGroupCache';
+
+// ============================================================================
+// Notification Delta Fetch Hook
+// ============================================================================
+
+/**
+ * Data received from service worker notification click
+ */
+export interface NotificationClickData {
+    type?: string;
+    groupId?: string;
+    transactionId?: string;
+    url?: string;
+}
+
+/**
+ * Hook to listen for notification clicks and trigger delta fetch.
+ * Story 14c.13: Option C - fetch delta on notification tap.
+ *
+ * @param db - Firestore instance
+ * @param appId - Application ID
+ * @param groups - Array of user's shared groups
+ * @param queryClient - React Query client
+ * @param onNavigateToGroup - Optional callback to navigate to a group view
+ */
+export function useNotificationDeltaFetch(
+    db: Firestore | null,
+    appId: string,
+    groups: SharedGroup[],
+    queryClient: ReturnType<typeof useQueryClient>,
+    onNavigateToGroup?: (group: SharedGroup) => void
+): void {
+    // Keep refs to avoid stale closures
+    const groupsRef = useRef<SharedGroup[]>(groups);
+    groupsRef.current = groups;
+
+    const onNavigateRef = useRef(onNavigateToGroup);
+    onNavigateRef.current = onNavigateToGroup;
+
+    useEffect(() => {
+        if (!db || !appId || !navigator.serviceWorker) return;
+
+        const handleMessage = async (event: MessageEvent) => {
+            if (event.data?.type !== 'NOTIFICATION_CLICK') return;
+
+            const data = event.data.data || {};
+            const groupId = data.groupId;
+
+            if (!groupId) {
+                console.log('[useNotificationDeltaFetch] No groupId in notification click');
+                return;
+            }
+
+            // Find the group in user's groups
+            const group = groupsRef.current.find(g => g.id === groupId);
+            if (!group) {
+                console.log(`[useNotificationDeltaFetch] Group ${groupId} not found in user groups`);
+                return;
+            }
+
+            console.log(`[useNotificationDeltaFetch] Triggering delta fetch for group ${groupId}`);
+
+            try {
+                // First navigate to the group
+                if (onNavigateRef.current) {
+                    onNavigateRef.current(group);
+                }
+
+                // Then fetch delta updates
+                const result = await triggerNotificationDeltaFetch(db, appId, group, queryClient);
+                console.log(`[useNotificationDeltaFetch] Delta fetch complete:`, result);
+            } catch (err) {
+                console.error(`[useNotificationDeltaFetch] Error:`, err);
+            }
+        };
+
+        navigator.serviceWorker.addEventListener('message', handleMessage);
+        return () => {
+            navigator.serviceWorker.removeEventListener('message', handleMessage);
+        };
+    }, [db, appId, queryClient]);
+}
 
 // ============================================================================
 // Types
@@ -364,6 +446,110 @@ async function fetchDeltaAndUpdateCache(
         }
     } catch (err) {
         console.error('[useSharedGroupTransactions] Delta sync error:', err);
+    }
+}
+
+// ============================================================================
+// Notification-Triggered Delta Fetch
+// ============================================================================
+
+/**
+ * Trigger delta fetch for a specific group when a notification is clicked.
+ * This allows updating only the changed transactions instead of invalidating
+ * the entire cache (Option C from cost analysis).
+ *
+ * Story 14c.13: Optimize notification-triggered updates
+ *
+ * @param db - Firestore instance
+ * @param appId - Application ID
+ * @param group - The shared group to fetch updates for
+ * @param queryClient - React Query client for cache invalidation
+ * @returns Promise that resolves when delta fetch is complete
+ */
+export async function triggerNotificationDeltaFetch(
+    db: Firestore,
+    appId: string,
+    group: SharedGroup,
+    queryClient: ReturnType<typeof useQueryClient>
+): Promise<{ updated: number; deleted: number }> {
+    if (!group.id || !group.members?.length) {
+        console.warn('[triggerNotificationDeltaFetch] Invalid group data');
+        return { updated: 0, deleted: 0 };
+    }
+
+    try {
+        // Get last sync timestamp from IndexedDB
+        let lastSyncTimestamp = Date.now() - 60 * 1000; // Default: last 1 minute
+
+        if (isIndexedDBAvailable()) {
+            try {
+                const idb = await openSharedGroupDB();
+                const syncMetadata = await getSyncMetadata(idb, group.id);
+                if (syncMetadata?.lastSyncTimestamp) {
+                    lastSyncTimestamp = syncMetadata.lastSyncTimestamp;
+                }
+            } catch (err) {
+                console.warn('[triggerNotificationDeltaFetch] IndexedDB error:', err);
+            }
+        }
+
+        const since = new Date(lastSyncTimestamp);
+
+        // Fetch delta for ALL members (notification could be from any member)
+        const { transactions: deltaTransactions, deletedIds } = await fetchDeltaUpdates(
+            db,
+            appId,
+            group.id,
+            { since, changedMembers: group.members }
+        );
+
+        if (deltaTransactions.length === 0 && deletedIds.length === 0) {
+            console.log('[triggerNotificationDeltaFetch] No changes found');
+            return { updated: 0, deleted: 0 };
+        }
+
+        // Update IndexedDB cache
+        if (isIndexedDBAvailable()) {
+            try {
+                const idb = await openSharedGroupDB();
+
+                if (deltaTransactions.length > 0) {
+                    await writeToCache(idb, group.id, deltaTransactions);
+                }
+
+                if (deletedIds.length > 0) {
+                    await removeFromCache(idb, group.id, deletedIds);
+                }
+
+                // Update sync metadata
+                await updateSyncMetadata(idb, {
+                    groupId: group.id,
+                    lastSyncTimestamp: Date.now(),
+                    memberSyncTimestamps: group.members.reduce((acc, m) => {
+                        acc[m] = Date.now();
+                        return acc;
+                    }, {} as Record<string, number>),
+                });
+            } catch (err) {
+                console.warn('[triggerNotificationDeltaFetch] Cache update error:', err);
+            }
+        }
+
+        // Invalidate React Query cache to trigger re-render with updated data
+        // Use partial invalidation on groupId to refresh all date ranges
+        queryClient.invalidateQueries({
+            queryKey: ['sharedGroupTransactions', group.id],
+        });
+
+        console.log('[triggerNotificationDeltaFetch] Delta sync complete:', {
+            updated: deltaTransactions.length,
+            deleted: deletedIds.length,
+        });
+
+        return { updated: deltaTransactions.length, deleted: deletedIds.length };
+    } catch (err) {
+        console.error('[triggerNotificationDeltaFetch] Error:', err);
+        return { updated: 0, deleted: 0 };
     }
 }
 
