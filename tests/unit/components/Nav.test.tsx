@@ -101,10 +101,11 @@ describe('Nav Component', () => {
     it('should render all navigation buttons', () => {
       render(<Nav {...defaultProps} />)
 
-      expect(screen.getByText('Home')).toBeInTheDocument()
-      expect(screen.getByText('Analytics')).toBeInTheDocument()
-      expect(screen.getByText('Insights')).toBeInTheDocument()
-      expect(screen.getByText('Alerts')).toBeInTheDocument()
+      // Story 14c.13: Nav is now icon-only with aria-labels
+      expect(screen.getByRole('button', { name: 'Home' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Analytics' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Insights' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Alerts' })).toBeInTheDocument()
     })
 
     it('should render the scan button with aria-label', () => {
@@ -126,7 +127,7 @@ describe('Nav Component', () => {
       render(<Nav {...defaultProps} />)
 
       // Find the Insights button and check it contains an SVG (Lightbulb icon)
-      const insightsButton = screen.getByText('Insights').closest('button')
+      const insightsButton = screen.getByRole('button', { name: 'Insights' })
       expect(insightsButton).toBeInTheDocument()
 
       // Check that an SVG (icon) is present in the button
@@ -134,13 +135,14 @@ describe('Nav Component', () => {
       expect(svg).toBeInTheDocument()
     })
 
-    it('AC#2: should display "Insights" label in English', () => {
+    it('AC#2: should have "Insights" aria-label in English', () => {
       render(<Nav {...defaultProps} />)
 
-      expect(screen.getByText('Insights')).toBeInTheDocument()
+      // Story 14c.13: Nav is icon-only, label in aria-label
+      expect(screen.getByRole('button', { name: 'Insights' })).toBeInTheDocument()
     })
 
-    it('AC#2: should display "Ideas" label in Spanish', () => {
+    it('AC#2: should have "Ideas" aria-label in Spanish', () => {
       const spanishT = (key: string) => {
         const translations: Record<string, string> = {
           home: 'Inicio',
@@ -154,13 +156,14 @@ describe('Nav Component', () => {
 
       render(<Nav {...defaultProps} t={spanishT} />)
 
-      expect(screen.getByText('Ideas')).toBeInTheDocument()
+      // Story 14c.13: Nav is icon-only, label in aria-label
+      expect(screen.getByRole('button', { name: 'Ideas' })).toBeInTheDocument()
     })
 
     it('AC#3: should call setView with "insights" when clicking Insights tab', () => {
       render(<Nav {...defaultProps} />)
 
-      const insightsButton = screen.getByText('Insights').closest('button')
+      const insightsButton = screen.getByRole('button', { name: 'Insights' })
       fireEvent.click(insightsButton!)
 
       expect(mockSetView).toHaveBeenCalledWith('insights')
@@ -170,7 +173,7 @@ describe('Nav Component', () => {
     it('should apply active styling when view is "insights"', () => {
       render(<Nav {...defaultProps} view="insights" />)
 
-      const insightsButton = screen.getByText('Insights').closest('button')
+      const insightsButton = screen.getByRole('button', { name: 'Insights' })
       // Story 14.11: Active tabs use --primary color via inline style
       expect(insightsButton).toHaveAttribute('style', expect.stringContaining('--primary'))
     })
@@ -178,7 +181,7 @@ describe('Nav Component', () => {
     it('should apply inactive styling when different view is active', () => {
       render(<Nav {...defaultProps} view="dashboard" />)
 
-      const insightsButton = screen.getByText('Insights').closest('button')
+      const insightsButton = screen.getByRole('button', { name: 'Insights' })
       // Story 14.11: Non-active tabs use --text-tertiary color via inline style
       expect(insightsButton).toHaveAttribute('style', expect.stringContaining('--text-tertiary'))
     })
@@ -188,7 +191,7 @@ describe('Nav Component', () => {
     it('should call setView with "dashboard" when clicking Home', () => {
       render(<Nav {...defaultProps} />)
 
-      const homeButton = screen.getByText('Home').closest('button')
+      const homeButton = screen.getByRole('button', { name: 'Home' })
       fireEvent.click(homeButton!)
 
       expect(mockSetView).toHaveBeenCalledWith('dashboard')
@@ -197,7 +200,7 @@ describe('Nav Component', () => {
     it('should call setView with "trends" when clicking Analytics', () => {
       render(<Nav {...defaultProps} />)
 
-      const analyticsButton = screen.getByText('Analytics').closest('button')
+      const analyticsButton = screen.getByRole('button', { name: 'Analytics' })
       fireEvent.click(analyticsButton!)
 
       expect(mockSetView).toHaveBeenCalledWith('trends')
@@ -218,7 +221,7 @@ describe('Nav Component', () => {
     it('should call setView with "alerts" when clicking Alerts', () => {
       render(<Nav {...defaultProps} />)
 
-      const alertsButton = screen.getByText('Alerts').closest('button')
+      const alertsButton = screen.getByRole('button', { name: 'Alerts' })
       fireEvent.click(alertsButton!)
 
       expect(mockSetView).toHaveBeenCalledWith('alerts')
@@ -234,7 +237,8 @@ describe('Nav Component', () => {
     ])('should apply active styling to %s button when view is %s', (view, label) => {
       render(<Nav {...defaultProps} view={view} />)
 
-      const activeButton = screen.getByText(label).closest('button')
+      // Story 14c.13: Nav is icon-only with aria-labels
+      const activeButton = screen.getByRole('button', { name: label })
       // Story 14.11: Active buttons have --primary color in their inline style
       expect(activeButton).toHaveAttribute('style', expect.stringContaining('--primary'))
     })
@@ -247,16 +251,17 @@ describe('Nav Component', () => {
     ])('should set aria-current="page" for active %s button', (view, label) => {
       render(<Nav {...defaultProps} view={view} />)
 
-      const activeButton = screen.getByText(label).closest('button')
+      // Story 14c.13: Nav is icon-only with aria-labels
+      const activeButton = screen.getByRole('button', { name: label })
       expect(activeButton).toHaveAttribute('aria-current', 'page')
     })
 
     it('should not set aria-current for inactive buttons', () => {
       render(<Nav {...defaultProps} view="dashboard" />)
 
-      const analyticsButton = screen.getByText('Analytics').closest('button')
-      const insightsButton = screen.getByText('Insights').closest('button')
-      const alertsButton = screen.getByText('Alerts').closest('button')
+      const analyticsButton = screen.getByRole('button', { name: 'Analytics' })
+      const insightsButton = screen.getByRole('button', { name: 'Insights' })
+      const alertsButton = screen.getByRole('button', { name: 'Alerts' })
 
       expect(analyticsButton).not.toHaveAttribute('aria-current')
       expect(insightsButton).not.toHaveAttribute('aria-current')
@@ -423,7 +428,8 @@ describe('Nav Component', () => {
         const scanButton = screen.getByRole('button', { name: 'Scan' })
         // FAB is wrapped in a relative container with negative margin
         const fabContainer = scanButton.parentElement
-        expect(fabContainer).toHaveStyle({ marginTop: '-40px' })
+        // Story 14c.13: Reduced FAB elevation for smaller nav bar
+        expect(fabContainer).toHaveStyle({ marginTop: '-36px' })
       })
 
       it('should apply primary gradient when scanStatus is "processing" (single scan)', () => {
@@ -469,7 +475,7 @@ describe('Nav Component', () => {
         vi.mocked(useReducedMotion).mockReturnValue(false)
         render(<Nav {...defaultProps} />)
 
-        const homeButton = screen.getByText('Home').closest('button')
+        const homeButton = screen.getByRole('button', { name: 'Home' })
         expect(homeButton).toHaveClass('transition-all')
         expect(homeButton).toHaveClass('active:scale-95')
       })
@@ -478,7 +484,7 @@ describe('Nav Component', () => {
         vi.mocked(useReducedMotion).mockReturnValue(true)
         render(<Nav {...defaultProps} />)
 
-        const homeButton = screen.getByText('Home').closest('button')
+        const homeButton = screen.getByRole('button', { name: 'Home' })
         expect(homeButton).not.toHaveClass('transition-all')
         expect(homeButton).not.toHaveClass('active:scale-95')
       })
@@ -487,7 +493,7 @@ describe('Nav Component', () => {
         vi.mocked(useReducedMotion).mockReturnValue(false)
         render(<Nav {...defaultProps} />)
 
-        const homeButton = screen.getByText('Home').closest('button')
+        const homeButton = screen.getByRole('button', { name: 'Home' })
         expect(homeButton).toHaveAttribute('style', expect.stringContaining('transition'))
       })
 
@@ -495,7 +501,7 @@ describe('Nav Component', () => {
         vi.mocked(useReducedMotion).mockReturnValue(true)
         render(<Nav {...defaultProps} />)
 
-        const homeButton = screen.getByText('Home').closest('button')
+        const homeButton = screen.getByRole('button', { name: 'Home' })
         expect(homeButton).toHaveAttribute('style', expect.stringContaining('none'))
       })
     })
@@ -505,7 +511,7 @@ describe('Nav Component', () => {
         vi.mocked(useReducedMotion).mockReturnValue(false)
         render(<Nav {...defaultProps} />)
 
-        const homeButton = screen.getByText('Home').closest('button')
+        const homeButton = screen.getByRole('button', { name: 'Home' })
         fireEvent.click(homeButton!)
 
         expect(mockVibrate).toHaveBeenCalledWith(10)
@@ -515,7 +521,7 @@ describe('Nav Component', () => {
         vi.mocked(useReducedMotion).mockReturnValue(true)
         render(<Nav {...defaultProps} />)
 
-        const homeButton = screen.getByText('Home').closest('button')
+        const homeButton = screen.getByRole('button', { name: 'Home' })
         fireEvent.click(homeButton!)
 
         expect(mockVibrate).not.toHaveBeenCalled()
@@ -526,10 +532,10 @@ describe('Nav Component', () => {
         render(<Nav {...defaultProps} />)
 
         // Click multiple nav buttons
-        fireEvent.click(screen.getByText('Home').closest('button')!)
-        fireEvent.click(screen.getByText('Analytics').closest('button')!)
-        fireEvent.click(screen.getByText('Insights').closest('button')!)
-        fireEvent.click(screen.getByText('Alerts').closest('button')!)
+        fireEvent.click(screen.getByRole('button', { name: 'Home' })!)
+        fireEvent.click(screen.getByRole('button', { name: 'Analytics' })!)
+        fireEvent.click(screen.getByRole('button', { name: 'Insights' })!)
+        fireEvent.click(screen.getByRole('button', { name: 'Alerts' })!)
 
         expect(mockVibrate).toHaveBeenCalledTimes(4)
         expect(mockVibrate).toHaveBeenCalledWith(10)
@@ -547,7 +553,7 @@ describe('Nav Component', () => {
         render(<Nav {...defaultProps} />)
 
         // Should not throw when clicking
-        const homeButton = screen.getByText('Home').closest('button')
+        const homeButton = screen.getByRole('button', { name: 'Home' })
         expect(() => fireEvent.click(homeButton!)).not.toThrow()
 
         // Restore for other tests
@@ -568,10 +574,11 @@ describe('Nav Component', () => {
         // JSDOM doesn't fully support calc() with env() so we verify the structure
         // In a real browser, paddingBottom would be set with safe area values
         // Here we verify the explicit padding values are set for other edges
+        // Story 14c.13: Reduced padding for smaller icon-only nav bar
         const style = nav.getAttribute('style')
-        expect(style).toContain('padding-top: 8px')
-        expect(style).toContain('padding-left: 16px')
-        expect(style).toContain('padding-right: 16px')
+        expect(style).toContain('padding-top: 4px')
+        expect(style).toContain('padding-left: 8px')
+        expect(style).toContain('padding-right: 8px')
 
         // The component does set paddingBottom with safe area - verify it in component code
         // This is a structural test; visual verification happens in browser testing
@@ -585,23 +592,8 @@ describe('Nav Component', () => {
       })
     })
 
-    describe('Font Weight Styling', () => {
-      it('should apply font-weight 600 to active tab label', () => {
-        render(<Nav {...defaultProps} view="dashboard" />)
-
-        const homeButton = screen.getByText('Home').closest('button')
-        const homeLabel = homeButton?.querySelector('span')
-        expect(homeLabel).toHaveStyle({ fontWeight: 600 })
-      })
-
-      it('should apply font-weight 500 to inactive tab labels', () => {
-        render(<Nav {...defaultProps} view="dashboard" />)
-
-        const analyticsButton = screen.getByText('Analytics').closest('button')
-        const analyticsLabel = analyticsButton?.querySelector('span')
-        expect(analyticsLabel).toHaveStyle({ fontWeight: 500 })
-      })
-    })
+    // Story 14c.13: Font weight tests removed - Nav is now icon-only without text labels
+    // Font styling tests no longer apply since there are no <span> labels to style
   })
 
   describe('Story 14d.3: Navigation Blocking', () => {
@@ -665,7 +657,7 @@ describe('Nav Component', () => {
         mockScanContextWithDialog(true)
         render(<Nav {...defaultProps} view="transaction-editor" />)
 
-        const homeButton = screen.getByText('Home').closest('button')
+        const homeButton = screen.getByRole('button', { name: 'Home' })
         fireEvent.click(homeButton!)
 
         // Navigation should be blocked
@@ -676,7 +668,7 @@ describe('Nav Component', () => {
         mockScanContextWithDialog(true)
         render(<Nav {...defaultProps} view="batch-capture" />)
 
-        const analyticsButton = screen.getByText('Analytics').closest('button')
+        const analyticsButton = screen.getByRole('button', { name: 'Analytics' })
         fireEvent.click(analyticsButton!)
 
         expect(mockSetView).not.toHaveBeenCalled()
@@ -686,7 +678,7 @@ describe('Nav Component', () => {
         mockScanContextWithDialog(true)
         render(<Nav {...defaultProps} view="batch-review" />)
 
-        const insightsButton = screen.getByText('Insights').closest('button')
+        const insightsButton = screen.getByRole('button', { name: 'Insights' })
         fireEvent.click(insightsButton!)
 
         expect(mockSetView).not.toHaveBeenCalled()
@@ -696,7 +688,7 @@ describe('Nav Component', () => {
         mockScanContextWithDialog(true)
         render(<Nav {...defaultProps} view="scan-result" />)
 
-        const alertsButton = screen.getByText('Alerts').closest('button')
+        const alertsButton = screen.getByRole('button', { name: 'Alerts' })
         fireEvent.click(alertsButton!)
 
         expect(mockSetView).not.toHaveBeenCalled()
@@ -708,7 +700,7 @@ describe('Nav Component', () => {
         mockScanContextWithDialog(true) // Dialog active
         render(<Nav {...defaultProps} view="dashboard" />)
 
-        const analyticsButton = screen.getByText('Analytics').closest('button')
+        const analyticsButton = screen.getByRole('button', { name: 'Analytics' })
         fireEvent.click(analyticsButton!)
 
         // Navigation should be allowed - dashboard is not a scan view
@@ -719,7 +711,7 @@ describe('Nav Component', () => {
         mockScanContextWithDialog(true)
         render(<Nav {...defaultProps} view="trends" />)
 
-        const homeButton = screen.getByText('Home').closest('button')
+        const homeButton = screen.getByRole('button', { name: 'Home' })
         fireEvent.click(homeButton!)
 
         expect(mockSetView).toHaveBeenCalledWith('dashboard')
@@ -729,7 +721,7 @@ describe('Nav Component', () => {
         mockScanContextWithDialog(true)
         render(<Nav {...defaultProps} view="insights" />)
 
-        const analyticsButton = screen.getByText('Analytics').closest('button')
+        const analyticsButton = screen.getByRole('button', { name: 'Analytics' })
         fireEvent.click(analyticsButton!)
 
         expect(mockSetView).toHaveBeenCalledWith('trends')
@@ -741,7 +733,7 @@ describe('Nav Component', () => {
         mockScanContextWithDialog(false) // No dialog
         render(<Nav {...defaultProps} view="transaction-editor" />)
 
-        const homeButton = screen.getByText('Home').closest('button')
+        const homeButton = screen.getByRole('button', { name: 'Home' })
         fireEvent.click(homeButton!)
 
         // Navigation should be allowed - no dialog active
@@ -752,7 +744,7 @@ describe('Nav Component', () => {
         vi.mocked(useScanOptional).mockReturnValue(null)
         render(<Nav {...defaultProps} view="transaction-editor" />)
 
-        const homeButton = screen.getByText('Home').closest('button')
+        const homeButton = screen.getByRole('button', { name: 'Home' })
         fireEvent.click(homeButton!)
 
         // Navigation should be allowed - context not available
@@ -765,7 +757,7 @@ describe('Nav Component', () => {
         mockScanContextWithDialog(true)
         render(<Nav {...defaultProps} view="transaction-editor" />)
 
-        const homeButton = screen.getByText('Home').closest('button')
+        const homeButton = screen.getByRole('button', { name: 'Home' })
         fireEvent.click(homeButton!)
 
         // Should show feedback message
@@ -778,7 +770,7 @@ describe('Nav Component', () => {
         mockScanContextWithDialog(true)
         render(<Nav {...defaultProps} view="transaction-editor" />)
 
-        const homeButton = screen.getByText('Home').closest('button')
+        const homeButton = screen.getByRole('button', { name: 'Home' })
         fireEvent.click(homeButton!)
 
         // Should trigger double-pulse haptic feedback
@@ -790,7 +782,7 @@ describe('Nav Component', () => {
         mockScanContextWithDialog(true)
         render(<Nav {...defaultProps} view="transaction-editor" />)
 
-        const homeButton = screen.getByText('Home').closest('button')
+        const homeButton = screen.getByRole('button', { name: 'Home' })
         fireEvent.click(homeButton!)
 
         expect(mockVibrate).not.toHaveBeenCalled()
@@ -800,7 +792,7 @@ describe('Nav Component', () => {
         mockScanContextWithDialog(true)
         render(<Nav {...defaultProps} view="transaction-editor" />)
 
-        const homeButton = screen.getByText('Home').closest('button')
+        const homeButton = screen.getByRole('button', { name: 'Home' })
         fireEvent.click(homeButton!)
 
         // Feedback should be visible
@@ -820,7 +812,7 @@ describe('Nav Component', () => {
         mockScanContextWithDialog(true)
         render(<Nav {...defaultProps} view="transaction-editor" />)
 
-        const homeButton = screen.getByText('Home').closest('button')
+        const homeButton = screen.getByRole('button', { name: 'Home' })
         fireEvent.click(homeButton!)
 
         const alert = screen.getByRole('alert')
@@ -833,7 +825,7 @@ describe('Nav Component', () => {
         mockScanContextWithDialog(true)
         render(<Nav {...defaultProps} view="transaction-editor" />)
 
-        const homeButton = screen.getByText('Home').closest('button')
+        const homeButton = screen.getByRole('button', { name: 'Home' })
         fireEvent.click(homeButton!)
 
         const alert = screen.getByRole('alert')
@@ -846,7 +838,7 @@ describe('Nav Component', () => {
         mockScanContextWithDialog(true)
         render(<Nav {...defaultProps} view="transaction-editor" />)
 
-        const homeButton = screen.getByText('Home').closest('button')
+        const homeButton = screen.getByRole('button', { name: 'Home' })
 
         // Rapid clicks
         fireEvent.click(homeButton!)
