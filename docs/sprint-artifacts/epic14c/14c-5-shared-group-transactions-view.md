@@ -34,7 +34,7 @@ Status: done
 - **LRU Eviction**: 50,000 record limit with 5,000 batch eviction
 
 ### Query Keys Added
-- `QUERY_KEYS.sharedGroupTransactions(groupId, startDate, endDate)`
+- `QUERY_KEYS.sharedGroupTransactions(groupId)` _(Story 14c.16: removed date range from key)_
 - `QUERY_KEYS.sharedGroups.all/single/transactions/members`
 
 ## Story

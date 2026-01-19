@@ -386,9 +386,11 @@ export async function fetchSharedGroupTransactions(...) {
 **Location:** `src/hooks/useSharedGroupTransactions.ts`
 
 ```typescript
+// Story 14c.16: Query key no longer includes date range
+// This enables shared cache across all date selections with client-side filtering
 export function useSharedGroupTransactions(options) {
   return useQuery({
-    queryKey: QUERY_KEYS.sharedGroupTransactions(groupId, startDate, endDate),
+    queryKey: QUERY_KEYS.sharedGroupTransactions(groupId),
     queryFn: () => fetchSharedGroupTransactions(...),
     staleTime: 5 * 60 * 1000,  // 5 minutes
     gcTime: 30 * 60 * 1000,    // 30 minutes

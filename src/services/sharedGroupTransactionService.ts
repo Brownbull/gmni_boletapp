@@ -122,11 +122,26 @@ export interface DeltaFetchResult {
 // Constants
 // ============================================================================
 
-/** Default limit per member query */
+/** Default limit per member query (when date range is specified) */
 const DEFAULT_LIMIT_PER_MEMBER = 100;
 
-/** Maximum date range in months */
+/**
+ * Story 14c.16 AC8: Higher limit for full fetch (no date range)
+ * This is the total limit when fetching ALL transactions for a group
+ *
+ * Calculation: 2-year lookback × 10 members × 30 txns/member/month = ~7,200
+ * Using 10,000 to provide headroom for active households
+ */
+const DEFAULT_LIMIT_FULL_FETCH = 10_000;
+
+/** Maximum date range in months (for client-side filtering) */
 const MAX_DATE_RANGE_MONTHS = 12;
+
+/**
+ * Story 14c.16 AC8: Default lookback in years when no date range provided
+ * Prevents fetching excessive historical data
+ */
+const DEFAULT_LOOKBACK_YEARS = 2;
 
 // ============================================================================
 // Query Functions
@@ -166,15 +181,36 @@ export async function fetchSharedGroupTransactions(
         return [];
     }
 
-    // Calculate limit
-    const maxResults = options.limitPerMember
-        ? options.limitPerMember * members.length
-        : DEFAULT_LIMIT_PER_MEMBER * members.length;
+    // Story 14c.16: Determine if this is a "full fetch" (no date range specified)
+    // Full fetch uses higher limit and 2-year lookback
+    const isFullFetch = !options.startDate && !options.endDate;
+
+    // Calculate limit based on fetch mode
+    let maxResults: number;
+    if (options.limitPerMember) {
+        // Explicit limit specified
+        maxResults = options.limitPerMember * members.length;
+    } else if (isFullFetch) {
+        // Story 14c.16 AC8: Full fetch uses higher limit
+        maxResults = DEFAULT_LIMIT_FULL_FETCH;
+    } else {
+        // Date-filtered fetch uses normal per-member limit
+        maxResults = DEFAULT_LIMIT_PER_MEMBER * members.length;
+    }
+
+    // Story 14c.16 AC8: Apply 2-year lookback for full fetch
+    const effectiveOptions = isFullFetch
+        ? {
+            ...options,
+            startDate: getDefaultLookbackDate(),
+            endDate: new Date(), // Today
+        }
+        : options;
 
     // Try Cloud Function first (primary, secure method)
     if (USE_CLOUD_FUNCTION) {
         try {
-            return await fetchViaCloudFunction(groupId, options, maxResults);
+            return await fetchViaCloudFunction(groupId, effectiveOptions, maxResults);
         } catch (error) {
             // Log and fall back to direct Firestore queries
             if (import.meta.env.DEV) {
@@ -185,7 +221,7 @@ export async function fetchSharedGroupTransactions(
     }
 
     // Fallback: Per-member queries (used in emulator or if CF fails)
-    return fetchSharedGroupTransactionsFallback(db, appId, groupId, members, options);
+    return fetchSharedGroupTransactionsFallback(db, appId, groupId, members, effectiveOptions);
 }
 
 /**
@@ -558,6 +594,24 @@ export function getDefaultDateRange(): { startDate: Date; endDate: Date } {
     const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
     const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0); // Last day of month
     return { startDate, endDate };
+}
+
+/**
+ * Get the default lookback start date for full fetch operations.
+ *
+ * Story 14c.16 AC8: Default 2-year lookback
+ * - Prevents fetching excessive historical data
+ * - Still allows access to recent history
+ *
+ * @returns Date 2 years ago from today
+ */
+export function getDefaultLookbackDate(): Date {
+    const now = new Date();
+    return new Date(
+        now.getFullYear() - DEFAULT_LOOKBACK_YEARS,
+        now.getMonth(),
+        now.getDate()
+    );
 }
 
 /**

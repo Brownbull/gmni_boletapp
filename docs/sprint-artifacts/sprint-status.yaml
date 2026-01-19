@@ -499,7 +499,8 @@ development_status:
   14c-10-empty-states-loading: done  # 2 pts - Skeleton UI, empty states, loading feedback
   14c-11-error-handling: ready-for-dev  # 2 pts - User not found, network errors, quota exceeded
 
-  # Phase 7: Tech Debt - 4 pts
+  # Phase 7: Bug Fixes & Tech Debt - 9 pts
+  14c-16-cache-architecture-fix: done  # 5 pts - Fix circular dependency: fetch all transactions once, filter client-side, compute years from full cache [BUG: 2025 transactions not visible] - Atlas Code Review APPROVED 2026-01-19
   14c-14-tech-debt-functions-config-migration: backlog  # 2 pts - Migrate functions.config() to env vars before March 2026
   14c-15-notification-tech-debt: backlog  # 2 pts - Consolidate NotificationClickData interface + VAPID public key to env var [FROM: 14c.13 code review]
 
