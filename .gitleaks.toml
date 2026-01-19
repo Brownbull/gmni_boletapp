@@ -61,6 +61,7 @@ paths = [
   '''\.github/workflows/.*\.yml$''',
   # BMAD config files (contain SHA-256 file hashes, not secrets)
   '''_bmad/_config/.*\.csv$''',
+  '''\.bmad/_cfg/.*\.csv$''',
   # BMAD testarch knowledge docs (contain example tokens for documentation)
   '''_bmad/bmm/testarch/knowledge/.*\.md$''',
   # Firebase messaging service worker (requires client-side Firebase config)

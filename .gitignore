@@ -89,3 +89,6 @@ oldbmad/
 docs/uxui/cc_chrome/backup
 # Claude Code credentials backup - DO NOT COMMIT
 docs/uxui/cc_chrome/backup/.credentials.json
+
+# Claude Code context files
+CLAUDE.md

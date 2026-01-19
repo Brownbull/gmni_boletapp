@@ -98,6 +98,7 @@
 | Query key without date range | `sharedGroupTransactions(groupId)` only - enables cache sharing (14c.16) |
 | Client-side date filtering | Fetch ALL once, filter via `useMemo` - fixes year dropdown bug (14c.16) |
 | Three-tier return values | `rawTransactions` → `allTransactions` → `transactions` for filter flexibility |
+| Wire raw data to views | Pass `rawTransactions` (not filtered) to views for year picker computation (14c.16 follow-up) |
 
 ### i18n & Translations
 | Pattern | Rule |
