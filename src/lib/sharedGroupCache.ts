@@ -200,33 +200,68 @@ export function isIndexedDBAvailable(): boolean {
 // ============================================================================
 
 /**
+ * Write result type indicating success or degraded mode.
+ * Story 14c.11: Error Handling - AC5 IndexedDB Quota Exceeded
+ */
+export interface WriteCacheResult {
+    success: boolean;
+    /** If quota was exceeded, cleanup was attempted */
+    quotaExceeded?: boolean;
+    /** Number of records written */
+    writtenCount?: number;
+}
+
+/**
  * Write transactions to the IndexedDB cache.
  *
  * AC3: Implement writeToCache(groupId, transactions[])
+ * Story 14c.11 AC5: Handle IndexedDB quota exceeded gracefully
  *
  * @param db IndexedDB instance
  * @param groupId Shared group ID
  * @param transactions Array of transactions to cache
+ * @returns Result indicating success or if quota was exceeded
  */
 export async function writeToCache(
     db: IDBDatabase,
     groupId: string,
     transactions: SharedGroupTransaction[]
-): Promise<void> {
+): Promise<WriteCacheResult> {
     return new Promise((resolve, reject) => {
         const transaction = db.transaction(STORES.TRANSACTIONS, 'readwrite');
         const store = transaction.objectStore(STORES.TRANSACTIONS);
         const now = Date.now();
+        let writtenCount = 0;
 
         transaction.oncomplete = () => {
             // After writing, check if we need to evict
             enforceCacheLimit(db).catch(console.error);
-            resolve();
+            resolve({ success: true, writtenCount });
         };
 
         transaction.onerror = () => {
-            console.error('[sharedGroupCache] writeToCache error:', transaction.error);
-            reject(transaction.error);
+            const error = transaction.error;
+            console.error('[sharedGroupCache] writeToCache error:', error);
+
+            // Story 14c.11 AC5: Handle quota exceeded
+            if (isQuotaExceededError(error)) {
+                console.warn('[sharedGroupCache] Quota exceeded, attempting cleanup...');
+                // Resolve with partial success - caller should show non-blocking warning
+                resolve({ success: false, quotaExceeded: true, writtenCount });
+            } else {
+                reject(error);
+            }
+        };
+
+        // Handle per-record errors (some browsers throw on individual put)
+        transaction.onabort = () => {
+            const error = transaction.error;
+            if (isQuotaExceededError(error)) {
+                console.warn('[sharedGroupCache] Quota exceeded during write, partial cache');
+                resolve({ success: false, quotaExceeded: true, writtenCount });
+            } else {
+                reject(error);
+            }
         };
 
         // Write each transaction
@@ -243,9 +278,42 @@ export async function writeToCache(
                 data: { ...txn, id: txn.id },
             };
 
-            store.put(cached);
+            try {
+                store.put(cached);
+                writtenCount++;
+            } catch (err) {
+                // Individual put failed
+                if (isQuotaExceededError(err)) {
+                    console.warn(`[sharedGroupCache] Quota exceeded at record ${writtenCount}`);
+                    break; // Stop writing, transaction will complete with what we have
+                }
+                throw err;
+            }
         }
     });
+}
+
+/**
+ * Check if an error is a quota exceeded error.
+ * Story 14c.11 AC5: Detect IndexedDB quota errors
+ */
+function isQuotaExceededError(error: unknown): boolean {
+    if (!error) return false;
+
+    // DOMException with QuotaExceededError name
+    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+        return true;
+    }
+
+    // Check error message as fallback
+    if (error && typeof error === 'object') {
+        const err = error as { name?: string; message?: string };
+        if (err.name === 'QuotaExceededError') return true;
+        if (err.message?.includes('QuotaExceeded')) return true;
+        if (err.message?.includes('quota')) return true;
+    }
+
+    return false;
 }
 
 /**
@@ -567,6 +635,95 @@ export async function enforceCacheLimit(db: IDBDatabase): Promise<void> {
             }
         };
     });
+}
+
+// ============================================================================
+// Story 14c.11: Quota Exceeded Handling
+// ============================================================================
+
+/**
+ * Attempt to free up storage space by evicting old records.
+ * Story 14c.11 AC5: Handle quota exceeded with cleanup
+ *
+ * @param db IndexedDB instance
+ * @param aggressiveEviction If true, evict more records
+ * @returns Number of records evicted
+ */
+export async function cleanupOldCacheEntries(
+    db: IDBDatabase,
+    aggressiveEviction = false
+): Promise<number> {
+    const evictionCount = aggressiveEviction
+        ? CACHE_CONFIG.EVICTION_BATCH * 2
+        : CACHE_CONFIG.EVICTION_BATCH;
+
+    if (import.meta.env.DEV) {
+        console.log(`[sharedGroupCache] Cleaning up ${evictionCount} old cache entries`);
+    }
+
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(STORES.TRANSACTIONS, 'readwrite');
+        const store = transaction.objectStore(STORES.TRANSACTIONS);
+        const index = store.index('by-cached-at');
+
+        let deleted = 0;
+
+        transaction.oncomplete = () => {
+            if (import.meta.env.DEV) {
+                console.log(`[sharedGroupCache] Cleanup complete: ${deleted} records evicted`);
+            }
+            resolve(deleted);
+        };
+
+        transaction.onerror = () => reject(transaction.error);
+
+        // Iterate from oldest to newest
+        const request = index.openCursor(null, 'next');
+
+        request.onsuccess = (event) => {
+            const cursor = (event.target as IDBRequest<IDBCursorWithValue | null>).result;
+            if (cursor && deleted < evictionCount) {
+                store.delete(cursor.primaryKey);
+                deleted++;
+                cursor.continue();
+            }
+        };
+    });
+}
+
+/**
+ * Attempt to write with automatic cleanup on quota exceeded.
+ * Story 14c.11 AC5: Graceful handling with retry after cleanup
+ *
+ * @param db IndexedDB instance
+ * @param groupId Shared group ID
+ * @param transactions Transactions to cache
+ * @returns Result including whether quota was hit and handled
+ */
+export async function writeToCacheWithRetry(
+    db: IDBDatabase,
+    groupId: string,
+    transactions: SharedGroupTransaction[]
+): Promise<WriteCacheResult> {
+    const result = await writeToCache(db, groupId, transactions);
+
+    // If quota exceeded, try cleanup and retry once
+    if (result.quotaExceeded) {
+        try {
+            await cleanupOldCacheEntries(db, true);
+            // Retry the write
+            const retryResult = await writeToCache(db, groupId, transactions);
+            return {
+                ...retryResult,
+                quotaExceeded: true, // Keep flag so caller knows quota was hit
+            };
+        } catch (retryErr) {
+            console.warn('[sharedGroupCache] Retry after cleanup failed:', retryErr);
+            return { success: false, quotaExceeded: true, writtenCount: 0 };
+        }
+    }
+
+    return result;
 }
 
 // ============================================================================

@@ -99,6 +99,10 @@
 | Client-side date filtering | Fetch ALL once, filter via `useMemo` - fixes year dropdown bug (14c.16) |
 | Three-tier return values | `rawTransactions` → `allTransactions` → `transactions` for filter flexibility |
 | Wire raw data to views | Pass `rawTransactions` (not filtered) to views for year picker computation (14c.16 follow-up) |
+| Error classification | Use `classifyError()` utility to detect Firebase/network/storage errors (14c.11) |
+| Quota exceeded handling | `writeToCacheWithRetry()` cleans cache before retry, returns gracefully on failure |
+| Error boundary wrapping | Domain views (GruposView) wrapped with `SharedGroupErrorBoundary` in parent (SettingsView) |
+| Test mock completeness | Mock ALL imported functions including `writeToCacheWithRetry` to avoid vitest warnings |
 
 ### i18n & Translations
 | Pattern | Rule |
@@ -212,6 +216,8 @@
 | Component integration | New components MUST be rendered in views, not just exported |
 | i18n `t` prop | Pass `t` function to components with user-facing text |
 | getText fallback | Use `getText(key)` helper for components that may not have `t` |
+| Error boundary integration | Wrap domain views (e.g., GruposView) with domain error boundary |
+| Props type export | Export interface alongside component: `export type { FooProps }` |
 
 ### Data & State
 | Pattern | Rule |
