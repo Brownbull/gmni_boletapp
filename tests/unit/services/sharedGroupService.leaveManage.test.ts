@@ -286,8 +286,8 @@ describe('sharedGroupService - Leave/Manage Functions', () => {
             await deleteSharedGroupWithCleanup(mockDb, 'owner-user-id', 'boletapp', 'group-123', false)
 
             expect(writeBatch).toHaveBeenCalledWith(mockDb)
-            // Should call set for each member's profile
-            expect(mockBatch.set).toHaveBeenCalledTimes(mockGroup.members.length)
+            // Should call set only for owner's profile (other members' stale refs cleaned up on access)
+            expect(mockBatch.set).toHaveBeenCalledTimes(1)
             // Should delete the group document
             expect(mockBatch.delete).toHaveBeenCalled()
             expect(mockBatch.commit).toHaveBeenCalled()
@@ -296,8 +296,8 @@ describe('sharedGroupService - Leave/Manage Functions', () => {
         it('untags all transactions when removeTransactionTags is true', async () => {
             await deleteSharedGroupWithCleanup(mockDb, 'owner-user-id', 'boletapp', 'group-123', true)
 
-            // Should query transactions for each member
-            expect(getDocs).toHaveBeenCalledTimes(mockGroup.members.length)
+            // Should query transactions only for owner (security rules prevent writing to other users' transactions)
+            expect(getDocs).toHaveBeenCalledTimes(1)
         })
 
         it('skips transaction untagging when removeTransactionTags is false', async () => {

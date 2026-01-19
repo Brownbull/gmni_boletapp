@@ -61,9 +61,14 @@ paths = [
   '''\.github/workflows/.*\.yml$''',
   # BMAD config files (contain SHA-256 file hashes, not secrets)
   '''_bmad/_config/.*\.csv$''',
+  # BMAD testarch knowledge docs (contain example tokens for documentation)
+  '''_bmad/bmm/testarch/knowledge/.*\.md$''',
   # Firebase messaging service worker (requires client-side Firebase config)
   # Firebase API keys are protected by security rules, not secrecy
   '''public/firebase-messaging-sw\.js$''',
+  # Scripts that use Firebase client config (public API key, not secret)
+  # Firebase API keys are protected by security rules, not by being secret
+  '''scripts/fix-duplicate-sharedGroupIds\.ts$''',
 ]
 
 # Regex patterns for content to ignore (placeholder values)

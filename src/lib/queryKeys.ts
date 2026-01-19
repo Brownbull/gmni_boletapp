@@ -87,11 +87,18 @@ export const QUERY_KEYS = {
 
     /**
      * Story 14c.5: Shared Group Transactions
+     * Story 14c.16: Cache Architecture Fix - Removed date range from key
      * Multi-member transaction queries with IndexedDB caching
-     * Key: ['sharedGroupTransactions', groupId, startDate, endDate]
+     *
+     * Key: ['sharedGroupTransactions', groupId]
+     *
+     * Date range is NO LONGER part of the key. This allows:
+     * - Single cache entry per group (shared across all date selections)
+     * - Client-side filtering via useMemo (not server-side)
+     * - Proper year filter dropdown population from full cached data
      */
-    sharedGroupTransactions: (groupId: string, startDate: string, endDate: string) =>
-        ['sharedGroupTransactions', groupId, startDate, endDate] as const,
+    sharedGroupTransactions: (groupId: string) =>
+        ['sharedGroupTransactions', groupId] as const,
 
     /**
      * Story 14c.1: Shared Groups
@@ -104,9 +111,9 @@ export const QUERY_KEYS = {
         /** Single shared group */
         single: (groupId: string) =>
             ['sharedGroups', 'single', groupId] as const,
-        /** Shared group transactions (alias for sharedGroupTransactions) */
-        transactions: (groupId: string, startDate: string, endDate: string) =>
-            ['sharedGroupTransactions', groupId, startDate, endDate] as const,
+        /** Shared group transactions (alias for sharedGroupTransactions) - Story 14c.16: Removed date range */
+        transactions: (groupId: string) =>
+            ['sharedGroupTransactions', groupId] as const,
         /** Shared group members */
         members: (groupId: string) =>
             ['sharedGroups', groupId, 'members'] as const,
