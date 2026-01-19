@@ -21,6 +21,7 @@ import { getFirestore } from 'firebase/firestore';
 import type { PendingInvitation } from '../../types/sharedGroup';
 import { isInvitationExpired, getInvitationTimeRemaining } from '../../types/sharedGroup';
 import { acceptInvitation, declineInvitation } from '../../services/sharedGroupService';
+import { classifyError, getErrorConfig, SharedGroupErrorType } from '../../lib/sharedGroupErrors';
 
 // ============================================================================
 // Local Helper Functions (Story 14c.8: Group Consolidation)
@@ -76,11 +77,12 @@ export const PendingInvitationsSection: React.FC<PendingInvitationsSectionProps>
     appId,
     t,
     theme = 'light',
-    lang: _lang = 'es', // Reserved for future localization
+    lang: _lang = 'es',
     onInvitationHandled,
     onShowToast,
 }) => {
-    void _lang; // Silence unused variable warning (reserved for future use)
+    // _lang reserved for future localization
+    void _lang;
     const isDark = theme === 'dark';
     const [processingId, setProcessingId] = useState<string | null>(null);
 
@@ -101,30 +103,12 @@ export const PendingInvitationsSection: React.FC<PendingInvitationsSectionProps>
 
             onInvitationHandled?.();
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            // AC8: Use classifyError for unified error handling (Story 14c.11)
+            const classifiedError = classifyError(error);
+            const errorConfig = getErrorConfig(classifiedError.type);
 
-            // AC8: Handle specific error cases
-            let displayMessage: string;
-            switch (errorMessage) {
-                case 'GROUP_FULL':
-                    displayMessage = t('groupFull');
-                    break;
-                case 'ALREADY_MEMBER':
-                    displayMessage = t('alreadyMember');
-                    break;
-                case 'INVITATION_EXPIRED':
-                    displayMessage = t('invitationExpired');
-                    break;
-                case 'GROUP_NOT_FOUND':
-                    displayMessage = t('groupNotFound');
-                    break;
-                case 'INVITATION_NOT_FOUND':
-                    displayMessage = t('invitationNotFound');
-                    break;
-                default:
-                    displayMessage = errorMessage;
-            }
-
+            // Get translated message from error config
+            const displayMessage = t(errorConfig.messageKey);
             onShowToast?.(displayMessage, 'error');
         } finally {
             setProcessingId(null);
@@ -145,8 +129,11 @@ export const PendingInvitationsSection: React.FC<PendingInvitationsSectionProps>
 
             onInvitationHandled?.();
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            onShowToast?.(errorMessage, 'error');
+            // Use classifyError for unified error handling (Story 14c.11)
+            const classifiedError = classifyError(error);
+            const errorConfig = getErrorConfig(classifiedError.type);
+            const displayMessage = t(errorConfig.messageKey);
+            onShowToast?.(displayMessage, 'error');
         } finally {
             setProcessingId(null);
         }
@@ -266,6 +253,21 @@ export const PendingInvitationsSection: React.FC<PendingInvitationsSectionProps>
                                     </div>
                                 </div>
                             </div>
+
+                            {/* AC2: Expired invitation help text (Story 14c.11) */}
+                            {expired && (
+                                <div
+                                    className="text-xs mb-3 p-2 rounded-lg"
+                                    style={{
+                                        backgroundColor: isDark
+                                            ? 'rgba(239, 68, 68, 0.1)'
+                                            : 'rgba(239, 68, 68, 0.05)',
+                                        color: 'var(--text-secondary)',
+                                    }}
+                                >
+                                    {t(getErrorConfig(SharedGroupErrorType.INVITATION_EXPIRED).messageKey)}
+                                </div>
+                            )}
 
                             {/* Action Buttons */}
                             <div className="flex gap-2">

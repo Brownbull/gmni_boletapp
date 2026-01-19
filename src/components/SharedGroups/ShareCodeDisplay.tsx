@@ -111,8 +111,8 @@ export const ShareCodeDisplay: React.FC<ShareCodeDisplayProps> = ({
                 await navigator.share({
                     title: groupName,
                     text: lang === 'es'
-                        ? `Únete a mi grupo "${groupName}" en BoletApp`
-                        : `Join my group "${groupName}" on BoletApp`,
+                        ? `Únete a mi grupo "${groupName}" en Gastify`
+                        : `Join my group "${groupName}" on Gastify`,
                     url: shareLink,
                 });
             } catch (err) {

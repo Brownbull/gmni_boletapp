@@ -55,6 +55,7 @@ import {
     openSharedGroupDB,
     readFromCache,
     writeToCache,
+    writeToCacheWithRetry,
     removeFromCache,
     getSyncMetadata,
     updateSyncMetadata,
@@ -362,7 +363,8 @@ export function useSharedGroupTransactions(
                 try {
                     const idb = await openSharedGroupDB();
                     // Story 14c.16 AC2: Store ALL transactions in IndexedDB
-                    await writeToCache(idb, group.id, transactions);
+                    // Story 14c.11 AC5: Use writeToCacheWithRetry for quota handling
+                    await writeToCacheWithRetry(idb, group.id, transactions);
                     await updateSyncMetadata(idb, {
                         groupId: group.id,
                         lastSyncTimestamp: Date.now(),

@@ -28,6 +28,7 @@ import {
     AppView,
     CuentaView,
 } from '../components/settings';
+import { SharedGroupErrorBoundary } from '../components/SharedGroups';
 
 interface SettingsViewProps {
     lang: string;
@@ -303,17 +304,24 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 );
 
             case 'grupos':
+                // Story 14c.11: Wrap with error boundary to catch component crashes
                 return (
-                    <GruposView
+                    <SharedGroupErrorBoundary
                         t={t}
                         theme={theme}
-                        userId={userId}
-                        userEmail={userEmail}
-                        userDisplayName={displayName}
-                        appId={appId || 'boletapp'}
-                        lang={lang as 'en' | 'es'}
-                        onShowToast={onShowToast}
-                    />
+                        onNavigateHome={() => setCurrentView('main')}
+                    >
+                        <GruposView
+                            t={t}
+                            theme={theme}
+                            userId={userId}
+                            userEmail={userEmail}
+                            userDisplayName={displayName}
+                            appId={appId || 'boletapp'}
+                            lang={lang as 'en' | 'es'}
+                            onShowToast={onShowToast}
+                        />
+                    </SharedGroupErrorBoundary>
                 );
 
             case 'app':

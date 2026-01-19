@@ -1,6 +1,6 @@
 # Story 14c.11: Error Handling
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -48,48 +48,48 @@ so that I know what went wrong and how to fix it.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create Error Display Components (AC: #1, #2, #3)
-  - [ ] 1.1 Create `SharedGroupError.tsx` - unified error display
-  - [ ] 1.2 Create error type enum: USER_NOT_FOUND, INVITATION_EXPIRED, GROUP_FULL, etc.
-  - [ ] 1.3 Design error illustrations per mockup
-  - [ ] 1.4 Add "Try Again" button for recoverable errors
-  - [ ] 1.5 Add contextual help text for each error type
+- [x] Task 1: Create Error Display Components (AC: #1, #2, #3)
+  - [x] 1.1 Create `SharedGroupError.tsx` - unified error display
+  - [x] 1.2 Create error type enum: USER_NOT_FOUND, INVITATION_EXPIRED, GROUP_FULL, etc.
+  - [x] 1.3 Design error illustrations per mockup (emoji icons)
+  - [x] 1.4 Add "Try Again" button for recoverable errors
+  - [x] 1.5 Add contextual help text for each error type
 
-- [ ] Task 2: Implement Invitation Error Handling (AC: #1, #2, #3)
-  - [ ] 2.1 Detect user not found when sending invitation
-  - [ ] 2.2 Detect expired invitation via `expiresAt` check
-  - [ ] 2.3 Detect group full via `members.length >= 10`
-  - [ ] 2.4 Show appropriate error in invitation UI
+- [x] Task 2: Implement Invitation Error Handling (AC: #1, #2, #3)
+  - [x] 2.1 Detect user not found when sending invitation
+  - [x] 2.2 Detect expired invitation via `expiresAt` check
+  - [x] 2.3 Detect group full via `members.length >= 10`
+  - [x] 2.4 Show appropriate error in invitation UI (leveraged existing PendingInvitationsSection patterns)
 
-- [ ] Task 3: Implement Network Error Handling (AC: #4)
-  - [ ] 3.1 Catch network errors in all shared group operations
-  - [ ] 3.2 Show connection error UI with retry option
-  - [ ] 3.3 Preserve cached data visibility during offline
-  - [ ] 3.4 Auto-retry when connection restored (optional)
+- [x] Task 3: Implement Network Error Handling (AC: #4)
+  - [x] 3.1 Catch network errors in all shared group operations
+  - [x] 3.2 Show connection error UI with retry option
+  - [x] 3.3 Preserve cached data visibility during offline
+  - [x] 3.4 Auto-retry when connection restored (optional - via React Query)
 
-- [ ] Task 4: Implement Storage Error Handling (AC: #5)
-  - [ ] 4.1 Catch IndexedDB quota exceeded errors
-  - [ ] 4.2 Show non-blocking toast warning
-  - [ ] 4.3 Trigger cache cleanup if needed
-  - [ ] 4.4 Fall back to in-memory caching
+- [x] Task 4: Implement Storage Error Handling (AC: #5)
+  - [x] 4.1 Catch IndexedDB quota exceeded errors
+  - [x] 4.2 Show non-blocking toast warning
+  - [x] 4.3 Trigger cache cleanup if needed (cleanupOldCacheEntries)
+  - [x] 4.4 Fall back to in-memory caching (writeToCacheWithRetry)
 
-- [ ] Task 5: Error Boundaries (AC: all)
-  - [ ] 5.1 Create `SharedGroupErrorBoundary.tsx`
-  - [ ] 5.2 Wrap shared group views with error boundary
-  - [ ] 5.3 Display graceful error UI on component crash
-  - [ ] 5.4 Log errors for debugging
+- [x] Task 5: Error Boundaries (AC: all)
+  - [x] 5.1 Create `SharedGroupErrorBoundary.tsx`
+  - [x] 5.2 Wrap shared group views with error boundary (integrated into SettingsView.tsx for GruposView)
+  - [x] 5.3 Display graceful error UI on component crash
+  - [x] 5.4 Log errors for debugging
 
-- [ ] Task 6: i18n Translations
-  - [ ] 6.1 Add all error message strings
-  - [ ] 6.2 Add help text strings
-  - [ ] 6.3 Add button label strings
+- [x] Task 6: i18n Translations
+  - [x] 6.1 Add all error message strings (EN + ES)
+  - [x] 6.2 Add help text strings
+  - [x] 6.3 Add button label strings
 
-- [ ] Task 7: Component Tests
-  - [ ] 7.1 Test invalid code error display
-  - [ ] 7.2 Test expired code error display
-  - [ ] 7.3 Test group full error display
-  - [ ] 7.4 Test network error handling
-  - [ ] 7.5 Test quota exceeded handling
+- [x] Task 7: Component Tests
+  - [x] 7.1 Test invalid code error display
+  - [x] 7.2 Test expired code error display
+  - [x] 7.3 Test group full error display
+  - [x] 7.4 Test network error handling
+  - [x] 7.5 Test quota exceeded handling
 
 ## Dev Notes
 
@@ -380,9 +380,90 @@ See mockup: `docs/uxui/mockups/01_views/shared-groups.html` → "Error States" t
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
+1. Created unified error classification system in `src/lib/sharedGroupErrors.ts` with:
+   - 16 error types covering all shared group operation failures
+   - `classifyError()` function to automatically detect Firebase, network, storage quota, and permission errors
+   - `getErrorConfig()` for UI configuration per error type
+   - Helper functions: `isNetworkRelated()`, `isStorageRelated()`, `shouldShowAsToast()`
+
+2. Created `SharedGroupError.tsx` component with:
+   - Full card mode for blocking errors
+   - Compact inline mode for non-blocking errors
+   - Network status indicator for connection errors
+   - Retry button for recoverable errors
+   - Navigate home button for non-recoverable errors
+   - Dark/light theme support
+   - ARIA accessibility (role="alert")
+
+3. Created `SharedGroupErrorBoundary.tsx` React error boundary with:
+   - Graceful error UI on component crashes
+   - Retry functionality to reset error state
+   - Navigate home callback
+   - Custom fallback support
+   - Error logging with component stack
+
+4. Enhanced IndexedDB cache with storage quota handling:
+   - `isQuotaExceededError()` detection
+   - `cleanupOldCacheEntries()` for aggressive cache eviction
+   - `writeToCacheWithRetry()` for automatic cleanup and retry
+   - Partial write support when quota exceeded mid-operation
+
+5. Added comprehensive i18n translations (EN + ES):
+   - 16 error title keys
+   - 16 error message keys
+   - 8 UI label keys (retry, dismiss, offline status, etc.)
+
+6. Created 89 unit tests across 3 test files:
+   - `tests/unit/lib/sharedGroupErrors.test.ts` (41 tests)
+   - `tests/unit/components/SharedGroups/SharedGroupError.test.tsx` (32 tests)
+   - `tests/unit/components/SharedGroups/SharedGroupErrorBoundary.test.tsx` (16 tests)
+
 ### File List
+
+**New Files Created:**
+- `src/lib/sharedGroupErrors.ts` - Error types and classification utilities
+- `src/components/SharedGroups/SharedGroupError.tsx` - Error display component
+- `src/components/SharedGroups/SharedGroupErrorBoundary.tsx` - React error boundary
+- `tests/unit/lib/sharedGroupErrors.test.ts` - Error utilities tests
+- `tests/unit/components/SharedGroups/SharedGroupError.test.tsx` - Error component tests
+- `tests/unit/components/SharedGroups/SharedGroupErrorBoundary.test.tsx` - Error boundary tests
+
+**Modified Files:**
+- `src/lib/sharedGroupCache.ts` - Added quota exceeded handling, cleanup functions
+- `src/hooks/useSharedGroupTransactions.ts` - Added writeToCacheWithRetry import
+- `src/utils/translations.ts` - Added error handling translations (EN + ES)
+- `docs/sprint-artifacts/sprint-status.yaml` - Updated story status to in-progress
+- `docs/sprint-artifacts/epic14c/14c-11-error-handling.md` - Updated with notes
+- `src/components/SharedGroups/index.ts` - Added exports for error components
+
+### Review Follow-ups (AI)
+- [x] [AI-Review][HIGH] Integrate SharedGroupErrorBoundary into shared group views (App.tsx or view components)
+  - Integrated in `src/views/SettingsView.tsx` wrapping GruposView
+- [x] [AI-Review][HIGH] Integrate classifyError() into PendingInvitationsSection (replace manual switch/case)
+  - Updated `src/components/SharedGroups/PendingInvitationsSection.tsx` to use classifyError() and getErrorConfig()
+- [x] [AI-Review][MEDIUM] Add SharedGroupError component usage for AC2 expired invitation display
+  - Added expired invitation help text using error config in PendingInvitationsSection
+
+### Second Implementation Session Notes
+
+7. Addressed all code review follow-ups:
+   - Integrated `SharedGroupErrorBoundary` into `SettingsView.tsx` wrapping `GruposView`
+   - Replaced manual switch/case error handling with `classifyError()` and `getErrorConfig()` in `PendingInvitationsSection`
+   - Added expired invitation help text using `SharedGroupErrorType.INVITATION_EXPIRED` error config for AC2
+
+8. All 109 tests passing:
+   - 41 error utility tests
+   - 32 error component tests
+   - 16 error boundary tests
+   - 20 shared group transactions hook tests
+
+9. Build successful with no TypeScript errors in modified files
+
+### Additional Files Modified (Second Session)
+- `src/views/SettingsView.tsx` - Wrapped GruposView with SharedGroupErrorBoundary
+- `src/components/SharedGroups/PendingInvitationsSection.tsx` - Integrated classifyError() and added AC2 expired message
 
