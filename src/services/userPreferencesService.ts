@@ -34,6 +34,19 @@ export type SupportedFontFamily = 'outfit' | 'space';
 export type ForeignLocationDisplayFormat = 'code' | 'flag';
 
 /**
+ * View mode preference for shared groups
+ * Story 14c.18: Persisted preference for personal vs group mode
+ */
+export interface ViewModePreference {
+  /** Current mode: personal or group */
+  mode: 'personal' | 'group';
+  /** Group ID when mode is 'group' */
+  groupId?: string;
+  /** Timestamp of last update (for sync conflict resolution) */
+  updatedAt?: any;
+}
+
+/**
  * User preferences stored in Firestore
  * Story 14.22: Extended to include location settings for cloud persistence
  */
@@ -54,6 +67,8 @@ export interface UserPreferences {
   fontFamily?: SupportedFontFamily;
   /** Story 14.35b: Foreign location display format ('code' or 'flag') */
   foreignLocationFormat?: ForeignLocationDisplayFormat;
+  /** Story 14c.18: View mode preference (personal vs group) */
+  viewModePreference?: ViewModePreference;
   /** Timestamp when preferences were last updated */
   updatedAt?: any;
 }
@@ -107,6 +122,8 @@ export async function getUserPreferences(
         fontFamily: data.fontFamily || DEFAULT_PREFERENCES.fontFamily,
         // Story 14.35b: Foreign location display format (defaults to 'code')
         foreignLocationFormat: data.foreignLocationFormat || DEFAULT_PREFERENCES.foreignLocationFormat,
+        // Story 14c.18: View mode preference (personal vs group)
+        viewModePreference: data.viewModePreference,
         updatedAt: data.updatedAt,
       };
     }
@@ -165,3 +182,88 @@ export const CURRENCY_INFO: Record<SupportedCurrency, { name: string; nameEs: st
  * List of supported currencies for dropdown options
  */
 export const SUPPORTED_CURRENCIES: SupportedCurrency[] = ['CLP', 'USD', 'EUR'];
+
+// =============================================================================
+// Story 14c.18: View Mode Preference Functions
+// =============================================================================
+
+/** localStorage key for offline fallback */
+export const VIEW_MODE_PREFERENCE_KEY = 'boletapp_view_mode_preference';
+
+/**
+ * Save view mode preference to Firestore with offline fallback to localStorage
+ * Story 14c.18: AC1, AC6, AC7
+ *
+ * @param db - Firestore instance
+ * @param userId - User ID from Firebase Auth
+ * @param appId - Application ID
+ * @param preference - View mode preference to save
+ */
+export async function saveViewModePreference(
+  db: Firestore,
+  userId: string,
+  appId: string,
+  preference: Omit<ViewModePreference, 'updatedAt'>
+): Promise<void> {
+  // Always save to localStorage first (offline support - AC7)
+  try {
+    localStorage.setItem(VIEW_MODE_PREFERENCE_KEY, JSON.stringify(preference));
+  } catch (error) {
+    // localStorage might be disabled or full
+    if (import.meta.env.DEV) {
+      console.warn('[ViewModePreference] Failed to save to localStorage:', error);
+    }
+  }
+
+  // Save to Firestore
+  try {
+    const docRef = getPreferencesDocRef(db, appId, userId);
+    await setDoc(
+      docRef,
+      {
+        viewModePreference: {
+          ...preference,
+          updatedAt: serverTimestamp(),
+        },
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+  } catch (error) {
+    console.error('[ViewModePreference] Error saving to Firestore:', error);
+    // Don't throw - localStorage fallback is available
+  }
+}
+
+/**
+ * Load view mode preference from localStorage (for offline/quick access)
+ * Story 14c.18: AC7
+ *
+ * @returns View mode preference or undefined if not found
+ */
+export function loadLocalViewModePreference(): ViewModePreference | undefined {
+  try {
+    const stored = localStorage.getItem(VIEW_MODE_PREFERENCE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored) as ViewModePreference;
+      // Validate structure
+      if (parsed.mode === 'personal' || parsed.mode === 'group') {
+        return parsed;
+      }
+    }
+  } catch {
+    // Invalid JSON or other error
+  }
+  return undefined;
+}
+
+/**
+ * Clear local view mode preference (for logout)
+ */
+export function clearLocalViewModePreference(): void {
+  try {
+    localStorage.removeItem(VIEW_MODE_PREFERENCE_KEY);
+  } catch {
+    // Ignore errors
+  }
+}

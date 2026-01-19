@@ -35,6 +35,8 @@ import { useInAppNotifications } from './hooks/useInAppNotifications';
 import { useViewMode } from './contexts/ViewModeContext';
 import { useUserSharedGroups } from './hooks/useUserSharedGroups';
 import { ViewModeSwitcher } from './components/SharedGroups/ViewModeSwitcher';
+// Story 14c.18: View mode preference persistence (Firestore sync)
+import { useViewModePreferencePersistence } from './hooks/useViewModePreferencePersistence';
 // Story 14c.17: Share Link Deep Linking - join shared groups via URL
 import { useJoinLinkHandler } from './hooks/useJoinLinkHandler';
 import { JoinGroupDialog } from './components/SharedGroups/JoinGroupDialog';
@@ -343,8 +345,10 @@ function App() {
     } = useItemNameMappings(user, services);
     // Story 9.8: User preferences for default scan currency
     // Story 14.22: Extended to include location settings from Firestore
+    // Story 14c.18: Added view mode preference for group persistence
     const {
         preferences: userPreferences,
+        loading: preferencesLoading,
         setDefaultCurrency: setDefaultScanCurrencyPref,
         setDefaultCountry: setDefaultCountryPref,
         setDefaultCity: setDefaultCityPref,
@@ -356,6 +360,8 @@ function App() {
         setFontFamily: setFontFamilyPref,
         // Story 14.35b: Foreign location display format preference
         setForeignLocationFormat: setForeignLocationFormatPref,
+        // Story 14c.18: View mode preference (debounced Firestore save)
+        saveViewModePreference,
     } = useUserPreferences(user, services);
     // Persistent scan credits from Firestore
     // Story 14d.4e: Changed from reserve/confirm/refund to immediate deduct pattern
@@ -451,6 +457,16 @@ function App() {
     const queryClient = useQueryClient();
     const { groups: userSharedGroups, isLoading: sharedGroupsLoading } = useUserSharedGroups(db, user?.uid);
     const [showViewModeSwitcher, setShowViewModeSwitcher] = useState(false);
+
+    // Story 14c.18: Connect view mode to Firestore persistence and group validation
+    // This handles: AC3 (load on auth), AC4 (validate group), AC5 (fallback), AC6 (sync on change)
+    useViewModePreferencePersistence({
+        groups: userSharedGroups,
+        groupsLoading: sharedGroupsLoading,
+        firestorePreference: userPreferences.viewModePreference,
+        preferencesLoading,
+        savePreference: saveViewModePreference,
+    });
 
     // Story 14c.7: Convert shared groups to GroupWithMeta format for TransactionGroupSelector
     const availableGroupsForSelector: GroupWithMeta[] = useMemo(() => {
