@@ -103,6 +103,11 @@
 | Quota exceeded handling | `writeToCacheWithRetry()` cleans cache before retry, returns gracefully on failure |
 | Error boundary wrapping | Domain views (GruposView) wrapped with `SharedGroupErrorBoundary` in parent (SettingsView) |
 | Test mock completeness | Mock ALL imported functions including `writeToCacheWithRetry` to avoid vitest warnings |
+| Coordination hooks | Use separate hook (`useViewModePreferencePersistence`) to orchestrate context + Firestore + validation (14c.18) |
+| Three-ref lifecycle tracking | `hasInitialSyncRef`, `prevModeRef`, `hasAppliedFirestoreRef` prevent loops and track state phases (14c.18) |
+| Firestore preference priority | Firestore > localStorage > default on preference load (14c.18) |
+| Group validation timing | Wait for groups to load before validating group mode preference (14c.18) |
+| Fallback to personal mode | If persisted groupId not found in user's groups, default to personal (14c.18) |
 
 ### i18n & Translations
 | Pattern | Rule |
