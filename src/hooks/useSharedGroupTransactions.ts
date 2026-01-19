@@ -2,10 +2,17 @@
  * useSharedGroupTransactions Hook
  *
  * Story 14c.5: Shared Group Transactions View
+ * Story 14c.16: Cache Architecture Fix
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * React Query integration for shared group transactions with IndexedDB caching.
  * Implements cache-first loading strategy with background Firestore sync.
+ *
+ * Story 14c.16 Architecture Fix:
+ * - Fetch ALL transactions once on initial load (no date filter)
+ * - Apply date filtering CLIENT-SIDE via useMemo
+ * - Query key no longer includes date range (shared cache across date selections)
+ * - Available years computed from FULL cached data (not filtered subset)
  *
  * AC5: React Query Integration
  * - Cache-first: IndexedDB → display → Firestore fetch
@@ -18,7 +25,7 @@
  *   transactions,
  *   isLoading,
  *   total,
- *   filterByMember,
+ *   availableYears,
  *   dateRange,
  *   setDateRange,
  * } = useSharedGroupTransactions({
@@ -43,7 +50,6 @@ import {
     getDefaultDateRange,
     enforceMaxDateRange,
     type SharedGroupTransaction,
-    type FetchSharedGroupTransactionsOptions,
 } from '../services/sharedGroupTransactionService';
 import {
     openSharedGroupDB,
@@ -152,23 +158,25 @@ export interface UseSharedGroupTransactionsOptions {
 }
 
 export interface UseSharedGroupTransactionsResult {
-    /** All transactions for the group (filtered by date range and member) */
+    /** Transactions filtered by date range and member */
     transactions: SharedGroupTransaction[];
-    /** Raw transactions before member filter */
+    /** ALL transactions for the group (unfiltered by date, respects member filter) */
     allTransactions: SharedGroupTransaction[];
+    /** Raw transactions from cache (no filters applied) */
+    rawTransactions: SharedGroupTransaction[];
     /** Whether initial load is in progress */
     isLoading: boolean;
     /** Whether a background refresh is in progress */
     isRefreshing: boolean;
     /** Any error that occurred */
     error: Error | null;
-    /** Total spending (respects member filter) */
+    /** Total spending (respects date range and member filters) */
     total: number;
-    /** Spending breakdown by member */
+    /** Spending breakdown by member (respects date range filter) */
     spendingByMember: Map<string, number>;
-    /** Current date range filter */
+    /** Current date range filter (display only, not used for fetching) */
     dateRange: { startDate: Date; endDate: Date };
-    /** Set the date range filter */
+    /** Set the date range filter (client-side filtering only) */
     setDateRange: (startDate: Date, endDate: Date) => void;
     /** Currently selected member IDs (empty = all) */
     selectedMembers: string[];
@@ -180,6 +188,8 @@ export interface UseSharedGroupTransactionsResult {
     refresh: () => void;
     /** Whether IndexedDB is being used (false = in-memory only) */
     usingIndexedDB: boolean;
+    /** Available years computed from ALL cached transactions (Story 14c.16 AC5) */
+    availableYears: number[];
 }
 
 // ============================================================================
@@ -187,10 +197,53 @@ export interface UseSharedGroupTransactionsResult {
 // ============================================================================
 
 /**
- * Helper to format date for query key (YYYY-MM-DD)
+ * Extract date string (YYYY-MM-DD) from a transaction
  */
-function formatDateForKey(date: Date): string {
-    return date.toISOString().slice(0, 10);
+function getTransactionDateString(date: unknown): string {
+    if (typeof date === 'string') return date;
+    if (date instanceof Date) return date.toISOString().slice(0, 10);
+    if (typeof date === 'object' && date && 'toDate' in date) {
+        return (date as { toDate: () => Date }).toDate().toISOString().slice(0, 10);
+    }
+    return '';
+}
+
+/**
+ * Check if a transaction falls within a date range
+ */
+function isInDateRange(
+    txn: SharedGroupTransaction,
+    startDate: Date,
+    endDate: Date
+): boolean {
+    const dateStr = getTransactionDateString(txn.date);
+    if (!dateStr) return false;
+
+    const startStr = startDate.toISOString().slice(0, 10);
+    const endStr = endDate.toISOString().slice(0, 10);
+
+    return dateStr >= startStr && dateStr <= endStr;
+}
+
+/**
+ * Extract unique years from transactions
+ * Story 14c.16 AC5: Compute available years from ALL cached data
+ */
+function extractAvailableYears(transactions: SharedGroupTransaction[]): number[] {
+    const yearsSet = new Set<number>();
+
+    for (const txn of transactions) {
+        const dateStr = getTransactionDateString(txn.date);
+        if (dateStr) {
+            const year = parseInt(dateStr.slice(0, 4), 10);
+            if (!isNaN(year)) {
+                yearsSet.add(year);
+            }
+        }
+    }
+
+    // Return sorted descending (most recent first)
+    return Array.from(yearsSet).sort((a, b) => b - a);
 }
 
 export function useSharedGroupTransactions(
@@ -201,7 +254,8 @@ export function useSharedGroupTransactions(
     const appId = services?.appId || '';
     const queryClient = useQueryClient();
 
-    // Date range state (AC8: default is current month)
+    // Date range state (used for CLIENT-SIDE filtering only - Story 14c.16)
+    // Default is current month, but this is just for display filtering
     const [dateRange, setDateRangeState] = useState(() => getDefaultDateRange());
 
     // Member filter state (AC7: filter by member)
@@ -211,6 +265,7 @@ export function useSharedGroupTransactions(
     const [usingIndexedDB, setUsingIndexedDB] = useState(() => isIndexedDBAvailable());
 
     // Date range setter with max range enforcement
+    // Story 14c.16: This only affects client-side filtering, NOT Firestore fetch
     const setDateRange = useCallback((startDate: Date, endDate: Date) => {
         const { startDate: adjustedStart, endDate: adjustedEnd } = enforceMaxDateRange(startDate, endDate);
         setDateRangeState({ startDate: adjustedStart, endDate: adjustedEnd });
@@ -231,27 +286,24 @@ export function useSharedGroupTransactions(
     }, []);
 
     // Main query for transactions
+    // Story 14c.16: Query key NO LONGER includes date range
+    // This creates a single cache entry per group, shared across all date selections
     const {
-        data: allTransactions = [],
+        data: rawTransactions = [],
         isLoading,
         isFetching: isRefreshing,
         error,
         refetch,
     } = useQuery({
-        queryKey: QUERY_KEYS.sharedGroupTransactions(
-            group?.id || '',
-            formatDateForKey(dateRange.startDate),
-            formatDateForKey(dateRange.endDate)
-        ),
+        // Story 14c.16 AC4: Query key without date range
+        queryKey: QUERY_KEYS.sharedGroupTransactions(group?.id || ''),
         queryFn: async () => {
             if (!db || !group?.id || !group.members?.length) {
                 return [];
             }
 
-            const fetchOptions: FetchSharedGroupTransactionsOptions = {
-                startDate: dateRange.startDate,
-                endDate: dateRange.endDate,
-            };
+            // Story 14c.16 AC1: Fetch ALL transactions (no date filter)
+            // The service layer will apply a 2-year lookback for performance guard
 
             // Step 1: Try to load from IndexedDB first (cache-first strategy)
             let cachedData: SharedGroupTransaction[] = [];
@@ -260,10 +312,8 @@ export function useSharedGroupTransactions(
             if (usingIndexedDB) {
                 try {
                     const idb = await openSharedGroupDB();
-                    cachedData = await readFromCache(idb, group.id, {
-                        startDate: dateRange.startDate,
-                        endDate: dateRange.endDate,
-                    });
+                    // Story 14c.16 AC2: Read ALL cached transactions (no date filter)
+                    cachedData = await readFromCache(idb, group.id);
                     syncMetadata = await getSyncMetadata(idb, group.id);
 
                     // If we have cached data, return it immediately
@@ -285,8 +335,7 @@ export function useSharedGroupTransactions(
                                     group.id,
                                     changedMembers,
                                     lastSyncDate,
-                                    queryClient,
-                                    dateRange
+                                    queryClient
                                 ).catch(console.error);
                             }
                         }
@@ -299,19 +348,20 @@ export function useSharedGroupTransactions(
                 }
             }
 
-            // Step 2: Fetch from Firestore
+            // Step 2: Fetch from Firestore (no date filter - Story 14c.16 AC1)
             const transactions = await fetchSharedGroupTransactions(
                 db,
                 appId,
                 group.id,
-                group.members,
-                fetchOptions
+                group.members
+                // No options = no date filter, service uses 2-year lookback
             );
 
             // Step 3: Update IndexedDB cache
             if (usingIndexedDB && transactions.length > 0) {
                 try {
                     const idb = await openSharedGroupDB();
+                    // Story 14c.16 AC2: Store ALL transactions in IndexedDB
                     await writeToCache(idb, group.id, transactions);
                     await updateSyncMetadata(idb, {
                         groupId: group.id,
@@ -335,20 +385,42 @@ export function useSharedGroupTransactions(
         refetchOnMount: true, // Always check for updates on mount
     });
 
-    // Filter transactions by selected members (AC7)
+    // Story 14c.16 AC5: Available years computed from ALL raw transactions
+    const availableYears = useMemo(
+        () => extractAvailableYears(rawTransactions),
+        [rawTransactions]
+    );
+
+    // Story 14c.16 AC3: Apply date filtering CLIENT-SIDE
+    const dateFilteredTransactions = useMemo(() => {
+        return rawTransactions.filter(txn =>
+            isInDateRange(txn, dateRange.startDate, dateRange.endDate)
+        );
+    }, [rawTransactions, dateRange.startDate, dateRange.endDate]);
+
+    // Filter by selected members (AC7)
     const transactions = useMemo(() => {
         if (selectedMembers.length === 0) {
-            return allTransactions;
+            return dateFilteredTransactions;
         }
-        return allTransactions.filter(txn => selectedMembers.includes(txn._ownerId));
-    }, [allTransactions, selectedMembers]);
+        return dateFilteredTransactions.filter(txn => selectedMembers.includes(txn._ownerId));
+    }, [dateFilteredTransactions, selectedMembers]);
 
-    // Calculate totals (AC6)
+    // allTransactions = member-filtered but NOT date-filtered (for spending breakdown)
+    const allTransactions = useMemo(() => {
+        if (selectedMembers.length === 0) {
+            return rawTransactions;
+        }
+        return rawTransactions.filter(txn => selectedMembers.includes(txn._ownerId));
+    }, [rawTransactions, selectedMembers]);
+
+    // Calculate totals (AC6) - based on date+member filtered transactions
     const total = useMemo(() => calculateTotalSpending(transactions), [transactions]);
 
+    // Spending by member - based on date-filtered transactions (for display consistency)
     const spendingByMember = useMemo(
-        () => calculateSpendingByMember(allTransactions),
-        [allTransactions]
+        () => calculateSpendingByMember(dateFilteredTransactions),
+        [dateFilteredTransactions]
     );
 
     // Refresh function
@@ -364,6 +436,7 @@ export function useSharedGroupTransactions(
     return {
         transactions,
         allTransactions,
+        rawTransactions,
         isLoading,
         isRefreshing,
         error: error as Error | null,
@@ -376,6 +449,7 @@ export function useSharedGroupTransactions(
         selectAllMembers,
         refresh,
         usingIndexedDB,
+        availableYears,
     };
 }
 
@@ -386,6 +460,7 @@ export function useSharedGroupTransactions(
 /**
  * Fetch delta updates and merge into cache.
  * Runs in background after initial cache hit.
+ * Story 14c.16: No longer uses date range for invalidation
  */
 async function fetchDeltaAndUpdateCache(
     db: Firestore,
@@ -393,8 +468,7 @@ async function fetchDeltaAndUpdateCache(
     groupId: string,
     changedMembers: string[],
     since: Date,
-    queryClient: ReturnType<typeof useQueryClient>,
-    dateRange: { startDate: Date; endDate: Date }
+    queryClient: ReturnType<typeof useQueryClient>
 ): Promise<void> {
     try {
         const { transactions: deltaTransactions, deletedIds } = await fetchDeltaUpdates(
@@ -429,13 +503,9 @@ async function fetchDeltaAndUpdateCache(
             }, {} as Record<string, number>),
         });
 
-        // Invalidate React Query cache to trigger re-render
+        // Story 14c.16 AC4: Invalidate using simplified query key (no date range)
         queryClient.invalidateQueries({
-            queryKey: QUERY_KEYS.sharedGroupTransactions(
-                groupId,
-                dateRange.startDate.toISOString().slice(0, 10),
-                dateRange.endDate.toISOString().slice(0, 10)
-            ),
+            queryKey: QUERY_KEYS.sharedGroupTransactions(groupId),
         });
 
         if (import.meta.env.DEV) {
@@ -535,10 +605,9 @@ export async function triggerNotificationDeltaFetch(
             }
         }
 
-        // Invalidate React Query cache to trigger re-render with updated data
-        // Use partial invalidation on groupId to refresh all date ranges
+        // Story 14c.16 AC4: Invalidate using simplified query key (no date range)
         queryClient.invalidateQueries({
-            queryKey: ['sharedGroupTransactions', group.id],
+            queryKey: QUERY_KEYS.sharedGroupTransactions(group.id),
         });
 
         console.log('[triggerNotificationDeltaFetch] Delta sync complete:', {

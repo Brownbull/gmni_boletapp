@@ -123,6 +123,23 @@ describe('QUERY_KEYS', () => {
         });
     });
 
+    describe('sharedGroupTransactions', () => {
+        const groupId = 'group-123';
+
+        it('generates correct key structure (Story 14c.16: no date range)', () => {
+            const key = QUERY_KEYS.sharedGroupTransactions(groupId);
+
+            expect(key).toEqual(['sharedGroupTransactions', groupId]);
+        });
+
+        it('alias sharedGroups.transactions produces same key', () => {
+            const directKey = QUERY_KEYS.sharedGroupTransactions(groupId);
+            const aliasKey = QUERY_KEYS.sharedGroups.transactions(groupId);
+
+            expect(directKey).toEqual(aliasKey);
+        });
+    });
+
     describe('key uniqueness', () => {
         it('generates unique keys for different users', () => {
             const user1Key = QUERY_KEYS.transactions('user1', appId);

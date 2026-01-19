@@ -2,10 +2,16 @@
  * useSharedGroupTransactions Hook Unit Tests
  *
  * Story 14c.5: Shared Group Transactions View
+ * Story 14c.16: Cache Architecture Fix
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * Tests for the React Query hook that manages shared group transactions
  * with IndexedDB caching support.
+ *
+ * Story 14c.16 additions:
+ * - Tests for client-side date filtering
+ * - Tests for availableYears computation
+ * - Tests for rawTransactions return value
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -319,6 +325,222 @@ describe('useSharedGroupTransactions', () => {
             // refresh should be available after query is ready
             expect(result.current.refresh).toBeDefined()
             expect(typeof result.current.refresh).toBe('function')
+        })
+    })
+
+    // ============================================================================
+    // Story 14c.16: Cache Architecture Fix Tests
+    // ============================================================================
+
+    describe('Client-Side Date Filtering (Story 14c.16 AC3)', () => {
+        it('should filter transactions by date range client-side', async () => {
+            const { fetchSharedGroupTransactions } = await import('../../../src/services/sharedGroupTransactionService')
+            // Mock transactions spanning multiple months
+            const mockTransactions = [
+                { id: 'tx-1', total: 100, _ownerId: 'user-1', date: '2026-01-15', merchant: 'A', category: 'Other', items: [] },
+                { id: 'tx-2', total: 200, _ownerId: 'user-2', date: '2026-01-20', merchant: 'B', category: 'Other', items: [] },
+                { id: 'tx-3', total: 300, _ownerId: 'user-1', date: '2025-12-15', merchant: 'C', category: 'Other', items: [] },
+                { id: 'tx-4', total: 400, _ownerId: 'user-2', date: '2025-06-01', merchant: 'D', category: 'Other', items: [] },
+            ]
+            ;(fetchSharedGroupTransactions as ReturnType<typeof vi.fn>).mockResolvedValue(mockTransactions)
+
+            const { result } = renderHook(
+                () => useSharedGroupTransactions({
+                    services: mockServices,
+                    group: mockGroup,
+                }),
+                { wrapper: createWrapper(queryClient) }
+            )
+
+            await waitFor(() => {
+                expect(result.current.isLoading).toBe(false)
+            })
+
+            // Default date range is January 2026, should show only January transactions
+            expect(result.current.transactions.length).toBe(2)
+            expect(result.current.transactions.map(t => t.id)).toEqual(['tx-1', 'tx-2'])
+
+            // rawTransactions should contain ALL transactions (no date filter)
+            expect(result.current.rawTransactions.length).toBe(4)
+        })
+
+        it('should update filtered transactions when date range changes', async () => {
+            const { fetchSharedGroupTransactions } = await import('../../../src/services/sharedGroupTransactionService')
+            const mockTransactions = [
+                { id: 'tx-1', total: 100, _ownerId: 'user-1', date: '2026-01-15', merchant: 'A', category: 'Other', items: [] },
+                { id: 'tx-2', total: 200, _ownerId: 'user-1', date: '2025-12-15', merchant: 'B', category: 'Other', items: [] },
+            ]
+            ;(fetchSharedGroupTransactions as ReturnType<typeof vi.fn>).mockResolvedValue(mockTransactions)
+
+            const { result } = renderHook(
+                () => useSharedGroupTransactions({
+                    services: mockServices,
+                    group: mockGroup,
+                }),
+                { wrapper: createWrapper(queryClient) }
+            )
+
+            await waitFor(() => {
+                expect(result.current.isLoading).toBe(false)
+            })
+
+            // Initially shows January 2026 only
+            expect(result.current.transactions.length).toBe(1)
+            expect(result.current.transactions[0].id).toBe('tx-1')
+
+            // Change date range to December 2025
+            act(() => {
+                result.current.setDateRange(new Date('2025-12-01'), new Date('2025-12-31'))
+            })
+
+            // Should now show December 2025 transaction
+            expect(result.current.transactions.length).toBe(1)
+            expect(result.current.transactions[0].id).toBe('tx-2')
+        })
+    })
+
+    describe('Available Years Computation (Story 14c.16 AC5)', () => {
+        it('should compute available years from all cached transactions', async () => {
+            const { fetchSharedGroupTransactions } = await import('../../../src/services/sharedGroupTransactionService')
+            const mockTransactions = [
+                { id: 'tx-1', total: 100, _ownerId: 'user-1', date: '2026-01-15', merchant: 'A', category: 'Other', items: [] },
+                { id: 'tx-2', total: 200, _ownerId: 'user-1', date: '2025-06-15', merchant: 'B', category: 'Other', items: [] },
+                { id: 'tx-3', total: 300, _ownerId: 'user-1', date: '2024-03-10', merchant: 'C', category: 'Other', items: [] },
+            ]
+            ;(fetchSharedGroupTransactions as ReturnType<typeof vi.fn>).mockResolvedValue(mockTransactions)
+
+            const { result } = renderHook(
+                () => useSharedGroupTransactions({
+                    services: mockServices,
+                    group: mockGroup,
+                }),
+                { wrapper: createWrapper(queryClient) }
+            )
+
+            await waitFor(() => {
+                expect(result.current.isLoading).toBe(false)
+            })
+
+            // Should have years from ALL transactions, sorted descending
+            expect(result.current.availableYears).toEqual([2026, 2025, 2024])
+        })
+
+        it('should deduplicate years', async () => {
+            const { fetchSharedGroupTransactions } = await import('../../../src/services/sharedGroupTransactionService')
+            const mockTransactions = [
+                { id: 'tx-1', total: 100, _ownerId: 'user-1', date: '2025-01-15', merchant: 'A', category: 'Other', items: [] },
+                { id: 'tx-2', total: 200, _ownerId: 'user-2', date: '2025-06-15', merchant: 'B', category: 'Other', items: [] },
+                { id: 'tx-3', total: 300, _ownerId: 'user-1', date: '2025-12-10', merchant: 'C', category: 'Other', items: [] },
+            ]
+            ;(fetchSharedGroupTransactions as ReturnType<typeof vi.fn>).mockResolvedValue(mockTransactions)
+
+            const { result } = renderHook(
+                () => useSharedGroupTransactions({
+                    services: mockServices,
+                    group: mockGroup,
+                }),
+                { wrapper: createWrapper(queryClient) }
+            )
+
+            await waitFor(() => {
+                expect(result.current.isLoading).toBe(false)
+            })
+
+            // Should have only one entry for 2025 (deduplicated)
+            expect(result.current.availableYears).toEqual([2025])
+        })
+
+        it('should return empty array when no transactions', async () => {
+            const { fetchSharedGroupTransactions } = await import('../../../src/services/sharedGroupTransactionService')
+            ;(fetchSharedGroupTransactions as ReturnType<typeof vi.fn>).mockResolvedValue([])
+
+            const { result } = renderHook(
+                () => useSharedGroupTransactions({
+                    services: mockServices,
+                    group: mockGroup,
+                }),
+                { wrapper: createWrapper(queryClient) }
+            )
+
+            await waitFor(() => {
+                expect(result.current.isLoading).toBe(false)
+            })
+
+            expect(result.current.availableYears).toEqual([])
+        })
+    })
+
+    describe('Raw Transactions Return Value (Story 14c.16)', () => {
+        it('should return rawTransactions without any filters applied', async () => {
+            const { fetchSharedGroupTransactions } = await import('../../../src/services/sharedGroupTransactionService')
+            const mockTransactions = [
+                { id: 'tx-1', total: 100, _ownerId: 'user-1', date: '2026-01-15', merchant: 'A', category: 'Other', items: [] },
+                { id: 'tx-2', total: 200, _ownerId: 'user-2', date: '2025-12-15', merchant: 'B', category: 'Other', items: [] },
+            ]
+            ;(fetchSharedGroupTransactions as ReturnType<typeof vi.fn>).mockResolvedValue(mockTransactions)
+
+            const { result } = renderHook(
+                () => useSharedGroupTransactions({
+                    services: mockServices,
+                    group: mockGroup,
+                }),
+                { wrapper: createWrapper(queryClient) }
+            )
+
+            await waitFor(() => {
+                expect(result.current.isLoading).toBe(false)
+            })
+
+            // rawTransactions should contain ALL transactions
+            expect(result.current.rawTransactions.length).toBe(2)
+            expect(result.current.rawTransactions).toEqual(mockTransactions)
+
+            // Apply member filter
+            act(() => {
+                result.current.toggleMember('user-1')
+            })
+
+            // rawTransactions should STILL contain all transactions (unaffected by filters)
+            expect(result.current.rawTransactions.length).toBe(2)
+
+            // But transactions should be filtered by member
+            expect(result.current.transactions.length).toBe(1)
+            expect(result.current.transactions[0]._ownerId).toBe('user-1')
+        })
+
+        it('should return allTransactions filtered by member but not date', async () => {
+            const { fetchSharedGroupTransactions } = await import('../../../src/services/sharedGroupTransactionService')
+            const mockTransactions = [
+                { id: 'tx-1', total: 100, _ownerId: 'user-1', date: '2026-01-15', merchant: 'A', category: 'Other', items: [] },
+                { id: 'tx-2', total: 200, _ownerId: 'user-2', date: '2026-01-20', merchant: 'B', category: 'Other', items: [] },
+                { id: 'tx-3', total: 300, _ownerId: 'user-1', date: '2025-12-15', merchant: 'C', category: 'Other', items: [] },
+            ]
+            ;(fetchSharedGroupTransactions as ReturnType<typeof vi.fn>).mockResolvedValue(mockTransactions)
+
+            const { result } = renderHook(
+                () => useSharedGroupTransactions({
+                    services: mockServices,
+                    group: mockGroup,
+                }),
+                { wrapper: createWrapper(queryClient) }
+            )
+
+            await waitFor(() => {
+                expect(result.current.isLoading).toBe(false)
+            })
+
+            // Select user-1 only
+            act(() => {
+                result.current.toggleMember('user-1')
+            })
+
+            // allTransactions: member-filtered but NOT date-filtered
+            expect(result.current.allTransactions.length).toBe(2)
+            expect(result.current.allTransactions.every(t => t._ownerId === 'user-1')).toBe(true)
+
+            // transactions: both member AND date filtered (January 2026)
+            expect(result.current.transactions.length).toBe(1)
+            expect(result.current.transactions[0].id).toBe('tx-1')
         })
     })
 })
