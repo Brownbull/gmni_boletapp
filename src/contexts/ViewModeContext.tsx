@@ -1,5 +1,6 @@
 /**
  * Story 14c.4: View Mode Switcher - ViewModeContext
+ * Story 14c.18: Firestore persistence + group validation
  *
  * App-wide context provider that manages switching between personal and
  * shared group view modes. All data-fetching hooks and views check this
@@ -9,6 +10,7 @@
  * - Personal mode (default): Shows user's own transactions
  * - Group mode: Shows combined transactions for a shared group
  * - localStorage persistence for mode across sessions (AC6)
+ * - Firestore persistence via callback (Story 14c.18)
  * - Cached group data for display purposes
  *
  * Architecture Reference: Epic 14c - Household Sharing
@@ -33,8 +35,10 @@ import React, {
   useCallback,
   useMemo,
   useEffect,
+  useRef,
 } from 'react';
 import type { SharedGroup } from '../types/sharedGroup';
+import type { ViewModePreference } from '../services/userPreferencesService';
 
 // =============================================================================
 // Constants
@@ -76,6 +80,13 @@ export interface ViewModeContextValue extends ViewModeState {
   setGroupMode: (groupId: string, group?: SharedGroup) => void;
   /** Update cached group data (for real-time updates) */
   updateGroupData: (group: SharedGroup) => void;
+  /**
+   * Story 14c.18: Validate and restore mode after group data is loaded
+   * Call this after groups are loaded to validate persisted group mode
+   */
+  validateAndRestoreMode: (groups: SharedGroup[]) => void;
+  /** Story 14c.18: Whether initial validation has been performed */
+  isValidated: boolean;
 }
 
 /**
@@ -84,6 +95,17 @@ export interface ViewModeContextValue extends ViewModeState {
 interface PersistedViewMode {
   mode: ViewMode;
   groupId?: string;
+}
+
+/**
+ * Story 14c.18: Props for ViewModeProvider
+ */
+interface ViewModeProviderProps {
+  children: React.ReactNode;
+  /** Story 14c.18: Initial preference loaded from Firestore */
+  initialPreference?: ViewModePreference;
+  /** Story 14c.18: Callback to save preference changes (debounced by caller) */
+  onPreferenceChange?: (preference: Omit<ViewModePreference, 'updatedAt'>) => void;
 }
 
 // =============================================================================
@@ -139,13 +161,32 @@ function persistMode(state: PersistedViewMode): void {
   }
 }
 
+/**
+ * Story 14c.18: Determine initial state from Firestore preference or localStorage
+ * Priority: Firestore > localStorage > default (personal)
+ */
+function getInitialState(initialPreference?: ViewModePreference): ViewModeState {
+  // If Firestore preference provided, use it
+  if (initialPreference) {
+    return {
+      mode: initialPreference.mode,
+      groupId: initialPreference.mode === 'group' ? initialPreference.groupId : undefined,
+      // group object will be populated by validateAndRestoreMode()
+    };
+  }
+
+  // Fall back to localStorage
+  const persisted = loadPersistedMode();
+  return {
+    mode: persisted.mode,
+    groupId: persisted.groupId,
+    // group object will be populated by validateAndRestoreMode()
+  };
+}
+
 // =============================================================================
 // Provider Component
 // =============================================================================
-
-interface ViewModeProviderProps {
-  children: React.ReactNode;
-}
 
 /**
  * View Mode Context Provider.
@@ -153,34 +194,70 @@ interface ViewModeProviderProps {
  * Wrap your app with this provider to enable view mode switching.
  * Should be placed inside QueryClientProvider for React Query support.
  *
+ * Story 14c.18: Now accepts initialPreference from Firestore and
+ * onPreferenceChange callback for persistence.
+ *
  * @example
  * ```tsx
  * <QueryClientProvider>
- *   <ViewModeProvider>
+ *   <ViewModeProvider
+ *     initialPreference={preferences.viewModePreference}
+ *     onPreferenceChange={saveViewModePreference}
+ *   >
  *     <App />
  *   </ViewModeProvider>
  * </QueryClientProvider>
  * ```
  */
-export function ViewModeProvider({ children }: ViewModeProviderProps) {
-  // Initialize state from localStorage
-  const [state, setState] = useState<ViewModeState>(() => {
-    const persisted = loadPersistedMode();
-    return {
-      mode: persisted.mode,
-      groupId: persisted.groupId,
-      // Note: group object is NOT persisted (will be loaded from Firestore)
-    };
-  });
+export function ViewModeProvider({
+  children,
+  initialPreference,
+  onPreferenceChange,
+}: ViewModeProviderProps) {
+  // Initialize state from Firestore preference or localStorage
+  const [state, setState] = useState<ViewModeState>(() =>
+    getInitialState(initialPreference)
+  );
 
-  // Persist state changes to localStorage
+  // Story 14c.18: Track if validation has been performed
+  const [isValidated, setIsValidated] = useState(false);
+
+  // Track if this is the initial render to skip first persistence
+  const isInitialRender = useRef(true);
+
+  // Story 14c.18: Track the last persisted state to prevent unnecessary saves
+  const lastPersistedRef = useRef<{ mode: ViewMode; groupId?: string } | null>(null);
+
+  // Persist state changes to localStorage and call onPreferenceChange
   useEffect(() => {
+    // Skip the initial render persistence (state comes from storage anyway)
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
+      return;
+    }
+
     const toPersist: PersistedViewMode = {
       mode: state.mode,
       groupId: state.groupId,
     };
+
+    // Always persist to localStorage
     persistMode(toPersist);
-  }, [state.mode, state.groupId]);
+
+    // Story 14c.18: Call onPreferenceChange callback if provided
+    // Only if the value actually changed
+    if (
+      onPreferenceChange &&
+      (lastPersistedRef.current?.mode !== state.mode ||
+        lastPersistedRef.current?.groupId !== state.groupId)
+    ) {
+      lastPersistedRef.current = { mode: state.mode, groupId: state.groupId };
+      onPreferenceChange({
+        mode: state.mode,
+        groupId: state.mode === 'group' ? state.groupId : undefined,
+      });
+    }
+  }, [state.mode, state.groupId, onPreferenceChange]);
 
   // ===========================================================================
   // Action Functions
@@ -237,6 +314,54 @@ export function ViewModeProvider({ children }: ViewModeProviderProps) {
     });
   }, []);
 
+  /**
+   * Story 14c.18: Validate and restore group mode after groups are loaded.
+   * If the persisted group is no longer accessible, fall back to personal mode.
+   * This fixes the race condition where mode is restored before group data loads.
+   * (AC4, AC5)
+   *
+   * @param groups - User's current shared groups
+   */
+  const validateAndRestoreMode = useCallback(
+    (groups: SharedGroup[]) => {
+      setState((prev) => {
+        // Already in personal mode - nothing to validate
+        if (prev.mode === 'personal') {
+          setIsValidated(true);
+          return prev;
+        }
+
+        // In group mode - validate the group still exists and user is a member
+        const group = groups.find((g) => g.id === prev.groupId);
+
+        if (group) {
+          // Group is valid - update with full group data
+          if (import.meta.env.DEV) {
+            console.log('[ViewModeContext] Validated group mode:', {
+              groupId: group.id,
+              groupName: group.name,
+            });
+          }
+          setIsValidated(true);
+          return { ...prev, group };
+        }
+
+        // Group not found - fall back to personal mode (AC5)
+        console.warn(
+          '[ViewModeContext] Persisted group not found, falling back to personal:',
+          prev.groupId
+        );
+        setIsValidated(true);
+        return {
+          mode: 'personal',
+          groupId: undefined,
+          group: undefined,
+        };
+      });
+    },
+    []
+  );
+
   // ===========================================================================
   // Computed Values
   // ===========================================================================
@@ -256,13 +381,25 @@ export function ViewModeProvider({ children }: ViewModeProviderProps) {
 
       // Computed
       isGroupMode,
+      isValidated,
 
       // Actions
       setPersonalMode,
       setGroupMode,
       updateGroupData,
+      validateAndRestoreMode,
     }),
-    [state.mode, state.groupId, state.group, isGroupMode, setPersonalMode, setGroupMode, updateGroupData]
+    [
+      state.mode,
+      state.groupId,
+      state.group,
+      isGroupMode,
+      isValidated,
+      setPersonalMode,
+      setGroupMode,
+      updateGroupData,
+      validateAndRestoreMode,
+    ]
   );
 
   return <ViewModeContext.Provider value={value}>{children}</ViewModeContext.Provider>;
@@ -330,3 +467,4 @@ export function useViewModeOptional(): ViewModeContextValue | null {
 // =============================================================================
 
 export type { SharedGroup } from '../types/sharedGroup';
+export type { ViewModePreference } from '../services/userPreferencesService';

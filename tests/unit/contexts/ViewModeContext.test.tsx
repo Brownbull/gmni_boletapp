@@ -1,5 +1,6 @@
 /**
  * Story 14c.4: View Mode Switcher - ViewModeContext Tests
+ * Story 14c.18: View Mode User Persistence Tests
  *
  * Tests for the ViewModeContext that manages switching between
  * personal and shared group view modes throughout the app.
@@ -7,6 +8,7 @@
  * Test coverage:
  * - AC5: Context state for filtering views
  * - AC6: localStorage persistence of view mode
+ * - Story 14c.18 AC1-AC8: Firestore persistence and group validation
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -488,6 +490,278 @@ describe('ViewModeContext', () => {
       await waitFor(() => {
         expect(screen.getByTestId('mode')).toHaveTextContent('group');
       });
+    });
+  });
+
+  // ===========================================================================
+  // Story 14c.18: validateAndRestoreMode Tests (AC4, AC5)
+  // ===========================================================================
+
+  describe('Story 14c.18: validateAndRestoreMode', () => {
+    it('should provide validateAndRestoreMode function', () => {
+      const { result } = renderHook(() => useViewMode(), {
+        wrapper: createWrapper(),
+      });
+
+      expect(typeof result.current.validateAndRestoreMode).toBe('function');
+    });
+
+    it('should provide isValidated state', () => {
+      const { result } = renderHook(() => useViewMode(), {
+        wrapper: createWrapper(),
+      });
+
+      expect(typeof result.current.isValidated).toBe('boolean');
+      // Initially false until validation is called
+      expect(result.current.isValidated).toBe(false);
+    });
+
+    it('should validate and keep group mode if group exists (AC4)', async () => {
+      // Pre-populate localStorage with group mode
+      mockStorage[VIEW_MODE_STORAGE_KEY] = JSON.stringify({
+        mode: 'group',
+        groupId: 'group-123',
+      });
+
+      const { result } = renderHook(() => useViewMode(), {
+        wrapper: createWrapper(),
+      });
+
+      const validGroup = createMockSharedGroup({ id: 'group-123', name: 'Valid Group' });
+
+      // Validate with groups that include the persisted group
+      act(() => {
+        result.current.validateAndRestoreMode([validGroup]);
+      });
+
+      await waitFor(() => {
+        expect(result.current.isValidated).toBe(true);
+        expect(result.current.mode).toBe('group');
+        expect(result.current.groupId).toBe('group-123');
+        expect(result.current.group?.name).toBe('Valid Group');
+      });
+    });
+
+    it('should fall back to personal mode if group does not exist (AC5)', async () => {
+      // Pre-populate localStorage with group mode for a non-existent group
+      mockStorage[VIEW_MODE_STORAGE_KEY] = JSON.stringify({
+        mode: 'group',
+        groupId: 'deleted-group-id',
+      });
+
+      const { result } = renderHook(() => useViewMode(), {
+        wrapper: createWrapper(),
+      });
+
+      const otherGroup = createMockSharedGroup({ id: 'other-group', name: 'Other Group' });
+
+      // Validate with groups that DON'T include the persisted group
+      act(() => {
+        result.current.validateAndRestoreMode([otherGroup]);
+      });
+
+      await waitFor(() => {
+        expect(result.current.isValidated).toBe(true);
+        expect(result.current.mode).toBe('personal');
+        expect(result.current.groupId).toBeUndefined();
+        expect(result.current.group).toBeUndefined();
+      });
+    });
+
+    it('should validate personal mode without changing state', async () => {
+      const { result } = renderHook(() => useViewMode(), {
+        wrapper: createWrapper(),
+      });
+
+      // Start in personal mode (default)
+      expect(result.current.mode).toBe('personal');
+
+      const someGroup = createMockSharedGroup({ id: 'group-123' });
+
+      // Validate with any groups
+      act(() => {
+        result.current.validateAndRestoreMode([someGroup]);
+      });
+
+      await waitFor(() => {
+        expect(result.current.isValidated).toBe(true);
+        expect(result.current.mode).toBe('personal');
+      });
+    });
+
+    it('should handle empty groups list gracefully', async () => {
+      // Pre-populate localStorage with group mode
+      mockStorage[VIEW_MODE_STORAGE_KEY] = JSON.stringify({
+        mode: 'group',
+        groupId: 'group-123',
+      });
+
+      const { result } = renderHook(() => useViewMode(), {
+        wrapper: createWrapper(),
+      });
+
+      // Validate with empty groups (user has no groups)
+      act(() => {
+        result.current.validateAndRestoreMode([]);
+      });
+
+      await waitFor(() => {
+        expect(result.current.isValidated).toBe(true);
+        expect(result.current.mode).toBe('personal');
+      });
+    });
+  });
+
+  // ===========================================================================
+  // Story 14c.18: Initial Preference Props Tests (AC3)
+  // ===========================================================================
+
+  describe('Story 14c.18: initialPreference prop (AC3)', () => {
+    function createWrapperWithInitialPreference(preference: { mode: 'personal' | 'group'; groupId?: string }) {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: false,
+            gcTime: 0,
+          },
+        },
+      });
+
+      return function Wrapper({ children }: { children: React.ReactNode }) {
+        return (
+          <QueryClientProvider client={queryClient}>
+            <ViewModeProvider initialPreference={preference}>{children}</ViewModeProvider>
+          </QueryClientProvider>
+        );
+      };
+    }
+
+    it('should initialize with Firestore preference when provided', () => {
+      const { result } = renderHook(() => useViewMode(), {
+        wrapper: createWrapperWithInitialPreference({
+          mode: 'group',
+          groupId: 'firestore-group-id',
+        }),
+      });
+
+      expect(result.current.mode).toBe('group');
+      expect(result.current.groupId).toBe('firestore-group-id');
+    });
+
+    it('should prefer Firestore preference over localStorage', () => {
+      // Pre-populate localStorage with different data
+      mockStorage[VIEW_MODE_STORAGE_KEY] = JSON.stringify({
+        mode: 'group',
+        groupId: 'local-group-id',
+      });
+
+      const { result } = renderHook(() => useViewMode(), {
+        wrapper: createWrapperWithInitialPreference({
+          mode: 'group',
+          groupId: 'firestore-group-id',
+        }),
+      });
+
+      // Should use Firestore preference, not localStorage
+      expect(result.current.groupId).toBe('firestore-group-id');
+    });
+
+    it('should initialize with personal mode from Firestore', () => {
+      const { result } = renderHook(() => useViewMode(), {
+        wrapper: createWrapperWithInitialPreference({
+          mode: 'personal',
+        }),
+      });
+
+      expect(result.current.mode).toBe('personal');
+      expect(result.current.groupId).toBeUndefined();
+    });
+  });
+
+  // ===========================================================================
+  // Story 14c.18: onPreferenceChange Callback Tests (AC6)
+  // ===========================================================================
+
+  describe('Story 14c.18: onPreferenceChange callback (AC6)', () => {
+    function createWrapperWithCallback(onPreferenceChange: (pref: { mode: 'personal' | 'group'; groupId?: string }) => void) {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: false,
+            gcTime: 0,
+          },
+        },
+      });
+
+      return function Wrapper({ children }: { children: React.ReactNode }) {
+        return (
+          <QueryClientProvider client={queryClient}>
+            <ViewModeProvider onPreferenceChange={onPreferenceChange}>{children}</ViewModeProvider>
+          </QueryClientProvider>
+        );
+      };
+    }
+
+    it('should call onPreferenceChange when mode changes to group', async () => {
+      const onPreferenceChange = vi.fn();
+      const { result } = renderHook(() => useViewMode(), {
+        wrapper: createWrapperWithCallback(onPreferenceChange),
+      });
+
+      const mockGroup = createMockSharedGroup();
+
+      act(() => {
+        result.current.setGroupMode(mockGroup.id!, mockGroup);
+      });
+
+      await waitFor(() => {
+        expect(onPreferenceChange).toHaveBeenCalledWith({
+          mode: 'group',
+          groupId: 'group-123',
+        });
+      });
+    });
+
+    it('should call onPreferenceChange when mode changes to personal', async () => {
+      const onPreferenceChange = vi.fn();
+      const { result } = renderHook(() => useViewMode(), {
+        wrapper: createWrapperWithCallback(onPreferenceChange),
+      });
+
+      const mockGroup = createMockSharedGroup();
+
+      // Switch to group first
+      act(() => {
+        result.current.setGroupMode(mockGroup.id!, mockGroup);
+      });
+
+      await waitFor(() => {
+        expect(result.current.mode).toBe('group');
+      });
+
+      onPreferenceChange.mockClear();
+
+      // Switch back to personal
+      act(() => {
+        result.current.setPersonalMode();
+      });
+
+      await waitFor(() => {
+        expect(onPreferenceChange).toHaveBeenCalledWith({
+          mode: 'personal',
+          groupId: undefined,
+        });
+      });
+    });
+
+    it('should not call onPreferenceChange on initial render', () => {
+      const onPreferenceChange = vi.fn();
+      renderHook(() => useViewMode(), {
+        wrapper: createWrapperWithCallback(onPreferenceChange),
+      });
+
+      // Should not be called on initial render
+      expect(onPreferenceChange).not.toHaveBeenCalled();
     });
   });
 });
