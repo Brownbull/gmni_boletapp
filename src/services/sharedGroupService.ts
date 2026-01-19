@@ -21,7 +21,7 @@
  *
  * // Generate a shareable link
  * const shareLink = getShareLink(sharedGroup.shareCode);
- * // "https://boletapp.web.app/join/Ab3dEf7hIj9kLm0p"
+ * // "https://boletapp-d609f.web.app/join/Ab3dEf7hIj9kLm0p"
  * ```
  */
 
@@ -65,7 +65,7 @@ import { LISTENER_LIMITS } from './firestore';
 const SHARED_GROUPS_COLLECTION = 'sharedGroups';
 
 /** Base URL for share links */
-const SHARE_LINK_BASE_URL = 'https://boletapp.web.app/join';
+const SHARE_LINK_BASE_URL = 'https://boletapp-d609f.web.app/join';
 
 // ============================================================================
 // Share Code Utilities

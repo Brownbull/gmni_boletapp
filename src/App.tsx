@@ -35,6 +35,9 @@ import { useInAppNotifications } from './hooks/useInAppNotifications';
 import { useViewMode } from './contexts/ViewModeContext';
 import { useUserSharedGroups } from './hooks/useUserSharedGroups';
 import { ViewModeSwitcher } from './components/SharedGroups/ViewModeSwitcher';
+// Story 14c.17: Share Link Deep Linking - join shared groups via URL
+import { useJoinLinkHandler } from './hooks/useJoinLinkHandler';
+import { JoinGroupDialog } from './components/SharedGroups/JoinGroupDialog';
 // Story 14c.5: Shared group transactions hook for group mode
 // Story 14c.13: Delta fetch on notification click (Option C)
 import { useSharedGroupTransactions, useNotificationDeltaFetch } from './hooks/useSharedGroupTransactions';
@@ -408,6 +411,33 @@ function App() {
     // Story 14c.4: View Mode Switcher - context and shared groups
     const { mode: viewMode, group: activeGroup, setGroupMode } = useViewMode();
     const db = getFirestore();
+
+    // Story 14c.17: Share Link Deep Linking - handle join URLs
+    const {
+        state: joinLinkState,
+        shareCode: _joinShareCode,
+        groupPreview: joinGroupPreview,
+        error: joinError,
+        joinedGroupId,
+        confirmJoin,
+        cancelJoin,
+        dismissError: dismissJoinError,
+    } = useJoinLinkHandler({
+        db,
+        userId: user?.uid ?? null,
+        isAuthenticated: !!user,
+        userProfile: user ? { displayName: user.displayName ?? undefined, email: user.email ?? undefined, photoURL: user.photoURL ?? undefined } : null,
+        appId: services?.appId,
+    });
+
+    // Story 14c.17: Handle successful join - switch to group mode
+    useEffect(() => {
+        if (joinLinkState === 'success' && joinedGroupId && joinGroupPreview) {
+            // Switch to the newly joined group
+            setGroupMode(joinedGroupId, joinGroupPreview as unknown as SharedGroup);
+            setView('dashboard');
+        }
+    }, [joinLinkState, joinedGroupId, joinGroupPreview, setGroupMode]);
 
     // Story 14c.13: In-app notifications for shared groups (must be after db is defined)
     const {
@@ -5154,6 +5184,19 @@ function App() {
                 t={t}
                 lang={lang}
                 formatCurrency={(amount, curr) => formatCurrency(amount, curr)}
+            />
+
+            {/* Story 14c.17: Join Group via Share Link Dialog */}
+            <JoinGroupDialog
+                isOpen={joinLinkState !== 'idle' && joinLinkState !== 'pending_auth' && joinLinkState !== 'success'}
+                state={joinLinkState}
+                groupPreview={joinGroupPreview}
+                error={joinError}
+                onConfirm={confirmJoin}
+                onCancel={cancelJoin}
+                onDismissError={dismissJoinError}
+                t={t}
+                lang={lang}
             />
             </div>
         </>

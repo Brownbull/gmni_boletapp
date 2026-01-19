@@ -72,3 +72,10 @@ export type { ColorPickerProps } from './ColorPicker';
 // Story 14c.9: Shared Group Analytics
 export { MemberContributionChart, MemberContributionChartSkeleton } from './MemberContributionChart';
 export type { MemberContributionChartProps, MemberContributionChartSkeletonProps } from './MemberContributionChart';
+
+// Story 14c.11: Error Handling
+export { SharedGroupError } from './SharedGroupError';
+export type { SharedGroupErrorProps } from './SharedGroupError';
+
+export { SharedGroupErrorBoundary } from './SharedGroupErrorBoundary';
+export type { SharedGroupErrorBoundaryProps } from './SharedGroupErrorBoundary';

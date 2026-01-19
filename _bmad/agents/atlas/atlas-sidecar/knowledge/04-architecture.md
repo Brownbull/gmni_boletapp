@@ -270,6 +270,21 @@ Functions: `sanitizeMerchantName`, `sanitizeItemName`, `sanitizeLocation`, `sani
 
 **Reference:** `docs/architecture/architecture.md` (ADR-011)
 
+**Error Handling (Story 14c.11):**
+- `src/lib/sharedGroupErrors.ts` - Error types and classification
+- `src/components/SharedGroups/SharedGroupError.tsx` - Unified error UI
+- `src/components/SharedGroups/SharedGroupErrorBoundary.tsx` - React error boundary
+- Error categories: Recoverable, Non-recoverable, Temporary (network), Degraded (storage)
+- IndexedDB quota exceeded triggers cleanup + fallback to in-memory
+
+**Share Link Deep Linking (Story 14c.17):**
+- `src/utils/deepLinkHandler.ts` - URL parsing for `/join/{shareCode}` pattern
+- `src/hooks/useJoinLinkHandler.ts` - State machine for join flow (idle→loading→confirming→joining→success|error)
+- `src/components/SharedGroups/JoinGroupDialog.tsx` - WCAG 2.1 AA compliant join confirmation dialog
+- sessionStorage for pending join codes (unauthenticated flow)
+- Existing functions reused: `getSharedGroupPreview()`, `joinByShareCode()`
+- Auto-switches to group mode after successful join
+
 ---
 
 ## Firebase Cloud Functions (Documented 2026-01-15)
@@ -295,5 +310,6 @@ Functions: `sanitizeMerchantName`, `sanitizeItemName`, `sanitizeLocation`, `sani
 - Generation 4: Consolidated Epic 14d verbose details
 - 2026-01-15: Added Epic 14c Household Sharing architecture
 - 2026-01-15: Added Cloud Functions documentation
+- 2026-01-19: Added Story 14c.17 Share Link Deep Linking pattern
 - Code review learnings in 06-lessons.md
 - Story details in docs/sprint-artifacts/
