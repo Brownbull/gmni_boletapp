@@ -840,6 +840,10 @@ export const TRANSLATIONS = {
         leaveGroupConfirm: "Leave Group",
         leaving: "Leaving...",
         leaveGroup: "Leave Group",
+        // Story 14c.17: Join Group via Share Link
+        joinGroupTitle: "Join group?",
+        join: "Join",
+        joining: "Joining...",
         groupMembers: "Members",
         groupOwner: "Owner",
         you: "You",
@@ -1788,6 +1792,10 @@ export const TRANSLATIONS = {
         leaveGroupConfirm: "Dejar grupo",
         leaving: "Saliendo...",
         leaveGroup: "Dejar grupo",
+        // Story 14c.17: Join Group via Share Link
+        joinGroupTitle: "¿Unirte al grupo?",
+        join: "Unirme",
+        joining: "Uniéndose...",
         groupMembers: "Miembros",
         groupOwner: "Dueño",
         you: "Tú",

@@ -147,8 +147,19 @@ service cloud.firestore {
             );
       }
 
-      // UPDATE: Owner can update anything, user can join, or member can update their timestamp
-      allow update: if isGroupOwner() || isJoiningGroup() || isMemberUpdatingOwnTimestamp();
+      // Helper: Check if member is leaving the group (removing themselves)
+      // Story 14c.3: Members can leave groups they don't own
+      // Bug fix (Code Review 2026-01-19): Allow non-owner members to remove themselves
+      function isMemberLeavingGroup() {
+        return isGroupMember()
+            && !(request.auth.uid == resource.data.ownerId) // Not the owner (owners must transfer/delete)
+            && !(request.auth.uid in request.resource.data.members) // User removed themselves
+            && request.resource.data.members.size() == resource.data.members.size() - 1 // Only one member removed
+            && request.resource.data.ownerId == resource.data.ownerId; // Owner unchanged
+      }
+
+      // UPDATE: Owner can update anything, user can join, member can leave, or member can update their timestamp
+      allow update: if isGroupOwner() || isJoiningGroup() || isMemberLeavingGroup() || isMemberUpdatingOwnTimestamp();
 
       // DELETE: Only owner can delete the group
       allow delete: if isGroupOwner();
