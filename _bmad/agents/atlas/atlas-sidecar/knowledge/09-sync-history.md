@@ -29,7 +29,7 @@
 | **Epic 13** | ✅ COMPLETE (14/14) - UX Design & Mockups |
 | **Epic 14** | ✅ COMPLETE (50+) - Core Implementation |
 | **Epic 14d** | ✅ COMPLETE (11/11) - Scan Architecture Refactor |
-| **Epic 14c** | 🔄 IN PROGRESS (14/17) - Household Sharing |
+| **Epic 14c** | 🔄 IN PROGRESS (15/17) - Household Sharing |
 | **Tests** | 3,146+ (84%+ coverage) |
 | **Bundle** | 2.92 MB ⚠️ |
 | **Velocity** | ~8.6 pts/day |
@@ -54,7 +54,7 @@
 | 14c.13 | ✅ Done | Push Notifications |
 | 14c.16 | ✅ Done | Cache Architecture Fix |
 | 14c.17 | 📋 Review | Share Link Deep Linking |
-| 14c.18 | 📋 Ready | View Mode Persistence |
+| 14c.18 | ✅ Done | View Mode Persistence (38 tests, Atlas Code Review 2026-01-19) |
 
 ### Next Epics Roadmap
 
