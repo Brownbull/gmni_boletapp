@@ -5,6 +5,7 @@
  * Story 14c.2: Accept/Decline Invitation
  * Story 14c.3: Leave/Manage Group
  * Story 14c.8: Group Consolidation - shared groups only
+ * Story 14c.20: Manual Sync Button for cache refresh
  *
  * Displays shared groups the user owns or is a member of.
  *
@@ -15,6 +16,7 @@
  * - Pending invitations section (Story 14c.2)
  * - Group management (leave, transfer, remove members) (Story 14c.3)
  * - Join groups by share code
+ * - Manual sync button for transaction refresh (Story 14c.20)
  */
 
 import React, { useState, useCallback } from 'react';
@@ -28,6 +30,7 @@ import { GroupMembersManager } from '../../SharedGroups/GroupMembersManager';
 import { DeleteGroupDialog } from '../../SharedGroups/DeleteGroupDialog';
 import { EmojiPicker } from '../../SharedGroups/EmojiPicker';
 import { ColorPicker } from '../../SharedGroups/ColorPicker';
+import { SyncButton } from '../../SharedGroups/SyncButton';
 import type { LeaveMode } from '../../SharedGroups/LeaveGroupDialog';
 import {
     regenerateShareCode,
@@ -830,23 +833,27 @@ export const GruposView: React.FC<GruposViewProps> = ({
                                                     className="flex-1 min-w-0 text-left"
                                                 >
                                                     <div
-                                                        className="font-medium truncate"
+                                                        className="font-medium truncate flex items-center gap-2"
                                                         style={{ color: 'var(--text-primary)' }}
                                                     >
                                                         {label}
-                                                    </div>
-                                                    <div
-                                                        className="text-xs flex items-center gap-2"
-                                                        style={{ color: 'var(--text-secondary)' }}
-                                                    >
-                                                        <Users className="w-3 h-3" />
-                                                        {group.members.length}{' '}
-                                                        {lang === 'es'
-                                                            ? (group.members.length === 1 ? 'miembro' : 'miembros')
-                                                            : (group.members.length === 1 ? 'member' : 'members')
-                                                        }
+                                                        <span
+                                                            className="text-xs flex items-center gap-1 font-normal"
+                                                            style={{ color: 'var(--text-secondary)' }}
+                                                        >
+                                                            <Users className="w-3 h-3" />
+                                                            {group.members.length}
+                                                        </span>
                                                     </div>
                                                 </button>
+
+                                                {/* Story 14c.20: Compact Sync Button */}
+                                                <SyncButton
+                                                    groupId={group.id!}
+                                                    lang={lang}
+                                                    onShowToast={onShowToast}
+                                                    compact={true}
+                                                />
 
                                                 {/* Edit Button */}
                                                 <button
@@ -1013,22 +1020,31 @@ export const GruposView: React.FC<GruposViewProps> = ({
                                         {/* Group Info */}
                                         <div className="flex-1 min-w-0 text-left">
                                             <div
-                                                className="font-medium truncate"
+                                                className="font-medium truncate flex items-center gap-2"
                                                 style={{ color: 'var(--text-primary)' }}
                                             >
                                                 {label}
+                                                <span
+                                                    className="text-xs flex items-center gap-1 font-normal"
+                                                    style={{ color: 'var(--text-secondary)' }}
+                                                >
+                                                    <Users className="w-3 h-3" />
+                                                    {group.members.length}
+                                                </span>
                                             </div>
-                                            <div
-                                                className="text-xs flex items-center gap-2"
-                                                style={{ color: 'var(--text-secondary)' }}
-                                            >
-                                                <Users className="w-3 h-3" />
-                                                {group.members.length}{' '}
-                                                {lang === 'es'
-                                                    ? (group.members.length === 1 ? 'miembro' : 'miembros')
-                                                    : (group.members.length === 1 ? 'member' : 'members')
-                                                }
-                                            </div>
+                                        </div>
+
+                                        {/* Story 14c.20: Compact Sync Button */}
+                                        <div
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="flex-shrink-0"
+                                        >
+                                            <SyncButton
+                                                groupId={group.id!}
+                                                lang={lang}
+                                                onShowToast={onShowToast}
+                                                compact={true}
+                                            />
                                         </div>
 
                                         {/* Expand Arrow */}
@@ -1041,7 +1057,7 @@ export const GruposView: React.FC<GruposViewProps> = ({
                                     {/* Expanded: Group Members Manager (non-owner can leave) */}
                                     {isExpanded && userId && (
                                         <div
-                                            className="px-3 pb-3"
+                                            className="px-3 pb-3 space-y-3"
                                             style={{ borderTop: '1px solid var(--border-light)' }}
                                         >
                                             <GroupMembersManager

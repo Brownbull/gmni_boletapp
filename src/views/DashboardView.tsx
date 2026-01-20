@@ -2073,17 +2073,26 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
             // Story 14c.5 Bug Fix: Clear IndexedDB cache and invalidate React Query
             // This ensures untagged transactions don't appear in stale cache
-            affectedGroupIds.forEach(groupId => {
-                // Clear IndexedDB cache (async, fire and forget)
-                clearGroupCacheById(groupId).catch(err => {
+            // Story 14c.20 Bug Fix: Await IndexedDB clear before invalidating to prevent race condition
+            await Promise.all(Array.from(affectedGroupIds).map(async groupId => {
+                // Clear IndexedDB cache FIRST
+                try {
+                    await clearGroupCacheById(groupId);
+                } catch (err) {
                     console.warn('[DashboardView] Failed to clear IndexedDB cache:', err);
+                }
+                // Reset React Query cache to clear in-memory data
+                await queryClient.resetQueries({
+                    queryKey: ['sharedGroupTransactions', groupId],
                 });
-                // Invalidate React Query in-memory cache
+                // THEN invalidate to trigger fresh fetch from Firestore
+                // Use refetchType: 'all' to force refetch even for inactive queries
                 queryClient.invalidateQueries({
                     queryKey: ['sharedGroupTransactions', groupId],
                     exact: false, // Invalidate all date ranges for this group
+                    refetchType: 'all',
                 });
-            });
+            }));
 
             console.log('[DashboardView] Cleared IndexedDB and invalidated React Query for groups:', Array.from(affectedGroupIds));
 
