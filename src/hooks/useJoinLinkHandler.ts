@@ -153,6 +153,15 @@ export function useJoinLinkHandler({
     // Track if we're currently processing to prevent double-processing
     const isProcessing = useRef(false);
 
+    // Debug: Log hook initialization
+    console.log('[useJoinLinkHandler] Hook init:', {
+        isAuthenticated,
+        userId: userId ? 'present' : 'null',
+        pathname: typeof window !== 'undefined' ? window.location.pathname : 'N/A',
+        pendingCode: typeof window !== 'undefined' ? getPendingJoinCode() : 'N/A',
+        hasProcessedUrl: hasProcessedUrl.current,
+    });
+
     /**
      * Fetch group preview and update state accordingly.
      */
@@ -162,6 +171,10 @@ export function useJoinLinkHandler({
 
         setState('loading');
         setShareCode(code);
+
+        // Clear pending code early - we've captured the code in state now
+        // This prevents duplicate processing if the app reloads during the flow
+        clearPendingJoinCode();
 
         try {
             const preview = await getSharedGroupPreview(db, code);
@@ -246,7 +259,14 @@ export function useJoinLinkHandler({
      * Confirm joining the group.
      */
     const confirmJoin = useCallback(async () => {
+        console.log('[useJoinLinkHandler] confirmJoin called:', {
+            shareCode,
+            userId: userId ? 'present' : 'null',
+            isAuthenticated,
+        });
+
         if (!shareCode || !userId || !isAuthenticated) {
+            console.warn('[useJoinLinkHandler] confirmJoin aborted - missing data');
             return;
         }
 
@@ -263,7 +283,7 @@ export function useJoinLinkHandler({
 
             setJoinedGroupId(result.groupId);
             setState('success');
-            clearPendingJoinCode();
+            // Note: clearPendingJoinCode() is called early in fetchGroupPreview
             clearJoinUrlPath();
         } catch (err) {
             console.error('[useJoinLinkHandler] Error joining group:', err);
