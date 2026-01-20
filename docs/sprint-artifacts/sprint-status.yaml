@@ -501,9 +501,9 @@ development_status:
 
   # Phase 7: Bug Fixes & Tech Debt - 19 pts
   14c-16-cache-architecture-fix: done  # 5 pts - Fix circular dependency: fetch all transactions once, filter client-side, compute years from full cache [BUG: 2025 transactions not visible] - Atlas Code Review APPROVED 2026-01-19
-  14c-17-share-link-deep-linking: review  # 5 pts - Handle /join/{shareCode} URLs, join confirmation dialog, unauthenticated flow [BUG: Share links don't work] - 55 tests added
+  14c-17-share-link-deep-linking: done  # 5 pts - Handle /join/{shareCode} URLs, join confirmation dialog, unauthenticated flow [BUG FIX: nanoid URL-safe chars] - 58 tests
   14c-18-view-mode-user-persistence: done  # 5 pts - Persist view mode to Firestore, validate group on restore, fix race condition [BUG: Mode/data mismatch on login] - 38 tests
-  14c-14-tech-debt-functions-config-migration: backlog  # 2 pts - Migrate functions.config() to env vars before March 2026
+  14c-14-tech-debt-functions-config-migration: done  # 2 pts - Migrate functions.config() to env vars before March 2026 - DEPLOYED 2026-01-19
   14c-15-notification-tech-debt: backlog  # 2 pts - Consolidate NotificationClickData interface + VAPID public key to env var [FROM: 14c.13 code review]
 
   # Phase 6: Release - 2 pts

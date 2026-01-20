@@ -303,6 +303,12 @@ Functions: `sanitizeMerchantName`, `sanitizeItemName`, `sanitizeLocation`, `sani
 
 **Reference:** `docs/architecture/api-contracts.md`
 
+**Secret Manager Migration (Story 14c.14):**
+- Deprecated: `functions.config().gemini?.api_key` (removed March 2026)
+- Production: Secret Manager via `.runWith({ secrets: ['GEMINI_API_KEY'] })`
+- Local: `functions/.env` file (gitignored)
+- Error handling: Descriptive message guides developers to correct setup
+
 ---
 
 **View Mode Persistence (Story 14c.18):**
@@ -321,5 +327,6 @@ Functions: `sanitizeMerchantName`, `sanitizeItemName`, `sanitizeLocation`, `sani
 - 2026-01-15: Added Cloud Functions documentation
 - 2026-01-19: Added Story 14c.17 Share Link Deep Linking pattern
 - 2026-01-19: Added Story 14c.18 View Mode Persistence pattern
+- 2026-01-19: Added Story 14c.14 Secret Manager Migration pattern
 - Code review learnings in 06-lessons.md
 - Story details in docs/sprint-artifacts/

@@ -7,7 +7,9 @@
  * Tests URL parsing for share code deep links:
  * - Valid URL patterns (/join/{code}, /join/{code}/, /join/{code}?...)
  * - Invalid URLs (wrong path, invalid code format)
- * - Share code format validation (16-char alphanumeric)
+ * - Share code format validation (16-char URL-safe: A-Za-z0-9_-)
+ *
+ * NOTE: nanoid uses URL-safe alphabet including underscore and hyphen
  */
 
 import { describe, it, expect } from 'vitest';
@@ -27,6 +29,14 @@ describe('deepLinkHandler', () => {
             expect(SHARE_CODE_PATTERN.test('abcdefghijklmnop')).toBe(true);
         });
 
+        it('should match codes with underscore and hyphen (nanoid URL-safe)', () => {
+            // nanoid uses URL-safe alphabet: A-Za-z0-9_-
+            expect(SHARE_CODE_PATTERN.test('Ab3dEf7h_j9kLm0p')).toBe(true);
+            expect(SHARE_CODE_PATTERN.test('Ab3dEf7h-j9kLm0p')).toBe(true);
+            expect(SHARE_CODE_PATTERN.test('Nxc5iS0_UVIOlt_3')).toBe(true); // Real production code
+            expect(SHARE_CODE_PATTERN.test('8MJ_xt9U7b5GHtXw')).toBe(true); // nanoid sample
+        });
+
         it('should reject codes shorter than 16 chars', () => {
             expect(SHARE_CODE_PATTERN.test('abc123')).toBe(false);
             expect(SHARE_CODE_PATTERN.test('Ab3dEf7hIj9kLm0')).toBe(false); // 15 chars
@@ -36,10 +46,11 @@ describe('deepLinkHandler', () => {
             expect(SHARE_CODE_PATTERN.test('Ab3dEf7hIj9kLm0pX')).toBe(false); // 17 chars
         });
 
-        it('should reject codes with special characters', () => {
+        it('should reject codes with non-URL-safe special characters', () => {
             expect(SHARE_CODE_PATTERN.test('Ab3dEf7hIj9kLm0!')).toBe(false);
-            expect(SHARE_CODE_PATTERN.test('Ab3dEf7h-j9kLm0p')).toBe(false);
-            expect(SHARE_CODE_PATTERN.test('Ab3dEf7h_j9kLm0p')).toBe(false);
+            expect(SHARE_CODE_PATTERN.test('Ab3dEf7h@j9kLm0p')).toBe(false);
+            expect(SHARE_CODE_PATTERN.test('Ab3dEf7h#j9kLm0p')).toBe(false);
+            expect(SHARE_CODE_PATTERN.test('Ab3dEf7h$j9kLm0p')).toBe(false);
         });
     });
 
@@ -47,6 +58,9 @@ describe('deepLinkHandler', () => {
         it('should return true for valid share codes', () => {
             expect(isValidShareCode('Ab3dEf7hIj9kLm0p')).toBe(true);
             expect(isValidShareCode('0123456789abcdef')).toBe(true);
+            // nanoid URL-safe codes with underscore and hyphen
+            expect(isValidShareCode('Nxc5iS0_UVIOlt_3')).toBe(true);
+            expect(isValidShareCode('Ab3dEf7h-j9kLm0p')).toBe(true);
         });
 
         it('should return false for invalid share codes', () => {
@@ -84,6 +98,16 @@ describe('deepLinkHandler', () => {
                 const result = parseShareCodeFromUrl('/Join/Ab3dEf7hIj9kLm0p');
                 expect(result).toBe('Ab3dEf7hIj9kLm0p');
             });
+
+            it('should parse codes with underscore (nanoid URL-safe)', () => {
+                const result = parseShareCodeFromUrl('/join/Nxc5iS0_UVIOlt_3');
+                expect(result).toBe('Nxc5iS0_UVIOlt_3');
+            });
+
+            it('should parse codes with hyphen (nanoid URL-safe)', () => {
+                const result = parseShareCodeFromUrl('/join/Ab3dEf7h-j9kLm0p');
+                expect(result).toBe('Ab3dEf7h-j9kLm0p');
+            });
         });
 
         describe('invalid URLs', () => {
@@ -98,7 +122,7 @@ describe('deepLinkHandler', () => {
             it('should return null for invalid share codes in URL', () => {
                 expect(parseShareCodeFromUrl('/join/short')).toBeNull();
                 expect(parseShareCodeFromUrl('/join/too-long-code-here!')).toBeNull();
-                expect(parseShareCodeFromUrl('/join/Ab3dEf7h_j9kLm0p')).toBeNull();
+                expect(parseShareCodeFromUrl('/join/Ab3dEf7h@j9kLm0p')).toBeNull(); // @ not in nanoid
             });
 
             it('should return null for empty or invalid input', () => {

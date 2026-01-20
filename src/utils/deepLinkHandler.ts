@@ -23,9 +23,10 @@ export const PENDING_JOIN_CODE_KEY = 'boletapp_pending_join_code';
 
 /**
  * Regular expression pattern for validating share codes.
- * Share codes are exactly 16 alphanumeric characters.
+ * Share codes are exactly 16 characters from nanoid's URL-safe alphabet.
+ * nanoid uses: A-Za-z0-9_- (URL-safe characters)
  */
-export const SHARE_CODE_PATTERN = /^[a-zA-Z0-9]{16}$/;
+export const SHARE_CODE_PATTERN = /^[a-zA-Z0-9_-]{16}$/;
 
 /**
  * Validate if a string is a valid share code format.

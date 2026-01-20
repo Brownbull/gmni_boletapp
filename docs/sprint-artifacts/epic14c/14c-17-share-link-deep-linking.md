@@ -1,6 +1,6 @@
 # Story 14c.17: Share Link Deep Linking
 
-Status: review
+Status: done
 
 ## Story
 
@@ -189,7 +189,7 @@ type JoinError = 'CODE_NOT_FOUND' | 'CODE_EXPIRED' | 'GROUP_FULL' | 'ALREADY_MEM
 - Used existing sharedGroupService functions (joinByShareCode, getSharedGroupPreview)
 
 ### Completion Notes
-- **55 new tests added** (18 URL parsing + 14 hook + 23 component)
+- **55 new tests added** (18 URL parsing + 14 hook + 23 component) → **58 tests after bug fix**
 - **Build passes** with no type errors
 - **All acceptance criteria satisfied**:
   - AC1: URL Detection on Load ✅
@@ -200,8 +200,23 @@ type JoinError = 'CODE_NOT_FOUND' | 'CODE_EXPIRED' | 'GROUP_FULL' | 'ALREADY_MEM
   - AC6: URL Cleanup ✅
   - AC7: Success Navigation ✅
 
+### Bug Fix: nanoid URL-safe Characters (2026-01-19)
+
+**Problem:** Share links with underscore (`_`) or hyphen (`-`) characters were silently rejected.
+
+**Root Cause:** The `SHARE_CODE_PATTERN` regex was `/^[a-zA-Z0-9]{16}$/` which only allowed alphanumeric characters. However, `nanoid` (used to generate share codes) uses URL-safe alphabet: `A-Za-z0-9_-`.
+
+**Example:** URL `https://boletapp-d609f.web.app/join/Nxc5iS0_UVIOlt_3` failed because the code contains underscores.
+
+**Fix:** Updated `SHARE_CODE_PATTERN` to `/^[a-zA-Z0-9_-]{16}$/` in `src/utils/deepLinkHandler.ts`.
+
+**Tests Added:**
+- Pattern tests for underscore/hyphen characters
+- URL parsing tests for real production codes like `Nxc5iS0_UVIOlt_3`
+
 ## Change Log
 
 | Date | Author | Change |
 |------|--------|--------|
 | 2026-01-19 | Claude (Atlas Dev Story) | Initial implementation |
+| 2026-01-19 | Claude (Atlas Dev Story) | Bug fix: Updated SHARE_CODE_PATTERN to support nanoid URL-safe chars (underscore, hyphen) |
