@@ -333,4 +333,94 @@ describe('useViewModePreferencePersistence', () => {
       });
     });
   });
+
+  // ===========================================================================
+  // Story 14c.19 Bug Fix Tests
+  // ===========================================================================
+
+  describe('Story 14c.19 Bug Fix - Group Mode Restoration', () => {
+    it('should restore group mode from Firestore preference (14c.19 bug fix)', async () => {
+      // Start with personal mode in localStorage (opposite of Firestore)
+      mockStorage['boletapp_view_mode'] = JSON.stringify({
+        mode: 'personal',
+      });
+
+      const savePreference = vi.fn();
+      const validGroup = createMockSharedGroup({
+        id: 'firestore-group-123',
+        name: 'Firestore Saved Group',
+      });
+
+      // Firestore says user prefers group mode
+      const firestorePreference: ViewModePreference = {
+        mode: 'group',
+        groupId: 'firestore-group-123',
+      };
+
+      function TestHook() {
+        const viewMode = useViewMode();
+        useViewModePreferencePersistence({
+          groups: [validGroup],
+          groupsLoading: false,
+          firestorePreference,
+          preferencesLoading: false,
+          savePreference,
+        });
+        return viewMode;
+      }
+
+      const { result } = renderHook(() => TestHook(), {
+        wrapper: createTestWrapper(),
+      });
+
+      // The bug was that setGroupMode was never called, so mode stayed personal
+      // After fix, it should restore to group mode from Firestore preference
+      await waitFor(() => {
+        expect(result.current.isValidated).toBe(true);
+        expect(result.current.mode).toBe('group');
+        expect(result.current.groupId).toBe('firestore-group-123');
+        expect(result.current.group?.name).toBe('Firestore Saved Group');
+      });
+    });
+
+    it('should fallback to personal when Firestore group is invalid (14c.19)', async () => {
+      const savePreference = vi.fn();
+
+      // Firestore says user prefers a group that no longer exists
+      const firestorePreference: ViewModePreference = {
+        mode: 'group',
+        groupId: 'deleted-group-id',
+      };
+
+      // User only has access to a different group
+      const differentGroup = createMockSharedGroup({
+        id: 'other-group',
+        name: 'Other Group',
+      });
+
+      function TestHook() {
+        const viewMode = useViewMode();
+        useViewModePreferencePersistence({
+          groups: [differentGroup], // deleted-group-id is NOT in user's groups
+          groupsLoading: false,
+          firestorePreference,
+          preferencesLoading: false,
+          savePreference,
+        });
+        return viewMode;
+      }
+
+      const { result } = renderHook(() => TestHook(), {
+        wrapper: createTestWrapper(),
+      });
+
+      // Should set group mode initially (from Firestore), then validateAndRestoreMode
+      // should detect the group is invalid and fall back to personal mode
+      await waitFor(() => {
+        expect(result.current.isValidated).toBe(true);
+        expect(result.current.mode).toBe('personal');
+        expect(result.current.groupId).toBeUndefined();
+      });
+    });
+  });
 });

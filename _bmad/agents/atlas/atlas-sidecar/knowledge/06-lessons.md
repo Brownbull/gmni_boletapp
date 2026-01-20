@@ -39,6 +39,7 @@
 | Cost Monitoring Gap | Set up Firebase budget alerts proactively |
 | Infinite Loop in useEffect | Use refs to track data changes, not useMemo results |
 | Default Array Parameters | `{ items = [] }` creates new ref - use module-level const |
+| No-op Code with Logging | Code that logs but doesn't call setter = bug (14c.19: setGroupMode logged but never called) |
 
 ---
 
