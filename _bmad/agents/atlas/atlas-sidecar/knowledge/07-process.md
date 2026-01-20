@@ -58,6 +58,7 @@ backlog → drafted → ready-for-dev → in-progress → review → done
 
 | Story/Epic | Date | Notes |
 |------------|------|-------|
+| **Story 14c.17** | 2026-01-19 | Share link deep linking - Bug fix: nanoid URL-safe chars (`_-`) in share codes |
 | **Story 14c.11** | 2026-01-19 | Error handling - SharedGroupError, ErrorBoundary, quota handling |
 | **Story 14c.16 Follow-up** | 2026-01-19 | rawTransactions wiring fix for year picker |
 | **Story 14c.16** | 2026-01-19 | Cache architecture fix, client-side filtering |
