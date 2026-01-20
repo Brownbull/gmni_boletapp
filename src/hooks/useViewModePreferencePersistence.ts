@@ -1,14 +1,14 @@
 /**
  * Story 14c.18: View Mode Preference Persistence Hook
+ * Story 14c.18 bugfix: Simplified to work like other settings (font, currency, etc.)
  *
  * Connects ViewModeContext to Firestore persistence via useUserPreferences.
- * Handles:
- * - Group validation after groups are loaded (AC4, AC5)
- * - Syncing preference changes to Firestore (AC6, AC8)
- * - Initial preference loading from Firestore (AC3)
+ * Works exactly like other user preferences - no dependency on async subscriptions.
  *
- * Usage: Call this hook once in App.tsx after useUserPreferences and
- * useUserSharedGroups are initialized.
+ * Key insight: Don't wait for groups to load before applying the preference.
+ * Apply the Firestore preference immediately, validate lazily when groups arrive.
+ *
+ * Usage: Call this hook once in App.tsx after useUserPreferences is initialized.
  */
 
 import { useEffect, useRef } from 'react';
@@ -32,10 +32,12 @@ interface UseViewModePreferencePersistenceOptions {
 /**
  * Hook to connect ViewModeContext with Firestore persistence.
  *
- * This hook:
- * 1. Validates group mode on startup after groups load (AC4, AC5)
- * 2. Persists mode changes to Firestore (AC6)
- * 3. Handles initial Firestore preference sync (AC3)
+ * This hook follows the same pattern as other settings (currency, font, etc.):
+ * 1. Apply Firestore preference IMMEDIATELY when preferences load (AC3)
+ * 2. Validate group membership LAZILY when groups arrive (AC4, AC5)
+ * 3. Persist mode changes to Firestore (AC6)
+ *
+ * This avoids the race condition by NOT waiting for groups before applying preference.
  */
 export function useViewModePreferencePersistence({
   groups,
@@ -53,15 +55,17 @@ export function useViewModePreferencePersistence({
     setGroupMode,
   } = useViewMode();
 
-  // Track if we've done initial Firestore sync
+  // Track if we've applied the initial Firestore preference
+  const hasAppliedFirestoreRef = useRef(false);
+  // Track if we've validated after groups loaded
+  const hasValidatedGroupsRef = useRef(false);
+  // Track if we've done initial sync (for persistence)
   const hasInitialSyncRef = useRef(false);
   // Track previous mode/groupId to detect changes
   const prevModeRef = useRef<{ mode: typeof mode; groupId?: string } | null>(null);
-  // Track if we've applied Firestore preference
-  const hasAppliedFirestoreRef = useRef(false);
 
-  // Step 1: Apply Firestore preference on first load (AC3)
-  // This runs once when preferences finish loading
+  // Step 1: Apply Firestore preference IMMEDIATELY when preferences load (AC3)
+  // Don't wait for groups - apply the preference right away, just like currency/font settings
   useEffect(() => {
     if (preferencesLoading || hasAppliedFirestoreRef.current) {
       return;
@@ -69,61 +73,64 @@ export function useViewModePreferencePersistence({
 
     hasAppliedFirestoreRef.current = true;
 
-    // If Firestore has a preference and it differs from current state, apply it
+    // If Firestore has a preference, apply it immediately
     if (firestorePreference) {
-      const currentMode = mode;
-      const currentGroupId = groupId;
+      if (import.meta.env.DEV) {
+        console.log('[useViewModePreferencePersistence] Applying Firestore preference immediately:', {
+          mode: firestorePreference.mode,
+          groupId: firestorePreference.groupId,
+        });
+      }
 
-      const needsUpdate =
-        firestorePreference.mode !== currentMode ||
-        (firestorePreference.mode === 'group' &&
-          firestorePreference.groupId !== currentGroupId);
-
-      if (needsUpdate) {
-        if (firestorePreference.mode === 'group' && firestorePreference.groupId) {
-          // Story 14c.19 fix: Set group mode so validateAndRestoreMode can validate it
-          // The group data will be populated by validateAndRestoreMode once groups load
-          if (import.meta.env.DEV) {
-            console.log(
-              '[useViewModePreferencePersistence] Firestore preference: group mode',
-              firestorePreference.groupId
-            );
-          }
-          setGroupMode(firestorePreference.groupId);
-        } else if (firestorePreference.mode === 'personal') {
-          if (import.meta.env.DEV) {
-            console.log(
-              '[useViewModePreferencePersistence] Firestore preference: personal mode'
-            );
-          }
-          setPersonalMode();
-        }
+      if (firestorePreference.mode === 'group' && firestorePreference.groupId) {
+        // Set group mode - group data will be populated when groups load
+        setGroupMode(firestorePreference.groupId);
+      } else if (firestorePreference.mode === 'personal') {
+        setPersonalMode();
       }
     }
-  }, [preferencesLoading, firestorePreference, mode, groupId, setPersonalMode, setGroupMode]);
+    // If no Firestore preference, ViewModeProvider already loaded from localStorage
+  }, [preferencesLoading, firestorePreference, setGroupMode, setPersonalMode]);
 
-  // Step 2: Validate group mode after groups finish loading (AC4, AC5)
+  // Step 2: Validate group membership LAZILY when groups arrive (AC4, AC5)
+  // This runs AFTER groups have loaded - validates the persisted groupId is still valid
   useEffect(() => {
-    // Wait for groups to load
-    if (groupsLoading || isValidated) {
+    // Wait for groups to load and for initial preference to be applied
+    if (groupsLoading || !hasAppliedFirestoreRef.current || hasValidatedGroupsRef.current) {
       return;
     }
 
+    // Only validate if groups array has actual content
+    // (avoid validating when subscription just started but no data yet)
+    if (groups.length === 0 && mode === 'group' && groupId) {
+      // We're in group mode but groups array is empty - wait for real data
+      if (import.meta.env.DEV) {
+        console.log('[useViewModePreferencePersistence] Waiting for groups data before validating');
+      }
+      return;
+    }
+
+    hasValidatedGroupsRef.current = true;
+
     if (import.meta.env.DEV) {
-      console.log('[useViewModePreferencePersistence] Validating mode with groups:', {
-        groupCount: groups.length,
+      console.log('[useViewModePreferencePersistence] Validating with groups:', {
         currentMode: mode,
         currentGroupId: groupId,
+        groupCount: groups.length,
+        groupIds: groups.map(g => g.id),
       });
     }
 
-    // Validate and restore mode - this will fall back to personal if group invalid
+    // Call validateAndRestoreMode to:
+    // 1. Populate group data if in valid group mode
+    // 2. Fall back to personal mode if group is invalid (AC5)
+    // 3. Mark context as validated
     validateAndRestoreMode(groups);
-  }, [groupsLoading, isValidated, groups, mode, groupId, validateAndRestoreMode]);
+  }, [groupsLoading, groups, mode, groupId, validateAndRestoreMode]);
 
   // Step 3: Persist mode changes to Firestore after initial sync (AC6)
   useEffect(() => {
-    // Don't persist until initial validation is done
+    // Don't persist until validation is done
     if (!isValidated || preferencesLoading) {
       return;
     }
