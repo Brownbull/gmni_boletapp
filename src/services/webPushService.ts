@@ -14,9 +14,15 @@
 
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-// VAPID public key - must match the one in Cloud Functions (.env)
-// Rotated 2026-01-18 after key leak
-const VAPID_PUBLIC_KEY = 'BEANNjOFiqAhGgzdE2MtZExF8zYaVgVBOIiw6J1JXvdyo11IpZJ5rtpi8n6uwWha4deWssa8oDqrhbT0rfxpyfY';
+/**
+ * VAPID public key for Web Push subscriptions
+ * Story 14c.15: Moved from hardcoded to environment variable
+ *
+ * Must match VAPID_PUBLIC_KEY in Cloud Functions .env
+ * Note: VAPID public keys are designed to be public - they're included
+ * in every push subscription request. Only the private key is secret.
+ */
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
 
 /**
  * Constants for web push management
@@ -91,6 +97,12 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
 export async function subscribeToWebPush(): Promise<PushSubscription | null> {
   if (!isWebPushSupported()) {
     console.warn('[WebPush] Push notifications not supported');
+    return null;
+  }
+
+  // Story 14c.15: Validate VAPID key is configured
+  if (!VAPID_PUBLIC_KEY) {
+    console.error('[WebPush] VAPID public key not configured. Set VITE_VAPID_PUBLIC_KEY in .env');
     return null;
   }
 
