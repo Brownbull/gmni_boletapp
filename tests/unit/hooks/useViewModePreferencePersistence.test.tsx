@@ -425,6 +425,67 @@ describe('useViewModePreferencePersistence', () => {
   });
 
   // ===========================================================================
+  // Story 14c.20 Bug Fix - Undefined groupId in Firestore
+  // ===========================================================================
+
+  describe('Story 14c.20 Bug Fix - savePreference with undefined groupId', () => {
+    it('should call savePreference without groupId when switching to personal mode', async () => {
+      // This test verifies that when switching from group to personal mode,
+      // the savePreference callback is called with mode='personal' and no groupId
+      // (not groupId: undefined which would cause Firestore to throw an error)
+
+      const savePreference = vi.fn();
+      const validGroup = createMockSharedGroup({ id: 'group-123', name: 'Test Group' });
+
+      // Start in group mode
+      mockStorage['boletapp_view_mode'] = JSON.stringify({
+        mode: 'group',
+        groupId: 'group-123',
+      });
+
+      function TestHook() {
+        const viewMode = useViewMode();
+        useViewModePreferencePersistence({
+          groups: [validGroup],
+          groupsLoading: false,
+          firestorePreference: { mode: 'group', groupId: 'group-123' },
+          preferencesLoading: false,
+          savePreference,
+        });
+        return viewMode;
+      }
+
+      const { result } = renderHook(() => TestHook(), {
+        wrapper: createTestWrapper(),
+      });
+
+      // Wait for validation
+      await waitFor(() => {
+        expect(result.current.isValidated).toBe(true);
+        expect(result.current.mode).toBe('group');
+      });
+
+      // Clear any calls from validation
+      savePreference.mockClear();
+
+      // Switch to personal mode
+      act(() => {
+        result.current.setPersonalMode();
+      });
+
+      // Verify savePreference is called correctly
+      await waitFor(() => {
+        expect(savePreference).toHaveBeenCalledTimes(1);
+        const callArgs = savePreference.mock.calls[0][0];
+        expect(callArgs.mode).toBe('personal');
+        // The key insight: groupId should be undefined (not present as a key with undefined value)
+        // This is handled by the userPreferencesService using deleteField()
+        expect(callArgs.groupId).toBeUndefined();
+      });
+    });
+  });
+
+  // ===========================================================================
   // Story 14c.18 Race Condition Bug Fix Tests
   // ===========================================================================
 

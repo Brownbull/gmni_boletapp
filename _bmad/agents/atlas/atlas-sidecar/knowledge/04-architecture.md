@@ -336,7 +336,7 @@ Functions: `sanitizeMerchantName`, `sanitizeItemName`, `sanitizeLocation`, `sani
 
 **Problem:** Full Firestore fetch on every view mode switch due to `refetchOnMount: true`
 
-**Solution:** Cache-first strategy with delta sync as primary freshness mechanism
+**Solution:** Cache-first strategy with delta sync + real-time invalidation
 
 ### React Query Configuration
 
@@ -354,38 +354,86 @@ useQuery({
 });
 ```
 
-### Data Flow
+### Real-Time Sync Architecture
 
 ```
-View Mode Switch (personal → group):
-    ↓
-React Query: refetchOnMount: false → Use cached data instantly
-    ↓
-(Background) Delta Sync: Check memberUpdates → Fetch only changed transactions
-    ↓
-(Safety) 1-hour staleTime: Full refresh if cache too old
+User A saves transaction → updateMemberTimestampsForTransaction() → memberUpdates.userA.lastSyncAt
+                                          ↓
+User B's onSnapshot listener detects memberUpdates change (1-3 seconds)
+                                          ↓
+detectMemberUpdates() compares timestamps → shouldInvalidate: true
+                                          ↓
+await clearGroupCacheById() → IndexedDB cleared (MUST await!)
+                                          ↓
+resetQueries() + invalidateQueries({ refetchType: 'all' }) → Force fresh fetch
+                                          ↓
+queryFn → IndexedDB empty → Firestore fetch → User B sees change
+```
+
+### Critical Bug Fixes (Learned Patterns)
+
+#### 1. Race Condition: IndexedDB Clear vs React Query Refetch
+```typescript
+// ❌ BUG: Fire-and-forget causes race condition
+clearGroupCacheById(groupId).catch(...);  // Starts async
+queryClient.invalidateQueries({...});      // Triggers immediately
+// queryFn reads STALE IndexedDB data before clear completes!
+
+// ✅ FIX: Await IndexedDB clear before invalidating
+await clearGroupCacheById(groupId);
+queryClient.invalidateQueries({...});
+```
+
+#### 2. Inactive Query Not Refetching
+```typescript
+// ❌ BUG: invalidateQueries only refetches ACTIVE queries
+// With refetchOnMount: false, inactive queries stay stale
+queryClient.invalidateQueries({ queryKey: [...] });
+
+// ✅ FIX: Use refetchType: 'all' to force refetch inactive queries
+queryClient.invalidateQueries({
+    queryKey: [...],
+    refetchType: 'all'  // Critical for cache optimization
+});
+```
+
+#### 3. Delta Sync Can't Detect Removals
+```typescript
+// ❌ LIMITATION: Delta query filters by sharedGroupIds array-contains groupId
+// When transaction is REMOVED from group, sharedGroupIds no longer contains groupId
+// Delta sync query returns empty → cache still has stale transaction
+
+// ✅ FIX: Use resetQueries() to clear React Query in-memory cache
+await queryClient.resetQueries({ queryKey: [...] });  // Clear in-memory
+queryClient.invalidateQueries({ queryKey: [...], refetchType: 'all' });  // Force fresh fetch
+```
+
+#### 4. memberUpdates Write Reliability
+```typescript
+// ❌ RISK: Fire-and-forget batch write can fail silently
+await transaction.save();
+updateMemberTimestampsForTransaction(...).catch(...);  // If fails, no sync signal
+
+// ✅ FIX: Retry logic with exponential backoff
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 500;
+// Attempt → fail → wait 500ms → retry → fail → wait 1000ms → retry
 ```
 
 ### Manual Sync Feature
 
-**Location:** Settings > Grupos (Shared Groups) > [Expand Group]
+**Location:** Settings > Grupos > [Group Header] (compact sync icon)
 
 **Components:**
 - `useManualSync` hook - Cooldown tracking, cache invalidation
-- `SyncButton` component - UI with loading, countdown, last sync time
+- `SyncButton` component - Compact mode (icon only) in group header
 
 **Behavior:**
 | State | Button | Display |
 |-------|--------|---------|
-| Idle | "Sincronizar" | "Última sync: hace X min" |
-| Syncing | "Sincronizando..." | Spinner |
-| Cooldown | "Espera Xs" | Disabled, countdown |
-
-**Storage:**
-```typescript
-// localStorage key per group
-`boletapp_group_sync_${groupId}` → timestamp
-```
+| Idle | Sync icon | Tooltip: "Sincronizar transacciones" |
+| Syncing | Spinner | Disabled |
+| Cooldown | Clock icon | Tooltip: "Espera Xs" |
 
 ### Cost Impact
 
@@ -398,7 +446,8 @@ React Query: refetchOnMount: false → Use cached data instantly
 - `src/hooks/useSharedGroupTransactions.ts` - React Query config
 - `src/hooks/useManualSync.ts` - Manual sync hook (60s cooldown)
 - `src/components/SharedGroups/SyncButton.tsx` - UI component
-- `src/components/settings/subviews/GruposView.tsx` - Integration
+- `src/App.tsx:533-575` - Cache invalidation on memberUpdates change
+- `src/services/sharedGroupService.ts:1284-1353` - Retry logic for timestamps
 
 ---
 

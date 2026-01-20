@@ -506,7 +506,11 @@ development_status:
   14c-14-tech-debt-functions-config-migration: done  # 2 pts - Migrate functions.config() to env vars before March 2026 - DEPLOYED 2026-01-19
   14c-15-notification-tech-debt: done  # 2 pts - Consolidate NotificationClickData interface + VAPID public key to env var [FROM: 14c.13 code review] - Atlas Code Review APPROVED 2026-01-20
   14c-19-view-mode-persistence-bug-fix: done  # 3 pts - Fix group mode not restoring from Firestore [BUG: 14c.18 regression] - Atlas Code Review APPROVED 2026-01-20 - 8 tests
-  14c-20-shared-group-cache-optimization: code-review  # 5 pts - Cache optimization: 1hr staleTime, 24hr gcTime, refetchOnMount/WindowFocus=false, manual sync button with 60s cooldown - 28 tests
+  14c-20-shared-group-cache-optimization: done  # 5 pts - Cache optimization: 1hr staleTime, 24hr gcTime, refetchOnMount/WindowFocus=false, manual sync button with 60s cooldown - 48 tests - Atlas Code Review APPROVED 2026-01-20
+
+  # Phase 8: Final Polish - 10 pts
+  14c-21-notification-bulk-actions: backlog  # 2 pts - Mark all read + Dismiss all buttons at bottom of NotificationsView
+  14c-22-login-landing-page-redesign: backlog  # 8 pts - UX design phase (3 logo + 3 screen options) + implementation of chosen design
 
   # Phase 6: Release - 2 pts
   14c-99-epic-release-deployment: ready-for-dev  # 2 pts - Version bump (minor beta), CI/CD verification, staging/prod deployment

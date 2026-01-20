@@ -114,6 +114,11 @@
 | nanoid URL-safe validation | Share code regex must include `_-` characters: `/^[a-zA-Z0-9_-]{16}$/` (14c.17 bug fix) |
 | Type consolidation | Duplicate interfaces → single file in `src/types/`, re-export for backwards compatibility (14c.15) |
 | Env vars for config | Client-side config via `import.meta.env.VITE_*` with validation + helpful error (14c.15) |
+| Cache-first staleTime | Long staleTime (60min) + `refetchOnMount/WindowFocus: false` + manual sync button for cost reduction (14c.20) |
+| invalidateQueries refetchType | Use `refetchType: 'all'` to force refetch on inactive queries when `refetchOnMount: false` (14c.20) |
+| resetQueries before invalidate | `resetQueries()` clears in-memory data; `invalidateQueries()` triggers refetch - use both for deletions (14c.20) |
+| IndexedDB-before-Query race | ALWAYS `await clearGroupCacheById()` BEFORE `invalidateQueries()` to prevent queryFn reading stale cache (14c.20) |
+| Per-group cooldown | Store cooldown timestamps with groupId key in localStorage for independent rate limiting (14c.20) |
 
 ### i18n & Translations
 | Pattern | Rule |

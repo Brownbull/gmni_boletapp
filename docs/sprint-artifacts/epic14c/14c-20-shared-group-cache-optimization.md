@@ -1,6 +1,6 @@
 # Story 14c.20: Shared Group Transaction Cache Optimization
 
-**Status**: code-review
+**Status**: done
 **Points**: 5
 **Priority**: Medium
 **Dependencies**: 14c.19 (View Mode Persistence Bug Fix)
@@ -373,6 +373,8 @@ const SYNC_COOLDOWN_KEY = `boletapp_group_sync_${groupId}`;
 | `tests/unit/hooks/useManualSync.test.ts` | **NEW** - 12 tests for manual sync hook |
 | `tests/unit/hooks/useSharedGroupTransactions.test.ts` | Added 3 Story 14c.20 cache optimization tests |
 | `tests/unit/components/SharedGroups/SyncButton.test.tsx` | **NEW** - 13 tests for SyncButton component |
+| `src/services/userPreferencesService.ts` | **BUG FIX** - Use `deleteField()` instead of `undefined` for groupId when saving personal mode |
+| `tests/unit/hooks/useViewModePreferencePersistence.test.tsx` | Added 1 regression test for undefined groupId bug |
 
 ---
 
@@ -382,3 +384,4 @@ const SYNC_COOLDOWN_KEY = `boletapp_group_sync_${groupId}`;
 |------|--------|--------|
 | 2026-01-19 | Story created from cost analysis discussion | User + Atlas |
 | 2026-01-20 | Implementation complete: React Query config, useManualSync, SyncButton, 28 tests | Atlas |
+| 2026-01-20 | **Bug Fix**: Firestore `setDoc()` failed with "Unsupported field value: undefined" when saving personal mode preference. Fixed by using `deleteField()` instead of `undefined` for `viewModePreference.groupId` when mode='personal'. Added regression test. | Atlas |
