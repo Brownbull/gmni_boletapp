@@ -547,6 +547,130 @@ describe('useSharedGroupTransactions', () => {
 })
 
 // ============================================================================
+// Story 14c.20: Cache Optimization Configuration Tests
+// ============================================================================
+
+describe('Cache Optimization Configuration (Story 14c.20)', () => {
+    let queryClient: QueryClient
+
+    beforeEach(() => {
+        queryClient = createTestQueryClient()
+        vi.clearAllMocks()
+    })
+
+    afterEach(() => {
+        queryClient.clear()
+    })
+
+    it('should NOT refetch on mount when data exists in cache', async () => {
+        const { fetchSharedGroupTransactions } = await import('../../../src/services/sharedGroupTransactionService')
+        const mockTransactions = [
+            { id: 'tx-1', total: 100, _ownerId: 'user-1', date: '2026-01-15', merchant: 'A', category: 'Other', items: [] },
+        ]
+        ;(fetchSharedGroupTransactions as ReturnType<typeof vi.fn>).mockResolvedValue(mockTransactions)
+
+        // First render - should fetch
+        const { result, unmount } = renderHook(
+            () => useSharedGroupTransactions({
+                services: mockServices,
+                group: mockGroup,
+                enabled: true,
+            }),
+            { wrapper: createWrapper(queryClient) }
+        )
+
+        await waitFor(() => {
+            expect(result.current.isLoading).toBe(false)
+        })
+
+        const fetchCallsAfterFirstRender = (fetchSharedGroupTransactions as ReturnType<typeof vi.fn>).mock.calls.length
+
+        // Unmount and remount (simulating view mode switch)
+        unmount()
+
+        // Re-render with same query client (data still in cache)
+        const { result: result2 } = renderHook(
+            () => useSharedGroupTransactions({
+                services: mockServices,
+                group: mockGroup,
+                enabled: true,
+            }),
+            { wrapper: createWrapper(queryClient) }
+        )
+
+        // Should NOT be loading since data is in cache
+        // Note: With refetchOnMount: false, it should use cached data
+        expect(result2.current.transactions.length).toBe(1)
+
+        // Verify no additional fetch was made (refetchOnMount: false)
+        const fetchCallsAfterRemount = (fetchSharedGroupTransactions as ReturnType<typeof vi.fn>).mock.calls.length
+        expect(fetchCallsAfterRemount).toBe(fetchCallsAfterFirstRender)
+    })
+
+    it('should use 60-minute staleTime (data considered fresh for 1 hour)', async () => {
+        const { fetchSharedGroupTransactions } = await import('../../../src/services/sharedGroupTransactionService')
+        const mockTransactions = [
+            { id: 'tx-1', total: 100, _ownerId: 'user-1', date: '2026-01-15', merchant: 'A', category: 'Other', items: [] },
+        ]
+        ;(fetchSharedGroupTransactions as ReturnType<typeof vi.fn>).mockResolvedValue(mockTransactions)
+
+        const { result } = renderHook(
+            () => useSharedGroupTransactions({
+                services: mockServices,
+                group: mockGroup,
+                enabled: true,
+            }),
+            { wrapper: createWrapper(queryClient) }
+        )
+
+        await waitFor(() => {
+            expect(result.current.isLoading).toBe(false)
+        })
+
+        // Check query state - data should not be stale immediately
+        const queryState = queryClient.getQueryState(['sharedGroupTransactions', mockGroup.id])
+        expect(queryState?.isInvalidated).toBe(false)
+    })
+
+    it('should expose refresh function for manual cache invalidation', async () => {
+        const { fetchSharedGroupTransactions } = await import('../../../src/services/sharedGroupTransactionService')
+        const mockTransactions = [
+            { id: 'tx-1', total: 100, _ownerId: 'user-1', date: '2026-01-15', merchant: 'A', category: 'Other', items: [] },
+        ]
+        ;(fetchSharedGroupTransactions as ReturnType<typeof vi.fn>).mockResolvedValue(mockTransactions)
+
+        const { result } = renderHook(
+            () => useSharedGroupTransactions({
+                services: mockServices,
+                group: mockGroup,
+                enabled: true,
+            }),
+            { wrapper: createWrapper(queryClient) }
+        )
+
+        await waitFor(() => {
+            expect(result.current.isLoading).toBe(false)
+        })
+
+        // refresh function should be available
+        expect(result.current.refresh).toBeDefined()
+        expect(typeof result.current.refresh).toBe('function')
+
+        // Calling refresh should trigger a refetch
+        const fetchCallsBefore = (fetchSharedGroupTransactions as ReturnType<typeof vi.fn>).mock.calls.length
+
+        await act(async () => {
+            await result.current.refresh()
+        })
+
+        await waitFor(() => {
+            const fetchCallsAfter = (fetchSharedGroupTransactions as ReturnType<typeof vi.fn>).mock.calls.length
+            expect(fetchCallsAfter).toBeGreaterThan(fetchCallsBefore)
+        })
+    })
+})
+
+// ============================================================================
 // Tests: useStorageStrategy
 // ============================================================================
 

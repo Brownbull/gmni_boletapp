@@ -91,11 +91,23 @@ src/
 
 | File | Purpose |
 |------|---------|
-| `src/lib/queryClient.ts` | QueryClient (5min stale, 30min cache) |
+| `src/lib/queryClient.ts` | QueryClient (global defaults) |
 | `src/lib/queryKeys.ts` | Hierarchical cache keys |
 | `src/hooks/useFirestoreSubscription.ts` | Real-time subscriptions + cache |
 | `src/hooks/useFirestoreQuery.ts` | One-time fetch hook |
 | `src/hooks/useFirestoreMutation.ts` | Mutations with cache invalidation |
+
+**Global Defaults** (`queryClient.ts`):
+```typescript
+staleTime: 5 * 60 * 1000,    // 5 minutes
+gcTime: 30 * 60 * 1000,      // 30 minutes
+refetchOnMount: false,        // Use cached data
+refetchOnWindowFocus: false,  // Don't auto-refetch on tab focus
+```
+
+**Per-Hook Overrides** (Story 14c.20):
+- Shared group transactions: `staleTime: 1hr`, `gcTime: 24hr` (cost optimization)
+- See "Shared Group Cache Optimization" section below
 
 **Critical Pattern**: Use refs for subscribeFn to avoid infinite loops. See `06-lessons.md` for pitfalls.
 
@@ -320,6 +332,76 @@ Functions: `sanitizeMerchantName`, `sanitizeItemName`, `sanitizeLocation`, `sani
 
 ---
 
+## Shared Group Cache Optimization (Story 14c.20)
+
+**Problem:** Full Firestore fetch on every view mode switch due to `refetchOnMount: true`
+
+**Solution:** Cache-first strategy with delta sync as primary freshness mechanism
+
+### React Query Configuration
+
+```typescript
+// useSharedGroupTransactions.ts
+useQuery({
+    queryKey: QUERY_KEYS.sharedGroupTransactions(groupId),
+    queryFn: async () => { /* IndexedDB → Delta sync → Firestore fallback */ },
+
+    // Story 14c.20: Cache Optimization
+    staleTime: 60 * 60 * 1000,        // 1 hour (safety net)
+    gcTime: 24 * 60 * 60 * 1000,      // 24 hours (survive view switches)
+    refetchOnMount: false,             // Use cached data on mount
+    refetchOnWindowFocus: false,       // Delta sync handles freshness
+});
+```
+
+### Data Flow
+
+```
+View Mode Switch (personal → group):
+    ↓
+React Query: refetchOnMount: false → Use cached data instantly
+    ↓
+(Background) Delta Sync: Check memberUpdates → Fetch only changed transactions
+    ↓
+(Safety) 1-hour staleTime: Full refresh if cache too old
+```
+
+### Manual Sync Feature
+
+**Location:** Settings > Grupos (Shared Groups) > [Expand Group]
+
+**Components:**
+- `useManualSync` hook - Cooldown tracking, cache invalidation
+- `SyncButton` component - UI with loading, countdown, last sync time
+
+**Behavior:**
+| State | Button | Display |
+|-------|--------|---------|
+| Idle | "Sincronizar" | "Última sync: hace X min" |
+| Syncing | "Sincronizando..." | Spinner |
+| Cooldown | "Espera Xs" | Disabled, countdown |
+
+**Storage:**
+```typescript
+// localStorage key per group
+`boletapp_group_sync_${groupId}` → timestamp
+```
+
+### Cost Impact
+
+| Metric | Before | After | Reduction |
+|--------|--------|-------|-----------|
+| Daily reads/user | ~10,000+ | ~700-1,500 | ~85% |
+| Monthly (50 users) | ~$9 | ~$2 | ~78% |
+
+**Key Files:**
+- `src/hooks/useSharedGroupTransactions.ts` - React Query config
+- `src/hooks/useManualSync.ts` - Manual sync hook (60s cooldown)
+- `src/components/SharedGroups/SyncButton.tsx` - UI component
+- `src/components/settings/subviews/GruposView.tsx` - Integration
+
+---
+
 ## Sync Notes
 
 - Generation 4: Consolidated Epic 14d verbose details
@@ -328,5 +410,6 @@ Functions: `sanitizeMerchantName`, `sanitizeItemName`, `sanitizeLocation`, `sani
 - 2026-01-19: Added Story 14c.17 Share Link Deep Linking pattern
 - 2026-01-19: Added Story 14c.18 View Mode Persistence pattern
 - 2026-01-19: Added Story 14c.14 Secret Manager Migration pattern
+- 2026-01-20: Added Story 14c.20 Shared Group Cache Optimization pattern
 - Code review learnings in 06-lessons.md
 - Story details in docs/sprint-artifacts/

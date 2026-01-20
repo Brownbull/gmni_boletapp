@@ -3,10 +3,11 @@
  *
  * Story 14c.5: Shared Group Transactions View
  * Story 14c.16: Cache Architecture Fix
+ * Story 14c.20: Cache Optimization (staleTime, gcTime, refetchOnMount, refetchOnWindowFocus)
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * React Query integration for shared group transactions with IndexedDB caching.
- * Implements cache-first loading strategy with background Firestore sync.
+ * Implements cache-first loading strategy with background delta sync.
  *
  * Story 14c.16 Architecture Fix:
  * - Fetch ALL transactions once on initial load (no date filter)
@@ -14,10 +15,12 @@
  * - Query key no longer includes date range (shared cache across date selections)
  * - Available years computed from FULL cached data (not filtered subset)
  *
- * AC5: React Query Integration
- * - Cache-first: IndexedDB → display → Firestore fetch
- * - staleTime: 5 minutes, gcTime: 30 minutes
- * - Shows cached data immediately while fetching fresh
+ * Story 14c.20 Cache Optimization:
+ * - staleTime: 1 hour (safety net, delta sync is primary freshness mechanism)
+ * - gcTime: 24 hours (survive long personal mode sessions and view switches)
+ * - refetchOnMount: false (use cached data on view mode switch)
+ * - refetchOnWindowFocus: false (delta sync handles freshness, not tab focus)
+ * - Manual sync available via Settings > Grupos for user-initiated refresh
  *
  * @example
  * ```tsx
@@ -373,10 +376,12 @@ export function useSharedGroupTransactions(
             return transactions;
         },
         enabled: enabled && !!db && !!appId && !!group?.id && (group?.members?.length ?? 0) > 0,
-        staleTime: 5 * 60 * 1000, // AC5: 5 minutes
-        gcTime: 30 * 60 * 1000, // AC5: 30 minutes
-        refetchOnWindowFocus: true,
-        refetchOnMount: true, // Always check for updates on mount
+        // Story 14c.20: Cache Optimization - Extended times to reduce Firestore costs
+        // Delta sync mechanism handles freshness, these are safety nets
+        staleTime: 60 * 60 * 1000, // 1 hour (was 5 min) - delta sync handles updates
+        gcTime: 24 * 60 * 60 * 1000, // 24 hours (was 30 min) - survive view mode switches
+        refetchOnWindowFocus: false, // Delta sync handles freshness, not tab focus
+        refetchOnMount: false, // Use cached data on view mode switch, delta syncs in background
     });
 
     // Story 14c.16 AC5: Available years computed from ALL raw transactions
@@ -498,8 +503,10 @@ async function fetchDeltaAndUpdateCache(
         });
 
         // Story 14c.16 AC4: Invalidate using simplified query key (no date range)
+        // Story 14c.20 Bug Fix: Use refetchType: 'all' to force refetch even for inactive queries
         queryClient.invalidateQueries({
             queryKey: QUERY_KEYS.sharedGroupTransactions(groupId),
+            refetchType: 'all',
         });
 
         if (import.meta.env.DEV) {
@@ -600,8 +607,10 @@ export async function triggerNotificationDeltaFetch(
         }
 
         // Story 14c.16 AC4: Invalidate using simplified query key (no date range)
+        // Story 14c.20 Bug Fix: Use refetchType: 'all' to force refetch even for inactive queries
         queryClient.invalidateQueries({
             queryKey: QUERY_KEYS.sharedGroupTransactions(group.id),
+            refetchType: 'all',
         });
 
         console.log('[triggerNotificationDeltaFetch] Delta sync complete:', {

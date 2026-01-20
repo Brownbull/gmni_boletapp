@@ -1294,31 +1294,60 @@ export async function updateMemberTimestampsForTransaction(
         return; // No groups to update
     }
 
-    const batch = writeBatch(db);
-    const now = serverTimestamp();
+    // Story 14c.20: Retry logic to ensure memberUpdates signal reaches other users
+    const MAX_RETRIES = 2;
+    const RETRY_DELAY_MS = 500;
 
-    for (const groupId of allAffectedGroups) {
-        const groupRef = doc(db, SHARED_GROUPS_COLLECTION, groupId);
-        batch.update(groupRef, {
-            [`memberUpdates.${userId}.lastSyncAt`]: now,
-            updatedAt: now,
-        });
-    }
+    const attemptUpdate = async (attempt: number): Promise<boolean> => {
+        const batch = writeBatch(db);
+        const now = serverTimestamp();
 
-    try {
-        await batch.commit();
-
-        if (import.meta.env.DEV) {
-            console.log('[sharedGroupService] updateMemberTimestampsForTransaction:', {
-                userId,
-                affectedGroups: Array.from(allAffectedGroups),
-                added: newGroupIds.filter(id => !previousGroupIds.includes(id)),
-                removed: previousGroupIds.filter(id => !newGroupIds.includes(id)),
+        for (const groupId of allAffectedGroups) {
+            const groupRef = doc(db, SHARED_GROUPS_COLLECTION, groupId);
+            batch.update(groupRef, {
+                [`memberUpdates.${userId}.lastSyncAt`]: now,
+                updatedAt: now,
             });
         }
-    } catch (error) {
-        // Don't fail the transaction save if timestamp update fails
-        // This is a non-critical optimization for delta sync
-        console.warn('[sharedGroupService] Failed to update memberUpdates timestamps:', error);
+
+        try {
+            await batch.commit();
+
+            if (import.meta.env.DEV) {
+                console.log('[sharedGroupService] updateMemberTimestampsForTransaction:', {
+                    userId,
+                    affectedGroups: Array.from(allAffectedGroups),
+                    added: newGroupIds.filter(id => !previousGroupIds.includes(id)),
+                    removed: previousGroupIds.filter(id => !newGroupIds.includes(id)),
+                    attempt: attempt + 1,
+                });
+            }
+            return true; // Success
+        } catch (error) {
+            if (import.meta.env.DEV) {
+                console.warn(`[sharedGroupService] memberUpdates update attempt ${attempt + 1} failed:`, error);
+            }
+            return false; // Failed, may retry
+        }
+    };
+
+    // Try initial attempt
+    let success = await attemptUpdate(0);
+
+    // Retry if failed (fire-and-forget background retries)
+    if (!success) {
+        for (let retry = 1; retry <= MAX_RETRIES; retry++) {
+            // Wait before retrying
+            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * retry));
+
+            success = await attemptUpdate(retry);
+            if (success) break;
+        }
+
+        // Log final failure (this is important for other users' sync)
+        if (!success) {
+            console.error('[sharedGroupService] Failed to update memberUpdates timestamps after retries. ' +
+                'Other users may not see this change until they manually sync or refresh.');
+        }
     }
 }

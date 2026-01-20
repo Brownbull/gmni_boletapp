@@ -79,3 +79,7 @@ export type { SharedGroupErrorProps } from './SharedGroupError';
 
 export { SharedGroupErrorBoundary } from './SharedGroupErrorBoundary';
 export type { SharedGroupErrorBoundaryProps } from './SharedGroupErrorBoundary';
+
+// Story 14c.20: Manual Sync Button
+export { SyncButton } from './SyncButton';
+export type { SyncButtonProps } from './SyncButton';
