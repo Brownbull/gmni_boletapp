@@ -504,7 +504,9 @@ development_status:
   14c-17-share-link-deep-linking: done  # 5 pts - Handle /join/{shareCode} URLs, join confirmation dialog, unauthenticated flow [BUG FIX: nanoid URL-safe chars] - 58 tests
   14c-18-view-mode-user-persistence: done  # 5 pts - Persist view mode to Firestore, validate group on restore, fix race condition [BUG: Mode/data mismatch on login] - 38 tests
   14c-14-tech-debt-functions-config-migration: done  # 2 pts - Migrate functions.config() to env vars before March 2026 - DEPLOYED 2026-01-19
-  14c-15-notification-tech-debt: backlog  # 2 pts - Consolidate NotificationClickData interface + VAPID public key to env var [FROM: 14c.13 code review]
+  14c-15-notification-tech-debt: done  # 2 pts - Consolidate NotificationClickData interface + VAPID public key to env var [FROM: 14c.13 code review] - Atlas Code Review APPROVED 2026-01-20
+  14c-19-view-mode-persistence-bug-fix: done  # 3 pts - Fix group mode not restoring from Firestore [BUG: 14c.18 regression] - Atlas Code Review APPROVED 2026-01-20 - 8 tests
+  14c-20-shared-group-cache-optimization: backlog  # 5 pts - Evaluate caching strategy (1hr staleTime, delta sync, manual "Sync Now" button with 60s cooldown) [OPTIONS: A/B/C/D]
 
   # Phase 6: Release - 2 pts
   14c-99-epic-release-deployment: ready-for-dev  # 2 pts - Version bump (minor beta), CI/CD verification, staging/prod deployment

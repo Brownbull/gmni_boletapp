@@ -21,6 +21,9 @@ import {
   isWebPushEnabledLocal,
   WEB_PUSH_CONSTANTS,
 } from '../services/webPushService';
+// Story 14c.15: Import and re-export from consolidated types for backwards compatibility
+import type { NotificationClickData } from '../types/notification';
+export type { NotificationClickData };
 
 export interface PushNotificationState {
   /** Whether push notifications are supported in this browser */
@@ -37,18 +40,6 @@ export interface PushNotificationState {
   enableNotifications: () => Promise<boolean>;
   /** Unsubscribe from web push */
   disableNotifications: () => Promise<void>;
-}
-
-/** Data passed to notification click callback */
-export interface NotificationClickData {
-  /** Type of notification (e.g., 'TRANSACTION_ADDED', 'TRANSACTION_REMOVED') */
-  type?: string;
-  /** Group ID if this is a shared group notification */
-  groupId?: string;
-  /** Transaction ID if applicable */
-  transactionId?: string;
-  /** URL to navigate to */
-  url?: string;
 }
 
 interface UsePushNotificationsOptions {

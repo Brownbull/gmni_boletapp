@@ -39,6 +39,7 @@
 | Cost Monitoring Gap | Set up Firebase budget alerts proactively |
 | Infinite Loop in useEffect | Use refs to track data changes, not useMemo results |
 | Default Array Parameters | `{ items = [] }` creates new ref - use module-level const |
+| No-op Code with Logging | Code that logs but doesn't call setter = bug (14c.19: setGroupMode logged but never called) |
 
 ---
 
@@ -109,6 +110,8 @@
 | Group validation timing | Wait for groups to load before validating group mode preference (14c.18) |
 | Fallback to personal mode | If persisted groupId not found in user's groups, default to personal (14c.18) |
 | nanoid URL-safe validation | Share code regex must include `_-` characters: `/^[a-zA-Z0-9_-]{16}$/` (14c.17 bug fix) |
+| Type consolidation | Duplicate interfaces → single file in `src/types/`, re-export for backwards compatibility (14c.15) |
+| Env vars for config | Client-side config via `import.meta.env.VITE_*` with validation + helpful error (14c.15) |
 
 ### i18n & Translations
 | Pattern | Rule |
