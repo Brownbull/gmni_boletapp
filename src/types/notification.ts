@@ -59,3 +59,20 @@ export interface InAppNotificationClient extends Omit<InAppNotification, 'create
     id: string;
     createdAt: Date;
 }
+
+/**
+ * Data passed from service worker on notification click
+ *
+ * Story 14c.15: Consolidated from usePushNotifications.ts and useSharedGroupTransactions.ts
+ * Story 14c.13: Used for delta fetch trigger when notification is tapped
+ */
+export interface NotificationClickData {
+    /** Type of notification (e.g., 'TRANSACTION_ADDED', 'TRANSACTION_REMOVED') */
+    type?: string;
+    /** Group ID if this is a shared group notification */
+    groupId?: string;
+    /** Transaction ID if applicable */
+    transactionId?: string;
+    /** URL to navigate to */
+    url?: string;
+}

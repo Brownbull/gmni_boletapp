@@ -153,15 +153,6 @@ export function useJoinLinkHandler({
     // Track if we're currently processing to prevent double-processing
     const isProcessing = useRef(false);
 
-    // Debug: Log hook initialization
-    console.log('[useJoinLinkHandler] Hook init:', {
-        isAuthenticated,
-        userId: userId ? 'present' : 'null',
-        pathname: typeof window !== 'undefined' ? window.location.pathname : 'N/A',
-        pendingCode: typeof window !== 'undefined' ? getPendingJoinCode() : 'N/A',
-        hasProcessedUrl: hasProcessedUrl.current,
-    });
-
     /**
      * Fetch group preview and update state accordingly.
      */
@@ -259,14 +250,7 @@ export function useJoinLinkHandler({
      * Confirm joining the group.
      */
     const confirmJoin = useCallback(async () => {
-        console.log('[useJoinLinkHandler] confirmJoin called:', {
-            shareCode,
-            userId: userId ? 'present' : 'null',
-            isAuthenticated,
-        });
-
         if (!shareCode || !userId || !isAuthenticated) {
-            console.warn('[useJoinLinkHandler] confirmJoin aborted - missing data');
             return;
         }
 

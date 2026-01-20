@@ -62,20 +62,12 @@ import {
     isIndexedDBAvailable,
     type SyncMetadata,
 } from '../lib/sharedGroupCache';
+// Story 14c.15: Re-export from consolidated types for backwards compatibility
+export type { NotificationClickData } from '../types/notification';
 
 // ============================================================================
 // Notification Delta Fetch Hook
 // ============================================================================
-
-/**
- * Data received from service worker notification click
- */
-export interface NotificationClickData {
-    type?: string;
-    groupId?: string;
-    transactionId?: string;
-    url?: string;
-}
 
 /**
  * Hook to listen for notification clicks and trigger delta fetch.
