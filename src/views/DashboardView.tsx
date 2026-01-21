@@ -32,8 +32,7 @@ import { useAllUserGroups } from '../hooks/useAllUserGroups';
 import { deleteTransactionsBatch, updateTransaction } from '../services/firestore';
 import { getFirestore } from 'firebase/firestore';
 import { useQueryClient } from '@tanstack/react-query';
-// Story 14c.5 Bug Fix: Clear IndexedDB cache when group assignments change
-import { clearGroupCacheById } from '../lib/sharedGroupCache';
+// Story 14c-refactor.4: sharedGroupCache DELETED - IndexedDB cache no longer used
 // Story 9.12: Category translations
 import type { Language } from '../utils/translations';
 import { translateCategory } from '../utils/categoryTranslations';
@@ -2071,22 +2070,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 )
             );
 
-            // Story 14c.5 Bug Fix: Clear IndexedDB cache and invalidate React Query
-            // This ensures untagged transactions don't appear in stale cache
-            // Story 14c.20 Bug Fix: Await IndexedDB clear before invalidating to prevent race condition
+            // Story 14c-refactor.4: IndexedDB cache clearing REMOVED
+            // Shared groups feature temporarily disabled - just invalidate React Query
             await Promise.all(Array.from(affectedGroupIds).map(async groupId => {
-                // Clear IndexedDB cache FIRST
-                try {
-                    await clearGroupCacheById(groupId);
-                } catch (err) {
-                    console.warn('[DashboardView] Failed to clear IndexedDB cache:', err);
-                }
                 // Reset React Query cache to clear in-memory data
                 await queryClient.resetQueries({
                     queryKey: ['sharedGroupTransactions', groupId],
                 });
-                // THEN invalidate to trigger fresh fetch from Firestore
-                // Use refetchType: 'all' to force refetch even for inactive queries
+                // Invalidate to trigger fresh fetch from Firestore
                 queryClient.invalidateQueries({
                     queryKey: ['sharedGroupTransactions', groupId],
                     exact: false, // Invalidate all date ranges for this group
@@ -2094,7 +2085,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 });
             }));
 
-            console.log('[DashboardView] Cleared IndexedDB and invalidated React Query for groups:', Array.from(affectedGroupIds));
+            if (import.meta.env.DEV) {
+                console.log('[DashboardView] Invalidated React Query for groups:', Array.from(affectedGroupIds));
+            }
 
             setShowGroupSelector(false);
             exitSelectionMode();

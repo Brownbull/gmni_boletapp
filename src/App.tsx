@@ -47,8 +47,7 @@ import { useQueryClient } from '@tanstack/react-query';
 // Story 14c.7: Tag transactions to groups
 import { updateMemberTimestampsForTransaction } from './services/sharedGroupService';
 import type { GroupWithMeta } from './components/SharedGroups';
-// Story 14c.5 Bug Fix: Clear IndexedDB cache when group assignments change
-import { clearGroupCacheById } from './lib/sharedGroupCache';
+// Story 14c-refactor.4: sharedGroupCache DELETED - IndexedDB cache no longer used
 // Story 14c-refactor.3: detectMemberUpdates import REMOVED (shared groups feature temporarily disabled)
 // Story 12.2: Parallel batch processing hook
 import { useBatchProcessing } from './hooks/useBatchProcessing';
@@ -272,12 +271,7 @@ function App() {
             (window as any).runCreatedAtMigration = async (dryRun = true) => {
                 return migrateCreatedAt(services.db, user.uid, services.appId, dryRun);
             };
-            // Story 14c.5 Bug Fix: Expose cache clearing function for debugging
-            (window as any).clearAllGroupCaches = async () => {
-                const { clearAllGroupCaches } = await import('./lib/sharedGroupCache');
-                await clearAllGroupCaches();
-                console.log('[App] All group caches cleared. Refresh to fetch fresh data.');
-            };
+            // Story 14c-refactor.4: clearAllGroupCaches REMOVED - IndexedDB cache deleted
         }
     }, [services, user]);
     // Story 14.27: Paginated transactions for HistoryView (includes loadMore for older transactions)
@@ -3875,16 +3869,9 @@ function App() {
                                 // Groups the transaction was ADDED to
                                 const addedToGroups = groupIds.filter(id => !previousGroupIds.includes(id));
 
-                                // Story 14c.20 Bug Fix: Clear IndexedDB FIRST, then do optimistic update
-                                // This ensures the cache is cleared before any subsequent refetch
-                                const updateCachesForGroup = async (groupId: string) => {
-                                    // Clear IndexedDB cache FIRST and wait for it
-                                    try {
-                                        await clearGroupCacheById(groupId);
-                                    } catch (err) {
-                                        console.warn('[App] Failed to clear IndexedDB cache:', err);
-                                    }
-
+                                // Story 14c-refactor.4: IndexedDB cache clearing REMOVED
+                                // Shared groups feature temporarily disabled - just do optimistic React Query update
+                                const updateCachesForGroup = (groupId: string) => {
                                     // Optimistically update in-memory cache based on whether
                                     // transaction was added or removed from this group
                                     queryClient.setQueriesData(
@@ -3934,10 +3921,8 @@ function App() {
                                     );
                                 };
 
-                                // Process all groups
-                                Promise.all(Array.from(affectedGroupIds).map(updateCachesForGroup)).catch(err => {
-                                    console.error('[App] Error updating caches:', err);
-                                });
+                                // Process all groups (synchronous - no IndexedDB to wait for)
+                                Array.from(affectedGroupIds).forEach(updateCachesForGroup);
                             }
                         }}
                     />
