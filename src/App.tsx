@@ -47,7 +47,7 @@ import { useQueryClient } from '@tanstack/react-query';
 // Story 14c.7: Tag transactions to groups
 import { updateMemberTimestampsForTransaction } from './services/sharedGroupService';
 import type { GroupWithMeta } from './components/SharedGroups';
-// Story 14c-refactor.4: sharedGroupCache DELETED - IndexedDB cache no longer used
+// Story 14c-refactor.4: clearGroupCacheById import REMOVED (IndexedDB cache deleted)
 // Story 14c-refactor.3: detectMemberUpdates import REMOVED (shared groups feature temporarily disabled)
 // Story 12.2: Parallel batch processing hook
 import { useBatchProcessing } from './hooks/useBatchProcessing';
@@ -271,7 +271,7 @@ function App() {
             (window as any).runCreatedAtMigration = async (dryRun = true) => {
                 return migrateCreatedAt(services.db, user.uid, services.appId, dryRun);
             };
-            // Story 14c-refactor.4: clearAllGroupCaches REMOVED - IndexedDB cache deleted
+            // Story 14c-refactor.4: clearAllGroupCaches debug utility REMOVED (IndexedDB cache deleted)
         }
     }, [services, user]);
     // Story 14.27: Paginated transactions for HistoryView (includes loadMore for older transactions)
@@ -3869,8 +3869,8 @@ function App() {
                                 // Groups the transaction was ADDED to
                                 const addedToGroups = groupIds.filter(id => !previousGroupIds.includes(id));
 
-                                // Story 14c-refactor.4: IndexedDB cache clearing REMOVED
-                                // Shared groups feature temporarily disabled - just do optimistic React Query update
+                                // Story 14c-refactor.4: clearGroupCacheById removed (IndexedDB cache deleted)
+                                // Only doing React Query optimistic updates now
                                 const updateCachesForGroup = (groupId: string) => {
                                     // Optimistically update in-memory cache based on whether
                                     // transaction was added or removed from this group
@@ -3921,8 +3921,8 @@ function App() {
                                     );
                                 };
 
-                                // Process all groups (synchronous - no IndexedDB to wait for)
-                                Array.from(affectedGroupIds).forEach(updateCachesForGroup);
+                                // Process all groups (sync after IndexedDB removal)
+                                affectedGroupIds.forEach(updateCachesForGroup);
                             }
                         }}
                     />

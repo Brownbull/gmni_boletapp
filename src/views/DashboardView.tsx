@@ -32,7 +32,7 @@ import { useAllUserGroups } from '../hooks/useAllUserGroups';
 import { deleteTransactionsBatch, updateTransaction } from '../services/firestore';
 import { getFirestore } from 'firebase/firestore';
 import { useQueryClient } from '@tanstack/react-query';
-// Story 14c-refactor.4: sharedGroupCache DELETED - IndexedDB cache no longer used
+// Story 14c-refactor.4: clearGroupCacheById import REMOVED (IndexedDB cache deleted)
 // Story 9.12: Category translations
 import type { Language } from '../utils/translations';
 import { translateCategory } from '../utils/categoryTranslations';
@@ -2070,14 +2070,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 )
             );
 
-            // Story 14c-refactor.4: IndexedDB cache clearing REMOVED
-            // Shared groups feature temporarily disabled - just invalidate React Query
+            // Story 14c-refactor.4: IndexedDB cache deleted - only React Query invalidation now
+            // Invalidate React Query cache for affected groups
             await Promise.all(Array.from(affectedGroupIds).map(async groupId => {
                 // Reset React Query cache to clear in-memory data
                 await queryClient.resetQueries({
                     queryKey: ['sharedGroupTransactions', groupId],
                 });
-                // Invalidate to trigger fresh fetch from Firestore
+                // THEN invalidate to trigger fresh fetch from Firestore
+                // Use refetchType: 'all' to force refetch even for inactive queries
                 queryClient.invalidateQueries({
                     queryKey: ['sharedGroupTransactions', groupId],
                     exact: false, // Invalidate all date ranges for this group

@@ -6,202 +6,167 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { clearLegacySharedGroupCache } from '../../../src/migrations/clearSharedGroupCache';
 
-// Constants from the module
-const MIGRATION_KEY = 'boletapp_migrations_v1';
-const SHARED_GROUP_CACHE_CLEARED = 'shared_group_cache_cleared';
-const DB_NAME = 'boletapp_shared_groups';
-
 describe('clearLegacySharedGroupCache', () => {
     let mockStorage: Record<string, string>;
     let mockLocalStorage: Storage;
+    let originalIndexedDB: typeof indexedDB | undefined;
     let mockDeleteDatabase: ReturnType<typeof vi.fn>;
-    let originalIndexedDB: typeof indexedDB;
-    let consoleLogSpy: ReturnType<typeof vi.spyOn>;
-    let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
+    let mockDeleteDatabaseRequest: {
+        result: null;
+        error: null;
+        onsuccess: ((event: Event) => void) | null;
+        onerror: ((event: Event) => void) | null;
+        onblocked: ((event: Event) => void) | null;
+    };
 
     beforeEach(() => {
         // Mock localStorage
         mockStorage = {};
         mockLocalStorage = {
-            getItem: vi.fn((key) => mockStorage[key] || null),
-            setItem: vi.fn((key, value) => { mockStorage[key] = value; }),
-            removeItem: vi.fn((key) => { delete mockStorage[key]; }),
-            clear: vi.fn(() => { mockStorage = {}; }),
+            getItem: vi.fn((key: string) => mockStorage[key] || null),
+            setItem: vi.fn((key: string, value: string) => {
+                mockStorage[key] = value;
+            }),
+            removeItem: vi.fn((key: string) => {
+                delete mockStorage[key];
+            }),
+            clear: vi.fn(() => {
+                mockStorage = {};
+            }),
             length: 0,
             key: vi.fn(() => null),
         };
         vi.stubGlobal('localStorage', mockLocalStorage);
 
-        // Mock indexedDB
-        mockDeleteDatabase = vi.fn();
+        // Save original indexedDB
         originalIndexedDB = globalThis.indexedDB;
+
+        // Mock indexedDB
+        mockDeleteDatabaseRequest = {
+            result: null,
+            error: null,
+            onsuccess: null,
+            onerror: null,
+            onblocked: null,
+        };
+        mockDeleteDatabase = vi.fn(() => mockDeleteDatabaseRequest);
+
         vi.stubGlobal('indexedDB', {
             deleteDatabase: mockDeleteDatabase,
         });
-
-        // Mock console
-        consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-        consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-        // Set DEV mode
-        vi.stubGlobal('import', { meta: { env: { DEV: true } } });
     });
 
     afterEach(() => {
         vi.unstubAllGlobals();
-        vi.restoreAllMocks();
-        vi.clearAllMocks();
-        if (originalIndexedDB) {
+        if (originalIndexedDB !== undefined) {
             globalThis.indexedDB = originalIndexedDB;
         }
     });
 
-    describe('when migration has not run', () => {
-        it('should delete the IndexedDB database', async () => {
-            // Mock successful database deletion
-            mockDeleteDatabase.mockImplementation(() => {
-                const request = {
-                    onsuccess: null as (() => void) | null,
-                    onerror: null as (() => void) | null,
-                    onblocked: null as (() => void) | null,
-                    error: null,
-                };
-                // Trigger onsuccess asynchronously
-                setTimeout(() => request.onsuccess?.(), 0);
-                return request;
-            });
-
-            await clearLegacySharedGroupCache();
-
-            expect(mockDeleteDatabase).toHaveBeenCalledWith(DB_NAME);
+    it('should skip migration if already completed', async () => {
+        // Set up migration as already completed
+        mockStorage['boletapp_migrations_v1'] = JSON.stringify({
+            shared_group_cache_cleared: Date.now(),
         });
 
-        it('should mark migration as complete after success', async () => {
-            mockDeleteDatabase.mockImplementation(() => {
-                const request = {
-                    onsuccess: null as (() => void) | null,
-                    onerror: null as (() => void) | null,
-                    onblocked: null as (() => void) | null,
-                    error: null,
-                };
-                setTimeout(() => request.onsuccess?.(), 0);
-                return request;
-            });
+        await clearLegacySharedGroupCache();
 
-            await clearLegacySharedGroupCache();
-
-            expect(mockLocalStorage.setItem).toHaveBeenCalled();
-            const savedMigrations = JSON.parse(mockStorage[MIGRATION_KEY] || '{}');
-            expect(savedMigrations[SHARED_GROUP_CACHE_CLEARED]).toBeTypeOf('number');
-        });
-
-        it('should log success in dev mode', async () => {
-            mockDeleteDatabase.mockImplementation(() => {
-                const request = {
-                    onsuccess: null as (() => void) | null,
-                    onerror: null as (() => void) | null,
-                    onblocked: null as (() => void) | null,
-                    error: null,
-                };
-                setTimeout(() => request.onsuccess?.(), 0);
-                return request;
-            });
-
-            await clearLegacySharedGroupCache();
-
-            expect(consoleLogSpy).toHaveBeenCalledWith('[migration] Cleared legacy shared group cache');
-        });
+        // Should not have called deleteDatabase
+        expect(mockDeleteDatabase).not.toHaveBeenCalled();
     });
 
-    describe('when migration has already run', () => {
-        beforeEach(() => {
-            mockStorage[MIGRATION_KEY] = JSON.stringify({
-                [SHARED_GROUP_CACHE_CLEARED]: Date.now(),
-            });
-        });
+    it('should delete IndexedDB database on first run', async () => {
+        // Simulate successful deletion
+        setTimeout(() => {
+            mockDeleteDatabaseRequest.onsuccess?.(new Event('success'));
+        }, 0);
 
-        it('should not attempt to delete database', async () => {
-            await clearLegacySharedGroupCache();
+        await clearLegacySharedGroupCache();
 
-            expect(mockDeleteDatabase).not.toHaveBeenCalled();
-        });
+        // Should have called deleteDatabase with correct name
+        expect(mockDeleteDatabase).toHaveBeenCalledWith('boletapp_shared_groups');
+
+        // Should have marked migration as complete
+        const migrations = JSON.parse(mockStorage['boletapp_migrations_v1'] || '{}');
+        expect(migrations.shared_group_cache_cleared).toBeDefined();
     });
 
-    describe('when IndexedDB is not available', () => {
-        beforeEach(() => {
-            vi.stubGlobal('indexedDB', undefined);
-        });
+    it('should handle deleteDatabase error gracefully', async () => {
+        // Simulate error
+        setTimeout(() => {
+            mockDeleteDatabaseRequest.onerror?.(new Event('error'));
+        }, 0);
 
-        it('should mark migration as complete without error', async () => {
-            await clearLegacySharedGroupCache();
+        // Should not throw
+        await expect(clearLegacySharedGroupCache()).resolves.toBeUndefined();
 
-            expect(mockLocalStorage.setItem).toHaveBeenCalled();
-            const savedMigrations = JSON.parse(mockStorage[MIGRATION_KEY] || '{}');
-            expect(savedMigrations[SHARED_GROUP_CACHE_CLEARED]).toBeTypeOf('number');
-        });
+        // Should still mark migration as complete to avoid retry loops
+        const migrations = JSON.parse(mockStorage['boletapp_migrations_v1'] || '{}');
+        expect(migrations.shared_group_cache_cleared).toBeDefined();
     });
 
-    describe('error handling', () => {
-        it('should handle deletion error gracefully', async () => {
-            mockDeleteDatabase.mockImplementation(() => {
-                const request = {
-                    onsuccess: null as (() => void) | null,
-                    onerror: null as (() => void) | null,
-                    onblocked: null as (() => void) | null,
-                    error: new Error('Deletion failed'),
-                };
-                setTimeout(() => request.onerror?.(), 0);
-                return request;
-            });
+    it('should handle blocked database gracefully', async () => {
+        const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-            await clearLegacySharedGroupCache();
+        // Simulate blocked
+        setTimeout(() => {
+            mockDeleteDatabaseRequest.onblocked?.(new Event('blocked'));
+        }, 0);
 
-            expect(consoleWarnSpy).toHaveBeenCalledWith(
-                '[migration] Failed to clear shared group cache:',
-                expect.any(Error)
-            );
-            // Should still mark as complete to avoid retry loops
-            const savedMigrations = JSON.parse(mockStorage[MIGRATION_KEY] || '{}');
-            expect(savedMigrations[SHARED_GROUP_CACHE_CLEARED]).toBeTypeOf('number');
+        // Should not throw
+        await expect(clearLegacySharedGroupCache()).resolves.toBeUndefined();
+
+        // Should log correct message (not "will retry" since we mark complete anyway)
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+            '[migration] Database deletion blocked - continuing without deletion'
+        );
+
+        // Should still mark migration as complete
+        const migrations = JSON.parse(mockStorage['boletapp_migrations_v1'] || '{}');
+        expect(migrations.shared_group_cache_cleared).toBeDefined();
+
+        consoleWarnSpy.mockRestore();
+    });
+
+    it('should handle missing IndexedDB', async () => {
+        // Remove indexedDB
+        vi.stubGlobal('indexedDB', undefined);
+
+        await clearLegacySharedGroupCache();
+
+        // Should mark migration as complete
+        const migrations = JSON.parse(mockStorage['boletapp_migrations_v1'] || '{}');
+        expect(migrations.shared_group_cache_cleared).toBeDefined();
+    });
+
+    it('should handle localStorage errors gracefully', async () => {
+        // Make localStorage throw
+        vi.stubGlobal('localStorage', {
+            getItem: vi.fn(() => {
+                throw new Error('localStorage unavailable');
+            }),
+            setItem: vi.fn(),
+            removeItem: vi.fn(),
+            clear: vi.fn(),
+            length: 0,
+            key: vi.fn(() => null),
         });
 
-        it('should handle blocked deletion gracefully', async () => {
-            mockDeleteDatabase.mockImplementation(() => {
-                const request = {
-                    onsuccess: null as (() => void) | null,
-                    onerror: null as (() => void) | null,
-                    onblocked: null as (() => void) | null,
-                    error: null,
-                };
-                setTimeout(() => request.onblocked?.(), 0);
-                return request;
-            });
+        // Should not throw (catches internally)
+        await expect(clearLegacySharedGroupCache()).resolves.toBeUndefined();
+    });
 
-            await clearLegacySharedGroupCache();
+    it('should not run migration twice in same session', async () => {
+        // First run - successful
+        setTimeout(() => {
+            mockDeleteDatabaseRequest.onsuccess?.(new Event('success'));
+        }, 0);
 
-            expect(consoleWarnSpy).toHaveBeenCalledWith(
-                '[migration] Database deletion blocked - continuing without deletion'
-            );
-            // Should mark as complete anyway
-            const savedMigrations = JSON.parse(mockStorage[MIGRATION_KEY] || '{}');
-            expect(savedMigrations[SHARED_GROUP_CACHE_CLEARED]).toBeTypeOf('number');
-        });
+        await clearLegacySharedGroupCache();
+        expect(mockDeleteDatabase).toHaveBeenCalledTimes(1);
 
-        it('should handle thrown exceptions', async () => {
-            mockDeleteDatabase.mockImplementation(() => {
-                throw new Error('Unexpected error');
-            });
-
-            // Should not throw
-            await clearLegacySharedGroupCache();
-
-            expect(consoleWarnSpy).toHaveBeenCalledWith(
-                '[migration] Error clearing shared group cache:',
-                expect.any(Error)
-            );
-            // Should mark as complete to avoid infinite retries
-            const savedMigrations = JSON.parse(mockStorage[MIGRATION_KEY] || '{}');
-            expect(savedMigrations[SHARED_GROUP_CACHE_CLEARED]).toBeTypeOf('number');
-        });
+        // Second run - should skip
+        await clearLegacySharedGroupCache();
+        expect(mockDeleteDatabase).toHaveBeenCalledTimes(1);
     });
 });

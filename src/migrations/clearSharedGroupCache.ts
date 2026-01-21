@@ -5,18 +5,20 @@
  * Epic 14c-refactor: Codebase Cleanup Before Shared Groups V2
  *
  * This migration deletes the `boletapp_shared_groups` IndexedDB database
- * that was used for caching shared group transactions. The feature is being
- * reset, and any cached data would be stale or invalid.
+ * that was used by the now-removed shared group caching system.
  *
- * Behavior:
- * - Runs once per device (tracked via localStorage)
+ * Migration behavior:
+ * - Runs once on app startup (tracked via localStorage)
  * - Deletes the entire IndexedDB database
- * - Handles blocked/error states gracefully
- * - Logs progress in development mode only
+ * - Logs success in dev mode only
+ * - Handles blocked/error states gracefully (marks as complete to avoid retry loops)
  *
  * @example
  * ```typescript
- * // Run on app startup (non-blocking)
+ * // In main.tsx or App.tsx (early in startup)
+ * import { clearLegacySharedGroupCache } from './migrations/clearSharedGroupCache';
+ *
+ * // Fire-and-forget on startup
  * clearLegacySharedGroupCache().catch(console.error);
  * ```
  */
@@ -27,23 +29,24 @@ const MIGRATION_KEY = 'boletapp_migrations_v1';
 /** Migration flag name */
 const SHARED_GROUP_CACHE_CLEARED = 'shared_group_cache_cleared';
 
-/** Database name to delete */
+/** IndexedDB database name to delete */
 const DB_NAME = 'boletapp_shared_groups';
 
 /**
  * One-time migration to clear legacy shared group cache from IndexedDB.
  * This runs on app startup and only executes once per device.
  *
- * Story 14c-refactor.4: Clean IndexedDB Cache
+ * @returns Promise that resolves when migration is complete or skipped
  */
 export async function clearLegacySharedGroupCache(): Promise<void> {
-    // Check if migration already ran
-    const migrations = JSON.parse(localStorage.getItem(MIGRATION_KEY) || '{}');
-    if (migrations[SHARED_GROUP_CACHE_CLEARED]) {
-        return; // Already migrated
-    }
+    let migrations: Record<string, number> = {};
 
     try {
+        // Check if migration already ran
+        migrations = JSON.parse(localStorage.getItem(MIGRATION_KEY) || '{}');
+        if (migrations[SHARED_GROUP_CACHE_CLEARED]) {
+            return; // Already migrated
+        }
         // Check if IndexedDB is available
         if (typeof indexedDB === 'undefined') {
             migrations[SHARED_GROUP_CACHE_CLEARED] = Date.now();
@@ -80,8 +83,13 @@ export async function clearLegacySharedGroupCache(): Promise<void> {
 
     } catch (err) {
         console.warn('[migration] Error clearing shared group cache:', err);
-        // Mark as migrated to avoid infinite retries
-        migrations[SHARED_GROUP_CACHE_CLEARED] = Date.now();
-        localStorage.setItem(MIGRATION_KEY, JSON.stringify(migrations));
+        // Try to mark as migrated to avoid infinite retries
+        try {
+            migrations[SHARED_GROUP_CACHE_CLEARED] = Date.now();
+            localStorage.setItem(MIGRATION_KEY, JSON.stringify(migrations));
+        } catch {
+            // If localStorage is completely unavailable, just continue
+            // The migration will be attempted again on next app load
+        }
     }
 }
