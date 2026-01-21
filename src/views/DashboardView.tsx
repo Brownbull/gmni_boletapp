@@ -608,7 +608,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     const [showFullList, setShowFullList] = useState(false);
 
     // Story 14.15b: Selection mode state and hooks for Dashboard Recientes
-    // Story 14c.8: Added selectAll and clearSelection for "Select All" feature
     const {
         isSelectionMode,
         selectedIds,
@@ -623,10 +622,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     // Group consolidation: Shared groups for group assignment
     const { groups, isLoading: groupsLoading } = useAllUserGroups(userId || undefined);
 
-    // Story 14c.5: Query client for cache invalidation when groups are assigned/unassigned
     const queryClient = useQueryClient();
 
-    // Story 14c.8: Helper to lookup group color from sharedGroupIds using loaded groups
     const getGroupColorForTransaction = useCallback((tx: Transaction): string | undefined => {
         if (!tx.sharedGroupIds?.length || !groups.length) return undefined;
         const group = groups.find(g => tx.sharedGroupIds?.includes(g.id));
@@ -1848,12 +1845,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     // Story 14.12: Active transactions based on recientes carousel slide
     const recentTransactions = recientesSlide === 0 ? recentTransactionsByScan : recentTransactionsByDate;
 
-    // Story 14c.8: Get visible transaction IDs for "Select All" in Recientes section
     const visibleRecientesIds = useMemo(() => {
         return recentTransactions.map(tx => (tx as Transaction).id).filter((id): id is string => !!id);
     }, [recentTransactions]);
 
-    // Story 14c.8: Handle Select All toggle for Recientes section
     const handleRecientesSelectAllToggle = useCallback(() => {
         const allVisibleSelected = visibleRecientesIds.length > 0 &&
             visibleRecientesIds.every(id => selectedIds.has(id));
@@ -2030,14 +2025,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     // Group consolidation: Modal handlers for selection mode
     // Note: No need for selectedIds.size check here - buttons are already disabled when size is 0
     const handleOpenAssignGroup = useCallback(() => {
-        console.log('[DashboardView] handleOpenAssignGroup called, selectedIds.size:', selectedIds.size);
         setShowGroupSelector(true);
-    }, [selectedIds.size]);
+    }, []);
 
     const handleOpenDelete = useCallback(() => {
-        console.log('[DashboardView] handleOpenDelete called, selectedIds.size:', selectedIds.size);
         setShowDeleteModal(true);
-    }, [selectedIds.size]);
+    }, []);
 
     // Group consolidation: Handle group assignment using TransactionGroupSelector
     // Updates sharedGroupIds on all selected transactions
@@ -2047,7 +2040,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         const selectedTxIds = Array.from(selectedIds);
         const db = getFirestore();
 
-        // Story 14c.5: Collect all affected groups for cache invalidation
         // Get previous group IDs from selected transactions
         const previousGroupIds = new Set<string>();
         recentTransactions.forEach(tx => {
@@ -3348,7 +3340,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     </button>
                                 </div>
                                 {/* Selection mode: Action buttons */}
-                                {/* Story 14c.8: Added Select All button */}
                                 <div
                                     className="flex items-center gap-2 transition-opacity duration-150"
                                     style={{
@@ -3358,7 +3349,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         right: isSelectionMode ? undefined : '0.625rem',
                                     }}
                                 >
-                                    {/* Story 14c.8: Select All / Deselect All button */}
                                     <button
                                         onClick={handleRecientesSelectAllToggle}
                                         className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"

@@ -130,7 +130,6 @@ export function useAuth(): UseAuthReturn {
     const signOut = async () => {
         if (!services) return;
 
-        // Story 14c.13-WP: Delete web push subscription before signing out
         // This is CRITICAL for proper notification routing when users share devices
         // If we don't delete the subscription, notifications will be sent to the wrong user
         try {

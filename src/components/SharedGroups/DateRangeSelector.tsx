@@ -1,5 +1,4 @@
 /**
- * Story 14c.5: Shared Group Transactions View - DateRangeSelector Component
  *
  * Date range selector for filtering shared group transactions.
  * Enforces a maximum 12-month range.

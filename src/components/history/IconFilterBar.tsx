@@ -52,7 +52,6 @@ import type { Language } from '../../utils/translations';
 // Story 14.36: Location filter with multi-select
 import { useLocationDisplay } from '../../hooks/useLocations';
 import { CountryFlag } from '../CountryFlag';
-// Story 14c.8: Consolidated group type (shared groups only)
 import type { GroupWithMeta } from '../../hooks/useAllUserGroups';
 
 // ============================================================================
@@ -69,9 +68,7 @@ interface IconFilterBarProps {
   t: (key: string) => string;
   /** Locale for date formatting */
   locale?: string;
-  /** Story 14c.8: User's groups for filtering (shared groups via useAllUserGroups) */
   groups?: GroupWithMeta[];
-  /** Story 14c.8: Whether groups are loading */
   groupsLoading?: boolean;
   /** Story 14.14b Session 5: Current view mode from TrendsView for sync */
   viewMode?: ViewMode;
@@ -247,7 +244,6 @@ export function IconFilterBar({
         />
       )}
 
-      {/* Story 14c.8: Custom Groups Dropdown (shared groups only) */}
       {openDropdown === 'custom' && (
         <GroupFilterDropdown
           currentGroupIds={state.group.groupIds}

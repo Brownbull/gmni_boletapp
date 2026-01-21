@@ -27,24 +27,18 @@ import { useInsightProfile } from './hooks/useInsightProfile';
 import { useBatchSession } from './hooks/useBatchSession';
 // Story 14.19: Personal records detection and celebration
 import { usePersonalRecords } from './hooks/usePersonalRecords';
-// Story 14c.2: Pending invitations for shared groups
 import { usePendingInvitations } from './hooks/usePendingInvitations';
-// Story 14c.13: In-app notifications for shared groups
 import { useInAppNotifications } from './hooks/useInAppNotifications';
-// Story 14c.4: View Mode Switcher for personal/group views
 import { useViewMode } from './contexts/ViewModeContext';
 import { useUserSharedGroups } from './hooks/useUserSharedGroups';
 import { ViewModeSwitcher } from './components/SharedGroups/ViewModeSwitcher';
-// Story 14c.18: View mode preference persistence (Firestore sync)
 import { useViewModePreferencePersistence } from './hooks/useViewModePreferencePersistence';
-// Story 14c.17: Share Link Deep Linking - join shared groups via URL
 import { useJoinLinkHandler } from './hooks/useJoinLinkHandler';
 import { JoinGroupDialog } from './components/SharedGroups/JoinGroupDialog';
 // Story 14c-refactor.3: useSharedGroupTransactions DELETED - shared groups feature temporarily disabled
 import type { SharedGroup } from './types/sharedGroup';
 import { getFirestore } from 'firebase/firestore';
 import { useQueryClient } from '@tanstack/react-query';
-// Story 14c.7: Tag transactions to groups
 import { updateMemberTimestampsForTransaction } from './services/sharedGroupService';
 import type { GroupWithMeta } from './components/SharedGroups';
 // Story 14c-refactor.4: clearGroupCacheById import REMOVED (IndexedDB cache deleted)
@@ -73,7 +67,6 @@ import { DashboardView } from './views/DashboardView';
 import { TrendsView } from './views/TrendsView';
 // Story 10a.4: Insights History View (replaces HistoryView in insights tab)
 import { InsightsView } from './views/InsightsView';
-// Story 14c.13: Notifications view with ProfileDropdown
 import { NotificationsView } from './views/NotificationsView';
 // Story 14.14: Transaction List View (accessible via profile menu)
 import { HistoryView } from './views/HistoryView';
@@ -336,7 +329,6 @@ function App() {
     } = useItemNameMappings(user, services);
     // Story 9.8: User preferences for default scan currency
     // Story 14.22: Extended to include location settings from Firestore
-    // Story 14c.18: Added view mode preference for group persistence
     const {
         preferences: userPreferences,
         loading: preferencesLoading,
@@ -351,7 +343,6 @@ function App() {
         setFontFamily: setFontFamilyPref,
         // Story 14.35b: Foreign location display format preference
         setForeignLocationFormat: setForeignLocationFormatPref,
-        // Story 14c.18: View mode preference (debounced Firestore save)
         saveViewModePreference,
     } = useUserPreferences(user, services);
     // Persistent scan credits from Firestore
@@ -402,14 +393,11 @@ function App() {
         appId: services?.appId ?? null,
     });
 
-    // Story 14c.2: Pending invitations for notification badge on Alerts
     const { pendingInvitations, pendingCount: pendingInvitationsCount } = usePendingInvitations(user?.email);
 
-    // Story 14c.4: View Mode Switcher - context and shared groups
     const { mode: viewMode, group: activeGroup, setGroupMode } = useViewMode();
     const db = getFirestore();
 
-    // Story 14c.17: Share Link Deep Linking - handle join URLs
     const {
         state: joinLinkState,
         shareCode: _joinShareCode,
@@ -427,7 +415,6 @@ function App() {
         appId: services?.appId,
     });
 
-    // Story 14c.17: Handle successful join - switch to group mode
     useEffect(() => {
         if (joinLinkState === 'success' && joinedGroupId && joinGroupPreview) {
             // Switch to the newly joined group
@@ -436,7 +423,6 @@ function App() {
         }
     }, [joinLinkState, joinedGroupId, joinGroupPreview, setGroupMode]);
 
-    // Story 14c.13: In-app notifications for shared groups (must be after db is defined)
     const {
         notifications: inAppNotifications,
         unreadCount: inAppNotificationsUnreadCount,
@@ -449,7 +435,6 @@ function App() {
     const { groups: userSharedGroups, isLoading: sharedGroupsLoading } = useUserSharedGroups(db, user?.uid);
     const [showViewModeSwitcher, setShowViewModeSwitcher] = useState(false);
 
-    // Story 14c.18: Connect view mode to Firestore persistence and group validation
     // This handles: AC3 (load on auth), AC4 (validate group), AC5 (fallback), AC6 (sync on change)
     useViewModePreferencePersistence({
         groups: userSharedGroups,
@@ -459,7 +444,6 @@ function App() {
         savePreference: saveViewModePreference,
     });
 
-    // Story 14c.7: Convert shared groups to GroupWithMeta format for TransactionGroupSelector
     const availableGroupsForSelector: GroupWithMeta[] = useMemo(() => {
         return userSharedGroups.map(group => ({
             id: group.id || '',
@@ -509,7 +493,6 @@ function App() {
         clearBatchReceipts: _clearBatchReceiptsContext, // Available for explicit clear, but resetScanContext also clears
         // Story 14d.5d: Batch editing context methods
         setBatchEditingIndex: setBatchEditingIndexContext,
-        // Story 14c.8: Update batch receipt when editing in batch mode
         updateBatchReceipt: updateBatchReceiptContext,
         // Story 14d.5d: Dialog context methods for batch dialogs
         showDialog: showScanDialog,
@@ -768,7 +751,6 @@ function App() {
     const defaultCity = userPreferences.defaultCity || '';
 
     /**
-     * Story 14c.8: Create a default new transaction with standard fields.
      * When in shared group mode, automatically includes the active group ID.
      * This ensures ALL new transactions (single scan, batch scan, manual creation)
      * are initialized consistently with the shared group when applicable.
@@ -1056,7 +1038,6 @@ function App() {
         }
     }, [view]); // Only depend on view, not pendingDistributionView
 
-    // Story 14c.13: Delta fetch on notification click (Option C - cost efficient)
     // Story 14c-refactor.3: useNotificationDeltaFetch REMOVED (shared groups feature temporarily disabled)
     // Will be restored in Epic 14d when shared groups are re-implemented
 
@@ -1160,7 +1141,6 @@ function App() {
                 setCurrentTransaction(scanState.results[0]);
             } else {
                 // Story 14.24: Include default location and currency in new transactions
-                // Story 14c.8: Use helper to include shared group when in group mode
                 setCurrentTransaction(createDefaultTransaction());
             }
             // Story 14.23: Restore to unified TransactionEditorView
@@ -1182,7 +1162,6 @@ function App() {
         setScanStoreType('auto');
         setScanCurrency(userPreferences.defaultCurrency || 'CLP');
         // Story 14.24: Include default location and currency in new transactions
-        // Story 14c.8: Use helper to include shared group when in group mode
         setCurrentTransaction(createDefaultTransaction());
         // Story 9.10 AC#1, AC#3: Create new pending scan session
         // Story 14d.4e: No longer need to create pendingScan - ScanContext manages state
@@ -1342,7 +1321,6 @@ function App() {
             setCurrentTransaction(transaction as any);
         } else if (mode === 'new') {
             // Story 14.24: Include default location and currency in new transactions
-            // Story 14c.8: Use helper to include shared group when in group mode
             setCurrentTransaction(createDefaultTransaction());
         }
         navigateToView('transaction-editor');
@@ -1633,7 +1611,6 @@ function App() {
             );
 
             // Build initial transaction from Gemini response
-            // Story 14c.8: Include sharedGroupIds when in group view mode
             const initialTransaction: Transaction = {
                 merchant: merchant,
                 date: d,
@@ -1652,7 +1629,6 @@ function App() {
                 receiptType: result.receiptType,
                 promptVersion: result.promptVersion,
                 merchantSource: result.merchantSource,
-                // Story 14c.8: Auto-tag to active group when in group view mode
                 ...(viewMode === 'group' && activeGroup?.id ? { sharedGroupIds: [activeGroup.id] } : {}),
             };
 
@@ -1737,7 +1713,6 @@ function App() {
                 };
             }
 
-            // Story 14c.8: sharedGroupIds is now set in initialTransaction above
             // No need for redundant injection here - transaction already has the group
 
             setCurrentTransaction(finalTransaction);
@@ -2238,7 +2213,6 @@ function App() {
                 onItemError: dispatchBatchItemError,
                 // Story 14d.5: Fixed race condition - create batchReceipts and pass
                 // to dispatchBatchComplete for atomic state update with phase transition
-                // Story 14c.8: Auto-tag batch transactions when in group view mode (AC#3)
                 onComplete: (processingResults, imageUrls) => {
                     // Add sharedGroupIds to each successful result if in group mode
                     let taggedResults = processingResults;
@@ -2490,7 +2464,6 @@ function App() {
         // Save transaction
         const transactionId = await firestoreAddTransaction(db, user.uid, appId, finalTx);
 
-        // Story 14c.12: Update memberUpdates timestamps for shared groups
         // Fire-and-forget to not block batch save performance
         if (finalTx.sharedGroupIds && finalTx.sharedGroupIds.length > 0) {
             updateMemberTimestampsForTransaction(
@@ -2991,7 +2964,6 @@ function App() {
             if (transaction) {
                 setCurrentTransaction(transaction as any);
             } else if (mode === 'new') {
-                // Story 14c.8: Use helper to include shared group when in group mode
                 setCurrentTransaction(createDefaultTransaction());
             }
             navigateToView('transaction-editor');
@@ -3224,11 +3196,9 @@ function App() {
     };
 
     // Story 14.24: Removed window.confirm - caller shows styled confirmation dialog
-    // Story 14c.12: Update memberUpdates when deleting transactions from shared groups
     const deleteTransaction = async (id: string) => {
         if (!services || !user) return;
 
-        // Story 14c.12: Update memberUpdates for shared groups before deletion
         // Use currentTransaction if available, otherwise the deletion will be caught
         // by other members on next sync (eventual consistency acceptable for delete)
         if (currentTransaction?.sharedGroupIds && currentTransaction.sharedGroupIds.length > 0) {
@@ -3409,20 +3379,15 @@ function App() {
     // with old transaction dates that wouldn't appear in the top 100 by date
     const recentlyAddedTransactions = recentScans.slice(0, 5);
 
-    // Story 14c.5: Data source switching for personal vs group mode
     // When in group mode, use shared group transactions; otherwise use personal transactions
     const isGroupMode = viewMode === 'group' && !!activeGroup;
-    // Story 14c.16: Use rawTransactions for group mode to enable cross-year navigation
     // sharedGroupTransactions is date-filtered (current month), rawTransactions has all data
-    // Story 14c.23 Fix: Defensive guard - React Query can return undefined during cache transitions
     // Use Array.isArray check to handle any non-array value (undefined, null, or unexpected type)
     const safeSharedGroupRawTransactions = Array.isArray(sharedGroupRawTransactions)
         ? sharedGroupRawTransactions
         : [];
     const activeTransactions = isGroupMode ? safeSharedGroupRawTransactions : transactions;
-    // Story 14c.5 Bug Fix: Sort shared group transactions by createdAt for recent scans carousel
     // This ensures recently scanned receipts appear first (consistent with personal mode behavior)
-    // Story 14c.16: Use rawTransactions for consistent data source
     const activeRecentTransactions = isGroupMode
         ? [...safeSharedGroupRawTransactions]
             .sort((a, b) => {
@@ -3511,7 +3476,6 @@ function App() {
                     userEmail={user?.email || ''}
                     theme={theme}
                     t={t}
-                    // Story 14c.4: View Mode Switcher props
                     onLogoClick={() => setShowViewModeSwitcher(true)}
                     viewMode={viewMode}
                     activeGroup={activeGroup ? {
@@ -3524,7 +3488,6 @@ function App() {
                 />
             )}
 
-            {/* Story 14c.4: View Mode Switcher dropdown */}
             {view !== 'settings' && (
                 <div className="fixed top-0 left-4 z-[60]" style={{ marginTop: 'calc(72px + max(env(safe-area-inset-top, 0px), 8px))' }}>
                     <ViewModeSwitcher
@@ -3560,7 +3523,6 @@ function App() {
                 }}
             >
                 {/* Story 10a.1: Wrap DashboardView with HistoryFiltersProvider for filter context (AC #2, #6) */}
-                {/* Story 14c.5: Uses activeRecentTransactions which switches between personal/group mode */}
                 {view === 'dashboard' && (
                     <HistoryFiltersProvider>
                         <DashboardView
@@ -3602,7 +3564,6 @@ function App() {
                                 navigateToTransactionDetail(transaction as Transaction);
                             }}
                             onTriggerScan={triggerScan}
-                            // Story 14c.5: Pass active transactions (personal or group based on view mode)
                             allTransactions={activeTransactions as any}
                             // Story 9.12: Language for category translations
                             lang={lang}
@@ -3613,7 +3574,6 @@ function App() {
                             // Story 14.15b: Selection mode props for group/delete operations
                             userId={user?.uid}
                             appId={services?.appId}
-                            // Story 14c.5: Recent scans switch based on view mode
                             // In group mode, use recent shared transactions; in personal mode, use createdAt-sorted
                             recentScans={activeRecentTransactions as any}
                             // Story 14.13: Font color mode for category text reactivity
@@ -3671,7 +3631,6 @@ function App() {
                         // Story 14.24: Read-only mode for viewing transactions from History
                         readOnly={isViewingReadOnly}
                         onRequestEdit={handleRequestEditFromReadOnly}
-                        // Story 14c.6: Other user's transaction (strict read-only, no edit option)
                         isOtherUserTransaction={Boolean(currentTransaction?._ownerId && currentTransaction._ownerId !== user?.uid)}
                         ownerId={currentTransaction?._ownerId}
                         ownerProfile={currentTransaction?._ownerId && activeGroup?.memberProfiles
@@ -3695,7 +3654,6 @@ function App() {
                             // Story 14d.4e: ScanContext persists state automatically via save effect
                             setCurrentTransaction(trans as any);
 
-                            // Story 14c.8: Also update batch receipt when in batch editing mode
                             // This ensures sharedGroupIds and other changes are persisted when navigating
                             // between batch receipts or going back to batch-review
                             if (scanState.batchEditingIndex !== null && scanState.batchReceipts) {
@@ -3829,7 +3787,6 @@ function App() {
                             }
                             navigateToView('batch-capture');
                         }}
-                        // Story 14c.7: Shared groups for tagging transactions
                         availableGroups={availableGroupsForSelector}
                         groupsLoading={sharedGroupsLoading}
                         onGroupsChange={async (groupIds) => {
@@ -3856,7 +3813,6 @@ function App() {
                                     console.warn('[App] Failed to update memberUpdates:', err);
                                 });
 
-                                // Story 14c.5 Bug Fix: Clear IndexedDB cache for affected groups
                                 // This ensures untagged transactions don't appear in stale cache
                                 const affectedGroupIds = new Set([...previousGroupIds, ...groupIds]);
 
@@ -3928,7 +3884,6 @@ function App() {
                     />
                 )}
 
-                {/* Story 14c.5: Uses activeTransactions which switches between personal/group mode */}
                 {view === 'trends' && (
                     // Story 10a.2: Pass initial state to navigate to specific month (AC #1, #2)
                     // Key forces remount when initial state changes to apply new initial value
@@ -3986,7 +3941,6 @@ function App() {
                                 initialDistributionView={pendingDistributionView || undefined}
                                 // Story 14.13: Font color mode for category text reactivity
                                 fontColorMode={fontColorMode}
-                                // Story 14c.9: Shared Group Analytics props
                                 isGroupMode={isGroupMode}
                                 groupName={activeGroup?.name}
                                 groupMembers={activeGroup?.memberProfiles
@@ -4077,7 +4031,6 @@ function App() {
                                         onItemError: dispatchBatchItemError,
                                         // Story 14d.5: Fixed race condition - create batchReceipts and pass
                                         // to dispatchBatchComplete for atomic state update with phase transition
-                                        // Story 14c.8: Auto-tag batch transactions when in group view mode (AC#3)
                                         onComplete: (processingResults, imageUrls) => {
                                             // Add sharedGroupIds to each successful result if in group mode
                                             let taggedResults = processingResults;
@@ -4309,8 +4262,6 @@ function App() {
                     />
                 )}
 
-                {/* Story 14.11: Notifications View - Story 14c.2: Shows pending invitations */}
-                {/* Story 14c.13: Now also shows shared group notifications */}
                 {view === 'alerts' && (
                     <NotificationsView
                         user={user}
@@ -4346,7 +4297,6 @@ function App() {
                 {/* Story 14.27: Uses paginatedTransactions with loadMore for infinite scroll */}
                 {/* Story 14.31: Uses transactionsWithRecentScans to include recently scanned receipts */}
                 {/* Story 14.13b: onStateChange syncs filter state for persistence across navigation */}
-                {/* Story 14c.5: In group mode, uses sharedGroupTransactions instead */}
                 {view === 'history' && (
                     <HistoryFiltersProvider
                         initialState={pendingHistoryFilters || undefined}
@@ -4387,7 +4337,6 @@ function App() {
                             fontColorMode={fontColorMode}
                             // Story 14.35b: Foreign location display format
                             foreignLocationFormat={userPreferences.foreignLocationFormat}
-                            // Story 14c.6: Active shared group for ownership display
                             activeGroup={activeGroup ? {
                                 id: activeGroup.id ?? '',
                                 memberProfiles: activeGroup.memberProfiles,
@@ -4414,7 +4363,6 @@ function App() {
                         // Story 14.35b: Foreign location display settings
                         defaultCountry={defaultCountry}
                         foreignLocationFormat={userPreferences.foreignLocationFormat}
-                        // Story 14c.8: User ID for group color lookup
                         userId={user?.uid}
                     />
                 )}
@@ -4424,7 +4372,6 @@ function App() {
                 {/* Session 2: Added userId and appId for groups filter (Layers icon) */}
                 {/* Story 14.13 Session 5: Pass pendingHistoryFilters for filtered navigation from analytics */}
                 {/* Story 14.13b: onStateChange syncs filter state for persistence across navigation */}
-                {/* Story 14c.5: In group mode, uses activeTransactions (switched data source) */}
                 {view === 'items' && (
                     <HistoryFiltersProvider
                         initialState={pendingHistoryFilters || undefined}
@@ -4564,9 +4511,7 @@ function App() {
                 // Context tracks batch state across all phases (capturing, processing, reviewing)
                 // Story 14d.5c AC5: Use hasBatchReceipts (context) instead of batchReviewResults
                 isBatchMode={isBatchModeFromContext || hasBatchReceipts}
-                // Story 14c.2: Badge count for alerts (pending invitations)
                 alertsBadgeCount={pendingInvitationsCount + inAppNotificationsUnreadCount}
-                // Story 14c.4: Pass active group color for nav bar top border
                 activeGroupColor={viewMode === 'group' && activeGroup ? activeGroup.color : undefined}
             />
 
@@ -4831,7 +4776,6 @@ function App() {
                 lang={lang}
                 // Story 14.35b: User's default country for foreign location detection
                 userDefaultCountry={defaultCountry}
-                // Story 14c.8: Pass active group for auto-tag indicator (AC#2)
                 // Note: onRemoveGroupTag intentionally not passed - QuickSaveCard is for fast saving
                 // If user wants to change the group, they should use the Edit button
                 activeGroup={viewMode === 'group' && activeGroup ? {
@@ -5123,7 +5067,6 @@ function App() {
                 formatCurrency={(amount, curr) => formatCurrency(amount, curr)}
             />
 
-            {/* Story 14c.17: Join Group via Share Link Dialog */}
             <JoinGroupDialog
                 isOpen={joinLinkState !== 'idle' && joinLinkState !== 'pending_auth' && joinLinkState !== 'success'}
                 state={joinLinkState}

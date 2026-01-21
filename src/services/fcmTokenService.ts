@@ -2,7 +2,6 @@
  * FCM Token Service
  *
  * Story 9.18: Initial FCM token storage
- * Story 14c.13: FCM Push Notifications for Shared Groups
  *
  * Manages FCM token storage in Firestore.
  * Stores tokens in user's subcollection for sending push notifications.
@@ -36,7 +35,6 @@ export type FcmDeviceType = 'web' | 'android' | 'ios';
 /**
  * FCM Token document stored in Firestore
  *
- * Story 14c.13: Extended with deviceType and lastUsedAt for token management
  */
 export interface FCMTokenDoc {
   /** Firestore document ID */
@@ -57,7 +55,6 @@ export interface FCMTokenDoc {
 
 /**
  * Constants for FCM token management
- * Story 14c.13: Token staleness threshold for cleanup
  */
 export const FCM_TOKEN_CONSTANTS = {
   /** LocalStorage key for notification enabled state */
@@ -191,7 +188,6 @@ function hashToken(token: string): string {
 }
 
 // ============================================================================
-// Story 14c.13: Additional FCM Token Management Functions
 // ============================================================================
 
 /**

@@ -69,7 +69,6 @@ export interface TransactionCardSelection {
 }
 
 /**
- * Story 14c.6: Transaction ownership props for shared group view.
  * Determines whether to show owner indicator on the card.
  */
 export interface TransactionCardOwnership {
@@ -108,7 +107,6 @@ export interface TransactionCardProps {
   onThumbnailClick?: () => void;
   /** Selection mode props (optional - for batch operations) */
   selection?: TransactionCardSelection;
-  /** Story 14c.6: Ownership props (optional - for shared group view) */
   ownership?: TransactionCardOwnership;
   /** Group color for left border accent (looked up from shared group, not stored on transaction) */
   groupColor?: string;
@@ -136,7 +134,6 @@ interface ReceiptThumbnailProps {
   colorTheme: ThemeName;
   mode: ModeName;
   onThumbnailClick?: (e: React.MouseEvent) => void;
-  /** Story 14c.6: Ownership info for profile indicator */
   ownership?: TransactionCardOwnership;
 }
 
@@ -171,7 +168,6 @@ const ReceiptThumbnail: React.FC<ReceiptThumbnailProps> = ({
     );
   };
 
-  // Story 14c.6: Owner badge component - rendered on bottom-left of thumbnail for other users' transactions
   const OwnerBadge = () => {
     // Only show if ownership data exists and this is NOT the current user's transaction
     if (!ownership || ownership.isOwn) return null;
@@ -251,7 +247,6 @@ const ReceiptThumbnail: React.FC<ReceiptThumbnailProps> = ({
       )}
       {/* Category badge overlay */}
       <CategoryBadge />
-      {/* Story 14c.6: Owner badge overlay */}
       <OwnerBadge />
     </div>
   );
@@ -417,7 +412,6 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
       style={{
         backgroundColor: 'var(--surface)',
         borderColor: getBorderColor(),
-        // Story 14c.8: Thicker left border with GROUP color for shared group transactions
         // Only the left border shows the group color; other 3 borders use default color
         borderLeftWidth: hasGroupAccent ? '5px' : undefined,
         borderLeftColor: hasGroupAccent ? groupColor : undefined,

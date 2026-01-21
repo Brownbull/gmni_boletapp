@@ -127,6 +127,16 @@ One-time migration scripts located in the root `scripts/` folder.
 | Script | Description |
 |--------|-------------|
 | `migrate-createdAt-admin.js` | Standardize `createdAt` field format in transactions |
+| `cleanup-shared-groups.ts` | Remove all shared group data from Firestore (Epic 14c-refactor) |
+
+#### Archived Scripts
+
+The following scripts have been moved to `scripts/archive/` (Story 14c-refactor.8):
+
+| Script | Description |
+|--------|-------------|
+| `archive/add-sharedGroupIds-field.ts` | Add `sharedGroupIds` field to all transactions |
+| `archive/fix-duplicate-sharedGroupIds.ts` | Remove duplicate entries from `sharedGroupIds` arrays |
 
 #### migrate-createdAt-admin.js
 
@@ -153,6 +163,34 @@ node scripts/migrate-createdAt-admin.js --user=USER_ID --execute
 ```
 
 **Prerequisites:** Requires Firebase Admin authentication (see below).
+
+---
+
+#### cleanup-shared-groups.ts
+
+**Story 14c-refactor.6:** Clean up all shared group data to prepare for Epic 14d (Shared Groups v2).
+
+**What it does:**
+1. Deletes all documents in `/sharedGroups` collection
+2. Deletes all documents in `/pendingInvitations` collection
+3. Clears `sharedGroupIds` to `[]` for all user transactions (preserves field for schema)
+
+**Usage:**
+```bash
+# Preview changes (safe - recommended first step)
+npx ts-node scripts/cleanup-shared-groups.ts --dry-run
+
+# Execute with confirmation prompt
+npx ts-node scripts/cleanup-shared-groups.ts
+
+# Execute without confirmation (for CI/automation)
+npx ts-node scripts/cleanup-shared-groups.ts --force
+
+# Show help
+npx ts-node scripts/cleanup-shared-groups.ts --help
+```
+
+**Prerequisites:** Requires `scripts/serviceAccountKey.json` for Firebase Admin authentication.
 
 ---
 

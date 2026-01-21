@@ -92,3 +92,6 @@ docs/uxui/cc_chrome/backup/.credentials.json
 
 # Claude Code context files
 CLAUDE.md
+
+# Claude Code
+.claude/

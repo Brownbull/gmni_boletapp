@@ -1,6 +1,4 @@
 /**
- * Story 14c.18: View Mode Preference Persistence Hook
- * Story 14c.18 bugfix: Simplified to work like other settings (font, currency, etc.)
  *
  * Connects ViewModeContext to Firestore persistence via useUserPreferences.
  * Works exactly like other user preferences - no dependency on async subscriptions.

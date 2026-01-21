@@ -86,8 +86,6 @@ export const QUERY_KEYS = {
         ['items', 'derived', userId, appId] as const,
 
     /**
-     * Story 14c.5: Shared Group Transactions
-     * Story 14c.16: Cache Architecture Fix - Removed date range from key
      * Multi-member transaction queries with IndexedDB caching
      *
      * Key: ['sharedGroupTransactions', groupId]
@@ -101,7 +99,6 @@ export const QUERY_KEYS = {
         ['sharedGroupTransactions', groupId] as const,
 
     /**
-     * Story 14c.1: Shared Groups
      * Structured for multi-user real-time sync
      */
     sharedGroups: {
@@ -111,7 +108,7 @@ export const QUERY_KEYS = {
         /** Single shared group */
         single: (groupId: string) =>
             ['sharedGroups', 'single', groupId] as const,
-        /** Shared group transactions (alias for sharedGroupTransactions) - Story 14c.16: Removed date range */
+        /** Shared group transactions (alias for sharedGroupTransactions) */
         transactions: (groupId: string) =>
             ['sharedGroupTransactions', groupId] as const,
         /** Shared group members */

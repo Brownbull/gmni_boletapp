@@ -1,7 +1,6 @@
 /**
  * PendingInvitationsSection Component
  *
- * Story 14c.2: Accept/Decline Invitation
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * Displays pending invitations at the top of the Groups settings view.
@@ -24,7 +23,6 @@ import { acceptInvitation, declineInvitation } from '../../services/sharedGroupS
 import { classifyError, getErrorConfig, SharedGroupErrorType } from '../../lib/sharedGroupErrors';
 
 // ============================================================================
-// Local Helper Functions (Story 14c.8: Group Consolidation)
 // ============================================================================
 
 /**
@@ -103,7 +101,6 @@ export const PendingInvitationsSection: React.FC<PendingInvitationsSectionProps>
 
             onInvitationHandled?.();
         } catch (error) {
-            // AC8: Use classifyError for unified error handling (Story 14c.11)
             const classifiedError = classifyError(error);
             const errorConfig = getErrorConfig(classifiedError.type);
 
@@ -129,7 +126,6 @@ export const PendingInvitationsSection: React.FC<PendingInvitationsSectionProps>
 
             onInvitationHandled?.();
         } catch (error) {
-            // Use classifyError for unified error handling (Story 14c.11)
             const classifiedError = classifyError(error);
             const errorConfig = getErrorConfig(classifiedError.type);
             const displayMessage = t(errorConfig.messageKey);
@@ -254,7 +250,6 @@ export const PendingInvitationsSection: React.FC<PendingInvitationsSectionProps>
                                 </div>
                             </div>
 
-                            {/* AC2: Expired invitation help text (Story 14c.11) */}
                             {expired && (
                                 <div
                                     className="text-xs mb-3 p-2 rounded-lg"

@@ -46,7 +46,6 @@ interface UseUserPreferencesResult {
   setFontFamily: (fontFamily: SupportedFontFamily) => Promise<void>;
   /** Story 14.35b: Update foreign location display format */
   setForeignLocationFormat: (format: ForeignLocationDisplayFormat) => Promise<void>;
-  /** Story 14c.18: Update view mode preference (debounced 1s) */
   saveViewModePreference: (preference: Omit<ViewModePreference, 'updatedAt'>) => void;
 }
 
@@ -176,7 +175,6 @@ export function useUserPreferences(
     [updatePreference]
   );
 
-  // Story 14c.18: Debounced save for view mode preference (AC6)
   // Use ref to track pending save timeout
   const viewModeSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 

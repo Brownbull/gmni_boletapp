@@ -1,7 +1,6 @@
 /**
  * NotificacionesView - Push Notification Settings Sub-View
  *
- * Story 14c.13: FCM Push Notifications for Shared Groups
  * Epic 14c: Household Sharing
  *
  * Settings UI for managing push notification preferences.

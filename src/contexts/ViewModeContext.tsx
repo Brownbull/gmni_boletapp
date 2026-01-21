@@ -1,6 +1,4 @@
 /**
- * Story 14c.4: View Mode Switcher - ViewModeContext
- * Story 14c.18: Firestore persistence + group validation
  *
  * App-wide context provider that manages switching between personal and
  * shared group view modes. All data-fetching hooks and views check this
@@ -9,8 +7,8 @@
  * Features:
  * - Personal mode (default): Shows user's own transactions
  * - Group mode: Shows combined transactions for a shared group
- * - localStorage persistence for mode across sessions (AC6)
- * - Firestore persistence via callback (Story 14c.18)
+ * - localStorage persistence for mode across sessions
+ * - Firestore persistence via callback
  * - Cached group data for display purposes
  *
  * Architecture Reference: Epic 14c - Household Sharing
@@ -81,11 +79,9 @@ export interface ViewModeContextValue extends ViewModeState {
   /** Update cached group data (for real-time updates) */
   updateGroupData: (group: SharedGroup) => void;
   /**
-   * Story 14c.18: Validate and restore mode after group data is loaded
    * Call this after groups are loaded to validate persisted group mode
    */
   validateAndRestoreMode: (groups: SharedGroup[]) => void;
-  /** Story 14c.18: Whether initial validation has been performed */
   isValidated: boolean;
 }
 
@@ -98,13 +94,10 @@ interface PersistedViewMode {
 }
 
 /**
- * Story 14c.18: Props for ViewModeProvider
  */
 interface ViewModeProviderProps {
   children: React.ReactNode;
-  /** Story 14c.18: Initial preference loaded from Firestore */
   initialPreference?: ViewModePreference;
-  /** Story 14c.18: Callback to save preference changes (debounced by caller) */
   onPreferenceChange?: (preference: Omit<ViewModePreference, 'updatedAt'>) => void;
 }
 
@@ -162,7 +155,6 @@ function persistMode(state: PersistedViewMode): void {
 }
 
 /**
- * Story 14c.18: Determine initial state from Firestore preference or localStorage
  * Priority: Firestore > localStorage > default (personal)
  */
 function getInitialState(initialPreference?: ViewModePreference): ViewModeState {
@@ -194,7 +186,6 @@ function getInitialState(initialPreference?: ViewModePreference): ViewModeState 
  * Wrap your app with this provider to enable view mode switching.
  * Should be placed inside QueryClientProvider for React Query support.
  *
- * Story 14c.18: Now accepts initialPreference from Firestore and
  * onPreferenceChange callback for persistence.
  *
  * @example
@@ -219,13 +210,11 @@ export function ViewModeProvider({
     getInitialState(initialPreference)
   );
 
-  // Story 14c.18: Track if validation has been performed
   const [isValidated, setIsValidated] = useState(false);
 
   // Track if this is the initial render to skip first persistence
   const isInitialRender = useRef(true);
 
-  // Story 14c.18: Track the last persisted state to prevent unnecessary saves
   const lastPersistedRef = useRef<{ mode: ViewMode; groupId?: string } | null>(null);
 
   // Persist state changes to localStorage and call onPreferenceChange
@@ -244,7 +233,6 @@ export function ViewModeProvider({
     // Always persist to localStorage
     persistMode(toPersist);
 
-    // Story 14c.18: Call onPreferenceChange callback if provided
     // Only if the value actually changed
     if (
       onPreferenceChange &&
@@ -315,7 +303,6 @@ export function ViewModeProvider({
   }, []);
 
   /**
-   * Story 14c.18: Validate and restore group mode after groups are loaded.
    * If the persisted group is no longer accessible, fall back to personal mode.
    * This fixes the race condition where mode is restored before group data loads.
    * (AC4, AC5)

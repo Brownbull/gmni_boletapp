@@ -1,5 +1,4 @@
 /**
- * Story 14c.6: Transaction Ownership Indicators - ProfileIndicator Component
  *
  * Small avatar component that displays a user's profile indicator (initial or photo).
  * Used on transaction cards to show who owns a transaction in shared group view.

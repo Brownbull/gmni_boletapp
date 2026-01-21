@@ -1,7 +1,6 @@
 /**
  * SyncButton Component
  *
- * Story 14c.20: Shared Group Cache Optimization
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * A button that triggers manual sync for shared group transactions.

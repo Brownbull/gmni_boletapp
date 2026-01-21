@@ -168,7 +168,6 @@ interface Transaction {
     sharedGroupIds?: string[];
     // Story 14.31: Scan date for sorting by when transaction was added
     createdAt?: any; // Firestore Timestamp or Date
-    // Story 14c.6: Transaction owner ID (for shared group transactions)
     _ownerId?: string;
 }
 
@@ -223,7 +222,6 @@ interface HistoryViewProps {
     fontColorMode?: 'colorful' | 'plain';
     /** Story 14.35b: How to display foreign locations (code or flag) */
     foreignLocationFormat?: 'code' | 'flag';
-    /** Story 14c.6: Active shared group (for member profile lookup) */
     activeGroup?: {
         id: string;
         memberProfiles?: Record<string, { displayName?: string; photoURL?: string }>;
@@ -280,7 +278,6 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
     fontColorMode: _fontColorMode,
     // Story 14.35b: Foreign location display format
     foreignLocationFormat = 'code',
-    // Story 14c.6: Active shared group for ownership display
     activeGroup = null,
     // Shared groups for dynamic color lookup (DEPRECATED - now using useAllUserGroups internally)
     sharedGroups: _sharedGroups = [],
@@ -295,7 +292,6 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
     // Story 14.14: Collapsible header state
     const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
     // Story 14.15: Selection mode for batch operations
-    // Story 14c.8: Added selectAll and clearSelection for "Select All" feature
     const {
         isSelectionMode,
         selectedIds,
@@ -335,7 +331,6 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
     // Group consolidation: Use shared groups hook instead of personal groups
     const { groups, isLoading: groupsLoading } = useAllUserGroups(userId || undefined);
 
-    // Story 14c.8: Helper to lookup group color from sharedGroupIds using loaded groups
     const getGroupColorForTransaction = useCallback((tx: Transaction): string | undefined => {
         if (!tx.sharedGroupIds?.length || !groups.length) return undefined;
         const group = groups.find(g => tx.sharedGroupIds?.includes(g.id));
@@ -547,12 +542,10 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
         return getDuplicateIds(transactionsToFilter as any);
     }, [transactionsToFilter]);
 
-    // Story 14c.8: Get visible transaction IDs for "Select All" functionality
     const visibleTransactionIds = useMemo(() => {
         return paginatedTransactions.map(tx => tx.id).filter((id): id is string => !!id);
     }, [paginatedTransactions]);
 
-    // Story 14c.8: Handle Select All toggle - selects all visible or clears selection
     const handleSelectAllToggle = useCallback(() => {
         const allVisibleSelected = visibleTransactionIds.length > 0 &&
             visibleTransactionIds.every(id => selectedIds.has(id));
@@ -929,7 +922,6 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                 {/* Content area with horizontal padding - matches header padding */}
                 <div className="px-3">
                     {/* Story 14.15: Selection Bar (shown when selection mode is active) */}
-                    {/* Story 14c.8: Added onSelectAll and totalVisible for "Select All" button */}
                     {isSelectionMode && (
                         <div className="mb-3">
                             <SelectionBar
@@ -1134,7 +1126,6 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                                                         isSelected: isSelected(tx.id),
                                                         onToggleSelect: () => toggleSelection(tx.id),
                                                     }}
-                                                    // Story 14c.6: Ownership for shared group transactions
                                                     ownership={tx._ownerId && userId ? {
                                                         ownerId: tx._ownerId,
                                                         isOwn: tx._ownerId === userId,

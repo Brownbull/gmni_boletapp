@@ -71,9 +71,7 @@ interface NavProps {
     isBatchMode?: boolean;
     /** Story 14d.7: Toast message callback for "scan in progress" */
     onShowToast?: (message: string) => void;
-    /** Story 14c.2: Badge count for alerts tab (pending invitations, etc.) */
     alertsBadgeCount?: number;
-    /** Story 14c.4: Active group color for top border accent when in group mode */
     activeGroupColor?: string;
 }
 
@@ -230,7 +228,6 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
     }, [setView, triggerHaptic, shouldBlockNavigation, prefersReducedMotion]);
 
     // Story 14.11 AC #2: Nav item styling with CSS variables
-    // Story 14c.13: Removed labels - icons only, reduced padding for smaller bar
     const getNavItemClasses = (_v: string): string => {
         // Note: v is available if view-specific classes are needed
         const baseClasses = 'flex items-center justify-center py-2 px-4 cursor-pointer select-none';
@@ -255,7 +252,6 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
 
     // Story 14.11 AC #1: Nav bar styling from mockup
     // Story 14.12: Use --bg to match header, --border-medium for accent top border (1px to match button outlines)
-    // Story 14c.4: Subtle gradient from bottom (theme bg) to top (group color) when in group mode
     const navStyle: React.CSSProperties = {
         // When in group mode, use gradient background from bottom to top
         // 70% from bottom is normal bg color, then gradient to group color at top
@@ -414,7 +410,6 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
             style={{
                 ...navStyle,
                 // Story 14.11 AC #1: Padding from mockup CSS - explicit to allow paddingBottom override
-                // Story 14c.13: Reduced padding for smaller icon-only nav bar
                 paddingTop: '4px',
                 paddingLeft: '8px',
                 paddingRight: '8px',
@@ -455,7 +450,6 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
                 className="relative flex-shrink-0"
                 style={{
                     // Story 14.11 AC #3: FAB elevation matching mockup
-                    // Story 14c.13: Adjusted for smaller nav bar, extra horizontal margin
                     marginTop: '-36px',
                     marginLeft: '16px',
                     marginRight: '16px',
@@ -564,7 +558,6 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
                 </button>
 
                 {/* Alerts - Story 14.11: Per mockup, 5th nav item is Alerts not Settings */}
-                {/* Story 14c.2: Added badge count for pending invitations */}
                 <button
                     onClick={() => handleNavClick('alerts')}
                     className={getNavItemClasses('alerts')}
@@ -574,7 +567,6 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
                 >
                     <div className="relative">
                         <Bell size={24} strokeWidth={1.8} />
-                        {/* Story 14c.2 AC2: Notification badge for pending invitations */}
                         {alertsBadgeCount > 0 && (
                             <span
                                 className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 flex items-center justify-center text-[10px] font-semibold rounded-full"

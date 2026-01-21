@@ -1,7 +1,6 @@
 /**
  * useInAppNotifications Hook
  *
- * Story 14c.13: In-app notification history for shared group events
  *
  * Real-time subscription to user's in-app notifications.
  * Provides read/unread state management and notification count.

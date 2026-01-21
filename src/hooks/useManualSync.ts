@@ -1,7 +1,6 @@
 /**
  * useManualSync Hook
  *
- * Story 14c.20: Shared Group Cache Optimization
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * Provides manual sync functionality for shared group transactions with:
@@ -187,7 +186,6 @@ export function useManualSync(options: UseManualSyncOptions): UseManualSyncResul
 
         try {
             // Invalidate React Query cache to trigger refetch
-            // Story 14c.20 Bug Fix: Use refetchType: 'all' to force refetch even for inactive queries
             await queryClient.invalidateQueries({
                 queryKey: QUERY_KEYS.sharedGroupTransactions(groupId),
                 refetchType: 'all',

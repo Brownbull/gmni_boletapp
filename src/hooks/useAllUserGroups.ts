@@ -1,6 +1,4 @@
 /**
- * Story 14c.7: Tag Transactions to Groups - useAllUserGroups Hook
- * Story 14c.8: Group Consolidation - shared groups only
  *
  * Custom hook that provides all user groups (shared groups only after consolidation).
  * Used by TransactionGroupSelector and IconFilterBar for group selection/filtering.
@@ -42,7 +40,7 @@ import type { SharedGroup } from '../types/sharedGroup';
 
 /**
  * Unified group representation for TransactionGroupSelector and IconFilterBar.
- * All groups are shared groups after consolidation (Story 14c.8).
+ * All groups are shared groups.
  */
 export interface GroupWithMeta {
   /** Firestore document ID */
