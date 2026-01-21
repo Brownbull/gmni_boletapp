@@ -222,8 +222,13 @@ function isInDateRange(
  * Extract unique years from transactions
  * Story 14c.16 AC5: Compute available years from ALL cached data
  */
-function extractAvailableYears(transactions: SharedGroupTransaction[]): number[] {
+function extractAvailableYears(transactions: SharedGroupTransaction[] | undefined): number[] {
     const yearsSet = new Set<number>();
+
+    // Defensive: transactions can be undefined during React Query state transitions
+    if (!transactions || !Array.isArray(transactions)) {
+        return [];
+    }
 
     for (const txn of transactions) {
         const dateStr = getTransactionDateString(txn.date);
@@ -386,11 +391,16 @@ export function useSharedGroupTransactions(
     );
 
     // Story 14c.16 AC3: Apply date filtering CLIENT-SIDE
+    // Story 14c.23 Fix: Defensive guard - React Query can return undefined during cache transitions
+    // Use Array.isArray check to handle any non-array value
+    const safeRawTransactions = Array.isArray(rawTransactions) ? rawTransactions : [];
+
     const dateFilteredTransactions = useMemo(() => {
-        return rawTransactions.filter(txn =>
+        if (!Array.isArray(safeRawTransactions)) return [];
+        return safeRawTransactions.filter(txn =>
             isInDateRange(txn, dateRange.startDate, dateRange.endDate)
         );
-    }, [rawTransactions, dateRange.startDate, dateRange.endDate]);
+    }, [safeRawTransactions, dateRange.startDate, dateRange.endDate]);
 
     // Filter by selected members (AC7)
     const transactions = useMemo(() => {
@@ -402,11 +412,12 @@ export function useSharedGroupTransactions(
 
     // allTransactions = member-filtered but NOT date-filtered (for spending breakdown)
     const allTransactions = useMemo(() => {
+        if (!Array.isArray(safeRawTransactions)) return [];
         if (selectedMembers.length === 0) {
-            return rawTransactions;
+            return safeRawTransactions;
         }
-        return rawTransactions.filter(txn => selectedMembers.includes(txn._ownerId));
-    }, [rawTransactions, selectedMembers]);
+        return safeRawTransactions.filter(txn => selectedMembers.includes(txn._ownerId));
+    }, [safeRawTransactions, selectedMembers]);
 
     // Calculate totals (AC6) - based on date+member filtered transactions
     const total = useMemo(() => calculateTotalSpending(transactions), [transactions]);
@@ -430,7 +441,7 @@ export function useSharedGroupTransactions(
     return {
         transactions,
         allTransactions,
-        rawTransactions,
+        rawTransactions: safeRawTransactions,
         isLoading,
         isRefreshing,
         error: error as Error | null,

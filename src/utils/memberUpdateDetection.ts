@@ -89,27 +89,35 @@ export function detectMemberUpdates(
         const prevUpdates = previousUpdatesMap.get(group.id);
         const currentUpdates = group.memberUpdates as MemberUpdatesMap;
 
+        // Story 14c.23 Fix: On first load (no previous data for this group),
+        // just populate the baseline - don't trigger invalidation.
+        // We only want to invalidate when we detect an ACTUAL change from a known baseline.
+        const isFirstLoadForGroup = prevUpdates === undefined;
+
         let otherMemberChanged = false;
 
-        for (const [memberId, memberData] of Object.entries(currentUpdates)) {
-            // Skip self - we don't need to refetch our own changes
-            if (memberId === currentUserId) {
-                continue;
-            }
+        // Only check for changes if we have a baseline to compare against
+        if (!isFirstLoadForGroup) {
+            for (const [memberId, memberData] of Object.entries(currentUpdates)) {
+                // Skip self - we don't need to refetch our own changes
+                if (memberId === currentUserId) {
+                    continue;
+                }
 
-            const prevMemberData = prevUpdates?.[memberId];
-            const prevTimestamp = prevMemberData?.lastSyncAt?.seconds ?? 0;
-            const currentTimestamp = memberData?.lastSyncAt?.seconds ?? 0;
+                const prevMemberData = prevUpdates?.[memberId];
+                const prevTimestamp = prevMemberData?.lastSyncAt?.seconds ?? 0;
+                const currentTimestamp = memberData?.lastSyncAt?.seconds ?? 0;
 
-            if (currentTimestamp > prevTimestamp) {
-                otherMemberChanged = true;
-                changeDetails.push({
-                    groupId: group.id,
-                    memberId,
-                    previousTimestamp: prevTimestamp,
-                    currentTimestamp,
-                });
-                break; // One change is enough to trigger invalidation
+                if (currentTimestamp > prevTimestamp) {
+                    otherMemberChanged = true;
+                    changeDetails.push({
+                        groupId: group.id,
+                        memberId,
+                        previousTimestamp: prevTimestamp,
+                        currentTimestamp,
+                    });
+                    break; // One change is enough to trigger invalidation
+                }
             }
         }
 

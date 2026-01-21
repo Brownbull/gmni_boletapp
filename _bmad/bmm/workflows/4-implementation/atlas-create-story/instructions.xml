@@ -7,6 +7,20 @@
   <critical>This workflow extends standard create-story with Atlas integration for workflow chain analysis</critical>
   <critical>Atlas provides: Workflow impact analysis, Push alerts, Additional AC suggestions, Memory feeding</critical>
 
+  <!-- AGENT PERSONA LOADING - CRITICAL FOR QUALITY -->
+  <agent-loading>
+    <critical>📋 LOAD PM AGENT PERSONA FOR STORY CREATION EXPERTISE</critical>
+    <action>Load and embody: {project-root}/_bmad/bmm/agents/pm.md</action>
+    <action>Extract and apply:
+      - persona.role: Product Manager - requirements and user stories expert
+      - persona.identity: Deep understanding of product vision, user needs, business value
+      - persona.communication_style: Clear, structured, user-focused
+      - persona.principles: Stories must be valuable, testable, sized appropriately
+      - memories: Project-specific PRD knowledge, epic context, user personas
+    </action>
+    <action>Apply PM agent's product thinking to story creation - focus on user value and clear acceptance criteria</action>
+  </agent-loading>
+
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <!-- STEP 0: Atlas Initialization                                            -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->

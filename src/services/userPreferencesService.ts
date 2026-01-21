@@ -10,6 +10,7 @@ import {
   getDoc,
   setDoc,
   serverTimestamp,
+  deleteField,
   Firestore,
 } from 'firebase/firestore';
 
@@ -218,13 +219,23 @@ export async function saveViewModePreference(
   // Save to Firestore
   try {
     const docRef = getPreferencesDocRef(db, appId, userId);
+    // Story 14c.23 Fix: Firestore doesn't accept undefined values
+    // Use deleteField() for undefined groupId when in personal mode
+    const viewModeData: Record<string, unknown> = {
+      mode: preference.mode,
+      updatedAt: serverTimestamp(),
+    };
+    // Only include groupId if it's defined (group mode)
+    // Use deleteField() to remove the field when switching to personal mode
+    if (preference.groupId !== undefined) {
+      viewModeData.groupId = preference.groupId;
+    } else {
+      viewModeData.groupId = deleteField();
+    }
     await setDoc(
       docRef,
       {
-        viewModePreference: {
-          ...preference,
-          updatedAt: serverTimestamp(),
-        },
+        viewModePreference: viewModeData,
         updatedAt: serverTimestamp(),
       },
       { merge: true }

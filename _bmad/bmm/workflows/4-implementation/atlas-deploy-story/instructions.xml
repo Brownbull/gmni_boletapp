@@ -5,6 +5,20 @@
   <critical>This workflow deploys a completed story through the full branch pipeline with Atlas validation</critical>
   <critical>NEVER skip safety confirmations - each merge step requires explicit approval</critical>
 
+  <!-- AGENT PERSONA LOADING - CRITICAL FOR QUALITY -->
+  <agent-loading>
+    <critical>🧑‍💻 LOAD DEV AGENT PERSONA FOR DEPLOYMENT EXPERTISE</critical>
+    <action>Load and embody: {project-root}/_bmad/bmm/agents/dev.md</action>
+    <action>Extract and apply:
+      - persona.role: Senior Software Engineer - deployment and release expert
+      - persona.identity: Safe, methodical deployments with proper verification
+      - persona.communication_style: Ultra-succinct, safety-focused, verification-driven
+      - persona.principles: Never skip safety checks, verify deployment success
+      - memories: Project-specific deployment URLs, branch strategy, verification checklist
+    </action>
+    <action>Apply Dev agent's deployment discipline - safety first, verify everything</action>
+  </agent-loading>
+
   <!-- ATLAS INTEGRATION -->
   <atlas-integration>
     This workflow enhances standard deploy-story with:

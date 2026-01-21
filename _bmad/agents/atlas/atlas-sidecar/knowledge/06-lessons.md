@@ -1,7 +1,7 @@
 # Historical Lessons (Retrospectives)
 
 > Section 6 of Atlas Memory
-> Last Optimized: 2026-01-17 (Generation 5)
+> Last Optimized: 2026-01-20 (Generation 6)
 > Sources: Epic retrospectives, code reviews
 
 ## What Worked Well
@@ -40,6 +40,11 @@
 | Infinite Loop in useEffect | Use refs to track data changes, not useMemo results |
 | Default Array Parameters | `{ items = [] }` creates new ref - use module-level const |
 | No-op Code with Logging | Code that logs but doesn't call setter = bug (14c.19: setGroupMode logged but never called) |
+| Aggressive Caching with Real-Time Sync | 1hr staleTime + refetchOnMount:false breaks cross-user sync - use default React Query settings for shared data (14c.20→14c.23) |
+| Delta Sync Cannot Detect Deletions | Delta fetch shows adds/mods but NOT removals - design soft delete or tombstones BEFORE implementing sync (14c failure) |
+| First-Works-Then-Fails Pattern | Sync that works once may fail on subsequent ops due to stale refs/listeners - test 3+ consecutive operations always (14c failure) |
+| Full Refetch Fallback = Cost Bomb | When delta breaks, do NOT ship refetchOnMount:true - costs explode O(txns × users × navs), 100 users = $3/day (14c failure) |
+| Refactor Before Extending Legacy | Epic 14c extended transaction system without refactoring first - caused cascade of sync bugs (apply Epic 12-14 retro lesson) |
 
 ---
 
@@ -112,6 +117,22 @@
 | nanoid URL-safe validation | Share code regex must include `_-` characters: `/^[a-zA-Z0-9_-]{16}$/` (14c.17 bug fix) |
 | Type consolidation | Duplicate interfaces → single file in `src/types/`, re-export for backwards compatibility (14c.15) |
 | Env vars for config | Client-side config via `import.meta.env.VITE_*` with validation + helpful error (14c.15) |
+| Cache optimization revert | Story 14c.20 aggressive caching (1hr stale, 24hr gc) caused sync issues - reverted to baseline (14c.23) |
+| Delta sync complexity | V2 delta sync with `removedFromGroupIds` added complexity without solving core sync timing issues |
+| Revert over fix forward | When cache strategy fundamentally breaks sync, revert to known-good state rather than patch |
+| Epic 14c FAILED | Entire epic reverted 2026-01-20 - see `docs/sprint-artifacts/epic-14c-retro-2026-01-20.md` for full analysis |
+
+### Real-Time Sync (Epic 14c FAILURE LESSONS)
+| Pattern | Rule |
+|---------|------|
+| Deletion detection REQUIRED | Delta sync cannot see removals - must design soft delete, tombstones, or version vectors BEFORE implementation |
+| Multi-operation testing | Test 3+ consecutive operations: add→sync→modify→sync→delete→sync; single-op tests give false confidence |
+| No full refetch fallback | When delta breaks, STOP and fix - do NOT ship `refetchOnMount: true` as band-aid (costs explode) |
+| Tiered sync windows | Real-time only for recent data (60 days); older data on-demand with cooldown |
+| Manual refresh cooldown | Rate limit: 1min (x3), then 15min, reset daily - prevents abuse |
+| State staleness after first op | useRef for comparison must update AFTER handling event; listener cleanup on component unmount |
+| Cost monitoring BEFORE launch | Set Firestore budget alerts before shipping any multi-user feature |
+| Caching vs real-time tradeoff | Cannot optimize for BOTH minimal reads AND instant sync without sophisticated infrastructure |
 
 ### i18n & Translations
 | Pattern | Rule |
@@ -248,7 +269,8 @@
 
 ## Sync Notes
 
+- **Generation 6 (2026-01-20):** Added Epic 14c failure lessons (delta sync, multi-op testing, cost control)
 - **Generation 5 (2026-01-17):** Consolidated 15+ story code reviews into pattern tables
 - **Reduction:** 528 → ~280 lines (~47% smaller)
 - Detailed story learnings available in `docs/sprint-artifacts/` story files
-- Backup: `backups/v5/knowledge/06-lessons.md`
+- Epic 14c full analysis: `docs/sprint-artifacts/epic-14c-retro-2026-01-20.md`
