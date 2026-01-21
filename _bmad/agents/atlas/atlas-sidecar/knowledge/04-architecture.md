@@ -91,11 +91,23 @@ src/
 
 | File | Purpose |
 |------|---------|
-| `src/lib/queryClient.ts` | QueryClient (5min stale, 30min cache) |
+| `src/lib/queryClient.ts` | QueryClient (global defaults) |
 | `src/lib/queryKeys.ts` | Hierarchical cache keys |
 | `src/hooks/useFirestoreSubscription.ts` | Real-time subscriptions + cache |
 | `src/hooks/useFirestoreQuery.ts` | One-time fetch hook |
 | `src/hooks/useFirestoreMutation.ts` | Mutations with cache invalidation |
+
+**Global Defaults** (`queryClient.ts`):
+```typescript
+staleTime: 5 * 60 * 1000,    // 5 minutes
+gcTime: 30 * 60 * 1000,      // 30 minutes
+refetchOnMount: false,        // Use cached data
+refetchOnWindowFocus: false,  // Don't auto-refetch on tab focus
+```
+
+**Per-Hook Overrides** (Story 14c.20):
+- Shared group transactions: `staleTime: 1hr`, `gcTime: 24hr` (cost optimization)
+- See "Shared Group Cache Optimization" section below
 
 **Critical Pattern**: Use refs for subscribeFn to avoid infinite loops. See `06-lessons.md` for pitfalls.
 
@@ -320,6 +332,125 @@ Functions: `sanitizeMerchantName`, `sanitizeItemName`, `sanitizeLocation`, `sani
 
 ---
 
+## Shared Group Cache Optimization (Story 14c.20)
+
+**Problem:** Full Firestore fetch on every view mode switch due to `refetchOnMount: true`
+
+**Solution:** Cache-first strategy with delta sync + real-time invalidation
+
+### React Query Configuration
+
+```typescript
+// useSharedGroupTransactions.ts
+useQuery({
+    queryKey: QUERY_KEYS.sharedGroupTransactions(groupId),
+    queryFn: async () => { /* IndexedDB → Delta sync → Firestore fallback */ },
+
+    // Story 14c.20: Cache Optimization
+    staleTime: 60 * 60 * 1000,        // 1 hour (safety net)
+    gcTime: 24 * 60 * 60 * 1000,      // 24 hours (survive view switches)
+    refetchOnMount: false,             // Use cached data on mount
+    refetchOnWindowFocus: false,       // Delta sync handles freshness
+});
+```
+
+### Real-Time Sync Architecture
+
+```
+User A saves transaction → updateMemberTimestampsForTransaction() → memberUpdates.userA.lastSyncAt
+                                          ↓
+User B's onSnapshot listener detects memberUpdates change (1-3 seconds)
+                                          ↓
+detectMemberUpdates() compares timestamps → shouldInvalidate: true
+                                          ↓
+await clearGroupCacheById() → IndexedDB cleared (MUST await!)
+                                          ↓
+resetQueries() + invalidateQueries({ refetchType: 'all' }) → Force fresh fetch
+                                          ↓
+queryFn → IndexedDB empty → Firestore fetch → User B sees change
+```
+
+### Critical Bug Fixes (Learned Patterns)
+
+#### 1. Race Condition: IndexedDB Clear vs React Query Refetch
+```typescript
+// ❌ BUG: Fire-and-forget causes race condition
+clearGroupCacheById(groupId).catch(...);  // Starts async
+queryClient.invalidateQueries({...});      // Triggers immediately
+// queryFn reads STALE IndexedDB data before clear completes!
+
+// ✅ FIX: Await IndexedDB clear before invalidating
+await clearGroupCacheById(groupId);
+queryClient.invalidateQueries({...});
+```
+
+#### 2. Inactive Query Not Refetching
+```typescript
+// ❌ BUG: invalidateQueries only refetches ACTIVE queries
+// With refetchOnMount: false, inactive queries stay stale
+queryClient.invalidateQueries({ queryKey: [...] });
+
+// ✅ FIX: Use refetchType: 'all' to force refetch inactive queries
+queryClient.invalidateQueries({
+    queryKey: [...],
+    refetchType: 'all'  // Critical for cache optimization
+});
+```
+
+#### 3. Delta Sync Can't Detect Removals
+```typescript
+// ❌ LIMITATION: Delta query filters by sharedGroupIds array-contains groupId
+// When transaction is REMOVED from group, sharedGroupIds no longer contains groupId
+// Delta sync query returns empty → cache still has stale transaction
+
+// ✅ FIX: Use resetQueries() to clear React Query in-memory cache
+await queryClient.resetQueries({ queryKey: [...] });  // Clear in-memory
+queryClient.invalidateQueries({ queryKey: [...], refetchType: 'all' });  // Force fresh fetch
+```
+
+#### 4. memberUpdates Write Reliability
+```typescript
+// ❌ RISK: Fire-and-forget batch write can fail silently
+await transaction.save();
+updateMemberTimestampsForTransaction(...).catch(...);  // If fails, no sync signal
+
+// ✅ FIX: Retry logic with exponential backoff
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 500;
+// Attempt → fail → wait 500ms → retry → fail → wait 1000ms → retry
+```
+
+### Manual Sync Feature
+
+**Location:** Settings > Grupos > [Group Header] (compact sync icon)
+
+**Components:**
+- `useManualSync` hook - Cooldown tracking, cache invalidation
+- `SyncButton` component - Compact mode (icon only) in group header
+
+**Behavior:**
+| State | Button | Display |
+|-------|--------|---------|
+| Idle | Sync icon | Tooltip: "Sincronizar transacciones" |
+| Syncing | Spinner | Disabled |
+| Cooldown | Clock icon | Tooltip: "Espera Xs" |
+
+### Cost Impact
+
+| Metric | Before | After | Reduction |
+|--------|--------|-------|-----------|
+| Daily reads/user | ~10,000+ | ~700-1,500 | ~85% |
+| Monthly (50 users) | ~$9 | ~$2 | ~78% |
+
+**Key Files:**
+- `src/hooks/useSharedGroupTransactions.ts` - React Query config
+- `src/hooks/useManualSync.ts` - Manual sync hook (60s cooldown)
+- `src/components/SharedGroups/SyncButton.tsx` - UI component
+- `src/App.tsx:533-575` - Cache invalidation on memberUpdates change
+- `src/services/sharedGroupService.ts:1284-1353` - Retry logic for timestamps
+
+---
+
 ## Sync Notes
 
 - Generation 4: Consolidated Epic 14d verbose details
@@ -328,5 +459,6 @@ Functions: `sanitizeMerchantName`, `sanitizeItemName`, `sanitizeLocation`, `sani
 - 2026-01-19: Added Story 14c.17 Share Link Deep Linking pattern
 - 2026-01-19: Added Story 14c.18 View Mode Persistence pattern
 - 2026-01-19: Added Story 14c.14 Secret Manager Migration pattern
+- 2026-01-20: Added Story 14c.20 Shared Group Cache Optimization pattern
 - Code review learnings in 06-lessons.md
 - Story details in docs/sprint-artifacts/

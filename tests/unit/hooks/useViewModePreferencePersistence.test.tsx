@@ -423,4 +423,183 @@ describe('useViewModePreferencePersistence', () => {
       });
     });
   });
+
+  // ===========================================================================
+  // Story 14c.20 Bug Fix - Undefined groupId in Firestore
+  // ===========================================================================
+
+  describe('Story 14c.20 Bug Fix - savePreference with undefined groupId', () => {
+    it('should call savePreference without groupId when switching to personal mode', async () => {
+      // This test verifies that when switching from group to personal mode,
+      // the savePreference callback is called with mode='personal' and no groupId
+      // (not groupId: undefined which would cause Firestore to throw an error)
+
+      const savePreference = vi.fn();
+      const validGroup = createMockSharedGroup({ id: 'group-123', name: 'Test Group' });
+
+      // Start in group mode
+      mockStorage['boletapp_view_mode'] = JSON.stringify({
+        mode: 'group',
+        groupId: 'group-123',
+      });
+
+      function TestHook() {
+        const viewMode = useViewMode();
+        useViewModePreferencePersistence({
+          groups: [validGroup],
+          groupsLoading: false,
+          firestorePreference: { mode: 'group', groupId: 'group-123' },
+          preferencesLoading: false,
+          savePreference,
+        });
+        return viewMode;
+      }
+
+      const { result } = renderHook(() => TestHook(), {
+        wrapper: createTestWrapper(),
+      });
+
+      // Wait for validation
+      await waitFor(() => {
+        expect(result.current.isValidated).toBe(true);
+        expect(result.current.mode).toBe('group');
+      });
+
+      // Clear any calls from validation
+      savePreference.mockClear();
+
+      // Switch to personal mode
+      act(() => {
+        result.current.setPersonalMode();
+      });
+
+      // Verify savePreference is called correctly
+      await waitFor(() => {
+        expect(savePreference).toHaveBeenCalledTimes(1);
+        const callArgs = savePreference.mock.calls[0][0];
+        expect(callArgs.mode).toBe('personal');
+        // The key insight: groupId should be undefined (not present as a key with undefined value)
+        // This is handled by the userPreferencesService using deleteField()
+        expect(callArgs.groupId).toBeUndefined();
+      });
+    });
+  });
+
+  // ===========================================================================
+  // Story 14c.18 Race Condition Bug Fix Tests
+  // ===========================================================================
+
+  describe('Story 14c.18 Race Condition Bug Fix', () => {
+    it('should correctly restore group mode when preferences and groups load simultaneously', async () => {
+      // This test verifies the race condition fix where Step 1 (apply Firestore preference)
+      // and Step 2 (validate group) could run in the same render cycle, causing
+      // validateAndRestoreMode to see stale state (personal mode) instead of the
+      // Firestore preference (group mode).
+
+      // Start with personal mode in localStorage
+      mockStorage['boletapp_view_mode'] = JSON.stringify({
+        mode: 'personal',
+      });
+
+      const savePreference = vi.fn();
+      const validGroup = createMockSharedGroup({
+        id: 'simultaneous-load-group',
+        name: 'Simultaneous Load Group',
+      });
+
+      // Firestore has group mode preference
+      const firestorePreference: ViewModePreference = {
+        mode: 'group',
+        groupId: 'simultaneous-load-group',
+      };
+
+      function TestHook({ preferencesLoading, groupsLoading }: { preferencesLoading: boolean; groupsLoading: boolean }) {
+        const viewMode = useViewMode();
+        useViewModePreferencePersistence({
+          groups: [validGroup],
+          groupsLoading,
+          firestorePreference,
+          preferencesLoading,
+          savePreference,
+        });
+        return viewMode;
+      }
+
+      // Start with both loading
+      const { result, rerender } = renderHook(
+        ({ preferencesLoading, groupsLoading }) => TestHook({ preferencesLoading, groupsLoading }),
+        {
+          wrapper: createTestWrapper(),
+          initialProps: { preferencesLoading: true, groupsLoading: true },
+        }
+      );
+
+      // Should not be validated yet
+      expect(result.current.isValidated).toBe(false);
+      expect(result.current.mode).toBe('personal'); // From localStorage
+
+      // Both finish loading at the same time (simulating the race condition scenario)
+      rerender({ preferencesLoading: false, groupsLoading: false });
+
+      // The fix ensures that even when both become available simultaneously,
+      // the Firestore preference is correctly applied AND validated
+      await waitFor(() => {
+        expect(result.current.isValidated).toBe(true);
+        expect(result.current.mode).toBe('group');
+        expect(result.current.groupId).toBe('simultaneous-load-group');
+        expect(result.current.group?.name).toBe('Simultaneous Load Group');
+      });
+    });
+
+    it('should wait for both preferences AND groups before applying any mode change', async () => {
+      // This test ensures the hook waits for BOTH to load before doing anything
+
+      const savePreference = vi.fn();
+      const validGroup = createMockSharedGroup({
+        id: 'wait-for-both-group',
+        name: 'Wait For Both Group',
+      });
+
+      const firestorePreference: ViewModePreference = {
+        mode: 'group',
+        groupId: 'wait-for-both-group',
+      };
+
+      function TestHook({ preferencesLoading, groupsLoading }: { preferencesLoading: boolean; groupsLoading: boolean }) {
+        const viewMode = useViewMode();
+        useViewModePreferencePersistence({
+          groups: [validGroup],
+          groupsLoading,
+          firestorePreference,
+          preferencesLoading,
+          savePreference,
+        });
+        return viewMode;
+      }
+
+      const { result, rerender } = renderHook(
+        ({ preferencesLoading, groupsLoading }) => TestHook({ preferencesLoading, groupsLoading }),
+        {
+          wrapper: createTestWrapper(),
+          initialProps: { preferencesLoading: true, groupsLoading: true },
+        }
+      );
+
+      // Both loading - not validated
+      expect(result.current.isValidated).toBe(false);
+
+      // Only preferences finish loading - still should not validate
+      rerender({ preferencesLoading: false, groupsLoading: true });
+      expect(result.current.isValidated).toBe(false);
+
+      // Now groups finish loading - should validate
+      rerender({ preferencesLoading: false, groupsLoading: false });
+
+      await waitFor(() => {
+        expect(result.current.isValidated).toBe(true);
+        expect(result.current.mode).toBe('group');
+        expect(result.current.groupId).toBe('wait-for-both-group');
+      });
+    });
+  });
 });

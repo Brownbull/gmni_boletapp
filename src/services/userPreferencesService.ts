@@ -217,6 +217,8 @@ export async function saveViewModePreference(
   }
 
   // Save to Firestore
+  // Story 14c.20 bug fix: Firestore doesn't accept undefined values
+  // Use deleteField() to remove groupId when switching to personal mode
   try {
     const docRef = getPreferencesDocRef(db, appId, userId);
     // Story 14c.23 Fix: Firestore doesn't accept undefined values

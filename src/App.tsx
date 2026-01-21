@@ -531,22 +531,46 @@ function App() {
         }
 
         // Invalidate caches for groups with changes
+        // Story 14c.20 Bug Fix: Must await IndexedDB clear BEFORE invalidating React Query
+        // to prevent race condition where queryFn reads stale IndexedDB data
         if (result.shouldInvalidate) {
-            for (const groupId of result.groupsWithChanges) {
+            const invalidateGroup = async (groupId: string) => {
                 if (import.meta.env.DEV) {
                     console.log(`[App] Invalidating transaction cache for group ${groupId} due to member update`);
                 }
 
-                // Clear IndexedDB cache for this group
-                clearGroupCacheById(groupId).catch(err => {
+                // Clear IndexedDB cache FIRST and wait for it to complete
+                try {
+                    await clearGroupCacheById(groupId);
+                    if (import.meta.env.DEV) {
+                        console.log(`[App] IndexedDB cache cleared for group ${groupId}`);
+                    }
+                } catch (err) {
                     console.warn('[App] Failed to clear group cache:', err);
-                });
+                }
 
-                // Invalidate React Query cache (partial match on groupId)
-                queryClient.invalidateQueries({
+                // Story 14c.20 Bug Fix: Reset React Query cache completely before refetching
+                // Use resetQueries to clear in-memory data, then invalidate to trigger fresh fetch
+                // This ensures removals are properly detected (not just updates)
+                await queryClient.resetQueries({
                     queryKey: ['sharedGroupTransactions', groupId],
                 });
-            }
+
+                if (import.meta.env.DEV) {
+                    console.log(`[App] React Query cache reset for group ${groupId}, triggering refetch`);
+                }
+
+                // Now invalidate to trigger a fresh fetch from Firestore
+                queryClient.invalidateQueries({
+                    queryKey: ['sharedGroupTransactions', groupId],
+                    refetchType: 'all',
+                });
+            };
+
+            // Process all groups (can be parallel since they're independent)
+            Promise.all(result.groupsWithChanges.map(invalidateGroup)).catch(err => {
+                console.error('[App] Error during cache invalidation:', err);
+            });
         }
 
         // Update ref with new state for next comparison
@@ -3951,13 +3975,15 @@ function App() {
                                 // Groups the transaction was ADDED to
                                 const addedToGroups = groupIds.filter(id => !previousGroupIds.includes(id));
 
-                                // Optimistically update React Query cache
-                                // This prevents the "double save" issue caused by refetch permission errors
-                                affectedGroupIds.forEach(groupId => {
-                                    // Clear IndexedDB cache (async, fire and forget)
-                                    clearGroupCacheById(groupId).catch(err => {
+                                // Story 14c.20 Bug Fix: Clear IndexedDB FIRST, then do optimistic update
+                                // This ensures the cache is cleared before any subsequent refetch
+                                const updateCachesForGroup = async (groupId: string) => {
+                                    // Clear IndexedDB cache FIRST and wait for it
+                                    try {
+                                        await clearGroupCacheById(groupId);
+                                    } catch (err) {
                                         console.warn('[App] Failed to clear IndexedDB cache:', err);
-                                    });
+                                    }
 
                                     // Optimistically update in-memory cache based on whether
                                     // transaction was added or removed from this group
@@ -4006,6 +4032,11 @@ function App() {
                                             );
                                         }
                                     );
+                                };
+
+                                // Process all groups
+                                Promise.all(Array.from(affectedGroupIds).map(updateCachesForGroup)).catch(err => {
+                                    console.error('[App] Error updating caches:', err);
                                 });
                             }
                         }}

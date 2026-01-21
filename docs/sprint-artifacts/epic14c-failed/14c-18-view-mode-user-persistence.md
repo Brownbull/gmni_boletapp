@@ -120,8 +120,51 @@ interface ViewModePreference {
 ### Test Coverage
 
 - 32 tests in ViewModeContext.test.tsx (including 12 new Story 14c.18 tests)
-- 6 tests in useViewModePreferencePersistence.test.tsx
+- 10 tests in useViewModePreferencePersistence.test.tsx (6 original + 2 from 14c.19 + 2 new race condition tests)
 - All tests passing
+
+---
+
+## Bug Fix: Race Condition (2026-01-20)
+
+### Problem
+Users reported that the view mode selection would reset to personal mode on login, refresh, or logout despite having a group selected and persisted in Firestore.
+
+### Root Cause Analysis (Initial)
+The original implementation had **two separate useEffect hooks** that could run in the same render cycle:
+1. **Step 1**: Apply Firestore preference (call `setGroupMode`)
+2. **Step 2**: Validate groups (call `validateAndRestoreMode`)
+
+The second issue discovered: `groupsLoading` became `false` before the groups array had real data (subscription returned empty array initially).
+
+### Solution: Lazy Validation Pattern
+Instead of waiting for groups to load before applying preferences (which caused timing issues), the fix follows the same pattern as other settings (font, currency):
+
+**Step 1: Apply Firestore Preference IMMEDIATELY**
+- When `preferencesLoading` becomes false, apply the Firestore preference right away
+- Don't wait for groups - set group mode with just the groupId
+- This ensures UI shows the correct mode immediately
+
+**Step 2: Validate Lazily When Groups Arrive**
+- Wait for `hasAppliedFirestoreRef` to be true (preference applied)
+- Wait for `groups.length > 0` when in group mode (real data, not empty subscription)
+- Only then call `validateAndRestoreMode(groups)` to populate group data or fallback
+
+**Step 3: Persist Changes (unchanged)**
+- After validation, persist mode changes to Firestore
+
+**Key Guard:** `if (groups.length === 0 && mode === 'group' && groupId)` - wait for real group data before validating.
+
+### Files Modified
+- `src/hooks/useViewModePreferencePersistence.ts` - Simplified to two-effect lazy validation pattern
+
+### Tests Added
+- "should correctly restore group mode when preferences and groups load simultaneously" (race condition test)
+- "should wait for both preferences AND groups before applying any mode change"
+
+### Atlas Lessons Added
+- `Multi-effect race condition`: NEVER split state read + state write across two useEffects
+- `Unified validation pattern`: When loading depends on multiple sources, wait for ALL to finish in ONE effect
 
 ## Story Points
 
