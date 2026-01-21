@@ -1,82 +1,51 @@
 /**
- * useSharedGroups Hook
+ * useSharedGroups Hook - STUB
  *
- * Story 14c.1: Create Shared Group
- * Epic 14c: Shared Groups (Household Sharing)
+ * Story 14c-refactor.3: Stub hooks for shared groups feature cleanup
+ * Epic 14c-refactor: Codebase cleanup before Shared Groups v2
  *
- * Subscribes to real-time updates of shared groups the user is a member of.
- * Uses React Query caching for optimal performance.
+ * This stub replaces the full implementation while the shared groups feature
+ * is temporarily disabled. Returns empty state without subscribing to any
+ * real-time data or making network calls.
  *
  * @example
  * ```tsx
  * const { sharedGroups, loading, error } = useSharedGroups(userId);
- *
- * return (
- *   <div>
- *     {sharedGroups.map(group => (
- *       <div key={group.id}>{group.name} - {group.members.length} members</div>
- *     ))}
- *   </div>
- * );
+ * // Returns: { sharedGroups: [], loading: false, error: null }
  * ```
  */
 
-import { useState, useMemo } from 'react';
-import { getFirestore } from 'firebase/firestore';
-import { useFirestoreSubscription } from './useFirestoreSubscription';
-import { subscribeToSharedGroups } from '../services/sharedGroupService';
+import { useMemo } from 'react';
 import type { SharedGroup } from '../types/sharedGroup';
 
 export interface UseSharedGroupsReturn {
-    /** Array of shared groups the user is a member of */
+    /** Array of shared groups the user is a member of (always empty in stub) */
     sharedGroups: SharedGroup[];
-    /** Whether the subscription is loading */
+    /** Whether the subscription is loading (always false in stub) */
     loading: boolean;
-    /** Error message if subscription failed */
+    /** Error message if subscription failed (always null in stub) */
     error: string | null;
 }
 
+// Module-level constant for stable reference (Atlas pattern: avoid default array params)
+const EMPTY_GROUPS: SharedGroup[] = [];
+
 /**
- * Hook for subscribing to shared groups the user is a member of.
+ * STUB: Hook for subscribing to shared groups the user is a member of.
+ * Returns empty state - shared groups feature is temporarily disabled.
  *
- * @param userId - The authenticated user's ID
- * @returns Shared group data and loading/error states
+ * @param _userId - The authenticated user's ID (unused in stub)
+ * @returns Empty shared group data with loading=false, error=null
  */
-export function useSharedGroups(userId: string | null): UseSharedGroupsReturn {
-    const [error, setError] = useState<string | null>(null);
-    const enabled = !!userId;
-
-    // Create the query key
-    const queryKey = useMemo(
-        () => enabled
-            ? ['sharedGroups', userId!]
-            : ['sharedGroups', ''],
-        [enabled, userId]
+export function useSharedGroups(_userId: string | null): UseSharedGroupsReturn {
+    return useMemo(
+        () => ({
+            sharedGroups: EMPTY_GROUPS,
+            loading: false,
+            error: null,
+        }),
+        []
     );
-
-    // Subscribe to shared groups with React Query caching
-    const { data: sharedGroups = [], isLoading } = useFirestoreSubscription<SharedGroup[]>(
-        queryKey,
-        (callback) => {
-            const db = getFirestore();
-            return subscribeToSharedGroups(
-                db,
-                userId!,
-                callback,
-                (err) => {
-                    console.error('[useSharedGroups] Subscription error:', err);
-                    setError(err.message);
-                }
-            );
-        },
-        { enabled }
-    );
-
-    return {
-        sharedGroups,
-        loading: isLoading,
-        error,
-    };
 }
 
 export default useSharedGroups;
