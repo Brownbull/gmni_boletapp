@@ -18,10 +18,12 @@
 | **2026-01-15** | **Combined Retrospective: Epics 12, 13, 14, 14d all COMPLETE** |
 | **2026-01-15 to 01-16** | **Epic 14c Phase 1-2: Stories 14c.1-14c.10 (Shared Groups)** |
 | **2026-01-17 to 01-19** | **Epic 14c Phase 4-5: 14c.11-14c.17 (Error Handling, Real-time, Push, Deep Links)** |
+| **2026-01-20** | **Epic 14c FAILED/REVERTED - Retrospective complete** |
+| **2026-01-21** | **Epic 14c-refactor: Story 14c-refactor.1 + 14c-refactor.2 (Stub Cloud Functions & Services)** |
 
 ---
 
-## Current Project Status (2026-01-19)
+## Current Project Status (2026-01-21)
 
 | Metric | Value |
 |--------|-------|
@@ -29,41 +31,30 @@
 | **Epic 13** | ✅ COMPLETE (14/14) - UX Design & Mockups |
 | **Epic 14** | ✅ COMPLETE (50+) - Core Implementation |
 | **Epic 14d** | ✅ COMPLETE (11/11) - Scan Architecture Refactor |
-| **Epic 14c** | 🔄 IN PROGRESS (15/17) - Household Sharing |
+| **Epic 14c** | ❌ FAILED/REVERTED (See retrospective) |
+| **Epic 14c-refactor** | 🔄 IN PROGRESS (2/19) - Codebase Cleanup |
 | **Tests** | 3,146+ (84%+ coverage) |
 | **Bundle** | 2.92 MB ⚠️ |
 | **Velocity** | ~8.6 pts/day |
 | **Version** | 1.0.0-beta.1 |
 
-### Epic 14c Progress (Household Sharing)
+### Epic 14c-refactor Progress (Codebase Cleanup)
 
 | Story | Status | Description |
 |-------|--------|-------------|
-| 14c.1 | ✅ Done | Create Shared Group |
-| 14c.2 | ✅ Done | Accept/Decline Invitation |
-| 14c.3 | ✅ Done | Leave/Manage Group |
-| 14c.4 | ✅ Done | View Mode Switcher |
-| 14c.5 | ✅ Done | Shared Group Transactions View |
-| 14c.6 | ✅ Done | Transaction Ownership Indicators |
-| 14c.7 | ✅ Done | Tag Transactions to Groups |
-| 14c.8 | ✅ Done | Auto-Tag on Scan |
-| 14c.9 | ✅ Done | Member Filter Bar |
-| 14c.10 | ✅ Done | Empty States & Loading |
-| 14c.11 | ✅ Done | Error Handling (89 tests, Atlas Code Review 2026-01-19) |
-| 14c.12 | ✅ Done | Real-time Sync |
-| 14c.13 | ✅ Done | Push Notifications |
-| 14c.16 | ✅ Done | Cache Architecture Fix |
-| 14c.17 | 📋 Review | Share Link Deep Linking |
-| 14c.18 | ✅ Done | View Mode Persistence (38 tests, Atlas Code Review 2026-01-19) |
+| 14c-refactor.1 | ✅ Done | Stub Cloud Functions |
+| 14c-refactor.2 | ✅ Done | Stub Services (Atlas Code Review 2026-01-21) |
+| 14c-refactor.3 | 📋 Ready | Stub Hooks |
+| 14c-refactor.4 | 📋 Ready | Clean IndexedDB Cache |
+| 14c-refactor.5-19 | 🔲 Backlog | Remaining stories (UI, App Refactor, Firebase) |
 
 ### Next Epics Roadmap
 
 | Epic | Theme | Status | Prep Required |
 |------|-------|--------|---------------|
-| **14c** | Household Sharing | In Progress | 1 story remaining |
-| **14E** | Codebase Refactoring | New | Architecture review |
-| **14F** | Invite-Only Access | New | Requirements definition |
-| **15** | Advanced Features | Backlog | Blocked by 14C/E/F |
+| **14c-refactor** | Codebase Cleanup | In Progress | 2/19 stories done |
+| **14d** | Shared Groups v2 | Blocked | Requires 14c-refactor completion |
+| **15** | Advanced Features | Backlog | Blocked by 14c-refactor |
 
 ---
 

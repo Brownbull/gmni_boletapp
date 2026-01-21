@@ -451,6 +451,54 @@ const RETRY_DELAY_MS = 500;
 
 ---
 
+---
+
+## Epic 14c-refactor: Service Stubbing Pattern (2026-01-21)
+
+**Pattern:** Replace full service implementations with type-safe stubs during feature cleanup
+
+### Stub Service Pattern
+
+```typescript
+// Mutating functions throw error
+export async function createSharedGroup(...): Promise<SharedGroup> {
+    throw new Error('Feature temporarily unavailable');
+}
+
+// Query functions return empty results
+export async function getSharedGroupsForUser(...): Promise<SharedGroup[]> {
+    return [];
+}
+
+// Subscription functions call callback immediately with empty data
+export function subscribeToSharedGroups(
+    _db: Firestore,
+    _userId: string,
+    onUpdate: (groups: SharedGroup[]) => void,
+    _onError?: (error: Error) => void
+): Unsubscribe {
+    onUpdate([]);  // Immediate callback with empty data
+    return () => {};  // No-op unsubscribe
+}
+```
+
+### Key Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Stub vs Delete | Runtime import dependencies require stub files to exist |
+| Preserve Types | `JoinError`, `InvitationError`, `LeaveGroupError` for backwards compatibility |
+| Preserve Utilities | `generateShareCode`, `getShareLink`, `isShareCodeExpired` - no network calls |
+| Keep JSDoc | Document STUB status clearly for future developers |
+
+### Files Affected
+- `src/services/sharedGroupService.ts` (~1325 → ~405 lines)
+- `src/services/sharedGroupTransactionService.ts` (~720 → ~122 lines)
+
+**Reference:** Story 14c-refactor.2
+
+---
+
 ## Sync Notes
 
 - Generation 4: Consolidated Epic 14d verbose details
@@ -460,5 +508,6 @@ const RETRY_DELAY_MS = 500;
 - 2026-01-19: Added Story 14c.18 View Mode Persistence pattern
 - 2026-01-19: Added Story 14c.14 Secret Manager Migration pattern
 - 2026-01-20: Added Story 14c.20 Shared Group Cache Optimization pattern
+- 2026-01-21: Added Epic 14c-refactor Service Stubbing Pattern
 - Code review learnings in 06-lessons.md
 - Story details in docs/sprint-artifacts/
