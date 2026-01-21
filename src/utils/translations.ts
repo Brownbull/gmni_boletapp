@@ -141,6 +141,11 @@ export const TRANSLATIONS = {
         settingsGruposShareFeature1: "Assign transactions to shared groups",
         settingsGruposShareFeature2: "Invite family or friends to view",
         settingsGruposShareFeature3: "Track shared expenses together",
+        // Story 14c-refactor.5: Placeholder UI states for disabled shared groups
+        sharedGroupsComingSoon: "Shared Groups",
+        sharedGroupsComingSoonDescription: "Coming soon",
+        featureComingSoon: "Coming Soon!",
+        featureComingSoonDescription: "This feature is being redesigned for a better experience. Stay tuned!",
         settingsCuenta: "My Data",
         settingsCuentaShort: "My Data",
         settingsCuentaDesc: "Export, import, reset, sign out",
@@ -1093,6 +1098,11 @@ export const TRANSLATIONS = {
         settingsGruposShareFeature1: "Asigna transacciones a grupos compartidos",
         settingsGruposShareFeature2: "Invita a familia o amigos a ver",
         settingsGruposShareFeature3: "Rastreen gastos compartidos juntos",
+        // Story 14c-refactor.5: Placeholder UI states for disabled shared groups
+        sharedGroupsComingSoon: "Grupos Compartidos",
+        sharedGroupsComingSoonDescription: "Próximamente",
+        featureComingSoon: "¡Próximamente!",
+        featureComingSoonDescription: "Esta función está siendo rediseñada para una mejor experiencia. ¡Mantente atento!",
         settingsCuenta: "Mis Datos",
         settingsCuentaShort: "Mis Datos",
         settingsCuentaDesc: "Exportar, importar, restablecer, cerrar sesion",

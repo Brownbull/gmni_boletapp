@@ -1,33 +1,32 @@
 /**
- * Story 14c.4: View Mode Switcher - ViewModeSwitcher Component
+ * Story 14c-refactor.5: ViewModeSwitcher - SIMPLIFIED (Feature Disabled)
  *
- * Dropdown/bottom sheet component for switching between personal and group view modes.
- * Shows "Personal" as the first option followed by all shared groups the user is a member of.
+ * STUB: Shared Groups feature is temporarily unavailable.
  *
- * Features:
- * - Personal mode option with description
- * - Group options with icon, name, and member count with mini avatars
- * - Checkmark on currently active mode
- * - Loading skeleton while fetching groups
- * - Keyboard navigation and accessibility
- * - Larger icons (48px) for better visibility
+ * This simplified ViewModeSwitcher:
+ * - Shows only Personal mode (no group options)
+ * - Displays a "Coming soon" placeholder for shared groups
+ * - Always selects Personal by default
+ *
+ * Original functionality will be restored in Epic 14d (Shared Groups v2).
  *
  * @example
  * ```tsx
  * <ViewModeSwitcher
  *   isOpen={isOpen}
  *   onClose={() => setIsOpen(false)}
- *   groups={groups}
- *   isLoading={isLoading}
- *   onSelect={(mode, group) => handleSelect(mode, group)}
+ *   groups={[]}  // Ignored - groups not rendered
+ *   isLoading={false}  // Ignored - no loading state
+ *   onSelect={(mode) => handleSelect(mode)}
  *   t={t}
  * />
  * ```
  */
 
 import React, { useEffect, useCallback } from 'react';
-import { Check, User } from 'lucide-react';
+import { Check, User, Users } from 'lucide-react';
 import { useViewMode } from '../../contexts/ViewModeContext';
+// Note: SharedGroup type still imported for props compatibility, but groups are not rendered
 import type { SharedGroup } from '../../types/sharedGroup';
 
 // =============================================================================
@@ -39,9 +38,9 @@ export interface ViewModeSwitcherProps {
   isOpen: boolean;
   /** Callback when the switcher should close */
   onClose: () => void;
-  /** Array of shared groups to display */
+  /** @deprecated Array of shared groups - IGNORED (feature disabled) */
   groups: SharedGroup[];
-  /** Whether groups are still loading */
+  /** @deprecated Whether groups are still loading - IGNORED (feature disabled) */
   isLoading: boolean;
   /** Callback when a mode is selected */
   onSelect?: (mode: 'personal' | 'group', group?: SharedGroup) => void;
@@ -56,12 +55,15 @@ export interface ViewModeSwitcherProps {
 export const ViewModeSwitcher: React.FC<ViewModeSwitcherProps> = ({
   isOpen,
   onClose,
-  groups,
-  isLoading,
+  // groups and isLoading are intentionally ignored - feature disabled
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  groups: _groups,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  isLoading: _isLoading,
   onSelect,
   t,
 }) => {
-  const { mode: currentMode, groupId: currentGroupId, setPersonalMode, setGroupMode } = useViewMode();
+  const { mode: currentMode, setPersonalMode } = useViewMode();
 
   // Handle Escape key to close
   useEffect(() => {
@@ -83,16 +85,6 @@ export const ViewModeSwitcher: React.FC<ViewModeSwitcherProps> = ({
     onSelect?.('personal', undefined);
     onClose();
   }, [setPersonalMode, onSelect, onClose]);
-
-  // Handle selection of a group
-  const handleSelectGroup = useCallback(
-    (group: SharedGroup) => {
-      setGroupMode(group.id!, group);
-      onSelect?.('group', group);
-      onClose();
-    },
-    [setGroupMode, onSelect, onClose]
-  );
 
   // Don't render if closed
   if (!isOpen) {
@@ -138,7 +130,7 @@ export const ViewModeSwitcher: React.FC<ViewModeSwitcherProps> = ({
 
         {/* Options list */}
         <div className="py-1">
-          {/* Personal option (always first) */}
+          {/* Personal option (always first and only active option) */}
           <ViewModeOption
             testId="view-mode-option-personal"
             isActive={currentMode === 'personal'}
@@ -148,54 +140,37 @@ export const ViewModeSwitcher: React.FC<ViewModeSwitcherProps> = ({
             onClick={handleSelectPersonal}
           />
 
-          {/* Loading skeleton */}
-          {isLoading && (
-            <div data-testid="view-mode-switcher-skeleton" className="px-4 py-3">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-12 h-12 rounded-full animate-pulse"
-                  style={{ backgroundColor: 'var(--bg-skeleton, #e2e8f0)' }}
-                />
-                <div className="flex-1 space-y-2">
-                  <div
-                    className="h-4 w-24 rounded animate-pulse"
-                    style={{ backgroundColor: 'var(--bg-skeleton, #e2e8f0)' }}
-                  />
-                  <div
-                    className="h-3 w-32 rounded animate-pulse"
-                    style={{ backgroundColor: 'var(--bg-skeleton, #e2e8f0)' }}
-                  />
-                </div>
+          {/* Story 14c-refactor.5: "Coming soon" placeholder for shared groups */}
+          <div
+            data-testid="view-mode-coming-soon"
+            role="menuitem"
+            aria-disabled="true"
+            className="w-full px-4 py-3 flex items-center gap-3 opacity-50 cursor-not-allowed"
+          >
+            {/* Icon container - grayed out */}
+            <div
+              className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: 'var(--bg-muted, #f1f5f9)' }}
+            >
+              <Users size={24} style={{ color: 'var(--text-tertiary, #94a3b8)' }} />
+            </div>
+
+            {/* Text content */}
+            <div className="flex-1 text-left min-w-0">
+              <div
+                className="font-medium text-sm truncate"
+                style={{ color: 'var(--text-tertiary, #94a3b8)' }}
+              >
+                {t('sharedGroupsComingSoon')}
+              </div>
+              <div
+                className="text-xs"
+                style={{ color: 'var(--text-tertiary, #94a3b8)' }}
+              >
+                {t('sharedGroupsComingSoonDescription')}
               </div>
             </div>
-          )}
-
-          {/* Group options */}
-          {!isLoading &&
-            groups.map((group) => (
-              <ViewModeOption
-                key={group.id}
-                testId={`view-mode-option-${group.id}`}
-                isActive={currentMode === 'group' && currentGroupId === group.id}
-                icon={
-                  <span
-                    className="text-2xl"
-                    role="img"
-                    aria-label={group.name}
-                    style={{
-                      fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", sans-serif',
-                      lineHeight: 1,
-                    }}
-                  >
-                    {group.icon || '👥'}
-                  </span>
-                }
-                name={group.name}
-                color={group.color}
-                onClick={() => handleSelectGroup(group)}
-                memberCount={group.members.length}
-              />
-            ))}
+          </div>
         </div>
       </div>
     </>
@@ -203,7 +178,7 @@ export const ViewModeSwitcher: React.FC<ViewModeSwitcherProps> = ({
 };
 
 // =============================================================================
-// Option Component
+// Option Component - Simplified (no group options needed)
 // =============================================================================
 
 interface ViewModeOptionProps {
@@ -212,10 +187,7 @@ interface ViewModeOptionProps {
   icon: React.ReactNode;
   name: string;
   description?: string;
-  color?: string;
   onClick: () => void;
-  /** Member count for display */
-  memberCount?: number;
 }
 
 const ViewModeOption: React.FC<ViewModeOptionProps> = ({
@@ -224,9 +196,7 @@ const ViewModeOption: React.FC<ViewModeOptionProps> = ({
   icon,
   name,
   description,
-  color,
   onClick,
-  memberCount,
 }) => {
   return (
     <button
@@ -239,12 +209,10 @@ const ViewModeOption: React.FC<ViewModeOptionProps> = ({
         backgroundColor: isActive ? 'var(--primary-bg, #eff6ff)' : 'transparent',
       }}
     >
-      {/* Icon container - larger 48px for better visibility */}
+      {/* Icon container */}
       <div
         className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
-        style={{
-          backgroundColor: color || 'var(--bg-muted, #f1f5f9)',
-        }}
+        style={{ backgroundColor: 'var(--bg-muted, #f1f5f9)' }}
       >
         {icon}
       </div>
@@ -258,22 +226,14 @@ const ViewModeOption: React.FC<ViewModeOptionProps> = ({
           {name}
         </div>
 
-        {/* Member count OR description */}
-        {memberCount !== undefined ? (
-          <div
-            className="text-xs"
-            style={{ color: 'var(--text-tertiary, #94a3b8)' }}
-          >
-            {memberCount} {memberCount === 1 ? 'miembro' : 'miembros'}
-          </div>
-        ) : description ? (
+        {description && (
           <div
             className="text-xs"
             style={{ color: 'var(--text-tertiary, #94a3b8)' }}
           >
             {description}
           </div>
-        ) : null}
+        )}
       </div>
 
       {/* Checkmark for active option */}

@@ -32,7 +32,7 @@
 | **Epic 14** | ✅ COMPLETE (50+) - Core Implementation |
 | **Epic 14d** | ✅ COMPLETE (11/11) - Scan Architecture Refactor |
 | **Epic 14c** | ❌ FAILED/REVERTED (See retrospective) |
-| **Epic 14c-refactor** | 🔄 IN PROGRESS (3/19) - Codebase Cleanup |
+| **Epic 14c-refactor** | 🔄 IN PROGRESS (5/19) - Codebase Cleanup |
 | **Tests** | 3,146+ (84%+ coverage) |
 | **Bundle** | 2.92 MB ⚠️ |
 | **Velocity** | ~8.6 pts/day |
@@ -44,9 +44,10 @@
 |-------|--------|-------------|
 | 14c-refactor.1 | ✅ Done | Stub Cloud Functions |
 | 14c-refactor.2 | ✅ Done | Stub Services (Atlas Code Review 2026-01-21) |
-| 14c-refactor.3 | ✅ Review | Stub Hooks (Build passes, test cleanup deferred) |
+| 14c-refactor.3 | ✅ Done | Stub Hooks |
 | 14c-refactor.4 | 📋 Ready | Clean IndexedDB Cache |
-| 14c-refactor.5-19 | 🔲 Backlog | Remaining stories (UI, App Refactor, Firebase) |
+| 14c-refactor.5 | ✅ Done | Placeholder UI States (Atlas Code Review 2026-01-21 - fixed missing translation keys) |
+| 14c-refactor.6-19 | 🔲 Backlog | Remaining stories (Firestore, App Refactor, Firebase) |
 
 ### Next Epics Roadmap
 
