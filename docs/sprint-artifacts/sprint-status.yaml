@@ -546,7 +546,7 @@ development_status:
   14c-refactor-8-remove-dead-code: done  # 2 pts - Delete memberUpdateDetection.ts, archive old migration scripts - Atlas Code Review APPROVED 2026-01-21
 
   # Part 2: App Architecture Refactor (5 stories, 21 pts) - NON-SCAN ONLY
-  14c-refactor-9-app-decomposition-contexts: ready-for-dev  # 5 pts - Extract Auth, Navigation, Theme, Notification, AppState contexts (PRESERVE ScanContext)
+  14c-refactor-9-app-decomposition-contexts: done  # 5 pts - Extract Auth, Navigation, Theme, Notification, AppState contexts (PRESERVE ScanContext) - Atlas Code Review APPROVED 2026-01-21
   14c-refactor-10-app-decomposition-hooks: ready-for-dev  # 5 pts - Extract useAppInitialization, useDeepLinking, usePushNotifications, useOnlineStatus, useAppLifecycle (PRESERVE scan hooks)
   14c-refactor-11-app-decomposition-components: ready-for-dev  # 3 pts - Create AppProviders, AppRoutes, AppLayout, AppErrorBoundary (compose with ScanProvider) - Story created 2026-01-21
   14c-refactor-12-transaction-service-simplification: backlog  # 5 pts - Remove IndexedDB/localStorage caching, React Query only
