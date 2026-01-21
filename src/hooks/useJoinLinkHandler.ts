@@ -1,7 +1,6 @@
 /**
  * useJoinLinkHandler Hook
  *
- * Story 14c.17: Share Link Deep Linking
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * Handles the complete join link flow:

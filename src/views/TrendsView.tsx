@@ -38,9 +38,7 @@ import {
     filterTransactionsByHistoryFilters,
 } from '../utils/historyFilterUtils';
 import type { HistoryFilterState } from '../contexts/HistoryFiltersContext';
-// Story 14c.8: Groups for custom groups filter (shared groups only)
 import { useAllUserGroups } from '../hooks/useAllUserGroups';
-// Story 14c.9: Shared Group Analytics - Member contribution chart
 import { MemberContributionChart } from '../components/SharedGroups/MemberContributionChart';
 import { calculateMemberContributions, type AnalyticsMember } from '../hooks/useAnalyticsTransactions';
 // Story 14.13: Hooks
@@ -233,13 +231,9 @@ export interface TrendsViewProps {
     initialDistributionView?: 'treemap' | 'donut';
     /** Story 14.13: Font color mode for category text colors (colorful vs plain) */
     fontColorMode?: 'colorful' | 'plain';
-    /** Story 14c.9: Whether viewing group analytics */
     isGroupMode?: boolean;
-    /** Story 14c.9: Group name for display */
     groupName?: string;
-    /** Story 14c.9: Group members for contribution chart */
     groupMembers?: Array<{ uid: string; displayName?: string; email?: string; avatarColor?: string }>;
-    /** Story 14c.9: Spending breakdown by member ID */
     spendingByMember?: Map<string, number>;
 }
 
@@ -2806,7 +2800,6 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     userName = '',
     userEmail = '',
     onNavigateToView,
-    // Story 14c.8: User ID for groups (appId no longer needed after consolidation)
     userId = '',
     appId: _appId = '',
     // Story 14.13 Session 7: Initial distribution view for back navigation
@@ -2814,7 +2807,6 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     // Story 14.13: Font color mode - receiving this prop triggers re-render when setting changes
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     fontColorMode: _fontColorMode,
-    // Story 14c.9: Shared Group Analytics props
     isGroupMode = false,
     groupName: _groupName,
     groupMembers = [],
@@ -2824,7 +2816,6 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     const prefersReducedMotion = useReducedMotion();
     const carouselRef = useRef<HTMLDivElement>(null);
 
-    // Story 14c.9: Carousel titles - use extended array when in group mode
     const carouselTitles = isGroupMode ? CAROUSEL_TITLES_GROUP : CAROUSEL_TITLES_BASE;
     const maxCarouselSlide = isGroupMode ? 2 : 1;
 
@@ -2839,7 +2830,6 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     // Story 14.14b: Use HistoryFilters context for IconFilterBar and bidirectional sync
     const { state: filterState, dispatch: filterDispatch } = useHistoryFilters();
 
-    // Story 14c.8: Groups hook for IconFilterBar custom groups dropdown (shared groups only)
     const { groups, isLoading: groupsLoading } = useAllUserGroups(userId);
 
     // Story 14.14b: Extract available filters from transactions for IconFilterBar
@@ -4302,7 +4292,6 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     }, [timePeriod, setTimePeriod, setCurrentPeriod]);
 
     // Carousel navigation (AC #4) with animation trigger
-    // Story 14c.9: Updated to support 3 slides in group mode
     const goToPrevSlide = useCallback(() => {
         setCarouselSlide(prev => (prev === 0 ? maxCarouselSlide : prev - 1) as CarouselSlide);
         setAnimationKey(prev => prev + 1); // Trigger animations on new slide
@@ -4805,7 +4794,6 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     }, [onTouchStart, onTouchMove, onTouchEnd]);
 
     // =========================================================================
-    // Story 14c.9: Member Contributions Calculation (Group Mode Only)
     // =========================================================================
 
     // Calculate member contributions for group analytics (AC4)
@@ -5078,7 +5066,6 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                 {/* Left side buttons container */}
                                 <div className="flex items-center gap-1.5 z-10">
                                     {/* View Toggle Button (AC #7) with icon morphing animation */}
-                                    {/* Story 14c.9: Hide on slide 2 (Contribuciones) - no view toggle needed */}
                                     {carouselSlide !== 2 && (
                                         <button
                                             onClick={toggleView}
@@ -5262,7 +5249,6 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                 )}
 
                                 {/* Right side buttons - Story 14.13.3: Show nav buttons for Sankey, count toggle for others */}
-                                {/* Story 14c.9: Hide all buttons on slide 2 (Contribuciones) - no toggles needed */}
                                 <div className="flex items-center gap-1 z-10">
                                     {carouselSlide === 2 ? (
                                         /* Slide 2 (Contribuciones): No right-side buttons - empty placeholder for layout balance */
@@ -5884,7 +5870,6 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                                     </div>
                                 )}
 
-                                {/* Slide 2: Member Contributions (Group Mode Only - Story 14c.9 AC4) */}
                                 {carouselSlide === 2 && isGroupMode && memberContributions.length > 0 && (
                                     <div className="relative flex flex-col h-full">
                                         {/* Title */}
@@ -5914,7 +5899,6 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
                             </div>
 
                             {/* Indicator Bar (AC #4) - Flush bottom like Dashboard */}
-                            {/* Story 14c.9: Shows 3 segments in group mode, 2 in personal mode */}
                             <div
                                 className="flex"
                                 style={{

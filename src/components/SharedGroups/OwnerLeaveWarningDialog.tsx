@@ -1,7 +1,6 @@
 /**
  * OwnerLeaveWarningDialog Component
  *
- * Story 14c.3: Leave/Manage Group
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * Warning dialog shown when the owner tries to leave a group.

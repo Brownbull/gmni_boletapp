@@ -1,7 +1,6 @@
 /**
  * EmojiPicker Component
  *
- * Story 14c.8: Auto-Tag on Scan - Group Creation Enhancement
  *
  * A full-screen centered modal picker for selecting emojis/icons for shared groups.
  * Displays a grid of common expense-related emojis organized by category.

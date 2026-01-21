@@ -1,7 +1,6 @@
 /**
  * GroupMembersManager Component
  *
- * Story 14c.3: Leave/Manage Group
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * List view of group members with management actions:

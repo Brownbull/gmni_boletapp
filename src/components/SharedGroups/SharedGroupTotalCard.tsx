@@ -1,5 +1,4 @@
 /**
- * Story 14c.5: Shared Group Transactions View - SharedGroupTotalCard Component
  *
  * Displays the combined total spending for a shared group.
  * Shows the sum of all members' tagged transactions for the selected period.

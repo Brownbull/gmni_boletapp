@@ -50,7 +50,6 @@ import { useScanOptional } from '../../contexts/ScanContext';
 import { DIALOG_TYPES } from '../../types/scanStateMachine';
 import { useIsForeignLocation } from '../../hooks/useIsForeignLocation';
 import { useLocationDisplay } from '../../hooks/useLocations';
-// Story 14c.8: Auto-tag indicator for group mode
 import { AutoTagIndicator } from '../SharedGroups/AutoTagIndicator';
 
 // Story 14d.6: Import centralized type from scanStateMachine
@@ -104,7 +103,6 @@ export interface QuickSaveCardProps {
   /** Story 14.35b: User's default country for foreign location detection */
   userDefaultCountry?: string;
   /**
-   * Story 14c.8: Active group info for auto-tag indicator.
    * When provided, shows indicator that transaction will be shared to this group.
    */
   activeGroup?: {
@@ -114,7 +112,6 @@ export interface QuickSaveCardProps {
     icon?: string;
   } | null;
   /**
-   * Story 14c.8: Callback when user removes the auto-tag.
    * If not provided, the remove button is hidden.
    */
   onRemoveGroupTag?: () => void;
@@ -500,7 +497,6 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
           </div>
         )}
 
-        {/* Story 14c.8: Auto-tag indicator for group mode (AC#2) */}
         {activeGroup && (
           <div className="mb-4">
             <AutoTagIndicator

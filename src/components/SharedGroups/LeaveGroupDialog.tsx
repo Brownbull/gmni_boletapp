@@ -1,7 +1,6 @@
 /**
  * LeaveGroupDialog Component
  *
- * Story 14c.3: Leave/Manage Group
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * Dialog for leaving a shared group with soft/hard leave options.

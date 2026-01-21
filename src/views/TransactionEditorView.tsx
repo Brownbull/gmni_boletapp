@@ -123,17 +123,17 @@ export interface TransactionEditorViewProps {
   onRequestEdit?: () => void;
 
   /**
-   * Story 14c.6: Transaction belongs to another user (in shared group view)
    * When true:
    * - Strict read-only mode (no Edit button shown at all)
    * - Owner info displayed in header
    * - Prevents any edit attempts
    */
   isOtherUserTransaction?: boolean;
-  /** Story 14c.6: Owner profile info for display when isOtherUserTransaction is true */
+  /** Owner profile info for display when isOtherUserTransaction is true */
   ownerProfile?: { displayName?: string; photoURL?: string | null } | null;
-  /** Story 14c.6: Owner's user ID for profile color in header ProfileIndicator
-   * NOTE: Currently unused - prop is passed but not rendered. AC #4 specifies
+  /**
+   * Owner's user ID for profile color in header ProfileIndicator
+   * NOTE: Currently unused - prop is passed but not rendered.
    * "owner's profile icon appears in the top-left" but current implementation
    * shows text "Added by [Name]" instead. Keeping prop for future enhancement.
    */
@@ -237,7 +237,6 @@ export interface TransactionEditorViewProps {
   /** Callback when user clicks batch scan button */
   onBatchModeClick?: () => void;
 
-  // Story 14c.7: Shared Groups - Tag transactions to groups
   /** Available shared groups for selection */
   availableGroups?: GroupWithMeta[];
   /** Whether groups are loading */
@@ -257,7 +256,6 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   // Story 14.24: Read-only mode for viewing transactions from History
   readOnly = false,
   onRequestEdit,
-  // Story 14c.6: Other user's transaction (strict read-only, no edit option)
   isOtherUserTransaction = false,
   ownerProfile,
   ownerId: _ownerId, // Reserved for future ProfileIndicator in header
@@ -303,7 +301,6 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   itemNameMappings = [],
   // Batch mode
   onBatchModeClick,
-  // Story 14c.7: Shared Groups
   availableGroups = [],
   groupsLoading = false,
   onGroupsChange,
@@ -340,7 +337,6 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   // Story 14.38: Item view mode toggle (grouped vs original order)
   const [itemViewMode, setItemViewMode] = useState<ItemViewMode>('grouped');
-  // Story 14c.7: Group selector modal state
   const [showGroupSelector, setShowGroupSelector] = useState(false);
 
   // ScanCompleteModal state (for new transactions only)
@@ -1706,7 +1702,6 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
 
               {/* Story 14.41: Edit button (view mode only) - same position as re-scan button */}
               {/* Uses accent color to match bottom "Editar transacción" button */}
-              {/* Story 14c.6: Hide edit button for other users' transactions */}
               {mode === 'existing' && readOnly && onRequestEdit && !isOtherUserTransaction && (
                 <button
                   onClick={onRequestEdit}
@@ -1741,7 +1736,6 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                 </button>
               )}
 
-              {/* Story 14c.8: Groups button */}
               {/* View mode (readOnly): Only show if transaction HAS groups - displays group indicator */}
               {/* Edit mode: Show button to add/modify groups */}
               {(() => {
@@ -2324,7 +2318,6 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
           </div>
 
           {/* Story 14.24: Show Edit button in read-only mode, Save button otherwise */}
-          {/* Story 14c.6: Show "Added by [name]" for other users' transactions, no edit option */}
           {readOnly && isOtherUserTransaction ? (
             <div
               className="w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2"
@@ -2673,7 +2666,6 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
         </div>
       )}
 
-      {/* Story 14c.7: Group Selector Modal */}
       {showGroupSelector && (
         <TransactionGroupSelector
           groups={availableGroups}

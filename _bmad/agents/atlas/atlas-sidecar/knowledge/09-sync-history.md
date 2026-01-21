@@ -19,7 +19,7 @@
 | **2026-01-15 to 01-16** | **Epic 14c Phase 1-2: Stories 14c.1-14c.10 (Shared Groups)** |
 | **2026-01-17 to 01-19** | **Epic 14c Phase 4-5: 14c.11-14c.17 (Error Handling, Real-time, Push, Deep Links)** |
 | **2026-01-20** | **Epic 14c FAILED/REVERTED - Retrospective complete** |
-| **2026-01-21** | **Epic 14c-refactor: Stories 14c-refactor.1-3 (Stub Cloud Functions, Services, Hooks)** |
+| **2026-01-21** | **Epic 14c-refactor: Stories 14c-refactor.1-6 done, 14c-refactor.7-11 ready, 14c-refactor.9-11 stories created** |
 
 ---
 
@@ -32,7 +32,7 @@
 | **Epic 14** | ✅ COMPLETE (50+) - Core Implementation |
 | **Epic 14d** | ✅ COMPLETE (11/11) - Scan Architecture Refactor |
 | **Epic 14c** | ❌ FAILED/REVERTED (See retrospective) |
-| **Epic 14c-refactor** | 🔄 IN PROGRESS (6/19) - Codebase Cleanup |
+| **Epic 14c-refactor** | 🔄 IN PROGRESS (8/19) - Codebase Cleanup |
 | **Tests** | 3,146+ (84%+ coverage) |
 | **Bundle** | 2.92 MB ⚠️ |
 | **Velocity** | ~8.6 pts/day |
@@ -47,13 +47,18 @@
 | 14c-refactor.3 | ✅ Done | Stub Hooks |
 | 14c-refactor.4 | ✅ Done | Clean IndexedDB Cache (Atlas Code Review 2026-01-21 - fixed console msg, added barrel export) |
 | 14c-refactor.5 | ✅ Done | Placeholder UI States (Atlas Code Review 2026-01-21 - fixed missing translation keys) |
-| 14c-refactor.6-19 | 🔲 Backlog | Remaining stories (Firestore, App Refactor, Firebase) |
+| 14c-refactor.6 | ✅ Done | Firestore Data Cleanup Script (Atlas Code Review 2026-01-21 - fixed infinite loop, added retry logic) |
+| 14c-refactor.7 | ✅ Done | Security Rules Simplification (Atlas Code Review 2026-01-21 - fixed missing commit) |
+| 14c-refactor.8 | 📋 Ready | Remove Dead Code (memberUpdateDetection.ts, archive scripts) |
+| **14c-refactor.9** | **📋 Ready** | **App.tsx Decomposition - Contexts (5 contexts: Auth, Nav, Theme, Notif, AppState)** |
+| **14c-refactor.10** | **📋 Ready** | **App.tsx Decomposition - Hooks (5 custom hooks)** |
+| 14c-refactor.11-19 | 🔲 Backlog | Components, Firebase Audit, Quality |
 
 ### Next Epics Roadmap
 
 | Epic | Theme | Status | Prep Required |
 |------|-------|--------|---------------|
-| **14c-refactor** | Codebase Cleanup | In Progress | 6/19 stories done |
+| **14c-refactor** | Codebase Cleanup | In Progress | 8/19 stories done |
 | **14d** | Shared Groups v2 | Blocked | Requires 14c-refactor completion |
 | **15** | Advanced Features | Backlog | Blocked by 14c-refactor |
 

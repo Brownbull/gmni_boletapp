@@ -304,7 +304,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 );
 
             case 'grupos':
-                // Story 14c.11: Wrap with error boundary to catch component crashes
                 return (
                     <SharedGroupErrorBoundary
                         t={t}

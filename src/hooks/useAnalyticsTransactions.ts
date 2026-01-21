@@ -1,7 +1,6 @@
 /**
  * useAnalyticsTransactions Hook
  *
- * Story 14c.9: Shared Group Analytics
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * Unified data source for analytics components that automatically provides

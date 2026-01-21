@@ -34,9 +34,7 @@ export interface SelectionBarProps {
   theme?: 'light' | 'dark';
   /** Language for pluralization */
   lang?: 'en' | 'es';
-  /** Story 14c.8: Callback when Select All is clicked */
   onSelectAll?: () => void;
-  /** Story 14c.8: Total number of visible/selectable transactions */
   totalVisible?: number;
 }
 
@@ -54,7 +52,6 @@ export const SelectionBar: React.FC<SelectionBarProps> = ({
   onSelectAll,
   totalVisible = 0,
 }) => {
-  // Story 14c.8: Determine if all visible items are selected
   const allSelected = totalVisible > 0 && selectedCount === totalVisible;
 
   // Format selection count text
@@ -107,7 +104,6 @@ export const SelectionBar: React.FC<SelectionBarProps> = ({
 
       {/* Right side: Action buttons - icons on top, labels below */}
       <div className="flex items-center gap-4">
-        {/* Story 14c.8: Select All / Deselect All button */}
         {onSelectAll && totalVisible > 0 && (
           <button
             onClick={onSelectAll}
@@ -121,7 +117,6 @@ export const SelectionBar: React.FC<SelectionBarProps> = ({
               style={{ color: 'white' }}
               fill={allSelected ? 'rgba(255, 255, 255, 0.3)' : 'none'}
             />
-            {/* Story 14c.8 Code Review: Use translation keys instead of hardcoded strings */}
             <span
               className="text-xs font-medium"
               style={{ color: 'rgba(255, 255, 255, 0.9)' }}
@@ -144,7 +139,6 @@ export const SelectionBar: React.FC<SelectionBarProps> = ({
             strokeWidth={1.8}
             style={{ color: 'white' }}
           />
-          {/* Story 14c.8 Code Review: Use translation keys instead of hardcoded strings */}
           <span
             className="text-xs font-medium"
             style={{ color: 'rgba(255, 255, 255, 0.9)' }}
@@ -166,7 +160,6 @@ export const SelectionBar: React.FC<SelectionBarProps> = ({
             strokeWidth={1.8}
             style={{ color: 'white' }}
           />
-          {/* Story 14c.8 Code Review: Use translation keys instead of hardcoded strings */}
           <span
             className="text-xs font-medium"
             style={{ color: 'rgba(255, 255, 255, 0.9)' }}

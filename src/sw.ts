@@ -1,7 +1,6 @@
 /**
  * Custom Service Worker with Web Push Support
  *
- * Story 14c.13: VAPID-based web push for reliable Android notifications
  *
  * This service worker:
  * 1. Handles native push events for web push notifications

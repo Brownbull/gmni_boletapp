@@ -2,8 +2,6 @@
  * Push Notifications Hook
  *
  * Story 9.18: Initial push notification setup
- * Story 14c.13: FCM Push Notifications for Shared Groups
- * Story 14c.13-WP: Migrated to Web Push (VAPID) for better Android support
  *
  * Hook for managing push notification state and functionality.
  * Uses the native Push API with VAPID keys instead of FCM for
@@ -21,7 +19,6 @@ import {
   isWebPushEnabledLocal,
   WEB_PUSH_CONSTANTS,
 } from '../services/webPushService';
-// Story 14c.15: Import and re-export from consolidated types for backwards compatibility
 import type { NotificationClickData } from '../types/notification';
 export type { NotificationClickData };
 
@@ -51,7 +48,7 @@ interface UsePushNotificationsOptions {
   appId: string | null;
   /** Callback when a foreground notification is received */
   onNotificationReceived?: (title: string, body: string) => void;
-  /** Callback when a notification is clicked (Story 14c.13: for delta fetch) */
+  /** Callback when a notification is clicked (for delta fetch) */
   onNotificationClick?: (data: NotificationClickData) => void;
 }
 
@@ -102,7 +99,6 @@ export function usePushNotifications({
 
     const handleServiceWorkerMessage = (event: MessageEvent) => {
       if (event.data?.type === 'NOTIFICATION_CLICK') {
-        // Story 14c.13: Notification clicked - trigger delta fetch callback
         console.log('[usePushNotifications] Notification clicked:', event.data);
         if (onNotificationClick) {
           const data = event.data.data || {};

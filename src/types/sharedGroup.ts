@@ -1,7 +1,6 @@
 /**
  * Shared Group Types
  *
- * Story 14c.1: Create Shared Group
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * Shared groups allow users to share transactions with family/friends.
@@ -54,7 +53,7 @@ export const SHARED_GROUP_LIMITS = {
 
 /**
  * Status of a member's last sync with group data.
- * Used for delta sync optimization in Story 14c.5.
+ * Used for delta sync optimization.
  */
 export interface MemberUpdate {
     /** Last time this member viewed/synced group data */
@@ -66,7 +65,6 @@ export interface MemberUpdate {
 /**
  * Public profile info for a group member.
  * Stored in SharedGroup.memberProfiles for display purposes.
- * Story 14c.4: Allow members to see each other's names/emails.
  */
 export interface MemberProfile {
     /** Display name from Firebase Auth or user preferences */
@@ -202,11 +200,8 @@ export function canAddMember(group: SharedGroup): boolean {
 /**
  * User profile extension for shared groups membership.
  *
- * Story 14c.1 (AC3): Type definition for user profile field.
- * Story 14c.2: Actual field population happens on join.
- *
  * This field is stored on user preferences document and used by
- * security rules for cross-user transaction reads (Story 14c.5).
+ * security rules for cross-user transaction reads.
  *
  * Path: artifacts/{appId}/users/{userId}/preferences/settings
  */
@@ -216,7 +211,6 @@ export interface UserSharedGroupMembership {
 }
 
 // ============================================================================
-// Story 14c.2: Accept/Decline Invitation Types
 // ============================================================================
 
 /**

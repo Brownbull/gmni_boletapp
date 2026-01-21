@@ -1,7 +1,6 @@
 /**
  * ColorPicker Component
  *
- * Story 14c.8: Auto-Tag on Scan - Group Creation Enhancement
  *
  * A full-screen centered modal picker for selecting colors for shared groups.
  * Shows a circular color button that opens a modal with color options.

@@ -1,7 +1,6 @@
 /**
  * SharedGroupErrorBoundary Component
  *
- * Story 14c.11: Error Handling
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * React Error Boundary specifically for shared group components.

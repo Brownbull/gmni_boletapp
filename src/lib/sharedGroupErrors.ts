@@ -1,7 +1,6 @@
 /**
  * Shared Group Error Types and Utilities
  *
- * Story 14c.11: Error Handling
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * Provides unified error classification for shared group operations.

@@ -510,7 +510,6 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
           className="px-4 py-4"
           style={{ backgroundColor: 'var(--bg)', paddingBottom: 'calc(80px + var(--safe-bottom, 0px))' }}
         >
-          {/* Story 14c.8 Code Review: Use theme-aware primary color instead of hardcoded green */}
           <button
             onClick={handleSaveAll}
             disabled={isSaving || validCount === 0}

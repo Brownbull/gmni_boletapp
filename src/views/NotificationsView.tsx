@@ -1,7 +1,6 @@
 /**
  * NotificationsView - Notifications/Alerts Panel
  *
- * Story 14c.13: Extracted notifications view for ProfileDropdown state management
  *
  * Displays pending invitations and shared group notifications.
  * Matches InsightsView layout with ProfileAvatar and ProfileDropdown.
@@ -129,7 +128,6 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({
 
       {/* Content area with top padding for fixed header - full width, no side padding */}
       <div className="flex-1 pt-[72px] pb-24 overflow-y-auto">
-        {/* Story 14c.2: Pending Invitations Section */}
         {pendingInvitations.length > 0 && user?.uid && services?.appId && (
           <PendingInvitationsSection
             invitations={pendingInvitations}
@@ -142,7 +140,6 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({
           />
         )}
 
-        {/* Story 14c.13: Shared Group Notifications */}
         {inAppNotifications.length > 0 && (
           <NotificationsList
             notifications={inAppNotifications}

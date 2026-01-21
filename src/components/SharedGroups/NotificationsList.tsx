@@ -1,7 +1,6 @@
 /**
  * NotificationsList Component
  *
- * Story 14c.13: In-app notifications display for Alertas view
  *
  * Displays a list of in-app notifications with:
  * - Long-press to enter selection mode (like transactions view)

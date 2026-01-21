@@ -78,13 +78,11 @@ export interface Transaction {
     /** Source of the merchant name (scan, learned, or user) */
     merchantSource?: MerchantSource;
 
-    // Story 14c.1: Shared Groups (consolidated from Story 14.15)
     /** Array of shared group IDs this transaction belongs to (max 5) */
     sharedGroupIds?: string[];
     /** Soft delete timestamp for shared group sync (null = not deleted) */
     deletedAt?: any; // Firestore Timestamp
 
-    // Story 14c.6: Transaction Ownership (client-side only)
     /**
      * Owner's user ID - set client-side when merging transactions from multiple members.
      * Not stored in Firestore (derived from transaction's document path).
@@ -108,7 +106,6 @@ export function hasTransactionThumbnail(transaction: Transaction): boolean {
 }
 
 /**
- * Story 14c.6: Check if a transaction belongs to the current user.
  *
  * A transaction is considered "owned" by the user if:
  * - No _ownerId is set (personal mode - all transactions are user's own)

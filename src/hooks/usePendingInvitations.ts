@@ -1,7 +1,6 @@
 /**
  * usePendingInvitations Hook
  *
- * Story 14c.2: Accept/Decline Invitation
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * Subscribes to real-time updates of pending invitations for the current user.
