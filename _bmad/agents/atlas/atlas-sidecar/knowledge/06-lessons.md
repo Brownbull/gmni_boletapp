@@ -72,6 +72,8 @@
 | LISTENER_LIMITS | Always apply limits to real-time queries |
 | Cross-User Queries | Use Cloud Function with server-side validation, NOT client collectionGroup |
 | Collection Group Limitation | Firestore CANNOT evaluate `resource.data.*` in collection group queries |
+| Batch commit retry | Use `commitBatchWithRetry()` with exponential backoff (MAX_RETRIES=2, 500ms base) for batch commits (14c-refactor.6) |
+| Dry-run loops | NEVER loop through docs in dry-run - use `count()` aggregation and return immediately (14c-refactor.6) |
 
 ### React Query + Firestore
 | Pattern | Rule |
@@ -240,6 +242,7 @@
 | Multi-session stories | Organize File List by session with labels |
 | Code Review Fixes section | Verify fixes were actually applied to code, not just documented (14c-refactor.4) |
 | Doc code examples | Keep embedded code examples in sync with actual implementation |
+| Commit before claiming deployed | Run `git status` before marking deployment tasks complete - Firebase deploy without commit = lost work risk (14c-refactor.7) |
 
 ### Component Patterns
 | Pattern | Rule |
@@ -275,6 +278,8 @@
 
 ## Sync Notes
 
+- **2026-01-21:** Added commit-before-deploy pattern from 14c-refactor.7 code review (Firebase deployed but changes not committed)
+- **2026-01-21:** Added Firestore batch retry pattern and dry-run loop prevention from 14c-refactor.6 code review
 - **2026-01-21:** Added story documentation pattern - verify code review fixes actually applied (14c-refactor.4 review)
 - **2026-01-21:** Added i18n fallback pattern lesson from 14c-refactor.5 code review (translation keys missing but tests passed due to mock)
 - **Generation 6 (2026-01-20):** Added Epic 14c failure lessons (delta sync, multi-op testing, cost control)
