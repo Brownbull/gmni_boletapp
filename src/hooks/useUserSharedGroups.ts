@@ -1,38 +1,25 @@
 /**
- * Story 14c.4: View Mode Switcher - useUserSharedGroups Hook
+ * useUserSharedGroups Hook - STUB
  *
- * Custom hook that subscribes to shared groups the current user is a member of.
- * Used by the ViewModeSwitcher component to display available groups.
+ * Story 14c-refactor.3: Stub hooks for shared groups feature cleanup
+ * Epic 14c-refactor: Codebase cleanup before Shared Groups v2
  *
- * Features:
- * - Real-time subscription to user's shared groups
- * - Loading and error states
- * - Helper functions for group lookup
- * - Automatic cleanup on unmount
+ * This stub replaces the full implementation while the shared groups feature
+ * is temporarily disabled. Returns empty state without subscribing to any
+ * real-time data or making network calls.
  *
  * @example
  * ```tsx
  * function GroupSelector() {
  *   const db = useFirestore();
  *   const { groups, isLoading, hasGroups, getGroupById } = useUserSharedGroups(db, userId);
- *
- *   if (isLoading) return <Skeleton />;
- *   if (!hasGroups) return <EmptyState />;
- *
- *   return (
- *     <ul>
- *       {groups.map(group => (
- *         <li key={group.id}>{group.name}</li>
- *       ))}
- *     </ul>
- *   );
+ *   // Returns: { groups: [], isLoading: false, hasGroups: false, ... }
  * }
  * ```
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import type { Firestore } from 'firebase/firestore';
-import { subscribeToSharedGroups } from '../services/sharedGroupService';
 import type { SharedGroup } from '../types/sharedGroup';
 
 // =============================================================================
@@ -43,18 +30,18 @@ import type { SharedGroup } from '../types/sharedGroup';
  * Return type of useUserSharedGroups hook
  */
 export interface UseUserSharedGroupsResult {
-  /** Array of shared groups the user is a member of */
-  groups: SharedGroup[];
-  /** True while loading initial data */
-  isLoading: boolean;
-  /** Error if subscription failed */
-  error: Error | undefined;
-  /** Number of groups */
-  groupCount: number;
-  /** True if user has at least one shared group */
-  hasGroups: boolean;
-  /** Helper to find a specific group by ID */
-  getGroupById: (groupId: string) => SharedGroup | undefined;
+    /** Array of shared groups the user is a member of (always empty in stub) */
+    groups: SharedGroup[];
+    /** True while loading initial data (always false in stub) */
+    isLoading: boolean;
+    /** Error if subscription failed (always undefined in stub) */
+    error: Error | undefined;
+    /** Number of groups (always 0 in stub) */
+    groupCount: number;
+    /** True if user has at least one shared group (always false in stub) */
+    hasGroups: boolean;
+    /** Helper to find a specific group by ID (always returns undefined in stub) */
+    getGroupById: (groupId: string) => SharedGroup | undefined;
 }
 
 // =============================================================================
@@ -62,79 +49,33 @@ export interface UseUserSharedGroupsResult {
 // =============================================================================
 
 /**
- * Subscribe to shared groups the current user is a member of.
+ * STUB: Subscribe to shared groups the current user is a member of.
+ * Returns empty state - shared groups feature is temporarily disabled.
  *
- * @param db - Firestore instance
- * @param userId - Current user's ID (undefined if not authenticated)
- * @returns Object with groups array, loading/error states, and helpers
+ * @param _db - Firestore instance (unused in stub)
+ * @param _userId - Current user's ID (unused in stub)
+ * @returns Object with empty groups array, loading/error states, and helpers
  */
 export function useUserSharedGroups(
-  db: Firestore,
-  userId: string | undefined
+    _db: Firestore,
+    _userId: string | undefined
 ): UseUserSharedGroupsResult {
-  const [groups, setGroups] = useState<SharedGroup[]>([]);
-  const [isLoading, setIsLoading] = useState(!!userId);
-  const [error, setError] = useState<Error | undefined>(undefined);
-
-  // Subscribe to shared groups when userId is available
-  useEffect(() => {
-    // Skip subscription if no userId
-    if (!userId) {
-      setGroups([]);
-      setIsLoading(false);
-      setError(undefined);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(undefined);
-
-    // Subscribe to real-time updates
-    const unsubscribe = subscribeToSharedGroups(
-      db,
-      userId,
-      (updatedGroups) => {
-        setGroups(updatedGroups);
-        setIsLoading(false);
-        setError(undefined);
-      },
-      (subscriptionError) => {
-        setError(subscriptionError);
-        setIsLoading(false);
-        setGroups([]);
-      }
+    const getGroupById = useCallback(
+        (_groupId: string): SharedGroup | undefined => undefined,
+        []
     );
 
-    // Cleanup on unmount or userId change
-    return () => {
-      unsubscribe();
-    };
-  }, [db, userId]);
-
-  // Helper to find a group by ID
-  const getGroupById = useCallback(
-    (groupId: string): SharedGroup | undefined => {
-      return groups.find((g) => g.id === groupId);
-    },
-    [groups]
-  );
-
-  // Computed values
-  const groupCount = groups.length;
-  const hasGroups = groupCount > 0;
-
-  // Memoize the return value to prevent unnecessary re-renders
-  return useMemo(
-    () => ({
-      groups,
-      isLoading,
-      error,
-      groupCount,
-      hasGroups,
-      getGroupById,
-    }),
-    [groups, isLoading, error, groupCount, hasGroups, getGroupById]
-  );
+    return useMemo(
+        () => ({
+            groups: [],
+            isLoading: false,
+            error: undefined,
+            groupCount: 0,
+            hasGroups: false,
+            getGroupById,
+        }),
+        [getGroupById]
+    );
 }
 
 // =============================================================================

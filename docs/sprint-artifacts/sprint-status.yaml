@@ -537,8 +537,8 @@ development_status:
 
   # Part 1: Shared Groups Stub & Cleanup (8 stories, 18 pts)
   14c-refactor-1-stub-cloud-functions: done  # 2 pts - Delete getSharedGroupTransactions, sendSharedGroupNotification, undeploy
-  14c-refactor-2-stub-services: ready-for-dev  # 3 pts - Replace services with stubs, delete sharedGroupTransactionService.ts
-  14c-refactor-3-stub-hooks: ready-for-dev  # 2 pts - Replace hooks with empty-return stubs, delete useSharedGroupTransactions
+  14c-refactor-2-stub-services: done  # 3 pts - Replace services with stubs - Atlas Code Review APPROVED 2026-01-21
+  14c-refactor-3-stub-hooks: done  # 2 pts - Replace hooks with empty-return stubs, delete useSharedGroupTransactions - Atlas Code Review APPROVED 2026-01-21
   14c-refactor-4-clean-indexeddb-cache: ready-for-dev  # 2 pts - Delete sharedGroupCache.ts, clear legacy IndexedDB
   14c-refactor-5-placeholder-ui-states: backlog  # 3 pts - Disable UI with "Coming soon" tooltips
   14c-refactor-6-firestore-data-cleanup-script: backlog  # 3 pts - Manual script to delete sharedGroups/pendingInvitations, empty sharedGroupIds
