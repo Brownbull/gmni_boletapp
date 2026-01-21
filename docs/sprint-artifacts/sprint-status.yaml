@@ -451,26 +451,20 @@ development_status:
   epic-14-retrospective: done  # Combined retro 2026-01-15 (Epics 12, 13, 14)
 
   # ============================================================================
-  # EPIC 14C: SHARED GROUPS (~59 points) - Updated 2026-01-17
+  # EPIC 14C: SHARED GROUPS - FAILED/REVERTED 2026-01-20
   # ============================================================================
-  # Multi-user shared groups (2-10 members), symmetric visibility
-  # PREREQUISITE: Story 14.29 (React Query Migration) - ✅ COMPLETE
-  # Brainstorming: docs/analysis/brainstorming-session-2026-01-15.md
-  # Real-Time Sync Decision: docs/sprint-artifacts/epic14c/BRAINSTORM-REALTIME-SYNC-DECISION.md
-  # Epic Doc: docs/sprint-artifacts/epic14/epic-14c-household-sharing.md
-  # Architecture: Option 4 Hybrid (shared group doc + user transactions)
-  # Real-Time Sync: Hybrid Approach A+C (memberUpdates listener + FCM push)
-# # BMAD custom commands
-# | Command | Description |
-# |---------|-------------|
-# | `/bmad:bmm:workflows:atlas-code-review` | ADVERSARIAL code review with Atlas validation |
-# | `/bmad:bmm:workflows:atlas-dev-story` | Story implementation with pattern guidance |
-# | `/bmad:bmm:workflows:atlas-correct-course` | Course correction during sprints |
-# | `/bmad:bmm:workflows:atlas-deploy-story` | Story deployment with validation |
-# | `/bmad:bmm:workflows:atlas-epic-tech-context` | Epic technical context preparation |
-# | `/bmad:bmm:workflows:atlas-story-context` | Story context loading |
-# | `/bmad:bmm:workflows:atlas-e2e` | Persona-driven E2E test generation |
-  epic-14c: contexted  # Stories drafted 2026-01-15
+  # STATUS: REVERTED to commit 68686f3 - Retrospective complete
+  # OUTCOME: Epic failed due to architectural gaps in real-time sync
+  # ROOT CAUSES: (1) Delta sync can't detect deletions, (2) State staleness after first op,
+  #              (3) Cost explosion from full refetch fallback
+  # DECISION: Reset epic, create 14c-refactor first, then retry as 14d
+  # Retrospective: docs/sprint-artifacts/epic-14c-retro-2026-01-20.md
+  #
+  # NEXT STEPS:
+  # 1. Epic 14c-refactor: Codebase cleanup (App.tsx, caching, cloud functions)
+  # 2. Epic 14d: Shared Groups v2 with lessons learned
+  # 3. Brainstorm session required before 14d implementation
+  epic-14c: failed  # REVERTED 2026-01-20 - See retrospective for details
 
   # Phase 1: Foundation (Can Start Without Mockups) - 15 pts
   14c-1-create-shared-group: done  # 8 pts - Data model + security rules + create UI + invite by email - Code review PASSED ✅
@@ -512,11 +506,78 @@ development_status:
   14c-21-notification-bulk-actions: backlog  # 2 pts - Mark all read + Dismiss all buttons at bottom of NotificationsView
   14c-22-login-landing-page-redesign: backlog  # 8 pts - UX design phase (3 logo + 3 screen options) + implementation of chosen design
 
+  # Phase 9: Revert & Stabilization - 3 pts
+  14c-23-revert-to-stable-baseline: review  # 3 pts - Reverted to commit 68686f3, discarded 14c.20 cache optimization - DEPLOYED 2026-01-20
+
   # Phase 6: Release - 2 pts
   14c-99-epic-release-deployment: ready-for-dev  # 2 pts - Version bump (minor beta), CI/CD verification, staging/prod deployment
 
-  epic-14c-retrospective: optional
+  epic-14c-retrospective: done  # 2026-01-20 - docs/sprint-artifacts/epic-14c-retro-2026-01-20.md
 
+  # ============================================================================
+  # EPIC 14c-REFACTOR: CODEBASE CLEANUP BEFORE SHARED GROUPS V2
+  # ============================================================================
+  # STATUS: NEW - Created from Epic 14c retrospective action items
+  # PURPOSE: Clean foundation before Epic 14d (Shared Groups v2)
+  # SCOPE: ~54 points across 19 stories
+  # PREREQUISITE: Must complete before starting Epic 14d
+  #
+  # KEY OBJECTIVES:
+  # 1. Remove broken shared groups sync implementation (preserve UI shells)
+  # 2. Refactor App.tsx (~3800 lines → ~300 lines) - NON-SCAN portions only
+  # 3. Simplify transaction caching to React Query only
+  # 4. Unify view mode state
+  # 5. Audit and optimize Firebase infrastructure
+  #
+  # PRIOR ART: Epic 14d-old (Scan Architecture Refactor) already completed:
+  # - ScanContext, useScanStateMachine, batch processing state
+  # - Stories 14c.9-14c.11 PRESERVE this work and only extract non-scan contexts
+  # ============================================================================
+  epic-14c-refactor: contexted  # Created 2026-01-21, tech context complete 2026-01-21
+
+  # Part 1: Shared Groups Stub & Cleanup (8 stories, 18 pts)
+  14c-refactor-1-stub-cloud-functions: done  # 2 pts - Delete getSharedGroupTransactions, sendSharedGroupNotification, undeploy
+  14c-refactor-2-stub-services: ready-for-dev  # 3 pts - Replace services with stubs, delete sharedGroupTransactionService.ts
+  14c-refactor-3-stub-hooks: ready-for-dev  # 2 pts - Replace hooks with empty-return stubs, delete useSharedGroupTransactions
+  14c-refactor-4-clean-indexeddb-cache: ready-for-dev  # 2 pts - Delete sharedGroupCache.ts, clear legacy IndexedDB
+  14c-refactor-5-placeholder-ui-states: backlog  # 3 pts - Disable UI with "Coming soon" tooltips
+  14c-refactor-6-firestore-data-cleanup-script: backlog  # 3 pts - Manual script to delete sharedGroups/pendingInvitations, empty sharedGroupIds
+  14c-refactor-7-security-rules-simplification: backlog  # 1 pt - Deny all shared group access in firestore.rules
+  14c-refactor-8-remove-dead-code: backlog  # 2 pts - Delete memberUpdateDetection.ts, archive old migration scripts
+
+  # Part 2: App Architecture Refactor (5 stories, 21 pts) - NON-SCAN ONLY
+  14c-refactor-9-app-decomposition-contexts: backlog  # 5 pts - Extract Auth, Navigation, Theme, Notification, AppState contexts (PRESERVE ScanContext)
+  14c-refactor-10-app-decomposition-hooks: backlog  # 5 pts - Extract useAppInitialization, useDeepLinking, usePushNotifications, useOnlineStatus, useAppLifecycle (PRESERVE scan hooks)
+  14c-refactor-11-app-decomposition-components: backlog  # 3 pts - Create AppProviders, AppRoutes, AppLayout, AppErrorBoundary (compose with ScanProvider)
+  14c-refactor-12-transaction-service-simplification: backlog  # 5 pts - Remove IndexedDB/localStorage caching, React Query only
+  14c-refactor-13-view-mode-state-unification: backlog  # 3 pts - Single source of truth for view mode (default to Personal)
+
+  # Part 3: Firebase & Infrastructure (3 stories, 7 pts)
+  14c-refactor-14-firebase-indexes-audit: backlog  # 2 pts - Remove sharedGroupIds indexes, document remaining
+  14c-refactor-15-cloud-functions-audit: backlog  # 3 pts - Inventory, remove unused, document in cloud-functions.md
+  14c-refactor-16-firestore-cost-monitoring: backlog  # 2 pts - Budget alerts + Cloud Monitoring dashboard
+
+  # Part 4: Quality & Validation (3 stories, 8 pts)
+  14c-refactor-17-test-suite-cleanup: backlog  # 3 pts - Delete removed file tests, add context/hook tests
+  14c-refactor-18-integration-testing: backlog  # 3 pts - Full smoke test checklist
+  14c-refactor-19-documentation-update: backlog  # 2 pts - Update architecture docs, archive old shared groups docs
+
+  epic-14c-refactor-retrospective: optional
+# | Command | Description |
+# |---------|-------------|
+# | `/bmad:bmm:workflows:atlas-code-review` | ADVERSARIAL code review with Atlas validation |
+# | `/bmad:bmm:workflows:atlas-create-story` | Story creation with workflow chain analysis |
+# | `/bmad:bmm:workflows:atlas-retrospective` | Epic retrospective with memory feeding |
+# | `/bmad:bmm:workflows:atlas-e2e` | Persona-driven E2E test generation |
+# | `/bmad:bmm:workflows:atlas-dev-story` | Story implementation with pattern guidance |
+# | `/bmad:bmm:workflows:atlas-sprint-planning` | Sprint planning with Atlas context |
+# | `/bmad:bmm:workflows:atlas-sprint-status` | Sprint status check |
+# | `/bmad:bmm:workflows:atlas-correct-course` | Course correction during sprints |
+# | `/bmad:bmm:workflows:atlas-deploy-story` | Story deployment with validation |
+# | `/bmad:bmm:workflows:atlas-epic-tech-context` | Epic technical context preparation |
+# | `/bmad:bmm:workflows:atlas-story-context` | Story context loading |
+# | `/bmad:bmm:workflows:atlas-story-done` | Story completion marking |
+# | `/bmad:bmm:workflows:atlas-story-ready` | Story readiness verification |
   # ============================================================================
   # EPIC 14d: SCAN ARCHITECTURE REFACTOR (~52 points)
   # ============================================================================
