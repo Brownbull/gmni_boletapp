@@ -1,6 +1,6 @@
 # Story 14c-refactor.4: Clean IndexedDB Cache
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -28,26 +28,26 @@ So that **there's no orphaned cache code or stale data cluttering the app**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create migration script to clear IndexedDB (AC: #2)
-  - [ ] Create `src/migrations/clearSharedGroupCache.ts`
-  - [ ] Implement `clearLegacySharedGroupCache()` function
-  - [ ] Add migration version tracking to localStorage
-  - [ ] Call migration on app startup in `App.tsx` or `main.tsx`
+- [x] Task 1: Create migration script to clear IndexedDB (AC: #2)
+  - [x] Create `src/migrations/clearSharedGroupCache.ts`
+  - [x] Implement `clearLegacySharedGroupCache()` function
+  - [x] Add migration version tracking to localStorage
+  - [x] Call migration on app startup in `src/main.tsx`
 
-- [ ] Task 2: Delete sharedGroupCache.ts (AC: #1)
-  - [ ] Delete `src/lib/sharedGroupCache.ts`
-  - [ ] Find all imports and remove them
-  - [ ] Verify `useSharedGroupTransactions.ts` was already deleted in Story 14c-refactor.3
+- [x] Task 2: Delete sharedGroupCache.ts (AC: #1)
+  - [x] Delete `src/lib/sharedGroupCache.ts`
+  - [x] Find all imports and remove them
+  - [x] Verify `useSharedGroupTransactions.ts` was already deleted in Story 14c-refactor.3
 
-- [ ] Task 3: Update any remaining consumers (AC: #1)
-  - [ ] Search for `from '../lib/sharedGroupCache'`
-  - [ ] Search for `from './sharedGroupCache'`
-  - [ ] Remove or update imports
+- [x] Task 3: Update any remaining consumers (AC: #1)
+  - [x] Search for `from '../lib/sharedGroupCache'`
+  - [x] Search for `from './sharedGroupCache'`
+  - [x] Remove or update imports
 
-- [ ] Task 4: Verify build and runtime success (AC: #1, #2)
-  - [ ] Run `npm run build`
-  - [ ] Run the app locally and check console for migration log
-  - [ ] Verify no errors in DevTools console
+- [x] Task 4: Verify build and runtime success (AC: #1, #2)
+  - [x] Run `npm run build`
+  - [x] Run the app locally and check console for migration log
+  - [x] Verify no errors in DevTools console
 
 ## Dev Notes
 
@@ -104,7 +104,7 @@ export async function clearLegacySharedGroupCache(): Promise<void> {
             };
 
             request.onblocked = () => {
-                console.warn('[migration] Database deletion blocked - will retry next session');
+                console.warn('[migration] Database deletion blocked - continuing without deletion');
                 resolve();
             };
         });
@@ -205,16 +205,64 @@ App Startup → Migration → Mark complete → Continue
 
 ### Agent Model Used
 
-(To be filled by dev agent)
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Debug Log References
 
-(To be filled during implementation)
+- Build: TypeScript compilation passed, Vite build successful (8.70s)
+- Tests: 4557 tests passed, 33 skipped (npm run test:quick)
+- Migration tests: 7/7 passed (tests/unit/migrations/clearSharedGroupCache.test.ts)
 
 ### Completion Notes List
 
-(To be filled during implementation)
+1. **Created migration script** (`src/migrations/clearSharedGroupCache.ts`):
+   - One-time migration that deletes `boletapp_shared_groups` IndexedDB database
+   - Tracks migration state in localStorage under `boletapp_migrations_v1`
+   - Handles errors gracefully (blocked, failed, localStorage unavailable)
+   - Logs to console in dev mode only
+
+2. **Integrated migration into app startup** (`src/main.tsx`):
+   - Fire-and-forget call to `clearLegacySharedGroupCache()`
+   - Non-blocking - doesn't delay app load
+
+3. **Deleted sharedGroupCache.ts** (756 lines removed):
+   - Deleted `src/lib/sharedGroupCache.ts`
+   - Deleted `tests/unit/lib/sharedGroupCache.test.ts`
+
+4. **Updated consumers**:
+   - `src/App.tsx`: Removed import and `clearGroupCacheById` usage (line 51, 3880-3886)
+   - `src/App.tsx`: Removed dev debug utility `clearAllGroupCaches` (line 275-279)
+   - `src/App.tsx`: Changed `updateCachesForGroup` from async to sync function
+   - `src/views/DashboardView.tsx`: Removed import and `clearGroupCacheById` usage (line 36, 2074-2097)
+
+5. **Created migration tests** (7 tests):
+   - Skip if already migrated
+   - Delete database on first run
+   - Handle error gracefully
+   - Handle blocked gracefully
+   - Handle missing IndexedDB
+   - Handle localStorage errors
+   - Idempotency check
 
 ### File List
 
-(To be filled during implementation - files modified/deleted/created)
+**Created:**
+- `src/migrations/clearSharedGroupCache.ts` (95 lines)
+- `src/migrations/index.ts` (7 lines) - Barrel export
+- `tests/unit/migrations/clearSharedGroupCache.test.ts` (170 lines)
+
+**Deleted:**
+- `src/lib/sharedGroupCache.ts` (756 lines)
+- `tests/unit/lib/sharedGroupCache.test.ts` (deleted)
+
+**Modified:**
+- `src/main.tsx` - Added migration import and call
+- `src/App.tsx` - Removed import, debug utility, and `clearGroupCacheById` usages
+- `src/views/DashboardView.tsx` - Removed import and `clearGroupCacheById` usage
+
+### Change Log
+
+| Date | Change |
+|------|--------|
+| 2026-01-21 | Story 14c-refactor.4: Created migration script, deleted sharedGroupCache.ts, updated consumers |
+| 2026-01-21 | Atlas Code Review: Fixed onblocked console message, added barrel export index.ts, updated test assertions |
