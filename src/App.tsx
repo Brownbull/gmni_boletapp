@@ -34,6 +34,23 @@ import { useUserSharedGroups } from './hooks/useUserSharedGroups';
 import { ViewModeSwitcher } from './components/SharedGroups/ViewModeSwitcher';
 import { useViewModePreferencePersistence } from './hooks/useViewModePreferencePersistence';
 import { useJoinLinkHandler } from './hooks/useJoinLinkHandler';
+// Story 14c-refactor.10: App-level hooks for lifecycle, initialization, and deep linking
+// These hooks extract cross-cutting concerns from App.tsx into reusable modules.
+// Import the hooks from the barrel file:
+// import {
+//     useOnlineStatus,          // Network connectivity monitoring
+//     useAppLifecycle,          // Foreground/background, beforeunload
+//     useAppInitialization,     // Auth + services coordination
+//     useDeepLinking,           // URL deep link handling (wraps useJoinLinkHandler)
+//     useAppPushNotifications,  // Push notifications coordination
+// } from './hooks/app';
+//
+// Example integration (future refactor):
+// const { isOnline, wasOffline } = useOnlineStatus({
+//     onOffline: () => setToastMessage({ text: 'Sin conexión', type: 'info' }),
+// });
+// const { isInForeground, registerBeforeUnloadGuard } = useAppLifecycle();
+// const { hasActiveJoinLink, confirmJoin, cancelJoin } = useDeepLinking({ db, userId, ... });
 import { JoinGroupDialog } from './components/SharedGroups/JoinGroupDialog';
 // Story 14c-refactor.3: useSharedGroupTransactions DELETED - shared groups feature temporarily disabled
 import type { SharedGroup } from './types/sharedGroup';
