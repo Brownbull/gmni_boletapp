@@ -1,102 +1,61 @@
 /**
- * JoinGroupDialog Component
+ * Story 14c-refactor.5: JoinGroupDialog - SIMPLIFIED (Feature Disabled)
  *
- * Story 14c.17: Share Link Deep Linking
- * Epic 14c: Shared Groups (Household Sharing)
+ * STUB: Shared Groups feature is temporarily unavailable.
  *
- * Dialog for joining a shared group via share link.
- * Shows group preview and confirmation before joining.
+ * This simplified JoinGroupDialog shows a "Coming soon" message
+ * instead of the full join flow.
  *
- * Features:
- * - WCAG 2.1 Level AA compliant (role="dialog", aria-modal, aria-labelledby)
- * - Focus trap within modal while open
- * - Escape key closes modal
- * - Group preview (name, color, icon, member count)
- * - Loading state during join
- * - Error state with appropriate messages
+ * Original functionality will be restored in Epic 14d (Shared Groups v2).
+ *
+ * @example
+ * ```tsx
+ * <JoinGroupDialog
+ *   isOpen={isOpen}
+ *   onCancel={() => setIsOpen(false)}
+ *   t={t}
+ * />
+ * ```
  */
 
 import React, { useEffect, useRef, useCallback } from 'react';
-import { X, UserPlus, Users, Loader2, AlertCircle, UserCheck } from 'lucide-react';
+import { X } from 'lucide-react';
+// Types kept for backwards compatibility but not used
 import type { SharedGroupPreview } from '../../types/sharedGroup';
 import type { JoinLinkState, JoinError } from '../../hooks/useJoinLinkHandler';
 
 export interface JoinGroupDialogProps {
     /** Whether the modal is currently open */
     isOpen: boolean;
-    /** Current state of the join flow */
-    state: JoinLinkState;
-    /** Group preview data (if available) */
-    groupPreview: SharedGroupPreview | null;
-    /** Error that occurred (if any) */
-    error: JoinError | null;
-    /** Callback when user confirms joining */
-    onConfirm: () => void;
+    /** @deprecated Current state of the join flow - IGNORED (feature disabled) */
+    state?: JoinLinkState;
+    /** @deprecated Group preview data - IGNORED (feature disabled) */
+    groupPreview?: SharedGroupPreview | null;
+    /** @deprecated Error that occurred - IGNORED (feature disabled) */
+    error?: JoinError | null;
+    /** @deprecated Callback when user confirms joining - IGNORED (feature disabled) */
+    onConfirm?: () => void;
     /** Callback when dialog is closed/canceled */
     onCancel: () => void;
-    /** Callback to dismiss error state */
-    onDismissError: () => void;
+    /** @deprecated Callback to dismiss error state - IGNORED (feature disabled) */
+    onDismissError?: () => void;
     /** Translation function */
     t: (key: string) => string;
-    /** Language for fallback text */
+    /** @deprecated Language for fallback text - IGNORED (feature disabled) */
     lang?: 'en' | 'es';
 }
 
 /**
- * Get user-friendly error message for each error type.
- */
-function getErrorMessage(error: JoinError, lang: 'en' | 'es'): { title: string; description: string } {
-    const messages: Record<JoinError, { en: { title: string; description: string }; es: { title: string; description: string } }> = {
-        CODE_NOT_FOUND: {
-            en: { title: 'Invalid Link', description: 'This share link is not valid. Please ask for a new one.' },
-            es: { title: 'Enlace Inválido', description: 'Este enlace no es válido. Pide uno nuevo.' },
-        },
-        CODE_EXPIRED: {
-            en: { title: 'Link Expired', description: 'This share link has expired. Ask the group owner for a new link.' },
-            es: { title: 'Enlace Expirado', description: 'Este enlace ha expirado. Pide uno nuevo al dueño del grupo.' },
-        },
-        GROUP_FULL: {
-            en: { title: 'Group Full', description: 'This group has reached the maximum of 10 members.' },
-            es: { title: 'Grupo Lleno', description: 'Este grupo ha alcanzado el máximo de 10 miembros.' },
-        },
-        ALREADY_MEMBER: {
-            en: { title: 'Already a Member', description: 'You\'re already a member of this group.' },
-            es: { title: 'Ya Eres Miembro', description: 'Ya eres miembro de este grupo.' },
-        },
-        NETWORK_ERROR: {
-            en: { title: 'Connection Error', description: 'Please check your internet connection and try again.' },
-            es: { title: 'Error de Conexión', description: 'Por favor revisa tu conexión a internet e intenta de nuevo.' },
-        },
-        UNKNOWN_ERROR: {
-            en: { title: 'Something Went Wrong', description: 'Please try again later.' },
-            es: { title: 'Algo Salió Mal', description: 'Por favor intenta de nuevo más tarde.' },
-        },
-    };
-
-    return messages[error][lang];
-}
-
-/**
- * Join group confirmation dialog.
+ * Simplified join group dialog that shows "Coming soon" message.
  */
 export const JoinGroupDialog: React.FC<JoinGroupDialogProps> = ({
     isOpen,
-    state,
-    groupPreview,
-    error,
-    onConfirm,
     onCancel,
-    onDismissError,
     t,
-    lang = 'es',
 }) => {
     const modalRef = useRef<HTMLDivElement>(null);
     const closeButtonRef = useRef<HTMLButtonElement>(null);
     const previousActiveElement = useRef<Element | null>(null);
-
-    const isJoining = state === 'joining';
-    const isLoading = state === 'loading';
-    const isError = state === 'error';
 
     // Store the previously focused element when modal opens
     useEffect(() => {
@@ -110,31 +69,26 @@ export const JoinGroupDialog: React.FC<JoinGroupDialogProps> = ({
 
     // Restore focus when modal closes
     const handleClose = useCallback(() => {
-        if (isJoining) return; // Don't close while joining
         onCancel();
         setTimeout(() => {
             (previousActiveElement.current as HTMLElement)?.focus?.();
         }, 0);
-    }, [onCancel, isJoining]);
+    }, [onCancel]);
 
     // Handle Escape key to close modal
     useEffect(() => {
         if (!isOpen) return;
 
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && !isJoining) {
+            if (e.key === 'Escape') {
                 e.preventDefault();
-                if (isError) {
-                    onDismissError();
-                } else {
-                    handleClose();
-                }
+                handleClose();
             }
         };
 
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, handleClose, isJoining, isError, onDismissError]);
+    }, [isOpen, handleClose]);
 
     // Focus trap within modal
     useEffect(() => {
@@ -181,26 +135,18 @@ export const JoinGroupDialog: React.FC<JoinGroupDialogProps> = ({
 
     if (!isOpen) return null;
 
-    // Translations
-    const texts = {
-        title: t('joinGroupTitle') || (lang === 'es' ? '¿Unirte al grupo?' : 'Join group?'),
-        loading: t('loading') || (lang === 'es' ? 'Cargando...' : 'Loading...'),
-        members: t('members') || (lang === 'es' ? 'miembros' : 'members'),
-        join: t('join') || (lang === 'es' ? 'Unirme' : 'Join'),
-        joining: t('joining') || (lang === 'es' ? 'Uniéndose...' : 'Joining...'),
-        cancel: t('cancel') || (lang === 'es' ? 'Cancelar' : 'Cancel'),
-        close: t('close') || (lang === 'es' ? 'Cerrar' : 'Close'),
-        ok: t('ok') || 'OK',
-    };
-
-    const errorMessage = error ? getErrorMessage(error, lang) : null;
+    // Translations with fallbacks
+    const title = t('featureComingSoon') || 'Próximamente';
+    const description = t('featureComingSoonDescription') || 'Esta función está siendo rediseñada para una mejor experiencia. ¡Mantente atento!';
+    const closeText = t('close') || 'Cerrar';
+    const okText = t('ok') || 'OK';
 
     return (
         <div
             className="fixed inset-0 z-[9999] flex items-center justify-center"
             role="presentation"
             data-testid="join-group-dialog-backdrop"
-            onClick={isJoining ? undefined : handleClose}
+            onClick={handleClose}
         >
             {/* Full-screen backdrop */}
             <div
@@ -216,165 +162,63 @@ export const JoinGroupDialog: React.FC<JoinGroupDialogProps> = ({
                 aria-labelledby="join-group-modal-title"
                 aria-describedby="join-group-modal-description"
                 className="relative z-10 w-full max-w-sm mx-4 rounded-2xl shadow-xl"
-                style={{ backgroundColor: 'var(--surface)' }}
+                style={{ backgroundColor: 'var(--surface, #ffffff)' }}
                 onClick={(e) => e.stopPropagation()}
                 data-testid="join-group-dialog"
             >
                 {/* Close button */}
                 <button
                     ref={closeButtonRef}
-                    onClick={isError ? onDismissError : handleClose}
-                    disabled={isJoining}
-                    className="absolute right-4 top-4 p-2 rounded-full transition-colors disabled:opacity-50"
+                    onClick={handleClose}
+                    className="absolute right-4 top-4 p-2 rounded-full transition-colors"
                     style={{
-                        color: 'var(--secondary)',
-                        backgroundColor: 'var(--bg-tertiary)',
+                        color: 'var(--secondary, #64748b)',
+                        backgroundColor: 'var(--bg-tertiary, #f1f5f9)',
                     }}
-                    aria-label={texts.close}
+                    aria-label={closeText}
                     data-testid="join-group-close-btn"
                 >
                     <X size={20} aria-hidden="true" />
                 </button>
 
-                {/* Content */}
-                <div className="p-6 text-center">
-                    {/* Loading State */}
-                    {isLoading && (
-                        <div data-testid="join-group-loading" className="py-8">
-                            <Loader2 className="animate-spin mx-auto mb-4" size={48} style={{ color: 'var(--primary)' }} />
-                            <p style={{ color: 'var(--secondary)' }}>{texts.loading}</p>
-                        </div>
-                    )}
+                {/* Content - Coming Soon Message */}
+                <div className="p-6 pt-12 text-center">
+                    {/* House emoji icon */}
+                    <div
+                        className="mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center text-3xl"
+                        style={{ backgroundColor: 'var(--primary-bg, #eff6ff)' }}
+                        aria-hidden="true"
+                    >
+                        🏠
+                    </div>
 
-                    {/* Error State */}
-                    {isError && errorMessage && (
-                        <>
-                            <div
-                                className="mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center"
-                                style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
-                                aria-hidden="true"
-                            >
-                                {error === 'ALREADY_MEMBER' ? (
-                                    <UserCheck className="text-amber-500" size={32} />
-                                ) : (
-                                    <AlertCircle className="text-red-500" size={32} />
-                                )}
-                            </div>
+                    {/* Title */}
+                    <h2
+                        id="join-group-modal-title"
+                        className="text-xl font-bold mb-2"
+                        style={{ color: 'var(--text-primary, #0f172a)' }}
+                    >
+                        {title}
+                    </h2>
 
-                            <h2
-                                id="join-group-modal-title"
-                                className="text-xl font-bold mb-2"
-                                style={{ color: error === 'ALREADY_MEMBER' ? 'var(--primary)' : '#ef4444' }}
-                            >
-                                {errorMessage.title}
-                            </h2>
+                    {/* Description */}
+                    <p
+                        id="join-group-modal-description"
+                        className="text-sm mb-6"
+                        style={{ color: 'var(--text-secondary, #64748b)' }}
+                    >
+                        {description}
+                    </p>
 
-                            <p
-                                id="join-group-modal-description"
-                                className="text-sm mb-6"
-                                style={{ color: 'var(--secondary)' }}
-                            >
-                                {errorMessage.description}
-                            </p>
-
-                            <button
-                                onClick={onDismissError}
-                                className="w-full py-3 px-4 rounded-xl text-white font-semibold shadow-md transition-all hover:scale-[1.01] active:scale-[0.99]"
-                                style={{ backgroundColor: 'var(--primary)' }}
-                                data-testid="join-group-dismiss-btn"
-                            >
-                                {texts.ok}
-                            </button>
-                        </>
-                    )}
-
-                    {/* Confirming State */}
-                    {(state === 'confirming' || state === 'joining') && groupPreview && (
-                        <>
-                            {/* Group Icon */}
-                            <div
-                                className="mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center text-2xl"
-                                style={{ backgroundColor: groupPreview.color }}
-                                aria-hidden="true"
-                            >
-                                {groupPreview.icon || <Users className="text-white" size={28} />}
-                            </div>
-
-                            {/* Title */}
-                            <h2
-                                id="join-group-modal-title"
-                                className="text-xl font-bold mb-1"
-                                style={{ color: 'var(--primary)' }}
-                            >
-                                {texts.title}
-                            </h2>
-
-                            {/* Group name */}
-                            <p
-                                className="text-lg font-semibold mb-2"
-                                style={{ color: groupPreview.color }}
-                            >
-                                {groupPreview.name}
-                            </p>
-
-                            {/* Member count */}
-                            <p
-                                id="join-group-modal-description"
-                                className="text-sm mb-6 flex items-center justify-center gap-2"
-                                style={{ color: 'var(--secondary)' }}
-                            >
-                                <Users size={16} />
-                                {groupPreview.memberCount} {texts.members}
-                            </p>
-
-                            {/* Joining indicator */}
-                            {isJoining && (
-                                <div data-testid="join-group-joining" className="mb-4">
-                                    <Loader2 className="animate-spin mx-auto" size={24} style={{ color: groupPreview.color }} />
-                                </div>
-                            )}
-
-                            {/* Action buttons */}
-                            <div className="flex flex-col gap-3">
-                                {/* Join button */}
-                                <button
-                                    onClick={onConfirm}
-                                    disabled={isJoining}
-                                    className="w-full py-3 px-4 rounded-xl text-white font-semibold shadow-md transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                    style={{ backgroundColor: groupPreview.color }}
-                                    data-testid="join-group-confirm-btn"
-                                >
-                                    {isJoining ? (
-                                        <>
-                                            <Loader2 className="animate-spin" size={18} />
-                                            {texts.joining}
-                                        </>
-                                    ) : (
-                                        <>
-                                            <UserPlus size={18} />
-                                            {texts.join}
-                                        </>
-                                    )}
-                                </button>
-
-                                {/* Cancel button */}
-                                <button
-                                    onClick={handleClose}
-                                    disabled={isJoining}
-                                    className="w-full py-3 px-4 rounded-xl border font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                                    style={{
-                                        borderColor: 'var(--border-light)',
-                                        color: 'var(--text-primary)',
-                                        backgroundColor: 'var(--bg-secondary)',
-                                    }}
-                                    data-testid="join-group-cancel-btn"
-                                >
-                                    <X size={18} />
-                                    {texts.cancel}
-                                </button>
-                            </div>
-                        </>
-                    )}
+                    {/* OK button */}
+                    <button
+                        onClick={handleClose}
+                        className="w-full py-3 px-4 rounded-xl text-white font-semibold shadow-md transition-all hover:scale-[1.01] active:scale-[0.99]"
+                        style={{ backgroundColor: 'var(--primary, #2563eb)' }}
+                        data-testid="join-group-ok-btn"
+                    >
+                        {okText}
+                    </button>
                 </div>
             </div>
         </div>

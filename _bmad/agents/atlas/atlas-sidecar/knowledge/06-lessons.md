@@ -143,6 +143,8 @@
 | Check existing keys | Search translations.ts before adding |
 | Both languages | Add en AND es simultaneously |
 | Test mockT | Return actual translations, not just keys |
+| Fallback masks bugs | `t('key') \|\| 'Fallback'` hides missing keys - verify keys exist in translations.ts (14c-refactor.5) |
+| File List accuracy | If claiming translations.ts modified, grep for the keys to verify (14c-refactor.5 review finding) |
 
 ---
 
@@ -271,6 +273,7 @@
 
 ## Sync Notes
 
+- **2026-01-21:** Added i18n fallback pattern lesson from 14c-refactor.5 code review (translation keys missing but tests passed due to mock)
 - **Generation 6 (2026-01-20):** Added Epic 14c failure lessons (delta sync, multi-op testing, cost control)
 - **Generation 5 (2026-01-17):** Consolidated 15+ story code reviews into pattern tables
 - **Reduction:** 528 → ~280 lines (~47% smaller)
