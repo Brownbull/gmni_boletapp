@@ -238,6 +238,8 @@
 | Story status | Update before commit (not "Ready for Dev") |
 | AC partial implementation | Document alternatives explicitly |
 | Multi-session stories | Organize File List by session with labels |
+| Code Review Fixes section | Verify fixes were actually applied to code, not just documented (14c-refactor.4) |
+| Doc code examples | Keep embedded code examples in sync with actual implementation |
 
 ### Component Patterns
 | Pattern | Rule |
@@ -273,6 +275,7 @@
 
 ## Sync Notes
 
+- **2026-01-21:** Added story documentation pattern - verify code review fixes actually applied (14c-refactor.4 review)
 - **2026-01-21:** Added i18n fallback pattern lesson from 14c-refactor.5 code review (translation keys missing but tests passed due to mock)
 - **Generation 6 (2026-01-20):** Added Epic 14c failure lessons (delta sync, multi-op testing, cost control)
 - **Generation 5 (2026-01-17):** Consolidated 15+ story code reviews into pattern tables
