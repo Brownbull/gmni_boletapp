@@ -523,6 +523,48 @@ export function useUserSharedGroups(_db: Firestore, _userId: string | undefined)
 
 **Reference:** Story 14c-refactor.3
 
+### IndexedDB Migration Pattern (Story 14c-refactor.4)
+
+**Pattern:** One-time migration scripts for clearing legacy client-side storage
+
+```typescript
+// src/migrations/clearSharedGroupCache.ts
+const MIGRATION_KEY = 'boletapp_migrations_v1';
+
+export async function clearLegacySharedGroupCache(): Promise<void> {
+    const migrations = JSON.parse(localStorage.getItem(MIGRATION_KEY) || '{}');
+    if (migrations['shared_group_cache_cleared']) return;
+
+    try {
+        await new Promise<void>((resolve) => {
+            const request = indexedDB.deleteDatabase('boletapp_shared_groups');
+            request.onsuccess = () => resolve();
+            request.onerror = () => resolve();  // Mark complete to avoid retry loops
+            request.onblocked = () => resolve();
+        });
+    } catch (err) { /* graceful handling */ }
+
+    migrations['shared_group_cache_cleared'] = Date.now();
+    localStorage.setItem(MIGRATION_KEY, JSON.stringify(migrations));
+}
+```
+
+**Key Decisions:**
+
+| Decision | Rationale |
+|----------|-----------|
+| localStorage tracking | Survives page refreshes, simple, reliable |
+| Fire-and-forget call | Non-blocking app startup |
+| Mark complete on error | Prevent infinite retry loops |
+| Console log only in DEV | Clean production experience |
+
+**Integration:** Call from `main.tsx` before React render (non-blocking):
+```typescript
+clearLegacySharedGroupCache().catch(console.error);
+```
+
+**Reference:** Story 14c-refactor.4
+
 ---
 
 ## Sync Notes
@@ -536,5 +578,6 @@ export function useUserSharedGroups(_db: Firestore, _userId: string | undefined)
 - 2026-01-20: Added Story 14c.20 Shared Group Cache Optimization pattern
 - 2026-01-21: Added Epic 14c-refactor Service Stubbing Pattern
 - 2026-01-21: Added Epic 14c-refactor Hook Stubbing Pattern (Story 14c-refactor.3)
+- 2026-01-21: Added IndexedDB Migration Pattern (Story 14c-refactor.4)
 - Code review learnings in 06-lessons.md
 - Story details in docs/sprint-artifacts/
