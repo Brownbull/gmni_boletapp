@@ -208,9 +208,13 @@ describe('detectMemberUpdates', () => {
             // Empty previous map = first load
             const result = detectMemberUpdates(groups, new Map(), currentUserId);
 
-            // First load should detect user-b's timestamp > 0 (previous was undefined = 0)
-            expect(result.shouldInvalidate).toBe(true);
-            expect(result.groupsWithChanges).toContain('group-1');
+            // Story 14c.23 Fix: First load should NOT trigger invalidation
+            // We only want to invalidate when we detect an ACTUAL change from a known baseline
+            // Otherwise, every app startup would trigger a full refetch
+            expect(result.shouldInvalidate).toBe(false);
+            expect(result.groupsWithChanges).toHaveLength(0);
+            // But the map should be populated for next comparison
+            expect(result.updatedPreviousMap.has('group-1')).toBe(true);
         });
 
         it('should handle new member joining group', () => {

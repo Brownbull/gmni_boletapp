@@ -3520,12 +3520,17 @@ function App() {
     const isGroupMode = viewMode === 'group' && !!activeGroup;
     // Story 14c.16: Use rawTransactions for group mode to enable cross-year navigation
     // sharedGroupTransactions is date-filtered (current month), rawTransactions has all data
-    const activeTransactions = isGroupMode ? sharedGroupRawTransactions : transactions;
+    // Story 14c.23 Fix: Defensive guard - React Query can return undefined during cache transitions
+    // Use Array.isArray check to handle any non-array value (undefined, null, or unexpected type)
+    const safeSharedGroupRawTransactions = Array.isArray(sharedGroupRawTransactions)
+        ? sharedGroupRawTransactions
+        : [];
+    const activeTransactions = isGroupMode ? safeSharedGroupRawTransactions : transactions;
     // Story 14c.5 Bug Fix: Sort shared group transactions by createdAt for recent scans carousel
     // This ensures recently scanned receipts appear first (consistent with personal mode behavior)
     // Story 14c.16: Use rawTransactions for consistent data source
     const activeRecentTransactions = isGroupMode
-        ? [...sharedGroupRawTransactions]
+        ? [...safeSharedGroupRawTransactions]
             .sort((a, b) => {
                 // Sort by createdAt descending (most recently scanned first)
                 const getTime = (tx: Transaction): number => {
@@ -4480,7 +4485,7 @@ function App() {
                                 // User clicks "Edit" button in detail view to enter edit mode (with conflict check)
                                 navigateToTransactionDetail(tx as Transaction);
                             }}
-                            allTransactions={(isGroupMode ? sharedGroupRawTransactions : transactionsWithRecentScans) as any}
+                            allTransactions={(isGroupMode ? safeSharedGroupRawTransactions : transactionsWithRecentScans) as any}
                             defaultCity={defaultCity}
                             defaultCountry={defaultCountry}
                             lang={lang}
