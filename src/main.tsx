@@ -10,7 +10,7 @@ import { ScanProvider } from './contexts/ScanContext';
 import { ViewModeProvider } from './contexts/ViewModeContext';
 // Story 14.35: Preload localized country data
 import { preloadCountries } from './services/locationService';
-// Story 14c-refactor.4: Clear legacy shared group cache from IndexedDB
+// Story 14c-refactor.4: Clear legacy shared group cache on startup
 import { clearLegacySharedGroupCache } from './migrations/clearSharedGroupCache';
 // Story 14.35b: Flag icons CSS for foreign location display
 import 'flag-icons/css/flag-icons.min.css';
@@ -19,7 +19,7 @@ import App from './App';
 // Story 14.35: Warm location cache on app startup (fire-and-forget)
 preloadCountries();
 
-// Story 14c-refactor.4: Run migration to clear legacy IndexedDB cache (non-blocking)
+// Story 14c-refactor.4: Clear legacy shared group IndexedDB cache (fire-and-forget)
 clearLegacySharedGroupCache().catch(console.error);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
