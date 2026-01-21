@@ -1,7 +1,6 @@
 /**
  * Web Push Service (Client-side)
  *
- * Story 14c.13: Alternative notification delivery using web-push/VAPID
  *
  * Uses the native Push API with VAPID keys for reliable
  * cross-browser push notification delivery, especially on Android Chrome.
@@ -16,7 +15,6 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 
 /**
  * VAPID public key for Web Push subscriptions
- * Story 14c.15: Moved from hardcoded to environment variable
  *
  * Must match VAPID_PUBLIC_KEY in Cloud Functions .env
  * Note: VAPID public keys are designed to be public - they're included
@@ -100,7 +98,6 @@ export async function subscribeToWebPush(): Promise<PushSubscription | null> {
     return null;
   }
 
-  // Story 14c.15: Validate VAPID key is configured
   if (!VAPID_PUBLIC_KEY) {
     console.error('[WebPush] VAPID public key not configured. Set VITE_VAPID_PUBLIC_KEY in .env');
     return null;

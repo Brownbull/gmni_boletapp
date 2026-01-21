@@ -3,7 +3,6 @@
  *
  * Story 9.18: Initial push notification settings
  * Story 14.22: Updated to match settings.html mockup design
- * Story 14c.13: Added shared group notifications toggle and test button
  *
  * Settings UI for push notifications with toggle switches.
  * Shows permission status and enable/disable toggle.
@@ -99,7 +98,6 @@ export function NotificationSettings({
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [isSendingGroupTest, setIsSendingGroupTest] = useState(false);
   const [spendingRemindersEnabled, setSpendingRemindersEnabled] = useState(false);
-  // Story 14c.13: Shared group notifications state
   const [sharedGroupNotificationsEnabled, setSharedGroupNotificationsEnabled] = useState(false);
 
   const {
@@ -123,7 +121,6 @@ export function NotificationSettings({
 
   const isDark = theme === 'dark';
 
-  // Story 14c.13: Shared group notifications depend on main push being enabled
   // Only show as enabled if main push is enabled AND localStorage flag is true
   useEffect(() => {
     const localEnabled = isWebPushEnabledLocal();
@@ -207,7 +204,6 @@ export function NotificationSettings({
     }
   };
 
-  // Story 14c.13: Handle shared group notifications toggle
   const handleSharedGroupNotificationsToggle = async () => {
     if (sharedGroupNotificationsEnabled) {
       // Disable - just update localStorage (subscriptions are managed by main push toggle)
@@ -241,7 +237,6 @@ export function NotificationSettings({
     }
   };
 
-  // Story 14c.13: Send test shared group notification
   const handleTestSharedGroupNotification = async () => {
     setIsSendingGroupTest(true);
     try {
@@ -353,7 +348,6 @@ export function NotificationSettings({
         )}
       </div>
 
-      {/* Story 14c.13: Shared Group Notifications Card */}
       <div style={cardStyle}>
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2.5">
@@ -465,7 +459,6 @@ export function NotificationSettings({
         </div>
       )}
 
-      {/* Story 14c.13: Test Shared Group Notification Card - only shown when shared group notifications are enabled */}
       {sharedGroupNotificationsEnabled && (
         <div style={cardStyle}>
           <div className="flex justify-between items-center">

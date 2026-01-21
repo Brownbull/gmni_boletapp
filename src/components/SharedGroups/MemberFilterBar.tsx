@@ -1,5 +1,4 @@
 /**
- * Story 14c.5: Shared Group Transactions View - MemberFilterBar Component
  *
  * Avatar toggle buttons for filtering transactions by member.
  * Allows multi-select to show transactions from specific members.

@@ -32,7 +32,6 @@ export { SearchBar } from './SearchBar';
 // Story 14.15: Selection mode components
 export { SelectionBar } from './SelectionBar';
 export type { SelectionBarProps } from './SelectionBar';
-// Story 14c.8: Personal group modals removed (AssignGroupModal, CreateGroupModal, EditGroupModal, DeleteGroupModal)
 // Use TransactionGroupSelector from SharedGroups for group assignment
 export { DeleteTransactionsModal } from './DeleteTransactionsModal';
 export type { DeleteTransactionsModalProps, TransactionPreview } from './DeleteTransactionsModal';

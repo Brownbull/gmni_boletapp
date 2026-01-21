@@ -1,5 +1,4 @@
 /**
- * Story 14c.9: Shared Group Analytics - MemberContributionChart Component
  *
  * Visualizes spending contribution breakdown by group member.
  * Shows each member's share of total group spending with horizontal bar chart.

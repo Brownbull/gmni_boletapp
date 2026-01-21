@@ -39,38 +39,86 @@
 
 ---
 
-## Current Development: Epic 14c (Household Sharing)
+## Current Development: Epic 14c-refactor (Codebase Cleanup)
 
-**Status:** 10/11 stories done | **Points:** ~55 | **Started:** 2026-01-15
+**Status:** 5/19 stories done | **Points:** ~54 | **Started:** 2026-01-21
 
-### Core Features Delivered
-- **Shared Groups:** Create, join via share code, manage members
-- **View Mode Switcher:** Toggle between personal/shared group views
-- **Transaction Tagging:** Tag transactions to groups manually or auto-tag on scan
-- **Ownership Indicators:** Visual display of transaction owners with avatars
-- **Member Filtering:** Filter shared group transactions by member
-- **Empty States:** Context-aware empty states and loading skeletons
+### Epic Context
+Epic 14c (original Household Sharing) was **REVERTED** on 2026-01-20 due to:
+- Delta sync cannot detect transaction removals
+- Multi-layer caching got out of sync
+- Cost explosion from fallback strategies
 
-### Story Status
+**This Epic:** Cleans codebase before Epic 14d (Shared Groups v2)
+
+### Story Status (Part 1: Cleanup)
 
 | Story | Status | Description |
 |-------|--------|-------------|
-| 14c.1 | ✅ Done | Create Shared Group (top-level collection, share codes) |
-| 14c.2 | ✅ Done | Accept/Decline Invitation (email-based workflow) |
-| 14c.3 | ✅ Done | Leave/Manage Group (member management, owner transfer) |
-| 14c.4 | ✅ Done | View Mode Switcher (personal/group toggle) |
-| 14c.5 | ✅ Done | Shared Group Transactions View (merged feed) |
-| 14c.6 | ✅ Done | Transaction Ownership Indicators (avatars, colors) |
-| 14c.7 | ✅ Done | Tag Transactions to Groups (manual assignment) |
-| 14c.8 | ✅ Done | Auto-Tag on Scan (default group assignment) |
-| 14c.9 | ✅ Done | Member Filter Bar (filter by household member) |
-| 14c.10 | ✅ Done | Empty States & Loading (skeleton + context CTAs) |
-| 14c.11 | 📋 Ready | Real-time Sync (onSnapshot listeners) |
+| 14c-refactor.1 | ✅ Done | Stub Cloud Functions |
+| 14c-refactor.2 | ✅ Done | Stub Services |
+| 14c-refactor.3 | ✅ Done | Stub Hooks |
+| 14c-refactor.4 | ✅ Done | Clean IndexedDB Cache |
+| 14c-refactor.5 | ✅ Done | Placeholder UI States |
+| 14c-refactor.6 | 📋 Ready | Firestore Data Cleanup Script |
+| 14c-refactor.7 | 📋 Ready | Security Rules Simplification |
+| 14c-refactor.8 | 📋 Ready | Remove Dead Code (memberUpdateDetection.ts, archive scripts) |
 
-### Key Architecture (ADR-011)
-- **Top-level collections:** `/sharedGroups/{groupId}`, `/pendingInvitations/{invitationId}`
-- **Security helpers:** `isGroupMember()`, `isGroupOwner()`, `isJoiningGroup()`
-- **Query pattern:** Collection group queries with auth-only + limit rules
+### Story Status (Part 2: App Architecture Refactor)
+
+| Story | Status | Description |
+|-------|--------|-------------|
+| **14c-refactor.9** | **📋 Ready** | **Extract Auth, Navigation, Theme, Notification, AppState contexts** |
+| **14c-refactor.10** | **📋 Ready** | **Extract useAppInitialization, useDeepLinking, usePushNotifications, useOnlineStatus, useAppLifecycle** |
+| **14c-refactor.11** | **📋 Ready** | **Create AppProviders, AppRoutes, AppLayout, AppErrorBoundary** |
+
+### Story Created - 14c-refactor.9 - 2026-01-21
+
+**Summary:** App.tsx Decomposition - Contexts (Non-Scan) - Extract 5 context providers for Auth, Navigation, Theme, Notification, and AppState
+
+**User Value:** Cleaner codebase architecture, smaller App.tsx (~500-700 lines reduced), better separation of concerns, maintainability
+
+**Workflow Touchpoints:**
+- Auth → Scan → Save Critical Path (auth timing)
+- Scan Request Lifecycle (ScanContext preserved)
+- Analytics Navigation Flow (view switching)
+- Trust Merchant Flow (user.uid dependency)
+
+**Source:** docs/sprint-artifacts/epic14c-refactor/14c-refactor-9-app-decomposition-contexts.md
+
+### Story Created - 14c-refactor.10 - 2026-01-21
+
+**Summary:** App.tsx Decomposition - Hooks (Non-Scan) - Extract 5 custom hooks for initialization, deep linking, push notifications, online status, and app lifecycle
+
+**User Value:** Cleaner codebase architecture, smaller App.tsx (~300-500 lines reduced), better separation of concerns
+
+**Workflow Touchpoints:**
+- Auth → Scan → Save Critical Path (initialization timing)
+- Push Notification Flow (FCM registration)
+- Deep Link Flow (/join/ route handling)
+- Scan Receipt Flow (depends on Firebase init)
+
+**Source:** docs/sprint-artifacts/epic14c-refactor/14c-refactor-10-app-decomposition-hooks.md
+
+### Story Created - 14c-refactor.11 - 2026-01-21
+
+**Summary:** App.tsx Decomposition - Components - Create AppProviders, AppRoutes, AppLayout, AppErrorBoundary to make App.tsx a simple composition root (~200-300 lines)
+
+**User Value:** App.tsx reduced from ~5100 lines to ~200-300 lines, clear separation of concerns, maintainable component architecture
+
+**Workflow Touchpoints:**
+- Auth → Scan → Save Critical Path (provider composition order)
+- Scan Receipt Flow (#1) (ScanProvider placement)
+- Analytics Navigation Flow (#4) (routing in AppRoutes)
+- Deep Link Flow (#14c.17) (/join/ route handling in AppRoutes)
+- History Filter Flow (#6) (filter clearing on navigation)
+
+**Source:** docs/sprint-artifacts/epic14c-refactor/14c-refactor-11-app-decomposition-components.md
+
+### Key Approach
+- **Shell & Stub:** Keep UI components as disabled placeholders
+- **React Query only:** Remove IndexedDB/localStorage caching
+- **Preserve ScanContext:** Epic 14d-old already refactored scan state
 
 ---
 

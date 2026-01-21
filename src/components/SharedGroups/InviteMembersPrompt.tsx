@@ -1,7 +1,6 @@
 /**
  * InviteMembersPrompt Component
  *
- * Story 14c.10: Empty States & Loading
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * A prominent banner shown at the top of shared group views when

@@ -1,7 +1,6 @@
 /**
  * SharedGroupEmptyState Component
  *
- * Story 14c.10: Empty States & Loading
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * Displays friendly empty state when a shared group has no transactions.

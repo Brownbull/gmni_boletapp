@@ -1,7 +1,6 @@
 /**
  * Deep Link Handler Utilities
  *
- * Story 14c.17: Share Link Deep Linking
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * Handles parsing of share code URLs for the shared groups feature.

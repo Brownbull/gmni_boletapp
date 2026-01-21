@@ -55,7 +55,6 @@ export async function addTransaction(
     // Clean undefined values before sending to Firestore
     const cleanedTransaction = removeUndefined(transaction as Record<string, unknown>);
 
-    // Story 14c.5: Always include sharedGroupIds (default empty array)
     // This ensures ALL transactions have the field, enabling proper security rules
     // for collection group queries that check resource.data.sharedGroupIds.size() > 0
     const transactionWithDefaults = {

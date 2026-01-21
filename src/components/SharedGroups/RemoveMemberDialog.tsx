@@ -1,7 +1,6 @@
 /**
  * RemoveMemberDialog Component
  *
- * Story 14c.3: Leave/Manage Group
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * Confirmation dialog for removing a member from a shared group.

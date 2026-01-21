@@ -1,7 +1,6 @@
 /**
  * ShareCodeDisplay Component
  *
- * Story 14c.1: Create Shared Group
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * Displays a share code with copy and share functionality.

@@ -36,7 +36,6 @@ export type ForeignLocationDisplayFormat = 'code' | 'flag';
 
 /**
  * View mode preference for shared groups
- * Story 14c.18: Persisted preference for personal vs group mode
  */
 export interface ViewModePreference {
   /** Current mode: personal or group */
@@ -68,7 +67,6 @@ export interface UserPreferences {
   fontFamily?: SupportedFontFamily;
   /** Story 14.35b: Foreign location display format ('code' or 'flag') */
   foreignLocationFormat?: ForeignLocationDisplayFormat;
-  /** Story 14c.18: View mode preference (personal vs group) */
   viewModePreference?: ViewModePreference;
   /** Timestamp when preferences were last updated */
   updatedAt?: any;
@@ -123,7 +121,6 @@ export async function getUserPreferences(
         fontFamily: data.fontFamily || DEFAULT_PREFERENCES.fontFamily,
         // Story 14.35b: Foreign location display format (defaults to 'code')
         foreignLocationFormat: data.foreignLocationFormat || DEFAULT_PREFERENCES.foreignLocationFormat,
-        // Story 14c.18: View mode preference (personal vs group)
         viewModePreference: data.viewModePreference,
         updatedAt: data.updatedAt,
       };
@@ -185,7 +182,6 @@ export const CURRENCY_INFO: Record<SupportedCurrency, { name: string; nameEs: st
 export const SUPPORTED_CURRENCIES: SupportedCurrency[] = ['CLP', 'USD', 'EUR'];
 
 // =============================================================================
-// Story 14c.18: View Mode Preference Functions
 // =============================================================================
 
 /** localStorage key for offline fallback */
@@ -193,7 +189,6 @@ export const VIEW_MODE_PREFERENCE_KEY = 'boletapp_view_mode_preference';
 
 /**
  * Save view mode preference to Firestore with offline fallback to localStorage
- * Story 14c.18: AC1, AC6, AC7
  *
  * @param db - Firestore instance
  * @param userId - User ID from Firebase Auth
@@ -217,11 +212,9 @@ export async function saveViewModePreference(
   }
 
   // Save to Firestore
-  // Story 14c.20 bug fix: Firestore doesn't accept undefined values
   // Use deleteField() to remove groupId when switching to personal mode
   try {
     const docRef = getPreferencesDocRef(db, appId, userId);
-    // Story 14c.23 Fix: Firestore doesn't accept undefined values
     // Use deleteField() for undefined groupId when in personal mode
     const viewModeData: Record<string, unknown> = {
       mode: preference.mode,
@@ -250,7 +243,6 @@ export async function saveViewModePreference(
 
 /**
  * Load view mode preference from localStorage (for offline/quick access)
- * Story 14c.18: AC7
  *
  * @returns View mode preference or undefined if not found
  */

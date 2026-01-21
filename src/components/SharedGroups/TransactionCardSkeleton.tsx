@@ -1,7 +1,6 @@
 /**
  * TransactionCardSkeleton Component
  *
- * Story 14c.10: Empty States & Loading
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * Animated skeleton placeholder for transaction cards during loading state.

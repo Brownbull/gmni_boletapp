@@ -1,7 +1,6 @@
 /**
  * In-App Notification Types
  *
- * Story 14c.13: In-app notification history for shared group events
  *
  * Notifications are stored in Firestore per-user and displayed in the Alertas view.
  * Push notifications also create in-app notifications for history persistence.
@@ -63,8 +62,6 @@ export interface InAppNotificationClient extends Omit<InAppNotification, 'create
 /**
  * Data passed from service worker on notification click
  *
- * Story 14c.15: Consolidated from usePushNotifications.ts and useSharedGroupTransactions.ts
- * Story 14c.13: Used for delta fetch trigger when notification is tapped
  */
 export interface NotificationClickData {
     /** Type of notification (e.g., 'TRANSACTION_ADDED', 'TRANSACTION_REMOVED') */

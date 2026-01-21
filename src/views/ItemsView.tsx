@@ -38,7 +38,6 @@ import { TransitionChild } from '../components/animation/TransitionChild';
 import { useDerivedItems } from '../hooks/useDerivedItems';
 import { useHistoryFilters } from '../hooks/useHistoryFilters';
 import { useReducedMotion } from '../hooks/useReducedMotion';
-// Story 14c.8: Groups for custom groups filter (shared groups only)
 import { useAllUserGroups } from '../hooks/useAllUserGroups';
 // Story 14.31 Session 2: Item aggregation (group same products together)
 // Story 14.31 Session 3: Added sortAggregatedItems for sort control
@@ -214,7 +213,6 @@ export const ItemsView: React.FC<ItemsViewProps> = ({
     onNavigateToView,
     initialCategory,
     initialSearchTerm,
-    // Story 14c.8: User ID for groups (appId no longer needed after consolidation)
     userId = null,
     appId: _appId = 'boletapp',
     // Story 14.13: Font color mode - receiving this prop triggers re-render when setting changes
@@ -257,7 +255,6 @@ export const ItemsView: React.FC<ItemsViewProps> = ({
         hasActiveFilters: hasTemporalOrCategoryFilters,
     } = useHistoryFilters();
 
-    // Story 14c.8: Groups hook for custom groups filter (shared groups only)
     const { groups, isLoading: groupsLoading } = useAllUserGroups(userId);
 
     // Items hook - uses React Query caching for derived items

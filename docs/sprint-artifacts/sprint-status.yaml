@@ -543,7 +543,7 @@ development_status:
   14c-refactor-5-placeholder-ui-states: done  # 3 pts - Disable UI with "Coming soon" tooltips
   14c-refactor-6-firestore-data-cleanup-script: done  # 3 pts - Manual script to delete sharedGroups/pendingInvitations, empty sharedGroupIds - Atlas Code Review APPROVED 2026-01-21
   14c-refactor-7-security-rules-simplification: done  # 1 pt - Deny all shared group access in firestore.rules - Atlas Code Review APPROVED 2026-01-21
-  14c-refactor-8-remove-dead-code: ready-for-dev  # 2 pts - Delete memberUpdateDetection.ts, archive old migration scripts
+  14c-refactor-8-remove-dead-code: done  # 2 pts - Delete memberUpdateDetection.ts, archive old migration scripts - Atlas Code Review APPROVED 2026-01-21
 
   # Part 2: App Architecture Refactor (5 stories, 21 pts) - NON-SCAN ONLY
   14c-refactor-9-app-decomposition-contexts: ready-for-dev  # 5 pts - Extract Auth, Navigation, Theme, Notification, AppState contexts (PRESERVE ScanContext)
@@ -565,11 +565,11 @@ development_status:
   epic-14c-refactor-retrospective: optional
 # | Command | Description |
 # |---------|-------------|
+# | `/bmad:bmm:workflows:atlas-dev-story` | Story implementation with pattern guidance |
 # | `/bmad:bmm:workflows:atlas-code-review` | ADVERSARIAL code review with Atlas validation |
 # | `/bmad:bmm:workflows:atlas-create-story` | Story creation with workflow chain analysis |
 # | `/bmad:bmm:workflows:atlas-retrospective` | Epic retrospective with memory feeding |
 # | `/bmad:bmm:workflows:atlas-e2e` | Persona-driven E2E test generation |
-# | `/bmad:bmm:workflows:atlas-dev-story` | Story implementation with pattern guidance |
 # | `/bmad:bmm:workflows:atlas-sprint-planning` | Sprint planning with Atlas context |
 # | `/bmad:bmm:workflows:atlas-sprint-status` | Sprint status check |
 # | `/bmad:bmm:workflows:atlas-correct-course` | Course correction during sprints |

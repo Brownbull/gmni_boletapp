@@ -1,7 +1,6 @@
 /**
  * SharedGroupError Component
  *
- * Story 14c.11: Error Handling
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * Unified error display component for shared group operations.

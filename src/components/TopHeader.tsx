@@ -1,6 +1,5 @@
 /**
  * Story 14.10: Top Header Bar Component
- * Story 14c.4: Added View Mode Switcher support
  *
  * A consistent top header bar across all views with:
  * - Home variant: Logo (left) | Wordmark (center) | Profile Avatar (right)
@@ -14,7 +13,6 @@
  * - 44px minimum touch targets for accessibility
  * - CSS variables for theming
  * - Profile dropdown menu with user info and navigation (shared component)
- * - Story 14c.4: Tappable logo for view mode switching (personal/group)
  */
 
 import React, { useState, useRef } from 'react';
@@ -53,7 +51,6 @@ export type HeaderVariant = 'home' | 'detail' | 'settings';
 export type ViewTitle = 'home' | 'analytics' | 'history' | 'insights' | 'alerts' | 'gastify';
 
 /**
- * Story 14c.4: Active group info for group mode display
  */
 export interface ActiveGroupInfo {
     id: string;
@@ -126,17 +123,14 @@ export interface TopHeaderProps {
     t: (key: string) => string;
 
     /**
-     * Story 14c.4: Handler for logo click to open view mode switcher
      */
     onLogoClick?: () => void;
 
     /**
-     * Story 14c.4: Current view mode ('personal' or 'group')
      */
     viewMode?: 'personal' | 'group';
 
     /**
-     * Story 14c.4: Active group info when in group mode
      */
     activeGroup?: ActiveGroupInfo;
 
@@ -144,7 +138,6 @@ export interface TopHeaderProps {
 
 /**
  * App Logo Component
- * Story 14c.4: Enhanced to support group mode icons
  * Renders the "G" logo in a circle with theme-aware colors
  * Uses CSS variables so theme switching works automatically
  * Sized for mobile visibility: 36x36px circle
@@ -380,7 +373,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                             </button>
                         )}
 
-                        {/* Story 14c.4: Logo is tappable when onLogoClick is provided */}
                         {showLogo && (
                             onLogoClick ? (
                                 <button
@@ -402,7 +394,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 {/* Center: Title/Wordmark (not for settings - title is in left section) */}
                 {variant !== 'settings' && (
                     <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-col items-center">
-                        {/* Story 14c.4: Show group name as title when in group mode (without emoji) */}
                         {viewMode === 'group' && activeGroup ? (
                             <div data-testid="group-mode-indicator" className="flex flex-col items-center">
                                 <span

@@ -1,5 +1,4 @@
 /**
- * Story 14c.8: Auto-Tag on Scan - AutoTagIndicator Component
  *
  * Displays a visual indicator when a transaction will be automatically
  * shared to a group. Shows the group icon, name, and color with an
@@ -101,7 +100,6 @@ export function AutoTagIndicator({
       aria-label={`${t('willBeSharedTo') || 'Will be shared to'} ${groupName}`}
     >
       {/* Group Icon Badge */}
-      {/* Story 14c.8 Code Review: Use rounded-full per Atlas lessons, add emoji font-family */}
       <span
         className={`${classes.icon} rounded-full flex items-center justify-center font-semibold`}
         style={{

@@ -1,7 +1,6 @@
 /**
  * SharedGroupSkeleton Component
  *
- * Story 14c.10: Empty States & Loading
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * Full view skeleton showing multiple transaction card skeletons

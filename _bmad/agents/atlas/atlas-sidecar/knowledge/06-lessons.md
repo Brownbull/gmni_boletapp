@@ -243,6 +243,7 @@
 | Code Review Fixes section | Verify fixes were actually applied to code, not just documented (14c-refactor.4) |
 | Doc code examples | Keep embedded code examples in sync with actual implementation |
 | Commit before claiming deployed | Run `git status` before marking deployment tasks complete - Firebase deploy without commit = lost work risk (14c-refactor.7) |
+| README script documentation | When archiving scripts, update README with separate "Archived Scripts" section - don't just leave entries in active table (14c-refactor.8) |
 
 ### Component Patterns
 | Pattern | Rule |
@@ -278,6 +279,7 @@
 
 ## Sync Notes
 
+- **2026-01-21:** Added README documentation pattern from 14c-refactor.8 code review (archived scripts need separate section, not just table entry)
 - **2026-01-21:** Added commit-before-deploy pattern from 14c-refactor.7 code review (Firebase deployed but changes not committed)
 - **2026-01-21:** Added Firestore batch retry pattern and dry-run loop prevention from 14c-refactor.6 code review
 - **2026-01-21:** Added story documentation pattern - verify code review fixes actually applied (14c-refactor.4 review)

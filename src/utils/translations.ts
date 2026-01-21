@@ -335,7 +335,6 @@ export const TRANSLATIONS = {
         spendingRemindersHint: "Weekly spending summary alerts",
         spendingRemindersEnabled: "Spending reminders enabled!",
         spendingRemindersDisabled: "Spending reminders disabled",
-        // Story 14c.13: Shared group notifications
         sharedGroupNotifications: "Shared Group Alerts",
         sharedGroupNotificationsHint: "Get notified when members add expenses",
         sharedGroupNotificationsEnabled: "Shared group alerts enabled!",
@@ -344,7 +343,6 @@ export const TRANSLATIONS = {
         testSharedGroupNotificationHint: "Send a test shared group notification",
         testSharedGroupNotificationTitle: "🏠 Test Group",
         testSharedGroupNotificationBody: "Partner added Grocery Store - $45.00",
-        // Story 14c.13: In-app notification time formatting
         justNow: "Just now",
         minutesAgo: "min ago",
         hoursAgo: "hr ago",
@@ -398,7 +396,6 @@ export const TRANSLATIONS = {
         selected: "selected",
         selectAll: "Select All",
         deselectAll: "Deselect All",
-        // Story 14c.8 Code Review: SelectionBar labels
         none: "None",
         groupLabel: "Group",
         // Story 14.33b: View Switcher & Carousel Mode
@@ -800,7 +797,6 @@ export const TRANSLATIONS = {
         updateBannerMessage: "There is an update available. Do you want to update?",
         updateNow: "Update",
         updateLater: "Later",
-        // Story 14c.10: Empty States & Loading
         sharedGroupNoTransactions: "No transactions in this group",
         sharedGroupNoTransactionsTitle: "No transactions yet",
         sharedGroupInviteMembersToStart: "Invite family or friends to start tracking shared expenses",
@@ -813,11 +809,9 @@ export const TRANSLATIONS = {
         sharedGroupShareExpensesTogether: "Share expenses together and track group spending",
         sharedGroupShareInviteLink: "Share Invite Link",
         sharedGroupLoadingFromMembers: "Loading transactions from {count} members...",
-        // Story 14c.6: Transaction Ownership Indicators
         addedBy: "Added by",
         viewOnly: "View only",
         unknownUser: "Unknown",
-        // Story 14c.2: Accept/Decline Invitation
         pendingInvitations: "Pending Invitations",
         pendingInvitationsDesc: "You have been invited to join these groups",
         invitedBy: "Invited by {name}",
@@ -835,7 +829,6 @@ export const TRANSLATIONS = {
         invitationNotFound: "Invitation not found",
         noPendingInvitations: "No pending invitations",
         dismissExpired: "Dismiss",
-        // Story 14c.3: Leave/Manage Group
         leaveGroupTitle: "Leave group?",
         leaveGroupSubtitle: "Choose what happens to your transactions",
         leaveGroupSoftTitle: "Keep transactions shared",
@@ -845,7 +838,6 @@ export const TRANSLATIONS = {
         leaveGroupConfirm: "Leave Group",
         leaving: "Leaving...",
         leaveGroup: "Leave Group",
-        // Story 14c.17: Join Group via Share Link
         joinGroupTitle: "Join group?",
         join: "Join",
         joining: "Joining...",
@@ -875,14 +867,12 @@ export const TRANSLATIONS = {
         deleteGroupRemoveTx: "Remove transactions from group",
         deleteGroupRemoveTxDesc: "All transactions become private again",
         // Note: 'deleting' key already exists above for batch operations
-        // Story 14c.4: View Mode Switcher
         personal: "Personal",
         viewModePersonalDescription: "Only your transactions",
         selectViewMode: "Select view",
         members: "members",
         viewing: "Viewing",
         switchViewMode: "Switch view mode",
-        // Story 14c.5: Shared Group Transactions View - Date Range Selector
         dateRangeThisMonth: "This Month",
         dateRangeLastMonth: "Last Month",
         dateRangeLast3Months: "Last 3 Months",
@@ -890,19 +880,15 @@ export const TRANSLATIONS = {
         dateRangeThisYear: "This Year",
         dateRangePreviousMonth: "Previous month",
         dateRangeNextMonth: "Next month",
-        // Story 14c.7: Tag Transactions to Groups
         selectGroups: "Select Groups",
         sharedGroups: "Shared Groups",
         personalGroups: "Personal Groups",
         shared: "Shared",
         noGroupsAvailable: "No groups available",
         groups: "Groups",
-        // Story 14c.8: Auto-Tag on Scan
         willBeSharedTo: "Will be shared to",
         removeGroupTag: "Remove group tag",
-        // Story 14c.8: Done button
         done: "Done",
-        // Story 14c.9: Shared Group Analytics
         memberContributions: "Member Contributions",
         memberContribution: "Member Contribution",
         groupSpending: "Group Spending",
@@ -913,7 +899,6 @@ export const TRANSLATIONS = {
         transactionPlural: "transactions",
         groupAnalytics: "Group Analytics",
         personalAnalytics: "Your Analytics",
-        // Story 14c.11: Error Handling
         // Error titles
         errorUserNotFoundTitle: "User Not Found",
         errorInvitationExpiredTitle: "Invitation Expired",
@@ -1292,7 +1277,6 @@ export const TRANSLATIONS = {
         spendingRemindersHint: "Alertas semanales de resumen",
         spendingRemindersEnabled: "¡Recordatorios de gasto activados!",
         spendingRemindersDisabled: "Recordatorios de gasto desactivados",
-        // Story 14c.13: Shared group notifications
         sharedGroupNotifications: "Alertas de Grupos",
         sharedGroupNotificationsHint: "Recibe notificaciones cuando otros agregan gastos",
         sharedGroupNotificationsEnabled: "¡Alertas de grupos activadas!",
@@ -1301,7 +1285,6 @@ export const TRANSLATIONS = {
         testSharedGroupNotificationHint: "Envía una notificación de prueba de grupo compartido",
         testSharedGroupNotificationTitle: "🏠 Grupo de Prueba",
         testSharedGroupNotificationBody: "Pareja agregó Supermercado - $45.00",
-        // Story 14c.13: In-app notification time formatting
         justNow: "Ahora mismo",
         minutesAgo: "min",
         hoursAgo: "hr",
@@ -1355,7 +1338,6 @@ export const TRANSLATIONS = {
         selected: "seleccionados",
         selectAll: "Seleccionar Todo",
         deselectAll: "Deseleccionar Todo",
-        // Story 14c.8 Code Review: SelectionBar labels
         none: "Ninguno",
         groupLabel: "Grupo",
         // Story 14.33b: View Switcher & Carousel Mode
@@ -1757,7 +1739,6 @@ export const TRANSLATIONS = {
         updateBannerMessage: "Hay una actualización disponible. ¿Quieres actualizar?",
         updateNow: "Actualizar",
         updateLater: "Después",
-        // Story 14c.10: Empty States & Loading
         sharedGroupNoTransactions: "Sin transacciones en este grupo",
         sharedGroupNoTransactionsTitle: "Sin transacciones aún",
         sharedGroupInviteMembersToStart: "Invita a familia o amigos para comenzar a rastrear gastos compartidos",
@@ -1770,11 +1751,9 @@ export const TRANSLATIONS = {
         sharedGroupShareExpensesTogether: "Compartan gastos juntos y rastreen el gasto del grupo",
         sharedGroupShareInviteLink: "Compartir Enlace de Invitación",
         sharedGroupLoadingFromMembers: "Cargando transacciones de {count} miembros...",
-        // Story 14c.6: Transaction Ownership Indicators
         addedBy: "Agregado por",
         viewOnly: "Solo lectura",
         unknownUser: "Desconocido",
-        // Story 14c.2: Accept/Decline Invitation
         pendingInvitations: "Invitaciones Pendientes",
         pendingInvitationsDesc: "Te han invitado a unirte a estos grupos",
         invitedBy: "Invitado por {name}",
@@ -1792,7 +1771,6 @@ export const TRANSLATIONS = {
         invitationNotFound: "Invitación no encontrada",
         noPendingInvitations: "Sin invitaciones pendientes",
         dismissExpired: "Descartar",
-        // Story 14c.3: Leave/Manage Group
         leaveGroupTitle: "¿Dejar el grupo?",
         leaveGroupSubtitle: "Elige qué hacer con tus transacciones",
         leaveGroupSoftTitle: "Mantener compartidas",
@@ -1802,7 +1780,6 @@ export const TRANSLATIONS = {
         leaveGroupConfirm: "Dejar grupo",
         leaving: "Saliendo...",
         leaveGroup: "Dejar grupo",
-        // Story 14c.17: Join Group via Share Link
         joinGroupTitle: "¿Unirte al grupo?",
         join: "Unirme",
         joining: "Uniéndose...",
@@ -1832,14 +1809,12 @@ export const TRANSLATIONS = {
         deleteGroupRemoveTx: "Remover transacciones del grupo",
         deleteGroupRemoveTxDesc: "Todas las transacciones se vuelven privadas",
         // Note: 'deleting' key already exists above for batch operations
-        // Story 14c.4: View Mode Switcher
         personal: "Personal",
         viewModePersonalDescription: "Solo tus transacciones",
         selectViewMode: "Seleccionar vista",
         members: "miembros",
         viewing: "Viendo",
         switchViewMode: "Cambiar modo de vista",
-        // Story 14c.5: Shared Group Transactions View - Date Range Selector
         dateRangeThisMonth: "Este Mes",
         dateRangeLastMonth: "Mes Pasado",
         dateRangeLast3Months: "Últimos 3 Meses",
@@ -1847,19 +1822,15 @@ export const TRANSLATIONS = {
         dateRangeThisYear: "Este Año",
         dateRangePreviousMonth: "Mes anterior",
         dateRangeNextMonth: "Mes siguiente",
-        // Story 14c.7: Tag Transactions to Groups
         selectGroups: "Seleccionar Grupos",
         sharedGroups: "Grupos Compartidos",
         personalGroups: "Grupos Personales",
         shared: "Compartido",
         noGroupsAvailable: "No hay grupos disponibles",
         groups: "Grupos",
-        // Story 14c.8: Auto-Tag on Scan
         willBeSharedTo: "Se compartirá con",
         removeGroupTag: "Quitar etiqueta de grupo",
-        // Story 14c.8: Done button
         done: "Listo",
-        // Story 14c.9: Shared Group Analytics
         memberContributions: "Contribuciones por Miembro",
         memberContribution: "Contribución de Miembro",
         groupSpending: "Gastos del Grupo",
@@ -1870,7 +1841,6 @@ export const TRANSLATIONS = {
         transactionPlural: "transacciones",
         groupAnalytics: "Análisis del Grupo",
         personalAnalytics: "Tus Análisis",
-        // Story 14c.11: Error Handling
         // Error titles
         errorUserNotFoundTitle: "Usuario No Encontrado",
         errorInvitationExpiredTitle: "Invitación Expirada",

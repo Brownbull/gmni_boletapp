@@ -2,7 +2,6 @@
  * RecentScansView Component
  *
  * Story 14.31: Dedicated view for latest scanned transactions.
- * Story 14c.8: Added selection mode with "Select All" functionality.
  *
  * Features:
  * - Shows transactions sorted by createdAt (scan date) descending
@@ -52,11 +51,8 @@ interface RecentScansViewProps {
     defaultCountry?: string;
     /** Story 14.35b: How to display foreign locations (code or flag) */
     foreignLocationFormat?: 'code' | 'flag';
-    /** Story 14c.8: User ID for loading shared groups */
     userId?: string | null;
-    /** Story 14c.8: Callback when group assignment is requested for selected transactions */
     onGroupSelected?: (selectedIds: string[]) => void;
-    /** Story 14c.8: Callback when delete is requested for selected transactions */
     onDeleteSelected?: (selectedIds: string[]) => void;
 }
 
@@ -162,7 +158,6 @@ export function RecentScansView({
     const [pageSize, setPageSize] = useState<PageSize>(15);
     const [currentPage, setCurrentPage] = useState(1);
 
-    // Story 14c.8: Selection mode for batch operations
     const {
         isSelectionMode,
         selectedIds,
@@ -175,12 +170,10 @@ export function RecentScansView({
         isSelected,
     } = useSelectionMode();
 
-    // Story 14c.8: Long-press state for selection mode entry
     const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
     const longPressMoved = useRef(false);
     const LONG_PRESS_DURATION = 500; // ms
 
-    // Story 14c.8: Long-press handlers
     const handleLongPressStart = useCallback((txId: string) => {
         longPressMoved.current = false;
         longPressTimerRef.current = setTimeout(() => {
@@ -202,10 +195,8 @@ export function RecentScansView({
         handleLongPressEnd();
     }, [handleLongPressEnd]);
 
-    // Story 14c.8: Load shared groups for color lookup
     const { groups } = useAllUserGroups(userId || undefined);
 
-    // Story 14c.8: Helper to lookup group color from sharedGroupIds
     const getGroupColorForTransaction = useCallback((tx: Transaction): string | undefined => {
         if (!tx.sharedGroupIds?.length || !groups.length) return undefined;
         const group = groups.find(g => tx.sharedGroupIds?.includes(g.id));
@@ -224,12 +215,10 @@ export function RecentScansView({
     const endIndex = startIndex + pageSize;
     const paginatedTransactions = sortedTransactions.slice(startIndex, endIndex);
 
-    // Story 14c.8: Get visible transaction IDs for "Select All" functionality
     const visibleTransactionIds = useMemo(() => {
         return paginatedTransactions.map(tx => tx.id).filter((id): id is string => !!id);
     }, [paginatedTransactions]);
 
-    // Story 14c.8: Handle Select All toggle
     const handleSelectAllToggle = useCallback(() => {
         const allVisibleSelected = visibleTransactionIds.length > 0 &&
             visibleTransactionIds.every(id => selectedIds.has(id));
@@ -240,14 +229,12 @@ export function RecentScansView({
         }
     }, [visibleTransactionIds, selectedIds, selectAll, clearSelection]);
 
-    // Story 14c.8: Handle group assignment for selected transactions
     const handleGroupAction = useCallback(() => {
         if (onGroupSelected && selectedCount > 0) {
             onGroupSelected(Array.from(selectedIds));
         }
     }, [onGroupSelected, selectedIds, selectedCount]);
 
-    // Story 14c.8: Handle delete for selected transactions
     const handleDeleteAction = useCallback(() => {
         if (onDeleteSelected && selectedCount > 0) {
             onDeleteSelected(Array.from(selectedIds));
@@ -346,7 +333,6 @@ export function RecentScansView({
                 </div>
             </div>
 
-            {/* Story 14c.8: Selection Bar (shown when selection mode is active) */}
             {isSelectionMode && (
                 <div className="px-4 py-2">
                     <SelectionBar
