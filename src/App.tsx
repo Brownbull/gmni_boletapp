@@ -40,9 +40,7 @@ import { useViewModePreferencePersistence } from './hooks/useViewModePreferenceP
 // Story 14c.17: Share Link Deep Linking - join shared groups via URL
 import { useJoinLinkHandler } from './hooks/useJoinLinkHandler';
 import { JoinGroupDialog } from './components/SharedGroups/JoinGroupDialog';
-// Story 14c.5: Shared group transactions hook for group mode
-// Story 14c.13: Delta fetch on notification click (Option C)
-import { useSharedGroupTransactions, useNotificationDeltaFetch } from './hooks/useSharedGroupTransactions';
+// Story 14c-refactor.3: useSharedGroupTransactions DELETED - shared groups feature temporarily disabled
 import type { SharedGroup } from './types/sharedGroup';
 import { getFirestore } from 'firebase/firestore';
 import { useQueryClient } from '@tanstack/react-query';
@@ -51,8 +49,7 @@ import { updateMemberTimestampsForTransaction } from './services/sharedGroupServ
 import type { GroupWithMeta } from './components/SharedGroups';
 // Story 14c.5 Bug Fix: Clear IndexedDB cache when group assignments change
 import { clearGroupCacheById } from './lib/sharedGroupCache';
-// Story 14c.12: Member update detection for cross-user sync
-import { detectMemberUpdates, type MemberUpdatesMap } from './utils/memberUpdateDetection';
+// Story 14c-refactor.3: detectMemberUpdates import REMOVED (shared groups feature temporarily disabled)
 // Story 12.2: Parallel batch processing hook
 import { useBatchProcessing } from './hooks/useBatchProcessing';
 // Story 12.3: Batch review type for edit flow
@@ -480,102 +477,16 @@ function App() {
         }));
     }, [userSharedGroups]);
 
-    // Story 14c.5: Shared group transactions for group mode
-    // Only fetches when viewMode === 'group' and activeGroup exists
-    // Group consolidation: These will be wired up when shared group view is fully integrated
-    const {
-        transactions: sharedGroupTransactions,
-        allTransactions: _sharedGroupAllTransactions,
-        rawTransactions: sharedGroupRawTransactions,
-        isLoading: _sharedGroupTransactionsLoading,
-        total: _sharedGroupTotal,
-        spendingByMember: sharedGroupSpendingByMember,
-        dateRange: _sharedGroupDateRange,
-        setDateRange: _setSharedGroupDateRange,
-        selectedMembers: _sharedGroupSelectedMembers,
-        toggleMember: _toggleSharedGroupMember,
-        selectAllMembers: _selectAllSharedGroupMembers,
-        refresh: _refreshSharedGroupTransactions,
-    } = useSharedGroupTransactions({
-        services,
-        group: activeGroup ?? null,
-        enabled: viewMode === 'group' && !!activeGroup,
-    });
+    // Story 14c-refactor.3: Stub values for shared group transactions (feature temporarily disabled)
+    // These inline stubs replace the deleted useSharedGroupTransactions hook
+    // Only the variables that are actually used in the render tree are kept
+    const sharedGroupTransactions: any[] = [];
+    const sharedGroupRawTransactions: any[] = [];
+    const sharedGroupSpendingByMember = new Map<string, number>();
 
-    // Story 14c.5 Bug Fix: Real-time sync when other members tag/untag transactions
-    // Story 14c.12: Refactored to use testable utility function
-    // Track previous memberUpdates to detect changes from OTHER users
-    const prevMemberUpdatesRef = useRef<Map<string, MemberUpdatesMap>>(new Map());
-
-    useEffect(() => {
-        if (!user?.uid || userSharedGroups.length === 0) {
-            prevMemberUpdatesRef.current.clear();
-            return;
-        }
-
-        // Use extracted utility function for testability
-        const result = detectMemberUpdates(
-            userSharedGroups,
-            prevMemberUpdatesRef.current,
-            user.uid
-        );
-
-        // Log changes in dev mode
-        if (import.meta.env.DEV && result.changeDetails.length > 0) {
-            for (const detail of result.changeDetails) {
-                console.log(`[App] Member ${detail.memberId} updated in group ${detail.groupId}`, {
-                    prev: detail.previousTimestamp,
-                    current: detail.currentTimestamp,
-                });
-            }
-        }
-
-        // Invalidate caches for groups with changes
-        // Story 14c.20 Bug Fix: Must await IndexedDB clear BEFORE invalidating React Query
-        // to prevent race condition where queryFn reads stale IndexedDB data
-        if (result.shouldInvalidate) {
-            const invalidateGroup = async (groupId: string) => {
-                if (import.meta.env.DEV) {
-                    console.log(`[App] Invalidating transaction cache for group ${groupId} due to member update`);
-                }
-
-                // Clear IndexedDB cache FIRST and wait for it to complete
-                try {
-                    await clearGroupCacheById(groupId);
-                    if (import.meta.env.DEV) {
-                        console.log(`[App] IndexedDB cache cleared for group ${groupId}`);
-                    }
-                } catch (err) {
-                    console.warn('[App] Failed to clear group cache:', err);
-                }
-
-                // Story 14c.20 Bug Fix: Reset React Query cache completely before refetching
-                // Use resetQueries to clear in-memory data, then invalidate to trigger fresh fetch
-                // This ensures removals are properly detected (not just updates)
-                await queryClient.resetQueries({
-                    queryKey: ['sharedGroupTransactions', groupId],
-                });
-
-                if (import.meta.env.DEV) {
-                    console.log(`[App] React Query cache reset for group ${groupId}, triggering refetch`);
-                }
-
-                // Now invalidate to trigger a fresh fetch from Firestore
-                queryClient.invalidateQueries({
-                    queryKey: ['sharedGroupTransactions', groupId],
-                    refetchType: 'all',
-                });
-            };
-
-            // Process all groups (can be parallel since they're independent)
-            Promise.all(result.groupsWithChanges.map(invalidateGroup)).catch(err => {
-                console.error('[App] Error during cache invalidation:', err);
-            });
-        }
-
-        // Update ref with new state for next comparison
-        prevMemberUpdatesRef.current = result.updatedPreviousMap;
-    }, [userSharedGroups, user?.uid, queryClient]);
+    // Story 14c-refactor.3: Member update detection REMOVED (shared groups feature temporarily disabled)
+    // This entire useEffect was for detecting cross-user sync in shared groups
+    // Will be restored in Epic 14d when shared groups are re-implemented
 
     // Story 14d.4c: Access ScanContext for scan state management
     // ScanProvider is now in main.tsx, allowing direct useScan() access
@@ -1152,19 +1063,8 @@ function App() {
     }, [view]); // Only depend on view, not pendingDistributionView
 
     // Story 14c.13: Delta fetch on notification click (Option C - cost efficient)
-    // Triggers delta fetch and navigation when user taps a push notification
-    // Must be after setView and setGroupMode are available
-    useNotificationDeltaFetch(
-        db,
-        services?.appId || '',
-        userSharedGroups,
-        queryClient,
-        useCallback((group: SharedGroup) => {
-            // Switch to group mode and navigate to dashboard
-            setGroupMode(group.id!, group);
-            setView('dashboard');
-        }, [setGroupMode])
-    );
+    // Story 14c-refactor.3: useNotificationDeltaFetch REMOVED (shared groups feature temporarily disabled)
+    // Will be restored in Epic 14d when shared groups are re-implemented
 
     // Note: Theme is applied synchronously during render (before JSX return)
     // to ensure CSS variables are available when children compute memoized data

@@ -497,6 +497,32 @@ export function subscribeToSharedGroups(
 
 **Reference:** Story 14c-refactor.2
 
+### Hook Stub Pattern (Story 14c-refactor.3)
+
+```typescript
+// Hook stub returns empty state, uses useMemo/useCallback for stable references
+export function useUserSharedGroups(_db: Firestore, _userId: string | undefined): UseUserSharedGroupsResult {
+    const getGroupById = useCallback((_groupId: string) => undefined, []);
+    return useMemo(() => ({
+        groups: [], isLoading: false, error: undefined, groupCount: 0, hasGroups: false, getGroupById
+    }), [getGroupById]);
+}
+```
+
+**Files Deleted:**
+- `src/hooks/useSharedGroupTransactions.ts` (697 lines) - React Query + IndexedDB hook
+
+**Files Stubbed:**
+- `src/hooks/useSharedGroups.ts` (83 → 44 lines)
+- `src/hooks/useUserSharedGroups.ts` (145 → 85 lines)
+
+**App.tsx Changes:**
+- Removed `useSharedGroupTransactions`, `useNotificationDeltaFetch` calls
+- Removed `detectMemberUpdates` useEffect block
+- Added inline stub values for shared group transactions
+
+**Reference:** Story 14c-refactor.3
+
 ---
 
 ## Sync Notes
@@ -509,5 +535,6 @@ export function subscribeToSharedGroups(
 - 2026-01-19: Added Story 14c.14 Secret Manager Migration pattern
 - 2026-01-20: Added Story 14c.20 Shared Group Cache Optimization pattern
 - 2026-01-21: Added Epic 14c-refactor Service Stubbing Pattern
+- 2026-01-21: Added Epic 14c-refactor Hook Stubbing Pattern (Story 14c-refactor.3)
 - Code review learnings in 06-lessons.md
 - Story details in docs/sprint-artifacts/

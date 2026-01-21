@@ -19,7 +19,7 @@
 | **2026-01-15 to 01-16** | **Epic 14c Phase 1-2: Stories 14c.1-14c.10 (Shared Groups)** |
 | **2026-01-17 to 01-19** | **Epic 14c Phase 4-5: 14c.11-14c.17 (Error Handling, Real-time, Push, Deep Links)** |
 | **2026-01-20** | **Epic 14c FAILED/REVERTED - Retrospective complete** |
-| **2026-01-21** | **Epic 14c-refactor: Story 14c-refactor.1 + 14c-refactor.2 (Stub Cloud Functions & Services)** |
+| **2026-01-21** | **Epic 14c-refactor: Stories 14c-refactor.1-3 (Stub Cloud Functions, Services, Hooks)** |
 
 ---
 
@@ -32,7 +32,7 @@
 | **Epic 14** | ✅ COMPLETE (50+) - Core Implementation |
 | **Epic 14d** | ✅ COMPLETE (11/11) - Scan Architecture Refactor |
 | **Epic 14c** | ❌ FAILED/REVERTED (See retrospective) |
-| **Epic 14c-refactor** | 🔄 IN PROGRESS (2/19) - Codebase Cleanup |
+| **Epic 14c-refactor** | 🔄 IN PROGRESS (3/19) - Codebase Cleanup |
 | **Tests** | 3,146+ (84%+ coverage) |
 | **Bundle** | 2.92 MB ⚠️ |
 | **Velocity** | ~8.6 pts/day |
@@ -44,7 +44,7 @@
 |-------|--------|-------------|
 | 14c-refactor.1 | ✅ Done | Stub Cloud Functions |
 | 14c-refactor.2 | ✅ Done | Stub Services (Atlas Code Review 2026-01-21) |
-| 14c-refactor.3 | 📋 Ready | Stub Hooks |
+| 14c-refactor.3 | ✅ Review | Stub Hooks (Build passes, test cleanup deferred) |
 | 14c-refactor.4 | 📋 Ready | Clean IndexedDB Cache |
 | 14c-refactor.5-19 | 🔲 Backlog | Remaining stories (UI, App Refactor, Firebase) |
 
@@ -52,7 +52,7 @@
 
 | Epic | Theme | Status | Prep Required |
 |------|-------|--------|---------------|
-| **14c-refactor** | Codebase Cleanup | In Progress | 2/19 stories done |
+| **14c-refactor** | Codebase Cleanup | In Progress | 3/19 stories done |
 | **14d** | Shared Groups v2 | Blocked | Requires 14c-refactor completion |
 | **15** | Advanced Features | Backlog | Blocked by 14c-refactor |
 
