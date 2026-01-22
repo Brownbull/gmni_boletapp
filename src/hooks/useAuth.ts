@@ -27,7 +27,7 @@ export type { Services };
  * Return type for useAuth hook
  * @deprecated Use AuthContextValue from contexts/AuthContext instead
  */
-export interface UseAuthReturn extends AuthContextValue {}
+export type UseAuthReturn = AuthContextValue;
 
 /**
  * Authentication hook - provides Firebase auth state and methods.

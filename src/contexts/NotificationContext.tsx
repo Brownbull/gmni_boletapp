@@ -44,7 +44,7 @@ import type { Firestore } from 'firebase/firestore';
 /**
  * Context value provided to consumers
  */
-export interface NotificationContextValue extends UseInAppNotificationsResult {}
+export type NotificationContextValue = UseInAppNotificationsResult;
 
 // =============================================================================
 // Context Creation
