@@ -553,9 +553,9 @@ development_status:
   14c-refactor-13-view-mode-state-unification: done  # 3 pts - Single source of truth for view mode (default to Personal) - Atlas Code Review APPROVED 2026-01-21
 
   # Part 3: Firebase & Infrastructure (3 stories, 7 pts)
-  14c-refactor-14-firebase-indexes-audit: ready-for-dev  # 2 pts - Remove sharedGroupIds indexes, document remaining - Story drafted 2026-01-21
-  14c-refactor-15-cloud-functions-audit: ready-for-dev  # 3 pts - Inventory, remove unused, document in cloud-functions.md - Atlas story created 2026-01-21
-  14c-refactor-16-firestore-cost-monitoring: ready-for-dev  # 2 pts - Budget alerts + Cloud Monitoring dashboard - Story created 2026-01-21
+  14c-refactor-14-firebase-indexes-audit: done  # 2 pts - Remove sharedGroupIds indexes, document remaining - Atlas Code Review APPROVED 2026-01-21
+  14c-refactor-15-cloud-functions-audit: done  # 3 pts - All 10 functions documented, JSDoc comments, orphan test deleted - Atlas Code Review APPROVED 2026-01-22
+  14c-refactor-16-firestore-cost-monitoring: done  # 2 pts - Budget alerts + Cloud Monitoring dashboard - Atlas Code Review APPROVED 2026-01-22
 
   # Part 4: Quality & Validation (3 stories, 8 pts)
   14c-refactor-17-test-suite-cleanup: ready-for-dev  # 3 pts - Delete removed file tests, add context/hook tests - Atlas story created 2026-01-21

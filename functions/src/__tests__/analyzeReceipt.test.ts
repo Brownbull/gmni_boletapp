@@ -27,7 +27,7 @@ jest.mock('@google/generative-ai', () => {
   }
 })
 
-// Mock functions.config()
+// Set required environment variable for tests
 process.env.GEMINI_API_KEY = 'test-api-key'
 
 // Import the function after mocks are set up
