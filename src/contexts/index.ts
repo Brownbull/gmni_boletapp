@@ -63,11 +63,11 @@ export {
 // =============================================================================
 
 // ViewModeContext - Personal vs shared group mode
+// Story 14c-refactor.13: VIEW_MODE_STORAGE_KEY removed (no localStorage persistence)
 export {
     ViewModeProvider,
     useViewMode,
     useViewModeOptional,
-    VIEW_MODE_STORAGE_KEY,
     type ViewModeContextValue,
     type ViewMode,
 } from './ViewModeContext';

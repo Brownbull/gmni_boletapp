@@ -9,7 +9,7 @@
  * visits show instantly (no loading spinner).
  */
 
-import { useMemo, useCallback, useRef, useEffect } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { User } from 'firebase/auth';
 import { useFirestoreQuery } from './useFirestoreQuery';
@@ -17,9 +17,7 @@ import { QUERY_KEYS } from '../lib/queryKeys';
 import {
   getUserPreferences,
   saveUserPreferences,
-  saveViewModePreference as saveViewModePrefToFirestore,
   UserPreferences,
-  ViewModePreference,
   SupportedCurrency,
   SupportedFontFamily,
   ForeignLocationDisplayFormat,
@@ -46,7 +44,6 @@ interface UseUserPreferencesResult {
   setFontFamily: (fontFamily: SupportedFontFamily) => Promise<void>;
   /** Story 14.35b: Update foreign location display format */
   setForeignLocationFormat: (format: ForeignLocationDisplayFormat) => Promise<void>;
-  saveViewModePreference: (preference: Omit<ViewModePreference, 'updatedAt'>) => void;
 }
 
 interface FirebaseServices {
@@ -175,54 +172,8 @@ export function useUserPreferences(
     [updatePreference]
   );
 
-  // Use ref to track pending save timeout
-  const viewModeSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (viewModeSaveTimeoutRef.current) {
-        clearTimeout(viewModeSaveTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const saveViewModePreference = useCallback(
-    (preference: Omit<ViewModePreference, 'updatedAt'>) => {
-      if (!user || !services) return;
-
-      // Clear any pending save
-      if (viewModeSaveTimeoutRef.current) {
-        clearTimeout(viewModeSaveTimeoutRef.current);
-      }
-
-      // Optimistic update to cache
-      const currentPrefs = queryClient.getQueryData<UserPreferences>(queryKey) ?? DEFAULT_PREFERENCES;
-      queryClient.setQueryData<UserPreferences>(queryKey, {
-        ...currentPrefs,
-        viewModePreference: preference,
-      });
-
-      // Debounce the Firestore save (1 second delay - AC6)
-      viewModeSaveTimeoutRef.current = setTimeout(async () => {
-        try {
-          await saveViewModePrefToFirestore(
-            services.db,
-            user.uid,
-            services.appId,
-            preference
-          );
-          if (import.meta.env.DEV) {
-            console.log('[useUserPreferences] View mode preference saved:', preference);
-          }
-        } catch (error) {
-          console.error('[useUserPreferences] Failed to save view mode preference:', error);
-          // Don't invalidate - localStorage fallback is available
-        }
-      }, 1000);
-    },
-    [user, services, queryClient, queryKey]
-  );
+  // Story 14c-refactor.13: saveViewModePreference REMOVED
+  // View mode persistence removed - always defaults to personal mode
 
   return useMemo(
     () => ({
@@ -236,7 +187,6 @@ export function useUserPreferences(
       setBirthDate,
       setFontFamily,
       setForeignLocationFormat,
-      saveViewModePreference,
     }),
     [
       preferences,
@@ -249,7 +199,6 @@ export function useUserPreferences(
       setBirthDate,
       setFontFamily,
       setForeignLocationFormat,
-      saveViewModePreference,
     ]
   );
 }

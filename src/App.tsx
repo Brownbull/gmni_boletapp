@@ -1,4 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+// Story 14c-refactor.11: App architecture components
+// AppLayout: Outer shell with theme classes
+// shouldShowTopHeader: Determines if TopHeader should render for current view
+// View type: Re-exported from types.ts for type consistency
+import { AppLayout, shouldShowTopHeader, type View } from './components/App';
 // Story 14.15 Session 10: Icons for credit info modal
 import { Camera, Zap, X, ShoppingCart, Trash2, ArrowLeft } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
@@ -32,7 +37,7 @@ import { useInAppNotifications } from './hooks/useInAppNotifications';
 import { useViewMode } from './contexts/ViewModeContext';
 import { useUserSharedGroups } from './hooks/useUserSharedGroups';
 import { ViewModeSwitcher } from './components/SharedGroups/ViewModeSwitcher';
-import { useViewModePreferencePersistence } from './hooks/useViewModePreferencePersistence';
+// Story 14c-refactor.13: useViewModePreferencePersistence DELETED - view mode persistence removed
 import { useJoinLinkHandler } from './hooks/useJoinLinkHandler';
 // Story 14c-refactor.10: App-level hooks for lifecycle, initialization, and deep linking
 // These hooks extract cross-cutting concerns from App.tsx into reusable modules.
@@ -215,15 +220,8 @@ import { getCitiesForCountry } from './data/locations';
 // Story 12.1: Added 'batch-capture' view for batch mode scanning
 // Story 12.3: Added 'batch-review' view for reviewing processed receipts before saving
 // Story 14.11: Added 'alerts' view for nav bar redesign (settings still accessible via header menu)
-// Story 14.14: Added 'history' view for transaction list (accessible via profile menu)
-// Story 14.16: Added 'reports' view for weekly report cards (accessible via profile menu)
-// Story 14.15: Added 'scan-result' view for new scan flow UI (mockup-compliant layout)
-// Story 14.23: Added 'transaction-editor' view for unified transaction editor (replaces scan-result + edit)
-// Story 14.24: Read-only viewing uses transaction-editor with readOnly prop (no separate view type needed)
-// Story 14.31: Added 'items' view for item history (accessible via profile menu or item category clicks)
-// Story 14d.9: Added 'statement-scan' view for statement scanning placeholder
-// Story 14.31: Added 'recent-scans' view for viewing all recent scans sorted by scan date
-type View = 'dashboard' | 'scan' | 'scan-result' | 'edit' | 'transaction-editor' | 'trends' | 'insights' | 'settings' | 'alerts' | 'batch-capture' | 'batch-review' | 'history' | 'reports' | 'items' | 'statement-scan' | 'recent-scans';
+// Story 14c-refactor.11: View type now imported from components/App/types.ts
+// See types.ts for full list of views and documentation of when each was added.
 
 /**
  * Story 14.15b: Reconcile transaction total with sum of items
@@ -348,7 +346,7 @@ function App() {
     // Story 14.22: Extended to include location settings from Firestore
     const {
         preferences: userPreferences,
-        loading: preferencesLoading,
+        loading: _preferencesLoading, // Story 14c-refactor.13: Unused after view mode persistence removal
         setDefaultCurrency: setDefaultScanCurrencyPref,
         setDefaultCountry: setDefaultCountryPref,
         setDefaultCity: setDefaultCityPref,
@@ -360,7 +358,7 @@ function App() {
         setFontFamily: setFontFamilyPref,
         // Story 14.35b: Foreign location display format preference
         setForeignLocationFormat: setForeignLocationFormatPref,
-        saveViewModePreference,
+        // Story 14c-refactor.13: saveViewModePreference REMOVED (view mode persistence removed)
     } = useUserPreferences(user, services);
     // Persistent scan credits from Firestore
     // Story 14d.4e: Changed from reserve/confirm/refund to immediate deduct pattern
@@ -452,14 +450,9 @@ function App() {
     const { groups: userSharedGroups, isLoading: sharedGroupsLoading } = useUserSharedGroups(db, user?.uid);
     const [showViewModeSwitcher, setShowViewModeSwitcher] = useState(false);
 
-    // This handles: AC3 (load on auth), AC4 (validate group), AC5 (fallback), AC6 (sync on change)
-    useViewModePreferencePersistence({
-        groups: userSharedGroups,
-        groupsLoading: sharedGroupsLoading,
-        firestorePreference: userPreferences.viewModePreference,
-        preferencesLoading,
-        savePreference: saveViewModePreference,
-    });
+    // Story 14c-refactor.13: useViewModePreferencePersistence call REMOVED
+    // View mode is now purely in-memory, always defaults to personal mode
+    // No localStorage or Firestore persistence until Epic 14d (Shared Groups v2)
 
     const availableGroupsForSelector: GroupWithMeta[] = useMemo(() => {
         return userSharedGroups.map(group => ({
@@ -3331,14 +3324,9 @@ function App() {
     }, [navigateToView]);
 
     // Story 7.12: Theme setup using CSS custom properties (AC #6, #7, #11)
-    // Story 7.17: Renamed themes - 'normal' (warm), 'professional' (cool)
-    // Story 14.12: Added 'mono' (monochrome) as new default
-    // The 'dark' class activates CSS variable overrides defined in index.html
-    // The data-theme attribute activates color theme variations
+    // Story 14c-refactor.11: AppLayout now handles theme class and data-theme attribute
+    // isDark still needed for modal inline styles
     const isDark = theme === 'dark';
-    const themeClass = isDark ? 'dark' : '';
-    // 'normal' is base CSS, 'professional' and 'mono' are overrides
-    const dataTheme = colorTheme !== 'normal' ? colorTheme : undefined;
 
     // Story 12.3: Compute scan status for Nav icon indicator (AC #3)
     // - 'processing': batch or single scan processing is in progress
@@ -3428,17 +3416,8 @@ function App() {
         <>
             {/* Story 14d.3: Browser back button blocker for scan dialogs (AC #5-7) */}
             <NavigationBlocker currentView={view} />
-            {/* Story 11.6: Use dvh (dynamic viewport height) for proper PWA sizing (AC #1, #2) */}
-            {/* h-screen provides fallback for Safari < 15.4 and older browsers without dvh support */}
-            <div
-                className={`h-screen h-[100dvh] max-w-md mx-auto shadow-xl border-x flex flex-col overflow-hidden ${themeClass}`}
-                data-theme={dataTheme}
-                style={{
-                    backgroundColor: 'var(--bg)',
-                    color: 'var(--primary)',
-                    borderColor: isDark ? '#1e293b' : '#e2e8f0',
-                }}
-            >
+            {/* Story 14c-refactor.11: AppLayout provides app shell with theme classes */}
+            <AppLayout theme={theme} colorTheme={colorTheme}>
             <input
                 type="file"
                 ref={fileInputRef}
@@ -3448,20 +3427,9 @@ function App() {
                 onChange={handleFileSelect}
             />
 
-            {/* Story 14.10: Top Header Bar (AC #1-5) */}
-            {/* Story 14.13: Hide TopHeader on TrendsView - Explora has its own header */}
-            {/* Story 14.14: Hide TopHeader on HistoryView - has its own header */}
-            {/* Story 14.16: Hide TopHeader on ReportsView - has its own header with year selector */}
-            {/* Story 14.31: Hide TopHeader on ItemsView - has its own header matching HistoryView */}
-            {/* Determine header variant and title based on current view */}
-            {/* Story 14.15: scan-result has its own header, so exclude it */}
-            {/* Story 14.15b: edit view has its own header with credits display */}
-            {/* Story 14.23: transaction-editor and batch-capture have their own headers */}
-            {/* Story 12.1 v9.7.0: batch-review has its own header */}
-            {/* Story 14d.9: statement-scan has its own header */}
-            {/* Story 14.31: recent-scans has its own header */}
-            {/* Story 14.33b: insights has its own header matching settings style */}
-            {view !== 'trends' && view !== 'history' && view !== 'reports' && view !== 'items' && view !== 'scan-result' && view !== 'edit' && view !== 'transaction-editor' && view !== 'batch-capture' && view !== 'batch-review' && view !== 'statement-scan' && view !== 'recent-scans' && view !== 'insights' && view !== 'alerts' && (
+            {/* Story 14c-refactor.11: Use shouldShowTopHeader() from types.ts */}
+            {/* Views that manage their own headers are excluded via the helper function */}
+            {shouldShowTopHeader(view) && (
                 <TopHeader
                     variant={
                         view === 'settings' ? 'settings' :
@@ -3844,6 +3812,9 @@ function App() {
 
                                 // Story 14c-refactor.4: clearGroupCacheById removed (IndexedDB cache deleted)
                                 // Only doing React Query optimistic updates now
+                                // TODO(14c-refactor.12): Dead code - sharedGroupTransactions query keys removed.
+                                // This entire function is a no-op since shared groups are stubbed.
+                                // Remove in Epic 14c-refactor Part 5 (App.tsx decomposition).
                                 const updateCachesForGroup = (groupId: string) => {
                                     // Optimistically update in-memory cache based on whether
                                     // transaction was added or removed from this group
@@ -5095,7 +5066,7 @@ function App() {
                 t={t}
                 lang={lang}
             />
-            </div>
+            </AppLayout>
         </>
     );
 }

@@ -102,7 +102,8 @@ src/
 staleTime: 5 * 60 * 1000,    // 5 minutes
 gcTime: 30 * 60 * 1000,      // 30 minutes
 refetchOnMount: false,        // Use cached data
-refetchOnWindowFocus: false,  // Don't auto-refetch on tab focus
+refetchOnWindowFocus: true,   // Catch updates while user was away (multi-device)
+refetchOnReconnect: false,    // Firestore handles reconnection internally
 ```
 
 **Per-Hook Overrides** (Story 14c.20):
@@ -622,5 +623,8 @@ const { isInForeground, registerBeforeUnloadGuard } = useAppLifecycle({
 - 2026-01-21: Added Epic 14c-refactor Hook Stubbing Pattern (Story 14c-refactor.3)
 - 2026-01-21: Added IndexedDB Migration Pattern (Story 14c-refactor.4)
 - 2026-01-21: Added App-Level Hook Pattern (Story 14c-refactor.10)
+- 2026-01-21: Updated React Query defaults (refetchOnWindowFocus: true for multi-device sync)
+- 2026-01-21: Story 14c-refactor.12 - Transaction Service Simplification (dead query keys removed, TODO markers added)
+- 2026-01-21: Story 14c-refactor.13 - View Mode State Unification (context simplified to in-memory only, Shell & Stub pattern)
 - Code review learnings in 06-lessons.md
 - Story details in docs/sprint-artifacts/

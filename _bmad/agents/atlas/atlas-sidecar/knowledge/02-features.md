@@ -41,7 +41,7 @@
 
 ## Current Development: Epic 14c-refactor (Codebase Cleanup)
 
-**Status:** 5/19 stories done | **Points:** ~54 | **Started:** 2026-01-21
+**Status:** 12/21 stories done | **Points:** ~65 (includes 14c-refactor.20-22) | **Started:** 2026-01-21
 
 ### Epic Context
 Epic 14c (original Household Sharing) was **REVERTED** on 2026-01-20 due to:
@@ -51,7 +51,7 @@ Epic 14c (original Household Sharing) was **REVERTED** on 2026-01-20 due to:
 
 **This Epic:** Cleans codebase before Epic 14d (Shared Groups v2)
 
-### Story Status (Part 1: Cleanup)
+### Story Status (Part 1: Cleanup) - ALL DONE ✅
 
 | Story | Status | Description |
 |-------|--------|-------------|
@@ -60,17 +60,27 @@ Epic 14c (original Household Sharing) was **REVERTED** on 2026-01-20 due to:
 | 14c-refactor.3 | ✅ Done | Stub Hooks |
 | 14c-refactor.4 | ✅ Done | Clean IndexedDB Cache |
 | 14c-refactor.5 | ✅ Done | Placeholder UI States |
-| 14c-refactor.6 | 📋 Ready | Firestore Data Cleanup Script |
-| 14c-refactor.7 | 📋 Ready | Security Rules Simplification |
-| 14c-refactor.8 | 📋 Ready | Remove Dead Code (memberUpdateDetection.ts, archive scripts) |
+| 14c-refactor.6 | ✅ Done | Firestore Data Cleanup Script |
+| 14c-refactor.7 | ✅ Done | Security Rules Simplification |
+| 14c-refactor.8 | ✅ Done | Remove Dead Code |
 
 ### Story Status (Part 2: App Architecture Refactor)
 
 | Story | Status | Description |
 |-------|--------|-------------|
-| **14c-refactor.9** | **📋 Ready** | **Extract Auth, Navigation, Theme, Notification, AppState contexts** |
-| **14c-refactor.10** | **📋 Ready** | **Extract useAppInitialization, useDeepLinking, usePushNotifications, useOnlineStatus, useAppLifecycle** |
-| **14c-refactor.11** | **📋 Ready** | **Create AppProviders, AppRoutes, AppLayout, AppErrorBoundary** |
+| 14c-refactor.9 | ✅ Done | Extract Auth, Navigation, Theme, Notification, AppState contexts |
+| 14c-refactor.10 | ✅ Done | Extract useAppInitialization, useDeepLinking, usePushNotifications, useOnlineStatus, useAppLifecycle |
+| 14c-refactor.11 | ✅ Done | Create AppProviders, AppRoutes, AppLayout, AppErrorBoundary (106 tests) |
+| 14c-refactor.12 | 📋 Ready | Verify React Query cache, remove dead query keys |
+| 14c-refactor.13 | 📋 Ready | View Mode State Unification |
+
+### Story Status (Part 5: App.tsx Full Decomposition) - NEW (3 stories, 11 pts)
+
+| Story | Status | Description |
+|-------|--------|-------------|
+| **14c-refactor.20** | **📋 Ready** | **Extract transaction + scan handlers (3 pts)** |
+| **14c-refactor.21** | **📋 Ready** | **Extract navigation + dialog handlers (3 pts)** |
+| **14c-refactor.22** | **📥 Backlog** | **JSX into AppRoutes + final cleanup to ~200-300 lines (5 pts)** |
 
 ### Story Created - 14c-refactor.9 - 2026-01-21
 
@@ -100,20 +110,98 @@ Epic 14c (original Household Sharing) was **REVERTED** on 2026-01-20 due to:
 
 **Source:** docs/sprint-artifacts/epic14c-refactor/14c-refactor-10-app-decomposition-hooks.md
 
-### Story Created - 14c-refactor.11 - 2026-01-21
+### Story Completed - 14c-refactor.11 - 2026-01-21
 
-**Summary:** App.tsx Decomposition - Components - Create AppProviders, AppRoutes, AppLayout, AppErrorBoundary to make App.tsx a simple composition root (~200-300 lines)
+**Summary:** App.tsx Decomposition - Components - Created AppProviders, AppRoutes, AppLayout, AppErrorBoundary, AppMainContent, and types module
 
-**User Value:** App.tsx reduced from ~5100 lines to ~200-300 lines, clear separation of concerns, maintainable component architecture
+**Outcome:**
+- 6 components created in `src/components/App/`
+- 106 unit tests (5 test files)
+- AppLayout + AppErrorBoundary integrated
+- **Partial integration:** Full line reduction (200-300 lines) deferred to 14c-refactor.20
+
+**Key Learnings (Atlas Code Review 2026-01-21):**
+1. **Scope creep detection:** Original AC#2 (~200-300 lines) was too aggressive for single story - split into follow-up
+2. **Provider scoping decision:** AnalyticsProvider/HistoryFiltersProvider intentionally kept view-scoped (prevent re-renders)
+3. **Test coverage:** Comprehensive testing (106 tests) validates component contracts before full integration
 
 **Workflow Touchpoints:**
-- Auth → Scan → Save Critical Path (provider composition order)
-- Scan Receipt Flow (#1) (ScanProvider placement)
-- Analytics Navigation Flow (#4) (routing in AppRoutes)
-- Deep Link Flow (#14c.17) (/join/ route handling in AppRoutes)
-- History Filter Flow (#6) (filter clearing on navigation)
+- Auth → Scan → Save Critical Path (provider composition order) ✅
+- Scan Receipt Flow (#1) (ScanProvider in main.tsx) ✅
+- Analytics Navigation Flow (#4) (AnalyticsProvider view-scoped) ✅
 
 **Source:** docs/sprint-artifacts/epic14c-refactor/14c-refactor-11-app-decomposition-components.md
+
+### Stories Created - 14c-refactor.20-22 - 2026-01-21
+
+**Split Decision:** Original 8pt story split into 3 granular stories (11 pts total) for better risk isolation and review cadence.
+
+| Story | Points | Scope |
+|-------|--------|-------|
+| 14c-refactor.20 | 3 pts | Transaction + Scan handlers (useTransactionHandlers, useScanHandlers) |
+| 14c-refactor.21 | 3 pts | Navigation + Dialog handlers (useNavigationHandlers, useDialogHandlers) |
+| 14c-refactor.22 | 5 pts | JSX into AppRoutes, AppProviders integration, final cleanup to ~200-300 lines |
+
+**Dependency Chain:**
+```
+14c-refactor.11 → 14c-refactor.20 → 14c-refactor.21 → 14c-refactor.22
+   (components)      (tx/scan)         (nav/dialog)      (JSX/cleanup)
+```
+
+**Sources:**
+- docs/sprint-artifacts/epic14c-refactor/stories/14c-refactor-20-app-handler-extraction.md
+- docs/sprint-artifacts/epic14c-refactor/stories/14c-refactor-21-app-navigation-dialog-handlers.md
+- docs/sprint-artifacts/epic14c-refactor/stories/14c-refactor-22-app-jsx-extraction-final-cleanup.md
+
+### Story Created - 14c-refactor.13 - 2026-01-21
+
+**Summary:** View Mode State Unification - Simplify view mode to React Context only, remove localStorage and Firestore persistence
+
+**User Value:** Eliminates synchronization bugs between three state sources, cleaner codebase, simpler architecture
+
+**Workflow Touchpoints:**
+- Scan Receipt Flow (#1) - no group auto-tagging
+- History Filter Flow (#6) - always personal data
+- Analytics Navigation Flow (#4) - always personal mode
+
+**Source:** docs/sprint-artifacts/epic14c-refactor/stories/14c-refactor-13-view-mode-state-unification.md
+
+### Story Created - 14c-refactor.15 - 2026-01-21
+
+**Summary:** Cloud Functions Audit - Inventory, document, and consolidate all Cloud Functions with criticality levels
+
+**User Value:** Clean, documented Cloud Functions infrastructure ready for future maintenance and Epic 14d
+
+**Workflow Touchpoints:**
+- Scan Receipt Flow (#1) - `analyzeReceipt` is core OCR function
+- Batch Processing Flow (#3) - uses `analyzeReceipt` for parallel processing
+- Scan Request Lifecycle (#9) - relies on `analyzeReceipt` response format
+
+**Source:** docs/sprint-artifacts/epic14c-refactor/stories/14c-refactor-15-cloud-functions-audit.md
+
+### Story Created - 14c-refactor.16 - 2026-01-21
+
+**Summary:** Firestore Cost Monitoring Setup - Budget alerts + Cloud Monitoring dashboard for cost visibility
+
+**User Value:** Proactive cost detection before Epic 14d launch, prevents cost explosions like Epic 14c ($19/week spike)
+
+**Workflow Touchpoints:**
+- None (infrastructure/observability story)
+
+**Source:** docs/sprint-artifacts/epic14c-refactor/stories/14c-refactor-16-firestore-cost-monitoring.md
+
+### Story Created - 14c-refactor.17 - 2026-01-21
+
+**Summary:** Test Suite Cleanup - Delete tests for removed shared group files, update stub tests, add context/hook tests
+
+**User Value:** Test suite accurately reflects refactored codebase, maintains 80%+ coverage, CI reliability
+
+**Workflow Touchpoints:**
+- CI/CD Test Pipeline (explicit test groups, shard balance)
+- Auth → Scan → Save Critical Path (context test coverage)
+- Firestore Security Rules (deny-all tests)
+
+**Source:** docs/sprint-artifacts/epic14c-refactor/stories/14c-refactor-17-test-suite-cleanup.md
 
 ### Key Approach
 - **Shell & Stub:** Keep UI components as disabled placeholders
@@ -180,12 +268,80 @@ Transactions → FilteringService → AnalyticsContext → Charts → Drill-down
 Create Group → Share Code → Accept Invite → View Mode Switch → Merged Feed
 ```
 
+### Story Marked Ready - 14c-refactor.20 - 2026-01-21
+
+**Summary:** App.tsx Handler Extraction - Transaction & Scan Handlers - Extract ~585 lines of handler code into `useTransactionHandlers` and `useScanHandlers` custom hooks
+
+**User Value:** Modularized and testable handler logic, improved maintainability, reduced coupling in App.tsx
+
+**Workflow Touchpoints:**
+- Scan Receipt Flow (#1) - `processScan` must maintain exact state machine event ordering
+- Quick Save Flow (#2) - Save handlers tightly coupled to quick save eligibility, timing critical for trust merchant prompts
+- Batch Processing Flow (#3) - Uses same `handleSaveTransaction` path as single scan
+- Auth → Scan → Save Critical Path - `user.uid` must be accessible in hook closure
+
+**Key Implementation Notes:**
+- Credit atomicity pattern: Deduct BEFORE API call, refund on error ONLY
+- Transaction handlers: Pass UI callbacks as props
+- Scan handlers: Access ScanContext internally (already tightly coupled)
+- All handlers use `useCallback` for stable references
+
+**Source:** docs/sprint-artifacts/epic14c-refactor/stories/14c-refactor-20-app-handler-extraction.md
+
+### Story Marked Ready - 14c-refactor.21 - 2026-01-21
+
+**Summary:** App.tsx Handler Extraction - Navigation & Dialog - Extract navigation handlers (navigateToView, navigateBack) and dialog handlers into custom hooks
+
+**User Value:** Modularized navigation logic, testable handlers, reduced App.tsx complexity, completion of handler extraction phase
+
+**Workflow Touchpoints:**
+- History Filter Flow (#6) - filter clearing logic on navigation
+- Analytics Navigation Flow (#4) - drill-down state passing (pendingHistoryFilters, pendingDistributionView)
+- Scan Receipt Flow (#1) - dialog dismissal on navigation
+- Quick Save Flow (#2) - QuickSave dialog dismissal timing
+
+**Key Implementation Notes:**
+- Filter persistence: Clear filters when navigating from unrelated views, preserve from related views (history/items/transaction-editor/trends/dashboard)
+- Scroll position management: Save/restore via refs (scrollPositionsRef, mainRef)
+- ScanContext integration: Navigation dismisses QuickSave dialog via `dismissScanDialog`
+- All handlers use `useCallback` for stable references
+
+**Source:** docs/sprint-artifacts/epic14c-refactor/stories/14c-refactor-21-app-navigation-dialog-handlers.md
+
+### Story Marked Ready - 14c-refactor.22 - 2026-01-21
+
+**Summary:** App.tsx JSX Extraction & Final Cleanup - Move ~3,200 lines of view rendering JSX into AppRoutes, integrate AppProviders, reduce App.tsx from 5,079 lines to ~200-300 lines
+
+**User Value:** Clean composition root architecture, better separation of concerns, maintainable codebase, completes App.tsx decomposition goal from Epic 14c-refactor
+
+**Workflow Touchpoints:**
+- Auth → Scan → Save Critical Path (#1) - Provider order must preserve AuthProvider→ScanProvider
+- Scan Receipt Flow (#1) - All scan views receive props from App.tsx, must maintain state machine integration
+- Quick Save Flow (#2) - QuickSaveCard overlay timing critical during scan flow
+- Analytics Navigation Flow (#4) - AnalyticsProvider must remain view-scoped (NOT moved to AppProviders)
+- History Filter Flow (#6) - HistoryFiltersProvider must remain view-scoped
+- Batch Processing Flow (#3) - BatchCaptureView/BatchReviewView receive batch state from App.tsx
+
+**Key Implementation Notes:**
+- View-scoped providers: AnalyticsProvider and HistoryFiltersProvider stay wrapping only their views
+- Overlay z-index: 15+ overlays must render at correct z-index (NavigationBlocker=60, dialogs=50, cards=40)
+- Scroll position: mainRef and scrollPositionsRef must be accessible in extracted JSX
+- Handler passing: Render props pattern (Option A) recommended over ViewHandlersContext
+- Provider order: main.tsx (QueryClient→Auth→ViewMode→Scan), App.tsx (Theme→Nav→AppState→Notification)
+
+**Source:** docs/sprint-artifacts/epic14c-refactor/stories/14c-refactor-22-app-jsx-extraction-final-cleanup.md
+
 ---
 
 ## Sync Notes
 
-- **Generation 5 (2026-01-17):** Updated for Epic 14c progress
-- Epic 14 and 14d marked COMPLETE
-- Epic 14c at 10/11 stories (91%)
-- Test count: 3,146+ unit tests
+- **Generation 9 (2026-01-21):** Updated for Story 14c-refactor.22 marked ready-for-dev (final App.tsx decomposition story)
+- **Generation 8 (2026-01-21):** Updated for Story 14c-refactor.21 marked ready-for-dev
+- **Generation 7 (2026-01-21):** Updated for Story 14c-refactor.20 marked ready-for-dev
+- Epic 14c-refactor at 12/22 stories - Part 1 COMPLETE, Part 2 in progress, Part 5 stories ready
+- Story 14c-refactor.11 DONE (106 tests, smoke tests pass), follow-up 14c-refactor.20-22 created
+- Story 14c-refactor.20, .21, .22 ready-for-dev with Atlas workflow chain analysis
+- Key pattern: Provider scoping (Analytics/HistoryFilters view-scoped vs app-scoped)
+- Key pattern: Credit atomicity (deduct before API, refund on error only)
+- Test count: 3,252+ unit tests
 - Version: 1.0.0-beta.1

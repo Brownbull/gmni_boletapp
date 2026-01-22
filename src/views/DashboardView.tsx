@@ -2063,6 +2063,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             );
 
             // Story 14c-refactor.4: IndexedDB cache deleted - only React Query invalidation now
+            // TODO(14c-refactor.12): Dead code - sharedGroupTransactions query keys removed.
+            // This entire block is a no-op since shared groups are stubbed.
+            // Remove when shared groups feature is re-implemented in Epic 14d.
             // Invalidate React Query cache for affected groups
             await Promise.all(Array.from(affectedGroupIds).map(async groupId => {
                 // Reset React Query cache to clear in-memory data

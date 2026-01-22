@@ -1,0 +1,382 @@
+# Story 14c-refactor.17: Test Suite Cleanup
+
+Status: ready-for-dev
+
+<!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
+
+## Story
+
+As a **developer**,
+I want **tests updated to reflect the refactored codebase**,
+So that **the test suite passes, provides confidence in the changes, and accurately reflects the current architecture**.
+
+## Acceptance Criteria
+
+### Core Functionality
+
+1. **Given** tests exist for removed shared group files
+   **When** this story is completed
+   **Then:**
+   - Delete test files for removed source files:
+     - `tests/unit/lib/sharedGroupErrors.test.ts` (source deleted in 14c-refactor.2)
+     - `tests/unit/migrations/clearSharedGroupCache.test.ts` (source deleted in 14c-refactor.4)
+   - Verify no imports reference deleted source files
+   - All remaining tests pass: `npm test`
+
+2. **Given** tests exist for stubbed services
+   **When** examining shared group service tests
+   **Then:**
+   - Update `tests/unit/services/sharedGroupService.test.ts` (if exists) to test stub behavior:
+     - `createSharedGroup()` throws "Feature temporarily unavailable"
+     - `getSharedGroups()` returns empty array `[]`
+   - Update `tests/unit/hooks/useSharedGroups.test.ts` (if exists) to test empty returns:
+     - `{ groups: [], isLoading: false, error: null }`
+   - Tests verify stub behavior, not original implementation
+
+3. **Given** new contexts were created in Story 14c-refactor.9
+   **When** examining test coverage for contexts
+   **Then:**
+   - Add tests for new contexts in `tests/unit/contexts/`:
+     - `AuthContext.test.tsx` - Test auth state, login/logout methods
+     - `NavigationContext.test.tsx` - Test view navigation, active route state
+     - `ThemeContext.test.tsx` - Test theme switching, dark mode
+     - `AppStateContext.test.tsx` - Test online/offline state, lifecycle
+     - `NotificationContext.test.tsx` - Test notification state management
+   - Each context test file has minimum 80% coverage
+   - Use existing patterns from `ScanContext.test.tsx` and `ViewModeContext.test.tsx`
+
+4. **Given** new hooks were created in Story 14c-refactor.10
+   **When** examining test coverage for hooks
+   **Then:**
+   - Verify tests exist for new hooks in `tests/unit/hooks/app/`:
+     - `useAppInitialization.test.ts` - ✅ EXISTS (verify passing)
+     - `useDeepLinking.test.ts` - ✅ EXISTS (verify passing)
+     - `useAppPushNotifications.test.ts` - ✅ EXISTS (verify passing)
+     - `useOnlineStatus.test.ts` - ✅ EXISTS (verify passing)
+     - `useAppLifecycle.test.ts` - ✅ EXISTS (verify passing)
+   - Each hook test file has minimum 80% coverage
+   - Tests follow existing patterns (localStorage mock, Timestamp mock)
+
+5. **Given** Firestore security rules were simplified in Story 14c-refactor.7
+   **When** examining security rules tests
+   **Then:**
+   - Update `tests/integration/shared-groups-rules.test.ts`:
+     - Test that `sharedGroups` collection denies all read/write
+     - Test that `pendingInvitations` collection denies all read/write
+     - Remove tests for cross-user transaction access via `sharedGroupIds`
+   - Personal transaction rules tests remain unchanged and passing
+
+### Atlas Workflow Impact Requirements
+
+6. **Given** CI uses explicit test group configuration (Story 14.30.8)
+   **When** test files are added or removed
+   **Then:**
+   - Update `vitest.config.ci.group-*.ts` files if affected groups change:
+     - New context tests may need addition to `group-hooks` or new group
+     - Removed test files should be removed from their groups
+   - CI shard balance maintained (target 1,500-3,000 lines per group)
+   - No CI job timeouts after changes
+
+7. **Given** test coverage requirements
+   **When** this story is completed
+   **Then:**
+   - Overall test coverage remains above 80% threshold
+   - No decrease in coverage for critical paths:
+     - Auth flow tests
+     - Scan state persistence tests
+     - Transaction CRUD tests
+   - Coverage report generated and reviewed
+
+8. **Given** new context/hook tests follow existing patterns
+   **When** implementing tests
+   **Then:**
+   - Use localStorage mock pattern from `tests/setup/vitest.setup.ts`
+   - Use Firebase Timestamp mock pattern from testing knowledge
+   - Use `vi.fn()` for callback mocking
+   - Use `renderHook` from `@testing-library/react` for hook tests
+   - Wrap components with required providers in tests
+
+### Dependencies
+
+9. **Given** this story depends on prior refactoring
+   **When** starting implementation
+   **Then:**
+   - Stories 14c-refactor.1-8 (cleanup) SHOULD be completed first
+   - Story 14c-refactor.9 (contexts) MUST be completed first
+   - Story 14c-refactor.10 (hooks) MUST be completed first
+   - Story 14c-refactor.7 (security rules) SHOULD be completed for rules tests
+
+## Tasks / Subtasks
+
+### Task 1: Delete Tests for Removed Files (AC: #1)
+
+- [ ] 1.1 Delete `tests/unit/lib/sharedGroupErrors.test.ts`
+- [ ] 1.2 Delete `tests/unit/migrations/clearSharedGroupCache.test.ts`
+- [ ] 1.3 Search for and remove any other test files referencing deleted source files
+- [ ] 1.4 Verify no import errors after deletion: `npm run typecheck`
+
+### Task 2: Update Stub Service Tests (AC: #2)
+
+- [ ] 2.1 Locate shared group service test files
+- [ ] 2.2 Update tests to verify stub behavior (throws/empty returns)
+- [ ] 2.3 Update hook tests to verify empty returns
+- [ ] 2.4 Run affected tests: `npm test -- sharedGroup`
+
+### Task 3: Add Context Tests (AC: #3, #8)
+
+- [ ] 3.1 Create `tests/unit/contexts/AuthContext.test.tsx`:
+  - [ ] Test initial auth state (null user)
+  - [ ] Test auth state after login (user object)
+  - [ ] Test logout clears auth state
+  - [ ] Test useAuth hook returns context values
+- [ ] 3.2 Create `tests/unit/contexts/NavigationContext.test.tsx`:
+  - [ ] Test initial view state
+  - [ ] Test setView updates active view
+  - [ ] Test navigation history tracking
+  - [ ] Test useNavigation hook returns context values
+- [ ] 3.3 Create `tests/unit/contexts/ThemeContext.test.tsx`:
+  - [ ] Test default theme state
+  - [ ] Test theme switching (light/dark)
+  - [ ] Test color theme switching (Normal/Professional/Mono)
+  - [ ] Test useTheme hook returns context values
+- [ ] 3.4 Create `tests/unit/contexts/AppStateContext.test.tsx`:
+  - [ ] Test initial online state
+  - [ ] Test offline state transition
+  - [ ] Test app lifecycle states
+  - [ ] Test useAppState hook returns context values
+- [ ] 3.5 Create `tests/unit/contexts/NotificationContext.test.tsx`:
+  - [ ] Test initial notification state
+  - [ ] Test notification display
+  - [ ] Test notification dismissal
+  - [ ] Test useNotification hook returns context values
+
+### Task 4: Verify Hook Tests (AC: #4, #8)
+
+- [ ] 4.1 Run existing hook tests: `npm test -- tests/unit/hooks/app/`
+- [ ] 4.2 Verify all 5 hook test files pass
+- [ ] 4.3 Check coverage for each hook file (minimum 80%)
+- [ ] 4.4 Add missing tests if coverage below threshold
+
+### Task 5: Update Firestore Rules Tests (AC: #5)
+
+- [ ] 5.1 Update `tests/integration/shared-groups-rules.test.ts`:
+  - [ ] Add test: sharedGroups collection denies read
+  - [ ] Add test: sharedGroups collection denies write
+  - [ ] Add test: pendingInvitations collection denies read
+  - [ ] Add test: pendingInvitations collection denies write
+  - [ ] Remove tests for cross-user access via sharedGroupIds
+- [ ] 5.2 Verify personal transaction rules tests still pass
+- [ ] 5.3 Run rules tests with emulator: `npm run test:rules`
+
+### Task 6: Update CI Test Groups (AC: #6)
+
+- [ ] 6.1 Review `vitest.config.ci.group-*.ts` files for affected groups
+- [ ] 6.2 Add new context tests to appropriate group (likely `group-hooks`)
+- [ ] 6.3 Remove deleted test files from their groups
+- [ ] 6.4 Verify CI job balance after changes
+- [ ] 6.5 Run CI locally to verify no timeouts: `npm run test:ci`
+
+### Task 7: Coverage Verification (AC: #7)
+
+- [ ] 7.1 Run full test suite with coverage: `npm run test:coverage`
+- [ ] 7.2 Verify overall coverage >= 80%
+- [ ] 7.3 Verify critical path coverage unchanged:
+  - [ ] Auth flow tests passing
+  - [ ] Scan state tests passing
+  - [ ] Transaction CRUD tests passing
+- [ ] 7.4 Document coverage metrics in completion notes
+
+### Task 8: Final Verification (AC: #1-9)
+
+- [ ] 8.1 Run full test suite: `npm test`
+- [ ] 8.2 Run TypeScript check: `npm run typecheck`
+- [ ] 8.3 Run build: `npm run build`
+- [ ] 8.4 Verify no console errors during test run
+- [ ] 8.5 Update task checkboxes and completion notes
+
+## Dev Notes
+
+### Test Files Inventory
+
+**Files to DELETE:**
+| File | Reason | Source Deleted In |
+|------|--------|-------------------|
+| `tests/unit/lib/sharedGroupErrors.test.ts` | Source deleted | 14c-refactor.2 |
+| `tests/unit/migrations/clearSharedGroupCache.test.ts` | Source deleted | 14c-refactor.4 |
+
+**Files with shared group references to UPDATE:**
+| File | Action |
+|------|--------|
+| `tests/unit/components/SharedGroups/ViewModeSwitcher.test.tsx` | Update for disabled state |
+| `tests/unit/hooks/useViewModePreferencePersistence.test.tsx` | Review stub behavior |
+| `tests/unit/hooks/useManualSync.test.ts` | Review stub behavior |
+| `tests/unit/contexts/ViewModeContext.test.tsx` | Verify personal-only mode |
+| `tests/unit/hooks/useJoinLinkHandler.test.ts` | Update for "Coming soon" |
+| `tests/unit/lib/queryKeys.test.ts` | Remove shared group keys if deleted |
+| `tests/integration/shared-groups-rules.test.ts` | Update for deny-all rules |
+| `tests/unit/hooks/useAllUserGroups.test.ts` | Update for empty returns |
+| `tests/unit/hooks/usePendingInvitations.test.ts` | Update for empty returns |
+| `tests/unit/utils/historyFilterUtils.group.test.ts` | Review group filter tests |
+
+**Files to CREATE (new contexts):**
+| File | Source Context |
+|------|----------------|
+| `tests/unit/contexts/AuthContext.test.tsx` | `src/contexts/AuthContext.tsx` |
+| `tests/unit/contexts/NavigationContext.test.tsx` | `src/contexts/NavigationContext.tsx` |
+| `tests/unit/contexts/ThemeContext.test.tsx` | `src/contexts/ThemeContext.tsx` |
+| `tests/unit/contexts/AppStateContext.test.tsx` | `src/contexts/AppStateContext.tsx` |
+| `tests/unit/contexts/NotificationContext.test.tsx` | `src/contexts/NotificationContext.tsx` |
+
+**Existing hook tests (VERIFY PASSING):**
+| File | Tests |
+|------|-------|
+| `tests/unit/hooks/app/useAppInitialization.test.ts` | Exists |
+| `tests/unit/hooks/app/useDeepLinking.test.ts` | Exists |
+| `tests/unit/hooks/app/useAppPushNotifications.test.ts` | Exists |
+| `tests/unit/hooks/app/useOnlineStatus.test.ts` | Exists |
+| `tests/unit/hooks/app/useAppLifecycle.test.ts` | Exists |
+
+### Testing Patterns Reference
+
+**localStorage Mock (from 05-testing.md):**
+```typescript
+let mockStorage: Record<string, string>;
+let mockLocalStorage: Storage;
+
+beforeEach(() => {
+  mockStorage = {};
+  mockLocalStorage = {
+    getItem: vi.fn((key) => mockStorage[key] || null),
+    setItem: vi.fn((key, value) => { mockStorage[key] = value; }),
+    removeItem: vi.fn((key) => { delete mockStorage[key]; }),
+    clear: vi.fn(() => { mockStorage = {}; }),
+    length: 0,
+    key: vi.fn(() => null),
+  };
+  vi.stubGlobal('localStorage', mockLocalStorage);
+});
+```
+
+**Firebase Timestamp Mock:**
+```typescript
+function createMockTimestamp(daysAgo: number): Timestamp {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  return {
+    toDate: () => date,
+    seconds: Math.floor(date.getTime() / 1000),
+    nanoseconds: 0,
+  } as unknown as Timestamp;
+}
+```
+
+**Context Test Pattern:**
+```typescript
+import { renderHook, act } from '@testing-library/react';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+
+const wrapper = ({ children }: { children: React.ReactNode }) => (
+  <AuthProvider>{children}</AuthProvider>
+);
+
+describe('AuthContext', () => {
+  it('should provide initial auth state', () => {
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    expect(result.current.user).toBeNull();
+    expect(result.current.isLoading).toBe(true);
+  });
+});
+```
+
+### CI Test Group Configuration
+
+Current groups from `05-testing.md`:
+- `test-unit-1`: hooks
+- `test-unit-2`: services
+- `test-unit-3`: utils
+- `test-unit-4`: analytics
+- `test-unit-5`: views + root
+- `test-unit-6`: components/insights
+- `test-unit-7`: components/scan
+- `test-unit-8`: components/other
+- `heavy-1 to heavy-4`: Large test files
+
+New context tests should likely go to `test-unit-1` (hooks) or a new `test-unit-contexts` group.
+
+### References
+
+- [Source: docs/sprint-artifacts/epic14c-refactor/tech-context-epic14c-refactor.md#Test-Strategy] - Test strategy
+- [Source: docs/sprint-artifacts/epic14c-refactor/epics.md#Story-14c.17] - Story definition
+- [Source: _bmad/agents/atlas/atlas-sidecar/knowledge/05-testing.md] - Testing patterns and CI config
+- [Source: _bmad/agents/atlas/atlas-sidecar/knowledge/08-workflow-chains.md] - Workflow dependencies
+- [Source: tests/unit/contexts/ScanContext.test.tsx] - Context test patterns
+- [Source: tests/unit/contexts/ViewModeContext.test.tsx] - Context test patterns
+
+## Atlas Workflow Analysis
+
+> This section was generated by Atlas workflow chain analysis (2026-01-21)
+
+### Affected Workflows
+
+- **CI/CD Test Pipeline**: Test suite cleanup will modify explicit test group configuration. Removing test files affects shard balance.
+- **Scan Receipt Flow (#1)**: Stub service tests must verify scan flow still works with empty shared group returns
+- **Auth → Scan → Save Critical Path (#1)**: Context test additions must verify auth state accessible in ScanContext
+
+### Downstream Effects to Consider
+
+- CI job shard rebalancing may be needed after test file removal
+- Coverage percentage may temporarily drop during transition (should recover with new context tests)
+- New context tests will increase total test count (estimated +50-80 tests)
+
+### Testing Implications
+
+- **Existing tests to verify:** Scan state persistence tests (14d.4d), auth flow tests, transaction CRUD tests
+- **New scenarios to add:** Context provider isolation tests, hook integration tests, security rules deny tests
+
+### Workflow Chain Visualization
+
+```
+[Story 14c-refactor.1-8] → Files removed → [THIS STORY: Delete tests for removed files]
+                                                      ↓
+[Story 14c-refactor.9] → Contexts created → [THIS STORY: Add context tests]
+                                                      ↓
+[Story 14c-refactor.10] → Hooks created → [THIS STORY: Verify hook tests]
+                                                      ↓
+[Story 14c-refactor.7] → Rules simplified → [THIS STORY: Update rules tests]
+                                                      ↓
+                                            [CI/CD Pipeline updated]
+```
+
+## Dev Agent Record
+
+### Agent Model Used
+
+{{agent_model_name_version}}
+
+### Debug Log References
+
+(To be filled during implementation)
+
+### Completion Notes List
+
+(To be filled during implementation)
+
+### File List
+
+**To Delete:**
+- `tests/unit/lib/sharedGroupErrors.test.ts`
+- `tests/unit/migrations/clearSharedGroupCache.test.ts`
+
+**To Create:**
+- `tests/unit/contexts/AuthContext.test.tsx`
+- `tests/unit/contexts/NavigationContext.test.tsx`
+- `tests/unit/contexts/ThemeContext.test.tsx`
+- `tests/unit/contexts/AppStateContext.test.tsx`
+- `tests/unit/contexts/NotificationContext.test.tsx`
+
+**To Update:**
+- `tests/integration/shared-groups-rules.test.ts`
+- `tests/unit/hooks/useAllUserGroups.test.ts`
+- `tests/unit/hooks/usePendingInvitations.test.ts`
+- `tests/unit/components/SharedGroups/ViewModeSwitcher.test.tsx`
+- `vitest.config.ci.group-*.ts` (as needed)
