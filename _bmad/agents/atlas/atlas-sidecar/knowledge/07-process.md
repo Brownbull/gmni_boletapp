@@ -58,6 +58,7 @@ backlog → drafted → ready-for-dev → in-progress → review → done
 
 | Story/Epic | Date | Notes |
 |------------|------|-------|
+| **Epic 14c-refactor Part 1-2** | 2026-01-22 | 13 stories (39 pts) - Shared Groups Stub + App Architecture Refactor, PR #211→#212 |
 | **Story 14c.17** | 2026-01-19 | Share link deep linking - Bug fix: nanoid URL-safe chars (`_-`) in share codes |
 | **Story 14c.11** | 2026-01-19 | Error handling - SharedGroupError, ErrorBoundary, quota handling |
 | **Story 14c.16 Follow-up** | 2026-01-19 | rawTransactions wiring fix for year picker |
