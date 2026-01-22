@@ -47,73 +47,51 @@ export async function setupFirebaseEmulator(): Promise<RulesTestEnvironment> {
         rules_version = '2';
         service cloud.firestore {
           match /databases/{database}/documents {
-            // User isolation pattern (matching production rules)
+            // ============================================================================
+            // Transaction Access - Owner Only
+            // Simplified after Epic 14c-refactor: Cross-user shared group access removed
+            // ============================================================================
+            match /artifacts/{appId}/users/{userId}/transactions/{transactionId} {
+              allow read, write: if request.auth != null && request.auth.uid == userId;
+            }
+
+            // ============================================================================
+            // Collection Group Query - Denied
+            // Client-side collection group queries disabled for security (2026-01-17)
+            // ============================================================================
+            match /{path=**}/transactions/{transactionId} {
+              allow read: if false;
+            }
+
+            // ============================================================================
+            // User Data Isolation
+            // Each user can only access their own data (all subcollections)
+            // ============================================================================
             match /artifacts/{appId}/users/{userId}/{document=**} {
               allow read, write: if request.auth != null && request.auth.uid == userId;
             }
 
-            // Story 14c.1: Shared Groups (top-level collection)
+            // ============================================================================
+            // Shared Groups - Disabled until Epic 14d
+            // Epic 14c-refactor: All shared group functionality stubbed
+            // Will be rebuilt with proper architecture in Epic 14d
+            // ============================================================================
             match /sharedGroups/{groupId} {
-              function isAuthenticated() {
-                return request.auth != null;
-              }
-
-              function isGroupMember() {
-                return isAuthenticated()
-                    && request.auth.uid in resource.data.members;
-              }
-
-              function isGroupOwner() {
-                return isAuthenticated()
-                    && request.auth.uid == resource.data.ownerId;
-              }
-
-              function isValidNewGroup() {
-                return isAuthenticated()
-                    && request.resource.data.ownerId == request.auth.uid
-                    && request.resource.data.members.hasOnly([request.auth.uid])
-                    && request.resource.data.members.size() == 1;
-              }
-
-              function isJoiningGroup() {
-                return isAuthenticated()
-                    && !(request.auth.uid in resource.data.members)
-                    && request.auth.uid in request.resource.data.members
-                    && request.resource.data.members.size() == resource.data.members.size() + 1
-                    && resource.data.members.size() < 10;
-              }
-
-              allow create: if isValidNewGroup();
-              allow read: if isGroupMember();
-              allow update: if isGroupOwner() || isJoiningGroup();
-              allow delete: if isGroupOwner();
+              allow read, write: if false;
             }
 
-            // Story 14c.2: Pending Invitations (top-level collection)
+            // ============================================================================
+            // Pending Invitations - Disabled until Epic 14d
+            // Epic 14c-refactor: All invitation functionality stubbed
+            // Will be rebuilt with proper architecture in Epic 14d
+            // ============================================================================
             match /pendingInvitations/{invitationId} {
-              function isAuthenticated() {
-                return request.auth != null;
-              }
-
-              function isInvitedUser() {
-                return isAuthenticated()
-                    && request.auth.token.email != null
-                    && resource.data.invitedEmail == request.auth.token.email.lower();
-              }
-
-              function isStatusUpdateOnly() {
-                return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
-                    && request.resource.data.status in ['accepted', 'declined'];
-              }
-
-              allow create: if isAuthenticated()
-                  && request.resource.data.invitedByUserId == request.auth.uid;
-              allow read: if isInvitedUser();
-              allow update: if isInvitedUser() && isStatusUpdateOnly();
-              allow delete: if false;
+              allow read, write: if false;
             }
 
-            // Deny all other paths
+            // ============================================================================
+            // Default Deny - All other paths
+            // ============================================================================
             match /{document=**} {
               allow read, write: if false;
             }

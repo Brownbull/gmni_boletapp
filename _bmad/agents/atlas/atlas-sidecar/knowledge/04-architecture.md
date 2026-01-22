@@ -626,5 +626,6 @@ const { isInForeground, registerBeforeUnloadGuard } = useAppLifecycle({
 - 2026-01-21: Updated React Query defaults (refetchOnWindowFocus: true for multi-device sync)
 - 2026-01-21: Story 14c-refactor.12 - Transaction Service Simplification (dead query keys removed, TODO markers added)
 - 2026-01-21: Story 14c-refactor.13 - View Mode State Unification (context simplified to in-memory only, Shell & Stub pattern)
+- 2026-01-22: Story 14c-refactor.17 - Test Suite Cleanup (92 new tests: 5 context files + 1 hook, security rules deny-all pattern)
 - Code review learnings in 06-lessons.md
 - Story details in docs/sprint-artifacts/

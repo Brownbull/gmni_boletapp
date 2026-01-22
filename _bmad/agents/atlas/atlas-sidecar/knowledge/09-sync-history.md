@@ -33,7 +33,7 @@
 | **Epic 14** | ✅ COMPLETE (50+) - Core Implementation |
 | **Epic 14d** | ✅ COMPLETE (11/11) - Scan Architecture Refactor |
 | **Epic 14c** | ❌ FAILED/REVERTED (See retrospective) |
-| **Epic 14c-refactor** | 🔄 IN PROGRESS (13/19) - Codebase Cleanup |
+| **Epic 14c-refactor** | 🔄 IN PROGRESS (19/22 done) - Codebase Cleanup |
 | **Tests** | 3,146+ (84%+ coverage) |
 | **Bundle** | 2.92 MB ⚠️ |
 | **Velocity** | ~8.6 pts/day |
@@ -56,7 +56,12 @@
 | 14c-refactor.11 | ✅ Done | App.tsx Decomposition - Components (Atlas Code Review 2026-01-21 - 106 tests) |
 | **14c-refactor.12** | **✅ Done** | **Transaction Service Simplification (Atlas Code Review 2026-01-21 - 5 issues fixed)** |
 | **14c-refactor.13** | **✅ Done** | **View Mode State Unification (Atlas Code Review 2026-01-21 - 0 issues, clean pass)** |
-| 14c-refactor.14-19 | 📋 Ready | Firebase Audit, Quality, Documentation |
+| 14c-refactor.14 | ✅ Done | Firebase Indexes Audit (Atlas Code Review 2026-01-21) |
+| 14c-refactor.15 | ✅ Done | Cloud Functions Audit (Atlas Code Review 2026-01-22) |
+| 14c-refactor.16 | ✅ Done | Firestore Cost Monitoring (Atlas Code Review 2026-01-22) |
+| **14c-refactor.17** | **✅ Done** | **Test Suite Cleanup (Atlas Code Review 2026-01-22 - 92 tests, 4 MEDIUM issues fixed)** |
+| **14c-refactor.18** | **✅ Done** | **Integration Testing - Atlas Code Review 2026-01-22 (16 tasks PASSED, 4,778 unit tests, 1 minor defer)** |
+| **14c-refactor.19** | **✅ Done** | **Documentation Update - Atlas Code Review 2026-01-22 (9 ACs PASSED, 3 MEDIUM issues fixed: File List, AC deviation, footer sync)** |
 | **14c-refactor.20** | **📋 Ready** | **App.tsx Handler Extraction - Transaction & Scan Handlers (3 pts)** |
 | **14c-refactor.21** | **📋 Ready** | **App.tsx Handler Extraction - Navigation & Dialog (3 pts)** |
 | **14c-refactor.22** | **📋 Ready** | **App.tsx JSX Extraction & Final Cleanup - 5,079→200-300 lines (5 pts)** |
@@ -65,7 +70,7 @@
 
 | Epic | Theme | Status | Prep Required |
 |------|-------|--------|---------------|
-| **14c-refactor** | Codebase Cleanup | In Progress | 13/19 stories done |
+| **14c-refactor** | Codebase Cleanup | In Progress | 19/22 stories done |
 | **14d** | Shared Groups v2 | Blocked | Requires 14c-refactor completion |
 | **15** | Advanced Features | Backlog | Blocked by 14c-refactor |
 
