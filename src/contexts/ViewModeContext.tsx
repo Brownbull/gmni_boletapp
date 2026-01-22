@@ -1,28 +1,28 @@
 /**
+ * ViewModeContext - Simple In-Memory View Mode State
+ *
+ * Story 14c-refactor.13: Simplified to single source of truth
  *
  * App-wide context provider that manages switching between personal and
  * shared group view modes. All data-fetching hooks and views check this
  * context to filter data appropriately.
  *
- * Features:
- * - Personal mode (default): Shows user's own transactions
- * - Group mode: Shows combined transactions for a shared group
- * - localStorage persistence for mode across sessions
- * - Firestore persistence via callback
- * - Cached group data for display purposes
+ * After Epic 14c-refactor, this context is simplified to:
+ * - Personal mode only (shared groups feature disabled)
+ * - No localStorage persistence
+ * - No Firestore persistence
+ * - Default to 'personal' on every app load
  *
- * Architecture Reference: Epic 14c - Household Sharing
+ * Epic 14d will implement proper persistence when Shared Groups v2 is ready.
  *
  * @example
  * ```tsx
  * // In any component
- * const { mode, groupId, isGroupMode, setGroupMode, setPersonalMode } = useViewMode();
+ * const { mode, isGroupMode, setPersonalMode } = useViewMode();
  *
- * // Switch to a shared group
- * setGroupMode('group-123', groupData);
- *
- * // Switch back to personal
- * setPersonalMode();
+ * // Currently always personal mode (shared groups disabled)
+ * console.log(mode); // 'personal'
+ * console.log(isGroupMode); // false
  * ```
  */
 
@@ -32,18 +32,8 @@ import React, {
   useState,
   useCallback,
   useMemo,
-  useEffect,
-  useRef,
 } from 'react';
 import type { SharedGroup } from '../types/sharedGroup';
-import type { ViewModePreference } from '../services/userPreferencesService';
-
-// =============================================================================
-// Constants
-// =============================================================================
-
-/** localStorage key for persisting view mode */
-export const VIEW_MODE_STORAGE_KEY = 'boletapp_view_mode';
 
 // =============================================================================
 // Types
@@ -51,6 +41,7 @@ export const VIEW_MODE_STORAGE_KEY = 'boletapp_view_mode';
 
 /**
  * View mode type - either personal or group
+ * Note: 'group' mode is currently disabled (Epic 14c-refactor)
  */
 export type ViewMode = 'personal' | 'group';
 
@@ -58,11 +49,11 @@ export type ViewMode = 'personal' | 'group';
  * Internal state for the view mode context
  */
 interface ViewModeState {
-  /** Current view mode */
+  /** Current view mode - always 'personal' until Epic 14d */
   mode: ViewMode;
-  /** Group ID when in group mode */
+  /** Group ID when in group mode (currently never used) */
   groupId?: string;
-  /** Cached group data for display (icon, name, color) */
+  /** Cached group data for display (currently never used) */
   group?: SharedGroup;
 }
 
@@ -70,35 +61,21 @@ interface ViewModeState {
  * Context value provided to consumers
  */
 export interface ViewModeContextValue extends ViewModeState {
-  /** Computed: true if mode is 'group' */
+  /** Computed: true if mode is 'group' (currently always false) */
   isGroupMode: boolean;
-  /** Switch to personal mode (clears group selection) */
+  /** Switch to personal mode */
   setPersonalMode: () => void;
-  /** Switch to group mode with specified group */
+  /** Switch to group mode - STUB: Feature disabled, does nothing */
   setGroupMode: (groupId: string, group?: SharedGroup) => void;
-  /** Update cached group data (for real-time updates) */
+  /** Update cached group data - STUB: Feature disabled, does nothing */
   updateGroupData: (group: SharedGroup) => void;
-  /**
-   * Call this after groups are loaded to validate persisted group mode
-   */
-  validateAndRestoreMode: (groups: SharedGroup[]) => void;
-  isValidated: boolean;
 }
 
 /**
- * Persisted state structure (minimal for localStorage)
- */
-interface PersistedViewMode {
-  mode: ViewMode;
-  groupId?: string;
-}
-
-/**
+ * Provider props - simplified, no persistence options needed
  */
 interface ViewModeProviderProps {
   children: React.ReactNode;
-  initialPreference?: ViewModePreference;
-  onPreferenceChange?: (preference: Omit<ViewModePreference, 'updatedAt'>) => void;
 }
 
 // =============================================================================
@@ -114,69 +91,6 @@ interface ViewModeProviderProps {
 const ViewModeContext = createContext<ViewModeContextValue | null>(null);
 
 // =============================================================================
-// Helper Functions
-// =============================================================================
-
-/**
- * Load persisted view mode from localStorage.
- * Returns default personal mode if not found or invalid.
- */
-function loadPersistedMode(): PersistedViewMode {
-  try {
-    const stored = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored) as PersistedViewMode;
-      // Validate the structure
-      if (parsed.mode === 'personal' || parsed.mode === 'group') {
-        return parsed;
-      }
-    }
-  } catch {
-    // Invalid JSON or other error - fall back to default
-    if (import.meta.env.DEV) {
-      console.warn('[ViewModeContext] Failed to load persisted mode, using default');
-    }
-  }
-  return { mode: 'personal' };
-}
-
-/**
- * Save view mode to localStorage.
- */
-function persistMode(state: PersistedViewMode): void {
-  try {
-    localStorage.setItem(VIEW_MODE_STORAGE_KEY, JSON.stringify(state));
-  } catch (error) {
-    // localStorage might be full or disabled
-    if (import.meta.env.DEV) {
-      console.warn('[ViewModeContext] Failed to persist mode:', error);
-    }
-  }
-}
-
-/**
- * Priority: Firestore > localStorage > default (personal)
- */
-function getInitialState(initialPreference?: ViewModePreference): ViewModeState {
-  // If Firestore preference provided, use it
-  if (initialPreference) {
-    return {
-      mode: initialPreference.mode,
-      groupId: initialPreference.mode === 'group' ? initialPreference.groupId : undefined,
-      // group object will be populated by validateAndRestoreMode()
-    };
-  }
-
-  // Fall back to localStorage
-  const persisted = loadPersistedMode();
-  return {
-    mode: persisted.mode,
-    groupId: persisted.groupId,
-    // group object will be populated by validateAndRestoreMode()
-  };
-}
-
-// =============================================================================
 // Provider Component
 // =============================================================================
 
@@ -184,68 +98,24 @@ function getInitialState(initialPreference?: ViewModePreference): ViewModeState 
  * View Mode Context Provider.
  *
  * Wrap your app with this provider to enable view mode switching.
- * Should be placed inside QueryClientProvider for React Query support.
- *
- * onPreferenceChange callback for persistence.
+ * Currently always initializes to personal mode (shared groups disabled).
  *
  * @example
  * ```tsx
  * <QueryClientProvider>
- *   <ViewModeProvider
- *     initialPreference={preferences.viewModePreference}
- *     onPreferenceChange={saveViewModePreference}
- *   >
+ *   <ViewModeProvider>
  *     <App />
  *   </ViewModeProvider>
  * </QueryClientProvider>
  * ```
  */
-export function ViewModeProvider({
-  children,
-  initialPreference,
-  onPreferenceChange,
-}: ViewModeProviderProps) {
-  // Initialize state from Firestore preference or localStorage
-  const [state, setState] = useState<ViewModeState>(() =>
-    getInitialState(initialPreference)
-  );
-
-  const [isValidated, setIsValidated] = useState(false);
-
-  // Track if this is the initial render to skip first persistence
-  const isInitialRender = useRef(true);
-
-  const lastPersistedRef = useRef<{ mode: ViewMode; groupId?: string } | null>(null);
-
-  // Persist state changes to localStorage and call onPreferenceChange
-  useEffect(() => {
-    // Skip the initial render persistence (state comes from storage anyway)
-    if (isInitialRender.current) {
-      isInitialRender.current = false;
-      return;
-    }
-
-    const toPersist: PersistedViewMode = {
-      mode: state.mode,
-      groupId: state.groupId,
-    };
-
-    // Always persist to localStorage
-    persistMode(toPersist);
-
-    // Only if the value actually changed
-    if (
-      onPreferenceChange &&
-      (lastPersistedRef.current?.mode !== state.mode ||
-        lastPersistedRef.current?.groupId !== state.groupId)
-    ) {
-      lastPersistedRef.current = { mode: state.mode, groupId: state.groupId };
-      onPreferenceChange({
-        mode: state.mode,
-        groupId: state.mode === 'group' ? state.groupId : undefined,
-      });
-    }
-  }, [state.mode, state.groupId, onPreferenceChange]);
+export function ViewModeProvider({ children }: ViewModeProviderProps) {
+  // Story 14c-refactor.13: Always start in personal mode, no persistence
+  const [state, setState] = useState<ViewModeState>({
+    mode: 'personal',
+    groupId: undefined,
+    group: undefined,
+  });
 
   // ===========================================================================
   // Action Functions
@@ -253,7 +123,7 @@ export function ViewModeProvider({
 
   /**
    * Switch to personal mode.
-   * Clears group selection and persists change.
+   * Clears any group selection.
    */
   const setPersonalMode = useCallback(() => {
     setState({
@@ -268,86 +138,30 @@ export function ViewModeProvider({
   }, []);
 
   /**
-   * Switch to group mode.
-   * Sets the groupId and optionally caches group data.
+   * Switch to group mode - STUB.
+   * Feature disabled in Epic 14c-refactor. Does nothing but log a warning.
+   * Will be re-enabled in Epic 14d.
    *
-   * @param groupId - The shared group ID to switch to
-   * @param group - Optional group data to cache for display
+   * @param _groupId - The shared group ID (ignored)
+   * @param _group - Group data (ignored)
    */
-  const setGroupMode = useCallback((groupId: string, group?: SharedGroup) => {
-    setState({
-      mode: 'group',
-      groupId,
-      group,
-    });
-
+  const setGroupMode = useCallback((_groupId: string, _group?: SharedGroup) => {
     if (import.meta.env.DEV) {
-      console.log('[ViewModeContext] Switched to group mode:', {
-        groupId,
-        groupName: group?.name,
-      });
+      console.warn(
+        '[ViewModeContext] setGroupMode called but shared groups are disabled. ' +
+          'This feature will be re-enabled in Epic 14d.'
+      );
     }
+    // Do nothing - feature disabled
   }, []);
 
   /**
-   * Update cached group data (for real-time updates from subscription).
+   * Update cached group data - STUB.
+   * Feature disabled in Epic 14c-refactor. Does nothing.
    */
-  const updateGroupData = useCallback((group: SharedGroup) => {
-    setState((prev) => {
-      // Only update if we're in group mode for this group
-      if (prev.mode === 'group' && prev.groupId === group.id) {
-        return { ...prev, group };
-      }
-      return prev;
-    });
+  const updateGroupData = useCallback((_group: SharedGroup) => {
+    // Do nothing - feature disabled
   }, []);
-
-  /**
-   * If the persisted group is no longer accessible, fall back to personal mode.
-   * This fixes the race condition where mode is restored before group data loads.
-   * (AC4, AC5)
-   *
-   * @param groups - User's current shared groups
-   */
-  const validateAndRestoreMode = useCallback(
-    (groups: SharedGroup[]) => {
-      setState((prev) => {
-        // Already in personal mode - nothing to validate
-        if (prev.mode === 'personal') {
-          setIsValidated(true);
-          return prev;
-        }
-
-        // In group mode - validate the group still exists and user is a member
-        const group = groups.find((g) => g.id === prev.groupId);
-
-        if (group) {
-          // Group is valid - update with full group data
-          if (import.meta.env.DEV) {
-            console.log('[ViewModeContext] Validated group mode:', {
-              groupId: group.id,
-              groupName: group.name,
-            });
-          }
-          setIsValidated(true);
-          return { ...prev, group };
-        }
-
-        // Group not found - fall back to personal mode (AC5)
-        console.warn(
-          '[ViewModeContext] Persisted group not found, falling back to personal:',
-          prev.groupId
-        );
-        setIsValidated(true);
-        return {
-          mode: 'personal',
-          groupId: undefined,
-          group: undefined,
-        };
-      });
-    },
-    []
-  );
 
   // ===========================================================================
   // Computed Values
@@ -368,24 +182,20 @@ export function ViewModeProvider({
 
       // Computed
       isGroupMode,
-      isValidated,
 
       // Actions
       setPersonalMode,
       setGroupMode,
       updateGroupData,
-      validateAndRestoreMode,
     }),
     [
       state.mode,
       state.groupId,
       state.group,
       isGroupMode,
-      isValidated,
       setPersonalMode,
       setGroupMode,
       updateGroupData,
-      validateAndRestoreMode,
     ]
   );
 
@@ -406,12 +216,10 @@ export function ViewModeProvider({
  * @example
  * ```tsx
  * function TransactionList() {
- *   const { mode, groupId, isGroupMode } = useViewMode();
+ *   const { mode, isGroupMode } = useViewMode();
  *
- *   // Filter data based on mode
- *   const query = isGroupMode
- *     ? getGroupTransactions(groupId)
- *     : getPersonalTransactions();
+ *   // Currently always personal mode
+ *   const query = getPersonalTransactions();
  *
  *   return <List data={query.data} />;
  * }
@@ -436,11 +244,7 @@ export function useViewMode(): ViewModeContextValue {
  * function Header() {
  *   const viewMode = useViewModeOptional();
  *
- *   // Only show group indicator if context is available
- *   if (viewMode?.isGroupMode) {
- *     return <GroupHeader group={viewMode.group} />;
- *   }
- *
+ *   // Currently always personal mode when available
  *   return <DefaultHeader />;
  * }
  * ```
@@ -450,8 +254,7 @@ export function useViewModeOptional(): ViewModeContextValue | null {
 }
 
 // =============================================================================
-// Re-exports
+// Re-exports for backwards compatibility
 // =============================================================================
 
 export type { SharedGroup } from '../types/sharedGroup';
-export type { ViewModePreference } from '../services/userPreferencesService';

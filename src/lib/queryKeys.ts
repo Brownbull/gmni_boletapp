@@ -85,36 +85,8 @@ export const QUERY_KEYS = {
     items: (userId: string, appId: string) =>
         ['items', 'derived', userId, appId] as const,
 
-    /**
-     * Multi-member transaction queries with IndexedDB caching
-     *
-     * Key: ['sharedGroupTransactions', groupId]
-     *
-     * Date range is NO LONGER part of the key. This allows:
-     * - Single cache entry per group (shared across all date selections)
-     * - Client-side filtering via useMemo (not server-side)
-     * - Proper year filter dropdown population from full cached data
-     */
-    sharedGroupTransactions: (groupId: string) =>
-        ['sharedGroupTransactions', groupId] as const,
-
-    /**
-     * Structured for multi-user real-time sync
-     */
-    sharedGroups: {
-        /** All shared groups for a user */
-        all: (userId: string) =>
-            ['sharedGroups', userId] as const,
-        /** Single shared group */
-        single: (groupId: string) =>
-            ['sharedGroups', 'single', groupId] as const,
-        /** Shared group transactions (alias for sharedGroupTransactions) */
-        transactions: (groupId: string) =>
-            ['sharedGroupTransactions', groupId] as const,
-        /** Shared group members */
-        members: (groupId: string) =>
-            ['sharedGroups', groupId, 'members'] as const,
-    },
+    // Note: sharedGroupTransactions and sharedGroups keys were removed in Story 14c-refactor.12
+    // The shared groups feature is stubbed pending future epic (after 14c-refactor completion).
 
     /**
      * Story 14.35: Localized location data

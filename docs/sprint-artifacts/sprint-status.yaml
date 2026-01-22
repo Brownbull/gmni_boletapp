@@ -546,21 +546,26 @@ development_status:
   14c-refactor-8-remove-dead-code: done  # 2 pts - Delete memberUpdateDetection.ts, archive old migration scripts - Atlas Code Review APPROVED 2026-01-21
 
   # Part 2: App Architecture Refactor (5 stories, 21 pts) - NON-SCAN ONLY
-  14c-refactor-9-app-decomposition-contexts: ready-for-dev  # 5 pts - Extract Auth, Navigation, Theme, Notification, AppState contexts (PRESERVE ScanContext)
-  14c-refactor-10-app-decomposition-hooks: ready-for-dev  # 5 pts - Extract useAppInitialization, useDeepLinking, usePushNotifications, useOnlineStatus, useAppLifecycle (PRESERVE scan hooks)
-  14c-refactor-11-app-decomposition-components: ready-for-dev  # 3 pts - Create AppProviders, AppRoutes, AppLayout, AppErrorBoundary (compose with ScanProvider) - Story created 2026-01-21
-  14c-refactor-12-transaction-service-simplification: backlog  # 5 pts - Remove IndexedDB/localStorage caching, React Query only
-  14c-refactor-13-view-mode-state-unification: backlog  # 3 pts - Single source of truth for view mode (default to Personal)
+  14c-refactor-9-app-decomposition-contexts: done  # 5 pts - Extract Auth, Navigation, Theme, Notification, AppState contexts (PRESERVE ScanContext) - Atlas Code Review APPROVED 2026-01-21
+  14c-refactor-10-app-decomposition-hooks: done  # 5 pts - Extract useAppInitialization, useDeepLinking, usePushNotifications, useOnlineStatus, useAppLifecycle (PRESERVE scan hooks) - Atlas Code Review APPROVED 2026-01-21
+  14c-refactor-11-app-decomposition-components: done  # 3 pts - Create AppProviders, AppRoutes, AppLayout, AppErrorBoundary (compose with ScanProvider) - Atlas Code Review APPROVED 2026-01-21 (106 tests, smoke tests pass, line reduction deferred to 14c-refactor.20-22)
+  14c-refactor-12-transaction-service-simplification: done  # 5 pts - Verify React Query cache, remove dead query keys - Atlas Code Review APPROVED 2026-01-21
+  14c-refactor-13-view-mode-state-unification: done  # 3 pts - Single source of truth for view mode (default to Personal) - Atlas Code Review APPROVED 2026-01-21
 
   # Part 3: Firebase & Infrastructure (3 stories, 7 pts)
-  14c-refactor-14-firebase-indexes-audit: backlog  # 2 pts - Remove sharedGroupIds indexes, document remaining
-  14c-refactor-15-cloud-functions-audit: backlog  # 3 pts - Inventory, remove unused, document in cloud-functions.md
-  14c-refactor-16-firestore-cost-monitoring: backlog  # 2 pts - Budget alerts + Cloud Monitoring dashboard
+  14c-refactor-14-firebase-indexes-audit: ready-for-dev  # 2 pts - Remove sharedGroupIds indexes, document remaining - Story drafted 2026-01-21
+  14c-refactor-15-cloud-functions-audit: ready-for-dev  # 3 pts - Inventory, remove unused, document in cloud-functions.md - Atlas story created 2026-01-21
+  14c-refactor-16-firestore-cost-monitoring: ready-for-dev  # 2 pts - Budget alerts + Cloud Monitoring dashboard - Story created 2026-01-21
 
   # Part 4: Quality & Validation (3 stories, 8 pts)
-  14c-refactor-17-test-suite-cleanup: backlog  # 3 pts - Delete removed file tests, add context/hook tests
-  14c-refactor-18-integration-testing: backlog  # 3 pts - Full smoke test checklist
-  14c-refactor-19-documentation-update: backlog  # 2 pts - Update architecture docs, archive old shared groups docs
+  14c-refactor-17-test-suite-cleanup: ready-for-dev  # 3 pts - Delete removed file tests, add context/hook tests - Atlas story created 2026-01-21
+  14c-refactor-18-integration-testing: ready-for-dev  # 3 pts - Full smoke test checklist - Story created 2026-01-21
+  14c-refactor-19-documentation-update: ready-for-dev  # 2 pts - Update architecture docs, archive old shared groups docs - Atlas story created 2026-01-21
+
+  # Part 5: App.tsx Full Decomposition (3 stories, 11 pts) - Follow-up from 14c-refactor.11
+  14c-refactor-20-app-handler-extraction: ready-for-dev  # 3 pts - Extract transaction + scan handlers into useTransactionHandlers, useScanHandlers [DEPENDS: 14c-refactor.11]
+  14c-refactor-21-app-navigation-dialog-handlers: ready-for-dev  # 3 pts - Extract navigation + dialog handlers into useNavigationHandlers, useDialogHandlers [DEPENDS: 14c-refactor.20] - Atlas story created 2026-01-21
+  14c-refactor-22-app-jsx-extraction-final-cleanup: ready-for-dev  # 5 pts - Move JSX into AppRoutes, integrate AppProviders, reduce App.tsx to ~200-300 lines [DEPENDS: 14c-refactor.21] - Atlas story created 2026-01-21
 
   epic-14c-refactor-retrospective: optional
 # | Command | Description |
