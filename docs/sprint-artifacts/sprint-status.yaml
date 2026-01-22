@@ -558,9 +558,9 @@ development_status:
   14c-refactor-16-firestore-cost-monitoring: done  # 2 pts - Budget alerts + Cloud Monitoring dashboard - Atlas Code Review APPROVED 2026-01-22
 
   # Part 4: Quality & Validation (3 stories, 8 pts)
-  14c-refactor-17-test-suite-cleanup: ready-for-dev  # 3 pts - Delete removed file tests, add context/hook tests - Atlas story created 2026-01-21
-  14c-refactor-18-integration-testing: ready-for-dev  # 3 pts - Full smoke test checklist - Story created 2026-01-21
-  14c-refactor-19-documentation-update: ready-for-dev  # 2 pts - Update architecture docs, archive old shared groups docs - Atlas story created 2026-01-21
+  14c-refactor-17-test-suite-cleanup: done  # 3 pts - Delete removed file tests, add context/hook tests - Atlas Code Review APPROVED 2026-01-22
+  14c-refactor-18-integration-testing: done  # 3 pts - Full smoke test checklist - Atlas Code Review APPROVED 2026-01-22
+  14c-refactor-19-documentation-update: done  # 2 pts - Update architecture docs, archive old shared groups docs - Completed 2026-01-22
 
   # Part 5: App.tsx Full Decomposition (3 stories, 11 pts) - Follow-up from 14c-refactor.11
   14c-refactor-20-app-handler-extraction: ready-for-dev  # 3 pts - Extract transaction + scan handlers into useTransactionHandlers, useScanHandlers [DEPENDS: 14c-refactor.11]

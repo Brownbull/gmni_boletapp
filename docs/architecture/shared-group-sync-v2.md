@@ -1,5 +1,18 @@
 # Shared Group Transactions Sync V2
 
+> ⚠️ **DEPRECATED (Epic 14c-refactor: 2026-01-22)**
+>
+> This V2 design document was created during the **debugging phase of Epic 14c** to fix sync issues.
+> It was **never fully implemented** before the epic was reverted.
+> See [epic-14c-retro-2026-01-20.md](../sprint-artifacts/epic-14c-retro-2026-01-20.md) for failure analysis.
+>
+> **Historical Value:** This document remains valuable for:
+> - Understanding the V2 sync design that was being attempted
+> - The `removedFromGroupIds` pattern for deletion detection
+> - Implementation status at the time of revert
+>
+> **For Epic 14d:** This design may be revisited/adapted when reimplementing shared groups.
+
 ## Overview
 
 This document describes the simplified architecture for shared group transaction synchronization, replacing the previous complex 3-layer caching system that had reliability issues.

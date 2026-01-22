@@ -277,8 +277,28 @@
 
 ---
 
+### Integration Testing (Story 14c-refactor.18)
+| Pattern | Rule |
+|---------|------|
+| Console warnings | COOP warning from Firebase Auth popup is expected (browser security policy, not a bug) |
+| SES intrinsics | "SES Removing unpermitted intrinsics" is from browser extensions, not our code |
+| Share code validation | Invalid format codes (not 16 chars) silently redirect - add user-friendly error in Epic 14d |
+| Deep link testing | Test with VALID format codes (16-char alphanumeric) not human-readable strings like "TESTCODE" |
+
+### Documentation Stories (Story 14c-refactor.19)
+| Pattern | Rule |
+|---------|------|
+| File List completeness | Include ALL modified files - Atlas memory files, sprint-status.yaml, not just main docs |
+| AC implementation changes | When approach differs from AC spec (e.g., deprecation notices vs archive moves), update Dev Notes AND File List |
+| Document footer sync | Footer version/date MUST match header "Last Updated" - stale footers cause confusion |
+| Deprecation in place | Valid alternative to moving files - add notice, document decision change in story |
+
+---
+
 ## Sync Notes
 
+- **2026-01-22:** Added documentation story patterns from 14c-refactor.19 code review (File List completeness, AC implementation changes)
+- **2026-01-22:** Added integration testing patterns from 14c-refactor.18 (console warnings, share code validation)
 - **2026-01-21:** Added README documentation pattern from 14c-refactor.8 code review (archived scripts need separate section, not just table entry)
 - **2026-01-21:** Added commit-before-deploy pattern from 14c-refactor.7 code review (Firebase deployed but changes not committed)
 - **2026-01-21:** Added Firestore batch retry pattern and dry-run loop prevention from 14c-refactor.6 code review

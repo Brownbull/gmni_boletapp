@@ -1,7 +1,7 @@
 # React Query Caching Architecture
 
 > Story 14.29: React Query Migration
-> Last Updated: 2026-01-07
+> Last Updated: 2026-01-22 (Epic 14c-refactor: Caching Simplification)
 
 ## Overview
 
@@ -203,6 +203,102 @@ export function useTransactions(user, services) {
 }
 ```
 
+---
+
+## Simplified Caching Architecture (Epic 14c-refactor)
+
+> **Added:** 2026-01-22 (Story 14c-refactor.4, 14c-refactor.12)
+
+Epic 14c-refactor simplified the caching architecture by removing the complex multi-layer cache that was causing sync issues in the failed Epic 14c (Shared Groups) implementation.
+
+### Before (Multi-Layer Complexity)
+
+```
+React Query Cache (in-memory)
+       ↓
+IndexedDB Cache (LRU eviction)  ← REMOVED
+       ↓
+localStorage Cache              ← REMOVED
+       ↓
+Firestore (source of truth)
+```
+
+**Problems with multi-layer caching:**
+- Delta sync couldn't detect deletions across layers
+- Cache invalidation cascaded unpredictably
+- IndexedDB added complexity with minimal benefit for current scale
+- localStorage state could get out of sync with Firestore
+
+### After (Simplified Two-Layer)
+
+```
+React Query Cache (in-memory)
+       ↓
+Firestore (source of truth)
+  └── Offline persistence built-in
+```
+
+### What Was Removed
+
+| Component | File | Status | Reason |
+|-----------|------|--------|--------|
+| IndexedDB cache | `src/lib/sharedGroupCache.ts` | ❌ Deleted | Complexity without benefit |
+| IndexedDB hooks | `useSharedGroupTransactions.ts` | ❌ Deleted | Unused |
+| localStorage sync | ViewModePreference | ✅ Simplified | React Query handles caching |
+| localStorage state | Various prefs | ✅ Simplified | Single source of truth |
+
+### Current Cache Configuration
+
+```typescript
+// src/lib/queryClient.ts
+export const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            staleTime: 5 * 60 * 1000,      // 5 minutes - data considered fresh
+            gcTime: 30 * 60 * 1000,         // 30 minutes - cache kept for recovery
+            refetchOnWindowFocus: true,     // Catch updates while app backgrounded
+            refetchOnReconnect: false,      // Firestore handles reconnection
+            refetchOnMount: false,          // Don't refetch if fresh
+            retry: 1,                       // Single retry on failure
+        },
+    },
+});
+```
+
+### Offline Support
+
+**Firestore offline persistence** handles offline scenarios without a custom IndexedDB layer:
+
+```typescript
+// Firebase initialization (already configured)
+enableIndexedDbPersistence(db).catch((err) => {
+    if (err.code === 'failed-precondition') {
+        // Multiple tabs open - only one can have persistence
+    } else if (err.code === 'unimplemented') {
+        // Browser doesn't support IndexedDB
+    }
+});
+```
+
+**Benefits:**
+- Firestore SDK manages cache internally
+- Automatic sync on reconnection
+- No custom cache invalidation needed
+- Consistent behavior across tabs
+
+### Key Lessons Applied
+
+From the Epic 14c failure retrospective:
+
+| Problem | Solution Applied |
+|---------|------------------|
+| Delta sync can't detect deletions | Removed multi-layer caching; Firestore handles sync |
+| Cache layers got out of sync | Single React Query layer only |
+| Cost explosion from refetchOnMount | Keep refetchOnMount: false |
+| Complexity without benefit | YAGNI - simpler is better for current scale |
+
+---
+
 ## Future Capabilities
 
 With React Query in place, we can now implement:
@@ -210,7 +306,7 @@ With React Query in place, we can now implement:
 1. **Optimistic updates** - Show changes immediately, rollback on error
 2. **Infinite queries** - Paginated transaction loading (Story 14.27)
 3. **Query prefetching** - Pre-load data before navigation
-4. **Household sharing** - Multi-user cache management (Epic 14c)
+4. **Household sharing** - Multi-user cache management (Epic 14d - will use simplified architecture)
 
 ## Troubleshooting
 

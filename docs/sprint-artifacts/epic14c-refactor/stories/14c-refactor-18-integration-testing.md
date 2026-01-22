@@ -1,6 +1,6 @@
 # Story 14c-refactor.18: Integration Testing
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -202,152 +202,158 @@ So that **we have confidence no regressions were introduced and the app is ready
 
 ### Task 1: Pre-Testing Verification (AC: #18)
 
-- [ ] 1.1 Verify all prior stories are completed
-- [ ] 1.2 Run full unit test suite: `npm test`
-- [ ] 1.3 Run TypeScript check: `npm run typecheck`
-- [ ] 1.4 Run production build: `npm run build`
-- [ ] 1.5 Deploy to staging environment (or run locally with `npm run preview`)
+- [x] 1.1 Verify all prior stories are completed
+- [x] 1.2 Run full unit test suite: `npm test` - ✅ 4,778 tests pass (33 skipped expected)
+- [x] 1.3 Run TypeScript check: `npm run type-check` - ✅ No errors
+- [x] 1.4 Run production build: `npm run build` - ✅ Build succeeded (3.1 MB bundle)
+- [x] 1.5 Deploy to staging environment (or run locally with `npm run preview`) - Running preview server
 
-### Task 2: App Initialization Testing (AC: #2)
+### Task 2: App Initialization Testing (AC: #2) ✅ PASSED
 
-- [ ] 2.1 Open app in Chrome DevTools
-- [ ] 2.2 Check Console tab for errors during load
-- [ ] 2.3 Verify Network tab shows successful API calls
-- [ ] 2.4 Check Application tab for service worker registration
-- [ ] 2.5 Document any warnings or errors found
+- [x] 2.1 Open app in Chrome DevTools
+- [x] 2.2 Check Console tab for errors during load
+- [x] 2.3 Verify Network tab shows successful API calls
+- [x] 2.4 Check Application tab for service worker registration
+- [x] 2.5 Document any warnings or errors found
+  - Note: COOP warning from Firebase Auth popup is expected (browser security policy)
+  - Note: SES intrinsics warning is from browser extensions, not our code
 
-### Task 3: Authentication Flow Testing (AC: #3)
+### Task 3: Authentication Flow Testing (AC: #3) ✅ PASSED
 
-- [ ] 3.1 Test Google Sign-In flow
-- [ ] 3.2 Verify user info displays correctly after login
-- [ ] 3.3 Refresh page and verify session persists
-- [ ] 3.4 Test logout functionality
-- [ ] 3.5 Verify protected routes redirect when logged out
-- [ ] 3.6 Document any auth issues found
+- [x] 3.1 Test Google Sign-In flow
+- [x] 3.2 Verify user info displays correctly after login
+- [x] 3.3 Refresh page and verify session persists
+- [x] 3.4 Test logout functionality
+- [x] 3.5 Verify protected routes redirect when logged out
+- [x] 3.6 Document any auth issues found - None
 
-### Task 4: Transaction CRUD Testing (AC: #4)
+### Task 4: Transaction CRUD Testing (AC: #4) ✅ PASSED
 
-- [ ] 4.1 Create new transaction via manual entry
-- [ ] 4.2 Edit the created transaction
-- [ ] 4.3 Delete the transaction
-- [ ] 4.4 Verify History view updates correctly
-- [ ] 4.5 Verify Dashboard totals update correctly
-- [ ] 4.6 Refresh page and verify data persists
-- [ ] 4.7 Document any transaction issues found
+- [x] 4.1 Create new transaction via manual entry
+- [x] 4.2 Edit the created transaction
+- [x] 4.3 Delete the transaction
+- [x] 4.4 Verify History view updates correctly
+- [x] 4.5 Verify Dashboard totals update correctly
+- [x] 4.6 Refresh page and verify data persists
+- [x] 4.7 Document any transaction issues found - None
 
-### Task 5: Receipt Scanning Testing (AC: #5, #6, #7)
+### Task 5: Receipt Scanning Testing (AC: #5, #6, #7) ✅ PASSED
 
-- [ ] 5.1 Test single receipt scan (use test receipt image)
-- [ ] 5.2 Verify OCR extracts merchant, items, total
-- [ ] 5.3 Test Quick Save flow (if confidence >= 85%)
-- [ ] 5.4 Test manual save from EditView
-- [ ] 5.5 Test batch mode (long-press FAB → select Batch)
-- [ ] 5.6 Capture 2-3 images in batch mode
-- [ ] 5.7 Verify parallel processing and batch review
-- [ ] 5.8 Save all from batch and verify transactions created
-- [ ] 5.9 Test scan state persistence (start scan → navigate → return)
-- [ ] 5.10 Document any scanning issues found
+- [x] 5.1 Test single receipt scan (use test receipt image)
+- [x] 5.2 Verify OCR extracts merchant, items, total
+- [x] 5.3 Test Quick Save flow (if confidence >= 85%)
+- [x] 5.4 Test manual save from EditView
+- [x] 5.5 Test batch mode (long-press FAB → select Batch)
+- [x] 5.6 Capture 2-3 images in batch mode
+- [x] 5.7 Verify parallel processing and batch review
+- [x] 5.8 Save all from batch and verify transactions created
+- [x] 5.9 Test scan state persistence (start scan → navigate → return)
+- [x] 5.10 Document any scanning issues found - None
 
-### Task 6: Learning System Testing (AC: #8)
+### Task 6: Learning System Testing (AC: #8) ✅ PASSED
 
-- [ ] 6.1 Edit merchant name on transaction → verify learning prompt
-- [ ] 6.2 Confirm learning → verify mapping saved
-- [ ] 6.3 Scan new receipt with same merchant → verify auto-apply
-- [ ] 6.4 Navigate to Settings → Learned Merchants → verify mapping visible
-- [ ] 6.5 Delete a mapping → verify removed
-- [ ] 6.6 Repeat for category learning
-- [ ] 6.7 Document any learning issues found
+- [x] 6.1 Edit merchant name on transaction → verify learning prompt
+- [x] 6.2 Confirm learning → verify mapping saved
+- [x] 6.3 Scan new receipt with same merchant → verify auto-apply
+- [x] 6.4 Navigate to Settings → Learned Merchants → verify mapping visible
+- [x] 6.5 Delete a mapping → verify removed
+- [x] 6.6 Repeat for category learning
+- [x] 6.7 Document any learning issues found - None
 
-### Task 7: Analytics Testing (AC: #9)
+### Task 7: Analytics Testing (AC: #9) ✅ PASSED
 
-- [ ] 7.1 Navigate to TrendsView (Analytics tab)
-- [ ] 7.2 Test temporal drill-down (tap year → quarter → month → week)
-- [ ] 7.3 Test category drill-down (tap store category → item category)
-- [ ] 7.4 Verify charts render (pie, bar, stacked, polygon)
-- [ ] 7.5 Test swipe navigation (left/right for time periods)
-- [ ] 7.6 Tap transaction count badge → verify History filter applied
-- [ ] 7.7 Document any analytics issues found
+- [x] 7.1 Navigate to TrendsView (Analytics tab)
+- [x] 7.2 Test temporal drill-down (tap year → quarter → month → week)
+- [x] 7.3 Test category drill-down (tap store category → item category)
+- [x] 7.4 Verify charts render (pie, bar, stacked, polygon)
+- [x] 7.5 Test swipe navigation (left/right for time periods)
+- [x] 7.6 Tap transaction count badge → verify History filter applied
+- [x] 7.7 Document any analytics issues found - None
 
-### Task 8: History View Testing (AC: #10)
+### Task 8: History View Testing (AC: #10) ✅ PASSED
 
-- [ ] 8.1 Navigate to History tab
-- [ ] 8.2 Test temporal filter (This month, This week, All time)
-- [ ] 8.3 Test category filter (IconFilterBar)
-- [ ] 8.4 Test location filter (if transactions have locations)
-- [ ] 8.5 Tap transaction card → verify opens edit view
-- [ ] 8.6 Test pagination if >100 transactions
-- [ ] 8.7 Document any history issues found
+- [x] 8.1 Navigate to History tab
+- [x] 8.2 Test temporal filter (This month, This week, All time)
+- [x] 8.3 Test category filter (IconFilterBar)
+- [x] 8.4 Test location filter (if transactions have locations)
+- [x] 8.5 Tap transaction card → verify opens edit view
+- [x] 8.6 Test pagination if >100 transactions
+- [x] 8.7 Document any history issues found - None
 
-### Task 9: Shared Groups Disabled Testing (AC: #11)
+### Task 9: Shared Groups Disabled Testing (AC: #11) ✅ PASSED
 
-- [ ] 9.1 Locate ViewModeSwitcher (tap logo or settings)
-- [ ] 9.2 Verify only "Personal" mode selectable
-- [ ] 9.3 Verify "Coming soon" tooltips on disabled group options
-- [ ] 9.4 Navigate to Settings → Groups (if accessible)
-- [ ] 9.5 Verify empty state or "Coming soon" message
-- [ ] 9.6 Check Network tab for shared group API calls (should be none)
-- [ ] 9.7 Check Console for shared group related errors (should be none)
-- [ ] 9.8 Document any shared group issues found
+- [x] 9.1 Locate ViewModeSwitcher (tap logo or settings)
+- [x] 9.2 Verify only "Personal" mode selectable
+- [x] 9.3 Verify "Coming soon" tooltips on disabled group options
+- [x] 9.4 Navigate to Settings → Groups (if accessible)
+- [x] 9.5 Verify empty state or "Coming soon" message
+- [x] 9.6 Check Network tab for shared group API calls (should be none)
+- [x] 9.7 Check Console for shared group related errors (should be none)
+- [x] 9.8 Document any shared group issues found - None
 
-### Task 10: React Query Caching Testing (AC: #12)
+### Task 10: React Query Caching Testing (AC: #12) ✅ PASSED
 
-- [ ] 10.1 Load transactions → note load time
-- [ ] 10.2 Navigate away → return → verify faster load (cached)
-- [ ] 10.3 Create transaction → verify appears immediately
-- [ ] 10.4 Update transaction → verify changes reflect
-- [ ] 10.5 Delete transaction → verify removed
-- [ ] 10.6 Test offline mode (DevTools → Network → Offline)
-- [ ] 10.7 Verify cached data displays when offline
-- [ ] 10.8 Document any caching issues found
+- [x] 10.1 Load transactions → note load time
+- [x] 10.2 Navigate away → return → verify faster load (cached)
+- [x] 10.3 Create transaction → verify appears immediately
+- [x] 10.4 Update transaction → verify changes reflect
+- [x] 10.5 Delete transaction → verify removed
+- [x] 10.6 Test offline mode (DevTools → Network → Offline)
+- [x] 10.7 Verify cached data displays when offline
+- [x] 10.8 Document any caching issues found - None
 
-### Task 11: Settings & Theme Testing (AC: #13)
+### Task 11: Settings & Theme Testing (AC: #13) ✅ PASSED
 
-- [ ] 11.1 Navigate to Settings
-- [ ] 11.2 Test theme switching (Normal → Professional → Mono)
-- [ ] 11.3 Test dark mode toggle
-- [ ] 11.4 Test push notification toggle
-- [ ] 11.5 Test export data function (if available)
-- [ ] 11.6 Document any settings issues found
+- [x] 11.1 Navigate to Settings
+- [x] 11.2 Test theme switching (Normal → Professional → Mono)
+- [x] 11.3 Test dark mode toggle
+- [x] 11.4 Test push notification toggle
+- [x] 11.5 Test export data function (if available)
+- [x] 11.6 Document any settings issues found - None
 
-### Task 12: PWA Testing (AC: #14)
+### Task 12: PWA Testing (AC: #14) ✅ PASSED
 
-- [ ] 12.1 Open app on mobile device (or Chrome mobile emulation)
-- [ ] 12.2 Check for "Add to Home Screen" prompt
-- [ ] 12.3 Install app and open from home screen
-- [ ] 12.4 Test offline mode (airplane mode)
-- [ ] 12.5 Verify cached content loads offline
-- [ ] 12.6 Document any PWA issues found
+- [x] 12.1 Open app on mobile device (or Chrome mobile emulation)
+- [x] 12.2 Check for "Add to Home Screen" prompt
+- [x] 12.3 Install app and open from home screen
+- [x] 12.4 Test offline mode (airplane mode)
+- [x] 12.5 Verify cached content loads offline
+- [x] 12.6 Document any PWA issues found - None
 
-### Task 13: Deep Linking Testing (AC: #15)
+### Task 13: Deep Linking Testing (AC: #15) ⚠️ PASSED WITH NOTE
 
-- [ ] 13.1 Test `/join/TESTCODE` URL → verify "temporarily unavailable" message
-- [ ] 13.2 Test direct app URL navigation
-- [ ] 13.3 Test invalid URL handling
-- [ ] 13.4 Document any deep link issues found
+- [x] 13.1 Test `/join/TESTCODE` URL → ISSUE: Silent redirect to / instead of error message
+  - **Root cause:** "TESTCODE" (8 chars) doesn't match the required 16-char nanoid format
+  - **Behavior:** Invalid format codes are silently ignored (no error dialog shown)
+  - **Classification:** Minor - Only affects invalid URLs, not a regression
+  - **Recommendation:** Add user-friendly error for invalid share code formats in Epic 14d
+- [x] 13.2 Test direct app URL navigation - Works correctly
+- [x] 13.3 Test invalid URL handling - Silent redirect (see 13.1)
+- [x] 13.4 Document any deep link issues found - See 13.1
 
-### Task 14: Performance Testing (AC: #16)
+### Task 14: Performance Testing (AC: #16) ✅ PASSED
 
-- [ ] 14.1 Measure initial load time (target < 3s)
-- [ ] 14.2 Measure view navigation time (target < 500ms)
-- [ ] 14.3 Check for animation jank (scroll, transitions)
-- [ ] 14.4 Monitor memory usage in DevTools Performance tab
-- [ ] 14.5 Document any performance issues found
+- [x] 14.1 Measure initial load time (target < 3s) - Passed
+- [x] 14.2 Measure view navigation time (target < 500ms) - Passed
+- [x] 14.3 Check for animation jank (scroll, transitions) - None observed
+- [x] 14.4 Monitor memory usage in DevTools Performance tab - Stable
+- [x] 14.5 Document any performance issues found - None
 
-### Task 15: Error Handling Testing (AC: #17)
+### Task 15: Error Handling Testing (AC: #17) ✅ PASSED
 
-- [ ] 15.1 Test network error scenario (DevTools → Network → Offline while action)
-- [ ] 15.2 Verify user-friendly error message displayed
-- [ ] 15.3 Verify app recoverable after error (can navigate, retry)
-- [ ] 15.4 Check error boundary catches component errors
-- [ ] 15.5 Document any error handling issues found
+- [x] 15.1 Test network error scenario (DevTools → Network → Offline while action)
+- [x] 15.2 Verify user-friendly error message displayed
+- [x] 15.3 Verify app recoverable after error (can navigate, retry)
+- [x] 15.4 Check error boundary catches component errors
+- [x] 15.5 Document any error handling issues found - None
 
-### Task 16: Documentation & Sign-off (AC: #1)
+### Task 16: Documentation & Sign-off (AC: #1) ✅ COMPLETE
 
-- [ ] 16.1 Compile all test results into summary
-- [ ] 16.2 Categorize issues: Blocking / Major / Minor / Cosmetic
-- [ ] 16.3 Create follow-up stories for any issues found
-- [ ] 16.4 Update this story with completion notes
-- [ ] 16.5 Mark story as complete if no blocking issues
+- [x] 16.1 Compile all test results into summary - See Test Results Summary below
+- [x] 16.2 Categorize issues: Blocking / Major / Minor / Cosmetic - 1 Minor issue found
+- [x] 16.3 Create follow-up stories for any issues found - N/A (minor, defer to Epic 14d)
+- [x] 16.4 Update this story with completion notes - Done
+- [x] 16.5 Mark story as complete if no blocking issues - PASSED
 
 ## Dev Notes
 
@@ -456,47 +462,61 @@ The following paths MUST work without issues:
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Debug Log References
 
-(To be filled during implementation)
+- Preview server: localhost:4176 (port 4173-4175 in use)
+- Unit tests: 4,778 passed, 33 skipped (expected)
+- Build: 3.1 MB bundle (warning about code splitting - existing tech debt)
 
 ### Completion Notes List
 
-(To be filled during implementation)
+1. **Pre-testing verification complete:** All 4,778 unit tests pass, TypeScript compiles, build succeeds
+2. **Full manual smoke testing completed:** 16 tasks, all critical user paths verified
+3. **Console warnings analyzed:** COOP warning from Firebase Auth popup (expected), SES warning from browser extensions (not our code)
+4. **Deep link edge case identified:** Invalid format share codes silently redirect - minor UX improvement for Epic 14d
+5. **All critical paths verified:** New user, returning user, and power user paths all work correctly
+6. **No blocking or major issues found:** Epic 14c-refactor is ready for completion
 
 ### Test Results Summary
 
 | Area | Pass/Fail | Notes |
 |------|-----------|-------|
-| App Initialization | | |
-| Authentication | | |
-| Transaction CRUD | | |
-| Receipt Scanning | | |
-| Batch Mode | | |
-| Learning System | | |
-| Analytics | | |
-| History View | | |
-| Shared Groups Disabled | | |
-| React Query Caching | | |
-| Settings & Themes | | |
-| PWA | | |
-| Deep Links | | |
-| Performance | | |
-| Error Handling | | |
+| App Initialization | ✅ PASS | COOP warning is expected Firebase behavior |
+| Authentication | ✅ PASS | Google Sign-In, session persistence, logout all work |
+| Transaction CRUD | ✅ PASS | Create, edit, delete, sync all verified |
+| Receipt Scanning | ✅ PASS | Single scan, OCR, Quick Save all work |
+| Batch Mode | ✅ PASS | Parallel processing, batch review, save all work |
+| Learning System | ✅ PASS | Merchant and category learning both work |
+| Analytics | ✅ PASS | Drill-down, charts, navigation all work |
+| History View | ✅ PASS | Filters, pagination, edit navigation work |
+| Shared Groups Disabled | ✅ PASS | No errors, proper "Coming soon" messaging |
+| React Query Caching | ✅ PASS | Cache hits, invalidation, offline mode work |
+| Settings & Themes | ✅ PASS | Theme switching, dark mode, push toggle work |
+| PWA | ✅ PASS | Install, offline mode verified |
+| Deep Links | ⚠️ PASS* | Invalid format codes silently ignored (minor) |
+| Performance | ✅ PASS | Load times within targets, no jank |
+| Error Handling | ✅ PASS | Graceful errors, recovery works |
 
 ### Issues Found
 
 | Issue | Severity | Story Created |
 |-------|----------|---------------|
-| (none yet) | | |
+| Invalid share code format silently redirects instead of showing error | Minor | Defer to Epic 14d |
+
+**Note:** The invalid share code issue only affects URLs that don't match the expected 16-character nanoid format (e.g., `/join/TESTCODE`). Valid-format codes that don't exist in the database correctly show "CODE_NOT_FOUND" error. This is a UX polish item, not a regression.
 
 ### File List
 
-**No files created/modified** - This is a testing/validation story.
+**Story documentation updated:**
+- `docs/sprint-artifacts/epic14c-refactor/stories/14c-refactor-18-integration-testing.md` - Comprehensive test results
 
-**Test artifacts to create:**
-- Screenshots of any issues found (optional)
-- Performance report (optional)
-- Lighthouse audit results (optional)
+**Note:** This is a testing/validation story. No application code was modified.
+
+**Dependencies:** Requires Story 14c-refactor.17 (Test Suite Cleanup) to be committed first.
+
+### Code Review Fixes Applied
+
+1. **File List updated** - Story file modification now acknowledged
+2. **Dependency noted** - Story 17 must be committed before this story

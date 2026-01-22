@@ -1,6 +1,6 @@
 # Architecture Document - Boletapp
 
-**Last Updated:** 2026-01-07 (Epic 14: React Query Migration + Performance Optimizations)
+**Last Updated:** 2026-01-22 (Epic 14c-refactor: App.tsx Decomposition + Caching Simplification)
 
 ## Executive Summary
 
@@ -181,6 +181,141 @@ main.tsx (Entry Point)
 - `GroupedBarChart` - Stacked bar chart for multi-category data
 - `Nav` - Bottom navigation bar
 - `ErrorBoundary` - React error boundary wrapper
+
+---
+
+## App Component Architecture (Epic 14c-refactor)
+
+> **Added:** 2026-01-22 (Stories 14c-refactor.9-11)
+
+Epic 14c-refactor decomposed App.tsx into modular contexts, hooks, and components. The scan architecture (from Epic 14d) was preserved intact; only non-scan portions were refactored.
+
+### App.tsx Structure Diagram
+
+```
+App.tsx (~5074 lines - composition root)
+   │
+   ├── AppProviders (wraps all providers)
+   │   ├── QueryClientProvider
+   │   ├── AuthProvider
+   │   ├── ThemeProvider
+   │   ├── ScanProvider (PRESERVED from Epic 14d)
+   │   ├── NavigationProvider
+   │   ├── AppStateProvider
+   │   └── NotificationProvider
+   │
+   ├── AppErrorBoundary (custom error boundary)
+   │
+   ├── AppLayout (authenticated layout container)
+   │   ├── TopHeader
+   │   ├── AppMainContent (view rendering)
+   │   └── Nav (bottom navigation)
+   │
+   └── AppRoutes (conditional view rendering)
+       ├── LoginScreen (!user)
+       └── View Components (user)
+           ├── DashboardView
+           ├── ScanView
+           ├── TransactionEditorView
+           ├── TrendsView
+           ├── HistoryView
+           ├── ItemsView
+           ├── SettingsView
+           └── InsightsView
+```
+
+### New Directory Structure
+
+```
+src/
+├── contexts/                        # Context providers (Epic 14c-refactor.9)
+│   ├── index.ts                     # Barrel exports
+│   ├── AuthContext.tsx              # Authentication state
+│   ├── NavigationContext.tsx        # View navigation
+│   ├── ThemeContext.tsx             # Theme + font scaling
+│   ├── NotificationContext.tsx      # In-app notifications
+│   ├── AppStateContext.tsx          # App lifecycle (online, foreground)
+│   ├── ScanContext.tsx              # PRESERVED from Epic 14d
+│   ├── ViewModeContext.tsx          # Personal/Group view mode
+│   ├── AnalyticsContext.tsx         # Analytics navigation state
+│   └── HistoryFiltersContext.tsx    # History filtering state
+│
+├── hooks/
+│   └── app/                         # App-level hooks (Epic 14c-refactor.10)
+│       ├── index.ts                 # Barrel exports
+│       ├── useAppInitialization.ts  # Auth + services coordination
+│       ├── useDeepLinking.ts        # URL deep link handling
+│       ├── useAppPushNotifications.ts # Push notification coordination
+│       ├── useOnlineStatus.ts       # Network connectivity monitoring
+│       └── useAppLifecycle.ts       # Foreground/background, beforeunload
+│
+├── components/
+│   └── App/                         # App-level components (Epic 14c-refactor.11)
+│       ├── index.ts                 # Barrel exports
+│       ├── AppProviders.tsx         # Provider composition
+│       ├── AppRoutes.tsx            # View routing logic
+│       ├── AppLayout.tsx            # Authenticated layout container
+│       ├── AppErrorBoundary.tsx     # Error boundary wrapper
+│       └── types.ts                 # Shared App component types
+```
+
+### Key Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Preserve ScanContext | Epic 14d work was complete and tested |
+| Wrapper hooks | New hooks wrap existing hooks for coordination |
+| Refs for callbacks | Prevent useEffect churn with stable references |
+| View-scoped providers | AnalyticsProvider, HistoryFiltersProvider stay view-scoped |
+
+---
+
+## Context Provider Hierarchy
+
+> **Added:** 2026-01-22 (Story 14c-refactor.9)
+
+### Provider Composition Order
+
+Providers are composed in a specific order to satisfy dependency requirements:
+
+```tsx
+<QueryClientProvider>        {/* React Query - outermost for all data */}
+  <AuthProvider>             {/* Auth state - needed by most providers */}
+    <ThemeProvider>          {/* Theme - visual, doesn't need auth */}
+      <ScanProvider>         {/* Scan state - needs auth for user.uid */}
+        <NavigationProvider> {/* Navigation - independent */}
+          <AppStateProvider> {/* App lifecycle - innermost */}
+            <NotificationProvider> {/* Notifications */}
+              {children}
+            </NotificationProvider>
+          </AppStateProvider>
+        </NavigationProvider>
+      </ScanProvider>
+    </ThemeProvider>
+  </AuthProvider>
+</QueryClientProvider>
+```
+
+### Context Responsibilities
+
+| Context | Responsibilities | Key State |
+|---------|------------------|-----------|
+| **AuthContext** | Firebase auth lifecycle, user state, sign-in/out | `user`, `loading`, `signIn()`, `signOut()` |
+| **NavigationContext** | View navigation, pending navigation, scroll state | `view`, `navigateTo()`, `pendingView` |
+| **ThemeContext** | Theme (Normal/Professional/Mono), font scaling, dark mode | `theme`, `fontScale`, `isDarkMode` |
+| **NotificationContext** | In-app notifications, toast messages, unread count | `notifications`, `addNotification()`, `unreadCount` |
+| **AppStateContext** | Online status, foreground/background, beforeunload guards | `isOnline`, `isInForeground`, `registerGuard()` |
+| **ScanContext** | Scan state machine, batch processing, scan mode | `phase`, `mode`, `dispatch()` (from Epic 14d) |
+| **ViewModeContext** | Personal vs Group view mode, active group | `viewMode`, `activeGroupId`, `setViewMode()` |
+
+### View-Scoped Providers (Not in AppProviders)
+
+These providers are scoped to specific views to prevent unnecessary re-renders:
+
+| Provider | Scope | Reason |
+|----------|-------|--------|
+| `AnalyticsProvider` | TrendsView only | Re-renders on drill-down changes |
+| `HistoryFiltersProvider` | HistoryView, ItemsView | Filter state isolated to history views |
 
 ---
 
@@ -1203,6 +1338,6 @@ Component → useFirestoreSubscription → React Query Cache + Firestore onSnaps
 
 ---
 
-**Document Version:** 6.0
-**Last Updated:** 2026-01-15
-**Epic:** Epic 14c (Household Sharing) + Cloud Functions Documentation
+**Document Version:** 7.0
+**Last Updated:** 2026-01-22
+**Epic:** Epic 14c-refactor (App.tsx Decomposition + Caching Simplification)
