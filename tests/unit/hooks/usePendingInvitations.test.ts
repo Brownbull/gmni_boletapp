@@ -1,71 +1,30 @@
 /**
  * usePendingInvitations Hook Tests
  *
- * Story 14c.2: Accept/Decline Invitation
- * Epic 14c: Shared Groups (Household Sharing)
+ * **STUB TESTS** - Epic 14c-refactor: Shared groups disabled until Epic 14d
  *
- * Tests for the pending invitations subscription hook.
+ * Tests for the stubbed pending invitations hook that returns empty state.
+ * Security rules deny all access to pendingInvitations collection.
+ *
+ * @see Story 14c-refactor.14 - Firebase Indexes Audit
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { usePendingInvitations, subscribeToPendingInvitations } from '../../../src/hooks/usePendingInvitations';
-import type { PendingInvitation } from '../../../src/types/sharedGroup';
 
-// Mock Firebase
-vi.mock('firebase/firestore', () => ({
-    getFirestore: vi.fn(() => ({})),
-    collection: vi.fn(),
-    query: vi.fn(),
-    where: vi.fn(),
-    orderBy: vi.fn(),
-    limit: vi.fn(),
-    onSnapshot: vi.fn(),
-}));
+describe('usePendingInvitations (STUB)', () => {
+    describe('stubbed behavior', () => {
+        it('should return empty array regardless of userEmail', () => {
+            const { result } = renderHook(() => usePendingInvitations('test@example.com'));
 
-// Mock the useFirestoreSubscription hook
-vi.mock('../../../src/hooks/useFirestoreSubscription', () => ({
-    useFirestoreSubscription: vi.fn(),
-}));
+            expect(result.current.pendingInvitations).toEqual([]);
+            expect(result.current.pendingCount).toBe(0);
+            expect(result.current.loading).toBe(false);
+            expect(result.current.error).toBeNull();
+        });
 
-import { useFirestoreSubscription } from '../../../src/hooks/useFirestoreSubscription';
-
-const mockUseFirestoreSubscription = vi.mocked(useFirestoreSubscription);
-
-// Mock invitation data
-const mockInvitation: PendingInvitation = {
-    id: 'invite-123',
-    groupId: 'group-456',
-    groupName: '🏠 Gastos del Hogar',
-    groupColor: '#10b981',
-    groupIcon: '🏠',
-    invitedEmail: 'test@example.com',
-    invitedByUserId: 'user-1',
-    invitedByName: 'John Doe',
-    createdAt: { toDate: () => new Date() } as any,
-    expiresAt: { toDate: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) } as any, // 7 days from now
-    status: 'pending',
-};
-
-const expiredInvitation: PendingInvitation = {
-    ...mockInvitation,
-    id: 'invite-expired',
-    expiresAt: { toDate: () => new Date(Date.now() - 1000) } as any, // Already expired
-};
-
-describe('usePendingInvitations', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
-
-    describe('when user email is not provided', () => {
         it('should return empty array when userEmail is null', () => {
-            mockUseFirestoreSubscription.mockReturnValue({
-                data: [],
-                isLoading: false,
-                error: null,
-            } as any);
-
             const { result } = renderHook(() => usePendingInvitations(null));
 
             expect(result.current.pendingInvitations).toEqual([]);
@@ -74,149 +33,55 @@ describe('usePendingInvitations', () => {
             expect(result.current.error).toBeNull();
         });
 
-        it('should not enable subscription when userEmail is null', () => {
-            mockUseFirestoreSubscription.mockReturnValue({
-                data: [],
-                isLoading: false,
-                error: null,
-            } as any);
+        it('should return empty array when userEmail is undefined', () => {
+            const { result } = renderHook(() => usePendingInvitations(undefined));
 
-            renderHook(() => usePendingInvitations(null));
-
-            expect(mockUseFirestoreSubscription).toHaveBeenCalledWith(
-                expect.arrayContaining(['pendingInvitations', '']),
-                expect.any(Function),
-                { enabled: false }
-            );
-        });
-    });
-
-    describe('when user email is provided', () => {
-        it('should return pending invitations from subscription', () => {
-            mockUseFirestoreSubscription.mockReturnValue({
-                data: [mockInvitation],
-                isLoading: false,
-                error: null,
-            } as any);
-
-            const { result } = renderHook(() => usePendingInvitations('test@example.com'));
-
-            expect(result.current.pendingInvitations).toHaveLength(1);
-            expect(result.current.pendingInvitations[0].groupName).toBe('🏠 Gastos del Hogar');
-            expect(result.current.loading).toBe(false);
-        });
-
-        it('should enable subscription when userEmail is provided', () => {
-            mockUseFirestoreSubscription.mockReturnValue({
-                data: [],
-                isLoading: false,
-                error: null,
-            } as any);
-
-            renderHook(() => usePendingInvitations('test@example.com'));
-
-            expect(mockUseFirestoreSubscription).toHaveBeenCalledWith(
-                expect.arrayContaining(['pendingInvitations', 'test@example.com']),
-                expect.any(Function),
-                { enabled: true }
-            );
-        });
-
-        it('should lowercase email in query key', () => {
-            mockUseFirestoreSubscription.mockReturnValue({
-                data: [],
-                isLoading: false,
-                error: null,
-            } as any);
-
-            renderHook(() => usePendingInvitations('Test@Example.COM'));
-
-            expect(mockUseFirestoreSubscription).toHaveBeenCalledWith(
-                ['pendingInvitations', 'test@example.com'],
-                expect.any(Function),
-                { enabled: true }
-            );
-        });
-
-        it('should return loading state from subscription', () => {
-            mockUseFirestoreSubscription.mockReturnValue({
-                data: undefined,
-                isLoading: true,
-                error: null,
-            } as any);
-
-            const { result } = renderHook(() => usePendingInvitations('test@example.com'));
-
-            expect(result.current.loading).toBe(true);
             expect(result.current.pendingInvitations).toEqual([]);
-        });
-    });
-
-    describe('pendingCount calculation', () => {
-        it('should count non-expired pending invitations', () => {
-            mockUseFirestoreSubscription.mockReturnValue({
-                data: [mockInvitation],
-                isLoading: false,
-                error: null,
-            } as any);
-
-            const { result } = renderHook(() => usePendingInvitations('test@example.com'));
-
-            expect(result.current.pendingCount).toBe(1);
-        });
-
-        it('should not count expired invitations in pendingCount', () => {
-            mockUseFirestoreSubscription.mockReturnValue({
-                data: [expiredInvitation],
-                isLoading: false,
-                error: null,
-            } as any);
-
-            const { result } = renderHook(() => usePendingInvitations('test@example.com'));
-
             expect(result.current.pendingCount).toBe(0);
+            expect(result.current.loading).toBe(false);
+            expect(result.current.error).toBeNull();
         });
 
-        it('should count only non-expired invitations when mixed', () => {
-            mockUseFirestoreSubscription.mockReturnValue({
-                data: [mockInvitation, expiredInvitation],
-                isLoading: false,
-                error: null,
-            } as any);
+        it('should return stable reference across rerenders', () => {
+            const { result, rerender } = renderHook(() => usePendingInvitations('test@example.com'));
 
-            const { result } = renderHook(() => usePendingInvitations('test@example.com'));
+            const firstResult = result.current;
+            rerender();
+            const secondResult = result.current;
 
-            expect(result.current.pendingCount).toBe(1);
-            expect(result.current.pendingInvitations).toHaveLength(2);
-        });
-    });
-
-    describe('query key generation', () => {
-        it('should generate unique query keys for different emails', () => {
-            const calls: any[] = [];
-            mockUseFirestoreSubscription.mockImplementation((queryKey) => {
-                calls.push(queryKey);
-                return { data: [], isLoading: false, error: null } as any;
-            });
-
-            const { rerender } = renderHook(
-                ({ email }) => usePendingInvitations(email),
-                { initialProps: { email: 'user1@example.com' } }
-            );
-
-            rerender({ email: 'user2@example.com' });
-
-            expect(calls[0]).toEqual(['pendingInvitations', 'user1@example.com']);
-            expect(calls[1]).toEqual(['pendingInvitations', 'user2@example.com']);
+            // useMemo should return same reference
+            expect(firstResult).toBe(secondResult);
         });
     });
 });
 
-describe('subscribeToPendingInvitations', () => {
-    // Note: This tests the function signature and basic behavior
-    // Full Firestore integration is tested in integration tests
+describe('subscribeToPendingInvitations (STUB)', () => {
+    it('should immediately call onUpdate with empty array', () => {
+        const onUpdate = vi.fn();
+        const onError = vi.fn();
 
-    it('should be a function', () => {
-        expect(typeof subscribeToPendingInvitations).toBe('function');
+        subscribeToPendingInvitations('test@example.com', onUpdate, onError);
+
+        expect(onUpdate).toHaveBeenCalledTimes(1);
+        expect(onUpdate).toHaveBeenCalledWith([]);
+        expect(onError).not.toHaveBeenCalled();
+    });
+
+    it('should return a no-op unsubscribe function', () => {
+        const onUpdate = vi.fn();
+
+        const unsubscribe = subscribeToPendingInvitations('test@example.com', onUpdate);
+
+        expect(typeof unsubscribe).toBe('function');
+        // Should not throw when called
+        expect(() => unsubscribe()).not.toThrow();
+    });
+
+    it('should work without onError callback', () => {
+        const onUpdate = vi.fn();
+
+        // Should not throw without onError
+        expect(() => subscribeToPendingInvitations('test@example.com', onUpdate)).not.toThrow();
+        expect(onUpdate).toHaveBeenCalledWith([]);
     });
 });
