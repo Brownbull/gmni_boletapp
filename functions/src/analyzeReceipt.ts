@@ -11,11 +11,19 @@ if (!admin.apps.length) {
   admin.initializeApp()
 }
 
-// Initialize Gemini AI with API key from Firebase config
+// Initialize Gemini AI with API key
+// Priority: 1) Environment variable (.env for local, Secret Manager for prod)
+//           2) Firebase config (deprecated but still works in production)
+// Note: functions.config() is deprecated (March 2026) - migrate to .env files
 const getGenAI = () => {
-  const apiKey = functions.config().gemini?.api_key || process.env.GEMINI_API_KEY
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const apiKey = process.env.GEMINI_API_KEY || (functions.config() as any).gemini?.api_key
   if (!apiKey) {
-    throw new Error('GEMINI_API_KEY not configured')
+    throw new Error(
+      'GEMINI_API_KEY not configured. ' +
+      'For local dev: add to functions/.env. ' +
+      'For production: use firebase functions:config:set or Secret Manager.'
+    )
   }
   return new GoogleGenerativeAI(apiKey)
 }
