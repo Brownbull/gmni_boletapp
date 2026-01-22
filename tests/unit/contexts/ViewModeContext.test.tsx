@@ -1,25 +1,24 @@
 /**
- * Story 14c.4: View Mode Switcher - ViewModeContext Tests
- * Story 14c.18: View Mode User Persistence Tests
+ * Story 14c-refactor.13: ViewModeContext Tests (Simplified)
  *
- * Tests for the ViewModeContext that manages switching between
- * personal and shared group view modes throughout the app.
+ * Tests for the simplified ViewModeContext that manages view mode
+ * in memory only (no persistence).
  *
- * Test coverage:
- * - AC5: Context state for filtering views
- * - AC6: localStorage persistence of view mode
- * - Story 14c.18 AC1-AC8: Firestore persistence and group validation
+ * After Epic 14c-refactor, the context is simplified to:
+ * - Always starts in personal mode
+ * - No localStorage persistence
+ * - No Firestore persistence
+ * - setGroupMode is a no-op stub
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, act, renderHook, waitFor } from '@testing-library/react';
+import { render, screen, act, renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import {
   ViewModeProvider,
   useViewMode,
   useViewModeOptional,
-  VIEW_MODE_STORAGE_KEY,
 } from '../../../src/contexts/ViewModeContext';
 import type { SharedGroup } from '../../../src/types/sharedGroup';
 import { Timestamp } from 'firebase/firestore';
@@ -27,27 +26,6 @@ import { Timestamp } from 'firebase/firestore';
 // =============================================================================
 // Test Setup
 // =============================================================================
-
-// Mock localStorage
-let mockStorage: Record<string, string>;
-let mockLocalStorage: Storage;
-
-function createMockLocalStorage(): Storage {
-  return {
-    getItem: vi.fn((key: string) => mockStorage[key] || null),
-    setItem: vi.fn((key: string, value: string) => {
-      mockStorage[key] = value;
-    }),
-    removeItem: vi.fn((key: string) => {
-      delete mockStorage[key];
-    }),
-    clear: vi.fn(() => {
-      mockStorage = {};
-    }),
-    length: 0,
-    key: vi.fn(() => null),
-  };
-}
 
 // Create a mock SharedGroup
 function createMockSharedGroup(overrides: Partial<SharedGroup> = {}): SharedGroup {
@@ -88,15 +66,12 @@ function createWrapper() {
   };
 }
 
-describe('ViewModeContext', () => {
+describe('ViewModeContext (Simplified - Story 14c-refactor.13)', () => {
   beforeEach(() => {
-    mockStorage = {};
-    mockLocalStorage = createMockLocalStorage();
-    vi.stubGlobal('localStorage', mockLocalStorage);
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
     vi.clearAllMocks();
   });
 
@@ -124,7 +99,7 @@ describe('ViewModeContext', () => {
       expect(typeof result.current.setPersonalMode).toBe('function');
     });
 
-    it('should provide setGroupMode function', () => {
+    it('should provide setGroupMode function (stub)', () => {
       const { result } = renderHook(() => useViewMode(), {
         wrapper: createWrapper(),
       });
@@ -134,11 +109,13 @@ describe('ViewModeContext', () => {
   });
 
   // ===========================================================================
-  // Mode Switching Tests
+  // Mode Switching Tests (Stubbed)
   // ===========================================================================
 
-  describe('Mode Switching', () => {
-    it('should switch to group mode when setGroupMode is called', async () => {
+  describe('Mode Switching (Stubbed)', () => {
+    it('should NOT switch to group mode when setGroupMode is called (feature disabled)', () => {
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
       const { result } = renderHook(() => useViewMode(), {
         wrapper: createWrapper(),
       });
@@ -149,158 +126,62 @@ describe('ViewModeContext', () => {
         result.current.setGroupMode(mockGroup.id!, mockGroup);
       });
 
-      await waitFor(() => {
-        expect(result.current.mode).toBe('group');
-        expect(result.current.groupId).toBe('group-123');
-        expect(result.current.group).toEqual(mockGroup);
-        expect(result.current.isGroupMode).toBe(true);
-      });
+      // Should remain in personal mode
+      expect(result.current.mode).toBe('personal');
+      expect(result.current.groupId).toBeUndefined();
+      expect(result.current.isGroupMode).toBe(false);
+
+      consoleSpy.mockRestore();
     });
 
-    it('should switch back to personal mode when setPersonalMode is called', async () => {
+    it('should stay in personal mode when setPersonalMode is called', () => {
       const { result } = renderHook(() => useViewMode(), {
         wrapper: createWrapper(),
       });
 
-      const mockGroup = createMockSharedGroup();
-
-      // First switch to group mode
-      act(() => {
-        result.current.setGroupMode(mockGroup.id!, mockGroup);
-      });
-
-      await waitFor(() => {
-        expect(result.current.mode).toBe('group');
-      });
-
-      // Then switch back to personal
       act(() => {
         result.current.setPersonalMode();
       });
 
-      await waitFor(() => {
-        expect(result.current.mode).toBe('personal');
-        expect(result.current.groupId).toBeUndefined();
-        expect(result.current.group).toBeUndefined();
-        expect(result.current.isGroupMode).toBe(false);
-      });
-    });
-
-    it('should switch between different groups', async () => {
-      const { result } = renderHook(() => useViewMode(), {
-        wrapper: createWrapper(),
-      });
-
-      const group1 = createMockSharedGroup({ id: 'group-1', name: 'Group 1' });
-      const group2 = createMockSharedGroup({ id: 'group-2', name: 'Group 2' });
-
-      act(() => {
-        result.current.setGroupMode(group1.id!, group1);
-      });
-
-      await waitFor(() => {
-        expect(result.current.groupId).toBe('group-1');
-      });
-
-      act(() => {
-        result.current.setGroupMode(group2.id!, group2);
-      });
-
-      await waitFor(() => {
-        expect(result.current.groupId).toBe('group-2');
-        expect(result.current.group?.name).toBe('Group 2');
-      });
+      expect(result.current.mode).toBe('personal');
+      expect(result.current.groupId).toBeUndefined();
+      expect(result.current.isGroupMode).toBe(false);
     });
   });
 
   // ===========================================================================
-  // localStorage Persistence Tests (AC6)
+  // No Persistence Tests (AC1, AC4)
   // ===========================================================================
 
-  describe('localStorage Persistence (AC6)', () => {
-    it('should persist mode to localStorage when switching to group mode', async () => {
+  describe('No Persistence (AC1, AC4)', () => {
+    it('should NOT persist anything to localStorage', () => {
+      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+
       const { result } = renderHook(() => useViewMode(), {
         wrapper: createWrapper(),
       });
 
-      const mockGroup = createMockSharedGroup();
-
-      act(() => {
-        result.current.setGroupMode(mockGroup.id!, mockGroup);
-      });
-
-      await waitFor(() => {
-        expect(mockLocalStorage.setItem).toHaveBeenCalled();
-        const storedValue = mockStorage[VIEW_MODE_STORAGE_KEY];
-        expect(storedValue).toBeDefined();
-        const parsed = JSON.parse(storedValue);
-        expect(parsed.mode).toBe('group');
-        expect(parsed.groupId).toBe('group-123');
-      });
-    });
-
-    it('should persist mode to localStorage when switching to personal mode', async () => {
-      const { result } = renderHook(() => useViewMode(), {
-        wrapper: createWrapper(),
-      });
-
-      const mockGroup = createMockSharedGroup();
-
-      // Switch to group first
-      act(() => {
-        result.current.setGroupMode(mockGroup.id!, mockGroup);
-      });
-
-      await waitFor(() => {
-        expect(result.current.mode).toBe('group');
-      });
-
-      // Switch back to personal
       act(() => {
         result.current.setPersonalMode();
       });
 
-      await waitFor(() => {
-        const storedValue = mockStorage[VIEW_MODE_STORAGE_KEY];
-        const parsed = JSON.parse(storedValue);
-        expect(parsed.mode).toBe('personal');
-      });
+      // No localStorage calls should be made
+      expect(setItemSpy).not.toHaveBeenCalled();
+
+      setItemSpy.mockRestore();
     });
 
-    it('should restore mode from localStorage on initialization', () => {
-      // Pre-populate localStorage with group mode
-      mockStorage[VIEW_MODE_STORAGE_KEY] = JSON.stringify({
-        mode: 'group',
-        groupId: 'persisted-group-id',
-      });
+    it('should NOT read from localStorage on initialization', () => {
+      const getItemSpy = vi.spyOn(Storage.prototype, 'getItem');
 
-      const { result } = renderHook(() => useViewMode(), {
+      renderHook(() => useViewMode(), {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.mode).toBe('group');
-      expect(result.current.groupId).toBe('persisted-group-id');
-    });
+      // No localStorage reads for view mode
+      expect(getItemSpy).not.toHaveBeenCalledWith('boletapp_view_mode');
 
-    it('should fall back to personal mode if localStorage has invalid data', () => {
-      // Pre-populate with invalid JSON
-      mockStorage[VIEW_MODE_STORAGE_KEY] = 'invalid json {{{';
-
-      const { result } = renderHook(() => useViewMode(), {
-        wrapper: createWrapper(),
-      });
-
-      expect(result.current.mode).toBe('personal');
-    });
-
-    it('should fall back to personal mode if localStorage is empty', () => {
-      // localStorage is empty by default in tests
-
-      const { result } = renderHook(() => useViewMode(), {
-        wrapper: createWrapper(),
-      });
-
-      expect(result.current.mode).toBe('personal');
+      getItemSpy.mockRestore();
     });
   });
 
@@ -328,80 +209,23 @@ describe('ViewModeContext', () => {
   });
 
   // ===========================================================================
-  // updateGroupData Tests
+  // updateGroupData Tests (Stubbed)
   // ===========================================================================
 
-  describe('updateGroupData', () => {
-    it('should update cached group data when in group mode for that group', async () => {
+  describe('updateGroupData (Stubbed)', () => {
+    it('should NOT update group data (feature disabled)', () => {
       const { result } = renderHook(() => useViewMode(), {
         wrapper: createWrapper(),
       });
 
-      const mockGroup = createMockSharedGroup({ id: 'group-123', name: 'Original Name' });
-      const updatedGroup = createMockSharedGroup({ id: 'group-123', name: 'Updated Name' });
+      const mockGroup = createMockSharedGroup({ id: 'group-123', name: 'Test Group' });
 
-      // First switch to group mode
-      act(() => {
-        result.current.setGroupMode(mockGroup.id!, mockGroup);
-      });
-
-      await waitFor(() => {
-        expect(result.current.group?.name).toBe('Original Name');
-      });
-
-      // Update the group data
-      act(() => {
-        result.current.updateGroupData(updatedGroup);
-      });
-
-      await waitFor(() => {
-        expect(result.current.group?.name).toBe('Updated Name');
-      });
-    });
-
-    it('should NOT update cached group data when in personal mode', async () => {
-      const { result } = renderHook(() => useViewMode(), {
-        wrapper: createWrapper(),
-      });
-
-      const mockGroup = createMockSharedGroup({ id: 'group-123', name: 'Some Group' });
-
-      // Stay in personal mode
-      expect(result.current.mode).toBe('personal');
-
-      // Try to update group data
       act(() => {
         result.current.updateGroupData(mockGroup);
       });
 
       // Group should remain undefined in personal mode
       expect(result.current.group).toBeUndefined();
-    });
-
-    it('should NOT update cached group data when in different group mode', async () => {
-      const { result } = renderHook(() => useViewMode(), {
-        wrapper: createWrapper(),
-      });
-
-      const group1 = createMockSharedGroup({ id: 'group-1', name: 'Group 1' });
-      const group2Update = createMockSharedGroup({ id: 'group-2', name: 'Group 2 Updated' });
-
-      // Switch to group 1
-      act(() => {
-        result.current.setGroupMode(group1.id!, group1);
-      });
-
-      await waitFor(() => {
-        expect(result.current.groupId).toBe('group-1');
-      });
-
-      // Try to update with group 2 data
-      act(() => {
-        result.current.updateGroupData(group2Update);
-      });
-
-      // Should still show group 1 data
-      expect(result.current.group?.name).toBe('Group 1');
     });
   });
 
@@ -410,28 +234,12 @@ describe('ViewModeContext', () => {
   // ===========================================================================
 
   describe('Computed Values', () => {
-    it('should have isGroupMode = false in personal mode', () => {
+    it('should have isGroupMode = false always', () => {
       const { result } = renderHook(() => useViewMode(), {
         wrapper: createWrapper(),
       });
 
       expect(result.current.isGroupMode).toBe(false);
-    });
-
-    it('should have isGroupMode = true in group mode', async () => {
-      const { result } = renderHook(() => useViewMode(), {
-        wrapper: createWrapper(),
-      });
-
-      const mockGroup = createMockSharedGroup();
-
-      act(() => {
-        result.current.setGroupMode(mockGroup.id!, mockGroup);
-      });
-
-      await waitFor(() => {
-        expect(result.current.isGroupMode).toBe(true);
-      });
     });
   });
 
@@ -459,7 +267,9 @@ describe('ViewModeContext', () => {
       expect(screen.getByTestId('mode')).toHaveTextContent('personal');
     });
 
-    it('should update child components when mode changes', async () => {
+    it('should always show personal mode even after setGroupMode attempt', () => {
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
       function TestChild() {
         const { mode, setGroupMode } = useViewMode();
         const mockGroup = createMockSharedGroup();
@@ -487,281 +297,10 @@ describe('ViewModeContext', () => {
         screen.getByText('Switch').click();
       });
 
-      await waitFor(() => {
-        expect(screen.getByTestId('mode')).toHaveTextContent('group');
-      });
-    });
-  });
+      // Should still be personal (setGroupMode is stubbed)
+      expect(screen.getByTestId('mode')).toHaveTextContent('personal');
 
-  // ===========================================================================
-  // Story 14c.18: validateAndRestoreMode Tests (AC4, AC5)
-  // ===========================================================================
-
-  describe('Story 14c.18: validateAndRestoreMode', () => {
-    it('should provide validateAndRestoreMode function', () => {
-      const { result } = renderHook(() => useViewMode(), {
-        wrapper: createWrapper(),
-      });
-
-      expect(typeof result.current.validateAndRestoreMode).toBe('function');
-    });
-
-    it('should provide isValidated state', () => {
-      const { result } = renderHook(() => useViewMode(), {
-        wrapper: createWrapper(),
-      });
-
-      expect(typeof result.current.isValidated).toBe('boolean');
-      // Initially false until validation is called
-      expect(result.current.isValidated).toBe(false);
-    });
-
-    it('should validate and keep group mode if group exists (AC4)', async () => {
-      // Pre-populate localStorage with group mode
-      mockStorage[VIEW_MODE_STORAGE_KEY] = JSON.stringify({
-        mode: 'group',
-        groupId: 'group-123',
-      });
-
-      const { result } = renderHook(() => useViewMode(), {
-        wrapper: createWrapper(),
-      });
-
-      const validGroup = createMockSharedGroup({ id: 'group-123', name: 'Valid Group' });
-
-      // Validate with groups that include the persisted group
-      act(() => {
-        result.current.validateAndRestoreMode([validGroup]);
-      });
-
-      await waitFor(() => {
-        expect(result.current.isValidated).toBe(true);
-        expect(result.current.mode).toBe('group');
-        expect(result.current.groupId).toBe('group-123');
-        expect(result.current.group?.name).toBe('Valid Group');
-      });
-    });
-
-    it('should fall back to personal mode if group does not exist (AC5)', async () => {
-      // Pre-populate localStorage with group mode for a non-existent group
-      mockStorage[VIEW_MODE_STORAGE_KEY] = JSON.stringify({
-        mode: 'group',
-        groupId: 'deleted-group-id',
-      });
-
-      const { result } = renderHook(() => useViewMode(), {
-        wrapper: createWrapper(),
-      });
-
-      const otherGroup = createMockSharedGroup({ id: 'other-group', name: 'Other Group' });
-
-      // Validate with groups that DON'T include the persisted group
-      act(() => {
-        result.current.validateAndRestoreMode([otherGroup]);
-      });
-
-      await waitFor(() => {
-        expect(result.current.isValidated).toBe(true);
-        expect(result.current.mode).toBe('personal');
-        expect(result.current.groupId).toBeUndefined();
-        expect(result.current.group).toBeUndefined();
-      });
-    });
-
-    it('should validate personal mode without changing state', async () => {
-      const { result } = renderHook(() => useViewMode(), {
-        wrapper: createWrapper(),
-      });
-
-      // Start in personal mode (default)
-      expect(result.current.mode).toBe('personal');
-
-      const someGroup = createMockSharedGroup({ id: 'group-123' });
-
-      // Validate with any groups
-      act(() => {
-        result.current.validateAndRestoreMode([someGroup]);
-      });
-
-      await waitFor(() => {
-        expect(result.current.isValidated).toBe(true);
-        expect(result.current.mode).toBe('personal');
-      });
-    });
-
-    it('should handle empty groups list gracefully', async () => {
-      // Pre-populate localStorage with group mode
-      mockStorage[VIEW_MODE_STORAGE_KEY] = JSON.stringify({
-        mode: 'group',
-        groupId: 'group-123',
-      });
-
-      const { result } = renderHook(() => useViewMode(), {
-        wrapper: createWrapper(),
-      });
-
-      // Validate with empty groups (user has no groups)
-      act(() => {
-        result.current.validateAndRestoreMode([]);
-      });
-
-      await waitFor(() => {
-        expect(result.current.isValidated).toBe(true);
-        expect(result.current.mode).toBe('personal');
-      });
-    });
-  });
-
-  // ===========================================================================
-  // Story 14c.18: Initial Preference Props Tests (AC3)
-  // ===========================================================================
-
-  describe('Story 14c.18: initialPreference prop (AC3)', () => {
-    function createWrapperWithInitialPreference(preference: { mode: 'personal' | 'group'; groupId?: string }) {
-      const queryClient = new QueryClient({
-        defaultOptions: {
-          queries: {
-            retry: false,
-            gcTime: 0,
-          },
-        },
-      });
-
-      return function Wrapper({ children }: { children: React.ReactNode }) {
-        return (
-          <QueryClientProvider client={queryClient}>
-            <ViewModeProvider initialPreference={preference}>{children}</ViewModeProvider>
-          </QueryClientProvider>
-        );
-      };
-    }
-
-    it('should initialize with Firestore preference when provided', () => {
-      const { result } = renderHook(() => useViewMode(), {
-        wrapper: createWrapperWithInitialPreference({
-          mode: 'group',
-          groupId: 'firestore-group-id',
-        }),
-      });
-
-      expect(result.current.mode).toBe('group');
-      expect(result.current.groupId).toBe('firestore-group-id');
-    });
-
-    it('should prefer Firestore preference over localStorage', () => {
-      // Pre-populate localStorage with different data
-      mockStorage[VIEW_MODE_STORAGE_KEY] = JSON.stringify({
-        mode: 'group',
-        groupId: 'local-group-id',
-      });
-
-      const { result } = renderHook(() => useViewMode(), {
-        wrapper: createWrapperWithInitialPreference({
-          mode: 'group',
-          groupId: 'firestore-group-id',
-        }),
-      });
-
-      // Should use Firestore preference, not localStorage
-      expect(result.current.groupId).toBe('firestore-group-id');
-    });
-
-    it('should initialize with personal mode from Firestore', () => {
-      const { result } = renderHook(() => useViewMode(), {
-        wrapper: createWrapperWithInitialPreference({
-          mode: 'personal',
-        }),
-      });
-
-      expect(result.current.mode).toBe('personal');
-      expect(result.current.groupId).toBeUndefined();
-    });
-  });
-
-  // ===========================================================================
-  // Story 14c.18: onPreferenceChange Callback Tests (AC6)
-  // ===========================================================================
-
-  describe('Story 14c.18: onPreferenceChange callback (AC6)', () => {
-    function createWrapperWithCallback(onPreferenceChange: (pref: { mode: 'personal' | 'group'; groupId?: string }) => void) {
-      const queryClient = new QueryClient({
-        defaultOptions: {
-          queries: {
-            retry: false,
-            gcTime: 0,
-          },
-        },
-      });
-
-      return function Wrapper({ children }: { children: React.ReactNode }) {
-        return (
-          <QueryClientProvider client={queryClient}>
-            <ViewModeProvider onPreferenceChange={onPreferenceChange}>{children}</ViewModeProvider>
-          </QueryClientProvider>
-        );
-      };
-    }
-
-    it('should call onPreferenceChange when mode changes to group', async () => {
-      const onPreferenceChange = vi.fn();
-      const { result } = renderHook(() => useViewMode(), {
-        wrapper: createWrapperWithCallback(onPreferenceChange),
-      });
-
-      const mockGroup = createMockSharedGroup();
-
-      act(() => {
-        result.current.setGroupMode(mockGroup.id!, mockGroup);
-      });
-
-      await waitFor(() => {
-        expect(onPreferenceChange).toHaveBeenCalledWith({
-          mode: 'group',
-          groupId: 'group-123',
-        });
-      });
-    });
-
-    it('should call onPreferenceChange when mode changes to personal', async () => {
-      const onPreferenceChange = vi.fn();
-      const { result } = renderHook(() => useViewMode(), {
-        wrapper: createWrapperWithCallback(onPreferenceChange),
-      });
-
-      const mockGroup = createMockSharedGroup();
-
-      // Switch to group first
-      act(() => {
-        result.current.setGroupMode(mockGroup.id!, mockGroup);
-      });
-
-      await waitFor(() => {
-        expect(result.current.mode).toBe('group');
-      });
-
-      onPreferenceChange.mockClear();
-
-      // Switch back to personal
-      act(() => {
-        result.current.setPersonalMode();
-      });
-
-      await waitFor(() => {
-        expect(onPreferenceChange).toHaveBeenCalledWith({
-          mode: 'personal',
-          groupId: undefined,
-        });
-      });
-    });
-
-    it('should not call onPreferenceChange on initial render', () => {
-      const onPreferenceChange = vi.fn();
-      renderHook(() => useViewMode(), {
-        wrapper: createWrapperWithCallback(onPreferenceChange),
-      });
-
-      // Should not be called on initial render
-      expect(onPreferenceChange).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
     });
   });
 });

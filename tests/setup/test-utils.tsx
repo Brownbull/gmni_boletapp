@@ -11,6 +11,7 @@
 import { render, RenderOptions, renderHook, RenderHookOptions } from '@testing-library/react';
 import React, { ReactElement, ReactNode, createContext, useContext } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '../../src/contexts/AuthContext';
 import type { ScanContextValue } from '../../src/contexts/ScanContext';
 import type { ScanState, ScanDialogType } from '../../src/types/scanStateMachine';
 import { DIALOG_TYPES } from '../../src/types/scanStateMachine';
@@ -48,12 +49,15 @@ interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
 
 /**
  * Wrapper component that provides all necessary context providers
+ * Story 14c-refactor.9: Added AuthProvider wrapping
  */
 function createWrapper(queryClient: QueryClient) {
   return function AllTheProviders({ children }: { children: ReactNode }) {
     return (
       <QueryClientProvider client={queryClient}>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </QueryClientProvider>
     );
   };

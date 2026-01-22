@@ -19,7 +19,7 @@
 | **2026-01-15 to 01-16** | **Epic 14c Phase 1-2: Stories 14c.1-14c.10 (Shared Groups)** |
 | **2026-01-17 to 01-19** | **Epic 14c Phase 4-5: 14c.11-14c.17 (Error Handling, Real-time, Push, Deep Links)** |
 | **2026-01-20** | **Epic 14c FAILED/REVERTED - Retrospective complete** |
-| **2026-01-21** | **Epic 14c-refactor: Stories 14c-refactor.1-6 done, 14c-refactor.7-11 ready, 14c-refactor.9-11 stories created** |
+| **2026-01-21** | **Epic 14c-refactor: Stories 14c-refactor.1-12 done, 14c-refactor.13 in-progress, 14c-refactor.20-22 ready** |
 
 ---
 
@@ -32,7 +32,7 @@
 | **Epic 14** | ✅ COMPLETE (50+) - Core Implementation |
 | **Epic 14d** | ✅ COMPLETE (11/11) - Scan Architecture Refactor |
 | **Epic 14c** | ❌ FAILED/REVERTED (See retrospective) |
-| **Epic 14c-refactor** | 🔄 IN PROGRESS (8/19) - Codebase Cleanup |
+| **Epic 14c-refactor** | 🔄 IN PROGRESS (13/19) - Codebase Cleanup |
 | **Tests** | 3,146+ (84%+ coverage) |
 | **Bundle** | 2.92 MB ⚠️ |
 | **Velocity** | ~8.6 pts/day |
@@ -49,16 +49,22 @@
 | 14c-refactor.5 | ✅ Done | Placeholder UI States (Atlas Code Review 2026-01-21 - fixed missing translation keys) |
 | 14c-refactor.6 | ✅ Done | Firestore Data Cleanup Script (Atlas Code Review 2026-01-21 - fixed infinite loop, added retry logic) |
 | 14c-refactor.7 | ✅ Done | Security Rules Simplification (Atlas Code Review 2026-01-21 - fixed missing commit) |
-| 14c-refactor.8 | 📋 Ready | Remove Dead Code (memberUpdateDetection.ts, archive scripts) |
-| **14c-refactor.9** | **📋 Ready** | **App.tsx Decomposition - Contexts (5 contexts: Auth, Nav, Theme, Notif, AppState)** |
-| **14c-refactor.10** | **📋 Ready** | **App.tsx Decomposition - Hooks (5 custom hooks)** |
-| 14c-refactor.11-19 | 🔲 Backlog | Components, Firebase Audit, Quality |
+| 14c-refactor.8 | ✅ Done | Remove Dead Code (memberUpdateDetection.ts, archive scripts) |
+| 14c-refactor.9 | ✅ Done | App.tsx Decomposition - Contexts (Atlas Code Review 2026-01-21) |
+| 14c-refactor.10 | ✅ Done | App.tsx Decomposition - Hooks (Atlas Code Review 2026-01-21) |
+| 14c-refactor.11 | ✅ Done | App.tsx Decomposition - Components (Atlas Code Review 2026-01-21 - 106 tests) |
+| **14c-refactor.12** | **✅ Done** | **Transaction Service Simplification (Atlas Code Review 2026-01-21 - 5 issues fixed)** |
+| **14c-refactor.13** | **✅ Done** | **View Mode State Unification (Atlas Code Review 2026-01-21 - 0 issues, clean pass)** |
+| 14c-refactor.14-19 | 📋 Ready | Firebase Audit, Quality, Documentation |
+| **14c-refactor.20** | **📋 Ready** | **App.tsx Handler Extraction - Transaction & Scan Handlers (3 pts)** |
+| **14c-refactor.21** | **📋 Ready** | **App.tsx Handler Extraction - Navigation & Dialog (3 pts)** |
+| **14c-refactor.22** | **📋 Ready** | **App.tsx JSX Extraction & Final Cleanup - 5,079→200-300 lines (5 pts)** |
 
 ### Next Epics Roadmap
 
 | Epic | Theme | Status | Prep Required |
 |------|-------|--------|---------------|
-| **14c-refactor** | Codebase Cleanup | In Progress | 8/19 stories done |
+| **14c-refactor** | Codebase Cleanup | In Progress | 13/19 stories done |
 | **14d** | Shared Groups v2 | Blocked | Requires 14c-refactor completion |
 | **15** | Advanced Features | Backlog | Blocked by 14c-refactor |
 

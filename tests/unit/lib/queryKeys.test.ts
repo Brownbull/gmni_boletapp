@@ -82,7 +82,8 @@ describe('QUERY_KEYS', () => {
         });
     });
 
-    // Story 14c.8: Personal groups removed - now using sharedGroups only
+    // Note: sharedGroupTransactions and sharedGroups tests removed in Story 14c-refactor.12
+    // The shared groups feature is stubbed pending Epic 14d redesign.
 
     describe('trustedMerchants', () => {
         it('generates correct key structure', () => {
@@ -120,23 +121,6 @@ describe('QUERY_KEYS', () => {
             const key = (QUERY_KEYS as any).household.members(householdId);
 
             expect(key).toEqual(['household', householdId, 'members']);
-        });
-    });
-
-    describe('sharedGroupTransactions', () => {
-        const groupId = 'group-123';
-
-        it('generates correct key structure (Story 14c.16: no date range)', () => {
-            const key = QUERY_KEYS.sharedGroupTransactions(groupId);
-
-            expect(key).toEqual(['sharedGroupTransactions', groupId]);
-        });
-
-        it('alias sharedGroups.transactions produces same key', () => {
-            const directKey = QUERY_KEYS.sharedGroupTransactions(groupId);
-            const aliasKey = QUERY_KEYS.sharedGroups.transactions(groupId);
-
-            expect(directKey).toEqual(aliasKey);
         });
     });
 

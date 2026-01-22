@@ -9,7 +9,9 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
-import { renderHook, waitFor, act } from '@testing-library/react';
+import { waitFor, act } from '@testing-library/react';
+// Story 14c-refactor.9: Use renderHookWithClient from test-utils for AuthProvider wrapping
+import { renderHookWithClient } from '../setup/test-utils';
 import { useAuth } from '../../src/hooks/useAuth';
 import {
     getAuth,
@@ -47,7 +49,7 @@ describe('Authentication Flow', () => {
         // Mock alert to avoid "alert is not defined" error in tests
         global.alert = vi.fn();
 
-        const { result } = renderHook(() => useAuth());
+        const { result } = renderHookWithClient(() => useAuth());
 
         // Wait for Firebase to initialize
         await waitFor(() => {
@@ -87,7 +89,7 @@ describe('Authentication Flow', () => {
      * This test verifies that authenticated users can successfully sign out.
      */
     it('should allow authenticated user to sign out', async () => {
-        const { result } = renderHook(() => useAuth());
+        const { result } = renderHookWithClient(() => useAuth());
 
         // Wait for Firebase to initialize
         await waitFor(() => {
@@ -114,7 +116,7 @@ describe('Authentication Flow', () => {
      */
     it('should persist auth state across hook re-initialization', async () => {
         // First hook instance
-        const { result: result1, unmount: unmount1 } = renderHook(() => useAuth());
+        const { result: result1, unmount: unmount1 } = renderHookWithClient(() => useAuth());
 
         await waitFor(() => {
             expect(result1.current.services).not.toBeNull();
@@ -124,7 +126,7 @@ describe('Authentication Flow', () => {
         unmount1();
 
         // Second hook instance (simulating page reload)
-        const { result: result2 } = renderHook(() => useAuth());
+        const { result: result2 } = renderHookWithClient(() => useAuth());
 
         await waitFor(() => {
             expect(result2.current.services).not.toBeNull();
@@ -142,7 +144,7 @@ describe('Authentication Flow', () => {
      * In the app, this would prevent access to protected views.
      */
     it('should correctly identify unauthenticated users', async () => {
-        const { result } = renderHook(() => useAuth());
+        const { result } = renderHookWithClient(() => useAuth());
 
         await waitFor(() => {
             expect(result.current.services).not.toBeNull();
@@ -163,7 +165,7 @@ describe('Authentication Flow', () => {
      * This test verifies that authentication errors are handled gracefully.
      */
     it('should handle authentication errors gracefully', async () => {
-        const { result } = renderHook(() => useAuth());
+        const { result } = renderHookWithClient(() => useAuth());
 
         await waitFor(() => {
             expect(result.current.services).not.toBeNull();

@@ -102,7 +102,8 @@ src/
 staleTime: 5 * 60 * 1000,    // 5 minutes
 gcTime: 30 * 60 * 1000,      // 30 minutes
 refetchOnMount: false,        // Use cached data
-refetchOnWindowFocus: false,  // Don't auto-refetch on tab focus
+refetchOnWindowFocus: true,   // Catch updates while user was away (multi-device)
+refetchOnReconnect: false,    // Firestore handles reconnection internally
 ```
 
 **Per-Hook Overrides** (Story 14c.20):
@@ -567,6 +568,48 @@ clearLegacySharedGroupCache().catch(console.error);
 
 ---
 
+## App-Level Hook Pattern (Story 14c-refactor.10)
+
+**Pattern:** Extract cross-cutting concerns into app-level coordination hooks
+
+### Hook Directory Structure
+
+```
+src/hooks/app/
+├── index.ts                    # Barrel exports
+├── useAppInitialization.ts     # Auth + services coordination
+├── useAppLifecycle.ts          # Foreground/background, beforeunload
+├── useAppPushNotifications.ts  # Push notifications coordination
+├── useDeepLinking.ts           # URL deep link handling
+└── useOnlineStatus.ts          # Network connectivity monitoring
+```
+
+### Key Patterns
+
+| Pattern | Implementation |
+|---------|----------------|
+| Wrapper Hooks | New hooks wrap existing hooks rather than replacing them |
+| Refs for Callbacks | All hooks use refs for callbacks to prevent useEffect churn |
+| Derived State | `useMemo` for computed values (isJoining, isPendingAuth, isPushEnabled) |
+| SSR Safety | Check `typeof window/document/navigator !== 'undefined'` |
+
+### Usage Example
+
+```typescript
+// Coordination hooks wrap base hooks for app-level concerns
+const { isOnline, wasOffline } = useOnlineStatus({
+    onOffline: () => setToastMessage({ text: 'Sin conexión', type: 'info' }),
+});
+
+const { isInForeground, registerBeforeUnloadGuard } = useAppLifecycle({
+    onBackground: () => saveState(),
+});
+```
+
+**Reference:** Story 14c-refactor.10, tests/unit/hooks/app/
+
+---
+
 ## Sync Notes
 
 - Generation 4: Consolidated Epic 14d verbose details
@@ -579,5 +622,9 @@ clearLegacySharedGroupCache().catch(console.error);
 - 2026-01-21: Added Epic 14c-refactor Service Stubbing Pattern
 - 2026-01-21: Added Epic 14c-refactor Hook Stubbing Pattern (Story 14c-refactor.3)
 - 2026-01-21: Added IndexedDB Migration Pattern (Story 14c-refactor.4)
+- 2026-01-21: Added App-Level Hook Pattern (Story 14c-refactor.10)
+- 2026-01-21: Updated React Query defaults (refetchOnWindowFocus: true for multi-device sync)
+- 2026-01-21: Story 14c-refactor.12 - Transaction Service Simplification (dead query keys removed, TODO markers added)
+- 2026-01-21: Story 14c-refactor.13 - View Mode State Unification (context simplified to in-memory only, Shell & Stub pattern)
 - Code review learnings in 06-lessons.md
 - Story details in docs/sprint-artifacts/
