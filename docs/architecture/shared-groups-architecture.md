@@ -1,8 +1,19 @@
 # Shared Groups Architecture
 
-> **Epic 14c: Household Sharing**
-> **Last Updated:** 2026-01-17
-> **Status:** Production
+> ⚠️ **DEPRECATED (Epic 14c-refactor: 2026-01-22)**
+>
+> This document describes the **original Epic 14c implementation that was reverted** due to real-time sync issues.
+> See [epic-14c-retro-2026-01-20.md](../sprint-artifacts/epic-14c-retro-2026-01-20.md) for failure analysis.
+> The codebase has been cleaned up - shared groups are currently **stubbed** pending Epic 14d (Shared Groups v2).
+>
+> **Historical Value:** This document remains valuable for:
+> - Understanding the Firestore collection group query limitation
+> - Cloud Function security pattern (will be reused in Epic 14d)
+> - Cost analysis methodology
+
+> **Original Epic 14c: Household Sharing**
+> **Originally Written:** 2026-01-17
+> **Status:** REVERTED / Archived
 
 ---
 

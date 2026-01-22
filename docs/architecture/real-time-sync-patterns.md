@@ -1,10 +1,23 @@
 # Real-Time Sync Patterns for Multi-User Applications
 
-> **Context:** This document captures patterns and bug fixes learned while implementing shared group transaction sync in a React + Firebase + React Query application.
+> ⚠️ **HISTORICAL DOCUMENT (Epic 14c-refactor: 2026-01-22)**
 >
-> **Applicable to:** Any app with real-time sync between users using:
+> This document captures patterns discovered during **Epic 14c (Shared Groups)** which was subsequently **reverted**.
+> The implementation described here **never shipped to production**.
+> See [epic-14c-retro-2026-01-20.md](../sprint-artifacts/epic-14c-retro-2026-01-20.md) for the full failure analysis.
+>
+> **Historical Value:** The patterns and bugs documented here are valuable lessons for:
+> - Signal-based cache invalidation pattern
+> - The four critical bugs in multi-layer caching
+> - Testing checklist for real-time sync
+>
+> **Key Lesson:** Multi-layer caching (React Query + IndexedDB + Firestore) adds complexity without proportional benefit. Epic 14c-refactor simplified to React Query only.
+
+> **Original Context:** This document captures patterns and bug fixes learned while implementing shared group transaction sync in a React + Firebase + React Query application.
+>
+> **Originally Applicable to:** Any app with real-time sync between users using:
 > - React Query (TanStack Query)
-> - IndexedDB caching
+> - IndexedDB caching (REMOVED in Epic 14c-refactor)
 > - Firestore (or similar) real-time listeners
 > - Multi-user data sharing
 
