@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "plugins": {
+    "example-skills@anthropic-agent-skills": [
+      {
+        "scope": "user",
+        "installPath": "/home/khujta/.claude/plugins/cache/anthropic-agent-skills/example-skills/unknown",
+        "version": "unknown",
+        "installedAt": "2025-11-06T14:41:36.236Z",
+        "lastUpdated": "2025-11-06T14:41:36.236Z",
+        "gitCommitSha": "c74d647e56e6daa12029b6acb11a821348ad044b",
+        "isLocal": true
+      }
+    ],
+    "playwright-skill@playwright-skill": [
+      {
+        "scope": "user",
+        "installPath": "/home/khujta/.claude/plugins/cache/playwright-skill/playwright-skill/4.0.2",
+        "version": "4.0.2",
+        "installedAt": "2025-11-06T14:41:36.236Z",
+        "lastUpdated": "2025-11-06T14:41:36.236Z",
+        "gitCommitSha": "9d29e01261959721b0d213780e4c362da5a76c5a",
+        "isLocal": true
+      }
+    ],
+    "superpowers-chrome@superpowers-chrome-dev": [
+      {
+        "scope": "user",
+        "installPath": "/home/khujta/.claude/plugins/cache/superpowers-chrome-dev/superpowers-chrome/1.5.0",
+        "version": "1.5.0",
+        "installedAt": "2025-11-06T14:55:31.052Z",
+        "lastUpdated": "2025-11-06T14:55:31.052Z",
+        "gitCommitSha": "5f9360ea855bc3da6f9f9b3d9cfc28271bf067cc",
+        "isLocal": true
+      }
+    ]
+  }
+}

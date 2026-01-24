@@ -88,6 +88,7 @@ import { getCategoryPillColors, getItemCategoryGroup, getItemGroupColors } from 
 import { getCategoryEmoji } from '../utils/categoryEmoji';
 import { normalizeItemCategory } from '../utils/categoryNormalizer';
 import { useScanOptional } from '../contexts/ScanContext';
+import { useViewHandlers } from '../contexts/ViewHandlersContext';
 import { ItemViewToggle, type ItemViewMode } from '../components/items/ItemViewToggle';
 import { TransactionGroupSelector, type GroupWithMeta } from '../components/SharedGroups';
 
@@ -186,7 +187,10 @@ export interface TransactionEditorViewProps {
   onSaveSubcategoryMapping?: (item: string, subcategory: string, source?: 'user' | 'ai') => Promise<string>;
   /** v9.7.0: Save item name mapping function (per-store item name learning) */
   onSaveItemNameMapping?: (normalizedMerchant: string, originalItemName: string, targetItemName: string, targetCategory?: ItemCategory) => Promise<string>;
-  /** Show toast notification */
+  /**
+   * @deprecated Story 14c-refactor.27: Use useViewHandlers().dialog.showToast instead.
+   * Show toast notification - will be removed in future version.
+   */
   onShowToast?: (text: string) => void;
 
   // UI
@@ -220,7 +224,10 @@ export interface TransactionEditorViewProps {
   defaultCountry?: string;
 
   // Optional UI callbacks
-  /** Callback when credit badges are clicked */
+  /**
+   * @deprecated Story 14c-refactor.27: Use useViewHandlers().dialog.openCreditInfoModal instead.
+   * Callback when credit badges are clicked - will be removed in future version.
+   */
   onCreditInfoClick?: () => void;
   /** Whether save is in progress */
   isSaving?: boolean;
@@ -279,7 +286,8 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   onSaveMerchantMapping,
   onSaveSubcategoryMapping,
   onSaveItemNameMapping,
-  onShowToast,
+  // Story 14c-refactor.27: onShowToast moved to useViewHandlers().dialog.showToast
+  onShowToast: _deprecatedOnShowToast,
   theme,
   t,
   formatCurrency,
@@ -293,7 +301,8 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   onBatchNext,
   defaultCity = '',
   defaultCountry = '',
-  onCreditInfoClick,
+  // Story 14c-refactor.27: onCreditInfoClick moved to useViewHandlers().dialog.openCreditInfoModal
+  onCreditInfoClick: _deprecatedOnCreditInfoClick,
   isSaving = false,
   animateItems = false,
   creditUsed = false,
@@ -313,6 +322,12 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   // Story 14d.4b: Get scan context for reading scan state
   // Uses optional hook since TransactionEditorView might be rendered outside ScanProvider
   const scanContext = useScanOptional();
+
+  // Story 14c-refactor.27: Get dialog handlers from ViewHandlersContext
+  const { dialog } = useViewHandlers();
+  // Extract handlers with fallback to deprecated props for backward compatibility during migration
+  const showToast = dialog.showToast;
+  const openCreditInfoModal = dialog.openCreditInfoModal;
 
   // Story 14d.4b: Derive scan state from context or fall back to props
   // Context takes precedence when available - this allows gradual migration
@@ -662,8 +677,9 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
     setActiveSuggestion(null);
 
     // Show toast feedback
-    onShowToast?.(t('suggestionApplied') || 'Name updated from suggestion');
-  }, [activeSuggestion, transaction, onUpdateTransaction, onSaveItemNameMapping, onShowToast, t]);
+    // Story 14c-refactor.27: Use dialog.showToast from ViewHandlersContext
+    showToast(t('suggestionApplied') || 'Name updated from suggestion', 'success');
+  }, [activeSuggestion, transaction, onUpdateTransaction, onSaveItemNameMapping, showToast, t]);
 
   // Handle clicking the suggestion indicator
   const handleShowSuggestion = useCallback((itemIndex: number, item: TransactionItem) => {
@@ -969,7 +985,8 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
         for (const item of itemsToLearn) {
           await onSaveMapping(item.itemName, item.newGroup as StoreCategory, 'user');
         }
-        onShowToast?.(t('learnCategorySuccess'));
+        // Story 14c-refactor.27: Use dialog.showToast from ViewHandlersContext
+        showToast(t('learnCategorySuccess'), 'success');
       } catch (error) {
         console.error('Failed to save category mappings:', error);
       } finally {
@@ -994,7 +1011,8 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
         for (const item of subcategoriesToLearn) {
           await onSaveSubcategoryMapping(item.itemName, item.newSubcategory, 'user');
         }
-        onShowToast?.(t('learnSubcategorySuccess'));
+        // Story 14c-refactor.27: Use dialog.showToast from ViewHandlersContext
+        showToast(t('learnSubcategorySuccess'), 'success');
       } catch (error) {
         console.error('Failed to save subcategory mappings:', error);
       } finally {
@@ -1057,7 +1075,8 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
       // Show success feedback if anything was saved
       if (shouldLearnAlias || shouldLearnCategory || hasItemsToLearn) {
         celebrateSuccess();
-        onShowToast?.(t('learnMerchantSuccess'));
+        // Story 14c-refactor.27: Use dialog.showToast from ViewHandlersContext
+        showToast(t('learnMerchantSuccess'), 'success');
       }
     }
     setShowMerchantLearningPrompt(false);
@@ -1072,7 +1091,8 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   // Re-scan handlers
   const handleRescanClick = () => {
     if (!hasCredits) {
-      onShowToast?.(t('noCreditsMessage'));
+      // Story 14c-refactor.27: Use dialog.showToast from ViewHandlersContext
+      showToast(t('noCreditsMessage'), 'info');
       return;
     }
     setShowRescanConfirm(true);
@@ -1220,9 +1240,10 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
           {/* Right side: Credit badges + Close/Delete button */}
           <div className="flex items-center gap-2">
             {/* Credit badges */}
+            {/* Story 14c-refactor.27: Use dialog.openCreditInfoModal from ViewHandlersContext */}
             {credits && (
               <button
-                onClick={onCreditInfoClick}
+                onClick={openCreditInfoModal}
                 className="flex items-center gap-1.5 px-2 py-1 rounded-full transition-all active:scale-95"
                 style={{
                   backgroundColor: 'var(--bg-secondary)',

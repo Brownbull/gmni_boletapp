@@ -62,6 +62,10 @@ import type { Transaction } from '../types/transaction';
 import type { FlattenedItem, ItemFilters, AggregatedItem } from '../types/item';
 import type { Language } from '../utils/translations';
 import { downloadAggregatedItemsCSV } from '../utils/csvExport';
+// Story 14c-refactor.27: ViewHandlersContext for navigation handlers
+import { useViewHandlers } from '../contexts/ViewHandlersContext';
+// Story 14c-refactor.27: View type for navigation
+import type { View } from '../components/App';
 
 // ============================================================================
 // Constants
@@ -111,7 +115,10 @@ interface ItemsViewProps {
     formatCurrency: (amount: number, currency: string) => string;
     /** Date formatter */
     formatDate: (date: string, format: string) => string;
-    /** Back navigation handler */
+    /**
+     * @deprecated Story 14c-refactor.27: Use useViewHandlers().navigation.navigateBack instead.
+     * Back navigation handler - will be removed in future version.
+     */
     onBack: () => void;
     /** Navigate to edit a transaction. Optional second param for multi-transaction navigation (Story 14.13 Session 6) */
     onEditTransaction: (transactionId: string, allTransactionIds?: string[]) => void;
@@ -121,7 +128,10 @@ interface ItemsViewProps {
     userName?: string;
     /** User email for profile dropdown */
     userEmail?: string;
-    /** General navigation handler for profile dropdown menu items */
+    /**
+     * @deprecated Story 14c-refactor.27: Use useViewHandlers().navigation.navigateToView instead.
+     * General navigation handler for profile dropdown menu items - will be removed in future version.
+     */
     onNavigateToView?: (view: string) => void;
     /** Initial category filter (for navigation from analytics) */
     initialCategory?: string;
@@ -205,12 +215,14 @@ export const ItemsView: React.FC<ItemsViewProps> = ({
     t,
     formatCurrency,
     formatDate,
-    onBack,
+    // Story 14c-refactor.27: onBack moved to useViewHandlers().navigation.navigateBack
+    onBack: _deprecatedOnBack,
     onEditTransaction,
     lang = 'en',
     userName = '',
     userEmail = '',
-    onNavigateToView,
+    // Story 14c-refactor.27: onNavigateToView moved to useViewHandlers().navigation.navigateToView
+    onNavigateToView: _deprecatedOnNavigateToView,
     initialCategory,
     initialSearchTerm,
     userId = null,
@@ -221,6 +233,11 @@ export const ItemsView: React.FC<ItemsViewProps> = ({
     // Story 14.35b: User's default country for foreign location detection
     defaultCountry,
 }) => {
+    // Story 14c-refactor.27: Get navigation handlers from ViewHandlersContext
+    const { navigation } = useViewHandlers();
+    const onBack = navigation.navigateBack;
+    const onNavigateToView = navigation.navigateToView;
+
     // Profile dropdown state
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const profileButtonRef = useRef<HTMLButtonElement>(null);
@@ -539,9 +556,8 @@ export const ItemsView: React.FC<ItemsViewProps> = ({
     // Handle profile navigation
     const handleProfileNavigate = useCallback((view: string) => {
         setIsProfileOpen(false);
-        if (onNavigateToView) {
-            onNavigateToView(view);
-        }
+        // Story 14c-refactor.27: Cast string to View type for navigation
+        onNavigateToView(view as View);
     }, [onNavigateToView]);
 
     // Handle item click - navigate to parent transaction

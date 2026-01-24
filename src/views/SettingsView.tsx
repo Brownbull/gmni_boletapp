@@ -29,6 +29,8 @@ import {
     CuentaView,
 } from '../components/settings';
 import { SharedGroupErrorBoundary } from '../components/SharedGroups';
+// Story 14c-refactor.27: ViewHandlersContext for dialog handlers
+import { useViewHandlers } from '../contexts/ViewHandlersContext';
 
 interface SettingsViewProps {
     lang: string;
@@ -87,6 +89,10 @@ interface SettingsViewProps {
     db?: Firestore | null;
     userId?: string | null;
     appId?: string | null;
+    /**
+     * @deprecated Story 14c-refactor.27: Use useViewHandlers().dialog.showToast instead.
+     * Toast notification handler - will be removed in future version.
+     */
     onShowToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
     // Trusted merchants
     trustedMerchants?: TrustedMerchant[];
@@ -163,7 +169,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     db = null,
     userId = null,
     appId = null,
-    onShowToast,
+    // Story 14c-refactor.27: onShowToast moved to useViewHandlers().dialog.showToast
+    onShowToast: _deprecatedOnShowToast,
     trustedMerchants = [],
     trustedMerchantsLoading = false,
     onRevokeTrust,
@@ -186,6 +193,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     currentSubview,
     onSubviewChange,
 }) => {
+    // Story 14c-refactor.27: Get dialog handlers from ViewHandlersContext
+    const { dialog } = useViewHandlers();
+    // Wrapper to adapt dialog.showToast (string, 'success' | 'info') to SettingsView signature (string, type?)
+    // Note: 'error' type maps to 'info' since dialog.showToast doesn't support 'error'
+    const onShowToast = (message: string, type?: 'success' | 'error' | 'info') => {
+        const toastType = type === 'error' ? 'info' : (type || 'success');
+        dialog.showToast(message, toastType);
+    };
+
     // Story 14.22 AC #1: Navigation state for hierarchical menu
     // Use controlled state if provided, otherwise use internal state
     const [internalView, setInternalView] = useState<SettingsSubView>('main');

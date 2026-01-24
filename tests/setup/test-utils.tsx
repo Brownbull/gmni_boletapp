@@ -10,8 +10,11 @@
 
 import { render, RenderOptions, renderHook, RenderHookOptions } from '@testing-library/react';
 import React, { ReactElement, ReactNode, createContext, useContext } from 'react';
+import { vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '../../src/contexts/AuthContext';
+// Story 14c-refactor.27: ViewHandlersContext for view tests
+import { ViewHandlersProvider, type ViewHandlersContextValue } from '../../src/contexts/ViewHandlersContext';
 import type { ScanContextValue } from '../../src/contexts/ScanContext';
 import type { ScanState, ScanDialogType } from '../../src/types/scanStateMachine';
 import { DIALOG_TYPES } from '../../src/types/scanStateMachine';
@@ -35,6 +38,105 @@ function createTestQueryClient() {
   });
 }
 
+// =============================================================================
+// Story 14c-refactor.27: ViewHandlersContext Mock Utilities
+// =============================================================================
+
+/**
+ * Creates mock view handlers for testing.
+ * All handlers are vi.fn() by default for easy assertion.
+ */
+export function createMockViewHandlers(): {
+  transaction: ViewHandlersContextValue['transaction'];
+  scan: ViewHandlersContextValue['scan'];
+  navigation: ViewHandlersContextValue['navigation'];
+  dialog: ViewHandlersContextValue['dialog'];
+} {
+  return {
+    transaction: {
+      saveTransaction: vi.fn().mockResolvedValue(undefined),
+      deleteTransaction: vi.fn().mockResolvedValue(undefined),
+      wipeDB: vi.fn().mockResolvedValue(undefined),
+      handleExportData: vi.fn().mockResolvedValue(undefined),
+      createDefaultTransaction: vi.fn().mockReturnValue({
+        merchant: '',
+        date: new Date().toISOString().split('T')[0],
+        total: 0,
+        category: 'Supermarket',
+        items: [],
+        country: '',
+        city: '',
+        currency: 'CLP',
+      }),
+    },
+    scan: {
+      isQuickSaveActive: false,
+      handlePhotoSelect: vi.fn(),
+      handleProcessScan: vi.fn(),
+      handleQuickSaveCard: vi.fn(),
+      handleQuickSaveSubmit: vi.fn().mockResolvedValue(undefined),
+      handleQuickSaveDismiss: vi.fn(),
+      handleCurrencyMismatch: vi.fn(),
+      handleTotalMismatch: vi.fn(),
+      handleScanOverlay: vi.fn(),
+      openScanOverlay: vi.fn(),
+      closeScanOverlay: vi.fn(),
+    },
+    navigation: {
+      navigateToView: vi.fn(),
+      navigateBack: vi.fn(),
+      handleNavigateToHistory: vi.fn(),
+    },
+    dialog: {
+      toastMessage: null,
+      setToastMessage: vi.fn(),
+      showToast: vi.fn(),
+      showCreditInfoModal: false,
+      setShowCreditInfoModal: vi.fn(),
+      openCreditInfoModal: vi.fn(),
+      closeCreditInfoModal: vi.fn(),
+      showConflictDialog: false,
+      setShowConflictDialog: vi.fn(),
+      conflictDialogData: null,
+      setConflictDialogData: vi.fn(),
+      handleConflictClose: vi.fn(),
+      handleConflictViewCurrent: vi.fn(),
+      handleConflictDiscard: vi.fn(),
+      openConflictDialog: vi.fn(),
+    },
+  };
+}
+
+// Default mock handlers for the provider
+// Export so tests can access them for assertions and reset in beforeEach
+export const mockViewHandlers = createMockViewHandlers();
+
+/**
+ * Story 14c-refactor.36: Helper to override navigation handler for testing fallback behavior.
+ * Use this when testing DashboardView inline pagination (which only renders when
+ * handleNavigateToHistory is undefined/falsy).
+ *
+ * @example
+ * ```tsx
+ * beforeEach(() => {
+ *   disableNavigationHandler();
+ * });
+ * afterEach(() => {
+ *   restoreNavigationHandler();
+ * });
+ * ```
+ */
+export function disableNavigationHandler(): void {
+  (mockViewHandlers.navigation as { handleNavigateToHistory: unknown }).handleNavigateToHistory = undefined;
+}
+
+/**
+ * Story 14c-refactor.36: Restore navigation handler after testing fallback behavior.
+ */
+export function restoreNavigationHandler(): void {
+  mockViewHandlers.navigation.handleNavigateToHistory = vi.fn();
+}
+
 /**
  * Custom render function that wraps components with providers
  *
@@ -50,13 +152,21 @@ interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
 /**
  * Wrapper component that provides all necessary context providers
  * Story 14c-refactor.9: Added AuthProvider wrapping
+ * Story 14c-refactor.27: Added ViewHandlersProvider wrapping for view tests
  */
 function createWrapper(queryClient: QueryClient) {
   return function AllTheProviders({ children }: { children: ReactNode }) {
     return (
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          {children}
+          <ViewHandlersProvider
+            transaction={mockViewHandlers.transaction}
+            scan={mockViewHandlers.scan}
+            navigation={mockViewHandlers.navigation}
+            dialog={mockViewHandlers.dialog}
+          >
+            {children}
+          </ViewHandlersProvider>
         </AuthProvider>
       </QueryClientProvider>
     );

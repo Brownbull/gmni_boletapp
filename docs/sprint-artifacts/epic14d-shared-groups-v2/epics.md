@@ -4,6 +4,7 @@ inputDocuments:
   - docs/architecture/epic-14d-requirements-and-concerns.md
   - docs/analysis/brainstorming-session-2026-01-20.md
   - docs/architecture/shared-group-sync-v2.md
+lastUpdated: 2026-01-22
 ---
 
 # Gastify - Epic 14d: Shared Groups v2 - Epic Breakdown
@@ -19,6 +20,31 @@ This document provides the complete epic and story breakdown for Epic 14d (Share
 4. Multiple iteration approaches caused more harm than one committed approach
 
 Epic 14d rebuilds with explicit constraints, user-controlled sync, and server-side change tracking.
+
+### Key Architecture: Layered Visibility Model (Brainstorm 2026-01-22)
+
+Epic 14d implements a **layered visibility model** that separates statistics (always shared) from transactions (conditionally shared):
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  STATISTICS (Always On)                                         │
+│  - byCategory, byMember, totals, insights                       │
+│  - All members' transactions contribute (anonymized)            │
+│  - Non-negotiable part of group membership                      │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│  TRANSACTIONS (Double-Gated)                                    │
+│  - Gate 1: Group owner enables transactionSharingEnabled        │
+│  - Gate 2: Each user opts in shareMyTransactions per group      │
+│  - Both gates must be TRUE to see a user's transactions         │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+This model provides:
+- **Privacy control**: Users choose whether to share transaction details
+- **Accurate statistics**: All members contribute to aggregates regardless of sharing preference
+- **Simple mental model**: Stats = always on, Transactions = opt-in
 
 ## Requirements Inventory
 
@@ -44,6 +70,18 @@ Epic 14d rebuilds with explicit constraints, user-controlled sync, and server-si
 | FR-16 | All members see countdown to next analytics refresh | Should Have |
 | FR-17 | Users receive push notifications when transactions affect their groups | Must Have |
 | FR-18 | Notification triggers badge indicator, not automatic sync | Must Have |
+
+#### Transaction Sharing Privacy Controls (Brainstorm 2026-01-22)
+
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-19 | Group owner can enable/disable transaction sharing for the group | Must Have |
+| FR-20 | Users can opt-in/out of sharing their transactions per group | Must Have |
+| FR-21 | Toggle settings have cooldown (5-15 min) and daily limit (3×) | Must Have |
+| FR-22 | Statistics always include all members' contributions (anonymized) | Must Have |
+| FR-23 | byMember breakdown always visible to group members | Must Have |
+| FR-24 | Clear UX communication when changing sharing settings | Must Have |
+| FR-25 | Join flow prompts user to opt-in when joining group with sharing enabled | Must Have |
 
 ### Non-Functional Requirements
 
@@ -113,6 +151,16 @@ Epic 14d rebuilds with explicit constraints, user-controlled sync, and server-si
 - UX-3: Offline banner: "Showing cached data"
 - UX-4: Yellow tint for stale data (nice-to-have)
 
+#### Layered Visibility Decisions (Brainstorm 2026-01-22)
+- LV-1: Statistics always include ALL members' transactions (anonymized aggregation)
+- LV-2: byMember breakdown always visible (core value proposition)
+- LV-3: Transaction visibility requires double opt-in (group + user flags)
+- LV-4: Changelog always created (filtering at read time for audit trail)
+- LV-5: Eventual consistency on opt-out (next sync clears, no purge signals)
+- LV-6: Default `shareMyTransactions: false` (privacy-first)
+- LV-7: Toggle cooldowns prevent abuse (3×/day, 5-15 min between)
+- LV-8: Join flow opt-in prompt when group has transaction sharing enabled
+
 ### FR Coverage Map
 
 | FR | Epic | Description |
@@ -135,6 +183,13 @@ Epic 14d rebuilds with explicit constraints, user-controlled sync, and server-si
 | FR-16 | Epic 3 | Countdown to refresh |
 | FR-17 | Epic 4 | Push notifications |
 | FR-18 | Epic 4 | Notification triggers badge |
+| FR-19 | Epic 1 | Group owner transaction sharing toggle |
+| FR-20 | Epic 1 | User per-group transaction sharing toggle |
+| FR-21 | Epic 1 | Toggle cooldowns and daily limits |
+| FR-22 | Epic 3 | Statistics include all members |
+| FR-23 | Epic 3 | byMember always visible |
+| FR-24 | Epic 1 | Clear UX for sharing settings |
+| FR-25 | Epic 1 | Join flow opt-in prompt |
 
 ## Epic List
 
@@ -337,6 +392,15 @@ So that **I can share expenses with family, roommates, or friends**.
 
 **Given** I am logged in
 **When** I tap "Create Group" and enter a name
+**Then** I see a creation flow that includes:
+- Group name input
+- **Transaction sharing prompt**: "Would you like to allow transaction sharing in this group?" with options:
+  - [Yes, allow sharing] (Recommended) - sets `transactionSharingEnabled: true`
+  - [No, statistics only] - sets `transactionSharingEnabled: false`
+- Helper text explaining: "When enabled, members can choose to share their transaction details. Statistics are always shared."
+
+**Given** I complete group creation
+**When** the group is created
 **Then** a new group is created with:
 - Unique ID
 - Name I provided
@@ -344,6 +408,7 @@ So that **I can share expenses with family, roommates, or friends**.
 - `createdAt` timestamp
 - Empty `members` array (just me)
 - `timezone` set to my device timezone (IANA format)
+- `transactionSharingEnabled` set based on my selection (default recommendation: true)
 **And** I see the group in my groups list
 **And** business constraint BC-1 is enforced (max 5 groups per user)
 
@@ -404,6 +469,13 @@ So that **I can join groups I want and ignore ones I don't**.
 **When** I log in
 **Then** I am prompted to accept/decline the invitation
 
+**Given** I tap an invite link with an invalid share code (not 16-char alphanumeric)
+**When** the link is processed
+**Then** I see a clear error message: "This invite link is invalid or expired"
+**And** I am NOT silently redirected
+
+**And** constraint FR-26 is enforced (user-friendly error for invalid share codes)
+
 ---
 
 ### Story 1.7: Leave/Manage Group
@@ -430,11 +502,24 @@ So that **I can control my group participation**.
 **Then** the group is deleted
 **And** all transactions have `sharedGroupId` set to null (constraint DM-6)
 
+**Given** ownership is transferred to another member
+**When** the transfer completes
+**Then** the new owner inherits the group's current toggle state:
+  - `transactionSharingToggleCountToday` is NOT reset
+  - `transactionSharingLastToggleAt` is preserved
+  - Cooldown continues from where it was (no reset on transfer)
+
 **Given** I am a group owner
 **When** I tap "Delete Group"
 **Then** all members are removed
 **And** all transactions have `sharedGroupId` set to null
 **And** the group is deleted
+
+**Given** a member leaves the group (self or removed by owner)
+**When** the Cloud Function processes the membership change
+**Then** `TRANSACTION_REMOVED` changelog entries are created for all of that member's transactions
+**And** other members' next sync will remove those transactions from their cache
+**And** the leaving member's transactions remain tagged with `sharedGroupId` but are inaccessible to the group
 
 ---
 
@@ -520,7 +605,171 @@ So that **I can see my own transactions or shared group transactions**.
 
 ---
 
-**Epic 1 Summary:** 10 stories, ~35 points estimated
+### Story 1.11: Transaction Sharing Toggle (Group Level)
+
+As a **group owner**,
+I want **to enable or disable transaction sharing for my group**,
+So that **I can control whether members can see each other's transaction details**.
+
+**Acceptance Criteria:**
+
+**Given** I am a group owner
+**When** I go to Group Settings
+**Then** I see a toggle: "Allow Transaction Sharing"
+**And** it shows the current state (enabled/disabled)
+**And** helper text explains: "When enabled, members can choose to share their transaction details with the group."
+
+**Given** I toggle the setting
+**When** the change is saved
+**Then** `transactionSharingEnabled` is updated on the group document
+**And** `transactionSharingLastToggleAt` is set to now
+**And** `transactionSharingToggleCountToday` is incremented
+
+**Given** I try to toggle again within 15 minutes
+**When** I tap the toggle
+**Then** I see: "Please wait X minutes before changing this setting"
+
+**Given** I have toggled 3 times today
+**When** I try to toggle again
+**Then** I see: "Daily limit reached. Try again tomorrow."
+
+**Given** it's a new day (midnight local)
+**When** I try to toggle
+**Then** my daily count has reset and I can toggle again
+
+**And** constraint FR-19 is enforced
+**And** constraint FR-21 is enforced (15 min cooldown, 3×/day limit)
+**And** constraint FR-24 is enforced (clear UX communication)
+
+**Note:** Group owner can enable/disable transaction sharing for the group, but CANNOT override individual members' `shareMyTransactions` preference. The double-gate model ensures each user retains control over their own transaction visibility.
+
+---
+
+### Story 1.12: User Transaction Sharing Preference
+
+As a **group member**,
+I want **to choose whether to share my transaction details with the group**,
+So that **I can contribute to statistics while keeping my spending details private**.
+
+**Acceptance Criteria:**
+
+**Given** I am a member of a group with `transactionSharingEnabled: true`
+**When** I go to Group Settings > My Sharing Preferences
+**Then** I see a toggle: "Share My Transactions"
+**And** helper text explains: "Your spending totals always appear in group statistics. This controls whether others see your individual transaction details."
+
+**Given** `transactionSharingEnabled` is false for the group
+**When** I view My Sharing Preferences
+**Then** the toggle is disabled with text: "Transaction sharing is disabled for this group by the owner"
+
+**Given** I toggle `shareMyTransactions` to true
+**When** the change is saved
+**Then** my preference is stored at `/users/{userId}/preferences/sharedGroups`
+**And** `lastToggleAt` is updated
+**And** `toggleCountToday` is incremented
+**And** other members will see my transactions on their next sync
+
+**Given** I toggle `shareMyTransactions` to false
+**When** the change is saved
+**Then** my preference is updated
+**And** I see: "Your future transactions won't be shared. Existing cached data on other devices will be cleared on their next sync."
+
+**Given** I try to toggle again within 5 minutes
+**When** I tap the toggle
+**Then** I see: "Please wait X minutes before changing this setting"
+
+**Given** I have toggled 3 times today
+**When** I try to toggle again
+**Then** I see: "Daily limit reached. Try again tomorrow."
+
+**And** constraint FR-20 is enforced
+**And** constraint FR-21 is enforced (5 min cooldown, 3×/day limit)
+**And** constraint LV-5 is enforced (eventual consistency, no purge signals)
+**And** constraint LV-6 is enforced (default: false)
+
+---
+
+### Story 1.13: User Group Preferences Document
+
+As a **system**,
+I want **a user preferences document for per-group settings**,
+So that **each user's sharing preferences are stored and retrievable**.
+
+**Acceptance Criteria:**
+
+**Given** a user is a member of shared groups
+**When** they have group-specific preferences
+**Then** preferences are stored at: `/users/{userId}/preferences/sharedGroups`
+
+**And** the document structure is:
+```typescript
+{
+  groupPreferences: {
+    [groupId: string]: {
+      shareMyTransactions: boolean;          // default: false
+      lastToggleAt: Timestamp | null;
+      toggleCountToday: number;
+      toggleCountResetAt: Timestamp | null;
+    }
+  }
+}
+```
+
+**Given** a user joins a new group
+**When** no preference exists
+**Then** `shareMyTransactions` defaults to `false` (constraint LV-6)
+
+**Given** a user leaves a group
+**When** the leave is processed
+**Then** their preference entry for that group is deleted (cleanup)
+
+**And** Firestore security rules allow:
+- Read: owner only (`userId == request.auth.uid`)
+- Write: owner only
+
+---
+
+### Story 1.14: Join Flow Transaction Sharing Opt-In
+
+As a **user joining a group**,
+I want **to be prompted about transaction sharing when I join**,
+So that **I can make an informed choice about sharing my transaction details**.
+
+**Acceptance Criteria:**
+
+**Given** I accept a group invitation
+**When** the group has `transactionSharingEnabled: true`
+**Then** before completing the join, I see a dialog:
+  - Title: "[Group Name] allows transaction sharing"
+  - Body: "Would you like to share your transaction details with group members? Your spending totals will always be visible in group statistics."
+  - Options: [Yes, share my transactions] [No, just statistics]
+
+**Given** I tap "Yes, share my transactions"
+**When** the join completes
+**Then** `shareMyTransactions` is set to `true` for this group
+**And** I see confirmation: "You're now a member of [Group Name]"
+
+**Given** I tap "No, just statistics"
+**When** the join completes
+**Then** `shareMyTransactions` is set to `false` for this group
+**And** I see confirmation: "You're now a member of [Group Name]. You can change sharing preferences in group settings."
+
+**Given** the group has `transactionSharingEnabled: false`
+**When** I accept the invitation
+**Then** I do NOT see the transaction sharing prompt
+**And** I join directly with `shareMyTransactions: false`
+
+**Given** I dismiss the dialog without choosing
+**When** the join completes
+**Then** `shareMyTransactions` defaults to `false` (privacy-first)
+
+**And** constraint FR-25 is enforced
+**And** constraint LV-6 is enforced (default: false)
+**And** constraint LV-8 is enforced (prompt on join)
+
+---
+
+**Epic 1 Summary:** 14 stories, ~47 points estimated
 
 ---
 
@@ -559,17 +808,27 @@ So that **group members can see my expense in the shared view**.
 
 ---
 
-### Story 2.2: View Group Transactions
+### Story 2.2: View Group Transactions (Double-Gate Visibility)
 
 As a **group member**,
-I want **to see all transactions tagged with my group**,
-So that **I can track shared expenses**.
+I want **to see transactions based on sharing permissions**,
+So that **I can track shared expenses while respecting privacy settings**.
 
 **Acceptance Criteria:**
 
 **Given** I am in Group view mode (from Story 1.10)
+**And** `transactionSharingEnabled` is `false` for the group
 **When** the Home/History view loads
-**Then** I see transactions from the local cache for this group
+**Then** I see ONLY my own transactions tagged with this group
+**And** I see a notice: "Transaction sharing is disabled for this group"
+**And** I can still view group statistics (Story 3.6, 3.7)
+
+**Given** `transactionSharingEnabled` is `true` for the group
+**When** the Home/History view loads
+**Then** I see:
+  - My own transactions (always)
+  - Transactions from members who have `shareMyTransactions: true`
+**And** transactions from members with `shareMyTransactions: false` are NOT shown
 **And** each transaction shows the owner's profile icon (constraint DM-3)
 **And** transactions I don't own are read-only
 
@@ -582,6 +841,8 @@ So that **I can track shared expenses**.
 **When** I tap on it
 **Then** I see the transaction details in read-only mode
 **And** I cannot edit any fields (constraint DM-1)
+
+**And** constraint LV-3 is enforced (double-gate visibility)
 
 ---
 
@@ -833,7 +1094,71 @@ So that **the Epic 14c "works first time, fails second" bug cannot recur**.
 
 ---
 
-**Epic 2 Summary:** 10 stories, ~39 points estimated
+### Story 2.11: Cloud Function - Transaction Visibility Filtering
+
+As a **system**,
+I want **the getSharedGroupTransactions Cloud Function to respect sharing preferences**,
+So that **transaction visibility follows the double-gate model**.
+
+**Acceptance Criteria:**
+
+**Given** a user requests group transactions via Cloud Function
+**When** `transactionSharingEnabled` is `false` for the group
+**Then** return ONLY the requesting user's own transactions for that group
+
+**Given** `transactionSharingEnabled` is `true` for the group
+**When** the Cloud Function processes the request
+**Then** for each group member:
+  - If member == requesting user → include their transactions
+  - If member has `shareMyTransactions: true` → include their transactions
+  - If member has `shareMyTransactions: false` or undefined → exclude their transactions
+
+**Given** the function returns transactions
+**When** the client receives the response
+**Then** the response includes ownership information for UI display
+
+**And** constraint LV-3 is enforced (double-gate)
+**And** constraint LV-4 is enforced (changelog still created for all, filtering at read)
+
+---
+
+### Story 2.12: Transaction Sharing Disabled Empty State
+
+As a **group member**,
+I want **clear feedback when transaction sharing is disabled**,
+So that **I understand why I can only see my own transactions**.
+
+**Acceptance Criteria:**
+
+**Given** I am in Group view
+**And** `transactionSharingEnabled` is `false`
+**When** I view the transactions list
+**Then** I see a banner/notice: "Transaction sharing is disabled for this group. You can view your own transactions and group statistics."
+
+**Given** I am the group owner
+**And** `transactionSharingEnabled` is `false`
+**When** I view the transactions list
+**Then** the banner includes: "Enable transaction sharing in group settings to let members share transactions."
+
+**Given** transaction sharing becomes enabled
+**When** I refresh/sync
+**Then** the banner disappears
+**And** I see transactions based on individual member preferences
+
+**Given** I have cached transactions from other members
+**And** the group owner changes `transactionSharingEnabled` from `true` to `false`
+**When** I perform a sync
+**Then** the Cloud Function returns only my own transactions (per double-gate logic)
+**And** my local cache is updated to remove other members' transactions
+**And** I see the "Transaction sharing is disabled" banner
+**And** eventual consistency applies (cache cleared on next sync, no immediate purge)
+
+**And** constraint FR-24 is enforced (clear UX communication)
+**And** constraint LV-5 is enforced (eventual consistency)
+
+---
+
+**Epic 2 Summary:** 12 stories, ~45 points estimated
 
 ---
 
@@ -1037,7 +1362,15 @@ So that **I understand who is contributing to group expenses**.
 **When** their historical transactions exist
 **Then** they still appear in analytics with "(Left)" indicator
 
+**Given** `transactionSharingEnabled` is `false` for the group
+**When** I view byMember analytics
+**Then** I STILL see the full byMember breakdown (all members' spending totals)
+**And** this is visible regardless of transaction sharing settings
+
+**Note:** byMember breakdown is ALWAYS visible as part of core group statistics (per FR-23 and LV-1). Only individual transaction details are gated by sharing preferences.
+
 **And** constraint FR-11 is enforced
+**And** constraint FR-23 is enforced (byMember always visible)
 
 ---
 
@@ -1163,6 +1496,14 @@ So that **group members know when new expenses are added or changed**.
 **Given** a transaction is removed from a group
 **When** the changelog Cloud Function fires
 **Then** a push notification is sent with type "TRANSACTION_REMOVED"
+
+**Given** the actor has `shareMyTransactions: false`
+**When** they add/edit/remove a transaction
+**Then** notifications are STILL sent to group members
+**And** notification shows activity occurred (e.g., "[Actor] added an expense")
+**And** this is consistent with statistics always reflecting all members' contributions
+
+**Note:** Notifications are sent regardless of transaction sharing preferences. Users know activity is happening even if they can't see transaction details. This aligns with the "statistics always on" principle - if Bob can see Alice's spending total in byMember, knowing she added an expense doesn't leak additional information.
 
 **And** constraint FR-17 is enforced
 **And** notifications are NOT sent to the user who made the change
@@ -1305,11 +1646,11 @@ So that **I'm not overwhelmed by notifications from active groups**.
 
 | Epic | Title | Stories | Points |
 |------|-------|---------|--------|
-| 1 | Data Model & Group Foundation | 10 | ~35 |
-| 2 | Changelog-Driven Sync | 10 | ~39 |
+| 1 | Data Model & Group Foundation | 14 | ~47 |
+| 2 | Changelog-Driven Sync | 12 | ~45 |
 | 3 | Server-Side Analytics | 10 | ~34 |
 | 4 | Notifications & Engagement | 5 | ~12 |
-| **Total** | | **35 stories** | **~120 points** |
+| **Total** | | **41 stories** | **~138 points** |
 
 ### FR Coverage Verification
 
@@ -1333,8 +1674,16 @@ So that **I'm not overwhelmed by notifications from active groups**.
 | FR-16 | Story 3.10 | ✅ |
 | FR-17 | Story 4.1 | ✅ |
 | FR-18 | Story 4.3 | ✅ |
+| FR-19 | Story 1.11 | ✅ |
+| FR-20 | Story 1.12 | ✅ |
+| FR-21 | Story 1.11, 1.12 | ✅ |
+| FR-22 | Story 3.2, 3.7 | ✅ |
+| FR-23 | Story 3.7 | ✅ |
+| FR-24 | Story 1.11, 1.12, 2.12 | ✅ |
+| FR-25 | Story 1.14 | ✅ |
+| FR-26 | Story 1.6 | ✅ |
 
-**All 18 Functional Requirements are covered.**
+**All 26 Functional Requirements are covered.**
 
 ### NFR Coverage Verification
 

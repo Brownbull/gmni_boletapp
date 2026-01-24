@@ -95,3 +95,4 @@ CLAUDE.md
 
 # Claude Code
 .claude/
+docs/development/tooling/wsl-chrome/backup/.credentials.json

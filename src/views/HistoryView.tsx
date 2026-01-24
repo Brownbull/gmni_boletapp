@@ -56,6 +56,10 @@ import { deleteTransactionsBatch, updateTransaction } from '../services/firestor
 import type { Language } from '../utils/translations';
 // Story 14.15c: CSV Export utilities
 import { downloadMonthlyTransactions, downloadYearlyStatistics } from '../utils/csvExport';
+// Story 14c-refactor.27: ViewHandlersContext for navigation handlers
+import { useViewHandlers } from '../contexts/ViewHandlersContext';
+// Story 14c-refactor.27: View type for navigation
+import type { View } from '../components/App';
 
 // ============================================================================
 // Constants
@@ -172,7 +176,7 @@ interface Transaction {
 }
 
 interface HistoryViewProps {
-    historyTrans: Transaction[];
+    transactions: Transaction[];
     historyPage: number;
     totalHistoryPages: number;
     theme: string;
@@ -183,6 +187,10 @@ interface HistoryViewProps {
     t: (key: string) => string;
     formatCurrency: (amount: number, currency: string) => string;
     formatDate: (date: string, format: string) => string;
+    /**
+     * @deprecated Story 14c-refactor.27: Use useViewHandlers().navigation.navigateBack instead.
+     * Back button handler - will be removed in future version.
+     */
     onBack: () => void;
     onSetHistoryPage: (page: number | ((prev: number) => number)) => void;
     onEditTransaction: (transaction: Transaction) => void;
@@ -207,15 +215,18 @@ interface HistoryViewProps {
     userName?: string;
     /** User email for profile dropdown */
     userEmail?: string;
-    /** General navigation handler for profile dropdown menu items */
+    /**
+     * @deprecated Story 14c-refactor.27: Use useViewHandlers().navigation.navigateToView instead.
+     * General navigation handler for profile dropdown menu items - will be removed in future version.
+     */
     onNavigateToView?: (view: string) => void;
     // Story 14.27: Pagination props for loading older transactions
     /** True if more pages are available beyond current transactions */
-    hasMoreTransactions?: boolean;
+    hasMore?: boolean;
     /** Callback to load more transactions from Firestore */
     onLoadMoreTransactions?: () => void;
     /** True while loading more transactions */
-    loadingMoreTransactions?: boolean;
+    isLoadingMore?: boolean;
     /** True if at listener limit (100 transactions) - indicates pagination available */
     isAtListenerLimit?: boolean;
     /** Story 14.13: Font color mode for category text colors (colorful vs plain) */
@@ -239,7 +250,7 @@ interface HistoryViewProps {
  * Must be rendered inside HistoryFiltersProvider.
  */
 const HistoryViewInner: React.FC<HistoryViewProps> = ({
-    historyTrans,
+    transactions,
     // Story 14.14: historyPage and onSetHistoryPage now managed internally
     historyPage: _historyPage,
     totalHistoryPages: _totalHistoryPages,
@@ -251,7 +262,8 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
     t,
     formatCurrency,
     formatDate,
-    onBack,
+    // Story 14c-refactor.27: onBack moved to useViewHandlers().navigation.navigateBack
+    onBack: _deprecatedOnBack,
     onSetHistoryPage: _onSetHistoryPage,
     onEditTransaction,
     // Story 9.11: New props for duplicate detection and normalization
@@ -267,11 +279,12 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
     // Story 14.15b: Profile dropdown props
     userName = '',
     userEmail = '',
-    onNavigateToView,
+    // Story 14c-refactor.27: onNavigateToView moved to useViewHandlers().navigation.navigateToView
+    onNavigateToView: _deprecatedOnNavigateToView,
     // Story 14.27: Pagination props for loading older transactions
-    hasMoreTransactions = false,
+    hasMore = false,
     onLoadMoreTransactions,
-    loadingMoreTransactions = false,
+    isLoadingMore = false,
     isAtListenerLimit = false,
     // Story 14.13: Font color mode - receiving this prop triggers re-render when setting changes
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -282,6 +295,11 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
     // Shared groups for dynamic color lookup (DEPRECATED - now using useAllUserGroups internally)
     sharedGroups: _sharedGroups = [],
 }) => {
+    // Story 14c-refactor.27: Get navigation handlers from ViewHandlersContext
+    const { navigation } = useViewHandlers();
+    const onBack = navigation.navigateBack;
+    const onNavigateToView = navigation.navigateToView;
+
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     // Story 14.14: Search functionality
     const [searchQuery, setSearchQuery] = useState('');
@@ -323,9 +341,8 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
     // Story 14.15b: Handle profile navigation
     const handleProfileNavigate = useCallback((view: string) => {
         setIsProfileOpen(false);
-        if (onNavigateToView) {
-            onNavigateToView(view);
-        }
+        // Story 14c-refactor.27: Cast string to View type for navigation
+        onNavigateToView(view as View);
     }, [onNavigateToView]);
 
     // Group consolidation: Use shared groups hook instead of personal groups
@@ -436,7 +453,7 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
     });
 
     // Use all transactions for filtering (not just current page)
-    const transactionsToFilter = allTransactions.length > 0 ? allTransactions : historyTrans;
+    const transactionsToFilter = allTransactions.length > 0 ? allTransactions : transactions;
 
     // Story 9.19: Extract available filters from ALL transactions (AC #7 - memoized)
     const availableFilters = useMemo(() => {
@@ -494,7 +511,7 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
     // Story 14.27: Scroll to top when "load more" completes (like turning to next page in a book)
     useEffect(() => {
         // Detect transition from loading -> not loading
-        if (wasLoadingMore.current && !loadingMoreTransactions) {
+        if (wasLoadingMore.current && !isLoadingMore) {
             // Loading just finished - scroll to top
             if (scrollContainerRef.current) {
                 scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
@@ -502,8 +519,8 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
-        wasLoadingMore.current = loadingMoreTransactions;
-    }, [loadingMoreTransactions]);
+        wasLoadingMore.current = isLoadingMore;
+    }, [isLoadingMore]);
 
     // Story 14.27: Helper to scroll to top (used for page navigation)
     const scrollToTop = useCallback(() => {
@@ -634,9 +651,9 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
 
     // Story 14.15: Get selected transactions for modals
     const getSelectedTransactions = useCallback((): Transaction[] => {
-        const allTx = allTransactions.length > 0 ? allTransactions : historyTrans;
-        return allTx.filter((tx) => selectedIds.has(tx.id));
-    }, [allTransactions, historyTrans, selectedIds]);
+        const allTx = allTransactions.length > 0 ? allTransactions : transactions;
+        return allTx.filter((tx: Transaction) => selectedIds.has(tx.id));
+    }, [allTransactions, transactions, selectedIds]);
 
     // Story 14.15: Get transaction previews for delete modal
     const getTransactionPreviews = useCallback((): TransactionPreview[] => {
@@ -1207,11 +1224,11 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
 
                         {/* Story 14.27: Load more button for pagination */}
                         {/* Show when at listener limit and on last page of client-side pagination */}
-                        {/* Scrolls to top after loading completes (useEffect watches loadingMoreTransactions) */}
-                        {isAtListenerLimit && hasMoreTransactions && currentPage >= totalFilteredPages && (
+                        {/* Scrolls to top after loading completes (useEffect watches isLoadingMore) */}
+                        {isAtListenerLimit && hasMore && currentPage >= totalFilteredPages && (
                             <button
                                 onClick={onLoadMoreTransactions}
-                                disabled={loadingMoreTransactions}
+                                disabled={isLoadingMore}
                                 className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors"
                                 style={{
                                     backgroundColor: 'var(--surface)',
@@ -1220,7 +1237,7 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                                 }}
                                 data-testid="load-more-transactions"
                             >
-                                {loadingMoreTransactions ? (
+                                {isLoadingMore ? (
                                     <>
                                         <Loader2 size={16} className="animate-spin" />
                                         <span>{lang === 'es' ? 'Cargando...' : 'Loading...'}</span>
@@ -1232,7 +1249,7 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                         )}
 
                         {/* Story 14.27: End of history indicator */}
-                        {isAtListenerLimit && !hasMoreTransactions && currentPage >= totalFilteredPages && (
+                        {isAtListenerLimit && !hasMore && currentPage >= totalFilteredPages && (
                             <span
                                 className="text-xs py-2"
                                 style={{ color: 'var(--text-tertiary)' }}

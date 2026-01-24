@@ -88,6 +88,8 @@ import { normalizeItemNameForGrouping } from '../hooks/useItems';
 import { calculateTreemapLayout } from '../utils/treemapLayout';
 // Story 14.13 Session 4: Navigation payload for treemap cell clicks
 import { HistoryNavigationPayload, DrillDownPath } from '../utils/analyticsToHistoryFilters';
+// Story 14c-refactor.27: ViewHandlersContext for navigation handlers
+import { useViewHandlers } from '../contexts/ViewHandlersContext';
 // Story 14.15b: Use consolidated TransactionCard from shared transactions folder
 import { TransactionCard } from '../components/transactions';
 // Story 14.12: Radar chart uses inline SVG (matching mockup hexagonal design)
@@ -143,7 +145,10 @@ interface DashboardViewProps {
     lang?: Language;
     /** Story 14.12: Navigate to history view */
     onViewHistory?: () => void;
-    /** Story 14.13 Session 4: Navigate to history with category filter (for treemap cell clicks) */
+    /**
+     * @deprecated Story 14c-refactor.27: Use useViewHandlers().navigation.handleNavigateToHistory instead.
+     * Story 14.13 Session 4: Navigate to history with category filter (for treemap cell clicks) - will be removed in future version.
+     */
     onNavigateToHistory?: (payload: HistoryNavigationPayload) => void;
     /** Story 14.14: Color theme for unified category colors */
     colorTheme?: ThemeName;
@@ -454,8 +459,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     // Story 9.12: Language for translations
     lang = 'en',
     onViewHistory,
-    // Story 14.13 Session 4: Navigate to history with category filter
-    onNavigateToHistory,
+    // Story 14c-refactor.27: onNavigateToHistory moved to useViewHandlers().navigation.handleNavigateToHistory
+    onNavigateToHistory: _deprecatedOnNavigateToHistory,
     // Story 14.14: Color theme for unified category colors
     colorTheme = 'normal',
     // Story 14.15b: Selection mode props
@@ -477,6 +482,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 }) => {
     // Story 7.12: Theme-aware styling using CSS variables (AC #1, #2, #8)
     const isDark = theme === 'dark';
+
+    // Story 14c-refactor.27: Get navigation handlers from ViewHandlersContext
+    const { navigation } = useViewHandlers();
+    const onNavigateToHistory = navigation.handleNavigateToHistory;
 
     // Story 14.12: Reduced motion preference (available for future use)
     useReducedMotion();

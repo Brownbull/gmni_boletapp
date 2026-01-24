@@ -33,7 +33,7 @@
       <action>Set {{atlas_enabled}} = true</action>
       <output>🗺️ **Atlas Integration Active**
 
-        Atlas will analyze this story for workflow chain impacts and provide push alerts if existing workflows are affected.
+        Atlas will analyze stories for workflow chain impacts and provide push alerts.
       </output>
     </check>
 
@@ -48,11 +48,337 @@
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 0b: Mode Selection (NEW - Dual-mode capability)                    -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="0b" goal="Select Workflow Mode">
+    <critical>📋 DUAL-MODE WORKFLOW - Create new OR analyze existing stories</critical>
+
+    <output>
+      **What would you like to do, {user_name}?**
+
+      **[C]reate New Story** - Create a new story with Atlas workflow analysis and sizing checks
+      **[A]nalyze Existing Stories** - Check existing stories for sizing issues and split oversized ones
+
+      Choose [C] or [A], or [X] to exit:
+    </output>
+
+    <check if="user chooses X">
+      <output>Workflow exited. No changes made.</output>
+      <action>EXIT workflow gracefully</action>
+    </check>
+
+    <check if="user chooses C">
+      <action>Set {{workflow_mode}} = "create"</action>
+      <output>✅ **Create Mode** - Proceeding to story creation...</output>
+      <action>GOTO step 1</action>
+    </check>
+
+    <check if="user chooses A">
+      <action>Set {{workflow_mode}} = "analyze"</action>
+      <output>✅ **Analyze Mode** - Proceeding to story sizing analysis...</output>
+      <action>GOTO step 0c</action>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 0c: Select Stories to Analyze (Analyze Mode)                       -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="0c" goal="Select stories to analyze for sizing">
+    <critical>📏 ANALYZE MODE - Select stories for sizing analysis</critical>
+    <note>Adapted from atlas-story-sizing Step 1</note>
+
+    <check if="{{story_path}} is provided by user">
+      <action>Load single story from provided path</action>
+      <action>Set {{analysis_mode}} = "single"</action>
+      <action>GOTO step 0d</action>
+    </check>
+
+    <action>Check if {{sprint_status}} file exists</action>
+    <check if="sprint status file does NOT exist">
+      <output>🚫 No sprint status file found and no story specified</output>
+      <output>
+        **Required Options:**
+        1. Run `sprint-planning` to initialize sprint tracking
+        2. Provide specific story path to analyze (e.g., "docs/sprint-artifacts/epic14c-refactor/stories/14c-refactor-22.md")
+        3. Provide story key to analyze (e.g., "14c-refactor-22")
+      </output>
+      <ask>Choose option [1], [2], [3], or [X] to exit:</ask>
+
+      <check if="user chooses X">
+        <output>Workflow exited. No changes made.</output>
+        <action>EXIT workflow gracefully</action>
+      </check>
+
+      <check if="user chooses 2 or 3">
+        <ask>Please provide the story path or key:</ask>
+        <action>Parse input and locate story file</action>
+        <action>Set {{analysis_mode}} = "single"</action>
+        <action>GOTO step 0d</action>
+      </check>
+    </check>
+
+    <!-- Load sprint status for batch analysis -->
+    <critical>MUST read COMPLETE {sprint_status} file from start to end</critical>
+    <action>Load the FULL file: {{sprint_status}}</action>
+    <action>Find ALL stories with status = "ready-for-dev" OR "drafted"</action>
+    <action>Set {{candidate_stories}} = list of story keys</action>
+    <action>Set {{candidate_count}} = count of stories found</action>
+
+    <check if="{{candidate_count}} == 0">
+      <output>No stories found with status "ready-for-dev" or "drafted".
+        All stories are either in backlog, in-progress, or done.
+      </output>
+      <ask>Would you like to analyze a specific story by path? [Y/N/X to exit]</ask>
+
+      <check if="user chooses X or N">
+        <output>Workflow exited. No changes made.</output>
+        <action>EXIT workflow gracefully</action>
+      </check>
+
+      <check if="user chooses Y">
+        <ask>Please provide the story path:</ask>
+        <action>Parse input and locate story file</action>
+        <action>Set {{analysis_mode}} = "single"</action>
+        <action>GOTO step 0d</action>
+      </check>
+    </check>
+
+    <output>📋 **Found {{candidate_count}} stories to analyze:**
+
+      {{candidate_stories_list}}
+    </output>
+
+    <ask>
+      Select analysis mode:
+      1. **Analyze all** - Check all {{candidate_count}} stories for sizing issues
+      2. **Select specific** - Choose which stories to analyze
+      3. **Single story** - Analyze one specific story by key
+      X. **Exit** workflow
+
+      Choose [1], [2], [3], or [X]:
+    </ask>
+
+    <check if="user chooses X">
+      <output>Workflow exited. No changes made.</output>
+      <action>EXIT workflow gracefully</action>
+    </check>
+
+    <check if="user chooses 1">
+      <action>Set {{analysis_mode}} = "batch"</action>
+      <action>Set {{stories_to_analyze}} = {{candidate_stories}}</action>
+    </check>
+
+    <check if="user chooses 2">
+      <ask>Enter story keys to analyze (comma-separated):</ask>
+      <action>Parse user input into {{stories_to_analyze}}</action>
+      <action>Set {{analysis_mode}} = "batch"</action>
+    </check>
+
+    <check if="user chooses 3">
+      <ask>Enter story key to analyze:</ask>
+      <action>Set {{stories_to_analyze}} = [user_input]</action>
+      <action>Set {{analysis_mode}} = "single"</action>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 0d: Load and Parse Story Content (Analyze Mode)                    -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="0d" goal="Load and parse story content for analysis">
+    <critical>🔬 EXHAUSTIVE STORY ANALYSIS</critical>
+    <note>Adapted from atlas-story-sizing Step 2</note>
+
+    <action>For each story in {{stories_to_analyze}}:</action>
+    <action>  1. Locate story file using story key pattern</action>
+    <action>  2. Load complete story file content</action>
+    <action>  3. Parse sections: Tasks/Subtasks, Dev Notes, Acceptance Criteria</action>
+    <action>  4. Extract metrics:</action>
+    <action>     - task_count: Number of top-level tasks (lines starting with "- [ ] Task")</action>
+    <action>     - subtask_count: Total subtasks across all tasks (nested "- [ ]" items)</action>
+    <action>     - file_count: Estimated files from Dev Notes or task descriptions</action>
+    <action>     - complexity_indicators: Test requirements, architectural changes, dependencies</action>
+
+    <action>Set {{story_metrics}} = collected metrics for all stories</action>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 0e: Apply Sizing Analysis (Analyze Mode)                           -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="0e" goal="Apply sizing heuristics and classify stories">
+    <critical>📏 CONTEXT WINDOW SIZING - Same logic as Step 5b</critical>
+    <critical>Lesson from Story 14c-refactor.22a: Stories with >3 complex tasks exhaust context windows</critical>
+    <note>Adapted from atlas-story-sizing Step 3</note>
+
+    <note>
+      **Sizing Guidelines:**
+      - **SMALL (1 pt):** 1-2 tasks, ≤5 subtasks total, ≤2 files
+      - **MEDIUM (2-3 pts):** 2-3 tasks, ≤10 subtasks total, ≤4 files
+      - **LARGE (5 pts):** 3-4 tasks, ≤15 subtasks total, ≤8 files
+      - **TOO LARGE (needs split):** >4 tasks OR >15 subtasks OR >8 files
+    </note>
+
+    <action>For each story in {{story_metrics}}:</action>
+    <action>  Apply sizing classification based on metrics</action>
+    <action>  Set {{story_size}} = SMALL | MEDIUM | LARGE | TOO_LARGE</action>
+
+    <action>Categorize results:</action>
+    <action>  {{ok_stories}} = stories classified as SMALL or MEDIUM</action>
+    <action>  {{warning_stories}} = stories classified as LARGE</action>
+    <action>  {{critical_stories}} = stories classified as TOO_LARGE</action>
+
+    <output>
+      📊 **Sizing Analysis Complete**
+
+      **Summary:**
+      - ✅ OK (SMALL/MEDIUM): {{ok_count}} stories
+      - ⚠️ WARNING (LARGE): {{warning_count}} stories
+      - ❌ CRITICAL (TOO_LARGE): {{critical_count}} stories
+
+      {{sizing_results_table}}
+    </output>
+
+    <check if="{{critical_count}} == 0 AND {{warning_count}} == 0">
+      <output>✅ **All stories are properly sized!**
+
+        No stories require splitting. All are within context window capacity.
+      </output>
+      <action>GOTO step 7</action>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 0f: Present Split Recommendations (Analyze Mode)                   -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="0f" goal="Present split recommendations for oversized stories">
+    <critical>🔄 SPLIT RECOMMENDATION ENGINE</critical>
+    <note>Adapted from atlas-story-sizing Step 4</note>
+
+    <check if="{{critical_count}} > 0">
+      <output>
+        ❌ **CRITICAL: {{critical_count}} stories REQUIRE splitting before development**
+
+        These stories will exhaust the dev agent's context window mid-implementation:
+
+        {{critical_stories_details}}
+      </output>
+    </check>
+
+    <check if="{{warning_count}} > 0">
+      <output>
+        ⚠️ **WARNING: {{warning_count}} stories are at capacity**
+
+        These stories are at the upper limit and may benefit from splitting:
+
+        {{warning_stories_details}}
+      </output>
+    </check>
+
+    <action>For each oversized story, generate split recommendations:</action>
+    <action>  1. Analyze task groupings for natural split points</action>
+    <action>  2. Suggest split strategy (by_layer, by_feature, by_phase, by_file)</action>
+    <action>  3. Calculate metrics for proposed sub-stories</action>
+
+    <output>
+      **Recommended Splits:**
+
+      {{split_recommendations}}
+    </output>
+
+    <ask>
+      How would you like to proceed?
+      1. **Auto-split all** - Apply recommended splits to all oversized stories
+      2. **Review each** - Interactively review and approve each split
+      3. **Skip warnings** - Only split CRITICAL stories, ignore warnings
+      4. **Manual mode** - I'll specify my own split strategy
+      X. **Exit** - Don't split anything, go to summary
+
+      Choose [1], [2], [3], [4], or [X]:
+    </ask>
+
+    <check if="user chooses X">
+      <output>No splits applied. Proceeding to summary...</output>
+      <action>GOTO step 7</action>
+    </check>
+
+    <check if="user chooses 1">
+      <action>Set {{split_mode}} = "auto_all"</action>
+      <action>Set {{stories_to_split}} = {{critical_stories}} + {{warning_stories}}</action>
+      <action>GOTO step 0g</action>
+    </check>
+
+    <check if="user chooses 2">
+      <action>Set {{split_mode}} = "interactive"</action>
+      <action>For each oversized story, present split preview and ask for approval</action>
+      <action>Collect approved splits into {{stories_to_split}}</action>
+      <action>GOTO step 0g</action>
+    </check>
+
+    <check if="user chooses 3">
+      <action>Set {{split_mode}} = "auto_critical"</action>
+      <action>Set {{stories_to_split}} = {{critical_stories}}</action>
+      <action>GOTO step 0g</action>
+    </check>
+
+    <check if="user chooses 4">
+      <ask>Which story would you like to split? (enter story key)</ask>
+      <ask>How many sub-stories to create? [2-5]</ask>
+      <ask>Describe task distribution for each sub-story:</ask>
+      <action>Build custom split from user input</action>
+      <action>Add to {{stories_to_split}}</action>
+      <action>GOTO step 0g</action>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 0g: Execute Splits and Create New Stories (Analyze Mode)           -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="0g" goal="Execute splits and create new story files">
+    <critical>📝 CREATING SPLIT STORY FILES</critical>
+    <note>Adapted from atlas-story-sizing Step 5</note>
+
+    <check if="{{stories_to_split}} is empty">
+      <output>No stories selected for splitting.</output>
+      <action>GOTO step 7</action>
+    </check>
+
+    <action>For each story in {{stories_to_split}}:</action>
+    <action>  1. Generate sub-story keys using letter suffix (e.g., 22 → 22a, 22b, 22c)</action>
+    <action>  2. Create new story files from template</action>
+    <action>  3. Distribute tasks according to split strategy</action>
+    <action>  4. Copy relevant Dev Notes and Acceptance Criteria</action>
+    <action>  5. Add dependency note: "Part of split from {{original_story_key}}"</action>
+    <action>  6. Add cross-references between split stories</action>
+    <action>  7. Mark original story as "split" or archive it</action>
+
+    <output>
+      ✅ **Split Complete: {{original_story_key}}**
+
+      **Created {{sub_story_count}} sub-stories:**
+      {{created_stories_list}}
+
+      **Original story archived/marked as split**
+    </output>
+
+    <action>After all splits complete:</action>
+    <action>Set {{total_created}} = count of new stories</action>
+    <action>Set {{total_archived}} = count of original stories archived</action>
+
+    <!-- Route to Step 7 for sprint status update and Atlas memory -->
+    <action>GOTO step 7</action>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <!-- STEPS 1-5: Standard Create-Story Logic (inherited)                      -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
   <step n="1" goal="Determine target story">
-    <note>This step is identical to standard create-story - see create-story/instructions.xml</note>
+    <note>This step extends standard create-story with Atlas-specific routing. Base logic from create-story/instructions.xml with additional GOTO routing for Atlas steps.</note>
 
     <check if="{{story_path}} is provided by user or user provided the epic and story number">
       <action>Parse user-provided story path: extract epic_num, story_num, story_title</action>
@@ -67,8 +393,20 @@
         **Required Options:**
         1. Run `sprint-planning` to initialize sprint tracking (recommended)
         2. Provide specific epic-story number to create (e.g., "1-2-user-auth")
+        3. Manually specify story requirements (epic number, story number, title)
       </output>
-      <ask>Choose option [1], provide epic-story number, or [q] to quit:</ask>
+      <ask>Choose option [1], [2], [3], provide epic-story number, or [X] to exit:</ask>
+
+      <check if="user chooses X">
+        <output>Workflow exited. No changes made.</output>
+        <action>EXIT workflow gracefully</action>
+      </check>
+
+      <check if="user chooses 3">
+        <ask>Please provide: Epic number, Story number, and Story title (e.g., "Epic 2, Story 3, User Authentication")</ask>
+        <action>Parse manual input and set {{epic_num}}, {{story_num}}, {{story_title}}</action>
+        <action>GOTO step 2</action>
+      </check>
     </check>
 
     <!-- Auto-discover from sprint status -->
@@ -154,33 +492,34 @@
           This story affects the following existing workflows:
 
           **Affected Workflows:**
-          {{#each workflow_impacts}}
-          - **{{workflow_name}}**: {{impact_description}}
-          {{/each}}
+          {{workflow_impacts_list}}
 
           **Downstream Effects:**
-          {{#each downstream_effects}}
-          - {{effect_description}}
-          {{/each}}
+          {{downstream_effects_list}}
 
           **Suggested Additional Acceptance Criteria:**
-          {{#each suggested_acs}}
-          - [ ] {{suggested_ac}}
-          {{/each}}
+          {{suggested_acs_list}}
 
           **Testing Considerations:**
           - Existing E2E tests that may need updates: {{affected_tests}}
           - New test scenarios implied: {{new_test_scenarios}}
         </output>
+        <note>Variables workflow_impacts_list, downstream_effects_list, and suggested_acs_list should be formatted as bullet lists by the workflow engine</note>
 
         <ask>
           Would you like to:
           1. **Include** these suggestions in the story
           2. **Review** each suggestion individually
           3. **Skip** Atlas suggestions (proceed with standard story)
+          X. **Exit** workflow without creating story
 
-          Choose [1], [2], or [3]:
+          Choose [1], [2], [3], or [X]:
         </ask>
+
+        <check if="user chooses X">
+          <output>Workflow exited. No story created.</output>
+          <action>EXIT workflow gracefully</action>
+        </check>
 
         <check if="user chooses 1">
           <action>Add all suggested ACs to story acceptance criteria</action>
@@ -212,6 +551,115 @@
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 5b: Context Window Sizing Analysis (NEW!)                          -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="5b" goal="Analyze Story Size for Context Window Fit">
+    <critical>📏 CONTEXT WINDOW SIZING - Prevent stories that exceed development capacity!</critical>
+    <critical>Lesson from Story 14c-refactor.22a: Stories with >3 complex tasks exhaust context windows</critical>
+
+    <note>
+      **Context Window Reality:**
+      - One development cycle = one context window = limited capacity
+      - Stories that exceed capacity get partially completed, requiring post-hoc splits
+      - Better to split upfront than discover mid-development
+    </note>
+
+    <action>Analyze the story's planned tasks and subtasks</action>
+    <action>Count: number of tasks, subtasks per task, estimated complexity</action>
+
+    <!-- Sizing Heuristics -->
+    <action>Apply sizing heuristics:
+      - **SMALL (1 pt):** 1-2 tasks, ≤5 subtasks total, single file focus
+      - **MEDIUM (2-3 pts):** 2-3 tasks, ≤10 subtasks total, 2-4 files
+      - **LARGE (5 pts):** 3-4 tasks, ≤15 subtasks total, 4-8 files
+      - **TOO LARGE (needs split):** >4 tasks OR >15 subtasks OR >8 files
+    </action>
+
+    <action>Set {{story_size}} = SMALL | MEDIUM | LARGE | TOO_LARGE</action>
+    <action>Set {{task_count}} = number of top-level tasks</action>
+    <action>Set {{subtask_count}} = total subtasks across all tasks</action>
+    <action>Set {{file_count}} = estimated files to create/modify</action>
+
+    <!-- TOO LARGE - Require Split -->
+    <check if="{{story_size}} == TOO_LARGE">
+      <output>
+        ⚠️ **STORY SIZING ALERT: Story exceeds context window capacity**
+
+        **Current Assessment:**
+        - Tasks: {{task_count}} (max recommended: 4)
+        - Subtasks: {{subtask_count}} (max recommended: 15)
+        - Files: {{file_count}} (max recommended: 8)
+
+        **Problem:** This story will likely exhaust the context window before completion,
+        requiring a post-hoc split (like Story 14c-refactor.22a → 22a-22e).
+
+        **Recommended Split Strategy:**
+        {{recommended_splits_list}}
+      </output>
+
+      <ask>
+        How would you like to proceed?
+        1. **Split now** - Create multiple smaller stories (recommended)
+        2. **Proceed anyway** - Create single story with risk acknowledgment
+        3. **Reduce scope** - Remove tasks to fit sizing guidelines
+        X. **Exit** workflow without creating story
+
+        Choose [1], [2], [3], or [X]:
+      </ask>
+
+      <check if="user chooses X">
+        <output>Workflow exited. No story created. Consider reviewing story scope before re-running.</output>
+        <action>EXIT workflow gracefully</action>
+      </check>
+
+      <check if="user chooses 1">
+        <action>Generate split story outlines</action>
+        <action>Create each sub-story with appropriate dependencies</action>
+        <output>✅ Story split into {{split_count}} smaller stories</output>
+        <action>Continue to Step 6 for FIRST sub-story only</action>
+      </check>
+
+      <check if="user chooses 2">
+        <action>Add sizing warning to story Dev Notes</action>
+        <action>Add "May require mid-development split" note</action>
+        <output>⚠️ Proceeding with oversized story - documented risk</output>
+      </check>
+
+      <check if="user chooses 3">
+        <ask>Which tasks should be deferred to a follow-up story?</ask>
+        <action>Remove selected tasks, recalculate sizing</action>
+      </check>
+    </check>
+
+    <!-- LARGE - Warn but proceed -->
+    <check if="{{story_size}} == LARGE">
+      <output>
+        📋 **Story Sizing: LARGE (5 pts)**
+
+        - Tasks: {{task_count}}
+        - Subtasks: {{subtask_count}}
+        - Files: {{file_count}}
+
+        This story is at the upper limit of context window capacity.
+        Consider: Could any task be a separate story?
+      </output>
+
+      <ask>Proceed with LARGE story, split into smaller stories, or exit? [proceed/split/X]</ask>
+
+      <check if="user chooses X">
+        <output>Workflow exited. No story created.</output>
+        <action>EXIT workflow gracefully</action>
+      </check>
+    </check>
+
+    <!-- SMALL/MEDIUM - Good to go -->
+    <check if="{{story_size}} == SMALL OR {{story_size}} == MEDIUM">
+      <output>✅ **Story Sizing: {{story_size}}** - Fits within context window capacity</output>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <!-- STEP 6: Create Story File (with Atlas enhancements)                     -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
@@ -238,14 +686,10 @@
 > 🗺️ This section was generated by Atlas workflow chain analysis
 
 ### Affected Workflows
-{{#each workflow_impacts}}
-- **{{workflow_name}}**: {{impact_description}}
-{{/each}}
+{{workflow_impacts_list}}
 
 ### Downstream Effects to Consider
-{{#each downstream_effects}}
-- {{effect_description}}
-{{/each}}
+{{downstream_effects_list}}
 
 ### Testing Implications
 - **Existing tests to verify:** {{affected_tests}}
@@ -255,6 +699,23 @@
 ```
 {{upstream_chain}} → [THIS STORY] → {{downstream_chain}}
 ```
+      </template-output>
+    </check>
+
+    <!-- Story Sizing Section -->
+    <check if="{{story_size}} == LARGE">
+      <template-output file="{default_output_file}">
+## Story Sizing Warning
+
+> ⚠️ **LARGE STORY** - At upper limit of context window capacity
+
+| Metric | Value | Guideline |
+|--------|-------|-----------|
+| Tasks | {{task_count}} | ≤4 |
+| Subtasks | {{subtask_count}} | ≤15 |
+| Files | {{file_count}} | ≤8 |
+
+**Mitigation:** If development exceeds context window, split remaining tasks into follow-up story.
       </template-output>
     </check>
 
@@ -277,75 +738,158 @@
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
   <step n="7" goal="Update sprint status and feed Atlas">
-    <invoke-task>Validate against checklist using _bmad/core/tasks/validate-workflow.xml</invoke-task>
-    <action>Save story document</action>
+    <!-- MODE-SPECIFIC PROCESSING -->
 
-    <!-- Update sprint status -->
-    <check if="sprint status file exists">
-      <action>Update development_status[{{story_key}}] = "ready-for-dev"</action>
-      <action>Save file, preserving all comments and structure</action>
-    </check>
+    <!-- CREATE MODE: Validate and save story -->
+    <check if="{{workflow_mode}} == 'create'">
+      <invoke-task>Validate against checklist using _bmad/core/tasks/validate-workflow.xml</invoke-task>
+      <action>Save story document</action>
 
-    <!-- ATLAS MEMORY FEEDING -->
-    <check if="{{atlas_enabled}} == true">
-      <output>
-        **🗺️ Atlas Memory Update**
-
-        Atlas can learn from this story creation to improve future workflow analysis.
-
-        **Nugget to add to Section 2 (Feature Inventory):**
-        ```
-        ### Story Created - {{story_key}} - {date}
-
-        **Summary:** {{story_title}} - {{story_summary}}
-
-        **User Value:** {{user_value}}
-
-        **Workflow Touchpoints:**
-        {{#each workflow_impacts}}
-        - {{workflow_name}}
-        {{/each}}
-
-        **Source:** {{story_file}}
-        ```
-      </output>
-
-      <ask>Update Atlas memory with this story's workflow touchpoints? [Y/N]</ask>
-
-      <check if="user says Y">
-        <action>Append nugget to Atlas memory Section 2</action>
-        <action>Update Atlas Sync History table</action>
-        <output>✅ Atlas memory updated with story {{story_key}} workflow touchpoints</output>
+      <!-- Update sprint status for new story -->
+      <check if="sprint status file exists">
+        <action>Update development_status[{{story_key}}] = "ready-for-dev"</action>
+        <action>Save file, preserving all comments and structure</action>
       </check>
+
+      <!-- ATLAS MEMORY FEEDING - Create Mode -->
+      <check if="{{atlas_enabled}} == true">
+        <output>
+          **🗺️ Atlas Memory Update**
+
+          Atlas can learn from this story creation to improve future workflow analysis.
+
+          **Nugget to add to Section 2 (Feature Inventory):**
+          ```
+          ### Story Created - {{story_key}} - {date}
+
+          **Summary:** {{story_title}} - {{story_summary}}
+
+          **User Value:** {{user_value}}
+
+          **Workflow Touchpoints:**
+          {{workflow_touchpoints_list}}
+
+          **Source:** {{story_file}}
+          ```
+        </output>
+
+        <ask>Update Atlas memory with this story's workflow touchpoints? [Y/N/X to skip]</ask>
+
+        <check if="user chooses X or N">
+          <output>Atlas memory not updated.</output>
+        </check>
+
+        <check if="user says Y">
+          <action>Append nugget to Atlas memory Section 2</action>
+          <action>Update Atlas Sync History table</action>
+          <output>✅ Atlas memory updated with story {{story_key}} workflow touchpoints</output>
+        </check>
+      </check>
+
+      <!-- Final output - Create Mode -->
+      <output>**🎯 ATLAS-ENHANCED STORY CREATED, {user_name}!**
+
+        **Story Details:**
+        - Story ID: {{story_id}}
+        - Story Key: {{story_key}}
+        - File: {{story_file}}
+        - Status: ready-for-dev
+        {{atlas_status_line}}
+
+        **Next Steps:**
+        1. Review the comprehensive story in {{story_file}}
+        2. Run `atlas-code-review` when implementation complete (includes Atlas validation)
+        3. Run `atlas-retrospective` after epic completion
+
+        **Atlas Enhancements Applied:**
+        {{atlas_enhancements_summary}}
+      </output>
+      <note>atlas_status_line: If atlas_enabled, show "- Atlas Analysis: ✅ Complete" and "- Workflow Impacts: N detected"</note>
+      <note>atlas_enhancements_summary: If workflow_impacts exist, show impact analysis details; otherwise show "- ✅ No workflow conflicts detected"</note>
     </check>
 
-    <!-- Final output -->
-    <output>**🎯 ATLAS-ENHANCED STORY CREATED, {user_name}!**
+    <!-- ANALYZE MODE: Update sprint status with splits -->
+    <check if="{{workflow_mode}} == 'analyze'">
+      <check if="sprint status file exists AND {{total_created}} > 0">
+        <critical>MUST update {sprint_status} with new split stories</critical>
+        <action>Load the FULL file: {{sprint_status}}</action>
 
-      **Story Details:**
-      - Story ID: {{story_id}}
-      - Story Key: {{story_key}}
-      - File: {{story_file}}
-      - Status: ready-for-dev
-      {{#if atlas_enabled}}
-      - Atlas Analysis: ✅ Complete
-      - Workflow Impacts: {{workflow_impact_count}} detected
-      {{/if}}
+        <action>For each split story:</action>
+        <action>  1. Update original story status to "split" or remove entry</action>
+        <action>  2. Add entries for each new sub-story with status "ready-for-dev"</action>
+        <action>  3. Preserve story ordering within epic</action>
 
-      **Next Steps:**
-      1. Review the comprehensive story in {{story_file}}
-      2. Run `atlas-code-review` when implementation complete (includes Atlas validation)
-      3. Run `atlas-retrospective` after epic completion
+        <action>Save file, preserving ALL comments and structure</action>
 
-      **Atlas Enhancements Applied:**
-      {{#if workflow_impacts}}
-      - ⚠️ Workflow impact analysis included
-      - 📋 Additional ACs suggested based on workflow chains
-      - 🧪 Testing implications documented
-      {{else}}
-      - ✅ No workflow conflicts detected
-      {{/if}}
-    </output>
+        <output>
+          📋 **Sprint Status Updated**
+
+          - Archived/marked as split: {{total_archived}} stories
+          - Added new entries: {{total_created}} stories
+        </output>
+      </check>
+
+      <!-- ATLAS MEMORY FEEDING - Analyze Mode (sizing lessons) -->
+      <check if="{{atlas_enabled}} == true AND {{total_created}} > 0">
+        <output>
+          **🗺️ Atlas Lesson Capture**
+
+          Atlas can learn from this sizing analysis to improve future story creation.
+
+          **Lesson to add to Section 6 (Lessons Learned):**
+          ```
+          ### Story Sizing Analysis - {date}
+
+          **Stories Analyzed:** {{total_analyzed}}
+          **Stories Split:** {{total_archived}}
+          **New Stories Created:** {{total_created}}
+
+          **Patterns Observed:**
+          {{sizing_patterns_observed}}
+
+          **Split Strategies Used:**
+          {{strategies_used_list}}
+
+          **Recommendation:** Stories exceeding 4 tasks / 15 subtasks / 8 files
+          should be split DURING creation, not after.
+          ```
+        </output>
+
+        <ask>Update Atlas memory with sizing lessons? [Y/N/X to skip]</ask>
+
+        <check if="user chooses X or N">
+          <output>Atlas memory not updated.</output>
+        </check>
+
+        <check if="user says Y">
+          <action>Append lesson to Atlas memory Section 6</action>
+          <action>Update Atlas Sync History table</action>
+          <output>✅ Atlas memory updated with sizing lessons</output>
+        </check>
+      </check>
+
+      <!-- Final output - Analyze Mode -->
+      <output>**📏 ATLAS STORY SIZING COMPLETE, {user_name}!**
+
+        **Analysis Summary:**
+        - Stories Analyzed: {{total_analyzed}}
+        - OK (no action needed): {{ok_count}}
+        - Split: {{total_archived}} → {{total_created}} new stories
+        {{atlas_lesson_line}}
+
+        **Files Modified:**
+        {{modified_files_list}}
+
+        **Next Steps:**
+        1. Review the split stories in their respective files
+        2. Run `atlas-dev-story` to implement ready stories
+        3. Consider running this workflow periodically to catch oversized stories
+
+        **Tip:** Creating stories with this workflow (Create mode) includes
+        built-in sizing checks to prevent oversized stories upfront.
+      </output>
+      <note>atlas_lesson_line: If atlas_enabled and lessons captured, show "- Atlas Lessons: ✅ Captured"</note>
+    </check>
   </step>
 
 </workflow>

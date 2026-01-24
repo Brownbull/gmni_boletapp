@@ -610,8 +610,138 @@ const { isInForeground, registerBeforeUnloadGuard } = useAppLifecycle({
 
 ---
 
+## Transaction & Scan Handler Hooks (Story 14c-refactor.20)
+
+**Pattern:** Extract App.tsx handler logic into testable hooks with props-based dependency injection
+
+### Hook Directory Structure (Extended)
+
+```
+src/hooks/app/
+├── index.ts                    # Barrel exports
+├── useAppInitialization.ts     # Auth + services coordination
+├── useAppLifecycle.ts          # Foreground/background, beforeunload
+├── useAppPushNotifications.ts  # Push notifications coordination
+├── useDeepLinking.ts           # URL deep link handling
+├── useOnlineStatus.ts          # Network connectivity monitoring
+├── useTransactionHandlers.ts   # Transaction CRUD (save, delete, wipe, export)
+├── useScanHandlers.ts          # Scan dialog/utility handlers (not integrated)
+├── useNavigationHandlers.ts    # View navigation, filter clearing, scroll position ← NEW
+└── useDialogHandlers.ts        # Toast, credit modal, conflict dialog ← NEW (not integrated)
+```
+
+### Key Patterns
+
+| Pattern | Implementation |
+|---------|----------------|
+| Props-based injection | Pass callbacks/services as props, not internal context |
+| Fire-and-forget Firestore | Don't await in critical path (offline persistence) |
+| useCallback stability | All handlers wrapped with exhaustive deps |
+| useMemo for result | Return object wrapped in useMemo |
+| Incremental extraction | Complex functions (processScan) stay in App.tsx with TODO for future |
+
+### Integration Status
+
+| Hook | Status | Lines | Tests |
+|------|--------|-------|-------|
+| useTransactionHandlers | ✅ Integrated | ~520 | 36 |
+| useScanHandlers | ⏳ Created, not integrated | ~825 | 69 |
+| useNavigationHandlers | ✅ Integrated | ~280 | 38 |
+| useDialogHandlers | ⏳ Created, not integrated | ~285 | 26 |
+
+**Reference:** Story 14c-refactor.20, 14c-refactor.20a, 14c-refactor.20b, 14c-refactor.21
+
+---
+
+## ViewHandlersContext Migration Pattern (Story 14c-refactor.27)
+
+**Pattern:** Migrate views from handler props to context consumption incrementally
+
+### Architecture
+
+```
+App.tsx
+   ↓
+ViewHandlersProvider (wraps view rendering area)
+   ↓ provides
+{ transaction, scan, navigation, dialog } handler bundles
+   ↓ consumed by
+Views via useViewHandlers() hook
+```
+
+### Migration Strategy
+
+| Phase | Action | Status |
+|-------|--------|--------|
+| 1 | Create ViewHandlersContext + Provider | ✅ Story 25 |
+| 2 | Add useViewHandlers() to views | ✅ Story 27 |
+| 3 | Mark old props @deprecated | ✅ Story 27 |
+| 4 | Keep props for backward compatibility | ✅ Current state |
+| 5 | Remove deprecated props | ⏳ TODO(14c-refactor.29) |
+
+### Views Migrated (7/9)
+
+| View | Handlers from Context |
+|------|----------------------|
+| TransactionEditorView | dialog.showToast, dialog.openCreditInfoModal |
+| TrendsView | navigation.handleNavigateToHistory, navigation.navigateBack |
+| BatchReviewView | navigation.navigateBack, dialog.openCreditInfoModal |
+| HistoryView | navigation.navigateBack, navigation.navigateToView |
+| ItemsView | navigation.navigateBack, navigation.navigateToView |
+| DashboardView | navigation.handleNavigateToHistory |
+| SettingsView | dialog.showToast (with type wrapper) |
+
+### Deferred Views
+
+- **InsightsView** - Complex `onMenuClick`/`onProfileClick` callback pattern
+- **ReportsView** - Complex drill-down navigation pattern
+
+**Rationale:** These views have menu/profile callbacks that interact with navigation in ways that need separate analysis to avoid conflicts with context handlers.
+
+### Key Files
+
+- `src/contexts/ViewHandlersContext.tsx` - Context + Provider + useViewHandlers()
+- `src/components/App/viewRenderers.tsx` - Migration status documentation
+- `tests/setup/test-utils.tsx` - createMockViewHandlers() for tests
+
+**Reference:** Story 14c-refactor.25, 14c-refactor.27
+
+---
+
+## Hook-to-View Type Conversion Pattern (Story 14c-refactor.31b)
+
+**Pattern:** Composition hooks return plain objects for JSON compatibility; views may expect different types.
+
+### Example: spendingByMember
+
+```typescript
+// Hook returns plain object (composable, serializable)
+export interface SpendingByMember {
+    [userId: string]: number;
+}
+
+// TrendsViewProps expects Map
+spendingByMember?: Map<string, number>;
+
+// Conversion at render time
+spendingByMember={new Map(Object.entries(trendsViewDataProps.spendingByMember))}
+```
+
+### Key Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Hooks return plain objects | JSON-compatible, easier testing, composable |
+| Views own type conversion | View-level concern, keeps hooks pure |
+| Document in both places | JSDoc in hook + story notes |
+
+**Reference:** Story 14c-refactor.31b
+
+---
+
 ## Sync Notes
 
+- 2026-01-23: Added ViewHandlersContext Migration Pattern (Story 14c-refactor.27) - 7/9 views migrated, InsightsView/ReportsView deferred
 - Generation 4: Consolidated Epic 14d verbose details
 - 2026-01-15: Added Epic 14c Household Sharing architecture
 - 2026-01-15: Added Cloud Functions documentation
@@ -627,5 +757,12 @@ const { isInForeground, registerBeforeUnloadGuard } = useAppLifecycle({
 - 2026-01-21: Story 14c-refactor.12 - Transaction Service Simplification (dead query keys removed, TODO markers added)
 - 2026-01-21: Story 14c-refactor.13 - View Mode State Unification (context simplified to in-memory only, Shell & Stub pattern)
 - 2026-01-22: Story 14c-refactor.17 - Test Suite Cleanup (92 new tests: 5 context files + 1 hook, security rules deny-all pattern)
+- 2026-01-22: Story 14c-refactor.20 - Transaction & Scan Handler Hooks (useTransactionHandlers integrated, useScanHandlers created)
+- 2026-01-22: Story 14c-refactor.21 - Navigation & Dialog Handler Hooks (useNavigationHandlers integrated, useDialogHandlers created but deferred)
+- 2026-01-22: Story 14c-refactor.22c - View Renderer Pattern (renderViewSwitch + 5 render functions, provider wrapping centralized)
+- 2026-01-23: Story 14c-refactor.31a - TrendsView interface cleanup (removed onBack, onNavigateToView, onNavigateToHistory; useViewHandlers() migration complete)
+- 2026-01-23: Story 14c-refactor.31b - Hook-to-View Type Conversion Pattern (plain objects in hooks, Map conversion at render)
+- 2026-01-23: Story 14c-refactor.31c - TrendsView integration complete (34 lines removed, single spread pattern, code review passed)
+- 2026-01-23: Story 14c-refactor.33b - TransactionEditorView hook expansion (17 callbacks passthrough, all optional for backward compat)
 - Code review learnings in 06-lessons.md
 - Story details in docs/sprint-artifacts/

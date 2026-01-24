@@ -28,6 +28,8 @@ import { Transaction } from '../types/transaction';
 import { formatCurrency } from '../utils/currency';
 import type { Currency } from '../types/settings';
 import { useScanOptional } from '../contexts/ScanContext';
+// Story 14c-refactor.27: ViewHandlersContext for navigation handlers
+import { useViewHandlers } from '../contexts/ViewHandlersContext';
 
 /**
  * Props for processing state display.
@@ -69,8 +71,13 @@ export interface BatchReviewViewProps {
   onEditReceipt: (receipt: BatchReceipt, batchIndex: number, batchTotal: number, allReceipts: BatchReceipt[]) => void;
   /** Called when receipt is updated from edit view */
   onReceiptUpdated?: (receiptId: string, transaction: Transaction) => void;
-  /** Called when user cancels and returns to batch capture */
-  onBack: () => void;
+  /**
+   * @deprecated Story 14c-refactor.27: Use useViewHandlers().navigation.navigateBack instead.
+   * Called when user cancels and returns to batch capture - will be removed in future version.
+   * Story 14c-refactor.32c: Made optional since view uses useViewHandlers() internally.
+   * TODO(14c-refactor.35d): Remove this deprecated prop during final cleanup.
+   */
+  onBack?: () => void;
   /** Called when X button is pressed to cancel/discard all (shows confirmation) */
   onCancel?: () => void;
   /** Called when all receipts are saved successfully. Story 14.15: Now includes saved transactions. */
@@ -83,7 +90,11 @@ export interface BatchReviewViewProps {
   processingState?: ProcessingStateProps;
   /** Story 12.1 v9.7.0: Credit information for header display */
   credits?: BatchReviewCredits;
-  /** Called when user taps credit badges */
+  /**
+   * @deprecated Story 14c-refactor.27: Use useViewHandlers().dialog.openCreditInfoModal instead.
+   * Called when user taps credit badges - will be removed in future version.
+   * TODO(14c-refactor.35d): Remove this deprecated prop during final cleanup.
+   */
   onCreditInfoClick?: () => void;
 }
 
@@ -107,18 +118,25 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
   onEditReceipt,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onReceiptUpdated: _onReceiptUpdated, // Reserved for parent integration
-  onBack,
+  // Story 14c-refactor.27: onBack moved to useViewHandlers().navigation.navigateBack
+  onBack: _deprecatedOnBack,
   onCancel,
   onSaveComplete,
   saveTransaction,
   onRetryReceipt,
   processingState: processingStateProp,
   credits,
-  onCreditInfoClick,
+  // Story 14c-refactor.27: onCreditInfoClick moved to useViewHandlers().dialog.openCreditInfoModal
+  onCreditInfoClick: _deprecatedOnCreditInfoClick,
 }) => {
   // Story 14d.5: Optional ScanContext consumption for state machine migration
   // When context is available and in batch mode, prefer context state over props
   const scanContext = useScanOptional();
+
+  // Story 14c-refactor.27: Get handlers from ViewHandlersContext
+  const { navigation, dialog } = useViewHandlers();
+  const onBack = navigation.navigateBack;
+  const onCreditInfoClick = dialog.openCreditInfoModal;
 
   // Story 14d.5c: Determine if we should use context mode
   // Use context when context is available AND has batch receipts (or we're in batch reviewing phase)

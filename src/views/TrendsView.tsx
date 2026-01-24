@@ -91,6 +91,10 @@ import {
     isDateInPeriod,
     type PeriodIdentifier,
 } from '../utils/periodComparison';
+// Story 14c-refactor.27: ViewHandlersContext for navigation handlers
+import { useViewHandlers } from '../contexts/ViewHandlersContext';
+// Story 14c-refactor.31a: View type for proper type assertion
+import type { View } from '../components/App/types';
 
 // ============================================================================
 // Types
@@ -213,16 +217,10 @@ export interface TrendsViewProps {
     onExporting?: (value: boolean) => void;
     /** Callback for premium upgrade prompt */
     onUpgradeRequired?: () => void;
-    /** Callback for navigating to History view with pre-applied filters */
-    onNavigateToHistory?: (payload: HistoryNavigationPayload) => void;
-    /** Story 14.14b: Back button handler */
-    onBack?: () => void;
     /** Story 14.14b: User name for profile avatar */
     userName?: string;
     /** Story 14.14b: User email for profile dropdown */
     userEmail?: string;
-    /** Story 14.14b: General navigation handler for profile dropdown menu items */
-    onNavigateToView?: (view: string) => void;
     /** Story 14.14b: User ID for groups hook */
     userId?: string;
     /** Story 14.14b: App ID for groups hook */
@@ -2794,12 +2792,9 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     exporting: _exporting = false,
     onExporting: _onExporting,
     onUpgradeRequired: _onUpgradeRequired,
-    onNavigateToHistory,
     // Story 14.14b: New props for header consistency
-    onBack,
     userName = '',
     userEmail = '',
-    onNavigateToView,
     userId = '',
     appId: _appId = '',
     // Story 14.13 Session 7: Initial distribution view for back navigation
@@ -2815,6 +2810,12 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
     const isDark = theme === 'dark';
     const prefersReducedMotion = useReducedMotion();
     const carouselRef = useRef<HTMLDivElement>(null);
+
+    // Story 14c-refactor.27/31a: Get navigation handlers from ViewHandlersContext
+    const { navigation } = useViewHandlers();
+    const onNavigateToHistory = navigation.handleNavigateToHistory;
+    const onBack = navigation.navigateBack;
+    const navigateToView = navigation.navigateToView;
 
     const carouselTitles = isGroupMode ? CAROUSEL_TITLES_GROUP : CAROUSEL_TITLES_BASE;
     const maxCarouselSlide = isGroupMode ? 2 : 1;
@@ -3231,13 +3232,11 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
 
     // Note: Filter dropdown states moved to IconFilterBar component via HistoryFiltersProvider
 
-    // Story 14.14b: Handle profile navigation
+    // Story 14.14b/14c-refactor.31a: Handle profile navigation via ViewHandlersContext
     const handleProfileNavigate = useCallback((view: string) => {
         setIsProfileOpen(false);
-        if (onNavigateToView) {
-            onNavigateToView(view);
-        }
-    }, [onNavigateToView]);
+        navigateToView(view as View);
+    }, [navigateToView]);
 
     // =========================================================================
     // Computed Data
