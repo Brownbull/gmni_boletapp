@@ -8,7 +8,8 @@
 
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+// Story 14c-refactor.27: Use test-utils for ViewHandlersProvider
+import { render, screen, fireEvent, waitFor, mockViewHandlers } from '../../setup/test-utils';
 import { BatchReviewView } from '../../../src/views/BatchReviewView';
 import type { ProcessingResult } from '../../../src/services/batchProcessingService';
 import type { Transaction } from '../../../src/types/transaction';
@@ -205,13 +206,15 @@ describe('BatchReviewView', () => {
 
   describe('interactions', () => {
     it('should call onBack when back button clicked', () => {
-      const onBack = vi.fn();
+      // Story 14c-refactor.27: Use context mock instead of prop callback
+      mockViewHandlers.navigation.navigateBack.mockClear();
 
-      render(<BatchReviewView {...defaultProps} onBack={onBack} />);
+      render(<BatchReviewView {...defaultProps} />);
 
       fireEvent.click(screen.getByRole('button', { name: /back/i }));
 
-      expect(onBack).toHaveBeenCalledTimes(1);
+      // Story 14c-refactor.27: Now calls context handler instead of prop
+      expect(mockViewHandlers.navigation.navigateBack).toHaveBeenCalledTimes(1);
     });
 
     it('should call onEditReceipt when Edit button clicked (AC #4)', () => {

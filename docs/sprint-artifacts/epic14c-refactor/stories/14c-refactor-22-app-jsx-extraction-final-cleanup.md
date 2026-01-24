@@ -1,6 +1,12 @@
 # Story 14c-refactor.22: App.tsx JSX Extraction & Final Cleanup
 
-Status: ready-for-dev
+Status: blocked
+
+> **BLOCKED (2026-01-22):** Original 200-300 line target not achievable with current architecture.
+> See completion notes for analysis. Scope split into:
+> - **14c-refactor.22a:** Interim cleanup (~2,000 lines target) - THIS SPRINT
+> - **14c-refactor.25:** ViewHandlersContext - NEXT SPRINT
+> - **14c-refactor.26:** View Prop Composition Hooks - NEXT SPRINT
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -428,15 +434,52 @@ function renderViewSwitch(view: View, handlers: ViewHandlers): ReactNode {
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Debug Log References
 
-(To be filled during implementation)
+- Session 2026-01-22: Initial analysis and extraction attempt
 
 ### Completion Notes List
 
-(To be filled during implementation)
+**Session 2026-01-22 - Analysis and Partial Implementation**
+
+1. **Current State Analysis:**
+   - App.tsx: 4,818 lines (target was ~200-300 lines)
+   - View switch JSX (main block): lines 3244-4157 (~913 lines)
+   - Overlays/modals: lines 4159-4815 (~656 lines)
+   - Hook calls, state, effects: lines 1-3130 (~3130 lines)
+
+2. **Blocker Identified:**
+   The ~200-300 line target is not achievable with current architecture because:
+   - 47 useState declarations remain in App.tsx
+   - ~40+ useCallback definitions still inline
+   - ~20+ useEffect hooks still inline
+   - Stories 14c-refactor.20 and 14c-refactor.21 extracted SOME handlers but not all
+   - Views have 30-100 props each, tightly coupled to App.tsx state
+
+3. **Attempted Approaches:**
+   - **AppOverlays component**: Created but abandoned due to complex type mismatches
+     between overlay components and the props interface (~60 props with async/sync mismatches)
+   - **ViewRenderer component**: Created massive ViewRendererProps interface (~250 props)
+     but this just moves complexity rather than reducing it
+   - **Render props pattern**: Current AppRoutes uses this, but all prop definitions stay in App.tsx
+
+4. **Practical Path Forward:**
+   To achieve ~200-300 lines, would need:
+   - Extract remaining ~40 callbacks to handler hooks (new stories)
+   - Create ViewHandlersContext to pass handlers via context instead of props
+   - Create view-specific hooks that compose the props needed by each view
+   - This is ~3-5 additional stories of work
+
+5. **Recommendation:**
+   Mark story as **blocked** pending additional handler extraction. The prerequisite
+   stories (14c-refactor.20, 14c-refactor.21) did not extract enough logic to make
+   the final JSX extraction achievable at the target line count.
+
+   **Alternative:** Accept ~1500-2000 lines as the practical target and extract just
+   the view JSX (~913 lines) to a helper file. This would be a meaningful improvement
+   even if not the original target.
 
 ## File List
 

@@ -87,3 +87,21 @@ export {
     type HistoryFilterState,
     type TemporalFilterState,
 } from './HistoryFiltersContext';
+
+// =============================================================================
+// Story 14c-refactor.25: ViewHandlersContext
+// =============================================================================
+
+// ViewHandlersContext - Handler bundles for views (eliminates prop drilling)
+export {
+    ViewHandlersProvider,
+    useViewHandlers,
+    useViewHandlersOptional,
+    ViewHandlersContext,
+    type ViewHandlersContextValue,
+    type ViewHandlersProviderProps,
+    type TransactionHandlers,
+    type ScanHandlers,
+    type NavigationHandlers,
+    type DialogHandlers,
+} from './ViewHandlersContext';

@@ -1,6 +1,6 @@
 # Boletapp Documentation Index
 
-**AI-Assisted Development Reference** | **Last Updated:** 2025-12-09 (Post-Epic 7 Complete)
+**AI-Assisted Development Reference** | **Last Updated:** 2026-01-24 (Epic 14e-feature-architecture planning)
 
 This is the primary entry point for AI-assisted development of Boletapp, a Smart Expense Tracker PWA.
 
@@ -41,19 +41,22 @@ src/
 
 ## Documentation Organization
 
-Documentation is organized into **7 thematic folders** for easy navigation:
+Documentation is organized into **10+ thematic folders** for easy navigation:
 
 ```
 docs/
-├── architecture/      # System architecture and technical design
-├── business/          # Pricing, costs, revenue projections (NEW - Epic 4 Retro)
-├── development/       # Developer guides and operational docs
-├── security/          # Security documentation and audit reports (Epic 4)
-├── testing/           # Test environment and testing guides
-├── planning/          # Epic planning and technical specs
+├── architecture/      # System architecture and technical design (diagrams in diagrams/)
+├── archive/           # Historical documentation and deprecated files
+├── business/          # Pricing, costs, revenue projections
+├── ci-cd/             # CI/CD pipeline (branching-strategy.md moved here)
+├── development/       # Developer guides and operational docs (tooling/wsl-chrome/)
+├── planning/          # Epic planning and technical specs (artifacts/ for reports)
 ├── reference/         # Quick reference and project scans
-├── sprint-artifacts/  # BMAD sprint stories and tracking (preserved)
-└── templates/         # Document templates (preserved)
+├── security/          # Security documentation and audit reports
+├── sprint-artifacts/  # BMAD sprint stories and tracking
+├── templates/         # Document templates
+├── testing/           # Test environment and testing guides
+└── uxui/              # UX/UI documentation (mockups/, reference/, ux-design-specification.md)
 ```
 
 ---
@@ -262,7 +265,7 @@ Automated project structure analysis (JSON)
 
 **Location:** [`sprint-artifacts/epic4-5/`](./sprint-artifacts/epic4-5/)
 
-- **[Epic 4.5 Tech Spec](./tech-spec.md)** - Image storage technical specification (defined in Epic 4 retrospective)
+- **[Epic 4.5 Tech Spec](./archive/tech-spec-epic4.5-nov2025.md)** - Image storage technical specification (archived)
 
 **Epic 4.5 Stories (All Complete):**
 1. [Story 4.5-1](./sprint-artifacts/epic4-5/4-5-1-firebase-storage-infrastructure.md) - Firebase Storage Infrastructure ✅
@@ -357,6 +360,37 @@ Automated project structure analysis (JSON)
 - ✅ **Navigation Labels:** Updated "History" → "Receipts", "Trends" → "Analytics"
 - ✅ **Tests:** 977+ tests (677 unit, 300 integration)
 - ✅ **Deployed:** 2025-12-09 to https://boletapp-d609f.web.app
+
+### Epic 14c-refactor: Cleanup & Refactor (COMPLETE ✅)
+
+**Location:** [`sprint-artifacts/epic14c-refactor/`](./sprint-artifacts/epic14c-refactor/)
+
+- **[Epics Document](./sprint-artifacts/epic14c-refactor/epics.md)** - Epic breakdown and stories
+- **[App Architecture Final](./sprint-artifacts/epic14c-refactor/app-architecture-final.md)** - Architecture analysis
+
+**Epic 14c-refactor Achievements:**
+- ✅ **Shared Groups Stub:** Disabled broken shared groups, preserved UI shells
+- ✅ **App Architecture Refactor:** Extracted 6,033 lines to composition hooks
+- ✅ **Handler Extraction:** 4 handler hooks (Transaction, Navigation, Dialog, Scan)
+- ✅ **View Composition:** 7 view props hooks (Dashboard, History, Trends, etc.)
+- ✅ **Documentation Consolidation:** Reorganized docs/ structure
+- ✅ **Test Cleanup:** Consolidated vitest configs, fixed test failures
+
+### Epic 14e: Feature-Based Architecture (PLANNED 📋)
+
+**Location:** [`sprint-artifacts/epic14e-feature-architecture/`](./sprint-artifacts/epic14e-feature-architecture/)
+
+- **[Epics Document](./sprint-artifacts/epic14e-feature-architecture/epics.md)** - Epic breakdown and 24 stories
+- **[Architecture Decision](./sprint-artifacts/epic14e-feature-architecture/architecture-decision.md)** - Hybrid architecture design
+
+**Epic 14e Scope:**
+- 📋 **Hybrid Architecture:** Feature Slicing (primary) + State Machines (complex flows)
+- 📋 **Modal Manager:** Centralized modal rendering with Zustand store
+- 📋 **Scan Feature:** XState machine + processScan extraction (600 lines)
+- 📋 **Batch Review Feature:** XState machine for batch review flow
+- 📋 **Simple Features:** Categories, Credit, Transactions extraction
+- 📋 **Target:** App.tsx reduced from ~3,850 lines to 500-800 lines
+- 📋 **Total:** 24 stories, ~72 story points across 5 parts
 
 ---
 
@@ -502,6 +536,6 @@ The `.bmad/` directory contains the BMAD (Breakthrough Modern Agile Development)
 
 ---
 
-**Documentation Version:** 9.0
-**Generated:** 2025-12-09 (Post-Epic 7 Complete)
-**Next Update:** After Epic 8 planning
+**Documentation Version:** 11.0
+**Generated:** 2026-01-24 (Epic 14e planning)
+**Next Update:** After Epic 14e Part 1 completion

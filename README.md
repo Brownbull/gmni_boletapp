@@ -200,11 +200,28 @@ Every push to `main` and all pull requests trigger the GitHub Actions workflow:
 
 ## Project Structure
 
+### Root Directories
+
+| Directory | Purpose |
+|-----------|---------|
+| `_bmad/` | BMAD framework - AI agent configurations and workflows |
+| `docs/` | Project documentation (architecture, guides, sprint artifacts) |
+| `functions/` | Firebase Cloud Functions backend |
+| `prompt-testing/` | AI prompt testing framework for receipt scanning |
+| `public/` | Static assets (PWA icons, sounds, manifest) |
+| `scripts/` | Utility scripts (admin, data generation, CI) |
+| `shared/` | Shared TypeScript schemas between frontend and functions |
+| `src/` | Main React application source code |
+| `tests/` | Test suites (unit, integration, e2e) |
+
+### Source Code Structure (src/)
+
 ```
 src/
 ├── components/     # Reusable UI components
 │   └── charts/     # Chart components (Pie, Bar)
 ├── config/         # Configuration (Firebase, Gemini)
+├── contexts/       # React contexts (Auth, Scan, Theme, etc.)
 ├── hooks/          # Custom React hooks
 ├── services/       # API services (Firestore, Gemini)
 ├── types/          # TypeScript type definitions
@@ -213,6 +230,15 @@ src/
 ├── App.tsx         # Main application component
 └── main.tsx        # Application entry point
 ```
+
+### Configuration Files
+
+Standard configuration files in root:
+- `package.json` - Node.js project manifest
+- `firebase.json` - Firebase project configuration
+- `vite.config.ts` - Vite bundler configuration
+- `vitest.config.unit.ts` - Vitest test configuration
+- `playwright.config.ts` - E2E test configuration
 
 ## Environment Variables
 

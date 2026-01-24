@@ -123,7 +123,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should render thumbnail when transaction has thumbnailUrl', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: [transactionWithThumbnail],
+        transactions: [transactionWithThumbnail],
       })
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
@@ -133,7 +133,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should display thumbnail image with correct alt text', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: [transactionWithThumbnail],
+        transactions: [transactionWithThumbnail],
       })
 
       const img = screen.getByAltText(`Receipt from ${transactionWithThumbnail.alias}`)
@@ -144,7 +144,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should have proper thumbnail dimensions', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: [transactionWithThumbnail],
+        transactions: [transactionWithThumbnail],
       })
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
@@ -155,7 +155,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should have accessible aria-label on thumbnail', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: [transactionWithThumbnail],
+        transactions: [transactionWithThumbnail],
       })
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
@@ -168,7 +168,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should NOT render thumbnail when transaction has no thumbnailUrl', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: [transactionWithoutImages],
+        transactions: [transactionWithoutImages],
       })
 
       expect(screen.queryByTestId('transaction-thumbnail')).not.toBeInTheDocument()
@@ -177,7 +177,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should render transaction data correctly without thumbnail', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: [transactionWithoutImages],
+        transactions: [transactionWithoutImages],
       })
 
       // Merchant appears at least once (as alias fallback or merchant display)
@@ -192,7 +192,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should render mixed transactions (with and without thumbnails)', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: [transactionWithThumbnail, transactionWithoutImages],
+        transactions: [transactionWithThumbnail, transactionWithoutImages],
       })
 
       // One thumbnail for transaction with image
@@ -210,7 +210,7 @@ describe('HistoryView Thumbnail Display', () => {
       expect(() => {
         renderHistoryView({
           ...mockProps,
-          historyTrans: [transactionWithoutImages],
+          transactions: [transactionWithoutImages],
         })
       }).not.toThrow()
     })
@@ -220,7 +220,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should open ImageViewer when thumbnail is clicked', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: [transactionWithThumbnail],
+        transactions: [transactionWithThumbnail],
       })
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
@@ -233,7 +233,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should NOT trigger onEditTransaction when thumbnail is clicked', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: [transactionWithThumbnail],
+        transactions: [transactionWithThumbnail],
       })
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
@@ -246,7 +246,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should trigger onEditTransaction when clicking on transaction row (not thumbnail)', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: [transactionWithThumbnail],
+        transactions: [transactionWithThumbnail],
       })
 
       // Click on the merchant name (part of transaction row, not thumbnail)
@@ -258,7 +258,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should be keyboard accessible (Enter key)', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: [transactionWithThumbnail],
+        transactions: [transactionWithThumbnail],
       })
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
@@ -270,7 +270,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should be keyboard accessible (Space key)', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: [transactionWithThumbnail],
+        transactions: [transactionWithThumbnail],
       })
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
@@ -284,7 +284,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should pass correct images to ImageViewer for multi-image transaction', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: [transactionWithMultipleImages],
+        transactions: [transactionWithMultipleImages],
       })
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
@@ -297,7 +297,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should close ImageViewer when close button is clicked', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: [transactionWithThumbnail],
+        transactions: [transactionWithThumbnail],
       })
 
       // Open viewer
@@ -312,7 +312,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should pass merchant name to ImageViewer', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: [transactionWithThumbnail],
+        transactions: [transactionWithThumbnail],
       })
 
       fireEvent.click(screen.getByTestId('transaction-thumbnail'))
@@ -326,7 +326,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should show placeholder on thumbnail load error', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: [transactionWithThumbnail],
+        transactions: [transactionWithThumbnail],
       })
 
       const img = screen.getByAltText(`Receipt from ${transactionWithThumbnail.alias}`)
@@ -353,7 +353,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should show pagination controls when there are transactions', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: generateTransactions(10),
+        transactions: generateTransactions(10),
         allTransactions: generateTransactions(10),
       })
 
@@ -365,7 +365,7 @@ describe('HistoryView Thumbnail Display', () => {
       const twentyTransactions = generateTransactions(20)
       renderHistoryView({
         ...mockProps,
-        historyTrans: twentyTransactions,
+        transactions: twentyTransactions,
         allTransactions: twentyTransactions,
         totalHistoryPages: 2,
       })
@@ -378,7 +378,7 @@ describe('HistoryView Thumbnail Display', () => {
       const fifteenTransactions = generateTransactions(15)
       renderHistoryView({
         ...mockProps,
-        historyTrans: fifteenTransactions,
+        transactions: fifteenTransactions,
         allTransactions: fifteenTransactions,
         totalHistoryPages: 1,
       })
@@ -391,7 +391,7 @@ describe('HistoryView Thumbnail Display', () => {
       const sixteenTransactions = generateTransactions(16)
       renderHistoryView({
         ...mockProps,
-        historyTrans: sixteenTransactions,
+        transactions: sixteenTransactions,
         allTransactions: sixteenTransactions,
         totalHistoryPages: 2,
       })
@@ -403,7 +403,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should show page size selector with options 15, 30, 60', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: generateTransactions(10),
+        transactions: generateTransactions(10),
         allTransactions: generateTransactions(10),
       })
 
@@ -416,7 +416,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should highlight default page size (15)', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: generateTransactions(10),
+        transactions: generateTransactions(10),
         allTransactions: generateTransactions(10),
       })
 
@@ -428,7 +428,7 @@ describe('HistoryView Thumbnail Display', () => {
       const manyTransactions = generateTransactions(45)
       renderHistoryView({
         ...mockProps,
-        historyTrans: manyTransactions,
+        transactions: manyTransactions,
         allTransactions: manyTransactions,
       })
 
@@ -454,7 +454,7 @@ describe('HistoryView Thumbnail Display', () => {
       const manyTransactions = generateTransactions(45)
       renderHistoryView({
         ...mockProps,
-        historyTrans: manyTransactions,
+        transactions: manyTransactions,
         allTransactions: manyTransactions,
       })
 
@@ -474,7 +474,7 @@ describe('HistoryView Thumbnail Display', () => {
       const manyTransactions = generateTransactions(20)
       renderHistoryView({
         ...mockProps,
-        historyTrans: manyTransactions,
+        transactions: manyTransactions,
         allTransactions: manyTransactions,
       })
 
@@ -493,7 +493,7 @@ describe('HistoryView Thumbnail Display', () => {
       const manyTransactions = generateTransactions(20)
       renderHistoryView({
         ...mockProps,
-        historyTrans: manyTransactions,
+        transactions: manyTransactions,
         allTransactions: manyTransactions,
       })
 
@@ -508,7 +508,7 @@ describe('HistoryView Thumbnail Display', () => {
       const fewTransactions = generateTransactions(10)
       renderHistoryView({
         ...mockProps,
-        historyTrans: fewTransactions,
+        transactions: fewTransactions,
         allTransactions: fewTransactions,
       })
 
@@ -521,7 +521,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should show "Per page:" label in English', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: generateTransactions(10),
+        transactions: generateTransactions(10),
         allTransactions: generateTransactions(10),
         lang: 'en',
       })
@@ -532,7 +532,7 @@ describe('HistoryView Thumbnail Display', () => {
     it('should show "Por página:" label in Spanish', () => {
       renderHistoryView({
         ...mockProps,
-        historyTrans: generateTransactions(10),
+        transactions: generateTransactions(10),
         allTransactions: generateTransactions(10),
         lang: 'es',
       })
