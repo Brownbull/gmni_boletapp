@@ -65,6 +65,8 @@
 | 3-Branch | `feature/* → develop → staging → main` |
 | Merge commits | For sync PRs, not squash |
 | Hotfixes | Backported immediately |
+| Credentials in commits | gitleaks scans full history; must rewrite history if leaked, not just delete file |
+| Pre-commit gitleaks | Install gitleaks locally to catch secrets before push |
 
 ### Firestore
 | Pattern | Rule |
@@ -344,6 +346,7 @@
 
 ## Sync Notes
 
+- **2026-01-24:** Deployment Epic 14c Part 4 COMPLETE - 18 stories (20-36) deployed to production via atlas-deploy-story workflow. **Deployment lesson:** `.credentials.json` file accidentally committed triggered gitleaks CI failure. Fix: Rewrite history to exclude file, add to `.gitignore`. **Pattern Added:** Pre-commit hooks should catch credentials files before CI; gitleaks scans full commit history not just HEAD.
 - **2026-01-24:** Story 14c-refactor.36 COMPLETE - DashboardView pagination test fixes. **Root cause:** NOT icon buttons (story hypothesis wrong). Actual issue: ViewHandlersContext provides `handleNavigateToHistory` mock which causes "View All" to navigate away instead of showing inline pagination. **Fix:** Add `beforeEach` to set `handleNavigateToHistory = undefined` for pagination tests. All 39/41 tests pass (2 skipped). 5,280 total tests pass. **Pattern Added:** Context callbacks affect fallback behavior - tests for fallback paths must override context mocks.
 - **2026-01-24:** Story 14c-refactor.35d CODE REVIEW PASSED - **1 MEDIUM fix applied:** Architecture doc line counts were 2-6x off (estimates vs actual `wc -l`). Fixed: Components (AppOverlays ~300→599, viewRenderers ~150→432, ViewHandlersContext ~80→229) and all 11 hooks (largest: useScanHandlers ~150→1,006). **Pattern Added:** Documentation line counts MUST use actual `wc -l` values, never estimates. Hook extraction totals ~5,000 lines across 11 hooks. Reserved void statements for future Epic 14d documented as intentional.
 - **2026-01-24:** Story 14c-refactor.35d COMPLETE - Dead code removal (371 lines removed from App.tsx: 4,221→3,850). **Target NOT achieved** (1,500-2,000 line goal was aspirational). Realistic minimum is ~3,000-3,500 lines due to handler complexity, state coupling. Removed: `_processBatchImages_DEPRECATED` (210 lines), legacy batch cancel system (76+18 lines), deprecated scan handlers (15 lines), commented view blocks (32 lines). Build passes, 5,274/5,280 tests pass (6 pre-existing). Created `docs/sprint-artifacts/epic14c-refactor/app-architecture-final.md` documenting final state and recommendations. **Pattern Added:** Aspirational LOC targets must account for actual state/handler complexity.
