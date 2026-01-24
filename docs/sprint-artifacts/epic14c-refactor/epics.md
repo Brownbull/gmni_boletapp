@@ -68,7 +68,8 @@ This epic handles the **remaining** App.tsx refactoring that was NOT part of the
 | 2 | App Architecture Refactor | 5 | 21 |
 | 3 | Firebase & Infrastructure | 3 | 7 |
 | 4 | Quality & Validation | 3 | 8 |
-| **Total** | | **19** | **~54** |
+| 5 | Project Cleanup & Organization | 4 | 12 |
+| **Total** | | **23** | **~66** |
 
 ---
 
@@ -405,10 +406,239 @@ So that **App.tsx becomes a simple composition root**.
     </AuthProvider>
   </QueryClientProvider>
   ```
-- App.tsx becomes ~200-300 lines max
+- App.tsx line reduction deferred to 14c-refactor.20-22
 - All routes continue to work
 - Error boundaries catch and display errors properly
 - **ScanContext functionality fully preserved**
+
+**Points:** 3
+
+---
+
+### Story 14c.22a: Interim Cleanup (This Sprint)
+
+> **Status:** ready-for-dev
+
+As a **developer**,
+I want **to integrate the existing handler hooks and extract view rendering JSX**,
+So that **App.tsx reaches ~2,000 lines as an achievable interim target**.
+
+**Background:**
+
+Story 14c-refactor.22 revealed that the original 200-300 line target is unrealistic because:
+- Handler hooks (useTransactionHandlers, useScanHandlers, etc.) require 26+ props each
+- All state (47 useState, ~40 useCallback) remains in App.tsx
+- The hooks moved logic but not state ownership
+
+This interim story achieves meaningful cleanup without major architectural changes.
+
+**Acceptance Criteria:**
+
+1. **Given** useScanHandlers exists but is commented out in App.tsx
+   **When** this story is completed
+   **Then:**
+   - useScanHandlers is integrated and functional
+   - ~100 lines of scan handler code removed from App.tsx
+
+2. **Given** useDialogHandlers exists but is commented out in App.tsx
+   **When** this story is completed
+   **Then:**
+   - useDialogHandlers is integrated and functional
+   - ~80 lines of dialog handler code removed from App.tsx
+
+3. **Given** renderViewSwitch() is ~913 lines inline in App.tsx
+   **When** this story is completed
+   **Then:**
+   - `src/components/App/viewRenderers.tsx` created
+   - renderViewSwitch moved to separate file
+   - App.tsx imports and uses the extracted function
+
+4. **Given** overlay/modal rendering is ~656 lines inline in App.tsx
+   **When** this story is completed
+   **Then:**
+   - `src/components/App/AppOverlays.tsx` created
+   - All dialogs, modals, sheets extracted
+   - App.tsx imports and uses AppOverlays
+
+5. **Given** all extractions are complete
+   **When** measuring App.tsx
+   **Then:**
+   - App.tsx is ~1,800-2,200 lines (down from ~4,800)
+   - All tests pass
+   - Build succeeds
+   - Manual smoke test passes
+
+**Points:** 3
+
+---
+
+### Story 14c.25: ViewHandlersContext (Next Sprint)
+
+> **Status:** draft
+> **NEXT SPRINT:** This story follows 14c-refactor.22a and requires it to be complete.
+
+As a **developer**,
+I want **a context to provide view handlers without prop drilling**,
+So that **handler hooks don't require 26+ props and App.tsx can be further reduced**.
+
+**Background:**
+
+The handler hooks (useTransactionHandlers, useScanHandlers, useNavigationHandlers, useDialogHandlers) each require 17-26+ props because they need access to:
+- User/auth state
+- All state setters (setView, setCurrentTransaction, etc.)
+- UI callbacks (setToastMessage, setShowDialog, etc.)
+
+A ViewHandlersContext can expose these handlers via context, eliminating prop drilling.
+
+**Acceptance Criteria:**
+
+1. **Given** handler hooks require many props
+   **When** this story is completed
+   **Then:**
+   - `src/contexts/ViewHandlersContext.tsx` created
+   - Context provides: transaction, scan, navigation, dialog handlers
+   - Handlers are stable references (useMemo)
+
+2. **Given** view components need these handlers
+   **When** this story is completed
+   **Then:**
+   - `useViewHandlers()` hook provides access to all handlers
+   - Views consume handlers via context instead of props
+   - Prop drilling reduced by ~60%
+
+3. **Given** App.tsx currently passes handlers as props
+   **When** this story is completed
+   **Then:**
+   - App.tsx wraps children with ViewHandlersProvider
+   - Handler prop interfaces simplified
+   - App.tsx reduced by ~200-400 additional lines
+
+**Points:** 2
+
+---
+
+### Story 14c.26: View-Specific Prop Composition Hooks (Next Sprint)
+
+> **Status:** draft
+> **NEXT SPRINT:** This story follows 14c-refactor.25 and requires it to be complete.
+
+As a **developer**,
+I want **dedicated hooks that compose all props needed for each complex view**,
+So that **view prop assembly is encapsulated, testable, and App.tsx becomes a minimal orchestrator**.
+
+**Background:**
+
+After ViewHandlersContext (14c-refactor.23) eliminates handler prop drilling, the remaining complexity in App.tsx is assembling data props for each view. Complex views like TransactionEditorView need 30-100 props combining:
+
+- User data (user, preferences, credits)
+- Transaction data (current transaction, items, mappings)
+- UI state (mode, scan state, dialog state)
+- Callbacks (now via context)
+
+View-specific composition hooks encapsulate this assembly:
+
+```typescript
+// Before: 80 props defined inline in App.tsx
+<TransactionEditorView
+  user={user}
+  transaction={currentTransaction}
+  mode={transactionEditorMode}
+  scanState={scanState}
+  // ... 76 more props
+/>
+
+// After: Hook composes everything
+const editorProps = useTransactionEditorViewProps();
+<TransactionEditorView {...editorProps} />
+```
+
+**Acceptance Criteria:**
+
+1. **Given** TransactionEditorView needs ~100 props
+   **When** this story is completed
+   **Then:**
+   - useTransactionEditorViewProps() hook created
+   - Hook composes all data props from existing hooks/context
+   - App.tsx uses spread: `<TransactionEditorView {...editorProps} />`
+
+2. **Given** TrendsView needs analytics state + callbacks
+   **When** this story is completed
+   **Then:**
+   - useTrendsViewProps() hook created
+   - Hook composes analytics initial state, pending filters
+
+3. **Given** HistoryView needs filter state + pagination
+   **When** this story is completed
+   **Then:**
+   - useHistoryViewProps() hook created
+   - Hook composes filter state, transactions, pagination
+
+4. **Given** BatchReviewView needs batch state + handlers
+   **When** this story is completed
+   **Then:**
+   - useBatchReviewViewProps() hook created
+   - Hook composes batch receipts, scan state
+
+5. **Given** all composition hooks are integrated
+   **When** measuring App.tsx
+   **Then:**
+   - App.tsx is ~800-1,000 lines (down from ~2,000)
+   - renderViewSwitch() is clean with spread props
+   - All tests pass
+   - Build succeeds
+
+**Points:** 3
+
+---
+
+### Story 14c.27: View Migration to ViewHandlersContext
+
+> **Status:** ready-for-dev
+> **Depends on:** 14c-refactor.25 (ViewHandlersContext)
+> **Optional after:** 14c-refactor.26 (can run in parallel)
+
+As a **developer**,
+I want **views to consume handlers via useViewHandlers() instead of props**,
+So that **handler props can be removed from view interfaces, reducing prop surface area and improving discoverability**.
+
+**Background:**
+
+Story 14c-refactor.25 created ViewHandlersContext infrastructure - handlers are AVAILABLE via context. Story 26 creates prop composition hooks for DATA props. This story migrates views to actually USE the context for handlers, removing handler callback props from view interfaces.
+
+```typescript
+// Before: Handlers passed via props
+function TransactionEditorView({ onSaveTransaction, onDeleteTransaction, ... }) {
+  const handleSave = () => onSaveTransaction(tx);
+}
+
+// After: Handlers from context
+function TransactionEditorView({ /* data props only */ }) {
+  const { transaction } = useViewHandlers();
+  const handleSave = () => transaction.saveTransaction(tx);
+}
+```
+
+**Acceptance Criteria:**
+
+1. **Given** priority views receive handler props
+   **When** this story is completed
+   **Then:**
+   - Views call `useViewHandlers()` to get handlers
+   - Handler props removed from view interfaces
+   - ViewRenderProps shrinks accordingly
+
+2. **Given** all migrations are complete
+   **When** testing
+   **Then:**
+   - All critical workflow paths work (scan, save, batch)
+   - All tests pass (with ViewHandlersProvider wrapper)
+   - Build succeeds
+
+**Views to Migrate:**
+- TransactionEditorView (~15 handler props)
+- TrendsView (~5 handler props)
+- BatchReviewView (~8 handler props)
+- HistoryView, ItemsView, DashboardView, SettingsView (~2-4 each)
 
 **Points:** 3
 
@@ -642,6 +872,111 @@ So that **future development has accurate reference material**.
 
 ---
 
+## Part 5: Project Cleanup & Organization
+
+**Goal:** Clean up project structure, consolidate configuration files, and organize documentation before Epic 14d.
+
+---
+
+### Story 14c.23: Test and Config File Consolidation
+
+As a **developer**,
+I want **test configuration files consolidated and root directory cleaned up**,
+So that **the project root is uncluttered, test configs are organized, and the codebase is maintainable**.
+
+**Acceptance Criteria:**
+
+**Given** 22 vitest configuration files exist in the root directory
+**When** this story is completed
+**Then:**
+- Create `tests/config/` directory and move all vitest CI configs there
+- Move root documentation files (`run_app.local.md`, `steps_for_epics.md`) to appropriate `docs/` locations
+- Delete temporary/generated files (log files, firebase exports)
+- Update `package.json` scripts to reference new paths
+- Update `.github/workflows/test.yml` to reference new paths
+- Create `tests/config/README.md` documenting config file purposes
+- CI pipeline passes after move
+- Root directory reduced from ~50 files to ~30 files
+
+**Points:** 3
+
+---
+
+### Story 14c.24: Documentation Consolidation and Folder Cleanup
+
+As a **developer**,
+I want **documentation consolidated, obsolete files removed, and non-code folders organized**,
+So that **documentation is findable, up-to-date, and the project structure is clean for Epic 14d**.
+
+**Acceptance Criteria:**
+
+**Given** duplicate and misplaced documentation files exist
+**When** this story is completed
+**Then:**
+- Delete duplicate files at `docs/` root (architecture-epic7.md, prd-epic7.md)
+- Consolidate archive folders (`docs/.archive/` → `docs/archive/`)
+- Move misplaced files to correct locations (branching-strategy.md → ci-cd/, etc.)
+- Consolidate `docs/planning/` and `docs/planning-artifacts/`
+- Move `docs/excalidraw-diagrams/` to `docs/architecture/diagrams/excalidraw/`
+- Clean up non-code folders (`functions/_bmad/`, old backups, `test-results/`)
+- Update `docs/README.md` and `docs/index.md` to reflect current structure
+- Add "Project Structure" section to root `README.md`
+- Evaluate and document decision for `docs/design-references/` (23MB) and `prompt-testing/`
+
+**Points:** 3
+
+---
+
+### Story 14c.28: App.tsx Comment Consolidation
+
+As a **developer maintaining the codebase**,
+I want **App.tsx comments cleaned up and consolidated**,
+So that **the file is readable without story reference noise, and comments provide meaningful context**.
+
+**Acceptance Criteria:**
+
+**Given** App.tsx has ~300 story reference comments (Story X.Y, AC #N patterns)
+**When** this story is completed
+**Then:**
+- Story number references removed from inline comments
+- Related props grouped under single descriptive comments
+- Comments explaining "why" preserved, comments explaining "what" removed
+- File header updated to describe responsibility (not implementation history)
+- Zero changes to actual code logic (comments only)
+- All tests still pass
+
+**Points:** 1
+
+**Story file:** [14c-refactor-28-app-comment-consolidation.md](stories/14c-refactor-28-app-comment-consolidation.md)
+
+---
+
+### Story 14c.29: App.tsx Prop Composition Integration
+
+As a **developer maintaining App.tsx**,
+I want **inline prop objects replaced with prop composition hook calls**,
+So that **App.tsx is reduced from 4,200 lines to ~1,500-2,000 lines**.
+
+**Background:**
+
+This is the **missing integration step** that was deferred from Story 26. Story 26 created 4 prop composition hooks (`useHistoryViewProps`, `useTrendsViewProps`, `useBatchReviewViewProps`, `useTransactionEditorViewProps`) but integration into App.tsx was deferred to Story 27. Story 27 only migrated views to USE context, not to REMOVE the prop passing from App.tsx.
+
+**Acceptance Criteria:**
+
+**Given** 4 prop composition hooks exist and views use ViewHandlersContext
+**When** this story is completed
+**Then:**
+- HistoryView, TrendsView, BatchReviewView, TransactionEditorView use hook spreads
+- Deprecated handler props (`onBack`, `onNavigateToView`, etc.) removed from view calls
+- App.tsx reduced from 4,200 to ~1,500-2,000 lines
+- All tests pass
+
+**Points:** 5
+
+**Story file:** [14c-refactor-29-app-prop-composition-integration.md](stories/14c-refactor-29-app-prop-composition-integration.md)
+
+---
+
 ## Story Dependencies
 
 ```
@@ -665,6 +1000,19 @@ So that **future development has accurate reference material**.
 14c.15 (Functions) ┼──► 14c.16 (Monitoring)
                    │
 All Part 1-3 ──────┴──► 14c.17 (Tests) ──► 14c.18 (Integration) ──► 14c.19 (Docs)
+                                                                          │
+                                                     ┌────────────────────┘
+                                                     ▼
+                                         14c.23 (Config Consolidation)
+                                                     │
+                                                     ▼
+                                         14c.24 (Docs Consolidation)
+                                                    │
+                                                    ▼
+                                        14c.28 (Comment Cleanup)
+
+14c.26 (Prop Hooks) ──┬──► 14c.29 (Prop Integration) ──► App.tsx ~1,500-2,000 lines
+14c.27 (Context Migration) ─┘
 ```
 
 ---
@@ -698,18 +1046,27 @@ All Part 1-3 ──────┴──► 14c.17 (Tests) ──► 14c.18 (Int
 18. 14c.18 - Integration Testing
 19. 14c.19 - Documentation Update
 
+**Sprint 5 (Focus: Project Cleanup)**
+20. 14c.23 - Test and Config File Consolidation
+21. 14c.24 - Documentation Consolidation and Folder Cleanup
+22. 14c.28 - App.tsx Comment Consolidation
+23. 14c.29 - App.tsx Prop Composition Integration (CRITICAL - line reduction)
+
 ---
 
 ## Success Criteria for Epic 14c
 
 - [ ] All shared group backend code removed or stubbed
-- [ ] App.tsx reduced from ~3800 lines to ~300 lines
+- [ ] App.tsx reduced from ~4200 lines to ~1500-2000 lines (via Story 29)
 - [ ] Single caching layer (React Query only)
 - [ ] View mode state unified
 - [ ] All tests passing
 - [ ] No console errors in production build
 - [ ] Firestore cost monitoring active
 - [ ] Documentation updated
+- [ ] Root directory cleaned up (~30 files vs ~50)
+- [ ] Test configs consolidated to `tests/config/`
+- [ ] Documentation folders organized and indexed
 - [ ] Clean foundation ready for Epic 14d
 
 ---
@@ -727,3 +1084,6 @@ All Part 1-3 ──────┴──► 14c.17 (Tests) ──► 14c.18 (Int
 *Generated from Brainstorming Session 2026-01-21*
 *Epic: 14c-refactor*
 *Updated: 2026-01-21 - Added prior art references from Epic 14d-old*
+*Updated: 2026-01-22 - Added Part 5: Project Cleanup stories (14c.23, 14c.24)*
+*Updated: 2026-01-23 - Added Story 14c.28: App.tsx Comment Consolidation*
+*Updated: 2026-01-23 - Added Story 14c.29: App.tsx Prop Composition Integration (missing line reduction step)*

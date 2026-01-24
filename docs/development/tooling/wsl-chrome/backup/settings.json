@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vitest:*)",
+      "Bash(npx tsc:*)",
+      "Bash(tee:*)",
+      "Bash(npm run build:*)",
+      "Bash(node -e:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(python3:*)"
+    ]
+  },
+  "enabledPlugins": {
+    "example-skills@anthropic-agent-skills": false,
+    "playwright-skill@playwright-skill": true,
+    "superpowers-chrome@superpowers-chrome-dev": true
+  }
+}

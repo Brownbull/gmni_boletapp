@@ -1,8 +1,8 @@
 # Atlas Memory - Application Knowledge Base
 
 > **Architecture:** Sharded Knowledge Fragments
-> **Last Sync:** 2026-01-17 (Epic 14c Phase 2)
-> **Last Optimized:** 2026-01-17 (Generation 5)
+> **Last Sync:** 2026-01-23 (Story 14c-refactor.35 Split via atlas-story-sizing)
+> **Last Optimized:** 2026-01-22 (Generation 20)
 > **Project:** BoletApp
 
 ---
@@ -45,7 +45,7 @@ Atlas uses **sharded memory** for context efficiency. Knowledge stored in `knowl
 | **Epic 14** | ✅ COMPLETE (50+ stories) |
 | **Epic 14d** | ✅ COMPLETE (11/11 stories) |
 | **Epic 14c** | 🔄 IN PROGRESS (10/11 stories) |
-| **Tests** | 3,146+ (84%+ coverage) |
+| **Tests** | 5,759+ (84%+ coverage) |
 | **Bundle** | 2.92 MB (**ALERT: needs optimization**) |
 | **Velocity** | ~8.6 pts/day (216 pts in 25 days) |
 

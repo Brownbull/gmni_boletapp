@@ -1,77 +1,78 @@
+/**
+ * App.tsx - Main Application Component
+ *
+ * Root component that orchestrates the entire application:
+ * - View routing and navigation state management
+ * - User authentication and session handling
+ * - Transaction and scan workflow coordination
+ * - Theme, language, and user preferences
+ * - Context providers (Auth, Scan, Analytics, HistoryFilters, ViewHandlers)
+ *
+ * View rendering is delegated to composition hooks (useXxxViewProps) and
+ * render functions (viewRenderers.tsx). Handler logic is extracted to
+ * app-level hooks (useTransactionHandlers, useScanHandlers, etc.).
+ */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-// Story 14c-refactor.11: App architecture components
-// AppLayout: Outer shell with theme classes
-// shouldShowTopHeader: Determines if TopHeader should render for current view
-// View type: Re-exported from types.ts for type consistency
-import { AppLayout, shouldShowTopHeader, type View } from './components/App';
-// Story 14.15 Session 10: Icons for credit info modal
+// App architecture components and view renderers
+import {
+    AppLayout,
+    AppOverlays,
+    shouldShowTopHeader,
+    type View,
+    renderStatementScanView,
+    renderReportsView,
+    renderRecentScansView,
+    renderInsightsView,
+    renderAlertsView,
+} from './components/App';
 import { Camera, Zap, X, ShoppingCart, Trash2, ArrowLeft } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useTransactions } from './hooks/useTransactions';
-// Story 14.31: Migration utility for createdAt field
 import { migrateCreatedAt } from './utils/migrateCreatedAt';
-// v9.7.0: Recent scans for "Últimos Escaneados" (ordered by createdAt, not date)
 import { useRecentScans } from './hooks/useRecentScans';
-// Story 14.27: Paginated transactions for HistoryView infinite scroll
 import { usePaginatedTransactions } from './hooks/usePaginatedTransactions';
 import { useCategoryMappings } from './hooks/useCategoryMappings';
 import { useMerchantMappings } from './hooks/useMerchantMappings';
 import { useSubcategoryMappings } from './hooks/useSubcategoryMappings';
-// v9.7.0: Per-Store Item Name Learning
 import { useItemNameMappings } from './hooks/useItemNameMappings';
-// Story 11.4: Trusted merchants for auto-save
 import { useTrustedMerchants } from './hooks/useTrustedMerchants';
 import { useUserPreferences } from './hooks/useUserPreferences';
-// Persistent scan credits
 import { useUserCredits } from './hooks/useUserCredits';
-// Story 14.15 AC #5: Reduced motion check for haptic feedback
 import { useReducedMotion } from './hooks/useReducedMotion';
-// Story 10.6: Insight profile hook for insight generation
 import { useInsightProfile } from './hooks/useInsightProfile';
-// Story 10.7: Batch session tracking for multi-receipt scanning
 import { useBatchSession } from './hooks/useBatchSession';
-// Story 14.19: Personal records detection and celebration
 import { usePersonalRecords } from './hooks/usePersonalRecords';
 import { usePendingInvitations } from './hooks/usePendingInvitations';
 import { useInAppNotifications } from './hooks/useInAppNotifications';
 import { useViewMode } from './contexts/ViewModeContext';
 import { useUserSharedGroups } from './hooks/useUserSharedGroups';
 import { ViewModeSwitcher } from './components/SharedGroups/ViewModeSwitcher';
-// Story 14c-refactor.13: useViewModePreferencePersistence DELETED - view mode persistence removed
 import { useJoinLinkHandler } from './hooks/useJoinLinkHandler';
-// Story 14c-refactor.10: App-level hooks for lifecycle, initialization, and deep linking
-// These hooks extract cross-cutting concerns from App.tsx into reusable modules.
-// Import the hooks from the barrel file:
-// import {
-//     useOnlineStatus,          // Network connectivity monitoring
-//     useAppLifecycle,          // Foreground/background, beforeunload
-//     useAppInitialization,     // Auth + services coordination
-//     useDeepLinking,           // URL deep link handling (wraps useJoinLinkHandler)
-//     useAppPushNotifications,  // Push notifications coordination
-// } from './hooks/app';
-//
-// Example integration (future refactor):
-// const { isOnline, wasOffline } = useOnlineStatus({
-//     onOffline: () => setToastMessage({ text: 'Sin conexión', type: 'info' }),
-// });
-// const { isInForeground, registerBeforeUnloadGuard } = useAppLifecycle();
-// const { hasActiveJoinLink, confirmJoin, cancelJoin } = useDeepLinking({ db, userId, ... });
+// App-level handler and composition hooks
+import {
+    useTransactionHandlers,
+    useScanHandlers,
+    useNavigationHandlers,
+    useDialogHandlers,
+    useHistoryViewProps,
+    useTrendsViewProps,
+    useBatchReviewViewProps,
+    useTransactionEditorViewProps,
+    useDashboardViewProps,
+    useSettingsViewProps,
+    useItemsViewProps,
+} from './hooks/app';
+import { ViewHandlersProvider } from './contexts';
 import { JoinGroupDialog } from './components/SharedGroups/JoinGroupDialog';
-// Story 14c-refactor.3: useSharedGroupTransactions DELETED - shared groups feature temporarily disabled
 import type { SharedGroup } from './types/sharedGroup';
 import { getFirestore } from 'firebase/firestore';
 import { useQueryClient } from '@tanstack/react-query';
 import { updateMemberTimestampsForTransaction } from './services/sharedGroupService';
 import type { GroupWithMeta } from './components/SharedGroups';
-// Story 14c-refactor.4: clearGroupCacheById import REMOVED (IndexedDB cache deleted)
-// Story 14c-refactor.3: detectMemberUpdates import REMOVED (shared groups feature temporarily disabled)
-// Story 12.2: Parallel batch processing hook
 import { useBatchProcessing } from './hooks/useBatchProcessing';
-// Story 12.3: Batch review type for edit flow
-// Story 14d.5c: Import createBatchReceiptsFromResults for context integration
 import type { BatchReceipt } from './hooks/useBatchReview';
 import { createBatchReceiptsFromResults } from './hooks/useBatchReview';
-// Story 14d.5d: Import dialog data types for batch complete modal
+// Dialog types for scan state machine
 import type {
     BatchCompleteDialogData,
     CurrencyMismatchDialogData,
@@ -81,98 +82,33 @@ import type {
 import { DIALOG_TYPES } from './types/scanStateMachine';
 import { LoginScreen } from './views/LoginScreen';
 import { DashboardView } from './views/DashboardView';
-// Story 9.9: ScanView is deprecated - scan functionality is now in EditView
-// import { ScanView } from './views/ScanView';
-// Story 14.23: DEPRECATED - EditView replaced by TransactionEditorView
-// Keeping import commented for potential rollback
-// import { EditView } from './views/EditView';
 import { TrendsView } from './views/TrendsView';
-// Story 10a.4: Insights History View (replaces HistoryView in insights tab)
-import { InsightsView } from './views/InsightsView';
-import { NotificationsView } from './views/NotificationsView';
-// Story 14.14: Transaction List View (accessible via profile menu)
 import { HistoryView } from './views/HistoryView';
-// Story 14.31: Items History View (accessible via profile menu or item category clicks)
 import { ItemsView } from './views/ItemsView';
-// Story 12.1: Batch Capture UI - dedicated view for batch mode scanning
 import { BatchCaptureView } from './views/BatchCaptureView';
-// Story 12.3: Batch Review Queue - review processed receipts before saving
 import { BatchReviewView } from './views/BatchReviewView';
-// Story 14d.9: Statement Scan Placeholder View
-import { StatementScanView } from './views/StatementScanView';
 import { SettingsView } from './views/SettingsView';
-// Story 14.16: Weekly Report Story Format - Instagram-style swipeable report cards
-import { ReportsView } from './views/ReportsView';
-// Story 14.31: Recent Scans view - dedicated view for latest scans sorted by scan date
-import { RecentScansView } from './views/RecentScansView';
-// Story 14.15: New scan result view matching scan-overlay.html mockup
-// Story 14.23: DEPRECATED - ScanResultView replaced by TransactionEditorView
-// Keeping import commented for potential rollback
-// import { ScanResultView } from './views/ScanResultView';
-// Story 14.23: Unified transaction editor (replaces ScanResultView + EditView)
-// Story 14.24: Also handles read-only mode via readOnly prop
-import { TransactionEditorView, type ScanButtonState } from './views/TransactionEditorView';
+import { TransactionEditorView } from './views/TransactionEditorView';
 import { Nav, ScanStatus } from './components/Nav';
-// Story 14.10: Top Header Bar component
 import { TopHeader } from './components/TopHeader';
-import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
-// Story 14d.3: Navigation blocker for browser back button
-import { NavigationBlocker } from './components/NavigationBlocker';
-// Story 10.6: Insight card components
-import { InsightCard } from './components/insights/InsightCard';
-import { BuildingProfileCard } from './components/insights/BuildingProfileCard';
-// Story 10.7: Batch summary component
-import { BatchSummary } from './components/insights/BatchSummary';
-// Story 14.19: Personal record celebration banner
-import { PersonalRecordBanner } from './components/celebrations';
-// Story 14.20: Session completion messaging
-import { SessionComplete, type SessionContext, type SessionAction } from './components/session';
-// Story 11.1: Batch upload components for multi-image processing
-// Story 11.2: Quick Save Card for high-confidence scans
-// Story 14.15: ScanOverlay for non-blocking scan flow, BatchCompleteModal for batch success
-// Story 14.15b: CurrencyMismatchDialog for currency auto-detection
-// TotalMismatchDialog for detecting OCR total errors (missing digits)
-import { BatchUploadPreview, BatchProcessingProgress, MAX_BATCH_IMAGES, QuickSaveCard, ScanOverlay, BatchCompleteModal, CurrencyMismatchDialog, TotalMismatchDialog } from './components/scan';
-import type { BatchItemResult } from './components/scan';
-// Story 14.15: Scan overlay state machine hook
+import { type SessionContext, type SessionAction } from './components/session';
+import { BatchUploadPreview, MAX_BATCH_IMAGES } from './components/scan';
 import { useScanOverlayState } from './hooks/useScanOverlayState';
-// Story 14.15 AC #4: Timeout constant for network timeout handling
 import { PROCESSING_TIMEOUT_MS } from './hooks/useScanState';
-// Story 11.2: Confidence check for Quick Save eligibility
 import { shouldShowQuickSave, calculateConfidence } from './utils/confidenceCheck';
-// Total validation for detecting OCR errors (missing digits)
-// Story 14d.6: TotalValidationResult moved to scanStateMachine.ts types
 import { validateTotal } from './utils/totalValidation';
-// Story 11.4: Trust Merchant Prompt component
-import { TrustMerchantPrompt } from './components/TrustMerchantPrompt';
-// Story 12.4: Credit Warning System
-import { CreditWarningDialog } from './components/batch';
-// Story 12.1 v9.7.0: Batch Processing Overlay
 import { BatchProcessingOverlay } from './components/scan';
 import { checkCreditSufficiency, type CreditCheckResult } from './services/creditService';
-// Story 14.24: Transaction conflict dialog for single active transaction paradigm
-import { TransactionConflictDialog, type ConflictingTransaction, type ConflictReason } from './components/dialogs/TransactionConflictDialog';
+import type { ConflictingTransaction, ConflictReason } from './components/dialogs/TransactionConflictDialog';
 import type { TrustPromptEligibility } from './types/trust';
 import { AnalyticsProvider } from './contexts/AnalyticsContext';
-// Story 14d.4c: ScanProvider moved to main.tsx, now using useScan() directly
 import { useScan } from './contexts/ScanContext';
-// Story 10a.2: Import for building analytics initial state
 import { getQuarterFromMonth } from './utils/analyticsHelpers';
 import type { AnalyticsNavigationState } from './types/analytics';
-import { HistoryFiltersProvider, type HistoryFilterState, type TemporalFilterState } from './contexts/HistoryFiltersContext';
-import type { HistoryNavigationPayload } from './views/TrendsView';
-// Story 14.22: Import group expansion functions for navigation filters
-import { expandStoreCategoryGroup, expandItemCategoryGroup, type StoreCategoryGroup, type ItemCategoryGroup } from './config/categoryColors';
+import { HistoryFiltersProvider, type HistoryFilterState } from './contexts/HistoryFiltersContext';
 import { analyzeReceipt, ReceiptType } from './services/gemini';
 import { SupportedCurrency } from './services/userPreferencesService';
-import {
-    addTransaction as firestoreAddTransaction,
-    updateTransaction as firestoreUpdateTransaction,
-    deleteTransaction as firestoreDeleteTransaction,
-    wipeAllTransactions
-} from './services/firestore';
-// Story 10.6: Insight generation service
-// Story 10.7: Added silence and historical comparison functions
+import { addTransaction as firestoreAddTransaction } from './services/firestore';
 import {
     generateInsightForTransaction,
     silenceInsights,
@@ -182,50 +118,28 @@ import {
     setLocalCache,
 } from './services/insightEngineService';
 import { Transaction, StoreCategory, TransactionItem } from './types/transaction';
-// Story 10.6: Insight types
 import { Insight } from './types/insight';
 import { Language, Currency, Theme, ColorTheme, FontColorMode, FontSize } from './types/settings';
-// Story 9.10: Persistent scan state management
-// Story 14d.4e: PendingScan removed - now using ScanContext (scanState) exclusively
-// import { PendingScan, createPendingScan } from './types/scan'; // REMOVED in 14d.4e
-// Story 14d.4d: Persistent scan state storage (survives refresh/logout)
-// Uses new ScanState format with backwards compatibility for old PendingScan format
-// Story 14d.5e: Now handles both single and batch mode (unified persistence)
 import {
     loadPersistedScanState,
     savePersistedScanState,
     clearPersistedScanState,
-    clearLegacyBatchStorage,  // Story 14d.5e: Clear old batch storage during migration
-    // Story 14d.4e: Legacy API removed - migration complete
-    // savePendingScan, loadPendingScan, clearPendingScan - REMOVED in 14d.4e
+    clearLegacyBatchStorage,
 } from './services/pendingScanStorage';
-// Story 12.1 v9.7.0: Persistent pending batch storage (survives refresh/logout)
-// Story 14d.5e: DEPRECATED - batch persistence now unified in pendingScanStorage.ts
-// Import removed: savePendingBatch, loadPendingBatch, clearPendingBatch, PendingBatch, createPendingBatch
 import { formatCurrency } from './utils/currency';
 import { formatDate } from './utils/date';
 import { getSafeDate, parseStrictNumber } from './utils/validation';
-import { downloadBasicData } from './utils/csvExport';
 import { TRANSLATIONS } from './utils/translations';
-// Story 10a.4: ITEMS_PER_PAGE removed - no longer used after HistoryView replaced
 import { STORE_CATEGORIES } from './config/constants';
 import { applyCategoryMappings } from './utils/categoryMatcher';
 import { incrementMappingUsage } from './services/categoryMappingService';
 import { incrementMerchantMappingUsage } from './services/merchantMappingService';
-// v9.7.0: Per-Store Item Name Learning
 import { incrementItemNameMappingUsage } from './services/itemNameMappingService';
 import { getCitiesForCountry } from './data/locations';
 
-// Story 10a.3: Changed 'list' to 'insights' (InsightsView will be added in 10a.4)
-// Story 12.1: Added 'batch-capture' view for batch mode scanning
-// Story 12.3: Added 'batch-review' view for reviewing processed receipts before saving
-// Story 14.11: Added 'alerts' view for nav bar redesign (settings still accessible via header menu)
-// Story 14c-refactor.11: View type now imported from components/App/types.ts
-// See types.ts for full list of views and documentation of when each was added.
-
 /**
- * Story 14.15b: Reconcile transaction total with sum of items
- * If there's a discrepancy, adds a surplus or discount item to balance
+ * Reconcile transaction total with sum of items.
+ * If there's a discrepancy, adds a surplus or discount item to balance.
  * @param items - Array of transaction items
  * @param receiptTotal - Total from the receipt
  * @param language - Language for item names
@@ -236,7 +150,7 @@ function reconcileItemsTotal(
     receiptTotal: number,
     language: 'en' | 'es'
 ): { items: typeof items; hasDiscrepancy: boolean; discrepancyAmount: number } {
-    // Story 14.24: price is total for line item, qty is informational only
+    // price is total for line item, qty is informational only
     const itemsSum = items.reduce((sum, item) => sum + item.price, 0);
 
     // Round to 2 decimal places for comparison (avoid floating point issues)
@@ -268,21 +182,19 @@ function reconcileItemsTotal(
 function App() {
     const { user, services, initError, signIn, signInWithTestCredentials, signOut } = useAuth();
     const transactions = useTransactions(user, services);
-    // v9.7.0: Recent scans for "Últimos Escaneados" (ordered by createdAt, not date)
-    // This separate query ensures recently scanned receipts appear even if their
-    // transaction date is outside the top 100 by date
+    // Recent scans sorted by createdAt (for "Últimos Escaneados" - ensures recently scanned
+    // receipts appear even if their transaction date is outside the top 100 by date)
     const recentScans = useRecentScans(user, services);
 
-    // Story 14.31: Expose migration function to browser console for fixing createdAt
+    // DEV: Expose migration function to browser console for fixing createdAt
     useEffect(() => {
         if (import.meta.env.DEV && services?.db && user?.uid) {
             (window as any).runCreatedAtMigration = async (dryRun = true) => {
                 return migrateCreatedAt(services.db, user.uid, services.appId, dryRun);
             };
-            // Story 14c-refactor.4: clearAllGroupCaches debug utility REMOVED (IndexedDB cache deleted)
         }
     }, [services, user]);
-    // Story 14.27: Paginated transactions for HistoryView (includes loadMore for older transactions)
+
     const {
         transactions: paginatedTransactions,
         hasMore: hasMoreTransactions,
@@ -291,29 +203,24 @@ function App() {
         isAtListenerLimit,
     } = usePaginatedTransactions(user, services);
 
-    // Story 14.31: Merge recentScans into paginatedTransactions for HistoryView
-    // This ensures recently scanned receipts with old transaction dates appear when
+    // Merge recentScans into paginatedTransactions for HistoryView.
+    // Ensures recently scanned receipts with old transaction dates appear when
     // sorting by "Ingresado" (scan date). Deduplicated by transaction ID.
     const transactionsWithRecentScans = useMemo(() => {
         const txMap = new Map<string, Transaction>();
-        // Add paginated transactions first
         for (const tx of paginatedTransactions) {
             if (tx.id) txMap.set(tx.id, tx);
         }
-        // Merge in recent scans (these may have old dates but recent createdAt)
         for (const tx of recentScans) {
             if (tx.id && !txMap.has(tx.id)) {
                 txMap.set(tx.id, tx);
             }
         }
-        // Return as array (sorting handled by HistoryView)
         return Array.from(txMap.values());
     }, [paginatedTransactions, recentScans]);
-    // Story 9.7 enhancement: Also expose updateMapping for edit functionality
+
+    // Category, merchant, subcategory, and item name mappings for learning system
     const { mappings, loading: mappingsLoading, saveMapping, deleteMapping, updateMapping: updateCategoryMapping } = useCategoryMappings(user, services);
-    // Story 9.5: Merchant mappings for fuzzy matching
-    // Story 9.6: Also expose saveMapping for learning prompt
-    // Story 9.7: Expose mappings, deleteMapping, updateMapping for Settings management UI
     const {
         mappings: merchantMappings,
         loading: merchantMappingsLoading,
@@ -322,7 +229,6 @@ function App() {
         deleteMapping: deleteMerchantMapping,
         updateMapping: updateMerchantMapping
     } = useMerchantMappings(user, services);
-    // Story 9.15: Subcategory mappings for learning and management
     const {
         mappings: subcategoryMappings,
         loading: subcategoryMappingsLoading,
@@ -330,39 +236,31 @@ function App() {
         deleteMapping: deleteSubcategoryMapping,
         updateMappingTarget: updateSubcategoryMapping
     } = useSubcategoryMappings(user, services);
-    // v9.7.0: Per-Store Item Name Learning - mappings scoped by merchant
-    // Phase 4: itemNameMappings now used for cross-store suggestions
-    // Phase 5: Added settings UI for item name mappings management
     const {
-        mappings: itemNameMappings, // Used for cross-store suggestions in TransactionEditorView
-        loading: itemNameMappingsLoading, // Phase 5: Used for settings UI loading state
+        mappings: itemNameMappings,
+        loading: itemNameMappingsLoading,
         saveMapping: saveItemNameMapping,
-        deleteMapping: deleteItemNameMapping, // Phase 5: Used for settings UI delete
-        updateMapping: updateItemNameMapping, // Phase 5: Used for settings UI edit
+        deleteMapping: deleteItemNameMapping,
+        updateMapping: updateItemNameMapping,
         findMatch: findItemNameMatch,
-        findMatchesForMerchant: _findItemNameMatchesForMerchant // Available for bulk operations (future)
+        findMatchesForMerchant: _findItemNameMatchesForMerchant
     } = useItemNameMappings(user, services);
-    // Story 9.8: User preferences for default scan currency
-    // Story 14.22: Extended to include location settings from Firestore
+
+    // User preferences (currency, location, profile settings)
     const {
         preferences: userPreferences,
-        loading: _preferencesLoading, // Story 14c-refactor.13: Unused after view mode persistence removal
+        loading: _preferencesLoading,
         setDefaultCurrency: setDefaultScanCurrencyPref,
         setDefaultCountry: setDefaultCountryPref,
         setDefaultCity: setDefaultCityPref,
-        // Story 14.22: These will be used in Profile sub-view (Task 6)
-        setDisplayName: _setDisplayNamePref,
-        setPhoneNumber: _setPhoneNumberPref,
-        setBirthDate: _setBirthDatePref,
-        // Story 14.22: Font family preference (persisted to Firestore)
+        setDisplayName: setDisplayNamePref,
+        setPhoneNumber: setPhoneNumberPref,
+        setBirthDate: setBirthDatePref,
         setFontFamily: setFontFamilyPref,
-        // Story 14.35b: Foreign location display format preference
         setForeignLocationFormat: setForeignLocationFormatPref,
-        // Story 14c-refactor.13: saveViewModePreference REMOVED (view mode persistence removed)
     } = useUserPreferences(user, services);
-    // Persistent scan credits from Firestore
-    // Story 14d.4e: Changed from reserve/confirm/refund to immediate deduct pattern
-    // Credits are deducted to Firestore immediately on scan start to prevent exploits.
+
+    // Scan credits (deducted immediately on scan start to prevent exploits)
     // Only restored via addCredits if API returns an error (server-side failure).
     const {
         credits: userCredits,
@@ -371,7 +269,8 @@ function App() {
         addCredits: addUserCredits,
         addSuperCredits: addUserSuperCredits,
     } = useUserCredits(user, services);
-    // Story 10.6: Insight profile for insight generation
+
+    // Insight profile for generating contextual insights after transactions
     const {
         profile: insightProfile,
         cache: insightCache,
@@ -379,14 +278,15 @@ function App() {
         trackTransaction: trackTransactionForInsight,
         incrementCounter: incrementInsightCounter,
     } = useInsightProfile(user, services);
-    // Story 10.7: Batch session tracking for multi-receipt scanning
+
+    // Batch session tracking for multi-receipt scanning
     const {
         session: batchSession,
         addToBatch,
         clearBatch,
-        // isBatchMode is exposed by hook but we calculate it inline in JSX
     } = useBatchSession();
-    // Story 11.4: Trusted merchants for auto-save (AC #1-8)
+
+    // Trusted merchants for auto-save functionality
     const {
         recordMerchantScan,
         checkTrusted,
@@ -396,7 +296,8 @@ function App() {
         trustedMerchants,
         loading: trustedMerchantsLoading,
     } = useTrustedMerchants(user, services);
-    // Story 14.19: Personal records detection and celebration
+
+    // Personal records detection and celebration
     const {
         recordToCelebrate,
         showRecordBanner,
@@ -409,7 +310,6 @@ function App() {
     });
 
     const { pendingInvitations, pendingCount: pendingInvitationsCount } = usePendingInvitations(user?.email);
-
     const { mode: viewMode, group: activeGroup, setGroupMode } = useViewMode();
     const db = getFirestore();
 
@@ -430,9 +330,9 @@ function App() {
         appId: services?.appId,
     });
 
+    // Auto-switch to newly joined group
     useEffect(() => {
         if (joinLinkState === 'success' && joinedGroupId && joinGroupPreview) {
-            // Switch to the newly joined group
             setGroupMode(joinedGroupId, joinGroupPreview as unknown as SharedGroup);
             setView('dashboard');
         }
@@ -450,10 +350,7 @@ function App() {
     const { groups: userSharedGroups, isLoading: sharedGroupsLoading } = useUserSharedGroups(db, user?.uid);
     const [showViewModeSwitcher, setShowViewModeSwitcher] = useState(false);
 
-    // Story 14c-refactor.13: useViewModePreferencePersistence call REMOVED
-    // View mode is now purely in-memory, always defaults to personal mode
-    // No localStorage or Firestore persistence until Epic 14d (Shared Groups v2)
-
+    // View mode is in-memory only (defaults to personal mode)
     const availableGroupsForSelector: GroupWithMeta[] = useMemo(() => {
         return userSharedGroups.map(group => ({
             id: group.id || '',
@@ -465,26 +362,16 @@ function App() {
         }));
     }, [userSharedGroups]);
 
-    // Story 14c-refactor.3: Stub values for shared group transactions (feature temporarily disabled)
-    // These inline stubs replace the deleted useSharedGroupTransactions hook
-    // Only the variables that are actually used in the render tree are kept
+    // Stub values for shared group transactions (feature temporarily disabled)
     const sharedGroupTransactions: any[] = [];
     const sharedGroupRawTransactions: any[] = [];
     const sharedGroupSpendingByMember = new Map<string, number>();
 
-    // Story 14c-refactor.3: Member update detection REMOVED (shared groups feature temporarily disabled)
-    // This entire useEffect was for detecting cross-user sync in shared groups
-    // Will be restored in Epic 14d when shared groups are re-implemented
-
-    // Story 14d.4c: Access ScanContext for scan state management
-    // ScanProvider is now in main.tsx, allowing direct useScan() access
-    // Story 14d.4d: Added restoreState for persistence recovery
+    // Scan context - manages scan state machine (single, batch, statement modes)
     const {
         state: scanState,
         startSingleScan: startScanContext,
-        // Story 14d.5: Batch scan context methods
         startBatchScan: startBatchScanContext,
-        // Story 14d.9: Statement scan context method (placeholder)
         startStatementScan: startStatementScanContext,
         batchItemStart: dispatchBatchItemStart,
         batchItemSuccess: dispatchBatchItemSuccess,
@@ -492,22 +379,16 @@ function App() {
         batchComplete: dispatchBatchComplete,
         isBatchMode: isBatchModeFromContext,
         isBatchProcessing: isBatchProcessingFromContext,
-        // Story 14d.5c: isBatchReviewing used via BatchReviewView internally (useContextMode)
         isBatchReviewing: _isBatchReviewingFromContext,
         batchProgress: batchProgressFromContext,
-        // Story 14d.5c: Batch receipt context methods
-        // Story 14d.5: setBatchReceipts no longer called separately - batchReceipts passed through batchComplete()
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         setBatchReceipts: _setBatchReceiptsContext,
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        clearBatchReceipts: _clearBatchReceiptsContext, // Available for explicit clear, but resetScanContext also clears
-        // Story 14d.5d: Batch editing context methods
+        clearBatchReceipts: _clearBatchReceiptsContext,
         setBatchEditingIndex: setBatchEditingIndexContext,
         updateBatchReceipt: updateBatchReceiptContext,
-        // Story 14d.5d: Dialog context methods for batch dialogs
         showDialog: showScanDialog,
         dismissDialog: dismissScanDialog,
-        // Single scan methods
         setImages: setScanContextImages,
         setStoreType: setScanContextStoreType,
         setCurrency: setScanContextCurrency,
@@ -516,247 +397,148 @@ function App() {
         processError: dispatchProcessError,
         reset: resetScanContext,
         isProcessing: isContextProcessing,
-        // Story 14d.4d: For persistence recovery
         restoreState: restoreScanState,
-        hasActiveRequest: _hasScanActiveRequest, // Available for future blocking checks
+        hasActiveRequest: _hasScanActiveRequest,
     } = useScan();
 
-    // Story 14d.5b: Batch dispatch methods now used for ScanContext integration
-    // dispatchBatchItemStart, dispatchBatchItemSuccess, dispatchBatchItemError, dispatchBatchComplete
-    // are passed to useBatchProcessing callbacks - no longer need silencing
+    // Reserved for future batch processing checks
+    void isBatchProcessingFromContext;
+    void batchProgressFromContext;
 
-    // Story 14d.5a-phase2: isBatchModeFromContext now used (AC8: mode checks)
-    // Story 14d.5b: isBatchProcessingFromContext + batchProgressFromContext now used via BatchReviewView
-    // Story 14d.5c AC5: These are now actively used for batch review flow
-    void isBatchProcessingFromContext; // Reserved for future batch processing checks
-    void batchProgressFromContext; // Reserved for future batch progress display
-
-    // Story 14d.5c AC5: Computed helper for batch receipts existence check
-    // Replaces batchReviewResults.length > 0 checks throughout the component
+    // Helper for batch receipts existence check
     const hasBatchReceipts = (scanState.batchReceipts?.length ?? 0) > 0;
 
     // ==========================================================================
-    // Story 14d.4c: State Variable Migrations (AC1-7, AC9-12)
-    // Local useState replaced with ScanContext state + compatibility wrappers
+    // State Variable Migrations - ScanContext wrappers for backward compatibility
     // ==========================================================================
 
-    // AC1: scanImages → state.images (read) + setImages (write)
+    // scanImages wrapper - auto-transitions to 'capturing' phase when setting images
     const scanImages = scanState.images;
     const setScanImages = useCallback((newImages: string[] | ((prev: string[]) => string[])) => {
         const imagesToSet = typeof newImages === 'function'
             ? newImages(scanState.images)
             : newImages;
 
-        // Story 14d.4c FIX: Auto-transition to 'capturing' phase if needed
-        // The state machine requires 'capturing' phase before images can be set
+        // Auto-transition to 'capturing' phase if needed
         if (scanState.phase === 'idle' && imagesToSet.length > 0 && user?.uid) {
-            // Start a single scan to transition idle → capturing
             startScanContext(user.uid);
-            // Story 14d.4c Code Review: setTimeout(0) defers to next tick to allow React state update
-            // This is necessary because startScanContext triggers async state transition before images can be set
-            // Alternative: Modify state machine to auto-set images on START_SINGLE_SCAN (future story)
+            // setTimeout(0) defers to next tick to allow state transition
             setTimeout(() => setScanContextImages(imagesToSet), 0);
         } else if (imagesToSet.length === 0) {
-            // Clearing images - always reset to idle state
-            // This handles: cancel during capturing, cancel after reviewing, navigation away
+            // Clearing images resets to idle state
             resetScanContext();
         } else {
             setScanContextImages(imagesToSet);
         }
     }, [scanState.images, scanState.phase, user?.uid, startScanContext, setScanContextImages, resetScanContext]);
 
-    // AC2: scanError → state.error (read) + processError (write)
+    // scanError wrapper - error is cleared by resetScanContext() and dispatchProcessStart()
     const scanError = scanState.error;
     const setScanError = useCallback((error: string | null) => {
         if (error) {
             dispatchProcessError(error);
         }
-        // Story 14d.4c Code Review: Clearing error (null) is a no-op here because:
-        // - resetScanContext() clears error when setScanImages([]) is called
-        // - dispatchProcessStart() clears error when processScan() starts
-        // The explicit setScanError(null) calls are kept for readability but are redundant
     }, [dispatchProcessError]);
 
-    // AC3: isAnalyzing → isProcessing from context
+    // isAnalyzing wrapper - derived from state machine phase
     const isAnalyzing = isContextProcessing;
     const setIsAnalyzing = useCallback((analyzing: boolean) => {
-        // No-op: isAnalyzing is derived from state machine phase
-        // PROCESS_START sets phase to 'scanning' (isProcessing=true)
-        // PROCESS_SUCCESS/ERROR transitions out (isProcessing=false)
         if (import.meta.env.DEV && analyzing !== isContextProcessing) {
-            console.debug('[14d.4c] setIsAnalyzing called (managed by state machine):', analyzing);
+            console.debug('[ScanContext] setIsAnalyzing called (managed by state machine):', analyzing);
         }
     }, [isContextProcessing]);
 
-    // AC4: scanStoreType → state.storeType (read) + setStoreType (write)
+    // scanStoreType wrapper
     const scanStoreType = (scanState.storeType || 'auto') as ReceiptType;
     const setScanStoreType = useCallback((storeType: ReceiptType) => {
         setScanContextStoreType(storeType);
     }, [setScanContextStoreType]);
 
-    // AC5: scanCurrency → state.currency (read) + setCurrency (write)
+    // scanCurrency wrapper
     const scanCurrency = (scanState.currency || 'CLP') as SupportedCurrency;
     const setScanCurrency = useCallback((currency: SupportedCurrency) => {
         setScanContextCurrency(currency);
     }, [setScanContextCurrency]);
 
-    // AC6: scanButtonState → derived from state.phase
-    // Story 14d.4c Code Review: Removed no-op setScanButtonState wrapper - all call sites removed
-    const scanButtonState = useMemo((): ScanButtonState => {
-        switch (scanState.phase) {
-            case 'idle': return 'idle';
-            case 'capturing': return 'pending';
-            case 'scanning': return 'scanning';
-            case 'reviewing': return 'complete';
-            case 'saving': return 'scanning';
-            case 'error': return 'error';
-            default: return 'idle';
-        }
-    }, [scanState.phase]);
-
-    // AC7: skipScanCompleteModal → managed via dialog state
-    // Note: This is a UI-specific flag, keeping as local state for now
-    // Future: Could be managed via ScanContext dialog state
+    // UI-specific flag for scan complete modal suppression
     const [skipScanCompleteModal, setSkipScanCompleteModal] = useState(false);
 
     // ==========================================================================
-    // End Story 14d.4c Migrations
+    // UI State
     // ==========================================================================
 
-    // UI State
     const [view, setView] = useState<View>('dashboard');
-    // Story 14.15b: Track previous view for proper back navigation
     const [previousView, setPreviousView] = useState<View>('dashboard');
-    // Story 14.22: Settings subview state for breadcrumb navigation
     const [settingsSubview, setSettingsSubview] = useState<'main' | 'limites' | 'perfil' | 'preferencias' | 'escaneo' | 'suscripcion' | 'datos' | 'grupos' | 'app' | 'cuenta'>('main');
-    // Story 14d.4c: scanImages, isAnalyzing, scanError, scanStoreType, scanCurrency moved to ScanContext
-    // See migration section above (AC1-5)
-    // Story 14.15b: Re-scan loading state (AC8: kept as local - not core scan flow)
     const [isRescanning, setIsRescanning] = useState(false);
     const [currentTransaction, setCurrentTransaction] = useState<Transaction | null>(null);
-    // Story 14.13 Session 6: Multi-transaction navigation from ItemsView
-    // When viewing a transaction from an aggregated item, store all related transaction IDs
-    // This enables "1 de 3" navigation header in TransactionEditorView
+    // Multi-transaction navigation from ItemsView (enables "1 de 3" header)
     const [transactionNavigationList, setTransactionNavigationList] = useState<string[] | null>(null);
-    // Story 14.24: Read-only mode for viewing transactions from History
-    // When true, TransactionEditorView shows Edit button instead of Save
+    // Read-only mode for viewing transactions from History
     const [isViewingReadOnly, setIsViewingReadOnly] = useState(false);
-    // Story 14.24: Track if a credit was actually used in current editing session
-    // This is true only when processScan or handleRescan is called (not just opening an existing transaction)
+    // Track if a credit was used in current editing session
     const [creditUsedInSession, setCreditUsedInSession] = useState(false);
-    // Story 14.23: editingItemIndex was used by EditView, kept for potential rollback
     const [_editingItemIndex, _setEditingItemIndex] = useState<number | null>(null);
-    // Story 9.10: Persistent scan state - maintains scan across navigation
-    // Story 14d.4e: pendingScan REMOVED - now using ScanContext (scanState) exclusively
-    // All reads use scanState.phase, scanState.images, scanState.results[0], scanState.error
-    // All writes use ScanContext actions (via AC1-5 wrapper functions defined above)
-    // Story 12.1 v9.7.0: Persistent batch state - maintains batch across refresh/logout
-    // Story 14d.5e: pendingBatch REMOVED - batch persistence now unified in ScanContext
-    // Batch state is persisted via scanState (includes mode, images, results, batchReceipts)
-    // Note: userCredits now managed by useUserCredits hook (line ~157)
-    // Story 10.6: Insight card state (AC #1, #4)
+
+    // Insight and session UI state
     const [currentInsight, setCurrentInsight] = useState<Insight | null>(null);
     const [showInsightCard, setShowInsightCard] = useState(false);
-    // Story 14.20: Session completion messaging state (AC #1)
     const [showSessionComplete, setShowSessionComplete] = useState(false);
     const [sessionContext, setSessionContext] = useState<SessionContext | null>(null);
-    // Story 10.7: Batch summary state (AC #1, #2)
     const [showBatchSummary, setShowBatchSummary] = useState(false);
-    // Story 11.1: Batch upload state for multi-image processing (AC #1-9)
+
+    // Batch upload and processing state
     const [batchImages, setBatchImages] = useState<string[]>([]);
     const [showBatchPreview, setShowBatchPreview] = useState(false);
-    const [isBatchProcessing, setIsBatchProcessing] = useState(false);
-    const [batchProgress, setBatchProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
-    const [batchResults, setBatchResults] = useState<BatchItemResult[]>([]);
-    // Story 11.1: Cancel batch processing state (state for future UI use, ref for loop)
-    const [_batchCancelRequested, setBatchCancelRequested] = useState(false);
-    const [showBatchCancelConfirm, setShowBatchCancelConfirm] = useState(false);
-    const batchCancelRef = useRef(false); // Ref for immediate access in loop
-    // Story 14d.6: Quick Save state migrated to ScanContext
-    // showQuickSaveCard, quickSaveTransaction, quickSaveConfidence REMOVED
-    // Now using scanState.activeDialog for dialog visibility and data
     const [isQuickSaving, setIsQuickSaving] = useState(false);
-    // Story 14d.5: Track saving state for TransactionEditorView to prevent double-click
     const [isTransactionSaving, setIsTransactionSaving] = useState(false);
-    // Story 11.3: Track when EditView should animate items (fresh scan result)
     const [animateEditViewItems, setAnimateEditViewItems] = useState(false);
-    // Story 14d.4c: scanButtonState and skipScanCompleteModal defined in migration section above (AC6, AC7)
-    // Story 14.23: Transaction editor mode ('new' for new transactions, 'existing' for editing)
     const [transactionEditorMode, setTransactionEditorMode] = useState<'new' | 'existing'>('new');
-    // Story 11.4: Trust Merchant Prompt state (AC #2, #3, #4)
     const [showTrustPrompt, setShowTrustPrompt] = useState(false);
     const [trustPromptData, setTrustPromptData] = useState<TrustPromptEligibility | null>(null);
-    // Story 12.4: Credit Warning Dialog state (AC #1, #5, #7)
     const [showCreditWarning, setShowCreditWarning] = useState(false);
     const [creditCheckResult, setCreditCheckResult] = useState<CreditCheckResult | null>(null);
-    // Story 14.15 Session 10: Credit Info Modal state (tappable from Nav credit badges)
-    const [showCreditInfoModal, setShowCreditInfoModal] = useState(false);
-    // Story 12.1: Batch Capture Mode state (AC #1)
-    // Story 14d.5a-phase2e: REMOVED - batch mode now solely tracked by ScanContext
-    // Read: isBatchModeFromContext (from ScanContext)
-    // Write: startBatchScanContext() / resetScanContext()
-    // Story 12.2 & 12.3: Batch processing and review state
-    const batchProcessing = useBatchProcessing(3); // Max 3 concurrent API calls
-    // Story 14d.5c AC5: batchReviewResults REMOVED - now using scanState.batchReceipts exclusively
-    // Use hasBatchReceipts helper for length checks, context is source of truth
-    // Story 14d.5d AC1: batchEditingReceipt REMOVED - now using scanState.batchEditingIndex
-    // Story 14d.5d AC8, AC11, AC12: Batch complete modal state REMOVED - now using scanState.activeDialog
-    // Story 14d.5d AC7: showBatchDiscardConfirm REMOVED - now using scanState.activeDialog
-    // Story 14d.6: Currency and Total mismatch dialog state REMOVED
-    // showCurrencyMismatch, currencyMismatchData REMOVED - now using scanState.activeDialog
-    // showTotalMismatch, totalMismatchData REMOVED - now using scanState.activeDialog
-    // Story 14.24: Conflict dialog for single active transaction paradigm
-    const [showConflictDialog, setShowConflictDialog] = useState(false);
-    const [conflictDialogData, setConflictDialogData] = useState<{
-        conflictingTransaction: ConflictingTransaction;
-        conflictReason: ConflictReason;
-        pendingAction: { mode: 'new' | 'existing'; transaction?: Transaction | null };
-    } | null>(null);
+    const batchProcessing = useBatchProcessing(3);
 
-    // Story 14.15: Scan overlay state machine for non-blocking scan flow (AC #1, #4)
     const scanOverlay = useScanOverlayState();
-    // Story 14.15 AC #5: Check reduced motion preference for haptic feedback
     const prefersReducedMotion = useReducedMotion();
 
-    // Settings
+    // ==========================================================================
+    // Settings State
+    // ==========================================================================
+
     const [lang, setLang] = useState<Language>('es');
     const [currency, setCurrency] = useState<Currency>('CLP');
     const [theme, setTheme] = useState<Theme>('light');
     const [dateFormat, setDateFormat] = useState<'LatAm' | 'US'>('LatAm');
-    // Story 7.12 AC#11: Color theme selector
-    // Story 14.12: Added 'mono' as new default, migrated from 'normal' default
+
+    // Color theme (defaults to 'mono', with migration from legacy values)
     const [colorTheme, setColorTheme] = useState<ColorTheme>(() => {
         const saved = localStorage.getItem('colorTheme');
-        // Migration: treat old 'ghibli' as 'normal', old 'default' as 'professional'
         if (saved === 'ghibli') return 'normal';
         if (saved === 'default') return 'professional';
-        // Keep explicit preferences
         if (saved === 'normal' || saved === 'professional' || saved === 'mono') return saved;
-        return 'mono'; // Default to 'mono' (monochrome minimal)
+        return 'mono';
     });
-    // Story 14.21: Font color mode for category text
-    // 'colorful' = use fg colors from category palette (default)
-    // 'plain' = use standard text colors (black/white based on mode)
+
+    // Font color mode for category text ('colorful' uses category palette colors)
     const [fontColorMode, setFontColorMode] = useState<FontColorMode>(() => {
         const saved = localStorage.getItem('fontColorMode');
         if (saved === 'colorful' || saved === 'plain') return saved;
-        return 'colorful'; // Default to colorful
+        return 'colorful';
     });
-    // Story 14.37: Font size scaling
-    // 'small' = current app sizes (default for backwards compatibility)
-    // 'normal' = larger sizes for better readability
+
+    // Font size scaling ('small' is default for backwards compatibility)
     const [fontSize, setFontSize] = useState<FontSize>(() => {
         const saved = localStorage.getItem('fontSize');
         if (saved === 'small' || saved === 'normal') return saved;
-        return 'small'; // Default to small (current sizes) for backwards compatibility
+        return 'small';
     });
-    // Story 14.22: Font family selection - now persisted to Firestore via useUserPreferences
-    // Derive from userPreferences for convenience (defaults to 'outfit')
+
+    // Font family from Firestore preferences
     const fontFamily = userPreferences.fontFamily || 'outfit';
 
-    // Story 9.3: Default location settings (used when scan doesn't detect location)
-    // Story 14.22: Now using Firestore-backed preferences instead of localStorage
-    // These derived values are for convenience - actual data comes from userPreferences
+    // Default location settings (from Firestore preferences)
     const defaultCountry = userPreferences.defaultCountry || '';
     const defaultCity = userPreferences.defaultCity || '';
 
@@ -788,40 +570,24 @@ function App() {
         return baseTransaction;
     }, [defaultCountry, defaultCity, userPreferences.defaultCurrency, viewMode, activeGroup]);
 
-    const [wiping, setWiping] = useState(false);
+    // UI loading states
+    const [wiping, _setWiping] = useState(false);
     const [exporting, setExporting] = useState(false);
     const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' } | null>(null);
 
-    // Story 10a.4: historyPage state removed - HistoryView no longer used in insights tab
-    // distinctAliases is now computed via useMemo, not state (see below)
-
-    // Story 9.20: Pending filters for navigation from Analytics to History
-    // When user clicks a badge in Analytics, we store the filters here,
-    // then pass them as initialState to HistoryFiltersProvider
+    // Navigation filter state - passed to HistoryFiltersProvider as initialState
     const [pendingHistoryFilters, setPendingHistoryFilters] = useState<HistoryFilterState | null>(null);
-
-    // Story 14.13 Session 7: Pending distribution view for back navigation to donut chart
-    // When user navigates from donut chart to history/items, store 'donut' to restore on back
+    // Distribution view state for back navigation (preserves donut/treemap selection)
     const [pendingDistributionView, setPendingDistributionView] = useState<'treemap' | 'donut' | null>(null);
-
-    // Story 10a.2: Initial analytics state for "This Month" navigation
-    // When user clicks "This Month" card, store the month to initialize TrendsView at month level
+    // Analytics navigation state for "This Month" card clicks
     const [analyticsInitialState, setAnalyticsInitialState] = useState<AnalyticsNavigationState | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
-    // Story 14.22: Main content scroll container ref for scroll position management
     const mainRef = useRef<HTMLDivElement>(null);
-    // Story 14.22: Track scroll positions per view for back navigation
     const scrollPositionsRef = useRef<Record<string, number>>({});
-    // Story 14.24: pendingScanInitializedRef REMOVED in 14d.4e - legacy effect removed
-    // Story 14d.4e: ScanContext now handles persistence via scanState save effect
-    // Story 14d.5e: pendingBatchInitializedRef REMOVED - batch persistence unified in scanState
     const t = (k: string) => (TRANSLATIONS[lang] as any)[k] || k;
 
-    // Story 14d.4c: Bridge hook REMOVED - App.tsx now uses useScan() directly
-    // Dialog state syncing is handled through ScanContext actions (showDialog, resolveDialog)
-
-    // Extract distinct aliases from transactions (computed, not state)
+    // Extract distinct aliases from transactions
     const distinctAliases = useMemo(() => {
         const aliases = new Set<string>();
         transactions.forEach(d => {
@@ -830,7 +596,161 @@ function App() {
         return Array.from(aliases).sort();
     }, [transactions]);
 
-    // Auto-dismiss toast after 3 seconds
+    // Transaction handlers (save, delete, wipe, export)
+    const {
+        saveTransaction,
+        deleteTransaction,
+        wipeDB,
+        handleExportData,
+    } = useTransactionHandlers({
+        user,
+        services,
+        viewMode,
+        activeGroup: activeGroup ?? null,  // Convert undefined to null for type safety
+        userPreferences,
+        transactions,
+        currency,
+        // Insight generation
+        insightProfile,
+        insightCache,
+        recordInsightShown,
+        trackTransactionForInsight,
+        incrementInsightCounter,
+        // Batch session - adapt type (hook only uses receipts.length for batch mode detection)
+        batchSession: batchSession ? { receipts: batchSession.receipts as any } : null,
+        addToBatch,  // Both hook and useBatchSession use (tx, insight) signature
+        // UI callbacks
+        setToastMessage,
+        setCurrentTransaction,
+        setView,
+        setCurrentInsight,
+        setShowInsightCard,
+        setShowBatchSummary,
+        setSessionContext,
+        // ScanContext integration
+        setScanImages,
+        // Translation
+        t,
+    });
+
+    // Navigation handlers (view transitions, back navigation, filter state)
+    const {
+        navigateToView,
+        navigateBack,
+        handleNavigateToHistory,
+    } = useNavigationHandlers({
+        view,
+        setView,
+        previousView,
+        setPreviousView,
+        mainRef,
+        scrollPositionsRef,
+        pendingHistoryFilters,
+        setPendingHistoryFilters,
+        pendingDistributionView,
+        setPendingDistributionView,
+        analyticsInitialState,
+        setAnalyticsInitialState,
+        scanState,
+        dismissScanDialog,
+    });
+
+    // Dialog handlers (credit info modal, conflict dialog)
+    const {
+        showCreditInfoModal,
+        setShowCreditInfoModal,
+        showConflictDialog,
+        setShowConflictDialog,
+        conflictDialogData,
+        setConflictDialogData,
+        handleConflictClose,
+        handleConflictViewCurrent,
+        handleConflictDiscard,
+    } = useDialogHandlers({
+        scanState,
+        setCurrentTransaction,
+        setScanImages,
+        createDefaultTransaction,
+        setTransactionEditorMode,
+        navigateToView,
+    });
+
+    // Scan handlers (overlay, quick save, currency/total mismatch)
+    const {
+        handleScanOverlayCancel,
+        handleScanOverlayRetry,
+        handleScanOverlayDismiss,
+        handleQuickSaveComplete,
+        handleQuickSave,
+        handleQuickSaveEdit,
+        handleQuickSaveCancel,
+        handleCurrencyUseDetected,
+        handleCurrencyUseDefault,
+        handleCurrencyMismatchCancel,
+        handleTotalUseItemsSum,
+        handleTotalKeepOriginal,
+        handleTotalMismatchCancel,
+        applyItemNameMappings: hookApplyItemNameMappings,
+        reconcileItemsTotal: hookReconcileItemsTotal,
+        continueScanWithTransaction,
+    } = useScanHandlers({
+        user,
+        services,
+        userPreferences,
+        transactions,
+        currency,
+        lang,
+        currentTransaction,
+        // Insight generation
+        insightProfile,
+        insightCache,
+        recordInsightShown,
+        trackTransactionForInsight,
+        incrementInsightCounter,
+        // Batch session
+        batchSession,
+        addToBatch,
+        // Trusted merchants
+        checkTrusted,
+        recordMerchantScan,
+        // Item name mapping
+        findItemNameMatch,
+        categoryMappings: mappings,
+        findMerchantMatch,
+        applyCategoryMappings,
+        incrementMappingUsage,
+        incrementMerchantMappingUsage,
+        incrementItemNameMappingUsage,
+        // ScanContext actions
+        showScanDialog,
+        dismissScanDialog,
+        dispatchProcessSuccess,
+        resetScanContext,
+        setScanImages,
+        // Scan overlay
+        scanOverlay,
+        // UI callbacks
+        setToastMessage,
+        setCurrentTransaction,
+        setView,
+        navigateToView,
+        setCurrentInsight,
+        setShowInsightCard,
+        setShowBatchSummary,
+        setSessionContext,
+        setAnimateEditViewItems,
+        setSkipScanCompleteModal,
+        setTransactionEditorMode,
+        setIsQuickSaving,
+        isQuickSaving,
+        // Trust prompt
+        setTrustPromptData,
+        setShowTrustPrompt,
+        // Translation
+        t,
+    });
+
+    // Toast auto-dismiss
     useEffect(() => {
         if (toastMessage) {
             const timer = setTimeout(() => setToastMessage(null), 3000);
@@ -838,51 +758,120 @@ function App() {
         }
     }, [toastMessage]);
 
-    // Story 14.19: Check for personal records after transactions change
-    // Uses fire-and-forget pattern matching insight generation - never blocks UI
+    // Handler bundles for ViewHandlersContext (eliminates prop drilling to views)
+    const transactionHandlers = useMemo(() => ({
+        saveTransaction,
+        deleteTransaction,
+        wipeDB,
+        handleExportData,
+        createDefaultTransaction,
+    }), [saveTransaction, deleteTransaction, wipeDB, handleExportData, createDefaultTransaction]);
+
+    const navigationHandlers = useMemo(() => ({
+        navigateToView,
+        navigateBack,
+        handleNavigateToHistory,
+    }), [navigateToView, navigateBack, handleNavigateToHistory]);
+
+    // Dialog handlers include both hook-provided handlers and local toast state
+    // Toast is kept local due to hook dependency order (useTransactionHandlers needs setToastMessage)
+    const dialogHandlers = useMemo(() => ({
+        // Toast
+        toastMessage,
+        setToastMessage,
+        showToast: (text: string, type: 'success' | 'info') => setToastMessage({ text, type }),
+        // Credit Info Modal
+        showCreditInfoModal,
+        setShowCreditInfoModal,
+        openCreditInfoModal: () => setShowCreditInfoModal(true),
+        closeCreditInfoModal: () => setShowCreditInfoModal(false),
+        // Conflict Dialog
+        showConflictDialog,
+        setShowConflictDialog,
+        conflictDialogData,
+        setConflictDialogData,
+        handleConflictClose,
+        handleConflictViewCurrent,
+        handleConflictDiscard,
+        openConflictDialog: (
+            conflictingTransaction: any,
+            conflictReason: any,
+            pendingAction: any
+        ) => {
+            setConflictDialogData({ conflictingTransaction, conflictReason, pendingAction });
+            setShowConflictDialog(true);
+        },
+    }), [
+        toastMessage, setToastMessage,
+        showCreditInfoModal, setShowCreditInfoModal,
+        showConflictDialog, setShowConflictDialog,
+        conflictDialogData, setConflictDialogData,
+        handleConflictClose, handleConflictViewCurrent, handleConflictDiscard,
+    ]);
+
+    const scanHandlers = useMemo(() => ({
+        handleScanOverlayCancel,
+        handleScanOverlayRetry,
+        handleScanOverlayDismiss,
+        handleQuickSaveComplete,
+        handleQuickSave,
+        handleQuickSaveEdit,
+        handleQuickSaveCancel,
+        handleCurrencyUseDetected,
+        handleCurrencyUseDefault,
+        handleCurrencyMismatchCancel,
+        handleTotalUseItemsSum,
+        handleTotalKeepOriginal,
+        handleTotalMismatchCancel,
+        // Utilities for ViewHandlersContext
+        applyItemNameMappings: hookApplyItemNameMappings,
+        reconcileItemsTotal: hookReconcileItemsTotal,
+        continueScanWithTransaction,
+    }), [
+        handleScanOverlayCancel, handleScanOverlayRetry, handleScanOverlayDismiss,
+        handleQuickSaveComplete, handleQuickSave, handleQuickSaveEdit, handleQuickSaveCancel,
+        handleCurrencyUseDetected, handleCurrencyUseDefault, handleCurrencyMismatchCancel,
+        handleTotalUseItemsSum, handleTotalKeepOriginal, handleTotalMismatchCancel,
+        hookApplyItemNameMappings, hookReconcileItemsTotal, continueScanWithTransaction,
+    ]);
+
+    // Check for personal records after transactions change
     useEffect(() => {
         if (transactions.length > 0 && user?.uid) {
             checkForRecords(transactions);
         }
     }, [transactions, user?.uid, checkForRecords]);
 
-    // Story 7.12 AC#11: Persist color theme to localStorage
+    // Persist appearance settings to localStorage
     useEffect(() => {
         localStorage.setItem('colorTheme', colorTheme);
     }, [colorTheme]);
 
-    // Story 14.21: Persist font color mode to localStorage
     useEffect(() => {
         localStorage.setItem('fontColorMode', fontColorMode);
     }, [fontColorMode]);
 
-    // Story 14.37: Persist font size to localStorage
     useEffect(() => {
         localStorage.setItem('fontSize', fontSize);
     }, [fontSize]);
 
-    // Story 14d.4d: Load persisted scan state from localStorage on user login
-    // Uses new ScanState format with automatic migration from old PendingScan format
-    // Story 14d.5e: Now also handles batch mode restoration (unified persistence)
+    // Load persisted scan state on user login (handles both single and batch modes)
     useEffect(() => {
         if (user?.uid) {
             const storedState = loadPersistedScanState(user.uid);
             if (storedState) {
-                // Story 14d.4d: Handle interrupted scans (scanning phase)
-                // These can't be recovered - show toast and clear storage
+                // Interrupted scans can't be recovered - show toast and clear storage
                 if (storedState.phase === 'scanning') {
-                    // Story 14d.5e: Different messages for batch vs single
                     const message = storedState.mode === 'batch'
                         ? 'Procesamiento de lote interrumpido. Los créditos ya se usaron.'
                         : 'Escaneo interrumpido. Intenta de nuevo.';
                     setToastMessage({ text: message, type: 'info' });
                     clearPersistedScanState(user.uid);
-                    return; // Don't restore - nothing meaningful to recover
+                    return;
                 }
 
-                // Story 14d.4d: Handle error phase from migration (old 'analyzing' status)
+                // Error state with no content - just show toast and clear
                 if (storedState.phase === 'error' && storedState.images.length === 0 && storedState.results.length === 0) {
-                    // Error state with no content - just show toast and clear
                     if (storedState.error) {
                         setToastMessage({ text: storedState.error, type: 'info' });
                     }
@@ -890,100 +879,67 @@ function App() {
                     return;
                 }
 
-                // Restore state to ScanContext via restoreState action
                 restoreScanState(storedState);
 
-                // Story 14d.5e: Handle batch mode restoration
+                // Batch mode restoration
                 if (storedState.mode === 'batch') {
-                    // Restore batchImages for BatchCaptureView/BatchReviewView
                     setBatchImages(storedState.images);
-
-                    // Story 14d.5e: Navigate to appropriate batch view
                     if (storedState.phase === 'reviewing' && (storedState.results.length > 0 || storedState.batchReceipts)) {
-                        // Has processed results - go to batch review
                         setView('batch-review');
                     } else if (storedState.phase === 'capturing' && storedState.images.length > 0) {
-                        // Has captured images but not processed - go to batch capture
                         setView('batch-capture');
                     }
-                    // For other phases, stay on dashboard
                     return;
                 }
 
-                // Single mode handling (existing logic)
-                // Also restore currentTransaction for immediate use (backwards compat)
-                // ScanState stores transactions in results array
+                // Single mode restoration
                 if (storedState.results.length > 0) {
                     setCurrentTransaction(storedState.results[0]);
                 }
 
-                // Story 14d.4e: Legacy pendingScan code REMOVED - all consumers now use scanState
-
-                // Story 14d.4d: Navigate to appropriate view based on restored phase
-                // This ensures user sees the recovered scan state
+                // Navigate to appropriate view based on restored phase
                 if (storedState.phase === 'reviewing' && storedState.results.length > 0) {
-                    // Has analyzed transaction - go to scan-result view
                     setView('scan-result');
                 } else if (storedState.phase === 'capturing' && storedState.images.length > 0) {
-                    // Has images but not yet analyzed - go to scan view
                     setView('scan');
                 } else if (storedState.phase === 'error' && (storedState.images.length > 0 || storedState.results.length > 0)) {
-                    // Error state with content - go to scan view to show retry option
                     setView('scan');
                 }
-                // For 'idle' or 'saving' phases, don't navigate - stay on dashboard
             }
         }
     }, [user?.uid, restoreScanState]);
 
-    // Story 14d.4d: Save ScanContext state to persistent storage whenever it changes
-    // This is the PRIMARY persistence mechanism - uses new ScanState format
-    // Story 14d.5e: This now handles BOTH single and batch mode (unified persistence)
+    // Persist scan state to storage (primary persistence mechanism)
     const scanStateInitializedRef = useRef(false);
     useEffect(() => {
         if (!user?.uid) return;
 
-        // Skip the first run - let the load effect run first
+        // Skip first run to let load effect run first
         if (!scanStateInitializedRef.current) {
             scanStateInitializedRef.current = true;
             return;
         }
 
-        // Only persist if there's meaningful content in the scan state
-        // Story 14d.5e: Also check for batch-specific content (batchReceipts)
         const hasContent = scanState.phase !== 'idle' &&
             (scanState.images.length > 0 || scanState.results.length > 0 || scanState.batchReceipts !== null);
 
         if (hasContent) {
             savePersistedScanState(user.uid, scanState);
-            // Story 14d.5e: Clear legacy batch storage when saving new unified state
-            // This ensures old storage doesn't conflict with new system
             clearLegacyBatchStorage(user.uid);
         } else if (scanState.phase === 'idle') {
-            // Clear storage when state is reset to idle
             clearPersistedScanState(user.uid);
-            // Story 14d.5e: Also clear legacy batch storage
             clearLegacyBatchStorage(user.uid);
         }
     }, [user?.uid, scanState]);
 
-    // Story 14d.4e: Legacy pendingScan save effect REMOVED
-    // Story 14d.5e: Legacy pendingBatch load/sync/save effects REMOVED
-    // All persistence is now handled by the unified ScanContext save effect above
-    // (saves scanState to localStorage as PersistedScanState format - works for both single and batch)
-
-    // Story 14.24 Phase 6.2: Navigation guard - warn before closing/refreshing with active transaction
-    // Story 14d.5e: Uses unified scanState for both single and batch modes
-    // This prevents accidental loss of scanned data and credits
+    // Navigation guard - warn before closing with active transaction
     useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            // Check if there's an active transaction that would be lost
-            // Story 14d.5e: scanState now includes both single and batch mode
             const hasActiveContent = scanState.phase !== 'idle' && (
-                scanState.phase === 'scanning' ||  // Scan in progress
-                scanState.results.length > 0 ||  // Analyzed but not saved
-                scanState.images.length > 0 ||  // Images selected but not analyzed
-                scanState.batchReceipts !== null  // Story 14d.5e: Batch receipts in review
+                scanState.phase === 'scanning' ||
+                scanState.results.length > 0 ||
+                scanState.images.length > 0 ||
+                scanState.batchReceipts !== null
             );
 
             if (hasActiveContent) {
@@ -999,246 +955,80 @@ function App() {
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [scanState]);
 
-    // Story 14.22: Font family persistence REMOVED from localStorage
-    // Now stored in Firestore via useUserPreferences.setFontFamily
-
-    // Story 9.3: Default location persistence
-    // Story 14.22: REMOVED localStorage persistence - now stored in Firestore via useUserPreferences
-    // The setDefaultCountryPref and setDefaultCityPref functions handle saving to Firestore
-
-    // Story 9.8: Sync scanCurrency with user's default preference when it loads
+    // Sync scanCurrency with user's default preference when it loads
     useEffect(() => {
         if (userPreferences.defaultCurrency) {
             setScanCurrency(userPreferences.defaultCurrency);
         }
     }, [userPreferences.defaultCurrency]);
 
-    // Story 9.20: Clear pending history filters when navigating AWAY from insights view
-    // Story 10a.3: Renamed 'list' to 'insights'
-    // Story 14.22: Clear pending filters when navigating away from history/insights views
-    // This ensures filters are applied when entering these views, but cleared when leaving
-    // so that returning normally shows unfiltered transactions
-    // Story 14.13: Also preserve filters when drilling into transaction-editor from history
-    // so that going back from transaction detail returns to the filtered list
-    useEffect(() => {
-        // Clear filters when navigating away from history/insights/transaction-editor views
-        // transaction-editor is included because users drill into it from filtered history
-        // and should return to the same filtered view when pressing back
-        // Story 14.13 Session 5: 'items' added for filtered navigation from analytics count mode
-        if (view !== 'insights' && view !== 'history' && view !== 'items' && view !== 'transaction-editor' && pendingHistoryFilters) {
-            setPendingHistoryFilters(null);
-        }
-    }, [view]); // Only depend on view, not pendingHistoryFilters
-
-    // Story 10a.2: Clear analytics initial state when navigating AWAY from trends view
-    // This ensures initial state is applied when entering trends, but cleared when leaving
-    // so that returning to trends normally shows year-level view
-    useEffect(() => {
-        if (view !== 'trends' && analyticsInitialState) {
-            setAnalyticsInitialState(null);
-        }
-    }, [view]); // Only depend on view, not analyticsInitialState
-
-    // Story 14.13 Session 7: Clear pending distribution view when navigating AWAY from trends
-    // This ensures the distribution view is restored when returning to trends from history/items,
-    // but cleared when leaving so subsequent visits start fresh
-    useEffect(() => {
-        if (view !== 'trends' && view !== 'history' && view !== 'items' && view !== 'transaction-editor' && pendingDistributionView) {
-            setPendingDistributionView(null);
-        }
-    }, [view]); // Only depend on view, not pendingDistributionView
-
-    // Story 14c-refactor.3: useNotificationDeltaFetch REMOVED (shared groups feature temporarily disabled)
-    // Will be restored in Epic 14d when shared groups are re-implemented
-
-    // Note: Theme is applied synchronously during render (before JSX return)
-    // to ensure CSS variables are available when children compute memoized data
-
-    // Story 14.15b: Navigate to a view while tracking the previous view for back navigation
-    // Story 14.22: Also saves scroll position before navigating
-    // Story 14.13b: Clear filters when navigating to history/items from outside (fresh start)
-    const navigateToView = useCallback((targetView: View) => {
-        // Save current scroll position before navigating
-        if (mainRef.current) {
-            scrollPositionsRef.current[view] = mainRef.current.scrollTop;
-        }
-        setPreviousView(view);
-
-        // Story 14.13b: Clear filters when navigating to history/items from outside
-        // This gives a "fresh start" when selecting from Profile menu while on Dashboard, Settings, etc.
-        // Filters persist when: navigating within history/items or viewing transaction detail and coming back
-        // Story 14.13: Also preserve filters when navigating from trends/insights (analytics drill-down)
-        // Story 14.13 Session 11: Also preserve filters when navigating from dashboard (treemap clicks)
-        const isFromRelatedView = view === 'history' || view === 'items' || view === 'transaction-editor' || view === 'trends' || view === 'insights' || view === 'dashboard';
-        const isToHistoryOrItems = targetView === 'history' || targetView === 'items';
-        if (isToHistoryOrItems && !isFromRelatedView) {
-            setPendingHistoryFilters(null);
-        }
-
-        setView(targetView);
-        // Story 14.24: Hide QuickSaveCard when navigating to a different view
-        // This prevents the modal from floating over other views
-        // Story 14d.6: Dismiss QuickSave dialog via context (local state removed)
-        if (targetView !== 'transaction-editor' && targetView !== 'scan-result') {
-            if (scanState.activeDialog?.type === DIALOG_TYPES.QUICKSAVE) {
-                dismissScanDialog();
-            }
-        }
-        // Reset scroll to top for the new view
-        setTimeout(() => {
-            if (mainRef.current) {
-                mainRef.current.scrollTo(0, 0);
-            }
-        }, 0);
-    }, [view]);
-
-    // Story 14.15b: Navigate back to the previous view (fallback to dashboard)
-    // Story 14.16b: If previousView is same as current or invalid, always fallback to dashboard
-    // Story 14.22: Also restores scroll position when navigating back
-    const navigateBack = useCallback(() => {
-        // Always go to dashboard if:
-        // 1. previousView is the same as current view (would be a no-op)
-        // 2. previousView is undefined/falsy
-        // 3. previousView is 'dashboard' (already the home screen)
-        const targetView = (previousView && previousView !== view) ? previousView : 'dashboard';
-        setView(targetView);
-        // Restore scroll position for the target view
-        setTimeout(() => {
-            if (mainRef.current) {
-                const savedPosition = scrollPositionsRef.current[targetView] || 0;
-                mainRef.current.scrollTo(0, savedPosition);
-            }
-        }, 0);
-    }, [previousView, view]);
-
-    // Story 9.9: Unified new transaction handler
-    // Story 9.10: Now checks for existing pending scan and restores it (AC #2)
-    // Both "+" button and camera button now go to EditView
-    // Camera button also auto-opens the file picker
+    // Handle starting a new transaction (from camera button or + button)
     const handleNewTransaction = (autoOpenFilePicker: boolean) => {
-        // Story 12.3: If batch review is active, show that instead of new transaction
-        // Story 14d.5c AC5: Use hasBatchReceipts (context) instead of batchReviewResults
+        // If batch review is active, show that instead
         if (hasBatchReceipts) {
             setView('batch-review');
             return;
         }
 
-        // v9.7.0: Clear batch editing state when starting fresh single scan
-        // This ensures batch navigation UI doesn't show in single scan mode
-        // Story 14d.5d AC5: Now using ScanContext batchEditingIndex
+        // Clear batch editing state when starting fresh single scan
         if (scanState.batchEditingIndex !== null) {
             setBatchEditingIndexContext(null);
         }
 
-        // Story 9.10 AC#2: Check for existing pending scan WITH meaningful content
-        // Story 14.15: Only restore if there are images or analyzed transaction
-        // Story 14d.4e: Now using scanState instead of pendingScan
-        // Don't restore empty pending scans (e.g., from cancelled file picker)
+        // Check for existing pending scan with content
         const hasExistingContent = scanState.phase !== 'idle' &&
             (scanState.images.length > 0 || scanState.results.length > 0);
         if (hasExistingContent) {
-            // Story 14.24: Clear QuickSaveCard when restoring pending transaction
-            // QuickSaveCard should only appear after a fresh scan, not when returning to draft
-            // Story 14d.6: Dismiss QuickSave dialog via context (local state removed)
+            // Clear QuickSaveCard when restoring pending transaction
             if (scanState.activeDialog?.type === DIALOG_TYPES.QUICKSAVE) {
                 dismissScanDialog();
             }
 
-            // Story 14d.4e: scanState already has the images and results, no need to "restore"
-            // setScanImages is not needed as scanState.images is already available
-            // setScanError is not needed as scanState.error is already available
             if (scanState.results.length > 0) {
                 setCurrentTransaction(scanState.results[0]);
             } else {
-                // Story 14.24: Include default location and currency in new transactions
                 setCurrentTransaction(createDefaultTransaction());
             }
-            // Story 14.23: Restore to unified TransactionEditorView
-            // Determine scan button state based on pending scan status
             setTransactionEditorMode('new');
-            // Story 14d.4c: scanButtonState is now derived from scanState.phase
             navigateToView('transaction-editor');
-            // Don't auto-open file picker when returning to pending scan
             return;
         }
-
-        // Story 14d.4e: No need to clear pendingScan - resetScanContext handles this
-        // resetScanContext is called via setScanImages([]) wrapper when clearing
 
         // No pending scan - create fresh session
         setScanImages([]);
         setScanError(null);
-        // Story 9.8: Reset scan options to defaults
         setScanStoreType('auto');
         setScanCurrency(userPreferences.defaultCurrency || 'CLP');
-        // Story 14.24: Include default location and currency in new transactions
         setCurrentTransaction(createDefaultTransaction());
-        // Story 9.10 AC#1, AC#3: Create new pending scan session
-        // Story 14d.4e: No longer need to create pendingScan - ScanContext manages state
-        // The setScanImages([]) call above triggers startScanContext when images are added
-        // Story 14.23: Use unified TransactionEditorView for new transactions
-        // Camera button opens file picker, manual "+" goes directly to editor for manual entry
+
+        // Camera button opens file picker, manual "+" goes directly to editor
         if (autoOpenFilePicker) {
             navigateToTransactionEditor('new');
             setTimeout(() => fileInputRef.current?.click(), 200);
         } else {
-            // Manual "+" button - go to transaction editor for manual entry
             navigateToTransactionEditor('new');
         }
     };
 
-    // Story 9.9: Handler to remove a photo from scan images
-    // Story 9.10: Also update pending scan state
-    // Story 14.23: DEPRECATED - was used by EditView/ScanResultView, kept for potential rollback
-    // Story 14d.4e: Updated to use ScanContext - setScanImages wrapper handles state machine
-    const _handleRemovePhoto = (index: number) => {
-        setScanImages(prev => {
-            const updatedImages = prev.filter((_, i) => i !== index);
-            // Story 14d.4e: setScanImages wrapper handles state machine updates
-            // No need to manually update pendingScan
-            return updatedImages;
-        });
-    };
-    void _handleRemovePhoto; // Suppress unused warning
-
-    // Story 9.9: Cancel handler for new transactions
-    // Story 9.10 AC#4: Clear pending scan on cancel
-    // Story 14.23: DEPRECATED - was used by EditView/ScanResultView, kept for potential rollback
-    // Story 14d.4e: Updated to use ScanContext
-    const _handleCancelNewTransaction = () => {
-        // Story 14d.4c: setScanImages([]) resets state machine to idle (derived scanButtonState)
-        setScanImages([]);
-        setScanError(null);
-        setCurrentTransaction(null);
-        // Story 14d.4e: setScanImages([]) resets state machine - no need to clear pendingScan
-        setView('dashboard');
-    };
-    void _handleCancelNewTransaction; // Suppress unused warning
-
-    // Story 14.24: Check if there's an active transaction that would conflict
-    // Story 14d.4e: Now using scanState instead of pendingScan
+    // Check if there's an active transaction that would conflict with a new action
     const hasActiveTransactionConflict = useCallback((): {
         hasConflict: boolean;
         conflictInfo?: { transaction: ConflictingTransaction; reason: ConflictReason };
     } => {
-        // Check if there's a pending scan with content
-        // Story 14d.4e: Check scanState.phase instead of pendingScan
         if (scanState.phase === 'idle') {
             return { hasConflict: false };
         }
 
-        // If we're already on transaction-editor, no conflict (editing same transaction)
+        // Already on transaction-editor = no conflict (editing same transaction)
         if (view === 'transaction-editor') {
             return { hasConflict: false };
         }
 
-        // Check various conflict scenarios
-        // Story 14d.4e: Use scanState.results[0] instead of pendingScan.analyzedTransaction
         const hasAnalyzedTransaction = scanState.results.length > 0;
         const hasImages = scanState.images.length > 0;
         const isScanning = scanState.phase === 'scanning';
 
-        // If scanning in progress, that's a conflict
+        // Scanning in progress is a conflict
         if (isScanning) {
             const transaction = scanState.results[0];
             return {
@@ -1248,7 +1038,7 @@ function App() {
                         merchant: transaction?.merchant,
                         total: transaction?.total,
                         currency: transaction?.currency,
-                        creditUsed: true, // Credit reserved during scan
+                        creditUsed: true,
                         hasChanges: false,
                         isScanning: true,
                         source: 'new_scan',
@@ -1258,8 +1048,7 @@ function App() {
             };
         }
 
-        // If we have analyzed transaction (credit was used), that's a conflict
-        // Story 14d.4e: 'reviewing' phase is equivalent to old 'analyzed' status
+        // Analyzed transaction (credit was used) is a conflict
         if (hasAnalyzedTransaction && scanState.phase === 'reviewing') {
             const transaction = scanState.results[0];
             return {
@@ -1298,20 +1087,13 @@ function App() {
         return { hasConflict: false };
     }, [scanState, view]);
 
-    // Story 14.23: Navigate to unified transaction editor
-    // Story 14.24: Enhanced with conflict detection
-    // mode: 'new' for new transactions, 'existing' for editing
+    // Navigate to transaction editor with conflict detection
     const navigateToTransactionEditor = (mode: 'new' | 'existing', transaction?: Transaction | null) => {
-        // Story 14.24: Check for conflicts with existing pending scan
         const conflictCheck = hasActiveTransactionConflict();
-
-        // For 'existing' mode, also check if we're editing the same transaction
-        // Story 14d.4e: Use scanState.results[0] instead of pendingScan.analyzedTransaction
         const isEditingSameTransaction = mode === 'existing' && transaction?.id &&
             scanState.results.length > 0 && scanState.results[0]?.id === transaction.id;
 
         if (conflictCheck.hasConflict && conflictCheck.conflictInfo && !isEditingSameTransaction) {
-            // Show conflict dialog instead of navigating
             setConflictDialogData({
                 conflictingTransaction: conflictCheck.conflictInfo.transaction,
                 conflictReason: conflictCheck.conflictInfo.reason,
@@ -1322,44 +1104,33 @@ function App() {
         }
 
         // No conflict, proceed with navigation
-        // Story 14.24: Reset read-only mode and creditUsedInSession when navigating to editor normally
         setIsViewingReadOnly(false);
         setCreditUsedInSession(false);
         setTransactionEditorMode(mode);
-        // Story 14d.4c: scanButtonState derived from phase - no need to set explicitly
         if (transaction) {
             setCurrentTransaction(transaction as any);
         } else if (mode === 'new') {
-            // Story 14.24: Include default location and currency in new transactions
             setCurrentTransaction(createDefaultTransaction());
         }
         navigateToView('transaction-editor');
     };
 
-    // Story 14.24: Navigate to read-only transaction view
-    // Used when clicking a transaction in HistoryView - uses TransactionEditorView in readOnly mode
-    // User clicks "Edit" button to enter edit mode (with conflict check)
-    // Story 14.13 Session 6: Optional allTransactionIds for multi-transaction navigation from ItemsView
+    // Navigate to read-only transaction view (from HistoryView clicks)
+    // Optional allTransactionIds enables multi-transaction navigation from ItemsView
     const navigateToTransactionDetail = (transaction: Transaction, allTransactionIds?: string[]) => {
         setIsViewingReadOnly(true);
-        setCreditUsedInSession(false); // No credit used yet - this is just viewing
+        setCreditUsedInSession(false);
         setTransactionEditorMode('existing');
         setCurrentTransaction(transaction);
-        // Story 14d.4c: scanButtonState derived from phase - existing transaction shows image if available
-        // Story 14.13 Session 6: Store navigation list for multi-transaction browsing
         setTransactionNavigationList(allTransactionIds && allTransactionIds.length > 1 ? allTransactionIds : null);
         navigateToView('transaction-editor');
     };
 
-    // Story 14.24: Handle edit request from read-only view
-    // This is called when user clicks "Edit" button in the TransactionEditorView (readOnly mode)
-    // Performs conflict check before enabling edit mode
+    // Handle edit request from read-only view (performs conflict check)
     const handleRequestEditFromReadOnly = () => {
-        // Check for conflicts before allowing edit
         const conflictCheck = hasActiveTransactionConflict();
 
         if (conflictCheck.hasConflict && conflictCheck.conflictInfo) {
-            // Show conflict dialog
             setConflictDialogData({
                 conflictingTransaction: conflictCheck.conflictInfo.transaction,
                 conflictReason: conflictCheck.conflictInfo.reason,
@@ -1367,15 +1138,11 @@ function App() {
             });
             setShowConflictDialog(true);
         } else {
-            // No conflict, enable edit mode
             setIsViewingReadOnly(false);
         }
     };
 
-    // Story 14.24: DEPRECATED - TransactionDetailView removed, using TransactionEditorView with readOnly instead
-    // handleEditFromDetailView and handleShowConflictFromDetailView removed
-
-    // Legacy scan handler (for backward compatibility during transition)
+    // Legacy scan handler for backward compatibility
     const triggerScan = () => {
         handleNewTransaction(true);
     };
@@ -1394,33 +1161,25 @@ function App() {
             )
         );
 
-        // Story 11.1: Detect multi-image upload (AC #2, #7)
+        // Multi-image upload - show batch preview
         if (newImages.length > 1) {
-            // Check max limit (AC #7)
             if (newImages.length > MAX_BATCH_IMAGES) {
                 setToastMessage({ text: t('batchMaxLimitError'), type: 'info' });
                 if (fileInputRef.current) fileInputRef.current.value = '';
                 return;
             }
-            // Show batch preview (AC #2)
             setBatchImages(newImages);
             setShowBatchPreview(true);
             if (fileInputRef.current) fileInputRef.current.value = '';
             return;
         }
 
-        // Single image - Story 14.15: Go to scan-result view with pending image (NOT auto-process)
+        // Single image - go to transaction editor
         const updatedImages = [...scanImages, ...newImages];
         setScanImages(updatedImages);
-        // Story 9.10 AC#3: Update pending scan with new images
-        // Story 14d.4e: setScanImages wrapper handles state machine updates
-        // No need to manually update pendingScan
-        // Story 14.23: Navigate to transaction-editor view (scan-result is deprecated)
-        // The processScan call happens automatically after navigation
         setView('transaction-editor');
         setTransactionEditorMode('new');
-        // Story 14d.4c: dispatchProcessStart will set phase to 'scanning', deriving correct button state
-        setSkipScanCompleteModal(false); // v9.7.0: Reset skip flag for fresh scan
+        setSkipScanCompleteModal(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
         // Auto-trigger scan processing - pass images directly to avoid stale closure
         // The setTimeout allows the view to update before processing starts
@@ -1490,16 +1249,14 @@ function App() {
             return;
         }
 
-        // Story 9.10 AC#7: Check if user has credits before scanning
+        // Check if user has credits
         if (userCredits.remaining <= 0) {
             setScanError(t('noCreditsMessage'));
             setToastMessage({ text: t('noCreditsMessage'), type: 'info' });
             return;
         }
 
-        // Story 14d.4e: Deduct credit IMMEDIATELY to Firestore to prevent exploits
-        // Credit is only restored if API returns an error (server-side failure).
-        // User cancellation, page refresh, or any other action does NOT restore credit.
+        // Deduct credit immediately to prevent exploits (only restored on API error)
         const deducted = await deductUserCredits(1);
         if (!deducted) {
             setScanError(t('noCreditsMessage'));
@@ -1507,26 +1264,14 @@ function App() {
             return;
         }
 
-        // Story 14.24: Mark that a credit was used in this session (for cancel warning)
         setCreditUsedInSession(true);
-
-        // Story 14d.4c AC9: Dispatch PROCESS_START to transition state machine to 'scanning' phase
-        // This replaces setIsAnalyzing(true) and implicitly clears error
         dispatchProcessStart('normal', 1);
-        // Story 14.15: Start scan overlay flow (AC #1)
         scanOverlay.startUpload();
-        // Simulate upload progress (images are already local base64)
         scanOverlay.setProgress(100);
         scanOverlay.startProcessing();
 
-        // Story 9.10: Update pending scan status to 'analyzing'
-        // Story 14d.4e: dispatchProcessStart already transitions to 'scanning' phase
-        // No need to manually update pendingScan
         try {
-            // Story 14d.4e: Credit already deducted to Firestore - no action needed here
-
-            // Story 9.8: Pass scan options (currency and store type) to analyzeReceipt
-            // Story 14.15 AC #4: Add timeout handling for network requests
+            // Timeout handling for network requests
             const timeoutPromise = new Promise<never>((_, reject) => {
                 setTimeout(() => reject(new Error('Request timed out. Please check your connection and try again.')), PROCESSING_TIMEOUT_MS);
             });
@@ -1544,9 +1289,7 @@ function App() {
             const merchant = result.merchant || 'Unknown';
             const finalTotal = parseStrictNumber(result.total);
 
-            // Story 9.3: Determine country and city
-            // 1. If scan detected country/city, validate city exists in our list (case-insensitive)
-            // 2. If scan didn't detect, fall back to user's default location
+            // Determine country and city - validate against our list, fall back to defaults
             let finalCountry = result.country || '';
             let finalCity = result.city || '';
 
@@ -1568,7 +1311,7 @@ function App() {
                 finalCity = defaultCity;
             }
 
-            // Story 14.15b: Map 'quantity' from AI to 'qty' field, default to 1
+            // Map 'quantity' from AI to 'qty' field, default to 1
             const parsedItems = (result.items || []).map(i => ({
                 ...i,
                 price: parseStrictNumber(i.price),
@@ -1576,7 +1319,6 @@ function App() {
             }));
 
             // Total validation: Check if extracted total matches items sum (>40% discrepancy)
-            // Build temporary transaction for validation
             const tempTransaction: Transaction = {
                 merchant: merchant,
                 date: d,
@@ -1586,9 +1328,7 @@ function App() {
             };
             const totalValidation = validateTotal(tempTransaction);
 
-            // If significant discrepancy detected, show dialog for user to choose
             if (!totalValidation.isValid) {
-                // Story 14d.6: Credit already deducted - use showScanDialog for unified dialog handling
                 const dialogData: TotalMismatchDialogData = {
                     validationResult: totalValidation,
                     pendingTransaction: {
@@ -1612,8 +1352,7 @@ function App() {
                 return;
             }
 
-            // Story 14.15b: Reconcile items total with receipt total
-            // If sum of items doesn't match receipt total, add an adjustment item
+            // Reconcile items total with receipt total (add adjustment item if needed)
             const { items: reconciledItems, hasDiscrepancy: scanHasDiscrepancy } = reconcileItemsTotal(
                 parsedItems,
                 finalTotal,
@@ -1631,7 +1370,6 @@ function App() {
                 // Include image URLs from Cloud Function response
                 imageUrls: result.imageUrls,
                 thumbnailUrl: result.thumbnailUrl,
-                // Story 9.1: v2.6.0 fields from AI extraction
                 time: result.time,
                 country: finalCountry,
                 city: finalCity,
@@ -1642,12 +1380,11 @@ function App() {
                 ...(viewMode === 'group' && activeGroup?.id ? { sharedGroupIds: [activeGroup.id] } : {}),
             };
 
-            // Story 6.4: Apply learned category mappings (AC#1-4)
-            // Only matches with confidence > 0.7 are applied
+            // Apply learned category mappings (confidence > 0.7)
             const { transaction: categorizedTransaction, appliedMappingIds } =
                 applyCategoryMappings(initialTransaction, mappings);
 
-            // Story 6.4 AC#5: Increment usage count for applied mappings (fire-and-forget)
+            // Increment usage count for applied mappings (fire-and-forget)
             if (appliedMappingIds.length > 0 && user && services) {
                 appliedMappingIds.forEach(mappingId => {
                     incrementMappingUsage(services.db, user.uid, services.appId, mappingId)
@@ -1655,25 +1392,17 @@ function App() {
                 });
             }
 
-            // Story 9.5: Apply learned merchant→alias mapping (AC#4, #5, #6)
-            // Merchant name = raw from receipt (stays as-is)
-            // Alias = user's preferred display name (what we learn and auto-fill)
-            // v9.6.1: Also apply learned store category if present
+            // Apply learned merchant→alias mapping (merchant = raw, alias = preferred display name)
             let finalTransaction = categorizedTransaction;
             const merchantMatch = findMerchantMatch(categorizedTransaction.merchant);
             if (merchantMatch && merchantMatch.confidence > 0.7) {
-                // AC#5: Apply matched alias (targetMerchant stores the preferred alias)
-                // v9.6.1: Also apply storeCategory if learned
                 finalTransaction = {
                     ...finalTransaction,
                     alias: merchantMatch.mapping.targetMerchant,
-                    // v9.6.1: Apply learned store category (only if it exists in the mapping)
                     ...(merchantMatch.mapping.storeCategory && { category: merchantMatch.mapping.storeCategory }),
-                    // AC#6: Mark as learned
                     merchantSource: 'learned' as const
                 };
 
-                // AC#7: Increment mapping usage count (fire-and-forget)
                 if (merchantMatch.mapping.id && user && services) {
                     incrementMerchantMappingUsage(services.db, user.uid, services.appId, merchantMatch.mapping.id)
                         .catch(err => console.error('Failed to increment merchant mapping usage:', err));
@@ -1695,18 +1424,15 @@ function App() {
                 }
             }
 
-            // Story 14.15b AC #2: Currency auto-detection handling
-            // Compare AI-detected currency with user's default currency
+            // Currency auto-detection - show dialog if different from user's default
             const detectedCurrency = finalTransaction.currency;
             const userDefaultCurrency = userPreferences.defaultCurrency;
 
-            // If AI detected a currency different from user's default, show dialog
             if (detectedCurrency && userDefaultCurrency && detectedCurrency !== userDefaultCurrency) {
-                // Story 14d.6: Credit already deducted - use showScanDialog for unified dialog handling
                 const dialogData: CurrencyMismatchDialogData = {
                     detectedCurrency,
                     pendingTransaction: finalTransaction,
-                    hasDiscrepancy: scanHasDiscrepancy, // Story 14.15b: Pass discrepancy flag
+                    hasDiscrepancy: scanHasDiscrepancy,
                 };
                 showScanDialog(DIALOG_TYPES.CURRENCY_MISMATCH, dialogData);
                 // Don't proceed with normal flow - wait for user's choice
@@ -1726,46 +1452,31 @@ function App() {
             // No need for redundant injection here - transaction already has the group
 
             setCurrentTransaction(finalTransaction);
-            // Story 9.10: Update pending scan with analyzed transaction (status = 'analyzed')
-            // Story 14d.4e: dispatchProcessSuccess stores the transaction in scanState.results
-            // and transitions to 'reviewing' phase - no need to manually update pendingScan
 
-            // Story 14d.4b FIX: Check QuickSaveCard eligibility BEFORE setting scanButtonState
-            // to prevent race condition where ScanCompleteModal shows before skipScanCompleteModal is set.
-            // We need to determine early if QuickSaveCard will show so we can set skipScanCompleteModal first.
+            // Check QuickSaveCard eligibility before state transition (prevents race condition)
             const merchantAlias = finalTransaction.alias || finalTransaction.merchant;
             const isTrusted = merchantAlias ? await checkTrusted(merchantAlias) : false;
             const willShowQuickSave = !isTrusted && shouldShowQuickSave(finalTransaction);
 
-            // Story 14d.4b: Set skipScanCompleteModal BEFORE scanButtonState to prevent race condition
-            // TransactionEditorView's useEffect triggers on scanButtonState change and checks skipScanCompleteModal
             if (willShowQuickSave || isTrusted) {
                 setSkipScanCompleteModal(true);
             }
 
-            // Story 14d.4c AC10: Dispatch PROCESS_SUCCESS to transition state machine to 'reviewing' phase
-            // This replaces setScanButtonState('complete') and stores the result in context
             dispatchProcessSuccess([finalTransaction]);
-            // Story 14d.4c: Don't clear images here - they're needed for thumbnail fallback
-            // Images will be cleared when user navigates away or starts a new scan
-
-            // Story 14d.4e: Credit already deducted to Firestore at scan start - no confirmation needed
-
-            // Story 14.15: Mark scan as ready (AC #1)
             scanOverlay.setReady();
-            // Story 14.15 AC #5: Haptic feedback on scan success (only when motion enabled)
+
+            // Haptic feedback on scan success (only when motion enabled)
             if (!prefersReducedMotion && navigator.vibrate) {
-                navigator.vibrate(50); // Brief success haptic
+                navigator.vibrate(50);
             }
 
-            // Story 14.15b: Show warning if items total didn't match receipt total
+            // Show warning if items total didn't match receipt total
             if (scanHasDiscrepancy) {
                 setToastMessage({ text: t('discrepancyWarning'), type: 'info' });
             }
 
+            // Auto-save for trusted merchants
             if (isTrusted && services && user) {
-                // Story 11.4 AC #5: Auto-save for trusted merchants
-                // Skip Quick Save Card entirely
                 try {
                     const transactionId = await firestoreAddTransaction(services.db, user.uid, services.appId, finalTransaction);
                     const txWithId = { ...finalTransaction, id: transactionId } as Transaction;
@@ -1785,14 +1496,11 @@ function App() {
                         console.warn('Failed to record merchant scan:', err)
                     );
 
-                    // Clear pending scan and show toast
-                    // Story 14d.4e: setScanImages([]) resets state machine - no need for setPendingScan(null)
                     setScanImages([]);
                     setCurrentTransaction(null);
                     setToastMessage({ text: t('autoSaved'), type: 'success' });
                     setView('dashboard');
 
-                    // Show insight or batch summary
                     const silenced = isInsightsSilenced(insightCache);
                     if (!silenced) {
                         const willBeBatchMode = (batchSession?.receipts.length ?? 0) + 1 >= 3;
@@ -1805,8 +1513,7 @@ function App() {
                     }
                 } catch (autoSaveErr) {
                     console.error('Auto-save failed:', autoSaveErr);
-                    // Story 14d.6: Fall back to Quick Save Card on error - use showScanDialog
-                    // Note: skipScanCompleteModal already set above for trusted merchants
+                    // Fall back to Quick Save Card on error
                     const dialogData: QuickSaveDialogData = {
                         transaction: finalTransaction,
                         confidence: calculateConfidence(finalTransaction),
@@ -1814,43 +1521,28 @@ function App() {
                     showScanDialog(DIALOG_TYPES.QUICKSAVE, dialogData);
                 }
             } else if (willShowQuickSave) {
-                // Story 14d.6: High confidence - Show Quick Save Card via showScanDialog
-                // Note: skipScanCompleteModal already set above
+                // High confidence - Show Quick Save Card
                 const dialogData: QuickSaveDialogData = {
                     transaction: finalTransaction,
                     confidence: calculateConfidence(finalTransaction),
                 };
                 showScanDialog(DIALOG_TYPES.QUICKSAVE, dialogData);
             } else {
-                // Low confidence: Stay on TransactionEditorView for editing
-                // Story 14.23: View is already 'transaction-editor', ScanCompleteModal will show
-                // Story 11.3: Enable item animation for fresh scan results
+                // Low confidence - stay on editor for manual review
                 setAnimateEditViewItems(true);
-                // Note: No setView call needed - view is already 'transaction-editor'
-                // and ScanCompleteModal shows automatically via useEffect
             }
         } catch (e: any) {
             const errorMessage = 'Failed: ' + e.message;
-            // Story 14d.4c AC11: Dispatch PROCESS_ERROR to transition state machine to 'error' phase
-            // This replaces setScanError() and setScanButtonState('error')
             dispatchProcessError(errorMessage);
-            // Story 14.15 AC #4: Detect timeout vs other errors and show in overlay
             const isTimeout = e.message?.includes('timed out');
             scanOverlay.setError(isTimeout ? 'timeout' : 'api', errorMessage);
-            // Story 9.10: Update pending scan with error status
-            // Story 14d.4e: dispatchProcessError transitions to 'error' phase
-            // and stores the error message in scanState.error - no need for pendingScan
-            // Story 14d.4e: Restore credit on API error - this is the ONLY case where credits are restored
-            // Credits were deducted to Firestore at scan start, now we add them back due to server failure.
+            // Restore credit on API error only
             await addUserCredits(1);
-            // Story 14.24 AC #4: Show toast that credit was not used
             setToastMessage({ text: t('scanFailedCreditRefunded'), type: 'info' });
         }
-        // Story 14d.4c: No finally block needed - isAnalyzing is now derived from state machine phase
-        // The state machine automatically transitions out of 'scanning' on success or error
     };
 
-    // Story 14.15b: Re-scan existing transaction with stored imageUrls
+    // Re-scan existing transaction with stored imageUrls
     const handleRescan = async () => {
         if (!currentTransaction?.id || !currentTransaction.imageUrls?.length) {
             console.error('Cannot rescan: no transaction or images');
@@ -1861,23 +1553,18 @@ function App() {
             return;
         }
 
-        // Story 14d.4e: Deduct credit IMMEDIATELY to Firestore to prevent exploits
+        // Deduct credit immediately to prevent exploits
         const deducted = await deductUserCredits(1);
         if (!deducted) {
             setToastMessage({ text: t('noCreditsMessage'), type: 'info' });
             return;
         }
 
-        // Story 14.24: Mark that a credit was used in this session (for cancel warning)
         setCreditUsedInSession(true);
-
         setIsRescanning(true);
-        try {
-            // Story 14d.4e: Credit already deducted to Firestore - no action needed here
 
-            // Call analyzeReceipt with stored images (using imageUrls directly)
-            // V3 prompt auto-detects currency, but we still pass empty string (required param)
-            // Story 14.15b: Pass isRescan=true so Cloud Function fetches from URLs
+        try {
+            // isRescan=true so Cloud Function fetches from URLs instead of base64
             const result = await analyzeReceipt(
                 currentTransaction.imageUrls,
                 '', // V3 auto-detects currency, empty string skips currency hint
@@ -1892,14 +1579,12 @@ function App() {
 
             const receiptTotal = parseStrictNumber(result.total);
 
-            // Story 14.15b: Map 'quantity' from AI to 'qty' field
             const parsedItems = (result.items || []).map(i => ({
                 ...i,
                 price: parseStrictNumber(i.price),
                 qty: (i as any).quantity ?? i.qty ?? 1,
             }));
 
-            // Story 14.15b: Reconcile items total with receipt total
             const { items: reconciledItems, hasDiscrepancy } = reconcileItemsTotal(
                 parsedItems,
                 receiptTotal,
@@ -1931,9 +1616,6 @@ function App() {
 
             setCurrentTransaction(updatedTransaction);
 
-            // Story 14d.4e: Credit already deducted to Firestore at scan start - no confirmation needed
-
-            // Show appropriate toast message
             if (hasDiscrepancy) {
                 setToastMessage({ text: t('discrepancyWarning'), type: 'info' });
             } else {
@@ -1941,7 +1623,7 @@ function App() {
             }
         } catch (e: any) {
             console.error('Re-scan failed:', e);
-            // Story 14d.4e: Restore credit on API error - this is the ONLY case where credits are restored
+            // Restore credit on API error only
             await addUserCredits(1);
             setToastMessage({ text: t('scanFailedCreditRefunded'), type: 'info' });
         } finally {
@@ -1949,270 +1631,28 @@ function App() {
         }
     };
 
-    // Story 11.1: Batch image processing (AC #3, #4, #5, #6)
-    // Story 12.2/12.3: DEPRECATED - replaced by useBatchProcessing hook + BatchReviewView
-    // Kept for reference during transition; will be removed in future cleanup
-    // @ts-expect-error - Deprecated function kept for reference
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const _processBatchImages_DEPRECATED = async () => {
-        if (!services || !user) return;
-        if (userCredits.remaining < batchImages.length) {
-            setToastMessage({ text: t('noCreditsMessage'), type: 'info' });
-            return;
-        }
-
-        setShowBatchPreview(false);
-        setIsBatchProcessing(true);
-        setBatchProgress({ current: 0, total: batchImages.length });
-        // Reset cancel state
-        setBatchCancelRequested(false);
-        setShowBatchCancelConfirm(false);
-        batchCancelRef.current = false;
-
-        // Initialize results with pending status
-        const initialResults: BatchItemResult[] = batchImages.map((_, index) => ({
-            index,
-            status: 'pending' as const,
-        }));
-        setBatchResults(initialResults);
-
-        const results: BatchItemResult[] = [...initialResults];
-        const { db, appId } = services;
-
-        // Process each image sequentially (AC #3)
-        for (let i = 0; i < batchImages.length; i++) {
-            // Check for cancel request before processing next image
-            if (batchCancelRef.current) {
-                // Mark remaining items as cancelled (not processed)
-                for (let j = i; j < batchImages.length; j++) {
-                    results[j] = { ...results[j], status: 'pending' };
-                }
-                setBatchResults([...results]);
-                break;
-            }
-
-            // Update current item to processing
-            results[i] = { ...results[i], status: 'processing' };
-            setBatchResults([...results]);
-            setBatchProgress({ current: i + 1, total: batchImages.length });
-
-            try {
-                // Process single image (credit deducted after successful save)
-                const result = await analyzeReceipt(
-                    [batchImages[i]],
-                    scanCurrency,
-                    scanStoreType !== 'auto' ? scanStoreType : undefined
-                );
-
-                let d = getSafeDate(result.date);
-                if (new Date(d).getFullYear() > new Date().getFullYear())
-                    d = new Date().toISOString().split('T')[0];
-                const merchant = result.merchant || 'Unknown';
-                const finalTotal = parseStrictNumber(result.total);
-
-                // Apply location logic
-                const finalCountry = result.country || defaultCountry || '';
-                let finalCity = result.city || '';
-                if (finalCountry && finalCity) {
-                    const availableCities = getCitiesForCountry(finalCountry);
-                    const matchedCity = availableCities.find(c => c.toLowerCase() === finalCity.toLowerCase());
-                    finalCity = matchedCity || '';
-                }
-                if (!finalCity && defaultCountry === finalCountry && defaultCity) {
-                    finalCity = defaultCity;
-                }
-
-                // Build transaction
-                const transaction: Transaction = {
-                    merchant: merchant,
-                    date: d,
-                    total: finalTotal,
-                    category: result.category || 'Other',
-                    alias: merchant,
-                    // Story 14.15b: Map 'quantity' from AI to 'qty' field, default to 1
-                    items: (result.items || []).map(item => ({
-                        ...item,
-                        price: parseStrictNumber(item.price),
-                        qty: (item as any).quantity ?? item.qty ?? 1,
-                    })),
-                    imageUrls: result.imageUrls,
-                    thumbnailUrl: result.thumbnailUrl,
-                    time: result.time,
-                    country: finalCountry,
-                    city: finalCity,
-                    currency: result.currency,
-                    receiptType: result.receiptType,
-                    promptVersion: result.promptVersion,
-                    merchantSource: result.merchantSource
-                };
-
-                // Apply category mappings
-                const { transaction: categorizedTx, appliedMappingIds } =
-                    applyCategoryMappings(transaction, mappings);
-
-                // Increment mapping usage (fire-and-forget)
-                if (appliedMappingIds.length > 0) {
-                    appliedMappingIds.forEach(mappingId => {
-                        incrementMappingUsage(db, user.uid, appId, mappingId)
-                            .catch(err => console.error('Failed to increment mapping usage:', err));
-                    });
-                }
-
-                // Apply merchant mappings
-                // v9.6.1: Also apply learned store category if present
-                let finalTx = categorizedTx;
-                const merchantMatch = findMerchantMatch(categorizedTx.merchant);
-                if (merchantMatch && merchantMatch.confidence > 0.7) {
-                    finalTx = {
-                        ...finalTx,
-                        alias: merchantMatch.mapping.targetMerchant,
-                        // v9.6.1: Apply learned store category
-                        ...(merchantMatch.mapping.storeCategory && { category: merchantMatch.mapping.storeCategory }),
-                        merchantSource: 'learned' as const
-                    };
-                    if (merchantMatch.mapping.id) {
-                        incrementMerchantMappingUsage(db, user.uid, appId, merchantMatch.mapping.id)
-                            .catch(err => console.error('Failed to increment merchant mapping usage:', err));
-                    }
-
-                    // v9.7.0: Apply learned item name mappings (scoped to this merchant)
-                    const { transaction: txWithItemNames, appliedIds: itemNameMappingIds } = applyItemNameMappings(
-                        finalTx,
-                        merchantMatch.mapping.normalizedMerchant
-                    );
-                    finalTx = txWithItemNames;
-
-                    // Increment item name mapping usage counts (fire-and-forget)
-                    if (itemNameMappingIds.length > 0) {
-                        itemNameMappingIds.forEach(id => {
-                            incrementItemNameMappingUsage(db, user.uid, appId, id)
-                                .catch(err => console.error('Failed to increment item name mapping usage:', err));
-                        });
-                    }
-                }
-
-                // Save transaction (AC #8)
-                const transactionId = await firestoreAddTransaction(db, user.uid, appId, finalTx);
-                const txWithId = { ...finalTx, id: transactionId };
-
-                // Deduct credit AFTER successful save (prevents credit loss on API failure, persisted to Firestore)
-                await deductUserCredits(1);
-
-                // Add to batch session for summary
-                const insight = await generateInsightForTransaction(
-                    txWithId,
-                    transactions,
-                    insightProfile || { schemaVersion: 1, firstTransactionDate: null as any, totalTransactions: 0, recentInsights: [] },
-                    insightCache
-                );
-                addToBatch(txWithId, insight);
-
-                // Update result to success
-                results[i] = {
-                    index: i,
-                    status: 'success',
-                    merchant: finalTx.alias || finalTx.merchant,
-                    total: finalTx.total,
-                };
-                setBatchResults([...results]);
-
-            } catch (error: any) {
-                // AC #6: Continue with remaining images on failure
-                console.error(`Batch image ${i + 1} failed:`, error);
-                results[i] = {
-                    index: i,
-                    status: 'failed',
-                    error: error.message || 'Unknown error',
-                };
-                setBatchResults([...results]);
-            }
-        }
-
-        // Processing complete
-        setIsBatchProcessing(false);
-
-        // Count successes
-        const successCount = results.filter(r => r.status === 'success').length;
-        const failCount = results.filter(r => r.status === 'failed').length;
-
-        // AC #5: Show batch summary after all processed
-        if (successCount > 0) {
-            // Short delay to show completion state (matches READY_DISPLAY_MS from useScanState)
-            const BATCH_COMPLETE_DELAY_MS = 500;
-            setTimeout(() => {
-                setShowBatchSummary(true);
-                setBatchImages([]);
-                setBatchResults([]);
-            }, BATCH_COMPLETE_DELAY_MS);
-        } else {
-            // All failed - show error
-            setToastMessage({ text: t('scanFailed'), type: 'info' });
-            setBatchImages([]);
-            setBatchResults([]);
-        }
-
-        // Show partial failure warning (AC #6)
-        if (failCount > 0 && successCount > 0) {
-            setToastMessage({
-                text: t('batchPartialWarning').replace('{count}', String(failCount)),
-                type: 'info'
-            });
-        }
-    };
-
-    // Story 11.1: Cancel batch preview
     const handleCancelBatchPreview = () => {
         setShowBatchPreview(false);
         setBatchImages([]);
     };
 
-    // Story 11.1: Handle cancel request during batch processing
-    const handleBatchCancelRequest = () => {
-        // Show confirmation dialog
-        setShowBatchCancelConfirm(true);
-    };
-
-    // Story 11.1: Confirm batch cancellation
-    const handleBatchCancelConfirm = () => {
-        batchCancelRef.current = true;
-        setBatchCancelRequested(true);
-        setShowBatchCancelConfirm(false);
-    };
-
-    // Story 11.1: Dismiss cancel confirmation (continue processing)
-    const handleBatchCancelDismiss = () => {
-        setShowBatchCancelConfirm(false);
-    };
-
-    // Story 12.4: Credit Warning System handlers (AC #1, #5, #7)
-    // Called when user clicks "Procesar todas" in BatchUploadPreview
+    // Credit warning dialog handlers (batch uses 1 super credit regardless of image count)
     const handleBatchConfirmWithCreditCheck = () => {
-        // AC #1: Pre-batch warning shows credit cost before processing
-        // Story 14.15 Session 10: Use super credits for batch mode
-        // Batch scanning uses 1 super credit total regardless of image count (up to 10)
         const result = checkCreditSufficiency(userCredits, 1, true);
         setCreditCheckResult(result);
         setShowCreditWarning(true);
     };
 
-    // Called when user confirms credit warning dialog
-    // Story 12.2 & 12.3: Now uses parallel processing and navigates to batch review
+    // Batch processing with parallel execution
     const handleCreditWarningConfirm = async () => {
-        // AC #5: "Continuar" → begin processing
         setShowCreditWarning(false);
         setCreditCheckResult(null);
         setShowBatchPreview(false);
 
-        // Story 12.3: Navigate to batch-review IMMEDIATELY to show processing progress
-        // Users can navigate away and return to see progress
+        // Navigate to batch-review immediately to show processing progress
         setView('batch-review');
-
-        // Story 14d.5b: Transition state machine to 'scanning' phase
-        // This is required before BATCH_ITEM_* actions can be dispatched
         dispatchProcessStart('super', 1);
 
-        // Story 12.2: Use parallel processing instead of sequential
-        // Story 14d.5b: Pass ScanContext callbacks for state machine integration
         await batchProcessing.startProcessing(
             batchImages,
             scanCurrency,
@@ -2221,8 +1661,6 @@ function App() {
                 onItemStart: dispatchBatchItemStart,
                 onItemSuccess: dispatchBatchItemSuccess,
                 onItemError: dispatchBatchItemError,
-                // Story 14d.5: Fixed race condition - create batchReceipts and pass
-                // to dispatchBatchComplete for atomic state update with phase transition
                 onComplete: (processingResults, imageUrls) => {
                     // Add sharedGroupIds to each successful result if in group mode
                     let taggedResults = processingResults;
@@ -2246,54 +1684,34 @@ function App() {
             }
         );
 
-        // Story 14d.5: batchReceipts now set atomically in onComplete callback above
-        // Story 14d.5e: Persistence handled automatically via scanState save effect
     };
 
-    // Called when user cancels credit warning dialog
     const handleCreditWarningCancel = () => {
-        // AC #5: "Cancelar" → return to batch capture
         setShowCreditWarning(false);
         setCreditCheckResult(null);
     };
 
-    // Called when user wants to reduce batch to available credits
     const handleReduceBatch = () => {
         if (!creditCheckResult) return;
-        // Reduce batch to maxProcessable images
         const maxProcessable = creditCheckResult.maxProcessable;
         setBatchImages(prev => prev.slice(0, maxProcessable));
         setShowCreditWarning(false);
-        // Re-check credits with reduced batch
-        // Story 14.15 Session 10: Use super credits for batch mode
-        // Batch scanning uses 1 super credit total regardless of image count
         const newResult = checkCreditSufficiency(userCredits, 1, true);
         setCreditCheckResult(newResult);
         setShowCreditWarning(true);
     };
 
-    // Story 12.3: Batch Review handlers (AC #4, #6, #7)
-    // Handle edit receipt from batch review
-    // Story 14.23: Updated to use TransactionEditorView
-    // Story 12.1 v9.7.0: Added allReceipts for batch navigation
-    // Story 14d.5d: Now uses ScanContext batchEditingIndex instead of local state
+    // Batch review handlers
     const handleBatchEditReceipt = (receipt: BatchReceipt, batchIndex: number, _batchTotal: number, _allReceipts: BatchReceipt[]) => {
-        // Story 14d.5d AC2: Track editing index in context (0-based, so batchIndex - 1)
         setBatchEditingIndexContext(batchIndex - 1);
-        // Set up transaction editor with the receipt's transaction
-        // Story 14d.5: Set thumbnailUrl directly on transaction instead of using setScanImages
-        // (setScanImages requires 'capturing' phase, but we're in 'reviewing' phase during batch edit)
         const transactionWithThumbnail = receipt.imageUrl
             ? { ...receipt.transaction, thumbnailUrl: receipt.imageUrl }
             : receipt.transaction;
         setCurrentTransaction(transactionWithThumbnail);
-        // Story 14.23: Use unified TransactionEditorView for batch editing
-        setTransactionEditorMode('existing'); // Treat as existing since it's already processed
+        setTransactionEditorMode('existing');
         navigateToView('transaction-editor');
     };
 
-    // Story 12.1 v9.7.0: Navigate to previous receipt in batch
-    // Story 14d.5d AC4: Now uses ScanContext batchEditingIndex + batchReceipts
     const handleBatchPrevious = () => {
         const batchReceipts = scanState.batchReceipts;
         const currentIndex = scanState.batchEditingIndex;
@@ -2302,7 +1720,6 @@ function App() {
         const prevReceipt = batchReceipts[prevIndex];
         if (prevReceipt) {
             setBatchEditingIndexContext(prevIndex);
-            // Story 14d.5: Set thumbnailUrl directly instead of using setScanImages
             const transactionWithThumbnail = prevReceipt.imageUrl
                 ? { ...prevReceipt.transaction, thumbnailUrl: prevReceipt.imageUrl }
                 : prevReceipt.transaction;
@@ -2310,8 +1727,6 @@ function App() {
         }
     };
 
-    // Story 12.1 v9.7.0: Navigate to next receipt in batch
-    // Story 14d.5d AC4: Now uses ScanContext batchEditingIndex + batchReceipts
     const handleBatchNext = () => {
         const batchReceipts = scanState.batchReceipts;
         const currentIndex = scanState.batchEditingIndex;
@@ -2320,7 +1735,6 @@ function App() {
         const nextReceipt = batchReceipts[nextIndex];
         if (nextReceipt) {
             setBatchEditingIndexContext(nextIndex);
-            // Story 14d.5: Set thumbnailUrl directly instead of using setScanImages
             const transactionWithThumbnail = nextReceipt.imageUrl
                 ? { ...nextReceipt.transaction, thumbnailUrl: nextReceipt.imageUrl }
                 : nextReceipt.transaction;
@@ -2328,7 +1742,7 @@ function App() {
         }
     };
 
-    // Story 14.13 Session 6: Navigate to previous transaction in list (from ItemsView aggregated item)
+    // Transaction list navigation (from ItemsView aggregated item)
     const handleTransactionListPrevious = () => {
         if (!transactionNavigationList || !currentTransaction?.id) return;
         const currentIndex = transactionNavigationList.indexOf(currentTransaction.id);
@@ -2337,11 +1751,9 @@ function App() {
         const prevTx = transactions.find(t => t.id === prevId);
         if (prevTx) {
             setCurrentTransaction(prevTx);
-            // Story 14d.4c: scanButtonState derived from phase
         }
     };
 
-    // Story 14.13 Session 6: Navigate to next transaction in list (from ItemsView aggregated item)
     const handleTransactionListNext = () => {
         if (!transactionNavigationList || !currentTransaction?.id) return;
         const currentIndex = transactionNavigationList.indexOf(currentTransaction.id);
@@ -2350,68 +1762,242 @@ function App() {
         const nextTx = transactions.find(t => t.id === nextId);
         if (nextTx) {
             setCurrentTransaction(nextTx);
-            // Story 14d.4c: scanButtonState derived from phase
         }
     };
 
-    // Handle back from batch review (return to dashboard, discard batch)
-    // Story 12.1 v9.7.0: Show confirmation if there are results (credit already spent)
-    // Story 14d.5a-phase2d: Use resetScanContext() to clear batch mode in context
-    // Story 14d.5d AC9: Now uses SHOW_DIALOG for batch_discard
+    // ==========================================================================
+    // TransactionEditorView callback handlers
+    // ==========================================================================
+
+    // Handle transaction update from editor (for UI state + batch context sync)
+    const handleEditorUpdateTransaction = useCallback((trans: Transaction) => {
+        setCurrentTransaction(trans as any);
+        // Sync with batch context if editing a batch receipt
+        if (scanState.batchEditingIndex !== null && scanState.batchReceipts) {
+            const receiptId = scanState.batchReceipts[scanState.batchEditingIndex]?.id;
+            if (receiptId) {
+                updateBatchReceiptContext(receiptId, { transaction: trans as any });
+            }
+        }
+    }, [scanState.batchEditingIndex, scanState.batchReceipts, updateBatchReceiptContext]);
+
+    // Handle save from editor
+    const handleEditorSave = useCallback(async (trans: Transaction) => {
+        if (isTransactionSaving) return;
+        setIsTransactionSaving(true);
+        try {
+            await saveTransaction(trans);
+            setScanImages([]);
+            setScanError(null);
+            setCurrentTransaction(null);
+            setIsViewingReadOnly(false);
+            setCreditUsedInSession(false);
+            setTransactionNavigationList(null);
+        } finally {
+            setIsTransactionSaving(false);
+        }
+    }, [isTransactionSaving, saveTransaction, setScanImages, setScanError]);
+
+    // Handle cancel from editor
+    const handleEditorCancel = useCallback(() => {
+        setScanImages([]);
+        setScanError(null);
+        setCurrentTransaction(null);
+        setAnimateEditViewItems(false);
+        setIsViewingReadOnly(false);
+        setCreditUsedInSession(false);
+        setTransactionNavigationList(null);
+        if (scanState.batchEditingIndex !== null) {
+            setBatchEditingIndexContext(null);
+            setView('batch-review');
+        } else {
+            navigateBack();
+        }
+    }, [setScanImages, setScanError, scanState.batchEditingIndex, setBatchEditingIndexContext, navigateBack]);
+
+    // Handle photo select from editor
+    const handleEditorPhotoSelect = useCallback((file: File) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const base64 = reader.result as string;
+            setScanImages([base64]);
+        };
+        reader.readAsDataURL(file);
+    }, [setScanImages]);
+
+    // Handle process scan from editor
+    const handleEditorProcessScan = useCallback(() => {
+        processScan();
+    }, [processScan]);
+
+    // Handle retry from editor
+    const handleEditorRetry = useCallback(() => {
+        setScanError(null);
+        processScan();
+    }, [setScanError, processScan]);
+
+    // Handle rescan from editor (existing transactions only)
+    const handleEditorRescan = useMemo(() => {
+        return transactionEditorMode === 'existing' ? async () => {
+            await handleRescan();
+        } : undefined;
+    }, [transactionEditorMode, handleRescan]);
+
+    // Handle delete from editor (existing transactions only)
+    const handleEditorDelete = useMemo(() => {
+        return transactionEditorMode === 'existing' ? deleteTransaction : undefined;
+    }, [transactionEditorMode, deleteTransaction]);
+
+    // Handle batch previous from editor (conditional)
+    const handleEditorBatchPrevious = useMemo(() => {
+        if (scanState.batchEditingIndex !== null) {
+            return handleBatchPrevious;
+        }
+        if (transactionNavigationList) {
+            return handleTransactionListPrevious;
+        }
+        return undefined;
+    }, [scanState.batchEditingIndex, transactionNavigationList, handleBatchPrevious, handleTransactionListPrevious]);
+
+    // Handle batch next from editor (conditional)
+    const handleEditorBatchNext = useMemo(() => {
+        if (scanState.batchEditingIndex !== null) {
+            return handleBatchNext;
+        }
+        if (transactionNavigationList) {
+            return handleTransactionListNext;
+        }
+        return undefined;
+    }, [scanState.batchEditingIndex, transactionNavigationList, handleBatchNext, handleTransactionListNext]);
+
+    // Handle batch mode click from editor
+    const handleEditorBatchModeClick = useCallback(() => {
+        if (user?.uid) {
+            startBatchScanContext(user.uid);
+        }
+        navigateToView('batch-capture');
+    }, [user?.uid, startBatchScanContext, navigateToView]);
+
+    // Handle groups change from editor (complex cache update logic)
+    const handleEditorGroupsChange = useCallback(async (groupIds: string[]) => {
+        if (!user?.uid || !currentTransaction) return;
+
+        const previousGroupIds = currentTransaction.sharedGroupIds || [];
+
+        if (import.meta.env.DEV) {
+            console.log('[App] onGroupsChange:', {
+                transactionId: currentTransaction.id,
+                previousGroupIds,
+                newGroupIds: groupIds,
+            });
+        }
+
+        // Fire and forget - don't block the UI
+        updateMemberTimestampsForTransaction(
+            db,
+            user.uid,
+            groupIds,
+            previousGroupIds
+        ).catch(err => {
+            console.warn('[App] Failed to update memberUpdates:', err);
+        });
+
+        // Groups the transaction was REMOVED from
+        const removedFromGroups = previousGroupIds.filter(id => !groupIds.includes(id));
+        // Groups the transaction was ADDED to
+        const addedToGroups = groupIds.filter(id => !previousGroupIds.includes(id));
+
+        // Optimistic cache update for affected groups
+        const affectedGroupIds = new Set([...previousGroupIds, ...groupIds]);
+
+        if (import.meta.env.DEV) {
+            console.log('[App] Clearing cache for groups:', Array.from(affectedGroupIds));
+        }
+
+        const updateCachesForGroup = (groupId: string) => {
+            queryClient.setQueriesData(
+                { queryKey: ['sharedGroupTransactions', groupId], exact: false },
+                (oldData: Transaction[] | undefined) => {
+                    if (!oldData || !currentTransaction.id) return oldData;
+
+                    if (removedFromGroups.includes(groupId)) {
+                        const filtered = oldData.filter(tx => tx.id !== currentTransaction.id);
+                        if (import.meta.env.DEV) {
+                            console.log(`[App] Optimistic update: removed txn from group ${groupId}`, {
+                                before: oldData.length,
+                                after: filtered.length,
+                            });
+                        }
+                        return filtered;
+                    }
+
+                    if (addedToGroups.includes(groupId)) {
+                        const updatedTxn = {
+                            ...currentTransaction,
+                            sharedGroupIds: groupIds,
+                            _ownerId: user.uid,
+                        };
+                        const exists = oldData.some(tx => tx.id === currentTransaction.id);
+                        if (exists) {
+                            return oldData.map(tx =>
+                                tx.id === currentTransaction.id ? updatedTxn : tx
+                            );
+                        }
+                        if (import.meta.env.DEV) {
+                            console.log(`[App] Optimistic update: added txn to group ${groupId}`);
+                        }
+                        return [updatedTxn, ...oldData];
+                    }
+
+                    // Transaction stayed in group, just update the sharedGroupIds
+                    return oldData.map(tx =>
+                        tx.id === currentTransaction.id
+                            ? { ...tx, sharedGroupIds: groupIds }
+                            : tx
+                    );
+                }
+            );
+        };
+
+        // Process all groups
+        affectedGroupIds.forEach(updateCachesForGroup);
+    }, [user?.uid, currentTransaction, db, queryClient]);
+
+    // ==========================================================================
+    // Batch review handlers
+    // ==========================================================================
+
+    // Back from batch review - show confirmation if results exist (credit spent)
     const handleBatchReviewBack = () => {
-        // If there are results to review, show confirmation that credit was spent
-        // Story 14d.5c AC5: Use hasBatchReceipts (context) instead of batchReviewResults
         if (hasBatchReceipts) {
             showScanDialog(DIALOG_TYPES.BATCH_DISCARD, {});
             return;
         }
-        // No results (cancelled during processing), just go back
-        // Story 14d.5c AC5: resetScanContext clears batchReceipts in context
-        // Story 14d.5e: resetScanContext() triggers persistence clear automatically
         setBatchImages([]);
         batchProcessing.reset();
-        resetScanContext(); // Clears batch mode + triggers storage clear via save effect
+        resetScanContext();
         setView('dashboard');
     };
 
-    // Confirm discard batch results (credit already spent)
-    // Story 14d.5a-phase2d: Use resetScanContext() to clear batch mode in context
-    // Story 14d.5d AC9: Now uses DISMISS_DIALOG
+    // Confirm discard batch results
     const handleBatchDiscardConfirm = () => {
         dismissScanDialog();
-        // Story 14d.5c AC5: resetScanContext clears batchReceipts in context
-        // Story 14d.5e: resetScanContext() triggers persistence clear automatically
         setBatchImages([]);
         batchProcessing.reset();
-        resetScanContext(); // Clears batch mode + triggers storage clear via save effect
+        resetScanContext();
         setView('dashboard');
     };
 
-    // Cancel discard - stay on batch review
-    // Story 14d.5d AC9: Now uses DISMISS_DIALOG
     const handleBatchDiscardCancel = () => {
         dismissScanDialog();
     };
 
-    // Handle save all complete from batch review
-    // Story 14.15: Now receives saved transactions for batch complete modal
-    // Story 12.1 v9.7.0: Credit is deducted when processing completes, not when saving
-    // Story 14d.5a-phase2d: Use resetScanContext() to clear batch mode in context
-    // Story 14d.5d AC10: Now uses SHOW_DIALOG for batch_complete with data
+    // Save all complete - show batch complete modal if transactions were saved
     const handleBatchSaveComplete = async (_savedTransactionIds: string[], savedTransactions: Transaction[]) => {
-        // Note: Super credit was already deducted when batch processing completed
-        // No additional credit deduction needed here
-
-        // Clear batch state
-        // Story 14d.5c AC5: resetScanContext clears batchReceipts in context
-        // Story 14d.5e: resetScanContext() triggers persistence clear automatically
         setBatchImages([]);
         batchProcessing.reset();
-        resetScanContext(); // Clears batch mode + triggers storage clear via save effect
+        resetScanContext();
 
-        // Story 14.15: Show batch complete modal only if transactions were saved
-        // Story 12.1 v9.7.0: If empty arrays, batch was completed via individual saves/discards
-        // Story 14d.5d AC10: Pass data through dialog for batch_complete
         if (savedTransactions.length > 0) {
             const dialogData: BatchCompleteDialogData = {
                 transactions: savedTransactions,
@@ -2422,7 +2008,7 @@ function App() {
         setView('dashboard');
     };
 
-    // Handle save transaction for batch review (AC #6)
+    // Handle save transaction for batch review
     const handleBatchSaveTransaction = async (transaction: Transaction): Promise<string> => {
         if (!services || !user) throw new Error('Not authenticated');
         const { db, appId } = services;
@@ -2489,20 +2075,14 @@ function App() {
         return transactionId;
     };
 
-    // Story 11.1: Remove image from batch
-    // Story 14.23: Updated to use TransactionEditorView
-    // Story 14d.4e: Updated to use ScanContext
+    // Remove image from batch (if 1 left, switch to single image flow)
     const handleRemoveBatchImage = (index: number) => {
         setBatchImages(prev => {
             const updated = prev.filter((_, i) => i !== index);
-            // If only 1 image left, switch to single image flow
             if (updated.length === 1) {
                 setShowBatchPreview(false);
-                // Story 14d.4e: setScanImages wrapper handles state machine (transitions to capturing)
                 setScanImages(updated);
-                // Story 14.23: Use unified TransactionEditorView
                 setTransactionEditorMode('new');
-                // Story 14d.4c: scanButtonState derived from phase (capturing → pending)
                 navigateToView('transaction-editor');
                 return [];
             }
@@ -2510,187 +2090,7 @@ function App() {
         });
     };
 
-    // Story 14.15: Scan overlay handlers (AC #4)
-    // Handle cancel from overlay - return to dashboard
-    // Story 14d.4e: Updated to use ScanContext
-    // Story 14d.4e: Cancel only available in error state (cancel button removed during processing)
-    // Credit was already restored in processScan catch block before showing error state,
-    // so no credit action needed here.
-    const handleScanOverlayCancel = useCallback(() => {
-        scanOverlay.reset();
-        setIsAnalyzing(false);
-        setScanError(null);
-        // Story 14d.4e: setScanImages([]) resets the state machine to idle
-        setScanImages([]);
-        setCurrentTransaction(null);
-        setView('dashboard');
-    }, [scanOverlay]);
-
-    // Handle retry from overlay error state - re-run processScan
-    const handleScanOverlayRetry = useCallback(() => {
-        scanOverlay.retry();
-        setScanError(null);
-        // processScan will be called again from EditView
-    }, [scanOverlay]);
-
-    // Handle dismiss from overlay ready state
-    const handleScanOverlayDismiss = useCallback(() => {
-        scanOverlay.reset();
-    }, [scanOverlay]);
-
-    // Story 11.2: Quick Save Card handlers (AC #3, #4, #7)
-    // Story 14.4: Quick Save completion handler (called after success animation)
-    // This is the callback that fires AFTER the success animation completes
-    // Story 14d.6: Updated to use ScanContext exclusively (local state removed)
-    const handleQuickSaveComplete = useCallback(() => {
-        // Story 14.4 AC #5: Close card and show Trust Merchant if eligible
-        // Story 14d.6: Dialog is already dismissed by resolveDialog in QuickSaveCard
-        // Story 14d.4e: setScanImages([]) resets the state machine to idle
-        setScanImages([]);
-        setView('dashboard');
-    }, [setScanImages]);
-
-    // Story 14d.6: Updated to receive dialog data from callback parameter
-    const handleQuickSave = async (dialogData?: QuickSaveDialogData) => {
-        // Story 14d.6: Get transaction from dialog data (local state removed)
-        const transaction = dialogData?.transaction;
-        if (!services || !user || !transaction || isQuickSaving) return;
-
-        // Story 14.24: Validate transaction has at least one item before saving
-        // This is a safety net - shouldShowQuickSave should already prevent this case
-        const hasValidItem = transaction.items?.some(
-            item => item.name && item.name.trim().length > 0 && typeof item.price === 'number' && item.price >= 0
-        );
-        if (!hasValidItem) {
-            // Redirect to editor instead of saving invalid transaction
-            setCurrentTransaction(transaction);
-            // Story 14d.6: Dialog already dismissed by resolveDialog in QuickSaveCard
-            setToastMessage({ text: t('itemsRequired') || 'Add at least one item', type: 'info' });
-            navigateToView('transaction-editor');
-            return;
-        }
-
-        const { db, appId } = services;
-
-        setIsQuickSaving(true);
-
-        const tDoc = {
-            ...transaction,
-            total: parseStrictNumber(transaction.total)
-        };
-
-        try {
-            // Story 10.6: Async side-effect pattern for insight generation
-            incrementInsightCounter();
-
-            const profile = insightProfile || {
-                schemaVersion: 1 as const,
-                firstTransactionDate: null as any,
-                totalTransactions: 0,
-                recentInsights: [],
-            };
-
-            const silenced = isInsightsSilenced(insightCache);
-
-            // Save transaction and generate insight
-            const transactionId = await firestoreAddTransaction(db, user.uid, appId, tDoc);
-            const txWithId = { ...tDoc, id: transactionId } as Transaction;
-
-            const insight = await generateInsightForTransaction(
-                txWithId,
-                transactions,
-                profile,
-                insightCache
-            );
-
-            // Add to batch session
-            addToBatch(txWithId, insight);
-
-            // Story 14.4: DON'T close card here - let success animation play first
-            // The QuickSaveCard will call onSaveComplete after animation
-
-            // Show insight card (unless silenced or in batch mode)
-            if (!silenced) {
-                const willBeBatchMode = (batchSession?.receipts.length ?? 0) + 1 >= 3;
-                if (willBeBatchMode) {
-                    setShowBatchSummary(true);
-                } else {
-                    setCurrentInsight(insight);
-                    setShowInsightCard(true);
-                }
-            }
-
-            // Record insight shown (if applicable)
-            if (insight && insight.id !== 'building_profile') {
-                recordInsightShown(insight.id, transactionId, {
-                    title: insight.title,
-                    message: insight.message,
-                    icon: insight.icon,
-                    category: insight.category,
-                }).catch(err => console.warn('Failed to record insight:', err));
-            }
-
-            // Track transaction for profile stats
-            const txDate = tDoc.date ? new Date(tDoc.date) : new Date();
-            trackTransactionForInsight(txDate)
-                .catch(err => console.warn('Failed to track transaction:', err));
-
-            // Story 11.4: Record scan for trust tracking (AC #1, #2)
-            // Quick Save = not edited, so wasEdited = false
-            const merchantAlias = tDoc.alias || tDoc.merchant;
-            if (merchantAlias) {
-                try {
-                    const eligibility = await recordMerchantScan(merchantAlias, false);
-                    // AC #3: Show trust prompt if eligible
-                    if (eligibility.shouldShowPrompt) {
-                        setTrustPromptData(eligibility);
-                        setShowTrustPrompt(true);
-                    }
-                } catch (err) {
-                    console.warn('Failed to record merchant scan:', err);
-                }
-            }
-
-        } catch (error) {
-            console.error('Quick save failed:', error);
-            setToastMessage({ text: t('scanFailed'), type: 'info' });
-            // Story 14d.6: On error, dismiss dialog via context (local state removed)
-            dismissScanDialog();
-        } finally {
-            setIsQuickSaving(false);
-        }
-    };
-
-    // Story 11.2: Handle "Editar" from Quick Save Card (AC #4)
-    // Story 14.23: Navigate to TransactionEditorView instead of deprecated scan-result view
-    // Story 14d.6: Updated to receive dialog data from callback parameter
-    const handleQuickSaveEdit = (dialogData?: QuickSaveDialogData) => {
-        // Story 14d.6: Get transaction from dialog data (local state removed)
-        const transaction = dialogData?.transaction;
-        if (transaction) {
-            setCurrentTransaction(transaction);
-        }
-        // Story 14d.6: Dialog already dismissed by resolveDialog in QuickSaveCard
-        // Story 14.24: Navigate to unified TransactionEditorView
-        setTransactionEditorMode('new');
-        // Story 14d.4c: scanButtonState derived from phase (reviewing → complete)
-        // v9.7.0: Skip the ScanCompleteModal since user already saw QuickSaveCard
-        setSkipScanCompleteModal(true);
-        setView('transaction-editor');
-    };
-
-    // Story 11.2: Handle "Cancelar" from Quick Save Card (AC #7)
-    // Story 14d.6: Updated to use ScanContext exclusively (local state removed)
-    const handleQuickSaveCancel = (dialogData?: QuickSaveDialogData) => {
-        void dialogData; // Unused but keeps signature consistent
-        // Story 14d.6: Dialog already dismissed by dismissDialog in QuickSaveCard
-        setCurrentTransaction(null);
-        // Story 14d.4e: setScanImages([]) resets state machine - no need for setPendingScan(null)
-        setScanImages([]);
-        setView('dashboard');
-    };
-
-    // Story 11.4: Trust Prompt handlers (AC #4)
+    // Trust prompt handlers
     const handleAcceptTrust = async () => {
         if (!trustPromptData?.merchant) return;
         const merchantName = trustPromptData.merchant.merchantName;
@@ -2718,622 +2118,10 @@ function App() {
         }
     };
 
-    // Story 14d.6: Currency mismatch dialog handlers - updated to accept data from callback
-    const handleCurrencyUseDetected = async (dialogData?: CurrencyMismatchDialogData) => {
-        // Story 14d.6: Data comes from dialog callback parameter (local state removed)
-        const data = dialogData;
-        if (!data) return;
-        // Use detected currency (already in transaction)
-        const transaction = data.pendingTransaction as Transaction;
-        const hasDiscrepancy = data.hasDiscrepancy;
-        setCurrentTransaction(transaction);
-
-        // Story 14d.4b FIX: Check QuickSaveCard eligibility BEFORE transitioning state
-        const merchantAlias = transaction.alias || transaction.merchant;
-        const isTrusted = merchantAlias ? await checkTrusted(merchantAlias) : false;
-        const willShowQuickSave = !isTrusted && shouldShowQuickSave(transaction);
-
-        // Story 14d.6 FIX: ALWAYS skip ScanCompleteModal when coming from currency dialog
-        // The user already went through the currency selection flow, so they'll either see:
-        // - QuickSaveCard (high confidence)
-        // - Auto-save (trusted merchant)
-        // - TransactionEditorView (low confidence)
-        // In all cases, we don't want the redundant ScanCompleteModal
-        setSkipScanCompleteModal(true);
-
-        // Story 14d.6 FIX: Transition state machine from 'scanning' to 'reviewing' phase
-        // IMPORTANT: This must be called AFTER setSkipScanCompleteModal to prevent race condition
-        // The currency dialog is shown mid-scan, so dispatchProcessSuccess was never called.
-        // This ensures isProcessing becomes false and ScanOverlay hides.
-        dispatchProcessSuccess([transaction]);
-
-        // Story 14d.6: Clear dialog state via context dismissal (local state removed)
-        dismissScanDialog();
-        // Note: Do NOT clear scanImages here - they're needed for thumbnail display
-        // Images will be cleared when transaction is saved or scan is cancelled
-        // Story 14.15b: Show warning if items total didn't match receipt total
-        if (hasDiscrepancy) {
-            setToastMessage({ text: t('discrepancyWarning'), type: 'info' });
-        }
-
-        if (isTrusted && services && user) {
-            // Auto-save for trusted merchants
-            try {
-                await firestoreAddTransaction(services.db, user.uid, services.appId, transaction);
-                setCurrentTransaction(null);
-                setToastMessage({ text: t('autoSaved'), type: 'success' });
-                setView('dashboard');
-            } catch (err) {
-                console.error('Auto-save failed:', err);
-                // Story 14d.6: Fall back to Quick Save - use showScanDialog
-                if (shouldShowQuickSave(transaction)) {
-                    const qsDialogData: QuickSaveDialogData = {
-                        transaction: transaction,
-                        confidence: calculateConfidence(transaction),
-                    };
-                    showScanDialog(DIALOG_TYPES.QUICKSAVE, qsDialogData);
-                }
-            }
-        } else if (willShowQuickSave) {
-            // Story 14d.6: High confidence - Show Quick Save Card via showScanDialog
-            const qsDialogData: QuickSaveDialogData = {
-                transaction: transaction,
-                confidence: calculateConfidence(transaction),
-            };
-            showScanDialog(DIALOG_TYPES.QUICKSAVE, qsDialogData);
-        } else {
-            // Low confidence: Stay on editor for manual review
-            setAnimateEditViewItems(true);
-        }
-    };
-
-    // Story 14d.6: Updated handler to accept data from dialog callback
-    const handleCurrencyUseDefault = async (dialogData?: CurrencyMismatchDialogData) => {
-        // Story 14d.6: Data comes from dialog callback parameter (local state removed)
-        const data = dialogData;
-        if (!data) return;
-        // Override with user's default currency
-        const transaction = {
-            ...data.pendingTransaction,
-            currency: userPreferences.defaultCurrency,
-        };
-        const hasDiscrepancy = data.hasDiscrepancy;
-        setCurrentTransaction(transaction);
-
-        // Story 14d.4b FIX: Check QuickSaveCard eligibility BEFORE transitioning state
-        const merchantAlias = transaction.alias || transaction.merchant;
-        const isTrusted = merchantAlias ? await checkTrusted(merchantAlias) : false;
-        const willShowQuickSave = !isTrusted && shouldShowQuickSave(transaction);
-
-        // Story 14d.6 FIX: ALWAYS skip ScanCompleteModal when coming from currency dialog
-        // The user already went through the currency selection flow, so they'll either see:
-        // - QuickSaveCard (high confidence)
-        // - Auto-save (trusted merchant)
-        // - TransactionEditorView (low confidence)
-        // In all cases, we don't want the redundant ScanCompleteModal
-        setSkipScanCompleteModal(true);
-
-        // Story 14d.6 FIX: Transition state machine from 'scanning' to 'reviewing' phase
-        // IMPORTANT: This must be called AFTER setSkipScanCompleteModal to prevent race condition
-        // The currency dialog is shown mid-scan, so dispatchProcessSuccess was never called.
-        // This ensures isProcessing becomes false and ScanOverlay hides.
-        dispatchProcessSuccess([transaction as Transaction]);
-
-        // Story 14d.6: Clear dialog state via context dismissal (local state removed)
-        dismissScanDialog();
-        // Note: Do NOT clear scanImages here - they're needed for thumbnail display
-        // Images will be cleared when transaction is saved or scan is cancelled
-        // Story 14.15b: Show warning if items total didn't match receipt total
-        if (hasDiscrepancy) {
-            setToastMessage({ text: t('discrepancyWarning'), type: 'info' });
-        }
-
-        if (isTrusted && services && user) {
-            // Auto-save for trusted merchants
-            try {
-                await firestoreAddTransaction(services.db, user.uid, services.appId, transaction);
-                setCurrentTransaction(null);
-                setToastMessage({ text: t('autoSaved'), type: 'success' });
-                setView('dashboard');
-            } catch (err) {
-                console.error('Auto-save failed:', err);
-                // Story 14d.6: Fall back to Quick Save - use showScanDialog
-                if (shouldShowQuickSave(transaction)) {
-                    const qsDialogData: QuickSaveDialogData = {
-                        transaction: transaction as Transaction,
-                        confidence: calculateConfidence(transaction),
-                    };
-                    showScanDialog(DIALOG_TYPES.QUICKSAVE, qsDialogData);
-                }
-            }
-        } else if (willShowQuickSave) {
-            // Story 14d.6: High confidence - Show Quick Save Card via showScanDialog
-            const qsDialogData: QuickSaveDialogData = {
-                transaction: transaction as Transaction,
-                confidence: calculateConfidence(transaction),
-            };
-            showScanDialog(DIALOG_TYPES.QUICKSAVE, qsDialogData);
-        } else {
-            // Low confidence: Stay on editor for manual review
-            setAnimateEditViewItems(true);
-        }
-    };
-
-    // Story 14d.6: Updated handler to accept data from dialog callback
-    const handleCurrencyMismatchCancel = (dialogData?: CurrencyMismatchDialogData) => {
-        // Use data from callback parameter (unused but keeps signature consistent)
-        void dialogData;
-        // Story 14d.6: Cancel scan entirely - dismiss context dialog (local state removed)
-        dismissScanDialog();
-        setCurrentTransaction(null);
-        setScanImages([]);
-        setView('dashboard');
-    };
-
-    // Story 14d.6: Total mismatch dialog handlers - updated to accept data from callback
-    const handleTotalUseItemsSum = (dialogData?: TotalMismatchDialogData) => {
-        // Story 14d.6: Data comes from dialog callback parameter (local state removed)
-        const data = dialogData;
-        if (!data) return;
-        const { validationResult, pendingTransaction, parsedItems } = data;
-
-        // Use items sum as the new total (no reconciliation needed since they match)
-        const correctedTransaction: Transaction = {
-            ...pendingTransaction as Transaction,
-            total: validationResult.itemsSum,
-            items: parsedItems as Transaction['items'], // Use original items without adjustment
-        };
-
-        // Story 14d.6: Close dialog via context dismissal (local state removed)
-        dismissScanDialog();
-
-        // Continue with the rest of the scan flow
-        continueScanWithTransaction(correctedTransaction);
-        setToastMessage({ text: t('totalCorrected') || 'Total corregido', type: 'success' });
-    };
-
-    const handleTotalKeepOriginal = (dialogData?: TotalMismatchDialogData) => {
-        // Story 14d.6: Data comes from dialog callback parameter (local state removed)
-        const data = dialogData;
-        if (!data) return;
-        const { pendingTransaction, parsedItems } = data;
-
-        // Keep original total, reconcile items to match
-        const { items: reconciledItems } = reconcileItemsTotal(
-            parsedItems as Transaction['items'],
-            (pendingTransaction as Transaction).total,
-            lang
-        );
-
-        const transaction: Transaction = {
-            ...pendingTransaction as Transaction,
-            items: reconciledItems,
-        };
-
-        // Story 14d.6: Close dialog via context dismissal (local state removed)
-        dismissScanDialog();
-
-        continueScanWithTransaction(transaction);
-    };
-
-    // Story 14d.6: Updated handler to accept data from dialog callback
-    const handleTotalMismatchCancel = (dialogData?: TotalMismatchDialogData) => {
-        // Use data from callback parameter (unused but keeps signature consistent)
-        void dialogData;
-        // Story 14d.6: Cancel scan entirely - dismiss context dialog (local state removed)
-        dismissScanDialog();
-        setCurrentTransaction(null);
-        setScanImages([]);
-        setView('dashboard');
-    };
-
-    // Story 14.24: Conflict dialog handlers
-    const handleConflictClose = () => {
-        // Close dialog without doing anything (stay on current view)
-        setShowConflictDialog(false);
-        setConflictDialogData(null);
-    };
-
-    // Story 14d.4e: Updated to use ScanContext
-    const handleConflictViewCurrent = () => {
-        // Navigate to the conflicting transaction (in transaction-editor)
-        setShowConflictDialog(false);
-        setConflictDialogData(null);
-        // The scan is still active, just navigate to it
-        // Story 14d.4e: Use scanState.results[0] instead of pendingScan.analyzedTransaction
-        if (scanState.results.length > 0) {
-            setCurrentTransaction(scanState.results[0]);
-        }
-        setTransactionEditorMode('new');
-        // Story 14d.4c: scanButtonState derived from phase - state machine preserves phase
-        navigateToView('transaction-editor');
-    };
-
-    // Story 14d.4e: Updated to use ScanContext
-    const handleConflictDiscard = () => {
-        // Discard the conflicting transaction and proceed with the pending action
-        setShowConflictDialog(false);
-
-        // Clear the conflicting pending scan
-        // Story 14d.4c: setScanImages([]) triggers reset to idle phase
-        setCurrentTransaction(null);
-        setScanImages([]);
-
-        // If we had reserved credits, they're lost (already confirmed to Firestore)
-        // This is expected - user chose to discard knowing they'd lose the credit
-
-        // Now execute the pending action
-        if (conflictDialogData?.pendingAction) {
-            const { mode, transaction } = conflictDialogData.pendingAction;
-            setConflictDialogData(null);
-
-            // Call navigateToTransactionEditor directly without conflict check
-            // (we just cleared the conflict)
-            setTransactionEditorMode(mode);
-            // Story 14d.4c: scanButtonState derived from phase
-            if (transaction) {
-                setCurrentTransaction(transaction as any);
-            } else if (mode === 'new') {
-                setCurrentTransaction(createDefaultTransaction());
-            }
-            navigateToView('transaction-editor');
-        } else {
-            setConflictDialogData(null);
-        }
-    };
-
-    // Helper: Continue scan flow with a transaction (after total mismatch resolution)
-    const continueScanWithTransaction = async (transaction: Transaction) => {
-        // Apply category mappings
-        const { transaction: categorizedTransaction, appliedMappingIds } =
-            applyCategoryMappings(transaction, mappings);
-
-        // Increment mapping usage (fire-and-forget)
-        if (appliedMappingIds.length > 0 && user && services) {
-            appliedMappingIds.forEach(mappingId => {
-                incrementMappingUsage(services.db, user.uid, services.appId, mappingId)
-                    .catch(err => console.error('Failed to increment mapping usage:', err));
-            });
-        }
-
-        // Apply merchant alias mapping
-        // v9.6.1: Also apply learned store category if present
-        let finalTransaction = categorizedTransaction;
-        const merchantMatch = findMerchantMatch(categorizedTransaction.merchant);
-        if (merchantMatch && merchantMatch.confidence > 0.7) {
-            finalTransaction = {
-                ...finalTransaction,
-                alias: merchantMatch.mapping.targetMerchant,
-                // v9.6.1: Apply learned store category
-                ...(merchantMatch.mapping.storeCategory && { category: merchantMatch.mapping.storeCategory }),
-                merchantSource: 'learned' as const
-            };
-            if (merchantMatch.mapping.id && user && services) {
-                incrementMerchantMappingUsage(services.db, user.uid, services.appId, merchantMatch.mapping.id)
-                    .catch(err => console.error('Failed to increment merchant mapping usage:', err));
-            }
-
-            // v9.7.0: Apply learned item name mappings (scoped to this merchant)
-            const { transaction: txWithItemNames, appliedIds: itemNameMappingIds } = applyItemNameMappings(
-                finalTransaction,
-                merchantMatch.mapping.normalizedMerchant
-            );
-            finalTransaction = txWithItemNames;
-
-            // Increment item name mapping usage counts (fire-and-forget)
-            if (itemNameMappingIds.length > 0 && user && services) {
-                itemNameMappingIds.forEach(id => {
-                    incrementItemNameMappingUsage(services.db, user.uid, services.appId, id)
-                        .catch(err => console.error('Failed to increment item name mapping usage:', err));
-                });
-            }
-        }
-
-        // Currency handling: if no currency, use default
-        if (!finalTransaction.currency && userPreferences.defaultCurrency) {
-            finalTransaction = {
-                ...finalTransaction,
-                currency: userPreferences.defaultCurrency,
-            };
-        }
-
-        // Check for currency mismatch
-        // Story 14d.6: Show dialog via ScanContext instead of local state
-        const detectedCurrency = finalTransaction.currency;
-        const userDefaultCurrency = userPreferences.defaultCurrency;
-        if (detectedCurrency && userDefaultCurrency && detectedCurrency !== userDefaultCurrency) {
-            const dialogData: CurrencyMismatchDialogData = {
-                detectedCurrency,
-                pendingTransaction: finalTransaction,
-                hasDiscrepancy: false,
-            };
-            showScanDialog(DIALOG_TYPES.CURRENCY_MISMATCH, dialogData);
-            return;
-        }
-
-        // Set as current transaction and continue
-        setCurrentTransaction(finalTransaction);
-        // Story 14d.4e: Transaction is stored in scanState.results via dispatchProcessSuccess
-        // No need to update pendingScan
-        // Story 14d.4c: scanButtonState derived from phase (dispatchProcessSuccess sets reviewing → complete)
-        // Don't clear scanImages here - they're needed for thumbnail display
-        // Images are cleared when transaction is saved or discarded
-
-        // Navigate to transaction editor to review/save the transaction
-        setTransactionEditorMode('new');
-        navigateToView('transaction-editor');
-    };
-
-    // Transaction Handlers
-    // Note: We use fire-and-forget pattern because Firestore's offline persistence
-    // means addDoc/updateDoc/deleteDoc may not resolve until server confirms,
-    // but local cache updates immediately. Navigate optimistically.
-    // Story 14.15b: Accept optional transaction parameter to avoid React state timing issues
-    const saveTransaction = async (transactionOverride?: Transaction) => {
-        const transactionToSave = transactionOverride || currentTransaction;
-        if (!services || !user || !transactionToSave) return;
-        const { db, appId } = services;
-
-        const tDoc = {
-            ...transactionToSave,
-            total: parseStrictNumber(transactionToSave.total)
-        };
-
-        // Navigate immediately (optimistic UI) - AC #4: Card appears AFTER save confirmation
-        setView('dashboard');
-        setCurrentTransaction(null);
-        // Story 9.10 AC#4: Clear pending scan on successful save
-        // Story 14d.4e: setScanImages([]) resets state machine - no need for setPendingScan(null)
-        setScanImages([]);
-
-        // Fire the Firestore operation and chain insight generation for new transactions
-        if (transactionToSave.id) {
-            // Update existing transaction - no insight generation
-            firestoreUpdateTransaction(db, user.uid, appId, transactionToSave.id, tDoc)
-                .catch(e => console.error('Update failed:', e));
-        } else {
-            // Story 10.6: Async side-effect pattern for insight generation (AC #2)
-            // Story 10.7: Extended for batch mode tracking and silence support
-            // Story 10a.4: Chain operations to capture real transaction ID for insight history
-
-            // Increment scan counter for sprinkle distribution
-            incrementInsightCounter();
-
-            // Get profile or use default if not loaded yet
-            const profile = insightProfile || {
-                schemaVersion: 1 as const,
-                firstTransactionDate: null as any,
-                totalTransactions: 0,
-                recentInsights: [],
-            };
-
-            // Story 10.7 AC#7: Check if insights are silenced
-            const silenced = isInsightsSilenced(insightCache);
-
-            // Fire and forget chain: add transaction → generate insight → record with real ID
-            firestoreAddTransaction(db, user.uid, appId, tDoc)
-                .then(async (transactionId) => {
-                    // Generate insight with real transaction ID
-                    const txWithId = { ...tDoc, id: transactionId } as Transaction;
-                    const insight = await generateInsightForTransaction(
-                        txWithId,
-                        transactions,
-                        profile,
-                        insightCache
-                    );
-
-                    // Story 10.7: Add transaction and insight to batch session
-                    addToBatch(txWithId, insight);
-
-                    // Story 10.7 AC#7: If silenced, skip showing individual insight
-                    if (silenced) {
-                        // Still track transaction for stats but don't show card
-                        const txDate = tDoc.date ? new Date(tDoc.date) : new Date();
-                        trackTransactionForInsight(txDate)
-                            .catch(err => console.warn('Failed to track transaction:', err));
-                        return;
-                    }
-
-                    // Story 10.7 AC#1: Show batch summary when 3+ receipts (after adding current)
-                    // Check updated batch session (addToBatch is async state update, so check count + 1)
-                    const willBeBatchMode = (batchSession?.receipts.length ?? 0) + 1 >= 3;
-                    if (willBeBatchMode) {
-                        setShowBatchSummary(true);
-                        // Don't show individual insight card in batch mode
-                    } else {
-                        // Standard insight card flow
-                        setCurrentInsight(insight);
-                        setShowInsightCard(true);
-                        // Story 14.20: Build session context for completion messaging (AC #1, #2, #3)
-                        const sessionReceipts = batchSession?.receipts ?? [];
-                        const transactionsSaved = sessionReceipts.length + 1; // +1 for current
-                        setSessionContext({
-                            transactionsSaved,
-                            consecutiveDays: profile.totalTransactions > 0 ? Math.min(profile.totalTransactions, 30) : 1,
-                            isFirstOfWeek: new Date().getDay() === 1 && transactionsSaved === 1, // Monday and first tx
-                            isPersonalRecord: false, // Will be set by usePersonalRecords if applicable
-                            totalAmount: txWithId.total,
-                            currency: txWithId.currency || currency,
-                            categoriesTouched: txWithId.category ? [txWithId.category] : [],
-                        });
-                    }
-
-                    // AC #9: Record insight shown in UserInsightProfile (if not fallback)
-                    // Story 10a.4: Pass real transaction ID and full insight content for history
-                    if (insight && insight.id !== 'building_profile') {
-                        recordInsightShown(insight.id, transactionId, {
-                            title: insight.title,
-                            message: insight.message,
-                            icon: insight.icon,
-                            category: insight.category,
-                        }).catch(err => console.warn('Failed to record insight:', err));
-                    }
-
-                    // Track transaction for profile stats (fire-and-forget)
-                    const txDate = tDoc.date ? new Date(tDoc.date) : new Date();
-                    trackTransactionForInsight(txDate)
-                        .catch(err => console.warn('Failed to track transaction:', err));
-                })
-                .catch(err => {
-                    console.warn('Transaction save or insight generation failed:', err);
-                    // Story 10.7: Still add to batch even if insight generation failed
-                    const txWithTemp = { ...tDoc, id: 'temp' } as Transaction;
-                    addToBatch(txWithTemp, null);
-
-                    // Story 10.7: Show batch summary if in batch mode, otherwise fallback card
-                    if (!silenced) {
-                        const willBeBatchMode = (batchSession?.receipts.length ?? 0) + 1 >= 3;
-                        if (willBeBatchMode) {
-                            setShowBatchSummary(true);
-                        } else {
-                            // Show fallback on error - never show nothing (AC #3)
-                            setCurrentInsight(null);
-                            setShowInsightCard(true);
-                            // Story 14.20: Build minimal session context for error case
-                            setSessionContext({
-                                transactionsSaved: 1,
-                                consecutiveDays: 1,
-                                isFirstOfWeek: false,
-                                isPersonalRecord: false,
-                                totalAmount: tDoc.total,
-                                currency: tDoc.currency || currency,
-                                categoriesTouched: tDoc.category ? [tDoc.category] : [],
-                            });
-                        }
-                    }
-                });
-        }
-    };
-
-    // Story 14.24: Removed window.confirm - caller shows styled confirmation dialog
-    const deleteTransaction = async (id: string) => {
-        if (!services || !user) return;
-
-        // Use currentTransaction if available, otherwise the deletion will be caught
-        // by other members on next sync (eventual consistency acceptable for delete)
-        if (currentTransaction?.sharedGroupIds && currentTransaction.sharedGroupIds.length > 0) {
-            updateMemberTimestampsForTransaction(
-                services.db,
-                user.uid,
-                [], // No groups after deletion
-                currentTransaction.sharedGroupIds // All previous groups
-            ).catch(err => {
-                console.warn('[App] Failed to update memberUpdates for delete:', err);
-            });
-        }
-
-        // Fire the delete (don't await)
-        firestoreDeleteTransaction(services.db, user.uid, services.appId, id)
-            .catch(e => console.error('Delete failed:', e));
-
-        // Navigate immediately
-        setView('dashboard');
-    };
-
-    const wipeDB = async () => {
-        if (!window.confirm(t('wipeConfirm'))) return;
-        if (!services || !user) return;
-        setWiping(true);
-        try {
-            await wipeAllTransactions(services.db, user.uid, services.appId);
-            alert(t('cleaned'));
-        } catch (e) {
-            alert('Failed to wipe');
-        }
-        setWiping(false);
-    };
-
-    // Export Data Handler (Story 5.2)
-    const handleExportData = async () => {
-        // AC#7: Empty state handling - check if no transactions
-        if (transactions.length === 0) {
-            setToastMessage({ text: t('noTransactionsToExport'), type: 'info' });
-            return;
-        }
-
-        setExporting(true);
-        try {
-            // AC#4: Use requestAnimationFrame for non-blocking UI
-            await new Promise(resolve => requestAnimationFrame(resolve));
-            // AC#8: Use downloadBasicData from csvExport.ts (Story 5.1)
-            downloadBasicData(transactions);
-            // AC#6: Success feedback
-            setToastMessage({ text: t('exportSuccess'), type: 'success' });
-        } finally {
-            setExporting(false);
-        }
-    };
-
-    // Story 9.20: Handler for navigating from Analytics to History with pre-applied filters (AC #4)
-    // Story 14.22: Navigate to History view with pre-applied filters
-    // This is called when user clicks a transaction count badge on analytics views
-    // Story 14.13 Session 5: Now supports targetView to navigate to 'items' for product counts
-    // Story 14.13a: Now supports drillDownPath for multi-dimension filtering
-    const handleNavigateToHistory = useCallback((payload: HistoryNavigationPayload) => {
-        // Create a complete filter state from the navigation payload
-        // Default to 'all' level if temporal/category not provided
-
-        // Build category filter based on what's in the payload
-        // Priority: category > storeGroup > itemGroup > itemCategory
-        let categoryFilter: HistoryFilterState['category'] = { level: 'all' };
-        if (payload.category) {
-            // Store category filter (e.g., "Supermarket")
-            categoryFilter = { level: 'category', category: payload.category };
-        } else if (payload.storeGroup) {
-            // Store group filter (e.g., "food-dining") - expand to all categories in the group
-            const storeCategories = expandStoreCategoryGroup(payload.storeGroup as StoreCategoryGroup);
-            categoryFilter = { level: 'category', category: storeCategories.join(',') };
-        } else if (payload.itemGroup) {
-            // Item group filter (e.g., "food-fresh") - expand to all item categories in the group
-            const itemCategories = expandItemCategoryGroup(payload.itemGroup as ItemCategoryGroup);
-            categoryFilter = { level: 'group', group: itemCategories.join(',') };
-        } else if (payload.itemCategory) {
-            // Item category filter (e.g., "Bakery") - filter by item.category field directly
-            categoryFilter = { level: 'group', group: payload.itemCategory };
-        }
-
-        // Story 14.13a: Include drillDownPath in category filter for multi-dimension filtering
-        // This allows ItemsView/HistoryView to filter by multiple dimensions simultaneously
-        // (e.g., items from "Supermercado" that are in "Alimentos Frescos" group)
-        if (payload.drillDownPath) {
-            categoryFilter.drillDownPath = payload.drillDownPath;
-        }
-
-        const filterState: HistoryFilterState = {
-            temporal: payload.temporal
-                ? { ...payload.temporal, level: payload.temporal.level as TemporalFilterState['level'] }
-                : { level: 'all' },
-            category: categoryFilter,
-            location: {}, // Location filter not set from analytics navigation
-            group: {}, // Story 14.15b: Group filter not set from analytics navigation
-        };
-
-        // Store the filters to be applied when History/Items view loads
-        setPendingHistoryFilters(filterState);
-
-        // Story 14.13 Session 7: Store source distribution view for back navigation
-        // If user navigated from donut chart, remember to restore it on back
-        if (payload.sourceDistributionView) {
-            setPendingDistributionView(payload.sourceDistributionView);
-        }
-
-        // Story 14.13 Session 5: Navigate to target view based on countMode toggle
-        // 'items' = Productos view, 'history' = Compras view (default)
-        const targetView = payload.targetView || 'history';
-        navigateToView(targetView);
-    }, [navigateToView]);
-
-    // Story 7.12: Theme setup using CSS custom properties (AC #6, #7, #11)
-    // Story 14c-refactor.11: AppLayout now handles theme class and data-theme attribute
-    // isDark still needed for modal inline styles
+    // isDark needed for modal inline styles
     const isDark = theme === 'dark';
 
-    // Story 12.3: Compute scan status for Nav icon indicator (AC #3)
-    // - 'processing': batch or single scan processing is in progress
-    // - 'ready': batch review results are available
-    // - 'idle': default state
-    // Story 14d.4e: Use scanState.phase instead of pendingScan.status
-    // Story 14d.5c AC5: Use hasBatchReceipts (context) instead of batchReviewResults
+    // Scan status for Nav icon indicator ('processing' | 'ready' | 'idle')
     const scanStatus: ScanStatus = batchProcessing.isProcessing
         ? 'processing'
         : scanState.phase === 'scanning'
@@ -3352,15 +2140,12 @@ function App() {
         } else {
             html.classList.remove('dark');
         }
-        // 'normal' theme (warm colors) is base CSS, 'professional' and 'mono' are overrides
         if (colorTheme !== 'normal') {
             html.setAttribute('data-theme', colorTheme);
         } else {
             html.removeAttribute('data-theme');
         }
-        // Story 14.22: Font family selection - 'outfit' is default in CSS
         html.setAttribute('data-font', fontFamily);
-        // Story 14.37: Font size scaling - 'small' is default (no attribute needed)
         if (fontSize === 'normal') {
             html.setAttribute('data-font-size', fontSize);
         } else {
@@ -3368,17 +2153,11 @@ function App() {
         }
     }
 
-    if (initError) {
-        return <div className="p-10 text-center text-red-500 font-bold">Error: {initError}</div>;
-    }
+    // ==========================================================================
+    // Computed values and composition hooks (MUST be before early returns for hooks)
+    // ==========================================================================
 
-    if (!user) {
-        return <LoginScreen onSignIn={signIn} onTestSignIn={() => signInWithTestCredentials()} t={t} />;
-    }
-
-    // Story 10a.4: History pagination removed - HistoryView replaced with InsightsView
-
-    // Story 9.11: Compute recently added transactions for dashboard
+    // Recently added transactions for dashboard (sorted by createdAt)
     // Bug Fix: Use recentScans (sorted by createdAt from Firestore) instead of transactions
     // The recentScans query is specifically ordered by createdAt desc and includes receipts
     // with old transaction dates that wouldn't appear in the top 100 by date
@@ -3411,12 +2190,527 @@ function App() {
             .slice(0, 5)
         : recentlyAddedTransactions;           // Personal mode: use createdAt-sorted
 
+    // ==========================================================================
+    // View Props Composition Hooks (data props - handlers come from ViewHandlersContext)
+    // ==========================================================================
+
+    const historyViewDataProps = useHistoryViewProps({
+        // Core data
+        transactions: isGroupMode ? sharedGroupTransactions : transactionsWithRecentScans,
+        transactionsWithRecentScans: isGroupMode ? safeSharedGroupRawTransactions : transactionsWithRecentScans,
+        // User info
+        user: {
+            displayName: user?.displayName || null,
+            email: user?.email || null,
+            uid: user?.uid || null,
+        },
+        appId: services?.appId || '',
+        // UI settings
+        theme: theme as 'light' | 'dark',
+        colorTheme,
+        currency,
+        dateFormat,
+        lang,
+        t,
+        formatCurrency,
+        formatDate: formatDate as (date: string, format: string) => string,
+        fontColorMode,
+        foreignLocationFormat: userPreferences.foreignLocationFormat || 'flag',
+        // Location defaults
+        defaultCity,
+        defaultCountry,
+        // Group-related
+        activeGroup: activeGroup ? {
+            id: activeGroup.id ?? '',
+            memberProfiles: activeGroup.memberProfiles,
+        } : undefined,
+        isGroupMode,
+        isAtListenerLimit,
+        // Filter state
+        pendingFilters: pendingHistoryFilters,
+        // Pagination
+        pagination: {
+            hasMore: isGroupMode ? false : hasMoreTransactions,
+            isLoading: isGroupMode ? false : loadingMoreTransactions,
+        },
+        loadMoreTransactions,
+        // Callbacks
+        onEditTransaction: (tx) => navigateToTransactionDetail(tx as Transaction),
+        onTransactionsDeleted: undefined, // HistoryView handles internally via Firestore
+    });
+
+    const trendsViewDataProps = useTrendsViewProps({
+        transactions: activeTransactions,
+        user: {
+            displayName: user?.displayName || null,
+            email: user?.email || null,
+            uid: user?.uid || null,
+        },
+        appId: services?.appId || '',
+        theme: theme as 'light' | 'dark',
+        colorTheme,
+        currency,
+        locale: lang,
+        t,
+        fontColorMode,
+        exporting,
+        initialDistributionView: pendingDistributionView || undefined,
+        isGroupMode,
+        groupName: activeGroup?.name,
+        groupMembers: activeGroup?.memberProfiles
+            ? Object.entries(activeGroup.memberProfiles).map(([uid, profile]) => ({
+                uid,
+                displayName: profile.displayName,
+                email: profile.email,
+            }))
+            : [],
+        spendingByMember: Object.fromEntries(sharedGroupSpendingByMember),
+        onEditTransaction: (transaction) => navigateToTransactionEditor('existing', transaction),
+        onExporting: setExporting,
+        onUpgradeRequired: () => setToastMessage({ text: t('upgradeRequired'), type: 'info' }),
+    });
+
+    const batchReviewViewDataProps = useBatchReviewViewProps({
+        processingResults: batchProcessing.results,
+        imageDataUrls: batchImages,
+        theme: theme as 'light' | 'dark',
+        currency,
+        t,
+        processingState: batchProcessing.isProcessing ? {
+            isProcessing: true,
+            progress: batchProcessing.progress,
+            states: batchProcessing.states,
+            onCancelProcessing: batchProcessing.cancel,
+        } : undefined,
+        credits: userCredits ? {
+            remaining: userCredits.remaining,
+            superRemaining: userCredits.superRemaining,
+        } : undefined,
+        onEditReceipt: handleBatchEditReceipt,
+        onCancel: handleBatchReviewBack,
+        onSaveComplete: handleBatchSaveComplete,
+        saveTransaction: handleBatchSaveTransaction,
+    });
+
+    const transactionEditorViewProps = useTransactionEditorViewProps({
+        user,
+        currentTransaction,
+        transactionEditorMode,
+        isViewingReadOnly,
+        transactionNavigationList,
+        scanState: {
+            phase: scanState.phase,
+            images: scanState.images,
+            batchEditingIndex: scanState.batchEditingIndex,
+            batchReceipts: scanState.batchReceipts,
+        },
+        isAnalyzing,
+        scanError,
+        skipScanCompleteModal,
+        isRescanning,
+        activeGroup: activeGroup ? {
+            memberProfiles: activeGroup.memberProfiles,
+        } : null,
+        availableGroups: availableGroupsForSelector,
+        groupsLoading: sharedGroupsLoading,
+        userCredits,
+        userPreferences: {
+            defaultCity,
+            defaultCountry,
+        },
+        distinctAliases,
+        itemNameMappings,
+        theme: theme as 'light' | 'dark',
+        t,
+        formatCurrency,
+        currency,
+        lang,
+        storeCategories: STORE_CATEGORIES as unknown as string[],
+        isSaving: isTransactionSaving,
+        animateItems: animateEditViewItems,
+        creditUsedInSession,
+        onUpdateTransaction: handleEditorUpdateTransaction,
+        onSave: handleEditorSave,
+        onCancel: handleEditorCancel,
+        onPhotoSelect: handleEditorPhotoSelect,
+        onProcessScan: handleEditorProcessScan,
+        onRetry: handleEditorRetry,
+        onRescan: handleEditorRescan,
+        onDelete: handleEditorDelete,
+        onSaveMapping: saveMapping,
+        onSaveMerchantMapping: saveMerchantMapping,
+        onSaveSubcategoryMapping: saveSubcategoryMapping,
+        onSaveItemNameMapping: saveItemNameMapping,
+        onBatchPrevious: handleEditorBatchPrevious,
+        onBatchNext: handleEditorBatchNext,
+        onBatchModeClick: handleEditorBatchModeClick,
+        onGroupsChange: handleEditorGroupsChange,
+        onRequestEdit: handleRequestEditFromReadOnly,
+    });
+
+    const dashboardViewProps = useDashboardViewProps({
+        // Core data
+        transactions: activeRecentTransactions as any,
+        allTransactions: activeTransactions as any,
+        recentScans: activeRecentTransactions as any,
+        // User info
+        userId: user?.uid || null,
+        appId: services?.appId || '',
+        // UI settings
+        theme,
+        colorTheme,
+        currency,
+        dateFormat,
+        lang,
+        t,
+        formatCurrency,
+        formatDate: formatDate as (date: string, format: string) => string,
+        getSafeDate,
+        fontColorMode,
+        // Location defaults
+        defaultCountry,
+        foreignLocationFormat: userPreferences.foreignLocationFormat || 'flag',
+        // Callbacks
+        onCreateNew: () => handleNewTransaction(false),
+        onViewTrends: (month: string | null) => {
+            if (month) {
+                const year = month.substring(0, 4);
+                const quarter = getQuarterFromMonth(month);
+                setAnalyticsInitialState({
+                    temporal: {
+                        level: 'month',
+                        year,
+                        quarter,
+                        month,
+                    },
+                    category: { level: 'all' },
+                    chartMode: 'aggregation',
+                    drillDownMode: 'temporal',
+                });
+            } else {
+                setAnalyticsInitialState(null);
+            }
+            setView('trends');
+        },
+        onEditTransaction: (transaction: any) => {
+            navigateToTransactionDetail(transaction as Transaction);
+        },
+        onTriggerScan: triggerScan,
+        onViewRecentScans: () => setView('recent-scans'),
+    });
+
+    // Clear all learned data handler
+    const handleClearAllLearnedData = useCallback(async () => {
+        // Delete all learned mappings in parallel
+        const deletePromises: Promise<void>[] = [];
+
+        // Delete all category mappings
+        for (const mapping of mappings) {
+            if (mapping.id) {
+                deletePromises.push(deleteMapping(mapping.id));
+            }
+        }
+
+        // Delete all merchant mappings
+        for (const mapping of merchantMappings) {
+            if (mapping.id) {
+                deletePromises.push(deleteMerchantMapping(mapping.id));
+            }
+        }
+
+        // Delete all subcategory mappings
+        for (const mapping of subcategoryMappings) {
+            if (mapping.id) {
+                deletePromises.push(deleteSubcategoryMapping(mapping.id));
+            }
+        }
+
+        // Revoke all trusted merchants
+        for (const merchant of trustedMerchants) {
+            deletePromises.push(removeTrust(merchant.merchantName));
+        }
+
+        // Phase 5: Delete all item name mappings
+        for (const mapping of itemNameMappings) {
+            if (mapping.id) {
+                deletePromises.push(deleteItemNameMapping(mapping.id));
+            }
+        }
+
+        await Promise.all(deletePromises);
+        setToastMessage({ text: t('clearAllLearnedDataSuccess') || 'All learned data cleared', type: 'success' });
+    }, [
+        mappings, deleteMapping,
+        merchantMappings, deleteMerchantMapping,
+        subcategoryMappings, deleteSubcategoryMapping,
+        trustedMerchants, removeTrust,
+        itemNameMappings, deleteItemNameMapping,
+        setToastMessage, t
+    ]);
+
+    const settingsViewProps = useSettingsViewProps({
+        // Core settings
+        lang,
+        currency,
+        dateFormat,
+        theme,
+        wiping,
+        exporting,
+        t,
+        onSetLang: (l: string) => setLang(l as Language),
+        onSetCurrency: (c: string) => setCurrency(c as Currency),
+        onSetDateFormat: (f: string) => setDateFormat(f as 'LatAm' | 'US'),
+        onSetTheme: (th: string) => setTheme(th as Theme),
+        onExportAll: handleExportData,
+        onWipeDB: wipeDB,
+        onSignOut: signOut,
+        // Category mappings
+        mappings,
+        mappingsLoading,
+        onDeleteMapping: deleteMapping,
+        onEditMapping: (id, cat) => updateCategoryMapping(id, cat as StoreCategory),
+        // Color theme
+        colorTheme,
+        onSetColorTheme: (ct: string) => setColorTheme(ct as ColorTheme),
+        // Font color mode
+        fontColorMode,
+        onSetFontColorMode: (mode: string) => setFontColorMode(mode as FontColorMode),
+        // Font family
+        fontFamily,
+        onSetFontFamily: (ff: string) => setFontFamilyPref(ff as 'outfit' | 'space'),
+        // Font size
+        fontSize,
+        onSetFontSize: (fs: string) => setFontSize(fs as FontSize),
+        // Default location
+        defaultCountry,
+        defaultCity,
+        onSetDefaultCountry: setDefaultCountryPref,
+        onSetDefaultCity: setDefaultCityPref,
+        // Merchant mappings
+        merchantMappings,
+        merchantMappingsLoading,
+        onDeleteMerchantMapping: deleteMerchantMapping,
+        onEditMerchantMapping: updateMerchantMapping,
+        // Default scan currency
+        defaultScanCurrency: userPreferences.defaultCurrency,
+        onSetDefaultScanCurrency: setDefaultScanCurrencyPref,
+        // Foreign location format
+        foreignLocationFormat: userPreferences.foreignLocationFormat || 'flag',
+        onSetForeignLocationFormat: setForeignLocationFormatPref,
+        // Subcategory mappings
+        subcategoryMappings,
+        subcategoryMappingsLoading,
+        onDeleteSubcategoryMapping: deleteSubcategoryMapping,
+        onUpdateSubcategoryMapping: updateSubcategoryMapping,
+        // Firebase context
+        db: services?.db || null,
+        userId: user?.uid || null,
+        appId: services?.appId || null,
+        // Trusted merchants
+        trustedMerchants,
+        trustedMerchantsLoading,
+        onRevokeTrust: removeTrust,
+        // Item name mappings
+        itemNameMappings,
+        itemNameMappingsLoading,
+        onDeleteItemNameMapping: deleteItemNameMapping,
+        onUpdateItemNameMapping: updateItemNameMapping,
+        // Clear all learned data
+        onClearAllLearnedData: handleClearAllLearnedData,
+        // Profile editing
+        userEmail: user?.email || '',
+        displayName: userPreferences.displayName || user?.displayName || '',
+        phoneNumber: userPreferences.phoneNumber || '',
+        birthDate: userPreferences.birthDate || '',
+        onSetDisplayName: setDisplayNamePref,
+        onSetPhoneNumber: setPhoneNumberPref,
+        onSetBirthDate: setBirthDatePref,
+        // Subscription info
+        plan: 'freemium',
+        creditsRemaining: userCredits.remaining,
+        superCreditsRemaining: userCredits.superRemaining,
+        // Controlled subview state
+        currentSubview: settingsSubview,
+        onSubviewChange: setSettingsSubview,
+    });
+
+    // ItemsView data props composition
+    const itemsViewProps = useItemsViewProps({
+        // Core data
+        transactions: activeTransactions as any,
+        // User info
+        userId: user?.uid || null,
+        appId: services?.appId || '',
+        userName: user?.displayName || '',
+        userEmail: user?.email || '',
+        // UI settings
+        theme,
+        colorTheme,
+        currency,
+        dateFormat,
+        lang,
+        t,
+        formatCurrency,
+        formatDate: formatDate as any,
+        fontColorMode,
+        // Location defaults
+        defaultCountry,
+        onEditTransaction: (transactionId, allTransactionIds) => {
+            const tx = activeTransactions.find(t => t.id === transactionId);
+            if (tx) {
+                navigateToTransactionDetail(tx as Transaction, allTransactionIds);
+            }
+        },
+    });
+
+    // =========================================================================
+    // Early returns for loading/error states
+    // These come AFTER hooks to satisfy React's rules of hooks
+    // =========================================================================
+
+    if (initError) {
+        return <div className="p-10 text-center text-red-500 font-bold">Error: {initError}</div>;
+    }
+
+    if (!user) {
+        return <LoginScreen onSignIn={signIn} onTestSignIn={() => signInWithTestCredentials()} t={t} />;
+    }
+
     return (
-        // Story 14d.4c: ScanProvider moved to main.tsx - App now uses useScan() directly
+        // ScanProvider is in main.tsx - App uses useScan() directly
         <>
-            {/* Story 14d.3: Browser back button blocker for scan dialogs (AC #5-7) */}
-            <NavigationBlocker currentView={view} />
-            {/* Story 14c-refactor.11: AppLayout provides app shell with theme classes */}
+            {/* All overlays (scan, quick-save, insights, session, dialogs) */}
+            <AppOverlays
+                // Core dependencies
+                currentView={view}
+                lang={lang}
+                theme={theme as 'light' | 'dark'}
+                t={t}
+                // ScanContext state
+                scanState={scanState}
+                scanOverlay={scanOverlay}
+                isAnalyzing={isAnalyzing}
+                scanImages={scanImages}
+                // Scan overlay handlers
+                onScanOverlayCancel={handleScanOverlayCancel}
+                onScanOverlayRetry={handleScanOverlayRetry}
+                onScanOverlayDismiss={handleScanOverlayDismiss}
+                // QuickSaveCard props
+                onQuickSave={handleQuickSave}
+                onQuickSaveEdit={handleQuickSaveEdit}
+                onQuickSaveCancel={handleQuickSaveCancel}
+                onQuickSaveComplete={handleQuickSaveComplete}
+                isQuickSaving={isQuickSaving}
+                currency={currency}
+                formatCurrency={formatCurrency}
+                userDefaultCountry={defaultCountry}
+                activeGroupForQuickSave={viewMode === 'group' && activeGroup ? {
+                    id: activeGroup.id!,
+                    name: activeGroup.name,
+                    color: activeGroup.color,
+                    icon: activeGroup.icon || undefined,
+                } : null}
+                // Insight card props
+                showInsightCard={showInsightCard}
+                currentInsight={currentInsight}
+                onInsightDismiss={() => {
+                    setShowInsightCard(false);
+                    if (sessionContext) {
+                        setShowSessionComplete(true);
+                    }
+                }}
+                // Session complete props
+                showSessionComplete={showSessionComplete}
+                sessionContext={sessionContext}
+                onSessionCompleteDismiss={() => {
+                    setShowSessionComplete(false);
+                    setSessionContext(null);
+                }}
+                onSessionCompleteAction={(action: SessionAction) => {
+                    switch (action) {
+                        case 'analytics':
+                            setView('trends');
+                            break;
+                        case 'scan':
+                            setView('dashboard');
+                            break;
+                        case 'history': {
+                            const now = new Date();
+                            const year = String(now.getFullYear());
+                            const month = `${year}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                            handleNavigateToHistory({
+                                temporal: {
+                                    level: 'month',
+                                    year,
+                                    month,
+                                },
+                            });
+                            break;
+                        }
+                    }
+                }}
+                // Personal record banner props
+                showRecordBanner={showRecordBanner}
+                recordToCelebrate={recordToCelebrate}
+                onRecordDismiss={dismissRecord}
+                // Credit warning dialog props
+                showCreditWarning={showCreditWarning}
+                creditCheckResult={creditCheckResult}
+                batchImageCount={batchImages.length}
+                onCreditWarningConfirm={handleCreditWarningConfirm}
+                onCreditWarningCancel={handleCreditWarningCancel}
+                onReduceBatch={handleReduceBatch}
+                // Batch summary props
+                showBatchSummary={showBatchSummary}
+                batchSession={batchSession}
+                transactions={transactions}
+                insightCache={insightCache}
+                onBatchSummarySilence={() => {
+                    const newCache = isInsightsSilenced(insightCache)
+                        ? clearSilence(insightCache)
+                        : silenceInsights(insightCache, 4);
+                    setLocalCache(newCache);
+                }}
+                onBatchSummaryDismiss={() => {
+                    setShowBatchSummary(false);
+                    clearBatch();
+                    setView('dashboard');
+                }}
+                // Trust merchant prompt props
+                showTrustPrompt={showTrustPrompt}
+                trustPromptData={trustPromptData}
+                onAcceptTrust={handleAcceptTrust}
+                onDeclineTrust={handleDeclineTrust}
+                // Currency/Total mismatch dialog props
+                userCurrency={userPreferences.defaultCurrency || 'CLP'}
+                onCurrencyUseDetected={handleCurrencyUseDetected}
+                onCurrencyUseDefault={handleCurrencyUseDefault}
+                onCurrencyMismatchCancel={handleCurrencyMismatchCancel}
+                onTotalUseItemsSum={handleTotalUseItemsSum}
+                onTotalKeepOriginal={handleTotalKeepOriginal}
+                onTotalMismatchCancel={handleTotalMismatchCancel}
+                // Transaction conflict dialog props
+                showConflictDialog={showConflictDialog}
+                conflictDialogData={conflictDialogData}
+                onConflictClose={handleConflictClose}
+                onConflictViewCurrent={handleConflictViewCurrent}
+                onConflictDiscard={handleConflictDiscard}
+                // Batch complete modal props
+                userCreditsRemaining={userCredits.superRemaining ?? 0}
+                onBatchCompleteDismiss={dismissScanDialog}
+                onBatchCompleteNavigateToHistory={(payload) => {
+                    dismissScanDialog();
+                    handleNavigateToHistory(payload);
+                }}
+                onBatchCompleteGoHome={() => {
+                    dismissScanDialog();
+                    setView('dashboard');
+                }}
+                // Utility functions
+                getLastWeekTotal={getLastWeekTotal}
+                isInsightsSilenced={isInsightsSilenced}
+            />
+            {/* AppLayout provides app shell with theme classes */}
             <AppLayout theme={theme} colorTheme={colorTheme}>
             <input
                 type="file"
@@ -3427,8 +2721,7 @@ function App() {
                 onChange={handleFileSelect}
             />
 
-            {/* Story 14c-refactor.11: Use shouldShowTopHeader() from types.ts */}
-            {/* Views that manage their own headers are excluded via the helper function */}
+            {/* Views that manage their own headers are excluded via shouldShowTopHeader() */}
             {shouldShowTopHeader(view) && (
                 <TopHeader
                     variant={
@@ -3485,18 +2778,11 @@ function App() {
                 </div>
             )}
 
-            {/* Story 11.6: Main content area with flex-1 and overflow (AC #2, #4, #5) */}
-            {/* Story 14.10: Added pt-12 (48px) to account for fixed header (AC #5) */}
-            {/* Story 14.12: Increased top padding for larger header (72px) + gap for mobile visibility */}
-            {/* Story 14.14b: TrendsView now has its own sticky header like HistoryView, so no padding needed */}
-            {/* Story 14.14: HistoryView has its own sticky header, so no top padding needed */}
-            {/* Story 14.16: ReportsView has its own fixed header and padding, so no main padding needed */}
-            {/* Story 14.15: ScanResultView has its own header, so no padding needed */}
-            {/* Story 14.15b: EditView now has its own header matching ScanResultView */}
-            {/* pb-24 (96px) accounts for nav bar (~70px) + safe area bottom */}
-            {/* Story 14.22: Added ref for scroll position management */}
-            {/* Story 14d.9: Added statement-scan to full-screen views (no padding/header) */}
-            {/* Story 14.31: Added recent-scans to full-screen views */}
+            {/* Main content area:
+              * - Full-screen views (history, trends, reports, etc.) manage their own headers/padding
+              * - Other views get default padding (p-3) with nav bar allowance (pb-24)
+              * - ref enables scroll position management
+              */}
             <main
                 ref={mainRef}
                 className={`flex-1 overflow-y-auto ${(view === 'reports' || view === 'history' || view === 'items' || view === 'trends' || view === 'scan-result' || view === 'edit' || view === 'transaction-editor' || view === 'batch-capture' || view === 'batch-review' || view === 'statement-scan' || view === 'recent-scans' || view === 'insights' || view === 'alerts') ? '' : 'p-3'}`}
@@ -3507,473 +2793,67 @@ function App() {
                         : 'calc(5rem + env(safe-area-inset-top, 0px))'
                 }}
             >
-                {/* Story 10a.1: Wrap DashboardView with HistoryFiltersProvider for filter context (AC #2, #6) */}
+                {/* ViewHandlersProvider provides handler bundles via context.
+                  * Views use useViewHandlers() to access handlers directly.
+                  */}
+                <ViewHandlersProvider
+                    transaction={transactionHandlers}
+                    scan={scanHandlers}
+                    navigation={navigationHandlers}
+                    dialog={dialogHandlers}
+                >
                 {view === 'dashboard' && (
                     <HistoryFiltersProvider>
-                        <DashboardView
-                            transactions={activeRecentTransactions as any}
-                            t={t}
-                            currency={currency}
-                            dateFormat={dateFormat}
-                            theme={theme}
-                            formatCurrency={formatCurrency}
-                            formatDate={formatDate as any}
-                            getSafeDate={getSafeDate}
-                            onCreateNew={() => handleNewTransaction(false)}
-                            onViewTrends={(month: string | null) => {
-                                // Story 10a.2: Build initial analytics state when month is provided (AC #1, #2)
-                                if (month) {
-                                    // month format is "YYYY-MM" (e.g., "2024-12")
-                                    const year = month.substring(0, 4);
-                                    const quarter = getQuarterFromMonth(month);
-                                    setAnalyticsInitialState({
-                                        temporal: {
-                                            level: 'month',
-                                            year,
-                                            quarter,
-                                            month,
-                                        },
-                                        category: { level: 'all' },
-                                        chartMode: 'aggregation',
-                                        drillDownMode: 'temporal',
-                                    });
-                                } else {
-                                    // Total Spent - default to year view
-                                    setAnalyticsInitialState(null);
-                                }
-                                setView('trends');
-                            }}
-                            onEditTransaction={(transaction: any) => {
-                                // Story 14.41: Navigate to read-only detail view first (consistent with HistoryView)
-                                // User clicks "Edit" button in detail view to enter edit mode
-                                navigateToTransactionDetail(transaction as Transaction);
-                            }}
-                            onTriggerScan={triggerScan}
-                            allTransactions={activeTransactions as any}
-                            // Story 9.12: Language for category translations
-                            lang={lang}
-                            // Story 14.13: Navigate to history with category filter (for treemap cell clicks)
-                            onNavigateToHistory={handleNavigateToHistory}
-                            // Story 14.14: Color theme for unified TransactionCard display
-                            colorTheme={colorTheme}
-                            // Story 14.15b: Selection mode props for group/delete operations
-                            userId={user?.uid}
-                            appId={services?.appId}
-                            // In group mode, use recent shared transactions; in personal mode, use createdAt-sorted
-                            recentScans={activeRecentTransactions as any}
-                            // Story 14.13: Font color mode for category text reactivity
-                            fontColorMode={fontColorMode}
-                            // Story 14.31: Navigate to recent scans view (Ver todo)
-                            onViewRecentScans={() => setView('recent-scans')}
-                            // Story 14.35b: Foreign location display settings
-                            defaultCountry={defaultCountry}
-                            foreignLocationFormat={userPreferences.foreignLocationFormat}
-                        />
+                        <DashboardView {...dashboardViewProps} />
                     </HistoryFiltersProvider>
                 )}
 
-                {/* Story 9.9: ScanView is deprecated - scan functionality is now in EditView
-                {view === 'scan' && (
-                    <ScanView
-                        scanImages={scanImages}
-                        isAnalyzing={isAnalyzing}
-                        scanError={scanError}
-                        theme={theme}
-                        t={t}
-                        onBack={() => setView('dashboard')}
-                        onAddPhoto={() => fileInputRef.current?.click()}
-                        onProcessScan={processScan}
-                    />
-                )}
-                */}
-
-                {/* Story 14.23: DEPRECATED - ScanResultView replaced by TransactionEditorView
-                 * This rendering block is commented out as part of the migration.
-                 * All new transaction flows now use TransactionEditorView.
-                 * Remove this commented block after verifying TransactionEditorView works correctly.
-                {view === 'scan-result' && (
-                    <ScanResultView ... />
-                )}
-                */}
-
-                {/* Story 14.23: DEPRECATED - EditView replaced by TransactionEditorView
-                 * This rendering block is commented out as part of the migration.
-                 * All edit transaction flows now use TransactionEditorView.
-                 * Remove this commented block after verifying TransactionEditorView works correctly.
-                {view === 'edit' && currentTransaction && (
-                    <EditView ... />
-                )}
-                */}
-
-                {/* Story 14.23: TransactionEditorView - Unified transaction editor */}
+                {/* TransactionEditorView - Unified transaction editor */}
                 {view === 'transaction-editor' && (
                     <TransactionEditorView
-                        // Story 12.1 v9.7.0: Key forces re-mount when navigating between batch receipts
-                        // Story 14d.5d: Now using ScanContext batchEditingIndex
                         key={scanState.batchEditingIndex !== null ? `batch-${scanState.batchEditingIndex}` : 'single'}
-                        transaction={currentTransaction}
-                        mode={transactionEditorMode}
-                        // Story 14.24: Read-only mode for viewing transactions from History
-                        readOnly={isViewingReadOnly}
-                        onRequestEdit={handleRequestEditFromReadOnly}
-                        isOtherUserTransaction={Boolean(currentTransaction?._ownerId && currentTransaction._ownerId !== user?.uid)}
-                        ownerId={currentTransaction?._ownerId}
-                        ownerProfile={currentTransaction?._ownerId && activeGroup?.memberProfiles
-                            ? activeGroup.memberProfiles[currentTransaction._ownerId]
-                            : undefined
-                        }
-                        scanButtonState={scanButtonState}
-                        isProcessing={isAnalyzing}
-                        processingEta={null}
-                        scanError={scanError}
-                        // v9.7.0: Skip ScanCompleteModal when coming from QuickSaveCard edit
-                        skipScanCompleteModal={skipScanCompleteModal}
-                        // Story 14d.4c: Always use scanImages[0] as fallback if available
-                        // This ensures thumbnail shows even if Cloud Function didn't return thumbnailUrl
-                        thumbnailUrl={currentTransaction?.thumbnailUrl || (scanImages.length > 0 ? scanImages[0] : undefined)}
-                        // v9.7.0: Pass pendingImageUrl during both 'pending' and 'scanning' states
-                        // so the captured image shows while processing
-                        pendingImageUrl={(scanButtonState === 'pending' || scanButtonState === 'scanning') && scanImages.length > 0 ? scanImages[0] : undefined}
-                        onUpdateTransaction={(trans) => {
-                            // Story 14.24: Update currentTransaction for UI
-                            // Story 14d.4e: ScanContext persists state automatically via save effect
-                            setCurrentTransaction(trans as any);
-
-                            // This ensures sharedGroupIds and other changes are persisted when navigating
-                            // between batch receipts or going back to batch-review
-                            if (scanState.batchEditingIndex !== null && scanState.batchReceipts) {
-                                const receiptId = scanState.batchReceipts[scanState.batchEditingIndex]?.id;
-                                if (receiptId) {
-                                    updateBatchReceiptContext(receiptId, { transaction: trans as any });
-                                }
-                            }
-                        }}
-                        onSave={async (trans) => {
-                            // Story 14d.5: Prevent double-click by tracking saving state
-                            if (isTransactionSaving) return;
-                            setIsTransactionSaving(true);
-                            try {
-                                await saveTransaction(trans);
-                                // Story 14.24: Reset all scan state after successful save
-                                // Story 14.13 Session 6: Clear transaction navigation list
-                                // Story 14d.4c: setScanImages([]) resets to idle phase
-                                setScanImages([]);
-                                setScanError(null);
-                                // Story 14d.4e: setScanImages([]) resets state machine - no need for setPendingScan(null)
-                                setCurrentTransaction(null);
-                                setIsViewingReadOnly(false);
-                                setCreditUsedInSession(false);
-                                setTransactionNavigationList(null);
-                            } finally {
-                                setIsTransactionSaving(false);
-                            }
-                        }}
-                        onCancel={() => {
-                            // Story 14.23: Reset scan state and navigate back
-                            // Story 14.24: Clear scan state on explicit discard, reset read-only mode
-                            // Story 14.13 Session 6: Clear transaction navigation list
-                            // Story 14d.4c: setScanImages([]) resets to idle phase
-                            setScanImages([]);
-                            setScanError(null);
-                            // Story 14d.4e: setScanImages([]) resets state machine - no need for setPendingScan(null)
-                            setCurrentTransaction(null);
-                            setAnimateEditViewItems(false);
-                            setIsViewingReadOnly(false);
-                            setCreditUsedInSession(false);
-                            setTransactionNavigationList(null);
-                            // Story 14d.5d AC5: Now using ScanContext batchEditingIndex
-                            if (scanState.batchEditingIndex !== null) {
-                                setBatchEditingIndexContext(null);
-                                setView('batch-review');
-                            } else {
-                                navigateBack();
-                            }
-                        }}
-                        onPhotoSelect={(file) => {
-                            // Convert file to base64 and update scan state
-                            const reader = new FileReader();
-                            reader.onload = () => {
-                                const base64 = reader.result as string;
-                                // Story 14d.4c: setScanImages will transition to 'capturing' phase (→ pending button)
-                                // Story 14d.4e: setScanImages wrapper handles state machine updates
-                                setScanImages([base64]);
-                            };
-                            reader.readAsDataURL(file);
-                        }}
-                        onProcessScan={() => {
-                            // Story 14d.4c: dispatchProcessStart sets phase to 'scanning'
-                            processScan();
-                        }}
-                        onRetry={() => {
-                            // Clear error and retry
-                            // Story 14d.4c: dispatchProcessStart sets phase to 'scanning'
-                            setScanError(null);
-                            processScan();
-                        }}
-                        onRescan={transactionEditorMode === 'existing' ? async () => {
-                            // Re-scan existing transaction
-                            // Story 14d.4c: handleRescan calls dispatchProcessStart which sets phase to 'scanning'
-                            await handleRescan();
-                        } : undefined}
-                        isRescanning={isRescanning}
-                        onDelete={transactionEditorMode === 'existing' ? deleteTransaction : undefined}
-                        onSaveMapping={saveMapping}
-                        onSaveMerchantMapping={saveMerchantMapping}
-                        onSaveSubcategoryMapping={saveSubcategoryMapping}
-                        onSaveItemNameMapping={saveItemNameMapping}
-                        onShowToast={(text) => setToastMessage({ text, type: 'success' })}
-                        theme={theme as 'light' | 'dark'}
-                        t={t}
-                        formatCurrency={formatCurrency}
-                        currency={currency}
-                        lang={lang}
-                        credits={userCredits}
-                        storeCategories={STORE_CATEGORIES as unknown as string[]}
-                        distinctAliases={distinctAliases}
-                        // Story 14.13 Session 6: Support both batch editing context and transaction list navigation
-                        // Priority: batchEditingIndex (from ScanContext) > transactionNavigationList (from ItemsView)
-                        // Story 14d.5d AC3: Now using ScanContext batchEditingIndex + batchReceipts
-                        batchContext={
-                            scanState.batchEditingIndex !== null && scanState.batchReceipts
-                                ? { index: scanState.batchEditingIndex + 1, total: scanState.batchReceipts.length }
-                                : transactionNavigationList && currentTransaction?.id
-                                    ? { index: transactionNavigationList.indexOf(currentTransaction.id) + 1, total: transactionNavigationList.length }
-                                    : null
-                        }
-                        onBatchPrevious={
-                            scanState.batchEditingIndex !== null
-                                ? handleBatchPrevious
-                                : transactionNavigationList
-                                    ? handleTransactionListPrevious
-                                    : undefined
-                        }
-                        onBatchNext={
-                            scanState.batchEditingIndex !== null
-                                ? handleBatchNext
-                                : transactionNavigationList
-                                    ? handleTransactionListNext
-                                    : undefined
-                        }
-                        defaultCity={defaultCity}
-                        defaultCountry={defaultCountry}
-                        onCreditInfoClick={() => setShowCreditInfoModal(true)}
-                        isSaving={isTransactionSaving}
-                        animateItems={animateEditViewItems}
-                        // Story 14.24: Only show credit warning if a credit was actually used in this session
-                        // (not just because an existing transaction has a thumbnail)
-                        creditUsed={creditUsedInSession}
-                        // Phase 4: Cross-store suggestions - pass all item name mappings
-                        itemNameMappings={itemNameMappings}
-                        // Batch mode: Allow switching to batch scan from single scan mode
-                        // Story 14d.5a-phase2: Context is now sole source of truth for batch mode
-                        onBatchModeClick={() => {
-                            if (user?.uid) {
-                                startBatchScanContext(user.uid);
-                            }
-                            navigateToView('batch-capture');
-                        }}
-                        availableGroups={availableGroupsForSelector}
-                        groupsLoading={sharedGroupsLoading}
-                        onGroupsChange={async (groupIds) => {
-                            // Update memberUpdates timestamps for affected groups
-                            if (user?.uid && currentTransaction) {
-                                const previousGroupIds = currentTransaction.sharedGroupIds || [];
-
-                                // Debug logging for cache clearing
-                                if (import.meta.env.DEV) {
-                                    console.log('[App] onGroupsChange:', {
-                                        transactionId: currentTransaction.id,
-                                        previousGroupIds,
-                                        newGroupIds: groupIds,
-                                    });
-                                }
-
-                                // Fire and forget - don't block the UI
-                                updateMemberTimestampsForTransaction(
-                                    db,
-                                    user.uid,
-                                    groupIds,
-                                    previousGroupIds
-                                ).catch(err => {
-                                    console.warn('[App] Failed to update memberUpdates:', err);
-                                });
-
-                                // This ensures untagged transactions don't appear in stale cache
-                                const affectedGroupIds = new Set([...previousGroupIds, ...groupIds]);
-
-                                if (import.meta.env.DEV) {
-                                    console.log('[App] Clearing cache for groups:', Array.from(affectedGroupIds));
-                                }
-
-                                // Groups the transaction was REMOVED from
-                                const removedFromGroups = previousGroupIds.filter(id => !groupIds.includes(id));
-                                // Groups the transaction was ADDED to
-                                const addedToGroups = groupIds.filter(id => !previousGroupIds.includes(id));
-
-                                // Story 14c-refactor.4: clearGroupCacheById removed (IndexedDB cache deleted)
-                                // Only doing React Query optimistic updates now
-                                // TODO(14c-refactor.12): Dead code - sharedGroupTransactions query keys removed.
-                                // This entire function is a no-op since shared groups are stubbed.
-                                // Remove in Epic 14c-refactor Part 5 (App.tsx decomposition).
-                                const updateCachesForGroup = (groupId: string) => {
-                                    // Optimistically update in-memory cache based on whether
-                                    // transaction was added or removed from this group
-                                    queryClient.setQueriesData(
-                                        { queryKey: ['sharedGroupTransactions', groupId], exact: false },
-                                        (oldData: Transaction[] | undefined) => {
-                                            if (!oldData || !currentTransaction.id) return oldData;
-
-                                            if (removedFromGroups.includes(groupId)) {
-                                                // Remove transaction from this group's cache
-                                                const filtered = oldData.filter(tx => tx.id !== currentTransaction.id);
-                                                if (import.meta.env.DEV) {
-                                                    console.log(`[App] Optimistic update: removed txn from group ${groupId}`, {
-                                                        before: oldData.length,
-                                                        after: filtered.length,
-                                                    });
-                                                }
-                                                return filtered;
-                                            }
-
-                                            if (addedToGroups.includes(groupId)) {
-                                                // Add transaction to this group's cache (with updated sharedGroupIds)
-                                                const updatedTxn = {
-                                                    ...currentTransaction,
-                                                    sharedGroupIds: groupIds,
-                                                    _ownerId: user.uid,
-                                                };
-                                                // Check if already exists (avoid duplicates)
-                                                const exists = oldData.some(tx => tx.id === currentTransaction.id);
-                                                if (exists) {
-                                                    return oldData.map(tx =>
-                                                        tx.id === currentTransaction.id ? updatedTxn : tx
-                                                    );
-                                                }
-                                                if (import.meta.env.DEV) {
-                                                    console.log(`[App] Optimistic update: added txn to group ${groupId}`);
-                                                }
-                                                return [updatedTxn, ...oldData];
-                                            }
-
-                                            // Transaction stayed in group, just update the sharedGroupIds
-                                            return oldData.map(tx =>
-                                                tx.id === currentTransaction.id
-                                                    ? { ...tx, sharedGroupIds: groupIds }
-                                                    : tx
-                                            );
-                                        }
-                                    );
-                                };
-
-                                // Process all groups (sync after IndexedDB removal)
-                                affectedGroupIds.forEach(updateCachesForGroup);
-                            }
-                        }}
+                        {...transactionEditorViewProps}
                     />
                 )}
 
+                {/* TrendsView with filters and analytics providers */}
                 {view === 'trends' && (
-                    // Story 10a.2: Pass initial state to navigate to specific month (AC #1, #2)
-                    // Key forces remount when initial state changes to apply new initial value
-                    // Story 14.14b: Wrap with HistoryFiltersProvider for IconFilterBar support
                     <HistoryFiltersProvider>
                         <AnalyticsProvider
                             key={analyticsInitialState ? JSON.stringify(analyticsInitialState.temporal) : 'default'}
                             initialState={analyticsInitialState ?? undefined}
                         >
                             <TrendsView
-                                transactions={activeTransactions}
-                                theme={theme as 'light' | 'dark'}
-                                colorTheme={colorTheme}
-                                currency={currency}
-                                locale={lang}
-                                t={t}
-                                onEditTransaction={(transaction) => {
-                                    // Story 14.23: Use unified TransactionEditorView for existing transactions
-                                    navigateToTransactionEditor('existing', transaction);
-                                }}
-                                exporting={exporting}
-                                onExporting={setExporting}
-                                onUpgradeRequired={() => {
-                                    setToastMessage({ text: t('upgradeRequired'), type: 'info' });
-                                }}
-                                // Story 9.20: Navigation from analytics badge to filtered History (AC #3)
-                                onNavigateToHistory={handleNavigateToHistory}
-                                // Story 14.14b: Header consistency props
-                                onBack={() => setView('dashboard')}
-                                userName={user?.displayName || ''}
-                                userEmail={user?.email || ''}
-                                onNavigateToView={(viewName) => {
-                                    if (viewName === 'settings') {
-                                        setView('settings');
-                                    } else if (viewName === 'history') {
-                                        // Navigate to history with current month filter
-                                        const now = new Date();
-                                        const year = String(now.getFullYear());
-                                        const month = `${year}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-                                        handleNavigateToHistory({
-                                            temporal: {
-                                                level: 'month',
-                                                year,
-                                                month,
-                                            },
-                                        });
-                                    } else if (viewName === 'reports') {
-                                        setView('reports');
-                                    }
-                                }}
-                                // Story 14.14b: Groups support for IconFilterBar
-                                userId={user?.uid || ''}
-                                appId={services?.appId || ''}
-                                // Story 14.13 Session 7: Restore distribution view on back navigation
-                                initialDistributionView={pendingDistributionView || undefined}
-                                // Story 14.13: Font color mode for category text reactivity
-                                fontColorMode={fontColorMode}
-                                isGroupMode={isGroupMode}
-                                groupName={activeGroup?.name}
-                                groupMembers={activeGroup?.memberProfiles
-                                    ? Object.entries(activeGroup.memberProfiles).map(([uid, profile]) => ({
-                                        uid,
-                                        displayName: profile.displayName,
-                                        email: profile.email,
-                                    }))
-                                    : []
-                                }
-                                spendingByMember={sharedGroupSpendingByMember}
+                                {...trendsViewDataProps}
+                                spendingByMember={new Map(Object.entries(trendsViewDataProps.spendingByMember))}
                             />
                         </AnalyticsProvider>
                     </HistoryFiltersProvider>
                 )}
 
-                {/* Story 10a.4: InsightsView - Insight History (AC #1-6) */}
-                {/* Story 14.33b: InsightsView now has its own header matching Settings style */}
-                {view === 'insights' && (
-                    <InsightsView
-                        onBack={() => setView('dashboard')}
-                        onEditTransaction={(transactionId: string) => {
-                            // AC4: Navigate to transaction by finding it in the list
-                            // Story 14.23: Use unified TransactionEditorView for existing transactions
-                            const tx = transactions.find(t => t.id === transactionId);
-                            if (tx) {
-                                navigateToTransactionEditor('existing', tx);
-                            }
-                        }}
-                        onNavigateToView={(targetView) => navigateToView(targetView as View)}
-                        onMenuClick={() => setView('settings')}
-                        theme={theme}
-                        t={t}
-                        userName={user?.displayName || ''}
-                        userEmail={user?.email || ''}
-                    />
-                )}
+                {/* InsightsView - insight history with inline header */}
+                {view === 'insights' && renderInsightsView({
+                    onBack: () => setView('dashboard'),
+                    onEditTransaction: (transactionId: string) => {
+                        const tx = transactions.find(t => t.id === transactionId);
+                        if (tx) {
+                            navigateToTransactionEditor('existing', tx);
+                        }
+                    },
+                    onNavigateToView: (targetView) => navigateToView(targetView as View),
+                    onMenuClick: () => setView('settings'),
+                    theme,
+                    t,
+                    userName: user?.displayName || '',
+                    userEmail: user?.email || '',
+                })}
 
-                {/* Story 12.1: Batch Capture UI - dedicated batch mode view (AC #1-9) */}
-                {/* Story 14d.5a-phase2: isBatchMode now read from ScanContext */}
+                {/* BatchCaptureView - batch mode from ScanContext */}
                 {view === 'batch-capture' && (
                     <BatchCaptureView
                         isBatchMode={isBatchModeFromContext}
                         onToggleMode={(batchMode) => {
-                            // Story 14d.5a-phase2: Toggle via context instead of local state
+                            // Toggle via context - controls batch/individual mode
                             if (batchMode && user?.uid) {
                                 startBatchScanContext(user.uid);
                             } else if (!batchMode) {
@@ -3983,14 +2863,11 @@ function App() {
                             }
                         }}
                         onProcessBatch={async (images) => {
-                            // Story 12.1 v9.7.0: Direct batch processing without credit warning popup
-                            // Process immediately like single scan - no intermediate confirmation
+                            // Direct batch processing - no intermediate confirmation
                             setBatchImages(images);
-
-                            // Story 14d.5b: Set images in ScanContext for state machine tracking
                             setScanContextImages(images);
 
-                            // Story 14d.4e: Deduct super credit IMMEDIATELY to Firestore to prevent exploits
+                            // Deduct super credit IMMEDIATELY to prevent exploits
                             // Credit is only restored if ALL API calls fail.
                             const deducted = await deductUserSuperCredits(1);
                             if (!deducted) {
@@ -4002,12 +2879,10 @@ function App() {
                             // Users can navigate away and return to see progress
                             setView('batch-review');
 
-                            // Story 14d.5b: Transition state machine to 'scanning' phase
-                            // This is required before BATCH_ITEM_* actions can be dispatched
+                            // Transition state machine to 'scanning' phase
                             dispatchProcessStart('super', 1);
 
-                            // Start parallel processing directly
-                            // Story 14d.5b: Pass ScanContext callbacks for state machine integration
+                            // Start parallel processing with state machine callbacks
                             try {
                                 const results = await batchProcessing.startProcessing(
                                     images,
@@ -4017,8 +2892,7 @@ function App() {
                                         onItemStart: dispatchBatchItemStart,
                                         onItemSuccess: dispatchBatchItemSuccess,
                                         onItemError: dispatchBatchItemError,
-                                        // Story 14d.5: Fixed race condition - create batchReceipts and pass
-                                        // to dispatchBatchComplete for atomic state update with phase transition
+                                        // Atomic state update with phase transition
                                         onComplete: (processingResults, imageUrls) => {
                                             // Add sharedGroupIds to each successful result if in group mode
                                             let taggedResults = processingResults;
@@ -4042,35 +2916,30 @@ function App() {
                                     }
                                 );
 
-                                // Check if ALL results failed (complete failure)
+                                // Restore credit only if ALL API calls failed
                                 const allFailed = results.every(r => !r.success);
                                 if (allFailed) {
-                                    // Story 14d.4e: Restore credit only if ALL API calls failed
                                     await addUserSuperCredits(1);
                                     setToastMessage({ text: t('scanFailedCreditRefunded'), type: 'info' });
                                 }
 
-                                // Story 14d.5: batchReceipts now set atomically in onComplete callback above
-                                // No need to call setBatchReceiptsContext here anymore
-                                // Story 14d.5e: Persistence handled automatically via scanState save effect
+                                // batchReceipts set atomically in onComplete callback
+                                // Persistence handled automatically via scanState save effect
                             } catch (e) {
-                                // Story 14d.4e: Restore credit on complete batch failure
+                                // Restore credit on complete batch failure
                                 console.error('Batch processing failed:', e);
                                 await addUserSuperCredits(1);
                                 setToastMessage({ text: t('scanFailedCreditRefunded'), type: 'info' });
                             }
                         }}
                         onSwitchToIndividual={() => {
-                            // Story 14d.5a-phase2d: Reset context to clear batch mode
-                            // Story 14d.5e: resetScanContext() triggers persistence clear automatically
+                            // Reset context clears batch mode and persistence
                             resetScanContext();
                             setBatchImages([]); // Clear images when switching to individual
                             handleNewTransaction(false);
                         }}
                         onBack={() => {
-                            // Story 12.1 v9.7.0: Clear batch state on explicit cancel
-                            // Story 14d.5a-phase2d: Reset context to clear batch mode
-                            // Story 14d.5e: resetScanContext() triggers persistence clear automatically
+                            // Clear batch state on cancel - resets context and persistence
                             resetScanContext();
                             setBatchImages([]);
                             setView('dashboard');
@@ -4083,355 +2952,108 @@ function App() {
                         normalCreditsAvailable={userCredits.remaining}
                         // Show credit info modal when badges tapped
                         onCreditInfoClick={() => setShowCreditInfoModal(true)}
-                        // Story 12.1 v9.7.0: Pass images for persistence across navigation
                         imageDataUrls={batchImages}
                         onImagesChange={(dataUrls) => setBatchImages(dataUrls)}
                     />
                 )}
 
-                {/* Story 12.3: Batch Review Queue - review processed receipts before saving (AC #1-8) */}
-                {/* Also shows processing progress when navigating back during batch processing */}
-                {/* Story 14d.5c AC5: processingResults still passed for type compatibility, but BatchReviewView */}
-                {/* uses context mode (scanState.batchReceipts) when isBatchReviewing is true */}
-                {view === 'batch-review' && (
-                    <BatchReviewView
-                        processingResults={batchProcessing.results}
-                        imageDataUrls={batchImages}
-                        theme={theme as 'light' | 'dark'}
-                        currency={currency}
-                        t={t}
-                        onEditReceipt={handleBatchEditReceipt}
-                        onBack={handleBatchReviewBack}
-                        onCancel={handleBatchReviewBack}
-                        onSaveComplete={handleBatchSaveComplete}
-                        saveTransaction={handleBatchSaveTransaction}
-                        // Story 12.3: Pass processing state for inline progress display
-                        processingState={batchProcessing.isProcessing ? {
-                            isProcessing: true,
-                            progress: batchProcessing.progress,
-                            states: batchProcessing.states,
-                            onCancelProcessing: batchProcessing.cancel,
-                        } : undefined}
-                        // Story 12.1 v9.7.0: Credit display in header
-                        credits={userCredits ? {
-                            remaining: userCredits.remaining,
-                            superRemaining: userCredits.superRemaining,
-                        } : undefined}
-                        onCreditInfoClick={() => setShowCreditInfoModal(true)}
-                    />
-                )}
+                {/* BatchReviewView - review processed receipts before saving */}
+                {view === 'batch-review' && <BatchReviewView {...batchReviewViewDataProps} />}
 
-                {view === 'settings' && (
-                    <SettingsView
-                        lang={lang}
-                        currency={currency}
-                        theme={theme}
-                        dateFormat={dateFormat}
-                        wiping={wiping}
-                        exporting={exporting}
-                        t={t}
-                        onSetLang={(l: string) => setLang(l as Language)}
-                        onSetCurrency={(c: string) => setCurrency(c as Currency)}
-                        onSetTheme={(th: string) => setTheme(th as Theme)}
-                        onSetDateFormat={(f: string) => setDateFormat(f as 'LatAm' | 'US')}
-                        onExportAll={handleExportData}
-                        onWipeDB={wipeDB}
-                        onSignOut={signOut}
-                        // Story 6.5: Category mappings management
-                        // Story 9.7 enhancement: Edit functionality added
-                        mappings={mappings}
-                        mappingsLoading={mappingsLoading}
-                        onDeleteMapping={deleteMapping}
-                        onEditMapping={(id, cat) => updateCategoryMapping(id, cat as StoreCategory)}
-                        // Story 7.12 AC#11: Color theme selector
-                        colorTheme={colorTheme}
-                        onSetColorTheme={(ct: string) => setColorTheme(ct as ColorTheme)}
-                        // Story 14.21: Font color mode setting
-                        fontColorMode={fontColorMode}
-                        onSetFontColorMode={(mode: string) => setFontColorMode(mode as FontColorMode)}
-                        // Story 14.22: Font family setting (persisted to Firestore)
-                        fontFamily={fontFamily}
-                        onSetFontFamily={(ff: string) => setFontFamilyPref(ff as 'outfit' | 'space')}
-                        // Story 14.37: Font size setting
-                        fontSize={fontSize}
-                        onSetFontSize={(fs: string) => setFontSize(fs as FontSize)}
-                        // Story 9.3: Default location settings
-                        // Story 14.22: Now using Firestore-backed preferences
-                        defaultCountry={defaultCountry}
-                        defaultCity={defaultCity}
-                        onSetDefaultCountry={setDefaultCountryPref}
-                        onSetDefaultCity={setDefaultCityPref}
-                        // Story 9.7: Merchant mappings management
-                        merchantMappings={merchantMappings}
-                        merchantMappingsLoading={merchantMappingsLoading}
-                        onDeleteMerchantMapping={deleteMerchantMapping}
-                        onEditMerchantMapping={updateMerchantMapping}
-                        // Story 9.8: Default scan currency setting
-                        defaultScanCurrency={userPreferences.defaultCurrency}
-                        onSetDefaultScanCurrency={setDefaultScanCurrencyPref}
-                        // Story 14.35b: Foreign location display format
-                        foreignLocationFormat={userPreferences.foreignLocationFormat}
-                        onSetForeignLocationFormat={setForeignLocationFormatPref}
-                        // Story 9.15: Subcategory mappings management
-                        subcategoryMappings={subcategoryMappings}
-                        subcategoryMappingsLoading={subcategoryMappingsLoading}
-                        onDeleteSubcategoryMapping={deleteSubcategoryMapping}
-                        onUpdateSubcategoryMapping={updateSubcategoryMapping}
-                        // Story 9.18: Push notifications settings
-                        db={services?.db || null}
-                        userId={user?.uid || null}
-                        appId={services?.appId || null}
-                        onShowToast={(text: string) => setToastMessage({ text, type: 'success' })}
-                        // Story 11.4: Trusted merchants management (AC #6, #7)
-                        trustedMerchants={trustedMerchants}
-                        trustedMerchantsLoading={trustedMerchantsLoading}
-                        onRevokeTrust={removeTrust}
-                        // Phase 5: Item name mappings management
-                        itemNameMappings={itemNameMappings}
-                        itemNameMappingsLoading={itemNameMappingsLoading}
-                        onDeleteItemNameMapping={deleteItemNameMapping}
-                        onUpdateItemNameMapping={updateItemNameMapping}
-                        // Story 14.22: Clear all learned data action
-                        onClearAllLearnedData={async () => {
-                            // Delete all learned mappings in parallel
-                            const deletePromises: Promise<void>[] = [];
+                {/* SettingsView */}
+                {view === 'settings' && <SettingsView {...settingsViewProps} />}
+                {view === 'alerts' && renderAlertsView({
+                    user,
+                    navigateToView: (v: string) => navigateToView(v as View),
+                    setView: (v: string) => setView(v as View),
+                    t,
+                    theme,
+                    pendingInvitations,
+                    services,
+                    lang: lang as 'en' | 'es',
+                    setToastMessage: (msg) => setToastMessage({ text: msg.text, type: msg.type as 'success' | 'info' }),
+                    inAppNotifications,
+                    userSharedGroups,
+                    setGroupMode,
+                    markNotificationAsRead,
+                    markAllNotificationsAsRead,
+                    deleteInAppNotification,
+                    deleteAllInAppNotifications,
+                })}
 
-                            // Delete all category mappings
-                            for (const mapping of mappings) {
-                                if (mapping.id) {
-                                    deletePromises.push(deleteMapping(mapping.id));
-                                }
-                            }
+                {/* Statement Scan Placeholder View */}
+                {view === 'statement-scan' && renderStatementScanView({
+                    theme,
+                    t,
+                    onBack: () => navigateToView('dashboard'),
+                })}
 
-                            // Delete all merchant mappings
-                            for (const mapping of merchantMappings) {
-                                if (mapping.id) {
-                                    deletePromises.push(deleteMerchantMapping(mapping.id));
-                                }
-                            }
-
-                            // Delete all subcategory mappings
-                            for (const mapping of subcategoryMappings) {
-                                if (mapping.id) {
-                                    deletePromises.push(deleteSubcategoryMapping(mapping.id));
-                                }
-                            }
-
-                            // Revoke all trusted merchants
-                            for (const merchant of trustedMerchants) {
-                                deletePromises.push(removeTrust(merchant.merchantName));
-                            }
-
-                            // Phase 5: Delete all item name mappings
-                            for (const mapping of itemNameMappings) {
-                                if (mapping.id) {
-                                    deletePromises.push(deleteItemNameMapping(mapping.id));
-                                }
-                            }
-
-                            await Promise.all(deletePromises);
-                            setToastMessage({ text: t('clearAllLearnedDataSuccess') || 'All learned data cleared', type: 'success' });
-                        }}
-                        // Story 14.22: Profile editing (from Firestore preferences)
-                        userEmail={user?.email || ''}
-                        displayName={userPreferences.displayName || user?.displayName || ''}
-                        phoneNumber={userPreferences.phoneNumber || ''}
-                        birthDate={userPreferences.birthDate || ''}
-                        onSetDisplayName={_setDisplayNamePref}
-                        onSetPhoneNumber={_setPhoneNumberPref}
-                        onSetBirthDate={_setBirthDatePref}
-                        // Story 14.22: Subscription info (MVP placeholder)
-                        plan="freemium"
-                        creditsRemaining={userCredits.remaining}
-                        superCreditsRemaining={userCredits.superRemaining}
-                        // Story 14.22: Controlled subview state for breadcrumb
-                        currentSubview={settingsSubview}
-                        onSubviewChange={setSettingsSubview}
-                    />
-                )}
-
-                {view === 'alerts' && (
-                    <NotificationsView
-                        user={user}
-                        navigateToView={(v: string) => navigateToView(v as View)}
-                        setView={(v: string) => setView(v as View)}
-                        t={t}
-                        theme={theme}
-                        pendingInvitations={pendingInvitations}
-                        services={services}
-                        lang={lang as 'en' | 'es'}
-                        setToastMessage={(msg) => setToastMessage({ text: msg.text, type: msg.type as 'success' | 'info' })}
-                        inAppNotifications={inAppNotifications}
-                        userSharedGroups={userSharedGroups}
-                        setGroupMode={setGroupMode}
-                        markNotificationAsRead={markNotificationAsRead}
-                        markAllNotificationsAsRead={markAllNotificationsAsRead}
-                        deleteInAppNotification={deleteInAppNotification}
-                        deleteAllInAppNotifications={deleteAllInAppNotifications}
-                    />
-                )}
-
-                {/* Story 14d.9: Statement Scan Placeholder View */}
-                {view === 'statement-scan' && (
-                    <StatementScanView
-                        theme={theme as 'light' | 'dark'}
-                        t={t}
-                        onBack={() => navigateToView('dashboard')}
-                    />
-                )}
-
-                {/* Story 14.14: Transaction History View (accessible via profile menu) */}
-                {/* Story 14.21: Added colorTheme prop for unified category colors */}
-                {/* Story 14.27: Uses paginatedTransactions with loadMore for infinite scroll */}
-                {/* Story 14.31: Uses transactionsWithRecentScans to include recently scanned receipts */}
-                {/* Story 14.13b: onStateChange syncs filter state for persistence across navigation */}
+                {/* Transaction History View - uses composition hook with infinite scroll */}
                 {view === 'history' && (
                     <HistoryFiltersProvider
                         initialState={pendingHistoryFilters || undefined}
                         onStateChange={setPendingHistoryFilters}
                     >
-                        <HistoryView
-                            historyTrans={(isGroupMode ? sharedGroupTransactions : transactionsWithRecentScans) as any}
-                            historyPage={1}
-                            totalHistoryPages={1}
-                            theme={theme}
-                            colorTheme={colorTheme}
-                            currency={currency}
-                            dateFormat={dateFormat}
-                            t={t}
-                            formatCurrency={formatCurrency}
-                            formatDate={formatDate as any}
-                            onBack={navigateBack}
-                            onSetHistoryPage={() => {}}
-                            onEditTransaction={(tx) => {
-                                // Story 14.24: Navigate to read-only detail view first
-                                // User clicks "Edit" button in detail view to enter edit mode (with conflict check)
-                                navigateToTransactionDetail(tx as Transaction);
-                            }}
-                            allTransactions={(isGroupMode ? safeSharedGroupRawTransactions : transactionsWithRecentScans) as any}
-                            defaultCity={defaultCity}
-                            defaultCountry={defaultCountry}
-                            lang={lang}
-                            userId={user?.uid}
-                            appId={services?.appId}
-                            userName={user?.displayName || ''}
-                            userEmail={user?.email || ''}
-                            onNavigateToView={(targetView) => navigateToView(targetView as View)}
-                            hasMoreTransactions={isGroupMode ? false : hasMoreTransactions}
-                            onLoadMoreTransactions={isGroupMode ? () => {} : loadMoreTransactions}
-                            loadingMoreTransactions={isGroupMode ? false : loadingMoreTransactions}
-                            isAtListenerLimit={isGroupMode ? false : isAtListenerLimit}
-                            // Story 14.13: Font color mode for category text reactivity
-                            fontColorMode={fontColorMode}
-                            // Story 14.35b: Foreign location display format
-                            foreignLocationFormat={userPreferences.foreignLocationFormat}
-                            activeGroup={activeGroup ? {
-                                id: activeGroup.id ?? '',
-                                memberProfiles: activeGroup.memberProfiles,
-                            } : undefined}
-                        />
+                        <HistoryView {...historyViewDataProps as any} />
                     </HistoryFiltersProvider>
                 )}
 
-                {/* Story 14.31: Recent Scans View - dedicated view for latest scans sorted by scan date */}
-                {view === 'recent-scans' && (
-                    <RecentScansView
-                        transactions={transactionsWithRecentScans as any}
-                        theme={theme}
-                        currency={currency}
-                        dateFormat={dateFormat}
-                        t={t}
-                        formatCurrency={formatCurrency}
-                        formatDate={formatDate as any}
-                        onBack={() => setView('dashboard')}
-                        onEditTransaction={(tx) => {
-                            navigateToTransactionDetail(tx as Transaction);
-                        }}
-                        lang={lang}
-                        // Story 14.35b: Foreign location display settings
-                        defaultCountry={defaultCountry}
-                        foreignLocationFormat={userPreferences.foreignLocationFormat}
-                        userId={user?.uid}
-                    />
-                )}
+                {/* Recent Scans View - latest scans sorted by scan date */}
+                {view === 'recent-scans' && renderRecentScansView({
+                    transactions: transactionsWithRecentScans as any,
+                    theme,
+                    currency,
+                    dateFormat,
+                    t,
+                    formatCurrency,
+                    formatDate: formatDate as any,
+                    onBack: () => setView('dashboard'),
+                    onEditTransaction: (tx) => navigateToTransactionDetail(tx as Transaction),
+                    lang,
+                    defaultCountry,
+                    foreignLocationFormat: userPreferences.foreignLocationFormat,
+                    userId: user?.uid,
+                })}
 
-                {/* Story 14.31: Items History View (accessible via profile menu or item category clicks) */}
-                {/* Session 2: Wrapped with HistoryFiltersProvider for temporal breadcrumb navigation */}
-                {/* Session 2: Added userId and appId for groups filter (Layers icon) */}
-                {/* Story 14.13 Session 5: Pass pendingHistoryFilters for filtered navigation from analytics */}
-                {/* Story 14.13b: onStateChange syncs filter state for persistence across navigation */}
+                {/* Items History View - filtered navigation from analytics */}
                 {view === 'items' && (
                     <HistoryFiltersProvider
                         initialState={pendingHistoryFilters || undefined}
                         onStateChange={setPendingHistoryFilters}
                     >
-                        <ItemsView
-                            transactions={activeTransactions}
-                            theme={theme}
-                            colorTheme={colorTheme}
-                            currency={currency}
-                            dateFormat={dateFormat}
-                            t={t}
-                            formatCurrency={formatCurrency}
-                            formatDate={formatDate as any}
-                            onBack={navigateBack}
-                            onEditTransaction={(transactionId, allTransactionIds) => {
-                                // Find the transaction and navigate to detail view
-                                // Story 14.13 Session 6: Pass all transaction IDs for multi-transaction navigation
-                                const tx = activeTransactions.find(t => t.id === transactionId);
-                                if (tx) {
-                                    navigateToTransactionDetail(tx as Transaction, allTransactionIds);
-                                }
-                            }}
-                            lang={lang}
-                            userName={user?.displayName || ''}
-                            userEmail={user?.email || ''}
-                            onNavigateToView={(targetView) => navigateToView(targetView as View)}
-                            userId={user?.uid}
-                            appId={services?.appId}
-                            // Story 14.13: Font color mode for category text reactivity
-                            fontColorMode={fontColorMode}
-                            // Story 14.35b: User's default country for foreign location detection
-                            defaultCountry={defaultCountry}
-                        />
+                        <ItemsView {...itemsViewProps as any} />
                     </HistoryFiltersProvider>
                 )}
 
-                {/* Story 14.16: Weekly Reports View (accessible via profile menu) */}
-                {view === 'reports' && (
-                    <ReportsView
-                        transactions={transactions as Transaction[]}
-                        t={t}
-                        theme={theme}
-                        userName={user?.displayName || ''}
-                        userEmail={user?.email || ''}
-                        onBack={navigateBack}
-                        onNavigateToView={(targetView) => navigateToView(targetView as View)}
-                        onSetPendingHistoryFilters={setPendingHistoryFilters}
-                    />
-                )}
+                {/* Weekly Reports View */}
+                {view === 'reports' && renderReportsView({
+                    transactions: transactions as Transaction[],
+                    theme,
+                    userName: user?.displayName || '',
+                    userEmail: user?.email || '',
+                    t,
+                    onBack: navigateBack,
+                    onNavigateToView: (targetView) => navigateToView(targetView as View),
+                    onSetPendingHistoryFilters: setPendingHistoryFilters,
+                })}
+                </ViewHandlersProvider>
             </main>
 
             <Nav
                 view={view}
-                setView={(v: string) => {
-                    // Story 14.24: Use navigateToView to ensure QuickSaveCard is cleared
-                    navigateToView(v as View);
-                }}
+                setView={(v: string) => navigateToView(v as View)}
                 onScanClick={() => {
-                    // Story 14d.9: If in statement mode, return to statement view
+                    // If in statement mode, return to statement view
                     if (scanState.mode === 'statement') {
                         navigateToView('statement-scan');
                         return;
                     }
-                    // Story 12.1 v9.7.0: Check batch state first (in order of priority)
+                    // Check batch state first (in order of priority)
                     // 1. Batch processing in progress or results pending review
-                    // Story 14d.5c AC5: Use hasBatchReceipts (context) instead of batchReviewResults
                     if (batchProcessing.isProcessing || hasBatchReceipts) {
                         navigateToView('batch-review');
                     }
                     // 2. Batch images captured but not yet processed - return to capture
-                    // Story 14d.5a-phase2d: Ensure context is in batch mode
                     else if (batchImages.length > 0) {
                         if (!isBatchModeFromContext && user?.uid) {
                             startBatchScanContext(user.uid);
@@ -4439,7 +3061,6 @@ function App() {
                         navigateToView('batch-capture');
                     }
                     // 3. Single-image scan in progress or complete - show transaction editor
-                    // Story 14d.4e: Use scanState instead of pendingScan
                     else if (scanState.phase === 'scanning' || scanState.results.length > 0) {
                         navigateToView('transaction-editor');
                     }
@@ -4448,25 +3069,19 @@ function App() {
                         triggerScan();
                     }
                 }}
-                // Story 12.1: Long-press on camera FAB opens batch capture mode (AC #1)
-                // Story 12.1 v9.7.0: If batch is active, return to appropriate view
-                // Story 14d.5: Also dispatch to ScanContext for state machine tracking
-                // Story 14d.5a-phase2d: Batch mode now solely tracked by context
+                // Long-press on camera FAB - batch mode tracked via ScanContext
                 onBatchClick={() => {
-                    // Story 14d.5c AC5: Use hasBatchReceipts (context) instead of batchReviewResults
                     if (batchProcessing.isProcessing || hasBatchReceipts) {
                         // Batch processing or results pending - go to review
                         navigateToView('batch-review');
                     } else if (batchImages.length > 0) {
                         // Batch images captured but not processed - return to capture
-                        // Story 14d.5a-phase2d: Ensure context is in batch mode
                         if (!isBatchModeFromContext && user?.uid) {
                             startBatchScanContext(user.uid);
                         }
                         navigateToView('batch-capture');
                     } else {
                         // No active batch - start new batch capture
-                        // Story 14d.5a-phase2: Context is sole source of truth
                         if (user?.uid) {
                             startBatchScanContext(user.uid);
                         }
@@ -4477,7 +3092,7 @@ function App() {
                     // Navigation state is now managed by AnalyticsContext
                     // Context resets to year level when mounted
                 }}
-                // Story 14d.9: Statement scan placeholder navigation
+                // Statement scan placeholder navigation
                 onStatementClick={() => {
                     // Start statement scan in context and navigate to placeholder view
                     if (user?.uid) {
@@ -4487,23 +3102,19 @@ function App() {
                 }}
                 theme={theme}
                 t={t}
-                // Story 12.3: Pass scan status for NAV icon indicator (AC #3)
                 scanStatus={scanStatus}
                 // Display remaining scan credits on camera FAB
                 scanCredits={userCredits.remaining}
                 // Display super credits (tier 2) on camera FAB
                 superCredits={userCredits.superRemaining}
-                // Story 14.15 Session 10: Show credit info modal when badges tapped
                 onCreditInfoClick={() => setShowCreditInfoModal(true)}
-                // Story 14d.5a-phase2: Batch mode now from ScanContext
-                // Context tracks batch state across all phases (capturing, processing, reviewing)
-                // Story 14d.5c AC5: Use hasBatchReceipts (context) instead of batchReviewResults
+                // Batch mode from ScanContext - tracks all phases (capturing, processing, reviewing)
                 isBatchMode={isBatchModeFromContext || hasBatchReceipts}
                 alertsBadgeCount={pendingInvitationsCount + inAppNotificationsUnreadCount}
                 activeGroupColor={viewMode === 'group' && activeGroup ? activeGroup.color : undefined}
             />
 
-            {/* Toast notification for feedback (AC#6, AC#7) - Story 14.22: Theme-aware styling */}
+            {/* Toast notification for feedback - theme-aware styling */}
             {toastMessage && (
                 <div
                     role="status"
@@ -4532,11 +3143,7 @@ function App() {
                 </div>
             )}
 
-            {/* Story 9.14: PWA update notification */}
-            {/* Story 14.42: Updated to top banner with language prop */}
-            <PWAUpdatePrompt language={lang} />
-
-            {/* Story 14.15 Session 10: Credit Info Modal (triggered by Nav credit badges) */}
+            {/* Credit Info Modal (triggered by Nav credit badges) */}
             {showCreditInfoModal && (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center">
                     {/* Backdrop */}
@@ -4656,126 +3263,7 @@ function App() {
                 </div>
             )}
 
-            {/* Story 14.15: Scan Overlay for non-blocking scan flow (AC #1, #4) */}
-            {/* Only show overlay when on scan-related views so user can navigate away */}
-            <ScanOverlay
-                state={scanOverlay.state}
-                progress={scanOverlay.progress}
-                eta={scanOverlay.eta}
-                error={scanOverlay.error}
-                onCancel={handleScanOverlayCancel}
-                onRetry={handleScanOverlayRetry}
-                onDismiss={handleScanOverlayDismiss}
-                theme={theme as 'light' | 'dark'}
-                t={t}
-                visible={(isAnalyzing || scanOverlay.state === 'error') && (view === 'scan' || view === 'scan-result' || view === 'edit' || view === 'transaction-editor')}
-                capturedImageUrl={scanImages[0]}
-            />
-
-            {/* Story 10.6: Insight card after transaction save (AC #1, #3, #4) */}
-            {/* Story 14.20: onDismiss now triggers SessionComplete (AC #1) */}
-            {showInsightCard && (
-                currentInsight && currentInsight.id !== 'building_profile'
-                    ? <InsightCard
-                        insight={currentInsight}
-                        onDismiss={() => {
-                            setShowInsightCard(false);
-                            // Story 14.20: Show session complete after insight dismisses (AC #1)
-                            if (sessionContext) {
-                                setShowSessionComplete(true);
-                            }
-                        }}
-                        theme={theme as 'light' | 'dark'}
-                      />
-                    : <BuildingProfileCard
-                        onDismiss={() => {
-                            setShowInsightCard(false);
-                            // Story 14.20: Show session complete after insight dismisses (AC #1)
-                            if (sessionContext) {
-                                setShowSessionComplete(true);
-                            }
-                        }}
-                        theme={theme as 'light' | 'dark'}
-                      />
-            )}
-
-            {/* Story 14.20: Session completion messaging (AC #1-6) */}
-            {showSessionComplete && sessionContext && (
-                <SessionComplete
-                    context={sessionContext}
-                    onDismiss={() => {
-                        setShowSessionComplete(false);
-                        setSessionContext(null);
-                    }}
-                    onAction={(action: SessionAction) => {
-                        // Story 14.20 AC #4: Navigate based on suggestion
-                        switch (action) {
-                            case 'analytics':
-                                setView('trends');
-                                break;
-                            case 'scan':
-                                // Return to dashboard to scan another
-                                setView('dashboard');
-                                break;
-                            case 'history': {
-                                // Navigate to history with current month filter
-                                const now = new Date();
-                                const year = String(now.getFullYear());
-                                const month = `${year}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-                                handleNavigateToHistory({
-                                    temporal: {
-                                        level: 'month',
-                                        year,
-                                        month,
-                                    },
-                                });
-                                break;
-                            }
-                        }
-                    }}
-                    t={t}
-                    theme={theme as 'light' | 'dark'}
-                />
-            )}
-
-            {/* Story 14.19: Personal record celebration banner */}
-            {showRecordBanner && recordToCelebrate && (
-                <PersonalRecordBanner
-                    record={recordToCelebrate}
-                    onDismiss={dismissRecord}
-                    autoDismissMs={8000}
-                    theme={theme as 'light' | 'dark'}
-                />
-            )}
-
-            {/* Story 11.2: Quick Save Card for high-confidence scans (AC #1-9) */}
-            {/* Story 14d.6: Now rendered unconditionally - component reads from ScanContext */}
-            {/* Visibility controlled via scanState.activeDialog?.type === 'quicksave' */}
-            <QuickSaveCard
-                onSave={handleQuickSave}
-                onEdit={handleQuickSaveEdit}
-                onCancel={handleQuickSaveCancel}
-                onSaveComplete={handleQuickSaveComplete}
-                theme={theme as 'light' | 'dark'}
-                t={t}
-                formatCurrency={formatCurrency}
-                currency={currency}
-                isSaving={isQuickSaving}
-                lang={lang}
-                // Story 14.35b: User's default country for foreign location detection
-                userDefaultCountry={defaultCountry}
-                // Note: onRemoveGroupTag intentionally not passed - QuickSaveCard is for fast saving
-                // If user wants to change the group, they should use the Edit button
-                activeGroup={viewMode === 'group' && activeGroup ? {
-                    id: activeGroup.id!,
-                    name: activeGroup.name,
-                    color: activeGroup.color,
-                    icon: activeGroup.icon || undefined,
-                } : null}
-            />
-
-            {/* Story 11.1: Batch upload preview for multi-image selection (AC #2) */}
-            {/* Story 11.6: Modal with safe area padding (AC #3) */}
+            {/* Batch upload preview for multi-image selection with safe area padding */}
             {showBatchPreview && (
                 <div
                     className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
@@ -4794,21 +3282,7 @@ function App() {
                 </div>
             )}
 
-            {/* Story 12.4: Credit Warning Dialog (AC #1, #2, #5, #7) */}
-            {showCreditWarning && creditCheckResult && (
-                <CreditWarningDialog
-                    creditCheck={creditCheckResult}
-                    receiptCount={batchImages.length}
-                    theme={theme as 'light' | 'dark'}
-                    t={t}
-                    onConfirm={handleCreditWarningConfirm}
-                    onCancel={handleCreditWarningCancel}
-                    onReduceBatch={creditCheckResult.maxProcessable > 0 ? handleReduceBatch : undefined}
-                />
-            )}
-
-            {/* Story 12.1 v9.7.0: Batch Processing Overlay - matches single scan UX */}
-            {/* Only show on batch-related views, allow navigation to other views */}
+            {/* Batch Processing Overlay - matches single scan UX */}
             <BatchProcessingOverlay
                 visible={batchProcessing.isProcessing && (view === 'batch-capture' || view === 'batch-review')}
                 theme={theme as 'light' | 'dark'}
@@ -4816,86 +3290,7 @@ function App() {
                 progress={batchProcessing.progress}
             />
 
-            {/* Story 11.1: Batch processing progress (AC #4) - Legacy sequential processing only */}
-            {/* Story 11.6: Modal with safe area padding (AC #3) */}
-            {/* Story 12.3: Parallel processing (batchProcessing) now shows inline in BatchReviewView */}
-            {/* This modal is only for legacy isBatchProcessing (sequential) which is deprecated */}
-            {isBatchProcessing && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
-                    style={{ padding: 'calc(1rem + var(--safe-top, 0px)) calc(1rem + var(--safe-right, 0px)) calc(1rem + var(--safe-bottom, 0px)) calc(1rem + var(--safe-left, 0px))' }}
-                >
-                    <BatchProcessingProgress
-                        current={batchProgress.current}
-                        total={batchProgress.total}
-                        results={batchResults}
-                        theme={theme as 'light' | 'dark'}
-                        currency={currency}
-                        t={t}
-                        onCancel={handleBatchCancelRequest}
-                    />
-                </div>
-            )}
-
-            {/* Story 11.1: Batch cancel confirmation dialog */}
-            {/* Story 11.6: Modal with safe area padding (AC #3) */}
-            {showBatchCancelConfirm && (
-                <div
-                    className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center"
-                    style={{ padding: 'calc(1rem + var(--safe-top, 0px)) calc(1rem + var(--safe-right, 0px)) calc(1rem + var(--safe-bottom, 0px)) calc(1rem + var(--safe-left, 0px))' }}
-                >
-                    <div
-                        className="rounded-xl p-6 max-w-sm w-full shadow-xl"
-                        style={{
-                            backgroundColor: 'var(--surface)',
-                            border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-                        }}
-                        role="alertdialog"
-                        aria-labelledby="cancel-dialog-title"
-                        aria-describedby="cancel-dialog-desc"
-                    >
-                        <h3
-                            id="cancel-dialog-title"
-                            className="text-lg font-bold mb-2"
-                            style={{ color: 'var(--primary)' }}
-                        >
-                            {t('batchCancelConfirmTitle')}
-                        </h3>
-                        <p
-                            id="cancel-dialog-desc"
-                            className="text-sm mb-6"
-                            style={{ color: 'var(--secondary)' }}
-                        >
-                            {t('batchCancelConfirmMessage').replace(
-                                '{count}',
-                                String(batchResults.filter(r => r.status === 'success').length)
-                            )}
-                        </p>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={handleBatchCancelConfirm}
-                                className="flex-1 py-2.5 px-4 rounded-lg font-medium text-white transition-colors"
-                                style={{ backgroundColor: '#ef4444' }}
-                            >
-                                {t('batchCancelConfirmYes')}
-                            </button>
-                            <button
-                                onClick={handleBatchCancelDismiss}
-                                className="flex-1 py-2.5 px-4 rounded-lg font-medium transition-colors"
-                                style={{
-                                    backgroundColor: isDark ? 'rgba(100, 116, 139, 0.2)' : 'rgba(100, 116, 139, 0.1)',
-                                    color: 'var(--secondary)',
-                                }}
-                            >
-                                {t('batchCancelConfirmNo')}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Story 12.1 v9.7.0: Batch discard confirmation dialog (credit already spent) */}
-            {/* Story 14d.5d AC9: Now uses ScanContext activeDialog */}
+            {/* Batch discard confirmation dialog - uses ScanContext activeDialog */}
             {scanState.activeDialog?.type === DIALOG_TYPES.BATCH_DISCARD && (
                 <div
                     className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
@@ -4951,109 +3346,6 @@ function App() {
                     </div>
                 </div>
             )}
-
-            {/* Story 10.7: Batch summary for multi-receipt sessions (AC #1, #2, #3, #4, #6) */}
-            {showBatchSummary && batchSession && (
-                <BatchSummary
-                    receipts={batchSession.receipts}
-                    insights={batchSession.insights}
-                    totalAmount={batchSession.totalAmount}
-                    lastWeekTotal={getLastWeekTotal(transactions)}
-                    onSilence={() => {
-                        // AC #6: Toggle silence - silence for 4 hours or clear if already silenced
-                        const newCache = isInsightsSilenced(insightCache)
-                            ? clearSilence(insightCache)
-                            : silenceInsights(insightCache, 4);
-                        setLocalCache(newCache);
-                    }}
-                    onDismiss={() => {
-                        setShowBatchSummary(false);
-                        clearBatch();
-                        // Story 11.1: Redirect to Home after batch processing completes
-                        setView('dashboard');
-                    }}
-                    isSilenced={isInsightsSilenced(insightCache)}
-                    theme={theme as 'light' | 'dark'}
-                />
-            )}
-
-            {/* Story 11.4: Trust Merchant Prompt (AC #2, #3, #4) */}
-            {showTrustPrompt && trustPromptData?.merchant && (
-                <TrustMerchantPrompt
-                    merchantName={trustPromptData.merchant.merchantName}
-                    scanCount={trustPromptData.merchant.scanCount}
-                    onAccept={handleAcceptTrust}
-                    onDecline={handleDeclineTrust}
-                    theme={theme as 'light' | 'dark'}
-                    t={t}
-                />
-            )}
-
-            {/* Story 14.15: Batch Complete Success Modal (State 3.a from scan-overlay.html mockup) */}
-            {/* Story 14d.5d AC10: Now uses ScanContext activeDialog with typed data */}
-            {scanState.activeDialog?.type === DIALOG_TYPES.BATCH_COMPLETE && (scanState.activeDialog.data as BatchCompleteDialogData)?.transactions?.length > 0 && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-                    style={{ paddingTop: 'calc(1rem + var(--safe-top, 0px))', paddingBottom: 'calc(1rem + var(--safe-bottom, 0px))' }}
-                >
-                    <BatchCompleteModal
-                        transactions={(scanState.activeDialog.data as BatchCompleteDialogData).transactions}
-                        creditsUsed={(scanState.activeDialog.data as BatchCompleteDialogData).creditsUsed}
-                        creditsRemaining={userCredits.superRemaining ?? 0}
-                        theme={theme as 'light' | 'dark'}
-                        t={t}
-                        onDismiss={() => {
-                            dismissScanDialog();
-                        }}
-                        onNavigateToHistory={(payload) => {
-                            dismissScanDialog();
-                            handleNavigateToHistory(payload);
-                        }}
-                        onGoHome={() => {
-                            dismissScanDialog();
-                            setView('dashboard');
-                        }}
-                        formatCurrency={formatCurrency}
-                    />
-                </div>
-            )}
-
-            {/* Story 14.15b: Currency Mismatch Dialog (AC #2) */}
-            {/* Story 14d.6: Now rendered unconditionally - component reads from ScanContext */}
-            {/* Visibility controlled via scanState.activeDialog?.type === 'currency_mismatch' */}
-            <CurrencyMismatchDialog
-                userCurrency={userPreferences.defaultCurrency || 'CLP'}
-                onUseDetected={handleCurrencyUseDetected}
-                onUseDefault={handleCurrencyUseDefault}
-                onCancel={handleCurrencyMismatchCancel}
-                theme={theme as 'light' | 'dark'}
-                t={t}
-            />
-
-            {/* Total Mismatch Dialog (OCR error detection) */}
-            {/* Story 14d.6: Now rendered unconditionally - component reads from ScanContext */}
-            {/* Visibility controlled via scanState.activeDialog?.type === 'total_mismatch' */}
-            <TotalMismatchDialog
-                onUseItemsSum={handleTotalUseItemsSum}
-                onKeepOriginal={handleTotalKeepOriginal}
-                onCancel={handleTotalMismatchCancel}
-                theme={theme as 'light' | 'dark'}
-                t={t}
-            />
-
-            {/* Story 14.24: Transaction Conflict Dialog */}
-            <TransactionConflictDialog
-                isOpen={showConflictDialog}
-                conflictingTransaction={conflictDialogData?.conflictingTransaction || null}
-                conflictReason={conflictDialogData?.conflictReason || null}
-                onContinueCurrent={handleConflictClose}
-                onViewConflicting={handleConflictViewCurrent}
-                onDiscardConflicting={handleConflictDiscard}
-                onClose={handleConflictClose}
-                t={t}
-                lang={lang}
-                formatCurrency={(amount, curr) => formatCurrency(amount, curr)}
-            />
 
             <JoinGroupDialog
                 isOpen={joinLinkState !== 'idle' && joinLinkState !== 'pending_auth' && joinLinkState !== 'success'}

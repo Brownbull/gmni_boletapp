@@ -316,7 +316,7 @@ jobs:
           done
 
       - name: Run unit tests - hooks-batch
-        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-hooks-batch.ts --coverage
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config tests/config/vitest.config.ci.group-hooks-batch.ts --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
@@ -391,7 +391,7 @@ jobs:
           done
 
       - name: Run unit tests - hooks-scan
-        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-hooks-scan.ts --coverage
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config tests/config/vitest.config.ci.group-hooks-scan.ts --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
@@ -470,7 +470,7 @@ jobs:
           done
 
       - name: Run unit tests - hooks-other
-        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-hooks-other.ts --coverage
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config tests/config/vitest.config.ci.group-hooks-other.ts --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
@@ -545,7 +545,7 @@ jobs:
           done
 
       - name: Run unit tests - services
-        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-services.ts --coverage
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config tests/config/vitest.config.ci.group-services.ts --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
@@ -624,7 +624,7 @@ jobs:
           done
 
       - name: Run unit tests - utils
-        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-utils.ts --coverage
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config tests/config/vitest.config.ci.group-utils.ts --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
@@ -703,7 +703,7 @@ jobs:
           done
 
       - name: Run unit tests - analytics
-        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-analytics.ts --coverage
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config tests/config/vitest.config.ci.group-analytics.ts --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
@@ -782,7 +782,7 @@ jobs:
           done
 
       - name: Run unit tests - views
-        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-views.ts --coverage
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config tests/config/vitest.config.ci.group-views.ts --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
@@ -865,7 +865,7 @@ jobs:
           done
 
       - name: Run unit tests - components-insights
-        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-components-insights.ts --coverage
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config tests/config/vitest.config.ci.group-components-insights.ts --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
@@ -944,7 +944,7 @@ jobs:
           done
 
       - name: Run unit tests - components-scan
-        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-components-scan.ts --coverage
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config tests/config/vitest.config.ci.group-components-scan.ts --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
@@ -1023,7 +1023,7 @@ jobs:
           done
 
       - name: Run unit tests - components-history
-        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-components-history.ts --coverage
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config tests/config/vitest.config.ci.group-components-history.ts --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
@@ -1102,7 +1102,7 @@ jobs:
           done
 
       - name: Run unit tests - components-charts
-        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-components-charts.ts --coverage
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config tests/config/vitest.config.ci.group-components-charts.ts --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
@@ -1181,7 +1181,7 @@ jobs:
           done
 
       - name: Run unit tests - components-forms
-        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-components-forms.ts --coverage
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config tests/config/vitest.config.ci.group-components-forms.ts --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
@@ -1260,7 +1260,7 @@ jobs:
           done
 
       - name: Run unit tests - components-celebrations
-        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-components-celebrations.ts --coverage
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config tests/config/vitest.config.ci.group-components-celebrations.ts --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
@@ -1339,7 +1339,7 @@ jobs:
           done
 
       - name: Run unit tests - components-misc
-        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config vitest.config.ci.group-components-misc.ts --coverage
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config tests/config/vitest.config.ci.group-components-misc.ts --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
           FIRESTORE_EMULATOR_HOST: localhost:8080
@@ -1426,7 +1426,7 @@ jobs:
       - name: Run heavy unit tests (group 1)
         run: |
           node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run \
-            --config vitest.config.ci.heavy-1.ts \
+            --config tests/config/vitest.config.ci.heavy-1.ts \
             --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
@@ -1508,7 +1508,7 @@ jobs:
       - name: Run heavy unit tests (group 2)
         run: |
           node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run \
-            --config vitest.config.ci.heavy-2.ts \
+            --config tests/config/vitest.config.ci.heavy-2.ts \
             --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
@@ -1590,7 +1590,7 @@ jobs:
       - name: Run heavy unit tests (group 3)
         run: |
           node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run \
-            --config vitest.config.ci.heavy-3.ts \
+            --config tests/config/vitest.config.ci.heavy-3.ts \
             --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
@@ -1672,7 +1672,7 @@ jobs:
       - name: Run heavy unit tests (group 4)
         run: |
           node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run \
-            --config vitest.config.ci.heavy-4.ts \
+            --config tests/config/vitest.config.ci.heavy-4.ts \
             --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
@@ -1755,7 +1755,7 @@ jobs:
       - name: Run heavy unit tests (group 5)
         run: |
           node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run \
-            --config vitest.config.ci.heavy-5.ts \
+            --config tests/config/vitest.config.ci.heavy-5.ts \
             --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
@@ -1837,7 +1837,7 @@ jobs:
       - name: Run heavy unit tests (group 6)
         run: |
           node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run \
-            --config vitest.config.ci.heavy-6.ts \
+            --config tests/config/vitest.config.ci.heavy-6.ts \
             --coverage
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"

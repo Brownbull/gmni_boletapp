@@ -1,6 +1,6 @@
 # Atlas-Enhanced Create Story Workflow
 name: atlas-create-story
-description: "Create stories with Atlas workflow chain analysis - identifies impacts on existing workflows and provides push alerts for downstream effects"
+description: "Dual-mode story workflow: Create new stories with Atlas workflow chain analysis OR analyze existing stories for sizing issues and split oversized ones"
 author: "BMad + Atlas Integration"
 
 # Critical variables from config
@@ -72,9 +72,55 @@ atlas_features:
   workflow_chain_analysis: true
   push_alerts: true
   memory_feeding: true
+  context_window_sizing: true  # Prevents oversized stories (lesson from 14c-refactor.22a)
+  sizing_analysis_mode: true   # NEW: Analyze existing stories and split oversized ones
+
+# Story Sizing Heuristics (Step 5.5)
+# Prevents stories that exceed development context window capacity
+sizing_guidelines:
+  small:
+    points: 1
+    max_tasks: 2
+    max_subtasks: 5
+    max_files: 2
+  medium:
+    points: "2-3"
+    max_tasks: 3
+    max_subtasks: 10
+    max_files: 4
+  large:
+    points: 5
+    max_tasks: 4
+    max_subtasks: 15
+    max_files: 8
+  too_large:
+    description: "Requires split before development"
+    threshold: ">4 tasks OR >15 subtasks OR >8 files"
+
+# Split strategy patterns (for analyze mode)
+split_strategies:
+  by_layer:
+    description: "Split by architectural layer (UI, API, DB)"
+    example: "Story A: Frontend components, Story B: Backend API"
+  by_feature:
+    description: "Split by feature subset"
+    example: "Story A: Core feature, Story B: Edge cases & error handling"
+  by_phase:
+    description: "Split by implementation phase"
+    example: "Story A: Scaffolding & interfaces, Story B: Implementation"
+  by_file:
+    description: "Split by file groups"
+    example: "Story A: Files 1-4, Story B: Files 5-8"
 
 # What Atlas adds to create-story:
 # 1. Analyzes story requirements against existing workflow chains
 # 2. Provides PUSH ALERTS if story affects existing workflows
 # 3. Suggests additional acceptance criteria based on workflow impact
 # 4. Feeds story intent to Atlas memory after creation
+# 5. ANALYZES STORY SIZE to prevent context window overflow (Step 5b)
+#    - Stories exceeding thresholds trigger split recommendation
+#    - Prevents post-hoc splits that waste development cycles (lesson: 14c-refactor.22a)
+# 6. DUAL-MODE: Can analyze existing stories for sizing issues
+#    - Batch analysis from sprint-status
+#    - Interactive split recommendations
+#    - Consolidates atlas-story-sizing functionality

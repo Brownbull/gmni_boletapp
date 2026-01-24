@@ -1,6 +1,7 @@
 # Epic 14d: Shared Groups v2 - Requirements and Concerns
 
 **Created:** 2026-01-20
+**Last Updated:** 2026-01-22
 **Purpose:** Comprehensive requirements document for research and architectural design
 **Context:** Post Epic 14c retrospective - rebuilding shared groups sync from lessons learned
 
@@ -15,6 +16,33 @@ Epic 14c attempted real-time sync for shared group transactions and failed due t
 4. Multiple iteration approaches caused more harm than one committed approach
 
 Epic 14d will rebuild with explicit constraints, user-controlled sync, and server-side change tracking.
+
+### Key Architecture: Layered Visibility Model (Brainstorm 2026-01-22)
+
+Epic 14d introduces a **layered visibility model** that separates statistics (always shared) from transactions (conditionally shared):
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  STATISTICS (Always On)                                         │
+│  - byCategory, byMember, totals, insights                       │
+│  - All members' transactions contribute (anonymized)            │
+│  - Non-negotiable part of group membership                      │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│  TRANSACTIONS (Double-Gated)                                    │
+│  - Gate 1: Group owner enables transactionSharingEnabled        │
+│  - Gate 2: Each user opts in shareMyTransactions per group      │
+│  - Both gates must be TRUE to see a user's transactions         │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Core Principles:**
+- Statistics always include all members' contributions (anonymized aggregation)
+- byMember breakdown always visible (core value proposition)
+- Transaction visibility requires explicit double opt-in
+- Changelog always created (filtering at read time for complete audit trail)
+- Eventual consistency on opt-out (next sync clears, no complex purge signals)
 
 ---
 
@@ -32,6 +60,156 @@ Users share expense groups (household, roommates, couples) and need to see each 
 5. Bob and Carol see: transaction STILL in Household group ✗
 
 **Root Cause:** Delta sync query `where('sharedGroupIds', 'array-contains', groupId)` cannot detect when a transaction is REMOVED from the array - the transaction simply stops matching the query, so the removal is never "seen."
+
+---
+
+## 1.1 User Journeys
+
+### User Types
+
+| User Type | Description | Primary Goals |
+|-----------|-------------|---------------|
+| Transaction Owner (Writer) | User who creates and manages their own transactions | Add expenses, tag with groups, edit/remove as needed |
+| Group Member (Reader) | User who views shared group transactions and analytics | See group spending, view member contributions, sync updates |
+| Group Owner (Admin) | User who created the group and manages settings | Manage members, control sharing settings, force analytics refresh |
+
+### Journey 1: Writer Adds Transaction to Shared Group
+
+**Actor:** Alice (Transaction Owner, Group Member)
+**Goal:** Add a new expense to the "Household" shared group
+
+| Step | Action | System Response |
+|------|--------|-----------------|
+| 1 | Alice opens app and taps "Add Expense" | Form displayed |
+| 2 | Alice enters amount ($50), description ("Groceries"), category ("Food") | Fields populated |
+| 3 | Alice selects "Household" from shared group picker | Group tag added |
+| 4 | Alice taps "Save" | Transaction saved locally (optimistic), synced to server |
+| 5 | - | Server writes changelog entry, updates analytics |
+| 6 | Alice sees transaction in her list with checkmark | Confirmation of sync success |
+
+**Success Criteria:** Transaction appears in Alice's list immediately; other members see red dot badge on next app open.
+
+### Journey 2: Reader Syncs Group Transactions
+
+**Actor:** Bob (Group Member)
+**Goal:** See latest transactions in "Household" group
+
+| Step | Action | System Response |
+|------|--------|-----------------|
+| 1 | Bob opens app | App loads cached data (<500ms), polls changelog |
+| 2 | Bob sees red dot badge on "Household" group | Indicates pending changes |
+| 3 | Bob taps sync button | "Syncing 3 changes..." progress shown |
+| 4 | - | Client fetches changelog, applies changes to local cache |
+| 5 | Bob sees Alice's new "Groceries" transaction | Cache updated, badge cleared |
+| 6 | Bob views "Last synced: Just now" | Freshness indicator updated |
+
+**Success Criteria:** Bob sees Alice's transaction after manual sync; sync completes in <5 seconds for 90-day window.
+
+### Journey 3: Writer Removes Transaction from Group
+
+**Actor:** Alice (Transaction Owner)
+**Goal:** Remove a transaction from "Household" group (keep transaction, remove group tag)
+
+| Step | Action | System Response |
+|------|--------|-----------------|
+| 1 | Alice opens transaction detail | Transaction displayed |
+| 2 | Alice removes "Household" tag | Tag removed locally |
+| 3 | Alice taps "Save" | Change synced to server |
+| 4 | - | Server writes TRANSACTION_REMOVED to changelog |
+| 5 | Alice sees transaction without group tag | Confirmed |
+
+**Reader perspective (Bob):**
+| Step | System Response |
+|------|-----------------|
+| 1 | Bob opens app, sees red dot badge |
+| 2 | Bob taps sync |
+| 3 | Client receives TRANSACTION_REMOVED event |
+| 4 | Transaction removed from Bob's local cache |
+| 5 | Bob no longer sees Alice's transaction in group |
+
+**Success Criteria:** Removal propagates to all members on next sync (fixes Epic 14c bug).
+
+### Journey 4: Group Owner Manages Sharing Settings
+
+**Actor:** Carol (Group Owner)
+**Goal:** Enable transaction sharing for the group
+
+| Step | Action | System Response |
+|------|--------|-----------------|
+| 1 | Carol opens group settings | Settings displayed |
+| 2 | Carol toggles "Enable Transaction Sharing" ON | Confirmation dialog shows impact |
+| 3 | Carol confirms | Setting saved, cooldown starts (15 min) |
+| 4 | - | Existing members notified of change |
+
+**Success Criteria:** Toggle respects cooldown (15 min) and daily limit (3×); members prompted to opt-in.
+
+### Journey 5: User Joins Group with Sharing Enabled
+
+**Actor:** Dave (New Member)
+**Goal:** Join "Household" group via share code
+
+| Step | Action | System Response |
+|------|--------|-----------------|
+| 1 | Dave enters share code | Code validated |
+| 2 | - | Prompt: "Household allows transaction sharing. Share your transactions?" |
+| 3 | Dave selects "Yes, share" or "No, just statistics" | Preference saved |
+| 4 | Dave added to group | Group appears in Dave's list |
+
+**Success Criteria:** Clear opt-in prompt; default is "No" (privacy-first).
+
+---
+
+## 1.2 Product Scope
+
+### MVP (Epic 14d)
+
+**In Scope:**
+- Changelog-driven sync with explicit removal detection
+- Manual sync buttons (90-day and 2-year)
+- Red dot badge for pending changes
+- Server-side analytics calculation (sum, count, average, byCategory, byMember)
+- Double-gate privacy model (group + user transaction sharing toggles)
+- Join flow opt-in prompt
+- Firestore offline persistence
+- Push notifications (badge trigger only, no auto-sync)
+- Optimistic updates for writers
+- "Last synced" freshness indicator
+
+**Out of Scope (MVP):**
+- Real-time listeners (explicitly rejected - cost/complexity)
+- Automatic background sync
+- P2P sync or CRDTs
+- Transaction comments or reactions
+- Split/settle-up calculations
+- Payment integration
+- Export to CSV/PDF
+
+### Future Growth (Post-MVP)
+
+**Phase 2 - Enhanced Analytics:**
+- Median calculation with 30-minute cooldown
+- Trend analysis (month-over-month)
+- Budget alerts per category
+- Custom date range reports
+
+**Phase 3 - Collaboration:**
+- Transaction comments
+- @mentions in groups
+- Activity feed
+
+**Phase 4 - Scale (100K+ users):**
+- BigQuery integration for complex analytics
+- CDN caching for analytics (5-15 min TTL)
+- Horizontal scaling architecture
+
+### Explicitly Excluded (Vision)
+
+| Feature | Rationale |
+|---------|-----------|
+| Real-time sync | Cost explosion, complexity (Epic 14c lesson) |
+| Money movement | Not a payments app, regulatory complexity |
+| Multi-group transactions | Simplifies sync logic (single sharedGroupId) |
+| Transaction history >2 years | Storage cost, diminishing value |
 
 ---
 
@@ -68,6 +246,18 @@ Users share expense groups (household, roommates, couples) and need to see each 
 |----|-------------|----------|
 | FR-17 | Users receive push notifications when transactions affect their groups | Must Have |
 | FR-18 | Notification triggers badge indicator, not automatic sync | Must Have |
+
+#### Transaction Sharing Privacy Controls (Brainstorm 2026-01-22)
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-19 | Group owner can enable/disable transaction sharing for the group | Must Have |
+| FR-20 | Users can opt-in/out of sharing their transactions per group | Must Have |
+| FR-21 | Toggle settings have cooldown (5-15 min) and daily limit (3×) | Must Have |
+| FR-22 | Statistics always include all members' contributions (anonymized) | Must Have |
+| FR-23 | byMember breakdown always visible to group members | Must Have |
+| FR-24 | Confirmation dialog displays impact of toggle change before confirming | Must Have |
+| FR-25 | Join flow prompts user to opt-in when joining group with sharing enabled | Must Have |
+| FR-26 | Invalid share codes display error message with reason and retry option | Must Have |
 
 ### 2.2 Non-Functional Requirements
 
@@ -137,9 +327,139 @@ Users share expense groups (household, roommates, couples) and need to see each 
 ### Group Roles
 | Role | Permissions |
 |------|-------------|
-| Owner | Manage group, members, force analytics refresh, all contributor permissions |
-| Contributor | Add transactions to group, view all transactions |
-| Viewer | View transactions only |
+| Owner | Manage group, members, force analytics refresh, transaction sharing toggle, all contributor permissions |
+| Contributor | Add transactions to group, view transactions (if sharing enabled), view statistics |
+| Viewer | View transactions (if sharing enabled), view statistics |
+
+---
+
+## 5.1 Layered Visibility Model (Brainstorm 2026-01-22)
+
+### Double-Gate Permission System
+
+Transaction visibility requires TWO independent flags to both be `true`:
+
+```
+Can User B see User A's transactions in Group X?
+
+  Group X config: transactionSharingEnabled = true?
+    └── NO  → Transactions hidden for everyone (statistics only mode)
+    └── YES → Check user-level...
+              User A's preference: shareMyTransactions[groupX] = true?
+                └── NO  → User A's transactions hidden from others
+                └── YES → ✅ User B can see User A's transactions
+```
+
+### Visibility Matrix
+
+| Group Setting | User A Setting | What User B Sees of User A |
+|---------------|----------------|---------------------------|
+| `transactionSharingEnabled: false` | N/A | Statistics only (A's spending in aggregates) |
+| `transactionSharingEnabled: true` | `shareMyTransactions: false` | Statistics only (A's spending in aggregates) |
+| `transactionSharingEnabled: true` | `shareMyTransactions: true` | Statistics + A's transaction details |
+
+**Always visible regardless of settings:**
+- Own transactions (user always sees their own)
+- All statistics including byMember breakdown
+
+### Group Document Structure (Updated)
+
+```typescript
+// /sharedGroups/{groupId}
+{
+  id: string;
+  name: string;
+  ownerId: string;
+  memberIds: string[];
+  timezone: string; // IANA format
+
+  // Transaction sharing (owner controls) - NEW
+  transactionSharingEnabled: boolean;        // default: false
+  transactionSharingLastToggleAt: Timestamp | null;
+  transactionSharingToggleCountToday: number;
+  transactionSharingToggleCountResetAt: Timestamp | null;
+
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+```
+
+### User Group Preferences Document (New)
+
+```typescript
+// /users/{userId}/preferences/sharedGroups
+{
+  groupPreferences: {
+    [groupId: string]: {
+      shareMyTransactions: boolean;          // default: false
+      lastToggleAt: Timestamp | null;
+      toggleCountToday: number;
+      toggleCountResetAt: Timestamp | null;
+    }
+  }
+}
+```
+
+### Toggle Cooldown Rules
+
+| Toggle | Who Controls | Daily Limit | Cooldown | Reset |
+|--------|--------------|-------------|----------|-------|
+| `transactionSharingEnabled` | Group Owner | 3×/day | 15 min | Midnight local |
+| `shareMyTransactions` | Each User | 3×/day | 5 min | Midnight local |
+
+**Rationale for cooldowns:**
+- Prevents abuse/gaming (toggle on → cache → toggle off)
+- Owner toggle has longer cooldown (affects ALL members)
+- Rate limiting prevents confusion from rapid changes
+
+### Backend Flow
+
+```
+User A saves transaction → sharedGroupId = "household"
+    │
+    ├──► Analytics Cloud Function (ALWAYS)
+    │    └── Read transaction, aggregate into /groups/household/analytics/*
+    │    └── byMember[userA] += transaction.amount
+    │
+    └──► Changelog Cloud Function (ALWAYS created)
+         └── Write to /groups/household/changelog/*
+         └── Entry includes: actorId, transactionId, type, data, timestamp
+
+User B requests group transactions:
+    │
+    └──► getSharedGroupTransactions Cloud Function
+         └── Check group.transactionSharingEnabled
+         │   └── If FALSE → return [] (empty, statistics only mode)
+         │
+         └── If TRUE → For each member:
+             └── If member == requestingUser → include their transactions
+             └── If member.shareMyTransactions == true → include
+             └── Else → exclude from results
+```
+
+### Join Flow Opt-In Prompt
+
+When a user joins a group that has `transactionSharingEnabled: true`, they should see:
+
+> **"[Group Name] allows transaction sharing"**
+>
+> Would you like to share your transaction details with group members?
+> Your spending totals will always be visible in group statistics.
+>
+> [Yes, share my transactions] [No, just statistics]
+
+**Default if dismissed:** `shareMyTransactions: false` (privacy-first)
+
+### Cache Invalidation on Opt-Out
+
+When user toggles `shareMyTransactions` from `true` → `false`:
+
+- **Approach:** Option A - Eventual consistency
+- Other members' cached data persists until next sync
+- Next sync clears (no complex purge signals)
+- UX message: "Your future transactions won't be shared. Existing cached data on other devices will be cleared on their next sync."
+
+**Rationale:** Avoids Epic 14c complexity with purge signals, refs, and invalidation cascades.
 
 ---
 
@@ -567,6 +887,22 @@ firebase.firestore().enablePersistence({ synchronizeTabs: true })
 |----------|-----------|-----------------|
 | **Firestore offline persistence** | 30-50% read reduction on app reopen | Research recommendation |
 | Changelog-only sync (no dual query) | Single query simpler, cheaper | Optimization |
+
+### 8.5 Layered Visibility Model (Brainstorm 2026-01-22)
+
+| # | Decision | Choice | Rationale |
+|---|----------|--------|-----------|
+| 1 | Sharing architecture | Layered (stats always, txns conditional) | Simpler than 3 separate modes, clear mental model |
+| 2 | Transaction visibility | Double-gate (group + user flags) | Granular privacy control without toggle explosion |
+| 3 | Default `shareMyTransactions` | `false` | Privacy-first, explicit opt-in required |
+| 4 | Changelog creation | Always (filter at read time) | Complete audit trail, simpler architecture |
+| 5 | Cache on opt-out | Eventual consistency (next sync clears) | Avoid Epic 14c complexity with purge signals |
+| 6 | Statistics contribution | Always includes all members | Accurate aggregates, core value proposition |
+| 7 | byMember visibility | Always visible | Core shared expense group value |
+| 8 | Toggle cooldowns | 3×/day with 5-15min cooldown | Prevent abuse/gaming, rate limiting |
+| 9 | Join flow | Prompt for transaction opt-in | Clear consent when joining sharing-enabled group |
+
+**Participants:** Winston (Architect), Archie (React-Opinionated-Architect), Atlas (Memory)
 
 ---
 

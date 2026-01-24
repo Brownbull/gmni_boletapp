@@ -21,10 +21,28 @@
 | **2026-01-20** | **Epic 14c FAILED/REVERTED - Retrospective complete** |
 | **2026-01-21** | **Epic 14c-refactor: Stories 14c-refactor.1-13 done via Atlas Code Review** |
 | **2026-01-22** | **Epic 14c-refactor Part 1-2 DEPLOYED: 13 stories (39 pts) to production via PR #211→#212** |
+| **2026-01-22** | **Epic 14d-v2: Atlas-create-story for Story 1.12 (User Transaction Sharing Preference - Gate 2)** |
+| **2026-01-22** | **Epic 14c-refactor: Atlas-create-story for Story 14c-refactor.25 (ViewHandlersContext) - 5 workflow impacts** |
+| **2026-01-22** | **Epic 14c-refactor.22c: Atlas Code Review - renderViewSwitch + 49 tests added (5,759 total tests)** |
+| **2026-01-23** | **Story 14c-refactor.30 SPLIT: atlas-story-sizing workflow split oversized story (5 tasks, 24 subtasks) into 30a/30b/30c** |
+| **2026-01-23** | **Story 14c-refactor.31 SPLIT: atlas-story-sizing workflow split TrendsView story (5 tasks, 17 subtasks) into 31a/31b/31c** |
+| **2026-01-23** | **Story 14c-refactor.32 SPLIT: atlas-story-sizing workflow split BatchReviewView story (4 tasks, 15 subtasks) into 32a/32b/32c - at LARGE boundary, split for consistency** |
+| **2026-01-23** | **Story 14c-refactor.33 SPLIT: atlas-story-sizing workflow split TransactionEditorView story (4 tasks, 16 subtasks) into 33a/33b/33c - most callbacks of any view** |
+| **2026-01-23** | **Story 14c-refactor.31a: Atlas Code Review APPROVED - TrendsView interface cleanup (3 deprecated props removed, View type import fix)** |
+| **2026-01-23** | **Story 14c-refactor.31b: Atlas Code Review APPROVED - useTrendsViewProps hook expansion (3 callback handlers, Hook-to-View Type Conversion pattern documented)** |
+| **2026-01-23** | **Story 14c-refactor.31c: Atlas Code Review APPROVED - TrendsView integration complete (34 lines removed, single spread pattern)** |
+| **2026-01-23** | **Story 14c-refactor.32a: Atlas Code Review APPROVED - BatchReviewView interface audit found "no changes needed" (names already aligned by Story 27)** |
+| **2026-01-23** | **Story 14c-refactor.33c: Atlas Dev COMPLETE - TransactionEditorView integration (12 callbacks extracted, single spread pattern, 46 hook tests pass)** |
+| **2026-01-23** | **Story 14c-refactor.34a: Atlas Dev COMPLETE - useDashboardViewProps hook created (34 tests), App.tsx integration (~60 lines reduced to spread)** |
+| **2026-01-23** | **Story 14c-refactor.34b: Atlas Dev COMPLETE - useSettingsViewProps hook created (63 tests), ~125 inline props consolidated to single spread** |
+| **2026-01-23** | **Story 14c-refactor.34c: Atlas Code Review PASSED - useItemsViewProps hook (37 tests), 3 doc fixes (File List, line count, verification checklist)** |
+| **2026-01-24** | **Story 14c-refactor.35a: Atlas Code Review APPROVED - App.tsx audit (4,221 lines), 3 patterns added (File List dedup, checklist context, gap quantification), enables 35b/35c/35d** |
+| **2026-01-24** | **Story 14c-refactor.35d: Atlas Code Review PASSED - Dead code removal complete (371 lines, App.tsx 4,221→3,850). 1 MEDIUM fix: Architecture doc line counts corrected (estimates 2-6x off). Pattern: Use `wc -l` for extracted code line counts. Epic 14c-refactor COMPLETE.** |
+| **2026-01-24** | **Story 14c-refactor.36: Atlas Code Review PASSED - DashboardView test fixes. 6 issues fixed (3M+3L): Added `disableNavigationHandler()`/`restoreNavigationHandler()` helpers to test-utils.tsx, consolidated duplicate beforeEach/afterEach to parent describe block. Pattern: Context callbacks affect fallback behavior.** |
 
 ---
 
-## Current Project Status (2026-01-22)
+## Current Project Status (2026-01-24)
 
 | Metric | Value |
 |--------|-------|
@@ -33,8 +51,8 @@
 | **Epic 14** | ✅ COMPLETE (50+) - Core Implementation |
 | **Epic 14d** | ✅ COMPLETE (11/11) - Scan Architecture Refactor |
 | **Epic 14c** | ❌ FAILED/REVERTED (See retrospective) |
-| **Epic 14c-refactor** | 🔄 IN PROGRESS (19/22 done) - Codebase Cleanup |
-| **Tests** | 3,146+ (84%+ coverage) |
+| **Epic 14c-refactor** | ✅ COMPLETE - Codebase Cleanup (App.tsx 4,800→3,850 lines) |
+| **Tests** | 5,759+ (84%+ coverage) |
 | **Bundle** | 2.92 MB ⚠️ |
 | **Velocity** | ~8.6 pts/day |
 | **Version** | 1.0.0-beta.1 |
@@ -62,17 +80,38 @@
 | **14c-refactor.17** | **✅ Done** | **Test Suite Cleanup (Atlas Code Review 2026-01-22 - 92 tests, 4 MEDIUM issues fixed)** |
 | **14c-refactor.18** | **✅ Done** | **Integration Testing - Atlas Code Review 2026-01-22 (16 tasks PASSED, 4,778 unit tests, 1 minor defer)** |
 | **14c-refactor.19** | **✅ Done** | **Documentation Update - Atlas Code Review 2026-01-22 (9 ACs PASSED, 3 MEDIUM issues fixed: File List, AC deviation, footer sync)** |
-| **14c-refactor.20** | **📋 Ready** | **App.tsx Handler Extraction - Transaction & Scan Handlers (3 pts)** |
-| **14c-refactor.21** | **📋 Ready** | **App.tsx Handler Extraction - Navigation & Dialog (3 pts)** |
-| **14c-refactor.22** | **📋 Ready** | **App.tsx JSX Extraction & Final Cleanup - 5,079→200-300 lines (5 pts)** |
+| **14c-refactor.20** | **✅ Done** | **App.tsx Handler Extraction - Transaction & Scan Handlers (3 pts)** |
+| **14c-refactor.21** | **✅ Done** | **App.tsx Handler Extraction - Navigation & Dialog (3 pts)** |
+| **14c-refactor.22** | **⏸️ Blocked** | **App.tsx JSX Extraction - BLOCKED (handler hooks require 26+ props)** |
+| **14c-refactor.22a** | **✅ Done** | **Interim Cleanup: Integrate hooks, extract viewRenderers (3 pts)** |
+| **14c-refactor.22b** | **✅ Done** | **viewRenderers TypeScript Safety (2 pts)** |
+| **14c-refactor.22c** | **✅ Done** | **renderViewSwitch Function (2 pts) - Atlas Code Review 2026-01-22 (+49 tests)** |
+| **14c-refactor.22d** | **📋 Ready** | **AppOverlays Extraction (2 pts)** |
+| **14c-refactor.22e** | **📋 Ready** | **Final Verification (1 pt)** |
+| **14c-refactor.25** | **✅ Done** | **ViewHandlersContext for Handler Passing (2 pts) - Atlas Code Review 2026-01-22** |
+| **14c-refactor.27** | **✅ Done** | **View Context Migration (2 pts) - Atlas Code Review 2026-01-23** |
+| **14c-refactor.30a** | **✅ Done** | **HistoryView Interface Rename (2 pts) - Split from 30** |
+| **14c-refactor.30b** | **✅ Done** | **useHistoryViewProps Hook Expansion (2 pts) - Atlas Code Review 2026-01-23** |
+| **14c-refactor.30c** | **✅ Done** | **HistoryView Integration Verification (2 pts) - Atlas Code Review 2026-01-23** |
+| **14c-refactor.31a** | **✅ Done** | **TrendsView Interface Rename (2 pts) - Atlas Code Review 2026-01-23** |
+| **14c-refactor.31b** | **✅ Done** | **useTrendsViewProps Hook Expansion (2 pts) - Atlas Code Review 2026-01-23** |
+| **14c-refactor.31c** | **✅ Done** | **TrendsView Integration Verification (2 pts) - Atlas Code Review 2026-01-23** |
+| **14c-refactor.32c** | **✅ Done** | **BatchReviewView Integration (2 pts) - Atlas Code Review 2026-01-23** |
+| **14c-refactor.33c** | **✅ Done** | **TransactionEditorView Integration (2 pts) - Atlas Dev 2026-01-23** |
+| **14c-refactor.34a** | **✅ Done** | **DashboardView Composition Hook (3 pts) - Atlas Dev 2026-01-23** |
+| **14c-refactor.34b** | **✅ Done** | **SettingsView Composition Hook (3 pts) - Atlas Dev 2026-01-23 (63 tests)** |
+| **14c-refactor.34c** | **✅ Done** | **ItemsView Composition Hook (2 pts) - Atlas Code Review 2026-01-23 (37 tests)** |
+| **14c-refactor.35a** | **✅ Done** | **App.tsx Audit & Documentation (1 pt) - Atlas Dev 2026-01-24 (audit report created)** |
+| **14c-refactor.35d** | **✅ Done** | **Dead Code & Verification (2 pts) - Atlas Code Review 2026-01-24 (371 lines removed)** |
+| **14c-refactor.36** | **✅ Done** | **DashboardView Test Fixes (1 pt) - Atlas Code Review 2026-01-24 (helper functions, 6 issues fixed)** |
 
 ### Next Epics Roadmap
 
 | Epic | Theme | Status | Prep Required |
 |------|-------|--------|---------------|
-| **14c-refactor** | Codebase Cleanup | In Progress | 19/22 stories done |
-| **14d** | Shared Groups v2 | Blocked | Requires 14c-refactor completion |
-| **15** | Advanced Features | Backlog | Blocked by 14c-refactor |
+| **14c-refactor** | Codebase Cleanup | ✅ COMPLETE | App.tsx 4,800→3,850 lines (~20% reduction) |
+| **14d-v2** | Shared Groups v2 | Ready | Epic 14c-refactor complete |
+| **15** | Advanced Features | Backlog | Requirements definition |
 
 ---
 

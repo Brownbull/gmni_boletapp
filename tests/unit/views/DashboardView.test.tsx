@@ -17,8 +17,8 @@
  * - AC#6: Full list view with filters and pagination
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '../../setup/test-utils';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, mockViewHandlers, disableNavigationHandler, restoreNavigationHandler } from '../../setup/test-utils';
 import { DashboardView } from '../../../src/views/DashboardView';
 import { HistoryFiltersProvider } from '../../../src/contexts/HistoryFiltersContext';
 
@@ -572,6 +572,17 @@ describe('DashboardView', () => {
   });
 
   describe('Full List View (View All)', () => {
+    // Story 14c-refactor.36: Override navigation handler so full list view renders inline
+    // When handleNavigateToHistory is provided (via ViewHandlersContext), clicking "View All"
+    // navigates away instead of showing inline pagination. These tests need the inline view.
+    beforeEach(() => {
+      disableNavigationHandler();
+    });
+
+    afterEach(() => {
+      restoreNavigationHandler();
+    });
+
     // Helper to navigate to full list view
     const navigateToFullList = () => {
       // Switch to "Por Fecha" slide (slide 1) which uses allTransactions
@@ -698,12 +709,12 @@ describe('DashboardView', () => {
 
   describe('Backward Compatibility', () => {
     it('should use onNavigateToHistory callback when provided for View All on "Por Fecha" slide', () => {
-      const onNavigateToHistory = vi.fn();
+      // Story 14c-refactor.27: Reset and use context mock instead of prop callback
+      mockViewHandlers.navigation.handleNavigateToHistory.mockClear();
       const transactions = createManyTransactions(10);
 
       renderDashboardView({
         allTransactions: transactions,
-        onNavigateToHistory,
       });
 
       // Switch to "Por Fecha" slide (slide 1) which uses allTransactions
@@ -712,8 +723,8 @@ describe('DashboardView', () => {
       fireEvent.click(screen.getByTestId('see-more-card'));
       fireEvent.click(screen.getByTestId('view-all-link'));
 
-      // On slide 1, it calls onNavigateToHistory with temporal filter
-      expect(onNavigateToHistory).toHaveBeenCalled();
+      // Story 14c-refactor.27: On slide 1, it calls context navigation handler
+      expect(mockViewHandlers.navigation.handleNavigateToHistory).toHaveBeenCalled();
     });
   });
 });
