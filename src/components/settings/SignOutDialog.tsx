@@ -15,15 +15,17 @@ import { LogOut, X } from 'lucide-react';
 
 export interface SignOutDialogProps {
     /** Whether the dialog is visible */
-    isOpen: boolean;
+    isOpen?: boolean;
     /** Called when user confirms sign out */
     onConfirm: () => void;
     /** Called when user cancels */
     onCancel: () => void;
-    /** Translation function */
-    t: (key: string) => string;
+    /** Translation function (optional - fallbacks used if not provided) */
+    t?: (key: string) => string;
     /** Language for fallback text */
     lang?: 'en' | 'es';
+    /** Called when modal closes (ModalManager integration) */
+    onClose?: () => void;
 }
 
 /**
@@ -31,13 +33,19 @@ export interface SignOutDialogProps {
  *
  * A styled confirmation dialog for signing out.
  */
+// Default translation function that returns empty string (fallbacks will be used)
+const defaultTranslate = () => '';
+
 export const SignOutDialog: React.FC<SignOutDialogProps> = ({
-    isOpen,
+    isOpen = true,  // Default to true for ModalManager integration
     onConfirm,
     onCancel,
-    t,
+    t = defaultTranslate,
     lang = 'es',
+    onClose,  // ModalManager integration - alias for onCancel
 }) => {
+    // Use onClose if provided (ModalManager), otherwise onCancel
+    const handleCancel = onClose || onCancel;
     const modalRef = useRef<HTMLDivElement>(null);
     const cancelButtonRef = useRef<HTMLButtonElement>(null);
     const previousActiveElement = useRef<Element | null>(null);
@@ -54,11 +62,11 @@ export const SignOutDialog: React.FC<SignOutDialogProps> = ({
 
     // Restore focus when modal closes
     const handleClose = useCallback(() => {
-        onCancel();
+        handleCancel();
         setTimeout(() => {
             (previousActiveElement.current as HTMLElement)?.focus?.();
         }, 0);
-    }, [onCancel]);
+    }, [handleCancel]);
 
     // Handle Escape key to close modal
     useEffect(() => {

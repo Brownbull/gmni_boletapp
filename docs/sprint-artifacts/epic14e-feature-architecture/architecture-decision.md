@@ -6,6 +6,13 @@
 **Author:** Archie (React Opinionated Architect)
 **Stakeholder:** Gabe
 
+**Pre-Dev Review:** ✅ PASSED (2026-01-24)
+- FSD layer compliance verified
+- ADR-018 (Zustand-only) rationale approved
+- Test strategy with transition matrices approved
+- Story 14e.8 enhanced with layered extraction safeguards
+- Story 14e.11 enhanced with 31-variable inventory references
+
 ---
 
 ## Context
@@ -116,15 +123,18 @@ src/
 │   │   ├── handlers/
 │   │   └── components/
 │   │
-│   ├── credit/                      # Simple feature
-│   │   ├── index.ts
-│   │   ├── CreditFeature.tsx
-│   │   ├── store/
-│   │   └── components/
-│   │
-│   └── transactions/                # Core data feature
+│   └── credit/                      # Simple feature
 │       ├── index.ts
-│       └── ...
+│       ├── CreditFeature.tsx
+│       ├── store/
+│       └── components/
+│
+├── entities/                        # Domain objects (FSD entities layer)
+│   └── transaction/                 # Used by scan, batch-review, categories
+│       ├── index.ts                 # Public API
+│       ├── hooks/useTransactions.ts
+│       ├── utils/transactionHelpers.ts
+│       └── types.ts
 │
 ├── shared/                          # Cross-feature utilities
 │   ├── components/

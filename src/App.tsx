@@ -25,7 +25,7 @@ import {
     renderInsightsView,
     renderAlertsView,
 } from './components/App';
-import { Camera, Zap, X, ShoppingCart, Trash2, ArrowLeft } from 'lucide-react';
+import { Trash2, ArrowLeft } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useTransactions } from './hooks/useTransactions';
 import { migrateCreatedAt } from './utils/migrateCreatedAt';
@@ -136,6 +136,8 @@ import { incrementMappingUsage } from './services/categoryMappingService';
 import { incrementMerchantMappingUsage } from './services/merchantMappingService';
 import { incrementItemNameMappingUsage } from './services/itemNameMappingService';
 import { getCitiesForCountry } from './data/locations';
+// Modal Manager - centralized modal rendering (Story 14e-4)
+import { ModalManager, useModalActions } from './managers/ModalManager';
 
 /**
  * Reconcile transaction total with sum of items.
@@ -655,10 +657,8 @@ function App() {
         dismissScanDialog,
     });
 
-    // Dialog handlers (credit info modal, conflict dialog)
+    // Dialog handlers (conflict dialog - credit info modal now uses Modal Manager)
     const {
-        showCreditInfoModal,
-        setShowCreditInfoModal,
         showConflictDialog,
         setShowConflictDialog,
         conflictDialogData,
@@ -674,6 +674,9 @@ function App() {
         setTransactionEditorMode,
         navigateToView,
     });
+
+    // Story 14e-4: Modal Manager actions for credit info modal
+    const { openModal: openModalAction, closeModal: closeModalAction } = useModalActions();
 
     // Scan handlers (overlay, quick save, currency/total mismatch)
     const {
@@ -775,16 +778,19 @@ function App() {
 
     // Dialog handlers include both hook-provided handlers and local toast state
     // Toast is kept local due to hook dependency order (useTransactionHandlers needs setToastMessage)
+    // Story 14e-4: Credit info modal now uses Modal Manager
     const dialogHandlers = useMemo(() => ({
         // Toast
         toastMessage,
         setToastMessage,
         showToast: (text: string, type: 'success' | 'info') => setToastMessage({ text, type }),
-        // Credit Info Modal
-        showCreditInfoModal,
-        setShowCreditInfoModal,
-        openCreditInfoModal: () => setShowCreditInfoModal(true),
-        closeCreditInfoModal: () => setShowCreditInfoModal(false),
+        // Credit Info Modal - Story 14e-4: Uses Modal Manager instead of local state
+        openCreditInfoModal: () => openModalAction('creditInfo', {
+            normalCredits: userCredits.remaining,
+            superCredits: userCredits.superRemaining ?? 0,
+            onClose: closeModalAction,
+        }),
+        closeCreditInfoModal: closeModalAction,
         // Conflict Dialog
         showConflictDialog,
         setShowConflictDialog,
@@ -803,7 +809,7 @@ function App() {
         },
     }), [
         toastMessage, setToastMessage,
-        showCreditInfoModal, setShowCreditInfoModal,
+        openModalAction, closeModalAction, userCredits.remaining, userCredits.superRemaining,
         showConflictDialog, setShowConflictDialog,
         conflictDialogData, setConflictDialogData,
         handleConflictClose, handleConflictViewCurrent, handleConflictDiscard,
@@ -2710,6 +2716,8 @@ function App() {
                 getLastWeekTotal={getLastWeekTotal}
                 isInsightsSilenced={isInsightsSilenced}
             />
+            {/* Story 14e-4: Centralized modal rendering via ModalManager */}
+            <ModalManager />
             {/* AppLayout provides app shell with theme classes */}
             <AppLayout theme={theme} colorTheme={colorTheme}>
             <input
@@ -2950,8 +2958,7 @@ function App() {
                         // Pass credits for header display and credit usage section
                         superCreditsAvailable={userCredits.superRemaining}
                         normalCreditsAvailable={userCredits.remaining}
-                        // Show credit info modal when badges tapped
-                        onCreditInfoClick={() => setShowCreditInfoModal(true)}
+                        // Story 14e-4: onCreditInfoClick removed - Nav uses Modal Manager directly
                         imageDataUrls={batchImages}
                         onImagesChange={(dataUrls) => setBatchImages(dataUrls)}
                     />
@@ -3107,7 +3114,7 @@ function App() {
                 scanCredits={userCredits.remaining}
                 // Display super credits (tier 2) on camera FAB
                 superCredits={userCredits.superRemaining}
-                onCreditInfoClick={() => setShowCreditInfoModal(true)}
+                // Story 14e-4: onCreditInfoClick removed - Nav uses Modal Manager directly
                 // Batch mode from ScanContext - tracks all phases (capturing, processing, reviewing)
                 isBatchMode={isBatchModeFromContext || hasBatchReceipts}
                 alertsBadgeCount={pendingInvitationsCount + inAppNotificationsUnreadCount}
@@ -3143,125 +3150,7 @@ function App() {
                 </div>
             )}
 
-            {/* Credit Info Modal (triggered by Nav credit badges) */}
-            {showCreditInfoModal && (
-                <div className="fixed inset-0 z-[70] flex items-center justify-center">
-                    {/* Backdrop */}
-                    <div
-                        className="absolute inset-0 bg-black/50"
-                        onClick={() => setShowCreditInfoModal(false)}
-                    />
-                    {/* Modal */}
-                    <div
-                        className="relative w-[calc(100%-32px)] max-w-sm rounded-2xl shadow-xl overflow-hidden"
-                        style={{
-                            backgroundColor: 'var(--bg-secondary)',
-                            animation: 'modalFadeIn 0.2s ease-out',
-                        }}
-                    >
-                        {/* Header */}
-                        <div
-                            className="flex justify-between items-center px-5 py-4"
-                            style={{ borderBottom: '1px solid var(--border-light)' }}
-                        >
-                            <span className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
-                                {t('creditInfoTitle') || 'Tus Créditos'}
-                            </span>
-                            <button
-                                onClick={() => setShowCreditInfoModal(false)}
-                                className="w-8 h-8 rounded-full flex items-center justify-center"
-                                style={{ backgroundColor: 'var(--bg-tertiary)' }}
-                                aria-label={t('close') || 'Cerrar'}
-                            >
-                                <X size={18} style={{ color: 'var(--text-primary)' }} />
-                            </button>
-                        </div>
-
-                        {/* Content */}
-                        <div className="p-5 space-y-4">
-                            {/* Normal Credits */}
-                            <div
-                                className="flex items-start gap-3 p-3 rounded-xl"
-                                style={{ backgroundColor: 'var(--primary-light)' }}
-                            >
-                                <div
-                                    className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                                    style={{ backgroundColor: 'var(--primary)' }}
-                                >
-                                    <Camera size={20} className="text-white" strokeWidth={2} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-baseline justify-between gap-2 mb-1">
-                                        <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
-                                            {t('normalCredits') || 'Créditos Normales'}
-                                        </span>
-                                        <span className="font-bold text-lg" style={{ color: 'var(--primary)' }}>
-                                            {userCredits.remaining.toLocaleString()}
-                                        </span>
-                                    </div>
-                                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                                        {t('normalCreditsDesc') || '1 crédito = 1 foto individual escaneada'}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Super Credits */}
-                            <div
-                                className="flex items-start gap-3 p-3 rounded-xl"
-                                style={{ backgroundColor: '#fef3c7' }}
-                            >
-                                <div
-                                    className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                                    style={{ backgroundColor: '#f59e0b' }}
-                                >
-                                    <Zap size={20} className="text-white" strokeWidth={2} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-baseline justify-between gap-2 mb-1">
-                                        <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
-                                            {t('superCredits') || 'Super Créditos'}
-                                        </span>
-                                        <span className="font-bold text-lg" style={{ color: '#d97706' }}>
-                                            {userCredits.superRemaining.toLocaleString()}
-                                        </span>
-                                    </div>
-                                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                                        {t('superCreditsDesc') || '1 crédito = escaneo en lote de hasta 10 fotos'}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Usage stats */}
-                            <div
-                                className="text-xs text-center pt-2"
-                                style={{
-                                    color: 'var(--text-tertiary)',
-                                    borderTop: '1px solid var(--border-light)',
-                                }}
-                            >
-                                {t('creditsUsed') || 'Usados'}: {userCredits.used} {t('normal') || 'normales'}, {userCredits.superUsed} {t('super') || 'super'}
-                            </div>
-
-                            {/* Buy more credits button */}
-                            <button
-                                onClick={() => {
-                                    setShowCreditInfoModal(false);
-                                    setView('settings');
-                                    setSettingsSubview('suscripcion');
-                                }}
-                                className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-                                style={{
-                                    backgroundColor: 'var(--primary)',
-                                    color: 'white',
-                                }}
-                            >
-                                <ShoppingCart size={18} strokeWidth={2} />
-                                {t('buyMoreCredits') || 'Comprar más créditos'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Story 14e-4: Credit Info Modal now rendered by ModalManager */}
 
             {/* Batch upload preview for multi-image selection with safe area padding */}
             {showBatchPreview && (

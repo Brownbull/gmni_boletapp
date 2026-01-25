@@ -2,7 +2,7 @@
 
 **Epic:** 14e - Feature-Based Architecture
 **Points:** 1
-**Status:** ready-for-dev
+**Status:** done
 **Created:** 2026-01-24
 **Pre-requisite:** Must complete before Story 14e.1
 
@@ -54,26 +54,26 @@ Verification:
 **Given** `src/hooks/useScanStateBridge.ts` exists but is unused
 **When** this story is completed
 **Then:**
-- [ ] `src/hooks/useScanStateBridge.ts` is deleted
-- [ ] No other files reference `useScanStateBridge`
+- [x] `src/hooks/useScanStateBridge.ts` is deleted
+- [x] No other files reference `useScanStateBridge`
 
 ### AC2: No Regressions
 
 **Given** the bridge is truly unused
 **When** the file is deleted
 **Then:**
-- [ ] `npm run build` succeeds
-- [ ] `npm run test` passes (all ~5,700 tests)
-- [ ] `npm run lint` passes
-- [ ] Smoke test: Single scan flow works
-- [ ] Smoke test: Batch scan flow works
+- [x] `npm run build` succeeds
+- [x] `npm run test` passes (all ~5,700 tests) - 5,264 tests pass
+- [x] `npm run lint` passes - N/A (no lint script configured)
+- [x] Smoke test: Single scan flow works - VERIFIED
+- [x] Smoke test: Batch scan flow works - VERIFIED (via long-press FAB → Batch mode)
 
 ### AC3: Hooks Index Updated (if applicable)
 
 **Given** hooks may have a barrel export
 **When** the file is deleted
 **Then:**
-- [ ] `src/hooks/index.ts` does not export `useScanStateBridge` (verify or remove if present)
+- [x] `src/hooks/index.ts` does not export `useScanStateBridge` (N/A - no barrel export exists)
 
 ---
 
@@ -138,13 +138,13 @@ npm run lint
 
 ## Definition of Done
 
-- [ ] Bridge file deleted
-- [ ] No TypeScript/build errors
-- [ ] All tests pass
-- [ ] Lint passes
-- [ ] Single scan flow works (manual smoke test)
-- [ ] Batch scan flow works (manual smoke test)
-- [ ] Story marked as done in sprint-status.yaml
+- [x] Bridge file deleted
+- [x] No TypeScript/build errors
+- [x] All tests pass (5,264 tests)
+- [x] Lint passes (N/A - no lint script)
+- [x] Single scan flow works (manual smoke test) - VERIFIED
+- [x] Batch scan flow works (manual smoke test) - VERIFIED via long-press FAB → Batch mode
+- [x] Story marked as done in sprint-status.yaml
 
 ---
 
@@ -160,3 +160,87 @@ npm run lint
 
 - **Depends on:** None (first story in epic)
 - **Blocks:** 14e.1 (Directory Structure & Zustand Setup)
+
+---
+
+## File List
+
+| File | Action | Lines |
+|------|--------|-------|
+| `src/hooks/useScanStateBridge.ts` | DELETED | 503 |
+| `tests/unit/hooks/useScanStateBridge.test.ts` | DELETED | ~300 |
+| `tests/config/vitest.config.ci.group-hooks-scan.ts` | MODIFIED | -1 (code review fix) |
+| `tests/config/vitest.config.ci.group-hooks-other.ts` | MODIFIED | -1 (code review fix) |
+| `eslint.config.security.mjs` | MODIFIED | -1 (code review fix) |
+
+---
+
+## Dev Agent Record
+
+### Implementation Date
+2026-01-24
+
+### Completion Notes
+
+**Verification performed:**
+1. `grep -r "useScanStateBridge" src/` - returned only self-references within the file
+2. `grep -r "from.*useScanStateBridge" src/` - returned no imports (confirmed dead code)
+3. `src/hooks/index.ts` - does not exist (no barrel export to clean up)
+
+**Files deleted:**
+- `src/hooks/useScanStateBridge.ts` (17,892 bytes) - bridge layer from Epic 14d migration
+- `tests/unit/hooks/useScanStateBridge.test.ts` - associated test file
+
+**Validation:**
+- Build: PASSED
+- Tests: 5,264 passed, 33 skipped (212 test files)
+- Lint: N/A (no lint script configured in package.json)
+
+**Remaining for reviewer:**
+- Manual smoke test: Single scan flow
+- Manual smoke test: Batch scan flow
+
+---
+
+## Code Review Record
+
+### Atlas-Enhanced Code Review
+**Date:** 2026-01-24
+**Reviewer:** Atlas Code Review Workflow
+
+### Findings
+
+| Severity | Issue | Status |
+|----------|-------|--------|
+| MEDIUM | CI config `vitest.config.ci.group-hooks-scan.ts` referenced deleted test file | ✅ FIXED |
+| MEDIUM | CI config `vitest.config.ci.group-hooks-other.ts` referenced deleted test file | ✅ FIXED |
+| MEDIUM | ESLint security config `eslint.config.security.mjs` ignored deleted file | ✅ FIXED |
+
+### Atlas Validation
+- **Architecture Compliance:** ✅ PASSED - Aligns with Epic 14d completion
+- **Pattern Compliance:** ✅ PASSED - Test file deleted with implementation
+- **Workflow Chain Impact:** ✅ NONE - Bridge was unused, no workflow affected
+
+### Verification After Fixes
+- Build: PASSED
+- Tests: 5,264 passed, 33 skipped
+- All stale config references removed
+
+### Smoke Test Results
+- [x] Single scan flow: PASSED
+- [x] Batch scan flow (long-press FAB → Batch mode): PASSED
+
+### Pre-existing Bug Discovered (Not a Regression)
+
+During smoke testing, a **pre-existing bug** was discovered in the legacy batch path:
+
+**Issue:** When selecting multiple images in single-scan mode (via file input), clicking "Procesar todas" appears to do nothing.
+
+**Root Cause:** `BatchUploadPreview` (z-50) renders after `AppOverlays` in the DOM, so when `CreditWarningDialog` (also z-50) is shown, it appears BEHIND the still-visible BatchUploadPreview.
+
+**Impact:** Legacy batch path is broken, but this is NOT caused by deleting `useScanStateBridge`:
+- The bridge was confirmed unused (not imported anywhere)
+- The proper batch flow (long-press FAB → Batch mode) works correctly
+- This bug predates this story
+
+**Recommendation:** Create a separate bug story to fix z-index layering in `handleBatchConfirmWithCreditCheck`.

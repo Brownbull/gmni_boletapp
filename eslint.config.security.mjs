@@ -14,7 +14,6 @@ export default [
     // ESLint v9 errors on unknown rules in disable comments, even with reportUnusedDisableDirectives: 'off'
     ignores: [
       'src/hooks/useChangeDetection.ts',
-      'src/hooks/useScanStateBridge.ts',
       'src/components/celebrations/PersonalRecordBanner.tsx',
       'src/components/history/IconFilterBar.tsx',
       'src/views/ItemsView.tsx',

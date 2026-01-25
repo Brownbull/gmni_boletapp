@@ -551,12 +551,24 @@
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 5b: Context Window Sizing Analysis (NEW!)                          -->
+  <!-- STEP 5b: PRE-GENERATION Sizing Estimate (Early Warning)                 -->
+  <!-- NOTE: This is an ESTIMATE based on epic descriptions!                   -->
+  <!-- The REAL validation happens in Step 6 AFTER story content is generated -->
+  <!-- Bug fix 2026-01-24: Story 14e-6 had 47 subtasks but wasn't caught here -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="5b" goal="Analyze Story Size for Context Window Fit">
-    <critical>📏 CONTEXT WINDOW SIZING - Prevent stories that exceed development capacity!</critical>
+  <step n="5b" goal="Pre-Generation Sizing Estimate (Early Warning)">
+    <critical>📏 PRE-GENERATION ESTIMATE - Based on epic descriptions only!</critical>
+    <critical>NOTE: The REAL sizing check happens in Step 6 AFTER story is generated</critical>
     <critical>Lesson from Story 14c-refactor.22a: Stories with >3 complex tasks exhaust context windows</critical>
+
+    <note>
+      **IMPORTANT - This is only an ESTIMATE:**
+      - At this point, the story file hasn't been created yet
+      - We can only estimate based on what's described in the epic file
+      - The actual task/subtask count is determined in Step 6 when the story is written
+      - Step 6 has a POST-GENERATION check that validates the ACTUAL content
+    </note>
 
     <note>
       **Context Window Reality:**
@@ -565,8 +577,8 @@
       - Better to split upfront than discover mid-development
     </note>
 
-    <action>Analyze the story's planned tasks and subtasks</action>
-    <action>Count: number of tasks, subtasks per task, estimated complexity</action>
+    <action>ESTIMATE the story's planned scope from epic description</action>
+    <action>This is a rough estimate - actual counts come from Step 6 post-generation check</action>
 
     <!-- Sizing Heuristics -->
     <action>Apply sizing heuristics:
@@ -731,6 +743,127 @@
 
     <!-- Set status -->
     <action>Set story Status to: "ready-for-dev"</action>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- POST-GENERATION SIZING VALIDATION (Critical Fix - 2026-01-24)          -->
+    <!-- This check runs AFTER the story is generated, not before!              -->
+    <!-- Bug found: Step 5b ran before story existed, couldn't count tasks      -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+    <critical>📏 POST-GENERATION SIZING CHECK - Validate ACTUAL story content!</critical>
+    <note>This is the REAL sizing check - Step 5b only estimates from epic descriptions</note>
+
+    <action>Parse the GENERATED story file to extract actual metrics:</action>
+    <action>  1. Count lines matching "- [ ] **Task" pattern → {{actual_task_count}}</action>
+    <action>  2. Count all nested "- [ ]" items → {{actual_subtask_count}}</action>
+    <action>  3. Count files in "Files to Create" + "Files to Modify" → {{actual_file_count}}</action>
+
+    <action>Apply sizing heuristics to ACTUAL counts:
+      - **SMALL (1 pt):** 1-2 tasks, ≤5 subtasks, ≤2 files
+      - **MEDIUM (2-3 pts):** 2-3 tasks, ≤10 subtasks, ≤4 files
+      - **LARGE (5 pts):** 3-4 tasks, ≤15 subtasks, ≤8 files
+      - **TOO_LARGE (needs split):** >4 tasks OR >15 subtasks OR >8 files
+    </action>
+
+    <action>Set {{actual_story_size}} = SMALL | MEDIUM | LARGE | TOO_LARGE</action>
+
+    <!-- TOO LARGE - Require Split AFTER Generation -->
+    <check if="{{actual_story_size}} == TOO_LARGE">
+      <output>
+        ⚠️ **POST-GENERATION SIZING ALERT: Story exceeds context window capacity!**
+
+        **Actual Metrics (from generated story):**
+        | Metric | Actual | Max Allowed | Status |
+        |--------|--------|-------------|--------|
+        | Tasks | {{actual_task_count}} | 4 | {{task_status}} |
+        | Subtasks | {{actual_subtask_count}} | 15 | {{subtask_status}} |
+        | Files | {{actual_file_count}} | 8 | {{file_status}} |
+
+        **Problem:** This story will exhaust the dev agent's context window mid-implementation.
+        The story was generated but is TOO LARGE for a single development session.
+
+        **Recommended Action:** Split into {{recommended_split_count}} smaller stories.
+      </output>
+
+      <ask>
+        How would you like to proceed?
+        1. **Split now** - Create multiple smaller stories (RECOMMENDED)
+        2. **Proceed anyway** - Keep single story with risk acknowledgment
+        X. **Discard** - Delete generated story and exit
+
+        Choose [1], [2], or [X]:
+      </ask>
+
+      <check if="user chooses X">
+        <action>Delete the generated story file</action>
+        <output>Story discarded. Consider reducing scope before re-running.</output>
+        <action>EXIT workflow gracefully</action>
+      </check>
+
+      <check if="user chooses 1">
+        <output>🔄 **Initiating story split...**</output>
+        <action>Analyze task groupings for natural split points</action>
+        <action>Generate split recommendations (by_layer, by_feature, by_phase, by_file)</action>
+
+        <ask>
+          **Recommended Split Strategy:** {{recommended_strategy}}
+
+          **Proposed Sub-Stories:**
+          {{split_preview_table}}
+
+          Accept this split? [Y/N/custom]
+        </ask>
+
+        <check if="user accepts">
+          <action>Create sub-story files with letter suffixes (e.g., {{story_key}}a, {{story_key}}b)</action>
+          <action>Distribute tasks according to split strategy</action>
+          <action>Add dependency chain between sub-stories</action>
+          <action>Mark original story as "split" with references to sub-stories</action>
+          <action>Set {{split_executed}} = true</action>
+          <action>Set {{created_stories}} = list of new story keys</action>
+          <output>
+            ✅ **Split Complete!**
+
+            **Original story:** {{story_key}} → marked as "split"
+            **Created {{split_count}} sub-stories:**
+            {{created_stories_list}}
+
+            Each sub-story is now within context window capacity.
+          </output>
+        </check>
+
+        <check if="user chooses custom">
+          <ask>Describe your preferred split (which tasks in which story):</ask>
+          <action>Apply custom split based on user input</action>
+        </check>
+      </check>
+
+      <check if="user chooses 2">
+        <action>Add prominent sizing warning to story header</action>
+        <action>Add "⚠️ OVERSIZED - May require mid-development split" badge</action>
+        <output>⚠️ Proceeding with oversized story - risk documented in story file</output>
+      </check>
+    </check>
+
+    <!-- LARGE - Warn but auto-proceed -->
+    <check if="{{actual_story_size}} == LARGE">
+      <output>
+        📋 **Sizing Check: LARGE (5 pts)** - At upper limit
+
+        | Metric | Actual | Guideline |
+        |--------|--------|-----------|
+        | Tasks | {{actual_task_count}} | ≤4 |
+        | Subtasks | {{actual_subtask_count}} | ≤15 |
+        | Files | {{actual_file_count}} | ≤8 |
+
+        Story is at capacity but within limits. Proceeding...
+      </output>
+    </check>
+
+    <!-- SMALL/MEDIUM - Good to go -->
+    <check if="{{actual_story_size}} == SMALL OR {{actual_story_size}} == MEDIUM">
+      <output>✅ **Sizing Check: {{actual_story_size}}** - Story fits within context window capacity</output>
+    </check>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->

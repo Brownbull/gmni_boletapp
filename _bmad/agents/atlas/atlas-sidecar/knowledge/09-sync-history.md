@@ -1,7 +1,7 @@
 # Sync History
 
 > Section 9 of Atlas Memory
-> Last Optimized: 2026-01-17 (Generation 5)
+> Last Optimized: 2026-01-24 (Generation 5)
 > Tracks knowledge synchronizations
 
 ## Sync Log Summary
@@ -39,10 +39,22 @@
 | **2026-01-24** | **Story 14c-refactor.35a: Atlas Code Review APPROVED - App.tsx audit (4,221 lines), 3 patterns added (File List dedup, checklist context, gap quantification), enables 35b/35c/35d** |
 | **2026-01-24** | **Story 14c-refactor.35d: Atlas Code Review PASSED - Dead code removal complete (371 lines, App.tsx 4,221→3,850). 1 MEDIUM fix: Architecture doc line counts corrected (estimates 2-6x off). Pattern: Use `wc -l` for extracted code line counts. Epic 14c-refactor COMPLETE.** |
 | **2026-01-24** | **Story 14c-refactor.36: Atlas Code Review PASSED - DashboardView test fixes. 6 issues fixed (3M+3L): Added `disableNavigationHandler()`/`restoreNavigationHandler()` helpers to test-utils.tsx, consolidated duplicate beforeEach/afterEach to parent describe block. Pattern: Context callbacks affect fallback behavior.** |
+| **2026-01-24** | **Epic 14e START: Story 14e-2 drafted via atlas-create-story - Modal Manager Zustand Store (21 modal types, type-safe props, foundation for App.tsx modal consolidation)** |
+| **2026-01-24** | **Story 14e-3 drafted via atlas-create-story - Modal Manager Component (MODALS registry, React.lazy loading, Suspense fallback, no workflow impacts)** |
+| **2026-01-24** | **Story 14e-4 drafted via atlas-create-story - Migrate Simple Modals (CreditInfoModal creation, SignOut migration, ModalManager integration, LOW RISK - no workflow impacts)** |
+| **2026-01-24** | **Story 14e-7 CONSOLIDATED into 14e-6c via atlas-create-story - Selector scope absorbed during 14e-6 split (14 selectors vs 5 originally planned). Pattern: Check upcoming stories during splits.** |
+| **2026-01-24** | **Story 14e-2: Atlas Dev COMPLETE - Modal Manager Zustand Store (29 tests). Pattern: Use relative imports over path aliases for consistency with existing codebase patterns.** |
+| **2026-01-24** | **Story 14e-8 drafted via atlas-create-story - Extract processScan Handler (5 pts, CRITICAL). 6 workflow impacts: #1 Scan Receipt (CRITICAL), #2 Quick Save (HIGH), #8 Trust Merchant (HIGH), #5 Learning (MEDIUM), #7 Insight Gen (MEDIUM). Layered extraction strategy: utilities → sub-handlers → main handler.** |
+| **2026-01-24** | **Story 14e-2: Atlas Code Review APPROVED - Modal Manager Zustand Store. 1 HIGH (AC4 test path doc error), 3 MEDIUM (CI group config, history state doc, co-located tests note), 1 LOW (relative imports). All doc issues FIXED. Pattern: Test path in AC should match project standard (`tests/unit/` not `src/__tests__/`).** |
+| **2026-01-24** | **Story 14e-9 SPLIT: atlas-create-story workflow split Scan Feature Components (6 tasks, 37 subtasks, ~12 files) into 14e-9a/b/c. Workflows impacted: #1 Scan Receipt (HIGH), #2 Quick Save (MEDIUM), #3 Batch Processing (MEDIUM). Pattern: Stories touching 8+ existing files likely need splitting.** |
+| **2026-01-24** | **Story 14e-10 drafted via atlas-create-story - Scan Feature Orchestrator (3 pts, HIGH). 4 workflow impacts: #1 Scan Receipt (CRITICAL), #2 Quick Save (HIGH), #3 Batch Processing (HIGH), #9 Scan Lifecycle (HIGH). Orchestrates all Part 2 work (14e-6, 14e-8, 14e-9). Blocks 14e-11 (ScanContext cleanup).** |
+| **2026-01-25** | **Story 14e-11 drafted via atlas-create-story - ScanContext Migration & Cleanup (2 pts, LOW). Cleanup story: deletes legacy ScanContext.tsx (~680 lines) and useScanStateMachine.ts (~898 lines) after Zustand migration. No new workflow impacts (existing flows preserved). Blocked by 14e-10. Total reduction: ~1,578 lines.** |
+| **2026-01-25** | **Story 14e-4: Atlas Code Review APPROVED - Migrate Simple Modals (3 pts). CreditInfoModal component created (19 tests), SignOutDialog migrated to Modal Manager, ~120 LOC removed from App.tsx, code splitting verified (3KB + 3.4KB chunks). 1 MEDIUM (AC3 partial - showCreditInfoModal kept for backward compatibility). Pattern: Incremental modal migration - keep old state APIs while adopting new pattern.** |
+| **2026-01-25** | **Story 14e-15 drafted via atlas-create-story - Batch Review Feature Components (3 pts, LOW). Migrates BatchSummaryCard→BatchReviewCard, extracts BatchProgressIndicator, creates state components (ReviewingState, ProcessingState, EmptyState). 2 workflow impacts: #3 Batch Processing (DIRECT), #9 Scan Lifecycle (INDIRECT). Depends on 14e-12a/b, 14e-13. Blocks 14e-16 (BatchReviewFeature orchestrator).** |
 
 ---
 
-## Current Project Status (2026-01-24)
+## Current Project Status (2026-01-25)
 
 | Metric | Value |
 |--------|-------|
@@ -52,58 +64,48 @@
 | **Epic 14d** | ✅ COMPLETE (11/11) - Scan Architecture Refactor |
 | **Epic 14c** | ❌ FAILED/REVERTED (See retrospective) |
 | **Epic 14c-refactor** | ✅ COMPLETE - Codebase Cleanup (App.tsx 4,800→3,850 lines) |
-| **Tests** | 5,759+ (84%+ coverage) |
+| **Epic 14e Part 1** | ✅ 5/5 - Modal Manager (Stories 14e-0 to 14e-4) |
+| **Tests** | 6,118+ (84%+ coverage) |
 | **Bundle** | 2.92 MB ⚠️ |
 | **Velocity** | ~8.6 pts/day |
 | **Version** | 1.0.0-beta.1 |
 
-### Epic 14c-refactor Progress (Codebase Cleanup)
+### Epic 14c-refactor Summary (✅ COMPLETE)
+
+**36 stories** completed 2026-01-21 to 2026-01-24 | **~110 points**
+
+**Key Deliverables:**
+- App.tsx: 4,800 → 3,850 lines (~20% reduction)
+- 11 handler hooks extracted (`src/hooks/app/`)
+- ViewHandlersContext for prop-drilling elimination
+- 5,759+ tests maintained
+
+**Story details:** `docs/sprint-artifacts/epic14c-refactor/stories/`
+
+### Epic 14e Progress (Feature-Based Architecture)
 
 | Story | Status | Description |
 |-------|--------|-------------|
-| 14c-refactor.1 | ✅ Done | Stub Cloud Functions |
-| 14c-refactor.2 | ✅ Done | Stub Services (Atlas Code Review 2026-01-21) |
-| 14c-refactor.3 | ✅ Done | Stub Hooks |
-| 14c-refactor.4 | ✅ Done | Clean IndexedDB Cache (Atlas Code Review 2026-01-21 - fixed console msg, added barrel export) |
-| 14c-refactor.5 | ✅ Done | Placeholder UI States (Atlas Code Review 2026-01-21 - fixed missing translation keys) |
-| 14c-refactor.6 | ✅ Done | Firestore Data Cleanup Script (Atlas Code Review 2026-01-21 - fixed infinite loop, added retry logic) |
-| 14c-refactor.7 | ✅ Done | Security Rules Simplification (Atlas Code Review 2026-01-21 - fixed missing commit) |
-| 14c-refactor.8 | ✅ Done | Remove Dead Code (memberUpdateDetection.ts, archive scripts) |
-| 14c-refactor.9 | ✅ Done | App.tsx Decomposition - Contexts (Atlas Code Review 2026-01-21) |
-| 14c-refactor.10 | ✅ Done | App.tsx Decomposition - Hooks (Atlas Code Review 2026-01-21) |
-| 14c-refactor.11 | ✅ Done | App.tsx Decomposition - Components (Atlas Code Review 2026-01-21 - 106 tests) |
-| **14c-refactor.12** | **✅ Done** | **Transaction Service Simplification (Atlas Code Review 2026-01-21 - 5 issues fixed)** |
-| **14c-refactor.13** | **✅ Done** | **View Mode State Unification (Atlas Code Review 2026-01-21 - 0 issues, clean pass)** |
-| 14c-refactor.14 | ✅ Done | Firebase Indexes Audit (Atlas Code Review 2026-01-21) |
-| 14c-refactor.15 | ✅ Done | Cloud Functions Audit (Atlas Code Review 2026-01-22) |
-| 14c-refactor.16 | ✅ Done | Firestore Cost Monitoring (Atlas Code Review 2026-01-22) |
-| **14c-refactor.17** | **✅ Done** | **Test Suite Cleanup (Atlas Code Review 2026-01-22 - 92 tests, 4 MEDIUM issues fixed)** |
-| **14c-refactor.18** | **✅ Done** | **Integration Testing - Atlas Code Review 2026-01-22 (16 tasks PASSED, 4,778 unit tests, 1 minor defer)** |
-| **14c-refactor.19** | **✅ Done** | **Documentation Update - Atlas Code Review 2026-01-22 (9 ACs PASSED, 3 MEDIUM issues fixed: File List, AC deviation, footer sync)** |
-| **14c-refactor.20** | **✅ Done** | **App.tsx Handler Extraction - Transaction & Scan Handlers (3 pts)** |
-| **14c-refactor.21** | **✅ Done** | **App.tsx Handler Extraction - Navigation & Dialog (3 pts)** |
-| **14c-refactor.22** | **⏸️ Blocked** | **App.tsx JSX Extraction - BLOCKED (handler hooks require 26+ props)** |
-| **14c-refactor.22a** | **✅ Done** | **Interim Cleanup: Integrate hooks, extract viewRenderers (3 pts)** |
-| **14c-refactor.22b** | **✅ Done** | **viewRenderers TypeScript Safety (2 pts)** |
-| **14c-refactor.22c** | **✅ Done** | **renderViewSwitch Function (2 pts) - Atlas Code Review 2026-01-22 (+49 tests)** |
-| **14c-refactor.22d** | **📋 Ready** | **AppOverlays Extraction (2 pts)** |
-| **14c-refactor.22e** | **📋 Ready** | **Final Verification (1 pt)** |
-| **14c-refactor.25** | **✅ Done** | **ViewHandlersContext for Handler Passing (2 pts) - Atlas Code Review 2026-01-22** |
-| **14c-refactor.27** | **✅ Done** | **View Context Migration (2 pts) - Atlas Code Review 2026-01-23** |
-| **14c-refactor.30a** | **✅ Done** | **HistoryView Interface Rename (2 pts) - Split from 30** |
-| **14c-refactor.30b** | **✅ Done** | **useHistoryViewProps Hook Expansion (2 pts) - Atlas Code Review 2026-01-23** |
-| **14c-refactor.30c** | **✅ Done** | **HistoryView Integration Verification (2 pts) - Atlas Code Review 2026-01-23** |
-| **14c-refactor.31a** | **✅ Done** | **TrendsView Interface Rename (2 pts) - Atlas Code Review 2026-01-23** |
-| **14c-refactor.31b** | **✅ Done** | **useTrendsViewProps Hook Expansion (2 pts) - Atlas Code Review 2026-01-23** |
-| **14c-refactor.31c** | **✅ Done** | **TrendsView Integration Verification (2 pts) - Atlas Code Review 2026-01-23** |
-| **14c-refactor.32c** | **✅ Done** | **BatchReviewView Integration (2 pts) - Atlas Code Review 2026-01-23** |
-| **14c-refactor.33c** | **✅ Done** | **TransactionEditorView Integration (2 pts) - Atlas Dev 2026-01-23** |
-| **14c-refactor.34a** | **✅ Done** | **DashboardView Composition Hook (3 pts) - Atlas Dev 2026-01-23** |
-| **14c-refactor.34b** | **✅ Done** | **SettingsView Composition Hook (3 pts) - Atlas Dev 2026-01-23 (63 tests)** |
-| **14c-refactor.34c** | **✅ Done** | **ItemsView Composition Hook (2 pts) - Atlas Code Review 2026-01-23 (37 tests)** |
-| **14c-refactor.35a** | **✅ Done** | **App.tsx Audit & Documentation (1 pt) - Atlas Dev 2026-01-24 (audit report created)** |
-| **14c-refactor.35d** | **✅ Done** | **Dead Code & Verification (2 pts) - Atlas Code Review 2026-01-24 (371 lines removed)** |
-| **14c-refactor.36** | **✅ Done** | **DashboardView Test Fixes (1 pt) - Atlas Code Review 2026-01-24 (helper functions, 6 issues fixed)** |
+| 14e-0 | ✅ Done | Delete Bridge Dead Code (1 pt) |
+| 14e-1 | ✅ Done | Directory Structure & Zustand Setup (2 pts) |
+| 14e-2 | ✅ Done | Modal Manager Zustand Store (3 pts) - 29 tests, Atlas Code Review APPROVED 2026-01-24 |
+| 14e-3 | ✅ Done | Modal Manager Component (2 pts) - Atlas Code Review APPROVED 2026-01-24 |
+| 14e-4 | ✅ Done | Migrate Simple Modals (3 pts) - Atlas Code Review APPROVED 2026-01-25 (19 tests, 87 total modal tests) |
+| 14e-5 | 📋 Ready | Migrate Complex Modals (3 pts) |
+| 14e-6a | 📋 Ready | Scan Zustand Store Foundation (3 pts) - Split from 14e-6 |
+| 14e-6b | 📋 Ready | Scan Zustand Store Complete (3 pts) - Split from 14e-6 |
+| 14e-6c | 📋 Ready | Scan Zustand Selectors & Exports (2 pts) - Absorbed 14e-7 scope |
+| 14e-6d | 📋 Ready | Scan Zustand Tests & Verification (2 pts) |
+| **14e-7** | **⊖ Consolidated** | **Absorbed into 14e-6c** |
+| 14e-8a | 📋 Ready | processScan Audit & Utilities (2 pts) - Split from 14e-8 |
+| 14e-8b | 📋 Ready | processScan Sub-handlers (2 pts) - Split from 14e-8 |
+| 14e-8c | 📋 Ready | processScan Handler Integration (3 pts) - Split from 14e-8 |
+| **14e-9** | **⊖ Split** | **Split into 14e-9a/b/c (8 pts total)** |
+| 14e-9a | 📋 Ready | Move Scan Components (2 pts) - Structural move |
+| 14e-9b | 📋 Ready | Update Components for Zustand (3 pts) - Hook migration |
+| 14e-9c | 📋 Ready | State Components & Tests (3 pts) - New components + tests |
+| 14e-10 | 📋 Ready | Scan Feature Orchestrator (3 pts) - Phase-based rendering |
+| **14e-11** | **📋 Ready** | **ScanContext Migration & Cleanup (2 pts) - Deletes legacy code (~1,578 lines)** |
 
 ### Next Epics Roadmap
 
@@ -112,29 +114,6 @@
 | **14c-refactor** | Codebase Cleanup | ✅ COMPLETE | App.tsx 4,800→3,850 lines (~20% reduction) |
 | **14d-v2** | Shared Groups v2 | Ready | Epic 14c-refactor complete |
 | **15** | Advanced Features | Backlog | Requirements definition |
-
----
-
-## Latest Session Summary (2026-01-16)
-
-### Epic 14c Stories 14c.5-14c.8 Code Reviews
-
-**Key Patterns Discovered:**
-- Firestore collection group queries CANNOT use `resource.data.*` conditions
-- Portal pattern required for modals inside scrollable containers
-- Left border accent pattern for group colors on TransactionCard
-- Internal hook usage for group data (not props) for consistent rendering
-
-**Architecture Updates:**
-- docs/architecture/architecture.md v6.0 (Cloud Functions, ADR-011)
-- docs/architecture/data-models.md (sharedGroups, pendingInvitations)
-- firestore.indexes.json (composite indexes for array-contains + orderBy)
-
-**Files Created (Epic 14c):**
-- src/components/SharedGroups/* (12+ components)
-- src/hooks/useAllUserGroups.ts, useSharedGroupTransactions.ts
-- src/services/sharedGroupService.ts, sharedGroupTransactionService.ts
-- tests/unit/components/SharedGroups/* (18+ test files)
 
 ---
 
@@ -165,7 +144,10 @@ All critical facts verified with direct quotes from source documents.
 
 ## Sync Notes
 
-- **Generation 5 (2026-01-17):** Archived verbose session details (Jan 11-16)
-- **Reduction:** 527 → ~130 lines (~75% smaller)
-- Previous generations in backups/v1-v5/
-- Detailed session logs available in story files under `docs/sprint-artifacts/`
+### Generation 5 (2026-01-24)
+- Consolidated Epic 14c-refactor story table (36 stories → summary)
+- Removed stale session summary (Epic 14c was reverted)
+- Updated current project status
+
+Previous generations in backups/v1-v5/
+Detailed logs in story files: `docs/sprint-artifacts/`

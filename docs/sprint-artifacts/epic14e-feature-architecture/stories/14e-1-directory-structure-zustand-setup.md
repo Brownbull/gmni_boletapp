@@ -2,9 +2,9 @@
 
 **Epic:** 14e - Feature-Based Architecture
 **Points:** 2
-**Status:** ready-for-dev
+**Status:** done
 **Created:** 2026-01-24
-**Updated:** 2026-01-24 (ADR-018: Zustand-only, XState removed)
+**Updated:** 2026-01-24 (Code review passed - CI config added)
 
 ---
 
@@ -58,9 +58,10 @@ src/
 │   │   └── index.ts
 │   ├── categories/
 │   │   └── index.ts
-│   ├── credit/
-│   │   └── index.ts
-│   └── transactions/
+│   └── credit/
+│       └── index.ts
+├── entities/         # NEW - Domain objects (FSD entities layer)
+│   └── transaction/
 │       └── index.ts
 ├── managers/         # NEW - Global managers
 │   └── ModalManager/
@@ -121,56 +122,78 @@ Per architecture decision ADR-018, XState was rejected because:
 **Given** the current flat src/ structure
 **When** this story is completed
 **Then:**
-- [ ] `src/features/` directory exists with subdirectories:
-  - [ ] `src/features/scan/index.ts`
-  - [ ] `src/features/batch-review/index.ts`
-  - [ ] `src/features/categories/index.ts`
-  - [ ] `src/features/credit/index.ts`
-  - [ ] `src/features/transactions/index.ts`
+- [x] `src/features/` directory exists with subdirectories:
+  - [x] `src/features/scan/index.ts`
+  - [x] `src/features/batch-review/index.ts`
+  - [x] `src/features/categories/index.ts`
+  - [x] `src/features/credit/index.ts`
+
+### AC1.5: Entities Directory Created
+
+**Given** transaction is a domain object used by multiple features
+**When** this story is completed
+**Then:**
+- [x] `src/entities/` directory exists with subdirectory:
+  - [x] `src/entities/transaction/index.ts`
 
 ### AC2: Manager Directory Created
 
 **Given** the target architecture uses Modal Manager
 **When** this story is completed
 **Then:**
-- [ ] `src/managers/ModalManager/index.ts` exists
+- [x] `src/managers/ModalManager/index.ts` exists
 
 ### AC3: Shared Directory Created
 
 **Given** features need shared utilities
 **When** this story is completed
 **Then:**
-- [ ] `src/shared/` directory exists with subdirectories:
-  - [ ] `src/shared/components/index.ts`
-  - [ ] `src/shared/hooks/index.ts`
-  - [ ] `src/shared/utils/index.ts`
-  - [ ] `src/shared/types/index.ts`
+- [x] `src/shared/` directory exists with subdirectories:
+  - [x] `src/shared/components/index.ts`
+  - [x] `src/shared/hooks/index.ts`
+  - [x] `src/shared/utils/index.ts`
+  - [x] `src/shared/types/index.ts`
 
 ### AC4: App Shell Directory Created
 
 **Given** Part 5 will extract App.tsx to app shell
 **When** this story is completed
 **Then:**
-- [ ] `src/app/index.ts` exists
+- [x] `src/app/index.ts` exists
 
 ### AC5: Zustand Dependency Installed
 
 **Given** Zustand is required for all client state stores
 **When** this story is completed
 **Then:**
-- [ ] `zustand@^5` is installed in dependencies
-- [ ] TypeScript types work correctly
-- [ ] Import `{ create }` from 'zustand' compiles
-- [ ] Import `{ devtools }` from 'zustand/middleware' compiles
+- [x] `zustand@^5` is installed in dependencies (v5.0.10)
+- [x] TypeScript types work correctly
+- [x] Import `{ create }` from 'zustand' compiles
+- [x] Import `{ devtools }` from 'zustand/middleware' compiles
 
-### AC6: Build Succeeds
+### AC6: Path Aliases Configured
 
-**Given** new directories and dependencies added
+**Given** features will use clean imports like `@features/scan`, `@entities/transaction`
+**When** this story is completed
+**Then:**
+- [x] `vite-tsconfig-paths` plugin installed (v6.0.5 in devDependencies)
+- [x] `tsconfig.json` updated with `baseUrl` and `paths`:
+  - `@features/*` → `src/features/*`
+  - `@entities/*` → `src/entities/*`
+  - `@managers/*` → `src/managers/*`
+  - `@shared/*` → `src/shared/*`
+  - `@app/*` → `src/app/*`
+- [x] `vite.config.ts` updated to use `tsconfigPaths()` plugin
+- [x] Imports like `import { X } from '@features/scan'` compile correctly
+
+### AC7: Build Succeeds
+
+**Given** new directories, dependencies, and path aliases added
 **When** running `npm run build`
 **Then:**
-- [ ] Build completes without errors
-- [ ] No TypeScript errors related to new structure
-- [ ] All existing tests pass
+- [x] Build completes without errors
+- [x] No TypeScript errors related to new structure
+- [x] All existing tests pass (5268 passed)
 
 ---
 
@@ -179,7 +202,7 @@ Per architecture decision ADR-018, XState was rejected because:
 ### Step 1: Install Dependencies
 
 ```bash
-npm install zustand
+npm install zustand vite-tsconfig-paths
 ```
 
 ### Step 2: Create Directory Structure
@@ -190,7 +213,9 @@ mkdir -p src/features/scan
 mkdir -p src/features/batch-review
 mkdir -p src/features/categories
 mkdir -p src/features/credit
-mkdir -p src/features/transactions
+
+# Entities (domain objects used by multiple features)
+mkdir -p src/entities/transaction
 
 # Managers
 mkdir -p src/managers/ModalManager
@@ -205,7 +230,42 @@ mkdir -p src/shared/types
 mkdir -p src/app
 ```
 
-### Step 3: Create Placeholder Index Files
+### Step 3: Configure Path Aliases
+
+**tsconfig.json** - Add `baseUrl` and `paths`:
+
+```json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@features/*": ["src/features/*"],
+      "@entities/*": ["src/entities/*"],
+      "@managers/*": ["src/managers/*"],
+      "@shared/*": ["src/shared/*"],
+      "@app/*": ["src/app/*"]
+    },
+    // ... existing options
+  }
+}
+```
+
+**vite.config.ts** - Add tsconfigPaths plugin:
+
+```typescript
+import tsconfigPaths from 'vite-tsconfig-paths'
+
+export default defineConfig({
+  plugins: [
+    react(),
+    tsconfigPaths(),  // Add this - reads paths from tsconfig.json
+    VitePWA({ /* existing config */ })
+  ],
+  // ... rest of config
+})
+```
+
+### Step 4: Create Placeholder Index Files
 
 Each index.ts should be a simple placeholder that exports nothing for now:
 
@@ -246,9 +306,9 @@ export {};
 ```
 
 ```typescript
-// src/features/transactions/index.ts
-// Feature: Transactions
-// This module will organize transaction hooks and utilities
+// src/entities/transaction/index.ts
+// Entity: Transaction
+// Domain object used by multiple features (scan, batch-review, categories)
 // Implemented in Story 14e-19
 
 export {};
@@ -300,12 +360,12 @@ export {};
 export {};
 ```
 
-### Step 4: Verify Zustand Works
+### Step 5: Verify Zustand and Path Aliases Work
 
 Create a simple test file to verify Zustand imports work:
 
 ```typescript
-// src/managers/ModalManager/__tests__/zustand-verify.test.ts
+// tests/unit/managers/ModalManager/zustand-verify.test.ts
 import { describe, it, expect } from 'vitest';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
@@ -347,7 +407,7 @@ describe('Zustand Setup Verification', () => {
 | `src/features/batch-review/index.ts` | Batch review feature entry point |
 | `src/features/categories/index.ts` | Categories feature entry point |
 | `src/features/credit/index.ts` | Credit feature entry point |
-| `src/features/transactions/index.ts` | Transactions feature entry point |
+| `src/entities/transaction/index.ts` | Transaction entity entry point (domain object) |
 | `src/managers/ModalManager/index.ts` | Modal manager entry point |
 | `src/shared/components/index.ts` | Shared components entry |
 | `src/shared/hooks/index.ts` | Shared hooks entry |
@@ -362,20 +422,24 @@ describe('Zustand Setup Verification', () => {
 
 | File | Change |
 |------|--------|
-| `package.json` | Add zustand dependency |
+| `package.json` | Add `zustand` and `vite-tsconfig-paths` dependencies |
+| `tsconfig.json` | Add `baseUrl` and `paths` for feature aliases |
+| `vite.config.ts` | Add `tsconfigPaths()` plugin |
 
 ---
 
 ## Definition of Done
 
-- [ ] All directories created as specified
-- [ ] All placeholder index.ts files created
-- [ ] `npm install` completes successfully with Zustand
-- [ ] `npm run build` succeeds
-- [ ] `npm run test` passes (including verification test)
-- [ ] `npm run lint` passes
-- [ ] No changes to existing functionality
-- [ ] Story marked as done in sprint-status.yaml
+- [x] All directories created as specified
+- [x] All placeholder index.ts files created
+- [x] `npm install` completes successfully with Zustand and vite-tsconfig-paths
+- [x] Path aliases configured in tsconfig.json
+- [x] tsconfigPaths plugin added to vite.config.ts
+- [x] `npm run build` succeeds
+- [x] `npm run test` passes (including verification test - 4 tests)
+- [x] `npm run lint` passes (0 errors, pre-existing warnings only)
+- [x] No changes to existing functionality
+- [ ] Story marked as done in sprint-status.yaml (pending review)
 
 ---
 
@@ -387,6 +451,92 @@ describe('Zustand Setup Verification', () => {
 - Build must work exactly as before
 - Test verifies Zustand is correctly configured
 - **XState intentionally NOT installed** per ADR-018
+
+---
+
+## Dev Agent Record
+
+### Implementation Date
+2026-01-24
+
+### Implementation Notes
+- Installed `zustand@^5.0.10` as runtime dependency
+- Installed `vite-tsconfig-paths@^6.0.5` as dev dependency
+- Created feature-based directory structure per target architecture
+- Configured path aliases in tsconfig.json with baseUrl and paths
+- Added tsconfigPaths() plugin to vite.config.ts (positioned before VitePWA)
+- Created placeholder index.ts files with documentation comments
+- Created Zustand verification test with 4 test cases:
+  - Basic store creation
+  - Devtools middleware integration
+  - Subscription support
+  - Selector pattern support
+
+### Test Results
+- Zustand verification tests: 4 passed
+- Full unit test suite: 5268 passed, 33 skipped
+- Build: Successful (no TypeScript errors)
+- Type check: Passed
+- Security lint: 0 errors (452 pre-existing warnings)
+
+### Debug Log
+No issues encountered during implementation.
+
+---
+
+## File List
+
+### Files Created
+| File | Purpose |
+|------|---------|
+| `src/features/scan/index.ts` | Scan feature entry point |
+| `src/features/batch-review/index.ts` | Batch review feature entry point |
+| `src/features/categories/index.ts` | Categories feature entry point |
+| `src/features/credit/index.ts` | Credit feature entry point |
+| `src/entities/transaction/index.ts` | Transaction entity entry point |
+| `src/managers/ModalManager/index.ts` | Modal manager entry point |
+| `src/shared/components/index.ts` | Shared components entry |
+| `src/shared/hooks/index.ts` | Shared hooks entry |
+| `src/shared/utils/index.ts` | Shared utils entry |
+| `src/shared/types/index.ts` | Shared types entry |
+| `src/app/index.ts` | App shell entry point |
+| `tests/unit/managers/ModalManager/zustand-verify.test.ts` | Zustand verification test |
+
+### Files Modified
+| File | Change |
+|------|--------|
+| `package.json` | Added `zustand` (dependencies) and `vite-tsconfig-paths` (devDependencies) |
+| `tsconfig.json` | Added `baseUrl` and `paths` for feature aliases |
+| `vite.config.ts` | Added `tsconfigPaths()` plugin import and usage |
+
+### Files Added (Code Review Fixes)
+| File | Change |
+|------|--------|
+| `tests/config/vitest.config.ci.group-managers.ts` | CI configuration for managers tests group |
+| `.github/workflows/test.yml` | Added test-managers job and updated merge-coverage dependencies |
+
+---
+
+## Code Review Fixes
+
+### [M-1] Tests Not Included in CI Group - FIXED
+- Created `tests/config/vitest.config.ci.group-managers.ts` for managers test group
+- Added `test-managers` job to `.github/workflows/test.yml`
+- Updated `merge-coverage` job dependencies to include `test-managers`
+
+### [L-1] Story Technical Implementation Reference - FIXED
+- Updated test file path reference from `src/managers/ModalManager/__tests__/` to `tests/unit/managers/ModalManager/`
+
+---
+
+## Change Log
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-01-24 | Story created | SM |
+| 2026-01-24 | Updated: ADR-018 Zustand-only, XState removed | SM |
+| 2026-01-24 | Implementation complete | Dev Agent (Claude Opus 4.5) |
+| 2026-01-24 | Atlas Code Review PASSED - CI config added for managers test group | Code Review Agent |
 
 ---
 
