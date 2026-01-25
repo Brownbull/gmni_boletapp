@@ -645,6 +645,52 @@ jobs:
           path: coverage/coverage-final.json
           retention-days: 1
 
+  # Story 14e-1: Managers tests (Zustand stores, orchestration logic)
+  test-managers:
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip_tests) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Restore workspace cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            functions/node_modules
+            functions/lib
+          key: ${{ runner.os }}-workspace-${{ github.sha }}
+
+      - name: Run unit tests - managers
+        run: node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config tests/config/vitest.config.ci.group-managers.ts --coverage
+        env:
+          NODE_OPTIONS: "--max-old-space-size=6144"
+          VITE_GEMINI_API_KEY: test-gemini-key
+          VITE_GEMINI_MODEL: gemini-2.5-flash-preview-09-2025
+          VITE_FIREBASE_API_KEY: test-api-key
+          VITE_FIREBASE_AUTH_DOMAIN: test-project.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: boletapp-d609f
+          VITE_FIREBASE_STORAGE_BUCKET: test-project.firebasestorage.app
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
+          VITE_FIREBASE_APP_ID: 1:123456789:web:test-app-id
+
+      - name: Upload coverage artifact (managers)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-managers
+          path: coverage/coverage-final.json
+          retention-days: 1
+
   test-analytics:
     needs: setup
     runs-on: ubuntu-latest
@@ -2023,7 +2069,7 @@ jobs:
   # Now merges coverage-final.json from each shard + heavy jobs - no duplicate test run
   # ============================================================================
   merge-coverage:
-    needs: [test-hooks-batch, test-hooks-scan, test-hooks-other, test-services, test-utils, test-analytics, test-views, test-components-insights, test-components-scan, test-components-history, test-components-charts, test-components-forms, test-components-celebrations, test-components-misc, test-unit-heavy-1, test-unit-heavy-2, test-unit-heavy-3, test-unit-heavy-4]
+    needs: [test-hooks-batch, test-hooks-scan, test-hooks-other, test-services, test-utils, test-managers, test-analytics, test-views, test-components-insights, test-components-scan, test-components-history, test-components-charts, test-components-forms, test-components-celebrations, test-components-misc, test-unit-heavy-1, test-unit-heavy-2, test-unit-heavy-3, test-unit-heavy-4]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     # Only run on PRs - coverage report is informational, not a gate

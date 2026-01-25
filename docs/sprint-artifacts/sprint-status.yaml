@@ -631,29 +631,51 @@ development_status:
   epic-14e-feature-architecture: contexted  # Tech context complete 2026-01-24
 
   # Part 0: Cleanup (Pre-requisite, 1 story, 1 pt)
-  14e-0-delete-bridge-dead-code: ready-for-dev  # 1 pt - Delete useScanStateBridge.ts (17KB dead code from 14d) - Story drafted 2026-01-24
+  14e-0-delete-bridge-dead-code: done  # 1 pt - Delete useScanStateBridge.ts (17KB dead code from 14d) - Atlas Code Review APPROVED 2026-01-24
 
   # Part 1: Foundation & Modal Manager (5 stories, 13 pts)
-  14e-1-directory-structure-zustand-setup: ready-for-dev  # 2 pts - Create src/features/, src/managers/, install Zustand - Story updated 2026-01-24
-  14e-2-modal-manager-zustand-store: backlog  # 3 pts - Zustand store for modal state management
-  14e-3-modal-manager-component: backlog  # 2 pts - ModalManager component with registry
-  14e-4-migrate-simple-modals: backlog  # 3 pts - Migrate 5 simple modals to ModalManager
-  14e-5-migrate-complex-modals: backlog  # 3 pts - Migrate remaining modals to ModalManager
+  14e-1-directory-structure-zustand-setup: done  # 2 pts - Create src/features/, src/managers/, install Zustand - Atlas Code Review PASSED 2026-01-24
+  14e-2-modal-manager-zustand-store: done  # 3 pts - Zustand store for modal state management - Atlas Code Review APPROVED 2026-01-24 (29 tests)
+  14e-3-modal-manager-component: done  # 2 pts - ModalManager component with registry - Atlas Code Review APPROVED 2026-01-24 (68 tests, stub-only registry)
+  14e-4-migrate-simple-modals: done  # 3 pts - Migrate simple modals to ModalManager (SignOut, CreditInfo) - Completed 2026-01-25 (19 tests, 120+ LOC removed)
+  14e-5-migrate-complex-modals: ready-for-dev  # 3 pts - Migrate complex modals (conflict, delete, learning) to ModalManager - Story created 2026-01-24
 
-  # Part 2: Scan Feature Extraction (6 stories, 21 pts) - Zustand store, NOT XState
-  14e-6-scan-zustand-store-definition: backlog  # 5 pts - Zustand store for scan flow (migrate from useReducer)
-  14e-7-scan-store-selectors-hooks: backlog  # 3 pts - Typed selectors for scan store
-  14e-8-extract-processscan-handler: backlog  # 5 pts - Extract 600-line processScan function
-  14e-9-scan-feature-components: backlog  # 3 pts - State-based UI components
+  # Part 2: Scan Feature Extraction (6 stories, 21 pts → 9 stories, 25 pts after 14e-6 split) - Zustand store, NOT XState
+  14e-6-scan-zustand-store-definition: split  # SPLIT 2026-01-24: 5 tasks + 47 subtasks exceeded limits → split into 14e-6a/b/c/d
+  14e-6a-scan-zustand-store-foundation: ready-for-dev  # 3 pts - Create store structure + core actions (START/IMAGE/PROCESS) - Story created 2026-01-24
+  14e-6b-scan-zustand-store-complete: ready-for-dev  # 3 pts - Remaining actions (DIALOG/SAVE/BATCH/CONTROL) [DEPENDS: 14e-6a] - Story created 2026-01-24
+  14e-6c-scan-zustand-selectors-exports: ready-for-dev  # 2 pts - 14 selector hooks + module exports [DEPENDS: 14e-6b] - Story created 2026-01-24
+  14e-6d-scan-zustand-tests-verification: ready-for-dev  # 2 pts - Comprehensive tests covering all transitions [DEPENDS: 14e-6c] - Story created 2026-01-24
+  14e-7-scan-store-selectors-hooks: consolidated  # Absorbed into 14e-6c (selectors + exports)
+  14e-8-extract-processscan-handler: split  # SPLIT 2026-01-24: 5 tasks + 28 subtasks exceeded limits → split into 14e-8a/b/c
+  14e-8a-processscan-audit-utilities: ready-for-dev  # 2 pts - Pre-audit + pure utilities [Part 1/3] - Story created 2026-01-24
+  14e-8b-processscan-subhandlers: ready-for-dev  # 2 pts - Sub-handlers extraction [Part 2/3, DEPENDS: 14e-8a] - Story created 2026-01-24
+  14e-8c-processscan-handler-integration: ready-for-dev  # 3 pts - Main handler + App.tsx integration [Part 3/3, DEPENDS: 14e-8b] - Story created 2026-01-24
+  14e-9-scan-feature-components: split  # SPLIT 2026-01-24: 6 tasks + 37 subtasks exceeded limits → split into 14e-9a/b/c
+  14e-9a-move-scan-components: ready-for-dev  # 2 pts - Move existing components + update imports [Part 1/3, DEPENDS: 14e-1] - Story created 2026-01-24
+  14e-9b-zustand-component-update: ready-for-dev  # 3 pts - Update components to use Zustand store [Part 2/3, DEPENDS: 14e-9a, 14e-6c] - Story created 2026-01-24
+  14e-9c-state-components-tests: ready-for-dev  # 3 pts - Create state components + tests [Part 3/3, DEPENDS: 14e-9b] - Story created 2026-01-24
   14e-10-scan-feature-orchestrator: backlog  # 3 pts - ScanFeature component
-  14e-11-scancontext-migration-cleanup: backlog  # 2 pts - Delete old ScanContext/useScanStateMachine
+  14e-11-scancontext-migration-cleanup: ready-for-dev  # 2 pts - Delete old ScanContext/useScanStateMachine - Story created 2026-01-25
 
-  # Part 3: Batch Review Feature (5 stories, 16 pts) - Zustand store, NOT XState
-  14e-12-batch-review-zustand-store: backlog  # 3 pts - Zustand store for batch review
-  14e-13-batch-review-store-selectors: backlog  # 2 pts - Typed selectors for batch store
-  14e-14-extract-batch-review-handlers: backlog  # 3 pts - Extract batch handlers
-  14e-15-batch-review-feature-components: backlog  # 3 pts - Batch review components
-  14e-16-batch-review-feature-orchestrator: backlog  # 5 pts - BatchReviewFeature component
+# /bmad:bmm:workflows:atlas-dev-story 14e-5-migrate-complex-modals
+# /bmad:bmm:workflows:atlas-code-review
+# /bmad:bmm:workflows:atlas-create-story
+# /bmad:bmm:workflows:atlas-story-sizing
+# /bmad:bmm:workflows:atlas-deploy-story
+
+  # Part 3: Batch Review Feature (5 stories, 16 pts → 6 stories, 17 pts after 14e-12 split) - Zustand store, NOT XState
+  14e-12-batch-review-zustand-store: split  # SPLIT 2026-01-25: Exceeded sizing limits → split into 14e-12a, 14e-12b
+  14e-12a-batch-review-store-foundation: ready-for-dev  # 2 pts - Store structure, types, lifecycle/item actions [DEPENDS: 14e-1]
+  14e-12b-batch-review-store-actions-tests: ready-for-dev  # 2 pts - Save/edit actions, phase guards, tests [DEPENDS: 14e-12a]
+  14e-13-batch-review-store-selectors: ready-for-dev  # 2 pts - Typed selectors for batch store - Story created 2026-01-25
+  14e-14-extract-batch-review-handlers: split  # SPLIT 2026-01-25: Exceeded sizing limits → split into 14e-14a/b/c/d
+  14e-14a-batch-handler-types-navigation: ready-for-dev  # 2 pts - Types + navigation handlers [Part 1/4]
+  14e-14b-batch-handler-edit-save: ready-for-dev  # 2 pts - Edit + save handlers [Part 2/4, DEPENDS: 14e-14a]
+  14e-14c-batch-handler-discard-credit: ready-for-dev  # 2 pts - Discard + credit check handlers [Part 3/4, DEPENDS: 14e-14b]
+  14e-14d-batch-handler-integration: ready-for-dev  # 2 pts - App.tsx integration [Part 4/4, DEPENDS: 14e-14c]
+  14e-15-batch-review-feature-components: ready-for-dev  # 3 pts - Batch review components - Story created 2026-01-25
+  14e-16-batch-review-feature-orchestrator: ready-for-dev  # 5 pts - BatchReviewFeature component - Story created 2026-01-25
 
   # Part 4: Simple Features (4 stories, 12 pts)
   14e-17-categories-feature-extraction: backlog  # 3 pts - Extract categories to feature

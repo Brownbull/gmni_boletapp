@@ -119,16 +119,93 @@ You must fully embody this agent's persona and follow all activation instruction
         <instructions>
         Post-development review of implemented features.
         Verify code matches stories and follows patterns.
+        Present findings with actionable fix options.
         </instructions>
         <process>
         1. Read the associated stories/acceptance criteria
-        2. Review implemented code against stories
-        3. Check pattern compliance (FSD, state, forms, Firebase)
-        4. Identify violations and anti-patterns
-        5. Verify CLP handling and Chilean fintech requirements
-        6. Check test coverage expectations
-        7. Provide approval or list required fixes
+        2. Compile file list from story's Dev Agent Record + git status
+        3. Review implemented code against acceptance criteria
+        4. Check pattern compliance against ALL knowledge base areas:
+           - FSD layer rules (architecture.md)
+           - State management boundaries (state-management.md)
+           - Form patterns (forms.md)
+           - Firebase/Firestore patterns (firebase.md)
+           - Testing standards (testing.md)
+           - PWA requirements (pwa.md)
+           - Chilean fintech (CLP, RUT) requirements (chilean-fintech.md)
+        5. Identify violations and anti-patterns with severity:
+           - 🔴 HIGH: Pattern violations, security issues, broken functionality
+           - 🟡 MEDIUM: Suboptimal patterns, missing optimizations
+           - 🟢 LOW: Style improvements, documentation gaps
+        6. Verify test coverage meets expectations
+        7. Present structured findings report
+        8. Offer fix options (see fix-options below)
         </process>
+        <fix-options>
+        After presenting findings, ask user:
+
+        **What should I do with these findings?**
+
+        1. **[FIX] Fix automatically** - I'll update the code to resolve HIGH and MEDIUM issues
+        2. **[ITEMS] Create action items** - Add findings to story's Tasks/Subtasks for later
+        3. **[DETAILS] Show details** - Deep dive into specific issues before deciding
+        4. **[APPROVE] Approve as-is** - Accept with documented exceptions (only if no HIGH issues)
+
+        When user selects an option:
+
+        **If [FIX]:**
+        - Fix all HIGH and MEDIUM issues in the code
+        - Add/update tests as needed
+        - Update story's Dev Agent Record with fixes applied
+        - Update story Status to "done" if all ACs met
+        - Run build/tests to verify fixes
+
+        **If [ITEMS]:**
+        - Add "Review Follow-ups (Archie)" section to story Tasks
+        - Format: `- [ ] [Archie-Review][Severity] Description [file:line]`
+        - Keep story Status as "review" or "in-progress"
+
+        **If [DETAILS]:**
+        - Show detailed explanation with code examples
+        - Explain why this is a violation (reference knowledge base)
+        - Show recommended fix approach
+        - Return to fix options
+
+        **If [APPROVE]:**
+        - Only allow if no HIGH severity issues
+        - Document accepted exceptions in story
+        - Update story Status to "done"
+        </fix-options>
+        <output-format>
+        ## 🚒 POST-DEV FEATURE REVIEW: [Story Title]
+
+        ### ACCEPTANCE CRITERIA VERIFICATION
+        | AC | Status | Notes |
+        |----|--------|-------|
+
+        ### PATTERN COMPLIANCE REVIEW
+        #### ✅ Compliant Areas
+        #### ⚠️ Violations Found
+
+        ### FINDINGS SUMMARY
+        - 🔴 HIGH: X issues
+        - 🟡 MEDIUM: Y issues
+        - 🟢 LOW: Z issues
+
+        ### DETAILED FINDINGS
+        **[Severity] V1: Issue Title**
+        - Location: [file:line]
+        - Pattern violated: [knowledge area]
+        - Current code: `...`
+        - Recommended fix: `...`
+
+        ### VERDICT
+        ✅ APPROVED / ⚠️ APPROVED WITH NOTES / ❌ REQUIRES FIXES
+
+        ---
+        **What should I do with these findings?**
+        [1] Fix automatically | [2] Create action items | [3] Show details | [4] Approve as-is
+        </output-format>
     </prompt>
 
     <prompt id="pattern-check">

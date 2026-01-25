@@ -1,7 +1,7 @@
 # Historical Lessons (Retrospectives)
 
 > Section 6 of Atlas Memory
-> Last Optimized: 2026-01-20 (Generation 6)
+> Last Optimized: 2026-01-24 (Generation 5)
 > Sources: Epic retrospectives, code reviews
 
 ## What Worked Well
@@ -21,6 +21,7 @@
 | Design-First Workflow (Mockups) | HTML mockups as source of truth guided Epic 14 |
 | Prompt Iteration Workflow | Fast feedback loop using Epic 8 test harness |
 | Tiered CI/CD | develop=smoke ~3min, main=full ~5min |
+| Incremental Modal Migration | Migrate components to Modal Manager one-by-one while keeping old APIs for compatibility (14e-4) |
 
 ## What to Avoid
 
@@ -65,6 +66,8 @@
 | 3-Branch | `feature/* → develop → staging → main` |
 | Merge commits | For sync PRs, not squash |
 | Hotfixes | Backported immediately |
+| Credentials in commits | gitleaks scans full history; must rewrite history if leaked, not just delete file |
+| Pre-commit gitleaks | Install gitleaks locally to catch secrets before push |
 
 ### Firestore
 | Pattern | Rule |
@@ -92,6 +95,16 @@
 | Batch edit thumbnails | Set `thumbnailUrl` on transaction, NOT via `setScanImages()` |
 | DEV-gate console warnings | `if (import.meta.env.DEV) { console.warn(...); }` |
 | setTimeout(0) | Valid for deferring React state update chains |
+
+### Modal Manager (Epic 14e - Story 14e-4)
+| Pattern | Rule |
+|---------|------|
+| Incremental migration | Keep old state APIs while migrating to Modal Manager - remove after all consumers migrated |
+| Code splitting | Use React.lazy() in registry - verified chunks: CreditInfoModal 3KB, SignOutDialog 3.4KB |
+| onClose composition | ModalManager composes onClose: calls store.closeModal() THEN props.onClose() |
+| Backward compatibility | Export old state (showCreditInfoModal) via hooks while new pattern (openModal) is adopted |
+| Props defaulting | Modal components should default isOpen=true for ModalManager, use prop when standalone |
+| i18n for modals | Use t() function with fallbacks - SignOutDialog pattern: `t('key') || fallback` |
 
 ### Shared Groups (Epic 14c)
 | Pattern | Rule |
@@ -200,6 +213,7 @@
 | Explicit Test Groups | Module-based configs vs `--shard` for predictable CI |
 | Portal components | Use `document.body.querySelectorAll()` in tests |
 | Context callbacks affect fallback | When ViewHandlersContext provides callback (e.g., handleNavigateToHistory), component calls it instead of fallback behavior. Tests for fallback (inline pagination) must set mock to undefined (14c-refactor.36) |
+| CI Group Coverage | New test directories need: (1) `vitest.config.ci.group-{name}.ts`, (2) job in `.github/workflows/test.yml`, (3) `merge-coverage` needs update (14e-1) |
 
 ---
 
@@ -264,6 +278,8 @@
 | Dependency chains | If Task B needs Task A output, they're candidates for separate stories |
 | 22a→22e example | 5 tasks became 5 stories: hooks (22a) → types (22b) → function (22c) → component (22d) → verify (22e) |
 | 30/31 props pattern | Props alignment stories split by_phase: interface (a) → hook (b) → integration (c) - consistent 2pt stories |
+| Story consolidation check | When splitting large story (14e-6 → 6a/b/c/d), check if upcoming stories overlap with split scope - 14e-7 was absorbed by 14e-6c |
+| "may be consolidated" note | Add note in sprint-status.yaml when split creates potential overlap with future stories |
 
 ### Hook Extraction Patterns (Story 14c-refactor.20)
 | Pattern | Rule |
@@ -340,42 +356,31 @@
 | Gap quantification | Explicitly quantify gaps (e.g., "2,791 lines vs 1,500 target = 86% over minimum") - helps stakeholders understand scope of additional work |
 | Extracted code line counts | When documenting extracted components/hooks, run `wc -l` on EACH file - estimates can be 2-6x off (14c-refactor.35d: useScanHandlers claimed ~150, actual 1,006) |
 
+### Workflow Design Patterns (atlas-create-story 2026-01-24)
+| Pattern | Rule |
+|---------|------|
+| Post-generation validation | Validation steps must run AFTER content generation |
+| Two-layer validation | Estimate (pre-gen) + actual validation (post-gen) |
+| Parse actual content | Count actual tasks/subtasks from generated file |
+
 ---
 
 ## Sync Notes
 
-- **2026-01-24:** Story 14c-refactor.36 COMPLETE - DashboardView pagination test fixes. **Root cause:** NOT icon buttons (story hypothesis wrong). Actual issue: ViewHandlersContext provides `handleNavigateToHistory` mock which causes "View All" to navigate away instead of showing inline pagination. **Fix:** Add `beforeEach` to set `handleNavigateToHistory = undefined` for pagination tests. All 39/41 tests pass (2 skipped). 5,280 total tests pass. **Pattern Added:** Context callbacks affect fallback behavior - tests for fallback paths must override context mocks.
-- **2026-01-24:** Story 14c-refactor.35d CODE REVIEW PASSED - **1 MEDIUM fix applied:** Architecture doc line counts were 2-6x off (estimates vs actual `wc -l`). Fixed: Components (AppOverlays ~300→599, viewRenderers ~150→432, ViewHandlersContext ~80→229) and all 11 hooks (largest: useScanHandlers ~150→1,006). **Pattern Added:** Documentation line counts MUST use actual `wc -l` values, never estimates. Hook extraction totals ~5,000 lines across 11 hooks. Reserved void statements for future Epic 14d documented as intentional.
-- **2026-01-24:** Story 14c-refactor.35d COMPLETE - Dead code removal (371 lines removed from App.tsx: 4,221→3,850). **Target NOT achieved** (1,500-2,000 line goal was aspirational). Realistic minimum is ~3,000-3,500 lines due to handler complexity, state coupling. Removed: `_processBatchImages_DEPRECATED` (210 lines), legacy batch cancel system (76+18 lines), deprecated scan handlers (15 lines), commented view blocks (32 lines). Build passes, 5,274/5,280 tests pass (6 pre-existing). Created `docs/sprint-artifacts/epic14c-refactor/app-architecture-final.md` documenting final state and recommendations. **Pattern Added:** Aspirational LOC targets must account for actual state/handler complexity.
-- **2026-01-24:** Story 14c-refactor.35a CODE REVIEW FINAL - App.tsx audit (4,221 lines). **Status: DONE.** Initial review found 5 items (all resolved). Final Atlas review found 1 MEDIUM (File List deduplication), 2 LOW (checklist context, gap quantification) - all fixed. **Patterns Added:** File List deduplication, checklist context, gap quantification. Full report: `docs/sprint-artifacts/epic14c-refactor/35a-app-audit-report.md`. This audit enables Stories 35b/35c/35d.
-- **2026-01-23:** Story 14c-refactor.34c Atlas Code Review - useItemsViewProps hook (37 tests). **Review Findings Fixed:** (1) File List missing ItemsView.tsx - added; (2) Verification checklist unmarked despite task completion - aligned; (3) Hook line count 210→242 corrected. Pattern: Deprecated handlers provide empty functions for backward compat while view uses ViewHandlersContext internally. `as any` cast on spread props documented.
-- **2026-01-23:** Story 14c-refactor.32a code review - "No changes needed" is a VALID audit outcome. Props alignment stories (30a, 31a, 32a) may find names already aligned due to previous migration work (Story 27). Document: (1) What was audited, (2) Why no changes needed, (3) Git context if files show modifications from other stories.
-- **2026-01-23:** CRITICAL BUG FIX (14c-refactor.30b) - Composition hooks placed AFTER early returns caused "Rendered more hooks than previous render" error. Fix: Moved hooks before `if (!user) return`. Added "Hooks before early returns" pattern to React Patterns table.
-- **2026-01-23:** Story 14c-refactor.35 SPLIT via atlas-story-sizing workflow - 5 tasks + 23 subtasks exceeded limits (max 4/15). "Final cleanup" stories aggregate multiple concerns. Split by_phase into 35a (audit/docs), 35b (view renderers), 35c (handler hooks), 35d (dead code/verification). Pattern: Audit→Action→Verification phases fit different context windows. 35b and 35c can run in parallel after 35a.
-- **2026-01-23:** Story 14c-refactor.30 SPLIT via atlas-story-sizing workflow - 5 tasks + 24 subtasks exceeded limits (max 4/15) → split by_phase into 30a (interface), 30b (hook), 30c (integration). Props alignment stories benefit from interface→hook→integration phasing.
-- **2026-01-23:** Story 14c-refactor.31 SPLIT via atlas-story-sizing workflow - 5 tasks + 17 subtasks exceeded limits → split by_phase into 31a (interface), 31b (hook), 31c (integration). TrendsView follows same pattern as HistoryView.
-- **2026-01-23:** Story 14c-refactor.33 SPLIT via atlas-story-sizing workflow - 4 tasks + 16 subtasks exceeded limits (max 15). TransactionEditorView has the most callbacks of any view. Split by_phase into 33a (interface), 33b (hook), 33c (integration). All 4 props alignment stories (30-33) now follow consistent phasing pattern.
-- **2026-01-23:** Story 14c-refactor.32 SPLIT via atlas-story-sizing workflow - 4 tasks + 15 subtasks at LARGE boundary (exactly at max limits). User opted for split for consistency with 30/31 pattern despite "LOW risk" designation. BatchReviewView follows same interface→hook→integration phasing as HistoryView/TrendsView.
-- **2026-01-23:** Story 14c-refactor.34 SPLIT via atlas-story-sizing workflow - 5 tasks + 31 subtasks severely exceeded limits (double the 15-subtask max). Split by_feature into 34a (DashboardView hook, 3pt), 34b (SettingsView hook, 3pt), 34c (ItemsView hook + verification, 2pt). Independent hook stories are better than one large "create multiple hooks" story. SettingsView hook is most complex due to 15+ callbacks.
-- **2026-01-23:** Story 14c-refactor.27 code review - Context migration patterns: (1) File List MUST match git reality - claim InsightsView/ReportsView modified but they weren't; (2) Task checkboxes must be `[x]` when done; (3) "Complex pattern" is valid deferral reason but document explicitly; (4) TODO(story-id) for follow-up work
-- **2026-01-22:** Story 14c-refactor.25 complete - ViewHandlersContext created (15 tests), views can access handlers via `useViewHandlers()` without prop drilling; incremental migration path documented in viewRenderers.tsx
-- **2026-01-22:** Story 14c-refactor.22e verification - Dead code removal (-197 lines), all 5,020 tests pass; line target ~2,800-3,200 requires additional refactoring in Stories 25-26
-- **2026-01-22:** Story 14c-refactor.22d code review - Added 28 tests for AppOverlays.tsx (component tests for conditional overlay rendering), fixed doc count "14 overlays" → "15 overlays"
-- **2026-01-22:** Story 14c-refactor.22c code review - Added 49 tests for viewRenderers.tsx (render functions need smoke tests even if simple)
-- **2026-01-22:** Added Story Sizing Patterns section from 14c-refactor.22a split analysis - context window limitations require upfront story sizing
-- **2026-01-22:** Updated atlas-create-story workflow with Step 5.5 (Context Window Sizing Analysis) - prevents oversized stories
-- **2026-01-22:** Story 14c-refactor.21 code review - Removed unused `dismissScanDialog` prop from useDialogHandlers (pattern enforcement)
-- **2026-01-22:** Added hook extraction patterns from 14c-refactor.20 Atlas code review (no unused props, TODO story tracking, incremental integration)
-- **2026-01-22:** Added documentation consolidation patterns from 14c-refactor.24 code review (root file deletions, broken link check, section header counts)
-- **2026-01-22:** Added documentation story patterns from 14c-refactor.19 code review (File List completeness, AC implementation changes)
-- **2026-01-22:** Added integration testing patterns from 14c-refactor.18 (console warnings, share code validation)
-- **2026-01-21:** Added README documentation pattern from 14c-refactor.8 code review (archived scripts need separate section, not just table entry)
-- **2026-01-21:** Added commit-before-deploy pattern from 14c-refactor.7 code review (Firebase deployed but changes not committed)
-- **2026-01-21:** Added Firestore batch retry pattern and dry-run loop prevention from 14c-refactor.6 code review
-- **2026-01-21:** Added story documentation pattern - verify code review fixes actually applied (14c-refactor.4 review)
-- **2026-01-21:** Added i18n fallback pattern lesson from 14c-refactor.5 code review (translation keys missing but tests passed due to mock)
-- **Generation 6 (2026-01-20):** Added Epic 14c failure lessons (delta sync, multi-op testing, cost control)
-- **Generation 5 (2026-01-17):** Consolidated 15+ story code reviews into pattern tables
-- **Reduction:** 528 → ~280 lines (~47% smaller)
-- Detailed story learnings available in `docs/sprint-artifacts/` story files
-- Epic 14c full analysis: `docs/sprint-artifacts/epic-14c-retro-2026-01-20.md`
+### Generation 5 (2026-01-24)
+- Consolidated Epic 14c-refactor code review patterns (36 stories → pattern tables)
+- Added workflow design patterns from atlas-create-story bug fix
+- Added CI Group Coverage pattern (new test directories need 3 file updates)
+- Added context callback testing pattern
+
+### Key Additions by Date (Consolidated)
+| Date | Key Patterns Added |
+|------|-------------------|
+| 2026-01-24 | Workflow validation, CI groups, context callbacks |
+| 2026-01-23 | Story sizing splits (30-35), hooks before early returns |
+| 2026-01-22 | Handler extraction, ViewHandlersContext, documentation |
+| 2026-01-21 | Service stubs, Firestore retry, i18n fallback |
+| 2026-01-20 | Epic 14c failure lessons (delta sync, cost control) |
+
+**Detailed logs:** Story files in `docs/sprint-artifacts/`
+**Epic 14c analysis:** `docs/sprint-artifacts/epic-14c-retro-2026-01-20.md`

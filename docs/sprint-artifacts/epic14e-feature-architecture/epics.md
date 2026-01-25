@@ -46,14 +46,24 @@ src/
 │   ├── scan/          # Zustand store + handlers + components
 │   ├── batch-review/  # Zustand store + handlers + components
 │   ├── categories/    # Simple feature
-│   ├── credit/        # Simple feature
-│   └── transactions/  # Core data feature
+│   └── credit/        # Simple feature
+├── entities/
+│   └── transaction/   # Domain object used by multiple features
 ├── managers/
 │   └── ModalManager/  # Centralized modal rendering (Zustand)
 ├── shared/            # Cross-feature utilities
 └── app/
     └── App.tsx        # ~500-800 lines (thin orchestrator)
 ```
+
+**Why `entities/transaction/` instead of `features/transactions/`?**
+
+Transaction is a **domain object** (entity) that multiple features operate on:
+- `scan` feature → creates transactions
+- `batch-review` feature → creates transactions
+- `categories` feature → categorizes transactions
+
+In FSD, entities are shared domain objects. Features are business capabilities. This distinction prevents circular dependencies and clarifies ownership.
 
 ---
 
@@ -120,22 +130,27 @@ So that **I have the foundation for feature extraction**.
 **Given** the current flat src/ structure
 **When** this story is completed
 **Then:**
-- `src/features/` directory created with subdirectories: scan/, batch-review/, categories/, credit/, transactions/
+- `src/features/` directory created with subdirectories: scan/, batch-review/, categories/, credit/
+- `src/entities/` directory created with subdirectory: transaction/
 - `src/managers/ModalManager/` directory created
 - `src/shared/` directory created with subdirectories: components/, hooks/, utils/, types/
 - `src/app/` directory created (App.tsx stays in src/ until Part 5)
 - Zustand installed: `zustand@^5`
+- Path aliases configured: `@features/*`, `@entities/*`, `@managers/*`, `@shared/*`, `@app/*`
+- `vite-tsconfig-paths` plugin installed and configured
 - TypeScript types work correctly
-- Empty index.ts files in each feature directory
+- Empty index.ts files in each feature and entity directory
 - Build succeeds with new structure
 
 **Technical Notes:**
-- Run `npm install zustand`
+- Run `npm install zustand vite-tsconfig-paths`
+- Configure `baseUrl` and `paths` in `tsconfig.json`
+- Add `tsconfigPaths()` plugin to `vite.config.ts`
 - **XState intentionally NOT installed** per ADR-018
 
 **Points:** 2
 
-**Story file:** [stories/14e-1-directory-structure-xstate-setup.md](./stories/14e-1-directory-structure-xstate-setup.md)
+**Story file:** [stories/14e-1-directory-structure-zustand-setup.md](./stories/14e-1-directory-structure-zustand-setup.md)
 
 ---
 
@@ -278,7 +293,12 @@ So that **the scan flow has centralized, global state management**.
 - Phase guards prevent invalid transitions (same logic as current reducer)
 - DevTools middleware enabled for debugging
 - Store exported with TypeScript types
-- Unit tests verify state transitions match existing behavior
+**Test Requirements (Explicit):**
+- Unit tests cover ALL valid phase transitions (e.g., idle→capturing, capturing→processing)
+- Unit tests cover ALL invalid phase transition attempts (e.g., startSingle when phase !== 'idle')
+- Unit tests verify phase guards block and log warnings for invalid transitions
+- Unit tests cover edge cases: rapid consecutive calls, reset during operation
+- Test matrix documented: [current phase] × [action] → [expected result]
 
 **Technical Notes:**
 - Study existing `src/hooks/useScanStateMachine.ts` and `src/types/scanStateMachine.ts`
@@ -289,29 +309,13 @@ So that **the scan flow has centralized, global state management**.
 
 ---
 
-### Story 14e.7: Scan Store Selectors & Hooks
+### Story 14e.7: Scan Store Selectors & Hooks - CONSOLIDATED
 
-As a **developer**,
-I want **typed selectors and hooks for the scan store**,
-So that **components have ergonomic access to scan state**.
+> **Status:** CONSOLIDATED into Story 14e-6c
+> **Reason:** When Story 14e-6 was split into 14e-6a/b/c/d, Story 14e-6c absorbed all selector functionality with expanded scope (14 selectors vs 5 originally planned).
+> See: [Story 14e-6c](./stories/14e-6c-scan-zustand-selectors-exports.md)
 
-**Acceptance Criteria:**
-
-**Given** the scan store from Story 14e.6
-**When** this story is completed
-**Then:**
-- Computed selectors created:
-  - `useScanPhase()` - current phase
-  - `useScanMode()` - current mode (single/batch/statement)
-  - `useIsScanning()` - true if not idle
-  - `useCanNavigateFreely()` - true if safe to leave
-  - `useHasActiveRequest()` - compatibility with existing API
-- Action hooks created:
-  - `useScanActions()` - all actions (startSingle, startBatch, etc.)
-- TypeScript types for all selectors
-- Unit tests verify selectors return correct values
-
-**Points:** 3
+~~**Points:** 3~~ → **Points:** 0 (absorbed into 14e-6c's 2 pts)
 
 ---
 
@@ -334,37 +338,52 @@ So that **the 600-line handler is no longer in App.tsx**.
 - All scan tests pass
 - No regressions in scan functionality
 
+**Pre-Extraction Requirements:**
+- [ ] Dependency audit completed: document ALL dependencies (hooks, state, callbacks, services)
+- [ ] Test coverage baseline: run existing tests, document pass/fail state
+- [ ] Smoke test checklist created: single scan, batch scan, statement scan, error cases
+- [ ] Rollback plan documented: steps to revert if extraction breaks functionality
+
+**Extraction Strategy (Recommended by Archie):**
+
+Extract in layers to minimize risk - do NOT pull 600 lines in one commit:
+
+1. **Layer 1 - Pure Utilities:** Extract pure helper functions with no external dependencies first
+2. **Layer 2 - Sub-handlers:** Extract functions that only depend on utilities (e.g., image processing helpers)
+3. **Layer 3 - Main Handler:** Extract the main `processScan` orchestration function last
+
+**Optional Safeguard:** Create a thin wrapper function in App.tsx that delegates to the extracted handler. This allows testing both implementations during verification before removing the old code.
+
 **Technical Notes:**
-- This is the single largest extraction - be thorough
+- This is the single largest extraction (~600 lines) - highest risk story
 - May need to pass many dependencies initially
+- Extract incrementally as described above
+- Each layer extraction should be a separate commit for easy rollback
 
 **Points:** 5
 
 ---
 
-### Story 14e.9: Scan Feature Components
+### Story 14e.9: Scan Feature Components - SPLIT
 
-As a **developer**,
-I want **scan-related components organized in the scan feature**,
-So that **all scan UI is colocated with scan logic**.
+> **Status:** SPLIT 2026-01-24
+> **Reason:** Exceeded sizing limits (6 tasks, 37 subtasks, ~12 files)
+> **Split into:** 14e-9a (move), 14e-9b (Zustand update), 14e-9c (state components)
 
-**Acceptance Criteria:**
+| Sub-Story | Description | Points |
+|-----------|-------------|--------|
+| **14e-9a** | Move existing components + update imports | 2 |
+| **14e-9b** | Update components to use Zustand store | 3 |
+| **14e-9c** | Create state components + tests | 3 |
 
-**Given** scan components in various locations
-**When** this story is completed
-**Then:**
-- Move/create components in `src/features/scan/components/`:
-  - ScanOverlay.tsx (may already exist)
-  - ScanResultModal.tsx (extract from ModalManager if simpler)
-  - states/IdleState.tsx
-  - states/ProcessingState.tsx
-  - states/ReviewingState.tsx
-  - states/ErrorState.tsx
-- Components use `useScanStore()` for state
-- Components call store actions directly
-- Unit tests for each state component
+**Total Points:** 8 (increased from 3 due to split overhead)
 
-**Points:** 3
+**Story Files:**
+- [14e-9a-move-scan-components.md](./stories/14e-9a-move-scan-components.md)
+- [14e-9b-zustand-component-update.md](./stories/14e-9b-zustand-component-update.md)
+- [14e-9c-state-components-tests.md](./stories/14e-9c-state-components-tests.md)
+
+~~**Points:** 3~~ → **Points:** 8 (split)
 
 ---
 
@@ -410,9 +429,23 @@ So that **we have a single source of truth for scan state**.
 - Zero regressions in scan functionality
 - App.tsx scan-related code reduced by ~800-1000 lines total
 
+**Pre-Deletion Verification (MANDATORY):**
+- [ ] Run `grep -r "ScanContext" src/` - must return only the context file itself
+- [ ] Run `grep -r "useScan" src/` - must return only new Zustand hooks and old files being deleted
+- [ ] Run `grep -r "useScanStateMachine" src/` - must return only the file being deleted
+- [ ] Document all consumers found and verify each has been migrated
+- [ ] Build succeeds with no errors
+- [ ] All tests pass BEFORE deletion
+
 **Technical Notes:**
 - May need to keep ScanContext as a thin wrapper during migration
-- Delete old files only after all consumers migrated
+- Delete old files only after all consumers verified migrated
+- If ANY consumer still references old hooks, DO NOT delete - fix first
+
+**Reference Documentation for 31 State Variables:**
+- `docs/architecture/diagrams/scan-state-machine.md` - State machine design with variable mapping
+- `docs/sprint-artifacts/epic14d-refactor-scan/stories/story-14d.1-scan-state-machine-hook.md` - Original migration story
+- Use these documents to verify ALL state is accounted for in new Zustand store
 
 **Points:** 2
 
@@ -424,27 +457,24 @@ So that **we have a single source of truth for scan state**.
 
 ---
 
-### Story 14e.12: Batch Review Zustand Store Definition
+### Story 14e.12: Batch Review Zustand Store Definition - SPLIT
 
-As a **developer**,
-I want **a Zustand store defining the batch review flow**,
-So that **batch review has centralized, predictable state management**.
+> **Status:** SPLIT 2026-01-25
+> **Reason:** Exceeded sizing limits (7 tasks, 27 subtasks)
+> **Split into:** 14e-12a (foundation), 14e-12b (actions & tests)
 
-**Acceptance Criteria:**
+| Sub-Story | Description | Points |
+|-----------|-------------|--------|
+| **14e-12a** | Store foundation + lifecycle/item actions | 2 |
+| **14e-12b** | Save/edit actions + phase guards + tests | 2 |
 
-**Given** the current batch review logic in App.tsx
-**When** this story is completed
-**Then:**
-- `src/features/batch-review/store/useBatchReviewStore.ts` created
-- Store defines typed phases: idle, loading, reviewing, processing, complete, error
-- Store state includes: items, currentIndex, processedCount, errors
-- Actions defined: nextItem, approve, skip, reject, undo, complete
-- Phase guards prevent invalid transitions
-- DevTools middleware enabled
-- TypeScript types for all state and actions
-- Unit tests verify transitions
+**Total Points:** 4 (increased from 3 due to split overhead)
 
-**Points:** 3
+**Story Files:**
+- [14e-12a-batch-review-store-foundation.md](./stories/14e-12a-batch-review-store-foundation.md)
+- [14e-12b-batch-review-store-actions-tests.md](./stories/14e-12b-batch-review-store-actions-tests.md)
+
+~~**Points:** 3~~ → **Points:** 4 (split)
 
 ---
 
@@ -473,27 +503,28 @@ So that **components have ergonomic access to batch review state**.
 
 ---
 
-### Story 14e.14: Extract Batch Review Handlers
+### Story 14e.14: Extract Batch Review Handlers - SPLIT
 
-As a **developer**,
-I want **batch review handlers extracted to feature handlers**,
-So that **batch logic is colocated with batch state**.
+> **Status:** SPLIT 2026-01-25
+> **Reason:** Exceeded sizing limits (7 tasks, 30 subtasks)
+> **Split into:** 14e-14a (types + navigation), 14e-14b (edit + save), 14e-14c (discard + credit), 14e-14d (integration)
 
-**Acceptance Criteria:**
+| Sub-Story | Description | Points |
+|-----------|-------------|--------|
+| **14e-14a** | Handler types + navigation handlers | 2 |
+| **14e-14b** | Edit + save handlers | 2 |
+| **14e-14c** | Discard + credit check handlers | 2 |
+| **14e-14d** | App.tsx integration | 2 |
 
-**Given** batch handlers in App.tsx (handleBatch*, handleApproveItem, etc.)
-**When** this story is completed
-**Then:**
-- `src/features/batch-review/handlers/` created with:
-  - approveItem.ts
-  - skipItem.ts
-  - rejectItem.ts
-  - processBatch.ts
-- Handlers use batch review store actions
-- Original handlers in App.tsx removed
-- All batch tests pass
+**Total Points:** 8 (increased from 3 due to split overhead)
 
-**Points:** 3
+**Story Files:**
+- [14e-14a-batch-handler-types-navigation.md](./stories/14e-14a-batch-handler-types-navigation.md)
+- [14e-14b-batch-handler-edit-save.md](./stories/14e-14b-batch-handler-edit-save.md)
+- [14e-14c-batch-handler-discard-credit.md](./stories/14e-14c-batch-handler-discard-credit.md)
+- [14e-14d-batch-handler-integration.md](./stories/14e-14d-batch-handler-integration.md)
+
+~~**Points:** 3~~ → **Points:** 8 (split)
 
 ---
 
@@ -599,26 +630,40 @@ So that **credit logic is colocated and isolated**.
 
 ---
 
-### Story 14e.19: Transactions Feature Foundation
+### Story 14e.19: Transaction Entity Foundation
 
 As a **developer**,
-I want **transaction management organized as a feature module**,
-So that **core data handling has clear ownership**.
+I want **transaction management organized as an entity module**,
+So that **domain objects are clearly separated from features per FSD**.
+
+**Context:**
+
+Transaction is a **domain object** (entity) used by multiple features:
+- `scan` → creates transactions
+- `batch-review` → creates transactions
+- `categories` → categorizes transactions
+
+Placing it in `entities/` prevents circular dependencies and clarifies that Transaction is shared data, not a business capability.
 
 **Acceptance Criteria:**
 
 **Given** transaction hooks and utilities scattered across codebase
 **When** this story is completed
 **Then:**
-- `src/features/transactions/` structure created:
+- `src/entities/transaction/` structure created:
   - index.ts (public API)
   - hooks/useTransactions.ts (existing, re-exported)
   - hooks/useTransactionFilters.ts
   - utils/transactionHelpers.ts
   - types.ts
 - Existing transaction hooks moved/re-exported
+- Features import from `@entities/transaction`
 - No breaking changes to consumers
 - Transaction types centralized
+
+**Technical Notes:**
+- Add path alias `@entities/*` in tsconfig.json if not present
+- This is the only entity for now; structure allows future entities (user, category, etc.)
 
 **Points:** 3
 
@@ -761,10 +806,11 @@ Part 1 (Foundation):
 14e.1 → 14e.2 → 14e.3 → 14e.4 → 14e.5
 
 Part 2 (Scan):
-14e.1 → 14e.6 → 14e.7 → 14e.8 → 14e.9 → 14e.10 → 14e.11
+14e.1 → 14e.6a → 14e.6b → 14e.6c → 14e.6d → 14e.8 → 14e.9 → 14e.10 → 14e.11
+Note: 14e.7 was consolidated into 14e.6c during the 14e.6 split
 
 Part 3 (Batch Review):
-14e.6 (for XState patterns) → 14e.12 → 14e.13 → 14e.14 → 14e.15 → 14e.16
+14e.6 (for Zustand store patterns) → 14e.12 → 14e.13 → 14e.14 → 14e.15 → 14e.16
 
 Part 4 (Simple Features):
 14e.5 (Modal Manager complete) → 14e.17, 14e.18, 14e.19, 14e.20
@@ -784,7 +830,8 @@ All Part 1-4 → 14e.21 → 14e.22 → 14e.23 → 14e.24
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| XState learning curve | Medium | Start with scan (most complex), patterns apply to batch |
+| Zustand phase guards miss edge cases | Medium | Explicit test matrix for ALL valid/invalid transitions |
+| processScan extraction breaks flow | High | Pre-extraction dependency audit, rollback plan |
 | Feature boundary disputes | Low | Architecture doc defines ownership |
 | Breaks existing tests | Medium | Run tests after each story, fix immediately |
 | Scope creep | Medium | Strict story boundaries, no gold plating |
@@ -799,3 +846,77 @@ All Part 1-4 → 14e.21 → 14e.22 → 14e.23 → 14e.24
 4. **Modal Manager:** 100% modals registered
 5. **Test Coverage:** Maintained or improved
 6. **No Regressions:** All existing functionality works
+
+---
+
+## Test Strategy
+
+### 1. Zustand Store Unit Tests (Stories 14e.6, 14e.12)
+
+Each Zustand store must have comprehensive unit tests covering:
+
+**Phase Transition Matrix:**
+```
+| Current Phase | Action        | Expected Result              |
+|---------------|---------------|------------------------------|
+| idle          | startSingle   | → capturing                  |
+| idle          | startBatch    | → capturing                  |
+| capturing     | processStart  | → processing                 |
+| capturing     | startSingle   | BLOCKED (log warning)        |
+| processing    | processSuccess| → reviewing                  |
+| processing    | startBatch    | BLOCKED (log warning)        |
+| ...           | ...           | ...                          |
+```
+
+**Edge Case Tests:**
+- Rapid consecutive calls (race condition prevention)
+- Reset during active operation
+- Actions with stale closures
+- Undo at boundary conditions
+
+### 2. Integration Tests (Stories 14e.10, 14e.16, 14e.21)
+
+Feature orchestrator integration tests:
+- Feature renders correct UI for each phase
+- Store actions trigger expected UI updates
+- Modal Manager opens/closes correctly from features
+- Feature-to-feature communication (if any)
+
+### 3. E2E Smoke Tests (After each Part)
+
+Manual or automated smoke tests after completing each Part:
+
+**Part 1 (Modal Manager):**
+- [ ] Open and close 3+ different modals
+- [ ] Modal props passed correctly
+- [ ] Close via escape key / backdrop click
+
+**Part 2 (Scan Feature):**
+- [ ] Single scan: capture → process → review → save
+- [ ] Batch scan: capture 3 images → process → review → save all
+- [ ] Statement scan: upload → process → review
+- [ ] Error handling: network failure during process
+- [ ] Cancel mid-flow
+
+**Part 3 (Batch Review):**
+- [ ] Approve all items
+- [ ] Skip item → come back
+- [ ] Reject item with reason
+- [ ] Undo last action
+- [ ] Complete batch
+
+**Part 4 & 5:**
+- [ ] All existing functionality still works
+- [ ] No console errors
+- [ ] Performance: no noticeable lag
+
+### 4. Regression Prevention
+
+After EVERY story:
+```bash
+npm run test        # All ~5,700 tests pass
+npm run build       # Build succeeds
+npm run lint        # No lint errors
+```
+
+If any fail → fix before merging, do NOT proceed to next story.

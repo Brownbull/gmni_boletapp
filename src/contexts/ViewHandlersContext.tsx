@@ -68,8 +68,16 @@ export type NavigationHandlers = UseNavigationHandlersResult;
 /**
  * Dialog handlers bundle.
  * Provides toast, credit modal, and conflict dialog state/handlers.
+ *
+ * Story 14e-4: Credit info modal functions are provided by App.tsx
+ * using Modal Manager, not by useDialogHandlers hook.
  */
-export type DialogHandlers = UseDialogHandlersResult;
+export type DialogHandlers = UseDialogHandlersResult & {
+    /** Open credit info modal (via Modal Manager) */
+    openCreditInfoModal: () => void;
+    /** Close credit info modal (via Modal Manager) */
+    closeCreditInfoModal: () => void;
+};
 
 // =============================================================================
 // Context Value Type

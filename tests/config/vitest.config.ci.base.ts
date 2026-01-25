@@ -1,5 +1,6 @@
 import { defineConfig, mergeConfig, UserConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import tsconfigPaths from 'vite-tsconfig-paths'
 import path from 'path'
 import pkg from '../../package.json'
 
@@ -22,7 +23,7 @@ import pkg from '../../package.json'
  * @see vitest.config.heavy.ts for heavy test configuration
  */
 export const baseCiConfig: UserConfig = {
-  plugins: [react()],
+  plugins: [react(), tsconfigPaths()],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
