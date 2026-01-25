@@ -3,9 +3,9 @@
 
 metadata:
   created: 2026-01-06T10:30:00Z
-  last_optimization: 2026-01-12T18:45:00Z
-  last_sync: 2026-01-12T18:45:00Z
-  current_generation: 4
+  last_optimization: 2026-01-24T12:00:00Z
+  last_sync: 2026-01-25T17:45:00Z
+  current_generation: 5
 
 versions:
   - generation: 1
@@ -58,6 +58,20 @@ versions:
       - "09-sync-history.md: Consolidated Jan 11-12 verbose session details (~230 lines → ~50 lines)"
       - "02-features.md: Marked Epic 14d COMPLETE, collapsed story details"
       - "Protected: Core identity facts, pattern tables, ADR decisions, critical workflow chains"
+
+  - generation: 5
+    timestamp: 2026-01-24T12:00:00Z
+    backup_path: ./backups/v5/
+    token_count_before: 18000
+    token_count_after: 11500
+    optimization_type: full
+    changes_summary:
+      - "atlas-memory.md: Fixed generation inconsistency (sync vs optimization), removed duplicate project status (~50 lines removed)"
+      - "02-features.md: Consolidated Epic 14c-refactor (36 stories → summary), Epic 14d-v2 (11 story entries → table), Epic 14e (3 story entries → table) - 743 → ~185 lines"
+      - "04-architecture.md: Archived reverted Epic 14c cache optimization section (~115 lines), consolidated sync notes - 769 → ~550 lines"
+      - "06-lessons.md: Consolidated verbose sync notes (50 entries → summary table) - 387 → ~300 lines"
+      - "09-sync-history.md: Removed stale session summary (Epic 14c reverted), consolidated story tables - 186 → ~100 lines"
+      - "Protected: Core identity facts, pattern tables, ADR decisions, critical workflow chains, Epic 14c failure lessons"
 
 restore_history: []
   # Example entry (added by memory-restore):

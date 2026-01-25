@@ -17,7 +17,6 @@ import { Firestore } from 'firebase/firestore';
 import { SettingsSubView } from '../types/settings';
 import {
     SettingsMenuItem,
-    SignOutDialog,
     LimitesView,
     PerfilView,
     PreferenciasView,
@@ -31,6 +30,8 @@ import {
 import { SharedGroupErrorBoundary } from '../components/SharedGroups';
 // Story 14c-refactor.27: ViewHandlersContext for dialog handlers
 import { useViewHandlers } from '../contexts/ViewHandlersContext';
+// Story 14e-4: Modal Manager for SignOut dialog
+import { useModalActions } from '../managers/ModalManager';
 
 interface SettingsViewProps {
     lang: string;
@@ -214,8 +215,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         }
     };
 
-    // Sign out confirmation dialog state
-    const [showSignOutDialog, setShowSignOutDialog] = useState(false);
+    // Story 14e-4: Use Modal Manager for sign out dialog
+    const { openModal, closeModal } = useModalActions();
 
     // Render the appropriate sub-view based on current navigation state
     const renderSubView = () => {
@@ -478,21 +479,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     icon="log-out"
                     iconBgColor="#fee2e2"
                     iconColor="#ef4444"
-                    onClick={() => setShowSignOutDialog(true)}
+                    onClick={() => {
+                        // Story 14e-4: Use Modal Manager for sign out dialog
+                        openModal('signOut', {
+                            onConfirm: () => {
+                                closeModal();
+                                onSignOut();
+                            },
+                            onCancel: closeModal,
+                            t,
+                            lang: lang as 'en' | 'es',
+                        });
+                    }}
                     testId="settings-menu-signout"
                 />
-
-                {/* Sign Out Confirmation Dialog */}
-                <SignOutDialog
-                    isOpen={showSignOutDialog}
-                    onConfirm={() => {
-                        setShowSignOutDialog(false);
-                        onSignOut();
-                    }}
-                    onCancel={() => setShowSignOutDialog(false)}
-                    t={t}
-                    lang={lang as 'en' | 'es'}
-                />
+                {/* Story 14e-4: SignOutDialog now rendered by ModalManager */}
             </div>
         );
     }

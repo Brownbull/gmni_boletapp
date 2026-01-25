@@ -8,6 +8,5 @@ import { createGroupConfig } from './vitest.config.ci.base'
  */
 export default defineConfig(createGroupConfig('hooks-scan', [
   'tests/unit/hooks/useScanState.test.ts',
-  'tests/unit/hooks/useScanStateBridge.test.ts',
   'tests/unit/hooks/useScanOverlayState.test.ts',
 ]))

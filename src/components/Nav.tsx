@@ -44,6 +44,8 @@ import type { ScanModeId } from './scan/ScanModeSelector';
 // Story 14d.8: FAB Visual States
 import { getFABColorScheme, shouldShowShineAnimation, shouldShowPulseAnimation } from '../config/fabColors';
 import type { ScanMode, ScanPhase } from '../types/scanStateMachine';
+// Story 14e-4: Modal Manager for credit info modal
+import { useModalActions } from '../managers/ModalManager';
 
 // Story 12.3: Scan status for nav icon indicator
 export type ScanStatus = 'idle' | 'processing' | 'ready';
@@ -82,6 +84,9 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
     // Story 14d.3 AC #1: Access scan state for navigation blocking
     // Uses optional hook since Nav may render before ScanProvider is mounted
     const scanContext = useScanOptional();
+
+    // Story 14e-4: Modal Manager for credit info modal
+    const { openModal, closeModal } = useModalActions();
 
     // Story 14d.3 AC #2-4: Navigation blocking state and feedback
     const [showBlockedFeedback, setShowBlockedFeedback] = useState(false);
@@ -226,6 +231,21 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
         }
         setView(targetView);
     }, [setView, triggerHaptic, shouldBlockNavigation, prefersReducedMotion]);
+
+    // Story 14e-4: Handle credit badge click - opens credit info modal via Modal Manager
+    const handleCreditInfoClick = useCallback(() => {
+        // Use legacy callback if provided (backward compatibility during migration)
+        if (onCreditInfoClick) {
+            onCreditInfoClick();
+            return;
+        }
+        // New pattern: use Modal Manager directly
+        openModal('creditInfo', {
+            normalCredits: scanCredits ?? 0,
+            superCredits: superCredits ?? 0,
+            onClose: closeModal,
+        });
+    }, [onCreditInfoClick, openModal, closeModal, scanCredits, superCredits]);
 
     // Story 14.11 AC #2: Nav item styling with CSS variables
     const getNavItemClasses = (_v: string): string => {
@@ -505,7 +525,7 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
                     <button
                         onClick={(e) => {
                             e.stopPropagation(); // Prevent triggering FAB
-                            onCreditInfoClick?.();
+                            handleCreditInfoClick();
                         }}
                         className="absolute px-1 py-px rounded-full text-xs font-semibold min-w-[18px] text-center transition-transform active:scale-95"
                         style={{
@@ -526,7 +546,7 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
                     <button
                         onClick={(e) => {
                             e.stopPropagation(); // Prevent triggering FAB
-                            onCreditInfoClick?.();
+                            handleCreditInfoClick();
                         }}
                         className="absolute px-1 py-px rounded-full text-xs font-semibold min-w-[18px] text-center transition-transform active:scale-95"
                         style={{

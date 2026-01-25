@@ -16,7 +16,6 @@ export default defineConfig(createGroupConfig(
     'tests/unit/hooks/useBatchProcessing.test.ts',
     // Scan hooks (in hooks-scan group)
     'tests/unit/hooks/useScanState.test.ts',
-    'tests/unit/hooks/useScanStateBridge.test.ts',
     'tests/unit/hooks/useScanOverlayState.test.ts',
   ]
 ))

@@ -1,8 +1,8 @@
 # Architectural Decisions & Patterns
 
 > Section 4 of Atlas Memory
-> Last Sync: 2026-01-15
-> Last Optimized: 2026-01-12 (Generation 4)
+> Last Sync: 2026-01-24
+> Last Optimized: 2026-01-24 (Generation 5)
 > Sources: architecture.md, ADRs, tech-spec documents
 
 ## Tech Stack
@@ -333,124 +333,17 @@ Functions: `sanitizeMerchantName`, `sanitizeItemName`, `sanitizeLocation`, `sani
 
 ---
 
-## Shared Group Cache Optimization (Story 14c.20)
+## Shared Group Cache Optimization (ARCHIVED - Epic 14c Reverted)
 
-**Problem:** Full Firestore fetch on every view mode switch due to `refetchOnMount: true`
+> ⚠️ **ARCHIVED:** Epic 14c was reverted 2026-01-20. This pattern documented for future reference.
+> See `docs/sprint-artifacts/epic-14c-retro-2026-01-20.md` for failure analysis.
+> Epic 14d-v2 uses changelog-driven sync instead.
 
-**Solution:** Cache-first strategy with delta sync + real-time invalidation
-
-### React Query Configuration
-
-```typescript
-// useSharedGroupTransactions.ts
-useQuery({
-    queryKey: QUERY_KEYS.sharedGroupTransactions(groupId),
-    queryFn: async () => { /* IndexedDB → Delta sync → Firestore fallback */ },
-
-    // Story 14c.20: Cache Optimization
-    staleTime: 60 * 60 * 1000,        // 1 hour (safety net)
-    gcTime: 24 * 60 * 60 * 1000,      // 24 hours (survive view switches)
-    refetchOnMount: false,             // Use cached data on mount
-    refetchOnWindowFocus: false,       // Delta sync handles freshness
-});
-```
-
-### Real-Time Sync Architecture
-
-```
-User A saves transaction → updateMemberTimestampsForTransaction() → memberUpdates.userA.lastSyncAt
-                                          ↓
-User B's onSnapshot listener detects memberUpdates change (1-3 seconds)
-                                          ↓
-detectMemberUpdates() compares timestamps → shouldInvalidate: true
-                                          ↓
-await clearGroupCacheById() → IndexedDB cleared (MUST await!)
-                                          ↓
-resetQueries() + invalidateQueries({ refetchType: 'all' }) → Force fresh fetch
-                                          ↓
-queryFn → IndexedDB empty → Firestore fetch → User B sees change
-```
-
-### Critical Bug Fixes (Learned Patterns)
-
-#### 1. Race Condition: IndexedDB Clear vs React Query Refetch
-```typescript
-// ❌ BUG: Fire-and-forget causes race condition
-clearGroupCacheById(groupId).catch(...);  // Starts async
-queryClient.invalidateQueries({...});      // Triggers immediately
-// queryFn reads STALE IndexedDB data before clear completes!
-
-// ✅ FIX: Await IndexedDB clear before invalidating
-await clearGroupCacheById(groupId);
-queryClient.invalidateQueries({...});
-```
-
-#### 2. Inactive Query Not Refetching
-```typescript
-// ❌ BUG: invalidateQueries only refetches ACTIVE queries
-// With refetchOnMount: false, inactive queries stay stale
-queryClient.invalidateQueries({ queryKey: [...] });
-
-// ✅ FIX: Use refetchType: 'all' to force refetch inactive queries
-queryClient.invalidateQueries({
-    queryKey: [...],
-    refetchType: 'all'  // Critical for cache optimization
-});
-```
-
-#### 3. Delta Sync Can't Detect Removals
-```typescript
-// ❌ LIMITATION: Delta query filters by sharedGroupIds array-contains groupId
-// When transaction is REMOVED from group, sharedGroupIds no longer contains groupId
-// Delta sync query returns empty → cache still has stale transaction
-
-// ✅ FIX: Use resetQueries() to clear React Query in-memory cache
-await queryClient.resetQueries({ queryKey: [...] });  // Clear in-memory
-queryClient.invalidateQueries({ queryKey: [...], refetchType: 'all' });  // Force fresh fetch
-```
-
-#### 4. memberUpdates Write Reliability
-```typescript
-// ❌ RISK: Fire-and-forget batch write can fail silently
-await transaction.save();
-updateMemberTimestampsForTransaction(...).catch(...);  // If fails, no sync signal
-
-// ✅ FIX: Retry logic with exponential backoff
-const MAX_RETRIES = 2;
-const RETRY_DELAY_MS = 500;
-// Attempt → fail → wait 500ms → retry → fail → wait 1000ms → retry
-```
-
-### Manual Sync Feature
-
-**Location:** Settings > Grupos > [Group Header] (compact sync icon)
-
-**Components:**
-- `useManualSync` hook - Cooldown tracking, cache invalidation
-- `SyncButton` component - Compact mode (icon only) in group header
-
-**Behavior:**
-| State | Button | Display |
-|-------|--------|---------|
-| Idle | Sync icon | Tooltip: "Sincronizar transacciones" |
-| Syncing | Spinner | Disabled |
-| Cooldown | Clock icon | Tooltip: "Espera Xs" |
-
-### Cost Impact
-
-| Metric | Before | After | Reduction |
-|--------|--------|-------|-----------|
-| Daily reads/user | ~10,000+ | ~700-1,500 | ~85% |
-| Monthly (50 users) | ~$9 | ~$2 | ~78% |
-
-**Key Files:**
-- `src/hooks/useSharedGroupTransactions.ts` - React Query config
-- `src/hooks/useManualSync.ts` - Manual sync hook (60s cooldown)
-- `src/components/SharedGroups/SyncButton.tsx` - UI component
-- `src/App.tsx:533-575` - Cache invalidation on memberUpdates change
-- `src/services/sharedGroupService.ts:1284-1353` - Retry logic for timestamps
-
----
+**Key Lessons (preserved for Epic 14d-v2):**
+- Delta sync cannot detect transaction REMOVALS
+- Aggressive caching (1hr stale) breaks cross-user sync
+- `resetQueries()` before `invalidateQueries()` to clear in-memory cache
+- `refetchType: 'all'` needed for inactive queries
 
 ---
 
@@ -741,28 +634,19 @@ spendingByMember={new Map(Object.entries(trendsViewDataProps.spendingByMember))}
 
 ## Sync Notes
 
-- 2026-01-23: Added ViewHandlersContext Migration Pattern (Story 14c-refactor.27) - 7/9 views migrated, InsightsView/ReportsView deferred
-- Generation 4: Consolidated Epic 14d verbose details
-- 2026-01-15: Added Epic 14c Household Sharing architecture
-- 2026-01-15: Added Cloud Functions documentation
-- 2026-01-19: Added Story 14c.17 Share Link Deep Linking pattern
-- 2026-01-19: Added Story 14c.18 View Mode Persistence pattern
-- 2026-01-19: Added Story 14c.14 Secret Manager Migration pattern
-- 2026-01-20: Added Story 14c.20 Shared Group Cache Optimization pattern
-- 2026-01-21: Added Epic 14c-refactor Service Stubbing Pattern
-- 2026-01-21: Added Epic 14c-refactor Hook Stubbing Pattern (Story 14c-refactor.3)
-- 2026-01-21: Added IndexedDB Migration Pattern (Story 14c-refactor.4)
-- 2026-01-21: Added App-Level Hook Pattern (Story 14c-refactor.10)
-- 2026-01-21: Updated React Query defaults (refetchOnWindowFocus: true for multi-device sync)
-- 2026-01-21: Story 14c-refactor.12 - Transaction Service Simplification (dead query keys removed, TODO markers added)
-- 2026-01-21: Story 14c-refactor.13 - View Mode State Unification (context simplified to in-memory only, Shell & Stub pattern)
-- 2026-01-22: Story 14c-refactor.17 - Test Suite Cleanup (92 new tests: 5 context files + 1 hook, security rules deny-all pattern)
-- 2026-01-22: Story 14c-refactor.20 - Transaction & Scan Handler Hooks (useTransactionHandlers integrated, useScanHandlers created)
-- 2026-01-22: Story 14c-refactor.21 - Navigation & Dialog Handler Hooks (useNavigationHandlers integrated, useDialogHandlers created but deferred)
-- 2026-01-22: Story 14c-refactor.22c - View Renderer Pattern (renderViewSwitch + 5 render functions, provider wrapping centralized)
-- 2026-01-23: Story 14c-refactor.31a - TrendsView interface cleanup (removed onBack, onNavigateToView, onNavigateToHistory; useViewHandlers() migration complete)
-- 2026-01-23: Story 14c-refactor.31b - Hook-to-View Type Conversion Pattern (plain objects in hooks, Map conversion at render)
-- 2026-01-23: Story 14c-refactor.31c - TrendsView integration complete (34 lines removed, single spread pattern, code review passed)
-- 2026-01-23: Story 14c-refactor.33b - TransactionEditorView hook expansion (17 callbacks passthrough, all optional for backward compat)
+### Generation 5 (2026-01-24)
+- Archived Epic 14c cache optimization (reverted)
+- Consolidated Epic 14c-refactor patterns
+
+### Key Patterns Added (2026-01-21 to 2026-01-24)
+| Pattern | Source |
+|---------|--------|
+| Service/Hook Stubbing | Epic 14c-refactor.2-3 |
+| IndexedDB Migration | Epic 14c-refactor.4 |
+| App-Level Hooks | Epic 14c-refactor.10 |
+| Handler Extraction | Epic 14c-refactor.20-21 |
+| ViewHandlersContext | Epic 14c-refactor.25-27 |
+| Hook-to-View Type Conversion | Epic 14c-refactor.31b |
+
 - Code review learnings in 06-lessons.md
 - Story details in docs/sprint-artifacts/

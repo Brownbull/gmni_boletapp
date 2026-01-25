@@ -2,10 +2,10 @@
  * Unit tests for useDialogHandlers hook
  *
  * Story 14c-refactor.21: Unit tests for extracted dialog handlers
+ * Story 14e-4: Credit info modal removed - now uses Modal Manager
  *
  * Tests dialog handlers:
  * - Toast notification management (showToast, auto-dismiss)
- * - Credit info modal state (open/close)
  * - Conflict dialog state and handlers (open, close, viewCurrent, discard)
  */
 
@@ -199,63 +199,8 @@ describe('useDialogHandlers', () => {
     });
 
     // =========================================================================
-    // Credit Info Modal Tests
-    // =========================================================================
-
-    describe('credit info modal', () => {
-        it('should initialize with modal closed', () => {
-            const props = createDefaultProps();
-            const { result } = renderHook(() => useDialogHandlers(props));
-
-            expect(result.current.showCreditInfoModal).toBe(false);
-        });
-
-        it('should open modal via openCreditInfoModal', () => {
-            const props = createDefaultProps();
-            const { result } = renderHook(() => useDialogHandlers(props));
-
-            act(() => {
-                result.current.openCreditInfoModal();
-            });
-
-            expect(result.current.showCreditInfoModal).toBe(true);
-        });
-
-        it('should close modal via closeCreditInfoModal', () => {
-            const props = createDefaultProps();
-            const { result } = renderHook(() => useDialogHandlers(props));
-
-            act(() => {
-                result.current.openCreditInfoModal();
-            });
-            expect(result.current.showCreditInfoModal).toBe(true);
-
-            act(() => {
-                result.current.closeCreditInfoModal();
-            });
-            expect(result.current.showCreditInfoModal).toBe(false);
-        });
-
-        it('should allow direct state control via setShowCreditInfoModal', () => {
-            const props = createDefaultProps();
-            const { result } = renderHook(() => useDialogHandlers(props));
-
-            act(() => {
-                result.current.setShowCreditInfoModal(true);
-            });
-
-            expect(result.current.showCreditInfoModal).toBe(true);
-
-            act(() => {
-                result.current.setShowCreditInfoModal(false);
-            });
-
-            expect(result.current.showCreditInfoModal).toBe(false);
-        });
-    });
-
-    // =========================================================================
     // Conflict Dialog Tests
+    // Story 14e-4: Credit info modal tests removed - now uses Modal Manager
     // =========================================================================
 
     describe('conflict dialog', () => {
@@ -539,10 +484,9 @@ describe('useDialogHandlers', () => {
             const props = createDefaultProps();
             const { result, rerender } = renderHook(() => useDialogHandlers(props));
 
+            // Story 14e-4: Credit info modal handlers removed - now uses Modal Manager
             const firstRender = {
                 showToast: result.current.showToast,
-                openCreditInfoModal: result.current.openCreditInfoModal,
-                closeCreditInfoModal: result.current.closeCreditInfoModal,
                 handleConflictClose: result.current.handleConflictClose,
                 handleConflictViewCurrent: result.current.handleConflictViewCurrent,
                 handleConflictDiscard: result.current.handleConflictDiscard,
@@ -552,8 +496,6 @@ describe('useDialogHandlers', () => {
             rerender();
 
             expect(result.current.showToast).toBe(firstRender.showToast);
-            expect(result.current.openCreditInfoModal).toBe(firstRender.openCreditInfoModal);
-            expect(result.current.closeCreditInfoModal).toBe(firstRender.closeCreditInfoModal);
             expect(result.current.handleConflictClose).toBe(firstRender.handleConflictClose);
             expect(result.current.openConflictDialog).toBe(firstRender.openConflictDialog);
         });

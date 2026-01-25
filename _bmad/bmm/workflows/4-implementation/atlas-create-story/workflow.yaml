@@ -117,10 +117,18 @@ split_strategies:
 # 2. Provides PUSH ALERTS if story affects existing workflows
 # 3. Suggests additional acceptance criteria based on workflow impact
 # 4. Feeds story intent to Atlas memory after creation
-# 5. ANALYZES STORY SIZE to prevent context window overflow (Step 5b)
-#    - Stories exceeding thresholds trigger split recommendation
+# 5. ANALYZES STORY SIZE to prevent context window overflow
+#    - Step 5b: PRE-GENERATION estimate based on epic descriptions (early warning)
+#    - Step 6: POST-GENERATION validation of ACTUAL task/subtask counts (CRITICAL!)
+#    - Bug fix 2026-01-24: Step 5b alone didn't catch story 14e-6 (47 subtasks)
+#      because the story hadn't been generated yet when it ran
 #    - Prevents post-hoc splits that waste development cycles (lesson: 14c-refactor.22a)
 # 6. DUAL-MODE: Can analyze existing stories for sizing issues
 #    - Batch analysis from sprint-status
 #    - Interactive split recommendations
 #    - Consolidates atlas-story-sizing functionality
+
+# Bug Fix History:
+# - 2026-01-24: Added POST-GENERATION sizing check in Step 6
+#   Story 14e-6 was created with 47 subtasks (3.1x limit) because Step 5b
+#   ran BEFORE the story was generated. Now Step 6 validates ACTUAL content.

@@ -2,13 +2,15 @@
  * Story 14c-refactor.21: useDialogHandlers Hook
  *
  * Extracts dialog/modal handlers from App.tsx into a reusable hook.
- * Handles toast notifications, credit info modal, and transaction conflict dialogs.
+ * Handles toast notifications and transaction conflict dialogs.
  *
  * Features:
  * - Toast notification management with auto-dismiss
- * - Credit info modal open/close coordination
  * - Transaction conflict dialog state and handlers
  * - Unified modal management pattern
+ *
+ * Story 14e-4: Credit info modal moved to Modal Manager.
+ * Use `openModal('creditInfo', {...})` instead of this hook for credit info.
  *
  * Architecture Reference: Epic 14c-refactor - App.tsx Handler Extraction
  * Dependencies:
@@ -23,11 +25,6 @@
  *     toastMessage,
  *     setToastMessage,
  *     showToast,
- *     // Credit Info Modal
- *     showCreditInfoModal,
- *     setShowCreditInfoModal,
- *     openCreditInfoModal,
- *     closeCreditInfoModal,
  *     // Conflict Dialog
  *     showConflictDialog,
  *     conflictDialogData,
@@ -46,7 +43,6 @@
  *   return (
  *     <>
  *       {toastMessage && <Toast message={toastMessage} />}
- *       {showCreditInfoModal && <CreditInfoModal onClose={closeCreditInfoModal} />}
  *       <TransactionConflictDialog
  *         isOpen={showConflictDialog}
  *         onClose={handleConflictClose}
@@ -128,19 +124,8 @@ export interface UseDialogHandlersResult {
     showToast: (text: string, type: 'success' | 'info') => void;
 
     // ===========================================================================
-    // Credit Info Modal State & Handlers
-    // ===========================================================================
-    /** Whether credit info modal is open */
-    showCreditInfoModal: boolean;
-    /** Set credit info modal visibility directly */
-    setShowCreditInfoModal: (show: boolean) => void;
-    /** Open credit info modal */
-    openCreditInfoModal: () => void;
-    /** Close credit info modal */
-    closeCreditInfoModal: () => void;
-
-    // ===========================================================================
     // Conflict Dialog State & Handlers
+    // Story 14e-4: Credit info modal moved to Modal Manager (openModal('creditInfo', {...}))
     // ===========================================================================
     /** Whether conflict dialog is open */
     showConflictDialog: boolean;
@@ -214,21 +199,8 @@ export function useDialogHandlers(props: UseDialogHandlersProps): UseDialogHandl
     }, []);
 
     // ===========================================================================
-    // Credit Info Modal State
-    // ===========================================================================
-
-    const [showCreditInfoModal, setShowCreditInfoModal] = useState(false);
-
-    const openCreditInfoModal = useCallback(() => {
-        setShowCreditInfoModal(true);
-    }, []);
-
-    const closeCreditInfoModal = useCallback(() => {
-        setShowCreditInfoModal(false);
-    }, []);
-
-    // ===========================================================================
     // Conflict Dialog State
+    // Story 14e-4: Credit info modal moved to Modal Manager (openModal('creditInfo', {...}))
     // ===========================================================================
 
     const [showConflictDialog, setShowConflictDialog] = useState(false);
@@ -321,17 +293,13 @@ export function useDialogHandlers(props: UseDialogHandlersProps): UseDialogHandl
     // ===========================================================================
 
     // Story 14c-refactor.25: Memoize return object for ViewHandlersContext stability
+    // Story 14e-4: Credit info modal removed - now uses Modal Manager
     return useMemo<UseDialogHandlersResult>(
         () => ({
             // Toast
             toastMessage,
             setToastMessage,
             showToast,
-            // Credit Info Modal
-            showCreditInfoModal,
-            setShowCreditInfoModal,
-            openCreditInfoModal,
-            closeCreditInfoModal,
             // Conflict Dialog
             showConflictDialog,
             setShowConflictDialog,
@@ -346,10 +314,6 @@ export function useDialogHandlers(props: UseDialogHandlersProps): UseDialogHandl
             toastMessage,
             setToastMessage,
             showToast,
-            showCreditInfoModal,
-            setShowCreditInfoModal,
-            openCreditInfoModal,
-            closeCreditInfoModal,
             showConflictDialog,
             setShowConflictDialog,
             conflictDialogData,
