@@ -23,7 +23,8 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { AlertTriangle, Calculator, ArrowRight, X } from 'lucide-react';
 import { TotalValidationResult } from '../../utils/totalValidation';
-import { useScanOptional } from '../../contexts/ScanContext';
+// Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
+import { useScanActiveDialog, useScanActions } from '@features/scan/store';
 import { DIALOG_TYPES } from '../../types/scanStateMachine';
 
 // Story 14d.6: Import centralized type from scanStateMachine
@@ -112,12 +113,13 @@ export const TotalMismatchDialog: React.FC<TotalMismatchDialogProps> = ({
   const dialogRef = useRef<HTMLDivElement>(null);
   const isDark = theme === 'dark';
 
-  // Story 14d.4b: Get scan context for reading dialog state
-  const scanContext = useScanOptional();
+  // Story 14e-11: Use Zustand store selectors and actions
+  const activeDialog = useScanActiveDialog();
+  const { resolveDialog, dismissDialog } = useScanActions();
 
   // Story 14d.4b: Derive values from context or fall back to props
-  const contextDialogData = scanContext?.state.activeDialog?.type === DIALOG_TYPES.TOTAL_MISMATCH
-    ? (scanContext.state.activeDialog.data as TotalMismatchDialogData)
+  const contextDialogData = activeDialog?.type === DIALOG_TYPES.TOTAL_MISMATCH
+    ? (activeDialog.data as TotalMismatchDialogData)
     : null;
 
   // Determine if dialog should be open
@@ -131,38 +133,36 @@ export const TotalMismatchDialog: React.FC<TotalMismatchDialogProps> = ({
   const currency = contextDialogData?.pendingTransaction?.currency ?? currencyProp ?? 'CLP';
 
   // Story 14d.6: Create handlers that pass dialog data to callbacks
+  // Story 14e-11: Use Zustand actions directly (always available)
   const handleUseItemsSum = useCallback(() => {
     // Capture data before resolveDialog clears it
     const data = contextDialogData ?? undefined;
 
-    if (scanContext?.resolveDialog) {
-      scanContext.resolveDialog(DIALOG_TYPES.TOTAL_MISMATCH, { choice: 'items_sum' });
-    }
+    // Story 14e-11: Zustand actions are always available
+    resolveDialog(DIALOG_TYPES.TOTAL_MISMATCH, { choice: 'items_sum' });
     // Pass data to callback for context-based dialog handling
     onUseItemsSumProp?.(data);
-  }, [scanContext, onUseItemsSumProp, contextDialogData]);
+  }, [resolveDialog, onUseItemsSumProp, contextDialogData]);
 
   const handleKeepOriginal = useCallback(() => {
     // Capture data before resolveDialog clears it
     const data = contextDialogData ?? undefined;
 
-    if (scanContext?.resolveDialog) {
-      scanContext.resolveDialog(DIALOG_TYPES.TOTAL_MISMATCH, { choice: 'original' });
-    }
+    // Story 14e-11: Zustand actions are always available
+    resolveDialog(DIALOG_TYPES.TOTAL_MISMATCH, { choice: 'original' });
     // Pass data to callback for context-based dialog handling
     onKeepOriginalProp?.(data);
-  }, [scanContext, onKeepOriginalProp, contextDialogData]);
+  }, [resolveDialog, onKeepOriginalProp, contextDialogData]);
 
   const handleCancel = useCallback(() => {
     // Capture data before dismissDialog clears it
     const data = contextDialogData ?? undefined;
 
-    if (scanContext?.dismissDialog) {
-      scanContext.dismissDialog();
-    }
+    // Story 14e-11: Zustand actions are always available
+    dismissDialog();
     // Pass data to callback for context-based dialog handling
     onCancelProp?.(data);
-  }, [scanContext, onCancelProp, contextDialogData]);
+  }, [dismissDialog, onCancelProp, contextDialogData]);
 
   // Handle escape key
   const handleKeyDown = useCallback(

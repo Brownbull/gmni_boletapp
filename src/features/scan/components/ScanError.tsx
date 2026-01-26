@@ -8,8 +8,8 @@
  */
 import React from 'react';
 import { AlertTriangle, RefreshCw, X, WifiOff, Clock, AlertCircle } from 'lucide-react';
-import type { ScanErrorType } from '../../hooks/useScanState';
-import { useReducedMotion } from '../../hooks/useReducedMotion';
+import type { ScanErrorType } from '@/hooks/useScanState';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 export interface ScanErrorProps {
   /** Error type for icon selection */

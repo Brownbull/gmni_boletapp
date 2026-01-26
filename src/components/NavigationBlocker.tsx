@@ -13,7 +13,8 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { useScanOptional } from '../contexts/ScanContext';
+// Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
+import { useHasDialog } from '@features/scan/store';
 
 interface NavigationBlockerProps {
   /** Current view name from App state */
@@ -41,10 +42,8 @@ function isScanView(view: string): boolean {
  * 3. When blocking ends, let natural navigation occur
  */
 export function NavigationBlocker({ currentView }: NavigationBlockerProps) {
-  const scanContext = useScanOptional();
-
-  // Track if we're currently blocking
-  const hasDialog = scanContext?.hasDialog ?? false;
+  // Story 14e-11: Use Zustand selector (always available, no provider boundary)
+  const hasDialog = useHasDialog();
   const shouldBlock = isScanView(currentView) && hasDialog;
 
   // Track whether we've pushed a blocking history entry

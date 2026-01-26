@@ -1,6 +1,6 @@
 # Story 14e.9c: Create State Components & Tests
 
-Status: ready-for-dev
+Status: done
 
 <!-- Part 3/3 of Story 14e-9 split (2026-01-24) -->
 
@@ -46,46 +46,46 @@ so that **the scan feature orchestrator can render phase-appropriate UI**.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Create IdleState Component** (AC: 1, 2, 3)
-  - [ ] Create `states/IdleState.tsx`
-  - [ ] Read phase from `useScanPhase()`
-  - [ ] Return null if phase !== 'idle'
-  - [ ] Render camera-ready prompt UI
-  - [ ] Handle mode-specific messaging
+- [x] **Task 1: Create IdleState Component** (AC: 1, 2, 3)
+  - [x] Create `states/IdleState.tsx`
+  - [x] Read phase from `useScanPhase()`
+  - [x] Return null if phase !== 'idle'
+  - [x] Render camera-ready prompt UI
+  - [x] Handle mode-specific messaging
 
-- [ ] **Task 2: Create ProcessingState Component** (AC: 1, 2, 4)
-  - [ ] Create `states/ProcessingState.tsx`
-  - [ ] Read phase from `useScanPhase()`
-  - [ ] Return null if phase !== 'scanning'
-  - [ ] Wrap ScanProgress component
-  - [ ] Pass progress data from `useScanProgress()`
+- [x] **Task 2: Create ProcessingState Component** (AC: 1, 2, 4)
+  - [x] Create `states/ProcessingState.tsx`
+  - [x] Read phase from `useScanPhase()`
+  - [x] Return null if phase !== 'scanning'
+  - [x] Wrap ScanProgress component
+  - [x] Pass progress data from `useScanProgress()`
 
-- [ ] **Task 3: Create ReviewingState Component** (AC: 1, 2, 3)
-  - [ ] Create `states/ReviewingState.tsx`
-  - [ ] Read phase from `useScanPhase()`
-  - [ ] Return null if phase !== 'reviewing'
-  - [ ] Render result preview UI
-  - [ ] Mode-aware: single vs batch review layout
+- [x] **Task 3: Create ReviewingState Component** (AC: 1, 2, 3)
+  - [x] Create `states/ReviewingState.tsx`
+  - [x] Read phase from `useScanPhase()`
+  - [x] Return null if phase !== 'reviewing'
+  - [x] Render result preview UI
+  - [x] Mode-aware: single vs batch review layout
 
-- [ ] **Task 4: Create ErrorState Component** (AC: 1, 2, 4)
-  - [ ] Create `states/ErrorState.tsx`
-  - [ ] Read phase from `useScanPhase()`
-  - [ ] Return null if phase !== 'error'
-  - [ ] Wrap ScanError component
-  - [ ] Add retry action via `useScanActions().reset()`
+- [x] **Task 4: Create ErrorState Component** (AC: 1, 2, 4)
+  - [x] Create `states/ErrorState.tsx`
+  - [x] Read phase from `useScanPhase()`
+  - [x] Return null if phase !== 'error'
+  - [x] Wrap ScanError component
+  - [x] Add retry action via `useScanActions().reset()`
 
-- [ ] **Task 5: Create State Component Tests** (AC: 5)
-  - [ ] Create `tests/unit/features/scan/components/states/` directory
-  - [ ] Create IdleState.test.tsx - phase guard, mode variations
-  - [ ] Create ProcessingState.test.tsx - phase guard, progress display
-  - [ ] Create ReviewingState.test.tsx - phase guard, mode variations
-  - [ ] Create ErrorState.test.tsx - phase guard, retry action
+- [x] **Task 5: Create State Component Tests** (AC: 5)
+  - [x] Create `tests/unit/features/scan/components/states/` directory
+  - [x] Create IdleState.test.tsx - phase guard, mode variations
+  - [x] Create ProcessingState.test.tsx - phase guard, progress display
+  - [x] Create ReviewingState.test.tsx - phase guard, mode variations
+  - [x] Create ErrorState.test.tsx - phase guard, retry action
 
-- [ ] **Task 6: Exports & Barrel Files** (AC: 6)
-  - [ ] Create `states/index.ts` with all state exports
-  - [ ] Update `components/index.ts` to re-export states
-  - [ ] Verify build succeeds
-  - [ ] Run all tests
+- [x] **Task 6: Exports & Barrel Files** (AC: 6)
+  - [x] Create `states/index.ts` with all state exports
+  - [x] Update `components/index.ts` to re-export states
+  - [x] Verify build succeeds
+  - [x] Run all tests
 
 ## Dev Notes
 
@@ -224,11 +224,38 @@ tests/unit/features/scan/components/states/
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Debug Log References
+N/A
 
 ### Completion Notes List
+1. Created 4 state components (IdleState, ProcessingState, ReviewingState, ErrorState)
+2. All components implement phase-gated rendering pattern
+3. ProcessingState wraps ScanProgress for batch mode, shows indeterminate for single mode
+4. ErrorState wraps ScanError with automatic error type detection
+5. ReviewingState supports wrapper mode (children) for existing review components
+6. Added useBatchProgress and useProcessingProgress selectors to store
+7. Created comprehensive test suite with 86 tests
+8. **[Archie Review Fix]** Moved inline CSS `<style>` animation from ProcessingState.tsx to index.html global styles (Story 14e-9c pattern compliance)
 
 ### File List
+**Created:**
+- src/features/scan/components/states/IdleState.tsx
+- src/features/scan/components/states/ProcessingState.tsx
+- src/features/scan/components/states/ReviewingState.tsx
+- src/features/scan/components/states/ErrorState.tsx
+- src/features/scan/components/states/index.ts
+- tests/unit/features/scan/components/states/IdleState.test.tsx (18 tests)
+- tests/unit/features/scan/components/states/ProcessingState.test.tsx (19 tests)
+- tests/unit/features/scan/components/states/ReviewingState.test.tsx (24 tests)
+- tests/unit/features/scan/components/states/ErrorState.test.tsx (25 tests)
+
+**Modified:**
+- src/features/scan/components/index.ts - Added state component exports
+- src/features/scan/store/selectors.ts - Added useBatchProgress, useProcessingProgress
+- src/features/scan/store/index.ts - Added new selector exports
+- index.html - Added indeterminate-progress keyframe animation (Archie review fix)
+- src/features/scan/components/states/ProcessingState.tsx - Removed inline style tag (Archie review fix)
 
 **Points:** 3

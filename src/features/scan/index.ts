@@ -1,5 +1,54 @@
-// Feature: Scan
-// This module will contain the scan Zustand store and components
-// Implemented in Story 14e-6 through 14e-11
+/**
+ * Feature: Scan
+ *
+ * This module contains the scan Zustand store, handlers, components, and
+ * the ScanFeature orchestrator.
+ *
+ * Implemented incrementally across Stories 14e-6 through 14e-11:
+ * - Story 14e-6a: Store foundation with core actions (START_*, IMAGE_*, PROCESS_*)
+ * - Story 14e-6b: Remaining actions (DIALOG_*, SAVE_*, BATCH_*, CONTROL)
+ * - Story 14e-6c: Selectors & module exports
+ * - Story 14e-6d: Comprehensive tests & verification
+ * - Story 14e-8a-c: processScan handler extraction
+ * - Story 14e-9a-c: Component migration & state components
+ * - Story 14e-10: ScanFeature orchestrator
+ *
+ * Usage:
+ * ```tsx
+ * // Import store and selectors
+ * import {
+ *   useScanStore,
+ *   useScanPhase,
+ *   useScanActions,
+ *   getScanState,
+ *   scanActions,
+ * } from '@features/scan';
+ *
+ * // Import processScan handler
+ * import { processScan } from '@features/scan';
+ *
+ * // Import ScanFeature orchestrator (Story 14e-10)
+ * import { ScanFeature } from '@features/scan';
+ *
+ * // In React components
+ * const phase = useScanPhase();
+ * const { startSingle } = useScanActions();
+ *
+ * // In non-React code
+ * const state = getScanState();
+ * scanActions.startSingle(userId);
+ * ```
+ */
 
-export {};
+// Re-export ScanFeature orchestrator (Story 14e-10)
+export { ScanFeature } from './ScanFeature';
+export type { ScanFeatureProps } from './ScanFeature';
+
+// Re-export entire store module
+export * from './store';
+
+// Re-export handlers module (Story 14e-8c)
+export * from './handlers';
+
+// Re-export components (Story 14e-9a)
+export * from './components';

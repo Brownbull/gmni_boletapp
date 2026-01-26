@@ -1,7 +1,7 @@
 # Feature Inventory + Intent
 
 > Section 2 of Atlas Memory
-> Last Sync: 2026-01-24
+> Last Sync: 2026-01-25
 > Last Optimized: 2026-01-24 (Generation 5)
 > Sources: sprint-status.yaml, epics.md, PRD documents
 
@@ -156,7 +156,7 @@ Rebuild shared groups with lessons learned from Epic 14c failure:
 
 ## Epic 14e: Feature-Based Architecture (🔄 IN PROGRESS)
 
-**Status:** 18/30 stories ready | **Points:** ~82 total | **Started:** 2026-01-24
+**Status:** 21/32 stories ready | **Points:** ~86 total | **Started:** 2026-01-24
 
 ### Epic Context
 Transform monolithic App.tsx (~3,850 lines) into feature-based architecture:
@@ -164,16 +164,21 @@ Transform monolithic App.tsx (~3,850 lines) into feature-based architecture:
 - Zustand Stores: Centralized client state (per ADR-018 - no XState)
 - Modal Manager: Single point for all modal rendering
 
-### Ready Stories Summary
+### Part 1: Modal Manager (✅ COMPLETE - 6 stories, 14 pts)
+
+| Story | Description | Points | Status |
+|-------|-------------|--------|--------|
+| 14e-0 | Delete Bridge Dead Code | 1 | ✅ |
+| 14e-1 | Directory Structure & Zustand Setup | 2 | ✅ |
+| 14e-2 | Modal Manager Zustand Store | 3 | ✅ |
+| 14e-3 | Modal Manager Component | 2 | ✅ |
+| 14e-4 | Migrate Simple Modals | 3 | ✅ |
+| 14e-5 | Migrate Complex Modals | 3 | ✅ |
+
+### Part 2-5: Scan Feature & App Shell (IN PROGRESS)
 
 | Story | Description | Points | Risk |
 |-------|-------------|--------|------|
-| 14e-0 | Delete Bridge Dead Code | 1 | LOW |
-| 14e-1 | Directory Structure & Zustand Setup | 2 | LOW |
-| 14e-2 | Modal Manager Zustand Store | 3 | LOW |
-| 14e-3 | Modal Manager Component | 2 | LOW |
-| 14e-4 | Migrate Simple Modals | 3 | LOW |
-| 14e-5 | Migrate Complex Modals | 3 | MEDIUM |
 | 14e-6 | Scan Zustand Store Definition | 5 | CRITICAL |
 | 14e-8 | Extract processScan Handler | 5 | CRITICAL |
 | 14e-10 | Scan Feature Orchestrator | 3 | HIGH |
@@ -186,6 +191,33 @@ Transform monolithic App.tsx (~3,850 lines) into feature-based architecture:
 | 14e-14c | Batch Handler Discard + Credit | 2 | LOW |
 | 14e-14d | Batch Handler App.tsx Integration | 2 | LOW |
 | 14e-15 | Batch Review Feature Components | 3 | LOW |
+| 14e-16 | Batch Review Feature Orchestrator | 5 | MEDIUM |
+| 14e-17 | Categories Feature Extraction | 3 | LOW |
+| 14e-18a | Credit State Hook | 2 | LOW |
+| 14e-18b | Credit Handlers | 2 | LOW |
+| 14e-18c | Credit Feature Integration | 3 | LOW |
+
+### Story Created - 14e-16-batch-review-feature-orchestrator (2026-01-25)
+
+**Summary:** BatchReviewFeature orchestrator component - renders phase-appropriate UI from Zustand store
+
+**User Value:** Single entry point for all batch review functionality in App.tsx, ~400-500 lines reduced
+
+**Workflow Touchpoints:**
+- Workflow #3 (Batch Processing): DIRECT - orchestrates full batch review phase UI
+- Workflow #9 (Scan Lifecycle): INDIRECT - batch review is sub-phase of scan
+- Workflow #1 (Scan Receipt): DOWNSTREAM - single scans may feed into batch context
+
+**Dependencies:** 14e-12a/b (store), 14e-13 (selectors), 14e-14a-d (handlers), 14e-15 (components)
+
+**Phase-based Rendering:**
+- `idle` → null (not visible)
+- `processing` → ProcessingState
+- `reviewing/editing/saving` → ReviewingState
+- `complete` → SuccessState
+- `error` → ErrorState
+
+**Source:** `docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-16-batch-review-feature-orchestrator.md`
 
 ### Story Created - 14e-15-batch-review-feature-components (2026-01-25)
 
@@ -254,6 +286,116 @@ src/features/batch-review/components/
 
 **Source:** `docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-11-scancontext-migration-cleanup.md`
 
+### Story Created - 14e-17-categories-feature-extraction (2026-01-25)
+
+**Summary:** Extract category management to feature module - wraps existing hooks, extracts handlers
+
+**User Value:** Category logic colocated and isolated, App.tsx simplified by ~30-50 lines
+
+**Workflow Touchpoints:**
+- Workflow #1 (Scan Receipt): Uses `applyCategoryMappings` - verify unchanged after extraction
+- Workflow #5 (Learning Flow): Category mappings save/retrieve via `useCategoryMappings`
+- Workflow #4 (Analytics Navigation): Category drill-down depends on categorization
+- Workflow #6 (History Filter Flow): Category filtering in IconFilterBar
+
+**Feature Structure:**
+```
+src/features/categories/
+  index.ts                    # Public API
+  CategoriesFeature.tsx       # Orchestrator (headless)
+  state/useCategoriesState.ts # Wraps existing hooks
+  handlers/categoryHandlers.ts
+```
+
+**Key Pattern:** Wrapper hooks (not replacement) - maintains backward compatibility
+
+**Source:** `docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-17-categories-feature-extraction.md`
+
+### Story Created - 14e-18a/b/c (Split) - Credit Feature Extraction (2026-01-25)
+
+**Summary:** Extract credit/payment functionality to feature module - wraps useUserCredits, extracts handlers
+
+**User Value:** Credit logic colocated and isolated, App.tsx simplified by ~50-80 lines
+
+**Split Details:**
+- **14e-18a** (2 pts): Feature structure + useCreditState hook
+- **14e-18b** (2 pts): Credit handlers extraction (warning dialog handlers)
+- **14e-18c** (3 pts): CreditFeature orchestrator + App.tsx integration
+- **Reason:** Original story exceeded sizing limits (6 tasks, 36 subtasks)
+
+**Workflow Touchpoints:**
+- Workflow #1 (Scan Receipt): DIRECT - Credit check before scan, deduct on start
+- Workflow #3 (Batch Processing): DIRECT - Super credit check and warning dialog
+- Workflow #9 (Scan Lifecycle): DIRECT - Credit reserve/confirm/refund pattern
+- Workflow #2 (Quick Save): INDIRECT - Uses credit state for UI display
+
+**Feature Structure:**
+```
+src/features/credit/
+  index.ts                    # Public API
+  CreditFeature.tsx           # Orchestrator (renders CreditWarningDialog)
+  state/useCreditState.ts     # Wraps useUserCredits hook
+  handlers/creditHandlers.ts  # Warning dialog handlers
+```
+
+**Key Pattern:** Wrapper hooks (not replacement) - maintains backward compatibility
+
+**Dependencies:**
+- 14e-18a: Depends on 14e-1 (directory structure)
+- 14e-18b: Depends on 14e-18a
+- 14e-18c: Depends on 14e-18a, 14e-18b
+
+**Source:** `docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-18a-credit-state-hook.md`, `14e-18b-credit-handlers.md`, `14e-18c-credit-feature-integration.md`
+
+### Story Created - 14e-19-transactions-feature-foundation (2026-01-25)
+
+**Summary:** Transaction Entity Foundation - organize transaction-related code as FSD entity module
+
+**User Value:** Centralized transaction API via `@entities/transaction`, clear separation of domain objects from features
+
+**Workflow Touchpoints:**
+- Workflow #1 (Scan Receipt): Uses Transaction type for creation
+- Workflow #3 (Batch Processing): Uses Transaction type for batch creation
+- Workflow #4 (Analytics Navigation): Uses `useAnalyticsTransactions` hook
+- Workflow #5 (Learning Flow): Modifies transactions via type
+- Workflow #6 (History Filter): Uses `useTransactions` hook
+- Workflow #9 (Scan Lifecycle): Transaction save is end goal
+
+**Risk:** LOW (re-organization via re-exports, no functional changes)
+
+**Entity Structure:**
+```
+src/entities/transaction/
+├── index.ts        # Public API (barrel export)
+├── types.ts        # Re-exports from src/types/transaction.ts
+├── hooks/index.ts  # Re-exports transaction hooks
+└── utils/index.ts  # Re-exports transaction utilities
+```
+
+**Source:** `docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-19-transactions-feature-foundation.md`
+
+### Story Created - 14e-20a/b (Split) - Remaining UI State Extraction (2026-01-25)
+
+**Summary:** Extract remaining UI state (toast + settings) from App.tsx to shared hooks/stores
+
+**User Value:** App.tsx contains minimal local state, UI concerns properly organized
+
+**Split Details:**
+- **14e-20a** (2 pts): Toast hook extraction - useToast.ts with auto-dismiss
+- **14e-20b** (2 pts): Settings store extraction - Zustand store with localStorage persist
+- **Reason:** Original story exceeded sizing limits (4 tasks, 23 subtasks)
+
+**Workflow Touchpoints:**
+- Workflow #1-3, #5 (Scan, Quick Save, Batch, Learning): Use toast notifications
+- All Views: Use settings for theme, font size, etc.
+- Risk: LOW (pure refactor, no behavior change)
+
+**Files Created:**
+- `src/shared/hooks/useToast.ts` - Toast state + auto-dismiss
+- `src/shared/stores/useSettingsStore.ts` - Settings with Zustand persist
+
+**Source:** `docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-20a-toast-hook-extraction.md`, `14e-20b-settings-store-extraction.md`
+
 ### Story Created - 14e-14a/b/c/d (Split) - Extract Batch Review Handlers (2026-01-25)
 
 **Summary:** Extract batch review handlers from App.tsx to feature handlers
@@ -281,11 +423,38 @@ src/features/batch-review/components/
 
 **Source:** `docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-14a-*.md, 14e-14b-*.md, 14e-14c-*.md, 14e-14d-*.md`
 
-### Story Created - 14e-10-scan-feature-orchestrator (2026-01-24)
+### Story Created - 14e-21-create-feature-orchestrator (2026-01-25)
+
+**Summary:** FeatureOrchestrator component - central composition of all features into single render tree
+
+**User Value:** App.tsx becomes thin shell, feature visibility managed centrally (~100-200 lines removed)
+
+**Workflow Touchpoints:**
+- Workflow #1 (Scan Receipt): Renders ScanFeature
+- Workflow #2 (Quick Save): ScanFeature handles internally
+- Workflow #3 (Batch Processing): Renders BatchReviewFeature
+- Workflow #9 (Scan Lifecycle): Composes both scan and batch features
+
+**Dependencies:** 14e-10 (ScanFeature), 14e-16 (BatchReviewFeature), 14e-17 (CategoriesFeature), 14e-18c (CreditFeature), 14e-3 (ModalManager)
+
+**Blocks:** 14e-22 (AppProviders), 14e-23 (App.tsx Final Cleanup)
+
+**Risk Assessment:** LOW - Pure composition layer, all logic delegated to features
+
+**Source:** `docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-21-create-feature-orchestrator.md`
+
+### Story COMPLETED - 14e-10-scan-feature-orchestrator (2026-01-26)
 
 **Summary:** ScanFeature orchestrator component - renders phase-appropriate UI from Zustand store
 
 **User Value:** Single entry point for all scan functionality in App.tsx
+
+**Implementation:**
+- Created `src/features/scan/ScanFeature.tsx` (322 lines)
+- Phase-based rendering: idle → capturing → scanning → reviewing → saving → error
+- Mode-aware: batch vs single vs statement
+- Integrated into App.tsx with existing handlers
+- 29 comprehensive tests
 
 **Workflow Touchpoints:**
 - Workflow #1 (Scan Receipt): Orchestrates full capture→save flow
@@ -293,7 +462,53 @@ src/features/batch-review/components/
 - Workflow #3 (Batch Processing): Coordinates batch capture and review
 - Workflow #9 (Scan Lifecycle): Integrates with FAB mode selector
 
+**Modal Integration Decision:** Keep scan modals in AppOverlays (Option B)
+- Rationale: Existing pattern established, non-breaking
+
+**Remaining Work (14e-11):**
+- Full replacement of view-based scan rendering
+- ScanContext deletion (~1,578 lines)
+- ~800-1000 lines of scan code removal from App.tsx
+
 **Source:** `docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-10-scan-feature-orchestrator.md`
+
+### Story Created - 14e-23-app-tsx-final-cleanup (2026-01-25)
+
+**Summary:** Final App.tsx cleanup - reduce from ~3,231 to 500-800 lines via feature extraction completion
+
+**User Value:** Clean app shell architecture with FeatureOrchestrator and AppProviders
+
+**Workflow Touchpoints:**
+- Workflow #4 (Analytics Navigation): LOW IMPACT - View routing remains in App.tsx
+- Workflow #6 (History Filter): LOW IMPACT - View routing remains in App.tsx
+- All other workflows: INDIRECT - Features handle via FeatureOrchestrator
+
+**Dependencies:** 14e-21 (FeatureOrchestrator), 14e-22 (AppProviders), all Part 1-4 stories
+
+**Blocks:** 14e-24 (Documentation)
+
+**Target:** App.tsx 500-800 lines (from ~3,231 lines)
+
+**Source:** `docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-23-app-tsx-final-cleanup.md`
+
+### Story Created - 14e-24-documentation-architecture-guide (2026-01-25)
+
+**Summary:** Documentation & Architecture Guide - comprehensive docs for feature-based architecture
+
+**User Value:** Onboarding guide for new developers, architecture pattern reference, prevents drift
+
+**Workflow Touchpoints:**
+- NO DIRECT WORKFLOW IMPACT - Documentation story
+- Enables future feature development via documented patterns
+- Completes Epic 14e as final story
+
+**Key Documentation:**
+- Feature creation guide
+- Zustand store patterns (ADR-018)
+- Modal Manager usage
+- State management philosophy
+
+**Source:** `docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-24-documentation-architecture-guide.md`
 
 ### Key Architecture Decisions
 - **ADR-018:** Zustand over XState for simpler state management

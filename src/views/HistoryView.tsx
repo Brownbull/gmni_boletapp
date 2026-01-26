@@ -33,8 +33,9 @@ import type { SortOption } from '../components/history/SortControl';
 import { SelectionBar } from '../components/history/SelectionBar';
 // Group consolidation: Replaced personal group modals with TransactionGroupSelector
 import { TransactionGroupSelector } from '../components/SharedGroups/TransactionGroupSelector';
-import { DeleteTransactionsModal } from '../components/history/DeleteTransactionsModal';
+// Story 14e-5: DeleteTransactionsModal now uses Modal Manager
 import type { TransactionPreview } from '../components/history/DeleteTransactionsModal';
+import { useModalActions } from '@managers/ModalManager';
 import { PageTransition } from '../components/animation/PageTransition';
 import { TransitionChild } from '../components/animation/TransitionChild';
 // Story 14.13: Duplicate detection for transactions
@@ -324,9 +325,10 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
         handleLongPressEnd,
         handleLongPressMove,
     } = useSelectionMode();
-    // Group consolidation: Modal states for group assignment and delete confirmation
+    // Group consolidation: Modal states for group assignment
     const [showGroupSelector, setShowGroupSelector] = useState(false);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    // Story 14e-5: Delete modal now uses Modal Manager
+    const { openModal, closeModal } = useModalActions();
     // Story 14.15c: Export state
     const [isExporting, setIsExporting] = useState(false);
     // Story 14.31 Session 3: Sort state
@@ -693,6 +695,7 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
     }, [userId, appId, selectedIds, exitSelectionMode]);
 
     // Story 14.15: Handle batch delete
+    // Story 14e-5: Now uses Modal Manager
     const handleDeleteTransactions = useCallback(async () => {
         if (!userId) {
             throw new Error('User not authenticated');
@@ -703,14 +706,14 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
         try {
             const db = getFirestore();
             await deleteTransactionsBatch(db, userId, appId, transactionIds);
-            setShowDeleteModal(false);
+            closeModal(); // Story 14e-5: Use Modal Manager to close
             exitSelectionMode();
             onTransactionsDeleted?.(transactionIds);
         } catch (err) {
             console.error('[HistoryView] Failed to delete transactions:', err);
             throw err; // Re-throw so modal can show error
         }
-    }, [userId, appId, selectedIds, exitSelectionMode, onTransactionsDeleted]);
+    }, [userId, appId, selectedIds, exitSelectionMode, onTransactionsDeleted, closeModal]);
 
     return (
         <PageTransition viewKey="history" direction="forward">
@@ -945,7 +948,18 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                             selectedCount={selectedCount}
                             onClose={exitSelectionMode}
                             onGroup={() => setShowGroupSelector(true)}
-                            onDelete={() => setShowDeleteModal(true)}
+                            onDelete={() => {
+                                // Story 14e-5: Use Modal Manager for delete confirmation
+                                openModal('deleteTransactions', {
+                                    transactions: getTransactionPreviews(),
+                                    onClose: closeModal,
+                                    onDelete: handleDeleteTransactions,
+                                    formatCurrency,
+                                    t,
+                                    lang: lang as 'en' | 'es',
+                                    currency,
+                                });
+                            }}
                             onSelectAll={handleSelectAllToggle}
                             totalVisible={visibleTransactionIds.length}
                             t={t}
@@ -1283,17 +1297,8 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                     />
                 )}
 
-                {/* Story 14.15: Delete Transactions Modal */}
-                <DeleteTransactionsModal
-                    isOpen={showDeleteModal}
-                    transactions={getTransactionPreviews()}
-                    onClose={() => setShowDeleteModal(false)}
-                    onDelete={handleDeleteTransactions}
-                    formatCurrency={formatCurrency}
-                    t={t}
-                    lang={lang as 'en' | 'es'}
-                    currency={currency}
-                />
+                {/* Story 14e-5: Delete Transactions Modal now uses Modal Manager */}
+                {/* Rendered by ModalManager component via openModal('deleteTransactions', {...}) */}
             </div>
         </PageTransition>
     );

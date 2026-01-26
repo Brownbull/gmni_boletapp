@@ -7,8 +7,7 @@ import { queryClient } from './lib/queryClient';
 import { AppErrorBoundary } from './components/App';
 // Story 14c-refactor.9: AuthProvider for app-wide authentication context
 import { AuthProvider } from './contexts/AuthContext';
-// Story 14d.4c: ScanProvider moved from App.tsx to enable useScan() in App component
-import { ScanProvider } from './contexts/ScanContext';
+// Story 14e-11: ScanProvider removed - Zustand store is global, no provider needed
 import { ViewModeProvider } from './contexts/ViewModeContext';
 // Story 14.35: Preload localized country data
 import { preloadCountries } from './services/locationService';
@@ -30,13 +29,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             {/* Story 14c-refactor.9: AuthProvider wraps ViewModeProvider for user.uid availability */}
             <AuthProvider>
                 <ViewModeProvider>
-                    {/* Story 14d.4c: ScanProvider wraps App to enable useScan() hook in App.tsx */}
-                    <ScanProvider>
-                        {/* Story 14c-refactor.11: Theme-aware error boundary */}
-                        <AppErrorBoundary>
-                            <App />
-                        </AppErrorBoundary>
-                    </ScanProvider>
+                    {/* Story 14e-11: ScanProvider removed - scan state now managed by Zustand store */}
+                    {/* Story 14c-refactor.11: Theme-aware error boundary */}
+                    <AppErrorBoundary>
+                        <App />
+                    </AppErrorBoundary>
                 </ViewModeProvider>
             </AuthProvider>
             {/* Story 14.29: React Query DevTools - only in development */}

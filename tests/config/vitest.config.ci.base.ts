@@ -28,9 +28,16 @@ export const baseCiConfig: UserConfig = {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
   // Story 14.42: Alias for virtual PWA module that only exists during Vite build
+  // Story 14e-11: Explicit path aliases for test files (tsconfig.json include only covers src/)
   resolve: {
     alias: {
       'virtual:pwa-register/react': path.resolve(__dirname, '../mocks/pwa-register.ts'),
+      '@features': path.resolve(__dirname, '../../src/features'),
+      '@entities': path.resolve(__dirname, '../../src/entities'),
+      '@managers': path.resolve(__dirname, '../../src/managers'),
+      '@shared': path.resolve(__dirname, '../../src/shared'),
+      '@app': path.resolve(__dirname, '../../src/app'),
+      '@': path.resolve(__dirname, '../../src'),
     },
   },
   test: {
@@ -120,6 +127,7 @@ export function createHeavyGroupConfig(
   const heavyBaseConfig: UserConfig = {
     plugins: baseCiConfig.plugins,
     define: baseCiConfig.define,
+    resolve: baseCiConfig.resolve, // Story 14e-11: Include path aliases for test files
     test: {
       globals: true,
       environment: 'happy-dom',

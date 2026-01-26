@@ -2,22 +2,16 @@
  * Modal Registry
  *
  * Story 14e-3: Maps ModalType to lazy-loaded modal components.
+ * Story 14e-4: CreditInfo and SignOut modals integrated.
+ * Story 14e-5: Complex modals integrated (TransactionConflict, DeleteTransactions,
+ *              Learning dialogs, ItemNameSuggestion).
+ *
  * Uses React.lazy() to avoid circular dependencies and enable code splitting.
  *
- * IMPLEMENTATION STATUS:
- * All modals are currently STUBBED. The actual component integration will happen
- * in Stories 14e-4/5 when each modal is migrated. The stubs provide a working
- * infrastructure while allowing incremental migration.
- *
- * Components are ready at these paths (migration pending):
- * - TransactionConflictDialog: src/components/dialogs/TransactionConflictDialog.tsx
- * - DeleteTransactionsModal: src/components/history/DeleteTransactionsModal.tsx
- * - LearnMerchantDialog: src/components/dialogs/LearnMerchantDialog.tsx
- * - ItemNameSuggestionDialog: src/components/dialogs/ItemNameSuggestionDialog.tsx
- * - InsightDetailModal: src/components/insights/InsightDetailModal.tsx
- * - UpgradePromptModal: src/components/UpgradePromptModal.tsx
- * - SignOutDialog: src/components/settings/SignOutDialog.tsx
- * - SharedGroups/*: src/components/SharedGroups/*.tsx
+ * MIGRATION PATTERN:
+ * Components with `isOpen` props are wrapped to always pass `isOpen={true}`,
+ * since ModalManager handles the open/close state. The wrapper also maps
+ * `onClose` to the component's appropriate close handler.
  *
  * @module ModalManager/registry
  */
@@ -124,13 +118,55 @@ export const MODAL_REGISTRY: Record<ModalType, LazyModalComponent> = {
   creditWarning: createLazyStub('creditWarning'),
 
   // ---------------------------------------------------------------------------
-  // Transaction management modals (READY - migrated in Story 14e-4/5)
-  // Components exist at src/components/dialogs/ and src/components/history/
+  // Transaction management modals (Story 14e-5: Migrated)
+  // Components wrapped with isOpen={true} for ModalManager integration
   // ---------------------------------------------------------------------------
-  transactionConflict: createLazyStub('transactionConflict'), // READY
-  deleteTransactions: createLazyStub('deleteTransactions'), // READY
-  learnMerchant: createLazyStub('learnMerchant'), // READY
-  itemNameSuggestion: createLazyStub('itemNameSuggestion'), // READY
+  transactionConflict: React.lazy(() =>
+    import('@/components/dialogs/TransactionConflictDialog').then((module) => ({
+      default: (props: React.ComponentProps<typeof module.TransactionConflictDialog>) => (
+        <module.TransactionConflictDialog {...props} isOpen={true} />
+      ),
+    }))
+  ),
+  deleteTransactions: React.lazy(() =>
+    import('@/components/history/DeleteTransactionsModal').then((module) => ({
+      default: (props: React.ComponentProps<typeof module.DeleteTransactionsModal>) => (
+        <module.DeleteTransactionsModal {...props} isOpen={true} />
+      ),
+    }))
+  ),
+
+  // ---------------------------------------------------------------------------
+  // Learning dialogs (Story 14e-5: Migrated)
+  // ---------------------------------------------------------------------------
+  learnMerchant: React.lazy(() =>
+    import('@/components/dialogs/LearnMerchantDialog').then((module) => ({
+      default: (props: React.ComponentProps<typeof module.LearnMerchantDialog>) => (
+        <module.LearnMerchantDialog {...props} isOpen={true} />
+      ),
+    }))
+  ),
+  categoryLearning: React.lazy(() =>
+    import('@/components/CategoryLearningPrompt').then((module) => ({
+      default: (props: React.ComponentProps<typeof module.CategoryLearningPrompt>) => (
+        <module.CategoryLearningPrompt {...props} isOpen={true} />
+      ),
+    }))
+  ),
+  subcategoryLearning: React.lazy(() =>
+    import('@/components/SubcategoryLearningPrompt').then((module) => ({
+      default: (props: React.ComponentProps<typeof module.SubcategoryLearningPrompt>) => (
+        <module.SubcategoryLearningPrompt {...props} isOpen={true} />
+      ),
+    }))
+  ),
+  itemNameSuggestion: React.lazy(() =>
+    import('@/components/dialogs/ItemNameSuggestionDialog').then((module) => ({
+      default: (props: React.ComponentProps<typeof module.ItemNameSuggestionDialog>) => (
+        <module.ItemNameSuggestionDialog {...props} isOpen={true} />
+      ),
+    }))
+  ),
 
   // ---------------------------------------------------------------------------
   // General modals (Story 14e-4: CreditInfo and SignOut migrated)

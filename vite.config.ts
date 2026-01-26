@@ -1,10 +1,12 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import tsconfigPaths from 'vite-tsconfig-paths'
+import path from 'path'
 import pkg from './package.json'
 
 // https://vitejs.dev/config/
+// Note: Using vitest/config for defineConfig to support test configuration
 export default defineConfig({
   // Inject app version from package.json at build time
   define: {
@@ -61,6 +63,20 @@ export default defineConfig({
   },
   preview: {
     port: 4175,
+  },
+  // Story 14e-9b: Explicit path aliases for test files in tests/ directory
+  // tsconfig.json has include: ['src'], so tsconfigPaths doesn't resolve paths for test files
+  // These aliases ensure imports like @/contexts/AuthContext work in tests/setup/test-utils.tsx
+  resolve: {
+    alias: {
+      'virtual:pwa-register/react': path.resolve(__dirname, 'tests/mocks/pwa-register.ts'),
+      '@features': path.resolve(__dirname, 'src/features'),
+      '@entities': path.resolve(__dirname, 'src/entities'),
+      '@managers': path.resolve(__dirname, 'src/managers'),
+      '@shared': path.resolve(__dirname, 'src/shared'),
+      '@app': path.resolve(__dirname, 'src/app'),
+      '@': path.resolve(__dirname, 'src'),
+    },
   },
   test: {
     globals: true,

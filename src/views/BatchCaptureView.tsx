@@ -35,7 +35,8 @@ import {
 } from 'lucide-react';
 import { MAX_BATCH_CAPTURE_IMAGES } from '../hooks/useBatchCapture';
 import { formatCreditsDisplay } from '../services/userCreditsService';
-import { useScanOptional } from '../contexts/ScanContext';
+// Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
+import { useScanStore, useIsProcessing, useScanActions } from '@features/scan/store';
 import { processFilesForCapture, type ProcessedImage } from '../utils/imageUtils';
 
 export interface BatchCaptureViewProps {
@@ -103,11 +104,13 @@ export const BatchCaptureView: React.FC<BatchCaptureViewProps> = ({
   imageDataUrls,
   onImagesChange,
 }) => {
-  // Story 14d.5a: ScanContext is the source of truth for batch state (Option A)
-  const scanContext = useScanOptional();
+  // Story 14e-11: Use Zustand store for batch state (migrated from ScanContext)
+  const scanStoreImages = useScanStore((s) => s.images);
+  const scanStoreIsProcessing = useIsProcessing();
+  const { setImages: scanStoreSetImages, reset: scanStoreReset } = useScanActions();
 
-  // Derive processing state: prefer context when in batch processing phase
-  const isProcessing = scanContext?.isBatchProcessing ?? isProcessingProp;
+  // Derive processing state: prefer store when in batch processing phase
+  const isProcessing = scanStoreIsProcessing || isProcessingProp;
 
   const isDark = theme === 'dark';
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -130,18 +133,17 @@ export const BatchCaptureView: React.FC<BatchCaptureViewProps> = ({
   void _isBatchMode;
   void _onToggleMode;
 
-  // Story 14d.5a: Get images from context (source of truth) or fallback to props
-  const contextImages = scanContext?.state.images ?? [];
-  const imageDataUrlsFromContext = contextImages.length > 0 ? contextImages : (imageDataUrls ?? []);
+  // Story 14e-11: Get images from Zustand store (source of truth) or fallback to props
+  const imageDataUrlsFromStore = scanStoreImages.length > 0 ? scanStoreImages : (imageDataUrls ?? []);
 
-  // Story 14d.5a: Convert context images to display format with thumbnails
+  // Story 14e-11: Convert store images to display format with thumbnails
   const displayImages: DisplayImage[] = useMemo(() => {
-    return imageDataUrlsFromContext.map((dataUrl, index) => ({
+    return imageDataUrlsFromStore.map((dataUrl, index) => ({
       id: `img_${index}_${dataUrl.substring(0, 20)}`,
       dataUrl,
       thumbnailUrl: thumbnailMap.get(dataUrl) ?? dataUrl, // Fallback to full image if no thumbnail
     }));
-  }, [imageDataUrlsFromContext, thumbnailMap]);
+  }, [imageDataUrlsFromStore, thumbnailMap]);
 
   // Computed values
   const count = displayImages.length;
@@ -150,7 +152,7 @@ export const BatchCaptureView: React.FC<BatchCaptureViewProps> = ({
   const maxImages = MAX_BATCH_CAPTURE_IMAGES;
 
   /**
-   * Story 14d.5a: Add images to context and generate thumbnails.
+   * Story 14e-11: Add images to Zustand store and generate thumbnails.
    * Uses imageUtils for thumbnail generation (extracted from useBatchCapture).
    */
   const addImages = useCallback(
@@ -168,17 +170,15 @@ export const BatchCaptureView: React.FC<BatchCaptureViewProps> = ({
         // Process files to get data URLs and thumbnails
         const processed: ProcessedImage[] = await processFilesForCapture(filesToAdd, availableSlots);
 
-        // Get current images from context
-        const currentImages = scanContext?.state.images ?? imageDataUrls ?? [];
+        // Get current images from Zustand store
+        const currentImages = scanStoreImages.length > 0 ? scanStoreImages : (imageDataUrls ?? []);
 
-        // Add new data URLs to context
+        // Add new data URLs to store
         const newDataUrls = processed.map(p => p.dataUrl);
         const allImages = [...currentImages, ...newDataUrls];
 
-        // Update context (source of truth)
-        if (scanContext?.setImages) {
-          scanContext.setImages(allImages);
-        }
+        // Update Zustand store (source of truth)
+        scanStoreSetImages(allImages);
 
         // Update thumbnail map
         setThumbnailMap(prev => {
@@ -196,24 +196,22 @@ export const BatchCaptureView: React.FC<BatchCaptureViewProps> = ({
         throw error;
       }
     },
-    [count, maxImages, scanContext, imageDataUrls, onImagesChange]
+    [count, maxImages, scanStoreImages, scanStoreSetImages, imageDataUrls, onImagesChange]
   );
 
   /**
-   * Story 14d.5a: Remove image by index.
+   * Story 14e-11: Remove image by index.
    */
   const removeImageByIndex = useCallback(
     (index: number): void => {
-      const currentImages = scanContext?.state.images ?? imageDataUrls ?? [];
+      const currentImages = scanStoreImages.length > 0 ? scanStoreImages : (imageDataUrls ?? []);
       if (index < 0 || index >= currentImages.length) return;
 
       const imageToRemove = currentImages[index];
       const newImages = currentImages.filter((_, i) => i !== index);
 
-      // Update context (source of truth)
-      if (scanContext?.setImages) {
-        scanContext.setImages(newImages);
-      }
+      // Update Zustand store (source of truth)
+      scanStoreSetImages(newImages);
 
       // Clean up thumbnail
       setThumbnailMap(prev => {
@@ -225,24 +223,22 @@ export const BatchCaptureView: React.FC<BatchCaptureViewProps> = ({
       // Also call prop callback for backwards compatibility
       onImagesChange?.(newImages);
     },
-    [scanContext, imageDataUrls, onImagesChange]
+    [scanStoreImages, scanStoreSetImages, imageDataUrls, onImagesChange]
   );
 
   /**
-   * Story 14d.5a: Clear all images and reset context.
+   * Story 14e-11: Clear all images and reset Zustand store.
    */
   const handleClearBatch = useCallback(() => {
     // Clear thumbnail map
     setThumbnailMap(new Map());
 
-    // Reset context state
-    if (scanContext?.reset) {
-      scanContext.reset();
-    }
+    // Reset Zustand store state
+    scanStoreReset();
 
     // Notify parent
     onImagesChange?.([]);
-  }, [scanContext, onImagesChange]);
+  }, [scanStoreReset, onImagesChange]);
 
   /**
    * Handle file selection from input.

@@ -22,6 +22,15 @@
 | Prompt Iteration Workflow | Fast feedback loop using Epic 8 test harness |
 | Tiered CI/CD | develop=smoke ~3min, main=full ~5min |
 | Incremental Modal Migration | Migrate components to Modal Manager one-by-one while keeping old APIs for compatibility (14e-4) |
+| useEffect Modal Orchestration | Complex modals with state dependencies use useEffect + refs to trigger openModal on state transitions (14e-5) |
+| Pure Utility Extraction Pattern | Extract pure functions FIRST before handler refactoring - enables unit testing without mocking hooks/context (14e-8a) |
+| Dependency Injection for Purity | Pass validator functions as params instead of importing directly - `parseLocationResult(scan, defaults, getCitiesForCountry)` enables testing (14e-8a) |
+| Archie Pre-Review Pattern | Run architecture review (Archie) before code review to catch magic numbers and missing JSDoc annotations early - reduces code review iterations (14e-8b) |
+| Review Follow-up in Same Story | Address code review findings immediately in same story rather than deferring - keeps story clean and avoids accumulating tech debt (14e-10) |
+| useShallow Combined Selectors | Combine multiple Zustand selectors into single useShallow() call to reduce re-renders - batch related state reads (14e-10) |
+| Partial Integration Pattern | When orchestrator component rendered outside main layout, return null for phases handled by other components to avoid duplicate UI and layout issues (14e-11) |
+| Defensive Phase Guards | State components should have phase guards (`if (phase !== 'expected') return null`) even if called from orchestrator - prevents rendering when used outside expected context (14e-11) |
+| Translation Key Fallbacks Hide Bugs | `t('key') \|\| 'Fallback'` patterns mask missing keys in production - verify keys exist in translations.ts, don't rely on fallback strings appearing (14e-11) |
 
 ## What to Avoid
 
@@ -48,6 +57,8 @@
 | Full Refetch Fallback = Cost Bomb | When delta breaks, do NOT ship refetchOnMount:true - costs explode O(txns × users × navs), 100 users = $3/day (14c failure) |
 | Refactor Before Extending Legacy | Epic 14c extended transaction system without refactoring first - caused cascade of sync bugs (apply Epic 12-14 retro lesson) |
 | Aspirational LOC Targets | 1,500-2,000 line target for 4,800-line App.tsx was unrealistic - actual minimum ~3,500 lines due to state/handler complexity (14c-refactor.35d) |
+| Orchestrator Outside Layout | Rendering orchestrator BEFORE AppLayout causes any content to push views down - use null returns during partial integration when overlays handle phases (14e-11 header-in-middle bug) |
+| Dialog Type Conflicts | Multiple components checking same condition (scan complete) can trigger conflicting UI (ScanCompleteModal vs QuickSaveCard) - check for active dialog type before showing local modals (14e-11) |
 
 ---
 
@@ -96,7 +107,7 @@
 | DEV-gate console warnings | `if (import.meta.env.DEV) { console.warn(...); }` |
 | setTimeout(0) | Valid for deferring React state update chains |
 
-### Modal Manager (Epic 14e - Story 14e-4)
+### Modal Manager (Epic 14e - Stories 14e-4, 14e-5)
 | Pattern | Rule |
 |---------|------|
 | Incremental migration | Keep old state APIs while migrating to Modal Manager - remove after all consumers migrated |
@@ -105,6 +116,13 @@
 | Backward compatibility | Export old state (showCreditInfoModal) via hooks while new pattern (openModal) is adopted |
 | Props defaulting | Modal components should default isOpen=true for ModalManager, use prop when standalone |
 | i18n for modals | Use t() function with fallbacks - SignOutDialog pattern: `t('key') || fallback` |
+| openModalDirect for refs | Use openModalDirect/closeModalDirect in useCallback handlers that access refs (14e-5 conflict dialog) |
+| useEffect modal triggers | Open modals via useEffect on state transitions, NOT in handler - prevents stale closures (14e-5 learning dialogs) |
+| Test cleanup after migration | Remove mocks and describe blocks for migrated modals from old test files (14e-5 AppOverlays.test.tsx) |
+| Vitest path aliases | Add tsconfigPaths() to vitest.config.unit.ts for @managers/*, @/* aliases to work in tests (14e-5 fix) |
+| Batch edit mode preservation | Check `wasInBatchEditingMode` BEFORE calling saveTransaction - setScanImages([]) only works in 'capturing' phase (14e-5 bug fix) |
+| FAB navigation batch awareness | FAB navigateToActiveRequest must check `scanState.mode` - batch→batch-review, single→transaction-editor (14e-5 bug fix) |
+| Single scan image limit | When single scan mode but multiple images selected, use first image only and show toast suggesting batch mode (14e-5 bug fix) |
 
 ### Shared Groups (Epic 14c)
 | Pattern | Rule |
@@ -214,6 +232,12 @@
 | Portal components | Use `document.body.querySelectorAll()` in tests |
 | Context callbacks affect fallback | When ViewHandlersContext provides callback (e.g., handleNavigateToHistory), component calls it instead of fallback behavior. Tests for fallback (inline pagination) must set mock to undefined (14c-refactor.36) |
 | CI Group Coverage | New test directories need: (1) `vitest.config.ci.group-{name}.ts`, (2) job in `.github/workflows/test.yml`, (3) `merge-coverage` needs update (14e-1) |
+| Collocated Tests Pattern | Feature-based tests at `src/features/**/store/__tests__/` need CI group include patterns - add to existing group (e.g., managers) rather than creating new CI job (14e-6d) |
+| Test path aliases | Use relative imports in test files, NOT `@features/*` path aliases - vite-tsconfig-paths may not resolve new directories until committed. Relative paths always work: `../../../../../../src/features/...` (14e-8a) |
+| Vitest explicit aliases | tsconfig.json `include: ['src']` means tsconfigPaths() only resolves aliases for src/ files. Add explicit aliases to vitest.config.unit.ts `resolve.alias` for @features/@entities/@managers/@shared/@app/@ to work in tests/ directory (14e-9a) |
+| Integration test aliases | vite.config.ts ALSO needs explicit `resolve.alias` for integration tests (not just vitest.config.unit.ts). When `vitest run tests/integration` uses vite.config.ts, missing aliases cause "Failed to resolve import" errors (14e-9b) |
+| Prop-based component migration | Before converting components to Zustand hooks, verify they actually USE context. Many "consumer" components are prop-based presentation components that receive state from parents - no migration needed (14e-9b finding: only ScanCompleteModal used context) |
+| useShallow test mock pattern | When component changes from individual selectors to useShallow combined selector, update test mock to mock `useScanStore` with selector function, not individual `useScanPhase`/`useScanMode` hooks (14e-10) |
 
 ---
 
@@ -280,6 +304,7 @@
 | 30/31 props pattern | Props alignment stories split by_phase: interface (a) → hook (b) → integration (c) - consistent 2pt stories |
 | Story consolidation check | When splitting large story (14e-6 → 6a/b/c/d), check if upcoming stories overlap with split scope - 14e-7 was absorbed by 14e-6c |
 | "may be consolidated" note | Add note in sprint-status.yaml when split creates potential overlap with future stories |
+| Reducer migration inventory | When splitting reducer→store migrations, create explicit action inventory with ownership per split story (14e-6b: SET_STORE_TYPE/SET_CURRENCY fell between 6a/6b scopes) |
 
 ### Hook Extraction Patterns (Story 14c-refactor.20)
 | Pattern | Rule |
@@ -376,6 +401,8 @@
 ### Key Additions by Date (Consolidated)
 | Date | Key Patterns Added |
 |------|-------------------|
+| 2026-01-26 | Integration test aliases (vite.config.ts + vitest.config.unit.ts - BOTH required), prop-based component migration verification, File List must match git reality (14e-9b code review), review follow-up in same story pattern, useShallow combined selectors, useShallow test mock pattern (14e-10 review follow-up), partial integration pattern, defensive phase guards, orchestrator-outside-layout anti-pattern, dialog type conflict prevention (14e-11 post-deployment fixes) |
+| 2026-01-25 | Zustand store pattern, line count verification, reducer migration inventory pattern (14e-6b), collocated tests CI coverage (14e-6d), pure utility extraction pattern, dependency injection for purity (14e-8a), Archie pre-review pattern (14e-8b) |
 | 2026-01-24 | Workflow validation, CI groups, context callbacks |
 | 2026-01-23 | Story sizing splits (30-35), hooks before early returns |
 | 2026-01-22 | Handler extraction, ViewHandlersContext, documentation |

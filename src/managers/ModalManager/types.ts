@@ -12,6 +12,25 @@ import type {
   ConflictingTransaction,
   ConflictReason,
 } from '../../components/dialogs/TransactionConflictDialog';
+import type {
+  TransactionPreview,
+} from '../../components/history/DeleteTransactionsModal';
+import type {
+  LearnMerchantSelection,
+  ItemNameChange,
+} from '../../components/dialogs/LearnMerchantDialog';
+import type {
+  ItemToLearn,
+} from '../../components/CategoryLearningPrompt';
+import type {
+  SubcategoryItemToLearn,
+} from '../../components/SubcategoryLearningPrompt';
+
+// Re-export types for consumer convenience
+export type { TransactionPreview } from '../../components/history/DeleteTransactionsModal';
+export type { LearnMerchantSelection, ItemNameChange } from '../../components/dialogs/LearnMerchantDialog';
+export type { ItemToLearn } from '../../components/CategoryLearningPrompt';
+export type { SubcategoryItemToLearn } from '../../components/SubcategoryLearningPrompt';
 
 // =============================================================================
 // Modal Type Union
@@ -33,7 +52,10 @@ export type ModalType =
   // Transaction management
   | 'transactionConflict'
   | 'deleteTransactions'
+  // Learning dialogs (Story 14e-5)
   | 'learnMerchant'
+  | 'categoryLearning'
+  | 'subcategoryLearning'
   | 'itemNameSuggestion'
   // General
   | 'creditInfo'
@@ -134,50 +156,138 @@ export interface CreditWarningProps {
   onCancel: () => void;
 }
 
-/** Props for transaction conflict dialog */
+/**
+ * Props for transaction conflict dialog
+ * Story 14e-5: Matches TransactionConflictDialogProps from actual component
+ */
 export interface TransactionConflictProps {
   /** Details of the conflicting transaction */
-  conflictingTransaction: ConflictingTransaction;
+  conflictingTransaction: ConflictingTransaction | null;
   /** Reason for the conflict */
-  conflictReason: ConflictReason;
-  /** Action user was trying to perform */
-  pendingAction: 'save' | 'delete';
-  /** Resolve the conflict */
-  onResolve: (resolution: 'keep' | 'replace' | 'cancel') => void;
+  conflictReason: ConflictReason | null;
+  /** Callback when user chooses to continue with current view (close dialog without action) */
+  onContinueCurrent?: () => void;
+  /** Callback when user chooses to view/resume the conflicting transaction */
+  onViewConflicting: () => void;
+  /** Callback when user chooses to discard the conflicting transaction */
+  onDiscardConflicting: () => void;
+  /** Callback when modal is closed */
+  onClose: () => void;
+  /** Translation function */
+  t: (key: string) => string;
+  /** Language for dynamic text */
+  lang?: 'en' | 'es';
+  /** Currency formatter */
+  formatCurrency?: (amount: number, currency: string) => string;
 }
 
-/** Props for delete transactions confirmation */
+/**
+ * Props for delete transactions confirmation
+ * Story 14e-5: Matches DeleteTransactionsModalProps from actual component
+ */
 export interface DeleteTransactionsProps {
-  /** Transactions to delete */
-  transactions: Transaction[];
-  /** Confirm deletion */
-  onConfirm: () => void;
-  /** Cancel deletion */
-  onCancel: () => void;
+  /** Transactions to be deleted (preview list) */
+  transactions: TransactionPreview[];
+  /** Callback when modal is closed */
+  onClose: () => void;
+  /** Callback when delete is confirmed */
+  onDelete: () => Promise<void>;
+  /** Currency formatter */
+  formatCurrency: (amount: number, currency: string) => string;
+  /** Translation function */
+  t: (key: string) => string;
+  /** Language for pluralization */
+  lang?: 'en' | 'es';
+  /** Default currency */
+  currency?: string;
 }
 
-/** Props for learn merchant dialog */
+/**
+ * Props for learn merchant dialog
+ * Story 14e-5: Matches LearnMerchantDialogProps from actual component
+ */
 export interface LearnMerchantProps {
-  /** Merchant name to learn */
-  merchantName: string;
-  /** Category to associate */
-  category: string;
-  /** Confirm learning */
-  onConfirm: () => void;
-  /** Skip learning */
-  onSkip: () => void;
+  /** Original merchant name (from AI scan or previous value) */
+  originalMerchant: string;
+  /** User's corrected merchant name */
+  correctedMerchant: string;
+  /** Whether merchant alias changed */
+  aliasChanged?: boolean;
+  /** Whether store category changed */
+  categoryChanged?: boolean;
+  /** Original store category (for display) */
+  originalCategory?: string;
+  /** New store category (for display) */
+  newCategory?: string;
+  /** Item name changes to prompt for learning */
+  itemNameChanges?: ItemNameChange[];
+  /** Callback when user confirms - receives which items to learn */
+  onConfirm: (selection: LearnMerchantSelection) => void;
+  /** Callback when user dismisses the modal */
+  onClose: () => void;
+  /** Translation function */
+  t: (key: string) => string;
+  /** Current theme for styling */
+  theme?: 'light' | 'dark';
 }
 
-/** Props for item name suggestion dialog */
+/**
+ * Props for category learning prompt
+ * Story 14e-5: Matches CategoryLearningPromptProps from actual component
+ */
+export interface CategoryLearningProps {
+  /** Items to learn (array of item name → group mappings) */
+  items: ItemToLearn[];
+  /** Callback when user clicks "Yes, Remember" */
+  onConfirm: () => void;
+  /** Callback when user dismisses the modal */
+  onClose: () => void;
+  /** Translation function */
+  t: (key: string) => string;
+  /** Current theme for styling */
+  theme?: 'light' | 'dark';
+  /** Loading state during async save operation */
+  isLoading?: boolean;
+}
+
+/**
+ * Props for subcategory learning prompt
+ * Story 14e-5: Matches SubcategoryLearningPromptProps from actual component
+ */
+export interface SubcategoryLearningProps {
+  /** Items to learn (array of item name → subcategory mappings) */
+  items: SubcategoryItemToLearn[];
+  /** Callback when user clicks "Yes, Remember" */
+  onConfirm: () => void;
+  /** Callback when user dismisses the modal */
+  onClose: () => void;
+  /** Translation function */
+  t: (key: string) => string;
+  /** Current theme for styling */
+  theme?: 'light' | 'dark';
+  /** Loading state during async save operation */
+  isLoading?: boolean;
+}
+
+/**
+ * Props for item name suggestion dialog
+ * Story 14e-5: Matches ItemNameSuggestionDialogProps from actual component
+ */
 export interface ItemNameSuggestionProps {
-  /** Original item name from scan */
-  originalName: string;
-  /** Suggested corrected name */
-  suggestedName: string;
-  /** Accept suggestion */
-  onAccept: (name: string) => void;
-  /** Reject suggestion */
-  onReject: () => void;
+  /** Original item name (from current scan) */
+  originalItemName: string;
+  /** Suggested item name (from another store's learned mapping) */
+  suggestedItemName: string;
+  /** The store where this name was learned */
+  fromMerchant: string;
+  /** Callback when user wants to apply the suggestion */
+  onApply: () => void;
+  /** Callback when user dismisses */
+  onDismiss: () => void;
+  /** Translation function */
+  t: (key: string) => string;
+  /** Current theme for styling */
+  theme?: 'light' | 'dark';
 }
 
 /** Props for credit info modal */
@@ -328,7 +438,10 @@ export interface ModalPropsMap {
   creditWarning: CreditWarningProps;
   transactionConflict: TransactionConflictProps;
   deleteTransactions: DeleteTransactionsProps;
+  // Learning dialogs (Story 14e-5)
   learnMerchant: LearnMerchantProps;
+  categoryLearning: CategoryLearningProps;
+  subcategoryLearning: SubcategoryLearningProps;
   itemNameSuggestion: ItemNameSuggestionProps;
   creditInfo: CreditInfoProps;
   insightDetail: InsightDetailProps;

@@ -6,9 +6,11 @@
  *
  * Z-Index Layers:
  * - z-60: NavigationBlocker, PWAUpdatePrompt (highest priority)
- * - z-50: ScanOverlay, CreditWarningDialog, Currency/TotalMismatchDialog, TransactionConflictDialog
+ * - z-50: ScanOverlay, CreditWarningDialog, Currency/TotalMismatchDialog
  * - z-40: QuickSaveCard, BatchCompleteModal, TrustMerchantPrompt, SessionComplete, BatchSummary
  * - z-30: InsightCard, BuildingProfileCard, PersonalRecordBanner
+ *
+ * Story 14e-5: TransactionConflictDialog moved to Modal Manager
  *
  * Architecture Reference: Epic 14c-refactor - App.tsx Decomposition
  */
@@ -29,7 +31,7 @@ import type {
     TotalMismatchDialogData,
 } from '../../types/scanStateMachine';
 import { DIALOG_TYPES } from '../../types/scanStateMachine';
-import type { ConflictingTransaction, ConflictReason } from '../dialogs/TransactionConflictDialog';
+// Story 14e-5: TransactionConflictDialog types no longer needed here (moved to Modal Manager)
 import type { SupportedCurrency } from '../../services/userPreferencesService';
 import type { HistoryNavigationPayload } from '../../views/TrendsView';
 import type { ScanOverlayStateHook } from '../../hooks/useScanOverlayState';
@@ -51,7 +53,7 @@ import { PersonalRecordBanner } from '../celebrations';
 import { SessionComplete } from '../session';
 import { TrustMerchantPrompt } from '../TrustMerchantPrompt';
 import { CreditWarningDialog } from '../batch';
-import { TransactionConflictDialog } from '../dialogs/TransactionConflictDialog';
+// Story 14e-5: TransactionConflictDialog import removed (now uses Modal Manager)
 
 // =============================================================================
 // Types
@@ -77,13 +79,7 @@ interface ActiveGroupInfo {
     icon?: string;
 }
 
-/**
- * Conflict dialog data structure
- */
-interface ConflictDialogData {
-    conflictingTransaction: ConflictingTransaction;
-    conflictReason: ConflictReason;
-}
+// Story 14e-5: ConflictDialogData moved to useDialogHandlers (Modal Manager integration)
 
 /**
  * Props for AppOverlays component
@@ -255,19 +251,9 @@ export interface AppOverlaysProps {
     onTotalMismatchCancel: (dialogData?: TotalMismatchDialogData) => void;
 
     // =========================================================================
-    // Transaction Conflict Dialog Props
+    // Transaction Conflict Dialog (Story 14e-5: Moved to Modal Manager)
+    // Conflict dialog is now rendered by ModalManager component, not AppOverlays
     // =========================================================================
-
-    /** Whether to show conflict dialog */
-    showConflictDialog: boolean;
-    /** Conflict dialog data */
-    conflictDialogData: ConflictDialogData | null;
-    /** Handler for continuing with current transaction */
-    onConflictClose: () => void;
-    /** Handler for viewing conflicting transaction */
-    onConflictViewCurrent: () => void;
-    /** Handler for discarding conflicting transaction */
-    onConflictDiscard: () => void;
 
     // =========================================================================
     // Batch Complete Modal Props
@@ -379,12 +365,7 @@ export const AppOverlays = React.memo(function AppOverlays(props: AppOverlaysPro
         onTotalKeepOriginal,
         onTotalMismatchCancel,
 
-        // Transaction conflict dialog props
-        showConflictDialog,
-        conflictDialogData,
-        onConflictClose,
-        onConflictViewCurrent,
-        onConflictDiscard,
+        // Story 14e-5: Transaction conflict dialog now uses Modal Manager (rendered by ModalManager component)
 
         // Batch complete modal props
         userCreditsRemaining,
@@ -473,19 +454,8 @@ export const AppOverlays = React.memo(function AppOverlays(props: AppOverlaysPro
                 t={t}
             />
 
-            {/* Story 14.24: Transaction Conflict Dialog */}
-            <TransactionConflictDialog
-                isOpen={showConflictDialog}
-                conflictingTransaction={conflictDialogData?.conflictingTransaction || null}
-                conflictReason={conflictDialogData?.conflictReason || null}
-                onContinueCurrent={onConflictClose}
-                onViewConflicting={onConflictViewCurrent}
-                onDiscardConflicting={onConflictDiscard}
-                onClose={onConflictClose}
-                t={t}
-                lang={lang}
-                formatCurrency={(amount, curr) => formatCurrency(amount, curr)}
-            />
+            {/* Story 14e-5: Transaction Conflict Dialog moved to Modal Manager */}
+            {/* Rendered by ModalManager component via openConflictDialog() */}
 
             {/* ============================================================== */}
             {/* Z-40: Cards & Modals */}

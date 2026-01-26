@@ -9,7 +9,7 @@
  * @see docs/sprint-artifacts/epic11/story-11.5-scan-status-clarity.md
  */
 import React, { useState, useEffect } from 'react';
-import type { ScanState, ScanErrorType } from '../../hooks/useScanState';
+import type { ScanState, ScanErrorType } from '@/hooks/useScanState';
 import { ScanProgress } from './ScanProgress';
 import { ScanSkeleton } from './ScanSkeleton';
 import { ScanReady } from './ScanReady';

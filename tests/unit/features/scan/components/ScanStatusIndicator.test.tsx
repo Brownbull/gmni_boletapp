@@ -8,14 +8,14 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '../../../setup/test-utils';
+import { render, screen, fireEvent } from '../../../../setup/test-utils';
 import {
   ScanStatusIndicator,
   ScanProgress,
   ScanSkeleton,
   ScanReady,
   ScanError,
-} from '../../../../src/components/scan';
+} from '@features/scan/components';
 
 // ============================================================================
 // Mock Setup

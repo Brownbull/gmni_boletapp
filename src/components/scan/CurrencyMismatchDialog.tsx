@@ -25,7 +25,8 @@
 
 import React, { useCallback, useEffect, useRef } from 'react';
 import { AlertCircle, ArrowRight, X } from 'lucide-react';
-import { useScanOptional } from '../../contexts/ScanContext';
+// Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
+import { useScanActiveDialog, useScanActions } from '@features/scan/store';
 import { DIALOG_TYPES } from '../../types/scanStateMachine';
 
 // Story 14d.6: Import centralized type from scanStateMachine
@@ -118,13 +119,14 @@ export const CurrencyMismatchDialog: React.FC<CurrencyMismatchDialogProps> = ({
   const dialogRef = useRef<HTMLDivElement>(null);
   const isDark = theme === 'dark';
 
-  // Story 14d.4b: Get scan context for reading dialog state
-  const scanContext = useScanOptional();
+  // Story 14e-11: Use Zustand store selectors and actions
+  const activeDialog = useScanActiveDialog();
+  const { resolveDialog, dismissDialog } = useScanActions();
 
   // Story 14d.4b: Derive values from context or fall back to props
   // Context takes precedence when available - this allows gradual migration
-  const contextDialogData = scanContext?.state.activeDialog?.type === DIALOG_TYPES.CURRENCY_MISMATCH
-    ? (scanContext.state.activeDialog.data as CurrencyMismatchDialogData)
+  const contextDialogData = activeDialog?.type === DIALOG_TYPES.CURRENCY_MISMATCH
+    ? (activeDialog.data as CurrencyMismatchDialogData)
     : null;
 
   // Determine if dialog should be open
@@ -134,6 +136,7 @@ export const CurrencyMismatchDialog: React.FC<CurrencyMismatchDialogProps> = ({
   const detectedCurrency = contextDialogData?.detectedCurrency ?? detectedCurrencyProp ?? '';
 
   // Story 14d.6: Create handlers that pass dialog data to callbacks
+  // Story 14e-11: Use Zustand actions directly (always available)
   // DESIGN DECISION: We capture dialog data BEFORE calling resolveDialog (which clears it),
   // then pass the data to the prop callback. This enables context-based dialog handling
   // where App.tsx reads data from the callback parameter instead of local state.
@@ -141,34 +144,31 @@ export const CurrencyMismatchDialog: React.FC<CurrencyMismatchDialogProps> = ({
     // Capture data before resolveDialog clears it
     const data = contextDialogData ?? undefined;
 
-    if (scanContext?.resolveDialog) {
-      scanContext.resolveDialog(DIALOG_TYPES.CURRENCY_MISMATCH, { choice: 'detected' });
-    }
+    // Story 14e-11: Zustand actions are always available
+    resolveDialog(DIALOG_TYPES.CURRENCY_MISMATCH, { choice: 'detected' });
     // Pass data to callback for context-based dialog handling
     onUseDetectedProp?.(data);
-  }, [scanContext, onUseDetectedProp, contextDialogData]);
+  }, [resolveDialog, onUseDetectedProp, contextDialogData]);
 
   const handleUseDefault = useCallback(() => {
     // Capture data before resolveDialog clears it
     const data = contextDialogData ?? undefined;
 
-    if (scanContext?.resolveDialog) {
-      scanContext.resolveDialog(DIALOG_TYPES.CURRENCY_MISMATCH, { choice: 'default' });
-    }
+    // Story 14e-11: Zustand actions are always available
+    resolveDialog(DIALOG_TYPES.CURRENCY_MISMATCH, { choice: 'default' });
     // Pass data to callback for context-based dialog handling
     onUseDefaultProp?.(data);
-  }, [scanContext, onUseDefaultProp, contextDialogData]);
+  }, [resolveDialog, onUseDefaultProp, contextDialogData]);
 
   const handleCancel = useCallback(() => {
     // Capture data before dismissDialog clears it
     const data = contextDialogData ?? undefined;
 
-    if (scanContext?.dismissDialog) {
-      scanContext.dismissDialog();
-    }
+    // Story 14e-11: Zustand actions are always available
+    dismissDialog();
     // Pass data to callback for context-based dialog handling
     onCancelProp?.(data);
-  }, [scanContext, onCancelProp, contextDialogData]);
+  }, [dismissDialog, onCancelProp, contextDialogData]);
 
   // Handle escape key
   const handleKeyDown = useCallback(

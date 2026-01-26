@@ -1,6 +1,6 @@
 # Story 14e.10: Scan Feature Orchestrator
 
-Status: ready-for-dev
+Status: done (Archie reviewed 2026-01-26 - APPROVED WITH NOTES)
 
 **Epic:** 14e - Feature-Based Architecture
 **Points:** 3
@@ -416,16 +416,142 @@ tests/unit/features/scan/
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Debug Log References
 
-_To be filled during development_
+- TypeScript type-check: PASS
+- Unit tests: 5566 passed, 33 skipped
+- ScanFeature tests: 29 passed
 
 ### Completion Notes List
 
-_To be filled during development_
+1. **ScanFeature Component Created** ([ScanFeature.tsx](src/features/scan/ScanFeature.tsx))
+   - Phase-based rendering using Zustand store (useScanPhase, useScanMode)
+   - Supports all phases: idle, capturing, scanning, reviewing, saving, error
+   - Mode-aware rendering for batch/single/statement modes
+   - Includes inline SavingState and StatementPlaceholder components
+
+2. **State Component Integration**
+   - Uses IdleState, ProcessingState, ReviewingState, ErrorState from 14e-9c
+   - Each state component has built-in phase guards
+   - Props forwarding for t, theme, and action callbacks
+
+3. **Modal Integration Decision**
+   - **Decision: Option B** - Keep scan modals in AppOverlays
+   - Rationale: AppOverlays already handles ScanOverlay, QuickSaveCard, BatchCompleteModal
+   - Future migration to ModalManager can be done in a follow-up story if needed
+
+4. **App.tsx Integration**
+   - Added ScanFeature import
+   - Rendered ScanFeature after ModalManager
+   - Connected to existing handlers (handleScanOverlayCancel, handleScanOverlayDismiss)
+   - Non-breaking integration alongside existing view-based rendering
+
+5. **Remaining Work for Story 14e-11**
+   - Full replacement of view-based scan rendering with ScanFeature
+   - Removal of ScanContext in favor of Zustand store
+   - Synchronization of `view` state with Zustand `phase`
+   - ~800-1000 lines of scan code removal from App.tsx
 
 ### File List
 
-_To be filled during development_
+| File | Action | Purpose |
+|------|--------|---------|
+| `src/features/scan/ScanFeature.tsx` | Created | Main orchestrator component (322 lines) |
+| `src/features/scan/index.ts` | Modified | Added ScanFeature export |
+| `src/App.tsx` | Modified | Added ScanFeature import and render |
+| `tests/unit/features/scan/ScanFeature.test.tsx` | Created | 29 comprehensive tests |
+| `docs/sprint-artifacts/sprint-status.yaml` | Modified | Updated story status
+
+---
+
+## Archie Review (Post-Dev Feature Review)
+
+**Date:** 2026-01-26
+**Reviewer:** Archie (React Opinionated Architect Agent)
+**Verdict:** ✅ APPROVED WITH NOTES
+
+### AC Verification Summary
+
+| AC | Status | Notes |
+|----|--------|-------|
+| AC1 | ✅ PASS | ScanFeature.tsx created with clean phase→component mapping |
+| AC2 | ✅ PASS | All 6 phases render correct components |
+| AC3 | ✅ PASS | single/batch/statement modes handled |
+| AC4 | ✅ PASS | Decision: modals stay in AppOverlays (documented) |
+| AC5 | ✅ PASS | ScanFeature exported via @features/scan |
+| AC6 | ⚠️ PARTIAL | Additive integration - full cleanup in 14e-11 (expected) |
+| AC7 | ✅ PASS | 29 ScanFeature tests + 5566 total passing |
+| AC8 | ⚠️ DEFERRED | Full workflow verification in 14e-11 (expected) |
+
+### Pattern Compliance
+
+- ✅ FSD layer rules followed
+- ✅ State management using Zustand selectors
+- ✅ Comprehensive test coverage
+- ✅ Accessibility (role, aria-label, aria-live)
+
+### Findings (~~deferred to Story 14e-11~~ COMPLETED)
+
+| Severity | Issue | Location | Status |
+|----------|-------|----------|--------|
+| 🟡 MEDIUM | Inline SavingState/StatementPlaceholder | ScanFeature.tsx:198-310 | ✅ FIXED |
+| 🟢 LOW | Missing useShallow optimization | ProcessingState.tsx:38-40 | ✅ FIXED |
+| 🟢 LOW | Missing React.memo on inline components | ScanFeature.tsx | ✅ FIXED |
+
+**Review follow-up items completed in 14e-10 (2026-01-26)**
+
+---
+
+## Review Follow-up Completion (2026-01-26)
+
+### Items Addressed
+
+All Archie review findings have been addressed directly in this story:
+
+| Severity | Issue | Resolution |
+|----------|-------|------------|
+| 🟡 MEDIUM | Inline SavingState/StatementPlaceholder | ✅ Extracted to `states/SavingState.tsx` and `states/StatementPlaceholder.tsx` |
+| 🟢 LOW | Missing useShallow optimization | ✅ Added `useShallow` to ProcessingState for combined selector |
+| 🟢 LOW | Missing React.memo on inline components | ✅ Both extracted components wrapped with `React.memo` |
+
+### Files Modified
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `src/features/scan/components/states/SavingState.tsx` | Created | Extracted SavingState with React.memo |
+| `src/features/scan/components/states/StatementPlaceholder.tsx` | Created | Extracted StatementPlaceholder with React.memo |
+| `src/features/scan/components/states/ProcessingState.tsx` | Modified | Added useShallow optimization |
+| `src/features/scan/components/states/index.ts` | Modified | Added exports for new components |
+| `src/features/scan/ScanFeature.tsx` | Modified | Import from states/ instead of inline |
+| `tests/unit/features/scan/components/states/SavingState.test.tsx` | Created | 11 tests for extracted component |
+| `tests/unit/features/scan/components/states/StatementPlaceholder.test.tsx` | Created | 12 tests for extracted component |
+| `tests/unit/features/scan/components/states/ProcessingState.test.tsx` | Modified | Updated mocks for useShallow pattern |
+| `tests/unit/features/scan/ScanFeature.test.tsx` | Modified | Updated mocks for extracted components |
+
+### Test Results
+
+- TypeScript type-check: PASS
+- Scan feature tests: 329 passed
+- Full test suite: 6,435 passed, 62 skipped
+
+### Implementation Notes
+
+1. **useShallow Pattern**: ProcessingState now uses a single combined selector with `useShallow`:
+   ```typescript
+   const { phase, mode, batchProgress } = useScanStore(
+     useShallow((s) => ({
+       phase: s.phase,
+       mode: s.mode,
+       batchProgress: s.batchProgress,
+     }))
+   );
+   ```
+
+2. **React.memo**: Both extracted components use named function memo pattern:
+   ```typescript
+   export const SavingState: React.FC<SavingStateProps> = memo(function SavingState({...}) {...});
+   ```
+
+3. **Story 14e-11 Impact**: These review items no longer need to be addressed in 14e-11.

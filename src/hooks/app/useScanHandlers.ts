@@ -204,15 +204,15 @@ export interface UseScanHandlersProps {
     /** Increment item name mapping usage */
     incrementItemNameMappingUsage: (db: Firestore, userId: string, appId: string, mappingId: string) => Promise<void>;
 
-    // ScanContext actions
-    /** Show dialog via ScanContext */
+    // Scan Zustand store actions
+    /** Show dialog via scan store */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     showScanDialog: (type: any, data?: any) => void;
-    /** Dismiss dialog via ScanContext */
+    /** Dismiss dialog via scan store */
     dismissScanDialog: () => void;
     /** Dispatch process success */
     dispatchProcessSuccess: (results: Transaction[]) => void;
-    /** Reset scan context */
+    /** Reset scan store to idle state */
     resetScanContext: () => void;
     /** Set scan images */
     setScanImages: (images: string[]) => void;
