@@ -21,7 +21,8 @@
  */
 
 import { useEffect, useRef, useCallback } from 'react';
-import { useScanOptional } from '../contexts/ScanContext';
+// Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
+import { useScanActiveDialog, useScanActions } from '@features/scan/store';
 import {
   DIALOG_TYPES,
   type ScanDialogType,
@@ -136,7 +137,8 @@ interface DialogSnapshot {
  * via a ref that components can update.
  */
 export function useDialogResolution(options: UseDialogResolutionOptions): void {
-  const scanContext = useScanOptional();
+  // Story 14e-11: Use Zustand selector (always available, no provider boundary)
+  const activeDialog = useScanActiveDialog();
 
   // Track the previous dialog to detect transitions
   const prevDialogRef = useRef<DialogSnapshot | null>(null);
@@ -146,9 +148,7 @@ export function useDialogResolution(options: UseDialogResolutionOptions): void {
   optionsRef.current = options;
 
   useEffect(() => {
-    if (!scanContext) return;
-
-    const currentDialog = scanContext.state.activeDialog;
+    const currentDialog = activeDialog;
     const prevDialog = prevDialogRef.current;
 
     // Case 1: Dialog closed (was open, now null)
@@ -182,7 +182,7 @@ export function useDialogResolution(options: UseDialogResolutionOptions): void {
     prevDialogRef.current = currentDialog
       ? { type: currentDialog.type, data: currentDialog.data }
       : null;
-  }, [scanContext?.state.activeDialog, scanContext]);
+  }, [activeDialog]);
 }
 
 /**
@@ -205,11 +205,12 @@ export function useActiveDialog():
   | { type: 'quicksave'; data: QuickSaveDialogData }
   | { type: 'scan_complete'; data: ScanCompleteDialogData }
   | null {
-  const scanContext = useScanOptional();
+  // Story 14e-11: Use Zustand selector (always available, no provider boundary)
+  const activeDialog = useScanActiveDialog();
 
-  if (!scanContext?.state.activeDialog) return null;
+  if (!activeDialog) return null;
 
-  const { type, data } = scanContext.state.activeDialog;
+  const { type, data } = activeDialog;
 
   switch (type) {
     case DIALOG_TYPES.CURRENCY_MISMATCH:
@@ -227,47 +228,48 @@ export function useActiveDialog():
 
 /**
  * Get showDialog action with typed data parameters.
- * This is a convenience wrapper around the context's showDialog.
+ * This is a convenience wrapper around the Zustand store's showDialog.
+ * Story 14e-11: Migrated from ScanContext to Zustand store.
  *
- * @returns Object with typed showDialog methods, or null if outside provider
+ * @returns Object with typed showDialog methods (always available with Zustand)
  */
 export function useDialogActions() {
-  const scanContext = useScanOptional();
+  // Story 14e-11: Use Zustand actions (always available, no provider boundary)
+  const { showDialog, dismissDialog: dismissDialogAction } = useScanActions();
 
   const showCurrencyMismatchDialog = useCallback(
     (data: CurrencyMismatchDialogData) => {
-      scanContext?.showDialog(DIALOG_TYPES.CURRENCY_MISMATCH, data);
+      showDialog({ type: DIALOG_TYPES.CURRENCY_MISMATCH, data });
     },
-    [scanContext]
+    [showDialog]
   );
 
   const showTotalMismatchDialog = useCallback(
     (data: TotalMismatchDialogData) => {
-      scanContext?.showDialog(DIALOG_TYPES.TOTAL_MISMATCH, data);
+      showDialog({ type: DIALOG_TYPES.TOTAL_MISMATCH, data });
     },
-    [scanContext]
+    [showDialog]
   );
 
   const showQuickSaveDialog = useCallback(
     (data: QuickSaveDialogData) => {
-      scanContext?.showDialog(DIALOG_TYPES.QUICKSAVE, data);
+      showDialog({ type: DIALOG_TYPES.QUICKSAVE, data });
     },
-    [scanContext]
+    [showDialog]
   );
 
   const showScanCompleteDialog = useCallback(
     (data: ScanCompleteDialogData) => {
-      scanContext?.showDialog(DIALOG_TYPES.SCAN_COMPLETE, data);
+      showDialog({ type: DIALOG_TYPES.SCAN_COMPLETE, data });
     },
-    [scanContext]
+    [showDialog]
   );
 
   const dismissDialog = useCallback(() => {
-    scanContext?.dismissDialog();
-  }, [scanContext]);
+    dismissDialogAction();
+  }, [dismissDialogAction]);
 
-  if (!scanContext) return null;
-
+  // Story 14e-11: Zustand store is always available, no need for null check
   return {
     showCurrencyMismatchDialog,
     showTotalMismatchDialog,

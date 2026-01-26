@@ -8,7 +8,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
-import { READY_DISPLAY_MS } from '../../hooks/useScanState';
+import { READY_DISPLAY_MS } from '@/hooks/useScanState';
 
 export interface ScanReadyProps {
   /** Theme for styling ('light' | 'dark') */

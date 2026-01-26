@@ -17,21 +17,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
-// Mock ScanContext
+// Story 14e-11: Mock Zustand store instead of ScanContext
 const mockReset = vi.fn();
-const mockScanContext = {
-  state: { images: [], mode: 'statement' as const, phase: 'idle' as const },
-  reset: mockReset,
-  isIdle: true,
-};
 
-vi.mock('../../../src/contexts/ScanContext', () => ({
-  useScan: vi.fn(() => mockScanContext),
+vi.mock('@features/scan/store', () => ({
+  useScanActions: vi.fn(() => ({
+    reset: mockReset,
+  })),
 }));
 
 // Import after mocking
 import { StatementScanView } from '../../../src/views/StatementScanView';
-import { useScan } from '../../../src/contexts/ScanContext';
 
 // Mock translation function
 const t = (key: string) => {

@@ -5,13 +5,13 @@
  * React hook for managing batch review state, including editing,
  * discarding, and saving all receipts.
  *
- * Story 14d.5c: Context Integration
- * The hook now supports two modes:
+ * Story 14d.5c + 14e-11: Store Adapter Integration
+ * The hook supports two modes:
  * 1. Standalone mode: Manages local state from processingResults (for tests)
- * 2. Context mode: Reads/writes from ScanContext (production)
+ * 2. Context mode: Reads/writes via store adapter (production uses Zustand)
  *
  * When `useContext: true` is passed in options, the hook delegates all
- * state management to ScanContext, enabling proper state machine tracking.
+ * state management to the scan Zustand store via the adapter interface.
  *
  * @see docs/sprint-artifacts/epic12/story-12.3-batch-review-queue.md
  * @see docs/sprint-artifacts/epic14d/stories/story-14d.5c-review-flow-migration.md
@@ -27,13 +27,13 @@ import { ImageProcessingState, ProcessingResult } from '../services/batchProcess
 import { calculateConfidence, QUICK_SAVE_CONFIDENCE_THRESHOLD } from '../utils/confidenceCheck';
 
 /**
- * Story 14d.5c: Minimal interface for ScanContext integration.
+ * Story 14d.5c + 14e-11: Minimal adapter interface for scan store integration.
  *
- * We define this locally instead of importing from ScanContext to avoid
- * module resolution issues during test execution. The actual ScanContextValue
- * is a superset of this interface.
+ * This interface abstracts the scan state source, allowing the hook to work with
+ * either Zustand store (production) or mock data (tests). Components create an
+ * adapter object from Zustand selectors and pass it to this hook.
  */
-interface ScanContextForBatchReview {
+interface BatchReviewStoreAdapter {
   state: {
     batchReceipts: BatchReceipt[] | null;
   };
@@ -151,7 +151,7 @@ export function createBatchReceiptsFromResults(
  */
 export interface UseBatchReviewOptions {
   /**
-   * When true, the hook reads from and writes to ScanContext.
+   * When true, the hook reads from and writes to scan Zustand store.
    * When false (default), the hook manages local state.
    *
    * Use false for tests, true for production.
@@ -159,16 +159,16 @@ export interface UseBatchReviewOptions {
   useContext?: boolean;
 
   /**
-   * Story 14d.5c: Injected ScanContext value.
+   * Story 14d.5c + 14e-11: Injected store adapter.
    *
-   * When provided, this context is used instead of importing useScanOptional.
-   * This is the preferred way to integrate with context as it avoids
+   * When provided, this adapter is used to read/write scan state.
+   * This is the preferred way to integrate with store as it avoids
    * module resolution issues during tests.
    *
-   * In production, pass the result of useScan() or useScanOptional().
-   * In tests without context, simply omit this option.
+   * In production, pass an adapter created from Zustand store selectors.
+   * In tests without store, simply omit this option.
    */
-  scanContext?: ScanContextForBatchReview | null;
+  scanContext?: BatchReviewStoreAdapter | null;
 }
 
 /**
@@ -238,7 +238,7 @@ export function useBatchReview(
    * Update a receipt's transaction data.
    * Marks the receipt as 'edited' and recalculates confidence.
    *
-   * Story 14d.5c: In context mode, dispatches to ScanContext.
+   * Story 14d.5c + 14e-11: In context mode, dispatches to scan store.
    */
   const updateReceipt = useCallback((id: string, transaction: Transaction) => {
     const confidence = calculateConfidence(transaction);
@@ -249,7 +249,7 @@ export function useBatchReview(
     };
 
     if (isContextModeActive && scanContext) {
-      // Context mode: update via ScanContext
+      // Context mode: update via scan store adapter
       scanContext.updateBatchReceipt(id, updates);
     } else {
       // Local mode: update local state
@@ -265,11 +265,11 @@ export function useBatchReview(
   /**
    * Discard a receipt from the batch.
    *
-   * Story 14d.5c: In context mode, dispatches to ScanContext.
+   * Story 14d.5c + 14e-11: In context mode, dispatches to scan store.
    */
   const discardReceipt = useCallback((id: string) => {
     if (isContextModeActive && scanContext) {
-      // Context mode: discard via ScanContext
+      // Context mode: discard via scan store adapter
       scanContext.discardBatchReceipt(id);
     } else {
       // Local mode: update local state

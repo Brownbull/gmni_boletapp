@@ -6,16 +6,20 @@
  *
  * Features:
  * - Toast notification management with auto-dismiss
- * - Transaction conflict dialog state and handlers
+ * - Transaction conflict dialog via Modal Manager
  * - Unified modal management pattern
  *
  * Story 14e-4: Credit info modal moved to Modal Manager.
+ * Story 14e-5: Transaction conflict dialog moved to Modal Manager.
+ *
  * Use `openModal('creditInfo', {...})` instead of this hook for credit info.
+ * Transaction conflict dialog is opened via `openConflictDialog()` which uses Modal Manager.
  *
  * Architecture Reference: Epic 14c-refactor - App.tsx Handler Extraction
  * Dependencies:
  * - ScanContext (for scanState access)
  * - React state management
+ * - Modal Manager for conflict dialog rendering
  *
  * @example
  * ```tsx
@@ -25,12 +29,8 @@
  *     toastMessage,
  *     setToastMessage,
  *     showToast,
- *     // Conflict Dialog
- *     showConflictDialog,
- *     conflictDialogData,
- *     handleConflictClose,
- *     handleConflictViewCurrent,
- *     handleConflictDiscard,
+ *     // Conflict Dialog (Story 14e-5: Now uses Modal Manager)
+ *     openConflictDialog,
  *   } = useDialogHandlers({
  *     scanState,
  *     setCurrentTransaction,
@@ -38,28 +38,28 @@
  *     createDefaultTransaction,
  *     setTransactionEditorMode,
  *     navigateToView,
+ *     t,
+ *     lang,
+ *     formatCurrency,
  *   });
  *
+ *   // Conflict dialog is rendered by ModalManager, not in App.tsx
  *   return (
  *     <>
  *       {toastMessage && <Toast message={toastMessage} />}
- *       <TransactionConflictDialog
- *         isOpen={showConflictDialog}
- *         onClose={handleConflictClose}
- *         onViewCurrent={handleConflictViewCurrent}
- *         onDiscard={handleConflictDiscard}
- *       />
+ *       <ModalManager />
  *     </>
  *   );
  * }
  * ```
  */
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { Transaction } from '../../types/transaction';
 import type { ScanState } from '../../types/scanStateMachine';
 import type { ConflictingTransaction, ConflictReason } from '../../components/dialogs/TransactionConflictDialog';
 import type { View } from '../../components/App';
+import { openModalDirect, closeModalDirect } from '@managers/ModalManager';
 
 // =============================================================================
 // Types
@@ -93,8 +93,18 @@ export interface UseDialogHandlersProps {
     scanState: ScanState;
     /** Set current transaction */
     setCurrentTransaction: (tx: Transaction | null) => void;
-    /** Set scan images (used to clear scan state) */
-    setScanImages: (images: string[] | ((prev: string[]) => string[])) => void;
+    /**
+     * Reset scan state to idle.
+     * Bug fix: Previously used setScanImages([]) which only works in 'capturing' phase.
+     * During batch scanning (phase='scanning'), SET_IMAGES is ignored.
+     * This function properly resets state in all phases.
+     */
+    resetScanState: () => void;
+    /**
+     * Clear batch images state (App.tsx local state, separate from scan state machine).
+     * Must be called alongside resetScanState to fully clear batch mode.
+     */
+    clearBatchImages: () => void;
     /** Create default transaction factory */
     createDefaultTransaction: () => Transaction;
     /** Set transaction editor mode */
@@ -103,6 +113,12 @@ export interface UseDialogHandlersProps {
     navigateToView: (view: View) => void;
     /** Auto-dismiss timeout for toasts (default: 3000ms) */
     toastAutoHideMs?: number;
+    /** Translation function for conflict dialog (Story 14e-5) */
+    t: (key: string) => string;
+    /** Language for conflict dialog (Story 14e-5) */
+    lang?: 'en' | 'es';
+    /** Currency formatter for conflict dialog (Story 14e-5) */
+    formatCurrency?: (amount: number, currency: string) => string;
 }
 
 /**
@@ -124,25 +140,12 @@ export interface UseDialogHandlersResult {
     showToast: (text: string, type: 'success' | 'info') => void;
 
     // ===========================================================================
-    // Conflict Dialog State & Handlers
-    // Story 14e-4: Credit info modal moved to Modal Manager (openModal('creditInfo', {...}))
+    // Conflict Dialog
+    // Story 14e-5: Conflict dialog now uses Modal Manager
+    // The dialog is rendered by ModalManager component, not AppOverlays
     // ===========================================================================
-    /** Whether conflict dialog is open */
-    showConflictDialog: boolean;
-    /** Set conflict dialog visibility */
-    setShowConflictDialog: (show: boolean) => void;
-    /** Conflict dialog data (conflicting transaction, reason, pending action) */
-    conflictDialogData: ConflictDialogData | null;
-    /** Set conflict dialog data */
-    setConflictDialogData: (data: ConflictDialogData | null) => void;
-    /** Close conflict dialog without action */
-    handleConflictClose: () => void;
-    /** Navigate to the conflicting transaction */
-    handleConflictViewCurrent: () => void;
-    /** Discard conflicting transaction and proceed with pending action */
-    handleConflictDiscard: () => void;
     /**
-     * Open conflict dialog with data.
+     * Open conflict dialog via Modal Manager.
      * @param conflictingTransaction - The transaction that conflicts
      * @param conflictReason - Why there's a conflict
      * @param pendingAction - The action the user was trying to perform
@@ -163,18 +166,21 @@ export interface UseDialogHandlersResult {
  *
  * Handles:
  * - Toast notifications with auto-dismiss
- * - Credit info modal state
- * - Transaction conflict dialog state and actions
+ * - Transaction conflict dialog via Modal Manager (Story 14e-5)
  */
 export function useDialogHandlers(props: UseDialogHandlersProps): UseDialogHandlersResult {
     const {
         scanState,
         setCurrentTransaction,
-        setScanImages,
+        resetScanState,
+        clearBatchImages,
         createDefaultTransaction,
         setTransactionEditorMode,
         navigateToView,
         toastAutoHideMs = 3000,
+        t,
+        lang = 'es',
+        formatCurrency,
     } = props;
 
     // ===========================================================================
@@ -199,77 +205,70 @@ export function useDialogHandlers(props: UseDialogHandlersProps): UseDialogHandl
     }, []);
 
     // ===========================================================================
-    // Conflict Dialog State
-    // Story 14e-4: Credit info modal moved to Modal Manager (openModal('creditInfo', {...}))
+    // Conflict Dialog (Story 14e-5: Uses Modal Manager)
     // ===========================================================================
 
-    const [showConflictDialog, setShowConflictDialog] = useState(false);
-    const [conflictDialogData, setConflictDialogData] = useState<ConflictDialogData | null>(null);
-
-    /**
-     * Open conflict dialog with data.
-     */
-    const openConflictDialog = useCallback((
-        conflictingTransaction: ConflictingTransaction,
-        conflictReason: ConflictReason,
-        pendingAction: ConflictDialogData['pendingAction']
-    ) => {
-        setConflictDialogData({
-            conflictingTransaction,
-            conflictReason,
-            pendingAction,
-        });
-        setShowConflictDialog(true);
-    }, []);
+    // Store pending action in ref to access from callbacks without stale closure
+    const pendingActionRef = useRef<ConflictDialogData['pendingAction'] | null>(null);
 
     /**
      * Story 14.24: Close conflict dialog without doing anything (stay on current view).
      */
     const handleConflictClose = useCallback(() => {
-        setShowConflictDialog(false);
-        setConflictDialogData(null);
+        closeModalDirect();
+        pendingActionRef.current = null;
     }, []);
 
     /**
-     * Story 14d.4e: Navigate to the conflicting transaction (in transaction-editor).
+     * Story 14d.4e: Navigate to the conflicting transaction/scan.
+     * Bug fix: Handle batch mode differently - navigate to batch-review, not transaction-editor.
      */
     const handleConflictViewCurrent = useCallback(() => {
-        setShowConflictDialog(false);
-        setConflictDialogData(null);
+        closeModalDirect();
+        pendingActionRef.current = null;
 
-        // The scan is still active, just navigate to it
+        // Batch mode: Navigate to batch-review where processing/results are shown
+        if (scanState.mode === 'batch') {
+            navigateToView('batch-review');
+            return;
+        }
+
+        // Single scan mode: Navigate to transaction-editor with the scanned result
         // Story 14d.4e: Use scanState.results[0] instead of pendingScan.analyzedTransaction
         if (scanState.results.length > 0) {
             setCurrentTransaction(scanState.results[0]);
         }
         setTransactionEditorMode('new');
-        // Story 14d.4c: scanButtonState derived from phase - state machine preserves phase
         navigateToView('transaction-editor');
-    }, [scanState.results, setCurrentTransaction, setTransactionEditorMode, navigateToView]);
+    }, [scanState.mode, scanState.results, setCurrentTransaction, setTransactionEditorMode, navigateToView]);
 
     /**
      * Story 14d.4e: Discard the conflicting transaction and proceed with the pending action.
      */
     const handleConflictDiscard = useCallback(() => {
-        setShowConflictDialog(false);
+        closeModalDirect();
 
         // Clear the conflicting pending scan
-        // Story 14d.4c: setScanImages([]) triggers reset to idle phase
+        // Bug fix: Use resetScanState() instead of setScanImages([]).
+        // setScanImages([]) only works in 'capturing' phase. During batch scan
+        // (phase='scanning'), SET_IMAGES is ignored, leaving state uncleaned.
+        // Also clear batchImages which is separate App.tsx local state.
         setCurrentTransaction(null);
-        setScanImages([]);
+        resetScanState();
+        clearBatchImages();
 
         // If we had reserved credits, they're lost (already confirmed to Firestore)
         // This is expected - user chose to discard knowing they'd lose the credit
 
-        // Now execute the pending action
-        if (conflictDialogData?.pendingAction) {
-            const { mode, transaction } = conflictDialogData.pendingAction;
-            setConflictDialogData(null);
+        // Now execute the pending action (read from ref to avoid stale closure)
+        const pendingAction = pendingActionRef.current;
+        if (pendingAction) {
+            const { mode, transaction } = pendingAction;
+            pendingActionRef.current = null;
 
             // Call navigateToTransactionEditor directly without conflict check
             // (we just cleared the conflict)
             setTransactionEditorMode(mode);
-            // Story 14d.4c: scanButtonState derived from phase
             if (transaction) {
                 setCurrentTransaction(transaction as Transaction);
             } else if (mode === 'new') {
@@ -277,16 +276,42 @@ export function useDialogHandlers(props: UseDialogHandlersProps): UseDialogHandl
             }
             navigateToView('transaction-editor');
         } else {
-            setConflictDialogData(null);
+            pendingActionRef.current = null;
         }
     }, [
-        conflictDialogData,
         setCurrentTransaction,
-        setScanImages,
+        resetScanState,
+        clearBatchImages,
         setTransactionEditorMode,
         createDefaultTransaction,
         navigateToView,
     ]);
+
+    /**
+     * Open conflict dialog via Modal Manager.
+     * Story 14e-5: Uses openModalDirect instead of local state.
+     */
+    const openConflictDialog = useCallback((
+        conflictingTransaction: ConflictingTransaction,
+        conflictReason: ConflictReason,
+        pendingAction: ConflictDialogData['pendingAction']
+    ) => {
+        // Store pending action in ref for handler access
+        pendingActionRef.current = pendingAction;
+
+        // Open modal via Modal Manager
+        openModalDirect('transactionConflict', {
+            conflictingTransaction,
+            conflictReason,
+            onContinueCurrent: handleConflictClose,
+            onViewConflicting: handleConflictViewCurrent,
+            onDiscardConflicting: handleConflictDiscard,
+            onClose: handleConflictClose,
+            t,
+            lang,
+            formatCurrency,
+        });
+    }, [handleConflictClose, handleConflictViewCurrent, handleConflictDiscard, t, lang, formatCurrency]);
 
     // ===========================================================================
     // Return Result
@@ -294,33 +319,20 @@ export function useDialogHandlers(props: UseDialogHandlersProps): UseDialogHandl
 
     // Story 14c-refactor.25: Memoize return object for ViewHandlersContext stability
     // Story 14e-4: Credit info modal removed - now uses Modal Manager
+    // Story 14e-5: Conflict dialog state removed - now uses Modal Manager
     return useMemo<UseDialogHandlersResult>(
         () => ({
             // Toast
             toastMessage,
             setToastMessage,
             showToast,
-            // Conflict Dialog
-            showConflictDialog,
-            setShowConflictDialog,
-            conflictDialogData,
-            setConflictDialogData,
-            handleConflictClose,
-            handleConflictViewCurrent,
-            handleConflictDiscard,
+            // Conflict Dialog (Story 14e-5: Uses Modal Manager, only exposes open function)
             openConflictDialog,
         }),
         [
             toastMessage,
             setToastMessage,
             showToast,
-            showConflictDialog,
-            setShowConflictDialog,
-            conflictDialogData,
-            setConflictDialogData,
-            handleConflictClose,
-            handleConflictViewCurrent,
-            handleConflictDiscard,
             openConflictDialog,
         ]
     );

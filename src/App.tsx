@@ -75,9 +75,6 @@ import { createBatchReceiptsFromResults } from './hooks/useBatchReview';
 // Dialog types for scan state machine
 import type {
     BatchCompleteDialogData,
-    CurrencyMismatchDialogData,
-    TotalMismatchDialogData,
-    QuickSaveDialogData,
 } from './types/scanStateMachine';
 import { DIALOG_TYPES } from './types/scanStateMachine';
 import { LoginScreen } from './views/LoginScreen';
@@ -95,14 +92,20 @@ import { type SessionContext, type SessionAction } from './components/session';
 import { BatchUploadPreview, MAX_BATCH_IMAGES } from './components/scan';
 import { useScanOverlayState } from './hooks/useScanOverlayState';
 import { PROCESSING_TIMEOUT_MS } from './hooks/useScanState';
-import { shouldShowQuickSave, calculateConfidence } from './utils/confidenceCheck';
-import { validateTotal } from './utils/totalValidation';
 import { BatchProcessingOverlay } from './components/scan';
 import { checkCreditSufficiency, type CreditCheckResult } from './services/creditService';
 import type { ConflictingTransaction, ConflictReason } from './components/dialogs/TransactionConflictDialog';
 import type { TrustPromptEligibility } from './types/trust';
 import { AnalyticsProvider } from './contexts/AnalyticsContext';
-import { useScan } from './contexts/ScanContext';
+// Story 14e-11: Migrated from useScan (ScanContext) to Zustand store
+import {
+    useScanStore,
+    useScanActions,
+    useIsProcessing,
+    useScanMode,
+    useScanPhase,
+    useBatchProgress,
+} from '@features/scan/store';
 import { getQuarterFromMonth } from './utils/analyticsHelpers';
 import type { AnalyticsNavigationState } from './types/analytics';
 import { HistoryFiltersProvider, type HistoryFilterState } from './contexts/HistoryFiltersContext';
@@ -138,6 +141,12 @@ import { incrementItemNameMappingUsage } from './services/itemNameMappingService
 import { getCitiesForCountry } from './data/locations';
 // Modal Manager - centralized modal rendering (Story 14e-4)
 import { ModalManager, useModalActions } from './managers/ModalManager';
+// ProcessScan handler (Story 14e-8c)
+import { processScan as processScanHandler } from '@features/scan';
+// ScanFeature orchestrator (Story 14e-10)
+// Usage: <ScanFeature t={t} theme={theme} ... />
+// Full integration pending Story 14e-11 (ScanContext Migration)
+import { ScanFeature } from '@features/scan';
 
 /**
  * Reconcile transaction total with sum of items.
@@ -369,39 +378,54 @@ function App() {
     const sharedGroupRawTransactions: any[] = [];
     const sharedGroupSpendingByMember = new Map<string, number>();
 
-    // Scan context - manages scan state machine (single, batch, statement modes)
+    // Story 14e-11: Scan state from Zustand store (migrated from ScanContext)
+    const scanState = useScanStore();
+    const scanPhase = useScanPhase();
+    const scanMode = useScanMode();
+    const isContextProcessing = useIsProcessing();
+    const batchProgressFromContext = useBatchProgress();
+    // Story 14e-11: hasActiveRequest available via useHasActiveRequest() if needed in future
+
+    // Story 14e-11: Scan actions from Zustand store
     const {
-        state: scanState,
-        startSingleScan: startScanContext,
-        startBatchScan: startBatchScanContext,
-        startStatementScan: startStatementScanContext,
+        startSingle: startScanContext,
+        startBatch: startBatchScanContext,
+        startStatement: startStatementScanContext,
         batchItemStart: dispatchBatchItemStart,
         batchItemSuccess: dispatchBatchItemSuccess,
         batchItemError: dispatchBatchItemError,
         batchComplete: dispatchBatchComplete,
-        isBatchMode: isBatchModeFromContext,
-        isBatchProcessing: isBatchProcessingFromContext,
-        isBatchReviewing: _isBatchReviewingFromContext,
-        batchProgress: batchProgressFromContext,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        setBatchReceipts: _setBatchReceiptsContext,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        clearBatchReceipts: _clearBatchReceiptsContext,
         setBatchEditingIndex: setBatchEditingIndexContext,
         updateBatchReceipt: updateBatchReceiptContext,
-        showDialog: showScanDialog,
+        discardBatchReceipt: discardBatchReceiptContext,
+        showDialog: showScanDialogZustand,
         dismissDialog: dismissScanDialog,
         setImages: setScanContextImages,
-        setStoreType: setScanContextStoreType,
-        setCurrency: setScanContextCurrency,
         processStart: dispatchProcessStart,
         processSuccess: dispatchProcessSuccess,
         processError: dispatchProcessError,
         reset: resetScanContext,
-        isProcessing: isContextProcessing,
         restoreState: restoreScanState,
-        hasActiveRequest: _hasScanActiveRequest,
-    } = useScan();
+    } = useScanActions();
+
+    // Story 14e-11: Wrapper to maintain old showDialog(type, data) signature
+    const showScanDialog = useCallback((type: string, data?: unknown) => {
+        showScanDialogZustand({ type, data } as any);
+    }, [showScanDialogZustand]);
+
+    // Story 14e-11: Computed values derived from Zustand state
+    const isBatchModeFromContext = scanMode === 'batch';
+    const isBatchProcessingFromContext = scanPhase === 'scanning' && scanMode === 'batch';
+    // isBatchReviewing can be derived as: scanPhase === 'reviewing' && scanMode === 'batch'
+
+    // Story 14e-11: Wrapper functions for setStoreType and setCurrency (use restoreState)
+    const setScanContextStoreType = useCallback((storeType: ReceiptType) => {
+        restoreScanState({ storeType });
+    }, [restoreScanState]);
+
+    const setScanContextCurrency = useCallback((currency: string) => {
+        restoreScanState({ currency });
+    }, [restoreScanState]);
 
     // Reserved for future batch processing checks
     void isBatchProcessingFromContext;
@@ -631,6 +655,12 @@ function App() {
         setSessionContext,
         // ScanContext integration
         setScanImages,
+        // Batch editing context (for returning to batch-review after save)
+        batchEditingIndex: scanState.batchEditingIndex,
+        clearBatchEditingIndex: () => setBatchEditingIndexContext(null),
+        // Batch receipts (for discarding after save)
+        batchReceipts: scanState.batchReceipts,
+        discardBatchReceipt: discardBatchReceiptContext,
         // Translation
         t,
     });
@@ -657,22 +687,19 @@ function App() {
         dismissScanDialog,
     });
 
-    // Dialog handlers (conflict dialog - credit info modal now uses Modal Manager)
-    const {
-        showConflictDialog,
-        setShowConflictDialog,
-        conflictDialogData,
-        setConflictDialogData,
-        handleConflictClose,
-        handleConflictViewCurrent,
-        handleConflictDiscard,
-    } = useDialogHandlers({
+    // Dialog handlers (Story 14e-5: Conflict dialog now uses Modal Manager)
+    // Note: toast state is managed locally in App.tsx, not from this hook
+    const { openConflictDialog } = useDialogHandlers({
         scanState,
         setCurrentTransaction,
-        setScanImages,
+        resetScanState: resetScanContext,
+        clearBatchImages: useCallback(() => setBatchImages([]), []),
         createDefaultTransaction,
         setTransactionEditorMode,
         navigateToView,
+        t,
+        lang,
+        formatCurrency,
     });
 
     // Story 14e-4: Modal Manager actions for credit info modal
@@ -779,6 +806,7 @@ function App() {
     // Dialog handlers include both hook-provided handlers and local toast state
     // Toast is kept local due to hook dependency order (useTransactionHandlers needs setToastMessage)
     // Story 14e-4: Credit info modal now uses Modal Manager
+    // Story 14e-5: Conflict dialog now uses Modal Manager
     const dialogHandlers = useMemo(() => ({
         // Toast
         toastMessage,
@@ -791,28 +819,12 @@ function App() {
             onClose: closeModalAction,
         }),
         closeCreditInfoModal: closeModalAction,
-        // Conflict Dialog
-        showConflictDialog,
-        setShowConflictDialog,
-        conflictDialogData,
-        setConflictDialogData,
-        handleConflictClose,
-        handleConflictViewCurrent,
-        handleConflictDiscard,
-        openConflictDialog: (
-            conflictingTransaction: any,
-            conflictReason: any,
-            pendingAction: any
-        ) => {
-            setConflictDialogData({ conflictingTransaction, conflictReason, pendingAction });
-            setShowConflictDialog(true);
-        },
+        // Conflict Dialog - Story 14e-5: Uses Modal Manager instead of local state
+        openConflictDialog,
     }), [
         toastMessage, setToastMessage,
         openModalAction, closeModalAction, userCredits.remaining, userCredits.superRemaining,
-        showConflictDialog, setShowConflictDialog,
-        conflictDialogData, setConflictDialogData,
-        handleConflictClose, handleConflictViewCurrent, handleConflictDiscard,
+        openConflictDialog,
     ]);
 
     const scanHandlers = useMemo(() => ({
@@ -1094,18 +1106,26 @@ function App() {
     }, [scanState, view]);
 
     // Navigate to transaction editor with conflict detection
+    // If scan is active, auto-navigate to scan view instead of showing dialog
     const navigateToTransactionEditor = (mode: 'new' | 'existing', transaction?: Transaction | null) => {
         const conflictCheck = hasActiveTransactionConflict();
         const isEditingSameTransaction = mode === 'existing' && transaction?.id &&
             scanState.results.length > 0 && scanState.results[0]?.id === transaction.id;
 
-        if (conflictCheck.hasConflict && conflictCheck.conflictInfo && !isEditingSameTransaction) {
-            setConflictDialogData({
-                conflictingTransaction: conflictCheck.conflictInfo.transaction,
-                conflictReason: conflictCheck.conflictInfo.reason,
-                pendingAction: { mode, transaction },
-            });
-            setShowConflictDialog(true);
+        if (conflictCheck.hasConflict && !isEditingSameTransaction) {
+            // Auto-navigate to the active scan view - no dialog
+            // Batch mode: go to batch-review
+            // Single scan: go to transaction-editor (with the scanned transaction)
+            if (scanState.mode === 'batch') {
+                navigateToView('batch-review');
+            } else {
+                // Single scan - navigate to the scanned transaction
+                if (scanState.results.length > 0) {
+                    setCurrentTransaction(scanState.results[0]);
+                }
+                setTransactionEditorMode('new');
+                navigateToView('transaction-editor');
+            }
             return;
         }
 
@@ -1123,7 +1143,25 @@ function App() {
 
     // Navigate to read-only transaction view (from HistoryView clicks)
     // Optional allTransactionIds enables multi-transaction navigation from ItemsView
+    // If scan is active, auto-navigate to scan view instead
     const navigateToTransactionDetail = (transaction: Transaction, allTransactionIds?: string[]) => {
+        const conflictCheck = hasActiveTransactionConflict();
+
+        if (conflictCheck.hasConflict) {
+            // Auto-navigate to the active scan view - no dialog
+            if (scanState.mode === 'batch') {
+                navigateToView('batch-review');
+            } else {
+                if (scanState.results.length > 0) {
+                    setCurrentTransaction(scanState.results[0]);
+                }
+                setTransactionEditorMode('new');
+                navigateToView('transaction-editor');
+            }
+            return;
+        }
+
+        // No conflict, proceed with read-only view
         setIsViewingReadOnly(true);
         setCreditUsedInSession(false);
         setTransactionEditorMode('existing');
@@ -1133,16 +1171,21 @@ function App() {
     };
 
     // Handle edit request from read-only view (performs conflict check)
+    // If scan is active, auto-navigate to scan view instead of showing dialog
     const handleRequestEditFromReadOnly = () => {
         const conflictCheck = hasActiveTransactionConflict();
 
-        if (conflictCheck.hasConflict && conflictCheck.conflictInfo) {
-            setConflictDialogData({
-                conflictingTransaction: conflictCheck.conflictInfo.transaction,
-                conflictReason: conflictCheck.conflictInfo.reason,
-                pendingAction: { mode: 'existing', transaction: currentTransaction! },
-            });
-            setShowConflictDialog(true);
+        if (conflictCheck.hasConflict) {
+            // Auto-navigate to the active scan view - no dialog
+            if (scanState.mode === 'batch') {
+                navigateToView('batch-review');
+            } else {
+                if (scanState.results.length > 0) {
+                    setCurrentTransaction(scanState.results[0]);
+                }
+                setTransactionEditorMode('new');
+                navigateToView('transaction-editor');
+            }
         } else {
             setIsViewingReadOnly(false);
         }
@@ -1156,6 +1199,30 @@ function App() {
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files?.length) return;
         const files = Array.from(e.target.files);
+
+        // Single scan mode: Only use first image if multiple selected
+        // Show toast suggesting batch mode for multiple images
+        // Don't auto-scan - let user review the image first
+        const isSingleScanMode = scanState.mode !== 'batch';
+        if (isSingleScanMode && files.length > 1) {
+            setToastMessage({ text: t('singleScanOneImageOnly'), type: 'info' });
+            // Only process the first image
+            const singleFile = files[0];
+            const singleImage = await new Promise<string>(resolve => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result as string);
+                reader.readAsDataURL(singleFile);
+            });
+            const updatedImages = [...scanImages, singleImage];
+            setScanImages(updatedImages);
+            setView('transaction-editor');
+            setTransactionEditorMode('new');
+            setSkipScanCompleteModal(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            // Don't auto-trigger scan - user selected multiple images so let them review first
+            return;
+        }
+
         const newImages = await Promise.all(
             files.map(
                 f =>
@@ -1167,7 +1234,7 @@ function App() {
             )
         );
 
-        // Multi-image upload - show batch preview
+        // Multi-image upload in batch mode - show batch preview
         if (newImages.length > 1) {
             if (newImages.length > MAX_BATCH_IMAGES) {
                 setToastMessage({ text: t('batchMaxLimitError'), type: 'info' });
@@ -1244,309 +1311,157 @@ function App() {
         };
     }, [findItemNameMatch]);
 
-    const processScan = async (imagesToProcess?: string[]) => {
-        // Fix: Accept images as parameter to avoid stale closure when called immediately after setState
+    /**
+     * processScan - Wrapper that calls the extracted processScan handler.
+     * Story 14e-8c: Extract processScan Handler
+     *
+     * Collects all dependencies from App.tsx scope and passes them to the
+     * extracted handler in src/features/scan/handlers/processScan/processScan.ts.
+     *
+     * @param imagesToProcess - Optional images to process (avoids stale closure)
+     */
+    const processScan = useCallback(async (imagesToProcess?: string[]) => {
+        // Collect images (parameter takes precedence to avoid stale closure)
         const images = imagesToProcess ?? scanImages;
 
-        // Validate images before proceeding
-        if (!images || images.length === 0) {
-            console.error('processScan called with no images');
-            setScanError(t('noImagesToScan') || 'No images to scan');
-            return;
-        }
-
-        // Check if user has credits
-        if (userCredits.remaining <= 0) {
-            setScanError(t('noCreditsMessage'));
-            setToastMessage({ text: t('noCreditsMessage'), type: 'info' });
-            return;
-        }
-
-        // Deduct credit immediately to prevent exploits (only restored on API error)
-        const deducted = await deductUserCredits(1);
-        if (!deducted) {
-            setScanError(t('noCreditsMessage'));
-            setToastMessage({ text: t('noCreditsMessage'), type: 'info' });
-            return;
-        }
-
-        setCreditUsedInSession(true);
-        dispatchProcessStart('normal', 1);
-        scanOverlay.startUpload();
-        scanOverlay.setProgress(100);
-        scanOverlay.startProcessing();
-
-        try {
-            // Timeout handling for network requests
-            const timeoutPromise = new Promise<never>((_, reject) => {
-                setTimeout(() => reject(new Error('Request timed out. Please check your connection and try again.')), PROCESSING_TIMEOUT_MS);
-            });
-            const result = await Promise.race([
-                analyzeReceipt(
-                    images,
-                    scanCurrency,
-                    scanStoreType !== 'auto' ? scanStoreType : undefined
-                ),
-                timeoutPromise
-            ]);
-            let d = getSafeDate(result.date);
-            if (new Date(d).getFullYear() > new Date().getFullYear())
-                d = new Date().toISOString().split('T')[0];
-            const merchant = result.merchant || 'Unknown';
-            const finalTotal = parseStrictNumber(result.total);
-
-            // Determine country and city - validate against our list, fall back to defaults
-            let finalCountry = result.country || '';
-            let finalCity = result.city || '';
-
-            if (finalCountry && finalCity) {
-                // Validate scanned city exists in our list for that country (case-insensitive match)
-                const availableCities = getCitiesForCountry(finalCountry);
-                const scannedCityLower = finalCity.toLowerCase();
-                const matchedCity = availableCities.find(c => c.toLowerCase() === scannedCityLower);
-                // Use the properly-cased version from our list, or clear if not found
-                finalCity = matchedCity || '';
-            }
-
-            // If no location detected from scan, use defaults
-            if (!finalCountry && defaultCountry) {
-                finalCountry = defaultCountry;
-                finalCity = defaultCity; // Use default city if no country was detected
-            } else if (finalCountry && !finalCity && defaultCountry === finalCountry && defaultCity) {
-                // Same country detected but no city, use default city
-                finalCity = defaultCity;
-            }
-
-            // Map 'quantity' from AI to 'qty' field, default to 1
-            const parsedItems = (result.items || []).map(i => ({
-                ...i,
-                price: parseStrictNumber(i.price),
-                qty: (i as any).quantity ?? i.qty ?? 1,
-            }));
-
-            // Total validation: Check if extracted total matches items sum (>40% discrepancy)
-            const tempTransaction: Transaction = {
-                merchant: merchant,
-                date: d,
-                total: finalTotal,
-                category: result.category || 'Other',
-                items: parsedItems,
-            };
-            const totalValidation = validateTotal(tempTransaction);
-
-            if (!totalValidation.isValid) {
-                const dialogData: TotalMismatchDialogData = {
-                    validationResult: totalValidation,
-                    pendingTransaction: {
-                        ...tempTransaction,
-                        alias: merchant,
-                        imageUrls: result.imageUrls,
-                        thumbnailUrl: result.thumbnailUrl,
-                        time: result.time,
-                        country: finalCountry,
-                        city: finalCity,
-                        currency: result.currency,
-                        receiptType: result.receiptType,
-                        promptVersion: result.promptVersion,
-                        merchantSource: result.merchantSource
-                    },
-                    parsedItems,
-                };
-                showScanDialog(DIALOG_TYPES.TOTAL_MISMATCH, dialogData);
-                setIsAnalyzing(false);
-                scanOverlay.setReady();
-                return;
-            }
-
-            // Reconcile items total with receipt total (add adjustment item if needed)
-            const { items: reconciledItems, hasDiscrepancy: scanHasDiscrepancy } = reconcileItemsTotal(
-                parsedItems,
-                finalTotal,
-                lang
-            );
-
-            // Build initial transaction from Gemini response
-            const initialTransaction: Transaction = {
-                merchant: merchant,
-                date: d,
-                total: finalTotal,
-                category: result.category || 'Other',
-                alias: merchant,
-                items: reconciledItems,
-                // Include image URLs from Cloud Function response
-                imageUrls: result.imageUrls,
-                thumbnailUrl: result.thumbnailUrl,
-                time: result.time,
-                country: finalCountry,
-                city: finalCity,
-                currency: result.currency,
-                receiptType: result.receiptType,
-                promptVersion: result.promptVersion,
-                merchantSource: result.merchantSource,
-                ...(viewMode === 'group' && activeGroup?.id ? { sharedGroupIds: [activeGroup.id] } : {}),
-            };
-
-            // Apply learned category mappings (confidence > 0.7)
-            const { transaction: categorizedTransaction, appliedMappingIds } =
-                applyCategoryMappings(initialTransaction, mappings);
-
-            // Increment usage count for applied mappings (fire-and-forget)
-            if (appliedMappingIds.length > 0 && user && services) {
-                appliedMappingIds.forEach(mappingId => {
-                    incrementMappingUsage(services.db, user.uid, services.appId, mappingId)
-                        .catch(err => console.error('Failed to increment mapping usage:', err));
-                });
-            }
-
-            // Apply learned merchant→alias mapping (merchant = raw, alias = preferred display name)
-            let finalTransaction = categorizedTransaction;
-            const merchantMatch = findMerchantMatch(categorizedTransaction.merchant);
-            if (merchantMatch && merchantMatch.confidence > 0.7) {
-                finalTransaction = {
-                    ...finalTransaction,
-                    alias: merchantMatch.mapping.targetMerchant,
-                    ...(merchantMatch.mapping.storeCategory && { category: merchantMatch.mapping.storeCategory }),
-                    merchantSource: 'learned' as const
-                };
-
-                if (merchantMatch.mapping.id && user && services) {
-                    incrementMerchantMappingUsage(services.db, user.uid, services.appId, merchantMatch.mapping.id)
-                        .catch(err => console.error('Failed to increment merchant mapping usage:', err));
-                }
-
-                // v9.7.0: Apply learned item name mappings (scoped to this merchant)
-                const { transaction: txWithItemNames, appliedIds: itemNameMappingIds } = applyItemNameMappings(
-                    finalTransaction,
-                    merchantMatch.mapping.normalizedMerchant
-                );
-                finalTransaction = txWithItemNames;
-
-                // Increment item name mapping usage counts (fire-and-forget)
-                if (itemNameMappingIds.length > 0 && user && services) {
-                    itemNameMappingIds.forEach(id => {
-                        incrementItemNameMappingUsage(services.db, user.uid, services.appId, id)
-                            .catch(err => console.error('Failed to increment item name mapping usage:', err));
-                    });
-                }
-            }
-
-            // Currency auto-detection - show dialog if different from user's default
-            const detectedCurrency = finalTransaction.currency;
-            const userDefaultCurrency = userPreferences.defaultCurrency;
-
-            if (detectedCurrency && userDefaultCurrency && detectedCurrency !== userDefaultCurrency) {
-                const dialogData: CurrencyMismatchDialogData = {
-                    detectedCurrency,
-                    pendingTransaction: finalTransaction,
-                    hasDiscrepancy: scanHasDiscrepancy,
-                };
-                showScanDialog(DIALOG_TYPES.CURRENCY_MISMATCH, dialogData);
-                // Don't proceed with normal flow - wait for user's choice
-                setIsAnalyzing(false);
-                scanOverlay.setReady();
-                return;
-            }
-
-            // If AI returned null/undefined, use user's default currency
-            if (!detectedCurrency && userDefaultCurrency) {
-                finalTransaction = {
-                    ...finalTransaction,
-                    currency: userDefaultCurrency,
-                };
-            }
-
-            // No need for redundant injection here - transaction already has the group
-
-            setCurrentTransaction(finalTransaction);
-
-            // Check QuickSaveCard eligibility before state transition (prevents race condition)
-            const merchantAlias = finalTransaction.alias || finalTransaction.merchant;
-            const isTrusted = merchantAlias ? await checkTrusted(merchantAlias) : false;
-            const willShowQuickSave = !isTrusted && shouldShowQuickSave(finalTransaction);
-
-            if (willShowQuickSave || isTrusted) {
-                setSkipScanCompleteModal(true);
-            }
-
-            dispatchProcessSuccess([finalTransaction]);
-            scanOverlay.setReady();
-
-            // Haptic feedback on scan success (only when motion enabled)
-            if (!prefersReducedMotion && navigator.vibrate) {
-                navigator.vibrate(50);
-            }
-
-            // Show warning if items total didn't match receipt total
-            if (scanHasDiscrepancy) {
-                setToastMessage({ text: t('discrepancyWarning'), type: 'info' });
-            }
-
-            // Auto-save for trusted merchants
-            if (isTrusted && services && user) {
-                try {
-                    const transactionId = await firestoreAddTransaction(services.db, user.uid, services.appId, finalTransaction);
-                    const txWithId = { ...finalTransaction, id: transactionId } as Transaction;
-
-                    // Generate insight
-                    const insight = await generateInsightForTransaction(
-                        txWithId,
-                        transactions,
-                        insightProfile || { schemaVersion: 1, firstTransactionDate: null as any, totalTransactions: 0, recentInsights: [] },
-                        insightCache
-                    );
-
-                    addToBatch(txWithId, insight);
-
-                    // Record scan (not edited since it was auto-saved)
-                    await recordMerchantScan(merchantAlias, false).catch(err =>
-                        console.warn('Failed to record merchant scan:', err)
-                    );
-
-                    setScanImages([]);
-                    setCurrentTransaction(null);
-                    setToastMessage({ text: t('autoSaved'), type: 'success' });
-                    setView('dashboard');
-
-                    const silenced = isInsightsSilenced(insightCache);
-                    if (!silenced) {
-                        const willBeBatchMode = (batchSession?.receipts.length ?? 0) + 1 >= 3;
-                        if (willBeBatchMode) {
-                            setShowBatchSummary(true);
-                        } else {
-                            setCurrentInsight(insight);
-                            setShowInsightCard(true);
-                        }
+        // Call the extracted handler with all dependencies
+        await processScanHandler({
+            scan: {
+                images,
+                currency: scanCurrency,
+                storeType: scanStoreType,
+                defaultCountry,
+                defaultCity,
+            },
+            user: {
+                userId: user?.uid || '',
+                creditsRemaining: userCredits.remaining,
+                defaultCurrency: userPreferences.defaultCurrency || 'CLP',
+                transactions,
+            },
+            mapping: {
+                mappings,
+                applyCategoryMappings,
+                findMerchantMatch,
+                applyItemNameMappings,
+                incrementMappingUsage: (mappingId: string) => {
+                    if (user && services) {
+                        incrementMappingUsage(services.db, user.uid, services.appId, mappingId)
+                            .catch(err => console.error('Failed to increment mapping usage:', err));
                     }
-                } catch (autoSaveErr) {
-                    console.error('Auto-save failed:', autoSaveErr);
-                    // Fall back to Quick Save Card on error
-                    const dialogData: QuickSaveDialogData = {
-                        transaction: finalTransaction,
-                        confidence: calculateConfidence(finalTransaction),
-                    };
-                    showScanDialog(DIALOG_TYPES.QUICKSAVE, dialogData);
-                }
-            } else if (willShowQuickSave) {
-                // High confidence - Show Quick Save Card
-                const dialogData: QuickSaveDialogData = {
-                    transaction: finalTransaction,
-                    confidence: calculateConfidence(finalTransaction),
-                };
-                showScanDialog(DIALOG_TYPES.QUICKSAVE, dialogData);
-            } else {
-                // Low confidence - stay on editor for manual review
-                setAnimateEditViewItems(true);
-            }
-        } catch (e: any) {
-            const errorMessage = 'Failed: ' + e.message;
-            dispatchProcessError(errorMessage);
-            const isTimeout = e.message?.includes('timed out');
-            scanOverlay.setError(isTimeout ? 'timeout' : 'api', errorMessage);
-            // Restore credit on API error only
-            await addUserCredits(1);
-            setToastMessage({ text: t('scanFailedCreditRefunded'), type: 'info' });
-        }
-    };
+                },
+                incrementMerchantMappingUsage: (mappingId: string) => {
+                    if (user && services) {
+                        incrementMerchantMappingUsage(services.db, user.uid, services.appId, mappingId)
+                            .catch(err => console.error('Failed to increment merchant mapping usage:', err));
+                    }
+                },
+                incrementItemNameMappingUsage: (mappingId: string) => {
+                    if (user && services) {
+                        incrementItemNameMappingUsage(services.db, user.uid, services.appId, mappingId)
+                            .catch(err => console.error('Failed to increment item name mapping usage:', err));
+                    }
+                },
+            },
+            ui: {
+                setScanError,
+                setCurrentTransaction,
+                setView,
+                showScanDialog,
+                dismissScanDialog,
+                dispatchProcessStart,
+                dispatchProcessSuccess,
+                dispatchProcessError,
+                setToastMessage,
+                setIsAnalyzing,
+                setScanImages,
+                setAnimateEditViewItems,
+                setSkipScanCompleteModal,
+                setCreditUsedInSession,
+            },
+            scanOverlay,
+            services: {
+                analyzeReceipt,
+                deductUserCredits,
+                addUserCredits,
+                getCitiesForCountry,
+            },
+            t,
+            lang,
+            viewMode,
+            activeGroupId: activeGroup?.id,
+            trustedAutoSave: {
+                checkTrusted,
+                saveTransaction: async (transaction: Transaction) => {
+                    if (!services || !user) throw new Error('Services not available');
+                    return firestoreAddTransaction(services.db, user.uid, services.appId, transaction);
+                },
+                generateInsight: async (transaction, history, profile, cache) => {
+                    return generateInsightForTransaction(transaction, history, profile, cache);
+                },
+                addToBatch,
+                recordMerchantScan,
+                insightProfile: insightProfile || null,
+                insightCache,
+                isInsightsSilenced,
+                batchSession,
+                onShowInsight: (insight) => {
+                    setCurrentInsight(insight);
+                    setShowInsightCard(true);
+                },
+                onShowBatchSummary: () => {
+                    setShowBatchSummary(true);
+                },
+            },
+            prefersReducedMotion,
+            processingTimeoutMs: PROCESSING_TIMEOUT_MS,
+        });
+    }, [
+        scanImages,
+        scanCurrency,
+        scanStoreType,
+        defaultCountry,
+        defaultCity,
+        user,
+        services,
+        userCredits.remaining,
+        userPreferences.defaultCurrency,
+        transactions,
+        mappings,
+        findMerchantMatch,
+        applyItemNameMappings,
+        setScanError,
+        setCurrentTransaction,
+        setView,
+        showScanDialog,
+        dismissScanDialog,
+        dispatchProcessStart,
+        dispatchProcessSuccess,
+        dispatchProcessError,
+        setToastMessage,
+        setIsAnalyzing,
+        setScanImages,
+        setAnimateEditViewItems,
+        setSkipScanCompleteModal,
+        setCreditUsedInSession,
+        scanOverlay,
+        deductUserCredits,
+        addUserCredits,
+        t,
+        lang,
+        viewMode,
+        activeGroup?.id,
+        checkTrusted,
+        addToBatch,
+        recordMerchantScan,
+        insightProfile,
+        insightCache,
+        batchSession,
+        setCurrentInsight,
+        setShowInsightCard,
+        setShowBatchSummary,
+        prefersReducedMotion,
+    ]);
 
     // Re-scan existing transaction with stored imageUrls
     const handleRescan = async () => {
@@ -1709,7 +1624,8 @@ function App() {
 
     // Batch review handlers
     const handleBatchEditReceipt = (receipt: BatchReceipt, batchIndex: number, _batchTotal: number, _allReceipts: BatchReceipt[]) => {
-        setBatchEditingIndexContext(batchIndex - 1);
+        const zeroBasedIndex = batchIndex - 1;
+        setBatchEditingIndexContext(zeroBasedIndex);
         const transactionWithThumbnail = receipt.imageUrl
             ? { ...receipt.transaction, thumbnailUrl: receipt.imageUrl }
             : receipt.transaction;
@@ -1791,9 +1707,16 @@ function App() {
     const handleEditorSave = useCallback(async (trans: Transaction) => {
         if (isTransactionSaving) return;
         setIsTransactionSaving(true);
+        // Capture batch editing state BEFORE saveTransaction clears it
+        const wasInBatchEditingMode = scanState.batchEditingIndex !== null;
         try {
             await saveTransaction(trans);
-            setScanImages([]);
+            // Bug fix: Only clear scan images when NOT in batch editing mode.
+            // saveTransaction already handles navigation back to batch-review.
+            // Clearing images here would trigger resetScanContext() and wipe all batch receipts.
+            if (!wasInBatchEditingMode) {
+                setScanImages([]);
+            }
             setScanError(null);
             setCurrentTransaction(null);
             setIsViewingReadOnly(false);
@@ -1802,11 +1725,15 @@ function App() {
         } finally {
             setIsTransactionSaving(false);
         }
-    }, [isTransactionSaving, saveTransaction, setScanImages, setScanError]);
+    }, [isTransactionSaving, saveTransaction, setScanImages, setScanError, scanState.batchEditingIndex]);
 
     // Handle cancel from editor
     const handleEditorCancel = useCallback(() => {
-        setScanImages([]);
+        // Bug fix: Only clear scan images when NOT in batch editing mode.
+        // Clearing images triggers resetScanContext() which would wipe all batch receipts.
+        if (scanState.batchEditingIndex === null) {
+            setScanImages([]);
+        }
         setScanError(null);
         setCurrentTransaction(null);
         setAnimateEditViewItems(false);
@@ -2695,12 +2622,7 @@ function App() {
                 onTotalUseItemsSum={handleTotalUseItemsSum}
                 onTotalKeepOriginal={handleTotalKeepOriginal}
                 onTotalMismatchCancel={handleTotalMismatchCancel}
-                // Transaction conflict dialog props
-                showConflictDialog={showConflictDialog}
-                conflictDialogData={conflictDialogData}
-                onConflictClose={handleConflictClose}
-                onConflictViewCurrent={handleConflictViewCurrent}
-                onConflictDiscard={handleConflictDiscard}
+                // Story 14e-5: Transaction conflict dialog now uses Modal Manager (rendered by ModalManager component)
                 // Batch complete modal props
                 userCreditsRemaining={userCredits.superRemaining ?? 0}
                 onBatchCompleteDismiss={dismissScanDialog}
@@ -2718,6 +2640,23 @@ function App() {
             />
             {/* Story 14e-4: Centralized modal rendering via ModalManager */}
             <ModalManager />
+            {/* Story 14e-10: ScanFeature orchestrator - phase-based scan UI
+              * Currently used for processing/error state overlays.
+              * Full integration (replacing view-based scan rendering) in Story 14e-11.
+              * ScanFeature reads phase from Zustand store and renders appropriate state components.
+              */}
+            <ScanFeature
+                t={t}
+                theme={theme as 'light' | 'dark'}
+                onCancelProcessing={() => {
+                    // Cancel processing - existing handler will be consolidated in 14e-11
+                    handleScanOverlayCancel();
+                }}
+                onErrorDismiss={() => {
+                    // Error dismiss - existing handler will be consolidated in 14e-11
+                    handleScanOverlayDismiss();
+                }}
+            />
             {/* AppLayout provides app shell with theme classes */}
             <AppLayout theme={theme} colorTheme={colorTheme}>
             <input

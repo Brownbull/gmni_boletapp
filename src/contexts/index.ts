@@ -72,9 +72,8 @@ export {
     type ViewMode,
 } from './ViewModeContext';
 
-// ScanContext - Scan state machine (PRESERVED from Epic 14d-old)
-// NOTE: Import directly from ScanContext for full API
-export { ScanProvider, useScan } from './ScanContext';
+// Story 14e-11: ScanContext removed - scan state now managed by Zustand store
+// Use @features/scan/store for scan state and actions
 
 // AnalyticsContext - Analytics state
 export { AnalyticsProvider, AnalyticsContext } from './AnalyticsContext';

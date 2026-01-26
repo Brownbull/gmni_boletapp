@@ -14,7 +14,8 @@
  */
 
 import { CreditCard, ArrowLeft } from 'lucide-react';
-import { useScan } from '../contexts/ScanContext';
+// Story 14e-11: Migrated from useScan (ScanContext) to useScanActions (Zustand store)
+import { useScanActions } from '@features/scan/store';
 
 export interface StatementScanViewProps {
   /** Theme for styling */
@@ -51,7 +52,8 @@ const getButtonHoverStyle = (isDark: boolean, isBackButton: boolean) => ({
  * AC1-AC16: Implements all acceptance criteria from story 14d.9
  */
 export function StatementScanView({ theme, t, onBack }: StatementScanViewProps) {
-  const { reset } = useScan();
+  // Story 14e-11: Use Zustand store actions instead of ScanContext
+  const { reset } = useScanActions();
 
   // AC7, AC8: Both buttons call reset() to return to idle state
   const handleBack = () => {

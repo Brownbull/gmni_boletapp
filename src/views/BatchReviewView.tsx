@@ -18,7 +18,7 @@
  * @see docs/sprint-artifacts/epic12/story-12.3-batch-review-queue.md
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { ChevronLeft, Save, Loader2, AlertCircle, Check, X, Trash2, RotateCcw, Zap, Camera, Info, Layers } from 'lucide-react';
 import { formatCreditsDisplay } from '../services/userCreditsService';
 import { useBatchReview, BatchReceipt } from '../hooks/useBatchReview';
@@ -27,7 +27,8 @@ import { ProcessingResult, ImageProcessingState } from '../services/batchProcess
 import { Transaction } from '../types/transaction';
 import { formatCurrency } from '../utils/currency';
 import type { Currency } from '../types/settings';
-import { useScanOptional } from '../contexts/ScanContext';
+// Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
+import { useScanStore, useScanPhase, useScanMode, useBatchProgress, useScanActions } from '@features/scan/store';
 // Story 14c-refactor.27: ViewHandlersContext for navigation handlers
 import { useViewHandlers } from '../contexts/ViewHandlersContext';
 
@@ -129,26 +130,41 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
   // Story 14c-refactor.27: onCreditInfoClick moved to useViewHandlers().dialog.openCreditInfoModal
   onCreditInfoClick: _deprecatedOnCreditInfoClick,
 }) => {
-  // Story 14d.5: Optional ScanContext consumption for state machine migration
-  // When context is available and in batch mode, prefer context state over props
-  const scanContext = useScanOptional();
+  // Story 14e-11: Use Zustand store selectors (migrated from ScanContext)
+  const scanPhase = useScanPhase();
+  const scanMode = useScanMode();
+  const batchProgress = useBatchProgress();
+  const batchReceipts = useScanStore((s) => s.batchReceipts);
+  const { updateBatchReceipt, discardBatchReceipt } = useScanActions();
+
+  // Derive batch state from Zustand
+  const isBatchReviewing = scanPhase === 'reviewing' && scanMode === 'batch';
+  const isBatchProcessing = scanPhase === 'scanning' && scanMode === 'batch';
 
   // Story 14c-refactor.27: Get handlers from ViewHandlersContext
   const { navigation, dialog } = useViewHandlers();
   const onBack = navigation.navigateBack;
   const onCreditInfoClick = dialog.openCreditInfoModal;
 
-  // Story 14d.5c: Determine if we should use context mode
-  // Use context when context is available AND has batch receipts (or we're in batch reviewing phase)
-  const useContextMode = scanContext !== null && scanContext.isBatchReviewing;
+  // Story 14e-11: Determine if we should use context mode (Zustand store)
+  // Use context when in batch reviewing phase
+  const useContextMode = isBatchReviewing;
 
-  // Derive processing state from context when available
+  // Story 14e-11: Create adapter object matching ScanContextForBatchReview interface
+  // This allows useBatchReview to work with the Zustand store
+  const scanContextAdapter = useMemo(() => ({
+    state: { batchReceipts },
+    updateBatchReceipt,
+    discardBatchReceipt,
+  }), [batchReceipts, updateBatchReceipt, discardBatchReceipt]);
+
+  // Derive processing state from Zustand store when available
   // This allows the component to work during migration when App.tsx still manages local state
-  const processingState = scanContext?.isBatchProcessing
+  const processingState = isBatchProcessing
     ? {
         isProcessing: true,
-        progress: scanContext.batchProgress
-          ? { current: scanContext.batchProgress.current, total: scanContext.batchProgress.total }
+        progress: batchProgress
+          ? { current: batchProgress.current, total: batchProgress.total }
           : { current: 0, total: 0 },
         states: [], // States are managed internally by useBatchProcessing hook
         onCancelProcessing: processingStateProp?.onCancelProcessing,
@@ -157,10 +173,9 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
 
   const isDark = theme === 'dark';
 
-  // Story 14d.5c: Use batch review hook with context mode option
-  // When context mode is active, receipts are read from/written to ScanContext
+  // Story 14e-11: Use batch review hook with Zustand adapter
+  // When context mode is active, receipts are read from/written to Zustand store
   // When not active (tests), receipts are managed locally
-  // Pass scanContext as injection to avoid module resolution issues in tests
   const {
     receipts,
     totalAmount,
@@ -178,7 +193,7 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
     isEmpty,
   } = useBatchReview(processingResults, imageDataUrls, {
     useContext: useContextMode,
-    scanContext: useContextMode ? scanContext : null,
+    scanContext: useContextMode ? scanContextAdapter : null,
   });
 
   // Use detected currency from receipts if available, otherwise fall back to user's currency

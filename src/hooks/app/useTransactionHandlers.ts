@@ -164,6 +164,16 @@ export interface UseTransactionHandlersProps {
     /** Clear scan images (resets state machine) */
     setScanImages: (images: string[]) => void;
 
+    // Batch editing context (for returning to batch-review after save)
+    /** Current batch editing index (null if not editing batch) */
+    batchEditingIndex: number | null;
+    /** Clear batch editing index after save */
+    clearBatchEditingIndex: () => void;
+    /** Batch receipts array (to get receipt ID for discard after save) */
+    batchReceipts: Array<{ id: string }> | null;
+    /** Discard batch receipt after saving (removes from batch list) */
+    discardBatchReceipt: (id: string) => void;
+
     // Translation function
     /** Translation function for i18n */
     t: (key: string) => string;
@@ -246,6 +256,10 @@ export function useTransactionHandlers(
         setShowBatchSummary,
         setSessionContext,
         setScanImages,
+        batchEditingIndex,
+        clearBatchEditingIndex,
+        batchReceipts,
+        discardBatchReceipt,
         t,
     } = props;
 
@@ -308,10 +322,24 @@ export function useTransactionHandlers(
         };
 
         // Navigate immediately (optimistic UI)
-        setView('dashboard');
+        // If in batch editing mode, return to batch-review instead of dashboard
+        if (batchEditingIndex !== null) {
+            // Get the receipt ID before clearing the index
+            const receiptId = batchReceipts?.[batchEditingIndex]?.id;
+            clearBatchEditingIndex();
+            // Remove the saved receipt from the batch list so it doesn't appear twice
+            if (receiptId) {
+                discardBatchReceipt(receiptId);
+            }
+            setView('batch-review');
+        } else {
+            setView('dashboard');
+        }
         setCurrentTransaction(null);
-        // Clear scan state
-        setScanImages([]);
+        // Clear scan state (only for non-batch, batch keeps its images)
+        if (batchEditingIndex === null) {
+            setScanImages([]);
+        }
 
         // Fire the Firestore operation and chain insight generation for new transactions
         if (transactionToSave.id) {
@@ -438,6 +466,10 @@ export function useTransactionHandlers(
         setView,
         setCurrentTransaction,
         setScanImages,
+        batchEditingIndex,
+        clearBatchEditingIndex,
+        batchReceipts,
+        discardBatchReceipt,
         setCurrentInsight,
         setShowInsightCard,
         setShowBatchSummary,

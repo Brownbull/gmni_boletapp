@@ -17,7 +17,7 @@
 
 import React, { useEffect, useRef, useCallback } from 'react';
 import { Camera, Layers, CreditCard, Zap, Clock } from 'lucide-react';
-import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 // =============================================================================
 // Types

@@ -36,14 +36,20 @@ import { Camera, Home, Lightbulb, BarChart3, Bell, Layers, CreditCard, AlertTria
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { DURATION, EASING } from './animation/constants';
 import { formatCreditsDisplay, formatSuperCreditsDisplay } from '../services/userCreditsService';
-// Story 14d.3: Import useScanOptional to access scan state for navigation blocking
-import { useScanOptional } from '../contexts/ScanContext';
-// Story 14d.7: Mode Selector Popup
-import { ScanModeSelector } from './scan/ScanModeSelector';
-import type { ScanModeId } from './scan/ScanModeSelector';
+// Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store selectors
+import {
+  useHasActiveRequest,
+  useHasDialog,
+  useScanMode,
+  useScanPhase,
+  useIsProcessing,
+} from '@features/scan/store';
+// Story 14d.7: Mode Selector Popup (migrated to @features/scan in Story 14e-9a)
+import { ScanModeSelector } from '@features/scan/components';
+import type { ScanModeId } from '@features/scan/components/ScanModeSelector';
 // Story 14d.8: FAB Visual States
 import { getFABColorScheme, shouldShowShineAnimation, shouldShowPulseAnimation } from '../config/fabColors';
-import type { ScanMode, ScanPhase } from '../types/scanStateMachine';
+// Story 14e-11: ScanMode/ScanPhase types now inferred from Zustand hooks
 // Story 14e-4: Modal Manager for credit info modal
 import { useModalActions } from '../managers/ModalManager';
 
@@ -81,9 +87,15 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
     // Story 14.11: Reduced motion preference for AC #5
     const prefersReducedMotion = useReducedMotion();
 
-    // Story 14d.3 AC #1: Access scan state for navigation blocking
-    // Uses optional hook since Nav may render before ScanProvider is mounted
-    const scanContext = useScanOptional();
+    // Story 14e-11: isBatchMode prop deprecated - now derived from Zustand store
+    void isBatchMode;
+
+    // Story 14e-11: Use Zustand store selectors (always available, no provider boundary)
+    const hasActiveRequest = useHasActiveRequest();
+    const hasDialog = useHasDialog();
+    const scanMode = useScanMode();
+    const scanPhase = useScanPhase();
+    const contextIsProcessing = useIsProcessing();
 
     // Story 14e-4: Modal Manager for credit info modal
     const { openModal, closeModal } = useModalActions();
@@ -94,18 +106,12 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
     // Story 14d.7: Mode selector popup state
     const [showModeSelector, setShowModeSelector] = useState(false);
 
-    // Story 14d.7 AC-RP1: Check if there's an active request (request precedence)
-    const hasActiveRequest = scanContext ? scanContext.hasActiveRequest : false;
-
     // Story 14d.3: Determine if navigation should be blocked
     // Only block when: 1) in scan view AND 2) dialog is active
     const isScanView = view === 'transaction-editor' ||
                        view === 'batch-capture' ||
                        view === 'batch-review' ||
                        view === 'scan-result';
-
-    // hasDialog is true when any dialog is showing
-    const hasDialog = scanContext ? scanContext.hasDialog : false;
 
     // Block navigation only when in scan view AND dialog is active
     const shouldBlockNavigation = isScanView && hasDialog;
@@ -130,12 +136,26 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
     const LONG_PRESS_DURATION = 500; // 500ms for long press
 
     // Story 14d.7: Navigate to scan view when request is active
+    // Story 14e-5: Navigate to appropriate view based on scan mode and phase
+    // Story 14e-11: Use Zustand selectors (scanMode, scanPhase) instead of scanContext
     const navigateToActiveRequest = useCallback(() => {
         // AC-RP3: Show toast "Tienes un escaneo en progreso"
         onShowToast?.(t('scanInProgress'));
-        // AC-RP1, AC-RP2: Navigate to current request view
+
+        // AC-RP1, AC-RP2: Navigate to current request view based on scan state
+        if (scanMode === 'batch') {
+            // Batch reviewing or scanning → show batch-review (for results or progress)
+            if (scanPhase === 'reviewing' || scanPhase === 'scanning') {
+                setView('batch-review');
+                return;
+            } else if (scanPhase === 'capturing') {
+                setView('batch-capture');
+                return;
+            }
+        }
+        // Default fallback for single mode or unknown state
         setView('transaction-editor');
-    }, [onShowToast, setView, t]);
+    }, [onShowToast, setView, t, scanMode, scanPhase]);
 
     const handlePointerDown = useCallback(() => {
         isLongPress.current = false;
@@ -282,13 +302,9 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
     };
 
     // =========================================================================
-    // Story 14d.8: FAB Visual States - Derive visual state from ScanContext
+    // Story 14d.8: FAB Visual States - Derive visual state from Zustand store
+    // Story 14e-11: scanMode, scanPhase, contextIsProcessing are now from selectors above
     // =========================================================================
-
-    // Extract mode and phase from scan context (with fallbacks for when context not available)
-    const scanMode: ScanMode = scanContext?.state.mode ?? 'single';
-    const scanPhase: ScanPhase = scanContext?.state.phase ?? 'idle';
-    const contextIsProcessing = scanContext?.isProcessing ?? false;
 
     // Story 14d.8 AC1-4: Get color scheme based on mode and phase
     const fabColorScheme = useMemo(() => {
@@ -326,26 +342,10 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
     }, [scanMode, scanPhase]);
 
     // Story 14d.8: Compute FAB gradient - use color scheme from state machine
-    // Fallback to legacy logic for backward compatibility when context isn't available
+    // Story 14e-11: Zustand store is always available, no fallback needed
     const getFabGradient = (): string => {
-        // When context is available, use the color scheme from state machine
-        if (scanContext) {
-            return fabColorScheme.gradient;
-        }
-
-        // Legacy fallback: Use props-based logic
-        // Batch mode (in batch-capture view): Use amber/gold gradient (super credit colors)
-        if (isBatchMode) {
-            return 'linear-gradient(135deg, #fbbf24, #f59e0b)';
-        }
-
-        // 'ready' state means batch results available - use green
-        if (scanStatus === 'ready') {
-            return 'linear-gradient(135deg, var(--success, #10b981), #059669)';
-        }
-
-        // Default gradient uses theme primary color for idle AND single scan processing
-        return 'linear-gradient(135deg, var(--primary), var(--primary-hover, var(--primary)))';
+        // Use the color scheme from state machine (Zustand store)
+        return fabColorScheme.gradient;
     };
 
     // Story 14.11 AC #3: FAB styling classes
@@ -488,23 +488,14 @@ export const Nav: React.FC<NavProps> = ({ view, setView, onScanClick, onBatchCli
                         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
                     }}
                     aria-label={
-                        // Story 14d.8: Use mode-specific aria-labels when context available
-                        scanContext
-                            ? scanMode === 'batch'
-                                ? t('batchModeBatch') || 'Batch Mode'
-                                : scanMode === 'statement'
-                                    ? t('batchModeStatement') || 'Statement Mode'
-                                    : scanPhase === 'scanning'
-                                        ? t('batchProcessing')
-                                        : t('scan')
-                            // Legacy fallback
-                            : isBatchMode
-                                ? t('batchModeBatch') || 'Batch Mode'
-                                : scanStatus === 'processing'
+                        // Story 14e-11: Mode-specific aria-labels (Zustand always available)
+                        scanMode === 'batch'
+                            ? t('batchModeBatch') || 'Batch Mode'
+                            : scanMode === 'statement'
+                                ? t('batchModeStatement') || 'Statement Mode'
+                                : scanPhase === 'scanning'
                                     ? t('batchProcessing')
-                                    : scanStatus === 'ready'
-                                        ? t('batchReviewReady')
-                                        : t('scan')
+                                    : t('scan')
                     }
                     // Story 14d.7 AC #28: ARIA attributes for popup menu
                     aria-haspopup="menu"

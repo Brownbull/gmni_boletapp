@@ -705,6 +705,17 @@
         will-change: opacity, transform;
       }
 
+      /* Story 14e-9c: Indeterminate progress animation for ProcessingState */
+      @keyframes indeterminate-progress {
+        0% { transform: translateX(-100%); }
+        50% { transform: translateX(200%); }
+        100% { transform: translateX(-100%); }
+      }
+
+      .animate-indeterminate-progress {
+        animation: indeterminate-progress 1.5s ease-in-out infinite;
+      }
+
       /* Respect prefers-reduced-motion (AC #8) */
       @media (prefers-reduced-motion: reduce) {
         .animate-slide-up,
@@ -716,7 +727,8 @@
         .transition-child,
         .animate-quick-save-success,
         .animate-comparison-left,
-        .animate-comparison-right {
+        .animate-comparison-right,
+        .animate-indeterminate-progress {
           animation: none;
           opacity: 1;
           transform: none;

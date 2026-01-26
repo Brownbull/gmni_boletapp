@@ -132,6 +132,11 @@ describe('useTransactionHandlers', () => {
         setShowBatchSummary: vi.fn(),
         setSessionContext: vi.fn(),
         setScanImages: vi.fn(),
+        // Batch editing context (for returning to batch-review after save)
+        batchEditingIndex: null,
+        clearBatchEditingIndex: vi.fn(),
+        batchReceipts: null,
+        discardBatchReceipt: vi.fn(),
         t: vi.fn((key) => key),
         ...overrides,
     });
@@ -487,6 +492,83 @@ describe('useTransactionHandlers', () => {
             expect(incrementInsightCounter).toHaveBeenCalled();
             // firestoreAddTransaction was called (this we know works from other tests)
             expect(firestoreService.addTransaction).toHaveBeenCalled();
+        });
+
+        it('should navigate to batch-review when in batch editing mode', async () => {
+            const setView = vi.fn();
+            const clearBatchEditingIndex = vi.fn();
+            const discardBatchReceipt = vi.fn();
+            const props = createDefaultProps({
+                setView,
+                clearBatchEditingIndex,
+                discardBatchReceipt,
+                batchEditingIndex: 0,
+                batchReceipts: [{ id: 'receipt-1' }, { id: 'receipt-2' }],
+            });
+            const { result } = renderHook(() => useTransactionHandlers(props));
+
+            await act(async () => {
+                await result.current.saveTransaction(mockTransaction);
+            });
+
+            expect(setView).toHaveBeenCalledWith('batch-review');
+            expect(clearBatchEditingIndex).toHaveBeenCalled();
+        });
+
+        it('should discard batch receipt after saving in batch editing mode', async () => {
+            const discardBatchReceipt = vi.fn();
+            const clearBatchEditingIndex = vi.fn();
+            const props = createDefaultProps({
+                discardBatchReceipt,
+                clearBatchEditingIndex,
+                batchEditingIndex: 1, // Editing the second receipt
+                batchReceipts: [{ id: 'receipt-1' }, { id: 'receipt-2' }, { id: 'receipt-3' }],
+            });
+            const { result } = renderHook(() => useTransactionHandlers(props));
+
+            await act(async () => {
+                await result.current.saveTransaction(mockTransaction);
+            });
+
+            // Should discard the receipt at index 1 (receipt-2)
+            expect(discardBatchReceipt).toHaveBeenCalledWith('receipt-2');
+        });
+
+        it('should not discard batch receipt when batchReceipts is null', async () => {
+            const discardBatchReceipt = vi.fn();
+            const clearBatchEditingIndex = vi.fn();
+            const props = createDefaultProps({
+                discardBatchReceipt,
+                clearBatchEditingIndex,
+                batchEditingIndex: 0,
+                batchReceipts: null, // No batch receipts
+            });
+            const { result } = renderHook(() => useTransactionHandlers(props));
+
+            await act(async () => {
+                await result.current.saveTransaction(mockTransaction);
+            });
+
+            // Should not call discardBatchReceipt when no receipts
+            expect(discardBatchReceipt).not.toHaveBeenCalled();
+            expect(clearBatchEditingIndex).toHaveBeenCalled();
+        });
+
+        it('should not clear scan images when in batch editing mode', async () => {
+            const setScanImages = vi.fn();
+            const props = createDefaultProps({
+                setScanImages,
+                batchEditingIndex: 0,
+                batchReceipts: [{ id: 'receipt-1' }],
+            });
+            const { result } = renderHook(() => useTransactionHandlers(props));
+
+            await act(async () => {
+                await result.current.saveTransaction(mockTransaction);
+            });
+
+            // Should NOT clear scan images when in batch mode (other receipts still need them)
+            expect(setScanImages).not.toHaveBeenCalled();
         });
     });
 

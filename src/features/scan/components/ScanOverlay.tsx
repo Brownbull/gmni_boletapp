@@ -20,11 +20,11 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { Upload, Loader2, Check, AlertCircle, X, RefreshCw, Info } from 'lucide-react';
-import { useReducedMotion } from '../../hooks/useReducedMotion';
-import { READY_DISPLAY_MS } from '../../hooks/useScanState';
-import type { ScanErrorType } from '../../hooks/useScanState';
-import type { ScanOverlayState } from '../../hooks/useScanOverlayState';
-import { DURATION } from '../animation/constants';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { READY_DISPLAY_MS } from '@/hooks/useScanState';
+import type { ScanErrorType } from '@/hooks/useScanState';
+import type { ScanOverlayState } from '@/hooks/useScanOverlayState';
+import { DURATION } from '@/components/animation/constants';
 
 // Re-export type for consumers
 export type { ScanOverlayState };

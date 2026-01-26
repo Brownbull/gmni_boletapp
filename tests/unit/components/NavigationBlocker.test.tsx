@@ -15,12 +15,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render } from '../../setup/test-utils'
 import { NavigationBlocker } from '../../../src/components/NavigationBlocker'
 
-// Mock useScanOptional hook
-vi.mock('../../../src/contexts/ScanContext', () => ({
-  useScanOptional: vi.fn(() => null),
-}))
+// Story 14e-11: Mock Zustand store selector for navigation blocking
+// (Replaced useScanOptional from ScanContext with useHasDialog from Zustand)
+const mockHasDialog = vi.fn(() => false)
 
-import { useScanOptional } from '../../../src/contexts/ScanContext'
+vi.mock('@features/scan/store', () => ({
+  useHasDialog: () => mockHasDialog(),
+}))
 
 describe('NavigationBlocker Component', () => {
   let mockPushState: ReturnType<typeof vi.fn>
@@ -50,59 +51,17 @@ describe('NavigationBlocker Component', () => {
       }
     })
 
-    // Reset useScanOptional mock
-    vi.mocked(useScanOptional).mockReturnValue(null)
+    // Story 14e-11: Reset useHasDialog mock to default (no dialog)
+    mockHasDialog.mockReturnValue(false)
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
   })
 
-  // Helper to mock scan context with dialog state
-  const mockScanContextWithDialog = (hasDialog: boolean) => {
-    vi.mocked(useScanOptional).mockReturnValue({
-      hasDialog,
-      canNavigateFreely: !hasDialog,
-      state: {} as never,
-      hasActiveRequest: false,
-      isProcessing: false,
-      isIdle: true,
-      hasError: false,
-      isBlocking: hasDialog,
-      creditSpent: false,
-      canSave: false,
-      currentView: 'capturing',
-      imageCount: 0,
-      resultCount: 0,
-      startSingleScan: vi.fn(),
-      startBatchScan: vi.fn(),
-      startStatementScan: vi.fn(),
-      addImage: vi.fn(),
-      removeImage: vi.fn(),
-      setImages: vi.fn(),
-      setStoreType: vi.fn(),
-      setCurrency: vi.fn(),
-      processStart: vi.fn(),
-      processSuccess: vi.fn(),
-      processError: vi.fn(),
-      showDialog: vi.fn(),
-      resolveDialog: vi.fn(),
-      dismissDialog: vi.fn(),
-      updateResult: vi.fn(),
-      setActiveResult: vi.fn(),
-      saveStart: vi.fn(),
-      saveSuccess: vi.fn(),
-      saveError: vi.fn(),
-      batchItemStart: vi.fn(),
-      batchItemSuccess: vi.fn(),
-      batchItemError: vi.fn(),
-      batchComplete: vi.fn(),
-      cancel: vi.fn(),
-      reset: vi.fn(),
-      restoreState: vi.fn(),
-      refundCredit: vi.fn(),
-      dispatch: vi.fn(),
-    })
+  // Story 14e-11: Helper to set Zustand store mock for dialog state
+  const mockScanStoreWithDialog = (hasDialog: boolean) => {
+    mockHasDialog.mockReturnValue(hasDialog)
   }
 
   // Helper to simulate popstate event
@@ -122,21 +81,21 @@ describe('NavigationBlocker Component', () => {
 
   describe('AC#5: Browser Back Blocking in Scan Views', () => {
     it('should push blocking history entry when dialog active in scan view', () => {
-      mockScanContextWithDialog(true)
+      mockScanStoreWithDialog(true)
       render(<NavigationBlocker currentView="transaction-editor" />)
 
       expect(mockPushState).toHaveBeenCalledWith({ blockingEntry: true }, '')
     })
 
     it('should add popstate listener when blocking', () => {
-      mockScanContextWithDialog(true)
+      mockScanStoreWithDialog(true)
       render(<NavigationBlocker currentView="transaction-editor" />)
 
       expect(popStateListeners.length).toBeGreaterThan(0)
     })
 
     it('should re-push blocking entry on popstate when dialog active', () => {
-      mockScanContextWithDialog(true)
+      mockScanStoreWithDialog(true)
       render(<NavigationBlocker currentView="transaction-editor" />)
 
       // Clear initial push call
@@ -155,7 +114,7 @@ describe('NavigationBlocker Component', () => {
       'batch-review',
       'scan-result',
     ])('should block in %s view when dialog active', (view) => {
-      mockScanContextWithDialog(true)
+      mockScanStoreWithDialog(true)
       render(<NavigationBlocker currentView={view} />)
 
       expect(mockPushState).toHaveBeenCalled()
@@ -165,7 +124,7 @@ describe('NavigationBlocker Component', () => {
 
   describe('AC#6: Silent Blocking (No Browser Prompt)', () => {
     it('should not trigger beforeunload prompt', () => {
-      mockScanContextWithDialog(true)
+      mockScanStoreWithDialog(true)
 
       // Verify we're using pushState pattern, not beforeunload
       const beforeunloadSpy = vi.spyOn(window, 'addEventListener')
@@ -179,7 +138,7 @@ describe('NavigationBlocker Component', () => {
     })
 
     it('should log warning when blocking', () => {
-      mockScanContextWithDialog(true)
+      mockScanStoreWithDialog(true)
       const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
       render(<NavigationBlocker currentView="transaction-editor" />)
@@ -201,14 +160,14 @@ describe('NavigationBlocker Component', () => {
       'reports',
       'alerts',
     ])('should NOT push blocking entry in %s view even with dialog', (view) => {
-      mockScanContextWithDialog(true)
+      mockScanStoreWithDialog(true)
       render(<NavigationBlocker currentView={view} />)
 
       expect(mockPushState).not.toHaveBeenCalled()
     })
 
     it('should NOT add popstate listener in non-scan views', () => {
-      mockScanContextWithDialog(true)
+      mockScanStoreWithDialog(true)
       render(<NavigationBlocker currentView="dashboard" />)
 
       // No listeners should be added for non-scan views
@@ -220,23 +179,25 @@ describe('NavigationBlocker Component', () => {
 
   describe('No Blocking When No Dialog', () => {
     it('should NOT push blocking entry when no dialog active', () => {
-      mockScanContextWithDialog(false)
+      mockScanStoreWithDialog(false)
       render(<NavigationBlocker currentView="transaction-editor" />)
 
       expect(mockPushState).not.toHaveBeenCalled()
     })
 
     it('should NOT add popstate listener when no dialog active', () => {
-      mockScanContextWithDialog(false)
+      mockScanStoreWithDialog(false)
       render(<NavigationBlocker currentView="transaction-editor" />)
 
       expect(popStateListeners.length).toBe(0)
     })
   })
 
-  describe('Graceful Handling When Context Not Available', () => {
-    it('should handle null scan context gracefully', () => {
-      vi.mocked(useScanOptional).mockReturnValue(null)
+  describe('Graceful Handling When No Dialog Active', () => {
+    // Story 14e-11: Updated from null context handling to default state handling
+    // Zustand always returns a value, so we test default (no dialog) state instead
+    it('should handle default state (no dialog) gracefully', () => {
+      mockHasDialog.mockReturnValue(false)
 
       // Should not throw
       expect(() => {
@@ -250,7 +211,7 @@ describe('NavigationBlocker Component', () => {
 
   describe('Cleanup on Unmount', () => {
     it('should remove popstate listener on unmount', () => {
-      mockScanContextWithDialog(true)
+      mockScanStoreWithDialog(true)
       const { unmount } = render(<NavigationBlocker currentView="transaction-editor" />)
 
       // Verify listener was added

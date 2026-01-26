@@ -12,12 +12,12 @@ import { render, RenderOptions, renderHook, RenderHookOptions } from '@testing-l
 import React, { ReactElement, ReactNode, createContext, useContext } from 'react';
 import { vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from '../../src/contexts/AuthContext';
+import { AuthProvider } from '@/contexts/AuthContext';
 // Story 14c-refactor.27: ViewHandlersContext for view tests
-import { ViewHandlersProvider, type ViewHandlersContextValue } from '../../src/contexts/ViewHandlersContext';
-import type { ScanContextValue } from '../../src/contexts/ScanContext';
-import type { ScanState, ScanDialogType } from '../../src/types/scanStateMachine';
-import { DIALOG_TYPES } from '../../src/types/scanStateMachine';
+import { ViewHandlersProvider, type ViewHandlersContextValue } from '@/contexts/ViewHandlersContext';
+import type { ScanContextValue } from '@/contexts/ScanContext';
+import type { ScanState, ScanDialogType } from '@/types/scanStateMachine';
+import { DIALOG_TYPES } from '@/types/scanStateMachine';
 
 /**
  * Creates a fresh QueryClient for each test to ensure isolation.
@@ -387,3 +387,89 @@ export function createMockDialogState<T = unknown>(
 
 // Re-export DIALOG_TYPES for convenience in tests
 export { DIALOG_TYPES };
+
+// =============================================================================
+// Story 14e-9b: Zustand Scan Store Mock Utilities
+// =============================================================================
+
+import { useScanStore, initialScanState } from '@features/scan/store/useScanStore';
+
+/**
+ * Reset the Zustand scan store to initial state.
+ * Call this in beforeEach() to ensure test isolation.
+ *
+ * Note: Uses merge mode (not replace) to preserve action functions.
+ *
+ * @example
+ * ```tsx
+ * beforeEach(() => {
+ *   resetScanStore();
+ * });
+ * ```
+ */
+export function resetScanStore(): void {
+  // Use merge mode (false) to preserve actions, only reset state properties
+  useScanStore.setState(initialScanState, false);
+}
+
+/**
+ * Set the Zustand scan store to a specific state.
+ * Useful for testing components with specific state requirements.
+ *
+ * Note: Uses merge mode (not replace) to preserve action functions.
+ *
+ * @example
+ * ```tsx
+ * beforeEach(() => {
+ *   setScanStoreState({
+ *     phase: 'reviewing',
+ *     results: [mockTransaction],
+ *     activeDialog: { type: 'scan_complete', data: { transaction: mockTransaction } },
+ *   });
+ * });
+ * ```
+ */
+export function setScanStoreState(state: Partial<ScanState>): void {
+  // First reset to initial state, then apply overrides (both with merge mode to preserve actions)
+  useScanStore.setState({ ...initialScanState, ...state }, false);
+}
+
+/**
+ * Get the current Zustand scan store state.
+ * Useful for assertions in tests.
+ *
+ * @example
+ * ```tsx
+ * expect(getScanStoreState().phase).toBe('reviewing');
+ * ```
+ */
+export function getScanStoreState(): ScanState {
+  return useScanStore.getState();
+}
+
+/**
+ * Call a Zustand scan store action directly.
+ * Useful for simulating user actions in tests.
+ *
+ * @example
+ * ```tsx
+ * callScanStoreAction('startSingle', 'test-user-id');
+ * expect(getScanStoreState().phase).toBe('capturing');
+ * ```
+ */
+export function callScanStoreAction<K extends keyof ReturnType<typeof useScanStore.getState>>(
+  actionName: K,
+  ...args: ReturnType<typeof useScanStore.getState>[K] extends (...args: infer P) => unknown ? P : never
+): void {
+  const store = useScanStore.getState();
+  const action = store[actionName];
+  if (typeof action === 'function') {
+    (action as (...args: unknown[]) => void)(...args);
+  }
+}
+
+// Re-export initialScanState for convenience in tests
+export { initialScanState };
+
+// Re-export the store hook for direct access in tests
+export { useScanStore };
