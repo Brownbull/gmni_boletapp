@@ -134,14 +134,27 @@ export interface BatchCompleteProps {
   onDismiss: () => void;
 }
 
-/** Props for batch discard confirmation */
+/**
+ * Props for batch discard confirmation dialog.
+ * Used for both single receipt discard and batch cancel scenarios.
+ *
+ * Story 14e-16: Extended to support both cases:
+ * - Single receipt: pass receiptId (unsavedCount optional)
+ * - Batch cancel: pass unsavedCount (receiptId undefined)
+ */
 export interface BatchDiscardProps {
-  /** Number of unsaved receipts */
-  unsavedCount: number;
+  /** Number of unsaved receipts (for batch cancel display) */
+  unsavedCount?: number;
+  /** Receipt ID for single receipt discard (mutually exclusive with batch cancel) */
+  receiptId?: string;
   /** Confirm discard */
   onConfirm: () => void;
   /** Cancel discard */
   onCancel: () => void;
+  /** Translation function */
+  t: (key: string) => string;
+  /** Current theme for styling */
+  theme?: 'light' | 'dark';
 }
 
 /** Props for credit warning dialog */

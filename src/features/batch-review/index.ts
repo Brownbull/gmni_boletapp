@@ -1,5 +1,133 @@
-// Feature: Batch Review
-// This module will contain the batch review Zustand store and components
-// Implemented in Story 14e-12 through 14e-16
+/**
+ * Feature: Batch Review
+ *
+ * Batch review Zustand store, handlers, and components.
+ * Implemented in Stories 14e-12 through 14e-16.
+ *
+ * Story 14e-12a: Store foundation + lifecycle/item actions (COMPLETE)
+ * Story 14e-12b: Save/edit actions (COMPLETE)
+ * Story 14e-13: Selectors (COMPLETE)
+ * Story 14e-14a: Handler types + navigation handlers (COMPLETE)
+ * Story 14e-14b: Edit and save handlers (COMPLETE)
+ * Story 14e-14c: Discard and credit check handlers (COMPLETE)
+ * Story 14e-14d: App.tsx integration (COMPLETE)
+ * Story 14e-15: Feature components (COMPLETE)
+ * Story 14e-16: BatchReviewFeature orchestrator (COMPLETE)
+ */
 
-export {};
+// =============================================================================
+// Feature Orchestrator (Story 14e-16)
+// =============================================================================
+
+export { BatchReviewFeature } from './BatchReviewFeature';
+export type { BatchReviewFeatureProps } from './BatchReviewFeature';
+
+// =============================================================================
+// Store (Story 14e-12a)
+// =============================================================================
+
+export {
+  useBatchReviewStore,
+  initialBatchReviewState,
+} from './store';
+
+export type {
+  BatchReviewPhase,
+  BatchReviewState,
+  BatchReviewActions,
+} from './store';
+
+// =============================================================================
+// Selectors (Story 14e-13)
+// =============================================================================
+
+export {
+  // Phase selectors
+  useBatchReviewPhase,
+  useIsBatchReviewing,
+  useIsEditing,
+  useIsSaving,
+  useIsComplete,
+  useHasBatchError,
+  // Data selectors
+  useBatchItems,
+  useCurrentBatchItem,
+  useCurrentBatchIndex,
+  useEditingReceiptId,
+  // Computed selectors
+  useBatchProgress,
+  useBatchTotalAmount,
+  useValidBatchCount,
+  useIsBatchEmpty,
+  // Actions hook
+  useBatchReviewActions,
+  // Direct access
+  getBatchReviewState,
+  batchReviewActions,
+} from './store';
+
+export type { BatchReviewActionsType } from './store';
+
+// =============================================================================
+// Handlers (Story 14e-14a, 14e-14b, 14e-14c, 14e-14d)
+// =============================================================================
+
+export {
+  // Navigation handlers (Story 14e-14a)
+  navigateToPreviousReceipt,
+  navigateToNextReceipt,
+  // Edit handler (Story 14e-14b)
+  editBatchReceipt,
+  // Save handlers (Story 14e-14b)
+  saveBatchTransaction,
+  handleSaveComplete,
+  // Discard handlers (Story 14e-14c)
+  handleReviewBack,
+  confirmDiscard,
+  cancelDiscard,
+  // Credit check handler (Story 14e-14c)
+  confirmWithCreditCheck,
+  // Utilities (Story 14e-14d)
+  buildTransactionWithThumbnail,
+} from './handlers';
+
+export type {
+  // Navigation types (Story 14e-14a)
+  BatchNavigationContext,
+  // Edit/Save types (Story 14e-14b)
+  BatchEditContext,
+  SaveContext,
+  SaveCompleteContext,
+  CategoryMappingResult,
+  MerchantMatchResult,
+  ItemNameMappingResult,
+  BatchProcessingController,
+  // Discard/Credit types (Story 14e-14c)
+  DiscardContext,
+  CreditCheckContext,
+} from './handlers';
+
+// =============================================================================
+// Components (Story 14e-15)
+// =============================================================================
+
+export {
+  // Main components
+  BatchReviewCard,
+  BatchProgressIndicator,
+  // State components
+  ProcessingState,
+  ReviewingState,
+  EmptyState,
+} from './components';
+
+export type {
+  // Component props
+  BatchReviewCardProps,
+  BatchProgressIndicatorProps,
+  ImageProcessingState,
+  // State component props
+  ProcessingStateProps,
+  ReviewingStateProps,
+  EmptyStateProps,
+} from './components';

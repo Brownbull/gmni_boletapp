@@ -393,16 +393,16 @@ development_status:
 
   # Part 3: Batch Review Feature (5 stories, 16 pts → 6 stories, 17 pts after 14e-12 split) - Zustand store, NOT XState
   14e-12-batch-review-zustand-store: split  # SPLIT 2026-01-25: Exceeded sizing limits → split into 14e-12a, 14e-12b
-  14e-12a-batch-review-store-foundation: ready-for-dev  # 2 pts - Store structure, types, lifecycle/item actions [DEPENDS: 14e-1]
-  14e-12b-batch-review-store-actions-tests: ready-for-dev  # 2 pts - Save/edit actions, phase guards, tests [DEPENDS: 14e-12a]
-  14e-13-batch-review-store-selectors: ready-for-dev  # 2 pts - Typed selectors for batch store - Story created 2026-01-25
+  14e-12a-batch-review-store-foundation: done  # 2 pts - Store structure, types, lifecycle/item actions [DEPENDS: 14e-1] - Archie Review APPROVED 2026-01-26 (21 tests, 1 MEDIUM follow-up)
+  14e-12b-batch-review-store-actions-tests: done  # 2 pts - Save/edit actions, phase guards, tests [DEPENDS: 14e-12a] - Atlas Code Review APPROVED 2026-01-26 (78 tests, 2 MEDIUM fixes)
+  14e-13-batch-review-store-selectors: done  # 2 pts - Typed selectors for batch store - Atlas Dev COMPLETE 2026-01-26 (14 selectors, 56 tests)
   14e-14-extract-batch-review-handlers: split  # SPLIT 2026-01-25: Exceeded sizing limits → split into 14e-14a/b/c/d
-  14e-14a-batch-handler-types-navigation: ready-for-dev  # 2 pts - Types + navigation handlers [Part 1/4]
-  14e-14b-batch-handler-edit-save: ready-for-dev  # 2 pts - Edit + save handlers [Part 2/4, DEPENDS: 14e-14a]
-  14e-14c-batch-handler-discard-credit: ready-for-dev  # 2 pts - Discard + credit check handlers [Part 3/4, DEPENDS: 14e-14b]
-  14e-14d-batch-handler-integration: ready-for-dev  # 2 pts - App.tsx integration [Part 4/4, DEPENDS: 14e-14c]
-  14e-15-batch-review-feature-components: ready-for-dev  # 3 pts - Batch review components - Story created 2026-01-25
-  14e-16-batch-review-feature-orchestrator: ready-for-dev  # 5 pts - BatchReviewFeature component - Story created 2026-01-25
+  14e-14a-batch-handler-types-navigation: done  # 2 pts - Types + navigation handlers [Part 1/4] - Atlas Code Review PASSED 2026-01-26 (19 tests, 3 fixes)
+  14e-14b-batch-handler-edit-save: done  # 2 pts - Edit + save handlers [Part 2/4, DEPENDS: 14e-14a] - Atlas Code Review APPROVED 2026-01-26 (39 tests, 1 fix)
+  14e-14c-batch-handler-discard-credit: done  # 2 pts - Discard + credit check handlers [Part 3/4, DEPENDS: 14e-14b] - Atlas Code Review APPROVED 2026-01-26 (36 tests)
+  14e-14d-batch-handler-integration: done  # 2 pts - App.tsx integration [Part 4/4, DEPENDS: 14e-14c] - Atlas Code Review APPROVED 2026-01-26
+  14e-15-batch-review-feature-components: done  # 3 pts - Batch review components - Atlas Code Review APPROVED 2026-01-26 (42 tests, AC5 store integration)
+  14e-16-batch-review-feature-orchestrator: done  # 5 pts - BatchReviewFeature orchestrator - Atlas dev-story COMPLETE 2026-01-26 (22 tests)
 
 # /bmad:bmm:workflows:atlas-dev-story 14e-12a
 # /bmad:bmm:workflows:atlas-code-review

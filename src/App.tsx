@@ -56,7 +56,7 @@ import {
     useDialogHandlers,
     useHistoryViewProps,
     useTrendsViewProps,
-    useBatchReviewViewProps,
+    // Story 14e-16: useBatchReviewViewProps removed - BatchReviewFeature uses store selectors
     useTransactionEditorViewProps,
     useDashboardViewProps,
     useSettingsViewProps,
@@ -70,12 +70,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { updateMemberTimestampsForTransaction } from './services/sharedGroupService';
 import type { GroupWithMeta } from './components/SharedGroups';
 import { useBatchProcessing } from './hooks/useBatchProcessing';
+// Story 14e-16: BatchReceipt type and createBatchReceiptsFromResults now imported with BatchReviewFeature
 import type { BatchReceipt } from './hooks/useBatchReview';
-import { createBatchReceiptsFromResults } from './hooks/useBatchReview';
 // Dialog types for scan state machine
-import type {
-    BatchCompleteDialogData,
-} from './types/scanStateMachine';
+// Story 14e-14d: BatchCompleteDialogData moved to extracted handlers
 import { DIALOG_TYPES } from './types/scanStateMachine';
 import { LoginScreen } from './views/LoginScreen';
 import { DashboardView } from './views/DashboardView';
@@ -83,7 +81,7 @@ import { TrendsView } from './views/TrendsView';
 import { HistoryView } from './views/HistoryView';
 import { ItemsView } from './views/ItemsView';
 import { BatchCaptureView } from './views/BatchCaptureView';
-import { BatchReviewView } from './views/BatchReviewView';
+// Story 14e-16: BatchReviewView replaced by BatchReviewFeature from @features/batch-review
 import { SettingsView } from './views/SettingsView';
 import { TransactionEditorView } from './views/TransactionEditorView';
 import { Nav, ScanStatus } from './components/Nav';
@@ -147,6 +145,24 @@ import { processScan as processScanHandler } from '@features/scan';
 // Usage: <ScanFeature t={t} theme={theme} ... />
 // Full integration pending Story 14e-11 (ScanContext Migration)
 import { ScanFeature } from '@features/scan';
+// Story 14e-14d: Batch review handlers extracted from App.tsx
+import {
+    navigateToPreviousReceipt,
+    navigateToNextReceipt,
+    editBatchReceipt,
+    saveBatchTransaction,
+    handleSaveComplete,
+    handleReviewBack,
+    confirmDiscard,
+    cancelDiscard,
+    confirmWithCreditCheck,
+} from '@features/batch-review/handlers';
+// Story 14e-16: BatchReviewFeature orchestrator + store actions
+import {
+    BatchReviewFeature,
+    batchReviewActions,
+} from '@features/batch-review';
+import { createBatchReceiptsFromResults } from './hooks/useBatchReview';
 
 /**
  * Reconcile transaction total with sum of items.
@@ -1558,10 +1574,14 @@ function App() {
     };
 
     // Credit warning dialog handlers (batch uses 1 super credit regardless of image count)
+    // Story 14e-14d: Replaced with extracted handler
     const handleBatchConfirmWithCreditCheck = () => {
-        const result = checkCreditSufficiency(userCredits, 1, true);
-        setCreditCheckResult(result);
-        setShowCreditWarning(true);
+        confirmWithCreditCheck({
+            userCredits,
+            checkCreditSufficiency,
+            setCreditCheckResult,
+            setShowCreditWarning,
+        });
     };
 
     // Batch processing with parallel execution
@@ -1623,45 +1643,32 @@ function App() {
     };
 
     // Batch review handlers
+    // Story 14e-14d: Replaced with extracted handlers
     const handleBatchEditReceipt = (receipt: BatchReceipt, batchIndex: number, _batchTotal: number, _allReceipts: BatchReceipt[]) => {
-        const zeroBasedIndex = batchIndex - 1;
-        setBatchEditingIndexContext(zeroBasedIndex);
-        const transactionWithThumbnail = receipt.imageUrl
-            ? { ...receipt.transaction, thumbnailUrl: receipt.imageUrl }
-            : receipt.transaction;
-        setCurrentTransaction(transactionWithThumbnail);
-        setTransactionEditorMode('existing');
-        navigateToView('transaction-editor');
+        editBatchReceipt(receipt, batchIndex, {
+            setBatchEditingIndexContext,
+            setCurrentTransaction,
+            setTransactionEditorMode,
+            navigateToView,
+        });
     };
 
     const handleBatchPrevious = () => {
-        const batchReceipts = scanState.batchReceipts;
-        const currentIndex = scanState.batchEditingIndex;
-        if (!batchReceipts || currentIndex === null || currentIndex <= 0) return;
-        const prevIndex = currentIndex - 1;
-        const prevReceipt = batchReceipts[prevIndex];
-        if (prevReceipt) {
-            setBatchEditingIndexContext(prevIndex);
-            const transactionWithThumbnail = prevReceipt.imageUrl
-                ? { ...prevReceipt.transaction, thumbnailUrl: prevReceipt.imageUrl }
-                : prevReceipt.transaction;
-            setCurrentTransaction(transactionWithThumbnail);
-        }
+        navigateToPreviousReceipt({
+            scanState,
+            setBatchEditingIndexContext,
+            currentTransaction,
+            setCurrentTransaction,
+        });
     };
 
     const handleBatchNext = () => {
-        const batchReceipts = scanState.batchReceipts;
-        const currentIndex = scanState.batchEditingIndex;
-        if (!batchReceipts || currentIndex === null || currentIndex >= batchReceipts.length - 1) return;
-        const nextIndex = currentIndex + 1;
-        const nextReceipt = batchReceipts[nextIndex];
-        if (nextReceipt) {
-            setBatchEditingIndexContext(nextIndex);
-            const transactionWithThumbnail = nextReceipt.imageUrl
-                ? { ...nextReceipt.transaction, thumbnailUrl: nextReceipt.imageUrl }
-                : nextReceipt.transaction;
-            setCurrentTransaction(transactionWithThumbnail);
-        }
+        navigateToNextReceipt({
+            scanState,
+            setBatchEditingIndexContext,
+            currentTransaction,
+            setCurrentTransaction,
+        });
     };
 
     // Transaction list navigation (from ItemsView aggregated item)
@@ -1742,6 +1749,8 @@ function App() {
         setTransactionNavigationList(null);
         if (scanState.batchEditingIndex !== null) {
             setBatchEditingIndexContext(null);
+            // Story 14e-16: Transition from editing → reviewing when canceling edit
+            batchReviewActions.finishEditing();
             setView('batch-review');
         } else {
             navigateBack();
@@ -1898,114 +1907,68 @@ function App() {
 
     // ==========================================================================
     // Batch review handlers
+    // Story 14e-14d: Replaced with extracted handlers
     // ==========================================================================
 
     // Back from batch review - show confirmation if results exist (credit spent)
     const handleBatchReviewBack = () => {
-        if (hasBatchReceipts) {
-            showScanDialog(DIALOG_TYPES.BATCH_DISCARD, {});
-            return;
-        }
-        setBatchImages([]);
-        batchProcessing.reset();
-        resetScanContext();
-        setView('dashboard');
+        handleReviewBack({
+            hasBatchReceipts,
+            showScanDialog,
+            dismissScanDialog,
+            setBatchImages,
+            batchProcessing,
+            resetScanContext,
+            setView,
+        });
     };
 
     // Confirm discard batch results
     const handleBatchDiscardConfirm = () => {
-        dismissScanDialog();
-        setBatchImages([]);
-        batchProcessing.reset();
-        resetScanContext();
-        setView('dashboard');
+        confirmDiscard({
+            hasBatchReceipts,
+            showScanDialog,
+            dismissScanDialog,
+            setBatchImages,
+            batchProcessing,
+            resetScanContext,
+            setView,
+        });
     };
 
     const handleBatchDiscardCancel = () => {
-        dismissScanDialog();
+        cancelDiscard({
+            hasBatchReceipts,
+            showScanDialog,
+            dismissScanDialog,
+            setBatchImages,
+            batchProcessing,
+            resetScanContext,
+            setView,
+        });
     };
 
     // Save all complete - show batch complete modal if transactions were saved
     const handleBatchSaveComplete = async (_savedTransactionIds: string[], savedTransactions: Transaction[]) => {
-        setBatchImages([]);
-        batchProcessing.reset();
-        resetScanContext();
-
-        if (savedTransactions.length > 0) {
-            const dialogData: BatchCompleteDialogData = {
-                transactions: savedTransactions,
-                creditsUsed: 1, // Batch uses 1 super credit regardless of transaction count
-            };
-            showScanDialog(DIALOG_TYPES.BATCH_COMPLETE, dialogData);
-        }
-        setView('dashboard');
+        handleSaveComplete(savedTransactions, {
+            setBatchImages,
+            batchProcessing,
+            resetScanContext,
+            showScanDialog,
+            setView,
+        });
     };
 
     // Handle save transaction for batch review
     const handleBatchSaveTransaction = async (transaction: Transaction): Promise<string> => {
-        if (!services || !user) throw new Error('Not authenticated');
-        const { db, appId } = services;
-
-        // Apply category mappings
-        const { transaction: categorizedTx, appliedMappingIds } = applyCategoryMappings(transaction, mappings);
-
-        // Increment mapping usage (fire-and-forget)
-        if (appliedMappingIds.length > 0) {
-            appliedMappingIds.forEach(mappingId => {
-                incrementMappingUsage(db, user.uid, appId, mappingId)
-                    .catch(err => console.error('Failed to increment mapping usage:', err));
-            });
-        }
-
-        // Apply merchant mappings
-        // v9.6.1: Also apply learned store category if present
-        let finalTx = categorizedTx;
-        const merchantMatch = findMerchantMatch(categorizedTx.merchant);
-        if (merchantMatch && merchantMatch.confidence > 0.7) {
-            finalTx = {
-                ...finalTx,
-                alias: merchantMatch.mapping.targetMerchant,
-                // v9.6.1: Apply learned store category
-                ...(merchantMatch.mapping.storeCategory && { category: merchantMatch.mapping.storeCategory }),
-                merchantSource: 'learned' as const
-            };
-            if (merchantMatch.mapping.id) {
-                incrementMerchantMappingUsage(db, user.uid, appId, merchantMatch.mapping.id)
-                    .catch(err => console.error('Failed to increment merchant mapping usage:', err));
-            }
-
-            // v9.7.0: Apply learned item name mappings (scoped to this merchant)
-            const { transaction: txWithItemNames, appliedIds: itemNameMappingIds } = applyItemNameMappings(
-                finalTx,
-                merchantMatch.mapping.normalizedMerchant
-            );
-            finalTx = txWithItemNames;
-
-            // Increment item name mapping usage counts (fire-and-forget)
-            if (itemNameMappingIds.length > 0) {
-                itemNameMappingIds.forEach(id => {
-                    incrementItemNameMappingUsage(db, user.uid, appId, id)
-                        .catch(err => console.error('Failed to increment item name mapping usage:', err));
-                });
-            }
-        }
-
-        // Save transaction
-        const transactionId = await firestoreAddTransaction(db, user.uid, appId, finalTx);
-
-        // Fire-and-forget to not block batch save performance
-        if (finalTx.sharedGroupIds && finalTx.sharedGroupIds.length > 0) {
-            updateMemberTimestampsForTransaction(
-                db,
-                user.uid,
-                finalTx.sharedGroupIds,
-                [] // No previous groups for new transactions
-            ).catch(err => {
-                console.warn('[App] Failed to update memberUpdates for batch save:', err);
-            });
-        }
-
-        return transactionId;
+        return saveBatchTransaction(transaction, {
+            services,
+            user,
+            mappings,
+            applyCategoryMappings,
+            findMerchantMatch,
+            applyItemNameMappings,
+        });
     };
 
     // Remove image from batch (if 1 left, switch to single image flow)
@@ -2203,27 +2166,8 @@ function App() {
         onUpgradeRequired: () => setToastMessage({ text: t('upgradeRequired'), type: 'info' }),
     });
 
-    const batchReviewViewDataProps = useBatchReviewViewProps({
-        processingResults: batchProcessing.results,
-        imageDataUrls: batchImages,
-        theme: theme as 'light' | 'dark',
-        currency,
-        t,
-        processingState: batchProcessing.isProcessing ? {
-            isProcessing: true,
-            progress: batchProcessing.progress,
-            states: batchProcessing.states,
-            onCancelProcessing: batchProcessing.cancel,
-        } : undefined,
-        credits: userCredits ? {
-            remaining: userCredits.remaining,
-            superRemaining: userCredits.superRemaining,
-        } : undefined,
-        onEditReceipt: handleBatchEditReceipt,
-        onCancel: handleBatchReviewBack,
-        onSaveComplete: handleBatchSaveComplete,
-        saveTransaction: handleBatchSaveTransaction,
-    });
+    // Story 14e-16: useBatchReviewViewProps removed - BatchReviewFeature uses store selectors instead
+    // Props are now passed directly to BatchReviewFeature in the render section
 
     const transactionEditorViewProps = useTransactionEditorViewProps({
         user,
@@ -2858,7 +2802,9 @@ function App() {
                                                 });
                                             }
                                             const receipts = createBatchReceiptsFromResults(taggedResults, imageUrls);
+                                            // Story 14e-16: Load into both scan store (for legacy) and batch review store (for orchestrator)
                                             dispatchBatchComplete(receipts);
+                                            batchReviewActions.loadBatch(receipts);
                                         },
                                     }
                                 );
@@ -2903,8 +2849,110 @@ function App() {
                     />
                 )}
 
-                {/* BatchReviewView - review processed receipts before saving */}
-                {view === 'batch-review' && <BatchReviewView {...batchReviewViewDataProps} />}
+                {/* Story 14e-16: BatchReviewFeature orchestrator - phase-based rendering from Zustand store */}
+                {view === 'batch-review' && (
+                    <BatchReviewFeature
+                        t={t}
+                        theme={theme as 'light' | 'dark'}
+                        currency={currency}
+                        formatCurrency={formatCurrency}
+                        credits={{
+                            remaining: userCredits.remaining,
+                            superRemaining: userCredits.superRemaining ?? 0,
+                        }}
+                        onCreditInfoClick={() => openModalAction('creditInfo', {
+                            normalCredits: userCredits.remaining,
+                            superCredits: userCredits.superRemaining ?? 0,
+                            onClose: closeModalAction,
+                        })}
+                        processingStates={batchProcessing.states}
+                        processingProgress={batchProcessing.progress}
+                        onCancelProcessing={batchProcessing.cancel}
+                        onEditReceipt={(receipt) => {
+                            // Adapter: Use scanState.batchReceipts (not batch review store)
+                            // because handleBatchEditReceipt uses scan store's setBatchEditingIndex
+                            const items = scanState.batchReceipts || [];
+                            const batchIndex = items.findIndex(item => item.id === receipt.id);
+                            // editBatchReceipt expects 1-indexed (converts to 0-indexed internally)
+                            // findIndex returns 0-indexed, so add 1
+                            handleBatchEditReceipt(receipt, batchIndex >= 0 ? batchIndex + 1 : 1, items.length, items);
+                        }}
+                        onSaveReceipt={async (receiptId) => {
+                            // Single receipt save - get receipt from scan store
+                            const receipt = scanState.batchReceipts?.find(item => item.id === receiptId);
+                            if (receipt) {
+                                try {
+                                    await handleBatchSaveTransaction(receipt.transaction);
+                                    // Remove from batch review store after successful save
+                                    batchReviewActions.discardItem(receiptId);
+                                    // Also update scanState.batchReceipts to keep in sync
+                                    discardBatchReceiptContext(receiptId);
+
+                                    // Story 14e-16: Check if batch is now empty after this save
+                                    // If so, auto-complete the batch review
+                                    const remainingCount = (scanState.batchReceipts?.length || 0) - 1;
+                                    if (remainingCount <= 0) {
+                                        // Get all saved transactions from batch session
+                                        // batchSession.receipts is Transaction[] directly
+                                        const savedTransactions = batchSession?.receipts || [];
+                                        // Reset store to idle before showing completion modal
+                                        batchReviewActions.reset();
+                                        handleBatchSaveComplete([], savedTransactions);
+                                    }
+                                } catch (error) {
+                                    console.error('[App] Failed to save receipt:', receiptId, error);
+                                }
+                            }
+                        }}
+                        onSaveAll={async () => {
+                            // Save all valid receipts from scan store
+                            const items = scanState.batchReceipts || [];
+                            const validReceipts = items.filter(r => r.status !== 'error');
+                            const savedTransactions: Transaction[] = [];
+
+                            // Start save operation in batch review store
+                            batchReviewActions.saveStart();
+
+                            for (const receipt of validReceipts) {
+                                try {
+                                    await handleBatchSaveTransaction(receipt.transaction);
+                                    savedTransactions.push(receipt.transaction);
+                                    // Track successful save in store
+                                    batchReviewActions.saveItemSuccess(receipt.id);
+                                } catch (error) {
+                                    console.error('[App] Failed to save receipt:', receipt.id, error);
+                                    // Track failed save in store
+                                    batchReviewActions.saveItemFailure(receipt.id, String(error));
+                                }
+                            }
+
+                            // Complete batch save operation in store
+                            batchReviewActions.saveComplete();
+
+                            // Reset store to idle before showing completion modal
+                            batchReviewActions.reset();
+
+                            // Show completion modal and navigate
+                            handleBatchSaveComplete([], savedTransactions);
+                        }}
+                        onSaveComplete={() => {
+                            // Story 14e-16: Pass saved transactions from batch session
+                            const savedTransactions = batchSession?.receipts || [];
+                            // Reset store FIRST to prevent infinite loop (phase → idle breaks useEffect condition)
+                            batchReviewActions.reset();
+                            handleBatchSaveComplete([], savedTransactions);
+                        }}
+                        onDiscardReceipt={(receiptId) => {
+                            // Sync scan store when discarding via UI
+                            discardBatchReceiptContext(receiptId);
+                        }}
+                        onBack={() => handleBatchReviewBack()}
+                        onRetryReceipt={(_receipt) => {
+                            // Retry a failed receipt by re-processing
+                            setToastMessage({ text: t('retryNotImplemented') || 'Retry not implemented', type: 'info' });
+                        }}
+                    />
+                )}
 
                 {/* SettingsView */}
                 {view === 'settings' && <SettingsView {...settingsViewProps} />}

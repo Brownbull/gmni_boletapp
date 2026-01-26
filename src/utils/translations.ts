@@ -632,6 +632,14 @@ export const TRANSLATIONS = {
         batchSaving: "Saving...",
         batchErrorExcluded: "{count} error receipt(s) excluded",
         batchSaveSuccess: "{count} receipt(s) saved successfully",
+        // Story 14e-16: BatchReviewFeature translations
+        batchLoading: "Loading receipts...",
+        batchSaveComplete: "Save Complete!",
+        batchError: "Something went wrong",
+        batchErrorMessage: "Unable to save receipts. Please try again.",
+        failed: "failed",
+        receiptSaved: "receipt saved",
+        receiptsSaved: "receipts saved",
         // Story 14.12: Dashboard recientes section
         noRecentTransactions: "No recent transactions",
         // Story 14.12: Dashboard carousel and date labels
@@ -1580,6 +1588,14 @@ export const TRANSLATIONS = {
         batchSaving: "Guardando...",
         batchErrorExcluded: "{count} boleta(s) con error excluida(s)",
         batchSaveSuccess: "{count} boleta(s) guardada(s) exitosamente",
+        // Story 14e-16: BatchReviewFeature translations
+        batchLoading: "Cargando recibos...",
+        batchSaveComplete: "¡Guardado completo!",
+        batchError: "Algo salió mal",
+        batchErrorMessage: "No se pudieron guardar los recibos. Por favor, intente de nuevo.",
+        failed: "fallido",
+        receiptSaved: "recibo guardado",
+        receiptsSaved: "recibos guardados",
         // Story 14.12: Dashboard recientes section
         noRecentTransactions: "Sin transacciones recientes",
         // Story 14.12: Dashboard carousel and date labels
