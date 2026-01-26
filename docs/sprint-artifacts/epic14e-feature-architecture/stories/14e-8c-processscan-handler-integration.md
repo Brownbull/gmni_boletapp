@@ -1,6 +1,6 @@
 # Story 14e.8c: processScan Main Handler & App.tsx Integration
 
-Status: ready-for-dev
+Status: completed
 
 ## Story
 
@@ -59,28 +59,28 @@ This is **Part 3 of 3** from the split of Story 14e.8 (Extract processScan Handl
 
 ### Task 3: Create Main processScan Handler (AC: 1, 2)
 
-- [ ] **3.1** Create `src/features/scan/handlers/processScan/processScan.ts`
-- [ ] **3.2** Implement `processScan(params: ProcessScanParams)` function
+- [x] **3.1** Create `src/features/scan/handlers/processScan/processScan.ts`
+- [x] **3.2** Implement `processScan(params: ProcessScanParams)` function
   - Orchestrates: validate -> mappings -> currency -> success routing
   - Uses utilities from utils.ts
   - Uses sub-handlers from subhandlers.ts
   - Handles error paths and credit refunds
-- [ ] **3.3** Add comprehensive JSDoc documentation
-- [ ] **3.4** Update barrel export in `processScan/index.ts`
-- [ ] **3.5** Export from `src/features/scan/handlers/index.ts`
-- [ ] **3.6** Export from `src/features/scan/index.ts`
+- [x] **3.3** Add comprehensive JSDoc documentation
+- [x] **3.4** Update barrel export in `processScan/index.ts`
+- [x] **3.5** Export from `src/features/scan/handlers/index.ts`
+- [x] **3.6** Export from `src/features/scan/index.ts`
 
 ### Task 4: App.tsx Integration & Verification (AC: 3, 4, 5)
 
-- [ ] **4.1** Import handler in App.tsx: `import { processScan } from '@features/scan'`
-- [ ] **4.2** Create wrapper function that:
+- [x] **4.1** Import handler in App.tsx: `import { processScan } from '@features/scan'`
+- [x] **4.2** Create wrapper function that:
   - Collects all dependencies from App.tsx state/hooks
   - Groups into ProcessScanParams structure
   - Calls extracted handler
-- [ ] **4.3** Delete original processScan function from App.tsx (~302 lines)
-- [ ] **4.4** Run all tests - verify all pass
-- [ ] **4.5** Execute smoke test checklist from 14e-8a audit
-- [ ] **4.6** Update any imports in other files if needed
+- [x] **4.3** Delete original processScan function from App.tsx (~302 lines)
+- [x] **4.4** Run all tests - verify all pass
+- [x] **4.5** Execute smoke test checklist from 14e-8a audit
+- [x] **4.6** Update any imports in other files if needed
 
 ## Dev Notes
 
@@ -230,12 +230,53 @@ From Atlas analysis - verify these still work:
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
-_To be filled during development_
+1. **Main Handler Created**: `processScan.ts` implements full 13-step orchestration workflow:
+   - Input validation (images, credits)
+   - Credit deduction with error refund
+   - Gemini OCR call with timeout
+   - Date parsing with future year correction
+   - Location validation
+   - Total validation (triggers dialog if >40% discrepancy)
+   - Initial transaction building
+   - Category/merchant/item name mappings application
+   - Currency detection (triggers dialog if mismatch)
+   - Success routing (trusted-autosave, quicksave, edit-view)
+   - Trusted merchant auto-save with insight generation
+   - Error handling with credit refund
+
+2. **Feature Exports**: Handler properly exported through barrel files:
+   - `handlers/processScan/index.ts` → `handlers/index.ts` → `scan/index.ts`
+   - Importable via `@features/scan`
+
+3. **App.tsx Integration**: Original ~302-line function replaced with thin ~95-line wrapper that collects dependencies and calls extracted handler
+
+4. **Test Coverage**: 23 unit tests added for main handler covering:
+   - Input validation (no images, undefined images)
+   - Credit handling (no credits, deduction failure, refund on error/timeout)
+   - Processing flow (sequence, parameters, store type)
+   - Success routing (edit-view, trusted-autosave, quicksave, fallback)
+   - Date validation (future year correction)
+   - Mapping application (category, merchant confidence threshold)
+   - Error handling (API failure, unknown errors)
+   - Return values (complete result, hasDiscrepancy flag)
+
+5. **Post-Dev Review (Archie)**: Passed with notes - all ACs met, 100 scan feature tests passing
 
 ### File List
 
-_To be filled during development_
+**Created:**
+- `src/features/scan/handlers/processScan/processScan.ts` - Main handler (433 lines)
+- `tests/unit/features/scan/handlers/processScan/processScan.test.ts` - Unit tests (23 tests)
+
+**Modified:**
+- `src/features/scan/handlers/processScan/index.ts` - Added processScan export
+- `src/App.tsx` - Replaced ~302-line function with thin wrapper (~95 lines)
+
+**Dependencies (from prior stories):**
+- `src/features/scan/handlers/processScan/types.ts` - ProcessScanParams, ProcessScanResult (Story 14e-8b)
+- `src/features/scan/handlers/processScan/utils.ts` - getSafeDate, parseStrictNumber, etc. (Story 14e-8a)
+- `src/features/scan/handlers/processScan/subhandlers.ts` - validateScanResult, applyAllMappings, etc. (Story 14e-8b)

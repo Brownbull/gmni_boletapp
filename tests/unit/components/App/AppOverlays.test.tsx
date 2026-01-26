@@ -93,11 +93,7 @@ vi.mock('../../../../src/components/batch', () => ({
     ),
 }));
 
-vi.mock('../../../../src/components/dialogs/TransactionConflictDialog', () => ({
-    TransactionConflictDialog: ({ isOpen }: { isOpen: boolean }) => (
-        isOpen ? <div data-testid="transaction-conflict-dialog">TransactionConflictDialog</div> : null
-    ),
-}));
+// Story 14e-5: TransactionConflictDialog mock removed - now rendered by ModalManager, not AppOverlays
 
 // =============================================================================
 // Test Fixtures
@@ -195,12 +191,7 @@ const createMockProps = (overrides: Partial<AppOverlaysProps> = {}): AppOverlays
     onTotalKeepOriginal: vi.fn(),
     onTotalMismatchCancel: vi.fn(),
 
-    // Transaction conflict dialog props
-    showConflictDialog: false,
-    conflictDialogData: null,
-    onConflictClose: vi.fn(),
-    onConflictViewCurrent: vi.fn(),
-    onConflictDiscard: vi.fn(),
+    // Story 14e-5: Transaction conflict dialog props removed - now uses Modal Manager
 
     // Batch complete modal props
     userCreditsRemaining: 10,
@@ -510,34 +501,8 @@ describe('AppOverlays', () => {
         });
     });
 
-    describe('TransactionConflictDialog visibility', () => {
-        it('shows TransactionConflictDialog when showConflictDialog is true', () => {
-            const props = createMockProps({
-                showConflictDialog: true,
-                conflictDialogData: {
-                    conflictingTransaction: {
-                        id: 'tx-123',
-                        merchantName: 'Test',
-                        total: 1000,
-                        date: new Date(),
-                    },
-                    conflictReason: 'duplicate_receipt',
-                },
-            });
-            render(<AppOverlays {...props} />);
-
-            expect(screen.getByTestId('transaction-conflict-dialog')).toBeInTheDocument();
-        });
-
-        it('hides TransactionConflictDialog when showConflictDialog is false', () => {
-            const props = createMockProps({
-                showConflictDialog: false,
-            });
-            render(<AppOverlays {...props} />);
-
-            expect(screen.queryByTestId('transaction-conflict-dialog')).not.toBeInTheDocument();
-        });
-    });
+    // Story 14e-5: TransactionConflictDialog tests removed - now rendered by ModalManager, not AppOverlays
+    // Test TransactionConflictDialog via ModalManager integration tests instead
 
     describe('BatchCompleteModal visibility', () => {
         it('shows BatchCompleteModal when activeDialog is BATCH_COMPLETE with transactions', () => {

@@ -16,8 +16,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ScanModeSelector } from '../../../../src/components/scan/ScanModeSelector';
-import type { ScanModeId } from '../../../../src/components/scan/ScanModeSelector';
+import { ScanModeSelector } from '@features/scan/components';
+import type { ScanModeId } from '@features/scan/components/ScanModeSelector';
 
 // Mock translation function
 const mockT = (key: string, params?: Record<string, string | number>): string => {

@@ -3,10 +3,11 @@
  *
  * Story 14c-refactor.21: Unit tests for extracted dialog handlers
  * Story 14e-4: Credit info modal removed - now uses Modal Manager
+ * Story 14e-5: Conflict dialog moved to Modal Manager - uses openModalDirect/closeModalDirect
  *
  * Tests dialog handlers:
  * - Toast notification management (showToast, auto-dismiss)
- * - Conflict dialog state and handlers (open, close, viewCurrent, discard)
+ * - Conflict dialog opening (openConflictDialog - triggers Modal Manager)
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -15,6 +16,12 @@ import type { Transaction } from '../../../../src/types/transaction';
 import type { ScanState } from '../../../../src/types/scanStateMachine';
 import type { UseDialogHandlersProps } from '../../../../src/hooks/app/useDialogHandlers';
 import { useDialogHandlers } from '../../../../src/hooks/app/useDialogHandlers';
+
+// Story 14e-5: Mock Modal Manager's openModalDirect and closeModalDirect
+vi.mock('../../../../src/managers/ModalManager', () => ({
+    openModalDirect: vi.fn(),
+    closeModalDirect: vi.fn(),
+}));
 
 describe('useDialogHandlers', () => {
     // Mock scan state
@@ -48,11 +55,15 @@ describe('useDialogHandlers', () => {
     const createDefaultProps = (overrides: Partial<UseDialogHandlersProps> = {}): UseDialogHandlersProps => ({
         scanState: createMockScanState(),
         setCurrentTransaction: vi.fn(),
-        setScanImages: vi.fn(),
+        resetScanState: vi.fn(),
+        clearBatchImages: vi.fn(),
         createDefaultTransaction: vi.fn(() => createMockTransaction()),
         setTransactionEditorMode: vi.fn(),
         navigateToView: vi.fn(),
         toastAutoHideMs: 3000,
+        t: vi.fn((key: string) => key),
+        lang: 'es',
+        formatCurrency: vi.fn((amount: number) => `$${amount}`),
         ...overrides,
     });
 
@@ -200,19 +211,21 @@ describe('useDialogHandlers', () => {
 
     // =========================================================================
     // Conflict Dialog Tests
-    // Story 14e-4: Credit info modal tests removed - now uses Modal Manager
+    // Story 14e-5: Conflict dialog now uses Modal Manager
+    // Tests verify openConflictDialog calls openModalDirect with correct props
     // =========================================================================
 
-    describe('conflict dialog', () => {
-        it('should initialize with dialog closed', () => {
+    describe('conflict dialog (Modal Manager integration)', () => {
+        it('should expose openConflictDialog function', () => {
             const props = createDefaultProps();
             const { result } = renderHook(() => useDialogHandlers(props));
 
-            expect(result.current.showConflictDialog).toBe(false);
-            expect(result.current.conflictDialogData).toBeNull();
+            expect(typeof result.current.openConflictDialog).toBe('function');
         });
 
-        it('should open conflict dialog via openConflictDialog', () => {
+        it('should call openModalDirect when openConflictDialog is called', async () => {
+            const { openModalDirect } = await import('../../../../src/managers/ModalManager');
+
             const props = createDefaultProps();
             const { result } = renderHook(() => useDialogHandlers(props));
 
@@ -234,244 +247,49 @@ describe('useDialogHandlers', () => {
                 );
             });
 
-            expect(result.current.showConflictDialog).toBe(true);
-            expect(result.current.conflictDialogData).toEqual({
-                conflictingTransaction,
-                conflictReason: 'scan_in_progress',
-                pendingAction: { mode: 'new' },
-            });
+            expect(openModalDirect).toHaveBeenCalledTimes(1);
+            expect(openModalDirect).toHaveBeenCalledWith(
+                'transactionConflict',
+                expect.objectContaining({
+                    conflictingTransaction,
+                    conflictReason: 'scan_in_progress',
+                })
+            );
         });
 
-        it('should close conflict dialog via handleConflictClose', () => {
-            const props = createDefaultProps();
+        it('should pass all required props to openModalDirect', async () => {
+            const { openModalDirect } = await import('../../../../src/managers/ModalManager');
+            const mockT = vi.fn((key: string) => key);
+            const mockFormatCurrency = vi.fn((amount: number) => `$${amount}`);
+
+            const props = createDefaultProps({
+                t: mockT,
+                lang: 'en',
+                formatCurrency: mockFormatCurrency,
+            });
             const { result } = renderHook(() => useDialogHandlers(props));
 
-            // Open dialog first
             act(() => {
                 result.current.openConflictDialog(
-                    {
-                        creditUsed: false,
-                        hasChanges: true,
-                        isScanning: false,
-                        source: 'manual_entry',
-                    },
+                    { creditUsed: false, hasChanges: true, isScanning: false, source: 'manual_entry' },
                     'has_unsaved_changes',
                     { mode: 'existing' }
                 );
             });
 
-            expect(result.current.showConflictDialog).toBe(true);
-
-            act(() => {
-                result.current.handleConflictClose();
-            });
-
-            expect(result.current.showConflictDialog).toBe(false);
-            expect(result.current.conflictDialogData).toBeNull();
-        });
-
-        it('should navigate to conflicting transaction via handleConflictViewCurrent', () => {
-            const setCurrentTransaction = vi.fn();
-            const setTransactionEditorMode = vi.fn();
-            const navigateToView = vi.fn();
-            const mockTransaction = createMockTransaction({ id: 'existing-tx' });
-
-            const props = createDefaultProps({
-                scanState: createMockScanState({ results: [mockTransaction] }),
-                setCurrentTransaction,
-                setTransactionEditorMode,
-                navigateToView,
-            });
-            const { result } = renderHook(() => useDialogHandlers(props));
-
-            // Open dialog first
-            act(() => {
-                result.current.openConflictDialog(
-                    { creditUsed: true, hasChanges: false, isScanning: true, source: 'new_scan' },
-                    'scan_in_progress',
-                    { mode: 'new' }
-                );
-            });
-
-            act(() => {
-                result.current.handleConflictViewCurrent();
-            });
-
-            expect(result.current.showConflictDialog).toBe(false);
-            expect(result.current.conflictDialogData).toBeNull();
-            expect(setCurrentTransaction).toHaveBeenCalledWith(mockTransaction);
-            expect(setTransactionEditorMode).toHaveBeenCalledWith('new');
-            expect(navigateToView).toHaveBeenCalledWith('transaction-editor');
-        });
-
-        it('should NOT set transaction when no results in scanState', () => {
-            const setCurrentTransaction = vi.fn();
-            const setTransactionEditorMode = vi.fn();
-            const navigateToView = vi.fn();
-
-            const props = createDefaultProps({
-                scanState: createMockScanState({ results: [] }),
-                setCurrentTransaction,
-                setTransactionEditorMode,
-                navigateToView,
-            });
-            const { result } = renderHook(() => useDialogHandlers(props));
-
-            // Open dialog first
-            act(() => {
-                result.current.openConflictDialog(
-                    { creditUsed: false, hasChanges: false, isScanning: false, source: 'new_scan' },
-                    'scan_in_progress',
-                    { mode: 'new' }
-                );
-            });
-
-            act(() => {
-                result.current.handleConflictViewCurrent();
-            });
-
-            expect(setCurrentTransaction).not.toHaveBeenCalled();
-            expect(setTransactionEditorMode).toHaveBeenCalledWith('new');
-            expect(navigateToView).toHaveBeenCalledWith('transaction-editor');
-        });
-
-        it('should discard conflicting and proceed with pending action via handleConflictDiscard', () => {
-            const setCurrentTransaction = vi.fn();
-            const setScanImages = vi.fn();
-            const setTransactionEditorMode = vi.fn();
-            const navigateToView = vi.fn();
-            const pendingTransaction = createMockTransaction({ id: 'pending-tx' });
-
-            const props = createDefaultProps({
-                setCurrentTransaction,
-                setScanImages,
-                setTransactionEditorMode,
-                navigateToView,
-            });
-            const { result } = renderHook(() => useDialogHandlers(props));
-
-            // Open dialog with pending action
-            act(() => {
-                result.current.openConflictDialog(
-                    { creditUsed: true, hasChanges: false, isScanning: true, source: 'new_scan' },
-                    'scan_in_progress',
-                    { mode: 'existing', transaction: pendingTransaction }
-                );
-            });
-
-            act(() => {
-                result.current.handleConflictDiscard();
-            });
-
-            expect(result.current.showConflictDialog).toBe(false);
-            // Clear conflicting state
-            expect(setCurrentTransaction).toHaveBeenCalledWith(null);
-            expect(setScanImages).toHaveBeenCalledWith([]);
-            // Execute pending action
-            expect(setTransactionEditorMode).toHaveBeenCalledWith('existing');
-            expect(setCurrentTransaction).toHaveBeenCalledWith(pendingTransaction);
-            expect(navigateToView).toHaveBeenCalledWith('transaction-editor');
-        });
-
-        it('should create default transaction when discarding with mode=new and no transaction', () => {
-            const setCurrentTransaction = vi.fn();
-            const setScanImages = vi.fn();
-            const setTransactionEditorMode = vi.fn();
-            const navigateToView = vi.fn();
-            const defaultTransaction = createMockTransaction();
-            const createDefaultTransaction = vi.fn(() => defaultTransaction);
-
-            const props = createDefaultProps({
-                setCurrentTransaction,
-                setScanImages,
-                setTransactionEditorMode,
-                navigateToView,
-                createDefaultTransaction,
-            });
-            const { result } = renderHook(() => useDialogHandlers(props));
-
-            // Open dialog with mode=new but no transaction
-            act(() => {
-                result.current.openConflictDialog(
-                    { creditUsed: false, hasChanges: true, isScanning: false, source: 'manual_entry' },
-                    'has_unsaved_changes',
-                    { mode: 'new' }
-                );
-            });
-
-            act(() => {
-                result.current.handleConflictDiscard();
-            });
-
-            expect(createDefaultTransaction).toHaveBeenCalled();
-            expect(setCurrentTransaction).toHaveBeenCalledWith(defaultTransaction);
-            expect(setTransactionEditorMode).toHaveBeenCalledWith('new');
-        });
-
-        it('should handle discard when no pendingAction data', () => {
-            const setCurrentTransaction = vi.fn();
-            const setScanImages = vi.fn();
-            const setTransactionEditorMode = vi.fn();
-            const navigateToView = vi.fn();
-
-            const props = createDefaultProps({
-                setCurrentTransaction,
-                setScanImages,
-                setTransactionEditorMode,
-                navigateToView,
-            });
-            const { result } = renderHook(() => useDialogHandlers(props));
-
-            // Manually set dialog data to null to simulate edge case
-            act(() => {
-                result.current.setShowConflictDialog(true);
-                result.current.setConflictDialogData(null);
-            });
-
-            act(() => {
-                result.current.handleConflictDiscard();
-            });
-
-            expect(result.current.showConflictDialog).toBe(false);
-            // Should still clear conflicting state
-            expect(setCurrentTransaction).toHaveBeenCalledWith(null);
-            expect(setScanImages).toHaveBeenCalledWith([]);
-            // But NOT execute pending action
-            expect(setTransactionEditorMode).not.toHaveBeenCalled();
-            expect(navigateToView).not.toHaveBeenCalled();
-        });
-
-        it('should allow direct state control via setShowConflictDialog', () => {
-            const props = createDefaultProps();
-            const { result } = renderHook(() => useDialogHandlers(props));
-
-            act(() => {
-                result.current.setShowConflictDialog(true);
-            });
-
-            expect(result.current.showConflictDialog).toBe(true);
-        });
-
-        it('should allow direct state control via setConflictDialogData', () => {
-            const props = createDefaultProps();
-            const { result } = renderHook(() => useDialogHandlers(props));
-
-            const data = {
-                conflictingTransaction: {
-                    creditUsed: false,
-                    hasChanges: false,
-                    isScanning: false,
-                    source: 'new_scan' as const,
-                },
-                conflictReason: 'credit_used' as const,
-                pendingAction: { mode: 'new' as const },
-            };
-
-            act(() => {
-                result.current.setConflictDialogData(data);
-            });
-
-            expect(result.current.conflictDialogData).toEqual(data);
+            expect(openModalDirect).toHaveBeenCalledWith(
+                'transactionConflict',
+                expect.objectContaining({
+                    t: mockT,
+                    lang: 'en',
+                    formatCurrency: mockFormatCurrency,
+                    // Handler functions
+                    onContinueCurrent: expect.any(Function),
+                    onViewConflicting: expect.any(Function),
+                    onDiscardConflicting: expect.any(Function),
+                    onClose: expect.any(Function),
+                })
+            );
         });
     });
 
@@ -484,38 +302,16 @@ describe('useDialogHandlers', () => {
             const props = createDefaultProps();
             const { result, rerender } = renderHook(() => useDialogHandlers(props));
 
-            // Story 14e-4: Credit info modal handlers removed - now uses Modal Manager
+            // Story 14e-5: Only openConflictDialog and toast handlers exposed now
             const firstRender = {
                 showToast: result.current.showToast,
-                handleConflictClose: result.current.handleConflictClose,
-                handleConflictViewCurrent: result.current.handleConflictViewCurrent,
-                handleConflictDiscard: result.current.handleConflictDiscard,
                 openConflictDialog: result.current.openConflictDialog,
             };
 
             rerender();
 
             expect(result.current.showToast).toBe(firstRender.showToast);
-            expect(result.current.handleConflictClose).toBe(firstRender.handleConflictClose);
             expect(result.current.openConflictDialog).toBe(firstRender.openConflictDialog);
-        });
-
-        it('should update conflict handlers when scanState changes', () => {
-            const props = createDefaultProps();
-            const { result, rerender } = renderHook(
-                (currentProps) => useDialogHandlers(currentProps),
-                { initialProps: props }
-            );
-
-            const firstViewCurrent = result.current.handleConflictViewCurrent;
-
-            // Change scanState with new results
-            const newScanState = createMockScanState({
-                results: [createMockTransaction()],
-            });
-            rerender({ ...props, scanState: newScanState });
-
-            expect(result.current.handleConflictViewCurrent).not.toBe(firstViewCurrent);
         });
     });
 
@@ -551,7 +347,9 @@ describe('useDialogHandlers', () => {
             expect(result.current.toastMessage?.text).toBe('Third');
         });
 
-        it('should handle opening conflict dialog multiple times', () => {
+        it('should handle opening conflict dialog multiple times', async () => {
+            const { openModalDirect } = await import('../../../../src/managers/ModalManager');
+
             const props = createDefaultProps();
             const { result } = renderHook(() => useDialogHandlers(props));
 
@@ -564,9 +362,9 @@ describe('useDialogHandlers', () => {
                 );
             });
 
-            expect(result.current.conflictDialogData?.conflictReason).toBe('has_unsaved_changes');
+            expect(openModalDirect).toHaveBeenCalledTimes(1);
 
-            // Second open (should replace first)
+            // Second open (should replace first via Modal Manager)
             act(() => {
                 result.current.openConflictDialog(
                     { creditUsed: true, hasChanges: false, isScanning: true, source: 'new_scan' },
@@ -575,7 +373,15 @@ describe('useDialogHandlers', () => {
                 );
             });
 
-            expect(result.current.conflictDialogData?.conflictReason).toBe('credit_used');
+            // Modal Manager is called twice total
+            expect(openModalDirect).toHaveBeenCalledTimes(2);
+            // Second call should have the new conflict reason
+            expect(openModalDirect).toHaveBeenLastCalledWith(
+                'transactionConflict',
+                expect.objectContaining({
+                    conflictReason: 'credit_used',
+                })
+            );
         });
     });
 });

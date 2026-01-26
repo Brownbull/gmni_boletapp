@@ -52,10 +52,9 @@ import { formatCreditsDisplay } from '../services/userCreditsService';
 import { CategoryBadge } from '../components/CategoryBadge';
 import { CategorySelectorOverlay } from '../components/CategorySelectorOverlay';
 import { ImageViewer } from '../components/ImageViewer';
-import { CategoryLearningPrompt } from '../components/CategoryLearningPrompt';
-import { SubcategoryLearningPrompt } from '../components/SubcategoryLearningPrompt';
-import { LearnMerchantDialog, type LearnMerchantSelection, type ItemNameChange } from '../components/dialogs/LearnMerchantDialog';
-import { ItemNameSuggestionDialog } from '../components/dialogs/ItemNameSuggestionDialog';
+// Story 14e-5: Learning dialogs and ItemNameSuggestion now use Modal Manager
+import type { LearnMerchantSelection, ItemNameChange } from '../components/dialogs/LearnMerchantDialog';
+import { useModalActions } from '@managers/ModalManager';
 import { ItemNameSuggestionIndicator } from '../components/ItemNameSuggestionIndicator';
 import { normalizeMerchantName } from '../services/merchantMappingService';
 import { normalizeItemName } from '../services/itemNameMappingService';
@@ -64,7 +63,7 @@ import { LocationSelect } from '../components/LocationSelect';
 import { DateTimeTag } from '../components/DateTimeTag';
 import { CurrencyTag } from '../components/CurrencyTag';
 import { ProcessingOverlay } from '../components/scan/ProcessingOverlay';
-import { ScanCompleteModal } from '../components/scan/ScanCompleteModal';
+import { ScanCompleteModal } from '@features/scan/components';
 import { celebrateSuccess } from '../utils/confetti';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useStaggeredReveal } from '../hooks/useStaggeredReveal';
@@ -87,7 +86,9 @@ import { translateItemCategoryGroup, getItemCategoryGroupEmoji, translateStoreCa
 import { getCategoryPillColors, getItemCategoryGroup, getItemGroupColors } from '../config/categoryColors';
 import { getCategoryEmoji } from '../utils/categoryEmoji';
 import { normalizeItemCategory } from '../utils/categoryNormalizer';
-import { useScanOptional } from '../contexts/ScanContext';
+// Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
+import { useIsProcessing as useScanIsProcessing, useScanActiveDialog } from '@features/scan/store';
+import { DIALOG_TYPES } from '../types/scanStateMachine';
 import { useViewHandlers } from '../contexts/ViewHandlersContext';
 import { ItemViewToggle, type ItemViewMode } from '../components/items/ItemViewToggle';
 import { TransactionGroupSelector, type GroupWithMeta } from '../components/SharedGroups';
@@ -319,9 +320,8 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
-  // Story 14d.4b: Get scan context for reading scan state
-  // Uses optional hook since TransactionEditorView might be rendered outside ScanProvider
-  const scanContext = useScanOptional();
+  // Story 14e-11: Use Zustand selector (always available, no provider boundary)
+  const scanStoreIsProcessing = useScanIsProcessing();
 
   // Story 14c-refactor.27: Get dialog handlers from ViewHandlersContext
   const { dialog } = useViewHandlers();
@@ -329,10 +329,10 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   const showToast = dialog.showToast;
   const openCreditInfoModal = dialog.openCreditInfoModal;
 
-  // Story 14d.4b: Derive scan state from context or fall back to props
-  // Context takes precedence when available - this allows gradual migration
-  // Note: These "effective" variables merge context state with props for backward compatibility
-  const effectiveIsProcessing = scanContext?.isProcessing ?? isProcessing;
+  // Story 14d.4b: Derive scan state from store or fall back to props
+  // Zustand store takes precedence when scan is active - this allows gradual migration
+  // Note: These "effective" variables merge store state with props for backward compatibility
+  const effectiveIsProcessing = scanStoreIsProcessing || isProcessing;
   // Story 14d.4c: effectiveScanError removed - error display uses scanButtonState derived from phase
 
   // Use transaction's currency if available, otherwise fall back to user's default currency
@@ -370,7 +370,28 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   const [showSubcategoryLearningPrompt, setShowSubcategoryLearningPrompt] = useState(false);
   const [subcategoriesToLearn, setSubcategoriesToLearn] = useState<Array<{ itemName: string; newSubcategory: string }>>([]);
   const [showMerchantLearningPrompt, setShowMerchantLearningPrompt] = useState(false);
-  const [savingMappings, setSavingMappings] = useState(false);
+  // Story 14e-5: savingMappings state kept for internal tracking; value not read since
+  // modals now close immediately (Modal Manager pattern) instead of showing loading state
+  const [_savingMappings, setSavingMappings] = useState(false);
+
+  // Story 14e-5: Modal Manager for learning dialogs and item name suggestion
+  const { openModal, closeModal } = useModalActions();
+
+  // Story 14e-5: Refs to track previous state for modal open detection
+  const prevShowLearningPromptRef = useRef(false);
+  const prevShowSubcategoryPromptRef = useRef(false);
+  const prevShowMerchantPromptRef = useRef(false);
+  const prevActiveSuggestionRef = useRef<typeof activeSuggestion>(null);
+
+  // Story 14e-5: Handler refs to always use latest handlers in useEffect callbacks
+  const handleLearnConfirmRef = useRef<() => Promise<void>>(() => Promise.resolve());
+  const handleLearnDismissRef = useRef<() => Promise<void>>(() => Promise.resolve());
+  const handleSubcategoryConfirmRef = useRef<() => Promise<void>>(() => Promise.resolve());
+  const handleSubcategoryDismissRef = useRef<() => Promise<void>>(() => Promise.resolve());
+  const handleMerchantConfirmRef = useRef<(selection: LearnMerchantSelection) => Promise<void>>(() => Promise.resolve());
+  const handleMerchantDismissRef = useRef<() => Promise<void>>(() => Promise.resolve());
+  const handleApplySuggestionRef = useRef<() => void>(() => {});
+  const handleDismissSuggestionRef = useRef<() => void>(() => {});
 
   // Phase 4: Cross-Store Suggestions state
   // Track which items have cross-store suggestions (item index -> suggestion data)
@@ -413,6 +434,10 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   // Determine credit availability
   const hasCredits = (credits?.remaining ?? 0) > 0 || (credits?.superRemaining ?? 0) > 0;
 
+  // Story 14e-11: Check if QUICKSAVE dialog is active (should use QuickSaveCard, not ScanCompleteModal)
+  const scanActiveDialog = useScanActiveDialog();
+  const isQuickSaveDialogActive = scanActiveDialog?.type === DIALOG_TYPES.QUICKSAVE;
+
   // Track previous scanButtonState to only show modal on TRANSITION to 'complete'
   // Story 14.24: Prevent ScanCompleteModal from showing when entering editor with
   // scanButtonState already at 'complete' (e.g., from QuickSaveCard edit)
@@ -428,16 +453,18 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
     // This prevents the modal from appearing when mounting with state already at 'complete'
     // (e.g., when navigating from QuickSaveCard's "Edit" button)
     // v9.7.0: Also skip if skipScanCompleteModal is true (coming from QuickSaveCard edit)
+    // Story 14e-11: Skip if QUICKSAVE dialog is active (QuickSaveCard will show instead)
     if (
       mode === 'new' &&
       scanButtonState === 'complete' &&
       prevState !== 'complete' &&
       transaction &&
+      !isQuickSaveDialogActive &&
       !skipScanCompleteModal
     ) {
       setShowScanCompleteModal(true);
     }
-  }, [mode, scanButtonState, transaction, skipScanCompleteModal]);
+  }, [mode, scanButtonState, transaction, skipScanCompleteModal, isQuickSaveDialogActive]);
 
   // Capture original item groups on mount
   useEffect(() => {
@@ -635,7 +662,9 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   }, [transaction?.merchant, transaction?.items, itemNameMappings, findCrossStoreSuggestion, itemSuggestions]);
 
   // Handle applying a cross-store suggestion
+  // Story 14e-5: Now uses Modal Manager
   const handleApplySuggestion = useCallback(() => {
+    closeModal(); // Story 14e-5: Close modal via Modal Manager
     if (!activeSuggestion || !transaction) return;
 
     const { itemIndex, suggestedName } = activeSuggestion;
@@ -673,13 +702,13 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
       ).catch(err => console.error('Failed to save cross-store suggestion mapping:', err));
     }
 
-    // Close the dialog
+    // Close the dialog (state tracking)
     setActiveSuggestion(null);
 
     // Show toast feedback
     // Story 14c-refactor.27: Use dialog.showToast from ViewHandlersContext
     showToast(t('suggestionApplied') || 'Name updated from suggestion', 'success');
-  }, [activeSuggestion, transaction, onUpdateTransaction, onSaveItemNameMapping, showToast, t]);
+  }, [closeModal, activeSuggestion, transaction, onUpdateTransaction, onSaveItemNameMapping, showToast, t]);
 
   // Handle clicking the suggestion indicator
   const handleShowSuggestion = useCallback((itemIndex: number, item: TransactionItem) => {
@@ -978,7 +1007,9 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   };
 
   // Learning prompt handlers
+  // Story 14e-5: Now uses Modal Manager - closeModal() closes the modal, state update is for tracking
   const handleLearnConfirm = async () => {
+    closeModal(); // Story 14e-5: Close modal via Modal Manager
     if (onSaveMapping && itemsToLearn.length > 0) {
       setSavingMappings(true);
       try {
@@ -999,12 +1030,15 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   };
 
   const handleLearnDismiss = async () => {
+    closeModal(); // Story 14e-5: Close modal via Modal Manager
     setShowLearningPrompt(false);
     setItemsToLearn([]);
     await proceedToSubcategoryLearningOrNext();
   };
 
+  // Story 14e-5: Now uses Modal Manager - closeModal() closes the modal, state update is for tracking
   const handleSubcategoryLearnConfirm = async () => {
+    closeModal(); // Story 14e-5: Close modal via Modal Manager
     if (onSaveSubcategoryMapping && subcategoriesToLearn.length > 0) {
       setSavingMappings(true);
       try {
@@ -1025,6 +1059,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   };
 
   const handleSubcategoryLearnDismiss = async () => {
+    closeModal(); // Story 14e-5: Close modal via Modal Manager
     setShowSubcategoryLearningPrompt(false);
     setSubcategoriesToLearn([]);
     await proceedToMerchantLearningOrSave();
@@ -1032,7 +1067,9 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
 
   // v9.6.1: Updated to accept selection - user can choose which items to learn
   // v9.7.0: Now also handles item name mappings
+  // Story 14e-5: Now uses Modal Manager - closeModal() closes the modal, state update is for tracking
   const handleLearnMerchantConfirm = async (selection: LearnMerchantSelection) => {
+    closeModal(); // Story 14e-5: Close modal via Modal Manager
     if (transaction?.merchant) {
       // Only save if user selected at least one item to learn
       const shouldLearnAlias = selection.learnAlias && hasMerchantAliasChanged();
@@ -1084,9 +1121,81 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   };
 
   const handleLearnMerchantDismiss = async () => {
+    closeModal(); // Story 14e-5: Close modal via Modal Manager
     setShowMerchantLearningPrompt(false);
     await handleFinalSave();
   };
+
+  // Story 14e-5: Dismiss handler for ItemNameSuggestion
+  const handleDismissSuggestion = useCallback(() => {
+    closeModal();
+    setActiveSuggestion(null);
+  }, [closeModal]);
+
+  // Story 14e-5: Update handler refs so useEffect always calls latest version
+  handleLearnConfirmRef.current = handleLearnConfirm;
+  handleLearnDismissRef.current = handleLearnDismiss;
+  handleSubcategoryConfirmRef.current = handleSubcategoryLearnConfirm;
+  handleSubcategoryDismissRef.current = handleSubcategoryLearnDismiss;
+  handleMerchantConfirmRef.current = handleLearnMerchantConfirm;
+  handleMerchantDismissRef.current = handleLearnMerchantDismiss;
+  handleApplySuggestionRef.current = handleApplySuggestion;
+  handleDismissSuggestionRef.current = handleDismissSuggestion;
+
+  // Story 14e-5: Open CategoryLearning modal when showLearningPrompt becomes true
+  useEffect(() => {
+    const wasOpen = prevShowLearningPromptRef.current;
+    prevShowLearningPromptRef.current = showLearningPrompt;
+
+    // Only open on transition from false to true
+    if (!wasOpen && showLearningPrompt && itemsToLearn.length > 0) {
+      openModal('categoryLearning', {
+        items: itemsToLearn,
+        onConfirm: () => handleLearnConfirmRef.current(),
+        onClose: () => handleLearnDismissRef.current(),
+        t,
+        theme,
+      });
+    }
+  }, [showLearningPrompt, itemsToLearn, openModal, t, theme]);
+
+  // Story 14e-5: Open SubcategoryLearning modal when showSubcategoryLearningPrompt becomes true
+  useEffect(() => {
+    const wasOpen = prevShowSubcategoryPromptRef.current;
+    prevShowSubcategoryPromptRef.current = showSubcategoryLearningPrompt;
+
+    // Only open on transition from false to true
+    if (!wasOpen && showSubcategoryLearningPrompt && subcategoriesToLearn.length > 0) {
+      openModal('subcategoryLearning', {
+        items: subcategoriesToLearn,
+        onConfirm: () => handleSubcategoryConfirmRef.current(),
+        onClose: () => handleSubcategoryDismissRef.current(),
+        t,
+        theme,
+      });
+    }
+  }, [showSubcategoryLearningPrompt, subcategoriesToLearn, openModal, t, theme]);
+
+  // Story 14e-5: LearnMerchant useEffect is placed after displayTransaction declaration below
+
+  // Story 14e-5: Open ItemNameSuggestion modal when activeSuggestion becomes non-null
+  useEffect(() => {
+    const wasOpen = prevActiveSuggestionRef.current !== null;
+    prevActiveSuggestionRef.current = activeSuggestion;
+
+    // Only open on transition from null to non-null
+    if (!wasOpen && activeSuggestion !== null) {
+      openModal('itemNameSuggestion', {
+        originalItemName: activeSuggestion.originalName,
+        suggestedItemName: activeSuggestion.suggestedName,
+        fromMerchant: activeSuggestion.fromMerchant,
+        onApply: () => handleApplySuggestionRef.current(),
+        onDismiss: () => handleDismissSuggestionRef.current(),
+        t,
+        theme,
+      });
+    }
+  }, [activeSuggestion, openModal, t, theme]);
 
   // Re-scan handlers
   const handleRescanClick = () => {
@@ -1144,6 +1253,46 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
     city: defaultCity,
     currency: currency,
   };
+
+  // Story 14e-5: Open LearnMerchant modal when showMerchantLearningPrompt becomes true
+  // NOTE: This useEffect must be after displayTransaction is declared
+  useEffect(() => {
+    const wasOpen = prevShowMerchantPromptRef.current;
+    prevShowMerchantPromptRef.current = showMerchantLearningPrompt;
+
+    // Only open on transition from false to true
+    if (!wasOpen && showMerchantLearningPrompt) {
+      openModal('learnMerchant', {
+        originalMerchant: displayTransaction.merchant,
+        correctedMerchant: displayTransaction.alias || '',
+        aliasChanged: hasMerchantAliasChanged(),
+        categoryChanged: hasStoreCategoryChanged(),
+        originalCategory: originalStoreCategoryRef.current
+          ? translateStoreCategory(originalStoreCategoryRef.current, lang)
+          : undefined,
+        newCategory: displayTransaction.category
+          ? translateStoreCategory(displayTransaction.category, lang)
+          : undefined,
+        itemNameChanges: findAllChangedItemNames(),
+        onConfirm: (selection) => handleMerchantConfirmRef.current(selection),
+        onClose: () => handleMerchantDismissRef.current(),
+        t,
+        theme,
+      });
+    }
+  }, [
+    showMerchantLearningPrompt,
+    openModal,
+    displayTransaction.merchant,
+    displayTransaction.alias,
+    displayTransaction.category,
+    hasMerchantAliasChanged,
+    hasStoreCategoryChanged,
+    findAllChangedItemNames,
+    lang,
+    t,
+    theme,
+  ]);
 
   return (
     <div
@@ -2471,56 +2620,9 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
         />
       )}
 
-      {/* Category Learning Prompt */}
-      <CategoryLearningPrompt
-        isOpen={showLearningPrompt}
-        items={itemsToLearn}
-        onConfirm={handleLearnConfirm}
-        onClose={handleLearnDismiss}
-        t={t}
-        theme={theme}
-        isLoading={savingMappings}
-      />
-
-      {/* Subcategory Learning Prompt */}
-      <SubcategoryLearningPrompt
-        isOpen={showSubcategoryLearningPrompt}
-        items={subcategoriesToLearn}
-        onConfirm={handleSubcategoryLearnConfirm}
-        onClose={handleSubcategoryLearnDismiss}
-        t={t}
-        theme={theme}
-        isLoading={savingMappings}
-      />
-
-      {/* Merchant Learning Prompt - v9.6.1: Now handles both alias and category changes */}
-      {/* v9.7.0: Also handles item name changes */}
-      <LearnMerchantDialog
-        isOpen={showMerchantLearningPrompt}
-        originalMerchant={displayTransaction.merchant}
-        correctedMerchant={displayTransaction.alias || ''}
-        aliasChanged={hasMerchantAliasChanged()}
-        categoryChanged={hasStoreCategoryChanged()}
-        originalCategory={originalStoreCategoryRef.current ? translateStoreCategory(originalStoreCategoryRef.current, lang) : undefined}
-        newCategory={displayTransaction.category ? translateStoreCategory(displayTransaction.category, lang) : undefined}
-        itemNameChanges={findAllChangedItemNames()}
-        onConfirm={handleLearnMerchantConfirm}
-        onClose={handleLearnMerchantDismiss}
-        t={t}
-        theme={theme}
-      />
-
-      {/* Phase 4: Cross-Store Item Name Suggestion Dialog */}
-      <ItemNameSuggestionDialog
-        isOpen={activeSuggestion !== null}
-        originalItemName={activeSuggestion?.originalName || ''}
-        suggestedItemName={activeSuggestion?.suggestedName || ''}
-        fromMerchant={activeSuggestion?.fromMerchant || ''}
-        onApply={handleApplySuggestion}
-        onDismiss={() => setActiveSuggestion(null)}
-        t={t}
-        theme={theme}
-      />
+      {/* Story 14e-5: Learning dialogs (CategoryLearning, SubcategoryLearning, LearnMerchant,
+          ItemNameSuggestion) are now rendered via Modal Manager. The useEffect hooks above
+          open these modals when their respective state flags become true. */}
 
       {/* Cancel Confirmation Dialog */}
       {showCancelConfirm && (

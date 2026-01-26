@@ -60,7 +60,8 @@ describe('ModalManager Integration', () => {
   });
 
   describe('Registry Structure', () => {
-    it('should have all 21 modal types in registry', () => {
+    // Story 14e-5: Added categoryLearning and subcategoryLearning (total 23 types)
+    it('should have all 23 modal types in registry', () => {
       const expectedTypes: ModalType[] = [
         'currencyMismatch',
         'totalMismatch',
@@ -72,6 +73,8 @@ describe('ModalManager Integration', () => {
         'transactionConflict',
         'deleteTransactions',
         'learnMerchant',
+        'categoryLearning',      // Story 14e-5
+        'subcategoryLearning',   // Story 14e-5
         'itemNameSuggestion',
         'creditInfo',
         'insightDetail',
@@ -90,7 +93,7 @@ describe('ModalManager Integration', () => {
         expect(MODAL_REGISTRY[type]).toBeDefined();
       });
 
-      expect(Object.keys(MODAL_REGISTRY)).toHaveLength(21);
+      expect(Object.keys(MODAL_REGISTRY)).toHaveLength(23);
     });
 
     it('should have lazy-loaded components (Symbol.for react.lazy)', () => {
@@ -208,7 +211,8 @@ describe('ModalManager Integration', () => {
   });
 
   describe('Type Safety at Runtime', () => {
-    it('should allow opening any of the 21 modal types', () => {
+    // Story 14e-5: Now 23 modal types
+    it('should allow opening any of the 23 modal types', () => {
       // Test a sampling of different modal types with minimal props
       const testCases: Array<{ type: ModalType; props: Record<string, unknown> }> = [
         { type: 'signOut', props: { onConfirm: vi.fn(), onCancel: vi.fn() } },
@@ -266,7 +270,8 @@ describe('ModalManager Integration', () => {
         '../../../../src/managers/ModalManager'
       );
       expect(ImportedRegistry).toBeDefined();
-      expect(Object.keys(ImportedRegistry)).toHaveLength(21);
+      // Story 14e-5: Now 23 types (added categoryLearning, subcategoryLearning)
+      expect(Object.keys(ImportedRegistry)).toHaveLength(23);
     });
 
     it('should export store and hooks', async () => {
@@ -328,13 +333,12 @@ describe('ModalManager Integration', () => {
     it('should close stub modal when close button clicked', async () => {
       const user = userEvent.setup();
 
-      // Story 14e-4: creditInfo is now a real component, use learnMerchant stub instead
+      // Story 14e-5: learnMerchant is now a real component, use joinGroup stub instead
       act(() => {
-        useModalStore.getState().openModal('learnMerchant', {
-          merchantName: 'Test Merchant',
-          category: 'Supermercado',
+        useModalStore.getState().openModal('joinGroup', {
+          groupId: 'test-group',
           onConfirm: vi.fn(),
-          onSkip: vi.fn(),
+          onCancel: vi.fn(),
         });
       });
 
@@ -343,7 +347,7 @@ describe('ModalManager Integration', () => {
       // Wait for modal to load
       await waitFor(
         () => {
-          expect(screen.getByText(/learnMerchant/)).toBeInTheDocument();
+          expect(screen.getByText(/joinGroup/)).toBeInTheDocument();
         },
         { timeout: 3000 }
       );
@@ -395,21 +399,23 @@ describe('ModalManager Integration', () => {
 
   describe('Edge Cases', () => {
     it('should handle multiple rapid modal switches', async () => {
-      const types: ModalType[] = [
-        'signOut',
-        'creditInfo',
-        'currencyMismatch',
-        'deleteTransactions',
+      // Each modal type needs valid props to avoid render errors
+      const testCases: Array<{ type: ModalType; props: Record<string, unknown> }> = [
+        { type: 'signOut', props: { onConfirm: vi.fn(), onCancel: vi.fn() } },
+        { type: 'creditInfo', props: { normalCredits: 1, superCredits: 0, onClose: vi.fn() } },
+        // Use stub modals for rapid switch test to avoid component-specific prop requirements
+        { type: 'currencyMismatch', props: { onClose: vi.fn() } },
+        { type: 'quickSave', props: { onClose: vi.fn() } },
       ];
 
       render(<ModalManager />);
 
-      for (const type of types) {
+      for (const { type, props } of testCases) {
         // Use async act() to properly handle Suspense resolution
         await act(async () => {
           useModalStore.setState({
             activeModal: type,
-            modalProps: {},
+            modalProps: props,
           });
           // Allow microtask queue to flush for lazy component resolution
           await Promise.resolve();

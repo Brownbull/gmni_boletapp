@@ -638,7 +638,7 @@ spendingByMember={new Map(Object.entries(trendsViewDataProps.spendingByMember))}
 - Archived Epic 14c cache optimization (reverted)
 - Consolidated Epic 14c-refactor patterns
 
-### Key Patterns Added (2026-01-21 to 2026-01-24)
+### Key Patterns Added (2026-01-21 to 2026-01-25)
 | Pattern | Source |
 |---------|--------|
 | Service/Hook Stubbing | Epic 14c-refactor.2-3 |
@@ -647,6 +647,204 @@ spendingByMember={new Map(Object.entries(trendsViewDataProps.spendingByMember))}
 | Handler Extraction | Epic 14c-refactor.20-21 |
 | ViewHandlersContext | Epic 14c-refactor.25-27 |
 | Hook-to-View Type Conversion | Epic 14c-refactor.31b |
+| Zustand Store Foundation | Epic 14e-6a |
+
+---
+
+## Zustand Store Pattern (Epic 14e - Story 14e-6a)
+
+**Pattern:** Feature-based Zustand store with phase guards
+
+### Store Structure
+```typescript
+// src/features/scan/store/useScanStore.ts
+export const useScanStore = create<ScanState & ScanActions>()(
+  devtools(
+    (set, get) => ({
+      ...initialScanState,
+
+      _guardPhase: (expected, actionName) => {
+        const state = get();
+        if (!allowed.includes(state.phase)) {
+          if (import.meta.env.DEV) {
+            console.warn(`[ScanStore] ${actionName} blocked...`);
+          }
+          return false;
+        }
+        return true;
+      },
+
+      startSingle: (userId) => {
+        if (!get()._guardPhase('idle', 'startSingle')) return;
+        set({ ...newState }, false, 'scan/startSingle');
+      },
+    }),
+    { name: 'scan-store', enabled: import.meta.env.DEV }
+  )
+);
+```
+
+### Key Decisions
+| Decision | Rationale |
+|----------|-----------|
+| DevTools DEV-only | `enabled: import.meta.env.DEV` prevents prod overhead |
+| Phase guard helper | `_guardPhase()` as internal action for DRY |
+| Action naming | `scan/{actionName}` for DevTools visibility |
+| Type reuse | Import from @/types, no duplication |
+
+**Reference:** Story 14e-6a-scan-zustand-store-foundation, Story 14e-6b-scan-zustand-store-complete
+
+**Story 14e-6b Additions (2026-01-25):**
+- 21 additional actions: DIALOG_*, RESULT_*, SAVE_*, BATCH_*, CONTROL
+- resolveDialog takes `(type, result)` for type validation matching original reducer
+- Pre-scan options (SET_STORE_TYPE, SET_CURRENCY) tracked for 14e-6c
+
+**Story 14e-6c Additions (2026-01-25) - Selectors & Module Exports:**
+- 14 memoized selector hooks: useScanPhase, useScanMode, useHasActiveRequest, useIsProcessing, useIsIdle, useHasError, useHasDialog, useIsBlocking, useCreditSpent, useCanNavigateFreely, useCanSave, useCurrentView, useImageCount, useResultCount
+- useScanActions hook uses `useShallow` from `zustand/react/shallow` for stable object references
+- Direct access: `getScanState()` and `scanActions` object for non-React code (services)
+- Module exports: `@features/scan` barrel re-exports entire store module
+- Type convenience exports in store/index.ts
 
 - Code review learnings in 06-lessons.md
 - Story details in docs/sprint-artifacts/
+
+---
+
+## ProcessScan Handler Pattern (Story 14e-8c - 2026-01-25)
+
+**Pattern:** Main orchestration handler with dependency injection via interface
+
+### Handler Structure
+
+```typescript
+// src/features/scan/handlers/processScan/processScan.ts
+
+export async function processScan(params: ProcessScanParams): Promise<ProcessScanResult> {
+  const { scan, user, mapping, ui, scanOverlay, services, t, lang, ... } = params;
+
+  // 13-step orchestration:
+  // 1. Validate images
+  // 2. Check credits
+  // 3. Deduct credit
+  // 4. Call Gemini OCR (with timeout race)
+  // 5. Parse date/location
+  // 6. Validate total (may show dialog)
+  // 7. Build initial transaction
+  // 8. Apply all mappings
+  // 9. Handle currency detection (may show dialog)
+  // 10. Set current transaction
+  // 11. Determine success route
+  // 12. Dispatch success
+  // 13. Handle trusted auto-save (if applicable)
+}
+```
+
+### Key Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| ProcessScanParams interface | Groups all dependencies by category (scan, user, mapping, ui, services) |
+| Thin App.tsx wrapper (~95 lines) | Collects dependencies from React hooks/state, delegates to handler |
+| Merchant confidence threshold: 0.7 | Prevents false positive mapping applications |
+| Timeout: 120s via Promise.race | Prevents indefinite waits on slow OCR |
+| Credit refund on error | Ensures users aren't charged for failed scans |
+
+### App.tsx Wrapper Pattern
+
+```typescript
+const processScan = useCallback(async (imagesToProcess?: string[]) => {
+  await processScanHandler({
+    scan: { images, currency, storeType, defaultCountry, defaultCity },
+    user: { userId, creditsRemaining, defaultCurrency, transactions },
+    mapping: { mappings, applyCategoryMappings, findMerchantMatch, ... },
+    ui: { setScanError, setCurrentTransaction, showScanDialog, ... },
+    scanOverlay,
+    services: { analyzeReceipt, deductUserCredits, addUserCredits, getCitiesForCountry },
+    t, lang, viewMode, trustedAutoSave, prefersReducedMotion,
+  });
+}, [/* dependencies */]);
+```
+
+### Test Coverage
+
+- **processScan.test.ts**: 23 unit tests (main handler)
+- **subhandlers.test.ts**: 32 unit tests (sub-handlers)
+- **utils.test.ts**: 45 unit tests (pure utilities)
+- **Total**: 100 tests for scan feature
+
+**Reference:** Story 14e-8c, `src/features/scan/handlers/processScan/`
+
+---
+
+## Scan Feature Component Migration (Story 14e-9a - 2026-01-25)
+
+**Pattern:** Feature-based directory migration with backward compatibility
+
+### Component Structure
+
+```
+src/features/scan/
+├── index.ts                    # Module barrel (exports store, handlers, components)
+├── store/                      # Zustand store (14e-6a-d)
+├── handlers/                   # processScan handler (14e-8a-c)
+└── components/                 # UI components (14e-9a)
+    ├── index.ts                # Component barrel exports
+    ├── states/                 # State-specific components (future)
+    ├── ScanOverlay.tsx
+    ├── ScanStatusIndicator.tsx
+    ├── ScanModeSelector.tsx
+    ├── ScanProgress.tsx
+    ├── ScanError.tsx
+    ├── ScanReady.tsx
+    ├── ScanSkeleton.tsx
+    └── ScanCompleteModal.tsx
+```
+
+### Migration Strategy
+
+| Step | Action | Notes |
+|------|--------|-------|
+| 1 | `git mv` components | Preserves git history |
+| 2 | Update internal imports | Use `@/` path aliases |
+| 3 | Create barrel exports | Re-export in `components/index.ts` |
+| 4 | Update old barrel | Re-export from new location for backward compatibility |
+| 5 | Update consumers | Prefer `@features/scan/components` import path |
+
+### Backward Compatibility
+
+```typescript
+// src/components/scan/index.ts - OLD BARREL
+// Re-exports migrated components for backward compatibility
+export {
+  ScanStatusIndicator,
+  ScanOverlay,
+  ScanModeSelector,
+  // ... etc
+} from '@features/scan/components';
+
+// Components still in this directory (not yet migrated)
+export { BatchUploadPreview } from './BatchUploadPreview';
+export { BatchProcessingOverlay } from './BatchProcessingOverlay';
+// ... etc
+```
+
+### Vitest Path Alias Configuration
+
+```typescript
+// vitest.config.unit.ts - REQUIRED for test files
+// tsconfig.json `include: ['src']` means path aliases only work in src/
+// Tests in tests/ directory need explicit aliases
+resolve: {
+  alias: {
+    '@features': path.resolve(__dirname, 'src/features'),
+    '@entities': path.resolve(__dirname, 'src/entities'),
+    '@managers': path.resolve(__dirname, 'src/managers'),
+    '@shared': path.resolve(__dirname, 'src/shared'),
+    '@app': path.resolve(__dirname, 'src/app'),
+    '@': path.resolve(__dirname, 'src'),
+  },
+}
+```
+
+**Reference:** Story 14e-9a-move-scan-components

@@ -30,6 +30,10 @@ export const TRANSLATIONS = {
         reports: "Reports", goals: "Goals", comingSoon: "Coming soon", productos: "Items",
         // Story 14d.9: Statement scan placeholder view
         statementScanTitle: "Credit Card Statement", statementScanDescription: "Soon you'll be able to scan credit card statements and add transactions automatically.", returnToHome: "Return to Home",
+        statementComingSoon: "Coming soon",
+        // Story 14e-11: Scan state component translations
+        reviewTitle: "Review Transaction", reviewMessage: "Review and confirm your transaction",
+        scanBatchPrompt: "Tap to add more receipts", scanSinglePrompt: "Tap to scan a receipt",
         showBarChart: "Show bar chart", showPieChart: "Show pie chart",
         selectMonth: "Select month", selectYear: "Select year",
         // Story 5.4: Premium transaction export
@@ -442,6 +446,7 @@ export const TRANSLATIONS = {
         batchReceiptsDetected: "receipts detected",
         batchExplanation: "Each image will become a separate transaction.",
         batchMaxLimitError: "Maximum 10 images per batch",
+        singleScanOneImageOnly: "Single scan: only 1 image. Use batch mode for multiple.",
         viewImages: "View images",
         hideImages: "Hide images",
         batchImageList: "Selected images",
@@ -607,6 +612,7 @@ export const TRANSLATIONS = {
         batchTitle: "Batch Mode",
         // Story 12.3: Batch Review Queue
         batchReviewTitle: "Review Batch",
+        batchReviewMessage: "{count} receipts ready for review",
         batchResult: "Result",
         batchReviewList: "Receipts to review",
         batchReviewEmpty: "No receipts to review",
@@ -972,6 +978,10 @@ export const TRANSLATIONS = {
         reports: "Reportes", goals: "Metas", comingSoon: "Próximamente", productos: "Productos",
         // Story 14d.9: Statement scan placeholder view
         statementScanTitle: "Estado de Cuenta", statementScanDescription: "Pronto podrás escanear estados de cuenta de tarjetas de crédito y añadir transacciones automáticamente.", returnToHome: "Volver al inicio",
+        statementComingSoon: "Próximamente",
+        // Story 14e-11: Scan state component translations
+        reviewTitle: "Revisar Transacción", reviewMessage: "Revisa y confirma tu transacción",
+        scanBatchPrompt: "Toca para agregar más boletas", scanSinglePrompt: "Toca para escanear una boleta",
         showBarChart: "Mostrar gráfico de barras", showPieChart: "Mostrar gráfico circular",
         selectMonth: "Seleccionar mes", selectYear: "Seleccionar año",
         // Story 5.4: Premium transaction export
@@ -1384,6 +1394,7 @@ export const TRANSLATIONS = {
         batchReceiptsDetected: "boletas detectadas",
         batchExplanation: "Cada imagen será una transacción separada.",
         batchMaxLimitError: "Máximo 10 imágenes por vez",
+        singleScanOneImageOnly: "Escaneo simple: solo 1 imagen. Usa modo lote para más.",
         viewImages: "Ver imágenes",
         hideImages: "Ocultar imágenes",
         batchImageList: "Imágenes seleccionadas",
@@ -1549,6 +1560,7 @@ export const TRANSLATIONS = {
         batchTitle: "Modo Lote",
         // Story 12.3: Batch Review Queue
         batchReviewTitle: "Revisar Lote",
+        batchReviewMessage: "{count} boletas listas para revisar",
         batchResult: "Resultado",
         batchReviewList: "Boletas por revisar",
         batchReviewEmpty: "No hay boletas para revisar",

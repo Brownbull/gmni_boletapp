@@ -3,6 +3,7 @@
  *
  * Story 14.23: Unified Transaction Editor
  * Story 14d.4b: Migrated to use ScanContext for scan-specific state
+ * Story 14e-9b: Migrated to use Zustand store instead of ScanContext
  * Epic 14: Core Implementation
  *
  * Centered modal displayed after a NEW transaction scan completes.
@@ -17,27 +18,29 @@
  *
  * Note: Only shown for NEW transactions. Re-scans go straight to edit mode.
  *
- * Story 14d.4b Migration:
- * - Uses useScanOptional() to read dialog state from context
- * - Falls back to props if context not available (backward compatibility)
- * - Context provides: transaction via activeDialog.data
+ * Story 14e-9b Migration:
+ * - Uses useScanActiveDialog() to read dialog state from Zustand store
+ * - Uses useScanActions() for resolveDialog/dismissDialog actions
+ * - Falls back to props if store data not available (backward compatibility)
+ * - Store provides: transaction via activeDialog.data
  *
  * @see /home/khujta/.claude/plans/fancy-doodling-island.md
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { Check, Pencil, X, Receipt } from 'lucide-react';
-import { Transaction } from '../../types/transaction';
-import { getCategoryEmoji } from '../../utils/categoryEmoji';
-import { translateCategory } from '../../utils/categoryTranslations';
-import { useReducedMotion } from '../../hooks/useReducedMotion';
-import { DURATION, EASING } from '../animation/constants';
-import type { Language } from '../../utils/translations';
-import { useScanOptional } from '../../contexts/ScanContext';
-import { DIALOG_TYPES } from '../../types/scanStateMachine';
+import { Transaction } from '@/types/transaction';
+import { getCategoryEmoji } from '@/utils/categoryEmoji';
+import { translateCategory } from '@/utils/categoryTranslations';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { DURATION, EASING } from '@/components/animation/constants';
+import type { Language } from '@/utils/translations';
+import { useScanActiveDialog, useScanActions } from '@features/scan/store';
+import { DIALOG_TYPES } from '@/types/scanStateMachine';
 
 /**
- * Story 14d.4b: Data structure for scan_complete dialog in ScanContext.
+ * Story 14d.4b: Data structure for scan_complete dialog.
+ * Story 14e-9b: Used with Zustand store activeDialog.
  */
 export interface ScanCompleteDialogData {
   transaction: Transaction;
@@ -58,26 +61,26 @@ export interface ScanCompleteModalProps {
   /** Language for category translation - required, from app settings */
   lang?: Language;
 
-  // === Story 14d.4b: Props below are now optional - can be read from ScanContext ===
+  // === Story 14e-9b: Props below are now optional - can be read from Zustand store ===
 
-  /** Whether the modal is visible - optional if using ScanContext */
+  /** Whether the modal is visible - optional if using Zustand store */
   visible?: boolean;
-  /** Transaction data from scan result - optional if using ScanContext */
+  /** Transaction data from scan result - optional if using Zustand store */
   transaction?: Transaction | null;
-  /** Callback when user clicks "Guardar" (Save) - optional if using ScanContext */
+  /** Callback when user clicks "Guardar" (Save) - optional if using Zustand store */
   onSave?: () => void;
-  /** Callback when user clicks "Editar" (Edit) - optional if using ScanContext */
+  /** Callback when user clicks "Editar" (Edit) - optional if using Zustand store */
   onEdit?: () => void;
-  /** Callback when user clicks backdrop or X button - optional if using ScanContext */
+  /** Callback when user clicks backdrop or X button - optional if using Zustand store */
   onDismiss?: () => void;
-  /** Whether save is in progress - optional if using ScanContext */
+  /** Whether save is in progress - optional if using Zustand store */
   isSaving?: boolean;
 }
 
 /**
  * ScanCompleteModal - Centered modal for "Save now or Edit?" choice
  *
- * Story 14d.4b: Uses ScanContext for scan-specific state with prop fallback.
+ * Story 14e-9b: Uses Zustand store for scan-specific state with prop fallback.
  */
 export const ScanCompleteModal: React.FC<ScanCompleteModalProps> = ({
   visible: visibleProp,
@@ -96,44 +99,39 @@ export const ScanCompleteModal: React.FC<ScanCompleteModalProps> = ({
   const prefersReducedMotion = useReducedMotion();
   const [isAnimatingIn, setIsAnimatingIn] = useState(false);
 
-  // Story 14d.4b: Get scan context for reading dialog state
-  const scanContext = useScanOptional();
+  // Story 14e-9b: Get scan state from Zustand store
+  const activeDialog = useScanActiveDialog();
+  const { resolveDialog, dismissDialog } = useScanActions();
 
-  // Story 14d.4b: Derive values from context or fall back to props
-  const contextDialogData = scanContext?.state.activeDialog?.type === DIALOG_TYPES.SCAN_COMPLETE
-    ? (scanContext.state.activeDialog.data as ScanCompleteDialogData)
+  // Story 14e-9b: Derive values from store or fall back to props
+  const storeDialogData = activeDialog?.type === DIALOG_TYPES.SCAN_COMPLETE
+    ? (activeDialog.data as ScanCompleteDialogData)
     : null;
 
   // Determine if modal should be visible
-  const visible = contextDialogData !== null || visibleProp === true;
+  const visible = storeDialogData !== null || visibleProp === true;
 
-  // Get transaction from context or props
-  const transaction = contextDialogData?.transaction ?? transactionProp;
+  // Get transaction from store or props
+  const transaction = storeDialogData?.transaction ?? transactionProp;
 
-  // isSaving could come from context in future
+  // isSaving could come from store in future
   const isSaving = isSavingProp;
 
-  // Story 14d.4b: Create wrapped handlers that dispatch to context and call props
+  // Story 14e-9b: Create wrapped handlers that dispatch to store and call props
   const handleSave = useCallback(() => {
-    if (scanContext?.resolveDialog) {
-      scanContext.resolveDialog(DIALOG_TYPES.SCAN_COMPLETE, { choice: 'save' });
-    }
+    resolveDialog(DIALOG_TYPES.SCAN_COMPLETE, { choice: 'save' });
     onSaveProp?.();
-  }, [scanContext, onSaveProp]);
+  }, [resolveDialog, onSaveProp]);
 
   const handleEdit = useCallback(() => {
-    if (scanContext?.resolveDialog) {
-      scanContext.resolveDialog(DIALOG_TYPES.SCAN_COMPLETE, { choice: 'edit' });
-    }
+    resolveDialog(DIALOG_TYPES.SCAN_COMPLETE, { choice: 'edit' });
     onEditProp?.();
-  }, [scanContext, onEditProp]);
+  }, [resolveDialog, onEditProp]);
 
   const handleDismiss = useCallback(() => {
-    if (scanContext?.dismissDialog) {
-      scanContext.dismissDialog();
-    }
+    dismissDialog();
     onDismissProp?.();
-  }, [scanContext, onDismissProp]);
+  }, [dismissDialog, onDismissProp]);
 
   // Handle visibility animation
   useEffect(() => {
@@ -187,7 +185,8 @@ export const ScanCompleteModal: React.FC<ScanCompleteModalProps> = ({
       >
         {/* Header with close button */}
         <div className={`relative px-6 pt-6 pb-4 ${isDark ? 'border-slate-700' : 'border-slate-100'}`}>
-          {(onDismissProp || scanContext?.dismissDialog) && (
+          {/* Story 14e-9b: Always show close button since dismissDialog is always available from store */}
+          {(onDismissProp || storeDialogData) && (
             <button
               onClick={handleDismiss}
               className={`absolute top-4 right-4 p-2 rounded-full transition-colors ${

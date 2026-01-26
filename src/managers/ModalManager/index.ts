@@ -100,8 +100,18 @@ export type {
   CreditWarningProps,
   TransactionConflictProps,
   DeleteTransactionsProps,
+  // Learning dialog props (Story 14e-5)
   LearnMerchantProps,
+  CategoryLearningProps,
+  SubcategoryLearningProps,
   ItemNameSuggestionProps,
+  // Re-exported types for consumer convenience
+  TransactionPreview,
+  LearnMerchantSelection,
+  ItemNameChange,
+  ItemToLearn,
+  SubcategoryItemToLearn,
+  // General modal props
   CreditInfoProps,
   InsightDetailProps,
   UpgradePromptProps,

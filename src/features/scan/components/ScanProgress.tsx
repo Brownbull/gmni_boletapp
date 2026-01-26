@@ -8,7 +8,7 @@
  */
 import React from 'react';
 import { Upload, X } from 'lucide-react';
-import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 export interface ScanProgressProps {
   /** Upload progress percentage (0-100) */

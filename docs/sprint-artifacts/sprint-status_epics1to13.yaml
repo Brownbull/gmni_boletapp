@@ -1,0 +1,318 @@
+# generated: 2025-12-09
+# project: boletapp
+# project_key: boletapp
+# tracking_system: file-system
+# story_location: docs/sprint-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic exists in epic file but not contexted
+#   - contexted: Next epic tech context created by *epic-tech-context (required)
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - drafted: Story file created in stories folder by *create-story
+#   - ready-for-dev: Draft approved and story context created by *story-ready
+#   - in-progress: Developer actively working on implementation by *dev-story
+#   - review: Implementation complete, ready for review by *code-review
+#   - done: Story completed by *story-done
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - completed: Retrospective has been done by *retrospective
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epics should be 'contexted' before stories can be 'drafted'
+# - SM typically drafts next story ONLY after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', dev reviews, then Dev moves to 'done'
+
+generated: 2025-12-09
+project: boletapp
+project_key: boletapp
+tracking_system: file-system
+story_location: docs/sprint-artifacts
+
+development_status:
+  # Epic 1: Production Deployment Readiness
+  epic-1: contexted
+  1-1-refactor-to-modular-architecture: done
+  1-2-production-build-configuration: done
+  1-3-git-repository-setup: done
+  1-4-firebase-deployment-infrastructure: done
+  1-5-production-deployment-verification: done
+  epic-1-retrospective: completed
+
+  # Epic 2: Testing Infrastructure & Documentation
+  epic-2: contexted
+  2-1-documentation-epic-evolution: done
+  2-2-test-environment-setup: done
+  2-3-testing-framework-configuration: done
+  2-4-authentication-security-tests: done
+  2-5-core-workflow-tests: done
+  2-6-cicd-pipeline-coverage-baseline: done
+  epic-2-retrospective: completed
+
+  # Epic 3: Production-Grade Quality & Testing Completion
+  epic-3: contexted
+  3-1-process-governance-setup: done
+  3-2-e2e-auth-navigation-workflow: done
+  3-3-e2e-transaction-management-workflow: done
+  3-4-e2e-analytics-export-workflow: done
+  3-5-accessibility-testing-framework: done
+  3-6-performance-baselines-lighthouse-ci: done
+  3-7-coverage-enforcement-quality-gates: done
+  epic-3-retrospective: completed
+
+  # Epic 4: Security Hardening & Penetration Testing
+  epic-4: contexted
+  4-1-secrets-detection-prevention: done
+  4-2-gemini-api-protection: done
+  4-3-dependency-static-security: done
+  4-4-security-documentation: done
+  epic-4-retrospective: completed  # Completed 2025-11-29
+
+  # Epic 4.5: Receipt Image Storage (defined in Epic 4 retrospective)
+  epic-4-5: contexted  # Tech-spec completed 2025-11-29
+  4-5-1-firebase-storage-infrastructure: done  # 3 points - Code Review APPROVED 2025-11-30
+  4-5-2-cloud-function-image-processing: done  # 5 points - Code Review APPROVED 2025-11-30
+  4-5-3-client-updates-ui: done  # 3 points - Code Review APPROVED 2025-12-01
+  4-5-4-cascade-delete-documentation: done  # 2 points - Code Review APPROVED 2025-12-01
+  epic-4-5-retrospective: completed  # Completed after 4.5-4
+
+  # Epic 5: Data Download & Export
+  # Tech-spec completed 2025-12-02, PRD completed 2025-12-02
+  # DEPLOYED TO PRODUCTION: 2025-12-03
+  epic-5: contexted
+  5-1-csv-export-utilities: done  # Context generated 2025-12-02, Dev completed 2025-12-02, Code Review APPROVED 2025-12-02
+  5-2-basic-data-export-settings: done  # Context generated 2025-12-02, Dev completed 2025-12-02, Code Review APPROVED 2025-12-02
+  5-3-subscription-tier-check-infrastructure: done  # Context generated 2025-12-02, Dev completed 2025-12-03, Code Review APPROVED 2025-12-03
+  5-4-premium-transaction-export: done  # Context generated 2025-12-03, Dev completed 2025-12-03, Code Review APPROVED 2025-12-03
+  5-5-premium-statistics-export-upgrade-prompt: done  # Context generated 2025-12-03, Dev completed 2025-12-03, Code Review APPROVED 2025-12-03, Deployed 2025-12-03
+  epic-5-retrospective: completed  # Completed 2025-12-03
+
+  # Epic 6: Smart Category Learning
+  # Infrastructure pre-requisite: CI/CD Auto-Deploy (from Epic 5 retro)
+  # Tech-spec completed 2025-12-03
+  epic-6: contexted  # Started 2025-12-03
+  6-0-cicd-auto-deploy-firebase: done  # Infrastructure story - Code Review APPROVED 2025-12-03
+  6-1-category-mapping-infrastructure: done  # 3 points - Types, Firestore service, security rules - Code Review APPROVED 2025-12-03
+  6-2-fuzzy-matching-engine: done  # 3 points - fuse.js integration, matcher logic - Code Review APPROVED 2025-12-03
+  6-3-category-learning-prompt: done  # 2 points - UI prompt on category edit - Code Review APPROVED 2025-12-03
+  6-4-auto-apply-on-receipt-scan: done  # 3 points - Apply mappings to Gemini results - Code Review APPROVED 2025-12-03
+  6-5-mappings-management-ui: done  # 3 points - Settings section for viewing/editing/deleting - Code Review APPROVED 2025-12-03
+  6-6-epic-release-deployment: done  # 1 point - Code Review APPROVED 2025-12-04
+  epic-6-retrospective: completed  # Completed 2025-12-04
+
+  # Epic 7: Analytics UX Redesign
+  # PRD and Architecture documents created 2025-12-05
+  # Tech-spec completed 2025-12-05
+  # Dual-axis navigation, Quarter/Week views, Chart dual mode, consistent UI
+  epic-7: contexted  # Tech-spec generated 2025-12-05
+  7-1-analytics-navigation-context: done  # Foundation - AnalyticsContext, useAnalyticsNavigation hook - Code Review APPROVED 2025-12-05
+  7-2-temporal-breadcrumb-component: done  # Collapsible temporal breadcrumb (Year/Quarter/Month/Week/Day) - Code Review APPROVED 2025-12-05
+  7-3-category-breadcrumb-component: done  # Collapsible category breadcrumb - Code Review APPROVED 2025-12-05
+  7-4-chart-mode-toggle-registry: done  # ChartModeToggle, chart registry pattern - Code Review APPROVED 2025-12-07
+  7-5-drill-down-cards-grid: done  # DrillDownCard, DrillDownGrid components - Code Review APPROVED 2025-12-07
+  7-6-quarter-week-date-utilities: done  # getQuartersInYear(), getWeeksInMonth() utilities - Code Review APPROVED 2025-12-07
+  7-7-trendsview-integration: done  # Refactor TrendsView using new components - Code Review APPROVED 2025-12-07
+  7-8-bug-fixes-polish: done  # FR1-4 fixes, visual consistency, i18n - Code Review APPROVED 2025-12-07
+  7-9-ux-breadcrumb-alignment: done  # UX alignment - breadcrumbs, chart toggle - Code Review APPROVED 2025-12-07
+  7-10-ux-cards-visual-alignment: done  # UX alignment - drill-down cards, legend, nav labels - Code Review APPROVED 2025-12-07
+  7-11-floating-download-fab: done  # UX enhancement - floating download button - Code Review APPROVED 2025-12-08
+  7-12-app-wide-theme-consistency: done  # App-wide theme + color theme selector (Default/Ghibli) - Code Review APPROVED 2025-12-08
+  7-13-stacked-bar-chart-comparison: done  # Stacked bars + correct temporal grouping (Q/M/W/D) - Code Review APPROVED 2025-12-08
+  7-14-analytics-header-layout-fixes: done  # Code Review APPROVED 2025-12-08 - AC #1 superseded by design decision to keep back arrow
+  7-15-seamless-chart-background: done  # Remove card background from chart area for seamless look - Code Review APPROVED 2025-12-08
+  7-16-drill-down-section-toggle: done  # Add Temporal/Category toggle for drill-down cards section - Code Review APPROVED 2025-12-08
+  7-17-stacked-bar-tooltip-ux: done  # Fix tooltip readability + renamed themes (Ghibli→Normal, Default→Professional) - Completed 2025-12-08
+  7-18-drilldown-card-progress-bar: done  # Add thin progress bar below label showing percentage visually - Code Review APPROVED 2025-12-09
+  7-99-epic-release-deployment: done  # Deploy, test, document - Code Review APPROVED 2025-12-09, Deployed 2025-12-09
+  epic-7-retrospective: completed  # Completed 2025-12-10
+
+  # Epic 8: Scan Testing & Tuning Infrastructure
+  # PRD: docs/sprint-artifacts/epic8/prd-epic8-scan-testing.md
+  # Purpose: Developer testing infrastructure to evaluate, tune, and improve scan accuracy
+  epic-8: contexted  # Tech-spec completed 2025-12-10
+  8-1-shared-prompts-library: done  # Shared prompts + image pre-processing optimization - Deployed 2025-12-11, Code Review APPROVED 2025-12-11
+  8-2-test-data-schema-structure: done  # Test data JSON schema and directory structure - Code Review APPROVED 2025-12-11
+  8-3-test-harness-core-cli: done  # CLI framework for running scan tests - Code Review APPROVED 2025-12-11
+  8-4-result-comparison-engine: done  # Compare actual vs expected results - Code Review APPROVED 2025-12-11
+  8-5-accuracy-reporting: done  # Generate accuracy metrics and reports - Code Review APPROVED 2025-12-11
+  8-6-generate-validate-commands: done  # CLI commands for test data generation/validation - Code Review APPROVED 2025-12-12
+  8-7-ab-prompt-comparison-analysis: done  # Compare prompt versions side-by-side - Code Review APPROVED 2025-12-12
+  8-8-starter-test-data-documentation: done  # Initial test dataset + documentation - Merged to develop (PR #44) 2025-12-12
+  8-9-cicd-pipeline-optimization: done  # Parallelize CI jobs, cache browsers/CLI, optimize Lighthouse - PR #51 MERGED 2025-12-12
+  epic-8-retrospective: completed  # Comprehensive retro: CI/CD standards, security lessons, test harness outcomes
+
+  # Future Epics (from Epic 7 retrospective - roadmap revised 2025-12-10, Epic 9 inserted 2025-12-12)
+  # See docs/planning/epics.md for full epic definitions
+
+  # Epic 9: Scan Enhancement & Merchant Learning (NEW - inserted after Epic 8)
+  # - Integrate v2.6.0 prompt fields into Transaction type and UI
+  # - Add merchant name learning (like category learning)
+  # PRD: docs/sprint-artifacts/epic9/prd-epic9-scan-enhancement.md
+  # Tech-Spec: docs/sprint-artifacts/epic9/tech-spec-epic-9.md
+  # Architecture: docs/sprint-artifacts/epic9/architecture-epic9.md
+  epic-9: contexted  # Scan Enhancement & Merchant Learning - Stories drafted 2025-12-12
+  9-1-transaction-type-extension: done  # 3 points - Add v2.6.0 fields to Transaction type - Code Review APPROVED 2025-12-13
+  9-2-transaction-item-category-fields: done  # 2 points - Proper typing for item categories - Code Review APPROVED 2025-12-13
+  9-3-edit-view-field-display: done  # 3 points - Display new fields + "Learned" badge - Code Review APPROVED 2025-12-13
+  9-4-merchant-mapping-infrastructure: done  # 3 points - Types, service, security rules - Code Review APPROVED 2025-12-13
+  9-5-merchant-fuzzy-matching: done  # 3 points - Fuse.js matcher with configurable threshold - Code Review APPROVED 2025-12-13
+  9-6-merchant-learning-prompt: done  # 2 points - Dialog on merchant edit - Code Review APPROVED 2025-12-13
+  9-7-merchant-mappings-management-ui: done  # 2 points - Settings UI for mappings - Code Review APPROVED 2025-12-13
+  9-8-scan-advanced-options: done  # 5 points - Pre-scan options (currency, store type) - Code Review APPROVED 2025-12-13
+  9-9-unified-transaction-flow: done  # 5 points - Unified scan+new transaction, cancel button, merchant/alias labels - Code Review APPROVED 2025-12-13
+  9-10-persistent-scan-state: done  # 3 points - Persistent scan state across navigation, credit placeholder (900) - Code Review APPROVED 2025-12-13
+  9-11-transaction-card-unification: done  # 5 points - Unified card display, duplicate detection, legacy defaults - Code Review APPROVED 2025-12-13
+  9-12-ui-content-translation: done  # 2 points - Translate categories/subcategories to user's language - Code Review APPROVED 2025-12-14
+  9-13-drilldown-analytics-validation: done  # 3 points - Fix drill-down totals and stop at correct level - Code Review APPROVED 2025-12-14
+  9-14-pwa-installation-support: done  # 3 points - PWA support for mobile installation - Code Review APPROVED 2025-12-16
+  9-15-subcategory-learning-and-management: done  # 5 points - Subcategory learning, editing, and Settings UI - Code Review APPROVED 2025-12-16
+  9-16-learning-prompt-loading-state: done  # 1 point - Bug fix: prevent duplicate transactions from double-clicking - Code Review APPROVED 2025-12-16
+  9-17-location-select-alphabetical-cities: done  # 0.5 points - Code Review APPROVED 2025-12-16
+  9-18-pwa-push-notifications: done  # 5 points - PWA push notifications with Firebase Cloud Messaging - Code Review APPROVED 2025-12-16
+  9-19-history-transaction-filters: done  # 5 points - Temporal, category, and location filters for History view - Code Review APPROVED 2025-12-16
+  9-20-analytics-transaction-count-navigation: done  # 3 points - Transaction count badge on analytics cards with navigation to filtered History - Code Review APPROVED 2025-12-16
+  9-99-epic-release-deployment: done  # 2 points - Production deployment, E2E verification - Completed 2025-12-16
+  epic-9-retrospective: done  # Completed 2025-12-16 - docs/sprint-artifacts/epic-9-retro-2025-12-16.md
+
+  # ============================================================================
+  # LAUNCH BACKBONE ROADMAP (Epics 10-16)
+  # Updated: 2025-12-16 per Epic 9 retrospective
+  # Full definitions: docs/planning/epics.md
+  # ============================================================================
+
+  # Epic 10: Foundation + Engagement & Insight Engine (~35 points, 3-4 weeks)
+  # Transform from "data entry tool" to "financial awareness companion"
+  # Architecture: docs/sprint-artifacts/epic10/architecture-epic10-insight-engine.md
+  # Brainstorming: docs/sprint-artifacts/epic10/epic-10-insight-engine-brainstorm.md
+  # Key ADRs: ADR-015 (Client-side engine), ADR-016 (Hybrid storage), ADR-017 (Phase-based priority)
+  epic-10: contexted  # Architecture complete 2025-12-17, stories drafted and aligned
+  10-0-foundation-sprint: done  # 8 points - Refactor analytics, filtering service, App.tsx cleanup - DEPLOYED 2025-12-18
+  10-1-insight-engine-service-interface: done  # 3 points - types/insight.ts, services/insightEngineService.ts - DEPLOYED 2025-12-18
+  10-2-phase-detection-user-profile: done  # 3 points - calculateUserPhase(), UserInsightProfile Firestore doc - Code Review APPROVED 2025-12-18
+  10-3-transaction-intrinsic-insights: done  # 5 points - 7 cold-start insight generators - Code Review APPROVED 2025-12-18
+  10-4-pattern-detection-insights: done  # 5 points - 5 history-based generators + precomputed aggregates - Code Review APPROVED 2025-12-18
+  10-5-selection-algorithm-sprinkle: done  # 3 points - selectInsight() with phase-based priority - DEPLOYED 2025-12-19 (PR #102)
+  10-6-scan-complete-insight-card: done  # 3 points - InsightCard.tsx, BuildingProfileCard.tsx fallback - DEPLOYED 2025-12-19 (PR #102)
+  10-7-batch-mode-summary: done  # 3 points - BatchSummary.tsx for multi-receipt sessions - DEPLOYED 2025-12-19 (PR #102)
+  10-99-epic-release-deployment: done  # 2 points - Production deployment via PR #102 - DEPLOYED 2025-12-19
+  epic-10-retrospective: completed  # Combined retro 2025-12-22
+
+  # Epic 10a: UX Consolidation - Home & Insights Tabs (~13 points, 1 week)
+  # Merge Dashboard + History into unified Home, repurpose Receipts tab as Insights History
+  # Architecture: docs/sprint-artifacts/epic10a/tech-context-epic10a.md
+  # Origin: User feedback session 2025-12-20 - insight history feature request
+  epic-10a: contexted  # Tech context complete 2025-12-20
+  10a-1-home-screen-consolidation: done  # 5 points - Merge Dashboard + History views - Code Review APPROVED 2025-12-20
+  10a-2-this-month-fix: done  # 1 point - This Month card navigation fix - Code Review APPROVED 2025-12-21
+  10a-3-nav-tab-rename: done  # 1 point - Receipts → Insights tab - Code Review APPROVED 2025-12-21
+  10a-4-insights-history-view: done  # 5 points - New InsightsView component - Code Review APPROVED 2025-12-21 (5 MEDIUM issues fixed)
+  10a-5-insight-record-storage: done  # 1 point - Extend InsightRecord schema - Code Review APPROVED 2025-12-21
+  epic-10a-retrospective: completed  # Combined retro 2025-12-22
+
+  # Epic 11: Quick Save & Scan Flow Optimization (~22 points, 2 weeks)
+  # Reduce scan-to-save friction to <15 seconds for 90% of users
+  # Tech Context: docs/sprint-artifacts/epic11/tech-context-epic11.md
+  #
+  # PARALLEL WORK LANES:
+  # ┌─────────────────────────────────────────────────────────────────┐
+  # │  Lane A: 11.1 (3pts) ──────────────────────────┐                │
+  # │                                                 │                │
+  # │  Lane B: 11.5 (3pts) ──────────────────────────┤                │
+  # │                                                 ▼                │
+  # │                                           11.2 (5pts)           │
+  # │                                                 │                │
+  # │                              ┌──────────────────┴───────────┐   │
+  # │                              ▼                              ▼   │
+  # │                         11.3 (3pts)                   11.4 (5pts)│
+  # │                              │                              │   │
+  # │                              └──────────────┬───────────────┘   │
+  # │                                             ▼                   │
+  # │                                       11.99 (2pts)              │
+  # └─────────────────────────────────────────────────────────────────┘
+  #
+  epic-11: contexted  # Tech context created 2025-12-21
+  11-1-one-image-one-transaction: done  # 3 pts - PARALLEL with 11.5 - Code Review APPROVED 2025-12-21, v9.4.0
+  11-2-quick-save-card: done  # 5 pts - Depends on 11.1 + 11.5 - Code Review APPROVED 2025-12-21
+  11-3-animated-item-reveal: done  # 3 pts - PARALLEL with 11.4, depends on 11.2 - Code Review APPROVED 2025-12-21
+  11-4-trust-merchant-system: done  # 5 pts - PARALLEL with 11.3, depends on 11.2 - Code Review APPROVED 2025-12-22
+  11-5-scan-status-clarity: done  # 3 pts - PARALLEL with 11.1 - Code Review APPROVED 2025-12-22, reduced motion fixes
+  11-6-responsive-viewport-adaptation: done  # 3 pts - Code Review APPROVED 2025-12-22
+  11-99-epic-release-deployment: done  # 2 pts - DEPLOYED 2025-12-22, PRs #119→#120→#121, v9.5.0
+  epic-11-retrospective: completed  # Combined retro 2025-12-22
+
+  # Epic 12: Batch Mode (~25 points, 2 weeks)
+  # Multi-image capture with parallel processing and batch review
+  # Tech Context: docs/sprint-artifacts/epic12/tech-context-epic12.md
+  #
+  # PARALLEL WORK LANES:
+  # ┌─────────────────────────────────────────────────────────────────┐
+  # │  Lane A: 12.1 (5pts) ─────┐                                     │
+  # │                           │                                     │
+  # │  Lane B: 12.4 (3pts) ─────┤                                     │
+  # │                           ▼                                     │
+  # │                      12.2 (5pts)                                │
+  # │                           │                                     │
+  # │                           ▼                                     │
+  # │                      12.3 (5pts)                                │
+  # │                           │                                     │
+  # │                           ▼                                     │
+  # │                      12.5 (3pts)                                │
+  # │                           │                                     │
+  # │                           ▼                                     │
+  # │                      12.99 (2pts)                               │
+  # └─────────────────────────────────────────────────────────────────┘
+  #
+  epic-12: contexted  # Tech context created 2025-12-22
+  12-1-batch-capture-ui: done  # 5 pts - PARALLEL with 12.4 - Camera + preview strip - Code Review APPROVED 2025-12-22, DEPLOYED
+  12-2-parallel-processing-service: done  # 5 pts - Depends on 12.1 - Concurrent API calls - Code Review APPROVED 2025-12-22, DEPLOYED
+  12-3-batch-review-queue: done  # 5 pts - Depends on 12.2 - Summary cards + edit capability - Code Review APPROVED 2025-12-22, DEPLOYED
+  12-4-credit-warning-system: done  # 3 pts - PARALLEL with 12.1 - Pre-batch credit check - Code Review APPROVED 2025-12-22, DEPLOYED
+  12-5-batch-save-and-insights: done  # 3 pts - Depends on 12.3 - Save all + aggregate insight - Code Review APPROVED 2025-12-23
+  12-99-epic-release-deployment: done  # 2 pts - Production deployment - DEPLOYED 2025-12-23, Atlas Code Review APPROVED 2025-12-23
+  epic-12-retrospective: done  # Combined retro 2026-01-15 (Epics 12, 13, 14)
+
+  # ============================================================================
+  # REVISED EPIC 13-15 ROADMAP (from Brainstorming Session 2025-12-22)
+  # Full Application UX Redesign: "From Reactive to Alive"
+  # Brainstorming doc: docs/analysis/brainstorming-session-2025-12-22.md
+  # Total scope: ~128 points across 3 epics
+  # ============================================================================
+
+  # Epic 13: UX Design & Mockups (~41 points)
+  # RESTRUCTURED 2025-12-27: Using design-system-mockup-builder workflow
+  # Phase 1: Extract design system reference | Phase 2: Build each screen independently
+  # Workflow: _bmad/bmm/workflows/design-system-mockup-builder
+  # Personas: María (parent), Diego (young pro), Rosa (abuelita), Tomás (drifter)
+  # Tech Context: docs/sprint-artifacts/epic13/tech-context-epic13.md (2025-12-23)
+  # UX Spec Update: docs/ux-design-specification.md Section 10 (2025-12-23)
+  epic-13: done  # Completed 2025-12-31 - All mockups approved
+
+  # Foundation (Specification Documents) - COMPLETED
+  13-1-critical-use-cases-document: done  # 3 pts - E2E scenarios - Atlas Code Review APPROVED 2025-12-23
+  13-2-voice-tone-guidelines: done  # 2 pts - Non-judgmental voice - Atlas Code Review APPROVED 2025-12-23
+  13-3-motion-design-system-spec: done  # 3 pts - "Everything Breathes" - Atlas Code Review APPROVED 2025-12-23
+
+  # Design System Foundation
+  13-4-design-system-html-components: done  # 5 pts - Build design-system-final.html with ALL components - Atlas Code Review APPROVED 2025-12-27
+  13-5-extract-design-system-reference: done  # 2 pts - Workflow Phase 1: Atlas Code Review APPROVED 2025-12-27
+
+  # Screen Mockups (Each uses Workflow Phase 2 independently - prevents context overflow)
+  # UNBLOCKED by 13.5 completion (2025-12-27) - All ready for parallel development
+  13-6-mockup-home-dashboard: done  # 3 pts - Atlas Code Review APPROVED 2025-12-29
+  13-7-mockup-analytics-polygon: done  # 5 pts - Includes Dynamic Polygon - Complete 2025-12-30
+  13-8-mockup-transaction-list: done  # 3 pts - Transaction items + filters - Complete 2025-12-30
+  13-9-mockup-scan-overlay: done  # 3 pts - Camera overlay flow - Complete 2025-12-29
+  13-10-mockup-goals-gps: done  # 3 pts - Savings GPS visualization - Complete 2025-12-31
+  13-11-mockup-reports: done  # 3 pts - Weekly report cards - Complete 2025-12-31
+  13-12-mockup-insights: done  # 3 pts - Insights history view - Complete 2025-12-31
+  13-13-mockup-settings: done  # 2 pts - Settings screen - Complete 2025-12-29
+
+  # Review Gate
+  13-14-design-review-approval-gate: done  # 1 pt - Design consistency review - APPROVED 2025-12-31
+  epic-13-retrospective: done  # Combined retro 2026-01-15 (Epics 12, 13, 14)
+  # ============================================================================

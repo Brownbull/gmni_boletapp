@@ -14,11 +14,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ScanOverlay, ScanOverlayProps, ScanOverlayState } from '../../../../src/components/scan/ScanOverlay';
-import { AnimationProvider } from '../../../../src/components/animation';
+import { ScanOverlay } from '@features/scan/components';
+import type { ScanOverlayProps, ScanOverlayState } from '@features/scan/components/ScanOverlay';
+import { AnimationProvider } from '@/components/animation';
 
 // Mock useReducedMotion
-vi.mock('../../../../src/hooks/useReducedMotion', () => ({
+vi.mock('@/hooks/useReducedMotion', () => ({
   useReducedMotion: () => false,
   default: () => false,
 }));

@@ -24,8 +24,9 @@ import { ImageViewer } from '../components/ImageViewer';
 import { HistoryFilterBar } from '../components/history/HistoryFilterBar';
 // Story 14.15b: Selection mode and modals for Dashboard
 // Group consolidation: Replaced personal group modals with TransactionGroupSelector
-import { DeleteTransactionsModal } from '../components/history/DeleteTransactionsModal';
+// Story 14e-5: DeleteTransactionsModal now uses Modal Manager
 import type { TransactionPreview } from '../components/history/DeleteTransactionsModal';
+import { useModalActions } from '@managers/ModalManager';
 import { TransactionGroupSelector } from '../components/SharedGroups/TransactionGroupSelector';
 import { useSelectionMode } from '../hooks/useSelectionMode';
 import { useAllUserGroups } from '../hooks/useAllUserGroups';
@@ -641,7 +642,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
     // Group consolidation: Modal states
     const [showGroupSelector, setShowGroupSelector] = useState(false);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    // Story 14e-5: Delete modal now uses Modal Manager
+    const { openModal, closeModal } = useModalActions();
 
     // Story 14.15b: Long-press state for selection mode entry
     const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -2037,9 +2039,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         setShowGroupSelector(true);
     }, []);
 
-    const handleOpenDelete = useCallback(() => {
-        setShowDeleteModal(true);
-    }, []);
+    // Story 14e-5: handleOpenDelete defined after getSelectedTransactions (see below)
 
     // Group consolidation: Handle group assignment using TransactionGroupSelector
     // Updates sharedGroupIds on all selected transactions
@@ -2101,21 +2101,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         }
     };
 
-    const handleConfirmDelete = async () => {
-        if (!userId || selectedIds.size === 0) return;
-
-        const db = getFirestore();
-        const selectedTxIds = Array.from(selectedIds);
-
-        try {
-            await deleteTransactionsBatch(db, userId, appId, selectedTxIds);
-            onTransactionsDeleted?.(selectedTxIds);
-            setShowDeleteModal(false);
-            exitSelectionMode();
-        } catch (error) {
-            console.error('Error deleting transactions:', error);
-        }
-    };
+    // Story 14e-5: handleConfirmDelete logic moved into openDeleteModal callback
 
     // Story 14.15b: Get selected transactions for delete modal preview
     const getSelectedTransactions = useCallback((): TransactionPreview[] => {
@@ -2131,6 +2117,32 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 };
             });
     }, [recentTransactions, selectedIds, currency]);
+
+    // Story 14e-5: handleOpenDelete uses Modal Manager (defined after getSelectedTransactions)
+    const handleOpenDelete = useCallback(() => {
+        openModal('deleteTransactions', {
+            transactions: getSelectedTransactions(),
+            onClose: closeModal,
+            onDelete: async () => {
+                if (!userId || selectedIds.size === 0) return;
+                const db = getFirestore();
+                const selectedTxIds = Array.from(selectedIds);
+                try {
+                    await deleteTransactionsBatch(db, userId, appId, selectedTxIds);
+                    onTransactionsDeleted?.(selectedTxIds);
+                    closeModal();
+                    exitSelectionMode();
+                } catch (error) {
+                    console.error('Error deleting transactions:', error);
+                    throw error;
+                }
+            },
+            formatCurrency,
+            t,
+            lang: lang as 'en' | 'es',
+            currency,
+        });
+    }, [openModal, closeModal, getSelectedTransactions, userId, selectedIds, appId, onTransactionsDeleted, exitSelectionMode, formatCurrency, t, lang, currency]);
 
     // Story 14.15b: Use consolidated TransactionCard with simplified props interface
     // Includes selection mode and long-press handlers
@@ -3534,18 +3546,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     />
                 )}
 
-                {/* Story 14.15b: Delete Transactions Modal */}
-                {showDeleteModal && (
-                    <DeleteTransactionsModal
-                        isOpen={showDeleteModal}
-                        onClose={() => setShowDeleteModal(false)}
-                        onDelete={handleConfirmDelete}
-                        transactions={getSelectedTransactions()}
-                        t={t}
-                        formatCurrency={formatCurrency}
-                        currency={currency}
-                    />
-                )}
+                {/* Story 14e-5: Delete Transactions Modal now uses Modal Manager */}
+                {/* Rendered by ModalManager component via openModal('deleteTransactions', {...}) */}
             </div>
         </PageTransition>
     );

@@ -46,7 +46,8 @@ import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { AnimatedItem } from '../AnimatedItem';
 import { DURATION, EASING } from '../animation/constants';
 import type { Language } from '../../utils/translations';
-import { useScanOptional } from '../../contexts/ScanContext';
+// Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
+import { useScanActiveDialog, useScanActions } from '@features/scan/store';
 import { DIALOG_TYPES } from '../../types/scanStateMachine';
 import { useIsForeignLocation } from '../../hooks/useIsForeignLocation';
 import { useLocationDisplay } from '../../hooks/useLocations';
@@ -146,12 +147,13 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
   const isDark = theme === 'dark';
   const prefersReducedMotion = useReducedMotion();
 
-  // Story 14d.4b: Get scan context for reading dialog state
-  const scanContext = useScanOptional();
+  // Story 14e-11: Use Zustand store selectors and actions
+  const activeDialog = useScanActiveDialog();
+  const { resolveDialog, dismissDialog } = useScanActions();
 
   // Story 14d.4b: Derive values from context or fall back to props
-  const contextDialogData = scanContext?.state.activeDialog?.type === DIALOG_TYPES.QUICKSAVE
-    ? (scanContext.state.activeDialog.data as QuickSaveDialogData)
+  const contextDialogData = activeDialog?.type === DIALOG_TYPES.QUICKSAVE
+    ? (activeDialog.data as QuickSaveDialogData)
     : null;
 
   // Get transaction and confidence from context or props
@@ -177,29 +179,29 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
   }, [isEntering, prefersReducedMotion]);
 
   // Story 14d.6: Create handlers that pass dialog data to callbacks
+  // Story 14e-11: Use Zustand actions directly (always available)
   const handleEdit = useCallback(() => {
     // Capture data before resolveDialog clears it
     const data = contextDialogData ?? undefined;
 
-    if (scanContext?.resolveDialog) {
-      scanContext.resolveDialog(DIALOG_TYPES.QUICKSAVE, { choice: 'edit' });
-    }
+    // Story 14e-11: Zustand actions are always available
+    resolveDialog(DIALOG_TYPES.QUICKSAVE, { choice: 'edit' });
     // Pass data to callback for context-based dialog handling
     onEditProp?.(data);
-  }, [scanContext, onEditProp, contextDialogData]);
+  }, [resolveDialog, onEditProp, contextDialogData]);
 
   const handleCancel = useCallback(() => {
     // Capture data before dismissDialog clears it
     const data = contextDialogData ?? undefined;
 
-    if (scanContext?.dismissDialog) {
-      scanContext.dismissDialog();
-    }
+    // Story 14e-11: Zustand actions are always available
+    dismissDialog();
     // Pass data to callback for context-based dialog handling
     onCancelProp?.(data);
-  }, [scanContext, onCancelProp, contextDialogData]);
+  }, [dismissDialog, onCancelProp, contextDialogData]);
 
   // Handle save with animation (Story 14.4 AC #2)
+  // Story 14e-11: Use Zustand actions directly (always available)
   const handleSave = useCallback(async () => {
     if (isSaving || saveAnimating) return;
 
@@ -211,10 +213,8 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
     }
 
     try {
-      // Story 14d.6: Dispatch to context if available
-      if (scanContext?.resolveDialog) {
-        scanContext.resolveDialog(DIALOG_TYPES.QUICKSAVE, { choice: 'save' });
-      }
+      // Story 14e-11: Zustand actions are always available
+      resolveDialog(DIALOG_TYPES.QUICKSAVE, { choice: 'save' });
       // Pass data to callback for context-based dialog handling
       if (onSaveProp) {
         await onSaveProp(data);
@@ -230,7 +230,7 @@ export const QuickSaveCard: React.FC<QuickSaveCardProps> = ({
     } finally {
       setSaveAnimating(false);
     }
-  }, [onSaveProp, isSaving, saveAnimating, prefersReducedMotion, onSaveComplete, scanContext, contextDialogData]);
+  }, [onSaveProp, isSaving, saveAnimating, prefersReducedMotion, onSaveComplete, resolveDialog, contextDialogData]);
 
   // Get display values (safe even if transaction is undefined)
   const merchantName = transaction?.alias || transaction?.merchant || t('unknown');

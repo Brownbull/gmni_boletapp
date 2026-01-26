@@ -21,22 +21,31 @@ vi.mock('../../../src/utils/imageUtils', () => ({
   readFileAsDataUrl: vi.fn(async () => 'data:image/jpeg;base64,mock'),
 }));
 
-// Story 14d.5a: Mock ScanContext for BatchCaptureView
-// Returns null to test fallback behavior (props-based mode)
-const mockScanContext = {
-  state: { images: [], mode: 'batch' as const, phase: 'capturing' as const },
-  setImages: vi.fn(),
-  reset: vi.fn(),
-  isBatchProcessing: false,
-};
+// Story 14e-11: Mock Zustand store for BatchCaptureView
+// (Replaced ScanContext with Zustand store)
+const mockScanStore = vi.fn((selector?: (state: unknown) => unknown) => {
+  const state = {
+    images: [] as string[],
+    mode: 'batch' as const,
+    phase: 'capturing' as const,
+  }
+  return selector ? selector(state) : state
+})
+const mockReset = vi.fn()
+const mockSetImages = vi.fn()
+const mockIsProcessing = vi.fn(() => false)
 
-vi.mock('../../../src/contexts/ScanContext', () => ({
-  useScanOptional: vi.fn(() => null), // Start with null - tests can override
-}));
+vi.mock('@features/scan/store', () => ({
+  useScanStore: (selector?: (state: unknown) => unknown) => mockScanStore(selector),
+  useScanActions: vi.fn(() => ({
+    reset: mockReset,
+    setImages: mockSetImages,
+  })),
+  useIsProcessing: () => mockIsProcessing(),
+}))
 
 // Import after mocking
-import { BatchCaptureView } from '../../../src/views/BatchCaptureView';
-import { useScanOptional } from '../../../src/contexts/ScanContext';
+import { BatchCaptureView } from '../../../src/views/BatchCaptureView'
 
 // Mock translation function
 const t = (key: string) => {
@@ -82,10 +91,27 @@ describe('BatchCaptureView Component', () => {
     t,
   };
 
+  // Store state to be returned by the mock
+  let storeState = {
+    images: [] as string[],
+    mode: 'batch' as const,
+    phase: 'capturing' as const,
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
-    // Reset to null context (props-based fallback)
-    vi.mocked(useScanOptional).mockReturnValue(null);
+    // Story 14e-11: Reset Zustand store mocks to default state
+    storeState = {
+      images: [],
+      mode: 'batch' as const,
+      phase: 'capturing' as const,
+    };
+    mockScanStore.mockImplementation((selector?: (state: typeof storeState) => unknown) => {
+      return selector ? selector(storeState) : storeState;
+    });
+    mockReset.mockClear();
+    mockSetImages.mockClear();
+    mockIsProcessing.mockReturnValue(false);
   });
 
   describe('Rendering', () => {
@@ -116,17 +142,13 @@ describe('BatchCaptureView Component', () => {
     });
   });
 
-  describe('Story 14d.5a: Context Integration', () => {
-    it('should use context images when context is available', () => {
-      const contextWithImages = {
-        ...mockScanContext,
-        state: {
-          images: ['data:image/jpeg;base64,test1'],
-          mode: 'batch' as const,
-          phase: 'capturing' as const,
-        },
+  describe('Story 14e-11: Zustand Store Integration', () => {
+    it('should use store images when available', () => {
+      storeState = {
+        images: ['data:image/jpeg;base64,test1'],
+        mode: 'batch' as const,
+        phase: 'capturing' as const,
       };
-      vi.mocked(useScanOptional).mockReturnValue(contextWithImages as never);
 
       render(<BatchCaptureView {...defaultProps} />);
 
@@ -134,8 +156,12 @@ describe('BatchCaptureView Component', () => {
       expect(screen.getByText(/1.*images selected/i)).toBeInTheDocument();
     });
 
-    it('should fall back to props when context is null', () => {
-      vi.mocked(useScanOptional).mockReturnValue(null);
+    it('should fall back to props when store has no images', () => {
+      storeState = {
+        images: [],
+        mode: 'batch' as const,
+        phase: 'capturing' as const,
+      };
 
       render(<BatchCaptureView {...defaultProps} imageDataUrls={['data:image/jpeg;base64,prop1']} />);
 
@@ -143,13 +169,7 @@ describe('BatchCaptureView Component', () => {
       expect(screen.getByText(/1.*images selected/i)).toBeInTheDocument();
     });
 
-    it('should call context.reset when clearing batch', () => {
-      const mockReset = vi.fn();
-      vi.mocked(useScanOptional).mockReturnValue({
-        ...mockScanContext,
-        reset: mockReset,
-      } as never);
-
+    it('should call reset action when clearing batch', () => {
       render(<BatchCaptureView {...defaultProps} />);
 
       // Click back with 0 images (no confirmation needed)
@@ -170,15 +190,12 @@ describe('BatchCaptureView Component', () => {
     });
 
     it('should show confirmation dialog with 2+ images', () => {
-      const contextWithImages = {
-        ...mockScanContext,
-        state: {
-          images: ['data:image/jpeg;base64,test1', 'data:image/jpeg;base64,test2'],
-          mode: 'batch' as const,
-          phase: 'capturing' as const,
-        },
+      // Story 14e-11: Use Zustand mock instead of context
+      storeState = {
+        images: ['data:image/jpeg;base64,test1', 'data:image/jpeg;base64,test2'],
+        mode: 'batch' as const,
+        phase: 'capturing' as const,
       };
-      vi.mocked(useScanOptional).mockReturnValue(contextWithImages as never);
 
       render(<BatchCaptureView {...defaultProps} />);
 
@@ -210,12 +227,9 @@ describe('BatchCaptureView Component', () => {
       expect(captureButton).toBeDisabled();
     });
 
-    it('should use context isBatchProcessing over props', () => {
-      const contextProcessing = {
-        ...mockScanContext,
-        isBatchProcessing: true,
-      };
-      vi.mocked(useScanOptional).mockReturnValue(contextProcessing as never);
+    it('should use store isProcessing over props', () => {
+      // Story 14e-11: Use Zustand mock instead of context
+      mockIsProcessing.mockReturnValue(true);
 
       render(<BatchCaptureView {...defaultProps} isProcessing={false} />);
 
@@ -241,15 +255,12 @@ describe('BatchCaptureView Component', () => {
     });
 
     it('should show credits needed as 1 when has images', () => {
-      const contextWithImages = {
-        ...mockScanContext,
-        state: {
-          images: ['data:image/jpeg;base64,test1'],
-          mode: 'batch' as const,
-          phase: 'capturing' as const,
-        },
+      // Story 14e-11: Use Zustand mock instead of context
+      storeState = {
+        images: ['data:image/jpeg;base64,test1'],
+        mode: 'batch' as const,
+        phase: 'capturing' as const,
       };
-      vi.mocked(useScanOptional).mockReturnValue(contextWithImages as never);
 
       render(<BatchCaptureView {...defaultProps} superCreditsAvailable={5} />);
 
