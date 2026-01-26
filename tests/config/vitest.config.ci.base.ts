@@ -127,6 +127,7 @@ export function createHeavyGroupConfig(
   const heavyBaseConfig: UserConfig = {
     plugins: baseCiConfig.plugins,
     define: baseCiConfig.define,
+    resolve: baseCiConfig.resolve, // Story 14e-11: Include path aliases for test files
     test: {
       globals: true,
       environment: 'happy-dom',
