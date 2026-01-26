@@ -1,6 +1,6 @@
 # Story 14e.14a: Batch Handler Types & Navigation Handlers
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -52,10 +52,11 @@ Navigation handlers in `src/App.tsx`:
 - `BatchNavigationContext` interface defined with:
   - `scanState: ScanState`
   - `setBatchEditingIndexContext: (index: number | null) => void`
-  - `pendingTransaction: Transaction | null`
-  - `setPendingTransaction: (tx: Transaction | null) => void`
-  - `navigateToView: (view: ViewType) => void`
+  - `currentTransaction: Transaction | null`
+  - `setCurrentTransaction: (tx: Transaction | null) => void`
 - All context interfaces exported
+
+**Note:** Implementation uses `currentTransaction`/`setCurrentTransaction` (matching actual App.tsx code) rather than `pendingTransaction`/`setPendingTransaction` from template. The `navigateToView` is not needed because handlers are invoked when already in the transaction editor view.
 
 ### AC3: Navigation Handlers Extracted
 
@@ -73,23 +74,23 @@ Navigation handlers in `src/App.tsx`:
 **When** running tests
 **Then:**
 - Tests verify bounds checking (no-op at boundaries)
-- Tests verify pendingTransaction update during navigation
-- Tests verify navigateToView called with 'transaction-editor'
+- Tests verify currentTransaction update during navigation
+- Tests verify thumbnailUrl is added when receipt has imageUrl
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Create handler directory and types** (AC: 1, 2)
-  - [ ] 1.1 Create `src/features/batch-review/handlers/` directory
-  - [ ] 1.2 Create `types.ts` with `BatchNavigationContext` interface
-  - [ ] 1.3 Create `index.ts` barrel export
+- [x] **Task 1: Create handler directory and types** (AC: 1, 2)
+  - [x] 1.1 Create `src/features/batch-review/handlers/` directory
+  - [x] 1.2 Create `types.ts` with `BatchNavigationContext` interface
+  - [x] 1.3 Create `index.ts` barrel export
 
-- [ ] **Task 2: Extract navigation handlers** (AC: 3, 4)
-  - [ ] 2.1 Create `navigation.ts` with `navigateToPreviousReceipt`
-  - [ ] 2.2 Add `navigateToNextReceipt` to `navigation.ts`
-  - [ ] 2.3 Add bounds checking (return early if at boundary)
-  - [ ] 2.4 Export from `index.ts`
-  - [ ] 2.5 Create `tests/unit/features/batch-review/handlers/navigation.test.ts`
-  - [ ] 2.6 Write tests for both handlers (happy path + boundaries)
+- [x] **Task 2: Extract navigation handlers** (AC: 3, 4)
+  - [x] 2.1 Create `navigation.ts` with `navigateToPreviousReceipt`
+  - [x] 2.2 Add `navigateToNextReceipt` to `navigation.ts`
+  - [x] 2.3 Add bounds checking (return early if at boundary)
+  - [x] 2.4 Export from `index.ts`
+  - [x] 2.5 Create `tests/unit/features/batch-review/handlers/navigation.test.ts`
+  - [x] 2.6 Write tests for both handlers (happy path + boundaries)
 
 ## Dev Notes
 
@@ -100,7 +101,7 @@ Navigation handlers in `src/App.tsx`:
 import type { BatchNavigationContext } from './types';
 
 export function navigateToPreviousReceipt(context: BatchNavigationContext): void {
-  const { scanState, setBatchEditingIndexContext, pendingTransaction, setPendingTransaction, navigateToView } = context;
+  const { scanState, setBatchEditingIndexContext, setCurrentTransaction } = context;
 
   const batchReceipts = scanState.batchReceipts;
   const currentIndex = scanState.batchEditingIndex;
@@ -108,21 +109,20 @@ export function navigateToPreviousReceipt(context: BatchNavigationContext): void
   // Bounds check: return early if at start or no batch
   if (!batchReceipts || currentIndex === null || currentIndex <= 0) return;
 
-  const newIndex = currentIndex - 1;
-  setBatchEditingIndexContext(newIndex);
+  const prevIndex = currentIndex - 1;
+  const prevReceipt = batchReceipts[prevIndex];
 
-  if (pendingTransaction) {
-    const receipt = batchReceipts[newIndex];
-    const transactionWithThumbnail = receipt.imageUrl
-      ? { ...receipt.transaction, thumbnailUrl: receipt.imageUrl }
-      : receipt.transaction;
-    setPendingTransaction(transactionWithThumbnail);
-    navigateToView('transaction-editor');
+  if (prevReceipt) {
+    setBatchEditingIndexContext(prevIndex);
+    const transactionWithThumbnail = prevReceipt.imageUrl
+      ? { ...prevReceipt.transaction, thumbnailUrl: prevReceipt.imageUrl }
+      : prevReceipt.transaction;
+    setCurrentTransaction(transactionWithThumbnail);
   }
 }
 
 export function navigateToNextReceipt(context: BatchNavigationContext): void {
-  const { scanState, setBatchEditingIndexContext, pendingTransaction, setPendingTransaction, navigateToView } = context;
+  const { scanState, setBatchEditingIndexContext, setCurrentTransaction } = context;
 
   const batchReceipts = scanState.batchReceipts;
   const currentIndex = scanState.batchEditingIndex;
@@ -130,16 +130,15 @@ export function navigateToNextReceipt(context: BatchNavigationContext): void {
   // Bounds check: return early if at end or no batch
   if (!batchReceipts || currentIndex === null || currentIndex >= batchReceipts.length - 1) return;
 
-  const newIndex = currentIndex + 1;
-  setBatchEditingIndexContext(newIndex);
+  const nextIndex = currentIndex + 1;
+  const nextReceipt = batchReceipts[nextIndex];
 
-  if (pendingTransaction) {
-    const receipt = batchReceipts[newIndex];
-    const transactionWithThumbnail = receipt.imageUrl
-      ? { ...receipt.transaction, thumbnailUrl: receipt.imageUrl }
-      : receipt.transaction;
-    setPendingTransaction(transactionWithThumbnail);
-    navigateToView('transaction-editor');
+  if (nextReceipt) {
+    setBatchEditingIndexContext(nextIndex);
+    const transactionWithThumbnail = nextReceipt.imageUrl
+      ? { ...nextReceipt.transaction, thumbnailUrl: nextReceipt.imageUrl }
+      : nextReceipt.transaction;
+    setCurrentTransaction(transactionWithThumbnail);
   }
 }
 ```
@@ -161,17 +160,48 @@ src/features/batch-review/
 
 ### References
 
-- [Source: src/App.tsx:1717-1744 - handleBatchPrevious, handleBatchNext]
+- [Source: src/App.tsx:1637-1665 - handleBatchPrevious, handleBatchNext]
 - [Source: docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-14-extract-batch-review-handlers.md - Parent story]
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Debug Log References
 
+None - implementation proceeded without issues.
+
 ### Completion Notes List
 
+1. Created handler directory structure following scan feature pattern
+2. Implemented `BatchNavigationContext` interface with actual App.tsx dependencies (using `currentTransaction`/`setCurrentTransaction` to match existing code)
+3. Extracted `navigateToPreviousReceipt` and `navigateToNextReceipt` handlers
+4. Comprehensive tests: 19 tests covering bounds checking, happy path navigation, thumbnail handling, and edge cases
+5. Updated feature barrel export to include handlers
+6. All 347 existing tests pass with no regressions
+
+### Code Review Fixes (2026-01-26)
+
+1. Added missing empty array edge case test for `navigateToPreviousReceipt` (test symmetry)
+2. Extracted `buildTransactionWithThumbnail()` helper to eliminate code duplication
+3. Test count: 18 → 19 tests
+
 ### File List
+
+**Created:**
+- `src/features/batch-review/handlers/types.ts` - BatchNavigationContext interface
+- `src/features/batch-review/handlers/navigation.ts` - Navigation handler functions
+- `src/features/batch-review/handlers/index.ts` - Barrel export
+- `tests/unit/features/batch-review/handlers/navigation.test.ts` - 19 unit tests
+
+**Modified:**
+- `src/features/batch-review/index.ts` - Added handler exports to feature barrel
+
+## Change Log
+
+| Date | Change |
+|------|--------|
+| 2026-01-26 | Story implemented by Claude Opus 4.5 - All ACs satisfied, 18 tests added |
+| 2026-01-26 | Atlas code review fixes: Added empty array test (+1), extracted buildTransactionWithThumbnail helper |

@@ -1,6 +1,6 @@
 # Story 14e.14c: Batch Discard & Credit Check Handlers
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -87,22 +87,22 @@ Discard and credit handlers in `src/App.tsx`:
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Add context types** (AC: 1)
-  - [ ] 1.1 Add `DiscardContext` to types.ts
-  - [ ] 1.2 Add `CreditCheckContext` to types.ts
+- [x] **Task 1: Add context types** (AC: 1)
+  - [x] 1.1 Add `DiscardContext` to types.ts
+  - [x] 1.2 Add `CreditCheckContext` to types.ts
 
-- [ ] **Task 2: Extract discard handlers** (AC: 2)
-  - [ ] 2.1 Create `discard.ts` with `handleReviewBack`
-  - [ ] 2.2 Add `confirmDiscard` to discard.ts
-  - [ ] 2.3 Add `cancelDiscard` to discard.ts
-  - [ ] 2.4 Export from index.ts
-  - [ ] 2.5 Write unit tests for all three handlers
+- [x] **Task 2: Extract discard handlers** (AC: 2)
+  - [x] 2.1 Create `discard.ts` with `handleReviewBack`
+  - [x] 2.2 Add `confirmDiscard` to discard.ts
+  - [x] 2.3 Add `cancelDiscard` to discard.ts
+  - [x] 2.4 Export from index.ts
+  - [x] 2.5 Write unit tests for all three handlers
 
-- [ ] **Task 3: Extract credit check handler** (AC: 3, 4)
-  - [ ] 3.1 Create `creditCheck.ts` with `confirmWithCreditCheck`
-  - [ ] 3.2 Use 1 super credit for batch pricing
-  - [ ] 3.3 Export from index.ts
-  - [ ] 3.4 Write unit tests
+- [x] **Task 3: Extract credit check handler** (AC: 3, 4)
+  - [x] 3.1 Create `creditCheck.ts` with `confirmWithCreditCheck`
+  - [x] 3.2 Use 1 super credit for batch pricing
+  - [x] 3.3 Export from index.ts
+  - [x] 3.4 Write unit tests
 
 ## Dev Notes
 
@@ -175,10 +175,39 @@ export function confirmWithCreditCheck(context: CreditCheckContext): void {
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Debug Log References
 
+None - clean implementation following established patterns.
+
 ### Completion Notes List
 
+1. **AC1 Complete**: Added `DiscardContext` and `CreditCheckContext` interfaces to types.ts with all required properties matching the story specification.
+
+2. **AC2 Complete**: Extracted three discard handlers to `discard.ts`:
+   - `handleReviewBack`: Shows BATCH_DISCARD dialog when receipts exist, navigates directly when none
+   - `confirmDiscard`: Dismisses dialog, clears all batch state, navigates to dashboard
+   - `cancelDiscard`: Dismisses dialog only (minimal function)
+
+3. **AC3 Complete**: Extracted `confirmWithCreditCheck` to `creditCheck.ts` with 1 super credit batch pricing model.
+
+4. **AC4 Complete**: 36 unit tests passing (24 discard + 12 credit check):
+   - Discard tests cover dialog showing, state cleanup, navigation, and execution order
+   - Credit check tests verify super credit usage, result handling, and batch pricing model
+
+5. **Pattern Compliance**: Followed established handler patterns from Story 14e-14a/b with props-based dependency injection.
+
+6. **Full Test Suite**: 5667 tests passing with no regressions.
+
 ### File List
+
+**New Files:**
+- `src/features/batch-review/handlers/discard.ts` - Discard handlers
+- `src/features/batch-review/handlers/creditCheck.ts` - Credit check handler
+- `tests/unit/features/batch-review/handlers/discard.test.ts` - 24 tests
+- `tests/unit/features/batch-review/handlers/creditCheck.test.ts` - 12 tests
+
+**Modified Files:**
+- `src/features/batch-review/handlers/types.ts` - Added DiscardContext, CreditCheckContext interfaces
+- `src/features/batch-review/handlers/index.ts` - Added barrel exports for new handlers

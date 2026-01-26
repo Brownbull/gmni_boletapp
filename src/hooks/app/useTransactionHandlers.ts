@@ -59,6 +59,8 @@ import {
 } from '../../services/insightEngineService';
 import { parseStrictNumber, getSafeDate } from '../../utils/validation';
 import { downloadBasicData } from '../../utils/csvExport';
+// Story 14e-16: Import batch review actions to sync removal when saving from edit mode
+import { batchReviewActions } from '@features/batch-review';
 
 // =============================================================================
 // Types
@@ -321,15 +323,25 @@ export function useTransactionHandlers(
             total: parseStrictNumber(transactionToSave.total),
         };
 
+        // Story 14e-16: Capture batch editing state BEFORE clearing it
+        // Used to skip insight card / session context when saving from batch mode
+        const wasInBatchEditingMode = batchEditingIndex !== null;
+
         // Navigate immediately (optimistic UI)
         // If in batch editing mode, return to batch-review instead of dashboard
         if (batchEditingIndex !== null) {
             // Get the receipt ID before clearing the index
             const receiptId = batchReceipts?.[batchEditingIndex]?.id;
             clearBatchEditingIndex();
+            // Story 14e-16: First transition from editing → reviewing phase,
+            // then discard the item. This allows auto-complete logic in
+            // BatchReviewFeature to detect when list becomes empty.
+            batchReviewActions.finishEditing();
             // Remove the saved receipt from the batch list so it doesn't appear twice
+            // Story 14e-16: Remove from both scan store and batch review store
             if (receiptId) {
                 discardBatchReceipt(receiptId);
+                batchReviewActions.discardItem(receiptId);
             }
             setView('batch-review');
         } else {
@@ -376,8 +388,10 @@ export function useTransactionHandlers(
                     // Add transaction and insight to batch session
                     addToBatch(txWithId, insight);
 
-                    // If silenced, skip showing individual insight
-                    if (silenced) {
+                    // If silenced OR in batch editing mode, skip showing individual insight
+                    // Story 14e-16: Don't show insight card when saving from batch edit mode
+                    // The batch review flow handles completion differently
+                    if (silenced || wasInBatchEditingMode) {
                         const txDate = tDoc.date ? new Date(tDoc.date) : new Date();
                         trackTransactionForInsight(txDate)
                             .catch(err => console.warn('Failed to track transaction:', err));
@@ -430,7 +444,8 @@ export function useTransactionHandlers(
                     addToBatch(txWithTemp, null);
 
                     // Show batch summary if in batch mode, otherwise fallback card
-                    if (!silenced) {
+                    // Story 14e-16: Skip when saving from batch edit mode
+                    if (!silenced && !wasInBatchEditingMode) {
                         const willBeBatchMode = (batchSession?.receipts.length ?? 0) + 1 >= 3;
                         if (willBeBatchMode) {
                             setShowBatchSummary(true);

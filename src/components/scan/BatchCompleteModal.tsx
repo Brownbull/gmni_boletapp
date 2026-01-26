@@ -7,7 +7,7 @@
  * @see docs/uxui/mockups/01_views/scan-overlay.html State 3.a
  */
 import React from 'react';
-import { X, Check, DollarSign, BarChart3, Home } from 'lucide-react';
+import { X, Layers, DollarSign, BarChart3, Home } from 'lucide-react';
 import type { Transaction } from '../../types/transaction';
 import type { HistoryNavigationPayload } from '../../utils/analyticsToHistoryFilters';
 
@@ -36,26 +36,28 @@ export interface BatchCompleteModalProps {
  * BatchCompleteModal Component
  *
  * Shows batch completion success with:
- * - Success checkmark icon
+ * - Batch icon (Layers) in primary color theme
  * - "X Transactions Saved" header
  * - List of transactions with merchant names and amounts
- * - Total batch amount
+ * - Total batch amount in primary color
  * - Credit usage summary
  * - "View History" and "Go Home" buttons
+ *
+ * Uses CSS custom properties for theme consistency:
+ * --bg-secondary, --primary, --primary-light, --text-primary, etc.
  */
 export const BatchCompleteModal: React.FC<BatchCompleteModalProps> = ({
   transactions,
   creditsUsed,
   creditsRemaining,
-  theme,
+  // theme is passed but we use CSS variables for consistent theming
+  theme: _theme,
   t,
   onDismiss,
   onNavigateToHistory,
   onGoHome,
   formatCurrency,
 }) => {
-  const isDark = theme === 'dark';
-
   // Calculate total amount (assumes all transactions use same currency)
   const currency = transactions[0]?.currency || 'USD';
   const totalAmount = transactions.reduce((sum, tx) => sum + tx.total, 0);
@@ -81,40 +83,49 @@ export const BatchCompleteModal: React.FC<BatchCompleteModalProps> = ({
     });
   };
 
-  // Theme-based styling
-  const cardBg = isDark ? 'bg-slate-800' : 'bg-white';
-  const textPrimary = isDark ? 'text-white' : 'text-slate-900';
-  const textSecondary = isDark ? 'text-slate-400' : 'text-slate-600';
-  const textTertiary = isDark ? 'text-slate-500' : 'text-slate-500';
-  const bgTertiary = isDark ? 'bg-slate-700' : 'bg-slate-100';
-  const borderLight = isDark ? 'border-slate-600' : 'border-slate-200';
-  const successBg = isDark ? 'bg-green-900/30' : 'bg-green-50';
+  // Use CSS custom properties for theme consistency
+  // These map to the app's design system variables
 
   return (
     <div
-      className={`${cardBg} rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]`}
+      className="rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] max-w-sm w-full"
+      style={{
+        backgroundColor: 'var(--bg-secondary)',
+        border: '2px solid var(--border-light)',
+      }}
       role="dialog"
       aria-labelledby="batch-complete-title"
     >
       {/* Close Button */}
       <button
         onClick={onDismiss}
-        className={`absolute top-3 right-3 w-8 h-8 ${bgTertiary} rounded-lg flex items-center justify-center z-10`}
+        className="absolute top-3 right-3 w-8 h-8 rounded-lg flex items-center justify-center z-10"
+        style={{
+          backgroundColor: 'var(--bg-tertiary)',
+          color: 'var(--text-secondary)',
+        }}
         aria-label={t('close')}
       >
-        <X className={textSecondary} size={16} />
+        <X size={16} />
       </button>
 
-      {/* Success Icon & Header */}
+      {/* Success Icon & Header - Uses Layers (batch FAD icon) with primary color */}
       <div className="p-5 flex flex-col items-center gap-3">
-        <div className={`w-16 h-16 ${successBg} rounded-full flex items-center justify-center`}>
-          <Check className="text-green-500" size={32} strokeWidth={3} />
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center"
+          style={{ backgroundColor: 'var(--primary-light)' }}
+        >
+          <Layers size={32} strokeWidth={2.5} style={{ color: 'var(--primary)' }} />
         </div>
         <div className="text-center">
-          <h2 id="batch-complete-title" className={`text-xl font-bold ${textPrimary}`}>
+          <h2
+            id="batch-complete-title"
+            className="text-xl font-bold"
+            style={{ color: 'var(--text-primary)' }}
+          >
             {transactions.length} {t('batchTransactionsSaved')}
           </h2>
-          <p className={`text-sm ${textSecondary}`}>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
             {t('batchProcessedSuccess')}
           </p>
         </div>
@@ -122,13 +133,19 @@ export const BatchCompleteModal: React.FC<BatchCompleteModalProps> = ({
 
       {/* Batch Summary */}
       <div className="px-5 flex-1 overflow-y-auto">
-        <div className={`${bgTertiary} rounded-xl p-3.5`}>
+        <div
+          className="rounded-xl p-3.5"
+          style={{ backgroundColor: 'var(--bg-tertiary)' }}
+        >
           {/* Summary Header */}
           <div className="flex justify-between items-center mb-2.5">
-            <span className={`text-xs uppercase tracking-wider ${textTertiary}`}>
+            <span
+              className="text-xs uppercase tracking-wider"
+              style={{ color: 'var(--text-tertiary)' }}
+            >
               {t('batchSummaryTitle')}
             </span>
-            <span className={`text-xs ${textTertiary}`}>
+            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
               {currentDate}
             </span>
           </div>
@@ -138,17 +155,21 @@ export const BatchCompleteModal: React.FC<BatchCompleteModalProps> = ({
             {transactions.map((tx, index) => (
               <div
                 key={tx.id || index}
-                className={`flex justify-between items-center py-2 ${
-                  index < transactions.length - 1 ? `border-b ${borderLight}` : ''
-                }`}
+                className="flex justify-between items-center py-2"
+                style={{
+                  borderBottom: index < transactions.length - 1 ? '1px solid var(--border-light)' : 'none',
+                }}
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full" />
-                  <span className={`text-sm ${textPrimary}`}>
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: 'var(--primary)' }}
+                  />
+                  <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
                     {tx.merchant || tx.alias || t('unknownMerchant')}
                   </span>
                 </div>
-                <span className={`text-sm font-semibold ${textPrimary}`}>
+                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                   {formatCurrency(tx.total, tx.currency || 'USD')}
                 </span>
               </div>
@@ -159,14 +180,17 @@ export const BatchCompleteModal: React.FC<BatchCompleteModalProps> = ({
 
       {/* Total Section */}
       <div className="px-5 pt-3">
-        <div className={`${successBg} rounded-xl p-3.5 flex justify-between items-center`}>
+        <div
+          className="rounded-xl p-3.5 flex justify-between items-center"
+          style={{ backgroundColor: 'var(--primary-light)' }}
+        >
           <div className="flex items-center gap-2">
-            <DollarSign className="text-green-500" size={20} />
-            <span className="text-sm font-medium text-green-600">
+            <DollarSign size={20} style={{ color: 'var(--primary)' }} />
+            <span className="text-sm font-medium" style={{ color: 'var(--primary)' }}>
               {t('batchTotal')}
             </span>
           </div>
-          <span className="text-xl font-bold text-green-600">
+          <span className="text-xl font-bold" style={{ color: 'var(--primary)' }}>
             {formatCurrency(totalAmount, currency)}
           </span>
         </div>
@@ -174,7 +198,7 @@ export const BatchCompleteModal: React.FC<BatchCompleteModalProps> = ({
 
       {/* Credit Usage */}
       <div className="px-5 pt-3 flex items-center justify-center gap-1.5">
-        <span className={`text-xs ${textTertiary}`}>
+        <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
           {t('creditsUsedRemaining')
             .replace('{used}', String(creditsUsed))
             .replace('{remaining}', String(creditsRemaining))}
@@ -185,18 +209,20 @@ export const BatchCompleteModal: React.FC<BatchCompleteModalProps> = ({
       <div className="p-5 flex gap-3">
         <button
           onClick={handleViewHistory}
-          className={`flex-1 h-12 rounded-xl font-semibold border-2 transition-colors flex items-center justify-center gap-2 ${
-            isDark
-              ? 'border-slate-600 text-slate-300 hover:bg-slate-700'
-              : 'border-slate-300 text-slate-700 hover:bg-slate-50'
-          }`}
+          className="flex-1 h-12 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2"
+          style={{
+            border: '2px solid var(--border-medium)',
+            color: 'var(--text-primary)',
+            backgroundColor: 'transparent',
+          }}
         >
           <BarChart3 size={16} />
           {t('viewHistory')}
         </button>
         <button
           onClick={onGoHome}
-          className="flex-1 h-12 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 bg-green-500 text-white hover:bg-green-600"
+          className="flex-1 h-12 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 text-white"
+          style={{ backgroundColor: 'var(--primary)' }}
         >
           <Home size={16} />
           {t('goHome')}

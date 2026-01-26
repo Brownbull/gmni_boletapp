@@ -1,6 +1,6 @@
 # Story 14e.12a: Batch Review Zustand Store Foundation
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -99,30 +99,35 @@ export interface BatchReviewState {
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Create store directory and types** (AC: 1, 2, 3)
-  - [ ] 1.1 Create `src/features/batch-review/store/` directory
-  - [ ] 1.2 Create `types.ts` with `BatchReviewPhase` type
-  - [ ] 1.3 Add `BatchReviewState` interface to `types.ts`
-  - [ ] 1.4 Add `BatchReviewActions` interface to `types.ts` (lifecycle + item actions only)
-  - [ ] 1.5 Create `index.ts` barrel export
+- [x] **Task 1: Create store directory and types** (AC: 1, 2, 3)
+  - [x] 1.1 Create `src/features/batch-review/store/` directory
+  - [x] 1.2 Create `types.ts` with `BatchReviewPhase` type
+  - [x] 1.3 Add `BatchReviewState` interface to `types.ts`
+  - [x] 1.4 Add `BatchReviewActions` interface to `types.ts` (lifecycle + item actions only)
+  - [x] 1.5 Create `index.ts` barrel export
 
-- [ ] **Task 2: Implement Zustand store** (AC: 4, 5)
-  - [ ] 2.1 Create `useBatchReviewStore.ts` with Zustand `create()`
-  - [ ] 2.2 Add `devtools` middleware with name `'batch-review-store'`
-  - [ ] 2.3 Define initial state (phase: 'idle', empty items, zero counters)
-  - [ ] 2.4 Implement `loadBatch(receipts)` action
-  - [ ] 2.5 Implement `reset()` action
+- [x] **Task 2: Implement Zustand store** (AC: 4, 5)
+  - [x] 2.1 Create `useBatchReviewStore.ts` with Zustand `create()`
+  - [x] 2.2 Add `devtools` middleware with name `'batch-review-store'`
+  - [x] 2.3 Define initial state (phase: 'idle', empty items, zero counters)
+  - [x] 2.4 Implement `loadBatch(receipts)` action
+  - [x] 2.5 Implement `reset()` action
 
-- [ ] **Task 3: Implement item actions** (AC: 6)
-  - [ ] 3.1 Implement `selectItem(index)` action
-  - [ ] 3.2 Implement `updateItem(id, updates)` action
-  - [ ] 3.3 Implement `discardItem(id)` action
+- [x] **Task 3: Implement item actions** (AC: 6)
+  - [x] 3.1 Implement `selectItem(index)` action
+  - [x] 3.2 Implement `updateItem(id, updates)` action
+  - [x] 3.3 Implement `discardItem(id)` action
 
-- [ ] **Task 4: Write basic tests** (AC: 7)
-  - [ ] 4.1 Create `useBatchReviewStore.test.ts`
-  - [ ] 4.2 Test initial state
-  - [ ] 4.3 Test `loadBatch()` and `reset()` lifecycle
-  - [ ] 4.4 Test item actions (select, update, discard)
+- [x] **Task 4: Write basic tests** (AC: 7)
+  - [x] 4.1 Create `useBatchReviewStore.test.ts`
+  - [x] 4.2 Test initial state
+  - [x] 4.3 Test `loadBatch()` and `reset()` lifecycle
+  - [x] 4.4 Test item actions (select, update, discard)
+
+### Review Follow-ups (Archie)
+
+- [x] [Archie-Review][MEDIUM] Fix React act() warnings in Hook Usage tests by wrapping store reset in act() [tests/unit/features/batch-review/store/useBatchReviewStore.test.ts:484-508]
+- [x] [Archie-Review][LOW] Add useShallow documentation note to store - Addressed by Story 14e-13 (selectors)
 
 ## Dev Notes
 
@@ -208,10 +213,32 @@ src/features/batch-review/
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Debug Log References
 
+N/A - Clean implementation with no blocking issues.
+
 ### Completion Notes List
 
+- Created Zustand store following scan store pattern (ADR-018)
+- Implemented 7 phases (idle, loading, reviewing, editing, saving, complete, error)
+- DevTools enabled in DEV mode only (`enabled: import.meta.env.DEV`)
+- Phase guard on loadBatch() blocks calling from non-idle phase
+- Phase guards on item actions (selectItem, updateItem, discardItem) - added during code review
+- discardItem() adjusts currentIndex when needed (before selection, at end, all removed)
+- 29 tests passing covering all acceptance criteria + phase guards
+- Build verified: Vite build completes without errors
+- ✅ Resolved review finding [MEDIUM]: Wrapped resetStore() in act() in beforeEach/afterEach to prevent React act() warnings when tests use renderHook
+
 ### File List
+
+**New Files:**
+- `src/features/batch-review/store/types.ts` - Phase, State, Actions type definitions
+- `src/features/batch-review/store/useBatchReviewStore.ts` - Zustand store implementation
+- `src/features/batch-review/store/index.ts` - Barrel exports
+- `tests/unit/features/batch-review/store/useBatchReviewStore.test.ts` - 29 unit tests
+
+**Modified Files:**
+- `src/features/batch-review/index.ts` - Updated to re-export store module
+- `docs/sprint-artifacts/sprint-status.yaml` - Status: review → done

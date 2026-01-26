@@ -139,14 +139,7 @@ export {
     type PaginationState,
 } from './useHistoryViewProps';
 
-// BatchReviewView data props composition
-export {
-    useBatchReviewViewProps,
-    type UseBatchReviewViewPropsOptions,
-    type BatchReviewViewDataProps,
-    type ProcessingStateForProps,
-    type BatchCreditsForProps,
-} from './useBatchReviewViewProps';
+// Story 14e-16: useBatchReviewViewProps DELETED - BatchReviewFeature uses store selectors
 
 // DashboardView data props composition (Story 14c-refactor.34a)
 export {
