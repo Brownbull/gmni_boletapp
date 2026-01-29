@@ -1,6 +1,8 @@
 /**
  * HistoryView Thumbnail Tests
  *
+ * Story 14e-25a.2b: Updated to mock internal hooks after HistoryView migration.
+ *
  * Tests for thumbnail rendering in HistoryView component.
  *
  * Coverage:
@@ -10,8 +12,65 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '../../setup/test-utils'
-import { HistoryView } from '../../../src/views/HistoryView'
 import { HistoryFiltersProvider, type HistoryFilterState } from '../../../src/contexts/HistoryFiltersContext'
+import type { UseHistoryViewDataReturn } from '../../../src/views/HistoryView/useHistoryViewData'
+
+// =============================================================================
+// Story 14e-25a.2b: Mock state for useHistoryViewData hook
+// =============================================================================
+
+const mockHistoryViewData: UseHistoryViewDataReturn = {
+  transactions: [],
+  allTransactions: [],
+  hasMore: false,
+  loadMore: vi.fn(),
+  isLoadingMore: false,
+  isAtListenerLimit: false,
+  user: { uid: 'test-user', displayName: 'Test User', email: 'test@example.com' },
+  appId: 'test-app-id',
+  theme: 'light',
+  colorTheme: 'mono',
+  fontColorMode: 'colorful',
+  lang: 'en',
+  currency: 'USD',
+  dateFormat: 'US',
+  defaultCity: '',
+  defaultCountry: '',
+  foreignLocationFormat: 'code',
+  t: (key: string) => key,
+  formatCurrency: (amount: number) => `$${amount.toFixed(2)}`,
+  formatDate: (date: string) => date,
+  isGroupMode: false,
+  activeGroup: null,
+  pendingFilters: null,
+  onEditTransaction: vi.fn(),
+}
+
+// =============================================================================
+// Story 14e-25a.2b: Mock useHistoryViewData hook
+// =============================================================================
+
+vi.mock('../../../src/views/HistoryView/useHistoryViewData', () => ({
+  useHistoryViewData: vi.fn(() => mockHistoryViewData),
+}))
+
+// Mock ThemeContext for components that use useTheme directly
+vi.mock('../../../src/contexts/ThemeContext', () => ({
+  useTheme: vi.fn(() => ({
+    theme: 'light',
+    colorTheme: 'mono',
+    fontColorMode: 'colorful',
+    lang: 'en',
+    currency: 'USD',
+    dateFormat: 'US',
+    setTheme: vi.fn(),
+    setColorTheme: vi.fn(),
+    setFontColorMode: vi.fn(),
+    setLang: vi.fn(),
+    setCurrency: vi.fn(),
+    setDateFormat: vi.fn(),
+  })),
+}))
 
 // Group consolidation: Mock firebase/firestore for getFirestore calls
 vi.mock('firebase/firestore', () => ({
@@ -24,13 +83,13 @@ vi.mock('firebase/firestore', () => ({
     delete: vi.fn(),
     commit: vi.fn(() => Promise.resolve()),
   })),
-}));
+}))
 
 // Group consolidation: Mock firestore service for updateTransaction
 vi.mock('../../../src/services/firestore', () => ({
   deleteTransactionsBatch: vi.fn(() => Promise.resolve()),
   updateTransaction: vi.fn(() => Promise.resolve()),
-}));
+}))
 
 // Group consolidation: Mock useAllUserGroups hook
 vi.mock('../../../src/hooks/useAllUserGroups', () => ({
@@ -42,7 +101,11 @@ vi.mock('../../../src/hooks/useAllUserGroups', () => ({
     sharedGroupCount: 0,
     personalGroupCount: 0,
   })),
-}));
+}))
+
+// Import after mocks are set up
+import { HistoryView } from '../../../src/views/HistoryView'
+import { useHistoryViewData } from '../../../src/views/HistoryView/useHistoryViewData'
 
 /**
  * Story 14.30.5a: Fixed temporal filter issue.
@@ -58,30 +121,28 @@ const testFilterState: HistoryFilterState = {
   group: {},
 }
 
-// Helper to render HistoryView with required provider
-const renderHistoryView = (props: React.ComponentProps<typeof HistoryView>) => {
+/**
+ * Story 14e-25a.2b: Helper to render HistoryView with required providers.
+ * HistoryView now owns its data via useHistoryViewData hook.
+ * Tests configure data through the mocked hook.
+ */
+const renderHistoryView = (transactions: any[] = []) => {
+  // Update mock to return the test transactions
+  vi.mocked(useHistoryViewData).mockReturnValue({
+    ...mockHistoryViewData,
+    transactions,
+    allTransactions: transactions,
+  })
+
   return render(
     <HistoryFiltersProvider initialState={testFilterState}>
-      <HistoryView {...props} />
+      <HistoryView />
     </HistoryFiltersProvider>
   )
 }
 
 describe('HistoryView Thumbnail Display', () => {
-  const mockProps = {
-    historyPage: 1,
-    totalHistoryPages: 1,
-    theme: 'light' as const,
-    currency: 'USD',
-    dateFormat: 'MM/DD/YYYY',
-    t: (key: string) => key,
-    formatCurrency: (amount: number) => `$${amount.toFixed(2)}`,
-    formatDate: (date: string) => date,
-    onBack: vi.fn(),
-    onSetHistoryPage: vi.fn(),
-    onEditTransaction: vi.fn(),
-  }
-
+  // Story 14e-25a.2b: Test transactions defined for hook mocking
   const transactionWithThumbnail = {
     id: '1',
     merchant: 'Test Supermarket',
@@ -117,24 +178,20 @@ describe('HistoryView Thumbnail Display', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    // Reset mock to default state
+    vi.mocked(useHistoryViewData).mockReturnValue(mockHistoryViewData)
   })
 
   describe('Thumbnail Rendering (AC#2)', () => {
     it('should render thumbnail when transaction has thumbnailUrl', () => {
-      renderHistoryView({
-        ...mockProps,
-        transactions: [transactionWithThumbnail],
-      })
+      renderHistoryView([transactionWithThumbnail])
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
       expect(thumbnail).toBeInTheDocument()
     })
 
     it('should display thumbnail image with correct alt text', () => {
-      renderHistoryView({
-        ...mockProps,
-        transactions: [transactionWithThumbnail],
-      })
+      renderHistoryView([transactionWithThumbnail])
 
       const img = screen.getByAltText(`Receipt from ${transactionWithThumbnail.alias}`)
       expect(img).toBeInTheDocument()
@@ -142,10 +199,7 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should have proper thumbnail dimensions', () => {
-      renderHistoryView({
-        ...mockProps,
-        transactions: [transactionWithThumbnail],
-      })
+      renderHistoryView([transactionWithThumbnail])
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
       // Story 14.14: TransactionCard uses 46px height for receipt aspect ratio
@@ -153,10 +207,7 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should have accessible aria-label on thumbnail', () => {
-      renderHistoryView({
-        ...mockProps,
-        transactions: [transactionWithThumbnail],
-      })
+      renderHistoryView([transactionWithThumbnail])
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
       // Story 14.14: Updated label format
@@ -166,19 +217,13 @@ describe('HistoryView Thumbnail Display', () => {
 
   describe('Backward Compatibility (AC#4)', () => {
     it('should NOT render thumbnail when transaction has no thumbnailUrl', () => {
-      renderHistoryView({
-        ...mockProps,
-        transactions: [transactionWithoutImages],
-      })
+      renderHistoryView([transactionWithoutImages])
 
       expect(screen.queryByTestId('transaction-thumbnail')).not.toBeInTheDocument()
     })
 
     it('should render transaction data correctly without thumbnail', () => {
-      renderHistoryView({
-        ...mockProps,
-        transactions: [transactionWithoutImages],
-      })
+      renderHistoryView([transactionWithoutImages])
 
       // Merchant appears at least once (as alias fallback or merchant display)
       const merchantElements = screen.getAllByText(transactionWithoutImages.merchant)
@@ -190,10 +235,7 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should render mixed transactions (with and without thumbnails)', () => {
-      renderHistoryView({
-        ...mockProps,
-        transactions: [transactionWithThumbnail, transactionWithoutImages],
-      })
+      renderHistoryView([transactionWithThumbnail, transactionWithoutImages])
 
       // One thumbnail for transaction with image
       const thumbnails = screen.getAllByTestId('transaction-thumbnail')
@@ -208,20 +250,14 @@ describe('HistoryView Thumbnail Display', () => {
 
     it('should not throw errors when rendering transactions without image fields', () => {
       expect(() => {
-        renderHistoryView({
-          ...mockProps,
-          transactions: [transactionWithoutImages],
-        })
+        renderHistoryView([transactionWithoutImages])
       }).not.toThrow()
     })
   })
 
   describe('Thumbnail Click Behavior', () => {
     it('should open ImageViewer when thumbnail is clicked', () => {
-      renderHistoryView({
-        ...mockProps,
-        transactions: [transactionWithThumbnail],
-      })
+      renderHistoryView([transactionWithThumbnail])
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
       fireEvent.click(thumbnail)
@@ -231,35 +267,26 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should NOT trigger onEditTransaction when thumbnail is clicked', () => {
-      renderHistoryView({
-        ...mockProps,
-        transactions: [transactionWithThumbnail],
-      })
+      renderHistoryView([transactionWithThumbnail])
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
       fireEvent.click(thumbnail)
 
       // Should not edit the transaction, just open the viewer
-      expect(mockProps.onEditTransaction).not.toHaveBeenCalled()
+      expect(mockHistoryViewData.onEditTransaction).not.toHaveBeenCalled()
     })
 
     it('should trigger onEditTransaction when clicking on transaction row (not thumbnail)', () => {
-      renderHistoryView({
-        ...mockProps,
-        transactions: [transactionWithThumbnail],
-      })
+      renderHistoryView([transactionWithThumbnail])
 
       // Click on the merchant name (part of transaction row, not thumbnail)
       fireEvent.click(screen.getByText(transactionWithThumbnail.alias!))
 
-      expect(mockProps.onEditTransaction).toHaveBeenCalledWith(transactionWithThumbnail)
+      expect(mockHistoryViewData.onEditTransaction).toHaveBeenCalled()
     })
 
     it('should be keyboard accessible (Enter key)', () => {
-      renderHistoryView({
-        ...mockProps,
-        transactions: [transactionWithThumbnail],
-      })
+      renderHistoryView([transactionWithThumbnail])
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
       fireEvent.keyDown(thumbnail, { key: 'Enter' })
@@ -268,10 +295,7 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should be keyboard accessible (Space key)', () => {
-      renderHistoryView({
-        ...mockProps,
-        transactions: [transactionWithThumbnail],
-      })
+      renderHistoryView([transactionWithThumbnail])
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
       fireEvent.keyDown(thumbnail, { key: ' ' })
@@ -282,10 +306,7 @@ describe('HistoryView Thumbnail Display', () => {
 
   describe('ImageViewer Integration', () => {
     it('should pass correct images to ImageViewer for multi-image transaction', () => {
-      renderHistoryView({
-        ...mockProps,
-        transactions: [transactionWithMultipleImages],
-      })
+      renderHistoryView([transactionWithMultipleImages])
 
       const thumbnail = screen.getByTestId('transaction-thumbnail')
       fireEvent.click(thumbnail)
@@ -295,10 +316,7 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should close ImageViewer when close button is clicked', () => {
-      renderHistoryView({
-        ...mockProps,
-        transactions: [transactionWithThumbnail],
-      })
+      renderHistoryView([transactionWithThumbnail])
 
       // Open viewer
       fireEvent.click(screen.getByTestId('transaction-thumbnail'))
@@ -310,10 +328,7 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should pass merchant name to ImageViewer', () => {
-      renderHistoryView({
-        ...mockProps,
-        transactions: [transactionWithThumbnail],
-      })
+      renderHistoryView([transactionWithThumbnail])
 
       fireEvent.click(screen.getByTestId('transaction-thumbnail'))
 
@@ -324,10 +339,7 @@ describe('HistoryView Thumbnail Display', () => {
 
   describe('Thumbnail Error Handling', () => {
     it('should show placeholder on thumbnail load error', () => {
-      renderHistoryView({
-        ...mockProps,
-        transactions: [transactionWithThumbnail],
-      })
+      renderHistoryView([transactionWithThumbnail])
 
       const img = screen.getByAltText(`Receipt from ${transactionWithThumbnail.alias}`)
       fireEvent.error(img)
@@ -351,61 +363,35 @@ describe('HistoryView Thumbnail Display', () => {
     }
 
     it('should show pagination controls when there are transactions', () => {
-      renderHistoryView({
-        ...mockProps,
-        transactions: generateTransactions(10),
-        allTransactions: generateTransactions(10),
-      })
+      renderHistoryView(generateTransactions(10))
 
       // Should show page indicator
       expect(screen.getByText('1 / 1')).toBeInTheDocument()
     })
 
     it('should default to 15 items per page', () => {
-      const twentyTransactions = generateTransactions(20)
-      renderHistoryView({
-        ...mockProps,
-        transactions: twentyTransactions,
-        allTransactions: twentyTransactions,
-        totalHistoryPages: 2,
-      })
+      renderHistoryView(generateTransactions(20))
 
       // With 20 transactions and default PAGE_SIZE=15, should show 2 pages
       expect(screen.getByText('1 / 2')).toBeInTheDocument()
     })
 
     it('should show correct page count for exactly 15 transactions', () => {
-      const fifteenTransactions = generateTransactions(15)
-      renderHistoryView({
-        ...mockProps,
-        transactions: fifteenTransactions,
-        allTransactions: fifteenTransactions,
-        totalHistoryPages: 1,
-      })
+      renderHistoryView(generateTransactions(15))
 
       // Exactly 15 transactions = 1 page (default page size)
       expect(screen.getByText('1 / 1')).toBeInTheDocument()
     })
 
     it('should show correct page count for 16 transactions', () => {
-      const sixteenTransactions = generateTransactions(16)
-      renderHistoryView({
-        ...mockProps,
-        transactions: sixteenTransactions,
-        allTransactions: sixteenTransactions,
-        totalHistoryPages: 2,
-      })
+      renderHistoryView(generateTransactions(16))
 
       // 16 transactions with default PAGE_SIZE=15 = 2 pages
       expect(screen.getByText('1 / 2')).toBeInTheDocument()
     })
 
     it('should show page size selector with options 15, 30, 60', () => {
-      renderHistoryView({
-        ...mockProps,
-        transactions: generateTransactions(10),
-        allTransactions: generateTransactions(10),
-      })
+      renderHistoryView(generateTransactions(10))
 
       expect(screen.getByTestId('page-size-selector')).toBeInTheDocument()
       expect(screen.getByTestId('page-size-15')).toBeInTheDocument()
@@ -414,23 +400,14 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should highlight default page size (15)', () => {
-      renderHistoryView({
-        ...mockProps,
-        transactions: generateTransactions(10),
-        allTransactions: generateTransactions(10),
-      })
+      renderHistoryView(generateTransactions(10))
 
       const button15 = screen.getByTestId('page-size-15')
       expect(button15).toHaveAttribute('aria-pressed', 'true')
     })
 
     it('should change page size when clicking a different option', () => {
-      const manyTransactions = generateTransactions(45)
-      renderHistoryView({
-        ...mockProps,
-        transactions: manyTransactions,
-        allTransactions: manyTransactions,
-      })
+      renderHistoryView(generateTransactions(45))
 
       // Initially 45 transactions with PAGE_SIZE=15 = 3 pages
       expect(screen.getByText('1 / 3')).toBeInTheDocument()
@@ -450,13 +427,7 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should reset to page 1 when changing page size after navigating', () => {
-      // With 45 transactions and page size 15, we have 3 pages
-      const manyTransactions = generateTransactions(45)
-      renderHistoryView({
-        ...mockProps,
-        transactions: manyTransactions,
-        allTransactions: manyTransactions,
-      })
+      renderHistoryView(generateTransactions(45))
 
       // Navigate to page 2
       fireEvent.click(screen.getByLabelText('nextPage'))
@@ -470,13 +441,7 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should navigate to next page when clicking next page button', () => {
-      // 20 transactions with page size 15 = 2 pages
-      const manyTransactions = generateTransactions(20)
-      renderHistoryView({
-        ...mockProps,
-        transactions: manyTransactions,
-        allTransactions: manyTransactions,
-      })
+      renderHistoryView(generateTransactions(20))
 
       // Should start at page 1
       expect(screen.getByText('1 / 2')).toBeInTheDocument()
@@ -490,12 +455,7 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should disable previous button on first page', () => {
-      const manyTransactions = generateTransactions(20)
-      renderHistoryView({
-        ...mockProps,
-        transactions: manyTransactions,
-        allTransactions: manyTransactions,
-      })
+      renderHistoryView(generateTransactions(20))
 
       // Internal state starts at page 1
       const prevButton = screen.getByLabelText('previousPage')
@@ -503,14 +463,7 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should disable next button on last page', () => {
-      // 10 transactions with PAGE_SIZE=15 = 1 page, so page 1 is last
-      // (Internal state starts at page 1, so we use a small dataset)
-      const fewTransactions = generateTransactions(10)
-      renderHistoryView({
-        ...mockProps,
-        transactions: fewTransactions,
-        allTransactions: fewTransactions,
-      })
+      renderHistoryView(generateTransactions(10))
 
       // With only 10 transactions and page size 15, there's only 1 page
       // So next button should be disabled
@@ -519,23 +472,26 @@ describe('HistoryView Thumbnail Display', () => {
     })
 
     it('should show "Per page:" label in English', () => {
-      renderHistoryView({
-        ...mockProps,
-        transactions: generateTransactions(10),
-        allTransactions: generateTransactions(10),
-        lang: 'en',
-      })
+      // Mock returns English by default
+      renderHistoryView(generateTransactions(10))
 
       expect(screen.getByText('Per page:')).toBeInTheDocument()
     })
 
     it('should show "Por página:" label in Spanish', () => {
-      renderHistoryView({
-        ...mockProps,
+      // Update mock to return Spanish
+      vi.mocked(useHistoryViewData).mockReturnValue({
+        ...mockHistoryViewData,
+        lang: 'es',
         transactions: generateTransactions(10),
         allTransactions: generateTransactions(10),
-        lang: 'es',
       })
+
+      render(
+        <HistoryFiltersProvider initialState={testFilterState}>
+          <HistoryView />
+        </HistoryFiltersProvider>
+      )
 
       expect(screen.getByText('Por página:')).toBeInTheDocument()
     })

@@ -29,8 +29,9 @@ import { formatCurrency } from '../utils/currency';
 import type { Currency } from '../types/settings';
 // Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
 import { useScanStore, useScanPhase, useScanMode, useBatchProgress, useScanActions } from '@features/scan/store';
-// Story 14c-refactor.27: ViewHandlersContext for navigation handlers
-import { useViewHandlers } from '../contexts/ViewHandlersContext';
+// Story 14e-25d: Direct hooks (ViewHandlersContext deleted)
+import { useNavigationActions } from '@/shared/stores';
+import { useModalActions } from '@/managers/ModalManager';
 
 /**
  * Props for processing state display.
@@ -73,10 +74,8 @@ export interface BatchReviewViewProps {
   /** Called when receipt is updated from edit view */
   onReceiptUpdated?: (receiptId: string, transaction: Transaction) => void;
   /**
-   * @deprecated Story 14c-refactor.27: Use useViewHandlers().navigation.navigateBack instead.
-   * Called when user cancels and returns to batch capture - will be removed in future version.
-   * Story 14c-refactor.32c: Made optional since view uses useViewHandlers() internally.
-   * TODO(14c-refactor.35d): Remove this deprecated prop during final cleanup.
+   * @deprecated Story 14e-25d: View uses navigateBack() from useNavigationActions() directly.
+   * This prop is no longer needed.
    */
   onBack?: () => void;
   /** Called when X button is pressed to cancel/discard all (shows confirmation) */
@@ -92,9 +91,8 @@ export interface BatchReviewViewProps {
   /** Story 12.1 v9.7.0: Credit information for header display */
   credits?: BatchReviewCredits;
   /**
-   * @deprecated Story 14c-refactor.27: Use useViewHandlers().dialog.openCreditInfoModal instead.
-   * Called when user taps credit badges - will be removed in future version.
-   * TODO(14c-refactor.35d): Remove this deprecated prop during final cleanup.
+   * @deprecated Story 14e-25d: View uses openModal() from useModalActions() directly.
+   * This prop is no longer needed.
    */
   onCreditInfoClick?: () => void;
 }
@@ -119,7 +117,7 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
   onEditReceipt,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onReceiptUpdated: _onReceiptUpdated, // Reserved for parent integration
-  // Story 14c-refactor.27: onBack moved to useViewHandlers().navigation.navigateBack
+  // Story 14e-25d: onBack now unused - view uses navigateBack() directly
   onBack: _deprecatedOnBack,
   onCancel,
   onSaveComplete,
@@ -127,7 +125,7 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
   onRetryReceipt,
   processingState: processingStateProp,
   credits,
-  // Story 14c-refactor.27: onCreditInfoClick moved to useViewHandlers().dialog.openCreditInfoModal
+  // Story 14e-25d: onCreditInfoClick now unused - view uses openModal() directly
   onCreditInfoClick: _deprecatedOnCreditInfoClick,
 }) => {
   // Story 14e-11: Use Zustand store selectors (migrated from ScanContext)
@@ -141,10 +139,15 @@ export const BatchReviewView: React.FC<BatchReviewViewProps> = ({
   const isBatchReviewing = scanPhase === 'reviewing' && scanMode === 'batch';
   const isBatchProcessing = scanPhase === 'scanning' && scanMode === 'batch';
 
-  // Story 14c-refactor.27: Get handlers from ViewHandlersContext
-  const { navigation, dialog } = useViewHandlers();
-  const onBack = navigation.navigateBack;
-  const onCreditInfoClick = dialog.openCreditInfoModal;
+  // Story 14e-25d: Direct hooks (ViewHandlersContext deleted)
+  const { navigateBack } = useNavigationActions();
+  const { openModal, closeModal } = useModalActions();
+  const onBack = navigateBack;
+  const onCreditInfoClick = () => openModal('creditInfo', {
+    normalCredits: credits?.remaining ?? 0,
+    superCredits: credits?.superRemaining ?? 0,
+    onClose: closeModal,
+  });
 
   // Story 14e-11: Determine if we should use context mode (Zustand store)
   // Use context when in batch reviewing phase

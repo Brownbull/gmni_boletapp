@@ -1,5 +1,6 @@
 /**
  * Story 14e-16: BatchReviewFeature Unit Tests
+ * Story 14e-29c: Updated to use handlersConfig and mock useBatchReviewHandlers
  *
  * Tests for the phase-based orchestrator component.
  * Covers all phases and handler integration.
@@ -12,34 +13,64 @@ import type { BatchReceipt } from '@/types/batchReceipt';
 import type { Transaction } from '@/types/transaction';
 
 // =============================================================================
-// Mocks
+// Mocks - Use vi.hoisted to handle mock hoisting
 // =============================================================================
 
-// Mock store state and actions
-const mockStoreState = {
-  phase: 'idle' as const,
-  items: [] as BatchReceipt[],
-  currentIndex: 0,
-  savedCount: 0,
-  failedCount: 0,
-  error: null,
-  editingReceiptId: null,
-  hadItems: false,
-};
-
-const mockStoreActions = {
-  loadBatch: vi.fn(),
-  reset: vi.fn(),
-  selectItem: vi.fn(),
-  updateItem: vi.fn(),
-  discardItem: vi.fn(),
-  startEditing: vi.fn(),
-  finishEditing: vi.fn(),
-  saveStart: vi.fn(),
-  saveItemSuccess: vi.fn(),
-  saveItemFailure: vi.fn(),
-  saveComplete: vi.fn(),
-};
+// Use vi.hoisted to make these available to hoisted mocks
+const { mockStoreState, mockStoreActions, mockHandlers, mockOpenModal, mockCloseModal, mockBatchReviewActions } = vi.hoisted(() => ({
+  mockStoreState: {
+    phase: 'idle' as 'idle' | 'loading' | 'reviewing' | 'editing' | 'saving' | 'complete' | 'error',
+    items: [] as BatchReceipt[],
+    currentIndex: 0,
+    savedCount: 0,
+    failedCount: 0,
+    error: null,
+    editingReceiptId: null,
+    hadItems: false,
+  },
+  mockStoreActions: {
+    loadBatch: vi.fn(),
+    reset: vi.fn(),
+    selectItem: vi.fn(),
+    updateItem: vi.fn(),
+    discardItem: vi.fn(),
+    startEditing: vi.fn(),
+    finishEditing: vi.fn(),
+    saveStart: vi.fn(),
+    saveItemSuccess: vi.fn(),
+    saveItemFailure: vi.fn(),
+    saveComplete: vi.fn(),
+  },
+  mockBatchReviewActions: {
+    loadBatch: vi.fn(),
+    reset: vi.fn(),
+    selectItem: vi.fn(),
+    updateItem: vi.fn(),
+    discardItem: vi.fn(),
+    startEditing: vi.fn(),
+    finishEditing: vi.fn(),
+    saveStart: vi.fn(),
+    saveItemSuccess: vi.fn(),
+    saveItemFailure: vi.fn(),
+    saveComplete: vi.fn(),
+  },
+  mockHandlers: {
+    handleSaveTransaction: vi.fn().mockResolvedValue('saved-id'),
+    handleSaveComplete: vi.fn(),
+    handleBack: vi.fn(),
+    handleDiscardConfirm: vi.fn(),
+    handleDiscardCancel: vi.fn(),
+    handleEditReceipt: vi.fn(),
+    handlePrevious: vi.fn(),
+    handleNext: vi.fn(),
+    handleCreditCheckComplete: vi.fn(),
+    handleCancelPreview: vi.fn(),
+    handleConfirmBatch: vi.fn(),
+    handleRemoveImage: vi.fn(),
+  },
+  mockOpenModal: vi.fn(),
+  mockCloseModal: vi.fn(),
+}));
 
 // Mock Zustand store - includes useBatchReviewStore for BatchReviewCard
 vi.mock('@features/batch-review/store', () => ({
@@ -54,18 +85,23 @@ vi.mock('@features/batch-review/store', () => ({
   useIsBatchEmpty: vi.fn(() => mockStoreState.items.length === 0),
   useHadItems: vi.fn(() => mockStoreState.hadItems),
   useBatchReviewActions: vi.fn(() => mockStoreActions),
-  useBatchTotalAmount: vi.fn(() => mockStoreState.items.reduce((sum, item) => sum + (item.transaction.total || 0), 0)),
-  useValidBatchCount: vi.fn(() => mockStoreState.items.filter(item => item.status !== 'error').length),
+  useBatchTotalAmount: vi.fn(() => mockStoreState.items.reduce((sum: number, item: BatchReceipt) => sum + (item.transaction.total || 0), 0)),
+  useValidBatchCount: vi.fn(() => mockStoreState.items.filter((item: BatchReceipt) => item.status !== 'error').length),
   // Required by BatchReviewCard component
-  useBatchReviewStore: vi.fn((selector) => {
+  useBatchReviewStore: vi.fn((selector: any) => {
     const fullState = { ...mockStoreState, ...mockStoreActions };
     return selector ? selector(fullState) : fullState;
   }),
+  // Story 14e-29c: batchReviewActions for direct imports
+  batchReviewActions: mockBatchReviewActions,
+}));
+
+// Story 14e-29c: Mock useBatchReviewHandlers hook
+vi.mock('@features/batch-review/hooks', () => ({
+  useBatchReviewHandlers: vi.fn(() => mockHandlers),
 }));
 
 // Mock ModalManager
-const mockOpenModal = vi.fn();
-const mockCloseModal = vi.fn();
 vi.mock('@managers/ModalManager', () => ({
   useModalActions: vi.fn(() => ({
     openModal: mockOpenModal,
@@ -100,14 +136,44 @@ const createMockReceipt = (id: string, overrides: Partial<BatchReceipt> = {}): B
 // Default Props
 // =============================================================================
 
+// Story 14e-29c: Mock handlersConfig for useBatchReviewHandlers
+const mockHandlersConfig = {
+  user: { uid: 'test-user' } as any,
+  services: { db: {} } as any,
+  scanState: { batchReceipts: [] },
+  setBatchEditingIndexContext: vi.fn(),
+  setCurrentTransaction: vi.fn(),
+  setTransactionEditorMode: vi.fn(),
+  navigateToView: vi.fn(),
+  setView: vi.fn(),
+  setBatchImages: vi.fn(),
+  batchProcessing: { isProcessing: false, states: [], progress: { current: 0, total: 0 }, cancel: vi.fn() } as any,
+  resetScanContext: vi.fn(),
+  showScanDialog: vi.fn(),
+  dismissScanDialog: vi.fn(),
+  mappings: { categories: [], merchants: {}, itemNames: {}, subcategories: {} } as any,
+  applyCategoryMappings: vi.fn((tx: any) => tx),
+  findMerchantMatch: vi.fn(() => null),
+  applyItemNameMappings: vi.fn((tx: any) => tx),
+  userCredits: { remaining: 10, used: 0, superRemaining: 5, superUsed: 0 },
+  setShowBatchPreview: vi.fn(),
+  setShouldTriggerCreditCheck: vi.fn(),
+  batchImages: [],
+  scanCurrency: 'USD',
+  scanStoreType: 'grocery',
+  viewMode: 'personal',
+  activeGroup: null,
+  batchProcessingExtended: { isProcessing: false, states: [], progress: { current: 0, total: 0 }, cancel: vi.fn() } as any,
+  setScanImages: vi.fn(),
+};
+
 const defaultProps = {
   t: (key: string) => key,
   theme: 'light' as const,
   currency: 'USD' as const,
   formatCurrency: (amount: number, _currency: string) => `$${amount}`,
-  onEditReceipt: vi.fn(),
-  onSaveComplete: vi.fn(),
-  onBack: vi.fn(),
+  handlersConfig: mockHandlersConfig,
+  onRetryReceipt: vi.fn(),
 };
 
 // =============================================================================
@@ -216,13 +282,14 @@ describe('BatchReviewFeature', () => {
     });
 
     it('should call onEditReceipt when edit is clicked', () => {
-      const onEditReceipt = vi.fn();
-      render(<BatchReviewFeature {...defaultProps} onEditReceipt={onEditReceipt} />);
+      // Story 14e-29c: Now uses handleEditReceipt from useBatchReviewHandlers hook
+      render(<BatchReviewFeature {...defaultProps} />);
 
       const editButtons = screen.getAllByLabelText('batchReviewEdit');
       fireEvent.click(editButtons[0]);
 
-      expect(onEditReceipt).toHaveBeenCalled();
+      // handleEditReceipt is called via the internal handler
+      expect(mockHandlers.handleEditReceipt).toHaveBeenCalled();
     });
   });
 
@@ -286,8 +353,8 @@ describe('BatchReviewFeature', () => {
     });
 
     it('should discard item when onConfirm callback is invoked', () => {
-      const onDiscardReceipt = vi.fn();
-      render(<BatchReviewFeature {...defaultProps} onDiscardReceipt={onDiscardReceipt} />);
+      // Story 14e-29c: onDiscardReceipt prop removed - feature handles internally
+      render(<BatchReviewFeature {...defaultProps} />);
 
       const discardButtons = screen.getAllByLabelText('batchReviewDiscard');
       fireEvent.click(discardButtons[0]);
@@ -300,7 +367,6 @@ describe('BatchReviewFeature', () => {
       modalProps.onConfirm();
 
       expect(mockStoreActions.discardItem).toHaveBeenCalledWith('1');
-      expect(onDiscardReceipt).toHaveBeenCalledWith('1');
       expect(mockCloseModal).toHaveBeenCalled();
     });
 
@@ -349,15 +415,16 @@ describe('BatchReviewFeature', () => {
     });
 
     it('should auto-dismiss after 2 seconds', async () => {
-      const onSaveComplete = vi.fn();
-      render(<BatchReviewFeature {...defaultProps} onSaveComplete={onSaveComplete} />);
+      // Story 14e-29c: handleSaveComplete is from the hook now
+      render(<BatchReviewFeature {...defaultProps} />);
 
       act(() => {
         vi.advanceTimersByTime(2000);
       });
 
       expect(mockStoreActions.reset).toHaveBeenCalled();
-      expect(onSaveComplete).toHaveBeenCalled();
+      // handleSaveComplete is called via the internal handler
+      expect(mockHandlers.handleSaveComplete).toHaveBeenCalled();
     });
   });
 
@@ -386,14 +453,15 @@ describe('BatchReviewFeature', () => {
     });
 
     it('should call reset and onBack on dismiss click', () => {
-      const onBack = vi.fn();
-      render(<BatchReviewFeature {...defaultProps} onBack={onBack} />);
+      // Story 14e-29c: handleBack is from the hook now
+      render(<BatchReviewFeature {...defaultProps} />);
 
       const dismissButton = screen.getByText('dismiss');
       fireEvent.click(dismissButton);
 
       expect(mockStoreActions.reset).toHaveBeenCalled();
-      // Note: onBack is called via handleBack which may open modal if items exist
+      // handleBack is called via the internal handler
+      expect(mockHandlers.handleBack).toHaveBeenCalled();
     });
   });
 
@@ -440,14 +508,15 @@ describe('BatchReviewFeature', () => {
     });
 
     it('should call onSaveReceipt when save is clicked', async () => {
-      const onSaveReceipt = vi.fn().mockResolvedValue(undefined);
-      render(<BatchReviewFeature {...defaultProps} onSaveReceipt={onSaveReceipt} />);
+      // Story 14e-29c: handleSaveTransaction is from the hook now
+      render(<BatchReviewFeature {...defaultProps} />);
 
       const saveButtons = screen.getAllByLabelText('save');
       fireEvent.click(saveButtons[0]);
 
       await waitFor(() => {
-        expect(onSaveReceipt).toHaveBeenCalledWith('1');
+        // handleSaveTransaction is called via the internal handleSaveReceipt
+        expect(mockHandlers.handleSaveTransaction).toHaveBeenCalled();
       });
     });
 
@@ -478,6 +547,76 @@ describe('BatchReviewFeature', () => {
       setMockPhase('error');
       render(<BatchReviewFeature {...defaultProps} theme="dark" />);
       expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+  });
+
+  // ===========================================================================
+  // Story 14e-33 AC3: Auto-Complete Discard Logic Tests
+  // ===========================================================================
+
+  describe('Auto-Complete Discard Logic (Story 14e-33 AC3)', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it('should NOT call handleSaveComplete when all items are discarded (savedCount = 0)', () => {
+      // Simulate: reviewing phase, had items, now empty, but nothing saved
+      setMockPhase('reviewing');
+      mockStoreState.items = []; // Empty
+      mockStoreState.hadItems = true;
+      mockStoreState.savedCount = 0; // Nothing was saved - all discarded
+
+      render(<BatchReviewFeature {...defaultProps} />);
+
+      // Should call handleBack (go home), NOT handleSaveComplete
+      expect(mockBatchReviewActions.reset).toHaveBeenCalled();
+      expect(mockHandlers.handleBack).toHaveBeenCalled();
+      expect(mockHandlers.handleSaveComplete).not.toHaveBeenCalled();
+    });
+
+    it('should call handleSaveComplete when items were saved (savedCount > 0)', () => {
+      // Simulate: reviewing phase, had items, now empty, some saved
+      setMockPhase('reviewing');
+      mockStoreState.items = []; // Empty
+      mockStoreState.hadItems = true;
+      mockStoreState.savedCount = 2; // 2 items were saved
+
+      render(<BatchReviewFeature {...defaultProps} />);
+
+      // Should call handleSaveComplete (show completion modal)
+      expect(mockBatchReviewActions.reset).toHaveBeenCalled();
+      expect(mockHandlers.handleSaveComplete).toHaveBeenCalled();
+      expect(mockHandlers.handleBack).not.toHaveBeenCalled();
+    });
+
+    it('should not trigger auto-complete when batch still has items', () => {
+      // Simulate: reviewing phase with items remaining
+      setMockPhase('reviewing');
+      setMockItems([createMockReceipt('1')]);
+      mockStoreState.hadItems = true;
+      mockStoreState.savedCount = 0;
+
+      render(<BatchReviewFeature {...defaultProps} />);
+
+      // Neither handleSaveComplete nor handleBack should be called
+      expect(mockHandlers.handleSaveComplete).not.toHaveBeenCalled();
+      expect(mockHandlers.handleBack).not.toHaveBeenCalled();
+    });
+
+    it('should auto-recover from stale state (empty items, hadItems=false)', () => {
+      // Simulate: Stale state after localStorage clear
+      // User is on batch-review but never had items (state was reset)
+      setMockPhase('reviewing');
+      mockStoreState.items = []; // Empty
+      mockStoreState.hadItems = false; // Never had items (cleared state)
+      mockStoreState.savedCount = 0;
+
+      render(<BatchReviewFeature {...defaultProps} />);
+
+      // Should auto-recover: reset and navigate back to dashboard
+      expect(mockBatchReviewActions.reset).toHaveBeenCalled();
+      expect(mockHandlers.handleBack).toHaveBeenCalled();
+      expect(mockHandlers.handleSaveComplete).not.toHaveBeenCalled();
     });
   });
 });

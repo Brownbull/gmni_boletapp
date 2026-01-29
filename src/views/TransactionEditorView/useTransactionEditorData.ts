@@ -1,0 +1,364 @@
+/**
+ * Story 14e-28: useTransactionEditorData Hook
+ *
+ * Composition hook that encapsulates all TransactionEditorView data needs.
+ * This hook owns data fetching and state derivation, allowing TransactionEditorView
+ * to own its data without prop drilling from App.tsx.
+ *
+ * Architecture:
+ * - Calls useAuth() for user/services
+ * - Calls useTheme() for theme/locale settings
+ * - Calls useUserPreferences() for user defaults
+ * - Calls useUserCredits() for credit display
+ * - Accesses ScanStore (Zustand) for scan state
+ * - Provides formatters (t, formatCurrency) internally
+ *
+ * Note: Some data still comes via props (currentTransaction, etc.) because
+ * it's managed by App.tsx for cross-view coordination. These are passed
+ * via _testOverrides pattern.
+ *
+ * @example
+ * ```tsx
+ * function TransactionEditorView(props) {
+ *   const data = useTransactionEditorData(props._testOverrides);
+ *   // Data comes from hook - minimal props needed
+ * }
+ * ```
+ */
+
+import { useMemo, useCallback } from 'react';
+import { getFirestore } from 'firebase/firestore';
+import { useAuth } from '@/hooks/useAuth';
+import { useUserPreferences } from '@/hooks/useUserPreferences';
+import { useUserCredits } from '@/hooks/useUserCredits';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useViewMode } from '@/contexts/ViewModeContext';
+import { useUserSharedGroups } from '@/hooks/useUserSharedGroups';
+import { useTransactions } from '@/hooks/useTransactions';
+import { useCategoryMappings } from '@/hooks/useCategoryMappings';
+import { useMerchantMappings } from '@/hooks/useMerchantMappings';
+import { useSubcategoryMappings } from '@/hooks/useSubcategoryMappings';
+import { useItemNameMappings } from '@/hooks/useItemNameMappings';
+import { formatCurrency as formatCurrencyUtil } from '@/utils/currency';
+import { TRANSLATIONS } from '@/utils/translations';
+import { STORE_CATEGORIES } from '@/config/constants';
+import type { Transaction, StoreCategory, ItemCategory } from '@/types/transaction';
+import type { UserCredits } from '@/types/scan';
+import type { Language, Theme } from '@/types/settings';
+import type { ItemNameMapping } from '@/types/itemNameMapping';
+import type { GroupWithMeta } from '@/components/SharedGroups';
+
+// Zustand store imports
+import {
+    useScanStore,
+    useScanPhase,
+    useIsProcessing,
+} from '@features/scan/store';
+
+// Shared utilities (Story 14e-28 review follow-up: extracted to eliminate duplication)
+import {
+    deriveScanButtonState,
+    computeBatchContext,
+    type ScanButtonState,
+} from '@/shared/utils';
+
+// Re-export ScanButtonState type for backwards compatibility
+export type { ScanButtonState } from '@/shared/utils';
+
+/**
+ * Props passed via _testOverrides for App-level state coordination.
+ * These cannot be derived by the hook because they're managed by App.tsx.
+ */
+export interface TransactionEditorDataOverrides {
+    // Transaction state (App.tsx managed)
+    currentTransaction: Transaction | null;
+    transactionEditorMode: 'new' | 'existing';
+    isViewingReadOnly: boolean;
+    transactionNavigationList: string[] | null;
+
+    // Scan state overrides (for batch editing context)
+    skipScanCompleteModal?: boolean;
+    isRescanning?: boolean;
+
+    // UI state
+    isSaving?: boolean;
+    animateItems?: boolean;
+    creditUsedInSession?: boolean;
+}
+
+/**
+ * Return type for useTransactionEditorData hook.
+ */
+export interface UseTransactionEditorDataReturn {
+    // Core
+    transaction: Transaction | null;
+    mode: 'new' | 'existing';
+    readOnly: boolean;
+    isOtherUserTransaction: boolean;
+    ownerId?: string;
+    ownerProfile?: { displayName?: string; photoURL?: string | null } | null;
+
+    // Scan state
+    scanButtonState: ScanButtonState;
+    isProcessing: boolean;
+    processingEta: number | null;
+    scanError: string | null;
+    skipScanCompleteModal: boolean;
+    thumbnailUrl?: string;
+    pendingImageUrl?: string;
+    isRescanning: boolean;
+
+    // UI settings
+    theme: Theme;
+    t: (key: string) => string;
+    formatCurrency: (amount: number, currency: string) => string;
+    currency: string;
+    lang: Language;
+    credits: UserCredits;
+    storeCategories: string[];
+    distinctAliases: string[];
+
+    // Context
+    batchContext: { index: number; total: number } | null;
+    defaultCity: string;
+    defaultCountry: string;
+    isSaving: boolean;
+    animateItems: boolean;
+    creditUsed: boolean;
+
+    // Cross-store suggestions
+    itemNameMappings: ItemNameMapping[];
+
+    // Shared groups
+    availableGroups: GroupWithMeta[];
+    groupsLoading: boolean;
+    activeGroup: { memberProfiles?: Record<string, { displayName?: string; photoURL?: string | null }> } | null;
+
+    // Mapping functions (for learning callbacks)
+    saveMapping: (item: string, category: StoreCategory, source?: 'user' | 'ai') => Promise<string>;
+    saveMerchantMapping: (originalMerchant: string, targetMerchant: string, storeCategory?: StoreCategory) => Promise<string>;
+    saveSubcategoryMapping: (item: string, subcategory: string, source?: 'user' | 'ai') => Promise<string>;
+    saveItemNameMapping: (normalizedMerchant: string, originalItemName: string, targetItemName: string, targetCategory?: ItemCategory) => Promise<string>;
+}
+
+// =============================================================================
+// Hook Implementation
+// =============================================================================
+
+/**
+ * useTransactionEditorData - Composition hook for TransactionEditorView data.
+ *
+ * Encapsulates all data fetching and state derivation that was previously
+ * done in useTransactionEditorViewProps and App.tsx.
+ *
+ * @param overrides - Data that must come from App.tsx (cross-view coordination)
+ * @returns UseTransactionEditorDataReturn - All data needed by TransactionEditorView
+ */
+export function useTransactionEditorData(
+    overrides?: TransactionEditorDataOverrides
+): UseTransactionEditorDataReturn {
+    // === Auth & Services ===
+    const { user, services } = useAuth();
+
+    // === Theme/Locale Settings ===
+    const { theme, lang, currency } = useTheme();
+
+    // === User Preferences ===
+    const { preferences } = useUserPreferences(user, services);
+    const defaultCity = preferences.defaultCity || '';
+    const defaultCountry = preferences.defaultCountry || '';
+
+    // === User Credits ===
+    const { credits: userCredits } = useUserCredits(user, services);
+
+    // === Transactions (for distinct aliases) ===
+    const transactions = useTransactions(user, services);
+
+    // Extract distinct aliases from transactions
+    const distinctAliases = useMemo(() => {
+        const aliases = new Set<string>();
+        transactions.forEach(d => {
+            if (d.alias) aliases.add(d.alias);
+        });
+        return Array.from(aliases).sort();
+    }, [transactions]);
+
+    // === Category Mappings ===
+    const { saveMapping } = useCategoryMappings(user, services);
+    const { saveMapping: saveMerchantMapping } = useMerchantMappings(user, services);
+    const { saveMapping: saveSubcategoryMapping } = useSubcategoryMappings(user, services);
+    const { mappings: itemNameMappings, saveMapping: saveItemNameMappingInternal } = useItemNameMappings(user, services);
+
+    // Wrap saveItemNameMapping to match the expected type signature
+    const saveItemNameMapping = useCallback(
+        async (normalizedMerchant: string, originalItemName: string, targetItemName: string, targetCategory?: ItemCategory) => {
+            return saveItemNameMappingInternal(
+                normalizedMerchant,
+                originalItemName,
+                targetItemName,
+                targetCategory
+            );
+        },
+        [saveItemNameMappingInternal]
+    );
+
+    // === Group Mode ===
+    const { mode: viewMode, group: viewModeGroup } = useViewMode();
+    const db = getFirestore();
+    const { groups: sharedGroups, isLoading: sharedGroupsLoading } = useUserSharedGroups(db, user?.uid);
+    const isGroupMode = viewMode === 'group' && !!viewModeGroup;
+
+    // Available groups for selector
+    const availableGroups: GroupWithMeta[] = useMemo(() => {
+        return sharedGroups.map(group => ({
+            id: group.id || '',
+            name: group.name,
+            color: group.color,
+            icon: group.icon,
+            isShared: true,
+            memberCount: group.members?.length || 0,
+        }));
+    }, [sharedGroups]);
+
+    // Active group info for owner display
+    const activeGroup = useMemo(() => {
+        if (!isGroupMode || !viewModeGroup) return null;
+        const group = sharedGroups.find((g) => g.id === viewModeGroup.id);
+        return {
+            memberProfiles: group?.memberProfiles,
+        };
+    }, [isGroupMode, viewModeGroup, sharedGroups]);
+
+    // === Scan State from Zustand ===
+    const scanState = useScanStore();
+    const scanPhase = useScanPhase();
+    const isProcessing = useIsProcessing();
+
+    // Derive scan button state
+    const scanButtonState = deriveScanButtonState(scanPhase);
+
+    // === Overrides (App.tsx managed state) ===
+    const currentTransaction = overrides?.currentTransaction ?? null;
+    const transactionEditorMode = overrides?.transactionEditorMode ?? 'new';
+    const isViewingReadOnly = overrides?.isViewingReadOnly ?? false;
+    const transactionNavigationList = overrides?.transactionNavigationList ?? null;
+    const skipScanCompleteModal = overrides?.skipScanCompleteModal ?? false;
+    const isRescanning = overrides?.isRescanning ?? false;
+    const isSaving = overrides?.isSaving ?? false;
+    const animateItems = overrides?.animateItems ?? false;
+    const creditUsedInSession = overrides?.creditUsedInSession ?? false;
+
+    // === Computed Values ===
+
+    // Pending image URL - show during pending/scanning states
+    const pendingImageUrl = useMemo(() => {
+        const isPendingOrScanning = scanButtonState === 'pending' || scanButtonState === 'scanning';
+        return isPendingOrScanning && scanState.images.length > 0 ? scanState.images[0] : undefined;
+    }, [scanButtonState, scanState.images]);
+
+    // Thumbnail URL with fallback
+    const thumbnailUrl = useMemo(() => {
+        return currentTransaction?.thumbnailUrl ||
+            (scanState.images.length > 0 ? scanState.images[0] : undefined);
+    }, [currentTransaction?.thumbnailUrl, scanState.images]);
+
+    // Batch context
+    const batchContext = useMemo(() => {
+        return computeBatchContext(
+            scanState.batchEditingIndex,
+            scanState.batchReceipts,
+            transactionNavigationList,
+            currentTransaction?.id
+        );
+    }, [
+        scanState.batchEditingIndex,
+        scanState.batchReceipts,
+        transactionNavigationList,
+        currentTransaction?.id,
+    ]);
+
+    // Determine if viewing another user's transaction
+    const isOtherUserTransaction = useMemo(() => {
+        return Boolean(
+            currentTransaction?._ownerId &&
+            currentTransaction._ownerId !== user?.uid
+        );
+    }, [currentTransaction?._ownerId, user?.uid]);
+
+    // Get owner profile from active group
+    const ownerProfile = useMemo(() => {
+        if (!currentTransaction?._ownerId || !activeGroup?.memberProfiles) {
+            return undefined;
+        }
+        return activeGroup.memberProfiles[currentTransaction._ownerId];
+    }, [currentTransaction?._ownerId, activeGroup?.memberProfiles]);
+
+    // === Formatters ===
+    const t = useCallback(
+        (key: string): string => {
+            const translations = TRANSLATIONS[lang] || TRANSLATIONS.en;
+            return (translations as Record<string, string>)[key] || key;
+        },
+        [lang]
+    );
+
+    const formatCurrency = useCallback(
+        (amount: number, currencyCode: string): string => {
+            return formatCurrencyUtil(amount, currencyCode);
+        },
+        []
+    );
+
+    // === Return Complete Data ===
+    return {
+        // Core
+        transaction: currentTransaction,
+        mode: transactionEditorMode,
+        readOnly: isViewingReadOnly,
+        isOtherUserTransaction,
+        ownerId: currentTransaction?._ownerId,
+        ownerProfile,
+
+        // Scan state
+        scanButtonState,
+        isProcessing,
+        processingEta: null, // Not currently tracked
+        scanError: scanState.error,
+        skipScanCompleteModal,
+        thumbnailUrl,
+        pendingImageUrl,
+        isRescanning,
+
+        // UI settings
+        theme,
+        t,
+        formatCurrency,
+        currency,
+        lang,
+        credits: userCredits,
+        storeCategories: STORE_CATEGORIES as unknown as string[],
+        distinctAliases: distinctAliases || [],
+
+        // Context
+        batchContext,
+        defaultCity,
+        defaultCountry,
+        isSaving,
+        animateItems,
+        creditUsed: creditUsedInSession,
+
+        // Cross-store suggestions
+        itemNameMappings,
+
+        // Shared groups
+        availableGroups,
+        groupsLoading: sharedGroupsLoading,
+        activeGroup,
+
+        // Mapping functions
+        saveMapping,
+        saveMerchantMapping,
+        saveSubcategoryMapping,
+        saveItemNameMapping,
+    };
+}

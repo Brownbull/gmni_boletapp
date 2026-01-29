@@ -88,19 +88,11 @@ export {
 } from './HistoryFiltersContext';
 
 // =============================================================================
-// Story 14c-refactor.25: ViewHandlersContext
+// Story 14e-25d: ViewHandlersContext DELETED
 // =============================================================================
-
-// ViewHandlersContext - Handler bundles for views (eliminates prop drilling)
-export {
-    ViewHandlersProvider,
-    useViewHandlers,
-    useViewHandlersOptional,
-    ViewHandlersContext,
-    type ViewHandlersContextValue,
-    type ViewHandlersProviderProps,
-    type TransactionHandlers,
-    type ScanHandlers,
-    type NavigationHandlers,
-    type DialogHandlers,
-} from './ViewHandlersContext';
+//
+// ViewHandlersContext was removed in Story 14e-25d. Views now use direct hooks:
+// - Navigation: useNavigationActions() from @/shared/stores
+// - Toast: useToast() from @/shared/hooks
+// - Modals: useModalActions() from @/managers/ModalManager
+// - History navigation: useHistoryNavigation() from @/shared/hooks

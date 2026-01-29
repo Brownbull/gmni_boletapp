@@ -404,28 +404,68 @@ development_status:
   14e-15-batch-review-feature-components: done  # 3 pts - Batch review components - Atlas Code Review APPROVED 2026-01-26 (42 tests, AC5 store integration)
   14e-16-batch-review-feature-orchestrator: done  # 5 pts - BatchReviewFeature orchestrator - Atlas dev-story COMPLETE 2026-01-26 (22 tests)
 
-# /bmad:bmm:workflows:atlas-dev-story 14e-12a
+  # Part 4: Simple Features (5 stories, 14 pts)
+  14e-17-categories-feature-extraction: done  # 3 pts - Extract categories to feature - Atlas Code Review APPROVED 2026-01-26
+  14e-17b-categories-app-integration: done  # 2 pts - App.tsx integration + composition hook migration [DEPENDS: 14e-17] - Story created 2026-01-26, COMPLETED 2026-01-27 (partial AC3/AC4 per architectural limitation)
+  14e-18-credit-feature-extraction: split  # SPLIT 2026-01-25: 6 tasks + 36 subtasks exceeded limits → split into 14e-18a/b/c
+  14e-18a-credit-state-hook: done  # 2 pts - Feature structure + useCreditState hook [Part 1/3, DEPENDS: 14e-1] - Atlas Code Review APPROVED 2026-01-27 (22 tests)
+  14e-18b-credit-handlers: done  # 2 pts - Credit handlers extraction [Part 2/3, DEPENDS: 14e-18a] - Atlas Code Review APPROVED 2026-01-27
+  14e-18c-credit-feature-integration: done  # 3 pts - CreditFeature orchestrator + App.tsx integration [Part 3/3, DEPENDS: 14e-18a, 14e-18b] - Atlas Code Review APPROVED 2026-01-27
+  14e-19-transactions-feature-foundation: done  # 3 pts - Organize transactions as entity module - Atlas Code Review APPROVED 2026-01-27 (staging fix applied)
+  14e-20-remaining-ui-state-extraction: split  # SPLIT 2026-01-25: 4 tasks + 23 subtasks exceeded limits -> split into 14e-20a/b
+  14e-20a-toast-hook-extraction: done  # 2 pts - Extract toast state to shared hook [Part 1/2, DEPENDS: 14e-1] - Atlas Code Review APPROVED 2026-01-27
+  14e-20b-settings-store-extraction: done  # 2 pts - Extract settings to Zustand store [Part 2/2, DEPENDS: 14e-1] - Atlas Code Review APPROVED 2026-01-27 (staging fix applied)
+
+  # Part 5: App Shell Finalization (4 stories, 10 pts)
+  14e-21-create-feature-orchestrator: done  # 3 pts - FeatureOrchestrator component - Completed 2026-01-27
+  14e-22-appproviders-refactor: done  # 2 pts - AppProviders to src/app/ with ViewHandlersProvider - Completed 2026-01-27
+  14e-23a-scan-overlay-migration: done  # 3 pts - Migrate scan overlays from AppOverlays to ScanFeature [BLOCKS: 14e-23] - Archie Review APPROVED 2026-01-27
+  14e-23b-appoverlays-simplification: done  # 2 pts - Simplify AppOverlays after scan migration [DEPENDS: 14e-23a, BLOCKS: 14e-23] - Atlas Code Review APPROVED 2026-01-27
+  14e-23-app-tsx-final-cleanup: done  # 3 pts - Final App.tsx cleanup (revised target ~3,150 lines due to architectural constraints) - Completed 2026-01-27
+  14e-24-documentation-architecture-guide: ready-for-dev  # 2 pts - Architecture documentation - Story created 2026-01-25
+
+  # Part 6: App.tsx Architectural Completion (4 stories, 16 pts) - Follow-up to achieve 500-800 line target
+  # ROOT CAUSE: Story 14e-23 accepted 3,163 lines vs architecture decision target of 500-800
+  # SOLUTION: Views own their data (call hooks internally) instead of receiving props from App.tsx
+  # Created: 2026-01-27 via Archie architectural review
+  14e-25-app-tsx-architectural-completion: split  # SPLIT 2026-01-27: 16 pts total → 4 sub-stories
+  14e-25a-navigation-store-historyview: split  # SPLIT 2026-01-27: 5 pts → 2 sub-stories (35 subtasks exceeded limit)
+  14e-25a1-navigation-store-foundation: done  # 3 pts - Navigation Zustand store + App.tsx migration [DEPENDS: 14e-23] - Atlas code-review APPROVED 2026-01-27 (4 follow-ups documented)
+  14e-25a2-historyview-data-migration: split  # SPLIT 2026-01-27: 19 subtasks exceeded limit → split into 14e-25a.2a, 14e-25a.2b
+  14e-25a2a-historyview-data-hook: done  # 2 pts - useHistoryViewData hook + tests [DEPENDS: 14e-25a.1] - Atlas code-review APPROVED 2026-01-27
+  14e-25a2b-historyview-migration: done  # 2 pts - HistoryView migration + App.tsx cleanup [DEPENDS: 14e-25a.2a] - Atlas code-review APPROVED 2026-01-28
+  14e-25b-trendsview-dashboardview: split  # SPLIT 2026-01-27: 6 pts total → 2 sub-stories (28 subtasks exceeded limit)
+  14e-25b1-trendsview-migration: done  # 3 pts - TrendsView owns data via useTrendsViewData [DEPENDS: 14e-25a2b] - DONE 2026-01-28: Atlas code-review passed
+  14e-25b2-dashboardview-migration: done  # 3 pts - DashboardView owns data via useDashboardViewData [DEPENDS: 14e-25b1] - Completed 2026-01-28
+  14e-25c-settingsview-remaining: split  # SPLIT 2026-01-27: 3 pts → 7 pts (55+ props in SettingsView required split)
+  14e-25c1-settingsview-migration: done  # 5 pts - SettingsView owns data via useSettingsViewData [DEPENDS: 14e-25b] - Atlas code-review APPROVED 2026-01-28
+  14e-25c2-remaining-views-migration: done  # 2 pts - Items, Insights, Reports, Batch views migrated (TransactionEditor deferred - complex) [DEPENDS: 14e-25c.1] - COMPLETED 2026-01-28
+  14e-25d-viewhandlers-deletion-cleanup: done  # 3 pts - Delete ViewHandlersContext, final cleanup [DEPENDS: 14e-25c.2] - COMPLETED 2026-01-28. AC5 deviation documented (3010 vs 500-800 lines - remaining views need migration)
+
+  # Part 7: Handler Extraction & App.tsx Business Logic Removal (4 stories, 12 pts)
+  # ROOT CAUSE: Phase 3 and Phase 5 of architecture decision not fully completed
+  # Business logic handlers remain in App.tsx instead of features/views
+  # TARGET: Reduce App.tsx from 3,010 to ~1,000-1,200 lines
+  # Created: 2026-01-28 via Archie architectural review
+  14e-28-transaction-editor-handler-extraction: done  # 5 pts - Extract 14 handleEditor* handlers to useTransactionEditorHandlers hook - COMPLETED 2026-01-28 (Phase 1: hooks created, App.tsx cleaned)
+  14e-28b-transaction-editor-view-migration: done  # 2 pts - TransactionEditorView uses hooks directly, delete useTransactionEditorViewProps [DEPENDS: 14e-28] - COMPLETED 2026-01-28
+  14e-29-batch-review-handler-completion: split  # SPLIT 2026-01-28: 3 pts → 4 pts (9 tasks, 32 subtasks exceeded limits)
+  14e-29a-hook-structure-consolidation: done  # 1 pt - Hook structure + consolidate existing extractions [DEPENDS: 14e-28] - COMPLETED 2026-01-28
+  14e-29b-processing-navigation-handlers: done  # 1 pt - Processing & navigation handlers extraction [DEPENDS: 14e-29a] - Atlas Code Review APPROVED 2026-01-28
+  14e-29c-save-discard-handlers: done  # 1 pt - Save/discard handlers + feature update [DEPENDS: 14e-29b] - Atlas Code Review APPROVED 2026-01-28
+  14e-29d-cleanup-tests-verification: done  # 1 pt - App.tsx cleanup + tests + verification [DEPENDS: 14e-29c] - Atlas Code Review APPROVED 2026-01-29, smoke test partial pass (2 pre-existing bugs → 14e-33)
+  14e-30-scan-feature-handler-completion: done  # 2 pts - Extract handleNewTransaction, handleFileSelect, handleRescan to ScanFeature [DEPENDS: 14e-28, 14e-29d] - Completed 2026-01-29
+  14e-31-itemsview-data-ownership: done  # 2 pts - ItemsView owns data via useItemsViewData hook - Atlas Code Review APPROVED 2026-01-29
+  14e-32-location-currency-selector-bugs: done  # 2 pts - Fix country normalization (Spanish→English) + currency dropdown positioning [BUG: Found in 14e-28b verification] - Atlas Code Review APPROVED 2026-01-28
+  14e-33-batch-ux-bugs: done  # 2 pts - Fix batch preview remove buttons (mobile visibility) + stale BATCH_COMPLETE modal after discard [BUG: Found in 14e-29d smoke test] - R1-R4 resolved, COMPLETED 2026-01-29
+
+# /bmad:bmm:workflows:dev-story 
+# /bmad:bmm:workflows:atlas-dev-story 
+# /bmad:bmm:workflows:code-review
 # /bmad:bmm:workflows:atlas-code-review
 # /bmad:bmm:workflows:atlas-create-story
 # /bmad:bmm:workflows:atlas-story-sizing
 # /bmad:bmm:workflows:atlas-deploy-story
-
-  # Part 4: Simple Features (4 stories, 12 pts)
-  14e-17-categories-feature-extraction: ready-for-dev  # 3 pts - Extract categories to feature - Story created 2026-01-25
-  14e-18-credit-feature-extraction: split  # SPLIT 2026-01-25: 6 tasks + 36 subtasks exceeded limits → split into 14e-18a/b/c
-  14e-18a-credit-state-hook: ready-for-dev  # 2 pts - Feature structure + useCreditState hook [Part 1/3, DEPENDS: 14e-1] - Story created 2026-01-25
-  14e-18b-credit-handlers: ready-for-dev  # 2 pts - Credit handlers extraction [Part 2/3, DEPENDS: 14e-18a] - Story created 2026-01-25
-  14e-18c-credit-feature-integration: ready-for-dev  # 3 pts - CreditFeature orchestrator + App.tsx integration [Part 3/3, DEPENDS: 14e-18a, 14e-18b] - Story created 2026-01-25
-  14e-19-transactions-feature-foundation: ready-for-dev  # 3 pts - Organize transactions as entity module - Story created 2026-01-25
-  14e-20-remaining-ui-state-extraction: split  # SPLIT 2026-01-25: 4 tasks + 23 subtasks exceeded limits -> split into 14e-20a/b
-  14e-20a-toast-hook-extraction: ready-for-dev  # 2 pts - Extract toast state to shared hook [Part 1/2, DEPENDS: 14e-1] - Story created 2026-01-25
-  14e-20b-settings-store-extraction: ready-for-dev  # 2 pts - Extract settings to Zustand store [Part 2/2, DEPENDS: 14e-1] - Story created 2026-01-25
-
-  # Part 5: App Shell Finalization (4 stories, 10 pts)
-  14e-21-create-feature-orchestrator: ready-for-dev  # 3 pts - FeatureOrchestrator component - Story created 2026-01-25
-  14e-22-appproviders-refactor: ready-for-dev  # 2 pts - Extract providers to AppProviders - Story created 2026-01-25
-  14e-23-app-tsx-final-cleanup: ready-for-dev  # 3 pts - Final App.tsx cleanup (500-800 lines target) - Story created 2026-01-25
-  14e-24-documentation-architecture-guide: ready-for-dev  # 2 pts - Architecture documentation - Story created 2026-01-25
 
   epic-14e-retrospective: optional
 

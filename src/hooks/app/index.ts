@@ -1,5 +1,6 @@
 /**
  * Story 14c-refactor.10: App-level hooks barrel exports
+ * Story 14e-25d: ViewHandlersContext deleted - views use direct hooks
  *
  * Central export point for app-level initialization, lifecycle,
  * and coordination hooks.
@@ -7,16 +8,13 @@
  * These hooks extract non-scan related App.tsx logic into
  * reusable, testable modules.
  *
- * ## ViewHandlersContext (Story 14c-refactor.25)
+ * ## Handler Access (Story 14e-25d)
  *
- * Handler hook results are bundled in ViewHandlersContext for views to consume
- * without prop drilling. Views can call `useViewHandlers()` from contexts/ to access:
- * - transaction: UseTransactionHandlersResult
- * - scan: UseScanHandlersResult
- * - navigation: UseNavigationHandlersResult
- * - dialog: UseDialogHandlersResult
- *
- * @see contexts/ViewHandlersContext.tsx for context implementation
+ * Views now use direct hooks for navigation and handlers:
+ * - Navigation: useNavigationActions() from @/shared/stores
+ * - Toast: useToast() from @/shared/hooks
+ * - Modals: useModalActions() from @/managers/ModalManager
+ * - History navigation: useHistoryNavigation() from @/shared/hooks
  *
  * @example
  * ```tsx
@@ -110,57 +108,10 @@ export {
 // View Props Composition Hooks (Story 14c-refactor.26)
 // =============================================================================
 
-// TransactionEditorView data props composition
-export {
-    useTransactionEditorViewProps,
-    type UseTransactionEditorViewPropsOptions,
-    type TransactionEditorDataProps,
-    type ScanStateForProps,
-    type ActiveGroupInfo,
-    type UserPreferencesForProps,
-} from './useTransactionEditorViewProps';
-
-// TrendsView data props composition
-export {
-    useTrendsViewProps,
-    type UseTrendsViewPropsOptions,
-    type TrendsViewDataProps,
-    type GroupMemberInfo,
-    type SpendingByMember,
-    type UserInfoForProps as TrendsUserInfo,
-} from './useTrendsViewProps';
-
-// HistoryView data props composition
-export {
-    useHistoryViewProps,
-    type UseHistoryViewPropsOptions,
-    type HistoryViewDataProps,
-    type UserInfoForHistoryProps,
-    type PaginationState,
-} from './useHistoryViewProps';
-
+// Story 14e-25b.1: useTrendsViewProps DELETED - TrendsView now owns its data via useTrendsViewData
+// Story 14e-25d: useHistoryViewProps DELETED - HistoryView now owns its data via useHistoryViewData
 // Story 14e-16: useBatchReviewViewProps DELETED - BatchReviewFeature uses store selectors
-
-// DashboardView data props composition (Story 14c-refactor.34a)
-export {
-    useDashboardViewProps,
-    type UseDashboardViewPropsOptions,
-    type DashboardViewDataProps,
-    type DashboardTransaction,
-    type SharedGroupForDashboard,
-} from './useDashboardViewProps';
-
-// SettingsView data props composition (Story 14c-refactor.34b)
-export {
-    useSettingsViewProps,
-    type UseSettingsViewPropsOptions,
-    type SettingsViewDataProps,
-} from './useSettingsViewProps';
-
-// ItemsView data props composition (Story 14c-refactor.34c)
-export {
-    useItemsViewProps,
-    type UseItemsViewPropsOptions,
-    type ItemsViewDataProps,
-    type ItemsTransaction,
-} from './useItemsViewProps';
+// Story 14e-25b.2: useDashboardViewProps DELETED - DashboardView now owns its data via useDashboardViewData
+// Story 14e-25d: useSettingsViewProps DELETED - SettingsView now owns its data via useSettingsViewData
+// Story 14e-28b: useTransactionEditorViewProps DELETED - TransactionEditorView now owns its data via internal hooks
+// Story 14e-31: useItemsViewProps DELETED - ItemsView now owns its data via useItemsViewData

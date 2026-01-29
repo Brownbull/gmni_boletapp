@@ -317,7 +317,7 @@ export function useDialogHandlers(props: UseDialogHandlersProps): UseDialogHandl
     // Return Result
     // ===========================================================================
 
-    // Story 14c-refactor.25: Memoize return object for ViewHandlersContext stability
+    // Story 14e-25d: ViewHandlersContext deleted - this hook used by App.tsx directly
     // Story 14e-4: Credit info modal removed - now uses Modal Manager
     // Story 14e-5: Conflict dialog state removed - now uses Modal Manager
     return useMemo<UseDialogHandlersResult>(

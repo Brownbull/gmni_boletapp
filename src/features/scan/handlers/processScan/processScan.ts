@@ -207,7 +207,7 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
 
     const validationResult = validateScanResult(tempTransaction, parsedItems, {
       showScanDialog: ui.showScanDialog,
-      setIsAnalyzing: ui.setIsAnalyzing,
+      // Story 14e-25d: setIsAnalyzing removed - state managed by state machine
       scanOverlay,
       reconcileItemsTotal,
       lang,
@@ -256,7 +256,7 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
       hasDiscrepancy,
       {
         showScanDialog: ui.showScanDialog,
-        setIsAnalyzing: ui.setIsAnalyzing,
+        // Story 14e-25d: setIsAnalyzing removed - state managed by state machine
         scanOverlay,
       }
     );

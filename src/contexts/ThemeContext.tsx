@@ -152,8 +152,9 @@ function loadTheme(): Theme {
 /**
  * Load language from localStorage.
  * Story 14c-refactor.9: Language persistence
+ * Exported for use in App.tsx (before ThemeProvider is available)
  */
-function loadLanguage(): Language {
+export function loadLanguage(): Language {
     const saved = localStorage.getItem('lang');
     if (saved === 'es' || saved === 'en') return saved as Language;
     return 'es'; // Default to Spanish (target market: Chile)
@@ -162,8 +163,9 @@ function loadLanguage(): Language {
 /**
  * Load currency from localStorage.
  * Story 14c-refactor.9: Currency persistence
+ * Exported for use in App.tsx (before ThemeProvider is available)
  */
-function loadCurrency(): Currency {
+export function loadCurrency(): Currency {
     const saved = localStorage.getItem('currency');
     if (saved === 'CLP' || saved === 'USD' || saved === 'EUR') return saved as Currency;
     return 'CLP'; // Default to Chilean Pesos (target market)
@@ -172,8 +174,9 @@ function loadCurrency(): Currency {
 /**
  * Load date format from localStorage.
  * Story 14c-refactor.9: Date format persistence
+ * Exported for use in App.tsx (before ThemeProvider is available)
  */
-function loadDateFormat(): 'LatAm' | 'US' {
+export function loadDateFormat(): 'LatAm' | 'US' {
     const saved = localStorage.getItem('dateFormat');
     if (saved === 'LatAm' || saved === 'US') return saved;
     return 'LatAm'; // Default to Latin American format (target market)
@@ -281,14 +284,20 @@ export function ThemeProvider({
 
     const setLang = useCallback((newLang: Language) => {
         setLangState(newLang);
+        // Dispatch custom event for same-window listeners (App.tsx)
+        window.dispatchEvent(new CustomEvent('locale-change', { detail: { type: 'lang', value: newLang } }));
     }, []);
 
     const setCurrency = useCallback((newCurrency: Currency) => {
         setCurrencyState(newCurrency);
+        // Dispatch custom event for same-window listeners (App.tsx)
+        window.dispatchEvent(new CustomEvent('locale-change', { detail: { type: 'currency', value: newCurrency } }));
     }, []);
 
     const setDateFormat = useCallback((format: 'LatAm' | 'US') => {
         setDateFormatState(format);
+        // Dispatch custom event for same-window listeners (App.tsx)
+        window.dispatchEvent(new CustomEvent('locale-change', { detail: { type: 'dateFormat', value: format } }));
     }, []);
 
     // ===========================================================================

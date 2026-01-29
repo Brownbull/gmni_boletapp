@@ -1042,6 +1042,60 @@ export function getCategoryPillFgAuto(category: string): string {
 }
 
 // ============================================================================
+// CONTRAST COLOR UTILITY
+// ============================================================================
+
+/**
+ * Calculate relative luminance of a color (for WCAG contrast calculations).
+ * @param hex - Hex color string (with or without #)
+ * @returns Luminance value between 0 and 1
+ */
+function getLuminance(hex: string): number {
+  // Remove # if present
+  const cleanHex = hex.replace('#', '');
+
+  // Parse RGB values
+  const r = parseInt(cleanHex.substring(0, 2), 16) / 255;
+  const g = parseInt(cleanHex.substring(2, 4), 16) / 255;
+  const b = parseInt(cleanHex.substring(4, 6), 16) / 255;
+
+  // Apply gamma correction
+  const rLinear = r <= 0.03928 ? r / 12.92 : Math.pow((r + 0.055) / 1.055, 2.4);
+  const gLinear = g <= 0.03928 ? g / 12.92 : Math.pow((g + 0.055) / 1.055, 2.4);
+  const bLinear = b <= 0.03928 ? b / 12.92 : Math.pow((b + 0.055) / 1.055, 2.4);
+
+  // Calculate luminance using WCAG formula
+  return 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
+}
+
+/**
+ * Get a contrasting text color (white or dark) for a given background color.
+ * Uses WCAG luminance formula to ensure readability.
+ *
+ * @param backgroundColor - Hex color of the background
+ * @returns '#ffffff' for dark backgrounds, '#1f2937' for light backgrounds
+ *
+ * @example
+ * getContrastTextColor('#3b82f6') // Returns '#ffffff' (white text on blue)
+ * getContrastTextColor('#fef3c7') // Returns '#1f2937' (dark text on light yellow)
+ */
+export function getContrastTextColor(backgroundColor: string): string {
+  // Handle CSS variables - default to white for safety
+  if (backgroundColor.startsWith('var(')) {
+    return '#ffffff';
+  }
+
+  try {
+    const luminance = getLuminance(backgroundColor);
+    // Use 0.5 as threshold - higher luminance = lighter color = needs dark text
+    return luminance > 0.5 ? '#1f2937' : '#ffffff';
+  } catch {
+    // Fallback to white on parse error
+    return '#ffffff';
+  }
+}
+
+// ============================================================================
 // CATEGORY GROUP HELPERS (Story 14.15c)
 // ============================================================================
 

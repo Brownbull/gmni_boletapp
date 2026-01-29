@@ -27,6 +27,11 @@ interface CurrencyTagProps {
  * - Shows clickable tag with currency symbol
  * - Opens dropdown panel with floating label select
  */
+// Story 14e-32: Dropdown positioning constants
+const DROPDOWN_WIDTH = 200; // matches min-w-[200px]
+const DROPDOWN_MARGIN = 20;
+const MIN_SPACE_REQUIRED = DROPDOWN_WIDTH + DROPDOWN_MARGIN;
+
 export const CurrencyTag: React.FC<CurrencyTagProps> = ({
     currency,
     onCurrencyChange,
@@ -35,6 +40,22 @@ export const CurrencyTag: React.FC<CurrencyTagProps> = ({
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+
+    /**
+     * Story 14e-32: Calculate dropdown position based on button location
+     * Uses button ref (not dropdown ref) to avoid render flash
+     * Returns 'left' if dropdown would extend past right edge, 'right' otherwise
+     */
+    const getDropdownPosition = (): 'left' | 'right' => {
+        if (!buttonRef.current) return 'right';
+        const rect = buttonRef.current.getBoundingClientRect();
+        const spaceOnRight = window.innerWidth - rect.right;
+        return spaceOnRight < MIN_SPACE_REQUIRED ? 'left' : 'right';
+    };
+
+    // Calculate position synchronously when open (button exists before dropdown)
+    const dropdownPosition = isOpen ? getDropdownPosition() : 'right';
 
     // Close dropdown on click outside
     useEffect(() => {
@@ -64,6 +85,7 @@ export const CurrencyTag: React.FC<CurrencyTagProps> = ({
             {/* Clickable tag */}
             {/* Story 14.41: Disabled state for read-only mode */}
             <button
+                ref={buttonRef}
                 type="button"
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 disabled={disabled}
@@ -82,10 +104,10 @@ export const CurrencyTag: React.FC<CurrencyTagProps> = ({
                 {displaySymbol}
             </button>
 
-            {/* Dropdown panel */}
+            {/* Dropdown panel - Story 14e-32: Dynamic positioning */}
             {isOpen && (
                 <div
-                    className="absolute top-full right-0 mt-2 min-w-[200px] rounded-xl overflow-hidden z-50"
+                    className={`absolute top-full ${dropdownPosition === 'right' ? 'right-0' : 'left-0'} mt-2 min-w-[200px] rounded-xl overflow-hidden z-50`}
                     style={{
                         backgroundColor: 'var(--bg-secondary, #ffffff)',
                         boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)',

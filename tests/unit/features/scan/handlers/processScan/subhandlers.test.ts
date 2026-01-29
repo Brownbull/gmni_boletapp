@@ -134,7 +134,7 @@ describe('validateScanResult', () => {
     expect(result.isValid).toBe(false);
     expect(result.shouldContinue).toBe(false);
     expect(deps.showScanDialog).toHaveBeenCalledWith('total_mismatch', expect.any(Object));
-    expect(deps.setIsAnalyzing).toHaveBeenCalledWith(false);
+    // Story 14e-25d: setIsAnalyzing removed - state managed by state machine
     expect(deps.scanOverlay.setReady).toHaveBeenCalled();
   });
 
@@ -382,7 +382,7 @@ describe('handleCurrencyDetection', () => {
       pendingTransaction: transaction,
       hasDiscrepancy: false,
     });
-    expect(deps.setIsAnalyzing).toHaveBeenCalledWith(false);
+    // Story 14e-25d: setIsAnalyzing removed - state managed by state machine
     expect(deps.scanOverlay.setReady).toHaveBeenCalled();
   });
 

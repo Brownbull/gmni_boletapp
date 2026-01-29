@@ -32,3 +32,6 @@ export type {
   ReviewingStateProps,
   ErrorStateProps,
 } from './states';
+
+// Story 14e-23: Batch discard dialog (reads from scan store)
+export { BatchDiscardDialog } from './BatchDiscardDialog';

@@ -1,8 +1,8 @@
 /**
  * Feature: Batch Review
  *
- * Batch review Zustand store, handlers, and components.
- * Implemented in Stories 14e-12 through 14e-16.
+ * Batch review Zustand store, handlers, hooks, and components.
+ * Implemented in Stories 14e-12 through 14e-16, 14e-29a.
  *
  * Story 14e-12a: Store foundation + lifecycle/item actions (COMPLETE)
  * Story 14e-12b: Save/edit actions (COMPLETE)
@@ -13,6 +13,7 @@
  * Story 14e-14d: App.tsx integration (COMPLETE)
  * Story 14e-15: Feature components (COMPLETE)
  * Story 14e-16: BatchReviewFeature orchestrator (COMPLETE)
+ * Story 14e-29a: Consolidated useBatchReviewHandlers hook (COMPLETE)
  */
 
 // =============================================================================
@@ -106,6 +107,13 @@ export type {
   DiscardContext,
   CreditCheckContext,
 } from './handlers';
+
+// =============================================================================
+// Hooks (Story 14e-29a) - Consolidated handler hook
+// =============================================================================
+
+export { useBatchReviewHandlers } from './hooks';
+export type { BatchReviewHandlersProps, BatchReviewHandlers } from './hooks';
 
 // =============================================================================
 // Components (Story 14e-15)

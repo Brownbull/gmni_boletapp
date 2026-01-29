@@ -1,6 +1,6 @@
 # Story 14e-18a: Credit Feature Structure & State Hook
 
-Status: ready-for-dev
+Status: done
 
 <!-- Created by atlas-create-story workflow 2026-01-25 -->
 <!-- Split from 14e-18: Part 1 of 3 -->
@@ -34,24 +34,24 @@ So that **credit state management is colocated in the feature module**.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Create Feature Directory Structure** (AC: #1, #3)
-  - [ ] 1.1: Update `src/features/credit/index.ts` (currently stub) with proper exports
-  - [ ] 1.2: Create `src/features/credit/state/` directory
-  - [ ] 1.3: Create `src/features/credit/handlers/` directory (placeholder for 14e-18b)
-  - [ ] 1.4: Verify path alias `@features/credit` works in imports
+- [x] **Task 1: Create Feature Directory Structure** (AC: #1, #3)
+  - [x] 1.1: Update `src/features/credit/index.ts` (currently stub) with proper exports
+  - [x] 1.2: Create `src/features/credit/state/` directory
+  - [x] 1.3: Create `src/features/credit/handlers/` directory (placeholder for 14e-18b)
+  - [x] 1.4: Verify path alias `@features/credit` works in imports
 
-- [ ] **Task 2: Create useCreditState Hook** (AC: #2, #4, #5)
-  - [ ] 2.1: Analyze existing `useUserCredits` hook interface (src/hooks/useUserCredits.ts)
-  - [ ] 2.2: Create `src/features/credit/state/useCreditState.ts`
-  - [ ] 2.3: Implement wrapper that delegates to `useUserCredits`:
+- [x] **Task 2: Create useCreditState Hook** (AC: #2, #4, #5)
+  - [x] 2.1: Analyze existing `useUserCredits` hook interface (src/hooks/useUserCredits.ts)
+  - [x] 2.2: Create `src/features/credit/state/useCreditState.ts`
+  - [x] 2.3: Implement wrapper that delegates to `useUserCredits`:
     ```typescript
     export function useCreditState(user: User | null, services: FirebaseServices | null) {
       const credits = useUserCredits(user, services);
       return useMemo(() => credits, [credits]);
     }
     ```
-  - [ ] 2.4: Export from `src/features/credit/index.ts`
-  - [ ] 2.5: Add unit tests for wrapper hook (verify all functions pass through correctly)
+  - [x] 2.4: Export from `src/features/credit/index.ts`
+  - [x] 2.5: Add unit tests for wrapper hook (verify all functions pass through correctly)
 
 ## Dev Notes
 
@@ -130,16 +130,30 @@ describe('useCreditState', () => {
 
 ### Agent Model Used
 
-<!-- Filled by dev agent -->
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Debug Log References
 
-<!-- Filled by dev agent -->
+- None required - implementation was straightforward
 
 ### Completion Notes List
 
-<!-- Filled by dev agent -->
+1. Created feature directory structure: `src/features/credit/state/` and `src/features/credit/handlers/`
+2. Created `useCreditState` wrapper hook following hook wrapper pattern from Epic 14c-refactor.27
+3. Hook exposes all 11 properties/functions from `useUserCredits`: credits, loading, hasReservedCredits, deductCredits, deductSuperCredits, addCredits, addSuperCredits, refreshCredits, reserveCredits, confirmReservedCredits, refundReservedCredits
+4. Added `CreditFirebaseServices` interface for type safety
+5. useMemo wraps result with all dependencies for stable references
+6. 22 unit tests covering: delegation, state exposure, operations, reference stability, default state, type exports
+7. All 5,779 existing tests continue to pass (AC5 verified)
+8. TypeScript compilation successful - path alias `@features/credit` works correctly
 
 ### File List
 
-<!-- Filled by dev agent -->
+**Created:**
+- `src/features/credit/state/index.ts` - State barrel exports
+- `src/features/credit/state/useCreditState.ts` - Wrapper hook (65 lines)
+- `src/features/credit/handlers/index.ts` - Handler placeholder for 14e-18b
+- `tests/unit/features/credit/state/useCreditState.test.ts` - 22 unit tests
+
+**Modified:**
+- `src/features/credit/index.ts` - Updated from stub to proper exports

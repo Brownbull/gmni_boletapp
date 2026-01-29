@@ -186,4 +186,152 @@ describe('CurrencyTag', () => {
       expect(screen.getByText('$')).toBeInTheDocument();
     });
   });
+
+  describe('Story 14e-32: dropdown positioning', () => {
+    const originalInnerWidth = window.innerWidth;
+
+    afterEach(() => {
+      // Restore original window.innerWidth
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: originalInnerWidth,
+      });
+    });
+
+    it('should position dropdown to right when there is enough space', () => {
+      // Set window width to 1024
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 1024,
+      });
+
+      render(<CurrencyTag {...defaultProps} />);
+
+      const button = screen.getByRole('button');
+
+      // Mock getBoundingClientRect to simulate button at left side of screen
+      vi.spyOn(button, 'getBoundingClientRect').mockReturnValue({
+        top: 100,
+        bottom: 140,
+        left: 100,
+        right: 150, // Button ends at 150px, 874px space on right (1024-150)
+        width: 50,
+        height: 40,
+        x: 100,
+        y: 100,
+        toJSON: () => ({}),
+      });
+
+      // Open dropdown
+      fireEvent.click(button);
+
+      // Find dropdown by looking for the min-w-[200px] class
+      const dropdown = document.querySelector('.min-w-\\[200px\\]');
+      expect(dropdown).toBeInTheDocument();
+      expect(dropdown?.className).toContain('right-0');
+    });
+
+    it('should position dropdown to left when near right edge', () => {
+      // Set window width to 500
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 500,
+      });
+
+      render(<CurrencyTag {...defaultProps} />);
+
+      const button = screen.getByRole('button');
+
+      // Mock getBoundingClientRect to simulate button near right edge
+      vi.spyOn(button, 'getBoundingClientRect').mockReturnValue({
+        top: 100,
+        bottom: 140,
+        left: 400,
+        right: 450, // Button ends at 450px, only 50px space on right (500-450)
+        width: 50,
+        height: 40,
+        x: 400,
+        y: 100,
+        toJSON: () => ({}),
+      });
+
+      // Open dropdown
+      fireEvent.click(button);
+
+      // Find dropdown
+      const dropdown = document.querySelector('.min-w-\\[200px\\]');
+      expect(dropdown).toBeInTheDocument();
+      expect(dropdown?.className).toContain('left-0');
+    });
+
+    it('should use right positioning when exactly at threshold', () => {
+      // MIN_SPACE_REQUIRED = 220 (200 + 20 margin)
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 500,
+      });
+
+      render(<CurrencyTag {...defaultProps} />);
+
+      const button = screen.getByRole('button');
+
+      // Mock getBoundingClientRect - 220px space exactly at threshold
+      vi.spyOn(button, 'getBoundingClientRect').mockReturnValue({
+        top: 100,
+        bottom: 140,
+        left: 200,
+        right: 280, // 500 - 280 = 220px = MIN_SPACE_REQUIRED
+        width: 80,
+        height: 40,
+        x: 200,
+        y: 100,
+        toJSON: () => ({}),
+      });
+
+      // Open dropdown
+      fireEvent.click(button);
+
+      // Find dropdown - should be right-0 since space equals threshold
+      const dropdown = document.querySelector('.min-w-\\[200px\\]');
+      expect(dropdown).toBeInTheDocument();
+      expect(dropdown?.className).toContain('right-0');
+    });
+
+    it('should use left positioning when just below threshold', () => {
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 500,
+      });
+
+      render(<CurrencyTag {...defaultProps} />);
+
+      const button = screen.getByRole('button');
+
+      // Mock getBoundingClientRect - 219px space (below threshold of 220)
+      vi.spyOn(button, 'getBoundingClientRect').mockReturnValue({
+        top: 100,
+        bottom: 140,
+        left: 200,
+        right: 281, // 500 - 281 = 219px < 220 threshold
+        width: 81,
+        height: 40,
+        x: 200,
+        y: 100,
+        toJSON: () => ({}),
+      });
+
+      // Open dropdown
+      fireEvent.click(button);
+
+      // Find dropdown - should be left-0
+      const dropdown = document.querySelector('.min-w-\\[200px\\]');
+      expect(dropdown).toBeInTheDocument();
+      expect(dropdown?.className).toContain('left-0');
+    });
+  });
 });
