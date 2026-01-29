@@ -2,6 +2,8 @@
  * DashboardView Unit Tests
  *
  * Story 14.12: Home Dashboard Refresh
+ * Story 14e-25b.2: Updated for hook-based data ownership
+ *
  * Tests for the redesigned dashboard matching home-dashboard.html mockup:
  * - Carousel with 3 views (Treemap, Polygon, Bump Chart)
  * - Month/Year picker dropdown
@@ -18,9 +20,50 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, mockViewHandlers, disableNavigationHandler, restoreNavigationHandler } from '../../setup/test-utils';
+import { render, screen, fireEvent, waitFor } from '../../setup/test-utils';
 import { DashboardView } from '../../../src/views/DashboardView';
 import { HistoryFiltersProvider } from '../../../src/contexts/HistoryFiltersContext';
+import type { UseDashboardViewDataReturn } from '../../../src/views/DashboardView/useDashboardViewData';
+
+// =============================================================================
+// Mock State
+// =============================================================================
+
+// Store mock data for dynamic modification
+const mockHookData = {
+  transactions: [] as any[],
+  allTransactions: [] as any[],
+  recentScans: [] as any[],
+  userId: 'test-user-123',
+  appId: 'test-app-id',
+  theme: 'light' as const,
+  colorTheme: 'mono' as any,
+  fontColorMode: 'colorful' as const,
+  lang: 'en' as const,
+  currency: 'USD',
+  dateFormat: 'US' as const,
+  defaultCountry: 'US',
+  foreignLocationFormat: 'code' as const,
+  t: (key: string) => key,
+  formatCurrency: (amount: number) => `$${amount.toFixed(2)}`,
+  formatDate: (date: string) => date,
+  getSafeDate: (val: any) => val || new Date().toISOString().split('T')[0],
+  sharedGroups: [] as any[],
+  onCreateNew: vi.fn(),
+  onViewTrends: vi.fn(),
+  onEditTransaction: vi.fn(),
+  onTriggerScan: vi.fn(),
+  onViewRecentScans: vi.fn(),
+};
+
+// =============================================================================
+// Mocks
+// =============================================================================
+
+// Story 14e-25b.2: Mock useDashboardViewData hook
+vi.mock('../../../src/views/DashboardView/useDashboardViewData', () => ({
+  useDashboardViewData: vi.fn(() => mockHookData),
+}));
 
 // Group consolidation: Mock firebase/firestore for getFirestore calls
 vi.mock('firebase/firestore', () => ({
@@ -53,6 +96,31 @@ vi.mock('../../../src/hooks/useAllUserGroups', () => ({
   })),
 }));
 
+// Story 14e-25d: Mock navigation hooks (ViewHandlersContext deleted)
+const mockHandleNavigateToHistory = vi.fn();
+const mockSetView = vi.fn();
+
+// Track whether navigation should be disabled (for inline full list view tests)
+let navigationDisabled = false;
+
+vi.mock('../../../src/shared/hooks', () => ({
+  useHistoryNavigation: vi.fn(() => ({
+    handleNavigateToHistory: navigationDisabled ? undefined : mockHandleNavigateToHistory,
+  })),
+}));
+
+vi.mock('../../../src/shared/stores', () => ({
+  useNavigationActions: vi.fn(() => ({
+    setView: mockSetView,
+    navigateBack: vi.fn(),
+    setHistoryFilters: vi.fn(),
+  })),
+}));
+
+// Helper functions to control navigation behavior in tests
+const disableNavigationHandler = () => { navigationDisabled = true; };
+const restoreNavigationHandler = () => { navigationDisabled = false; };
+
 // Helper to format month in short format (e.g., "Jan '26")
 const formatShortMonth = (month: number, year: number) => {
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
@@ -60,28 +128,30 @@ const formatShortMonth = (month: number, year: number) => {
   return `${monthNames[month]} '${shortYear}`;
 };
 
-// Helper to render DashboardView with required provider
-const renderDashboardView = (props: Partial<React.ComponentProps<typeof DashboardView>> = {}) => {
-  const defaultProps: React.ComponentProps<typeof DashboardView> = {
-    transactions: [],
-    allTransactions: [],
-    t: (key: string) => key,
-    currency: 'USD',
-    dateFormat: 'MM/DD/YYYY',
-    theme: 'light',
-    formatCurrency: (amount: number) => `$${amount.toFixed(2)}`,
-    formatDate: (date: string) => date,
-    getSafeDate: (val: any) => val || new Date().toISOString().split('T')[0],
-    onCreateNew: vi.fn(),
-    onViewTrends: vi.fn(),
-    onEditTransaction: vi.fn(),
-    onTriggerScan: vi.fn(),
-    lang: 'en',
-  };
+/**
+ * Story 14e-25b.2: Helper to render DashboardView with hook data overrides.
+ *
+ * Since DashboardView now owns its data via useDashboardViewData hook,
+ * tests provide data by modifying mockHookData before rendering.
+ * The _testOverrides prop is used for callbacks that need override.
+ */
+const renderDashboardView = (overrides: Partial<UseDashboardViewDataReturn> = {}) => {
+  // Story 14e-25b.2: Sync transactions and allTransactions for convenience
+  // If only allTransactions is provided, use it for transactions too
+  const normalizedOverrides = { ...overrides };
+  if (normalizedOverrides.allTransactions && !normalizedOverrides.transactions) {
+    normalizedOverrides.transactions = normalizedOverrides.allTransactions;
+  }
+  if (normalizedOverrides.transactions && !normalizedOverrides.allTransactions) {
+    normalizedOverrides.allTransactions = normalizedOverrides.transactions;
+  }
+
+  // Apply overrides to mock hook data
+  Object.assign(mockHookData, normalizedOverrides);
 
   return render(
     <HistoryFiltersProvider>
-      <DashboardView {...defaultProps} {...props} />
+      <DashboardView _testOverrides={normalizedOverrides} />
     </HistoryFiltersProvider>
   );
 };
@@ -148,6 +218,32 @@ const createDuplicateTransactions = () => {
 describe('DashboardView', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Story 14e-25b.2: Reset mock hook data to defaults
+    Object.assign(mockHookData, {
+      transactions: [],
+      allTransactions: [],
+      recentScans: [],
+      userId: 'test-user-123',
+      appId: 'test-app-id',
+      theme: 'light',
+      colorTheme: 'mono',
+      fontColorMode: 'colorful',
+      lang: 'en',
+      currency: 'USD',
+      dateFormat: 'US',
+      defaultCountry: 'US',
+      foreignLocationFormat: 'code',
+      t: (key: string) => key,
+      formatCurrency: (amount: number) => `$${amount.toFixed(2)}`,
+      formatDate: (date: string) => date,
+      getSafeDate: (val: any) => val || new Date().toISOString().split('T')[0],
+      sharedGroups: [],
+      onCreateNew: vi.fn(),
+      onViewTrends: vi.fn(),
+      onEditTransaction: vi.fn(),
+      onTriggerScan: vi.fn(),
+      onViewRecentScans: vi.fn(),
+    });
   });
 
   describe('Story 14.12: Carousel Layout', () => {
@@ -572,9 +668,9 @@ describe('DashboardView', () => {
   });
 
   describe('Full List View (View All)', () => {
-    // Story 14c-refactor.36: Override navigation handler so full list view renders inline
-    // When handleNavigateToHistory is provided (via ViewHandlersContext), clicking "View All"
-    // navigates away instead of showing inline pagination. These tests need the inline view.
+    // Story 14e-25d: Override navigation handler so full list view renders inline
+    // When handleNavigateToHistory is provided, clicking "View All" navigates away
+    // instead of showing inline pagination. These tests need the inline view.
     beforeEach(() => {
       disableNavigationHandler();
     });
@@ -707,10 +803,10 @@ describe('DashboardView', () => {
     });
   });
 
-  describe('Backward Compatibility', () => {
-    it('should use onNavigateToHistory callback when provided for View All on "Por Fecha" slide', () => {
-      // Story 14c-refactor.27: Reset and use context mock instead of prop callback
-      mockViewHandlers.navigation.handleNavigateToHistory.mockClear();
+  describe('Navigation', () => {
+    it('should use handleNavigateToHistory when View All clicked on "Por Fecha" slide', () => {
+      // Story 14e-25d: Direct hook mock (ViewHandlersContext deleted)
+      mockHandleNavigateToHistory.mockClear();
       const transactions = createManyTransactions(10);
 
       renderDashboardView({
@@ -723,8 +819,8 @@ describe('DashboardView', () => {
       fireEvent.click(screen.getByTestId('see-more-card'));
       fireEvent.click(screen.getByTestId('view-all-link'));
 
-      // Story 14c-refactor.27: On slide 1, it calls context navigation handler
-      expect(mockViewHandlers.navigation.handleNavigateToHistory).toHaveBeenCalled();
+      // Story 14e-25d: DashboardView calls useHistoryNavigation().handleNavigateToHistory
+      expect(mockHandleNavigateToHistory).toHaveBeenCalled();
     });
   });
 });

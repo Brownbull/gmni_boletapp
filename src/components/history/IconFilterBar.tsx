@@ -748,7 +748,8 @@ function CategoryFilterDropdownMenu({
   const committedTransactions = useMemo(() => {
     // First check drillDownPath for store category
     if (drillStoreCategory) {
-      return new Set([drillStoreCategory]);
+      // Handle comma-separated multi-select values
+      return new Set(drillStoreCategory.split(',').map(c => c.trim()));
     }
     // Check drillDownPath for store group - expand to all categories in the group
     if (drillStoreGroup) {
@@ -766,7 +767,8 @@ function CategoryFilterDropdownMenu({
     // Story 14.13a: itemCategory takes priority over itemGroup (more specific)
     // When user drills from group to specific category, both may be set
     if (drillItemCategory) {
-      return new Set([drillItemCategory]);
+      // Handle comma-separated multi-select values
+      return new Set(drillItemCategory.split(',').map(c => c.trim()));
     }
     if (drillItemGroup) {
       // Expand the group to its constituent item categories

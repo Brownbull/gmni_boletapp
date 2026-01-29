@@ -510,6 +510,66 @@ src/entities/transaction/
 
 **Source:** `docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-24-documentation-architecture-guide.md`
 
+### Story Created - 14e-25b (Split) - TrendsView + DashboardView Migration (2026-01-27)
+
+**Summary:** View-owned data migration for TrendsView and DashboardView - largest analytical views
+
+**User Value:** App.tsx reduced by ~150 lines, views self-contained with no prop drilling
+
+**Workflow Touchpoints:**
+- Workflow #4 (Analytics Navigation): DIRECT - TrendsView is entry point, DashboardView is upstream
+- Workflow #6 (History Filter): DOWNSTREAM - TrendsView navigates to History with filters
+
+**Split Details:**
+- **14e-25b.1** (3 pts): TrendsView migration + useTrendsViewData hook
+- **14e-25b.2** (3 pts): DashboardView migration + useDashboardViewData hook
+
+**Pattern:** `useXxxViewData()` composition hook + `__testData` prop for testing
+
+**Source:** `docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-25b*.md`
+
+### Story Enhanced - 14e-25d - ViewHandlersContext Deletion (2026-01-28)
+
+**Summary:** ViewHandlersContext Deletion + Final Cleanup - completes feature-based architecture
+
+**User Value:** App.tsx reduced to 500-800 lines (from 3,163), clean orchestration shell
+
+**Workflow Touchpoints:**
+- Workflow #4 (Analytics Navigation): LOW IMPACT - Views already migrated
+- Workflow #6 (History Filter): LOW IMPACT - Views already migrated
+- Workflows #1-3 (Scan): NONE - Not related to ViewHandlers
+
+**Atlas Enhancements Added:**
+- AC8: Composition hooks deletion (useXxxViewProps hooks obsolete after views own data)
+- AC9: Test file updates (mock internal hooks, not ViewHandlers)
+
+**Prerequisite Chain:** 14e-25a (HistoryView) → 14e-25b (TrendsView+Dashboard) → 14e-25c (Settings+Rest) → **14e-25d (Cleanup)**
+
+**Source:** `docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-25d-viewhandlers-deletion-cleanup.md`
+
+### Story Ready - 14e-31-itemsview-data-ownership (2026-01-29)
+
+**Summary:** ItemsView owns data via internal hook - final view migration before ViewHandlersContext deletion
+
+**User Value:** ItemsView self-contained, useItemsViewProps deleted, App.tsx reduced by ~30 lines
+
+**Workflow Touchpoints:**
+- Workflow #6 (History Filter Flow): DIRECT - ItemsView is alternate history view for items
+- Workflow #4 (Analytics Navigation): DOWNSTREAM - TrendsView drill-down navigates to ItemsView
+- Workflow #1 (Scan Receipt Flow): DOWNSTREAM - Saved transactions appear as items
+
+**Pattern:** View-owned data via `useItemsViewData()` hook (same as HistoryView, TrendsView, etc.)
+
+**Key Changes:**
+- Create `src/views/ItemsView/useItemsViewData.ts`
+- Delete `src/hooks/app/useItemsViewProps.ts`
+- Get formatters (t, formatCurrency, formatDate) from internal sources
+- Navigation handler uses store directly
+
+**Blocks:** 14e-25d (ViewHandlersContext deletion)
+
+**Source:** `docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-31-itemsview-data-ownership.md`
+
 ### Key Architecture Decisions
 - **ADR-018:** Zustand over XState for simpler state management
 - **Modal Manager:** 21 modal types, lazy loading, single render point

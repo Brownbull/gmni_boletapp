@@ -1,59 +1,46 @@
 /**
  * Story 14c-refactor.22d: AppOverlays Component
+ * Story 14e-23a: Scan overlays migrated to ScanFeature
+ * Story 14e-23b: NavigationBlocker and PWAUpdatePrompt moved to App.tsx
  *
- * Centralizes all overlay/modal rendering from App.tsx.
- * Extracted overlays: 15 overlay components (~300-400 lines)
+ * Centralizes non-scan overlay/modal rendering from App.tsx.
+ * Scan-related overlays (ScanOverlay, QuickSaveCard, BatchCompleteModal,
+ * CurrencyMismatchDialog, TotalMismatchDialog) are now rendered by ScanFeature.
  *
  * Z-Index Layers:
- * - z-60: NavigationBlocker, PWAUpdatePrompt (highest priority)
- * - z-50: ScanOverlay, CreditWarningDialog, Currency/TotalMismatchDialog
- * - z-40: QuickSaveCard, BatchCompleteModal, TrustMerchantPrompt, SessionComplete, BatchSummary
+ * - z-60: NavigationBlocker, PWAUpdatePrompt (moved to App.tsx - Story 14e-23b)
+ * - z-40: TrustMerchantPrompt, SessionComplete, BatchSummary
  * - z-30: InsightCard, BuildingProfileCard, PersonalRecordBanner
  *
  * Story 14e-5: TransactionConflictDialog moved to Modal Manager
+ * Story 14e-18c: CreditWarningDialog moved to CreditFeature
+ * Story 14e-23a: Scan overlays moved to ScanFeature
+ * Story 14e-23b: NavigationBlocker, PWAUpdatePrompt moved to App.tsx
  *
  * Architecture Reference: Epic 14c-refactor - App.tsx Decomposition
  */
 
 import React from 'react';
-import type { View } from './types';
+// Story 14e-23b: View type no longer needed (currentView moved to App.tsx)
 import type { Insight, LocalInsightCache } from '../../types/insight';
 import type { PersonalRecord } from '../../types/personalRecord';
 import type { Transaction } from '../../types/transaction';
 import type { TrustPromptEligibility } from '../../types/trust';
-import type { CreditCheckResult } from '../../services/creditService';
 import type { SessionContext, SessionAction } from '../session';
-import type {
-    ScanState,
-    BatchCompleteDialogData,
-    QuickSaveDialogData,
-    CurrencyMismatchDialogData,
-    TotalMismatchDialogData,
-} from '../../types/scanStateMachine';
-import { DIALOG_TYPES } from '../../types/scanStateMachine';
-// Story 14e-5: TransactionConflictDialog types no longer needed here (moved to Modal Manager)
-import type { SupportedCurrency } from '../../services/userPreferencesService';
-import type { HistoryNavigationPayload } from '../../views/TrendsView';
-import type { ScanOverlayStateHook } from '../../hooks/useScanOverlayState';
+// Story 14e-23a: Scan-related types no longer needed here (moved to ScanFeature)
 
 // Overlay Components
-import { NavigationBlocker } from '../NavigationBlocker';
-import { PWAUpdatePrompt } from '../PWAUpdatePrompt';
-import {
-    ScanOverlay,
-    QuickSaveCard,
-    BatchCompleteModal,
-    CurrencyMismatchDialog,
-    TotalMismatchDialog,
-} from '../scan';
+// Story 14e-23b: NavigationBlocker and PWAUpdatePrompt moved to App.tsx
+// import { NavigationBlocker } from '../NavigationBlocker';
+// import { PWAUpdatePrompt } from '../PWAUpdatePrompt';
+// Story 14e-23a: Scan overlays moved to ScanFeature
+// import { ScanOverlay, QuickSaveCard, BatchCompleteModal, CurrencyMismatchDialog, TotalMismatchDialog } from '../scan';
 import { InsightCard } from '../insights/InsightCard';
 import { BuildingProfileCard } from '../insights/BuildingProfileCard';
 import { BatchSummary } from '../insights/BatchSummary';
 import { PersonalRecordBanner } from '../celebrations';
 import { SessionComplete } from '../session';
 import { TrustMerchantPrompt } from '../TrustMerchantPrompt';
-import { CreditWarningDialog } from '../batch';
-// Story 14e-5: TransactionConflictDialog import removed (now uses Modal Manager)
 
 // =============================================================================
 // Types
@@ -69,20 +56,12 @@ interface BatchSession {
     totalAmount: number;
 }
 
-/**
- * Active group info for overlays
- */
-interface ActiveGroupInfo {
-    id: string;
-    name: string;
-    color: string;
-    icon?: string;
-}
-
-// Story 14e-5: ConflictDialogData moved to useDialogHandlers (Modal Manager integration)
+// Story 14e-23a: ActiveGroupInfo moved to ScanFeature
 
 /**
  * Props for AppOverlays component
+ * Story 14e-23a: Scan-related props migrated to ScanFeature
+ * Story 14e-23b: currentView and lang props moved to App.tsx (for NavigationBlocker/PWAUpdatePrompt)
  *
  * All overlay visibility flags, data, and handlers are passed as props.
  * This allows App.tsx to maintain state ownership while AppOverlays
@@ -93,61 +72,19 @@ export interface AppOverlaysProps {
     // Core Dependencies
     // =========================================================================
 
-    /** Current view for NavigationBlocker */
-    currentView: View;
-    /** Language for PWAUpdatePrompt */
-    lang: 'en' | 'es';
+    // Story 14e-23b: currentView and lang moved to App.tsx
+    // (NavigationBlocker and PWAUpdatePrompt now rendered directly in App.tsx)
+
     /** Current theme */
     theme: 'light' | 'dark';
     /** Translation function */
     t: (key: string) => string;
 
-    // =========================================================================
-    // ScanContext State (for scan-related dialogs)
-    // =========================================================================
-
-    /** Current scan state from ScanContext */
-    scanState: ScanState;
-    /** Scan overlay state machine (from useScanOverlayState hook) */
-    scanOverlay: ScanOverlayStateHook;
-    /** Whether scan is analyzing */
-    isAnalyzing: boolean;
-    /** Current captured images */
-    scanImages: string[];
-
-    // =========================================================================
-    // Scan Overlay Props
-    // =========================================================================
-
-    /** Handler for scan overlay cancel */
-    onScanOverlayCancel: () => void;
-    /** Handler for scan overlay retry */
-    onScanOverlayRetry: () => void;
-    /** Handler for scan overlay dismiss */
-    onScanOverlayDismiss: () => void;
-
-    // =========================================================================
-    // QuickSaveCard Props
-    // =========================================================================
-
-    /** Handler for quick save */
-    onQuickSave: (dialogData?: QuickSaveDialogData) => Promise<void>;
-    /** Handler for quick save edit */
-    onQuickSaveEdit: (dialogData?: QuickSaveDialogData) => void;
-    /** Handler for quick save cancel */
-    onQuickSaveCancel: (dialogData?: QuickSaveDialogData) => void;
-    /** Handler for quick save complete */
-    onQuickSaveComplete: () => void;
-    /** Whether quick save is in progress */
-    isQuickSaving: boolean;
-    /** Currency for formatting */
-    currency: string;
-    /** Format currency function */
-    formatCurrency: (amount: number, currency: string) => string;
-    /** User's default country for foreign location detection */
-    userDefaultCountry: string;
-    /** Active group info for quick save tagging */
-    activeGroupForQuickSave: ActiveGroupInfo | null;
+    // Story 14e-23a: ScanContext state props moved to ScanFeature
+    // Story 14e-23a: Scan Overlay props moved to ScanFeature
+    // Story 14e-23a: QuickSaveCard props moved to ScanFeature
+    // Story 14e-23a: Currency/Total Mismatch Dialog props moved to ScanFeature
+    // Story 14e-23a: Batch Complete Modal props moved to ScanFeature
 
     // =========================================================================
     // Insight Card Props
@@ -185,23 +122,6 @@ export interface AppOverlaysProps {
     onRecordDismiss: () => void;
 
     // =========================================================================
-    // Credit Warning Dialog Props
-    // =========================================================================
-
-    /** Whether to show credit warning */
-    showCreditWarning: boolean;
-    /** Credit check result */
-    creditCheckResult: CreditCheckResult | null;
-    /** Number of images in batch */
-    batchImageCount: number;
-    /** Handler for credit warning confirm */
-    onCreditWarningConfirm: () => void;
-    /** Handler for credit warning cancel */
-    onCreditWarningCancel: () => void;
-    /** Handler for reduce batch */
-    onReduceBatch?: () => void;
-
-    // =========================================================================
     // Batch Summary Props
     // =========================================================================
 
@@ -232,43 +152,6 @@ export interface AppOverlaysProps {
     onDeclineTrust: () => Promise<void>;
 
     // =========================================================================
-    // Currency/Total Mismatch Dialog Props
-    // =========================================================================
-
-    /** User's default currency */
-    userCurrency: SupportedCurrency;
-    /** Handler for using detected currency */
-    onCurrencyUseDetected: (dialogData?: CurrencyMismatchDialogData) => Promise<void>;
-    /** Handler for using default currency */
-    onCurrencyUseDefault: (dialogData?: CurrencyMismatchDialogData) => Promise<void>;
-    /** Handler for currency mismatch cancel */
-    onCurrencyMismatchCancel: (dialogData?: CurrencyMismatchDialogData) => void;
-    /** Handler for using items sum */
-    onTotalUseItemsSum: (dialogData?: TotalMismatchDialogData) => void;
-    /** Handler for keeping original total */
-    onTotalKeepOriginal: (dialogData?: TotalMismatchDialogData) => void;
-    /** Handler for total mismatch cancel */
-    onTotalMismatchCancel: (dialogData?: TotalMismatchDialogData) => void;
-
-    // =========================================================================
-    // Transaction Conflict Dialog (Story 14e-5: Moved to Modal Manager)
-    // Conflict dialog is now rendered by ModalManager component, not AppOverlays
-    // =========================================================================
-
-    // =========================================================================
-    // Batch Complete Modal Props
-    // =========================================================================
-
-    /** User credits remaining (for batch complete modal) */
-    userCreditsRemaining: number;
-    /** Handler for batch complete dismiss */
-    onBatchCompleteDismiss: () => void;
-    /** Handler for navigating to history from batch complete */
-    onBatchCompleteNavigateToHistory: (payload: HistoryNavigationPayload) => void;
-    /** Handler for going home from batch complete */
-    onBatchCompleteGoHome: () => void;
-
-    // =========================================================================
     // Utility Functions for Calculations
     // =========================================================================
 
@@ -284,39 +167,19 @@ export interface AppOverlaysProps {
 
 /**
  * AppOverlays Component
+ * Story 14e-23a: Scan overlays migrated to ScanFeature
  *
- * Renders all overlay/modal components for the application.
+ * Renders non-scan overlay/modal components for the application.
  * Memoized to prevent unnecessary re-renders when unrelated state changes.
  */
 export const AppOverlays = React.memo(function AppOverlays(props: AppOverlaysProps) {
     const {
         // Core dependencies
-        currentView,
-        lang,
+        // Story 14e-23b: currentView and lang moved to App.tsx
         theme,
         t,
 
-        // ScanContext state
-        scanState,
-        scanOverlay,
-        isAnalyzing,
-        scanImages,
-
-        // Scan overlay handlers
-        onScanOverlayCancel,
-        onScanOverlayRetry,
-        onScanOverlayDismiss,
-
-        // QuickSaveCard props
-        onQuickSave,
-        onQuickSaveEdit,
-        onQuickSaveCancel,
-        onQuickSaveComplete,
-        isQuickSaving,
-        currency,
-        formatCurrency,
-        userDefaultCountry,
-        activeGroupForQuickSave,
+        // Story 14e-23a: Scan-related props removed (now in ScanFeature)
 
         // Insight card props
         showInsightCard,
@@ -334,14 +197,6 @@ export const AppOverlays = React.memo(function AppOverlays(props: AppOverlaysPro
         recordToCelebrate,
         onRecordDismiss,
 
-        // Credit warning dialog props
-        showCreditWarning,
-        creditCheckResult,
-        batchImageCount,
-        onCreditWarningConfirm,
-        onCreditWarningCancel,
-        onReduceBatch,
-
         // Batch summary props
         showBatchSummary,
         batchSession,
@@ -356,148 +211,21 @@ export const AppOverlays = React.memo(function AppOverlays(props: AppOverlaysPro
         onAcceptTrust,
         onDeclineTrust,
 
-        // Currency/Total mismatch dialog props
-        userCurrency,
-        onCurrencyUseDetected,
-        onCurrencyUseDefault,
-        onCurrencyMismatchCancel,
-        onTotalUseItemsSum,
-        onTotalKeepOriginal,
-        onTotalMismatchCancel,
-
-        // Story 14e-5: Transaction conflict dialog now uses Modal Manager (rendered by ModalManager component)
-
-        // Batch complete modal props
-        userCreditsRemaining,
-        onBatchCompleteDismiss,
-        onBatchCompleteNavigateToHistory,
-        onBatchCompleteGoHome,
-
         // Utility functions
         getLastWeekTotal,
         isInsightsSilenced,
     } = props;
 
-    // Determine visibility for scan overlay
-    const isScanOverlayVisible =
-        (isAnalyzing || scanOverlay.state === 'error') &&
-        (currentView === 'scan' || currentView === 'scan-result' || currentView === 'edit' || currentView === 'transaction-editor');
-
-    // Check for batch complete dialog
-    const batchCompleteData = scanState.activeDialog?.type === DIALOG_TYPES.BATCH_COMPLETE
-        ? (scanState.activeDialog.data as BatchCompleteDialogData)
-        : null;
-    const showBatchCompleteModal = batchCompleteData && (batchCompleteData.transactions?.length ?? 0) > 0;
+    // Story 14e-23a: Scan overlay visibility logic moved to ScanFeature
 
     return (
         <>
-            {/* ============================================================== */}
-            {/* Z-60: Highest Priority - Navigation & Updates */}
-            {/* ============================================================== */}
-
-            {/* Story 14d.3: Browser back button blocker for scan dialogs (AC #5-7) */}
-            <NavigationBlocker currentView={currentView} />
-
-            {/* Story 9.14 / 14.42: PWA update notification */}
-            <PWAUpdatePrompt language={lang} />
-
-            {/* ============================================================== */}
-            {/* Z-50: Dialogs */}
-            {/* ============================================================== */}
-
-            {/* Story 14.15: Scan Overlay for non-blocking scan flow (AC #1, #4) */}
-            <ScanOverlay
-                state={scanOverlay.state}
-                progress={scanOverlay.progress}
-                eta={scanOverlay.eta}
-                error={scanOverlay.error}
-                onCancel={onScanOverlayCancel}
-                onRetry={onScanOverlayRetry}
-                onDismiss={onScanOverlayDismiss}
-                theme={theme}
-                t={t}
-                visible={isScanOverlayVisible}
-                capturedImageUrl={scanImages[0]}
-            />
-
-            {/* Story 12.4: Credit Warning Dialog (AC #1, #2, #5, #7) */}
-            {showCreditWarning && creditCheckResult && (
-                <CreditWarningDialog
-                    creditCheck={creditCheckResult}
-                    receiptCount={batchImageCount}
-                    theme={theme}
-                    t={t}
-                    onConfirm={onCreditWarningConfirm}
-                    onCancel={onCreditWarningCancel}
-                    onReduceBatch={creditCheckResult.maxProcessable > 0 ? onReduceBatch : undefined}
-                />
-            )}
-
-            {/* Story 14.15b: Currency Mismatch Dialog (AC #2) */}
-            {/* Story 14d.6: Rendered unconditionally - component reads from ScanContext */}
-            <CurrencyMismatchDialog
-                userCurrency={userCurrency}
-                onUseDetected={onCurrencyUseDetected}
-                onUseDefault={onCurrencyUseDefault}
-                onCancel={onCurrencyMismatchCancel}
-                theme={theme}
-                t={t}
-            />
-
-            {/* Total Mismatch Dialog (OCR error detection) */}
-            {/* Story 14d.6: Rendered unconditionally - component reads from ScanContext */}
-            <TotalMismatchDialog
-                onUseItemsSum={onTotalUseItemsSum}
-                onKeepOriginal={onTotalKeepOriginal}
-                onCancel={onTotalMismatchCancel}
-                theme={theme}
-                t={t}
-            />
-
-            {/* Story 14e-5: Transaction Conflict Dialog moved to Modal Manager */}
-            {/* Rendered by ModalManager component via openConflictDialog() */}
+            {/* Story 14e-23b: NavigationBlocker and PWAUpdatePrompt moved to App.tsx */}
+            {/* Story 14e-23a: Scan overlays moved to ScanFeature */}
 
             {/* ============================================================== */}
             {/* Z-40: Cards & Modals */}
             {/* ============================================================== */}
-
-            {/* Story 11.2: Quick Save Card for high-confidence scans (AC #1-9) */}
-            {/* Story 14d.6: Rendered unconditionally - component reads from ScanContext */}
-            <QuickSaveCard
-                onSave={onQuickSave}
-                onEdit={onQuickSaveEdit}
-                onCancel={onQuickSaveCancel}
-                onSaveComplete={onQuickSaveComplete}
-                theme={theme}
-                t={t}
-                formatCurrency={formatCurrency}
-                currency={currency}
-                isSaving={isQuickSaving}
-                lang={lang}
-                userDefaultCountry={userDefaultCountry}
-                activeGroup={activeGroupForQuickSave}
-            />
-
-            {/* Story 14.15: Batch Complete Success Modal (State 3.a from scan-overlay.html mockup) */}
-            {/* Story 14d.5d AC10: Now uses ScanContext activeDialog with typed data */}
-            {showBatchCompleteModal && batchCompleteData && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-                    style={{ paddingTop: 'calc(1rem + var(--safe-top, 0px))', paddingBottom: 'calc(1rem + var(--safe-bottom, 0px))' }}
-                >
-                    <BatchCompleteModal
-                        transactions={batchCompleteData.transactions}
-                        creditsUsed={batchCompleteData.creditsUsed}
-                        creditsRemaining={userCreditsRemaining}
-                        theme={theme}
-                        t={t}
-                        onDismiss={onBatchCompleteDismiss}
-                        onNavigateToHistory={onBatchCompleteNavigateToHistory}
-                        onGoHome={onBatchCompleteGoHome}
-                        formatCurrency={formatCurrency}
-                    />
-                </div>
-            )}
 
             {/* Story 11.4: Trust Merchant Prompt (AC #2, #3, #4) */}
             {showTrustPrompt && trustPromptData?.merchant && (

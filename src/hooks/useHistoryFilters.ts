@@ -265,7 +265,12 @@ export function getCategoryFilterLabel(
 
     // Add store category (most important for context)
     if (path.storeCategory) {
-      parts.push(translateStoreCategory(path.storeCategory, lang));
+      // Handle comma-separated multi-select values
+      const translatedCategories = path.storeCategory
+        .split(',')
+        .map(c => translateStoreCategory(c.trim(), lang))
+        .join(',');
+      parts.push(translatedCategories);
     } else if (path.storeGroup) {
       const groupEmoji = getStoreCategoryGroupEmoji(path.storeGroup as StoreCategoryGroup);
       const groupName = translateStoreCategoryGroup(path.storeGroup as StoreCategoryGroup, lang);
@@ -274,7 +279,12 @@ export function getCategoryFilterLabel(
 
     // Add item group or category
     if (path.itemCategory) {
-      parts.push(translateItemGroup(path.itemCategory, lang));
+      // Handle comma-separated multi-select values
+      const translatedItems = path.itemCategory
+        .split(',')
+        .map(c => translateItemGroup(c.trim(), lang))
+        .join(',');
+      parts.push(translatedItems);
     } else if (path.itemGroup) {
       const groupEmoji = getItemCategoryGroupEmoji(path.itemGroup as ItemCategoryGroup);
       const groupName = translateItemCategoryGroup(path.itemGroup as ItemCategoryGroup, lang);

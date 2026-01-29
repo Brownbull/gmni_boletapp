@@ -277,8 +277,12 @@ export interface UIDependencies {
   /** Set toast message */
   setToastMessage: (message: { text: string; type: 'success' | 'info' }) => void;
 
-  /** Set whether analyzing is in progress */
-  setIsAnalyzing: (analyzing: boolean) => void;
+  /**
+   * Set whether analyzing is in progress
+   * Story 14e-25d: Optional and no-op - state is managed by state machine (dispatchProcessStart/dispatchProcessSuccess)
+   * @deprecated This is a no-op. State is managed by the scan state machine.
+   */
+  setIsAnalyzing?: (analyzing: boolean) => void;
 
   /** Set scan images */
   setScanImages: (images: string[]) => void;

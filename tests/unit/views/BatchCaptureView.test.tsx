@@ -44,6 +44,16 @@ vi.mock('@features/scan/store', () => ({
   useIsProcessing: () => mockIsProcessing(),
 }))
 
+// Story 14e-25c.2: Mock navigation store for BatchCaptureView
+const mockNavigateBack = vi.fn()
+vi.mock('../../../src/shared/stores/useNavigationStore', () => ({
+  useNavigation: () => ({
+    navigateBack: mockNavigateBack,
+    navigateToView: vi.fn(),
+    view: 'batch-capture',
+  }),
+}))
+
 // Import after mocking
 import { BatchCaptureView } from '../../../src/views/BatchCaptureView'
 
@@ -80,13 +90,10 @@ const t = (key: string) => {
 };
 
 describe('BatchCaptureView Component', () => {
+  // Story 14e-25c.2: Minimal props - onBack, isBatchMode, onToggleMode, isProcessing removed
   const defaultProps = {
-    isBatchMode: true,
-    onToggleMode: vi.fn(),
     onProcessBatch: vi.fn(),
     onSwitchToIndividual: vi.fn(),
-    onBack: vi.fn(),
-    isProcessing: false,
     theme: 'light' as const,
     t,
   };
@@ -112,6 +119,8 @@ describe('BatchCaptureView Component', () => {
     mockReset.mockClear();
     mockSetImages.mockClear();
     mockIsProcessing.mockReturnValue(false);
+    // Story 14e-25c.2: Reset navigation mock
+    mockNavigateBack.mockClear();
   });
 
   describe('Rendering', () => {
@@ -180,13 +189,13 @@ describe('BatchCaptureView Component', () => {
   });
 
   describe('Back/Cancel Button', () => {
-    it('should call onBack when back button is clicked with no images', () => {
-      const onBack = vi.fn();
-      render(<BatchCaptureView {...defaultProps} onBack={onBack} />);
+    // Story 14e-25c.2: Navigation via useNavigation() hook instead of props
+    it('should call navigateBack when back button is clicked with no images', () => {
+      render(<BatchCaptureView {...defaultProps} />);
 
       fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 
-      expect(onBack).toHaveBeenCalled();
+      expect(mockNavigateBack).toHaveBeenCalled();
     });
 
     it('should show confirmation dialog with 2+ images', () => {
@@ -220,21 +229,21 @@ describe('BatchCaptureView Component', () => {
   });
 
   describe('Processing State', () => {
+    // Story 14e-25c.2: isProcessing comes from store only (prop removed)
     it('should disable capture buttons when processing', () => {
-      render(<BatchCaptureView {...defaultProps} isProcessing={true} />);
+      mockIsProcessing.mockReturnValue(true);
+      render(<BatchCaptureView {...defaultProps} />);
 
       const captureButton = screen.getByRole('button', { name: 'Capture Photo' });
       expect(captureButton).toBeDisabled();
     });
 
-    it('should use store isProcessing over props', () => {
-      // Story 14e-11: Use Zustand mock instead of context
-      mockIsProcessing.mockReturnValue(true);
-
-      render(<BatchCaptureView {...defaultProps} isProcessing={false} />);
+    it('should enable capture buttons when not processing', () => {
+      mockIsProcessing.mockReturnValue(false);
+      render(<BatchCaptureView {...defaultProps} />);
 
       const captureButton = screen.getByRole('button', { name: 'Capture Photo' });
-      expect(captureButton).toBeDisabled();
+      expect(captureButton).not.toBeDisabled();
     });
   });
 

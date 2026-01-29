@@ -145,19 +145,21 @@ export const BatchUploadPreview: React.FC<BatchUploadPreviewProps> = ({
                   <div className="absolute bottom-0.5 left-0.5 w-4 h-4 bg-[var(--primary)] text-white rounded flex items-center justify-center text-xs font-semibold">
                     {index + 1}
                   </div>
-                  {/* Remove button on hover */}
+                  {/* Remove button - always visible for mobile/touch (Story 14e-33 AC1) */}
                   {onRemoveImage && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         onRemoveImage(index);
                       }}
-                      className={`absolute top-0.5 right-0.5 p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${
-                        isDark ? 'bg-slate-900/80 text-white' : 'bg-white/90 text-slate-900'
+                      className={`absolute -top-2 -right-2 min-w-[44px] min-h-[44px] w-7 h-7 flex items-center justify-center rounded-full shadow-sm border ${
+                        isDark
+                          ? 'bg-slate-800/90 text-white border-slate-600 hover:bg-slate-700'
+                          : 'bg-white/95 text-slate-700 border-slate-300 hover:bg-slate-100'
                       }`}
                       aria-label={`${t('removeImage')} ${index + 1}`}
                     >
-                      <X size={12} />
+                      <X size={14} />
                     </button>
                   )}
                 </div>

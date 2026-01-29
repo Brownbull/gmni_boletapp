@@ -1,3 +1,8 @@
 // Shared utilities used across multiple features
 
-export {};
+// Scan helpers (used by TransactionEditorView composition hooks)
+export {
+    deriveScanButtonState,
+    computeBatchContext,
+    type ScanButtonState,
+} from './scanHelpers';

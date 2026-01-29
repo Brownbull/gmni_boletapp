@@ -164,6 +164,57 @@ describe('BatchUploadPreview', () => {
     });
   });
 
+  describe('AC #1 (Story 14e-33): Remove buttons visible on mobile', () => {
+    it('should have remove buttons always visible (not hover-only)', () => {
+      render(
+        <BatchUploadPreview
+          {...defaultProps}
+          onRemoveImage={vi.fn()}
+        />
+      );
+      // Open thumbnails
+      fireEvent.click(screen.getByText('View images'));
+      // Remove buttons should be visible (no opacity-0 class)
+      const removeButtons = screen.getAllByLabelText(/Remove image/);
+      removeButtons.forEach((button) => {
+        expect(button).not.toHaveClass('opacity-0');
+      });
+    });
+
+    it('should have sufficient touch target size (minimum 44px)', () => {
+      render(
+        <BatchUploadPreview
+          {...defaultProps}
+          onRemoveImage={vi.fn()}
+        />
+      );
+      // Open thumbnails
+      fireEvent.click(screen.getByText('View images'));
+      const removeButtons = screen.getAllByLabelText(/Remove image/);
+      removeButtons.forEach((button) => {
+        // Check for min-w-[44px] and min-h-[44px] or equivalent classes
+        // The button should have touch-friendly sizing
+        expect(button.className).toMatch(/min-w-\[44px\]|w-11|min-h-\[44px\]|h-11/);
+      });
+    });
+
+    it('should have semi-transparent background for visibility', () => {
+      render(
+        <BatchUploadPreview
+          {...defaultProps}
+          onRemoveImage={vi.fn()}
+        />
+      );
+      // Open thumbnails
+      fireEvent.click(screen.getByText('View images'));
+      const removeButtons = screen.getAllByLabelText(/Remove image/);
+      removeButtons.forEach((button) => {
+        // Should have background opacity styling
+        expect(button.className).toMatch(/bg-.*\/[0-9]+|bg-black\/|bg-white\/|bg-slate-/);
+      });
+    });
+  });
+
   describe('Theme support (AC #9)', () => {
     it('should apply dark theme styles', () => {
       const { container } = render(

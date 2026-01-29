@@ -709,6 +709,126 @@ export const useScanStore = create<ScanState & ScanActions>()(
 - Code review learnings in 06-lessons.md
 - Story details in docs/sprint-artifacts/
 
+**Story 14e-12a/12b Additions (2026-01-26) - Batch Review Store:**
+- Second Zustand store following scan store pattern: `useBatchReviewStore`
+- 6 save/edit actions: `saveStart`, `saveItemSuccess`, `saveItemFailure`, `saveComplete`, `startEditing`, `finishEditing`
+- Phase guards inline (not via helper) with DEV-only console.warn
+- `startEditing` validates receipt exists before phase transition
+- `saveComplete` transitions to `complete` (any success) or `error` (all failed)
+- Action naming: `batch-review/{actionName}` for DevTools
+- 78 tests covering phase transition matrix and edge cases
+- Reference: `src/features/batch-review/store/`
+
+**Story 14e-13 Additions (2026-01-26) - Batch Review Selectors:**
+- 14 memoized selector hooks following scan store pattern
+- Phase selectors: useBatchReviewPhase, useIsBatchReviewing, useIsEditing, useIsSaving, useIsComplete, useHasBatchError
+- Data selectors: useBatchItems, useCurrentBatchItem, useCurrentBatchIndex, useEditingReceiptId
+- Computed selectors: useBatchProgress (useShallow for object), useBatchTotalAmount, useValidBatchCount, useIsBatchEmpty
+- useBatchReviewActions hook uses `useShallow` for stable object references
+- Direct access: `getBatchReviewState()` and `batchReviewActions` for non-React code
+- Module exports: `@features/batch-review` barrel re-exports entire store module
+
+**Story 14e-25a.1 Additions (2026-01-27) - Navigation Store:**
+- Third Zustand store for app-wide navigation state: `useNavigationStore`
+- State: view, previousView, settingsSubview, scrollPositions, pendingHistoryFilters, pendingDistributionView, analyticsInitialState
+- Actions: setView (auto-tracks previousView), navigateToView (with cross-view options), navigateBack, setSettingsSubview, saveScrollPosition, getScrollPosition, clearPendingFilters, clearAnalyticsInitialState, setPendingHistoryFilters, setPendingDistributionView, setAnalyticsInitialState
+- Typed selectors: useCurrentView, usePreviousView, useSettingsSubview, usePendingHistoryFilters, usePendingDistributionView, useAnalyticsInitialState
+- useNavigationActions hook uses `useShallow` for stable object references
+- Convenience hook: useNavigation returns view state + common actions combined
+- Direct access: `getNavigationState()` and `navigationActions` for non-React code
+- View type relocated: `src/app/types.ts` (re-exported from `src/components/App/types.ts` for backward compatibility)
+- 42 unit tests covering all actions, selectors, and direct access patterns
+- Reference: `src/shared/stores/useNavigationStore.ts`
+- 56 tests covering all selectors and direct access functions
+- Code review fix: Test stability verification extended to all 11 actions (was only 4)
+
+**Story 14e-14a Additions (2026-01-26) - Batch Review Handlers:**
+- Handler directory: `src/features/batch-review/handlers/` with barrel exports
+- `BatchNavigationContext` interface for props-based dependency injection (follows processScan pattern)
+- `navigateToPreviousReceipt` and `navigateToNextReceipt` handlers extracted from App.tsx
+- `buildTransactionWithThumbnail(receipt)` helper eliminates code duplication
+- 19 tests covering bounds checking, navigation, thumbnail handling, edge cases
+- Code review fix: Added empty array edge case test for test symmetry
+- Reference: `src/features/batch-review/handlers/`
+
+**Story 14e-14b Additions (2026-01-26) - Batch Edit & Save Handlers:**
+- `BatchEditContext`, `SaveContext`, `SaveCompleteContext` interfaces for dependency injection
+- `editBatchReceipt(receipt, batchIndex, context)` - Converts 1-based UI index to 0-based, injects thumbnail URL
+- `saveBatchTransaction(transaction, context)` - Auth check, category/merchant/item name mappings, Firestore save
+- `handleSaveComplete(transactions, context)` - Reset state, show BATCH_COMPLETE dialog, navigate to dashboard
+- Helper types: `CategoryMappingResult`, `MerchantMatchResult`, `ItemNameMappingResult`, `BatchProcessingController`
+- MERCHANT_CONFIDENCE_THRESHOLD = 0.7 (matches processScan pattern)
+- Fire-and-forget pattern for mapping usage increments and member timestamp updates
+- 39 tests (12 editReceipt + 27 save) covering auth, mappings, shared groups, state reset
+- Code review fix: Console.warn prefix `[App]` for consistency with source App.tsx
+- Reference: `src/features/batch-review/handlers/editReceipt.ts`, `save.ts`
+
+**Story 14e-14c Additions (2026-01-26) - Batch Discard & Credit Check Handlers:**
+- `DiscardContext`, `CreditCheckContext` interfaces for props-based dependency injection
+- `handleReviewBack(context)` - Shows BATCH_DISCARD dialog when receipts exist, navigates directly when none
+- `confirmDiscard(context)` - Dismisses dialog, clears all batch state, navigates to dashboard
+- `cancelDiscard(context)` - Dismisses dialog only (minimal function)
+- `confirmWithCreditCheck(context)` - Batch uses 1 super credit (isSuper: true) flat rate
+- Type import pattern: `UserCredits` imported and re-exported for external consumers
+- 36 tests (24 discard + 12 credit check) covering behavior, execution order, integration flows
+- Code review fix: Staged untracked files, fixed UserCredits type reference
+- Reference: `src/features/batch-review/handlers/discard.ts`, `creditCheck.ts`
+
+**Story 14e-14d Additions (2026-01-26) - Batch Handler App.tsx Integration:**
+- All 9 handlers imported from `@features/batch-review/handlers` into App.tsx
+- Inline context creation (Approach A): context objects created at call site in thin wrappers
+- Handlers integrated: navigateToPreviousReceipt, navigateToNextReceipt, editBatchReceipt, saveBatchTransaction, handleSaveComplete, handleReviewBack, confirmDiscard, cancelDiscard, confirmWithCreditCheck
+- ~91 lines of handler logic removed from App.tsx, replaced with thin wrappers (2-8 lines each)
+- Unused import cleanup: `BatchCompleteDialogData` removed (now internal to handlers)
+- Code review action item: Feature barrel `@features/batch-review` missing discard/credit exports (consistency fix for future)
+- 6,512 tests pass, build succeeds
+- Reference: `src/App.tsx:149-159` (imports), `src/App.tsx:1572-1963` (wrappers)
+
+**Story 14e-15 Additions (2026-01-26) - Component Store Integration Pattern:**
+- **Pattern:** Component consumes store action directly via selector, with optional prop fallback for backwards compatibility
+- BatchReviewCard uses `useBatchReviewStore((state) => state.discardItem)` directly (AC5 requirement)
+- `onDiscard` prop marked `@deprecated`, optional with fallback to store action
+- Handler pattern: `handleDiscard()` checks prop first, falls back to store action with `receipt.id`
+- Test pattern: Mock store with selector pattern, verify `mockDiscardItem` called with entity ID
+- 38 component tests (17 BatchReviewCard including AC5 store integration test)
+- 5,709 tests pass, build succeeds
+- Reference: `src/features/batch-review/components/BatchReviewCard.tsx:143-157`
+
+```typescript
+// Component Store Integration Pattern (14e-15)
+const discardItemFromStore = useBatchReviewStore((state) => state.discardItem);
+
+const handleDiscard = () => {
+  if (onDiscard) {
+    onDiscard();  // Backwards compatibility
+  } else {
+    discardItemFromStore(receipt.id);  // Store action with entity ID
+  }
+};
+```
+
+**Story 14e-16 Additions (2026-01-26) - BatchReviewFeature Orchestrator:**
+- Phase-based rendering orchestrator: `BatchReviewFeature.tsx` (811 lines)
+- Phases: idle→null, loading→LoadingState/ProcessingState, reviewing/editing/saving→full UI, complete→CompleteState, error→ErrorState
+- Inline discard confirmation dialog (alternative to ModalManager - keeps component self-contained)
+- Auto-complete detection via `useHadItems` selector (Zustand flag persists across remounts, unlike React ref)
+- Props-based dependency injection for callbacks (onEditReceipt, onSaveReceipt, onSaveAll, onBack, onDiscardReceipt)
+- 24 tests covering all phases, handler callbacks, theme support
+- Pattern: Store flag (`hadItems`) preferred over React ref for state that must persist across component remounts
+- Reference: `src/features/batch-review/BatchReviewFeature.tsx`
+
+**Story 14e-18b Additions (2026-01-27) - Credit Handlers Extraction:**
+- Credit handler directory: `src/features/credit/handlers/` with barrel exports
+- `CreditHandlerContext` interface for props-based dependency injection
+- Factory pattern handlers:
+  - `createBatchConfirmWithCreditCheck(ctx)` - Shows credit warning dialog (1 super credit for batch)
+  - `createCreditWarningConfirm(ctx)` - Confirms and triggers batch callback (async)
+  - `createCreditWarningCancel(ctx)` - Cancels and clears state
+- Simplified context: Removed `deductSuperCredits` (not needed in warning handlers)
+- 23 tests covering sufficient/insufficient credits, confirm/cancel flows, async callbacks
+- Code review finding: Duplication with batch-review `confirmWithCreditCheck` - intentional foundation for migration
+- Reference: `src/features/credit/handlers/creditHandlers.ts`
+
 ---
 
 ## ProcessScan Handler Pattern (Story 14e-8c - 2026-01-25)
@@ -848,3 +968,153 @@ resolve: {
 ```
 
 **Reference:** Story 14e-9a-move-scan-components
+
+---
+
+## FeatureOrchestrator Pattern (Epic 14e - Story 14e-21)
+
+**Pattern:** Centralized feature composition component that delegates rendering to feature modules.
+
+### Component Location
+
+```
+src/app/FeatureOrchestrator.tsx
+```
+
+### Architecture
+
+FeatureOrchestrator composes all feature modules into a single render tree:
+
+```typescript
+export function FeatureOrchestrator({
+  scanFeatureProps,
+  batchReviewFeatureProps,
+  creditFeatureProps,
+  categoriesFeatureProps,
+  renderModalManager = true,
+}: FeatureOrchestratorProps): React.ReactElement {
+  return (
+    <>
+      {/* Headless features */}
+      {categoriesFeatureProps && <CategoriesFeature {...props} />}
+
+      {/* Conditional UI features */}
+      {creditFeatureProps && <CreditFeature {...props} />}
+
+      {/* Overlay features (handle own visibility) */}
+      <ScanFeature {...scanFeatureProps} />
+      {batchReviewFeatureProps && <BatchReviewFeature {...props} />}
+
+      {/* Modal rendering (must be last for z-index) */}
+      {renderModalManager && <ModalManager />}
+    </>
+  );
+}
+```
+
+### Key Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Props-based composition | Features receive props from App.tsx, orchestrator just composes |
+| Optional features | Only render features when props provided |
+| Render order | CategoriesFeature (headless) → CreditFeature (dialog) → Overlays → ModalManager |
+| No state management | Orchestrator does NOT manage feature state - only composition |
+
+### Feature Visibility
+
+Each feature handles its own visibility internally via Zustand store:
+
+| Feature | Visibility Logic | Renders |
+|---------|------------------|---------|
+| CategoriesFeature | Always | Headless (context provider) |
+| CreditFeature | Always | Dialog when triggered |
+| ScanFeature | phase !== 'idle' | Phase-appropriate scan UI |
+| BatchReviewFeature | phase !== 'idle' | Phase-appropriate batch UI |
+| ModalManager | Always | Active modal or null |
+
+**Reference:** Story 14e-21-create-feature-orchestrator
+
+---
+
+## AppProviders Pattern (Epic 14e - Story 14e-22)
+
+**Pattern:** Consolidated provider composition in app shell layer
+
+### Component Location
+
+```
+src/app/AppProviders.tsx
+```
+
+### Architecture
+
+AppProviders consolidates all app-level React context providers:
+
+```typescript
+export function AppProviders({
+  children,
+  fontFamily = 'outfit',
+  db,
+  userId,
+  appId,
+  handlers,
+}: AppProvidersProps): JSX.Element {
+  return (
+    <ThemeProvider fontFamily={fontFamily}>
+      <NavigationProvider>
+        <AppStateProvider>
+          <NotificationProvider db={db} userId={userId} appId={appId}>
+            {handlers ? (
+              <ViewHandlersProvider
+                transaction={handlers.transaction}
+                scan={handlers.scan}
+                navigation={handlers.navigation}
+                dialog={handlers.dialog}
+              >
+                {children}
+              </ViewHandlersProvider>
+            ) : (
+              children
+            )}
+          </NotificationProvider>
+        </AppStateProvider>
+      </NavigationProvider>
+    </ThemeProvider>
+  );
+}
+```
+
+### Key Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Optional handlers | Enables graceful degradation in tests (no handler mocking needed) |
+| Provider order | ThemeProvider outermost (no deps) → ViewHandlersProvider innermost (may use all) |
+| View-scoped providers excluded | HistoryFiltersProvider, AnalyticsProvider remain per-view to prevent re-renders |
+| Handler bundles object | Single `handlers` prop groups all handler types for clean API |
+
+### Provider Hierarchy (Complete)
+
+```
+main.tsx (external)
+├── QueryClientProvider
+├── AuthProvider
+├── ViewModeProvider
+├── ScanProvider
+└── AppErrorBoundary
+    └── App.tsx
+        └── AppProviders (THIS COMPONENT)
+            ├── ThemeProvider
+            ├── NavigationProvider
+            ├── AppStateProvider
+            └── NotificationProvider
+                └── Views (views own their data via internal hooks)
+```
+
+**Reference:** Story 14e-22-appproviders-refactor, 14e-25d-viewhandlers-deletion-cleanup
+
+> **Story 14e-25d Update (2026-01-28):** ViewHandlersProvider DELETED. Views now own their data via direct hooks:
+> - `useHistoryNavigation()` - replaces navigation.handleNavigateToHistory
+> - `useNavigationActions()` - view navigation from Zustand store
+> - `useToast()` - replaces dialog.showToast

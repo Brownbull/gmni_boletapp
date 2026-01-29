@@ -12,4 +12,5 @@ export default defineConfig(createGroupConfig('views', [
   'tests/unit/config/**/*.test.{ts,tsx}',
   'tests/unit/lib/**/*.test.{ts,tsx}',
   'tests/unit/contexts/**/*.test.{ts,tsx}',
+  'tests/unit/app/**/*.test.{ts,tsx}',  // Story 14e-21: FeatureOrchestrator tests
 ]))

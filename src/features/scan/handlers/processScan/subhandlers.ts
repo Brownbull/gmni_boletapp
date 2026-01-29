@@ -51,8 +51,11 @@ const MERCHANT_MATCH_CONFIDENCE_THRESHOLD = 0.7;
 export interface ValidateScanResultDeps {
   /** Show scan dialog (for total mismatch) */
   showScanDialog: UIDependencies['showScanDialog'];
-  /** Set analyzing state */
-  setIsAnalyzing: UIDependencies['setIsAnalyzing'];
+  /**
+   * Set analyzing state
+   * @deprecated Story 14e-25d: No-op - state managed by state machine
+   */
+  setIsAnalyzing?: UIDependencies['setIsAnalyzing'];
   /** Scan overlay controller */
   scanOverlay: ScanOverlayController;
   /** Reconcile items total function */
@@ -80,7 +83,6 @@ export interface ValidateScanResultDeps {
  * ```typescript
  * const result = validateScanResult(tempTransaction, parsedItems, {
  *   showScanDialog,
- *   setIsAnalyzing,
  *   scanOverlay,
  *   reconcileItemsTotal,
  *   lang: 'es',
@@ -98,7 +100,7 @@ export function validateScanResult(
   parsedItems: TransactionItem[],
   deps: ValidateScanResultDeps
 ): ValidateScanResultOutput {
-  const { showScanDialog, setIsAnalyzing, scanOverlay, reconcileItemsTotal, lang } = deps;
+  const { showScanDialog, scanOverlay, reconcileItemsTotal, lang } = deps;
 
   // Validate total using centralized utility
   const totalValidation: TotalValidationResult = validateTotal(transaction);
@@ -112,7 +114,7 @@ export function validateScanResult(
     };
 
     showScanDialog('total_mismatch', dialogData);
-    setIsAnalyzing(false);
+    // Story 14e-25d: setIsAnalyzing removed - state managed by state machine
     scanOverlay.setReady();
 
     return {
@@ -284,8 +286,11 @@ export function applyAllMappings(
 export interface HandleCurrencyDetectionDeps {
   /** Show scan dialog (for currency mismatch) */
   showScanDialog: UIDependencies['showScanDialog'];
-  /** Set analyzing state */
-  setIsAnalyzing: UIDependencies['setIsAnalyzing'];
+  /**
+   * Set analyzing state
+   * @deprecated Story 14e-25d: No-op - state managed by state machine
+   */
+  setIsAnalyzing?: UIDependencies['setIsAnalyzing'];
   /** Scan overlay controller */
   scanOverlay: ScanOverlayController;
 }
@@ -311,7 +316,7 @@ export interface HandleCurrencyDetectionDeps {
  *   userPreferences.defaultCurrency,
  *   transaction,
  *   hasDiscrepancy,
- *   { showScanDialog, setIsAnalyzing, scanOverlay }
+ *   { showScanDialog, scanOverlay }
  * );
  *
  * if (!result.shouldContinue) {
@@ -328,7 +333,7 @@ export function handleCurrencyDetection(
   hasDiscrepancy: boolean,
   deps: HandleCurrencyDetectionDeps
 ): CurrencyDetectionResult {
-  const { showScanDialog, setIsAnalyzing, scanOverlay } = deps;
+  const { showScanDialog, scanOverlay } = deps;
 
   // Check for currency mismatch
   if (detectedCurrency && userDefaultCurrency && detectedCurrency !== userDefaultCurrency) {
@@ -339,7 +344,7 @@ export function handleCurrencyDetection(
     };
 
     showScanDialog('currency_mismatch', dialogData);
-    setIsAnalyzing(false);
+    // Story 14e-25d: setIsAnalyzing removed - state managed by state machine
     scanOverlay.setReady();
 
     return {

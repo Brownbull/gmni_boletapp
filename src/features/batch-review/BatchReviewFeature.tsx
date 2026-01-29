@@ -1,5 +1,6 @@
 /**
  * Story 14e-16: BatchReviewFeature Orchestrator Component
+ * Story 14e-29c: Updated to use useBatchReviewHandlers internally
  *
  * Orchestrates all batch review rendering based on Zustand store phase.
  * This is the single entry point for batch review functionality in App.tsx.
@@ -21,6 +22,7 @@
  * - Discard confirmation via ModalManager (AC6 compliant)
  *
  * @see docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-16-batch-review-feature-orchestrator.md
+ * @see docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-29c-save-discard-handlers.md
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -48,7 +50,14 @@ import {
   useValidBatchCount,
   useBatchReviewActions,
   useHadItems,
+  batchReviewActions,
 } from './store';
+
+// Story 14e-33: Import scan actions for discarding batch receipts from scan store
+import { scanActions } from '@/features/scan/store';
+
+// Story 14e-29c: Import handlers hook
+import { useBatchReviewHandlers, type BatchReviewHandlersProps } from './hooks';
 
 // State components (AC1, AC5) - extracted to states/ folder (Story 14e-16)
 import {
@@ -64,6 +73,7 @@ import {
 import type { Currency } from '@/types/settings';
 import type { BatchReceipt } from '@/types/batchReceipt';
 import type { ImageProcessingState } from './components';
+import type { Transaction } from '@/types/transaction';
 
 // =============================================================================
 // Types
@@ -79,6 +89,9 @@ export interface BatchReviewCredits {
 
 /**
  * Props for BatchReviewFeature orchestrator.
+ *
+ * Story 14e-29c: Updated to use handlersConfig instead of individual callbacks.
+ * The feature now uses useBatchReviewHandlers internally for all handler logic.
  */
 export interface BatchReviewFeatureProps {
   /** Translation function */
@@ -109,22 +122,26 @@ export interface BatchReviewFeatureProps {
   onCancelProcessing?: () => void;
 
   // ==========================================================================
-  // Callbacks (AC4 - from handlers module)
+  // Story 14e-29c: Handlers hook configuration
   // ==========================================================================
-  /** Called when user wants to edit a receipt */
-  onEditReceipt: (receipt: BatchReceipt) => void;
-  /** Called when save operation needs to be performed on a single receipt */
-  onSaveReceipt?: (receiptId: string) => Promise<void>;
-  /** Called to save all valid receipts */
-  onSaveAll?: () => Promise<void>;
-  /** Called when all receipts are saved and batch is complete */
-  onSaveComplete?: () => void;
-  /** Called when user wants to go back/cancel */
-  onBack?: () => void;
+  /**
+   * Configuration for useBatchReviewHandlers hook.
+   * Provides all dependencies needed for internal handler creation.
+   * Replaces individual callback props (onEditReceipt, onSaveReceipt, etc.)
+   */
+  handlersConfig: BatchReviewHandlersProps;
+
+  // ==========================================================================
+  // Story 14e-29c: Batch session for save tracking
+  // ==========================================================================
+  /** Current batch session for tracking saved transactions */
+  batchSession?: { receipts: Transaction[] };
+
+  // ==========================================================================
+  // Callbacks (retained for special cases not handled by hook)
+  // ==========================================================================
   /** Called when user wants to retry a failed receipt */
   onRetryReceipt?: (receipt: BatchReceipt) => void;
-  /** Called when user discards a receipt - used to sync scan store */
-  onDiscardReceipt?: (receiptId: string) => void;
 }
 
 // =============================================================================
@@ -136,6 +153,8 @@ export interface BatchReviewFeatureProps {
  *
  * Reads phase from Zustand batch review store and renders appropriate UI.
  * This is the single entry point for all batch review rendering.
+ *
+ * Story 14e-29c: Now uses useBatchReviewHandlers internally for all handler logic.
  */
 export function BatchReviewFeature({
   t,
@@ -147,13 +166,9 @@ export function BatchReviewFeature({
   processingStates,
   processingProgress,
   onCancelProcessing,
-  onEditReceipt,
-  onSaveReceipt,
-  onSaveAll,
-  onSaveComplete,
-  onBack,
+  handlersConfig,
+  batchSession,
   onRetryReceipt,
-  onDiscardReceipt,
 }: BatchReviewFeatureProps): React.ReactElement | null {
   // ==========================================================================
   // Store selectors (AC3)
@@ -166,6 +181,11 @@ export function BatchReviewFeature({
   const validCount = useValidBatchCount();
   const { reset, discardItem } = useBatchReviewActions();
   const hadItems = useHadItems();
+
+  // ==========================================================================
+  // Story 14e-29c: Use handlers hook internally
+  // ==========================================================================
+  const handlers = useBatchReviewHandlers(handlersConfig);
 
   // ==========================================================================
   // Modal Manager (AC6)
@@ -181,24 +201,57 @@ export function BatchReviewFeature({
   const pendingDiscardIdRef = useRef<string | null>(null);
 
   // ==========================================================================
+  // Scan store access for discarding receipts
+  // Story 14e-33: Fixed no-op - now actually syncs with scan store
+  // ==========================================================================
+  const discardBatchReceiptFromScanStore = useCallback(
+    (receiptId: string) => {
+      // Remove receipt from scan store to keep batchReceipts in sync with batch review store
+      // This prevents batchEditingIndex from pointing to wrong items after saves
+      scanActions.discardBatchReceipt(receiptId);
+    },
+    []
+  );
+
+  // ==========================================================================
   // Effects
   // ==========================================================================
 
   /**
    * Story 14e-16: Auto-complete when batch becomes empty after saves.
+   * Story 14e-33 AC3: Only trigger completion if items were actually SAVED (not just discarded).
    * When all items are saved (from menu or edit mode), automatically
    * trigger completion instead of showing empty state.
    * Uses store's hadItems flag which persists across component remounts.
+   * Uses progress.saved to verify items were actually saved (prevents stale modal on discard).
    */
   useEffect(() => {
-    // If we're in reviewing phase, had items before, and now empty -> auto-complete
-    if (phase === 'reviewing' && hadItems && isEmpty && onSaveComplete) {
-      onSaveComplete();
+    // If we're in reviewing phase and empty
+    if (phase === 'reviewing' && isEmpty) {
+      // Case 1: Had items, now empty - check if saved or discarded
+      if (hadItems) {
+        // Story 14e-33 AC3: Only show completion if we actually saved something
+        if (progress.saved > 0) {
+          // Story 14e-29c: Use handler from hook
+          const savedTransactions = batchSession?.receipts || [];
+          batchReviewActions.reset();
+          handlers.handleSaveComplete(savedTransactions);
+        } else {
+          // All items were discarded - reset and navigate away without completion modal
+          batchReviewActions.reset();
+          handlers.handleBack();
+        }
+      } else {
+        // Case 2: Story 14e-33 follow-up - Never had items (stale state from cleared storage)
+        // This prevents getting stuck on empty screen after localStorage clear
+        batchReviewActions.reset();
+        handlers.handleBack();
+      }
     }
-  }, [phase, isEmpty, hadItems, onSaveComplete]);
+  }, [phase, isEmpty, hadItems, handlers, batchSession, progress.saved]);
 
   // ==========================================================================
-  // Handlers
+  // Handlers - Story 14e-29c: Integrated with useBatchReviewHandlers
   // ==========================================================================
 
   /**
@@ -214,12 +267,15 @@ export function BatchReviewFeature({
           receiptId: receipt.id,
           onConfirm: () => {
             const receiptId = pendingDiscardIdRef.current;
-            if (receiptId) {
-              discardItem(receiptId);
-              onDiscardReceipt?.(receiptId);
-              pendingDiscardIdRef.current = null;
-            }
+            // Story 14e-33: Close modal FIRST to prevent race condition
+            // where isEmpty triggers navigation while modal is still open
             closeModal();
+            if (receiptId) {
+              pendingDiscardIdRef.current = null;
+              discardItem(receiptId);
+              // Story 14e-33: Sync with scan store to keep batchReceipts aligned
+              discardBatchReceiptFromScanStore(receiptId);
+            }
           },
           onCancel: () => {
             pendingDiscardIdRef.current = null;
@@ -231,19 +287,20 @@ export function BatchReviewFeature({
       } else {
         // Low confidence or error receipts can be discarded directly
         discardItem(receipt.id);
-        // Sync with scan store
-        onDiscardReceipt?.(receipt.id);
+        // Story 14e-33: Sync with scan store to keep batchReceipts aligned
+        discardBatchReceiptFromScanStore(receipt.id);
       }
     },
-    [discardItem, onDiscardReceipt, openModal, closeModal, t, theme]
+    [discardItem, discardBatchReceiptFromScanStore, openModal, closeModal, t, theme]
   );
 
   /**
    * Handle back button click (chevron left).
+   * Story 14e-29c: Uses handleBack from hook.
    */
   const handleBackClick = useCallback(() => {
-    onBack?.();
-  }, [onBack]);
+    handlers.handleBack();
+  }, [handlers]);
 
   /**
    * Handle close button click (X) (AC6: ModalManager integration).
@@ -256,7 +313,7 @@ export function BatchReviewFeature({
         onConfirm: () => {
           closeModal();
           reset();
-          onBack?.();
+          handlers.handleDiscardConfirm();
         },
         onCancel: closeModal,
         t,
@@ -264,31 +321,102 @@ export function BatchReviewFeature({
       });
     } else {
       reset();
-      onBack?.();
+      handlers.handleBack();
     }
-  }, [items.length, reset, onBack, openModal, closeModal, t, theme]);
+  }, [items.length, reset, handlers, openModal, closeModal, t, theme]);
+
+  /**
+   * Handle save single receipt.
+   * Story 14e-29c: Uses handleSaveTransaction from hook.
+   */
+  const handleSaveReceipt = useCallback(
+    async (receiptId: string) => {
+      const receipt = items.find((item) => item.id === receiptId);
+      if (!receipt) return;
+
+      try {
+        await handlers.handleSaveTransaction(receipt.transaction);
+        // Remove from batch review store after successful save
+        batchReviewActions.discardItem(receiptId);
+        // Story 14e-33: Sync with scan store to keep batchReceipts aligned
+        discardBatchReceiptFromScanStore(receiptId);
+
+        // Check if batch is now empty after this save
+        const remainingCount = items.length - 1;
+        if (remainingCount <= 0) {
+          const savedTransactions = batchSession?.receipts || [];
+          batchReviewActions.reset();
+          handlers.handleSaveComplete(savedTransactions);
+        }
+      } catch (error) {
+        console.error('[BatchReviewFeature] Failed to save receipt:', receiptId, error);
+      }
+    },
+    [items, handlers, discardBatchReceiptFromScanStore, batchSession]
+  );
 
   /**
    * Handle Save All button click.
+   * Story 14e-29c: Uses handleSaveTransaction from hook for each receipt.
    */
   const handleSaveAll = useCallback(async () => {
-    if (!onSaveAll || isSaving) return;
+    if (isSaving) return;
     setIsSaving(true);
     setSaveProgress(0);
+
+    const validReceipts = items.filter((r) => r.status !== 'error');
+    const savedTransactions: Transaction[] = [];
+
+    // Start save operation in batch review store
+    batchReviewActions.saveStart();
+
     try {
-      await onSaveAll();
+      for (const receipt of validReceipts) {
+        try {
+          await handlers.handleSaveTransaction(receipt.transaction);
+          savedTransactions.push(receipt.transaction);
+          // Track successful save in store
+          batchReviewActions.saveItemSuccess(receipt.id);
+          setSaveProgress((prev) => prev + 1);
+        } catch (error) {
+          console.error('[BatchReviewFeature] Failed to save receipt:', receipt.id, error);
+          batchReviewActions.saveItemFailure(receipt.id, String(error));
+        }
+      }
+
+      // Complete batch save operation in store
+      batchReviewActions.saveComplete();
+      batchReviewActions.reset();
+
+      // Show completion modal and navigate
+      handlers.handleSaveComplete(savedTransactions);
     } finally {
       setIsSaving(false);
     }
-  }, [onSaveAll, isSaving]);
+  }, [items, handlers, isSaving]);
+
+  /**
+   * Handle edit receipt.
+   * Story 14e-29c: Uses handleEditReceipt from hook.
+   */
+  const handleEditReceipt = useCallback(
+    (receipt: BatchReceipt) => {
+      const batchIndex = items.findIndex((item) => item.id === receipt.id);
+      // editBatchReceipt expects 1-indexed (converts to 0-indexed internally)
+      handlers.handleEditReceipt(receipt, batchIndex >= 0 ? batchIndex + 1 : 1);
+    },
+    [items, handlers]
+  );
 
   /**
    * Handle save complete - reset store and notify parent.
    */
-  const handleSaveComplete = useCallback(() => {
+  const handleSaveCompleteInternal = useCallback(() => {
+    const savedTransactions = batchSession?.receipts || [];
     reset();
-    onSaveComplete?.();
-  }, [reset, onSaveComplete]);
+    batchReviewActions.reset();
+    handlers.handleSaveComplete(savedTransactions);
+  }, [reset, handlers, batchSession]);
 
   /**
    * Handle retry all after error.
@@ -302,8 +430,8 @@ export function BatchReviewFeature({
    */
   const handleErrorDismiss = useCallback(() => {
     reset();
-    onBack?.();
-  }, [reset, onBack]);
+    handlers.handleBack();
+  }, [reset, handlers]);
 
   // Format total for display
   const formattedTotal = formatCurrency(totalAmount, currency);
@@ -480,8 +608,8 @@ export function BatchReviewFeature({
                 theme={theme}
                 currency={currency}
                 t={t}
-                onSaveReceipt={onSaveReceipt}
-                onEditReceipt={onEditReceipt}
+                onSaveReceipt={handleSaveReceipt}
+                onEditReceipt={handleEditReceipt}
                 onDiscardReceipt={handleDiscardReceipt}
                 onRetryReceipt={onRetryReceipt}
               />
@@ -537,7 +665,7 @@ export function BatchReviewFeature({
           theme={theme}
           savedCount={progress.saved}
           failedCount={progress.failed}
-          onDismiss={handleSaveComplete}
+          onDismiss={handleSaveCompleteInternal}
         />
       );
 

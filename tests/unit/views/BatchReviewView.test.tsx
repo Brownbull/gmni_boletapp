@@ -8,8 +8,8 @@
 
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-// Story 14c-refactor.27: Use test-utils for ViewHandlersProvider
-import { render, screen, fireEvent, waitFor, mockViewHandlers } from '../../setup/test-utils';
+// Story 14e-25d: Use test-utils (ViewHandlersContext deleted)
+import { render, screen, fireEvent, waitFor } from '../../setup/test-utils';
 import { BatchReviewView } from '../../../src/views/BatchReviewView';
 import type { ProcessingResult } from '../../../src/services/batchProcessingService';
 import type { Transaction } from '../../../src/types/transaction';
@@ -17,6 +17,17 @@ import type { Transaction } from '../../../src/types/transaction';
 // Mock the useBatchReview hook
 vi.mock('../../../src/hooks/useBatchReview', () => ({
   useBatchReview: vi.fn(),
+}));
+
+// Story 14e-25d: Mock navigation hooks (ViewHandlersContext deleted)
+const mockNavigateBack = vi.fn();
+
+vi.mock('../../../src/shared/stores', () => ({
+  useNavigationActions: vi.fn(() => ({
+    navigateBack: mockNavigateBack,
+    setView: vi.fn(),
+    setHistoryFilters: vi.fn(),
+  })),
 }));
 
 import { useBatchReview } from '../../../src/hooks/useBatchReview';
@@ -205,16 +216,16 @@ describe('BatchReviewView', () => {
   });
 
   describe('interactions', () => {
-    it('should call onBack when back button clicked', () => {
-      // Story 14c-refactor.27: Use context mock instead of prop callback
-      mockViewHandlers.navigation.navigateBack.mockClear();
+    it('should call navigateBack when back button clicked', () => {
+      // Story 14e-25d: Use direct hook mock (ViewHandlersContext deleted)
+      mockNavigateBack.mockClear();
 
       render(<BatchReviewView {...defaultProps} />);
 
       fireEvent.click(screen.getByRole('button', { name: /back/i }));
 
-      // Story 14c-refactor.27: Now calls context handler instead of prop
-      expect(mockViewHandlers.navigation.navigateBack).toHaveBeenCalledTimes(1);
+      // Story 14e-25d: View calls useNavigationActions().navigateBack()
+      expect(mockNavigateBack).toHaveBeenCalledTimes(1);
     });
 
     it('should call onEditReceipt when Edit button clicked (AC #4)', () => {

@@ -27,6 +27,17 @@ import { AnalyticsProvider } from '../../../src/contexts/AnalyticsContext';
 import { HistoryFiltersProvider } from '../../../src/contexts/HistoryFiltersContext';
 import { TrendsView } from '../../../src/views/TrendsView';
 import type { Transaction } from '../../../src/types/transaction';
+// Story 14e-25b.1: Import type for mock data
+import type { TrendsViewData } from '../../../src/views/TrendsView/useTrendsViewData';
+
+// ============================================================================
+// Story 14e-25b.1: Mock useTrendsViewData hook
+// ============================================================================
+let mockHookReturnValue: Partial<TrendsViewData> = {};
+
+vi.mock('../../../src/views/TrendsView/useTrendsViewData', () => ({
+  useTrendsViewData: vi.fn(() => mockHookReturnValue),
+}));
 
 // ============================================================================
 // Mock localStorage
@@ -51,6 +62,8 @@ beforeEach(() => {
     key: vi.fn(() => null),
   };
   vi.stubGlobal('localStorage', mockLocalStorage);
+  // Story 14e-25b.1: Reset mock hook return value
+  mockHookReturnValue = {};
 });
 
 afterEach(() => {
@@ -166,17 +179,32 @@ const mockT = (key: string) => {
   return translations[key] || key;
 };
 
-const defaultProps = {
+/**
+ * Story 14e-25b.1: Default test data for TrendsView
+ * TrendsView now owns its data via useTrendsViewData() hook.
+ */
+const defaultTestData: Partial<TrendsViewData> = {
   transactions: mockTransactions,
-  theme: 'light' as const,
+  theme: 'light',
+  colorTheme: 'mono',
+  fontColorMode: 'colorful',
   currency: 'CLP',
   locale: 'en',
+  lang: 'en',
   t: mockT,
   onEditTransaction: vi.fn(),
   exporting: false,
-  onExporting: vi.fn(),
-  onUpgradeRequired: vi.fn(),
-  onNavigateToHistory: vi.fn(),
+  userName: 'Test User',
+  userEmail: 'test@example.com',
+  userId: 'test-user-123',
+  appId: 'test-app-id',
+  user: { uid: 'test-user-123', displayName: 'Test User', email: 'test@example.com' },
+  isGroupMode: false,
+  groupName: undefined,
+  groupMembers: [],
+  spendingByMember: new Map(),
+  analyticsInitialState: null,
+  initialDistributionView: undefined,
 };
 
 const initialState = {
@@ -186,11 +214,16 @@ const initialState = {
   drillDownMode: 'temporal' as const,
 };
 
-function renderTrendsView(props = {}, state = initialState) {
+function renderTrendsView(testDataOverrides: Partial<TrendsViewData> = {}, state = initialState) {
+  // Story 14e-25b.1: Set mock hook return value before rendering
+  mockHookReturnValue = {
+    ...defaultTestData,
+    ...testDataOverrides,
+  };
   return render(
     <HistoryFiltersProvider>
       <AnalyticsProvider initialState={state}>
-        <TrendsView {...defaultProps} {...props} />
+        <TrendsView />
       </AnalyticsProvider>
     </HistoryFiltersProvider>
   );

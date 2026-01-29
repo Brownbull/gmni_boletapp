@@ -1,5 +1,7 @@
 /**
  * Story 14e-10: ScanFeature Orchestrator Component
+ * Story 14e-23a: Migrated scan overlays from AppOverlays
+ * Story 14e-30: Owns file input element and ref
  *
  * Orchestrates all scan-related rendering based on Zustand store phase.
  * This is the single entry point for scan functionality in App.tsx.
@@ -7,29 +9,56 @@
  * Phase → Component Mapping:
  * - idle: IdleState (optional - often handled by FAB)
  * - capturing: BatchCaptureView (batch) / CameraView (single) / StatementPlaceholder
- * - scanning: ProcessingState (shows progress)
+ * - scanning: ScanOverlay (shows progress)
  * - reviewing: ReviewingState (wrapper for TransactionEditorView/BatchReviewView)
  * - saving: SavingState (saving indicator)
- * - error: ErrorState (error display with retry)
+ * - error: ScanOverlay (error display with retry)
+ *
+ * Dialog Rendering (from activeDialog.type):
+ * - QUICK_SAVE: QuickSaveCard
+ * - BATCH_COMPLETE: BatchCompleteModal
+ * - CURRENCY_MISMATCH: CurrencyMismatchDialog
+ * - TOTAL_MISMATCH: TotalMismatchDialog
+ *
+ * File Input (Story 14e-30):
+ * - Hidden file input element for image selection
+ * - Exposes fileInputRef to parent via onFileInputReady callback
+ * - Handles onFileSelect via prop
  *
  * @see docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-10-scan-feature-orchestrator.md
+ * @see docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-23a-scan-overlay-migration.md
+ * @see docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-30-scan-feature-handler-completion.md
  */
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   useScanPhase,
   useScanMode,
   useScanActions,
 } from './store';
+import { useScanStore } from './store/useScanStore';
 import {
   IdleState,
-  // Story 14e-11: ProcessingState, ErrorState, SavingState not used during partial integration
-  // These phases are handled by existing ScanOverlay in AppOverlays.tsx
-  // ProcessingState,
   ReviewingState,
-  // ErrorState,
-  // SavingState,
-  // StatementPlaceholder,
 } from './components/states';
+// Story 14e-23: BatchDiscardDialog reads from scan store
+import { BatchDiscardDialog } from './components/BatchDiscardDialog';
+import {
+  ScanOverlay,
+  QuickSaveCard,
+  BatchCompleteModal,
+  CurrencyMismatchDialog,
+  TotalMismatchDialog,
+} from '@/components/scan';
+import { DIALOG_TYPES } from '@/types/scanStateMachine';
+import type {
+  BatchCompleteDialogData,
+  QuickSaveDialogData,
+  CurrencyMismatchDialogData,
+  TotalMismatchDialogData,
+} from '@/types/scanStateMachine';
+import type { ScanOverlayStateHook } from '@/hooks/useScanOverlayState';
+import type { SupportedCurrency } from '@/services/userPreferencesService';
+import type { HistoryNavigationPayload } from '@/views/TrendsView';
 
 // =============================================================================
 // Types
@@ -93,6 +122,17 @@ export interface ReviewProps {
 // SavingStateProps - now exported from ./components/states/SavingState
 
 /**
+ * Active group info for quick save tagging
+ * Story 14e-23a: Migrated from AppOverlays
+ */
+export interface ActiveGroupInfo {
+  id: string;
+  name: string;
+  color: string;
+  icon?: string;
+}
+
+/**
  * Main props for ScanFeature orchestrator
  */
 export interface ScanFeatureProps {
@@ -101,6 +141,16 @@ export interface ScanFeatureProps {
 
   /** Theme */
   theme: 'light' | 'dark';
+
+  /** Language for component localization */
+  lang?: 'en' | 'es';
+
+  /**
+   * Current app view - used for scan overlay visibility.
+   * Story 14e-23a fix: Single scan overlay should only show on scan-related views,
+   * matching batch mode behavior where BatchProcessingOverlay has view-based visibility.
+   */
+  currentView?: string;
 
   /**
    * Whether to render idle state
@@ -169,6 +219,126 @@ export interface ScanFeatureProps {
    * Custom saving message
    */
   savingMessage?: string;
+
+  // =========================================================================
+  // ScanOverlay Props (Story 14e-23a)
+  // =========================================================================
+
+  /** Scan overlay state machine (from useScanOverlayState hook) */
+  scanOverlay?: ScanOverlayStateHook;
+
+  /** Whether scan is analyzing (for overlay visibility) */
+  isAnalyzing?: boolean;
+
+  /** Current captured images (for thumbnail in overlay) */
+  scanImages?: string[];
+
+  /** Handler for scan overlay cancel */
+  onScanOverlayCancel?: () => void;
+
+  /** Handler for scan overlay retry */
+  onScanOverlayRetry?: () => void;
+
+  /** Handler for scan overlay dismiss */
+  onScanOverlayDismiss?: () => void;
+
+  // =========================================================================
+  // QuickSaveCard Props (Story 14e-23a)
+  // =========================================================================
+
+  /** Handler for quick save */
+  onQuickSave?: (dialogData?: QuickSaveDialogData) => Promise<void>;
+
+  /** Handler for quick save edit */
+  onQuickSaveEdit?: (dialogData?: QuickSaveDialogData) => void;
+
+  /** Handler for quick save cancel */
+  onQuickSaveCancel?: (dialogData?: QuickSaveDialogData) => void;
+
+  /** Handler for quick save complete */
+  onQuickSaveComplete?: () => void;
+
+  /** Whether quick save is in progress */
+  isQuickSaving?: boolean;
+
+  /** Currency for formatting */
+  currency?: string;
+
+  /** Format currency function */
+  formatCurrency?: (amount: number, currency: string) => string;
+
+  /** User's default country for foreign location detection */
+  userDefaultCountry?: string;
+
+  /** Active group info for quick save tagging */
+  activeGroupForQuickSave?: ActiveGroupInfo | null;
+
+  // =========================================================================
+  // Currency/Total Mismatch Dialog Props (Story 14e-23a)
+  // =========================================================================
+
+  /** User's default currency */
+  userCurrency?: SupportedCurrency;
+
+  /** Handler for using detected currency */
+  onCurrencyUseDetected?: (dialogData?: CurrencyMismatchDialogData) => Promise<void>;
+
+  /** Handler for using default currency */
+  onCurrencyUseDefault?: (dialogData?: CurrencyMismatchDialogData) => Promise<void>;
+
+  /** Handler for currency mismatch cancel */
+  onCurrencyMismatchCancel?: (dialogData?: CurrencyMismatchDialogData) => void;
+
+  /** Handler for using items sum */
+  onTotalUseItemsSum?: (dialogData?: TotalMismatchDialogData) => void;
+
+  /** Handler for keeping original total */
+  onTotalKeepOriginal?: (dialogData?: TotalMismatchDialogData) => void;
+
+  /** Handler for total mismatch cancel */
+  onTotalMismatchCancel?: (dialogData?: TotalMismatchDialogData) => void;
+
+  // =========================================================================
+  // BatchCompleteModal Props (Story 14e-23a)
+  // =========================================================================
+
+  /** User credits remaining (for batch complete modal) */
+  userCreditsRemaining?: number;
+
+  /** Handler for batch complete dismiss */
+  onBatchCompleteDismiss?: () => void;
+
+  /** Handler for navigating to history from batch complete */
+  onBatchCompleteNavigateToHistory?: (payload: HistoryNavigationPayload) => void;
+
+  /** Handler for going home from batch complete */
+  onBatchCompleteGoHome?: () => void;
+
+  // =========================================================================
+  // BatchDiscardDialog Props (Story 14e-23)
+  // =========================================================================
+
+  /** Handler for confirming batch discard */
+  onBatchDiscardConfirm?: () => void;
+
+  /** Handler for canceling batch discard */
+  onBatchDiscardCancel?: () => void;
+
+  // =========================================================================
+  // Story 14e-30: File Input Props
+  // =========================================================================
+
+  /**
+   * Handler for file selection from hidden input.
+   * Called when user selects files via the file picker.
+   */
+  onFileSelect?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+
+  /**
+   * Callback when file input ref is ready.
+   * Parent can use this to trigger file picker via ref.current?.click()
+   */
+  onFileInputReady?: (ref: React.RefObject<HTMLInputElement>) => void;
 }
 
 // =============================================================================
@@ -190,6 +360,7 @@ export interface ScanFeatureProps {
  * - Phase-driven rendering (not view-based)
  * - Can wrap existing views (BatchCaptureView, TransactionEditorView)
  * - Or render internal state components for simpler phases
+ * - Story 14e-23a: Renders scan overlays (ScanOverlay, QuickSaveCard, etc.)
  *
  * @example
  * ```tsx
@@ -199,137 +370,324 @@ export interface ScanFeatureProps {
  *   onCancelProcessing={handleCancel}
  *   batchCaptureView={<BatchCaptureView {...batchProps} />}
  *   reviewView={<TransactionEditorView {...editorProps} />}
+ *   scanOverlay={scanOverlay}
+ *   isAnalyzing={isAnalyzing}
+ *   scanImages={scanImages}
+ *   onScanOverlayCancel={handleCancel}
+ *   // ... other overlay props
  * />
  * ```
  */
 export function ScanFeature({
   t,
   theme,
+  lang = 'en',
+  currentView,
   showIdleState = false,
   onStartScan,
-  // Story 14e-11: Unused during partial integration (handled by ScanOverlay)
-  onCancelProcessing: _onCancelProcessing,
-  onErrorDismiss: _onErrorDismiss,
-  onRetry: _onRetry,
+  onCancelProcessing,
+  onErrorDismiss,
+  onRetry,
   batchCaptureView,
   singleCaptureView,
   statementView,
   reviewView,
   savingMessage: _savingMessage,
+  // Story 14e-23a: ScanOverlay props
+  scanOverlay,
+  // Story 14e-23a fix: isAnalyzing replaced by scanOverlay.state !== 'idle' check
+  // Kept for backward compat but unused (view-based visibility now uses state directly)
+  isAnalyzing: _isAnalyzing = false,
+  scanImages = [],
+  onScanOverlayCancel,
+  onScanOverlayRetry,
+  onScanOverlayDismiss,
+  // Story 14e-23a: QuickSaveCard props
+  onQuickSave,
+  onQuickSaveEdit,
+  onQuickSaveCancel,
+  onQuickSaveComplete,
+  isQuickSaving = false,
+  currency = 'CLP',
+  formatCurrency,
+  userDefaultCountry = 'CL',
+  activeGroupForQuickSave,
+  // Story 14e-23a: Currency/Total mismatch dialog props
+  userCurrency = 'CLP',
+  onCurrencyUseDetected,
+  onCurrencyUseDefault,
+  onCurrencyMismatchCancel,
+  onTotalUseItemsSum,
+  onTotalKeepOriginal,
+  onTotalMismatchCancel,
+  // Story 14e-23a: BatchCompleteModal props
+  userCreditsRemaining = 0,
+  onBatchCompleteDismiss,
+  onBatchCompleteNavigateToHistory,
+  onBatchCompleteGoHome,
+  // Story 14e-23: BatchDiscardDialog props
+  onBatchDiscardConfirm,
+  onBatchDiscardCancel,
+  // Story 14e-30: File input props
+  onFileSelect,
+  onFileInputReady,
 }: ScanFeatureProps): React.ReactElement | null {
   const phase = useScanPhase();
   const mode = useScanMode();
-  // Story 14e-11: reset not needed during partial integration
   useScanActions(); // Keep hook call to maintain hook order
+
+  // Story 14e-30: File input ref owned by ScanFeature
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Story 14e-30: Notify parent when file input ref is ready
+  useEffect(() => {
+    if (onFileInputReady && fileInputRef.current) {
+      onFileInputReady(fileInputRef);
+    }
+  }, [onFileInputReady]);
+
+  // Story 14e-23a: Read activeDialog from Zustand store for dialog rendering
+  const activeDialog = useScanStore((state) => state.activeDialog);
+
+  // =========================================================================
+  // Story 14e-23a: Overlay visibility logic (phase + view-based)
+  // Story 14e-23a fix: Added view-based check to match batch mode behavior.
+  // Batch mode uses BatchProcessingOverlay with view-based visibility:
+  //   visible={batchProcessing.isProcessing && (view === 'batch-capture' || view === 'batch-review')}
+  // Single scan should behave the same - only show overlay on scan-related views.
+  // =========================================================================
+
+  // Scan-related views where overlay should be visible
+  const isScanRelatedView =
+    !currentView || // If no view provided, show overlay (backward compat)
+    currentView === 'scan' ||
+    currentView === 'scan-result' ||
+    currentView === 'transaction-editor';
+
+  // ScanOverlay visibility - shows during scanning or error phases AND on scan-related views
+  // Note: scanOverlay.state !== 'idle' ensures batch mode never shows this (uses BatchProcessingOverlay)
+  const isScanOverlayVisible =
+    scanOverlay &&
+    scanOverlay.state !== 'idle' &&
+    (phase === 'scanning' || phase === 'error') &&
+    isScanRelatedView;
+
+  // Check for batch complete dialog
+  const batchCompleteData = activeDialog?.type === DIALOG_TYPES.BATCH_COMPLETE
+    ? (activeDialog.data as BatchCompleteDialogData)
+    : null;
+  const showBatchCompleteModal = batchCompleteData && (batchCompleteData.transactions?.length ?? 0) > 0;
+
+  // =========================================================================
+  // Story 14e-23a: Render scan-related overlays FIRST (before phase switch)
+  // These are fixed-position overlays that render regardless of phase
+  // =========================================================================
+
+  const renderOverlays = (): React.ReactNode => {
+    // Default formatCurrency if not provided
+    const formatCurrencyFn = formatCurrency || ((amount: number, curr: string) => `${curr} ${amount.toFixed(2)}`);
+
+    return (
+      <>
+        {/* ScanOverlay for processing/error states */}
+        {scanOverlay && (
+          <ScanOverlay
+            state={scanOverlay.state}
+            progress={scanOverlay.progress}
+            eta={scanOverlay.eta}
+            error={scanOverlay.error}
+            onCancel={onScanOverlayCancel || onCancelProcessing || (() => {})}
+            onRetry={onScanOverlayRetry || onRetry || (() => {})}
+            onDismiss={onScanOverlayDismiss || onErrorDismiss || (() => {})}
+            theme={theme}
+            t={t}
+            visible={isScanOverlayVisible ?? false}
+            capturedImageUrl={scanImages[0]}
+          />
+        )}
+
+        {/* QuickSaveCard - rendered unconditionally, component reads from ScanContext */}
+        {onQuickSave && onQuickSaveEdit && onQuickSaveCancel && (
+          <QuickSaveCard
+            onSave={onQuickSave}
+            onEdit={onQuickSaveEdit}
+            onCancel={onQuickSaveCancel}
+            onSaveComplete={onQuickSaveComplete}
+            theme={theme}
+            t={t}
+            formatCurrency={formatCurrencyFn}
+            currency={currency}
+            isSaving={isQuickSaving}
+            lang={lang}
+            userDefaultCountry={userDefaultCountry}
+            activeGroup={activeGroupForQuickSave || undefined}
+          />
+        )}
+
+        {/* CurrencyMismatchDialog - rendered unconditionally, component reads from ScanContext */}
+        {onCurrencyUseDetected && onCurrencyUseDefault && onCurrencyMismatchCancel && (
+          <CurrencyMismatchDialog
+            userCurrency={userCurrency}
+            onUseDetected={onCurrencyUseDetected}
+            onUseDefault={onCurrencyUseDefault}
+            onCancel={onCurrencyMismatchCancel}
+            theme={theme}
+            t={t}
+          />
+        )}
+
+        {/* TotalMismatchDialog - rendered unconditionally, component reads from ScanContext */}
+        {onTotalUseItemsSum && onTotalKeepOriginal && onTotalMismatchCancel && (
+          <TotalMismatchDialog
+            onUseItemsSum={onTotalUseItemsSum}
+            onKeepOriginal={onTotalKeepOriginal}
+            onCancel={onTotalMismatchCancel}
+            theme={theme}
+            t={t}
+          />
+        )}
+
+        {/* BatchCompleteModal - shown when BATCH_COMPLETE dialog is active and all handlers provided */}
+        {showBatchCompleteModal && batchCompleteData && onBatchCompleteDismiss && onBatchCompleteNavigateToHistory && onBatchCompleteGoHome && (
+          <div
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            style={{ paddingTop: 'calc(1rem + var(--safe-top, 0px))', paddingBottom: 'calc(1rem + var(--safe-bottom, 0px))' }}
+          >
+            <BatchCompleteModal
+              transactions={batchCompleteData.transactions}
+              creditsUsed={batchCompleteData.creditsUsed}
+              creditsRemaining={userCreditsRemaining}
+              theme={theme}
+              t={t}
+              onDismiss={onBatchCompleteDismiss}
+              onNavigateToHistory={onBatchCompleteNavigateToHistory}
+              onGoHome={onBatchCompleteGoHome}
+              formatCurrency={formatCurrencyFn}
+            />
+          </div>
+        )}
+
+        {/* Story 14e-23: BatchDiscardDialog - reads visibility from scan store */}
+        {onBatchDiscardConfirm && onBatchDiscardCancel && (
+          <BatchDiscardDialog
+            t={t}
+            onConfirm={onBatchDiscardConfirm}
+            onCancel={onBatchDiscardCancel}
+          />
+        )}
+
+        {/* Story 14e-30: Hidden file input for image selection */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          multiple
+          accept="image/*"
+          onChange={onFileSelect}
+        />
+      </>
+    );
+  };
 
   // =========================================================================
   // Phase-based rendering
   // =========================================================================
+
+  // Story 14e-23a: Always render overlays, then phase-specific content
+  const overlays = renderOverlays();
 
   switch (phase) {
     // -----------------------------------------------------------------------
     // IDLE: No active scan
     // -----------------------------------------------------------------------
     case 'idle':
-      // Only render if showIdleState is true
+      // Only render overlays if showIdleState is false
       // Usually idle is handled by FAB, not ScanFeature
       if (!showIdleState) {
-        return null;
+        // Still render overlays (they handle their own visibility)
+        return <>{overlays}</>;
       }
       return (
-        <IdleState
-          t={t}
-          theme={theme}
-          onStartScan={onStartScan}
-        />
+        <>
+          {overlays}
+          <IdleState
+            t={t}
+            theme={theme}
+            onStartScan={onStartScan}
+          />
+        </>
       );
 
     // -----------------------------------------------------------------------
     // CAPTURING: Camera/file selection active
     // -----------------------------------------------------------------------
     case 'capturing':
-      // Story 14e-11: Only render if capture views are provided
-      // Otherwise, return null to let existing view-based rendering handle it
-      // (BatchCaptureView, StatementScanView are already rendered by App.tsx)
-
       // Mode determines which capture UI to show
       if (mode === 'batch') {
-        // Batch mode: render BatchCaptureView if provided
         if (batchCaptureView) {
-          return <>{batchCaptureView}</>;
+          return <>{overlays}{batchCaptureView}</>;
         }
-        // No batchCaptureView provided - let existing views handle it
-        return null;
+        return <>{overlays}</>;
       }
 
       if (mode === 'statement') {
-        // Statement mode: render if statementView provided
         if (statementView) {
-          return <>{statementView}</>;
+          return <>{overlays}{statementView}</>;
         }
-        // StatementPlaceholder only if explicitly using ScanFeature for statement mode
-        // Currently App.tsx uses StatementScanView directly, so return null
-        return null;
+        return <>{overlays}</>;
       }
 
-      // Single mode: render camera UI if provided
+      // Single mode
       if (singleCaptureView) {
-        return <>{singleCaptureView}</>;
+        return <>{overlays}{singleCaptureView}</>;
       }
-      // Fallback for single mode (usually camera is triggered externally)
-      return null;
+      return <>{overlays}</>;
 
     // -----------------------------------------------------------------------
     // SCANNING: Processing receipt image
     // -----------------------------------------------------------------------
     case 'scanning':
-      // Story 14e-11: ScanOverlay in AppOverlays already handles processing state
-      // as a fixed overlay. Return null to avoid duplicate UI and layout issues.
-      // ScanFeature is rendered outside AppLayout, so any content here would
-      // push the actual views down (causing the header-in-middle issue).
-      return null;
+      // Story 14e-23a: ScanOverlay handles processing state - render overlays only
+      return <>{overlays}</>;
 
     // -----------------------------------------------------------------------
     // REVIEWING: Showing scan results for review
     // -----------------------------------------------------------------------
     case 'reviewing':
-      // Story 14e-11: Only render if reviewView is provided
-      // Otherwise, return null to let existing view-based rendering handle it
-      // (TransactionEditorView, BatchReviewView are already rendered by App.tsx)
       if (!reviewView) {
-        return null;
+        return <>{overlays}</>;
       }
       return (
-        <ReviewingState
-          t={t}
-          theme={theme}
-        >
-          {reviewView}
-        </ReviewingState>
+        <>
+          {overlays}
+          <ReviewingState
+            t={t}
+            theme={theme}
+          >
+            {reviewView}
+          </ReviewingState>
+        </>
       );
 
     // -----------------------------------------------------------------------
     // SAVING: Transaction is being saved
     // -----------------------------------------------------------------------
     case 'saving':
-      // Story 14e-11: Return null during partial integration
-      // The save operation shows QuickSaveCard's "Guardando..." state
-      // or navigates away. Rendering SavingState here would cause layout issues.
-      return null;
+      // QuickSaveCard handles "Guardando..." state - render overlays only
+      return <>{overlays}</>;
 
     // -----------------------------------------------------------------------
     // ERROR: Something went wrong
     // -----------------------------------------------------------------------
     case 'error':
-      // Story 14e-11: ScanOverlay in AppOverlays already handles error state
-      // as a fixed overlay. Return null to avoid duplicate UI.
-      return null;
+      // Story 14e-23a: ScanOverlay handles error state - render overlays only
+      return <>{overlays}</>;
 
     // -----------------------------------------------------------------------
-    // Default: Unknown phase - render nothing
+    // Default: Unknown phase - render overlays
     // -----------------------------------------------------------------------
     default:
-      return null;
+      return <>{overlays}</>;
   }
 }
 

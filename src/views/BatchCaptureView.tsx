@@ -38,20 +38,20 @@ import { formatCreditsDisplay } from '../services/userCreditsService';
 // Story 14e-11: Migrated from useScanOptional (ScanContext) to Zustand store
 import { useScanStore, useIsProcessing, useScanActions } from '@features/scan/store';
 import { processFilesForCapture, type ProcessedImage } from '../utils/imageUtils';
+// Story 14e-25c.2: Navigation via Zustand store
+import { useNavigation } from '../shared/stores/useNavigationStore';
 
+/**
+ * Story 14e-25c.2: Minimal props interface for BatchCaptureView.
+ * Navigation uses useNavigation() hook.
+ * Batch state accessed via useScanStore().
+ * Scan flow callbacks remain as props to coordinate with parent.
+ */
 export interface BatchCaptureViewProps {
-  /** Whether batch mode is active (true) or individual mode (false) */
-  isBatchMode: boolean;
-  /** Callback to toggle between individual and batch mode */
-  onToggleMode: (isBatch: boolean) => void;
   /** Callback when batch is ready to process - passes captured images */
   onProcessBatch: (images: string[]) => void;
   /** Callback to switch to individual scan mode */
   onSwitchToIndividual: () => void;
-  /** Callback to go back to dashboard */
-  onBack: () => void;
-  /** Whether batch is currently being processed */
-  isProcessing?: boolean;
   /** Theme for styling */
   theme: 'light' | 'dark';
   /** Translation function */
@@ -90,12 +90,8 @@ interface DisplayImage {
  * - Button to switch back to single scan mode
  */
 export const BatchCaptureView: React.FC<BatchCaptureViewProps> = ({
-  isBatchMode: _isBatchMode,
-  onToggleMode: _onToggleMode,
   onProcessBatch,
   onSwitchToIndividual,
-  onBack,
-  isProcessing: isProcessingProp = false,
   theme,
   t,
   superCreditsAvailable,
@@ -104,13 +100,16 @@ export const BatchCaptureView: React.FC<BatchCaptureViewProps> = ({
   imageDataUrls,
   onImagesChange,
 }) => {
+  // Story 14e-25c.2: Get navigation from Zustand store
+  const { navigateBack } = useNavigation();
+
   // Story 14e-11: Use Zustand store for batch state (migrated from ScanContext)
   const scanStoreImages = useScanStore((s) => s.images);
   const scanStoreIsProcessing = useIsProcessing();
   const { setImages: scanStoreSetImages, reset: scanStoreReset } = useScanActions();
 
-  // Derive processing state: prefer store when in batch processing phase
-  const isProcessing = scanStoreIsProcessing || isProcessingProp;
+  // Story 14e-25c.2: Derive processing state from store only
+  const isProcessing = scanStoreIsProcessing;
 
   const isDark = theme === 'dark';
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -128,10 +127,6 @@ export const BatchCaptureView: React.FC<BatchCaptureViewProps> = ({
     }
     return new Map();
   });
-
-  // Silence unused variables
-  void _isBatchMode;
-  void _onToggleMode;
 
   // Story 14e-11: Get images from Zustand store (source of truth) or fallback to props
   const imageDataUrlsFromStore = scanStoreImages.length > 0 ? scanStoreImages : (imageDataUrls ?? []);
@@ -282,6 +277,7 @@ export const BatchCaptureView: React.FC<BatchCaptureViewProps> = ({
   /**
    * Handle cancel with confirmation if 2+ images exist.
    * Story 14d.5a: Uses handleClearBatch to also reset context
+   * Story 14e-25c.2: Uses navigateBack() instead of onBack prop
    */
   const handleCancel = useCallback(() => {
     if (count >= 2 && !confirmingCancel) {
@@ -289,8 +285,8 @@ export const BatchCaptureView: React.FC<BatchCaptureViewProps> = ({
       return;
     }
     handleClearBatch();
-    onBack();
-  }, [count, confirmingCancel, handleClearBatch, onBack]);
+    navigateBack();
+  }, [count, confirmingCancel, handleClearBatch, navigateBack]);
 
   /**
    * Handle switch to single scan mode.
@@ -773,7 +769,7 @@ export const BatchCaptureView: React.FC<BatchCaptureViewProps> = ({
                 onClick={() => {
                   setConfirmingCancel(false);
                   handleClearBatch();
-                  onBack();
+                  navigateBack();
                 }}
                 className="flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 text-white bg-red-500 hover:bg-red-600 transition-colors"
               >

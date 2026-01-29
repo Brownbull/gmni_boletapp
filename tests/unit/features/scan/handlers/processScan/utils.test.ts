@@ -24,6 +24,25 @@ import type {
   TransactionItem,
 } from '../../../../../../src/features/scan/handlers/processScan/types';
 
+// Mock locationService for country normalization tests
+vi.mock('@/services/locationService', () => ({
+  findCountry: vi.fn((nameOrCode: string) => {
+    // Mock country lookup - return normalized entry for known countries
+    const countryMap: Record<string, { code: string; names: { en: string; es: string } }> = {
+      // English names
+      'United States': { code: 'US', names: { en: 'United States', es: 'Estados Unidos' } },
+      'Chile': { code: 'CL', names: { en: 'Chile', es: 'Chile' } },
+      'Argentina': { code: 'AR', names: { en: 'Argentina', es: 'Argentina' } },
+      // Spanish names
+      'Estados Unidos': { code: 'US', names: { en: 'United States', es: 'Estados Unidos' } },
+      // Codes
+      'US': { code: 'US', names: { en: 'United States', es: 'Estados Unidos' } },
+      'CL': { code: 'CL', names: { en: 'Chile', es: 'Chile' } },
+    };
+    return countryMap[nameOrCode] || undefined;
+  }),
+}));
+
 describe('processScan utilities', () => {
   describe('getSafeDate (re-exported)', () => {
     it('should be re-exported from utils/validation', () => {
@@ -152,6 +171,70 @@ describe('processScan utilities', () => {
         mockGetCitiesForCountry
       );
       expect(result).toEqual({ country: 'Chile', city: 'Santiago' });
+    });
+
+    // Story 14e-32: Country normalization tests
+    describe('country normalization (Story 14e-32)', () => {
+      // Need cities for United States in the mock
+      const mockGetCitiesWithUS: CityValidator = (country: string) => {
+        const cityMap: Record<string, string[]> = {
+          Chile: ['Santiago', 'Valparaíso', 'Concepción'],
+          Argentina: ['Buenos Aires', 'Córdoba', 'Mendoza'],
+          'United States': ['New York', 'Los Angeles', 'Chicago'],
+        };
+        return cityMap[country] || [];
+      };
+
+      it('should normalize Spanish country name to English', () => {
+        const result = parseLocationResult(
+          { country: 'Estados Unidos', city: 'New York' },
+          defaultDefaults,
+          mockGetCitiesWithUS
+        );
+        expect(result.country).toBe('United States');
+        expect(result.city).toBe('New York');
+      });
+
+      it('should keep English country name unchanged', () => {
+        const result = parseLocationResult(
+          { country: 'United States', city: 'Los Angeles' },
+          defaultDefaults,
+          mockGetCitiesWithUS
+        );
+        expect(result.country).toBe('United States');
+        expect(result.city).toBe('Los Angeles');
+      });
+
+      it('should normalize country code to English name', () => {
+        const result = parseLocationResult(
+          { country: 'US', city: 'Chicago' },
+          defaultDefaults,
+          mockGetCitiesWithUS
+        );
+        expect(result.country).toBe('United States');
+        expect(result.city).toBe('Chicago');
+      });
+
+      it('should keep unknown country as-is', () => {
+        const result = parseLocationResult(
+          { country: 'UnknownCountry', city: '' },
+          defaultDefaults,
+          mockGetCitiesWithUS
+        );
+        // Unknown country stays as-is (findCountry returns undefined)
+        expect(result.country).toBe('UnknownCountry');
+      });
+
+      it('should normalize country before validating city', () => {
+        // This ensures the city validation uses the normalized country name
+        const result = parseLocationResult(
+          { country: 'Estados Unidos', city: 'new york' }, // lowercase city
+          defaultDefaults,
+          mockGetCitiesWithUS
+        );
+        expect(result.country).toBe('United States');
+        expect(result.city).toBe('New York'); // Properly cased from our list
+      });
     });
   });
 

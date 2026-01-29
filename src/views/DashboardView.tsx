@@ -35,7 +35,7 @@ import { getFirestore } from 'firebase/firestore';
 import { useQueryClient } from '@tanstack/react-query';
 // Story 14c-refactor.4: clearGroupCacheById import REMOVED (IndexedDB cache deleted)
 // Story 9.12: Category translations
-import type { Language } from '../utils/translations';
+// Story 14e-25b.2: Language type now comes from hook (useDashboardViewData)
 import { translateCategory } from '../utils/categoryTranslations';
 // Story 10a.1: Filter and duplicate detection utilities (AC #2, #4)
 import { useHistoryFilters } from '../hooks/useHistoryFilters';
@@ -71,7 +71,7 @@ import {
     expandItemCategoryGroup,   // Story 14.13 Session 13: For "Más" expansion
     type StoreCategoryGroup,
     type ItemCategoryGroup,
-    type ThemeName,
+    // Story 14e-25b.2: ThemeName type now comes from hook (useDashboardViewData)
 } from '../config/categoryColors';
 import { getCategoryEmoji } from '../utils/categoryEmoji';
 // Story 14.13 Session 4: Category translations for view mode labels
@@ -89,8 +89,11 @@ import { normalizeItemNameForGrouping } from '../hooks/useItems';
 import { calculateTreemapLayout } from '../utils/treemapLayout';
 // Story 14.13 Session 4: Navigation payload for treemap cell clicks
 import { HistoryNavigationPayload, DrillDownPath } from '../utils/analyticsToHistoryFilters';
-// Story 14c-refactor.27: ViewHandlersContext for navigation handlers
-import { useViewHandlers } from '../contexts/ViewHandlersContext';
+// Story 14e-25d: Direct navigation hooks (ViewHandlersContext deleted)
+import { useHistoryNavigation } from '@/shared/hooks';
+import { useNavigationActions } from '@/shared/stores';
+// Story 14e-25b.2: DashboardView data hook
+import { useDashboardViewData, type UseDashboardViewDataReturn } from './DashboardView/useDashboardViewData';
 // Story 14.15b: Use consolidated TransactionCard from shared transactions folder
 import { TransactionCard } from '../components/transactions';
 // Story 14.12: Radar chart uses inline SVG (matching mockup hexagonal design)
@@ -125,57 +128,23 @@ interface Transaction {
     sharedGroupIds?: string[];
 }
 
-interface DashboardViewProps {
-    /** Story 10a.1: Used as fallback when allTransactions is empty */
-    transactions: Transaction[];
-    t: (key: string) => string;
-    currency: string;
-    dateFormat: string;
-    theme: string;
-    formatCurrency: (amount: number, currency: string) => string;
-    formatDate: (date: string, format: string) => string;
-    getSafeDate: (val: any) => string;
-    onCreateNew: () => void;
-    onViewTrends: (month: string | null) => void;
-    onEditTransaction: (transaction: Transaction) => void;
-    /** Story 14.12: Trigger scan action for quick action button */
-    onTriggerScan?: () => void;
-    /** Story 10a.1: All transactions for display (now used for full paginated list) */
-    allTransactions?: Transaction[];
-    /** Story 9.12: Language for category translations */
-    lang?: Language;
-    /** Story 14.12: Navigate to history view */
-    onViewHistory?: () => void;
+/**
+ * Story 14e-25b.2: DashboardView Props
+ *
+ * DashboardView now owns its data via useDashboardViewData hook.
+ * Props are minimal - only test overrides for testing and callbacks
+ * that need App-level state coordination.
+ */
+export interface DashboardViewProps {
     /**
-     * @deprecated Story 14c-refactor.27: Use useViewHandlers().navigation.handleNavigateToHistory instead.
-     * Story 14.13 Session 4: Navigate to history with category filter (for treemap cell clicks) - will be removed in future version.
+     * Optional overrides for testing and production callbacks.
+     * In production, App.tsx passes callbacks that need App-level coordination.
+     * In tests, can inject mock data without needing to mock hooks.
      */
-    onNavigateToHistory?: (payload: HistoryNavigationPayload) => void;
-    /** Story 14.14: Color theme for unified category colors */
-    colorTheme?: ThemeName;
-    // Story 14.15b: Selection mode props for Dashboard
-    /** Authenticated user ID for group operations */
-    userId?: string | null;
-    /** App ID for Firestore path */
-    appId?: string;
-    /** Callback when transactions are deleted */
-    onTransactionsDeleted?: (deletedIds: string[]) => void;
-    /**
-     * v9.7.0: Recent scans for "Últimos Escaneados" carousel.
-     * Separate Firestore query ordered by createdAt (scan timestamp) instead of date.
-     * Ensures recently scanned receipts with old transaction dates appear.
-     */
-    recentScans?: Transaction[];
-    /** Story 14.13: Font color mode for category text colors (colorful vs plain) */
-    fontColorMode?: 'colorful' | 'plain';
-    /** Story 14.31: Navigate to recent scans view (Ver todo) */
-    onViewRecentScans?: () => void;
-    /** Story 14.35b: User's default country for foreign location detection */
-    defaultCountry?: string;
-    /** Story 14.35b: How to display foreign locations (code or flag) */
-    foreignLocationFormat?: 'code' | 'flag';
-    /** Group consolidation: Shared groups for dynamic group color lookup */
-    sharedGroups?: Array<{ id: string; color: string }>;
+    _testOverrides?: Partial<UseDashboardViewDataReturn & {
+        /** Callback when transactions are deleted */
+        onTransactionsDeleted?: (deletedIds: string[]) => void;
+    }>;
 }
 
 // Story 14.12: Number of recent transactions to show (collapsed/expanded)
@@ -444,49 +413,50 @@ const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
     );
 };
 
-export const DashboardView: React.FC<DashboardViewProps> = ({
-    transactions,
-    t,
-    currency,
-    dateFormat,
-    theme,
-    formatCurrency,
-    formatDate,
-    // onCreateNew - kept in interface for backwards compatibility, unused per mockup alignment
-    onViewTrends,
-    onEditTransaction,
-    // onTriggerScan - kept in interface for backwards compatibility, FAB in nav handles scan
-    allTransactions = [],
-    // Story 9.12: Language for translations
-    lang = 'en',
-    onViewHistory,
-    // Story 14c-refactor.27: onNavigateToHistory moved to useViewHandlers().navigation.handleNavigateToHistory
-    onNavigateToHistory: _deprecatedOnNavigateToHistory,
-    // Story 14.14: Color theme for unified category colors
-    colorTheme = 'normal',
-    // Story 14.15b: Selection mode props
-    userId = null,
-    appId = 'boletapp',
-    onTransactionsDeleted,
-    // v9.7.0: Recent scans for "Últimos Escaneados" carousel
-    recentScans = [],
-    // Story 14.13: Font color mode - receiving this prop triggers re-render when setting changes
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    fontColorMode: _fontColorMode,
-    // Story 14.31: Navigate to recent scans view (Ver todo)
-    onViewRecentScans,
-    // Story 14.35b: Foreign location display settings
-    defaultCountry = '',
-    foreignLocationFormat = 'code',
-    // Group consolidation: Shared groups for dynamic color lookup (DEPRECATED - now using useAllUserGroups internally)
-    sharedGroups: _sharedGroups = [],
-}) => {
+export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) => {
+    // Story 14e-25b.2: Get all data from internal hook
+    const hookData = useDashboardViewData();
+
+    // Merge hook data with test overrides (test overrides take precedence)
+    // Pattern: HistoryView lines 186-209
+    const {
+        transactions,
+        allTransactions,
+        recentScans,
+        userId,
+        appId,
+        theme,
+        colorTheme,
+        fontColorMode: _fontColorMode,
+        lang,
+        currency,
+        dateFormat,
+        defaultCountry,
+        foreignLocationFormat,
+        t,
+        formatCurrency,
+        formatDate,
+        getSafeDate: _getSafeDate,
+        sharedGroups: _sharedGroups,
+        onCreateNew: _onCreateNew,
+        onViewTrends,
+        onEditTransaction,
+        onTriggerScan: _onTriggerScan,
+        onViewRecentScans,
+    } = { ...hookData, ..._testOverrides };
+
+    // Extract onTransactionsDeleted from overrides (not in hook)
+    const onTransactionsDeleted = _testOverrides?.onTransactionsDeleted;
+
     // Story 7.12: Theme-aware styling using CSS variables (AC #1, #2, #8)
     const isDark = theme === 'dark';
 
-    // Story 14c-refactor.27: Get navigation handlers from ViewHandlersContext
-    const { navigation } = useViewHandlers();
-    const onNavigateToHistory = navigation.handleNavigateToHistory;
+    // Story 14e-25d: Direct navigation hooks (ViewHandlersContext deleted)
+    const { handleNavigateToHistory } = useHistoryNavigation();
+    const { setView } = useNavigationActions();
+    const onNavigateToHistory = handleNavigateToHistory;
+    // Story 14e-25b.2: onViewHistory from navigation (fallback for "Ver todo")
+    const onViewHistory = () => setView('history');
 
     // Story 14.12: Reduced motion preference (available for future use)
     useReducedMotion();
@@ -2192,7 +2162,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     userDefaultCountry={defaultCountry}
                     foreignLocationFormat={foreignLocationFormat}
                     isDuplicate={isDuplicate}
-                    onClick={() => onEditTransaction(transaction)}
+                    onClick={() => onEditTransaction(transaction as any)}
                     onThumbnailClick={() => handleThumbnailClick(transaction)}
                     selection={isSelectionMode ? {
                         isSelectionMode,
