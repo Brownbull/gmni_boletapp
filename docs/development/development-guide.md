@@ -2,7 +2,10 @@
 
 ## Overview
 
-Boletapp is a modular Progressive Web Application (PWA) built with React, TypeScript, and Vite. The codebase is organized into components, views, hooks, and services for maintainability.
+Boletapp is a Progressive Web Application (PWA) built with React 18, TypeScript, and Vite. The codebase follows a **Feature-Based Architecture** (Epic 14e) with:
+- **Zustand** for client state management (7 stores)
+- **TanStack Query** for server state and Firestore caching
+- **Feature modules** in `src/features/` with self-contained stores, handlers, and hooks
 
 ## Prerequisites
 
@@ -98,21 +101,60 @@ npm run preview    # Preview at http://localhost:4175
 | `npm run build` | Create production build in `dist/` |
 | `npm run preview` | Preview production build locally |
 | `npm run type-check` | Run TypeScript type checking |
+| `npm run test` | Run unit and integration tests (Vitest) |
+| `npm run test:ui` | Run tests with Vitest UI |
+| `npm run test:coverage` | Run tests with coverage report |
+| `npm run lint` | Run ESLint checks |
 
 ## Project Structure
 
 ```
 src/
-├── components/     # Reusable UI components
-│   └── charts/     # Chart components (Pie, Bar)
-├── config/         # Configuration (Firebase, Gemini)
-├── hooks/          # Custom React hooks
-├── services/       # API services (Firestore, Gemini)
-├── types/          # TypeScript type definitions
-├── utils/          # Utility functions
-├── views/          # Page-level components
-├── App.tsx         # Main application component
-└── main.tsx        # Application entry point
+├── features/                    # Feature modules (Epic 14e)
+│   ├── scan/                    # Receipt scanning feature
+│   │   ├── store/               # useScanStore + selectors
+│   │   ├── handlers/            # processScan, batch handlers
+│   │   ├── hooks/               # useScanInitiation, useScanFlow
+│   │   └── index.ts             # Public API barrel
+│   ├── batch-review/            # Batch transaction review
+│   │   ├── store/               # useBatchReviewStore + selectors
+│   │   ├── handlers/            # save, batch operations
+│   │   └── hooks/               # useBatchReviewHandlers
+│   ├── transaction-editor/      # Transaction editing
+│   │   └── store/               # useTransactionEditorStore
+│   ├── categories/              # Category management
+│   │   └── utils/               # itemNameMappings
+│   └── credit/                  # Credit tracking
+├── entities/                    # Domain entities
+│   └── transaction/
+│       ├── model/               # Types, schemas
+│       └── utils/               # reconciliation, transformations
+├── shared/                      # Cross-cutting concerns
+│   ├── stores/                  # Shared Zustand stores
+│   │   ├── useNavigationStore.ts
+│   │   ├── useSettingsStore.ts
+│   │   └── useInsightStore.ts
+│   ├── lib/                     # Utilities
+│   └── ui/                      # Shared UI components
+├── managers/                    # Infrastructure
+│   └── modal/                   # useModalStore
+├── contexts/                    # React Context providers
+├── components/                  # Shared UI components
+│   └── App/                     # AppProviders, AppRoutes
+├── hooks/                       # App-level hooks
+│   └── app/                     # useAppInitialization, etc.
+├── views/                       # Page-level components
+├── config/                      # Configuration (Firebase, Gemini)
+├── services/                    # API services
+├── App.tsx                      # Main orchestrator (~2,191 lines)
+└── main.tsx                     # Application entry point
+
+tests/
+├── unit/                        # Unit tests (mirrors src/)
+│   ├── features/                # Feature tests
+│   ├── entities/                # Entity tests
+│   └── shared/                  # Shared tests
+└── integration/                 # Integration tests
 ```
 
 ## Development Workflow
@@ -182,9 +224,28 @@ git pull origin main
 
 ## Testing Approach
 
+### Automated Testing (Vitest)
+
+The project uses **Vitest** with **React Testing Library** for automated testing:
+
+```bash
+npm run test              # Run all tests
+npm run test:ui           # Run with Vitest UI
+npm run test:coverage     # Run with coverage report
+```
+
+**Test Organization:**
+- `tests/unit/` - Unit tests for stores, handlers, utilities
+- `tests/integration/` - Integration tests for feature workflows
+
+**Key Test Files:**
+- `tests/unit/features/scan/store/useScanStore.test.ts` - Scan store tests
+- `tests/unit/features/batch-review/handlers/save.test.ts` - Save handler tests
+- `tests/integration/batch-processing.test.tsx` - Full batch workflow
+
 ### Manual Browser Testing
 
-Since there is no automated test suite, follow this testing checklist:
+For features not covered by automated tests, follow this checklist:
 
 #### Authentication Flow
 - [ ] Google sign-in works correctly
@@ -319,7 +380,7 @@ firebase deploy --only hosting
 
 ### Static Hosting
 
-Upload `main.tsx` to any static hosting provider:
+Run `npm run build` and upload the `dist/` folder to any static hosting provider:
 - Netlify
 - Vercel
 - GitHub Pages
@@ -331,7 +392,9 @@ Ensure HTTPS is enabled for PWA features to work correctly.
 
 ### Current Optimizations
 
-- Single-file architecture minimizes HTTP requests
+- **TanStack Query caching** - Instant navigation with cached data
+- **Zustand selectors** - Granular re-renders via selector hooks
+- **Feature isolation** - Code-split by feature module
 - Firebase Firestore real-time sync reduces polling
 - Pagination limits DOM rendering (20 items per page)
 - Chart rendering uses native SVG (no heavy libraries)
@@ -340,10 +403,9 @@ Ensure HTTPS is enabled for PWA features to work correctly.
 
 - Implement lazy loading for transaction history
 - Add service worker for offline support
-- Cache Firestore queries with persistence
-- Optimize image compression before Gemini API calls
+- Further code splitting with dynamic imports
 
 ---
 
 **Generated by BMAD Document Project Workflow**
-*Date: 2025-11-20*
+*Last Updated: 2026-02-01 (Epic 14e Feature Architecture)*

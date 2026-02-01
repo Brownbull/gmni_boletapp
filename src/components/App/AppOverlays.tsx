@@ -2,6 +2,7 @@
  * Story 14c-refactor.22d: AppOverlays Component
  * Story 14e-23a: Scan overlays migrated to ScanFeature
  * Story 14e-23b: NavigationBlocker and PWAUpdatePrompt moved to App.tsx
+ * Story 14e-39: TrustMerchantPrompt moved to CreditFeature
  *
  * Centralizes non-scan overlay/modal rendering from App.tsx.
  * Scan-related overlays (ScanOverlay, QuickSaveCard, BatchCompleteModal,
@@ -9,13 +10,14 @@
  *
  * Z-Index Layers:
  * - z-60: NavigationBlocker, PWAUpdatePrompt (moved to App.tsx - Story 14e-23b)
- * - z-40: TrustMerchantPrompt, SessionComplete, BatchSummary
+ * - z-40: TrustMerchantPrompt (moved to CreditFeature - Story 14e-39), SessionComplete, BatchSummary
  * - z-30: InsightCard, BuildingProfileCard, PersonalRecordBanner
  *
  * Story 14e-5: TransactionConflictDialog moved to Modal Manager
  * Story 14e-18c: CreditWarningDialog moved to CreditFeature
  * Story 14e-23a: Scan overlays moved to ScanFeature
  * Story 14e-23b: NavigationBlocker, PWAUpdatePrompt moved to App.tsx
+ * Story 14e-39: TrustMerchantPrompt moved to CreditFeature
  *
  * Architecture Reference: Epic 14c-refactor - App.tsx Decomposition
  */
@@ -25,7 +27,7 @@ import React from 'react';
 import type { Insight, LocalInsightCache } from '../../types/insight';
 import type { PersonalRecord } from '../../types/personalRecord';
 import type { Transaction } from '../../types/transaction';
-import type { TrustPromptEligibility } from '../../types/trust';
+// Story 14e-39: TrustPromptEligibility no longer needed (moved to CreditFeature)
 import type { SessionContext, SessionAction } from '../session';
 // Story 14e-23a: Scan-related types no longer needed here (moved to ScanFeature)
 
@@ -40,7 +42,8 @@ import { BuildingProfileCard } from '../insights/BuildingProfileCard';
 import { BatchSummary } from '../insights/BatchSummary';
 import { PersonalRecordBanner } from '../celebrations';
 import { SessionComplete } from '../session';
-import { TrustMerchantPrompt } from '../TrustMerchantPrompt';
+// Story 14e-39: TrustMerchantPrompt moved to CreditFeature
+// import { TrustMerchantPrompt } from '../TrustMerchantPrompt';
 
 // =============================================================================
 // Types
@@ -138,18 +141,7 @@ export interface AppOverlaysProps {
     /** Handler for batch summary dismiss */
     onBatchSummaryDismiss: () => void;
 
-    // =========================================================================
-    // Trust Merchant Prompt Props
-    // =========================================================================
-
-    /** Whether to show trust prompt */
-    showTrustPrompt: boolean;
-    /** Trust prompt data */
-    trustPromptData: TrustPromptEligibility | null;
-    /** Handler for accepting trust */
-    onAcceptTrust: () => Promise<void>;
-    /** Handler for declining trust */
-    onDeclineTrust: () => Promise<void>;
+    // Story 14e-39: Trust Merchant Prompt Props REMOVED - moved to CreditFeature
 
     // =========================================================================
     // Utility Functions for Calculations
@@ -205,11 +197,7 @@ export const AppOverlays = React.memo(function AppOverlays(props: AppOverlaysPro
         onBatchSummarySilence,
         onBatchSummaryDismiss,
 
-        // Trust merchant prompt props
-        showTrustPrompt,
-        trustPromptData,
-        onAcceptTrust,
-        onDeclineTrust,
+        // Story 14e-39: Trust merchant prompt props REMOVED - moved to CreditFeature
 
         // Utility functions
         getLastWeekTotal,
@@ -227,17 +215,7 @@ export const AppOverlays = React.memo(function AppOverlays(props: AppOverlaysPro
             {/* Z-40: Cards & Modals */}
             {/* ============================================================== */}
 
-            {/* Story 11.4: Trust Merchant Prompt (AC #2, #3, #4) */}
-            {showTrustPrompt && trustPromptData?.merchant && (
-                <TrustMerchantPrompt
-                    merchantName={trustPromptData.merchant.merchantName}
-                    scanCount={trustPromptData.merchant.scanCount}
-                    onAccept={onAcceptTrust}
-                    onDecline={onDeclineTrust}
-                    theme={theme}
-                    t={t}
-                />
-            )}
+            {/* Story 14e-39: TrustMerchantPrompt moved to CreditFeature */}
 
             {/* Story 14.20: Session completion messaging (AC #1-6) */}
             {showSessionComplete && sessionContext && (

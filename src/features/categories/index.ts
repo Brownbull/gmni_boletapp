@@ -47,3 +47,6 @@ export * from './state';
 
 // Re-export handlers module
 export * from './handlers';
+
+// Re-export utils module (Story 14e-42)
+export * from './utils';

@@ -459,13 +459,54 @@ development_status:
   14e-32-location-currency-selector-bugs: done  # 2 pts - Fix country normalization (Spanish→English) + currency dropdown positioning [BUG: Found in 14e-28b verification] - Atlas Code Review APPROVED 2026-01-28
   14e-33-batch-ux-bugs: done  # 2 pts - Fix batch preview remove buttons (mobile visibility) + stale BATCH_COMPLETE modal after discard [BUG: Found in 14e-29d smoke test] - R1-R4 resolved, COMPLETED 2026-01-29
 
-# /bmad:bmm:workflows:dev-story 
-# /bmad:bmm:workflows:atlas-dev-story 
+  # Part 8: State Management Completion & Business Logic Extraction (12 stories, ~33 pts)
+  # ROOT CAUSE: Remaining useState calls and business logic in App.tsx after Epic 14e
+  # GOAL: Eliminate duplicate state, fix race conditions, extract business logic
+  # TARGET: App.tsx reduced from ~2,458 to ~1,200-1,500 lines
+  # Created: 2026-01-29 via Pre-dev Epic Review
+
+  # Phase 1: Eliminate Duplicate State (5 pts) - CRITICAL
+  14e-34a-eliminate-batchimages-duplication: done  # 3 pts - Remove batchImages useState, use useScanStore.images [RACE CONDITION FIX] - Atlas Code Review APPROVED 2026-01-29
+  14e-34b-atomic-batch-operations: done  # 2 pts - Atomic discard/update for both batch stores [RACE CONDITION FIX, DEPENDS: 14e-34a] - Atlas Code Review APPROVED 2026-01-29
+
+  # Phase 2: Settings Migration (3 pts)
+  14e-35-locale-settings-zustand: done  # 3 pts - Migrate lang/currency/dateFormat to useSettingsStore [RACE CONDITION FIX] - Atlas Code Review APPROVED 2026-01-29
+
+  # Phase 3: New Stores (8 pts → 9 pts after 14e-36 split)
+  14e-36-transaction-editor-store: split  # SPLIT 2026-01-29: 6 tasks + 29 subtasks exceeded limits → split into 14e-36a/b/c
+  14e-36a-transaction-editor-store-foundation: done  # 2 pts - Store structure + 9 actions [Part 1/3] - Atlas Code Review APPROVED 2026-01-29
+  14e-36b-transaction-editor-store-selectors: done  # 2 pts - 10 selectors + tests [Part 2/3, DEPENDS: 14e-36a] - Atlas Code Review APPROVED 2026-01-29 (79 tests)
+  14e-36c-transaction-editor-store-migration: done  # 2 pts - App.tsx migration + verification [Part 3/3, DEPENDS: 14e-36b] - Atlas Code Review APPROVED 2026-01-29
+  14e-37-insight-store: done  # 3 pts - Create useInsightStore (5 insight/session useState) - Atlas Code Review APPROVED 2026-01-29
+
+  # Phase 4: Expand Existing Stores (4 pts)
+  14e-38-scan-store-ui-flags: done  # 2 pts - Add skipScanCompleteModal, isRescanning to useScanStore - Archie Review APPROVED 2026-01-29 (3 LOW follow-ups)
+  14e-39-trust-prompt-credit-feature: done  # 2 pts - Move trust prompt state to CreditFeature - Code review #2 PASSED 2026-01-30
+
+  # Phase 5: Extract Business Logic (8 pts)
+  14e-40-extract-conflict-detection: done  # Code Review APPROVED 2026-01-30 (1 fix: removed dead code)  # 3 pts - Extract hasActiveTransactionConflict to scan utils - Atlas enhanced 2026-01-29
+  14e-41-extract-reconcile-items-total: done  # Code Review APPROVED 2026-01-30 - 3 fixes applied (tests, validation, docs)  # 3 pts - Extract reconcileItemsTotal to transaction entity + remove duplicate from subhandlers.ts - Atlas Enhanced 2026-01-29
+  14e-42-extract-item-name-mappings: done  # Code Review APPROVED 2026-01-30 - 2 CRITICAL staging fixes, 1 MEDIUM status fix  # 3 pts - Extract applyItemNameMappings to categories feature + remove duplicate from subhandlers.ts - Atlas Enhanced 2026-01-29
+
+  # Phase 6: Simplify processScan (3 pts)
+  14e-43-processscan-simplification: done  # Atlas Code Review APPROVED 2026-02-01 - 2 doc fixes applied  # 3 pts - Reduce processScan callback injection, use stores directly [DEPENDS: 14e-34a, 14e-36, 14e-40-42]
+
+  # Phase 7: Final Cleanup (2 pts)
+  14e-44-final-cleanup: done  # 2 pts - App.tsx dead code removal, verification, documentation [DEPENDS: All 14e-34 through 14e-43] - Code Review APPROVED 2026-02-01 (2,191 lines final, 152 lines removed)
+
+  # Phase 8: Consistency Completion (2 pts) - From Adversarial Review 2026-02-01
+  # Original plan was 14 pts (4 stories) - reduced to 2 pts (1 story) after adversarial review
+  # Rejected: Mapping Store (local state correct), Toast/Notification (not duplicates), Animation Review (local state correct)
+  14e-45-navigationcontext-deletion: review  # 2 pts - Delete NavigationContext (duplicate of useNavigationStore), migrate 5 consumers, add Local State Patterns docs [DEPENDS: 14e-44]
+
+# /bmad:bmm:workflows:dev-story
+# /bmad:bmm:workflows:atlas-dev-story
 # /bmad:bmm:workflows:code-review
 # /bmad:bmm:workflows:atlas-code-review
 # /bmad:bmm:workflows:atlas-create-story
 # /bmad:bmm:workflows:atlas-story-sizing
 # /bmad:bmm:workflows:atlas-deploy-story
+# /bmad:bmm:workflows:archie-refactor src/features/scan/
 
   epic-14e-retrospective: optional
 

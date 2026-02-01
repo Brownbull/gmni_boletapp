@@ -55,3 +55,6 @@ export * from './components';
 
 // Re-export hooks (Story 14e-30)
 export * from './hooks';
+
+// Re-export utils (Story 14e-40)
+export * from './utils';

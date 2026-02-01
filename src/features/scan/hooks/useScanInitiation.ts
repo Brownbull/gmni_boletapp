@@ -111,8 +111,7 @@ export interface ScanInitiationProps {
   /** Set scan currency */
   setScanCurrency: (currency: SupportedCurrency) => void;
 
-  /** Set batch images for preview */
-  setBatchImages: (images: string[]) => void;
+  // Story 14e-34a: setBatchImages removed - now uses useScanStore.setImages directly
 
   /** Show batch preview modal */
   setShowBatchPreview: (show: boolean) => void;
@@ -204,7 +203,7 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
     setScanError,
     setScanStoreType,
     setScanCurrency,
-    setBatchImages,
+    // Story 14e-34a: setBatchImages removed - now uses useScanStore.setImages
     setShowBatchPreview,
     setToastMessage,
     setSkipScanCompleteModal,
@@ -222,7 +221,12 @@ export function useScanInitiation(props: ScanInitiationProps): ScanInitiationHan
   // Store Access
   // =========================================================================
 
-  const { dismissDialog: dismissScanDialog, setBatchEditingIndex: setBatchEditingIndexContext } = useScanStore();
+  const {
+    dismissDialog: dismissScanDialog,
+    setBatchEditingIndex: setBatchEditingIndexContext,
+    // Story 14e-34a: Use setImages from store (single source of truth)
+    setImages: setBatchImages,
+  } = useScanStore();
   const { setView, navigateToView } = useNavigationStore();
 
   // =========================================================================

@@ -62,4 +62,7 @@ export {
     normalizeTransactions,
     DEFAULT_TIME,
     type UserDefaults,
+    // Story 14e-41: Reconciliation utility
+    reconcileItemsTotal,
+    type ReconcileResult,
 } from './utils';

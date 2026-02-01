@@ -14,8 +14,9 @@
  */
 
 import { create } from 'zustand';
+import { useShallow } from 'zustand/react/shallow';
 import { devtools, persist, createJSONStorage } from 'zustand/middleware';
-import type { Theme, ColorTheme, FontColorMode, FontSize } from '@/types/settings';
+import type { Theme, ColorTheme, FontColorMode, FontSize, Language, Currency } from '@/types/settings';
 
 // =============================================================================
 // Types
@@ -26,6 +27,10 @@ interface SettingsState {
   colorTheme: ColorTheme;
   fontColorMode: FontColorMode;
   fontSize: FontSize;
+  // Story 14e-35: Locale settings migrated from App.tsx useState
+  lang: Language;
+  currency: Currency;
+  dateFormat: 'LatAm' | 'US';
 }
 
 interface SettingsActions {
@@ -33,6 +38,10 @@ interface SettingsActions {
   setColorTheme: (colorTheme: ColorTheme) => void;
   setFontColorMode: (fontColorMode: FontColorMode) => void;
   setFontSize: (fontSize: FontSize) => void;
+  // Story 14e-35: Locale setting actions
+  setLang: (lang: Language) => void;
+  setCurrency: (currency: Currency) => void;
+  setDateFormat: (dateFormat: 'LatAm' | 'US') => void;
 }
 
 // =============================================================================
@@ -44,6 +53,10 @@ export const defaultSettingsState: SettingsState = {
   colorTheme: 'mono',
   fontColorMode: 'colorful',
   fontSize: 'small',
+  // Story 14e-35: Default locale settings (target market: Chile)
+  lang: 'es',
+  currency: 'CLP',
+  dateFormat: 'LatAm',
 };
 
 // =============================================================================
@@ -58,6 +71,9 @@ export const defaultSettingsState: SettingsState = {
  * - colorTheme: 'ghibli' -> 'normal', 'default' -> 'professional'
  * - fontColorMode: validates 'colorful' | 'plain'
  * - fontSize: validates 'small' | 'normal'
+ * - lang: validates 'es' | 'en' (Story 14e-35)
+ * - currency: validates 'CLP' | 'USD' | 'EUR' (Story 14e-35)
+ * - dateFormat: validates 'LatAm' | 'US' (Story 14e-35)
  *
  * Note: 'theme' (light/dark) is not persisted in legacy format, uses default.
  */
@@ -95,6 +111,25 @@ const migrateFromLegacyKeys = (): Partial<SettingsState> => {
     result.fontSize = savedFontSize;
   }
 
+  // Story 14e-35: Migrate locale settings from legacy keys
+  // lang (Language)
+  const savedLang = localStorage.getItem('lang');
+  if (savedLang === 'es' || savedLang === 'en') {
+    result.lang = savedLang;
+  }
+
+  // currency (Currency)
+  const savedCurrency = localStorage.getItem('currency');
+  if (savedCurrency === 'CLP' || savedCurrency === 'USD' || savedCurrency === 'EUR') {
+    result.currency = savedCurrency;
+  }
+
+  // dateFormat
+  const savedDateFormat = localStorage.getItem('dateFormat');
+  if (savedDateFormat === 'LatAm' || savedDateFormat === 'US') {
+    result.dateFormat = savedDateFormat;
+  }
+
   return result;
 };
 
@@ -130,6 +165,22 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
         setFontSize: (fontSize) => {
           try { localStorage.setItem('fontSize', fontSize); } catch { /* SSR/test safety */ }
           set({ fontSize }, false, 'settings/setFontSize');
+        },
+
+        // Story 14e-35: Locale setting actions
+        setLang: (lang) => {
+          try { localStorage.setItem('lang', lang); } catch { /* SSR/test safety */ }
+          set({ lang }, false, 'settings/setLang');
+        },
+
+        setCurrency: (currency) => {
+          try { localStorage.setItem('currency', currency); } catch { /* SSR/test safety */ }
+          set({ currency }, false, 'settings/setCurrency');
+        },
+
+        setDateFormat: (dateFormat) => {
+          try { localStorage.setItem('dateFormat', dateFormat); } catch { /* SSR/test safety */ }
+          set({ dateFormat }, false, 'settings/setDateFormat');
         },
       }),
       {
@@ -169,6 +220,32 @@ export const useColorTheme = () => useSettingsStore((state) => state.colorTheme)
 export const useFontColorMode = () => useSettingsStore((state) => state.fontColorMode);
 export const useFontSize = () => useSettingsStore((state) => state.fontSize);
 
+// Story 14e-35: Locale selectors (prevent unnecessary re-renders)
+export const useLang = () => useSettingsStore((state) => state.lang);
+export const useCurrency = () => useSettingsStore((state) => state.currency);
+export const useDateFormat = () => useSettingsStore((state) => state.dateFormat);
+
+/**
+ * Combined locale settings selector.
+ * Use when you need all locale settings together (e.g., for passing to formatters).
+ * Uses shallow comparison to prevent infinite re-renders.
+ *
+ * @example
+ * // Use combined when you need multiple values together
+ * const { lang, currency, dateFormat } = useLocaleSettings();
+ *
+ * // Use individual selectors when you only need one value (better re-render isolation)
+ * const lang = useLang();
+ */
+export const useLocaleSettings = () =>
+  useSettingsStore(
+    useShallow((state) => ({
+      lang: state.lang,
+      currency: state.currency,
+      dateFormat: state.dateFormat,
+    }))
+  );
+
 // =============================================================================
 // Direct Access (for non-React code)
 // =============================================================================
@@ -191,4 +268,10 @@ export const settingsActions = {
     useSettingsStore.getState().setFontColorMode(fontColorMode),
   setFontSize: (fontSize: FontSize) =>
     useSettingsStore.getState().setFontSize(fontSize),
+  // Story 14e-35: Locale actions for non-React code
+  setLang: (lang: Language) => useSettingsStore.getState().setLang(lang),
+  setCurrency: (currency: Currency) =>
+    useSettingsStore.getState().setCurrency(currency),
+  setDateFormat: (dateFormat: 'LatAm' | 'US') =>
+    useSettingsStore.getState().setDateFormat(dateFormat),
 };

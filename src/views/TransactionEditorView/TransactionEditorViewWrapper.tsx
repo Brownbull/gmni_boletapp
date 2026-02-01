@@ -24,6 +24,7 @@ import { useTransactionEditorHandlers, type UseTransactionEditorHandlersProps } 
 
 /**
  * Story 14e-28b: _testOverrides interface for App-level state coordination.
+ * Story 14e-36c: Handler state now from Zustand store, only external deps needed.
  *
  * This combines data overrides (for useTransactionEditorData) and
  * handler dependencies (for useTransactionEditorHandlers).
@@ -41,17 +42,10 @@ export interface TransactionEditorViewTestOverrides {
     creditUsedInSession?: boolean;
 
     // === Handler dependencies (for useTransactionEditorHandlers) ===
+    // Story 14e-36c: Editor state/actions now from store, only external deps needed
     user: User | null;
     db: Firestore;
-    setCurrentTransaction: (tx: Transaction | null) => void;
-    setTransactionEditorMode: (mode: 'new' | 'existing') => void;
-    setIsViewingReadOnly: (value: boolean) => void;
     transactions: Transaction[];
-    setTransactionNavigationList: (list: string[] | null) => void;
-    isTransactionSaving: boolean;
-    setIsTransactionSaving: (value: boolean) => void;
-    setAnimateEditViewItems: (value: boolean) => void;
-    setCreditUsedInSession: (value: boolean) => void;
     saveTransaction: (tx: Transaction) => Promise<string | void>;
     deleteTransaction: (id: string) => void;
     processScan: (images?: string[]) => void;
@@ -94,21 +88,11 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
         creditUsedInSession: _testOverrides.creditUsedInSession,
     };
 
+    // Story 14e-36c: Editor state/actions now from store, only external deps passed
     const handlerProps: UseTransactionEditorHandlersProps = {
         user: _testOverrides.user,
         db: _testOverrides.db,
-        currentTransaction: _testOverrides.currentTransaction,
-        setCurrentTransaction: _testOverrides.setCurrentTransaction,
-        transactionEditorMode: _testOverrides.transactionEditorMode,
-        setTransactionEditorMode: _testOverrides.setTransactionEditorMode,
-        setIsViewingReadOnly: _testOverrides.setIsViewingReadOnly,
         transactions: _testOverrides.transactions,
-        transactionNavigationList: _testOverrides.transactionNavigationList,
-        setTransactionNavigationList: _testOverrides.setTransactionNavigationList,
-        isTransactionSaving: _testOverrides.isTransactionSaving,
-        setIsTransactionSaving: _testOverrides.setIsTransactionSaving,
-        setAnimateEditViewItems: _testOverrides.setAnimateEditViewItems,
-        setCreditUsedInSession: _testOverrides.setCreditUsedInSession,
         saveTransaction: _testOverrides.saveTransaction,
         deleteTransaction: _testOverrides.deleteTransaction,
         processScan: _testOverrides.processScan,

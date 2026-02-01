@@ -1,5 +1,6 @@
 /**
  * Story 11.1: One Image = One Transaction
+ * Story 14e-34a: Updated tests to use store mock instead of images prop
  * Unit tests for BatchUploadPreview component
  *
  * Tests AC #2 (X boletas detectadas), AC #7 (10 image limit)
@@ -7,6 +8,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BatchUploadPreview, MAX_BATCH_IMAGES } from '../../../../src/components/scan/BatchUploadPreview';
+
+// Story 14e-34a: Mock the scan store module
+let mockImages: string[] = [];
+vi.mock('@/features/scan/store', () => ({
+  useScanImages: () => mockImages,
+}));
 
 // Mock translation function
 const mockT = (key: string) => {
@@ -32,9 +39,14 @@ const createMockImages = (count: number): string[] => {
   );
 };
 
+// Story 14e-34a: Helper to set mock images for tests
+const setMockImages = (images: string[]) => {
+  mockImages = images;
+};
+
 describe('BatchUploadPreview', () => {
+  // Story 14e-34a: images prop removed - now reads from store
   const defaultProps = {
-    images: createMockImages(3),
     theme: 'light' as const,
     t: mockT,
     onConfirm: vi.fn(),
@@ -43,16 +55,20 @@ describe('BatchUploadPreview', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Story 14e-34a: Default to 3 images for most tests
+    setMockImages(createMockImages(3));
   });
 
   describe('AC #2: Show "X boletas detectadas" message', () => {
     it('should display correct count for 3 images', () => {
-      render(<BatchUploadPreview {...defaultProps} images={createMockImages(3)} />);
+      setMockImages(createMockImages(3));
+      render(<BatchUploadPreview {...defaultProps} />);
       expect(screen.getByText('3 receipts detected')).toBeInTheDocument();
     });
 
     it('should display correct count for 5 images', () => {
-      render(<BatchUploadPreview {...defaultProps} images={createMockImages(5)} />);
+      setMockImages(createMockImages(5));
+      render(<BatchUploadPreview {...defaultProps} />);
       expect(screen.getByText('5 receipts detected')).toBeInTheDocument();
     });
 
@@ -64,18 +80,21 @@ describe('BatchUploadPreview', () => {
 
   describe('AC #7: Maximum 10 images per batch', () => {
     it('should show error when more than 10 images', () => {
-      render(<BatchUploadPreview {...defaultProps} images={createMockImages(11)} />);
+      setMockImages(createMockImages(11));
+      render(<BatchUploadPreview {...defaultProps} />);
       expect(screen.getByText('Maximum 10 images per batch')).toBeInTheDocument();
     });
 
     it('should disable Process All button when over limit', () => {
-      render(<BatchUploadPreview {...defaultProps} images={createMockImages(11)} />);
+      setMockImages(createMockImages(11));
+      render(<BatchUploadPreview {...defaultProps} />);
       const processButton = screen.getByText('Process All');
       expect(processButton).toBeDisabled();
     });
 
     it('should enable Process All button when within limit', () => {
-      render(<BatchUploadPreview {...defaultProps} images={createMockImages(10)} />);
+      setMockImages(createMockImages(10));
+      render(<BatchUploadPreview {...defaultProps} />);
       const processButton = screen.getByText('Process All');
       expect(processButton).not.toBeDisabled();
     });
@@ -126,11 +145,11 @@ describe('BatchUploadPreview', () => {
     });
 
     it('should not call onConfirm when over limit', () => {
+      setMockImages(createMockImages(11));
       const onConfirm = vi.fn();
       render(
         <BatchUploadPreview
           {...defaultProps}
-          images={createMockImages(11)}
           onConfirm={onConfirm}
         />
       );

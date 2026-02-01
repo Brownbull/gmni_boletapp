@@ -109,11 +109,11 @@ export type {
 } from './handlers';
 
 // =============================================================================
-// Hooks (Story 14e-29a) - Consolidated handler hook
+// Hooks (Story 14e-29a, 14e-34b) - Consolidated handler hook and atomic actions
 // =============================================================================
 
-export { useBatchReviewHandlers } from './hooks';
-export type { BatchReviewHandlersProps, BatchReviewHandlers } from './hooks';
+export { useBatchReviewHandlers, useAtomicBatchActions, atomicBatchActions } from './hooks';
+export type { BatchReviewHandlersProps, BatchReviewHandlers, AtomicBatchActions, AtomicBatchActionsType } from './hooks';
 
 // =============================================================================
 // Components (Story 14e-15)

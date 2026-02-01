@@ -59,13 +59,7 @@ vi.mock('../../../../src/components/session', () => ({
     ),
 }));
 
-vi.mock('../../../../src/components/TrustMerchantPrompt', () => ({
-    TrustMerchantPrompt: ({ merchantName }: { merchantName: string }) => (
-        <div data-testid="trust-merchant-prompt" data-merchant={merchantName}>
-            TrustMerchantPrompt
-        </div>
-    ),
-}));
+// Story 14e-39: TrustMerchantPrompt mock removed - now rendered by CreditFeature
 
 // Story 14e-18c: CreditWarningDialog mock removed - now rendered by CreditFeature
 // Story 14e-5: TransactionConflictDialog mock removed - now rendered by ModalManager, not AppOverlays
@@ -108,11 +102,7 @@ const createMockProps = (overrides: Partial<AppOverlaysProps> = {}): AppOverlays
     onBatchSummarySilence: vi.fn(),
     onBatchSummaryDismiss: vi.fn(),
 
-    // Trust merchant prompt props
-    showTrustPrompt: false,
-    trustPromptData: null,
-    onAcceptTrust: vi.fn(),
-    onDeclineTrust: vi.fn(),
+    // Story 14e-39: Trust merchant prompt props removed - now managed by CreditFeature
 
     // Utility functions
     getLastWeekTotal: vi.fn(() => 0),
@@ -282,35 +272,7 @@ describe('AppOverlays', () => {
         });
     });
 
-    describe('TrustMerchantPrompt visibility', () => {
-        it('shows TrustMerchantPrompt when showTrustPrompt is true and data exists', () => {
-            const props = createMockProps({
-                showTrustPrompt: true,
-                trustPromptData: {
-                    eligible: true,
-                    merchant: {
-                        merchantName: 'Test Store',
-                        scanCount: 3,
-                    },
-                },
-            });
-            render(<AppOverlays {...props} />);
-
-            const prompt = screen.getByTestId('trust-merchant-prompt');
-            expect(prompt).toBeInTheDocument();
-            expect(prompt).toHaveAttribute('data-merchant', 'Test Store');
-        });
-
-        it('hides TrustMerchantPrompt when showTrustPrompt is false', () => {
-            const props = createMockProps({
-                showTrustPrompt: false,
-                trustPromptData: { eligible: true, merchant: { merchantName: 'Test', scanCount: 3 } },
-            });
-            render(<AppOverlays {...props} />);
-
-            expect(screen.queryByTestId('trust-merchant-prompt')).not.toBeInTheDocument();
-        });
-    });
+    // Story 14e-39: TrustMerchantPrompt visibility tests removed - now rendered by CreditFeature
 
     // Story 14e-5: TransactionConflictDialog tests removed - now rendered by ModalManager, not AppOverlays
     // Story 14e-23a: BatchCompleteModal tests moved to ScanFeature tests

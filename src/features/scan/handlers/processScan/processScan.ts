@@ -5,6 +5,9 @@
  * Coordinates: validation -> mappings -> currency -> success routing.
  *
  * Story 14e-8c: Main handler integration
+ * Story 14e-43: Refactored to use Zustand stores directly for UI state.
+ *   Callbacks like showScanDialog, setCurrentTransaction, setView are now
+ *   accessed via store actions instead of dependency injection from App.tsx.
  *
  * @module features/scan/handlers/processScan/processScan
  */
@@ -16,6 +19,7 @@ import type {
   Transaction,
   TransactionItem,
   StoreCategory,
+  ReceiptType,
 } from './types';
 
 import {
@@ -30,10 +34,28 @@ import {
   applyAllMappings,
   handleCurrencyDetection,
   handleScanSuccess,
-  reconcileItemsTotal,
 } from './subhandlers';
 
+// Story 14e-41: Import reconcileItemsTotal from entity (single source of truth)
+import { reconcileItemsTotal } from '@entities/transaction';
+
 import { calculateConfidence } from '@/utils/confidenceCheck';
+
+// =============================================================================
+// Story 14e-43: Store Direct Access for Non-React Code
+// =============================================================================
+// These store actions can be called directly from handler code without React context.
+// See docs/sprint-artifacts/epic14e-feature-architecture/architecture-decision.md (ADR-018)
+// for the Zustand direct access pattern.
+//
+// Pattern:
+//   scanActions.processError('error')      // Instead of: ui.setScanError('error')
+//   transactionEditorActions.setTransaction(tx)  // Instead of: ui.setCurrentTransaction(tx)
+//   navigationActions.setView('dashboard')  // Instead of: ui.setView('dashboard')
+
+import { scanActions } from '@features/scan/store';
+import { transactionEditorActions } from '@features/transaction-editor/store';
+import { navigationActions, insightActions } from '@shared/stores';
 
 // =============================================================================
 // Constants
@@ -103,7 +125,8 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
 
   if (!scan.images || scan.images.length === 0) {
     console.error('processScan called with no images');
-    ui.setScanError(t('noImagesToScan') || 'No images to scan');
+    // Story 14e-43: Use store action directly (no ui.setScanError callback needed)
+    scanActions.processError(t('noImagesToScan'));
     return { success: false, error: 'No images to scan' };
   }
 
@@ -112,7 +135,8 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
   // ==========================================================================
 
   if (user.creditsRemaining <= 0) {
-    ui.setScanError(t('noCreditsMessage'));
+    // Story 14e-43: Use store action directly
+    scanActions.processError(t('noCreditsMessage'));
     ui.setToastMessage({ text: t('noCreditsMessage'), type: 'info' });
     return { success: false, error: 'No credits' };
   }
@@ -123,13 +147,15 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
 
   const deducted = await services.deductUserCredits(1);
   if (!deducted) {
-    ui.setScanError(t('noCreditsMessage'));
+    // Story 14e-43: Use store action directly
+    scanActions.processError(t('noCreditsMessage'));
     ui.setToastMessage({ text: t('noCreditsMessage'), type: 'info' });
     return { success: false, error: 'Credit deduction failed' };
   }
 
-  ui.setCreditUsedInSession(true);
-  ui.dispatchProcessStart('normal', 1);
+  // Story 14e-43: Use store actions directly
+  transactionEditorActions.setCreditUsed(true);
+  scanActions.processStart('normal', 1);
   scanOverlay.startUpload();
   scanOverlay.setProgress(100);
   scanOverlay.startProcessing();
@@ -150,7 +176,7 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
       services.analyzeReceipt(
         scan.images,
         scan.currency,
-        scan.storeType !== 'auto' ? (scan.storeType as any) : undefined
+        scan.storeType !== 'auto' ? (scan.storeType as ReceiptType) : undefined
       ),
       timeoutPromise,
     ]);
@@ -205,8 +231,9 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
       merchantSource: result.merchantSource,
     };
 
+    // Story 14e-43: Pass store action directly instead of ui callback
     const validationResult = validateScanResult(tempTransaction, parsedItems, {
-      showScanDialog: ui.showScanDialog,
+      showScanDialog: (type, data) => scanActions.showDialog({ type, data }),
       // Story 14e-25d: setIsAnalyzing removed - state managed by state machine
       scanOverlay,
       reconcileItemsTotal,
@@ -249,13 +276,14 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
     // Step 9: Handle Currency Detection (May Show Dialog)
     // ========================================================================
 
+    // Story 14e-43: Pass store action directly instead of ui callback
     const currencyResult = handleCurrencyDetection(
       finalTransaction.currency,
       user.defaultCurrency,
       finalTransaction,
       hasDiscrepancy,
       {
-        showScanDialog: ui.showScanDialog,
+        showScanDialog: (type, data) => scanActions.showDialog({ type, data }),
         // Story 14e-25d: setIsAnalyzing removed - state managed by state machine
         scanOverlay,
       }
@@ -278,7 +306,8 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
     // Step 10: Set Current Transaction
     // ========================================================================
 
-    ui.setCurrentTransaction(finalTransaction);
+    // Story 14e-43: Use store action directly
+    transactionEditorActions.setTransaction(finalTransaction);
 
     // ========================================================================
     // Step 11: Determine Success Route
@@ -288,16 +317,18 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
     let routeResult: { route: 'quicksave' | 'trusted-autosave' | 'edit-view'; confidence?: number; isTrusted?: boolean };
 
     if (trustedAutoSave) {
+      // Story 14e-43: Use store actions directly
       routeResult = await handleScanSuccess(finalTransaction, {
         checkTrusted: trustedAutoSave.checkTrusted,
-        showScanDialog: ui.showScanDialog,
-        setSkipScanCompleteModal: ui.setSkipScanCompleteModal,
-        setAnimateEditViewItems: ui.setAnimateEditViewItems,
+        showScanDialog: (type, data) => scanActions.showDialog({ type, data }),
+        setSkipScanCompleteModal: scanActions.setSkipScanCompleteModal,
+        setAnimateEditViewItems: transactionEditorActions.setAnimateItems,
       });
     } else {
       // No trusted check - default to edit view
       const confidence = calculateConfidence(finalTransaction);
-      ui.setAnimateEditViewItems(true);
+      // Story 14e-43: Use store action directly
+      transactionEditorActions.setAnimateItems(true);
       routeResult = { route: 'edit-view', confidence, isTrusted: false };
     }
 
@@ -305,7 +336,8 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
     // Step 12: Dispatch Success
     // ========================================================================
 
-    ui.dispatchProcessSuccess([finalTransaction]);
+    // Story 14e-43: Use store action directly
+    scanActions.processSuccess([finalTransaction]);
     scanOverlay.setReady();
 
     // Haptic feedback on scan success (only when motion enabled)
@@ -351,20 +383,20 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
           console.warn('Failed to record merchant scan:', err)
         );
 
-        // Clean up scan state
-        ui.setScanImages([]);
-        ui.setCurrentTransaction(null);
+        // Story 14e-43: Clean up scan state using store actions directly
+        scanActions.setImages([]);
+        transactionEditorActions.setTransaction(null);
         ui.setToastMessage({ text: t('autoSaved'), type: 'success' });
-        ui.setView('dashboard');
+        navigationActions.setView('dashboard');
 
-        // Show insight or batch summary
+        // Story 14e-43: Show insight or batch summary using store actions directly
         const silenced = trustedAutoSave.isInsightsSilenced(trustedAutoSave.insightCache);
         if (!silenced && insight) {
           const willBeBatchMode = (trustedAutoSave.batchSession?.receipts.length ?? 0) + 1 >= 3;
-          if (willBeBatchMode && trustedAutoSave.onShowBatchSummary) {
-            trustedAutoSave.onShowBatchSummary();
-          } else if (trustedAutoSave.onShowInsight) {
-            trustedAutoSave.onShowInsight(insight);
+          if (willBeBatchMode) {
+            insightActions.showBatchSummaryOverlay();
+          } else {
+            insightActions.showInsight(insight);
           }
         }
 
@@ -379,10 +411,11 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
       } catch (autoSaveErr) {
         console.error('Auto-save failed:', autoSaveErr);
         // Fall back to Quick Save Card on error
+        // Story 14e-43: Use store action directly
         const confidence = calculateConfidence(finalTransaction);
-        ui.showScanDialog('quicksave', {
-          transaction: finalTransaction,
-          confidence,
+        scanActions.showDialog({
+          type: 'quicksave',
+          data: { transaction: finalTransaction, confidence },
         });
 
         return {
@@ -416,7 +449,8 @@ export async function processScan(params: ProcessScanParams): Promise<ProcessSca
     const errorMessage = e instanceof Error ? e.message : 'Unknown error';
     const fullErrorMessage = 'Failed: ' + errorMessage;
 
-    ui.dispatchProcessError(fullErrorMessage);
+    // Story 14e-43: Use store action directly
+    scanActions.processError(fullErrorMessage);
 
     const isTimeout = errorMessage?.includes('timed out');
     scanOverlay.setError(isTimeout ? 'timeout' : 'api', fullErrorMessage);

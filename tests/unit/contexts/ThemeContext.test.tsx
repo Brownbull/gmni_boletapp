@@ -1,5 +1,6 @@
 /**
  * Story 14c-refactor.17: ThemeContext Tests
+ * Story 14e-35: Updated for Zustand store integration
  *
  * Tests for the ThemeContext that manages theme and locale settings.
  *
@@ -7,7 +8,7 @@
  * - Light/dark theme
  * - Color theme (mono, normal, professional)
  * - Font settings (color mode, size, family)
- * - Locale settings (language, currency, date format)
+ * - Locale settings (language, currency, date format) - now via Zustand store
  * - localStorage persistence
  *
  * Architecture Reference: Epic 14c-refactor - App Decomposition
@@ -16,12 +17,31 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, act, renderHook } from '@testing-library/react';
 import React from 'react';
+
+// Story 14e-35: Mock zustand persist middleware to avoid localStorage issues in tests
+// This must be called before any imports that use the middleware
+vi.mock('zustand/middleware', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('zustand/middleware')>();
+    return {
+        ...actual,
+        // Make persist a pass-through that doesn't actually persist
+        persist: vi.fn((config) => config),
+        createJSONStorage: vi.fn(() => ({
+            getItem: () => null,
+            setItem: () => {},
+            removeItem: () => {},
+        })),
+    };
+});
+
 import {
     ThemeProvider,
     useTheme,
     useThemeOptional,
 } from '../../../src/contexts/ThemeContext';
 import type { FontFamily } from '../../../src/types/settings';
+// Story 14e-35: Import store for resetting state between tests
+import { useSettingsStore, defaultSettingsState } from '../../../src/shared/stores/useSettingsStore';
 
 // =============================================================================
 // Test Setup
@@ -71,11 +91,19 @@ describe('ThemeContext (Story 14c-refactor.9)', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         setupMockLocalStorage();
+        // Story 14e-35: Reset Zustand store to default state before each test
+        act(() => {
+            useSettingsStore.setState(defaultSettingsState);
+        });
     });
 
     afterEach(() => {
         vi.clearAllMocks();
         vi.unstubAllGlobals();
+        // Story 14e-35: Clean up store state
+        act(() => {
+            useSettingsStore.setState(defaultSettingsState);
+        });
     });
 
     // ===========================================================================
@@ -227,8 +255,13 @@ describe('ThemeContext (Story 14c-refactor.9)', () => {
             expect(result.current.fontSize).toBe('normal');
         });
 
-        it('should load lang from localStorage', () => {
-            mockStorage['lang'] = 'en';
+        // Story 14e-35: Locale settings now come from Zustand store, not localStorage directly
+        // ThemeContext reads from the store, which has its own persistence
+        it('should load lang from store', () => {
+            // Set store state directly (simulates what would happen after localStorage hydration)
+            act(() => {
+                useSettingsStore.setState({ lang: 'en' });
+            });
 
             const { result } = renderHook(() => useTheme(), {
                 wrapper: createWrapper(),
@@ -237,8 +270,11 @@ describe('ThemeContext (Story 14c-refactor.9)', () => {
             expect(result.current.lang).toBe('en');
         });
 
-        it('should load currency from localStorage', () => {
-            mockStorage['currency'] = 'USD';
+        it('should load currency from store', () => {
+            // Set store state directly
+            act(() => {
+                useSettingsStore.setState({ currency: 'USD' });
+            });
 
             const { result } = renderHook(() => useTheme(), {
                 wrapper: createWrapper(),
@@ -247,8 +283,11 @@ describe('ThemeContext (Story 14c-refactor.9)', () => {
             expect(result.current.currency).toBe('USD');
         });
 
-        it('should load dateFormat from localStorage', () => {
-            mockStorage['dateFormat'] = 'US';
+        it('should load dateFormat from store', () => {
+            // Set store state directly
+            act(() => {
+                useSettingsStore.setState({ dateFormat: 'US' });
+            });
 
             const { result } = renderHook(() => useTheme(), {
                 wrapper: createWrapper(),

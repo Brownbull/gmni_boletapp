@@ -22,15 +22,17 @@
  *
  * @example
  * ```tsx
+ * // Story 14e-36c: Editor state now from Zustand store, minimal props needed
  * function TransactionEditorView(props) {
  *   const handlers = useTransactionEditorHandlers({
  *     user,
- *     services,
- *     currentTransaction,
- *     setCurrentTransaction,
- *     transactionNavigationList,
+ *     db,
  *     transactions,
- *     // ... other required props
+ *     saveTransaction,
+ *     deleteTransaction,
+ *     processScan,
+ *     handleRescan,
+ *     hasActiveTransactionConflict,
  *   });
  *
  *   return (
@@ -51,8 +53,18 @@ import {
     useScanStore,
     useScanActions,
 } from '@features/scan/store';
+// Story 14e-40: ConflictResult type from scan utils
+import type { ConflictResult } from '@features/scan';
 import { batchReviewActions } from '@features/batch-review';
 import { useNavigationActions } from '@/shared/stores';
+// Story 14e-36c: Transaction editor store (replaces App.tsx props)
+import {
+    useCurrentTransaction,
+    useEditorMode,
+    useNavigationList,
+    useIsSaving,
+    useTransactionEditorActions,
+} from '@features/transaction-editor';
 
 // Service imports
 import { updateMemberTimestampsForTransaction } from '@/services/sharedGroupService';
@@ -63,30 +75,16 @@ import { updateMemberTimestampsForTransaction } from '@/services/sharedGroupServ
 
 /**
  * Props for useTransactionEditorHandlers hook.
- * These come from App.tsx state that needs coordination.
+ * Story 14e-36c: Editor state now comes from Zustand store, not props.
+ * Remaining props are for external dependencies not in the store.
  */
 export interface UseTransactionEditorHandlersProps {
     // User and auth
     user: User | null;
     db: Firestore;
 
-    // Transaction state (App.tsx managed)
-    currentTransaction: Transaction | null;
-    setCurrentTransaction: (tx: Transaction | null) => void;
-    transactionEditorMode: 'new' | 'existing';
-    setTransactionEditorMode: (mode: 'new' | 'existing') => void;
-    setIsViewingReadOnly: (value: boolean) => void;
-
-    // Transaction data for list navigation
+    // Transaction data for list navigation (not in editor store)
     transactions: Transaction[];
-    transactionNavigationList: string[] | null;
-    setTransactionNavigationList: (list: string[] | null) => void;
-
-    // UI state
-    isTransactionSaving: boolean;
-    setIsTransactionSaving: (value: boolean) => void;
-    setAnimateEditViewItems: (value: boolean) => void;
-    setCreditUsedInSession: (value: boolean) => void;
 
     // Transaction handlers from useTransactionHandlers
     saveTransaction: (tx: Transaction) => Promise<string | void>;
@@ -96,8 +94,8 @@ export interface UseTransactionEditorHandlersProps {
     processScan: (images?: string[]) => void;
     handleRescan: () => Promise<void>;
 
-    // Conflict detection
-    hasActiveTransactionConflict: () => { hasConflict: boolean; reason?: string };
+    // Story 14e-40: Conflict detection - now using extracted utility type
+    hasActiveTransactionConflict: () => ConflictResult;
 }
 
 /**
@@ -153,21 +151,11 @@ export interface UseTransactionEditorHandlersReturn {
 export function useTransactionEditorHandlers(
     props: UseTransactionEditorHandlersProps
 ): UseTransactionEditorHandlersReturn {
+    // Story 14e-36c: Only external dependencies come from props
     const {
         user,
         db,
-        currentTransaction,
-        setCurrentTransaction,
-        transactionEditorMode,
-        setTransactionEditorMode,
-        setIsViewingReadOnly,
         transactions,
-        transactionNavigationList,
-        setTransactionNavigationList,
-        isTransactionSaving,
-        setIsTransactionSaving,
-        setAnimateEditViewItems,
-        setCreditUsedInSession,
         saveTransaction,
         deleteTransaction,
         processScan,
@@ -180,6 +168,21 @@ export function useTransactionEditorHandlers(
     // ==========================================================================
     // Store Access
     // ==========================================================================
+
+    // Story 14e-36c: Transaction editor state from Zustand store (not props)
+    const currentTransaction = useCurrentTransaction();
+    const transactionEditorMode = useEditorMode();
+    const transactionNavigationList = useNavigationList();
+    const isTransactionSaving = useIsSaving();
+    const {
+        setTransaction: setCurrentTransaction,
+        setMode: setTransactionEditorMode,
+        setReadOnly: setIsViewingReadOnly,
+        setNavigationList: setTransactionNavigationList,
+        setSaving: setIsTransactionSaving,
+        setAnimateItems: setAnimateEditViewItems,
+        setCreditUsed: setCreditUsedInSession,
+    } = useTransactionEditorActions();
 
     const scanState = useScanStore();
     const {

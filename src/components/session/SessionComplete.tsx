@@ -2,6 +2,7 @@
  * SessionComplete Component
  *
  * Story 14.20: Session Completion Messaging
+ * Story 14e-37: Migrated to use Zustand store (optional)
  * Epic 14: Core Implementation
  *
  * Displays an encouraging wrap-up message after saving transactions.
@@ -12,6 +13,9 @@
  * - Respects prefers-reduced-motion
  * - Non-intrusive positioning (doesn't block navigation)
  *
+ * Story 14e-37: Can now use store directly for context and dismiss action.
+ * Props are optional - if not provided, uses useInsightStore.
+ *
  * @see docs/sprint-artifacts/epic14/stories/story-14.20-session-completion-messaging.md
  */
 
@@ -19,6 +23,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { X, TrendingUp, Camera, History, Sparkles } from 'lucide-react';
 import { DURATION, EASING } from '../animation/constants';
 import { TranslationKey } from '../../utils/translations';
+import { useSessionContext, useInsightActions } from '@/shared/stores';
 
 /**
  * Session context for message selection and summary display
@@ -55,11 +60,17 @@ export interface Suggestion {
 }
 
 export interface SessionCompleteProps {
-  context: SessionContext;
-  onDismiss: () => void;
+  /** Session context data. Optional - uses store if not provided (Story 14e-37) */
+  context?: SessionContext;
+  /** Dismiss callback. Optional - uses store action if not provided (Story 14e-37) */
+  onDismiss?: () => void;
+  /** Action callback for navigation (analytics, scan, history) */
   onAction: (action: SessionAction) => void;
+  /** Translation function */
   t: (key: TranslationKey) => string;
+  /** Theme for styling */
   theme: 'light' | 'dark';
+  /** Auto-dismiss delay in ms. Default: 5000 */
   autoDismissMs?: number;
 }
 
@@ -149,10 +160,12 @@ function formatCurrency(amount: number, currency: string): string {
  *
  * Displays after save + insight flow completes.
  * Non-intrusive toast-like notification with auto-dismiss.
+ *
+ * Story 14e-37: Can now use store for context and dismiss.
  */
 export function SessionComplete({
-  context,
-  onDismiss,
+  context: contextProp,
+  onDismiss: onDismissProp,
   onAction,
   t,
   theme,
@@ -162,6 +175,14 @@ export function SessionComplete({
   const [isPaused, setIsPaused] = useState(false);
   const touchStartY = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Story 14e-37: Use store if props not provided
+  const storeContext = useSessionContext();
+  const { hideSessionCompleteOverlay } = useInsightActions();
+
+  // Use prop if provided, otherwise fall back to store
+  const context = contextProp ?? storeContext;
+  const onDismiss = onDismissProp ?? hideSessionCompleteOverlay;
 
   // Check reduced motion preference
   const prefersReducedMotion =
@@ -210,6 +231,12 @@ export function SessionComplete({
     // Resume timer after touch ends (with a small delay for accidental touches)
     setTimeout(() => setIsPaused(false), 500);
   };
+
+  // Story 14e-37: If no context (prop or store), don't render
+  // Note: When using store, parent should check showSessionComplete before rendering
+  if (!context) {
+    return null;
+  }
 
   // Get message and suggestions
   const messageKey = selectMessage(context);

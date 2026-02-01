@@ -118,15 +118,17 @@ export function isFullScreenView(view: View): boolean {
  *
  * AppProviders wraps children with app-level context providers:
  * - ThemeProvider (theme + font preferences)
- * - NavigationProvider (view navigation state)
  * - AppStateProvider (toasts, operation status)
  * - NotificationProvider (in-app notifications)
  *
  * External providers (Auth, Query, Scan) remain in main.tsx.
  * View-scoped providers (Analytics, HistoryFilters) remain per-view.
  *
+ * Story 14e-45: NavigationProvider removed - navigation now uses Zustand:
+ * - Navigation state: useNavigationStore from @/shared/stores
+ * - Navigation actions: useNavigationActions() from @/shared/stores
+ *
  * Story 14e-25d: ViewHandlersProvider removed - views now use direct hooks:
- * - Navigation: useNavigationActions() from @/shared/stores
  * - Toast: useToast() from @/shared/hooks
  * - Modals: useModalActions() from @/managers/ModalManager
  * - History navigation: useHistoryNavigation() from @/shared/hooks

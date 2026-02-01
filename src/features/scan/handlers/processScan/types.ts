@@ -8,6 +8,7 @@
  */
 
 import type { Transaction, TransactionItem, StoreCategory } from '@/types/transaction';
+import type { FindItemNameMatchFn } from '@/features/categories';
 
 /**
  * Result from Gemini AI scan (subset of Transaction fields returned by analyzeReceipt).
@@ -185,11 +186,11 @@ export interface MappingDependencies {
   /** Find a merchant match for the given merchant name */
   findMerchantMatch: (merchant: string) => MerchantMatchResult | null;
 
-  /** Apply item name mappings (scoped to a normalized merchant) */
-  applyItemNameMappings: (
-    transaction: Transaction,
-    normalizedMerchant: string
-  ) => ItemNameMappingResult;
+  /**
+   * Find item name match for a merchant and item (Story 14e-42).
+   * Used with applyItemNameMappings utility from @features/categories.
+   */
+  findItemNameMatch: FindItemNameMatchFn;
 
   /** Increment usage count for a category mapping */
   incrementMappingUsage: (mappingId: string) => void;
@@ -246,55 +247,124 @@ export interface QuickSaveDialogData {
 
 /**
  * UI dependencies - setters, dispatchers, and dialog triggers.
- * These are callbacks that affect UI state.
+ *
+ * **Story 14e-43: Store Direct Access Refactor**
+ *
+ * Most UI callbacks are now accessed directly via Zustand stores in processScan.ts:
+ * - scanActions.processError() instead of setScanError()
+ * - scanActions.processStart/Success() instead of dispatchProcessStart/Success()
+ * - scanActions.showDialog() instead of showScanDialog()
+ * - scanActions.setImages() instead of setScanImages()
+ * - scanActions.setSkipScanCompleteModal() instead of setSkipScanCompleteModal()
+ * - transactionEditorActions.setTransaction() instead of setCurrentTransaction()
+ * - transactionEditorActions.setAnimateItems() instead of setAnimateEditViewItems()
+ * - transactionEditorActions.setCreditUsed() instead of setCreditUsedInSession()
+ * - navigationActions.setView() instead of setView()
+ *
+ * **Still Required (no store equivalent):**
+ * - setToastMessage: No toast store exists yet
+ *
+ * @see scanActions from '@features/scan/store'
+ * @see transactionEditorActions from '@features/transaction-editor/store'
+ * @see navigationActions from '@shared/stores'
  */
 export interface UIDependencies {
-  /** Set scan error message */
-  setScanError: (error: string | null) => void;
+  /**
+   * Set scan error message.
+   * @deprecated Story 14e-43: Now accessed via scanActions.processError() directly.
+   * This callback is ignored - processScan uses store actions internally.
+   */
+  setScanError?: (error: string | null) => void;
 
-  /** Set current transaction being edited */
-  setCurrentTransaction: (transaction: Transaction | null) => void;
+  /**
+   * Set current transaction being edited.
+   * @deprecated Story 14e-43: Now accessed via transactionEditorActions.setTransaction() directly.
+   * This callback is ignored - processScan uses store actions internally.
+   */
+  setCurrentTransaction?: (transaction: Transaction | null) => void;
 
-  /** Set the current view (accepts any string for flexibility) */
+  /**
+   * Set the current view.
+   * @deprecated Story 14e-43: Now accessed via navigationActions.setView() directly.
+   * This callback is ignored - processScan uses store actions internally.
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setView: (view: any) => void;
+  setView?: (view: any) => void;
 
-  /** Show a scan dialog (total mismatch, currency mismatch, quick save) */
-  showScanDialog: (type: ProcessScanDialogType, data?: unknown) => void;
+  /**
+   * Show a scan dialog (total mismatch, currency mismatch, quick save).
+   * @deprecated Story 14e-43: Now accessed via scanActions.showDialog() directly.
+   * This callback is ignored - processScan uses store actions internally.
+   */
+  showScanDialog?: (type: ProcessScanDialogType, data?: unknown) => void;
 
-  /** Dismiss the current scan dialog */
-  dismissScanDialog: () => void;
+  /**
+   * Dismiss the current scan dialog.
+   * @deprecated Story 14e-43: Now accessed via scanActions.dismissDialog() directly.
+   * This callback is ignored - processScan uses store actions internally.
+   */
+  dismissScanDialog?: () => void;
 
-  /** Dispatch scan process start */
-  dispatchProcessStart: (creditType: 'normal' | 'super', creditsCount: number) => void;
+  /**
+   * Dispatch scan process start.
+   * @deprecated Story 14e-43: Now accessed via scanActions.processStart() directly.
+   * This callback is ignored - processScan uses store actions internally.
+   */
+  dispatchProcessStart?: (creditType: 'normal' | 'super', creditsCount: number) => void;
 
-  /** Dispatch scan process success */
-  dispatchProcessSuccess: (results: Transaction[]) => void;
+  /**
+   * Dispatch scan process success.
+   * @deprecated Story 14e-43: Now accessed via scanActions.processSuccess() directly.
+   * This callback is ignored - processScan uses store actions internally.
+   */
+  dispatchProcessSuccess?: (results: Transaction[]) => void;
 
-  /** Dispatch scan process error */
-  dispatchProcessError: (error: string) => void;
+  /**
+   * Dispatch scan process error.
+   * @deprecated Story 14e-43: Now accessed via scanActions.processError() directly.
+   * This callback is ignored - processScan uses store actions internally.
+   */
+  dispatchProcessError?: (error: string) => void;
 
-  /** Set toast message */
+  /**
+   * Set toast message.
+   * **Required** - No toast store exists. This is still injected from App.tsx.
+   */
   setToastMessage: (message: { text: string; type: 'success' | 'info' }) => void;
 
   /**
-   * Set whether analyzing is in progress
-   * Story 14e-25d: Optional and no-op - state is managed by state machine (dispatchProcessStart/dispatchProcessSuccess)
-   * @deprecated This is a no-op. State is managed by the scan state machine.
+   * Set whether analyzing is in progress.
+   * @deprecated Story 14e-25d: No-op - state is managed by the scan state machine.
    */
   setIsAnalyzing?: (analyzing: boolean) => void;
 
-  /** Set scan images */
-  setScanImages: (images: string[]) => void;
+  /**
+   * Set scan images.
+   * @deprecated Story 14e-43: Now accessed via scanActions.setImages() directly.
+   * This callback is ignored - processScan uses store actions internally.
+   */
+  setScanImages?: (images: string[]) => void;
 
-  /** Set animate edit view items flag */
-  setAnimateEditViewItems: (animate: boolean) => void;
+  /**
+   * Set animate edit view items flag.
+   * @deprecated Story 14e-43: Now accessed via transactionEditorActions.setAnimateItems() directly.
+   * This callback is ignored - processScan uses store actions internally.
+   */
+  setAnimateEditViewItems?: (animate: boolean) => void;
 
-  /** Set skip scan complete modal flag */
-  setSkipScanCompleteModal: (skip: boolean) => void;
+  /**
+   * Set skip scan complete modal flag.
+   * @deprecated Story 14e-43: Now accessed via scanActions.setSkipScanCompleteModal() directly.
+   * This callback is ignored - processScan uses store actions internally.
+   */
+  setSkipScanCompleteModal?: (skip: boolean) => void;
 
-  /** Mark that credit was used in this session */
-  setCreditUsedInSession: (used: boolean) => void;
+  /**
+   * Mark that credit was used in this session.
+   * @deprecated Story 14e-43: Now accessed via transactionEditorActions.setCreditUsed() directly.
+   * This callback is ignored - processScan uses store actions internally.
+   */
+  setCreditUsedInSession?: (used: boolean) => void;
 }
 
 /**
@@ -464,10 +534,18 @@ export interface TrustedAutoSaveDependencies {
   /** Current batch session */
   batchSession: BatchSession | null;
 
-  /** Callback when insight should be shown */
+  /**
+   * Callback when insight should be shown.
+   * @deprecated Story 14e-43: Now accessed via insightActions.showInsight() directly.
+   * This callback is ignored - processScan uses store actions internally.
+   */
   onShowInsight?: (insight: Insight) => void;
 
-  /** Callback when batch summary should be shown */
+  /**
+   * Callback when batch summary should be shown.
+   * @deprecated Story 14e-43: Now accessed via insightActions.showBatchSummaryOverlay() directly.
+   * This callback is ignored - processScan uses store actions internally.
+   */
   onShowBatchSummary?: () => void;
 }
 

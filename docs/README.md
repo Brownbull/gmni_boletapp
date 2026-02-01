@@ -1,7 +1,7 @@
 # Boletapp Documentation
 
-**Last Updated:** 2026-01-22
-**Version:** 5.0
+**Last Updated:** 2026-02-01
+**Version:** 6.0
 
 ---
 
@@ -51,7 +51,7 @@ Epic planning and technical specifications
 BMAD sprint stories and tracking
 - Sprint status tracking (sprint-status.yaml)
 - Epic folders (epic7, epic8, epic9, etc.)
-- Current epic: Epic 14c-refactor
+- Current epic: **Epic 14e - Feature Architecture**
 
 ### [`testing/`](./testing/)
 Test environment setup and testing guides
@@ -94,6 +94,14 @@ All documents follow these conventions:
 ---
 
 ## Recent Updates
+
+### 2026-02-01 (v6.0) - Epic 14e Feature Architecture
+- Updated architecture.md with Zustand state management (7 stores)
+- Updated project-overview.md with feature-based architecture
+- Updated development-guide.md with new project structure and test commands
+- Updated source-tree-analysis.md with feature modules and Zustand stores
+- Added ADR-012 for Epic 14e architectural decisions
+- Architecture now documents 2-paradigm state approach (Zustand + TanStack Query)
 
 ### 2026-01-22 (v5.0) - Documentation Consolidation (Story 14c-refactor.24)
 - Deleted duplicate root files (architecture-epic7.md, prd-epic7.md)

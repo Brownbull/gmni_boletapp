@@ -63,7 +63,10 @@ import {
 } from '../../services/insightEngineService';
 import { shouldShowQuickSave, calculateConfidence } from '../../utils/confidenceCheck';
 import { parseStrictNumber } from '../../utils/validation';
-import { TRANSLATIONS } from '../../utils/translations';
+// Story 14e-41: reconcileItemsTotal moved to entity (single source of truth)
+import { reconcileItemsTotal as entityReconcileItemsTotal } from '@entities/transaction';
+// Story 14e-42: applyItemNameMappings moved to @features/categories (single source of truth)
+import { applyItemNameMappings as pureApplyItemNameMappings } from '@/features/categories';
 
 // =============================================================================
 // Types
@@ -395,73 +398,26 @@ export function useScanHandlers(
     /**
      * Apply learned item name mappings to transaction items.
      * Only applies when there's a merchant match (item mappings are scoped per-store).
+     *
+     * Story 14e-42: Wrapper around pure utility with findItemNameMatch bound from context.
      */
     const applyItemNameMappings = useCallback((
         transaction: Transaction,
         normalizedMerchant: string
     ): { transaction: Transaction; appliedIds: string[] } => {
-        const appliedIds: string[] = [];
-
-        const updatedItems = transaction.items.map((item: TransactionItem): TransactionItem => {
-            const match = findItemNameMatch(normalizedMerchant, item.name);
-
-            if (match && match.confidence > 0.7) {
-                if (match.mapping.id) {
-                    appliedIds.push(match.mapping.id);
-                }
-
-                return {
-                    ...item,
-                    name: match.mapping.targetItemName,
-                    ...(match.mapping.targetCategory && { category: match.mapping.targetCategory }),
-                    categorySource: match.mapping.targetCategory ? 'learned' as const : item.categorySource,
-                };
-            }
-
-            return item;
-        });
-
-        return {
-            transaction: {
-                ...transaction,
-                items: updatedItems,
-            },
-            appliedIds,
-        };
+        return pureApplyItemNameMappings(transaction, normalizedMerchant, findItemNameMatch);
     }, [findItemNameMatch]);
 
     /**
      * Reconcile transaction total with sum of items.
      * If there's a discrepancy, adds a surplus or discount item to balance.
+     *
+     * Story 14e-41: Wrapper around entity function with lang bound from context.
      */
     const reconcileItemsTotal = useCallback((
-        items: Array<{ name: string; price: number; category?: string; qty?: number; subcategory?: string }>,
+        items: TransactionItem[],
         receiptTotal: number
-    ): { items: typeof items; hasDiscrepancy: boolean; discrepancyAmount: number } => {
-        const itemsSum = items.reduce((sum, item) => sum + item.price, 0);
-
-        const roundedItemsSum = Math.round(itemsSum * 100) / 100;
-        const roundedReceiptTotal = Math.round(receiptTotal * 100) / 100;
-        const difference = Math.round((roundedReceiptTotal - roundedItemsSum) * 100) / 100;
-
-        if (Math.abs(difference) < 1) {
-            return { items, hasDiscrepancy: false, discrepancyAmount: 0 };
-        }
-
-        const translations = TRANSLATIONS[lang];
-        const adjustmentItem = {
-            name: difference > 0 ? translations.surplusItem : translations.discountItem,
-            price: difference,
-            category: 'Other' as const,
-            qty: 1,
-        };
-
-        return {
-            items: [...items, adjustmentItem],
-            hasDiscrepancy: true,
-            discrepancyAmount: difference,
-        };
-    }, [lang]);
+    ) => entityReconcileItemsTotal(items, receiptTotal, lang as 'en' | 'es'), [lang]);
 
     // =========================================================================
     // Scan Overlay Handlers

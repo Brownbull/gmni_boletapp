@@ -8,10 +8,10 @@
 
 - **Project Name:** boletapp
 - **Project Type:** Expense Tracker PWA
-- **Architecture:** Single-Page Application (SPA)
-- **Repository Structure:** Monolith
-- **Primary Language:** TypeScript/JavaScript (React)
-- **Status:** Brownfield Project
+- **Architecture:** Feature-Based SPA with Zustand State Management
+- **Repository Structure:** Modular Monolith (Feature-Sliced Design)
+- **Primary Language:** TypeScript (React 18)
+- **Status:** Production (Active Development)
 
 ## Purpose
 
@@ -25,24 +25,38 @@ The application enables users to:
 
 | Category | Technology | Version/Details | Justification |
 |----------|-----------|----------------|---------------|
-| **Frontend Framework** | React | 18.x | Component-based UI with hooks |
-| **Language** | TypeScript/JSX | ES6+ | Type-safe development |
-| **UI Library** | Lucide React | Latest | Modern icon system |
-| **Styling** | Tailwind CSS | Utility classes | Inline utility-first CSS |
-| **Backend/Database** | Firebase Firestore | Latest | Real-time NoSQL database |
-| **Authentication** | Firebase Auth | Latest | Google OAuth integration |
-| **AI Integration** | Google Gemini AI | 2.5-flash-preview | Receipt OCR and parsing |
+| **Frontend Framework** | React | 18.3.1 | Component-based UI with hooks |
+| **Language** | TypeScript | 5.3.3 | Type-safe development |
+| **State Management** | Zustand + TanStack Query | 5.x | Client state (Zustand), server state (TQ) |
+| **Build Tool** | Vite | 5.4.0 | Fast ES module bundler with HMR |
+| **UI Library** | Lucide React | 0.460.0 | Modern icon system |
+| **Styling** | Tailwind CSS | 3.x | Utility-first CSS via CDN |
+| **Backend/Database** | Firebase Firestore | 10.14.1 | Real-time NoSQL database |
+| **Authentication** | Firebase Auth | 10.14.1 | Google OAuth integration |
+| **AI Integration** | Google Gemini AI | 2.5-flash | Receipt OCR via Cloud Function |
 | **Internationalization** | Native Intl API | Browser-native | Multi-currency (CLP, USD) |
-| **Data Visualization** | Custom Charts | Recharts-style | Pie and bar charts |
-| **Build Tool** | None (Single File) | N/A | Direct browser execution |
+| **Data Visualization** | Custom Charts | SVG-based | Pie and bar charts |
+| **Testing** | Vitest + React Testing Library | Latest | Unit and component tests |
 
 ## Architecture Pattern
 
-**Single-File Component Architecture**
-- All application logic contained in [main.tsx](../main.tsx)
-- Component-based structure using React functional and class components
-- State management using React hooks (useState, useEffect, useRef)
-- Error boundary pattern for fault tolerance
+**Feature-Based Architecture (Epic 14e)**
+
+- **Feature Modules:** Self-contained features in `src/features/` with own stores, handlers, and hooks
+- **Zustand State:** 7 stores managing client state (scan, batch-review, navigation, settings, etc.)
+- **TanStack Query:** Server state caching with Firestore real-time sync
+- **Entity Layer:** Domain models in `src/entities/` (transaction utils, reconciliation)
+- **Shared Layer:** Cross-cutting utilities, stores, and components in `src/shared/`
+
+**Key Directories:**
+```
+src/features/       # Feature modules (scan, batch-review, transaction-editor, etc.)
+src/entities/       # Domain entities (transaction)
+src/shared/         # Shared stores, utilities, UI components
+src/managers/       # Infrastructure (modal management)
+src/contexts/       # React Context providers
+src/views/          # Page-level view components
+```
 
 ## Key Features
 
@@ -78,17 +92,28 @@ The application enables users to:
 
 ```
 boletapp/
-├── main.tsx                    # Single-file application
-├── gemini_instructions.md      # Firebase & Gemini setup guide
-├── gemini_summary.md          # Application overview
-├── docs/                      # Generated documentation
-│   ├── index.md              # Master index
-│   ├── project-overview.md   # This file
-│   └── ...                   # Other generated docs
-├── .bmad/                    # BMAD framework (development methodology)
-├── .github/                  # GitHub configuration
-├── .claude/                  # Claude Code commands
-└── .vscode/                  # VSCode settings
+├── src/                       # Source code
+│   ├── features/              # Feature modules (scan, batch-review, etc.)
+│   ├── entities/              # Domain entities (transaction)
+│   ├── shared/                # Shared stores, utils, UI
+│   ├── managers/              # Infrastructure (modal)
+│   ├── contexts/              # React Context providers
+│   ├── views/                 # Page-level components
+│   ├── components/            # Shared UI components
+│   ├── hooks/                 # App-level hooks
+│   ├── services/              # External API integrations
+│   ├── config/                # Configuration files
+│   ├── App.tsx                # Main orchestrator (~2,191 lines)
+│   └── main.tsx               # React DOM entry point
+├── functions/                 # Firebase Cloud Functions
+├── tests/                     # Test files (unit, integration)
+├── docs/                      # Documentation
+│   ├── architecture/          # Architecture docs
+│   ├── reference/             # Reference docs (this file)
+│   └── sprint-artifacts/      # Sprint planning & stories
+├── _bmad/                     # BMAD framework
+├── .github/                   # GitHub workflows
+└── .vscode/                   # VSCode settings
 ```
 
 ## Getting Started
@@ -137,4 +162,4 @@ Refer to:
 ---
 
 *Generated by BMAD Document Project Workflow*
-*Date: 2025-11-20*
+*Last Updated: 2026-02-01 (Epic 14e Feature Architecture)*

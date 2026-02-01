@@ -21,8 +21,9 @@ import type {
   SaveCompleteContext,
   CategoryMappingResult,
   MerchantMatchResult,
-  ItemNameMappingResult,
 } from '@features/batch-review/handlers';
+// Story 14e-42: FindItemNameMatchFn now used instead of ItemNameMappingResult
+import type { FindItemNameMatchFn } from '@/features/categories';
 import type { Transaction, StoreCategory } from '@/types/transaction';
 import type { User } from 'firebase/auth';
 import type { Services } from '@/contexts/AuthContext';
@@ -119,13 +120,8 @@ function createMockSaveContext(
 
   const defaultFindMerchantMatch = (): MerchantMatchResult | null => null;
 
-  const defaultApplyItemNameMappings = (
-    tx: Transaction,
-    _normalizedMerchant: string
-  ): ItemNameMappingResult => ({
-    transaction: tx,
-    appliedIds: [],
-  });
+  // Story 14e-42: Now uses findItemNameMatch for DI to pure utility
+  const defaultFindItemNameMatch: FindItemNameMatchFn = () => null;
 
   return {
     services: createMockServices(),
@@ -133,7 +129,7 @@ function createMockSaveContext(
     mappings: [],
     applyCategoryMappings: defaultApplyCategoryMappings,
     findMerchantMatch: defaultFindMerchantMatch,
-    applyItemNameMappings: defaultApplyItemNameMappings,
+    findItemNameMatch: defaultFindItemNameMatch,
     ...overrides,
   };
 }
@@ -279,10 +275,8 @@ describe('saveBatchTransaction', () => {
           transaction: tx,
           appliedMappingIds: [],
         }),
-        applyItemNameMappings: (tx) => ({
-          transaction: tx,
-          appliedIds: [],
-        }),
+        // Story 14e-42: Now uses findItemNameMatch for DI to pure utility
+        findItemNameMatch: () => null,
       });
 
       await saveBatchTransaction(transaction, context);
@@ -347,10 +341,8 @@ describe('saveBatchTransaction', () => {
           transaction: tx,
           appliedMappingIds: [],
         }),
-        applyItemNameMappings: (tx) => ({
-          transaction: tx,
-          appliedIds: [],
-        }),
+        // Story 14e-42: Now uses findItemNameMatch for DI to pure utility
+        findItemNameMatch: () => null,
       });
 
       await saveBatchTransaction(transaction, context);
@@ -382,10 +374,8 @@ describe('saveBatchTransaction', () => {
           transaction: tx,
           appliedMappingIds: [],
         }),
-        applyItemNameMappings: (tx) => ({
-          transaction: tx,
-          appliedIds: [],
-        }),
+        // Story 14e-42: Now uses findItemNameMatch for DI to pure utility
+        findItemNameMatch: () => null,
       });
 
       await saveBatchTransaction(transaction, context);
@@ -407,12 +397,15 @@ describe('saveBatchTransaction', () => {
         },
         confidence: 0.9,
       };
-      const applyItemNameMappings = vi.fn().mockReturnValue({
-        transaction: {
-          ...transaction,
-          items: [{ name: 'Milk 1 Liter', price: 500, qty: 1 }],
-        },
-        appliedIds: ['item-mapping-1'],
+      // Story 14e-42: Now uses findItemNameMatch for DI to pure utility
+      const mockFindItemNameMatch = vi.fn((merchant: string, itemName: string) => {
+        if (itemName === 'MILK 1L') {
+          return {
+            mapping: { id: 'item-mapping-1', targetItemName: 'Milk 1 Liter' },
+            confidence: 0.9,
+          };
+        }
+        return null;
       });
 
       const context = createMockSaveContext({
@@ -421,19 +414,23 @@ describe('saveBatchTransaction', () => {
           transaction: tx,
           appliedMappingIds: [],
         }),
-        applyItemNameMappings,
+        findItemNameMatch: mockFindItemNameMatch,
       });
 
       await saveBatchTransaction(transaction, context);
 
-      expect(applyItemNameMappings).toHaveBeenCalledWith(
-        expect.anything(),
-        'store' // normalizedMerchant
-      );
+      // Verify findItemNameMatch was called with the normalized merchant
+      expect(mockFindItemNameMatch).toHaveBeenCalledWith('store', 'MILK 1L');
     });
 
     it('should increment item name mapping usage when applied', async () => {
-      const transaction = createMockTransaction();
+      // Create transaction with 2 items to test multiple increments
+      const transaction = createMockTransaction({
+        items: [
+          { name: 'Item 1', price: 500, qty: 1 },
+          { name: 'Item 2', price: 500, qty: 1 },
+        ],
+      });
       const merchantMatch: MerchantMatchResult = {
         mapping: {
           id: 'merchant-1',
@@ -443,16 +440,24 @@ describe('saveBatchTransaction', () => {
         confidence: 0.9,
       };
 
+      // Story 14e-42: Now uses findItemNameMatch for DI to pure utility
+      // Mock returns matches for both items to trigger 2 usage increments
+      let callCount = 0;
+      const mockFindItemNameMatch = vi.fn(() => {
+        callCount++;
+        return {
+          mapping: { id: `item-${callCount}`, targetItemName: `Mapped ${callCount}` },
+          confidence: 0.9,
+        };
+      });
+
       const context = createMockSaveContext({
         findMerchantMatch: () => merchantMatch,
         applyCategoryMappings: (tx) => ({
           transaction: tx,
           appliedMappingIds: [],
         }),
-        applyItemNameMappings: (tx) => ({
-          transaction: tx,
-          appliedIds: ['item-1', 'item-2'],
-        }),
+        findItemNameMatch: mockFindItemNameMatch,
       });
 
       await saveBatchTransaction(transaction, context);

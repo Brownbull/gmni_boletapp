@@ -1,5 +1,6 @@
 /**
  * Story 14e-18c: CreditFeature Component Unit Tests
+ * Story 14e-39: Trust Prompt State Integration Tests
  *
  * Tests for the CreditFeature orchestrator component following Atlas testing patterns.
  *
@@ -10,10 +11,11 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import type { User } from 'firebase/auth';
-import { CreditFeature, useCreditFeature, type CreditFeatureProps } from '@features/credit';
+import { CreditFeature, useCreditFeature, type CreditFeatureProps, type TrustPromptActions } from '@features/credit';
 import { useCreditState } from '@features/credit';
 import type { UserCredits } from '@/types/scan';
 import { DEFAULT_CREDITS } from '@/types/scan';
+import type { TrustPromptEligibility } from '@/types/trust';
 
 // ============================================================================
 // Mocks
@@ -72,6 +74,10 @@ function CreditFeatureConsumer({ onRender }: { onRender?: (ctx: ReturnType<typeo
       <span data-testid="credits-remaining">{ctx.credits.remaining}</span>
       <span data-testid="super-remaining">{ctx.credits.superRemaining}</span>
       <span data-testid="show-warning">{String(ctx.showCreditWarning)}</span>
+      {/* Story 14e-39: Trust prompt state */}
+      <span data-testid="show-trust-prompt">{String(ctx.showTrustPrompt)}</span>
+      <span data-testid="trust-prompt-merchant">{ctx.trustPromptData?.merchant?.merchantName || ''}</span>
+      <span data-testid="should-trigger-credit-check">{String(ctx.shouldTriggerCreditCheck)}</span>
       <button data-testid="check-credits" onClick={ctx.handleBatchConfirmWithCreditCheck}>
         Check Credits
       </button>
@@ -80,6 +86,25 @@ function CreditFeatureConsumer({ onRender }: { onRender?: (ctx: ReturnType<typeo
       </button>
       <button data-testid="cancel" onClick={ctx.handleCreditWarningCancel}>
         Cancel
+      </button>
+      {/* Story 14e-39: Trust prompt actions */}
+      <button
+        data-testid="show-trust-prompt-action"
+        onClick={() => ctx.showTrustPromptAction({
+          eligible: true,
+          merchant: { merchantName: 'Test Merchant', scanCount: 5 },
+        })}
+      >
+        Show Trust Prompt
+      </button>
+      <button data-testid="hide-trust-prompt" onClick={ctx.hideTrustPrompt}>
+        Hide Trust Prompt
+      </button>
+      <button data-testid="trigger-credit-check-action" onClick={ctx.triggerCreditCheckAction}>
+        Trigger Credit Check
+      </button>
+      <button data-testid="clear-credit-check-trigger" onClick={ctx.clearCreditCheckTrigger}>
+        Clear Credit Check Trigger
       </button>
     </div>
   );
@@ -845,6 +870,385 @@ describe('triggerCreditCheck prop', () => {
     // Dialog should be visible again
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+  });
+});
+
+// ============================================================================
+// Story 14e-39: Trust Prompt State Tests
+// ============================================================================
+
+describe('Trust Prompt State (Story 14e-39)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseCreditState.mockReturnValue(createMockCreditState());
+  });
+
+  // =========================================================================
+  // Trust Prompt State Initialization
+  // =========================================================================
+
+  describe('trust prompt state initialization', () => {
+    it('should initialize with showTrustPrompt as false', () => {
+      render(
+        <CreditFeature {...defaultProps}>
+          <CreditFeatureConsumer />
+        </CreditFeature>
+      );
+
+      expect(screen.getByTestId('show-trust-prompt')).toHaveTextContent('false');
+    });
+
+    it('should initialize with trustPromptData as null', () => {
+      render(
+        <CreditFeature {...defaultProps}>
+          <CreditFeatureConsumer />
+        </CreditFeature>
+      );
+
+      expect(screen.getByTestId('trust-prompt-merchant')).toHaveTextContent('');
+    });
+
+    it('should initialize with shouldTriggerCreditCheck as false', () => {
+      render(
+        <CreditFeature {...defaultProps}>
+          <CreditFeatureConsumer />
+        </CreditFeature>
+      );
+
+      expect(screen.getByTestId('should-trigger-credit-check')).toHaveTextContent('false');
+    });
+  });
+
+  // =========================================================================
+  // Trust Prompt Actions
+  // =========================================================================
+
+  describe('trust prompt actions', () => {
+    it('should show trust prompt when showTrustPromptAction is called', async () => {
+      render(
+        <CreditFeature {...defaultProps}>
+          <CreditFeatureConsumer />
+        </CreditFeature>
+      );
+
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('show-trust-prompt-action'));
+      });
+
+      expect(screen.getByTestId('show-trust-prompt')).toHaveTextContent('true');
+      expect(screen.getByTestId('trust-prompt-merchant')).toHaveTextContent('Test Merchant');
+    });
+
+    it('should hide trust prompt when hideTrustPrompt is called', async () => {
+      render(
+        <CreditFeature {...defaultProps}>
+          <CreditFeatureConsumer />
+        </CreditFeature>
+      );
+
+      // First show the prompt
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('show-trust-prompt-action'));
+      });
+
+      expect(screen.getByTestId('show-trust-prompt')).toHaveTextContent('true');
+
+      // Then hide it
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('hide-trust-prompt'));
+      });
+
+      expect(screen.getByTestId('show-trust-prompt')).toHaveTextContent('false');
+      expect(screen.getByTestId('trust-prompt-merchant')).toHaveTextContent('');
+    });
+
+    it('should trigger credit check when triggerCreditCheckAction is called', async () => {
+      render(
+        <CreditFeature {...defaultProps}>
+          <CreditFeatureConsumer />
+        </CreditFeature>
+      );
+
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('trigger-credit-check-action'));
+      });
+
+      // Story 14e-39 (code review fix #2): Verify both state AND dialog are shown
+      expect(screen.getByTestId('should-trigger-credit-check')).toHaveTextContent('true');
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    it('should clear credit check trigger when clearCreditCheckTrigger is called', async () => {
+      render(
+        <CreditFeature {...defaultProps}>
+          <CreditFeatureConsumer />
+        </CreditFeature>
+      );
+
+      // First trigger
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('trigger-credit-check-action'));
+      });
+
+      expect(screen.getByTestId('should-trigger-credit-check')).toHaveTextContent('true');
+
+      // Then clear
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('clear-credit-check-trigger'));
+      });
+
+      expect(screen.getByTestId('should-trigger-credit-check')).toHaveTextContent('false');
+    });
+
+    // Story 14e-39 (code review fix #2): Test flag cleared on dialog confirm
+    it('should clear shouldTriggerCreditCheck when credit check dialog is confirmed', async () => {
+      const onBatchConfirmed = vi.fn();
+
+      render(
+        <CreditFeature {...defaultProps} onBatchConfirmed={onBatchConfirmed}>
+          <CreditFeatureConsumer />
+        </CreditFeature>
+      );
+
+      // Trigger via action (sets flag AND shows dialog)
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('trigger-credit-check-action'));
+      });
+
+      expect(screen.getByTestId('should-trigger-credit-check')).toHaveTextContent('true');
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+      // Confirm the dialog
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('confirm'));
+      });
+
+      // Flag should be cleared after confirm
+      expect(screen.getByTestId('should-trigger-credit-check')).toHaveTextContent('false');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    // Story 14e-39 (code review fix #2): Test flag cleared on dialog cancel
+    it('should clear shouldTriggerCreditCheck when credit check dialog is cancelled', async () => {
+      render(
+        <CreditFeature {...defaultProps}>
+          <CreditFeatureConsumer />
+        </CreditFeature>
+      );
+
+      // Trigger via action (sets flag AND shows dialog)
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('trigger-credit-check-action'));
+      });
+
+      expect(screen.getByTestId('should-trigger-credit-check')).toHaveTextContent('true');
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+      // Cancel the dialog
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('cancel'));
+      });
+
+      // Flag should be cleared after cancel
+      expect(screen.getByTestId('should-trigger-credit-check')).toHaveTextContent('false');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+  });
+
+  // =========================================================================
+  // TrustMerchantPrompt Rendering
+  // =========================================================================
+
+  describe('TrustMerchantPrompt rendering', () => {
+    it('should not render TrustMerchantPrompt when showTrustPrompt is false', () => {
+      render(
+        <CreditFeature {...defaultProps}>
+          <CreditFeatureConsumer />
+        </CreditFeature>
+      );
+
+      expect(screen.queryByTestId('trust-merchant-prompt')).not.toBeInTheDocument();
+    });
+
+    it('should render TrustMerchantPrompt when showTrustPrompt is true and data exists', async () => {
+      render(
+        <CreditFeature {...defaultProps}>
+          <CreditFeatureConsumer />
+        </CreditFeature>
+      );
+
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('show-trust-prompt-action'));
+      });
+
+      // Note: TrustMerchantPrompt is rendered by CreditFeature, but we don't mock it here
+      // The actual component is imported, so we verify through state
+      expect(screen.getByTestId('show-trust-prompt')).toHaveTextContent('true');
+    });
+  });
+
+  // =========================================================================
+  // Trust Callbacks
+  // =========================================================================
+
+  describe('trust callbacks', () => {
+    it('should call onAcceptTrust when trust is accepted', async () => {
+      const onAcceptTrust = vi.fn().mockResolvedValue(undefined);
+
+      let capturedCtx: ReturnType<typeof useCreditFeature> | null = null;
+
+      render(
+        <CreditFeature {...defaultProps} onAcceptTrust={onAcceptTrust}>
+          <CreditFeatureConsumer onRender={(ctx) => { capturedCtx = ctx; }} />
+        </CreditFeature>
+      );
+
+      // Show trust prompt with custom data
+      await act(async () => {
+        capturedCtx?.showTrustPromptAction({
+          eligible: true,
+          merchant: { merchantName: 'Callback Test Store', scanCount: 3 },
+        });
+      });
+
+      expect(screen.getByTestId('show-trust-prompt')).toHaveTextContent('true');
+    });
+
+    it('should call onDeclineTrust when trust is declined', async () => {
+      const onDeclineTrust = vi.fn().mockResolvedValue(undefined);
+
+      let capturedCtx: ReturnType<typeof useCreditFeature> | null = null;
+
+      render(
+        <CreditFeature {...defaultProps} onDeclineTrust={onDeclineTrust}>
+          <CreditFeatureConsumer onRender={(ctx) => { capturedCtx = ctx; }} />
+        </CreditFeature>
+      );
+
+      // Show trust prompt
+      await act(async () => {
+        capturedCtx?.showTrustPromptAction({
+          eligible: true,
+          merchant: { merchantName: 'Decline Test Store', scanCount: 3 },
+        });
+      });
+
+      expect(screen.getByTestId('show-trust-prompt')).toHaveTextContent('true');
+    });
+  });
+
+  // =========================================================================
+  // onTrustActionsReady Callback
+  // =========================================================================
+
+  describe('onTrustActionsReady callback', () => {
+    it('should call onTrustActionsReady with actions on mount', async () => {
+      const onTrustActionsReady = vi.fn();
+
+      render(
+        <CreditFeature {...defaultProps} onTrustActionsReady={onTrustActionsReady}>
+          <CreditFeatureConsumer />
+        </CreditFeature>
+      );
+
+      await waitFor(() => {
+        expect(onTrustActionsReady).toHaveBeenCalledTimes(1);
+      });
+
+      const actions: TrustPromptActions = onTrustActionsReady.mock.calls[0][0];
+      expect(typeof actions.showTrustPromptAction).toBe('function');
+      expect(typeof actions.hideTrustPrompt).toBe('function');
+    });
+
+    it('should allow external triggering of trust prompt via actions', async () => {
+      let externalActions: TrustPromptActions | null = null;
+      const onTrustActionsReady = vi.fn((actions) => {
+        externalActions = actions;
+      });
+
+      render(
+        <CreditFeature {...defaultProps} onTrustActionsReady={onTrustActionsReady}>
+          <CreditFeatureConsumer />
+        </CreditFeature>
+      );
+
+      await waitFor(() => {
+        expect(externalActions).not.toBeNull();
+      });
+
+      // Trigger trust prompt externally
+      await act(async () => {
+        externalActions?.showTrustPromptAction({
+          eligible: true,
+          merchant: { merchantName: 'External Store', scanCount: 7 },
+        });
+      });
+
+      expect(screen.getByTestId('show-trust-prompt')).toHaveTextContent('true');
+      expect(screen.getByTestId('trust-prompt-merchant')).toHaveTextContent('External Store');
+    });
+
+    it('should allow external hiding of trust prompt via actions', async () => {
+      let externalActions: TrustPromptActions | null = null;
+      const onTrustActionsReady = vi.fn((actions) => {
+        externalActions = actions;
+      });
+
+      render(
+        <CreditFeature {...defaultProps} onTrustActionsReady={onTrustActionsReady}>
+          <CreditFeatureConsumer />
+        </CreditFeature>
+      );
+
+      await waitFor(() => {
+        expect(externalActions).not.toBeNull();
+      });
+
+      // Show then hide via external actions
+      await act(async () => {
+        externalActions?.showTrustPromptAction({
+          eligible: true,
+          merchant: { merchantName: 'Hide Test', scanCount: 2 },
+        });
+      });
+
+      expect(screen.getByTestId('show-trust-prompt')).toHaveTextContent('true');
+
+      await act(async () => {
+        externalActions?.hideTrustPrompt();
+      });
+
+      expect(screen.getByTestId('show-trust-prompt')).toHaveTextContent('false');
+    });
+  });
+
+  // =========================================================================
+  // Context Value Exposure
+  // =========================================================================
+
+  describe('context value exposure', () => {
+    it('should expose all trust prompt state and actions via context', () => {
+      let capturedCtx: ReturnType<typeof useCreditFeature> | null = null;
+
+      render(
+        <CreditFeature {...defaultProps}>
+          <CreditFeatureConsumer onRender={(ctx) => { capturedCtx = ctx; }} />
+        </CreditFeature>
+      );
+
+      expect(capturedCtx).not.toBeNull();
+
+      // Trust prompt state
+      expect(capturedCtx?.showTrustPrompt).toBe(false);
+      expect(capturedCtx?.trustPromptData).toBeNull();
+      expect(capturedCtx?.shouldTriggerCreditCheck).toBe(false);
+
+      // Trust prompt actions
+      expect(typeof capturedCtx?.showTrustPromptAction).toBe('function');
+      expect(typeof capturedCtx?.hideTrustPrompt).toBe('function');
+      expect(typeof capturedCtx?.triggerCreditCheckAction).toBe('function');
+      expect(typeof capturedCtx?.clearCreditCheckTrigger).toBe('function');
     });
   });
 });

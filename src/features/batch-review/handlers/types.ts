@@ -20,6 +20,8 @@ import type { CategoryMapping } from '@/types/categoryMapping';
 import type { View } from '@/components/App';
 import type { Services } from '@/contexts/AuthContext';
 import type { UserCredits } from '@/types/scan';
+// Story 14e-42: Import FindItemNameMatchFn for dependency injection
+import type { FindItemNameMatchFn } from '@/features/categories';
 
 // =============================================================================
 // Navigation Handler Context (AC2)
@@ -159,13 +161,10 @@ export interface SaveContext {
   findMerchantMatch: (merchant: string) => MerchantMatchResult | null;
 
   /**
-   * Apply item name mappings (scoped to a normalized merchant).
-   * Returns transaction with mapped item names and list of applied mapping IDs.
+   * Find item name match for a merchant and item (Story 14e-42).
+   * Used with applyItemNameMappings utility from @features/categories.
    */
-  applyItemNameMappings: (
-    transaction: Transaction,
-    normalizedMerchant: string
-  ) => ItemNameMappingResult;
+  findItemNameMatch: FindItemNameMatchFn;
 }
 
 // =============================================================================
