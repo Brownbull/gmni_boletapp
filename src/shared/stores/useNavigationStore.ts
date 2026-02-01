@@ -291,8 +291,13 @@ export const useNavigationActions = () =>
  * Convenience hook combining view state and navigation actions.
  * For components that need both current view and ability to navigate.
  *
+ * Story 14e-45: Added `goBack` (alias for navigateBack) and `navigateWithHistory`
+ * (alias for navigateToView) for API compatibility with deleted NavigationContext.
+ *
  * @example
  * const { view, setView, navigateToView, navigateBack } = useNavigation();
+ * // Legacy API also available:
+ * const { goBack, navigateWithHistory } = useNavigation();
  */
 export const useNavigation = () =>
     useNavigationStore(
@@ -304,6 +309,9 @@ export const useNavigation = () =>
             navigateToView: s.navigateToView,
             navigateBack: s.navigateBack,
             setSettingsSubview: s.setSettingsSubview,
+            // Story 14e-45: Legacy API aliases for NavigationContext compatibility
+            goBack: s.navigateBack,
+            navigateWithHistory: s.navigateToView,
         }))
     );
 

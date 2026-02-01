@@ -29,6 +29,10 @@ import { DIALOG_TYPES } from '@/types/scanStateMachine';
 
 // Store imports
 import { batchReviewActions, useBatchReviewStore } from '../store';
+// Cross-feature import: batch-review needs scan store for shared images state
+// This is intentional - batchImages was eliminated (Story 14e-34a) and replaced
+// with useScanStore.images as the single source of truth for batch image data.
+// The alternative would be duplicating state, which causes race conditions.
 import { useScanStore } from '@/features/scan/store';
 
 // Batch processing utilities
@@ -43,12 +47,14 @@ import { incrementMappingUsage } from '@/services/categoryMappingService';
 import { incrementMerchantMappingUsage } from '@/services/merchantMappingService';
 import { incrementItemNameMappingUsage } from '@/services/itemNameMappingService';
 import { updateMemberTimestampsForTransaction } from '@/services/sharedGroupService';
+// Story 14e-42: Import pure utility and type from @features/categories
+import { applyItemNameMappings, type FindItemNameMatchFn } from '@/features/categories';
 
 // Types from existing handlers
+// Story 14e-42: ItemNameMappingResult removed - now using pure utility from @features/categories
 import type {
   CategoryMappingResult,
   MerchantMatchResult,
-  ItemNameMappingResult,
   BatchProcessingController,
 } from '../handlers/types';
 import type { ReceiptType } from '@/services/gemini';
@@ -114,8 +120,7 @@ export interface BatchReviewHandlersProps {
   navigateToView: (view: View) => void;
   /** Function to set the current view */
   setView: (view: View) => void;
-  /** Function to set/clear batch images */
-  setBatchImages: (images: string[]) => void;
+  // Story 14e-34a: setBatchImages removed - now uses useScanStore.setImages directly
   /** Batch processing controller with reset capability */
   batchProcessing: BatchProcessingController;
   /** Function to reset the scan context to idle state */
@@ -135,11 +140,11 @@ export interface BatchReviewHandlersProps {
   ) => CategoryMappingResult;
   /** Find a merchant match for the given merchant name */
   findMerchantMatch: (merchant: string) => MerchantMatchResult | null;
-  /** Apply item name mappings (scoped to a normalized merchant) */
-  applyItemNameMappings: (
-    transaction: Transaction,
-    normalizedMerchant: string
-  ) => ItemNameMappingResult;
+  /**
+   * Find item name match for a merchant and item (Story 14e-42).
+   * Used with applyItemNameMappings utility from @features/categories.
+   */
+  findItemNameMatch: FindItemNameMatchFn;
 
   // Credit check functions (optional - only needed for handleCreditCheckComplete)
   /** Current user credit balance */
@@ -186,8 +191,7 @@ export interface BatchReviewHandlersProps {
   setShowBatchPreview: (show: boolean) => void;
   /** Function to trigger the credit check flow via CreditFeature */
   setShouldTriggerCreditCheck: (trigger: boolean) => void;
-  /** Current batch images for processing */
-  batchImages: string[];
+  // Story 14e-34a: batchImages removed - now uses useScanStore.images directly
   /** Currency for scan processing */
   scanCurrency: string;
   /** Store type for scan processing ('auto' or specific type) */
@@ -304,7 +308,7 @@ export function useBatchReviewHandlers(props: BatchReviewHandlersProps): BatchRe
     setTransactionEditorMode,
     navigateToView,
     setView,
-    setBatchImages,
+    // Story 14e-34a: setBatchImages removed - now uses useScanStore.setImages
     batchProcessing,
     resetScanContext,
     showScanDialog,
@@ -312,7 +316,7 @@ export function useBatchReviewHandlers(props: BatchReviewHandlersProps): BatchRe
     mappings,
     applyCategoryMappings,
     findMerchantMatch,
-    applyItemNameMappings,
+    findItemNameMatch, // Story 14e-42: Pure utility uses DI
     userCredits,
     checkCreditSufficiency,
     setCreditCheckResult,
@@ -320,7 +324,7 @@ export function useBatchReviewHandlers(props: BatchReviewHandlersProps): BatchRe
     // Story 14e-29b: Processing handler dependencies
     setShowBatchPreview,
     setShouldTriggerCreditCheck,
-    batchImages,
+    // Story 14e-34a: batchImages removed - now uses useScanStore.images
     scanCurrency,
     scanStoreType,
     viewMode,
@@ -333,14 +337,19 @@ export function useBatchReviewHandlers(props: BatchReviewHandlersProps): BatchRe
 
   // ==========================================================================
   // Story 14e-29b: Access scan store for dispatch actions
+  // Story 14e-34a: Added images and setImages (replaces batchImages/setBatchImages props)
   // ==========================================================================
+  const scanStoreState = useScanStore();
   const {
     processStart: dispatchProcessStart,
     batchItemStart: dispatchBatchItemStart,
     batchItemSuccess: dispatchBatchItemSuccess,
     batchItemError: dispatchBatchItemError,
     batchComplete: dispatchBatchComplete,
-  } = useScanStore();
+    // Story 14e-34a: Single source of truth for batch images
+    images: batchImages,
+    setImages: setBatchImages,
+  } = scanStoreState;
 
   // ==========================================================================
   // Navigation handlers (consolidated from handlers/navigation.ts)
@@ -479,8 +488,9 @@ export function useBatchReviewHandlers(props: BatchReviewHandlersProps): BatchRe
         }
 
         // Apply learned item name mappings (scoped to this merchant)
+        // Story 14e-42: Uses pure utility from @features/categories with findItemNameMatch DI
         const { transaction: txWithItemNames, appliedIds: itemNameMappingIds } =
-          applyItemNameMappings(finalTx, merchantMatch.mapping.normalizedMerchant);
+          applyItemNameMappings(finalTx, merchantMatch.mapping.normalizedMerchant, findItemNameMatch);
         finalTx = txWithItemNames;
 
         // Increment item name mapping usage counts (fire-and-forget)
@@ -510,7 +520,7 @@ export function useBatchReviewHandlers(props: BatchReviewHandlersProps): BatchRe
 
       return transactionId;
     },
-    [user, services, mappings, applyCategoryMappings, findMerchantMatch, applyItemNameMappings]
+    [user, services, mappings, applyCategoryMappings, findMerchantMatch, findItemNameMatch]
   );
 
   /**

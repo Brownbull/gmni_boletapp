@@ -15,6 +15,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import React, { useState } from 'react';
 import { BatchUploadPreview, MAX_BATCH_IMAGES } from '../../src/components/scan/BatchUploadPreview';
+
+// Story 14e-34a: Mock the scan store for integration tests
+// BatchUploadPreview now reads images from the store instead of props
+let mockStoreImages: string[] = [];
+vi.mock('../../src/features/scan/store', () => ({
+  useScanImages: () => mockStoreImages,
+}));
 import { BatchProcessingProgress } from '../../src/components/scan/BatchProcessingProgress';
 import type { BatchItemResult } from '../../src/components/scan/BatchProcessingProgress';
 import type { Transaction, StoreCategory } from '../../src/types/transaction';
@@ -157,9 +164,11 @@ describe('Batch Processing Integration - Story 11.1', () => {
       const onConfirm = vi.fn();
       const onCancel = vi.fn();
 
+      // Story 14e-34a: Set mock store images instead of passing prop
+      mockStoreImages = images;
+
       render(
         <BatchUploadPreview
-          images={images}
           theme="light"
           t={mockT}
           onConfirm={onConfirm}
@@ -176,9 +185,11 @@ describe('Batch Processing Integration - Story 11.1', () => {
       const images = createMockImages(11);
       const onConfirm = vi.fn();
 
+      // Story 14e-34a: Set mock store images instead of passing prop
+      mockStoreImages = images;
+
       render(
         <BatchUploadPreview
-          images={images}
           theme="light"
           t={mockT}
           onConfirm={onConfirm}
@@ -202,9 +213,11 @@ describe('Batch Processing Integration - Story 11.1', () => {
       const images = createMockImages(10);
       const onConfirm = vi.fn();
 
+      // Story 14e-34a: Set mock store images instead of passing prop
+      mockStoreImages = images;
+
       render(
         <BatchUploadPreview
-          images={images}
           theme="light"
           t={mockT}
           onConfirm={onConfirm}
@@ -355,9 +368,11 @@ describe('Batch Processing Integration - Story 11.1', () => {
     it('should apply dark theme to BatchUploadPreview', () => {
       const images = createMockImages(3);
 
+      // Story 14e-34a: Set mock store images instead of passing prop
+      mockStoreImages = images;
+
       const { container } = render(
         <BatchUploadPreview
-          images={images}
           theme="dark"
           t={mockT}
           onConfirm={vi.fn()}
@@ -565,9 +580,11 @@ describe('Batch Processing Integration - Story 11.1', () => {
       const images = createMockImages(3);
       const onRemoveImage = vi.fn();
 
+      // Story 14e-34a: Set mock store images instead of passing prop
+      mockStoreImages = images;
+
       render(
         <BatchUploadPreview
-          images={images}
           theme="light"
           t={mockT}
           onConfirm={vi.fn()}
@@ -589,9 +606,11 @@ describe('Batch Processing Integration - Story 11.1', () => {
     it('should not show remove buttons when onRemoveImage not provided', () => {
       const images = createMockImages(3);
 
+      // Story 14e-34a: Set mock store images instead of passing prop
+      mockStoreImages = images;
+
       render(
         <BatchUploadPreview
-          images={images}
           theme="light"
           t={mockT}
           onConfirm={vi.fn()}
@@ -662,9 +681,11 @@ describe('Batch Processing Integration - Story 11.1', () => {
     it('should have accessible batch preview dialog', () => {
       const images = createMockImages(3);
 
+      // Story 14e-34a: Set mock store images instead of passing prop
+      mockStoreImages = images;
+
       render(
         <BatchUploadPreview
-          images={images}
           theme="light"
           t={mockT}
           onConfirm={vi.fn()}

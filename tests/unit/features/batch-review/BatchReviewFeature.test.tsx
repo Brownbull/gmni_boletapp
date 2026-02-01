@@ -17,7 +17,7 @@ import type { Transaction } from '@/types/transaction';
 // =============================================================================
 
 // Use vi.hoisted to make these available to hoisted mocks
-const { mockStoreState, mockStoreActions, mockHandlers, mockOpenModal, mockCloseModal, mockBatchReviewActions } = vi.hoisted(() => ({
+const { mockStoreState, mockStoreActions, mockHandlers, mockOpenModal, mockCloseModal, mockBatchReviewActions, mockAtomicActions } = vi.hoisted(() => ({
   mockStoreState: {
     phase: 'idle' as 'idle' | 'loading' | 'reviewing' | 'editing' | 'saving' | 'complete' | 'error',
     items: [] as BatchReceipt[],
@@ -70,6 +70,11 @@ const { mockStoreState, mockStoreActions, mockHandlers, mockOpenModal, mockClose
   },
   mockOpenModal: vi.fn(),
   mockCloseModal: vi.fn(),
+  // Story 14e-34b: Mock atomic batch actions
+  mockAtomicActions: {
+    discardReceiptAtomic: vi.fn(),
+    updateReceiptAtomic: vi.fn(),
+  },
 }));
 
 // Mock Zustand store - includes useBatchReviewStore for BatchReviewCard
@@ -97,8 +102,10 @@ vi.mock('@features/batch-review/store', () => ({
 }));
 
 // Story 14e-29c: Mock useBatchReviewHandlers hook
+// Story 14e-34b: Add useAtomicBatchActions mock
 vi.mock('@features/batch-review/hooks', () => ({
   useBatchReviewHandlers: vi.fn(() => mockHandlers),
+  useAtomicBatchActions: vi.fn(() => mockAtomicActions),
 }));
 
 // Mock ModalManager
@@ -333,7 +340,8 @@ describe('BatchReviewFeature', () => {
       const discardButtons = screen.getAllByLabelText('batchReviewDiscard');
       fireEvent.click(discardButtons[0]);
 
-      expect(mockStoreActions.discardItem).toHaveBeenCalledWith('1');
+      // Story 14e-34b: Now uses atomic discard action
+      expect(mockAtomicActions.discardReceiptAtomic).toHaveBeenCalledWith('1');
       // Should NOT open modal
       expect(mockOpenModal).not.toHaveBeenCalled();
     });
@@ -347,7 +355,8 @@ describe('BatchReviewFeature', () => {
       const discardButtons = screen.getAllByLabelText('batchReviewDiscard');
       fireEvent.click(discardButtons[0]);
 
-      expect(mockStoreActions.discardItem).toHaveBeenCalledWith('1');
+      // Story 14e-34b: Now uses atomic discard action
+      expect(mockAtomicActions.discardReceiptAtomic).toHaveBeenCalledWith('1');
       // Should NOT open modal
       expect(mockOpenModal).not.toHaveBeenCalled();
     });
@@ -366,7 +375,8 @@ describe('BatchReviewFeature', () => {
       // Simulate user clicking confirm in the modal
       modalProps.onConfirm();
 
-      expect(mockStoreActions.discardItem).toHaveBeenCalledWith('1');
+      // Story 14e-34b: Now uses atomic discard action
+      expect(mockAtomicActions.discardReceiptAtomic).toHaveBeenCalledWith('1');
       expect(mockCloseModal).toHaveBeenCalled();
     });
 
@@ -383,7 +393,8 @@ describe('BatchReviewFeature', () => {
       // Simulate user clicking cancel in the modal
       modalProps.onCancel();
 
-      expect(mockStoreActions.discardItem).not.toHaveBeenCalled();
+      // Story 14e-34b: Now uses atomic discard action
+      expect(mockAtomicActions.discardReceiptAtomic).not.toHaveBeenCalled();
       expect(mockCloseModal).toHaveBeenCalled();
     });
   });

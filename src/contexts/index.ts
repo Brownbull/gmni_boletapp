@@ -23,15 +23,16 @@ export {
     type Services,
 } from './AuthContext';
 
-// NavigationContext - View navigation state
-export {
-    NavigationProvider,
-    useNavigation,
-    useNavigationOptional,
-    type NavigationContextValue,
-    type View,
-    type SettingsSubview,
-} from './NavigationContext';
+// =============================================================================
+// Story 14e-45: NavigationContext DELETED
+// =============================================================================
+//
+// NavigationContext was removed in Story 14e-45. Navigation now uses Zustand:
+// - State: useNavigationStore from @/shared/stores
+// - Actions: useNavigationActions() from @/shared/stores
+// - Combined: useNavigation() from @/shared/stores
+// - View type: import { View } from '@app/types'
+// - SettingsSubview type: import { SettingsSubview } from '@/shared/stores/useNavigationStore'
 
 // ThemeContext - Theme and locale preferences
 export {

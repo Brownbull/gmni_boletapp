@@ -17,6 +17,8 @@ import { updateMemberTimestampsForTransaction } from '@/services/sharedGroupServ
 import { DIALOG_TYPES, type BatchCompleteDialogData } from '@/types/scanStateMachine';
 import type { Transaction } from '@/types/transaction';
 import type { SaveContext, SaveCompleteContext } from './types';
+// Story 14e-42: Import pure utility from @features/categories
+import { applyItemNameMappings } from '@/features/categories';
 
 /** Merchant match confidence threshold for applying learned mappings */
 const MERCHANT_CONFIDENCE_THRESHOLD = 0.7;
@@ -40,7 +42,7 @@ const MERCHANT_CONFIDENCE_THRESHOLD = 0.7;
  *     mappings,
  *     applyCategoryMappings,
  *     findMerchantMatch,
- *     applyItemNameMappings,
+ *     findItemNameMatch, // Story 14e-42: Pure utility uses DI
  *   });
  *   return transactionId;
  * };
@@ -56,7 +58,7 @@ export async function saveBatchTransaction(
     mappings,
     applyCategoryMappings,
     findMerchantMatch,
-    applyItemNameMappings,
+    findItemNameMatch, // Story 14e-42: Pure utility uses DI
   } = context;
 
   // Auth check
@@ -105,9 +107,11 @@ export async function saveBatchTransaction(
     }
 
     // v9.7.0: Apply learned item name mappings (scoped to this merchant)
+    // Story 14e-42: Uses pure utility from @features/categories with findItemNameMatch DI
     const { transaction: txWithItemNames, appliedIds: itemNameMappingIds } = applyItemNameMappings(
       finalTx,
-      merchantMatch.mapping.normalizedMerchant
+      merchantMatch.mapping.normalizedMerchant,
+      findItemNameMatch
     );
     finalTx = txWithItemNames;
 

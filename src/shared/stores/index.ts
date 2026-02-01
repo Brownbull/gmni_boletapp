@@ -7,6 +7,11 @@ export {
   useColorTheme,
   useFontColorMode,
   useFontSize,
+  // Story 14e-35: Locale selectors
+  useLang,
+  useCurrency,
+  useDateFormat,
+  useLocaleSettings,
   getSettingsState,
   settingsActions,
 } from './useSettingsStore';
@@ -29,3 +34,21 @@ export {
   type SettingsSubview,
   type NavigateToViewOptions,
 } from './useNavigationStore';
+
+// Story 14e-37: Insight store
+export {
+  useInsightStore,
+  defaultInsightState,
+  useCurrentInsight,
+  useShowInsightCard,
+  useShowSessionComplete,
+  useSessionContext,
+  useShowBatchSummary,
+  useInsightCardState,
+  useSessionCompleteState,
+  useInsightActions,
+  getInsightState,
+  insightActions,
+  type InsightState,
+  type InsightActions,
+} from './useInsightStore';

@@ -1,6 +1,7 @@
 /**
  * Story 11.1: One Image = One Transaction - Batch Upload Preview Component
  * Story 14.15: Updated to match scan-overlay.html State 0.5b mockup design
+ * Story 14e-34a: Migrated from props to useScanStore for images (AC2)
  *
  * Shows preview when user selects multiple images, confirming that each image
  * will create a separate transaction. Displays thumbnails, credit usage info,
@@ -11,13 +12,16 @@
  */
 import React, { useState } from 'react';
 import { X, ChevronDown, ChevronUp, Image, AlertTriangle, Minus, Clock, ArrowRight, ScanLine } from 'lucide-react';
+import { useScanImages } from '@/features/scan/store';
 
 /** Maximum images allowed per batch (AC #7) */
 export const MAX_BATCH_IMAGES = 10;
 
 export interface BatchUploadPreviewProps {
-  /** Array of base64 encoded images */
-  images: string[];
+  /**
+   * Story 14e-34a: images prop removed - now reads from useScanStore.images directly.
+   * This eliminates prop drilling and ensures single source of truth.
+   */
   /** Theme for styling */
   theme: 'light' | 'dark';
   /** Translation function */
@@ -45,7 +49,6 @@ export interface BatchUploadPreviewProps {
  * - Cancel and Process buttons with icons
  */
 export const BatchUploadPreview: React.FC<BatchUploadPreviewProps> = ({
-  images,
   theme,
   t,
   onConfirm,
@@ -55,6 +58,9 @@ export const BatchUploadPreview: React.FC<BatchUploadPreviewProps> = ({
   usesSuperCredits = false,
 }) => {
   const [showThumbnails, setShowThumbnails] = useState(false);
+
+  // Story 14e-34a: Read images from scan store (single source of truth)
+  const images = useScanImages();
 
   const isDark = theme === 'dark';
   const count = images.length;

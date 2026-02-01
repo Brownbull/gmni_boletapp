@@ -35,11 +35,17 @@ export {
 // Data selectors (Story 14e-9b)
 export { useScanActiveDialog, useScanError, useScanResults } from './selectors';
 
+// UI flag selectors (Story 14e-38)
+export { useSkipScanCompleteModal, useIsRescanning } from './selectors';
+
 // Complex computed selectors
 export { useCanNavigateFreely, useCanSave, useCurrentView } from './selectors';
 
 // Count selectors
 export { useImageCount, useResultCount } from './selectors';
+
+// Image selectors (Story 14e-34a)
+export { useScanImages } from './selectors';
 
 // Progress selectors (Story 14e-9c)
 export { useBatchProgress, useProcessingProgress } from './selectors';

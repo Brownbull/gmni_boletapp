@@ -17,7 +17,6 @@ import type {
   Transaction,
   TransactionItem,
   MappingDependencies,
-  UIDependencies,
   TotalMismatchDialogData,
   CurrencyMismatchDialogData,
   QuickSaveDialogData,
@@ -26,10 +25,12 @@ import type {
   ScanSuccessResult,
   ScanOverlayController,
 } from './types';
+// Story 14e-43: UIDependencies import removed - subhandler deps now use direct function types
 
 import { validateTotal, type TotalValidationResult } from '@/utils/totalValidation';
 import { shouldShowQuickSave, calculateConfidence } from '@/utils/confidenceCheck';
-import { TRANSLATIONS } from '@/utils/translations';
+// Story 14e-42: applyItemNameMappings extracted to @features/categories
+import { applyItemNameMappings } from '@/features/categories';
 
 // =============================================================================
 // Constants
@@ -47,15 +48,22 @@ const MERCHANT_MATCH_CONFIDENCE_THRESHOLD = 0.7;
 
 /**
  * Dependencies for validateScanResult sub-handler.
+ *
+ * Story 14e-43: Uses direct function types instead of picking from UIDependencies
+ * since those callbacks are now deprecated/optional in the main interface.
+ * The actual functions passed come from store actions in processScan.ts.
  */
 export interface ValidateScanResultDeps {
-  /** Show scan dialog (for total mismatch) */
-  showScanDialog: UIDependencies['showScanDialog'];
+  /**
+   * Show scan dialog (for total mismatch).
+   * Story 14e-43: Receives scanActions.showDialog wrapper from processScan.
+   */
+  showScanDialog: (type: 'total_mismatch' | 'currency_mismatch' | 'quicksave', data?: unknown) => void;
   /**
    * Set analyzing state
    * @deprecated Story 14e-25d: No-op - state managed by state machine
    */
-  setIsAnalyzing?: UIDependencies['setIsAnalyzing'];
+  setIsAnalyzing?: (analyzing: boolean) => void;
   /** Scan overlay controller */
   scanOverlay: ScanOverlayController;
   /** Reconcile items total function */
@@ -202,7 +210,7 @@ export function applyAllMappings(
     mappings,
     applyCategoryMappings,
     findMerchantMatch,
-    applyItemNameMappings,
+    findItemNameMatch, // Story 14e-42: Now uses pure utility via dependency injection
     incrementMappingUsage,
     incrementMerchantMappingUsage,
     incrementItemNameMappingUsage,
@@ -251,9 +259,11 @@ export function applyAllMappings(
     }
 
     // Step 3: Apply item name mappings (scoped to matched merchant)
+    // Story 14e-42: Uses pure utility from @features/categories with findItemNameMatch DI
     const { transaction: txWithItemNames, appliedIds: itemNameMappingIds } = applyItemNameMappings(
       finalTransaction,
-      merchantMatch.mapping.normalizedMerchant
+      merchantMatch.mapping.normalizedMerchant,
+      findItemNameMatch
     );
 
     finalTransaction = txWithItemNames;
@@ -282,15 +292,22 @@ export function applyAllMappings(
 
 /**
  * Dependencies for handleCurrencyDetection sub-handler.
+ *
+ * Story 14e-43: Uses direct function types instead of picking from UIDependencies
+ * since those callbacks are now deprecated/optional in the main interface.
+ * The actual functions passed come from store actions in processScan.ts.
  */
 export interface HandleCurrencyDetectionDeps {
-  /** Show scan dialog (for currency mismatch) */
-  showScanDialog: UIDependencies['showScanDialog'];
+  /**
+   * Show scan dialog (for currency mismatch).
+   * Story 14e-43: Receives scanActions.showDialog wrapper from processScan.
+   */
+  showScanDialog: (type: 'total_mismatch' | 'currency_mismatch' | 'quicksave', data?: unknown) => void;
   /**
    * Set analyzing state
    * @deprecated Story 14e-25d: No-op - state managed by state machine
    */
-  setIsAnalyzing?: UIDependencies['setIsAnalyzing'];
+  setIsAnalyzing?: (analyzing: boolean) => void;
   /** Scan overlay controller */
   scanOverlay: ScanOverlayController;
 }
@@ -367,16 +384,29 @@ export function handleCurrencyDetection(
 
 /**
  * Dependencies for handleScanSuccess sub-handler.
+ *
+ * Story 14e-43: Uses direct function types instead of picking from UIDependencies
+ * since those callbacks are now deprecated/optional in the main interface.
+ * The actual functions passed come from store actions in processScan.ts.
  */
 export interface HandleScanSuccessDeps {
   /** Check if merchant is trusted (async) */
   checkTrusted: (merchantAlias: string) => Promise<boolean>;
-  /** Show scan dialog (for quick save) */
-  showScanDialog: UIDependencies['showScanDialog'];
-  /** Set skip scan complete modal flag */
-  setSkipScanCompleteModal: UIDependencies['setSkipScanCompleteModal'];
-  /** Set animate edit view items flag */
-  setAnimateEditViewItems: UIDependencies['setAnimateEditViewItems'];
+  /**
+   * Show scan dialog (for quick save).
+   * Story 14e-43: Receives scanActions.showDialog wrapper from processScan.
+   */
+  showScanDialog: (type: 'total_mismatch' | 'currency_mismatch' | 'quicksave', data?: unknown) => void;
+  /**
+   * Set skip scan complete modal flag.
+   * Story 14e-43: Receives scanActions.setSkipScanCompleteModal from processScan.
+   */
+  setSkipScanCompleteModal: (skip: boolean) => void;
+  /**
+   * Set animate edit view items flag.
+   * Story 14e-43: Receives transactionEditorActions.setAnimateItems from processScan.
+   */
+  setAnimateEditViewItems: (animate: boolean) => void;
 }
 
 /**
@@ -466,61 +496,4 @@ export async function handleScanSuccess(
   };
 }
 
-// =============================================================================
-// Utility: reconcileItemsTotal
-// =============================================================================
-
-/**
- * Reconcile items total with receipt total.
- *
- * If there's a discrepancy between items sum and receipt total,
- * adds an adjustment item to make them match:
- * - Positive difference (receipt > items): "Unitemized charge" / "Cargo sin detallar"
- * - Negative difference (items > receipt): "Discount/Adjustment" / "Descuento/Ajuste"
- *
- * This is a pure function extracted for testability.
- *
- * @param items - Original items from scan
- * @param receiptTotal - Total from receipt
- * @param lang - Language for adjustment item name
- * @returns Reconciled items and discrepancy info
- */
-export function reconcileItemsTotal(
-  items: TransactionItem[],
-  receiptTotal: number,
-  lang: 'en' | 'es'
-): { items: TransactionItem[]; hasDiscrepancy: boolean; discrepancyAmount: number } {
-  // Calculate items sum (price is already line total, not unit price)
-  const itemsSum = items.reduce((sum, item) => {
-    const price = typeof item.price === 'number' ? item.price : 0;
-    return sum + price;
-  }, 0);
-
-  // Round to avoid floating point issues
-  const roundedItemsSum = Math.round(itemsSum * 100) / 100;
-  const roundedReceiptTotal = Math.round(receiptTotal * 100) / 100;
-  const difference = Math.round((roundedReceiptTotal - roundedItemsSum) * 100) / 100;
-
-  // Allow small discrepancies (< $1)
-  if (Math.abs(difference) < 1) {
-    return { items, hasDiscrepancy: false, discrepancyAmount: 0 };
-  }
-
-  // Get adjustment item name based on direction
-  const translations = TRANSLATIONS[lang];
-  const adjustmentName = difference > 0 ? translations.surplusItem : translations.discountItem;
-
-  // Add adjustment item
-  const adjustmentItem: TransactionItem = {
-    name: adjustmentName,
-    price: difference,
-    qty: 1,
-    category: 'Other',
-  };
-
-  return {
-    items: [...items, adjustmentItem],
-    hasDiscrepancy: true,
-    discrepancyAmount: difference,
-  };
-}
+// NOTE: reconcileItemsTotal moved to @entities/transaction (Story 14e-41)

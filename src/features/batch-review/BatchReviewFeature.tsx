@@ -53,11 +53,9 @@ import {
   batchReviewActions,
 } from './store';
 
-// Story 14e-33: Import scan actions for discarding batch receipts from scan store
-import { scanActions } from '@/features/scan/store';
-
 // Story 14e-29c: Import handlers hook
-import { useBatchReviewHandlers, type BatchReviewHandlersProps } from './hooks';
+// Story 14e-34b: Import atomic batch actions
+import { useBatchReviewHandlers, useAtomicBatchActions, type BatchReviewHandlersProps } from './hooks';
 
 // State components (AC1, AC5) - extracted to states/ folder (Story 14e-16)
 import {
@@ -179,13 +177,18 @@ export function BatchReviewFeature({
   const isEmpty = useIsBatchEmpty();
   const totalAmount = useBatchTotalAmount();
   const validCount = useValidBatchCount();
-  const { reset, discardItem } = useBatchReviewActions();
+  const { reset } = useBatchReviewActions();
   const hadItems = useHadItems();
 
   // ==========================================================================
   // Story 14e-29c: Use handlers hook internally
   // ==========================================================================
   const handlers = useBatchReviewHandlers(handlersConfig);
+
+  // ==========================================================================
+  // Story 14e-34b: Atomic batch actions for race condition prevention
+  // ==========================================================================
+  const { discardReceiptAtomic } = useAtomicBatchActions();
 
   // ==========================================================================
   // Modal Manager (AC6)
@@ -199,19 +202,6 @@ export function BatchReviewFeature({
   const [saveProgress, setSaveProgress] = useState(0);
   // Track pending discard for confirmation callback
   const pendingDiscardIdRef = useRef<string | null>(null);
-
-  // ==========================================================================
-  // Scan store access for discarding receipts
-  // Story 14e-33: Fixed no-op - now actually syncs with scan store
-  // ==========================================================================
-  const discardBatchReceiptFromScanStore = useCallback(
-    (receiptId: string) => {
-      // Remove receipt from scan store to keep batchReceipts in sync with batch review store
-      // This prevents batchEditingIndex from pointing to wrong items after saves
-      scanActions.discardBatchReceipt(receiptId);
-    },
-    []
-  );
 
   // ==========================================================================
   // Effects
@@ -257,6 +247,7 @@ export function BatchReviewFeature({
   /**
    * Handle discard receipt click (AC6: ModalManager integration).
    * Shows confirmation for high confidence receipts using ModalManager.
+   * Story 14e-34b: Uses atomic discard to prevent race conditions.
    */
   const handleDiscardReceipt = useCallback(
     (receipt: BatchReceipt) => {
@@ -272,9 +263,8 @@ export function BatchReviewFeature({
             closeModal();
             if (receiptId) {
               pendingDiscardIdRef.current = null;
-              discardItem(receiptId);
-              // Story 14e-33: Sync with scan store to keep batchReceipts aligned
-              discardBatchReceiptFromScanStore(receiptId);
+              // Story 14e-34b: Atomic discard - both stores updated synchronously
+              discardReceiptAtomic(receiptId);
             }
           },
           onCancel: () => {
@@ -286,12 +276,11 @@ export function BatchReviewFeature({
         });
       } else {
         // Low confidence or error receipts can be discarded directly
-        discardItem(receipt.id);
-        // Story 14e-33: Sync with scan store to keep batchReceipts aligned
-        discardBatchReceiptFromScanStore(receipt.id);
+        // Story 14e-34b: Atomic discard - both stores updated synchronously
+        discardReceiptAtomic(receipt.id);
       }
     },
-    [discardItem, discardBatchReceiptFromScanStore, openModal, closeModal, t, theme]
+    [discardReceiptAtomic, openModal, closeModal, t, theme]
   );
 
   /**
@@ -328,6 +317,7 @@ export function BatchReviewFeature({
   /**
    * Handle save single receipt.
    * Story 14e-29c: Uses handleSaveTransaction from hook.
+   * Story 14e-34b: Uses atomic discard for race condition prevention.
    */
   const handleSaveReceipt = useCallback(
     async (receiptId: string) => {
@@ -336,10 +326,9 @@ export function BatchReviewFeature({
 
       try {
         await handlers.handleSaveTransaction(receipt.transaction);
-        // Remove from batch review store after successful save
-        batchReviewActions.discardItem(receiptId);
-        // Story 14e-33: Sync with scan store to keep batchReceipts aligned
-        discardBatchReceiptFromScanStore(receiptId);
+        // Story 14e-34b: Atomic discard - both stores updated synchronously
+        // This prevents race conditions where effects observe intermediate state
+        discardReceiptAtomic(receiptId);
 
         // Check if batch is now empty after this save
         const remainingCount = items.length - 1;
@@ -352,7 +341,7 @@ export function BatchReviewFeature({
         console.error('[BatchReviewFeature] Failed to save receipt:', receiptId, error);
       }
     },
-    [items, handlers, discardBatchReceiptFromScanStore, batchSession]
+    [items, handlers, discardReceiptAtomic, batchSession]
   );
 
   /**

@@ -24,3 +24,6 @@ export {
     // Types
     type UserDefaults,
 } from '../../../utils/transactionNormalizer';
+
+// Story 14e-41: Transaction reconciliation utility
+export { reconcileItemsTotal, type ReconcileResult } from './reconciliation';

@@ -24,6 +24,8 @@ const { mockScanStoreActions, mockNavigationStoreActions } = vi.hoisted(() => ({
   mockScanStoreActions: {
     dismissDialog: vi.fn(),
     setBatchEditingIndex: vi.fn(),
+    // Story 14e-34a: Add setImages for single source of truth
+    setImages: vi.fn(),
   },
   mockNavigationStoreActions: {
     setView: vi.fn(),
@@ -120,7 +122,7 @@ function createDefaultProps(overrides: Partial<ScanInitiationProps> = {}): ScanI
     setScanError: vi.fn(),
     setScanStoreType: vi.fn(),
     setScanCurrency: vi.fn(),
-    setBatchImages: vi.fn(),
+    // Story 14e-34a: setBatchImages removed - now uses useScanStore.setImages directly
     setShowBatchPreview: vi.fn(),
     setToastMessage: vi.fn(),
     setSkipScanCompleteModal: vi.fn(),
@@ -430,7 +432,8 @@ describe('useScanInitiation', () => {
         await vi.runAllTimersAsync();
       });
 
-      expect(props.setBatchImages).toHaveBeenCalled();
+      // Story 14e-34a: Check store action instead of prop
+      expect(mockScanStoreActions.setImages).toHaveBeenCalled();
       expect(props.setShowBatchPreview).toHaveBeenCalledWith(true);
       // Should NOT navigate to transaction editor
       expect(mockNavigationStoreActions.setView).not.toHaveBeenCalled();

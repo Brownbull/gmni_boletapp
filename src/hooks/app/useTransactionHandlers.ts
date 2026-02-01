@@ -60,7 +60,8 @@ import {
 import { parseStrictNumber, getSafeDate } from '../../utils/validation';
 import { downloadBasicData } from '../../utils/csvExport';
 // Story 14e-16: Import batch review actions to sync removal when saving from edit mode
-import { batchReviewActions } from '@features/batch-review';
+// Story 14e-34b: Import atomic batch actions for race condition prevention
+import { batchReviewActions, atomicBatchActions } from '@features/batch-review';
 
 // =============================================================================
 // Types
@@ -173,8 +174,7 @@ export interface UseTransactionHandlersProps {
     clearBatchEditingIndex: () => void;
     /** Batch receipts array (to get receipt ID for discard after save) */
     batchReceipts: Array<{ id: string }> | null;
-    /** Discard batch receipt after saving (removes from batch list) */
-    discardBatchReceipt: (id: string) => void;
+    // Story 14e-34b: Removed discardBatchReceipt prop - now using atomicBatchActions internally
 
     // Translation function
     /** Translation function for i18n */
@@ -261,7 +261,7 @@ export function useTransactionHandlers(
         batchEditingIndex,
         clearBatchEditingIndex,
         batchReceipts,
-        discardBatchReceipt,
+        // Story 14e-34b: discardBatchReceipt removed - now using atomicBatchActions internally
         t,
     } = props;
 
@@ -339,9 +339,9 @@ export function useTransactionHandlers(
             batchReviewActions.finishEditing();
             // Remove the saved receipt from the batch list so it doesn't appear twice
             // Story 14e-16: Remove from both scan store and batch review store
+            // Story 14e-34b: Use atomic action to prevent race conditions
             if (receiptId) {
-                discardBatchReceipt(receiptId);
-                batchReviewActions.discardItem(receiptId);
+                atomicBatchActions.discardReceiptAtomic(receiptId);
             }
             setView('batch-review');
         } else {
@@ -484,7 +484,7 @@ export function useTransactionHandlers(
         batchEditingIndex,
         clearBatchEditingIndex,
         batchReceipts,
-        discardBatchReceipt,
+        // Story 14e-34b: discardBatchReceipt removed - now using atomicBatchActions internally
         setCurrentInsight,
         setShowInsightCard,
         setShowBatchSummary,

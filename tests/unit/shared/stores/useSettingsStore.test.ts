@@ -1,11 +1,13 @@
 /**
  * Story 14e-20b: Settings Store Unit Tests
+ * Story 14e-35: Added locale settings tests
  *
  * Tests for useSettingsStore covering:
  * - AC1: Initial state and defaults
  * - AC2: Zustand persist middleware configuration
  * - AC3: All settings functionality without regressions
  * - AC4: Migration from legacy localStorage keys
+ * - Story 14e-35: Locale settings (lang, currency, dateFormat)
  *
  * Note: Zustand persist middleware is mocked to avoid localStorage issues
  * in the test environment. The actual persistence behavior is verified
@@ -39,6 +41,11 @@ import {
   useColorTheme,
   useFontColorMode,
   useFontSize,
+  // Story 14e-35: Locale selectors
+  useLang,
+  useCurrency,
+  useDateFormat,
+  useLocaleSettings,
   getSettingsState,
   settingsActions,
 } from '@shared/stores/useSettingsStore';
@@ -64,6 +71,10 @@ function getStateOnly() {
     colorTheme: state.colorTheme,
     fontColorMode: state.fontColorMode,
     fontSize: state.fontSize,
+    // Story 14e-35: Locale settings
+    lang: state.lang,
+    currency: state.currency,
+    dateFormat: state.dateFormat,
   };
 }
 
@@ -98,6 +109,10 @@ describe('useSettingsStore', () => {
         colorTheme: 'mono',
         fontColorMode: 'colorful',
         fontSize: 'small',
+        // Story 14e-35: Locale defaults (target market: Chile)
+        lang: 'es',
+        currency: 'CLP',
+        dateFormat: 'LatAm',
       });
     });
 
@@ -107,6 +122,10 @@ describe('useSettingsStore', () => {
         colorTheme: 'mono',
         fontColorMode: 'colorful',
         fontSize: 'small',
+        // Story 14e-35: Locale defaults
+        lang: 'es',
+        currency: 'CLP',
+        dateFormat: 'LatAm',
       });
     });
   });
@@ -217,6 +236,86 @@ describe('useSettingsStore', () => {
         expect(useSettingsStore.getState().fontSize).toBe('small');
       });
     });
+
+    // Story 14e-35: Locale setting actions
+    describe('setLang', () => {
+      it('should update lang to en', () => {
+        const { setLang } = useSettingsStore.getState();
+
+        act(() => {
+          setLang('en');
+        });
+
+        expect(useSettingsStore.getState().lang).toBe('en');
+      });
+
+      it('should update lang to es', () => {
+        useSettingsStore.setState({ lang: 'en' });
+        const { setLang } = useSettingsStore.getState();
+
+        act(() => {
+          setLang('es');
+        });
+
+        expect(useSettingsStore.getState().lang).toBe('es');
+      });
+    });
+
+    describe('setCurrency', () => {
+      it('should update currency to USD', () => {
+        const { setCurrency } = useSettingsStore.getState();
+
+        act(() => {
+          setCurrency('USD');
+        });
+
+        expect(useSettingsStore.getState().currency).toBe('USD');
+      });
+
+      it('should update currency to EUR', () => {
+        const { setCurrency } = useSettingsStore.getState();
+
+        act(() => {
+          setCurrency('EUR');
+        });
+
+        expect(useSettingsStore.getState().currency).toBe('EUR');
+      });
+
+      it('should update currency to CLP', () => {
+        useSettingsStore.setState({ currency: 'USD' });
+        const { setCurrency } = useSettingsStore.getState();
+
+        act(() => {
+          setCurrency('CLP');
+        });
+
+        expect(useSettingsStore.getState().currency).toBe('CLP');
+      });
+    });
+
+    describe('setDateFormat', () => {
+      it('should update dateFormat to US', () => {
+        const { setDateFormat } = useSettingsStore.getState();
+
+        act(() => {
+          setDateFormat('US');
+        });
+
+        expect(useSettingsStore.getState().dateFormat).toBe('US');
+      });
+
+      it('should update dateFormat to LatAm', () => {
+        useSettingsStore.setState({ dateFormat: 'US' });
+        const { setDateFormat } = useSettingsStore.getState();
+
+        act(() => {
+          setDateFormat('LatAm');
+        });
+
+        expect(useSettingsStore.getState().dateFormat).toBe('LatAm');
+      });
+    });
   });
 
   // ===========================================================================
@@ -254,6 +353,43 @@ describe('useSettingsStore', () => {
       const { result } = renderHook(() => useFontSize());
 
       expect(result.current).toBe('normal');
+    });
+
+    // Story 14e-35: Locale selectors
+    it('useLang should return current lang', () => {
+      useSettingsStore.setState({ lang: 'en' });
+
+      const { result } = renderHook(() => useLang());
+
+      expect(result.current).toBe('en');
+    });
+
+    it('useCurrency should return current currency', () => {
+      useSettingsStore.setState({ currency: 'EUR' });
+
+      const { result } = renderHook(() => useCurrency());
+
+      expect(result.current).toBe('EUR');
+    });
+
+    it('useDateFormat should return current dateFormat', () => {
+      useSettingsStore.setState({ dateFormat: 'US' });
+
+      const { result } = renderHook(() => useDateFormat());
+
+      expect(result.current).toBe('US');
+    });
+
+    it('useLocaleSettings should return all locale settings', () => {
+      useSettingsStore.setState({ lang: 'en', currency: 'USD', dateFormat: 'US' });
+
+      const { result } = renderHook(() => useLocaleSettings());
+
+      expect(result.current).toEqual({
+        lang: 'en',
+        currency: 'USD',
+        dateFormat: 'US',
+      });
     });
   });
 
@@ -302,6 +438,31 @@ describe('useSettingsStore', () => {
 
       expect(useSettingsStore.getState().fontSize).toBe('normal');
     });
+
+    // Story 14e-35: Locale direct access actions
+    it('settingsActions.setLang should update lang', () => {
+      act(() => {
+        settingsActions.setLang('en');
+      });
+
+      expect(useSettingsStore.getState().lang).toBe('en');
+    });
+
+    it('settingsActions.setCurrency should update currency', () => {
+      act(() => {
+        settingsActions.setCurrency('USD');
+      });
+
+      expect(useSettingsStore.getState().currency).toBe('USD');
+    });
+
+    it('settingsActions.setDateFormat should update dateFormat', () => {
+      act(() => {
+        settingsActions.setDateFormat('US');
+      });
+
+      expect(useSettingsStore.getState().dateFormat).toBe('US');
+    });
   });
 
   // ===========================================================================
@@ -326,7 +487,7 @@ describe('useSettingsStore', () => {
 
     it('should update state through actions (persistence trigger)', () => {
       // Verify actions update state correctly - each action triggers persist
-      const { setTheme, setColorTheme, setFontColorMode, setFontSize } =
+      const { setTheme, setColorTheme, setFontColorMode, setFontSize, setLang, setCurrency, setDateFormat } =
         useSettingsStore.getState();
 
       act(() => {
@@ -334,6 +495,10 @@ describe('useSettingsStore', () => {
         setColorTheme('professional');
         setFontColorMode('plain');
         setFontSize('normal');
+        // Story 14e-35: Locale actions
+        setLang('en');
+        setCurrency('USD');
+        setDateFormat('US');
       });
 
       const state = getStateOnly();
@@ -342,6 +507,10 @@ describe('useSettingsStore', () => {
         colorTheme: 'professional',
         fontColorMode: 'plain',
         fontSize: 'normal',
+        // Story 14e-35: Locale state
+        lang: 'en',
+        currency: 'USD',
+        dateFormat: 'US',
       });
     });
   });
@@ -358,6 +527,10 @@ describe('useSettingsStore', () => {
       expect(state.colorTheme).toBe('mono');
       expect(state.fontColorMode).toBe('colorful');
       expect(state.fontSize).toBe('small');
+      // Story 14e-35: Locale defaults
+      expect(state.lang).toBe('es');
+      expect(state.currency).toBe('CLP');
+      expect(state.dateFormat).toBe('LatAm');
     });
 
     it('defaultSettingsState should have correct migration-aware defaults', () => {
@@ -365,6 +538,10 @@ describe('useSettingsStore', () => {
       expect(defaultSettingsState.colorTheme).toBe('mono');
       expect(defaultSettingsState.fontColorMode).toBe('colorful');
       expect(defaultSettingsState.fontSize).toBe('small');
+      // Story 14e-35: Locale defaults
+      expect(defaultSettingsState.lang).toBe('es');
+      expect(defaultSettingsState.currency).toBe('CLP');
+      expect(defaultSettingsState.dateFormat).toBe('LatAm');
     });
   });
 });

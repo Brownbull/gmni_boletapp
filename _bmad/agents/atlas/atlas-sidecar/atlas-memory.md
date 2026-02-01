@@ -1,8 +1,8 @@
 # Atlas Memory - Application Knowledge Base
 
 > **Architecture:** Sharded Knowledge Fragments
-> **Last Sync:** 2026-01-29 (Story 14e-29d APPROVED - Placeholder Handler Documentation Pattern)
-> **Last Optimized:** 2026-01-24 (Generation 5)
+> **Last Sync:** 2026-02-01 (Story 14e-45 - NavigationContext deletion)
+> **Last Optimized:** 2026-02-01 (Generation 6)
 > **Project:** BoletApp
 
 ---
@@ -17,7 +17,7 @@ Atlas uses **sharded memory** for context efficiency. Knowledge stored in `knowl
 | 02 | [02-features.md](knowledge/02-features.md) | Feature inventory, Epic status |
 | 03 | [03-personas.md](knowledge/03-personas.md) | Chilean Family persona, Abuelita Test |
 | 04 | [04-architecture.md](knowledge/04-architecture.md) | Tech stack, ADRs, key patterns |
-| 05 | [05-testing.md](knowledge/05-testing.md) | Test metrics (3,146+ tests), CI/CD |
+| 05 | [05-testing.md](knowledge/05-testing.md) | Test metrics, CI/CD |
 | 06 | [06-lessons.md](knowledge/06-lessons.md) | Pattern tables, critical learnings |
 | 07 | [07-process.md](knowledge/07-process.md) | 3-branch strategy, deployment |
 | 08 | [08-workflow-chains.md](knowledge/08-workflow-chains.md) | 10 user journeys, scan lifecycle |
@@ -36,15 +36,14 @@ Atlas uses **sharded memory** for context efficiency. Knowledge stored in `knowl
 | **Core Value** | "Help Chilean families answer 'Where did my money go?'" | ux-design-specification.md:12 |
 | **Payment Provider** | Mercado Pago (Chile) | pricing-model.md:163 |
 
-### Current Status Summary (2026-01-24)
+### Current Status Summary (2026-02-01)
 
 | Metric | Value |
 |--------|-------|
 | **Epic 14c-refactor** | ✅ COMPLETE (36 stories) |
 | **Epic 14e** | 🔄 IN PROGRESS (Feature Architecture) |
-| **Tests** | 5,759+ (84%+ coverage) |
+| **Tests** | 5,800+ (84%+ coverage) |
 | **Bundle** | 2.92 MB ⚠️ |
-| **App.tsx** | 3,850 lines (from 4,800) |
 
 > **Full status:** See [09-sync-history.md](knowledge/09-sync-history.md)
 
@@ -70,27 +69,27 @@ Atlas uses **sharded memory** for context efficiency. Knowledge stored in `knowl
 - Architecture conflicts with documented patterns
 - ⚠️ **Bundle size at 2.92 MB** (code splitting needed)
 - Test coverage dropping below 80%
-- ✅ **CI shard imbalance RESOLVED** (Story 14.30.8): Explicit test groups
 
 ---
 
-## Generation 5 Optimization Summary (2026-01-24)
+## Generation 6 Optimization Summary (2026-02-01)
 
 | Fragment | Before | After | Reduction |
 |----------|--------|-------|-----------|
-| atlas-memory.md | 120 lines | ~70 lines | 42% |
-| 02-features.md | 743 lines | ~400 lines | 46% |
-| 04-architecture.md | 769 lines | ~550 lines | 28% |
-| 06-lessons.md | 387 lines | ~300 lines | 22% |
-| 09-sync-history.md | 186 lines | ~100 lines | 46% |
+| 02-features.md | 27 KB | 4.5 KB | 83% |
+| 04-architecture.md | 44 KB | 7 KB | 84% |
+| 06-lessons.md | 49 KB | 5.7 KB | 88% |
+| 09-sync-history.md | 84 KB | 4 KB | 95% |
+| **Total** | **~205 KB** | **~21 KB** | **~90%** |
 
 **Key changes:**
-- Removed duplicate project status (single source in 09-sync-history.md)
-- Archived reverted Epic 14c cache optimization patterns
-- Consolidated completed epic story tables
-- Fixed generation numbering (sync ≠ optimization generations)
+- Consolidated 100+ detailed sync entries into summary tables
+- Removed verbose per-story additions (details in story files)
+- Patterns now organized by domain, not chronologically
+- Zustand stores documented in single table
+- Epic 14e progress tracked in summary format
 
-**Backup location:** `backups/v5/`
+**Backup location:** `backups/v6/`
 
 ---
 

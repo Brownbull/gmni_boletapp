@@ -1,6 +1,7 @@
 /**
  * Story 14e-22: AppProviders - App-level provider composition
  * Story 14e-25d: Removed ViewHandlersProvider (views use direct hooks)
+ * Story 14e-45: Removed NavigationProvider (navigation via useNavigationStore Zustand store)
  *
  * Composes all app-level React context providers in the correct order.
  * This component handles the "provider pyramid" pattern cleanly.
@@ -14,11 +15,11 @@
  *
  * 2. AppProviders level (this component):
  *    - ThemeProvider (theme + locale preferences)
- *    - NavigationProvider (view navigation state)
  *    - AppStateProvider (toasts, operation status)
  *    - NotificationProvider (in-app notifications)
  *
- * Note: AnalyticsProvider and HistoryFiltersProvider are view-scoped
+ * Note: Navigation state is now managed by useNavigationStore (Zustand).
+ * AnalyticsProvider and HistoryFiltersProvider are view-scoped
  * and should remain in the components that use them (TrendsView, HistoryView).
  *
  * Architecture Reference: Epic 14e - Feature-Based Architecture
@@ -47,7 +48,6 @@
 import type { AppProvidersProps } from './types';
 import {
     ThemeProvider,
-    NavigationProvider,
     AppStateProvider,
     NotificationProvider,
 } from '../contexts';
@@ -65,9 +65,12 @@ import {
  *
  * Order rationale:
  * - ThemeProvider: No dependencies, provides theme to all children
- * - NavigationProvider: May use theme for styling
  * - AppStateProvider: No dependencies on above, provides toast/operation state
  * - NotificationProvider: May show toasts via AppStateProvider
+ *
+ * Story 14e-45: NavigationProvider removed - navigation now uses Zustand store:
+ * - Navigation state: useNavigationStore from @/shared/stores
+ * - Navigation actions: useNavigationActions() from @/shared/stores
  *
  * Story 14e-25d: ViewHandlersProvider removed - views now use direct hooks:
  * - Navigation: useNavigationActions() from @/shared/stores
@@ -84,17 +87,15 @@ export function AppProviders({
 }: AppProvidersProps): JSX.Element {
     return (
         <ThemeProvider fontFamily={fontFamily}>
-            <NavigationProvider>
-                <AppStateProvider>
-                    <NotificationProvider
-                        db={db ?? null}
-                        userId={userId ?? null}
-                        appId={appId ?? null}
-                    >
-                        {children}
-                    </NotificationProvider>
-                </AppStateProvider>
-            </NavigationProvider>
+            <AppStateProvider>
+                <NotificationProvider
+                    db={db ?? null}
+                    userId={userId ?? null}
+                    appId={appId ?? null}
+                >
+                    {children}
+                </NotificationProvider>
+            </AppStateProvider>
         </ThemeProvider>
     );
 }

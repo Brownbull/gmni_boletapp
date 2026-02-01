@@ -22,7 +22,7 @@ import { DIALOG_TYPES } from '../../../../../src/types/scanStateMachine';
 // =============================================================================
 
 // Mock store actions - use vi.hoisted to define mocks before they're used
-const { mockBatchReviewActions, mockScanStoreActions, mockBatchReviewStoreState } = vi.hoisted(() => ({
+const { mockBatchReviewActions, mockScanStoreActions, mockBatchReviewStoreState, mockScanStoreImages } = vi.hoisted(() => ({
   mockBatchReviewActions: {
     startEditing: vi.fn(),
     reset: vi.fn(),
@@ -34,10 +34,17 @@ const { mockBatchReviewActions, mockScanStoreActions, mockBatchReviewStoreState 
     batchItemSuccess: vi.fn(),
     batchItemError: vi.fn(),
     batchComplete: vi.fn(),
+    // Story 14e-34a: Add images and setImages for single source of truth
+    images: ['image1.jpg', 'image2.jpg'],
+    setImages: vi.fn(),
   },
   // Story 14e-33: Mock store state for handleBack
   mockBatchReviewStoreState: {
     items: [] as unknown[],
+  },
+  // Story 14e-34a: Mutable images array for test manipulation
+  mockScanStoreImages: {
+    current: ['image1.jpg', 'image2.jpg'],
   },
 }));
 
@@ -50,8 +57,14 @@ vi.mock('../../../../../src/features/batch-review/store', () => ({
 }));
 
 // Mock scan store
+// Story 14e-34a: Include images and setImages for single source of truth
 vi.mock('../../../../../src/features/scan/store', () => ({
-  useScanStore: () => mockScanStoreActions,
+  useScanStore: () => ({
+    ...mockScanStoreActions,
+    // Story 14e-34a: Return current images from mutable reference
+    images: mockScanStoreImages.current,
+    setImages: mockScanStoreActions.setImages,
+  }),
 }));
 
 // Mock createBatchReceiptsFromResults
@@ -159,7 +172,7 @@ function createMockProps(overrides: Partial<BatchReviewHandlersProps> = {}): Bat
     setTransactionEditorMode: vi.fn(),
     navigateToView: vi.fn(),
     setView: vi.fn(),
-    setBatchImages: vi.fn(),
+    // Story 14e-34a: setBatchImages removed - now uses useScanStore.setImages directly
     batchProcessing: {
       reset: vi.fn(),
     },
@@ -196,7 +209,7 @@ function createMockProps(overrides: Partial<BatchReviewHandlersProps> = {}): Bat
     // Story 14e-29b: Processing handler dependencies
     setShowBatchPreview: vi.fn(),
     setShouldTriggerCreditCheck: vi.fn(),
-    batchImages: ['image1.jpg', 'image2.jpg'],
+    // Story 14e-34a: batchImages removed - now uses useScanStore.images directly
     scanCurrency: 'CLP',
     scanStoreType: 'auto',
     viewMode: 'personal' as const,
@@ -482,7 +495,8 @@ describe('useBatchReviewHandlers', () => {
         result.current.handleSaveComplete(transactions);
       });
 
-      expect(props.setBatchImages).toHaveBeenCalledWith([]);
+      // Story 14e-34a: Check store action instead of prop
+      expect(mockScanStoreActions.setImages).toHaveBeenCalledWith([]);
       expect(props.batchProcessing.reset).toHaveBeenCalled();
       expect(props.resetScanContext).toHaveBeenCalled();
     });
@@ -557,7 +571,8 @@ describe('useBatchReviewHandlers', () => {
       });
 
       expect(props.showScanDialog).not.toHaveBeenCalled();
-      expect(props.setBatchImages).toHaveBeenCalledWith([]);
+      // Story 14e-34a: Check store action instead of prop
+      expect(mockScanStoreActions.setImages).toHaveBeenCalledWith([]);
       expect(props.resetScanContext).toHaveBeenCalled();
       expect(mockBatchReviewActions.reset).toHaveBeenCalled();
       expect(props.setView).toHaveBeenCalledWith('dashboard');
@@ -574,7 +589,8 @@ describe('useBatchReviewHandlers', () => {
       });
 
       expect(props.dismissScanDialog).toHaveBeenCalled();
-      expect(props.setBatchImages).toHaveBeenCalledWith([]);
+      // Story 14e-34a: Check store action instead of prop
+      expect(mockScanStoreActions.setImages).toHaveBeenCalledWith([]);
       expect(props.batchProcessing.reset).toHaveBeenCalled();
       expect(props.resetScanContext).toHaveBeenCalled();
       expect(mockBatchReviewActions.reset).toHaveBeenCalled();
@@ -592,7 +608,8 @@ describe('useBatchReviewHandlers', () => {
       });
 
       expect(props.dismissScanDialog).toHaveBeenCalled();
-      expect(props.setBatchImages).not.toHaveBeenCalled();
+      // Story 14e-34a: Check store action instead of prop
+      expect(mockScanStoreActions.setImages).not.toHaveBeenCalled();
       expect(props.resetScanContext).not.toHaveBeenCalled();
     });
   });
@@ -655,7 +672,8 @@ describe('useBatchReviewHandlers', () => {
       });
 
       expect(props.setShowBatchPreview).toHaveBeenCalledWith(false);
-      expect(props.setBatchImages).toHaveBeenCalledWith([]);
+      // Story 14e-34a: Check store action instead of prop
+      expect(mockScanStoreActions.setImages).toHaveBeenCalledWith([]);
     });
   });
 
@@ -697,8 +715,9 @@ describe('useBatchReviewHandlers', () => {
     });
 
     it('should call startProcessing with correct params', async () => {
+      // Story 14e-34a: Set mock store images instead of props
+      mockScanStoreImages.current = ['img1.jpg', 'img2.jpg'];
       const props = createMockProps({
-        batchImages: ['img1.jpg', 'img2.jpg'],
         scanCurrency: 'USD',
         scanStoreType: 'supermarket',
       });
@@ -770,22 +789,23 @@ describe('useBatchReviewHandlers', () => {
 
   describe('handleRemoveImage', () => {
     it('should remove image at specified index', () => {
-      const props = createMockProps({
-        batchImages: ['img1.jpg', 'img2.jpg', 'img3.jpg'],
-      });
+      // Story 14e-34a: Set mock store images instead of props
+      mockScanStoreImages.current = ['img1.jpg', 'img2.jpg', 'img3.jpg'];
+      const props = createMockProps();
       const { result } = renderHook(() => useBatchReviewHandlers(props));
 
       act(() => {
         result.current.handleRemoveImage(1);
       });
 
-      expect(props.setBatchImages).toHaveBeenCalledWith(['img1.jpg', 'img3.jpg']);
+      // Story 14e-34a: Check store action instead of prop
+      expect(mockScanStoreActions.setImages).toHaveBeenCalledWith(['img1.jpg', 'img3.jpg']);
     });
 
     it('should switch to single mode when one image left', () => {
-      const props = createMockProps({
-        batchImages: ['img1.jpg', 'img2.jpg'],
-      });
+      // Story 14e-34a: Set mock store images instead of props
+      mockScanStoreImages.current = ['img1.jpg', 'img2.jpg'];
+      const props = createMockProps();
       const { result } = renderHook(() => useBatchReviewHandlers(props));
 
       act(() => {
@@ -799,9 +819,9 @@ describe('useBatchReviewHandlers', () => {
     });
 
     it('should not switch mode when more than one image left', () => {
-      const props = createMockProps({
-        batchImages: ['img1.jpg', 'img2.jpg', 'img3.jpg'],
-      });
+      // Story 14e-34a: Set mock store images instead of props
+      mockScanStoreImages.current = ['img1.jpg', 'img2.jpg', 'img3.jpg'];
+      const props = createMockProps();
       const { result } = renderHook(() => useBatchReviewHandlers(props));
 
       act(() => {
