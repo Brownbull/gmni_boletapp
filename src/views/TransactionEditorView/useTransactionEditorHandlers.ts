@@ -67,7 +67,7 @@ import {
 } from '@features/transaction-editor';
 
 // Service imports
-import { updateMemberTimestampsForTransaction } from '@/services/sharedGroupService';
+// Story 14d-v2-1.1: updateMemberTimestampsForTransaction removed (Epic 14c cleanup)
 
 // =============================================================================
 // Types
@@ -464,7 +464,8 @@ export function useTransactionEditorHandlers(
     const handleGroupsChange = useCallback(async (groupIds: string[]) => {
         if (!user?.uid || !currentTransaction) return;
 
-        const previousGroupIds = currentTransaction.sharedGroupIds || [];
+        // Story 14d-v2-1.1: sharedGroupIds[] removed, will use sharedGroupId in Epic 14d
+        const previousGroupIds: string[] = [];
 
         if (import.meta.env.DEV) {
             console.log('[TransactionEditor] onGroupsChange:', {
@@ -474,15 +475,8 @@ export function useTransactionEditorHandlers(
             });
         }
 
-        // Fire and forget - don't block the UI
-        updateMemberTimestampsForTransaction(
-            db,
-            user.uid,
-            groupIds,
-            previousGroupIds
-        ).catch(err => {
-            console.warn('[TransactionEditor] Failed to update memberUpdates:', err);
-        });
+        // Story 14d-v2-1.1: updateMemberTimestampsForTransaction removed (Epic 14c cleanup)
+        // Epic 14d will use changelog-based sync instead
 
         // Groups the transaction was REMOVED from
         const removedFromGroups = previousGroupIds.filter(id => !groupIds.includes(id));
@@ -514,9 +508,9 @@ export function useTransactionEditorHandlers(
                     }
 
                     if (addedToGroups.includes(groupId)) {
+                        // Story 14d-v2-1.1: sharedGroupIds removed, Epic 14d will use sharedGroupId
                         const updatedTxn = {
                             ...currentTransaction,
-                            sharedGroupIds: groupIds,
                             _ownerId: user.uid,
                         };
                         const exists = oldData.some(tx => tx.id === currentTransaction.id);
@@ -531,12 +525,9 @@ export function useTransactionEditorHandlers(
                         return [updatedTxn, ...oldData];
                     }
 
-                    // Transaction stayed in group, just update the sharedGroupIds
-                    return oldData.map(tx =>
-                        tx.id === currentTransaction.id
-                            ? { ...tx, sharedGroupIds: groupIds }
-                            : tx
-                    );
+                    // Story 14d-v2-1.1: sharedGroupIds removed, Epic 14d will use sharedGroupId
+                    // Transaction stayed in group, no update needed for now
+                    return oldData;
                 }
             );
         };

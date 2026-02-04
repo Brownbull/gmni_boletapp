@@ -16,7 +16,7 @@
  */
 
 export {
-    // Functions
+    // Functions - Display normalization (time, city, country from user settings)
     normalizeTransaction,
     normalizeTransactions,
     // Constants
@@ -24,6 +24,14 @@ export {
     // Types
     type UserDefaults,
 } from '../../../utils/transactionNormalizer';
+
+// Story 14d-v2-1-2b: Epic 14d-v2 field defaults (sharedGroupId, version, periods, etc.)
+export {
+    ensureTransactionDefaults,
+    ensureTransactionsDefaults,
+    isDeleted,
+    isSharedTransaction,
+} from '../../../utils/transactionUtils';
 
 // Story 14e-41: Transaction reconciliation utility
 export { reconcileItemsTotal, type ReconcileResult } from './reconciliation';

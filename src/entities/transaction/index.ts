@@ -58,10 +58,16 @@ export {
 // Utilities - Re-exported from src/utils/
 // ============================================================================
 export {
+    // Display normalization (time, city, country from user settings)
     normalizeTransaction,
     normalizeTransactions,
     DEFAULT_TIME,
     type UserDefaults,
+    // Story 14d-v2-1-2b: Epic 14d-v2 field defaults
+    ensureTransactionDefaults,
+    ensureTransactionsDefaults,
+    isDeleted,
+    isSharedTransaction,
     // Story 14e-41: Reconciliation utility
     reconcileItemsTotal,
     type ReconcileResult,

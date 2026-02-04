@@ -15,7 +15,7 @@
  * Architecture Reference: Epic 14c-refactor - App.tsx Handler Extraction
  * Dependencies:
  * - AuthContext (user, services)
- * - ViewModeContext (viewMode, activeGroup for shared group tagging)
+ * - useViewModeStore (viewMode, activeGroup for shared group tagging - Zustand)
  * - useUserPreferences (location, currency defaults)
  * - React Query (cache invalidation)
  *
@@ -213,7 +213,7 @@ export interface UseTransactionHandlersResult {
 
     /**
      * Create a default transaction with user preferences.
-     * Auto-assigns sharedGroupIds when in group view mode.
+     * Story 14d-v2-1.1: Group auto-assignment removed (Epic 14c cleanup).
      */
     createDefaultTransaction: () => Transaction;
 }
@@ -268,7 +268,7 @@ export function useTransactionHandlers(
 
     /**
      * Create a default transaction with user preferences.
-     * Auto-assigns sharedGroupIds when in group view mode.
+     * Story 14d-v2-1.1: Group auto-assignment removed (Epic 14c cleanup).
      */
     const createDefaultTransaction = useCallback((): Transaction => {
         const baseTransaction: Transaction = {
@@ -282,13 +282,9 @@ export function useTransactionHandlers(
             currency: userPreferences.defaultCurrency || 'CLP',
         };
 
-        // Auto-assign shared group when in group view mode
-        if (viewMode === 'group' && activeGroup?.id) {
-            return {
-                ...baseTransaction,
-                sharedGroupIds: [activeGroup.id],
-            };
-        }
+        // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
+        // Epic 14d will use sharedGroupId (single nullable string) instead
+        // Group mode auto-assignment will be re-added in Epic 14d
 
         return baseTransaction;
     }, [

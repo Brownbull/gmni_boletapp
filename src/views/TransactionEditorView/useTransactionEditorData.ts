@@ -32,7 +32,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useUserCredits } from '@/hooks/useUserCredits';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useViewMode } from '@/contexts/ViewModeContext';
+// Story 14d-v2-0: ViewMode migrated from Context to Zustand store
+import { useViewMode } from '@/shared/stores/useViewModeStore';
 import { useUserSharedGroups } from '@/hooks/useUserSharedGroups';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useCategoryMappings } from '@/hooks/useCategoryMappings';
@@ -46,7 +47,7 @@ import type { Transaction, StoreCategory, ItemCategory } from '@/types/transacti
 import type { UserCredits } from '@/types/scan';
 import type { Language, Theme } from '@/types/settings';
 import type { ItemNameMapping } from '@/types/itemNameMapping';
-import type { GroupWithMeta } from '@/components/SharedGroups';
+import type { GroupWithMeta } from '@/features/shared-groups';
 
 // Zustand store imports
 import {

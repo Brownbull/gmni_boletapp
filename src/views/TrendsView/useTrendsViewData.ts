@@ -30,7 +30,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useViewMode } from '@/contexts/ViewModeContext';
+// Story 14d-v2-0: ViewMode migrated from Context to Zustand store
+import { useViewMode } from '@/shared/stores/useViewModeStore';
 import { useUserSharedGroups } from '@/hooks/useUserSharedGroups';
 import { useAnalyticsInitialState, useNavigationStore } from '@/shared/stores/useNavigationStore';
 import { TRANSLATIONS } from '@/utils/translations';

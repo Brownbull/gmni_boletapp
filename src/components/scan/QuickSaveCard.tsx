@@ -51,7 +51,7 @@ import { useScanActiveDialog, useScanActions } from '@features/scan/store';
 import { DIALOG_TYPES } from '../../types/scanStateMachine';
 import { useIsForeignLocation } from '../../hooks/useIsForeignLocation';
 import { useLocationDisplay } from '../../hooks/useLocations';
-import { AutoTagIndicator } from '../SharedGroups/AutoTagIndicator';
+import { AutoTagIndicator } from '@/features/shared-groups';
 
 // Story 14d.6: Import centralized type from scanStateMachine
 import type { QuickSaveDialogData } from '../../types/scanStateMachine';

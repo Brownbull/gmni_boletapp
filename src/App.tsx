@@ -64,14 +64,15 @@ import { useBatchSession } from './hooks/useBatchSession';
 import { usePersonalRecords } from './hooks/usePersonalRecords';
 import { usePendingInvitations } from './hooks/usePendingInvitations';
 import { useInAppNotifications } from './hooks/useInAppNotifications';
-import { useViewMode } from './contexts/ViewModeContext';
+// Story 14d-v2-0: ViewMode migrated from Context to Zustand store
+import { useViewMode } from '@/shared/stores/useViewModeStore';
 import { useUserSharedGroups } from './hooks/useUserSharedGroups';
-import { ViewModeSwitcher } from './components/SharedGroups/ViewModeSwitcher';
+import { ViewModeSwitcher } from '@/features/shared-groups';
 import { useJoinLinkHandler } from './hooks/useJoinLinkHandler';
 // App-level handler hooks
 import { useTransactionHandlers, useScanHandlers, useDialogHandlers } from './hooks/app';
 import { AppProviders } from '@app/AppProviders';
-import { JoinGroupDialog } from './components/SharedGroups/JoinGroupDialog';
+import { JoinGroupDialog } from '@/features/shared-groups';
 import type { SharedGroup } from './types/sharedGroup';
 import { getFirestore } from 'firebase/firestore';
 import { useBatchProcessing } from './hooks/useBatchProcessing';
@@ -525,13 +526,9 @@ function App() {
             currency: userPreferences.defaultCurrency || 'CLP',
         };
 
-        // Auto-assign shared group when in group view mode
-        if (viewMode === 'group' && activeGroup?.id) {
-            return {
-                ...baseTransaction,
-                sharedGroupIds: [activeGroup.id],
-            };
-        }
+        // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
+        // Epic 14d will use sharedGroupId (single nullable string) instead
+        // Group mode auto-assignment will be re-added in Epic 14d
 
         return baseTransaction;
     }, [defaultCountry, defaultCity, userPreferences.defaultCurrency, viewMode, activeGroup]);
@@ -1486,7 +1483,7 @@ function App() {
     }
 
     if (!user) {
-        return <LoginScreen onSignIn={signIn} onTestSignIn={() => signInWithTestCredentials()} t={t} />;
+        return <LoginScreen onSignIn={signIn} onTestSignIn={signInWithTestCredentials} t={t} />;
     }
 
     return (
@@ -1834,23 +1831,9 @@ function App() {
                                         onItemError: dispatchBatchItemError,
                                         // Atomic state update with phase transition
                                         onComplete: (processingResults, imageUrls) => {
-                                            // Add sharedGroupIds to each successful result if in group mode
-                                            let taggedResults = processingResults;
-                                            if (viewMode === 'group' && activeGroup?.id) {
-                                                taggedResults = processingResults.map(result => {
-                                                    if (result.success && result.result) {
-                                                        return {
-                                                            ...result,
-                                                            result: {
-                                                                ...result.result,
-                                                                sharedGroupIds: [activeGroup.id!],
-                                                            },
-                                                        };
-                                                    }
-                                                    return result;
-                                                });
-                                            }
-                                            const receipts = createBatchReceiptsFromResults(taggedResults, imageUrls);
+                                            // Story 14d-v2-1.1: sharedGroupIds[] tagging removed (Epic 14c cleanup)
+                                            // Epic 14d will use sharedGroupId (single nullable string) instead
+                                            const receipts = createBatchReceiptsFromResults(processingResults, imageUrls);
                                             // Story 14e-16: Load into both scan store (for legacy) and batch review store (for orchestrator)
                                             dispatchBatchComplete(receipts);
                                             batchReviewActions.loadBatch(receipts);

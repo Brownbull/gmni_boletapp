@@ -85,8 +85,18 @@ export const QUERY_KEYS = {
     items: (userId: string, appId: string) =>
         ['items', 'derived', userId, appId] as const,
 
-    // Note: sharedGroupTransactions and sharedGroups keys were removed in Story 14c-refactor.12
-    // The shared groups feature is stubbed pending future epic (after 14c-refactor completion).
+    /**
+     * Story 14d-v2-1-4b: Shared Groups Query Keys
+     * Hierarchical keys for group queries and mutations
+     */
+    groups: {
+        /** All groups queries (for bulk invalidation) */
+        all: () => ['groups'] as const,
+        /** List of groups user belongs to */
+        list: (userId: string) => ['groups', 'list', userId] as const,
+        /** Group count for BC-1 limit checks */
+        count: (userId: string) => ['groups', 'count', userId] as const,
+    },
 
     /**
      * Story 14.35: Localized location data
