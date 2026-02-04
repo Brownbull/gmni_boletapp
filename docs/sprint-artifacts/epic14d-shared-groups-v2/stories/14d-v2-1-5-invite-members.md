@@ -1,6 +1,12 @@
 # Story 14d-v2.1.5: Invite Members to Group
 
-Status: ready-for-dev
+Status: split
+
+> **SPLIT 2026-02-01:** This story exceeded sizing limits (8 tasks, 42 subtasks, 9 files).
+> Split into 3 sub-stories using `by_layer` strategy:
+> - [14d-v2-1-5a: Invitation Foundation](./14d-v2-1-5a-invitation-foundation.md) - Types & Utils
+> - [14d-v2-1-5b: Invitation Backend](./14d-v2-1-5b-invitation-backend.md) - Service & Security
+> - [14d-v2-1-5c: Invitation UI](./14d-v2-1-5c-invitation-ui.md) - Components & Integration
 
 ## Story
 

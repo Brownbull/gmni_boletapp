@@ -8,3 +8,4 @@ lessons,6,Historical Lessons (Retrospectives),"What worked, what failed, pattern
 process,7,Process & Strategy,"Branching strategy, testing approach, team decisions, deployment patterns","process,strategy,branching,deployment",knowledge/07-process.md
 chains,8,Workflow Chains,"User journeys mapped to component steps, upstream/downstream dependencies","workflows,chains,journeys,dependencies",knowledge/08-workflow-chains.md
 sync-history,9,Sync History,"Document sync timestamps, sources checked, drift detection","sync,history,updates,drift",knowledge/09-sync-history.md
+instincts,10,Learned Instincts & Patterns,"Confidence-weighted patterns learned from session observations","instincts,patterns,learning,evolved",knowledge/10-instincts.md

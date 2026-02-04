@@ -282,12 +282,17 @@ This model provides:
 
 | Epic | Title | FRs | Points Est. |
 |------|-------|-----|-------------|
-| 1 | Data Model & Group Foundation (From Scratch) | Foundation | ~20 pts |
-| 2 | Changelog-Driven Sync | FR-1 to FR-9 | ~30 pts |
-| 3 | Server-Side Analytics | FR-10 to FR-16 | ~25 pts |
-| 4 | Notifications & Engagement | FR-17 to FR-18 | ~10 pts |
+| **0** | **Architecture Alignment (Pre-requisite)** | ADR-018 | **~3 pts** |
+| 1 | Data Model & Group Foundation (From Scratch) | Foundation | ~50 pts (14→18 stories after 1.10 split) |
+| 2 | Changelog-Driven Sync | FR-1 to FR-9 | ~45 pts |
+| 3 | Server-Side Analytics | FR-10 to FR-16 | ~34 pts |
+| 4 | Notifications & Engagement | FR-17 to FR-18 | ~12 pts |
 
-**Total estimated: ~85 points**
+**Total estimated: ~144 points** (updated 2026-02-01 after architecture alignment)
+
+> **Note (2026-02-01):** Story 1.10 was split into 4 sub-stories (1.10a-d) per Epic 14e alignment.
+> Story 1.1 estimate reduced from ~5 to ~2-3 pts per legacy inventory verification.
+> See [Architecture Alignment Plan](./14d-v2-architecture-alignment-plan.md) for details.
 
 ---
 
@@ -307,11 +312,48 @@ The core bug from Epic 14c that this epic solves:
 
 ---
 
+## Epic 0: Architecture Alignment (Pre-requisite)
+
+> **Added 2026-02-01:** Per Epic 14e alignment review, this story ensures Epic 14d-v2 follows established Zustand patterns.
+> See [Architecture Alignment Plan](./14d-v2-architecture-alignment-plan.md) for decisions.
+
+**Goal:** Align shared groups infrastructure with Epic 14e architecture (ADR-018: Zustand-only state management).
+
+### Story 0: Architecture Alignment (~3 pts)
+
+As a **developer**,
+I want **the shared groups feature infrastructure aligned with Epic 14e architecture**,
+So that **all Epic 14d-v2 stories can build on consistent Zustand patterns**.
+
+**Acceptance Criteria:**
+
+**Given** the Epic 14e Zustand-only pattern (ADR-018)
+**When** Epic 14d-v2 view mode state is implemented
+**Then** it uses a Zustand store at `src/shared/stores/useViewModeStore.ts`
+**And** follows the same patterns as useNavigationStore
+
+**Given** the feature directory structure from Epic 14e
+**When** the shared-groups feature directory is created
+**Then** it exists at `src/features/shared-groups/`
+**And** includes standard subdirectories: `store/`, `handlers/`, `hooks/`, `components/`, `types.ts`
+
+**Given** existing ViewModeContext consumers in the codebase
+**When** the migration is complete
+**Then** all consumers use `useViewModeStore` instead
+**And** `ViewModeContext.tsx` is deleted
+**And** all tests pass
+
+**Story file:** [14d-v2-0-architecture-alignment.md](./stories/14d-v2-0-architecture-alignment.md)
+
+---
+
 ## Epic 1: Data Model & Group Foundation (From Scratch)
 
 **Goal:** Users can create shared groups, invite members, and the system has the new data structures that enable reliable sync.
 
 ### Story 1.1: Legacy Shared Groups Cleanup
+
+> **Updated 2026-02-01:** Per legacy inventory verification, some files no longer exist. See [14d-v2-legacy-inventory.md](./14d-v2-legacy-inventory.md) for details. Story points reduced from ~5 to ~2-3.
 
 As a **developer**,
 I want **all Epic 14c shared group code removed from the codebase**,
@@ -521,6 +563,15 @@ So that **I can control my group participation**.
 **And** other members' next sync will remove those transactions from their cache
 **And** the leaving member's transactions remain tagged with `sharedGroupId` but are inaccessible to the group
 
+**Given** I am a group owner
+**When** I edit the group name, icon, or color
+**Then** the changes are saved to the group document
+**And** all members see the updated appearance on their next sync
+
+**Given** I am NOT the group owner
+**When** I view group settings
+**Then** I can see name/icon/color but cannot edit them
+
 ---
 
 ### Story 1.8: Cloud Function - Changelog Writer
@@ -580,6 +631,14 @@ So that **storage costs are controlled and app works offline**.
 ---
 
 ### Story 1.10: View Mode Switcher
+
+> **SUPERSEDED (2026-02-01):** This story has been split into 4 sub-stories for Epic 14e Zustand alignment:
+> - [14d-v2-1.10a: ViewMode Store Integration](./stories/14d-v2-1-10a-viewmode-store-integration.md)
+> - [14d-v2-1.10b: ViewModeSwitcher UI](./stories/14d-v2-1-10b-viewmodeswitcher-ui.md)
+> - [14d-v2-1.10c: Header Mode Indicator](./stories/14d-v2-1-10c-header-mode-indicator.md)
+> - [14d-v2-1.10d: Data Filtering Integration](./stories/14d-v2-1-10d-data-filtering-integration.md)
+>
+> See [Architecture Alignment Plan](./14d-v2-architecture-alignment-plan.md) for decisions.
 
 As a **user**,
 I want **to switch between Personal and Group views**,

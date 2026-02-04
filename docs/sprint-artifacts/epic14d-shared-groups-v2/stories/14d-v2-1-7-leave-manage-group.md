@@ -1,6 +1,18 @@
 # Story 14d-v2.1.7: Leave/Manage Group
 
-Status: ready-for-dev
+Status: split
+
+> **SPLIT 2026-02-01**: This story exceeded sizing guidelines (11 tasks, 69 subtasks, 12+ files)
+> **Split strategy:** by_feature
+> **Sub-stories:**
+> - [14d-v2-1-7a](14d-v2-1-7a-leave-transfer-service.md) - Leave + Transfer Service (2 pts)
+> - [14d-v2-1-7b](14d-v2-1-7b-deletion-service.md) - Deletion Service Logic (2 pts)
+> - [14d-v2-1-7c](14d-v2-1-7c-cloud-function-member-leave.md) - Cloud Function Trigger (2 pts)
+> - [14d-v2-1-7d](14d-v2-1-7d-leave-transfer-ui.md) - Leave/Transfer UI + View Mode (3 pts)
+> - [14d-v2-1-7e](14d-v2-1-7e-delete-ui-security-rules.md) - Delete UI + Security Rules (2 pts)
+> - [14d-v2-1-7f](14d-v2-1-7f-integration-tests.md) - Integration Tests (2 pts)
+> - [14d-v2-1-7g](14d-v2-1-7g-edit-group-settings.md) - Edit Group Settings (3 pts) **ADDED 2026-02-02**
+> **Total:** 16 pts (was 3 pts estimated)
 
 ## Story
 

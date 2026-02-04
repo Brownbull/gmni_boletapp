@@ -186,6 +186,33 @@ export const LISTENER_LIMITS = {
 
 ---
 
+## Soft Delete Query Pattern (Epic 14d-v2)
+
+**Pattern**: Client-side filtering after normalization (NOT Firestore `where` clause)
+
+```typescript
+// In firestore.ts query functions
+const rawTxs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+const normalizedTxs = ensureTransactionsDefaults(rawTxs);  // Legacy support
+const activeTxs = normalizedTxs.filter(tx => !isDeleted(tx));  // Soft-delete filter
+callback(activeTxs);
+```
+
+**Why client-side?**
+- Legacy transactions don't have `deletedAt` field
+- `ensureTransactionsDefaults()` normalizes missing field to `null`
+- Firestore `where('deletedAt', '==', null)` fails for documents without field
+- Avoids compound index requirements
+
+**Functions using this pattern:**
+- `subscribeToTransactions()` - line 183-186
+- `subscribeToRecentScans()` - line 241-242
+- `getTransactionPage()` - line 382-383
+
+**Source**: Story 14d-v2-1-2c (2026-02-01)
+
+---
+
 ## Scan State Machine (Epic 14d)
 
 ```typescript
@@ -239,6 +266,20 @@ Patterns blocked: Script tags, event handlers, protocol attacks, control charact
 |----------|---------|
 | `analyzeReceipt` | Receipt OCR (rate limit: 10/min/user) |
 | `onTransactionDeleted` | Cascade delete images |
+| `onTransactionWrite` | Changelog writer for shared group sync (2nd gen) |
+
+### Cloud Function Patterns (Epic 14d-v2)
+
+| Pattern | Implementation |
+|---------|----------------|
+| Type Isolation | Duplicate types in `functions/src/` (cannot import from `src/`) |
+| Idempotency | Deterministic doc IDs: `{eventId}-{changeType}` with `set()` |
+| Batch Operations | `db.batch()` for atomic multi-document writes |
+| Defense-in-Depth | Cloud Function validation + Firestore security rules |
+| TOCTOU Mitigation | Security rules at write time + 30-day TTL + idempotent retries |
+| Input Sanitization | `sanitizeString()` for XSS prevention + client escaping |
+
+**Type Sync:** Track with TD-14d-9 (CI validation for drift detection)
 
 ---
 

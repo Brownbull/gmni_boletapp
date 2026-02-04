@@ -126,6 +126,39 @@ function createMockTimestamp(daysAgo: number): Timestamp {
 }
 ```
 
+### Cloud Functions Testing (Jest)
+
+```typescript
+// Mock firebase-admin BEFORE imports
+jest.mock('firebase-admin', () => ({
+  initializeApp: jest.fn(),
+  apps: [],
+  firestore: jest.fn(() => ({
+    collection: jest.fn(() => ({
+      doc: jest.fn(() => ({
+        get: mockGet,
+        set: mockSet,
+        collection: jest.fn(() => ({ doc: jest.fn() })),
+      })),
+    })),
+    batch: jest.fn(() => ({
+      set: mockBatchSet,
+      commit: mockBatchCommit,
+    })),
+  })),
+}));
+
+// Mock firebase-functions/v2/firestore
+jest.mock('firebase-functions/v2/firestore', () => ({
+  onDocumentWritten: mockOnDocumentWritten,
+}));
+
+// Extract handler from mock after import
+const [, handler] = mockOnDocumentWritten.mock.calls[0];
+```
+
+**Key Pattern:** Control group membership via `mockGroupMembers` object for security tests.
+
 ### Filter State for Historical Dates
 
 ```typescript

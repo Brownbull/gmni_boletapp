@@ -1,0 +1,68 @@
+# ECC-Enhanced Code Review Workflow
+name: ecc-code-review
+description: "Parallel multi-agent code review using ECC agents orchestrated by Atlas Puppeteer"
+author: "BMad + Atlas Puppeteer"
+
+# ECC Integration - Atlas as Puppeteer Orchestrator
+ecc_orchestration:
+  enabled: true
+  orchestrator: "Atlas Puppeteer"
+
+  # ECC agents used in this workflow (ALL RUN IN PARALLEL)
+  agents:
+    code_reviewer:
+      subagent_type: "everything-claude-code:code-reviewer"
+      purpose: "Code quality, maintainability, best practices"
+    security_reviewer:
+      subagent_type: "everything-claude-code:security-reviewer"
+      purpose: "OWASP Top 10, secrets, vulnerabilities"
+    architect:
+      subagent_type: "everything-claude-code:architect"
+      purpose: "Architecture compliance, patterns, design"
+    tdd_guide:
+      subagent_type: "everything-claude-code:tdd-guide"
+      purpose: "Test coverage, TDD compliance, test quality"
+
+  # Parallel execution - ALL agents spawn simultaneously
+  parallel_execution: true
+  sequence: "[code-reviewer + security-reviewer + architect + tdd-guide] parallel → Atlas synthesis"
+
+# Atlas Integration
+atlas_features:
+  architecture_validation: true
+  workflow_chain_validation: true
+  pattern_compliance: true
+  memory_feeding: true
+  push_alerts: true
+  puppeteer_orchestration: true
+
+atlas_knowledge_fragments:
+  required:
+    - "04-architecture.md"
+    - "05-testing.md"
+  optional:
+    - "06-lessons.md"
+    - "08-workflow-chains.md"
+
+# Critical variables from config
+config_source: "{project-root}/_bmad/bmm/config.yaml"
+output_folder: "{config_source}:output_folder"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+user_skill_level: "{config_source}:user_skill_level"
+document_output_language: "{config_source}:document_output_language"
+date: system-generated
+sprint_artifacts: "{config_source}:sprint_artifacts"
+sprint_status: "{sprint_artifacts}/sprint-status.yaml || {output_folder}/sprint-status.yaml"
+
+# Atlas memory paths
+atlas_memory: "{project-root}/_bmad/agents/atlas/atlas-sidecar"
+atlas_index: "{atlas_memory}/atlas-index.csv"
+atlas_knowledge: "{atlas_memory}/knowledge"
+
+# Workflow components
+installed_path: "{project-root}/_bmad/bmm/workflows/4-implementation/ecc-code-review"
+instructions: "{installed_path}/instructions.xml"
+validation: "{installed_path}/checklist.md"
+
+standalone: true
