@@ -52,3 +52,24 @@ export {
   type InsightState,
   type InsightActions,
 } from './useInsightStore';
+
+// Story 14d-v2-0: View mode store
+export {
+  useViewModeStore,
+  useViewMode,
+  useViewModeMode,
+  useIsGroupMode,
+  useCurrentGroupId,
+  useCurrentGroup,
+  useViewModeActions,
+  selectIsGroupMode,
+  selectCurrentGroupId,
+  selectCurrentGroup,
+  getViewModeState,
+  viewModeActions,
+  initialViewModeState,
+  type ViewMode,
+  type ViewModeState,
+  type ViewModeActions,
+  type ViewModeStore,
+} from './useViewModeStore';

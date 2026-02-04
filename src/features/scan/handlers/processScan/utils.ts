@@ -164,7 +164,7 @@ export function buildInitialTransaction(
   location: ParsedLocation,
   total: number,
   date: string,
-  config: BuildTransactionConfig
+  _config: BuildTransactionConfig  // Story 14d-v2-1.1: Unused until Epic 14d adds sharedGroupId support
 ): Transaction {
   const merchant = scanResult.merchant || 'Unknown';
   const category = (scanResult.category || 'Other') as StoreCategory;
@@ -188,10 +188,9 @@ export function buildInitialTransaction(
     merchantSource: scanResult.merchantSource,
   };
 
-  // Add shared group ID if in group mode
-  if (config.viewMode === 'group' && config.activeGroupId) {
-    transaction.sharedGroupIds = [config.activeGroupId];
-  }
+  // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
+  // Epic 14d will use sharedGroupId (single nullable string) instead
+  // Group mode support will be re-added in Epic 14d
 
   return transaction;
 }

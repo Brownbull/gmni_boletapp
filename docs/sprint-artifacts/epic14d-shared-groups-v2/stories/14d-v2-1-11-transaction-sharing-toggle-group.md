@@ -1,6 +1,18 @@
 # Story 14d-v2-1.11: Transaction Sharing Toggle (Group Level)
 
-Status: ready-for-dev
+Status: split
+
+> **SPLIT 2026-02-01:** This story exceeded all sizing limits (6 tasks, 28 subtasks, 12 files).
+> Split via Atlas Story Sizing workflow into 3 sub-stories:
+> - [14d-v2-1-11a](14d-v2-1-11a-foundation-types-cooldown.md) - Foundation: Types + Cooldown (2 pts)
+> - [14d-v2-1-11b](14d-v2-1-11b-service-layer-security.md) - Service Layer + Security (2 pts)
+> - [14d-v2-1-11c](14d-v2-1-11c-ui-components-integration.md) - UI Components + Integration (2 pts)
+> Total: 6 pts (was 3 pts - underestimated)
+
+> **Architecture Alignment Review (2026-02-01):**
+> Reviewed during Epic 14d-v2 alignment with Epic 14e Zustand patterns.
+> No changes required - this story manages Firestore state, not client state.
+> See [14d-v2-architecture-alignment-plan.md](../14d-v2-architecture-alignment-plan.md)
 
 ## Story
 

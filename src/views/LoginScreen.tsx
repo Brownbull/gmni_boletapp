@@ -1,9 +1,10 @@
 import React from 'react';
 import { Receipt, Globe } from 'lucide-react';
+import { TestUserMenu } from '../components/auth/TestUserMenu';
 
 interface LoginScreenProps {
     onSignIn: () => Promise<void>;
-    onTestSignIn?: () => Promise<void>;
+    onTestSignIn?: (email?: string, password?: string) => Promise<void>;
     t: (key: string) => string;
 }
 
@@ -45,20 +46,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSignIn, onTestSignIn
                 <Globe size={20} strokeWidth={2} /> {t('signin')}
             </button>
 
-            {/* Test Login Button - Only visible in dev/test environments */}
+            {/* Test Login Menu - Only visible in dev/test environments */}
             {isDev && onTestSignIn && (
-                <button
-                    onClick={onTestSignIn}
-                    data-testid="test-login-button"
-                    className="mt-4 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-                    style={{
-                        backgroundColor: 'rgba(251, 191, 36, 0.2)',
-                        color: '#fbbf24',
+                <TestUserMenu
+                    onSelectUser={async (email, password) => {
+                        await onTestSignIn(email, password);
                     }}
-                    title="Test authentication for E2E testing (dev only)"
-                >
-                    🧪 Test Login
-                </button>
+                />
             )}
         </div>
     );

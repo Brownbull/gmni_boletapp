@@ -206,7 +206,9 @@ describe('useTransactionHandlers', () => {
             expect(tx.sharedGroupIds).toBeUndefined();
         });
 
-        it('should include sharedGroupIds in group view mode', () => {
+        // Story 14d-v2-1.1: sharedGroupIds removed (Epic 14c cleanup)
+        // Epic 14d will use sharedGroupId (single nullable string) instead
+        it('should NOT include sharedGroupIds in group view mode (Epic 14c cleanup)', () => {
             const props = createDefaultProps({
                 viewMode: 'group',
                 activeGroup: mockSharedGroup,
@@ -215,7 +217,8 @@ describe('useTransactionHandlers', () => {
 
             const tx = result.current.createDefaultTransaction();
 
-            expect(tx.sharedGroupIds).toEqual(['group-123']);
+            // Story 14d-v2-1.1: sharedGroupIds no longer assigned
+            expect(tx.sharedGroupIds).toBeUndefined();
         });
 
         it('should not include sharedGroupIds in group mode without activeGroup', () => {

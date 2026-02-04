@@ -1,7 +1,10 @@
 /**
  * Migrations barrel export
  *
- * Story 14c-refactor.4: Clean IndexedDB Cache
+ * Add migration exports here as needed.
+ * Previous migrations (completed and removed):
+ * - clearLegacySharedGroupCache: Cleared IndexedDB cache (Story 14c-refactor.4)
  */
 
-export { clearLegacySharedGroupCache } from './clearSharedGroupCache';
+// No active migrations currently
+export {};

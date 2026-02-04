@@ -1,11 +1,11 @@
 /**
  * useAnalyticsTransactions Hook
  *
- * Epic 14c: Shared Groups (Household Sharing)
+ * Epic 14d-v2: Shared Groups v2 (Household Sharing)
  *
  * Unified data source for analytics components that automatically provides
  * either personal transactions or shared group transactions based on the
- * current ViewModeContext state.
+ * current view mode state (useViewModeStore Zustand store).
  *
  * Architecture:
  * - In personal mode: Returns user's personal transactions
@@ -40,7 +40,8 @@
  */
 
 import { useMemo } from 'react';
-import { useViewMode } from '../contexts/ViewModeContext';
+// Story 14d-v2-0: ViewMode migrated from Context to Zustand store
+import { useViewMode } from '@/shared/stores/useViewModeStore';
 import type { Transaction } from '../types/transaction';
 
 // ============================================================================

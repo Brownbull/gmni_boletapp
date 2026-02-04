@@ -1,0 +1,947 @@
+<workflow>
+  <critical>The workflow execution engine is governed by: {project-root}/_bmad/core/tasks/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} and language MUST be tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+
+  <critical>🎭 ECC-ORCHESTRATED STORY CREATION - Atlas Puppeteer spawns Planner + Architect agents!</critical>
+  <critical>This workflow uses ECC agents to analyze requirements and provide technical guidance</critical>
+  <critical>Sequence: planner → architect → [database-reviewer + security-reviewer] if needed</critical>
+
+  <!-- ATLAS PUPPETEER PROTOCOL -->
+  <puppeteer-protocol>
+    <principle>Atlas is the Puppeteer - coordinates story creation with ECC agent analysis</principle>
+    <principle>Planner analyzes requirements and identifies implementation risks</principle>
+    <principle>Architect provides technical design and pattern recommendations</principle>
+    <principle>Optional parallel technical review for complex stories</principle>
+
+    <available-agents>
+      | Agent | subagent_type | Purpose |
+      |-------|---------------|---------|
+      | Planner | everything-claude-code:planner | Requirements analysis, risk identification |
+      | Architect | everything-claude-code:architect | Technical design, patterns |
+      | Database Reviewer | everything-claude-code:database-reviewer | Schema/query analysis |
+      | Security Reviewer | everything-claude-code:security-reviewer | Security considerations |
+    </available-agents>
+  </puppeteer-protocol>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 0: Atlas Initialization                                            -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="0" goal="Initialize Atlas and load context for story creation">
+    <check if="{atlas_index} exists">
+      <action>Load {atlas_index} to identify relevant fragments</action>
+      <action>Load {atlas_knowledge}/02-features.md for feature context</action>
+      <action>Load {atlas_knowledge}/04-architecture.md for patterns</action>
+      <action>Load {atlas_knowledge}/08-workflow-chains.md for user flows</action>
+      <action>Store as {{atlas_context}} for ECC agents</action>
+
+      <output>🗺️ **Atlas Puppeteer Initialized for Story Creation**
+
+        Context loaded:
+        - Features: {{feature_summary}}
+        - Architecture patterns: {{architecture_summary}}
+        - Workflow chains: {{workflow_summary}}
+
+        Ready to spawn ECC agents for story analysis.
+      </output>
+    </check>
+
+    <check if="{atlas_index} does NOT exist">
+      <action>Set {{atlas_context}} = "No Atlas context"</action>
+      <output>ℹ️ Atlas not configured - ECC agents will analyze without project context</output>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 1: Find Next Story from Epics                                      -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="1" goal="Identify next story to create from epics">
+    <action>Search {epics_dir} for epic files</action>
+    <action>Check {sprint_status} for stories already created</action>
+    <action>Find next uncreated story from epic requirements</action>
+
+    <check if="no epics found">
+      <output>⚠️ No epic files found in {epics_dir}
+
+        **Options:**
+        1. Create epics first with `/create-epics-and-stories`
+        2. Provide story requirements manually
+      </output>
+      <ask>Choose [1] or [2], or describe the story you want to create:</ask>
+    </check>
+
+    <check if="next story identified">
+      <action>Extract {{story_requirements}} from epic</action>
+      <action>Extract {{acceptance_criteria}} from epic</action>
+      <action>Set {{story_key}} from epic naming convention</action>
+
+      <output>📋 **Next Story Identified**
+
+        Story: {{story_key}}
+        Epic: {{epic_name}}
+        Requirements: {{story_requirements_summary}}
+      </output>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 1.25: Load Epic Architectural Context                              -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="1.25" goal="Load and extract architectural specifications from epic and project documentation">
+    <critical>🏗️ ARCHITECTURE CONTEXT: Load all architectural references to prevent technical debt</critical>
+    <critical>Stories MUST align with documented architecture - no ad-hoc patterns allowed</critical>
+
+    <output>🏗️ **Loading Architectural Context...**
+
+      Searching for architectural specifications in epic and project docs.
+    </output>
+
+    <!-- Load architectural context from multiple sources -->
+    <action>Search epic document ({{epic_file}}) for:
+      - "Architecture Reference" or "Technical Reference" sections
+      - Links to architecture documents
+      - Pattern specifications
+      - File structure requirements
+      - Technology stack decisions
+    </action>
+
+    <action>Extract {{epic_architecture_refs}} = list of architecture document paths from epic</action>
+
+    <!-- Load referenced architecture documents -->
+    <check if="architecture documents referenced in epic">
+      <action>For each referenced document in {{epic_architecture_refs}}:
+        - Load the document
+        - Extract pattern requirements
+        - Extract file location conventions
+        - Extract state management patterns
+        - Extract anti-patterns to avoid
+        - Extract technology constraints
+      </action>
+    </check>
+
+    <!-- Also check project-level architecture docs -->
+    <action>Load project architecture documentation:
+      - {atlas_knowledge}/04-architecture.md (if exists)
+      - docs/architecture/*.md (if exists)
+      - docs/tech-specs/*.md (if exists)
+      - PRD architecture sections
+    </action>
+
+    <!-- Compile all architectural patterns -->
+    <action>Compile {{documented_patterns}} from all sources:
+
+      **Pattern Categories:**
+      1. **File Structure Patterns**
+         - Component location conventions
+         - Service location conventions
+         - Hook location conventions
+         - Type definition locations
+         - Test file locations
+
+      2. **State Management Patterns**
+         - Preferred state management library/approach
+         - Store organization conventions
+         - State shape requirements
+         - Patterns to avoid (e.g., prop drilling, certain contexts)
+
+      3. **Code Organization Patterns**
+         - Feature module structure (if applicable)
+         - Shared vs feature-specific code rules
+         - Export/import conventions
+         - Naming conventions
+
+      4. **Technology Constraints**
+         - Required libraries/frameworks
+         - Forbidden libraries/patterns
+         - Version requirements
+
+      5. **Anti-Patterns**
+         - Explicitly forbidden approaches
+         - Legacy patterns to avoid
+         - Technical debt patterns to prevent
+    </action>
+
+    <action>Set {{architecture_source}} = "Epic: {{epic_name}}" + list of loaded docs</action>
+
+    <check if="documented_patterns found">
+      <output>✅ **Architectural Context Loaded**
+
+        **Source Documents:**
+        {{architecture_source}}
+
+        **Documented Patterns Found:**
+
+        **File Structure:**
+        {{file_structure_patterns}}
+
+        **State Management:**
+        {{state_management_patterns}}
+
+        **Code Organization:**
+        {{code_organization_patterns}}
+
+        **Anti-Patterns to Avoid:**
+        {{antipatterns_list}}
+
+        These patterns will be enforced via architectural ACs.
+      </output>
+    </check>
+
+    <check if="NO documented patterns found">
+      <output>⚠️ **Warning: No Architectural Documentation Found**
+
+        No architecture documents were found or referenced in:
+        - Epic document: {{epic_file}}
+        - Atlas knowledge: {atlas_knowledge}/04-architecture.md
+        - Project docs: docs/architecture/
+
+        **Risk:** Without documented architecture, implementation may drift.
+      </output>
+
+      <ask>How to proceed?
+        [S]pecify - Manually specify architectural patterns now
+        [D]efault - Use default patterns (feature-based modules, component colocation)
+        [C]ontinue - Continue without architectural enforcement (NOT RECOMMENDED)</ask>
+
+      <check if="user chooses S">
+        <ask>Describe the architectural patterns for this epic:
+          - Where should components be placed?
+          - What state management approach should be used?
+          - What patterns should be avoided?</ask>
+        <action>Parse user input into {{documented_patterns}}</action>
+      </check>
+
+      <check if="user chooses D">
+        <action>Set {{documented_patterns}} = default_patterns:
+          - Components: colocated with feature
+          - State: project's standard approach
+          - Anti-patterns: scattered files, inconsistent naming
+        </action>
+      </check>
+
+      <check if="user chooses C">
+        <action>Set {{skip_architecture_enforcement}} = true</action>
+        <output>⚠️ Proceeding without architectural enforcement. Technical debt risk is HIGH.</output>
+      </check>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 1.5: Architectural Foundation Check                                -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="1.5" goal="Check if feature requires architectural foundation story first">
+    <critical>🏗️ ARCHITECTURE GATE: Detect if this is first story for a new feature</critical>
+    <critical>New features MUST have architectural foundation before functional stories</critical>
+
+    <check if="{{skip_architecture_enforcement}} == true">
+      <output>⚠️ Skipping foundation check (architecture enforcement disabled)</output>
+      <goto step="2"/>
+    </check>
+
+    <action>Identify {{feature_name}} from story requirements (e.g., "shared-groups", "batch-review")</action>
+
+    <!-- Check for existing feature structure based on documented patterns -->
+    <action>Based on {{documented_patterns}}.file_structure_patterns:
+      - Identify expected feature location from docs
+      - Check if feature module/directory exists at documented location
+      - Check sprint-status for any completed stories in this feature
+    </action>
+
+    <check if="feature structure does NOT exist AND no prior stories completed for this feature">
+      <output>⚠️ **Architectural Foundation Required**
+
+        Feature `{{feature_name}}` has no existing structure.
+
+        **Required Foundation (per documented architecture):**
+        ```
+        {{documented_patterns.expected_feature_structure}}
+        ```
+
+        **Source:** {{architecture_source}}
+
+        **Action Required:**
+        Before creating functional stories, an architectural foundation story
+        (e.g., `{{epic_key}}-0-architecture-setup`) must be created first.
+      </output>
+
+      <ask>Create architectural foundation story first? [Y/N]
+
+        [Y] - Create `{{epic_key}}-0-architecture-setup` to establish structure per documented architecture
+        [N] - Proceed anyway (NOT RECOMMENDED - causes architectural drift)</ask>
+
+      <check if="user chooses Y">
+        <action>Set {{story_key}} = "{{epic_key}}-0-architecture-setup"</action>
+        <action>Set {{is_foundation_story}} = true</action>
+        <action>Generate foundation story requirements from {{documented_patterns}}:
+          - Create directory structure per documented conventions
+          - Set up exports per documented patterns
+          - Create type definitions per documented conventions
+          - Configure state management per documented approach (if feature has state)
+          - Apply any other patterns specified in architecture docs
+        </action>
+        <output>📋 **Foundation Story Created**
+
+          Redirecting to create: {{story_key}}
+          This story establishes the architectural foundation per documented patterns.
+
+          **Architecture Source:** {{architecture_source}}
+        </output>
+      </check>
+
+      <check if="user chooses N">
+        <action>Set {{architectural_warning}} = "ARCHITECTURAL DRIFT RISK: No foundation story"</action>
+        <output>⚠️ Proceeding without foundation story - architectural ACs will be MANDATORY</output>
+      </check>
+    </check>
+
+    <check if="feature structure EXISTS">
+      <action>Scan existing feature structure and compare to documented patterns</action>
+      <action>Detect any drift between existing structure and documented architecture</action>
+      <action>Set {{existing_patterns}} = detected patterns from codebase</action>
+      <action>Set {{pattern_drift}} = differences between existing and documented patterns</action>
+
+      <check if="pattern drift detected">
+        <output>⚠️ **Pattern Drift Detected**
+
+          Existing structure differs from documented architecture:
+
+          **Documented Pattern:**
+          {{documented_patterns.summary}}
+
+          **Existing Pattern:**
+          {{existing_patterns.summary}}
+
+          **Drift:**
+          {{pattern_drift}}
+
+          New code should follow the DOCUMENTED patterns to avoid increasing drift.
+        </output>
+      </check>
+
+      <check if="no drift">
+        <output>✅ Feature structure exists and aligns with documented architecture
+
+          **Location:** {{existing_feature_location}}
+          **Pattern Compliance:** ✓ Aligned with {{architecture_source}}
+
+          Architectural ACs will enforce consistency with documented patterns.
+        </output>
+      </check>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 2: ECC Planner - Requirements Analysis                             -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="2" goal="Spawn ECC Planner for requirements analysis">
+    <critical>🎭 ATLAS PUPPETEER: Spawning ECC Planner agent</critical>
+
+    <output>🎭 **Spawning ECC Planner...**
+
+      Task: Analyze story requirements and identify implementation approach
+    </output>
+
+    <ecc-spawn agent="planner">
+      <task-call>
+        subagent_type: "everything-claude-code:planner"
+        description: "Analyze story requirements for {{story_key}}"
+        prompt: |
+          ## Story Requirements Analysis
+
+          **Story:** {{story_key}}
+
+          **Requirements:**
+          {{story_requirements}}
+
+          **Acceptance Criteria:**
+          {{acceptance_criteria}}
+
+          **Atlas Context:**
+          {{atlas_context}}
+
+          **Analysis Required:**
+
+          1. **Requirements Breakdown**
+             - Core functionality needed
+             - Dependencies on existing code
+             - External integrations required
+
+          2. **Implementation Approach**
+             - Recommended approach
+             - Alternative approaches considered
+             - Trade-offs
+
+          3. **Risk Assessment**
+             - Technical risks
+             - Complexity factors
+             - Unknown areas
+
+          4. **Task Decomposition**
+             - Suggested task breakdown
+             - Estimated complexity per task
+             - Recommended order
+
+          5. **Testing Strategy**
+             - Key test scenarios
+             - Edge cases to cover
+             - Integration points to test
+
+          **Output Format:**
+          Structured analysis with:
+          - Implementation approach recommendation
+          - Risk assessment (HIGH/MEDIUM/LOW)
+          - Task breakdown with estimates
+          - Testing strategy outline
+      </task-call>
+    </ecc-spawn>
+
+    <action>Collect planner output as {{planner_analysis}}</action>
+
+    <output>✅ **ECC Planner Complete**
+
+      **Implementation Approach:**
+      {{planner_approach}}
+
+      **Risk Level:** {{risk_level}}
+
+      **Task Breakdown:**
+      {{task_suggestions}}
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 3: ECC Architect - Technical Design                                -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="3" goal="Spawn ECC Architect for technical design">
+    <critical>🎭 ATLAS PUPPETEER: Spawning ECC Architect agent</critical>
+    <critical>🏗️ ARCHITECTURE ENFORCEMENT: Architect MUST follow documented patterns and specify exact locations</critical>
+
+    <output>🎭 **Spawning ECC Architect...**
+
+      Task: Provide technical design following DOCUMENTED architectural patterns
+      Architecture Source: {{architecture_source}}
+    </output>
+
+    <ecc-spawn agent="architect">
+      <task-call>
+        subagent_type: "everything-claude-code:architect"
+        description: "Technical design for {{story_key}}"
+        prompt: |
+          ## Technical Design Task
+
+          **Story:** {{story_key}}
+
+          **Requirements:**
+          {{story_requirements}}
+
+          **Planner Analysis:**
+          {{planner_analysis}}
+
+          **Atlas Architecture Patterns:**
+          {{atlas_context}}
+
+          **Feature Context:**
+          - Feature name: {{feature_name}}
+          - Is foundation story: {{is_foundation_story}}
+          - Existing patterns in codebase: {{existing_patterns}}
+
+          ---
+
+          ## 🚨 CRITICAL: Documented Architecture Specification
+
+          **Architecture Source:** {{architecture_source}}
+
+          **You MUST follow these documented patterns. Deviation creates technical debt.**
+
+          ### Documented File Structure Patterns
+          {{documented_patterns.file_structure_patterns}}
+
+          ### Documented State Management Patterns
+          {{documented_patterns.state_management_patterns}}
+
+          ### Documented Code Organization Patterns
+          {{documented_patterns.code_organization_patterns}}
+
+          ### Documented Anti-Patterns (MUST NOT DO)
+          {{documented_patterns.antipatterns_list}}
+
+          ### Technology Constraints
+          {{documented_patterns.technology_constraints}}
+
+          ---
+
+          **Design Required:**
+
+          1. **Component Design**
+             - New components needed
+             - Existing components to modify
+             - Component interactions
+
+          2. **Pattern Compliance**
+             - How this story follows the documented patterns
+             - Any pattern decisions that need clarification
+             - Alignment with existing codebase patterns
+
+          3. **Data Model**
+             - Data structures needed
+             - Database changes (if any)
+             - API contracts
+
+          4. **Dependencies**
+             - Internal dependencies
+             - External packages needed
+             - Version considerations
+
+          5. **Dev Notes**
+             - Technical guidance for implementation
+             - Common pitfalls to avoid
+             - Reference implementations
+
+          ---
+
+          ## 🚨 MANDATORY: File Location & Pattern Specification
+
+          **CRITICAL:** You MUST specify EXACT file paths following the DOCUMENTED patterns above.
+          Vague locations like "in the components folder" are NOT ACCEPTABLE.
+
+          6. **File Location Specification (MANDATORY)**
+             For EACH new file/component, specify location per documented architecture:
+             ```
+             | File/Component | EXACT Path | Documented Pattern Reference |
+             |----------------|------------|------------------------------|
+             | ComponentName | {path per documented pattern} | {pattern name from docs} |
+             | HookName | {path per documented pattern} | {pattern name from docs} |
+             | ServiceName | {path per documented pattern} | {pattern name from docs} |
+             ```
+
+             ❌ WRONG: "Create a new dialog component"
+             ✅ CORRECT: "Create `CreateGroupDialog.tsx` at `{exact path per documented pattern}`"
+
+          7. **State Management Specification (MANDATORY if story has state)**
+             Follow the documented state management pattern:
+             - Location: per {{documented_patterns.state_management_patterns}}
+             - Pattern: per documented approach
+             - State shape: Define interface
+             - Actions: List all state mutations
+
+             ❌ WRONG: "Add state management"
+             ✅ CORRECT: "Create store at `{exact path per documented pattern}` following {documented state pattern}"
+
+          8. **Architectural Acceptance Criteria (MANDATORY)**
+             Generate testable ACs that enforce the DOCUMENTED patterns:
+             ```
+             ### Architectural ACs (Based on Documented Architecture)
+
+             **File Location ACs (per documented patterns):**
+             - AC-ARCH-LOC-1: {Component} located at {documented location}
+             - AC-ARCH-LOC-2: {Hook} located at {documented location}
+             ...
+
+             **Pattern Compliance ACs:**
+             - AC-ARCH-PATTERN-1: Follows {documented pattern name} for {aspect}
+             - AC-ARCH-PATTERN-2: {specific pattern requirement from docs}
+             ...
+
+             **Anti-Pattern ACs (things that must NOT happen per docs):**
+             - AC-ARCH-NO-1: {anti-pattern from documented list}
+             - AC-ARCH-NO-2: {anti-pattern from documented list}
+             ...
+             ```
+
+          **Output Format:**
+          Technical design document with:
+          - Architecture diagram (text-based)
+          - File changes list WITH EXACT PATHS per documented patterns (table format)
+          - Pattern compliance notes (how design follows documented architecture)
+          - State management specification following documented approach (if applicable)
+          - **MANDATORY: Architectural Acceptance Criteria based on documented patterns**
+          - Dev Notes for story file
+      </task-call>
+    </ecc-spawn>
+
+    <action>Collect architect output as {{architect_design}}</action>
+    <action>Extract {{file_locations}} from architect output</action>
+    <action>Extract {{architectural_acs}} from architect output</action>
+    <action>Extract {{state_management_spec}} from architect output</action>
+
+    <output>✅ **ECC Architect Complete**
+
+      **Architecture Source:** {{architecture_source}}
+
+      **Component Design:**
+      {{component_design}}
+
+      **Pattern Compliance:**
+      {{pattern_compliance_notes}}
+
+      **Files to Change (with exact paths per documented patterns):**
+      {{file_changes}}
+
+      **Architectural ACs Generated (based on documented architecture):**
+      {{architectural_acs}}
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 4: Optional Parallel Technical Review                              -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="4" goal="Optional parallel technical review for complex stories">
+    <!-- Check if story needs specialized review -->
+    <action>Analyze story for:
+      - Database changes → spawn database-reviewer
+      - Auth/security features → spawn security-reviewer
+    </action>
+
+    <check if="story involves database OR auth">
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <!-- EXPLICIT PARALLEL EXECUTION DIRECTIVE                                   -->
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <parallel-execution-rule>
+        🚨 HOW TO ACHIEVE TRUE PARALLELISM:
+
+        If BOTH database-reviewer AND security-reviewer are needed,
+        you MUST issue BOTH Task tool invocations in your NEXT SINGLE RESPONSE.
+
+        ❌ WRONG: Task(database-reviewer) → wait → Task(security-reviewer) → wait
+        ✅ CORRECT: Task(database-reviewer) + Task(security-reviewer) → both run simultaneously
+      </parallel-execution-rule>
+
+      <output>🎭 **Spawning Parallel Technical Reviewers...**
+
+        Story involves specialized areas - running additional analysis.
+      </output>
+
+      <ecc-parallel-spawn>
+        <task-call id="db_review" condition="involves_database">
+          subagent_type: "everything-claude-code:database-reviewer"
+          description: "Database analysis for {{story_key}}"
+          prompt: |
+            Analyze database requirements for story: {{story_key}}
+
+            **Architect Design:**
+            {{architect_design}}
+
+            **Check:**
+            - Schema design recommendations
+            - Index requirements
+            - Query optimization notes
+            - Security rules needed
+
+            Output: Database considerations for Dev Notes
+        </task-call>
+
+        <task-call id="security_review" condition="involves_auth">
+          subagent_type: "everything-claude-code:security-reviewer"
+          description: "Security analysis for {{story_key}}"
+          prompt: |
+            Analyze security requirements for story: {{story_key}}
+
+            **Requirements:**
+            {{story_requirements}}
+
+            **Check:**
+            - Authentication requirements
+            - Authorization model
+            - Input validation needs
+            - Security testing requirements
+
+            Output: Security considerations for Dev Notes
+        </task-call>
+      </ecc-parallel-spawn>
+
+      <action>Merge technical review outputs into {{technical_notes}}</action>
+    </check>
+
+    <check if="no specialized review needed">
+      <action>Set {{technical_notes}} = "No specialized technical review required"</action>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 5: Atlas Workflow Chain Analysis                                   -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="5" goal="Atlas workflow chain impact analysis">
+    <critical>🗺️ ATLAS: Analyze workflow chain impacts</critical>
+
+    <check if="{{atlas_enabled}} == true">
+      <action>Load {atlas_knowledge}/08-workflow-chains.md</action>
+      <action>Analyze story impact on existing user flows</action>
+      <action>Identify upstream and downstream dependencies</action>
+
+      <output>🗺️ **Atlas Workflow Chain Analysis**
+
+        **Affected Workflows:**
+        {{affected_workflows}}
+
+        **Upstream Dependencies:**
+        {{upstream_deps}}
+
+        **Downstream Impacts:**
+        {{downstream_impacts}}
+
+        **Push Alerts:**
+        {{push_alerts}}
+
+        **Additional ACs Suggested:**
+        {{suggested_acs}}
+      </output>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 5.5: Generate Mandatory Architectural ACs                          -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="5.5" goal="Generate and validate mandatory architectural acceptance criteria based on documented patterns">
+    <critical>🏗️ ARCHITECTURE ENFORCEMENT: Generate ACs from DOCUMENTED architecture, not hardcoded patterns</critical>
+
+    <check if="{{skip_architecture_enforcement}} == true">
+      <output>⚠️ Skipping architectural AC generation (enforcement disabled)</output>
+      <action>Set {{all_architectural_acs}} = []</action>
+      <goto step="6"/>
+    </check>
+
+    <output>🏗️ **Architectural AC Generation**
+
+      **Architecture Source:** {{architecture_source}}
+
+      Generating testable ACs based on documented patterns...
+    </output>
+
+    <action>Collect architectural ACs from architect output ({{architectural_acs}})</action>
+    <action>Validate each architectural AC is testable:
+      - Has specific file path or pattern to verify
+      - Can be checked during code review
+      - Has clear pass/fail criteria
+      - References documented pattern source
+    </action>
+
+    <action>Generate standardized architectural ACs from {{documented_patterns}}:
+
+      **Mandatory File Location ACs (from documented file structure):**
+      For each new component in {{file_locations}}:
+        - AC-ARCH-LOC-{n}: "{component_name}" is located at "{exact_path}" (per {pattern_source})
+
+      **Mandatory Pattern ACs (from documented patterns):**
+      For each pattern in {{documented_patterns.file_structure_patterns}}:
+        - AC-ARCH-PATTERN-{n}: {pattern_requirement} (source: {architecture_source})
+
+      For each pattern in {{documented_patterns.code_organization_patterns}}:
+        - AC-ARCH-ORG-{n}: {organization_requirement} (source: {architecture_source})
+
+      {{#if state_management_spec}}
+      **State Management ACs (from documented state patterns):**
+      For each pattern in {{documented_patterns.state_management_patterns}}:
+        - AC-ARCH-STATE-{n}: {state_pattern_requirement} (source: {architecture_source})
+      {{/if}}
+
+      **Anti-Pattern ACs (from documented anti-patterns):**
+      For each antipattern in {{documented_patterns.antipatterns_list}}:
+        - AC-ARCH-NO-{n}: {antipattern_description} must NOT occur (source: {architecture_source})
+    </action>
+
+    <output>**Architectural ACs Generated (based on documented architecture)**
+
+      **Architecture Source:** {{architecture_source}}
+
+      **File Location ACs:**
+      {{file_location_acs}}
+
+      **Pattern Compliance ACs:**
+      {{pattern_acs}}
+
+      **Anti-Pattern ACs (must NOT happen):**
+      {{antipattern_acs}}
+
+      **Summary:**
+      - Total architectural ACs: {{arch_ac_count}}
+      - Based on: {{architecture_source}}
+
+      These ACs are MANDATORY and will be validated during:
+      1. Implementation (ecc-dev-story - pattern validation)
+      2. Code review (ecc-code-review - architecture agent validates against documented patterns)
+    </output>
+
+    <action>Set {{all_architectural_acs}} = merged list of all architectural ACs</action>
+    <action>Set {{architecture_reference}} = {{architecture_source}} for traceability</action>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 6: Generate Story File                                             -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="6" goal="Generate comprehensive story file with mandatory architectural ACs">
+    <action>Compile story file from:
+      - Original requirements and ACs from epic
+      - **MANDATORY: Architectural ACs from Step 5.5**
+      - Planner task breakdown
+      - Architect technical design (with exact file paths)
+      - Technical review notes
+      - Atlas workflow chain analysis
+      - Suggested additional ACs
+    </action>
+
+    <output>📝 **Generating Story File...**
+
+      Combining ECC agent outputs into comprehensive story.
+      **Including MANDATORY architectural ACs.**
+    </output>
+
+    <action>Create story file at {story_dir}/{{story_key}}.md with:
+      - Story metadata
+      - **Functional Acceptance Criteria** (from epic)
+      - **Architectural Acceptance Criteria** (MANDATORY - from Step 5.5)
+      - Tasks/Subtasks (from planner)
+      - **File Specification Table** (exact paths from architect)
+      - Dev Notes (from architect + technical reviews)
+      - File List (predicted with exact paths)
+      - ECC Analysis Summary
+    </action>
+
+    <story-template>
+      ```markdown
+      # Story: {{story_key}}
+
+      ## Status: ready-for-dev
+      ## Epic: {{epic_name}}
+
+      ## Overview
+      {{story_requirements}}
+
+      ## Functional Acceptance Criteria
+      {{functional_acs}}
+
+      ## Architectural Acceptance Criteria (MANDATORY)
+
+      > ⚠️ These ACs are MANDATORY and will be validated during code review.
+      > Failure to meet these ACs will block story completion.
+
+      ### File Location Requirements
+      {{file_location_acs}}
+
+      ### Pattern Requirements
+      {{pattern_acs}}
+
+      ### Anti-Pattern Requirements (Must NOT Happen)
+      {{antipattern_acs}}
+
+      ## File Specification
+
+      | File/Component | Exact Path | Pattern | AC Reference |
+      |----------------|------------|---------|--------------|
+      {{file_specification_table}}
+
+      ## Tasks / Subtasks
+      {{tasks_from_planner}}
+
+      ## Dev Notes
+
+      ### Architecture Guidance
+      {{architect_notes}}
+
+      ### Technical Notes
+      {{technical_notes}}
+
+      ## ECC Analysis Summary
+      - Risk Level: {{risk_level}}
+      - Complexity: {{complexity_estimate}}
+      - Agents consulted: Planner, Architect{{#if involves_database}}, Database Reviewer{{/if}}{{#if involves_auth}}, Security Reviewer{{/if}}
+      ```
+    </story-template>
+
+    <output>## 📋 Story Created: {{story_key}}
+
+      **File:** {story_dir}/{{story_key}}.md
+
+      **Sections Generated:**
+      - ✅ Story metadata
+      - ✅ Functional Acceptance Criteria ({{functional_ac_count}} items)
+      - ✅ **Architectural Acceptance Criteria ({{arch_ac_count}} items) - MANDATORY**
+      - ✅ File Specification Table (exact paths)
+      - ✅ Tasks/Subtasks ({{task_count}} tasks)
+      - ✅ Dev Notes (ECC-generated)
+      - ✅ ECC Analysis Summary
+
+      **ECC Agents Consulted:**
+      - Planner: Requirements analysis, task breakdown
+      - Architect: Technical design, patterns, **file locations**
+      {{#if involves_database}}- Database Reviewer: Schema recommendations{{/if}}
+      {{#if involves_auth}}- Security Reviewer: Security requirements{{/if}}
+
+      **Atlas Enhancements:**
+      - Workflow chain analysis
+      - Additional AC suggestions: {{suggested_ac_count}}
+      - Push alerts: {{push_alert_count}}
+
+      **Architecture Enforcement:**
+      - File location ACs: {{file_location_ac_count}}
+      - Pattern ACs: {{pattern_ac_count}}
+      - Anti-pattern ACs: {{antipattern_ac_count}}
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 7: Update Sprint Status                                            -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="7" goal="Update sprint status with new story">
+    <check if="{{sprint_status}} file exists">
+      <action>Add {{story_key}}: ready-for-dev to sprint-status.yaml</action>
+      <output>✅ Sprint status updated: {{story_key}} → ready-for-dev</output>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 8: Atlas Memory Feeding                                            -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="8" goal="Feed story creation insights to Atlas memory">
+    <check if="{{atlas_enabled}} == true">
+      <output>🗺️ **Atlas Memory Update**
+
+        Feed ECC story analysis to Atlas:
+
+        **Story:** {{story_key}}
+        **Patterns Identified:** {{patterns_identified}}
+        **Workflow Impacts:** {{workflow_impacts}}
+        **Technical Decisions:** {{technical_decisions}}
+
+        Update Atlas memory?
+      </output>
+
+      <ask>Update Atlas memory? [Y/N]</ask>
+
+      <check if="user confirms">
+        <action>Update {atlas_knowledge}/02-features.md with new feature context</action>
+        <action>Update {atlas_knowledge}/08-workflow-chains.md with flow impacts</action>
+        <output>✅ Atlas memory updated with story creation insights</output>
+      </check>
+    </check>
+
+    <output>**✅ ECC Story Creation Complete!**
+
+      **Story:** {{story_key}}
+      **Status:** ready-for-dev
+      **File:** {story_dir}/{{story_key}}.md
+
+      **ECC Analysis:**
+      - Risk Level: {{risk_level}}
+      - Tasks: {{task_count}}
+      - Complexity: {{complexity_estimate}}
+
+      **Next Steps:**
+      - Run `ecc-dev-story` to implement with ECC agents
+      - Or run `dev-story` for standard implementation
+    </output>
+  </step>
+
+</workflow>

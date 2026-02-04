@@ -10,8 +10,11 @@
  * 1. main.tsx level (external - already wrapped):
  *    - QueryClientProvider (React Query)
  *    - AuthProvider (Firebase auth state)
- *    - ViewModeProvider (personal vs shared group)
- *    - ScanProvider (scan state machine - Epic 14d)
+ *
+ * State managed by Zustand stores (no providers needed):
+ *    - View mode: useViewModeStore (Story 14d-v2-0)
+ *    - Scan state: useScanStore (Story 14e-11)
+ *    - Navigation: useNavigationStore (Story 14e-45)
  *
  * 2. AppProviders level (this component):
  *    - ThemeProvider (theme + locale preferences)

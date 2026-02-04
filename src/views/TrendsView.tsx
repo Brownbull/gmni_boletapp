@@ -39,7 +39,7 @@ import {
 } from '../utils/historyFilterUtils';
 import type { HistoryFilterState } from '../contexts/HistoryFiltersContext';
 import { useAllUserGroups } from '../hooks/useAllUserGroups';
-import { MemberContributionChart } from '../components/SharedGroups/MemberContributionChart';
+import { MemberContributionChart } from '@/features/shared-groups';
 import { calculateMemberContributions, type AnalyticsMember } from '../hooks/useAnalyticsTransactions';
 // Story 14.13: Hooks
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation';

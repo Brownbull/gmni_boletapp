@@ -51,17 +51,14 @@ vi.mock('@/services/itemNameMappingService', () => ({
   incrementItemNameMappingUsage: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock shared group service
-vi.mock('@/services/sharedGroupService', () => ({
-  updateMemberTimestampsForTransaction: vi.fn().mockResolvedValue(undefined),
-}));
+// Story 14d-v2-1.1: sharedGroupService mock removed (Epic 14c cleanup)
+// updateMemberTimestampsForTransaction has been removed from the service
 
 // Import mocked functions for assertions
 import { addTransaction } from '@/services/firestore';
 import { incrementMappingUsage } from '@/services/categoryMappingService';
 import { incrementMerchantMappingUsage } from '@/services/merchantMappingService';
 import { incrementItemNameMappingUsage } from '@/services/itemNameMappingService';
-import { updateMemberTimestampsForTransaction } from '@/services/sharedGroupService';
 
 // =============================================================================
 // Test Helpers
@@ -493,45 +490,20 @@ describe('saveBatchTransaction', () => {
     });
   });
 
-  describe('shared group handling', () => {
+  // Story 14d-v2-1.1: Shared group handling removed (Epic 14c cleanup)
+  // Epic 14d will use sharedGroupId (single nullable string) instead
+  // updateMemberTimestampsForTransaction has been removed
+  describe.skip('shared group handling (REMOVED - Epic 14c cleanup)', () => {
     it('should update member timestamps for shared groups', async () => {
-      const transaction = createMockTransaction({
-        sharedGroupIds: ['group-1', 'group-2'],
-      });
-      const context = createMockSaveContext();
-
-      await saveBatchTransaction(transaction, context);
-
-      await vi.waitFor(() => {
-        expect(updateMemberTimestampsForTransaction).toHaveBeenCalledWith(
-          expect.anything(),
-          'test-user-id',
-          ['group-1', 'group-2'],
-          [] // No previous groups for new transactions
-        );
-      });
+      // This functionality has been removed in Epic 14c cleanup
     });
 
     it('should not update member timestamps when no shared groups', async () => {
-      const transaction = createMockTransaction({
-        sharedGroupIds: undefined,
-      });
-      const context = createMockSaveContext();
-
-      await saveBatchTransaction(transaction, context);
-
-      expect(updateMemberTimestampsForTransaction).not.toHaveBeenCalled();
+      // This functionality has been removed in Epic 14c cleanup
     });
 
     it('should not update member timestamps when shared groups is empty', async () => {
-      const transaction = createMockTransaction({
-        sharedGroupIds: [],
-      });
-      const context = createMockSaveContext();
-
-      await saveBatchTransaction(transaction, context);
-
-      expect(updateMemberTimestampsForTransaction).not.toHaveBeenCalled();
+      // This functionality has been removed in Epic 14c cleanup
     });
   });
 });

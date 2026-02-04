@@ -1,6 +1,21 @@
 # Story 14d-v2-1.10: View Mode Switcher
 
-Status: ready-for-dev
+Status: **SUPERSEDED** - Split into sub-stories (see below)
+
+> **Architecture Alignment (2026-02-01):**
+> This story was split into 4 sub-stories to align with Epic 14e Zustand architecture.
+> See [Architecture Alignment Plan](../14d-v2-architecture-alignment-plan.md) for decisions.
+>
+> **Replacement Stories:**
+> - [14d-v2-0: Architecture Alignment](./14d-v2-0-architecture-alignment.md) - Creates useViewModeStore
+> - [14d-v2-1.10a: ViewMode Store Integration](./14d-v2-1-10a-viewmode-store-integration.md)
+> - [14d-v2-1.10b: ViewModeSwitcher UI](./14d-v2-1-10b-viewmodeswitcher-ui.md)
+> - [14d-v2-1.10c: Header Mode Indicator](./14d-v2-1-10c-header-mode-indicator.md)
+> - [14d-v2-1.10d: Data Filtering Integration](./14d-v2-1-10d-data-filtering-integration.md)
+>
+> **Original story preserved below for reference.**
+
+---
 
 ## Story
 

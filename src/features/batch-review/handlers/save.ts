@@ -13,7 +13,6 @@ import { addTransaction as firestoreAddTransaction } from '@/services/firestore'
 import { incrementMappingUsage } from '@/services/categoryMappingService';
 import { incrementMerchantMappingUsage } from '@/services/merchantMappingService';
 import { incrementItemNameMappingUsage } from '@/services/itemNameMappingService';
-import { updateMemberTimestampsForTransaction } from '@/services/sharedGroupService';
 import { DIALOG_TYPES, type BatchCompleteDialogData } from '@/types/scanStateMachine';
 import type { Transaction } from '@/types/transaction';
 import type { SaveContext, SaveCompleteContext } from './types';
@@ -127,18 +126,6 @@ export async function saveBatchTransaction(
 
   // Save transaction to Firestore
   const transactionId = await firestoreAddTransaction(db, user.uid, appId, finalTx);
-
-  // Fire-and-forget: Update member timestamps for shared groups
-  if (finalTx.sharedGroupIds && finalTx.sharedGroupIds.length > 0) {
-    updateMemberTimestampsForTransaction(
-      db,
-      user.uid,
-      finalTx.sharedGroupIds,
-      [] // No previous groups for new transactions
-    ).catch((err) => {
-      console.warn('[App] Failed to update memberUpdates for batch save:', err);
-    });
-  }
 
   return transactionId;
 }

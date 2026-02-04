@@ -1,0 +1,712 @@
+<workflow>
+  <critical>The workflow execution engine is governed by: {project-root}/_bmad/core/tasks/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} and language MUST be tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+
+  <critical>🎭 ECC-ORCHESTRATED STORY DEVELOPMENT - Atlas Puppeteer spawns specialized ECC agents!</critical>
+  <critical>This workflow uses the Task tool to spawn ECC agents for focused tasks</critical>
+  <critical>Atlas coordinates: planner → tdd-guide → build-error-resolver → code-reviewer</critical>
+
+  <!-- ATLAS PUPPETEER PROTOCOL -->
+  <puppeteer-protocol>
+    <principle>Atlas is the Puppeteer - spawns specialized ECC agents, coordinates work, synthesizes outputs</principle>
+    <principle>Use Task tool with appropriate subagent_type for each ECC agent</principle>
+    <principle>For parallel tasks, spawn multiple agents in a SINGLE message with multiple Task calls</principle>
+    <principle>Create handoff documents between sequential agent phases</principle>
+    <principle>Synthesize outputs with workflow chain analysis after each agent completes</principle>
+
+    <available-agents>
+      | Agent | subagent_type | Purpose |
+      |-------|---------------|---------|
+      | Planner | everything-claude-code:planner | Implementation planning |
+      | TDD Guide | everything-claude-code:tdd-guide | Test-first development |
+      | Build Resolver | everything-claude-code:build-error-resolver | Fix build errors |
+      | Code Reviewer | everything-claude-code:code-reviewer | Quality review |
+      | Security Reviewer | everything-claude-code:security-reviewer | Security analysis |
+    </available-agents>
+  </puppeteer-protocol>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 0: Atlas Knowledge Loading                                         -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="0" goal="Atlas initialization and knowledge loading" tag="atlas-init">
+    <critical>Load Atlas knowledge BEFORE orchestrating ECC agents</critical>
+
+    <check if="{atlas_index} exists">
+      <action>Load {atlas_index} to identify relevant fragments</action>
+      <action>Load {atlas_knowledge}/04-architecture.md for tech patterns</action>
+      <action>Load {atlas_knowledge}/05-testing.md for test patterns</action>
+      <action>Load {atlas_knowledge}/08-workflow-chains.md for user flow context</action>
+      <action>Store as {{atlas_context}} for passing to ECC agents</action>
+
+      <output>🗺️ **Atlas Puppeteer Initialized**
+
+        Knowledge loaded for ECC agent orchestration:
+        - Architecture patterns: {{architecture_summary}}
+        - Testing patterns: {{testing_summary}}
+        - Workflow chains: {{workflow_summary}}
+
+        ECC agents will receive this context for implementation guidance.
+      </output>
+    </check>
+
+    <check if="{atlas_index} does NOT exist">
+      <output>⚠️ Atlas not configured - ECC agents will operate without project context</output>
+      <action>Set {{atlas_context}} = "No Atlas context available"</action>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 1: Find and Load Story                                             -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="1" goal="Find next ready story and load it" tag="story-discovery">
+    <check if="{{story_path}} is provided">
+      <action>Use {{story_path}} directly</action>
+      <action>Read COMPLETE story file</action>
+      <action>Extract story_key from filename or metadata</action>
+      <goto anchor="task_check" />
+    </check>
+
+    <check if="{{sprint_status}} file exists">
+      <action>Load the FULL file: {{sprint_status}}</action>
+      <action>Find the FIRST story with status "ready-for-dev"</action>
+
+      <check if="no ready-for-dev story found">
+        <output>📋 No ready-for-dev stories found in sprint-status.yaml
+
+          **Options:**
+          1. Run `ecc-create-story` to create next story with ECC planning
+          2. Specify a particular story file path
+        </output>
+        <ask>Choose option [1] or [2], or provide story path:</ask>
+      </check>
+    </check>
+
+    <anchor id="task_check" />
+    <action>Parse sections: Story, Acceptance Criteria, Tasks/Subtasks, Dev Notes</action>
+    <action>Identify first incomplete task (unchecked [ ])</action>
+    <action>Set {{story_context}} = summary of story requirements for ECC agents</action>
+
+    <!-- ARCHITECTURE ENFORCEMENT: Load architectural ACs and documented patterns -->
+    <critical>🏗️ ARCHITECTURE ENFORCEMENT: Extract architectural ACs and pattern documentation</critical>
+    <action>Parse "Architectural Acceptance Criteria" section from story</action>
+    <action>Extract {{file_location_acs}} - list of required file paths</action>
+    <action>Extract {{pattern_acs}} - required patterns from documented architecture</action>
+    <action>Extract {{antipattern_acs}} - things that must NOT happen per docs</action>
+    <action>Parse "File Specification" table for {{expected_file_paths}}</action>
+    <action>Extract {{architecture_reference}} - source of architectural patterns</action>
+
+    <check if="architectural ACs found">
+      <output>🏗️ **Architectural Requirements Loaded**
+
+        **Architecture Source:** {{architecture_reference}}
+
+        **File Location ACs:** {{file_location_ac_count}}
+        **Pattern ACs:** {{pattern_ac_count}}
+        **Anti-Pattern ACs:** {{antipattern_ac_count}}
+
+        Implementation will be validated against documented patterns.
+      </output>
+    </check>
+
+    <check if="NO architectural ACs found">
+      <output>⚠️ **Warning: No Architectural ACs Found**
+
+        This story was created without architectural acceptance criteria.
+        This may lead to deviation from documented architecture.
+
+        **Recommended Action:** Re-create story using `ecc-create-story` workflow
+        to generate ACs from architecture documentation.
+      </output>
+      <ask>Continue without architectural validation? [Y/N]</ask>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 2: ECC Planner - Implementation Planning                           -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="2" goal="Spawn ECC Planner for implementation planning" tag="ecc-planner">
+    <critical>🎭 ATLAS PUPPETEER: Spawning ECC Planner agent</critical>
+
+    <action>Prepare planner context:
+      - Story requirements: {{story_context}}
+      - Atlas architecture patterns: {{atlas_context}}
+      - Incomplete tasks: {{task_list}}
+    </action>
+
+    <output>🎭 **Spawning ECC Planner...**
+
+      Task: Create implementation plan for story {{story_key}}
+      Context: Atlas patterns + story requirements
+    </output>
+
+    <ecc-spawn agent="planner">
+      <task-call>
+        subagent_type: "everything-claude-code:planner"
+        description: "Plan story implementation"
+        prompt: |
+          Plan the implementation for story: {{story_key}}
+
+          **Story Requirements:**
+          {{story_context}}
+
+          **Tasks to Implement:**
+          {{task_list}}
+
+          **Atlas Context (Architecture Patterns):**
+          {{atlas_context}}
+
+          **Output Required:**
+          1. Implementation approach for each task
+          2. File changes required
+          3. Dependencies and order
+          4. Risk assessment
+          5. Testing strategy alignment
+
+          Create a clear implementation plan that the TDD Guide agent can follow.
+      </task-call>
+    </ecc-spawn>
+
+    <action>Collect planner output as {{implementation_plan}}</action>
+    <action>Store in Dev Agent Record → Implementation Plan</action>
+
+    <output>✅ **ECC Planner Complete**
+
+      Implementation plan created:
+      {{implementation_plan_summary}}
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 3: Mark Story In-Progress                                          -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="3" goal="Mark story in-progress" tag="status-update">
+    <check if="{{sprint_status}} file exists">
+      <action>Update story status: ready-for-dev → in-progress</action>
+      <output>🚀 Story {{story_key}} marked in-progress</output>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 4: ECC TDD Guide - Test-First Implementation                       -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="4" goal="Spawn ECC TDD Guide for test-first implementation" tag="ecc-tdd">
+    <critical>🎭 ATLAS PUPPETEER: Spawning ECC TDD Guide agent for each task</critical>
+    <critical>🏗️ ARCHITECTURE ENFORCEMENT: Validate file locations after each task</critical>
+
+    <loop for="each incomplete task in {{task_list}}">
+      <output>🎭 **Spawning ECC TDD Guide for Task: {{current_task}}**
+
+        Phase: RED-GREEN-REFACTOR cycle
+      </output>
+
+      <ecc-spawn agent="tdd-guide">
+        <task-call>
+          subagent_type: "everything-claude-code:tdd-guide"
+          description: "TDD implementation for {{current_task}}"
+          prompt: |
+            Implement task using strict TDD methodology: {{current_task}}
+
+            **Implementation Plan (from Planner):**
+            {{implementation_plan}}
+
+            **Atlas Testing Patterns:**
+            {{atlas_testing_patterns}}
+
+            ---
+
+            ## 🚨 MANDATORY: Documented Architecture Compliance
+
+            **Architecture Source:** {{architecture_reference}}
+
+            **You MUST follow the documented architectural patterns.**
+            Creating files outside documented locations creates technical debt.
+
+            **Expected File Paths (from story File Specification):**
+            {{expected_file_paths}}
+
+            **Documented File Structure Patterns:**
+            {{file_location_acs}}
+
+            **Documented Pattern Requirements:**
+            {{pattern_acs}}
+
+            **Anti-Patterns from Documentation (MUST NOT DO):**
+            {{antipattern_acs}}
+
+            ---
+
+            **Requirements:**
+            1. Write FAILING tests first (RED phase)
+            2. Implement MINIMAL code to pass tests (GREEN phase)
+            3. Refactor while keeping tests green (REFACTOR phase)
+            4. Ensure 80%+ coverage for new code
+            5. **Create files ONLY at locations specified in story File Specification**
+            6. **Follow all patterns documented in {{architecture_reference}}**
+
+            **Task Details:**
+            {{current_task_details}}
+
+            **Expected Output:**
+            - Test files created/modified
+            - Implementation files created/modified (AT SPECIFIED PATHS)
+            - Coverage report
+        </task-call>
+      </ecc-spawn>
+
+      <action>Collect TDD output for {{current_task}}</action>
+
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <!-- ARCHITECTURE VALIDATION: Check file locations after each task          -->
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <action>Identify new files created by TDD Guide</action>
+      <action>Validate each new file against {{expected_file_paths}} and architectural ACs</action>
+
+      <check if="file location violation detected">
+        <output>🚨 **ARCHITECTURAL VIOLATION DETECTED**
+
+          **Violation Type:** File Location Mismatch
+
+          **Expected:** {{expected_path}}
+          **Actual:** {{actual_path}}
+
+          **Affected AC:** {{violated_ac}}
+
+          This violates the story's architectural requirements.
+        </output>
+
+        <ask>How to handle?
+          [F]ix - Move file to correct location and update imports
+          [E]xception - Document exception (requires justification)
+          [A]bort - Stop implementation until resolved</ask>
+
+        <check if="user chooses F">
+          <action>Move file from {{actual_path}} to {{expected_path}}</action>
+          <action>Update all imports referencing the old path</action>
+          <action>Re-run tests to ensure nothing broke</action>
+          <output>✅ File moved to correct location. Imports updated.</output>
+        </check>
+
+        <check if="user chooses E">
+          <ask>Provide justification for exception:</ask>
+          <action>Document exception in story Dev Notes:
+            - Architectural exception for: {{actual_path}}
+            - Expected: {{expected_path}}
+            - Justification: {{user_justification}}
+            - Date: {date}
+          </action>
+          <output>⚠️ Exception documented. Will be flagged in code review.</output>
+        </check>
+
+        <check if="user chooses A">
+          <action>Mark story as blocked</action>
+          <output>🛑 Implementation paused. Resolve architectural issue before continuing.</output>
+          <stop/>
+        </check>
+      </check>
+
+      <!-- Anti-pattern validation (based on documented anti-patterns) -->
+      <check if="file violates any documented anti-pattern in {{antipattern_acs}}">
+        <output>🚨 **ANTI-PATTERN VIOLATION**
+
+          **Architecture Source:** {{architecture_reference}}
+
+          **Issue:** File violates documented anti-pattern
+          **Path:** {{actual_path}}
+
+          **Anti-Pattern AC Violated:** {{violated_antipattern_ac}}
+
+          **Documented Requirement:**
+          {{antipattern_ac.description}}
+
+          **Expected Location (per documented patterns):**
+          {{expected_location_from_docs}}
+        </output>
+
+        <action>Move file to location per documented patterns</action>
+        <action>Update imports</action>
+      </check>
+
+      <!-- Handle build errors with Build Resolver -->
+      <check if="build errors detected">
+        <output>⚠️ Build errors detected - spawning Build Resolver...</output>
+
+        <ecc-spawn agent="build-resolver">
+          <task-call>
+            subagent_type: "everything-claude-code:build-error-resolver"
+            description: "Fix build errors"
+            prompt: |
+              Fix the build/TypeScript errors with MINIMAL changes.
+
+              **Errors:**
+              {{build_errors}}
+
+              **Rules:**
+              - Fix ONLY what's needed to make build pass
+              - Do NOT refactor unrelated code
+              - Do NOT change architecture
+              - Do NOT move files to different locations
+              - Add type annotations where missing
+              - Fix imports/exports
+          </task-call>
+        </ecc-spawn>
+      </check>
+
+      <action>Mark task [x] complete in story file</action>
+      <action>Update File List with changed files (verified locations)</action>
+
+      <output>✅ **Task Complete:** {{current_task}}
+
+        Files created (architecture validated):
+        {{task_files_list}}
+      </output>
+    </loop>
+
+    <output>✅ **ECC TDD Guide Complete**
+
+      Tasks implemented: {{completed_task_count}}
+      Test coverage: {{coverage_percentage}}%
+
+      **Architecture Validation:**
+      - Files checked: {{files_validated_count}}
+      - Violations fixed: {{violations_fixed_count}}
+      - Exceptions documented: {{exceptions_count}}
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 5: Run Full Test Suite                                             -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="5" goal="Run full test suite and validate" tag="validation">
+    <action>Run full test suite: npm test or detected test command</action>
+    <action>Run linting: npm run lint or detected lint command</action>
+    <action>Run build: npm run build or detected build command</action>
+
+    <check if="tests fail">
+      <output>❌ Tests failing - spawning Build Resolver...</output>
+
+      <ecc-spawn agent="build-resolver">
+        <task-call>
+          subagent_type: "everything-claude-code:build-error-resolver"
+          description: "Fix test failures"
+          prompt: |
+            Fix the failing tests with minimal changes.
+
+            **Test Failures:**
+            {{test_failures}}
+
+            Fix only what's needed to make tests pass.
+        </task-call>
+      </ecc-spawn>
+
+      <action>Re-run tests after fixes</action>
+    </check>
+
+    <output>✅ **Validation Complete**
+
+      Tests: {{test_result}}
+      Lint: {{lint_result}}
+      Build: {{build_result}}
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 6: Parallel Pre-Completion Review                                  -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="6" goal="Parallel ECC review before marking complete" tag="ecc-parallel-review">
+    <critical>🎭 ATLAS PUPPETEER: Spawning PARALLEL review agents (SINGLE message, MULTIPLE Task calls)</critical>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- EXPLICIT PARALLEL EXECUTION DIRECTIVE                                   -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <parallel-execution-rule>
+      🚨 HOW TO ACHIEVE TRUE PARALLELISM:
+
+      You MUST issue BOTH Task tool invocations in your NEXT SINGLE RESPONSE.
+
+      ❌ WRONG (Sequential - slow):
+         Response 1: Task(code-reviewer) → wait → result
+         Response 2: Task(security-reviewer) → wait → result
+
+      ✅ CORRECT (Parallel - fast):
+         Response 1: Task(code-reviewer) + Task(security-reviewer)
+         → Both run simultaneously → Both results returned together
+
+      IN YOUR NEXT MESSAGE, include BOTH Task tool calls at once.
+    </parallel-execution-rule>
+
+    <output>🎭 **Spawning Parallel Review Team...**
+
+      Agents running in parallel:
+      1. Code Reviewer - Quality and best practices
+      2. Security Reviewer - Vulnerability analysis
+    </output>
+
+    <!-- CRITICAL: These must be in a SINGLE message for true parallelism -->
+    <ecc-spawn-parallel>
+      <task-call-1>
+        subagent_type: "everything-claude-code:code-reviewer"
+        description: "Code quality review"
+        prompt: |
+          Review the implementation for story: {{story_key}}
+
+          **Files Changed:**
+          {{file_list}}
+
+          **Check for:**
+          - Code quality and maintainability
+          - Error handling
+          - Performance issues
+          - Test quality
+          - Documentation
+
+          Output: List of findings with severity (HIGH/MEDIUM/LOW)
+      </task-call-1>
+
+      <task-call-2>
+        subagent_type: "everything-claude-code:security-reviewer"
+        description: "Security review"
+        prompt: |
+          Security review for story: {{story_key}}
+
+          **Files Changed:**
+          {{file_list}}
+
+          **Check for:**
+          - OWASP Top 10 vulnerabilities
+          - Hardcoded secrets
+          - Input validation
+          - Authentication/authorization issues
+
+          Output: Security findings with severity and remediation
+      </task-call-2>
+    </ecc-spawn-parallel>
+
+    <action>Collect outputs from both agents</action>
+    <action>Merge findings by severity</action>
+
+    <!-- Atlas Synthesis -->
+    <output>🗺️ **Atlas Synthesis - Parallel Review Results**
+
+      **Code Review Findings:**
+      {{code_review_findings}}
+
+      **Security Review Findings:**
+      {{security_review_findings}}
+
+      **Atlas Cross-Cutting Analysis:**
+      - Workflow chain impacts: {{workflow_impacts}}
+      - Architecture alignment: {{architecture_alignment}}
+    </output>
+
+    <check if="HIGH severity issues found">
+      <action>Fix HIGH severity issues before proceeding</action>
+      <action>Re-run affected tests</action>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 6.5: Pre-Completion Architectural Validation                       -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="6.5" goal="Validate all architectural ACs before completion" tag="arch-validation">
+    <critical>🏗️ ARCHITECTURE GATE: ALL architectural ACs must pass before completion</critical>
+
+    <output>🏗️ **Pre-Completion Architectural Validation**
+
+      **Architecture Source:** {{architecture_reference}}
+
+      Checking all architectural acceptance criteria from documented patterns...
+    </output>
+
+    <action>Enumerate all files created/modified during implementation</action>
+    <action>Validate each file location AC against actual file paths</action>
+    <action>Validate pattern ACs from story (per documented architecture)</action>
+    <action>Validate anti-pattern ACs from story (per documented architecture)</action>
+
+    <validation-checks>
+      <!-- File Location Validation (from story File Specification) -->
+      <check type="file-location">
+        <description>Verify all new files match story File Specification</description>
+        <for-each file in="{{created_files}}">
+          <compare expected="{{expected_file_paths}}" actual="{{file.path}}"/>
+          <check if="mismatch">
+            <flag severity="HIGH" ac="{{related_ac}}">
+              File location mismatch per documented architecture:
+              - Actual: {{file.path}}
+              - Expected: {{expected_path}}
+              - Source: {{architecture_reference}}
+            </flag>
+          </check>
+        </for-each>
+      </check>
+
+      <!-- Pattern Compliance Validation (from documented patterns) -->
+      <check type="documented-patterns">
+        <description>Verify implementation follows documented patterns</description>
+        <for-each pattern_ac in="{{pattern_acs}}">
+          <validate ac="{{pattern_ac}}" against="{{created_files}}">
+            <check if="violation">
+              <flag severity="HIGH" ac="{{pattern_ac.id}}">
+                Pattern violation per {{architecture_reference}}:
+                - Required: {{pattern_ac.description}}
+                - Actual: {{violation_details}}
+              </flag>
+            </check>
+          </validate>
+        </for-each>
+      </check>
+
+      <!-- Anti-Pattern Validation (from documented anti-patterns) -->
+      <check type="documented-antipatterns">
+        <description>Verify no documented anti-patterns introduced</description>
+        <for-each antipattern_ac in="{{antipattern_acs}}">
+          <scan for="{{antipattern_ac.pattern}}" in="{{created_files}}">
+            <flag severity="HIGH" ac="{{antipattern_ac.id}}" if="found">
+              Anti-pattern violation per {{architecture_reference}}:
+              - Prohibited: {{antipattern_ac.description}}
+              - Found in: {{file.path}}
+            </flag>
+          </scan>
+        </for-each>
+      </check>
+    </validation-checks>
+
+    <action>Compile validation results as {{arch_validation_results}}</action>
+
+    <check if="all architectural ACs pass">
+      <output>✅ **Architectural Validation PASSED**
+
+        **Architecture Source:** {{architecture_reference}}
+
+        All architectural acceptance criteria satisfied:
+        {{passing_acs}}
+
+        **Summary:**
+        - File Location ACs: ✅ {{file_location_passed}}/{{file_location_total}}
+        - Pattern ACs: ✅ {{pattern_passed}}/{{pattern_total}}
+        - Anti-Pattern ACs: ✅ {{antipattern_passed}}/{{antipattern_total}}
+
+        Implementation aligns with documented architecture.
+      </output>
+    </check>
+
+    <check if="architectural AC failures detected">
+      <output>🚨 **Architectural Validation FAILED**
+
+        **Architecture Source:** {{architecture_reference}}
+
+        The following architectural ACs (from documented patterns) are not satisfied:
+
+        {{failing_acs}}
+
+        **This BLOCKS story completion.**
+        Deviation from documented architecture creates technical debt.
+      </output>
+
+      <ask>How to proceed?
+        [F]ix - Fix violations now
+        [E]xception - Document exceptions (requires strong justification)
+        [A]bort - Stop and address issues manually</ask>
+
+      <check if="user chooses F">
+        <action>For each failing AC, apply fix (move files, update imports)</action>
+        <action>Re-run validation</action>
+      </check>
+
+      <check if="user chooses E">
+        <ask>For each failing AC, provide justification:</ask>
+        <action>Document all exceptions in story file</action>
+        <output>⚠️ Exceptions documented. Story will proceed with warnings.</output>
+      </check>
+
+      <check if="user chooses A">
+        <output>🛑 Story completion blocked. Address architectural issues before proceeding.</output>
+        <stop/>
+      </check>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 7: Story Completion                                                -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="7" goal="Mark story complete and update status" tag="completion">
+    <action>Verify ALL tasks marked [x] complete</action>
+    <action>Verify ALL functional acceptance criteria satisfied</action>
+    <action>Verify ALL architectural acceptance criteria satisfied (from Step 6.5)</action>
+    <action>Update story Status to "review"</action>
+
+    <check if="{{sprint_status}} file exists">
+      <action>Update sprint-status.yaml: {{story_key}} → review</action>
+    </check>
+
+    <output>✅ **Story Implementation Complete**
+
+      Story: {{story_key}}
+      Status: Ready for review
+      Tasks completed: {{task_count}}
+      Coverage: {{coverage_percentage}}%
+
+      **ECC Agents Used:**
+      - Planner: Implementation planning
+      - TDD Guide: Test-first development
+      - Build Resolver: Error fixing (if needed)
+      - Code Reviewer: Quality review
+      - Security Reviewer: Security analysis
+
+      **Architectural Validation:**
+      - File Location ACs: ✅ {{file_location_passed}}/{{file_location_total}}
+      - Pattern ACs: ✅ {{pattern_passed}}/{{pattern_total}}
+      - Anti-Pattern ACs: ✅ {{antipattern_passed}}/{{antipattern_total}}
+      {{#if exceptions_count > 0}}
+      - ⚠️ Exceptions documented: {{exceptions_count}} (will be reviewed in code review)
+      {{/if}}
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 8: Atlas Memory Feeding                                            -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="8" goal="Feed learnings to Atlas memory" tag="atlas-feed">
+    <check if="{{atlas_enabled}} == true">
+      <output>🗺️ **Atlas Memory Update**
+
+        Preparing to feed implementation insights:
+
+        **Story:** {{story_key}}
+        **ECC Agents Used:** planner, tdd-guide, code-reviewer, security-reviewer
+        **Patterns Applied:** {{patterns_used}}
+        **Testing Approach:** TDD with {{coverage_percentage}}% coverage
+        **Challenges:** {{challenges_encountered}}
+        **Resolutions:** {{resolution_strategies}}
+
+        Would you like to update Atlas memory?
+      </output>
+
+      <ask>Update Atlas memory? [Y/N]</ask>
+
+      <check if="user confirms">
+        <action>Update {atlas_knowledge}/05-testing.md with testing patterns</action>
+        <action>Update {atlas_knowledge}/06-lessons.md with lessons learned</action>
+        <action>Update {atlas_knowledge}/09-sync-history.md with sync entry</action>
+        <output>✅ Atlas memory updated with ECC orchestration insights</output>
+      </check>
+    </check>
+
+    <output>**Next Steps:**
+      - Run `ecc-code-review` for external review
+      - Or proceed to deployment if approved
+    </output>
+  </step>
+
+</workflow>

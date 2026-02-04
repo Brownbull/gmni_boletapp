@@ -1,6 +1,6 @@
 # Firestore Indexes Documentation
 
-> **Last Updated:** 2026-01-21 (Story 14c-refactor.14)
+> **Last Updated:** 2026-02-01 (Story 14d-v2-1.3b)
 > **Status:** Production
 > **Firebase Project:** boletapp-d609f
 
@@ -108,6 +108,49 @@ When adding new composite indexes:
 
 ---
 
+## TTL Policies (Epic 14d-v2)
+
+### Changelog TTL (30 days)
+
+The `sharedGroups/{groupId}/changelog` subcollection uses Firestore's Time-to-Live (TTL) feature to automatically delete changelog entries after 30 days (Architecture Decision AD-9).
+
+| Collection Path | TTL Field | Duration | Purpose |
+|-----------------|-----------|----------|---------|
+| `sharedGroups/{groupId}/changelog` | `_ttl` | 30 days | Auto-cleanup of sync entries |
+
+**TTL Field Specification:**
+- Field name: `_ttl`
+- Type: Firestore `Timestamp`
+- Value: Set to `current time + 30 days` when creating changelog entries
+- Firestore automatically deletes documents when `_ttl < server time`
+
+### Manual Setup Required
+
+⚠️ **TTL policies cannot be deployed via `firebase deploy`.** They must be configured manually in Firebase Console.
+
+**Setup Steps:**
+
+1. Navigate to [Firebase Console](https://console.firebase.google.com/project/boletapp-d609f/firestore/ttl)
+2. Go to **Firestore Database** > **Time-to-live policies**
+3. Click **Create policy**
+4. Configure:
+   - **Collection group**: `changelog`
+   - **Timestamp field**: `_ttl`
+5. Click **Create**
+
+**Verification:**
+- Policy appears in TTL policies list with "Active" status
+- Monitor Cloud Logging for TTL deletion events (may take up to 24 hours to start)
+
+### Cost Benefits
+
+TTL auto-deletion reduces storage costs by:
+- Removing stale changelog entries automatically
+- No manual cleanup scripts required
+- No additional read/write costs for deletion (Firestore handles internally)
+
+---
+
 ## Cost Considerations
 
 - **Composite indexes** incur storage and write costs
@@ -117,14 +160,23 @@ When adding new composite indexes:
 
 ---
 
-## Future Considerations (Epic 14d)
+## Epic 14d-v2 Implementation Status
 
-When Epic 14d (Shared Groups v2) is implemented, new indexes will likely be needed for:
-- Cross-user transaction queries (redesigned architecture)
-- Group membership queries
+Epic 14d-v2 (Shared Groups v2) is currently in progress. The following has been implemented:
+
+### Implemented (Story 14d-v2-1.3b)
+- **Changelog security rules** - Append-only subcollection for transaction sync
+  - Read: Group members only
+  - Create: Group members only with validation
+  - Update/Delete: Forbidden (append-only pattern)
+- **TTL policy documentation** - 30-day auto-expiration for changelog entries
+
+### Pending Implementation
+- Group membership queries (Story 1.4+)
 - Real-time sync signals
+- Cross-user transaction visibility
 
-These will be designed with lessons learned from Epic 14c:
+Design principles from Epic 14c lessons:
 - Avoid collection group queries where possible (cost explosion risk)
 - Prefer user-scoped paths with explicit sharing references
 - Document all indexes with their query locations

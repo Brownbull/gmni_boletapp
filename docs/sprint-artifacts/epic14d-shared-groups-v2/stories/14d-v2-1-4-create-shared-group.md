@@ -1,6 +1,19 @@
 # Story 14d-v2.1.4: Create Shared Group
 
-Status: ready-for-dev
+Status: split
+
+> **SPLIT 2026-02-01:** This story exceeded sizing limits and was split into 4 sub-stories.
+> See: 14d-v2-1-4a, 14d-v2-1-4b, 14d-v2-1-4c, 14d-v2-1-4d
+>
+> **Original Metrics:** 8 tasks, 42 subtasks, 8 files (TOO_LARGE)
+> **Split Strategy:** by_layer (Architectural Layer)
+>
+> | Sub-Story | Description | Sizing |
+> |-----------|-------------|--------|
+> | 14d-v2-1-4a | Types & Security Rules | MEDIUM (2 tasks, 11 subtasks) |
+> | 14d-v2-1-4b | Service & Hook Layer | MEDIUM (2 tasks, 12 subtasks) |
+> | 14d-v2-1-4c | UI Components | LARGE (3 tasks, 15 subtasks) |
+> | 14d-v2-1-4d | Integration Testing | SMALL (1 task, 4 subtasks) |
 
 ## Story
 

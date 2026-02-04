@@ -1,6 +1,12 @@
 # Story 14d-v2.1.3: Changelog Infrastructure
 
-Status: ready-for-dev
+Status: split
+
+> **SPLIT 2026-02-01:** This story exceeded sizing guidelines (5 tasks, 27 subtasks, 6 files).
+> Split into 3 sub-stories per Atlas story sizing workflow:
+> - [14d-v2-1-3a-changelog-types.md](14d-v2-1-3a-changelog-types.md) - TypeScript Types (Task 1)
+> - [14d-v2-1-3b-changelog-security-rules.md](14d-v2-1-3b-changelog-security-rules.md) - Security Rules & TTL (Tasks 2, 5)
+> - [14d-v2-1-3c-changelog-service-tests.md](14d-v2-1-3c-changelog-service-tests.md) - Service Function & Tests (Tasks 3, 4)
 
 ## Story
 

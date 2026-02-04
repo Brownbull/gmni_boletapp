@@ -20,12 +20,16 @@ dist-ssr
 # Environment variables
 .env
 .env.local
+.env.staging
 .env.*.local
 
 # Firebase service account keys (NEVER commit these)
 serviceAccountKey.json
+serviceAccountKey.staging.json
 **/serviceAccountKey.json
+**/serviceAccountKey.*.json
 *.json.enc
+scripts/keys/
 
 # Editor directories and files
 .vscode/*
@@ -52,6 +56,10 @@ coverage/
 playwright-report/
 lighthouse-reports/
 .lighthouseci/
+
+# E2E test auth state (contains tokens - auto-generated)
+tests/e2e/.auth/user.json
+tests/e2e/.auth/*.png
 
 # Prompt testing results (keep structure, ignore generated files)
 prompt-testing/results/*

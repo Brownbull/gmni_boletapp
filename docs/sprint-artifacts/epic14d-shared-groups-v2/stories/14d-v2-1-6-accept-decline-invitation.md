@@ -1,6 +1,17 @@
 # Story 14d-v2.1.6: Accept/Decline Group Invitation
 
-Status: ready-for-dev
+Status: split
+
+> **SPLIT:** This story was split into 5 sub-stories on 2026-02-01 by Atlas Story Sizing workflow.
+> **Reason:** 13 tasks, 74 subtasks, 13+ files exceeded sizing limits (max: 4 tasks, 15 subtasks, 8 files)
+> **Split Strategy:** by_feature
+>
+> **Sub-stories:**
+> - [14d-v2-1-6a: Deep Link & Pending Invitations Service](14d-v2-1-6a-deep-link-pending-service.md) - Tasks 1-2 (Foundation)
+> - [14d-v2-1-6b: Accept/Decline Invitation Logic](14d-v2-1-6b-accept-decline-logic.md) - Tasks 3-5 (Backend)
+> - [14d-v2-1-6c: Invitations UI Components](14d-v2-1-6c-invitations-ui.md) - Tasks 6-8 (Main UI)
+> - [14d-v2-1-6d: Transaction Sharing Opt-In & Error UI](14d-v2-1-6d-optin-error-ui.md) - Tasks 9-10 (Opt-In/Errors)
+> - [14d-v2-1-6e: Security Rules, Preferences & Integration Tests](14d-v2-1-6e-security-rules-tests.md) - Tasks 11-13 (Rules/Tests)
 
 ## Story
 

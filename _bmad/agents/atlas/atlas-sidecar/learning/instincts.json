@@ -1,0 +1,902 @@
+[
+  {
+    "id": "workflow-13938199",
+    "pattern": "Common workflow: Bash -> Read",
+    "confidence": 0.8999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 89
+  },
+  {
+    "id": "workflow-6404f25b",
+    "pattern": "Common workflow: Read -> Read",
+    "confidence": 0.8999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 614
+  },
+  {
+    "id": "workflow-63fd9f99",
+    "pattern": "Common workflow: Read -> Bash",
+    "confidence": 0.8999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 57
+  },
+  {
+    "id": "workflow-138c2ed7",
+    "pattern": "Common workflow: Bash -> Bash",
+    "confidence": 0.8999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 200
+  },
+  {
+    "id": "workflow-39934f3e",
+    "pattern": "Common workflow: Read -> Read -> Bash",
+    "confidence": 0.8999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 30
+  },
+  {
+    "id": "workflow-4d444fba",
+    "pattern": "Common workflow: Bash -> Bash -> Bash",
+    "confidence": 0.8999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 128
+  },
+  {
+    "id": "workflow-4d4ba27c",
+    "pattern": "Common workflow: Bash -> Bash -> Read",
+    "confidence": 0.8999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 49
+  },
+  {
+    "id": "workflow-399aa200",
+    "pattern": "Common workflow: Read -> Read -> Read",
+    "confidence": 0.8999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 457
+  },
+  {
+    "id": "workflow-16d6cec2",
+    "pattern": "Common workflow: Read -> Bash -> Read",
+    "confidence": 0.8999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 23
+  },
+  {
+    "id": "workflow-22cdca5",
+    "pattern": "Common workflow: Read -> Read -> Read -> Read",
+    "confidence": 0.8999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 355
+  },
+  {
+    "id": "workflow-63ff06cf",
+    "pattern": "Common workflow: Read -> Edit",
+    "confidence": 0.8999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 105
+  },
+  {
+    "id": "workflow-51a76743",
+    "pattern": "Common workflow: Edit -> Edit",
+    "confidence": 0.8999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 168
+  },
+  {
+    "id": "workflow-3a783ca4",
+    "pattern": "Common workflow: Edit -> Edit -> Edit",
+    "confidence": 0.8999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 103
+  },
+  {
+    "id": "pref-tool-read",
+    "pattern": "Frequently uses Read tool",
+    "confidence": 0.8999999999999999,
+    "context": "tool_preference",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 920
+  },
+  {
+    "id": "workflow-3050882f",
+    "pattern": "Common workflow: Write -> Write",
+    "confidence": 0.7999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T03:48:45.520Z",
+    "occurrences": 26
+  },
+  {
+    "id": "workflow-558add9d",
+    "pattern": "Common workflow: Bash -> Bash -> Bash -> Bash",
+    "confidence": 0.7999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 93
+  },
+  {
+    "id": "workflow-6242ecc2",
+    "pattern": "Common workflow: Bash -> Read -> Read",
+    "confidence": 0.7999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 33
+  },
+  {
+    "id": "workflow-6bfaf675",
+    "pattern": "Common workflow: Edit -> Edit -> Edit -> Edit",
+    "confidence": 0.7999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 59
+  },
+  {
+    "id": "workflow-64000e3d",
+    "pattern": "Common workflow: Read -> Glob",
+    "confidence": 0.7999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 54
+  },
+  {
+    "id": "workflow-51ad52cf",
+    "pattern": "Common workflow: Edit -> Read",
+    "confidence": 0.7999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 44
+  },
+  {
+    "id": "workflow-6400239b",
+    "pattern": "Common workflow: Read -> Grep",
+    "confidence": 0.7999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 68
+  },
+  {
+    "id": "workflow-635ae39b",
+    "pattern": "Common workflow: Grep -> Read",
+    "confidence": 0.7999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 82
+  },
+  {
+    "id": "workflow-273d16e8",
+    "pattern": "Common workflow: Read -> Edit -> Edit",
+    "confidence": 0.7999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 44
+  },
+  {
+    "id": "workflow-3a725118",
+    "pattern": "Common workflow: Edit -> Edit -> Read",
+    "confidence": 0.7999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 26
+  },
+  {
+    "id": "workflow-28209d18",
+    "pattern": "Common workflow: Edit -> Read -> Edit",
+    "confidence": 0.7999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 30
+  },
+  {
+    "id": "workflow-71e601ff",
+    "pattern": "Common workflow: Read -> Edit -> Edit -> Edit",
+    "confidence": 0.7999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 25
+  },
+  {
+    "id": "workflow-6c00e201",
+    "pattern": "Common workflow: Edit -> Edit -> Edit -> Read",
+    "confidence": 0.7999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 21
+  },
+  {
+    "id": "workflow-7e529601",
+    "pattern": "Common workflow: Edit -> Edit -> Read -> Edit",
+    "confidence": 0.7999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 22
+  },
+  {
+    "id": "workflow-51a6000d",
+    "pattern": "Common workflow: Edit -> Bash",
+    "confidence": 0.7999999999999999,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 60
+  },
+  {
+    "id": "workflow-41e12fe3",
+    "pattern": "Common workflow: Bash -> Read -> Read -> Read",
+    "confidence": 0.7,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T03:48:45.520Z",
+    "occurrences": 16
+  },
+  {
+    "id": "workflow-6e74acc0",
+    "pattern": "Common workflow: Grep -> Read -> Read",
+    "confidence": 0.7,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T03:48:45.520Z",
+    "occurrences": 42
+  },
+  {
+    "id": "workflow-59fc5edf",
+    "pattern": "Common workflow: Bash -> Bash -> Read -> Read",
+    "confidence": 0.7,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 21
+  },
+  {
+    "id": "workflow-551f0c3d",
+    "pattern": "Common workflow: Glob -> Read",
+    "confidence": 0.7,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 52
+  },
+  {
+    "id": "workflow-16de2184",
+    "pattern": "Common workflow: Read -> Bash -> Bash",
+    "confidence": 0.7,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 23
+  },
+  {
+    "id": "workflow-22589e3",
+    "pattern": "Common workflow: Read -> Read -> Read -> Bash",
+    "confidence": 0.7,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 16
+  },
+  {
+    "id": "workflow-6248d84e",
+    "pattern": "Common workflow: Bash -> Read -> Edit",
+    "confidence": 0.7,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 24
+  },
+  {
+    "id": "workflow-3a79a3da",
+    "pattern": "Common workflow: Edit -> Edit -> Bash",
+    "confidence": 0.7,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 24
+  },
+  {
+    "id": "workflow-3995d340",
+    "pattern": "Common workflow: Read -> Read -> Grep",
+    "confidence": 0.7,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 40
+  },
+  {
+    "id": "workflow-38f09340",
+    "pattern": "Common workflow: Read -> Grep -> Read",
+    "confidence": 0.7,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 36
+  },
+  {
+    "id": "workflow-3995bde2",
+    "pattern": "Common workflow: Read -> Read -> Glob",
+    "confidence": 0.7,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 42
+  },
+  {
+    "id": "workflow-227f887",
+    "pattern": "Common workflow: Read -> Read -> Read -> Glob",
+    "confidence": 0.7,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 28
+  },
+  {
+    "id": "workflow-5592305f",
+    "pattern": "Common workflow: Bash -> Bash -> Bash -> Read",
+    "confidence": 0.6,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T03:06:07.148Z",
+    "occurrences": 19
+  },
+  {
+    "id": "workflow-3994b674",
+    "pattern": "Common workflow: Read -> Read -> Edit",
+    "confidence": 0.6,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 24
+  },
+  {
+    "id": "workflow-3f5b9e2",
+    "pattern": "Common workflow: Glob -> Read -> Read",
+    "confidence": 0.6,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 36
+  },
+  {
+    "id": "workflow-2ab4bbe2",
+    "pattern": "Common workflow: Read -> Glob -> Read",
+    "confidence": 0.6,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 31
+  },
+  {
+    "id": "workflow-4beaf287",
+    "pattern": "Common workflow: Glob -> Read -> Read -> Read",
+    "confidence": 0.6,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 33
+  },
+  {
+    "id": "workflow-4e4be6df",
+    "pattern": "Common workflow: Read -> Read -> Bash -> Bash",
+    "confidence": 0.5,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 8
+  },
+  {
+    "id": "workflow-15d68a5f",
+    "pattern": "Common workflow: Read -> Bash -> Bash -> Bash",
+    "confidence": 0.5,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 14
+  },
+  {
+    "id": "workflow-30c4a401",
+    "pattern": "Common workflow: Write -> Write -> Write",
+    "confidence": 0.5,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 14
+  },
+  {
+    "id": "workflow-6a024b91",
+    "pattern": "Common workflow: Write -> Write -> Write -> Write",
+    "confidence": 0.5,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 12
+  },
+  {
+    "id": "workflow-635614db",
+    "pattern": "Common workflow: Grep -> Grep",
+    "confidence": 0.5,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T03:06:07.148Z",
+    "occurrences": 32
+  },
+  {
+    "id": "workflow-cb90979",
+    "pattern": "Common workflow: Read -> Read -> Glob -> Read",
+    "confidence": 0.5,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T03:48:45.520Z",
+    "occurrences": 25
+  },
+  {
+    "id": "workflow-1ce5d7ba",
+    "pattern": "Common workflow: Read -> Write",
+    "confidence": 0.5,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 9
+  },
+  {
+    "id": "workflow-27430274",
+    "pattern": "Common workflow: Read -> Edit -> Read",
+    "confidence": 0.5,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 14
+  },
+  {
+    "id": "workflow-6bf98f3f",
+    "pattern": "Common workflow: Edit -> Edit -> Edit -> Bash",
+    "confidence": 0.5,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T12:08:41.723Z",
+    "occurrences": 11
+  },
+  {
+    "id": "pref-dir-13eae54a",
+    "pattern": "Frequently works in agents/atlas",
+    "confidence": 0.4,
+    "context": "directory_preference",
+    "firstSeen": "2026-02-02T21:39:02.800Z",
+    "lastConfirmed": "2026-02-02T21:39:02.800Z",
+    "occurrences": 12
+  },
+  {
+    "id": "workflow-720420a2",
+    "pattern": "Common workflow: Write -> Bash",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 5
+  },
+  {
+    "id": "workflow-5f9e34b",
+    "pattern": "Common workflow: Read -> Read -> Write",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 3
+  },
+  {
+    "id": "workflow-4f24659d",
+    "pattern": "Common workflow: Read -> Write -> Bash",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 3
+  },
+  {
+    "id": "workflow-437f4685",
+    "pattern": "Common workflow: Write -> Bash -> Bash",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 3
+  },
+  {
+    "id": "workflow-43bb36b0",
+    "pattern": "Common workflow: Read -> Read -> Read -> Write",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 3
+  },
+  {
+    "id": "workflow-5a024a6b",
+    "pattern": "Common workflow: Bash -> Bash -> Read -> Edit",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 8
+  },
+  {
+    "id": "workflow-5f29303c",
+    "pattern": "Common workflow: Bash -> Write",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 4
+  },
+  {
+    "id": "workflow-138eb2d9",
+    "pattern": "Common workflow: Bash -> Grep",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 9
+  },
+  {
+    "id": "workflow-6355ff7d",
+    "pattern": "Common workflow: Grep -> Glob",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 7
+  },
+  {
+    "id": "workflow-551a281f",
+    "pattern": "Common workflow: Glob -> Glob",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 7
+  },
+  {
+    "id": "workflow-551a3d7d",
+    "pattern": "Common workflow: Glob -> Grep",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 9
+  },
+  {
+    "id": "workflow-51a8840f",
+    "pattern": "Common workflow: Edit -> Grep",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 9
+  },
+  {
+    "id": "workflow-3f0d5c4",
+    "pattern": "Common workflow: Glob -> Read -> Glob",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 3
+  },
+  {
+    "id": "workflow-62f1ca42",
+    "pattern": "Common workflow: Bash -> Grep -> Grep",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 5
+  },
+  {
+    "id": "workflow-6f239f9e",
+    "pattern": "Common workflow: Grep -> Grep -> Glob",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 4
+  },
+  {
+    "id": "workflow-af02c3c",
+    "pattern": "Common workflow: Glob -> Glob -> Read",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 7
+  },
+  {
+    "id": "workflow-3f0eb22",
+    "pattern": "Common workflow: Glob -> Read -> Grep",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 3
+  },
+  {
+    "id": "workflow-38ebc480",
+    "pattern": "Common workflow: Read -> Grep -> Grep",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 12
+  },
+  {
+    "id": "workflow-6f1ebb80",
+    "pattern": "Common workflow: Grep -> Grep -> Read",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 14
+  },
+  {
+    "id": "workflow-6e797b80",
+    "pattern": "Common workflow: Grep -> Read -> Grep",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 9
+  },
+  {
+    "id": "workflow-6f238a40",
+    "pattern": "Common workflow: Grep -> Grep -> Grep",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 9
+  },
+  {
+    "id": "workflow-7d5f619e",
+    "pattern": "Common workflow: Grep -> Glob -> Grep",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 3
+  },
+  {
+    "id": "workflow-34bab22",
+    "pattern": "Common workflow: Glob -> Grep -> Read",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 6
+  },
+  {
+    "id": "workflow-273e33b4",
+    "pattern": "Common workflow: Read -> Edit -> Grep",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 6
+  },
+  {
+    "id": "workflow-28c4c04c",
+    "pattern": "Common workflow: Edit -> Grep -> Read",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 8
+  },
+  {
+    "id": "workflow-6e7a984c",
+    "pattern": "Common workflow: Grep -> Read -> Edit",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 11
+  },
+  {
+    "id": "workflow-3a771fd8",
+    "pattern": "Common workflow: Edit -> Edit -> Grep",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 3
+  },
+  {
+    "id": "workflow-1030ae73",
+    "pattern": "Common workflow: Read -> Read -> Edit -> Edit",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 7
+  },
+  {
+    "id": "workflow-324fb5ff",
+    "pattern": "Common workflow: Edit -> Read -> Edit -> Edit",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 8
+  },
+  {
+    "id": "workflow-41d9dd21",
+    "pattern": "Common workflow: Bash -> Read -> Read -> Bash",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 4
+  },
+  {
+    "id": "workflow-59737f25",
+    "pattern": "Common workflow: Read -> Grep -> Grep -> Read",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 7
+  },
+  {
+    "id": "workflow-23e43065",
+    "pattern": "Common workflow: Grep -> Grep -> Read -> Grep",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 4
+  },
+  {
+    "id": "workflow-34b68f9b",
+    "pattern": "Common workflow: Grep -> Read -> Grep -> Grep",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 5
+  },
+  {
+    "id": "workflow-596eb065",
+    "pattern": "Common workflow: Read -> Grep -> Grep -> Grep",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 4
+  },
+  {
+    "id": "workflow-233a21a5",
+    "pattern": "Common workflow: Grep -> Grep -> Grep -> Grep",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 3
+  },
+  {
+    "id": "workflow-14fe4a47",
+    "pattern": "Common workflow: Grep -> Grep -> Glob -> Grep",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 3
+  },
+  {
+    "id": "workflow-5c245c39",
+    "pattern": "Common workflow: Glob -> Grep -> Read -> Read",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 5
+  },
+  {
+    "id": "workflow-3407b21b",
+    "pattern": "Common workflow: Grep -> Read -> Read -> Read",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 17
+  },
+  {
+    "id": "workflow-226f119",
+    "pattern": "Common workflow: Read -> Read -> Read -> Edit",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 7
+  },
+  {
+    "id": "workflow-603285a7",
+    "pattern": "Common workflow: Read -> Edit -> Grep -> Read",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 5
+  },
+  {
+    "id": "workflow-37f89acd",
+    "pattern": "Common workflow: Edit -> Grep -> Read -> Edit",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 7
+  },
+  {
+    "id": "workflow-465f51a7",
+    "pattern": "Common workflow: Grep -> Read -> Edit -> Read",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 3
+  },
+  {
+    "id": "workflow-5f8e6273",
+    "pattern": "Common workflow: Read -> Edit -> Read -> Edit",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 7
+  },
+  {
+    "id": "workflow-7dae72cd",
+    "pattern": "Common workflow: Edit -> Edit -> Grep -> Read",
+    "confidence": 0.4,
+    "context": "repeated_workflow",
+    "firstSeen": "2026-02-04T02:24:15.643Z",
+    "lastConfirmed": "2026-02-04T02:24:15.643Z",
+    "occurrences": 3
+  }
+]

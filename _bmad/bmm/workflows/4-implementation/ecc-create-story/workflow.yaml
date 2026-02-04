@@ -1,0 +1,70 @@
+# ECC-Enhanced Story Creation Workflow
+name: ecc-create-story
+description: "Story creation using ECC agents orchestrated by Atlas Puppeteer - Planner + Architect for technical analysis"
+author: "BMad + Atlas Puppeteer"
+
+# ECC Integration - Atlas as Puppeteer Orchestrator
+ecc_orchestration:
+  enabled: true
+  orchestrator: "Atlas Puppeteer"
+
+  # ECC agents used in this workflow
+  agents:
+    planner:
+      subagent_type: "everything-claude-code:planner"
+      purpose: "Analyze requirements, identify risks, plan implementation approach"
+    architect:
+      subagent_type: "everything-claude-code:architect"
+      purpose: "Technical design, pattern recommendations, dependency analysis"
+
+  # Sequential with parallel option
+  sequence: "planner → architect → (parallel: database-reviewer + security-reviewer if needed)"
+
+  # Optional parallel technical review
+  parallel_phases:
+    technical_review:
+      agents: ["database-reviewer", "security-reviewer"]
+      condition: "story involves database or auth"
+      description: "Parallel technical review for complex stories"
+
+# Atlas Integration
+atlas_features:
+  workflow_chain_analysis: true
+  architecture_context: true
+  push_alerts: true
+  memory_feeding: true
+  puppeteer_orchestration: true
+
+atlas_knowledge_fragments:
+  required:
+    - "02-features.md"
+    - "04-architecture.md"
+    - "08-workflow-chains.md"
+  optional:
+    - "03-personas.md"
+    - "06-lessons.md"
+
+# Critical variables from config
+config_source: "{project-root}/_bmad/bmm/config.yaml"
+output_folder: "{config_source}:output_folder"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+user_skill_level: "{config_source}:user_skill_level"
+document_output_language: "{config_source}:document_output_language"
+story_dir: "{config_source}:sprint_artifacts"
+date: system-generated
+
+sprint_artifacts: "{config_source}:sprint_artifacts"
+sprint_status: "{sprint_artifacts}/sprint-status.yaml || {output_folder}/sprint-status.yaml"
+epics_dir: "{output_folder}"
+
+# Atlas memory paths
+atlas_memory: "{project-root}/_bmad/agents/atlas/atlas-sidecar"
+atlas_index: "{atlas_memory}/atlas-index.csv"
+atlas_knowledge: "{atlas_memory}/knowledge"
+
+# Workflow components
+installed_path: "{project-root}/_bmad/bmm/workflows/4-implementation/ecc-create-story"
+instructions: "{installed_path}/instructions.xml"
+
+standalone: true

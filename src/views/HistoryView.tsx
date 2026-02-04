@@ -32,7 +32,7 @@ import { SortControl } from '../components/history/SortControl';
 import type { SortOption } from '../components/history/SortControl';
 import { SelectionBar } from '../components/history/SelectionBar';
 // Group consolidation: Replaced personal group modals with TransactionGroupSelector
-import { TransactionGroupSelector } from '../components/SharedGroups/TransactionGroupSelector';
+import { TransactionGroupSelector } from '@/features/shared-groups';
 // Story 14e-5: DeleteTransactionsModal now uses Modal Manager
 import type { TransactionPreview } from '../components/history/DeleteTransactionsModal';
 import { useModalActions } from '@managers/ModalManager';
@@ -52,7 +52,7 @@ import { useSelectionMode } from '../hooks/useSelectionMode';
 // Group consolidation: Use useAllUserGroups instead of useGroups for shared groups
 import { useAllUserGroups } from '../hooks/useAllUserGroups';
 import { getFirestore } from 'firebase/firestore';
-import { deleteTransactionsBatch, updateTransaction } from '../services/firestore';
+import { deleteTransactionsBatch } from '../services/firestore';
 // Story 9.12: Category translations (AC #1, #2)
 // Note: Language type now comes from useHistoryViewData hook
 // Story 14.15c: CSV Export utilities
@@ -267,11 +267,11 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
     // Group consolidation: Use shared groups hook instead of personal groups
     const { groups, isLoading: groupsLoading } = useAllUserGroups(userId || undefined);
 
-    const getGroupColorForTransaction = useCallback((tx: Transaction): string | undefined => {
-        if (!tx.sharedGroupIds?.length || !groups.length) return undefined;
-        const group = groups.find(g => tx.sharedGroupIds?.includes(g.id));
-        return group?.color;
-    }, [groups]);
+    // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
+    // Epic 14d will use sharedGroupId (single nullable string) instead
+    const getGroupColorForTransaction = useCallback((_tx: Transaction): string | undefined => {
+        return undefined;
+    }, []);
 
     const lastScrollY = useRef(0);
     const scrollThreshold = 80; // Pixels to scroll before collapsing (increased for stability)
@@ -584,32 +584,14 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
         }));
     }, [getSelectedTransactions, currency]);
 
-    // Group consolidation: Handle group assignment using TransactionGroupSelector
-    // Updates sharedGroupIds on all selected transactions
-    const handleGroupSelect = useCallback(async (groupIds: string[]) => {
-        if (!userId) {
-            console.error('[HistoryView] Cannot assign group: User not authenticated');
-            return;
-        }
-
-        const selectedTxIds = Array.from(selectedIds);
-        const db = getFirestore();
-
-        try {
-            // Update each selected transaction with the new sharedGroupIds
-            await Promise.all(
-                selectedTxIds.map(txId =>
-                    updateTransaction(db, userId, appId, txId, {
-                        sharedGroupIds: groupIds.length > 0 ? groupIds : [],
-                    })
-                )
-            );
-            setShowGroupSelector(false);
-            exitSelectionMode();
-        } catch (err) {
-            console.error('[HistoryView] Failed to assign groups:', err);
-        }
-    }, [userId, appId, selectedIds, exitSelectionMode]);
+    // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
+    // Epic 14d will use sharedGroupId (single nullable string) instead
+    // Group assignment functionality disabled until Epic 14d
+    const handleGroupSelect = useCallback(async (_groupIds: string[]) => {
+        console.warn('[HistoryView] Group assignment disabled - Epic 14c cleanup');
+        setShowGroupSelector(false);
+        exitSelectionMode();
+    }, [exitSelectionMode]);
 
     // Story 14.15: Handle batch delete
     // Story 14e-5: Now uses Modal Manager
@@ -1050,7 +1032,7 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
                                                         thumbnailUrl: tx.thumbnailUrl,
                                                         imageUrls: tx.imageUrls,
                                                         items: tx.items || [],
-                                                        sharedGroupIds: tx.sharedGroupIds,
+                                                        // Story 14d-v2-1.1: sharedGroupIds removed (Epic 14c cleanup)
                                                     }}
                                                     groupColor={getGroupColorForTransaction(tx)}
                                                     formatters={{

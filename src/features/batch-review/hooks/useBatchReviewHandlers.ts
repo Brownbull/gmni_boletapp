@@ -46,7 +46,6 @@ import { addTransaction as firestoreAddTransaction } from '@/services/firestore'
 import { incrementMappingUsage } from '@/services/categoryMappingService';
 import { incrementMerchantMappingUsage } from '@/services/merchantMappingService';
 import { incrementItemNameMappingUsage } from '@/services/itemNameMappingService';
-import { updateMemberTimestampsForTransaction } from '@/services/sharedGroupService';
 // Story 14e-42: Import pure utility and type from @features/categories
 import { applyItemNameMappings, type FindItemNameMatchFn } from '@/features/categories';
 
@@ -506,18 +505,6 @@ export function useBatchReviewHandlers(props: BatchReviewHandlersProps): BatchRe
       // Save transaction to Firestore
       const transactionId = await firestoreAddTransaction(db, user.uid, appId, finalTx);
 
-      // Fire-and-forget: Update member timestamps for shared groups
-      if (finalTx.sharedGroupIds && finalTx.sharedGroupIds.length > 0) {
-        updateMemberTimestampsForTransaction(
-          db,
-          user.uid,
-          finalTx.sharedGroupIds,
-          [] // No previous groups for new transactions
-        ).catch((err) => {
-          console.warn('[useBatchReviewHandlers] Failed to update memberUpdates for batch save:', err);
-        });
-      }
-
       return transactionId;
     },
     [user, services, mappings, applyCategoryMappings, findMerchantMatch, findItemNameMatch]
@@ -681,23 +668,9 @@ export function useBatchReviewHandlers(props: BatchReviewHandlersProps): BatchRe
           onItemSuccess: dispatchBatchItemSuccess,
           onItemError: dispatchBatchItemError,
           onComplete: (processingResults, imageUrls) => {
-            // Add sharedGroupIds to each successful result if in group mode
-            let taggedResults = processingResults;
-            if (viewMode === 'group' && activeGroup?.id) {
-              taggedResults = processingResults.map(result => {
-                if (result.success && result.result) {
-                  return {
-                    ...result,
-                    result: {
-                      ...result.result,
-                      sharedGroupIds: [activeGroup.id!],
-                    },
-                  };
-                }
-                return result;
-              });
-            }
-            const receipts = createBatchReceiptsFromResults(taggedResults, imageUrls);
+            // Story 14d-v2-1.1: sharedGroupIds[] tagging removed (Epic 14c cleanup)
+            // Epic 14d will use sharedGroupId (single nullable string) instead
+            const receipts = createBatchReceiptsFromResults(processingResults, imageUrls);
             dispatchBatchComplete(receipts);
             batchReviewActions.loadBatch(receipts);
           },

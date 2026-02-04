@@ -16,8 +16,11 @@ import {
     startAfter,
     QueryDocumentSnapshot,
     DocumentData,
+    increment,
 } from 'firebase/firestore';
 import { Transaction } from '../types/transaction';
+import { computePeriods } from '../utils/periodUtils';
+import { ensureTransactionsDefaults, isDeleted } from '../utils/transactionUtils';
 
 /**
  * Removes undefined values from an object (Firestore doesn't accept undefined).
@@ -55,12 +58,17 @@ export async function addTransaction(
     // Clean undefined values before sending to Firestore
     const cleanedTransaction = removeUndefined(transaction as Record<string, unknown>);
 
-    // This ensures ALL transactions have the field, enabling proper security rules
-    // for collection group queries that check resource.data.sharedGroupIds.size() > 0
+    // Story 14d-v2-1.2b: Compute periods from date for efficient temporal queries
+    const periods = transaction.date ? computePeriods(transaction.date) : undefined;
+
+    // Story 14d-v2-1.2b: Set version: 1 for new transactions (optimistic concurrency)
+    // Also set updatedAt, periods for changelog tracking and efficient queries
     const transactionWithDefaults = {
         ...cleanedTransaction,
-        sharedGroupIds: (cleanedTransaction as any).sharedGroupIds ?? [],
         createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        version: 1,
+        ...(periods && { periods }),
     };
 
     const docRef = await addDoc(
@@ -74,6 +82,8 @@ export async function addTransaction(
             merchant: transaction.merchant,
             date: transaction.date,
             currency: (transaction as any).currency,
+            version: 1,
+            periods: periods?.month,
             path: `artifacts/${appId}/users/${userId}/transactions/${docRef.id}`
         });
     }
@@ -89,8 +99,19 @@ export async function updateTransaction(
 ): Promise<void> {
     // Clean undefined values before sending to Firestore
     const cleanedUpdates = removeUndefined(updates as Record<string, unknown>);
+
+    // Story 14d-v2-1.2b: Recompute periods if date changed
+    const periods = updates.date ? computePeriods(updates.date) : undefined;
+
+    // Story 14d-v2-1.2b: Increment version for optimistic concurrency
+    // Use Firestore increment() for atomic version updates
     const docRef = doc(db, 'artifacts', appId, 'users', userId, 'transactions', transactionId);
-    return updateDoc(docRef, { ...cleanedUpdates, updatedAt: serverTimestamp() });
+    return updateDoc(docRef, {
+        ...cleanedUpdates,
+        updatedAt: serverTimestamp(),
+        version: increment(1),
+        ...(periods && { periods }),
+    });
 }
 
 export async function deleteTransaction(
@@ -156,6 +177,14 @@ export function subscribeToTransactions(
             ...doc.data()
         } as Transaction));
 
+        // Story 14d-v2-1-2b: Apply Epic 14d-v2 defaults to legacy transactions
+        const normalizedTxs = ensureTransactionsDefaults(txs);
+
+        // Story 14d-v2-1-2c: Filter out soft-deleted transactions
+        // Uses client-side filtering after normalization to support legacy transactions
+        // that don't have deletedAt field (normalized to deletedAt: null)
+        const activeTxs = normalizedTxs.filter(tx => !isDeleted(tx));
+
         // Dev-mode logging for snapshot size monitoring (AC #6)
         if (import.meta.env.DEV && snapshot.size >= LISTENER_LIMITS.TRANSACTIONS) {
             console.warn(
@@ -164,7 +193,7 @@ export function subscribeToTransactions(
             );
         }
 
-        callback(txs);
+        callback(activeTxs);
     });
 }
 
@@ -206,9 +235,15 @@ export function subscribeToRecentScans(
             ...doc.data()
         } as Transaction));
 
+        // Story 14d-v2-1-2b: Apply Epic 14d-v2 defaults to legacy transactions
+        const normalizedTxs = ensureTransactionsDefaults(txs);
+
+        // Story 14d-v2-1-2c: Filter out soft-deleted transactions
+        const activeTxs = normalizedTxs.filter(tx => !isDeleted(tx));
+
         // Sort client-side as backup (Firestore should already sort, but ensure order)
         // createdAt can be a Firestore Timestamp (with .seconds) or a Date string
-        const sortedTxs = [...txs].sort((a, b) => {
+        const sortedTxs = [...activeTxs].sort((a, b) => {
             const getTime = (tx: Transaction): number => {
                 const ca = tx.createdAt;
                 if (!ca) return 0;
@@ -336,10 +371,16 @@ export async function getTransactionPage(
     // Take only pageSize documents (exclude the extra one used for hasMore check)
     const docs = hasMore ? snapshot.docs.slice(0, pageSize) : snapshot.docs;
 
-    const transactions = docs.map(d => ({
+    const rawTransactions = docs.map(d => ({
         id: d.id,
         ...d.data()
     } as Transaction));
+
+    // Story 14d-v2-1-2b: Apply Epic 14d-v2 defaults to legacy transactions
+    const normalizedTransactions = ensureTransactionsDefaults(rawTransactions);
+
+    // Story 14d-v2-1-2c: Filter out soft-deleted transactions
+    const transactions = normalizedTransactions.filter(tx => !isDeleted(tx));
 
     // Last document for next page cursor (null if no more pages)
     const lastDoc = docs.length > 0 ? docs[docs.length - 1] : null;
@@ -414,6 +455,9 @@ export async function updateTransactionsBatch(
     // Clean undefined values
     const cleanedUpdates = removeUndefined(updates as Record<string, unknown>);
 
+    // Story 14d-v2-1.2b: Recompute periods if date changed
+    const periods = updates.date ? computePeriods(updates.date) : undefined;
+
     // Firestore batch limit is 500 operations
     const BATCH_SIZE = 500;
 
@@ -423,7 +467,13 @@ export async function updateTransactionsBatch(
 
         for (const txId of chunk) {
             const docRef = doc(db, 'artifacts', appId, 'users', userId, 'transactions', txId);
-            batch.update(docRef, { ...cleanedUpdates, updatedAt: serverTimestamp() });
+            // Story 14d-v2-1.2b: Increment version and update timestamp
+            batch.update(docRef, {
+                ...cleanedUpdates,
+                updatedAt: serverTimestamp(),
+                version: increment(1),
+                ...(periods && { periods }),
+            });
         }
 
         await batch.commit();

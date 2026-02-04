@@ -48,511 +48,10 @@ development_status:
   epic-11: docs/sprint-artifacts/sprint-status_epics1to13.yaml
   epic-12: docs/sprint-artifacts/sprint-status_epics1to13.yaml
   epic-13: docs/sprint-artifacts/sprint-status_epics1to13.yaml
-
-  # Epic 14: Core Implementation (~48 points)
-  # Implement approved mockups with animation framework
-  # Key features: Polygon, Scan flow, Reports, Celebrations
-  # UNBLOCKED by Epic 13 completion (2025-12-31) - Ready for development
-  # Atlas Feature Mapping: Animation system, Polygon visualization, Celebrations
-  # Workflow Chains: Extends Scan Flow (#1), Analytics (#2), Quick Save (#6)
-  epic-14: done  # Started 2025-12-31, COMPLETED 2026-01-15 - All stories done
-
-  # Foundation Layer (must be completed first)
-  14-1-animation-framework: done  # 5 pts - Core animation utilities - Atlas Code Review APPROVED 2025-12-31
-  14-2-screen-transition-system: done  # 3 pts - Staggered entry, breathing - Atlas Code Review APPROVED 2025-12-31
-
-  # Scan Flow Enhancement
-  14-3-scan-overlay-flow: done  # 5 pts - Non-blocking overlay [EXTENDS: Quick Save Flow #6] - Atlas Code Review APPROVED 2025-12-31
-  14-4-quick-save-path: done  # 3 pts - Progressive item reveal [EXTENDS: Quick Save Flow #6] - Atlas Code Review APPROVED 2026-01-01
-
-  # Analytics & Visualization (can parallelize after 14.1)
-  14-5-dynamic-polygon-component: done  # 5 pts - 3-6 sided spending shape [NEW FEATURE: Polygon] - Atlas Code Review APPROVED 2025-12-31
-  14-6-polygon-dual-mode: done  # 3 pts - Merchant categories + item groups [DEPENDS: 14.5] - Atlas Code Review APPROVED 2026-01-01
-  14-7-expanding-lava-visual: done  # 3 pts - Inverted metaphor [DEPENDS: 14.5] - Atlas Code Review APPROVED 2026-01-01
-  14-8-enhanced-existing-charts: done  # 3 pts - Pie, Bar, Stacked improvements [EXTENDS: Analytics #2] - Atlas Code Review APPROVED 2026-01-01
-  14-9-swipe-time-navigation: done  # 3 pts - Left/right for week/month [EXTENDS: Analytics #2] - Atlas Code Review APPROVED 2026-01-01
-
-  # ============================================================================
-  # PHASE 2: NAVIGATION INFRASTRUCTURE (do NEXT - foundational for all views)
-  # ============================================================================
-  # These must be done BEFORE view integration - all views depend on navigation
-  14-10-top-header-bar: done  # 3 pts - App-wide header (logo, title, menu) [BLOCKS: all view stories] - Atlas Code Review APPROVED 2026-01-02
-  14-11-bottom-nav-redesign: done  # 3 pts - Redesign Nav.tsx to match mockups [BLOCKS: all view stories] - Atlas Code Review APPROVED 2026-01-02
-
-  # ============================================================================
-  # PHASE 3: VIEW INTEGRATION (wire components into actual views)
-  # ============================================================================
-  # These make the mockups visible in the app - BLOCKED by 14.10 + 14.11
-  14-12-home-dashboard-refresh: done  # 5 pts - Update DashboardView with new design [MOCKUP: home-dashboard.html] - DEPLOYED 2026-01-03 (PR #135, #136, #137 UI refinements)
-  14-13-analytics-explorer-redesign: done  # 8 pts - Complete TrendsView redesign to "Explora" [MOCKUP: analytics-polygon.html] - COMPLETE 2026-01-11 (21 sessions)
-  14-13-2-tendencia-slide-redesign: done  # 8 pts (13→8 reduced scope) - Period comparison for Tendencia slide; Sankey + drill-down deferred - 2026-01-11
-  14-13-3-tendencia-sankey-diagram: done  # 8 pts - Sankey flow diagram alternate view (Store Cats → Item Cats) - COMPLETED 2026-01-12
-  14-13a-multi-level-filter-support: done  # 5 pts - Track drill-down path, multi-dimension filtering - Atlas Code Review APPROVED 2026-01-09
-  14-13b-header-clear-filter-buttons: done  # 3 pts - Clear "✕" button on Compras/Productos titles when filters active, multi-level manual filtering, filter persistence - Atlas Code Review APPROVED 2026-01-10
-  14-14-transaction-list-redesign: done  # 3 pts - Update HistoryView with card design [MOCKUP: transaction-list.html] - Completed 2026-01-04
-  14-14b-donut-chart-redesign: done  # 13 pts - Donut chart with drill-down navigation [MOCKUP: analytics-polygon.html] - Completed 2026-01-12
-  14-15-scan-flow-integration: done  # 3 pts - Wire ScanOverlay + QuickSaveCard into ScanView [MOCKUP: scan-overlay.html] - Completed 2026-01-06
-  14-15b-selection-mode-groups: done  # 5 pts - Transaction selection mode & groups [MOCKUP: transaction-list.html states 3-6] - Completed 2026-01-05
-  14-15c-category-group-filters: done  # 3 pts - Category group filters in IconFilterBar [EXTENDS: 14.14, 14.21] - Completed 2026-01-05
-
-  # ============================================================================
-  # PHASE 4: REPORTS & INSIGHTS
-  # ============================================================================
-  14-16-weekly-report-story-format: done  # 5 pts - Instagram-style cards [MOCKUP: reports.html] - Completed 2026-01-07, Atlas Code Review APPROVED
-  14-16b-semantic-color-system: done  # 5 pts - Apply semantic colors (trends, charts) across app [DEPENDS: 14.21] - Completed 2026-01-12
-  14-17-intentional-or-accidental-pattern: done  # 2 pts - Non-judgmental prompts [EXTENDS: Insight Gen #5] - Atlas Code Review APPROVED 2026-01-12
-
-  # ============================================================================
-  # PHASE 5: CELEBRATIONS & ENGAGEMENT
-  # ============================================================================
-  14-18-celebration-system: done  # 3 pts - Confetti, haptics, sounds [NEW FEATURE: Celebrations] - Atlas Code Review APPROVED 2026-01-12
-  14-19-personal-records-detection: done  # 3 pts - "Lowest restaurant week!" [EXTENDS: Insight Gen #5] - Atlas Code Review APPROVED 2026-01-12
-  14-20-session-completion-messaging: done  # 2 pts - "Great check-in today" [NEW FEATURE: Session UX] - Atlas Code Review APPROVED 2026-01-12
-
-  # Design System Consolidation
-  14-21-category-color-consolidation: done  # 5 pts - Unified category colors for all themes/modes [TECH DEBT: Design System] - Completed 2026-01-04
-
-  # Settings Redesign
-  14-22-settings-view-redesign: done  # 8 pts - Hierarchical settings with sub-views + Custom Groups placeholder [MOCKUP: settings.html] - COMPLETE 2026-01-12
-
-  # Transaction Editor Improvements
-  14-23-unified-transaction-editor: done  # 5 pts - Unified editor for new/existing transactions - Completed 2026-01-06
-  14-24-persistent-transaction-state: done  # 8 pts - Single active transaction paradigm, credit reserve pattern, read-only detail view - FEATURE COMPLETE 2026-01-07
-
-  # ============================================================================
-  # PHASE 6: FIRESTORE COST OPTIMIZATION (HIGH PRIORITY - $19/week spike)
-  # ============================================================================
-  # Root cause: Unlimited listeners fetching entire collections
-  # Investigation: 2026-01-07 - Found 6+ listeners without limits
-  14-25-firestore-listener-limits: done  # 3 pts - Add limit(100) to listeners [HIGH PRIORITY: Cost reduction] - Atlas Code Review APPROVED 2026-01-07
-  14-26-firestore-query-optimization: done  # 2 pts - Add limit(1) to single-doc queries, batch deletes - Atlas Code Review APPROVED 2026-01-07
-  14-27-transaction-pagination: done  # 5 pts - usePaginatedTransactions hook + HistoryView "Load more" - Atlas Code Review APPROVED 2026-01-07 (45 tests added)
-  14-28-app-level-preferences: done  # 2 pts - Migrated to React Query caching - Atlas Code Review APPROVED 2026-01-07
-  14-29-react-query-migration: done  # 8 pts - Atlas Code Review APPROVED 2026-01-07
-
-  # ============================================================================
-  # PHASE 7: TEST TECHNICAL DEBT (from React Query + UI refactoring)
-  # ============================================================================
-  # 71 failing tests from: React Query migration (missing QueryClientProvider),
-  # UI refactoring (inline styles vs Tailwind classes), prompt library changes
-  14-30-test-technical-debt: done  # 3 pts - CI optimization complete, tiered testing (14.43), all tests passing - DEPLOYED 2026-01-14
-  14-30-5a-fix-preexisting-test-failures: done  # 2 pts - FIXED: 30 tests fixed (HistoryViewThumbnails filter issue, TopHeader translation keys) - VERIFIED 2026-01-14
-  # Story 14.30.8: Fix test-components-misc timeout (LearnMerchantDialog infinite render loop)
-  # ROOT CAUSE: Component used `itemNameChanges = []` default parameter which creates new array
-  # reference each render, causing useEffect infinite loop. Fixed both component and test.
-  # - Component: Use EMPTY_ITEM_CHANGES constant for stable reference
-  # - Test: Use fake timers + stable array + fireEvent (not userEvent)
-  # Result: components-misc now completes in ~8s instead of timing out at 7+ minutes
-  14-30-8-components-misc-timeout: done  # 1 pt - Fix LearnMerchantDialog + useBatchReview infinite loops causing CI timeout - DEPLOYED 2026-01-14
-  # Fixes: LearnMerchantDialog (default array param), useBatchReview (useMemo in useEffect deps)
-  # Result: heavy-1 tests complete in ~1s instead of timing out
-  # Deployed: PR #148 → develop → staging (PR #149) → main (production)
-  14-31-items-history-view: done  # 8 pts - Items view similar to History view for item-level browsing - COMPLETED 2026-01-12
-  14-32-usage-cost-audit: done  # 3 pts - Audit Firestore subscriptions, Cloud Functions, and database operations for cost leakage - AUDIT COMPLETE: No issues found
-
-  # ============================================================================
-  # PHASE 9: SCAN FLOW & LOCATION IMPROVEMENTS
-  # ============================================================================
-  # Bug fixes and UX improvements identified during 14.31 completion
-  14-34-quicksave-currency-formatting: done  # 2 pts - Fix foreign currency display (USD/EUR/GBP) showing wrong decimals - COMPLETED 2026-01-12
-  14-35-dynamic-location-data: done  # 5 pts - Fetch countries/cities from API, show localized names - Atlas Code Review APPROVED 2026-01-12
-  14-35b-foreign-location-display: done  # 3 pts - Show country flag emoji for foreign transactions (city from different country than user's configured country) - COMPLETED 2026-01-12
-  14-36-location-filter-hierarchy: done  # 5 pts - Add Location filter section to IconFilterBar with Country→City hierarchy - COMPLETED 2026-01-12
-  14-37-toast-theming-font-scaling: done  # 5 pts - Toast theme integration + font size scaling system - Atlas Code Review PASSED 2026-01-13
-  14-38-item-view-toggle: done  # 3 pts - Toggle grouped vs original order view in transaction editor - Atlas Code Review PASSED 2026-01-13
-  14-39-dollar-sign-ocr-improvement: done  # 2 pts - CANCELLED: V3 prompt already handles $ recognition correctly (tested 2026-01-13)
-  14-40-category-statistics-popup: done  # 5 pts - Statistics popup when tapping category in treemap/donut/trend (min/max/avg/median prices) - Code reviewed 2026-01-13
-  14-41-view-mode-edit-button: done  # 2 pts - Lock metadata fields in view mode, add edit button below thumbnail - Code reviewed 2026-01-13
-  14-42-version-upgrade-auto-update: done  # 3 pts - Version bump to 1.0.0-beta.1, top banner update prompt with Update/Dismiss buttons - Code Review APPROVED 2026-01-14
-  14-43-branch-specific-ci-testing: done  # 4 pts - Branch-specific CI tiers: develop=smoke (~3min), main=full (~5min) - Atlas Code Review PASSED, DEPLOYED 2026-01-14
-  14-44-category-statistics-data-fix: done  # 3 pts - Fix category statistics for translated item categories - Atlas Code Review PASSED, DEPLOYED 2026-01-14
-
-  # ============================================================================
-  # PHASE 8: INSIGHTS VIEW REDESIGN (~14 points)
-  # ============================================================================
-  # Implement insights.html mockup - View switcher, carousel, airlock, celebrations
-  # Gap identified: Epic 13 mockup exists but no implementation story was created
-  # Backend ready: 14.17 (intentional prompts), 14.18 (celebrations), 14.19 (personal records)
-  # Mockup: docs/uxui/mockups/01_views/insights.html
-  14-33a-insight-card-types-styling: done  # 3 pts - 5 insight types (quirky/celebration/actionable/tradeoff/trend) with distinct styling - Atlas Code Review APPROVED 2026-01-12
-  14-33a.1-insight-theme-colors: done  # 2 pts - Theme-aware CSS variables for all 5 insight types across 3 themes (Normal/Professional/Mono) - COMPLETED 2026-01-12
-  14-33b-view-switcher-carousel: done  # 5 pts - View switcher (Lista/Destacados/Airlock/Logro) + carousel mode [DEPENDS: 14.33a] - Atlas Code Review APPROVED 2026-01-12 (5 fixes applied)
-  14-33c-airlock-sequence: done  # 3 pts - 3-step progressive reveal UI (Curiosity → Brace → Reveal) [DEPENDS: 14.33b] - Atlas Code Review APPROVED 2026-01-12
-  14-33c.1-airlock-generation-persistence: done  # 5 pts - Generate airlock with super credit, persist to Firestore, history list [DEPENDS: 14.33c] - Atlas Code Review APPROVED 2026-01-12 (77 tests, 7 issues fixed)
-  14-33d-celebration-records-display: done  # 3 pts - Celebration cards + badge unlock display [DEPENDS: 14.33b, 14.18, 14.19] - COMPLETED 2026-01-12 (49 tests)
-
-  epic-14-retrospective: done  # Combined retro 2026-01-15 (Epics 12, 13, 14)
-
-  # ============================================================================
-  # EPIC 14C: SHARED GROUPS - FAILED/REVERTED 2026-01-20
-  # ============================================================================
-  # STATUS: REVERTED to commit 68686f3 - Retrospective complete
-  # OUTCOME: Epic failed due to architectural gaps in real-time sync
-  # ROOT CAUSES: (1) Delta sync can't detect deletions, (2) State staleness after first op,
-  #              (3) Cost explosion from full refetch fallback
-  # DECISION: Reset epic, create 14c-refactor first, then retry as 14d
-  # Retrospective: docs/sprint-artifacts/epic-14c-retro-2026-01-20.md
-  #
-  # NEXT STEPS:
-  # 1. Epic 14c-refactor: Codebase cleanup (App.tsx, caching, cloud functions)
-  # 2. Epic 14d: Shared Groups v2 with lessons learned
-  # 3. Brainstorm session required before 14d implementation
-  epic-14c: done  # REVERTED 2026-01-20 - See retrospective for details
-
-  # Phase 1: Foundation (Can Start Without Mockups) - 15 pts
-  14c-1-create-shared-group: done  # 8 pts - Data model + security rules + create UI + invite by email - Code review PASSED ✅
-  14c-2-accept-decline-invitation: done  # 4 pts - Pending invitations UI + accept/decline flow + notification badge - Code Review PASSED ✅
-  14c-3-leave-manage-group: done  # 3 pts - Soft/hard leave + ownership transfer
-
-  # Phase 2: Core UX (After Mockups) - 16 pts
-  14c-4-view-mode-switcher: done  # 5 pts - Logo icon tap → group selector → filter all views - Code Review PASSED ✅
-  14c-5-shared-group-transactions-view: done  # 8 pts - Infrastructure complete (Tasks 1-10). Cache staleness issues resolved by 14c.12
-  14c-6-transaction-ownership-indicators: done  # 3 pts - Profile icon on cards + view-only mode - Atlas Code Review PASSED 2026-01-16
-
-  # Phase 3: Features - 10 pts
-  14c-7-tag-transactions-to-groups: done  # 3 pts - Custom group selector in Edit view - 34 tests passing
-  14c-8-auto-tag-on-scan: done  # 2 pts - In group view, new scans auto-tagged - Atlas Code Review PASSED 2026-01-16
-  14c-9-shared-group-analytics: done  # 5 pts - Polygon, sparkline, insights for group data - Atlas Code Review PASSED 2026-01-17 (46 tests, AC4 chart integrated into TrendsView)
-
-  # Phase 4: Real-Time Sync (2026-01-17 Brainstorming Decision) - 13 pts
-  # Decision: Hybrid Approach A+C - memberUpdates listener + VAPID Web Push notifications
-  # Decision Doc: docs/sprint-artifacts/epic14c/BRAINSTORM-REALTIME-SYNC-DECISION.md
-  # NOTE: 14c.12 RESOLVES cache invalidation issues from 14c.5 - this is the missing piece for cross-user sync
-  # NOTE: 14c.13 pivoted from FCM to VAPID Web Push for reliable Android PWA background delivery
-  14c-12-realtime-sync-complete-circuit: done  # 5 pts - onSnapshot + memberUpdates + cache invalidation - Atlas Code Review PASSED 2026-01-17 (4631 tests, security rules tightened, +20 new utility tests)
-  14c-13-push-notifications: done  # 8 pts - VAPID Web Push for closed-app notifications + in-app notification history [DEPENDS: 14c.12] - 2026-01-18, Atlas Code Review APPROVED
-
-  # Phase 5: Polish - 4 pts
-  14c-10-empty-states-loading: done  # 2 pts - Skeleton UI, empty states, loading feedback
-  14c-11-error-handling: done  # 2 pts - User not found, network errors, quota exceeded - Atlas Code Review APPROVED 2026-01-19
-
-  # Phase 7: Bug Fixes & Tech Debt - 19 pts
-  14c-16-cache-architecture-fix: done  # 5 pts - Fix circular dependency: fetch all transactions once, filter client-side, compute years from full cache [BUG: 2025 transactions not visible] - Atlas Code Review APPROVED 2026-01-19
-  14c-17-share-link-deep-linking: done  # 5 pts - Handle /join/{shareCode} URLs, join confirmation dialog, unauthenticated flow [BUG FIX: nanoid URL-safe chars] - 58 tests
-  14c-18-view-mode-user-persistence: done  # 5 pts - Persist view mode to Firestore, validate group on restore, fix race condition [BUG: Mode/data mismatch on login] - 38 tests
-  14c-14-tech-debt-functions-config-migration: done  # 2 pts - Migrate functions.config() to env vars before March 2026 - DEPLOYED 2026-01-19
-  14c-15-notification-tech-debt: done  # 2 pts - Consolidate NotificationClickData interface + VAPID public key to env var [FROM: 14c.13 code review] - Atlas Code Review APPROVED 2026-01-20
-  14c-19-view-mode-persistence-bug-fix: done  # 3 pts - Fix group mode not restoring from Firestore [BUG: 14c.18 regression] - Atlas Code Review APPROVED 2026-01-20 - 8 tests
-  14c-20-shared-group-cache-optimization: done  # 5 pts - Cache optimization: 1hr staleTime, 24hr gcTime, refetchOnMount/WindowFocus=false, manual sync button with 60s cooldown - 48 tests - Atlas Code Review APPROVED 2026-01-20
-
-  # Phase 8: Final Polish - 10 pts
-  14c-21-notification-bulk-actions: backlog  # 2 pts - Mark all read + Dismiss all buttons at bottom of NotificationsView
-  14c-22-login-landing-page-redesign: backlog  # 8 pts - UX design phase (3 logo + 3 screen options) + implementation of chosen design
-
-  # Phase 9: Revert & Stabilization - 3 pts
-  14c-23-revert-to-stable-baseline: review  # 3 pts - Reverted to commit 68686f3, discarded 14c.20 cache optimization - DEPLOYED 2026-01-20
-
-  # Phase 6: Release - 2 pts
-  14c-99-epic-release-deployment: ready-for-dev  # 2 pts - Version bump (minor beta), CI/CD verification, staging/prod deployment
-
-  epic-14c-retrospective: done  # 2026-01-20 - docs/sprint-artifacts/epic-14c-retro-2026-01-20.md
-
-  # ============================================================================
-  # EPIC 14c-REFACTOR: CODEBASE CLEANUP BEFORE SHARED GROUPS V2
-  # ============================================================================
-  # STATUS: NEW - Created from Epic 14c retrospective action items
-  # PURPOSE: Clean foundation before Epic 14d (Shared Groups v2)
-  # SCOPE: ~54 points across 19 stories
-  # PREREQUISITE: Must complete before starting Epic 14d
-  #
-  # KEY OBJECTIVES:
-  # 1. Remove broken shared groups sync implementation (preserve UI shells)
-  # 2. Refactor App.tsx (~3800 lines → ~300 lines) - NON-SCAN portions only
-  # 3. Simplify transaction caching to React Query only
-  # 4. Unify view mode state
-  # 5. Audit and optimize Firebase infrastructure
-  #
-  # PRIOR ART: Epic 14d-old (Scan Architecture Refactor) already completed:
-  # - ScanContext, useScanStateMachine, batch processing state
-  # - Stories 14c.9-14c.11 PRESERVE this work and only extract non-scan contexts
-  # ============================================================================
-  epic-14c-refactor: contexted  # Created 2026-01-21, tech context complete 2026-01-21
-
-  # Part 1: Shared Groups Stub & Cleanup (8 stories, 18 pts)
-  14c-refactor-1-stub-cloud-functions: done  # 2 pts - Delete getSharedGroupTransactions, sendSharedGroupNotification, undeploy
-  14c-refactor-2-stub-services: done  # 3 pts - Replace services with stubs - Atlas Code Review APPROVED 2026-01-21
-  14c-refactor-3-stub-hooks: done  # 2 pts - Replace hooks with empty-return stubs, delete useSharedGroupTransactions - Atlas Code Review APPROVED 2026-01-21
-  14c-refactor-4-clean-indexeddb-cache: done  # 2 pts - Delete sharedGroupCache.ts, clear legacy IndexedDB - Atlas Code Review APPROVED 2026-01-21
-  14c-refactor-5-placeholder-ui-states: done  # 3 pts - Disable UI with "Coming soon" tooltips
-  14c-refactor-6-firestore-data-cleanup-script: done  # 3 pts - Manual script to delete sharedGroups/pendingInvitations, empty sharedGroupIds - Atlas Code Review APPROVED 2026-01-21
-  14c-refactor-7-security-rules-simplification: done  # 1 pt - Deny all shared group access in firestore.rules - Atlas Code Review APPROVED 2026-01-21
-  14c-refactor-8-remove-dead-code: done  # 2 pts - Delete memberUpdateDetection.ts, archive old migration scripts - Atlas Code Review APPROVED 2026-01-21
-
-  # Part 2: App Architecture Refactor (5 stories, 21 pts) - NON-SCAN ONLY
-  14c-refactor-9-app-decomposition-contexts: done  # 5 pts - Extract Auth, Navigation, Theme, Notification, AppState contexts (PRESERVE ScanContext) - Atlas Code Review APPROVED 2026-01-21
-  14c-refactor-10-app-decomposition-hooks: done  # 5 pts - Extract useAppInitialization, useDeepLinking, usePushNotifications, useOnlineStatus, useAppLifecycle (PRESERVE scan hooks) - Atlas Code Review APPROVED 2026-01-21
-  14c-refactor-11-app-decomposition-components: done  # 3 pts - Create AppProviders, AppRoutes, AppLayout, AppErrorBoundary (compose with ScanProvider) - Atlas Code Review APPROVED 2026-01-21 (106 tests, smoke tests pass, line reduction deferred to 14c-refactor.20-22)
-  14c-refactor-12-transaction-service-simplification: done  # 5 pts - Verify React Query cache, remove dead query keys - Atlas Code Review APPROVED 2026-01-21
-  14c-refactor-13-view-mode-state-unification: done  # 3 pts - Single source of truth for view mode (default to Personal) - Atlas Code Review APPROVED 2026-01-21
-
-  # Part 3: Firebase & Infrastructure (3 stories, 7 pts)
-  14c-refactor-14-firebase-indexes-audit: done  # 2 pts - Remove sharedGroupIds indexes, document remaining - Atlas Code Review APPROVED 2026-01-21
-  14c-refactor-15-cloud-functions-audit: done  # 3 pts - All 10 functions documented, JSDoc comments, orphan test deleted - Atlas Code Review APPROVED 2026-01-22
-  14c-refactor-16-firestore-cost-monitoring: done  # 2 pts - Budget alerts + Cloud Monitoring dashboard - Atlas Code Review APPROVED 2026-01-22
-
-  # Part 4: Quality & Validation (3 stories, 8 pts)
-  14c-refactor-17-test-suite-cleanup: done  # 3 pts - Delete removed file tests, add context/hook tests - Atlas Code Review APPROVED 2026-01-22
-  14c-refactor-18-integration-testing: done  # 3 pts - Full smoke test checklist - Atlas Code Review APPROVED 2026-01-22
-  14c-refactor-19-documentation-update: done  # 2 pts - Update architecture docs, archive old shared groups docs - Completed 2026-01-22
-
-  # Part 5: App.tsx Full Decomposition (3 stories, 11 pts) - Follow-up from 14c-refactor.11
-  14c-refactor-20-app-handler-extraction: done  # 3 pts - Hooks created, integrated (20a), tested (20b) - COMPLETE 2026-01-22
-  14c-refactor-20a-hook-integration: done  # 3 pts - Integrated useTransactionHandlers (147 lines removed). useScanHandlers deferred to 20b. [DEPENDS: 14c-refactor.20] [FROM: Code Review 2026-01-22]
-  14c-refactor-20b-hook-unit-tests: done  # 3 pts - 101 tests created (36+65), all 5646 tests passing [DEPENDS: 14c-refactor.20] [FROM: Code Review 2026-01-22]
-  14c-refactor-21-app-navigation-dialog-handlers: done  # 3 pts - Extract navigation + dialog handlers into useNavigationHandlers, useDialogHandlers [DEPENDS: 14c-refactor.20] - Atlas story created 2026-01-21, COMPLETE 2026-01-22
-  14c-refactor-22-app-jsx-extraction-final-cleanup: done  # 5 pts - BLOCKED: Original ~200-300 line target unrealistic. Handler hooks require 26+ props each due to state remaining in App.tsx. See stories 22a-22e, 25, 26 for phased approach.
-  14c-refactor-22a-interim-cleanup: done  # 1 pt - Tasks 1-2 DONE: useScanHandlers + useDialogHandlers integrated (91 tests). Tasks 3-5 split to stories 22b-22e (2026-01-22 Feature Review).
-  14c-refactor-22b-viewrenderers-typescript: done  # 1 pt - Replace 63 `any` types with proper TypeScript interfaces [FROM: 22a Task 3.2] - COMPLETE 2026-01-22
-  14c-refactor-22c-renderviewswitch: done  # 2 pts - Created renderViewSwitch + 5 new render functions + integrated insights/alerts views - COMPLETE 2026-01-22
-  14c-refactor-22d-appoverlays: done  # 2 pts - Extract 15 overlay components to AppOverlays.tsx - COMPLETE 2026-01-22 [FROM: 22a Task 4]
-  14c-refactor-22e-verification: done  # 1 pt - Dead code removal (-197 lines), 5787 tests pass, smoke test PASSED, Atlas Code Review APPROVED 2026-01-22
-  14c-refactor-25-view-handlers-context: done  # 2 pts - ViewHandlersContext created, 15 tests, code review APPROVED + fixes applied 2026-01-22 [DEPENDS: 22e]
-  14c-refactor-26-view-prop-composition-hooks: done  # 3 pts - 4 composition hooks created, 47 tests, App.tsx integration DEFERRED to story 27 [DEPENDS: 25] - COMPLETE 2026-01-22
-  14c-refactor-27-view-context-migration: done  # 3 pts - Migrated 7/9 views to useViewHandlers(), InsightsView/ReportsView DEFERRED (complex patterns), Atlas Code Review 2026-01-23
-  14c-refactor-28-app-comment-consolidation: done  # 1 pt - Removed 328 story refs, reduced 3850→3387 lines (-463), 832→343 comments (-489), all tests pass 2026-01-24
-  14c-refactor-29-app-prop-composition-integration: done  # 5 pts - Integrated 4 composition hooks, removed deprecated handlers from migrated views. Line count 3,366 (target 1,500-2,000 not met due to hook naming mismatches - documented). Atlas Code Review APPROVED 2026-01-24 [DEPENDS: 26, 27]
-
-  # Part 5.5: View Props Interface Alignment (6 stories, 29 pts) - FROM Story 29 Feature Review
-  # ROOT CAUSE: Hooks have naming mismatches with view interfaces, preventing direct spreading
-  # APPROACH: Update view interfaces to match hook outputs, expand hooks to cover ALL props
-  14c-refactor-30-historyview-props-alignment: done  # SPLIT 2026-01-23: 5 tasks + 24 subtasks exceeded sizing guidelines → split into 30a, 30b, 30c
-  14c-refactor-30a-historyview-interface-rename: done  # 2 pts - Rename historyTrans→transactions, hasMoreTransactions→hasMore in HistoryView interface [DEPENDS: 29]
-  14c-refactor-30b-hook-expansion: done  # 2 pts - Expand useHistoryViewProps hook to include all missing props [DEPENDS: 30a] - DONE 2026-01-23 (bug fix: hooks before early returns)
-  14c-refactor-30c-integration-verification: done  # 2 pts - App.tsx integration with spread + verification [DEPENDS: 30b] - DONE 2026-01-23 (36 lines reduced, code review passed)
-  14c-refactor-31-trendsview-props-alignment: done  # SPLIT 2026-01-23: 5 tasks + 17 subtasks exceeded sizing guidelines → split into 31a, 31b, 31c
-  14c-refactor-31a-trendsview-interface-rename: done  # 2 pts - Audit + clean TrendsViewProps interface [DEPENDS: 29] - Atlas Code Review APPROVED 2026-01-23
-  14c-refactor-31b-trendsview-hook-expansion: done  # 2 pts - Expand useTrendsViewProps to cover all props [DEPENDS: 31a]
-  14c-refactor-31c-trendsview-integration-verification: done  # 2 pts - App.tsx integration + verification [DEPENDS: 31b] - DONE 2026-01-23 (34 lines removed, code review passed)
-  14c-refactor-32-batchreviewview-props-alignment: done  # SPLIT 2026-01-23: 4 tasks + 15 subtasks at sizing limit → split into 32a, 32b, 32c
-  14c-refactor-32a-batchreviewview-interface-rename: done  # 2 pts - Interface props already aligned with hook output - no changes needed - Code Review APPROVED 2026-01-23 [DEPENDS: 29]
-  14c-refactor-32b-batchreviewview-hook-expansion: done  # 2 pts - Expand hook to return all required props [DEPENDS: 32a] - Code Review PASSED 2026-01-23
-  14c-refactor-32c-batchreviewview-integration-verification: done  # 2 pts - App.tsx integration + tests [DEPENDS: 32b] - Atlas Code Review PASSED 2026-01-23 (43 tests, 0 HIGH issues)
-  14c-refactor-33-transactioneditorview-props-alignment: done  # SPLIT 2026-01-23: 4 tasks + 16 subtasks exceeded sizing guidelines → split into 33a, 33b, 33c
-  14c-refactor-33a-transactioneditorview-interface-rename: done  # 2 pts - Audit + document props interface [DEPENDS: 29] - Atlas Code Review PASSED 2026-01-23 (5 fixes applied)
-  14c-refactor-33b-transactioneditorview-hook-expansion: done  # 2 pts - Expand hook to return all required props [DEPENDS: 33a] - 17 callbacks added, 46 tests pass, Atlas Code Review PASSED 2026-01-23
-  14c-refactor-33c-transactioneditorview-integration-verification: done  # 2 pts - App.tsx integration + verification [DEPENDS: 33b] - Atlas Dev PASSED 2026-01-23 (46 hook tests pass, single-spread pattern)
-  14c-refactor-34-remaining-view-composition-hooks: done  # SPLIT 2026-01-23: 5 tasks + 31 subtasks exceeded sizing guidelines → split into 34a, 34b, 34c
-  14c-refactor-34a-dashboard-composition-hook: done  # 3 pts - Create useDashboardViewProps hook [DEPENDS: 29] - Atlas Code Review PASSED 2026-01-23 (34 tests, 2 MEDIUM acceptable trade-offs)
-  14c-refactor-34b-settings-composition-hook: done  # 3 pts - Create useSettingsViewProps hook (most complex - 15+ callbacks) [DEPENDS: 29] - Atlas Code Review PASSED 2026-01-23 (67 tests after fixes, naming + error handling tests added)
-  14c-refactor-34c-items-composition-hook: done  # 2 pts - Create useItemsViewProps hook + final verification [DEPENDS: 34a, 34b] - Atlas Code Review PASSED 2026-01-23 (37 tests, 3 doc fixes applied)
-  14c-refactor-35-final-app-line-count-target: done  # SPLIT 2026-01-23: 5 tasks + 23 subtasks exceeded sizing guidelines → split into 35a, 35b, 35c, 35d
-  14c-refactor-35a-audit-documentation: done  # 1 pt - Audit remaining App.tsx code - Atlas Code Review APPROVED 2026-01-24
-  14c-refactor-35b-view-render-functions: done  # 2 pts - Verification: 4/5 views already extracted, BatchCaptureView kept inline (documented) - Atlas Code Review PASSED 2026-01-24
-  14c-refactor-35c-handler-hook-extraction: done  # 2 pts - ANALYSIS COMPLETE: No extractions needed (insight<50 lines, credit>10 props, session<50 lines) - Atlas Code Review PASSED 2026-01-24
-  14c-refactor-35d-dead-code-verification: done  # 2 pts - Remove dead code (371 lines), document final architecture - Atlas Dev COMPLETE 2026-01-24
-
-  # Part 5.6: Test Fixes (discovered during validation)
-  14c-refactor-36-dashboardview-test-fixes: done  # 1 pt - Fix 7 failing DashboardView Full List View tests - Atlas Code Review PASSED 2026-01-24 (6 issues fixed, helper functions added)
-
-  # Part 5: Project Cleanup & Organization (4 stories, 12 pts)
-  14c-refactor-23-test-and-config-consolidation: done  # 3 pts - Move 22 vitest.config.ci.* files to tests/config/, move root docs, clean temp files - COMPLETE 2026-01-22
-  14c-refactor-24-documentation-consolidation: done  # 3 pts - Consolidate docs/ structure, remove duplicates, archive obsolete, update indexes, add Project Structure to README - Code Review APPROVED 2026-01-22
-
-  epic-14c-refactor-retrospective: optional
-
-  # ============================================================================
-  # EPIC 14e: FEATURE-BASED ARCHITECTURE (~73 points)
-  # ============================================================================
-  # Transform monolithic App.tsx (~3,387 lines) into feature-based architecture
-  # Zustand-unified approach: Feature Slicing + Zustand stores (per ADR-018)
-  # Target: App.tsx reduced to 500-800 lines
-  # Epic Document: docs/sprint-artifacts/epic14e-feature-architecture/epics.md
-  # Architecture Decision: docs/sprint-artifacts/epic14e-feature-architecture/architecture-decision.md
-  # ADR-018: Zustand-only state management (XState rejected)
-  # Created: 2026-01-24 from Epic 14c-refactor analysis
-  # Updated: 2026-01-24 - Pre-dev review completed, XState removed per ADR-018
-  epic-14e-feature-architecture: contexted  # Tech context complete 2026-01-24
-
-  # Part 0: Cleanup (Pre-requisite, 1 story, 1 pt)
-  14e-0-delete-bridge-dead-code: done  # 1 pt - Delete useScanStateBridge.ts (17KB dead code from 14d) - Atlas Code Review APPROVED 2026-01-24
-
-  # Part 1: Foundation & Modal Manager (5 stories, 13 pts)
-  14e-1-directory-structure-zustand-setup: done  # 2 pts - Create src/features/, src/managers/, install Zustand - Atlas Code Review PASSED 2026-01-24
-  14e-2-modal-manager-zustand-store: done  # 3 pts - Zustand store for modal state management - Atlas Code Review APPROVED 2026-01-24 (29 tests)
-  14e-3-modal-manager-component: done  # 2 pts - ModalManager component with registry - Atlas Code Review APPROVED 2026-01-24 (68 tests, stub-only registry)
-  14e-4-migrate-simple-modals: done  # 3 pts - Migrate simple modals to ModalManager (SignOut, CreditInfo) - Completed 2026-01-25 (19 tests, 120+ LOC removed)
-  14e-5-migrate-complex-modals: done  # 3 pts - Migrate complex modals (conflict, delete, learning) - Atlas Code Review APPROVED 2026-01-25 (7 modals, 217/218 tests)
-
-  # Part 2: Scan Feature Extraction (6 stories, 21 pts → 9 stories, 25 pts after 14e-6 split) - Zustand store, NOT XState
-  14e-6-scan-zustand-store-definition: split  # SPLIT 2026-01-24: 5 tasks + 47 subtasks exceeded limits → split into 14e-6a/b/c/d
-  14e-6a-scan-zustand-store-foundation: done  # 3 pts - Create store structure + core actions (START/IMAGE/PROCESS) - Atlas Code Review APPROVED 2026-01-25
-  14e-6b-scan-zustand-store-complete: done  # 3 pts - Remaining actions (DIALOG/SAVE/BATCH/CONTROL) [DEPENDS: 14e-6a] - Archie Review APPROVED 2026-01-25
-  14e-6c-scan-zustand-selectors-exports: done  # 2 pts - 14 selector hooks + module exports [DEPENDS: 14e-6b] - Atlas Code Review APPROVED 2026-01-25
-  14e-6d-scan-zustand-tests-verification: done  # 2 pts - Comprehensive tests covering all transitions [DEPENDS: 14e-6c] - Atlas Code Review APPROVED 2026-01-25
-  14e-7-scan-store-selectors-hooks: consolidated  # Absorbed into 14e-6c (selectors + exports)
-  14e-8-extract-processscan-handler: split  # SPLIT 2026-01-24: 5 tasks + 28 subtasks exceeded limits → split into 14e-8a/b/c
-  14e-8a-processscan-audit-utilities: done  # 2 pts - Pre-audit + pure utilities [Part 1/3] - Atlas Code Review APPROVED 2026-01-25 (45 tests, 6 files)
-  14e-8b-processscan-subhandlers: done  # 2 pts - Sub-handlers extraction [Part 2/3, DEPENDS: 14e-8a] - Atlas Code Review APPROVED 2026-01-25 (32 tests)
-  14e-8c-processscan-handler-integration: done  # 3 pts - Main handler + App.tsx integration [Part 3/3, DEPENDS: 14e-8b] - COMPLETED 2026-01-25 (302 lines extracted, all 5424 tests pass)
-  14e-9-scan-feature-components: split  # SPLIT 2026-01-24: 6 tasks + 37 subtasks exceeded limits → split into 14e-9a/b/c
-  14e-9a-move-scan-components: done  # 2 pts - Move existing components + update imports [Part 1/3, DEPENDS: 14e-1] - COMPLETED 2026-01-25 (8 components, vitest alias fix, 5447 tests pass)
-  14e-9b-zustand-component-update: done  # 3 pts - Update components to use Zustand store [Part 2/3, DEPENDS: 14e-9a, 14e-6c] - Atlas Code Review APPROVED 2026-01-26 (ScanCompleteModal migrated, 113 tests pass)
-  14e-9c-state-components-tests: done  # 3 pts - Create state components + tests [Part 3/3, DEPENDS: 14e-9b] - Atlas Code Review APPROVED 2026-01-26 (4 state components, 86 tests)
-  14e-10-scan-feature-orchestrator: done  # 3 pts - ScanFeature orchestrator [DEPENDS: 14e-9b, 14e-9c] - Archie Review APPROVED 2026-01-26 (322 lines, 29 tests, minor items→14e-11)
-  14e-11-scancontext-migration-cleanup: done  # 2 pts - Delete old ScanContext/useScanStateMachine - Atlas Code Review APPROVED 2026-01-26 (1,578 lines removed, 12+ consumers migrated)
-
-  # Part 3: Batch Review Feature (5 stories, 16 pts → 6 stories, 17 pts after 14e-12 split) - Zustand store, NOT XState
-  14e-12-batch-review-zustand-store: split  # SPLIT 2026-01-25: Exceeded sizing limits → split into 14e-12a, 14e-12b
-  14e-12a-batch-review-store-foundation: done  # 2 pts - Store structure, types, lifecycle/item actions [DEPENDS: 14e-1] - Archie Review APPROVED 2026-01-26 (21 tests, 1 MEDIUM follow-up)
-  14e-12b-batch-review-store-actions-tests: done  # 2 pts - Save/edit actions, phase guards, tests [DEPENDS: 14e-12a] - Atlas Code Review APPROVED 2026-01-26 (78 tests, 2 MEDIUM fixes)
-  14e-13-batch-review-store-selectors: done  # 2 pts - Typed selectors for batch store - Atlas Dev COMPLETE 2026-01-26 (14 selectors, 56 tests)
-  14e-14-extract-batch-review-handlers: split  # SPLIT 2026-01-25: Exceeded sizing limits → split into 14e-14a/b/c/d
-  14e-14a-batch-handler-types-navigation: done  # 2 pts - Types + navigation handlers [Part 1/4] - Atlas Code Review PASSED 2026-01-26 (19 tests, 3 fixes)
-  14e-14b-batch-handler-edit-save: done  # 2 pts - Edit + save handlers [Part 2/4, DEPENDS: 14e-14a] - Atlas Code Review APPROVED 2026-01-26 (39 tests, 1 fix)
-  14e-14c-batch-handler-discard-credit: done  # 2 pts - Discard + credit check handlers [Part 3/4, DEPENDS: 14e-14b] - Atlas Code Review APPROVED 2026-01-26 (36 tests)
-  14e-14d-batch-handler-integration: done  # 2 pts - App.tsx integration [Part 4/4, DEPENDS: 14e-14c] - Atlas Code Review APPROVED 2026-01-26
-  14e-15-batch-review-feature-components: done  # 3 pts - Batch review components - Atlas Code Review APPROVED 2026-01-26 (42 tests, AC5 store integration)
-  14e-16-batch-review-feature-orchestrator: done  # 5 pts - BatchReviewFeature orchestrator - Atlas dev-story COMPLETE 2026-01-26 (22 tests)
-
-  # Part 4: Simple Features (5 stories, 14 pts)
-  14e-17-categories-feature-extraction: done  # 3 pts - Extract categories to feature - Atlas Code Review APPROVED 2026-01-26
-  14e-17b-categories-app-integration: done  # 2 pts - App.tsx integration + composition hook migration [DEPENDS: 14e-17] - Story created 2026-01-26, COMPLETED 2026-01-27 (partial AC3/AC4 per architectural limitation)
-  14e-18-credit-feature-extraction: split  # SPLIT 2026-01-25: 6 tasks + 36 subtasks exceeded limits → split into 14e-18a/b/c
-  14e-18a-credit-state-hook: done  # 2 pts - Feature structure + useCreditState hook [Part 1/3, DEPENDS: 14e-1] - Atlas Code Review APPROVED 2026-01-27 (22 tests)
-  14e-18b-credit-handlers: done  # 2 pts - Credit handlers extraction [Part 2/3, DEPENDS: 14e-18a] - Atlas Code Review APPROVED 2026-01-27
-  14e-18c-credit-feature-integration: done  # 3 pts - CreditFeature orchestrator + App.tsx integration [Part 3/3, DEPENDS: 14e-18a, 14e-18b] - Atlas Code Review APPROVED 2026-01-27
-  14e-19-transactions-feature-foundation: done  # 3 pts - Organize transactions as entity module - Atlas Code Review APPROVED 2026-01-27 (staging fix applied)
-  14e-20-remaining-ui-state-extraction: split  # SPLIT 2026-01-25: 4 tasks + 23 subtasks exceeded limits -> split into 14e-20a/b
-  14e-20a-toast-hook-extraction: done  # 2 pts - Extract toast state to shared hook [Part 1/2, DEPENDS: 14e-1] - Atlas Code Review APPROVED 2026-01-27
-  14e-20b-settings-store-extraction: done  # 2 pts - Extract settings to Zustand store [Part 2/2, DEPENDS: 14e-1] - Atlas Code Review APPROVED 2026-01-27 (staging fix applied)
-
-  # Part 5: App Shell Finalization (4 stories, 10 pts)
-  14e-21-create-feature-orchestrator: done  # 3 pts - FeatureOrchestrator component - Completed 2026-01-27
-  14e-22-appproviders-refactor: done  # 2 pts - AppProviders to src/app/ with ViewHandlersProvider - Completed 2026-01-27
-  14e-23a-scan-overlay-migration: done  # 3 pts - Migrate scan overlays from AppOverlays to ScanFeature [BLOCKS: 14e-23] - Archie Review APPROVED 2026-01-27
-  14e-23b-appoverlays-simplification: done  # 2 pts - Simplify AppOverlays after scan migration [DEPENDS: 14e-23a, BLOCKS: 14e-23] - Atlas Code Review APPROVED 2026-01-27
-  14e-23-app-tsx-final-cleanup: done  # 3 pts - Final App.tsx cleanup (revised target ~3,150 lines due to architectural constraints) - Completed 2026-01-27
-  14e-24-documentation-architecture-guide: ready-for-dev  # 2 pts - Architecture documentation - Story created 2026-01-25
-
-  # Part 6: App.tsx Architectural Completion (4 stories, 16 pts) - Follow-up to achieve 500-800 line target
-  # ROOT CAUSE: Story 14e-23 accepted 3,163 lines vs architecture decision target of 500-800
-  # SOLUTION: Views own their data (call hooks internally) instead of receiving props from App.tsx
-  # Created: 2026-01-27 via Archie architectural review
-  14e-25-app-tsx-architectural-completion: split  # SPLIT 2026-01-27: 16 pts total → 4 sub-stories
-  14e-25a-navigation-store-historyview: split  # SPLIT 2026-01-27: 5 pts → 2 sub-stories (35 subtasks exceeded limit)
-  14e-25a1-navigation-store-foundation: done  # 3 pts - Navigation Zustand store + App.tsx migration [DEPENDS: 14e-23] - Atlas code-review APPROVED 2026-01-27 (4 follow-ups documented)
-  14e-25a2-historyview-data-migration: split  # SPLIT 2026-01-27: 19 subtasks exceeded limit → split into 14e-25a.2a, 14e-25a.2b
-  14e-25a2a-historyview-data-hook: done  # 2 pts - useHistoryViewData hook + tests [DEPENDS: 14e-25a.1] - Atlas code-review APPROVED 2026-01-27
-  14e-25a2b-historyview-migration: done  # 2 pts - HistoryView migration + App.tsx cleanup [DEPENDS: 14e-25a.2a] - Atlas code-review APPROVED 2026-01-28
-  14e-25b-trendsview-dashboardview: split  # SPLIT 2026-01-27: 6 pts total → 2 sub-stories (28 subtasks exceeded limit)
-  14e-25b1-trendsview-migration: done  # 3 pts - TrendsView owns data via useTrendsViewData [DEPENDS: 14e-25a2b] - DONE 2026-01-28: Atlas code-review passed
-  14e-25b2-dashboardview-migration: done  # 3 pts - DashboardView owns data via useDashboardViewData [DEPENDS: 14e-25b1] - Completed 2026-01-28
-  14e-25c-settingsview-remaining: split  # SPLIT 2026-01-27: 3 pts → 7 pts (55+ props in SettingsView required split)
-  14e-25c1-settingsview-migration: done  # 5 pts - SettingsView owns data via useSettingsViewData [DEPENDS: 14e-25b] - Atlas code-review APPROVED 2026-01-28
-  14e-25c2-remaining-views-migration: done  # 2 pts - Items, Insights, Reports, Batch views migrated (TransactionEditor deferred - complex) [DEPENDS: 14e-25c.1] - COMPLETED 2026-01-28
-  14e-25d-viewhandlers-deletion-cleanup: done  # 3 pts - Delete ViewHandlersContext, final cleanup [DEPENDS: 14e-25c.2] - COMPLETED 2026-01-28. AC5 deviation documented (3010 vs 500-800 lines - remaining views need migration)
-
-  # Part 7: Handler Extraction & App.tsx Business Logic Removal (4 stories, 12 pts)
-  # ROOT CAUSE: Phase 3 and Phase 5 of architecture decision not fully completed
-  # Business logic handlers remain in App.tsx instead of features/views
-  # TARGET: Reduce App.tsx from 3,010 to ~1,000-1,200 lines
-  # Created: 2026-01-28 via Archie architectural review
-  14e-28-transaction-editor-handler-extraction: done  # 5 pts - Extract 14 handleEditor* handlers to useTransactionEditorHandlers hook - COMPLETED 2026-01-28 (Phase 1: hooks created, App.tsx cleaned)
-  14e-28b-transaction-editor-view-migration: done  # 2 pts - TransactionEditorView uses hooks directly, delete useTransactionEditorViewProps [DEPENDS: 14e-28] - COMPLETED 2026-01-28
-  14e-29-batch-review-handler-completion: split  # SPLIT 2026-01-28: 3 pts → 4 pts (9 tasks, 32 subtasks exceeded limits)
-  14e-29a-hook-structure-consolidation: done  # 1 pt - Hook structure + consolidate existing extractions [DEPENDS: 14e-28] - COMPLETED 2026-01-28
-  14e-29b-processing-navigation-handlers: done  # 1 pt - Processing & navigation handlers extraction [DEPENDS: 14e-29a] - Atlas Code Review APPROVED 2026-01-28
-  14e-29c-save-discard-handlers: done  # 1 pt - Save/discard handlers + feature update [DEPENDS: 14e-29b] - Atlas Code Review APPROVED 2026-01-28
-  14e-29d-cleanup-tests-verification: done  # 1 pt - App.tsx cleanup + tests + verification [DEPENDS: 14e-29c] - Atlas Code Review APPROVED 2026-01-29, smoke test partial pass (2 pre-existing bugs → 14e-33)
-  14e-30-scan-feature-handler-completion: done  # 2 pts - Extract handleNewTransaction, handleFileSelect, handleRescan to ScanFeature [DEPENDS: 14e-28, 14e-29d] - Completed 2026-01-29
-  14e-31-itemsview-data-ownership: done  # 2 pts - ItemsView owns data via useItemsViewData hook - Atlas Code Review APPROVED 2026-01-29
-  14e-32-location-currency-selector-bugs: done  # 2 pts - Fix country normalization (Spanish→English) + currency dropdown positioning [BUG: Found in 14e-28b verification] - Atlas Code Review APPROVED 2026-01-28
-  14e-33-batch-ux-bugs: done  # 2 pts - Fix batch preview remove buttons (mobile visibility) + stale BATCH_COMPLETE modal after discard [BUG: Found in 14e-29d smoke test] - R1-R4 resolved, COMPLETED 2026-01-29
-
-  # Part 8: State Management Completion & Business Logic Extraction (12 stories, ~33 pts)
-  # ROOT CAUSE: Remaining useState calls and business logic in App.tsx after Epic 14e
-  # GOAL: Eliminate duplicate state, fix race conditions, extract business logic
-  # TARGET: App.tsx reduced from ~2,458 to ~1,200-1,500 lines
-  # Created: 2026-01-29 via Pre-dev Epic Review
-
-  # Phase 1: Eliminate Duplicate State (5 pts) - CRITICAL
-  14e-34a-eliminate-batchimages-duplication: done  # 3 pts - Remove batchImages useState, use useScanStore.images [RACE CONDITION FIX] - Atlas Code Review APPROVED 2026-01-29
-  14e-34b-atomic-batch-operations: done  # 2 pts - Atomic discard/update for both batch stores [RACE CONDITION FIX, DEPENDS: 14e-34a] - Atlas Code Review APPROVED 2026-01-29
-
-  # Phase 2: Settings Migration (3 pts)
-  14e-35-locale-settings-zustand: done  # 3 pts - Migrate lang/currency/dateFormat to useSettingsStore [RACE CONDITION FIX] - Atlas Code Review APPROVED 2026-01-29
-
-  # Phase 3: New Stores (8 pts → 9 pts after 14e-36 split)
-  14e-36-transaction-editor-store: split  # SPLIT 2026-01-29: 6 tasks + 29 subtasks exceeded limits → split into 14e-36a/b/c
-  14e-36a-transaction-editor-store-foundation: done  # 2 pts - Store structure + 9 actions [Part 1/3] - Atlas Code Review APPROVED 2026-01-29
-  14e-36b-transaction-editor-store-selectors: done  # 2 pts - 10 selectors + tests [Part 2/3, DEPENDS: 14e-36a] - Atlas Code Review APPROVED 2026-01-29 (79 tests)
-  14e-36c-transaction-editor-store-migration: done  # 2 pts - App.tsx migration + verification [Part 3/3, DEPENDS: 14e-36b] - Atlas Code Review APPROVED 2026-01-29
-  14e-37-insight-store: done  # 3 pts - Create useInsightStore (5 insight/session useState) - Atlas Code Review APPROVED 2026-01-29
-
-  # Phase 4: Expand Existing Stores (4 pts)
-  14e-38-scan-store-ui-flags: done  # 2 pts - Add skipScanCompleteModal, isRescanning to useScanStore - Archie Review APPROVED 2026-01-29 (3 LOW follow-ups)
-  14e-39-trust-prompt-credit-feature: done  # 2 pts - Move trust prompt state to CreditFeature - Code review #2 PASSED 2026-01-30
-
-  # Phase 5: Extract Business Logic (8 pts)
-  14e-40-extract-conflict-detection: done  # Code Review APPROVED 2026-01-30 (1 fix: removed dead code)  # 3 pts - Extract hasActiveTransactionConflict to scan utils - Atlas enhanced 2026-01-29
-  14e-41-extract-reconcile-items-total: done  # Code Review APPROVED 2026-01-30 - 3 fixes applied (tests, validation, docs)  # 3 pts - Extract reconcileItemsTotal to transaction entity + remove duplicate from subhandlers.ts - Atlas Enhanced 2026-01-29
-  14e-42-extract-item-name-mappings: done  # Code Review APPROVED 2026-01-30 - 2 CRITICAL staging fixes, 1 MEDIUM status fix  # 3 pts - Extract applyItemNameMappings to categories feature + remove duplicate from subhandlers.ts - Atlas Enhanced 2026-01-29
-
-  # Phase 6: Simplify processScan (3 pts)
-  14e-43-processscan-simplification: done  # Atlas Code Review APPROVED 2026-02-01 - 2 doc fixes applied  # 3 pts - Reduce processScan callback injection, use stores directly [DEPENDS: 14e-34a, 14e-36, 14e-40-42]
-
-  # Phase 7: Final Cleanup (2 pts)
-  14e-44-final-cleanup: done  # 2 pts - App.tsx dead code removal, verification, documentation [DEPENDS: All 14e-34 through 14e-43] - Code Review APPROVED 2026-02-01 (2,191 lines final, 152 lines removed)
-
-  # Phase 8: Consistency Completion (2 pts) - From Adversarial Review 2026-02-01
-  # Original plan was 14 pts (4 stories) - reduced to 2 pts (1 story) after adversarial review
-  # Rejected: Mapping Store (local state correct), Toast/Notification (not duplicates), Animation Review (local state correct)
-  14e-45-navigationcontext-deletion: review  # 2 pts - Delete NavigationContext (duplicate of useNavigationStore), migrate 5 consumers, add Local State Patterns docs [DEPENDS: 14e-44]
-
-# /bmad:bmm:workflows:dev-story
-# /bmad:bmm:workflows:atlas-dev-story
-# /bmad:bmm:workflows:code-review
-# /bmad:bmm:workflows:atlas-code-review
-# /bmad:bmm:workflows:atlas-create-story
-# /bmad:bmm:workflows:atlas-story-sizing
-# /bmad:bmm:workflows:atlas-deploy-story
-# /bmad:bmm:workflows:archie-refactor src/features/scan/
-
-  epic-14e-retrospective: optional
-
-  # ============================================================================
-  # EPIC 14d: SCAN ARCHITECTURE REFACTOR (~52 points)
-  # ============================================================================
-  # Refactor 31 scan state variables into unified state machine
-  # Enables: Multi-mode scanning (single, batch, statement), clear FAB feedback
-  # Planning Document: docs/sprint-artifacts/epic14d/scan-architecture-refactor-plan.md
-  # Epic Document: docs/sprint-artifacts/epic14d/epic-14d-scan-architecture-refactor.md
-  # Created: 2026-01-08 via Atlas planning session
-  epic-14d-scan-architecture-refactor: done  # Started 2026-01-08, COMPLETED 2026-01-12 (11/11 stories)
-
-  # Phase 1: State Machine Foundation (11 pts)
-  14d-1-scan-state-machine-hook: done  # 5 pts - useScanStateMachine with useReducer pattern - 74 tests passing (code review complete 2026-01-08)
-  14d-2-scan-context-provider: done  # 3 pts - App-wide ScanContext - 23 tests passing, Atlas Code Review APPROVED 2026-01-09
-  14d-3-hybrid-navigation-blocking: done  # 3 pts - Custom Nav guard + browser back blocker - 40 tests (18 Nav + 22 NavigationBlocker)
-
-  # Phase 2: Migrate Existing Flows (21 pts → 39 pts after 14d.4 breakdown)
-  # Story 14d.4 DIVIDED into 4 sub-stories (2026-01-09) - ~107 setter usages required phased approach
-  # See: docs/sprint-artifacts/epic14d/stories/story-14d.4-analysis.md
-  14d-4-single-scan-refactor: done  # 8→18 pts - All 5 sub-stories complete + FAB icon fix (Camera for single, Layers for batch) 2026-01-12
-  14d-4a-state-bridge-layer: done  # 3 pts - Foundation: useScanStateBridge hook - Atlas Code Review APPROVED 2026-01-09
-  14d-4b-consumer-migration: done  # 5 pts - Migrate views/dialogs to use ScanContext - QA VERIFIED 2026-01-09 (fixed race conditions + theme colors)
-  14d-4c-state-variable-removal: done  # 5 pts - Remove 8 state variables from App.tsx - Atlas Code Review PASSED 2026-01-10
-  14d-4d-pending-scan-migration: done  # 5 pts - Storage migration complete, Atlas Code Review APPROVED 2026-01-10
-  14d-4e-pendingscan-cleanup: done  # 3 pts - Full pendingScan removal (~35 usages) + credit exploit prevention - E2E VERIFIED 2026-01-10
-  14d-5-batch-scan-refactor: done  # 8→21 pts - All sub-stories complete + race condition fix (batchReceipts atomic with BATCH_COMPLETE) 2026-01-12
-  14d-5a-core-state-migration: done  # 5 pts - Phase 0-1 complete: imageUtils.ts extracted, BatchCaptureView uses ScanContext
-  14d-5a-phase2-app-migration: done  # 3 pts - isBatchCaptureMode state REMOVED, all setters migrated to context - Atlas Code Review APPROVED 2026-01-11
-  14d-5b-processing-integration: done  # 5 pts - Wire useBatchProcessing to dispatch ScanContext actions - Atlas Code Review PASSED 2026-01-11
-  14d-5c-review-flow-migration: done  # 5 pts - Migrate batchReviewResults → ScanContext.results - Atlas Code Review PASSED 2026-01-11
-  14d-5d-edit-dialog-state: done  # 3 pts - Migrate batchEditingReceipt, confirmation dialogs - Atlas Code Review PASSED 2026-01-11
-  14d-5e-persistence-migration: done  # 3 pts - Migrate pendingBatch → ScanContext persistence - Unified batch persistence 2026-01-11
-  14d-6-unified-dialog-handling: done  # 5 pts - Consolidate currency/total/quicksave dialogs - COMPLETED 2026-01-11
-
-  # Phase 3: FAB & Mode Selection UX (12 pts)
-  14d-7-mode-selector-popup: done  # 5 pts - Long-press FAB popup with 3 options - COMPLETED 2026-01-12
-  14d-8-fab-visual-states: done  # 5 pts - Color + icon + shine animation per mode - Atlas Code Review APPROVED 2026-01-12
-  14d-9-statement-placeholder-view: done  # 2 pts - "Próximamente" placeholder - Atlas Code Review PASSED 2026-01-12
-
-  # Phase 4: Polish & Extension (8 pts)
-  14d-10-state-machine-persistence: done  # 3 pts - OBSOLETE: Superseded by 14d.4d + 14d.5e (no-expiration architecture decision)
-  14d-11-app-tsx-cleanup: done  # 2 pts (revised) - Deleted pendingBatchStorage.ts; other variables are component interfaces (see story) - Atlas Code Review PASSED 2026-01-12
-
-  epic-14d-retrospective: done  # Combined retro 2026-01-15 (Epics 12, 13, 14, 14d)
+  epic-14: docs/sprint-artifacts/sprint-status_epics1to13.yaml
+  epic-14c: docs/sprint-artifacts/sprint-status_epics1to13.yaml
+  epic-14d: docs/sprint-artifacts/sprint-status_epics1to13.yaml
+  epic-14e: docs/sprint-artifacts/sprint-status_epics1to13.yaml
 
   # ============================================================================
   # EPIC 14d-v2: SHARED GROUPS V2 (~138 points across 4 sub-epics)
@@ -563,23 +62,117 @@ development_status:
   # Epic Document: docs/sprint-artifacts/epic14d-shared-groups-v2/epics.md
   # Architecture: docs/architecture/epic-14d-requirements-and-concerns.md
   # Created: 2026-01-22 from Epic 14c retrospective
-  epic-14d-v2-shared-groups: backlog
+  epic-14d-v2-shared-groups: contexted  # INITIALIZED 2026-02-01 - Architecture review pending
 
-  # Sub-Epic 1: Data Model & Group Foundation (14 stories, ~47 pts)
-  14d-v2-1-1-legacy-cleanup: ready-for-dev  # 3 pts - Remove all Epic 14c code, preserve UI shells - Story created 2026-01-22
-  14d-v2-1-2-transaction-type-migration: ready-for-dev  # 3 pts - Add sharedGroupId (single), deletedAt, updatedAt, version, periods
-  14d-v2-1-3-changelog-infrastructure: ready-for-dev  # 5 pts - /groups/{groupId}/changelog/{changeId} subcollection - Story created 2026-01-22
-  14d-v2-1-4-create-shared-group: ready-for-dev  # 5 pts - Group CRUD with transactionSharingEnabled toggle - Story created 2026-01-22
-  14d-v2-1-5-invite-members: ready-for-dev  # 3 pts - Email + share link invitations - Story created 2026-01-22
-  14d-v2-1-6-accept-decline-invitation: ready-for-dev  # 3 pts - Join flow with opt-in prompt - Story created 2026-01-22
-  14d-v2-1-7-leave-manage-group: ready-for-dev  # 3 pts - Leave, ownership transfer, delete - Story created 2026-01-22
-  14d-v2-1-8-cloud-function-changelog-writer: ready-for-dev  # 5 pts - Triggers on transaction changes - Story created 2026-01-22
-  14d-v2-1-9-firestore-ttl-offline: ready-for-dev  # 2 pts - 30-day TTL, offline persistence - Story created 2026-01-22
-  14d-v2-1-10-view-mode-switcher: ready-for-dev  # 3 pts - Personal/Group toggle - Story created 2026-01-22
-  14d-v2-1-11-transaction-sharing-toggle-group: ready-for-dev  # 3 pts - Owner controls group-level sharing - Story created 2026-01-22
-  14d-v2-1-12-user-transaction-sharing-preference: ready-for-dev  # 3 pts - Per-user opt-in per group - Atlas story created 2026-01-22
+  # Sub-Epic 0: Architecture Alignment (1 story, ~3 pts) - Added 2026-02-01
+  # Pre-requisite: Align Epic 14d-v2 with Epic 14e Zustand patterns (ADR-018)
+  # See: docs/sprint-artifacts/epic14d-shared-groups-v2/14d-v2-architecture-alignment-plan.md
+  14d-v2-0-architecture-alignment: done  # 3 pts - Create useViewModeStore, feature directory, migrate consumers - Atlas Code Review APPROVED 2026-02-01
+
+  # Sub-Epic 1: Data Model & Group Foundation (14→18 stories after 1.10 split, ~50 pts)
+  14d-v2-1-1-legacy-cleanup: done  # 2-3 pts (reduced) - Remove Epic 14c code, preserve UI shells - Atlas Code Review APPROVED 2026-02-01
+  14d-v2-1-2-transaction-type-migration: split  # SPLIT 2026-02-01: 6 tasks, 35 subtasks exceeded limits → split into 14d-v2-1-2a/b/c
+  14d-v2-1-2a-transaction-types-periods: done  # 2 pts - Types + computePeriods utility [Part 1/3] - Atlas Code Review APPROVED 2026-02-01 (26 tests)
+  14d-v2-1-2b-transaction-service-layer: done  # 2 pts - Firestore save/update + normalization [Part 2/3] - Atlas Code Review APPROVED 2026-02-01 (22 tests, 4 fixes applied)
+  14d-v2-1-2c-transaction-queries-tests: done  # 2 pts - Query updates + test maintenance [Part 3/3, DEPENDS: 1-2b] - Atlas Code Review APPROVED 2026-02-01
+  14d-v2-1-3-changelog-infrastructure: split  # SPLIT 2026-02-01: 5 tasks, 27 subtasks exceeded limits → split into 14d-v2-1-3a/b/c
+  14d-v2-1-3a-changelog-types: done  # 2 pts - TypeScript types for changelog [Part 1/3, DEPENDS: none] - Atlas Code Review APPROVED 2026-02-01 (25 tests)
+  14d-v2-1-3b-changelog-security-rules: done  # 2 pts - Security rules + TTL config [Part 2/3, PARALLEL: 1-3a] - Atlas Code Review APPROVED 2026-02-01 (10 tests, 5 fixes applied)
+  14d-v2-1-3c-changelog-service-tests: done  # 2 pts - Service function + tests [Part 3/3, DEPENDS: 1-3a, 1-3b] - Atlas Code Review APPROVED 2026-02-01 (29 tests)
+  14d-v2-1-4-create-shared-group: split  # SPLIT 2026-02-01: 8 tasks, 42 subtasks exceeded limits → split into 14d-v2-1-4a/b/c/d
+  14d-v2-1-4a-types-security-rules: done  # 2 pts - Types + Firestore security rules [Part 1/4, DEPENDS: none] - Atlas Code Review APPROVED 2026-02-01 (12 tests, 2 MEDIUM fixes)
+  14d-v2-1-4b-service-hook-layer: done  # 2 pts - Group service + useGroups hook [Part 2/4, DEPENDS: 1-4a] - Atlas Code Review APPROVED 2026-02-01 (66 tests, getCountFromServer optimization)
+  14d-v2-1-4c-ui-components: split  # SPLIT 2026-02-01: Proactive sizing reduction → split into 14d-v2-1-4c-1, 14d-v2-1-4c-2
+  14d-v2-1-4c-1-core-dialog: done  # 2 pts - Core dialog UI + entry point [Part 1/2, DEPENDS: 1-4b] - Atlas Code Review APPROVED 2026-02-01 (31 tests)
+  14d-v2-1-4c-2-enhanced-features: done  # 2 pts - Toast/discard/navigation + BC-1 limit UI [Part 2/2, DEPENDS: 1-4c-1] - Atlas Code Review APPROVED 2026-02-02 (git staging fixed, 6451 tests)
+  14d-v2-1-4d-integration-testing: done  # 1 pt - E2E + validation tests [Part 4/4, DEPENDS: 1-4c-2] - Atlas Code Review APPROVED 2026-02-02 (82 tests, E2E doc fixed)
+  14d-v2-1-5-invite-members: split  # SPLIT 2026-02-01: 8 tasks, 42 subtasks exceeded limits → split into 14d-v2-1-5a/b/c
+  14d-v2-1-5a-invitation-foundation: done  # 2 pts - Types + utils (PendingInvitation, shareCode, validateEmail) [Part 1/3] - Atlas Code Review APPROVED 2026-02-02 (70 tests, 4 fixes: staging + File List)
+  14d-v2-1-5b-invitation-backend: split  # SPLIT 2026-02-01: 18 subtasks exceeded limit → split into 14d-v2-1-5b-1, 14d-v2-1-5b-2
+  14d-v2-1-5b-1-core-invitation-service: done  # 2 pts - Core service functions [Part 2a/3, DEPENDS: 1-5a] - Atlas Code Review APPROVED 2026-02-02 (47 tests, 5 fixes: staging + sanitization)
+  14d-v2-1-5b-2-validation-security: done  # 2 pts - Validation + security rules [Part 2b/3, DEPENDS: 1-5b-1] - Atlas Code Review APPROVED 2026-02-02 (72 unit + 12 rules tests, 4 fixes: staging)
+  14d-v2-1-5c-invitation-ui: done  # 2 pts - InviteMembersDialog + integration tests [Part 3/3, DEPENDS: 1-5a, 1-5b-1, 1-5b-2] - Atlas Code Review APPROVED 2026-02-02 (47 tests, 6 fixes: a11y + React 17 compliance)
+  14d-v2-1-6-accept-decline-invitation: split  # SPLIT 2026-02-01: 13 tasks, 74 subtasks exceeded limits → split into 14d-v2-1-6a/b/c/d/e
+  14d-v2-1-6a-deep-link-pending-service: done  # 2 pts - Deep link handler + pending invitations service [Part 1/5, DEPENDS: 1-5] - Atlas Code Review APPROVED 2026-02-02 (119 tests, 3 fixes: staging)
+  14d-v2-1-6b-accept-decline-logic: done  # 2 pts - Accept/decline logic + validation [Part 2/5, DEPENDS: 1-6a] - Atlas Code Review APPROVED 2026-02-02 (128 tests, 6 fixes: staging + sanitization)
+  14d-v2-1-6c-invitations-ui: split  # SPLIT 2026-02-01: 18 subtasks exceeded limit → split into 14d-v2-1-6c-1, 14d-v2-1-6c-2
+  14d-v2-1-6c-1-badge-list: done  # 2 pts - Badge + invitations list UI [Part 1/2, DEPENDS: 1-6a, 1-6b] - Atlas Code Review APPROVED 2026-02-02
+  14d-v2-1-6c-2-accept-dialog: done  # 2 pts - Accept invitation dialog [Part 2/2, DEPENDS: 1-6c-1] - Atlas Code Review APPROVED 2026-02-02 (41 tests, 3 fixes: staging + pluralization)
+  14d-v2-1-6d-optin-error-ui: done  # 2 pts - Transaction sharing opt-in + error views [Part 4/5, DEPENDS: 1-6b, 1-6c-2]
+  14d-v2-1-6e-security-rules-tests: done  # 2 pts - Security rules + preferences + E2E tests [Part 5/5, DEPENDS: 1-6a-d] - Atlas Code Review APPROVED 2026-02-02 (8 security rules + 16 unit + 7 E2E tests, 1 fix: staging)
+  14d-v2-1-7-leave-manage-group: split  # SPLIT 2026-02-01: 11 tasks, 69 subtasks, 12+ files exceeded limits → split into 14d-v2-1-7a/b/c/d/e/f/g
+  14d-v2-1-7a-leave-transfer-service: done  # 2 pts - Leave + ownership transfer service functions [Part 1/7, DEPENDS: none] - ECC Review 2026-02-02
+  14d-v2-1-7b-deletion-service: done  # 2 pts - Last member + owner deletion service [Part 2/7, DEPENDS: 1-7a] - ECC Review 2026-02-02: APPROVED (2 HIGH fixes applied)
+  14d-v2-1-7c-cloud-function-member-leave: done  # 2 pts - Cloud Function for TRANSACTION_REMOVED changelog [Part 3/7, DEPENDS: 1-3, 1-7a] - ECC Parallel Review 2026-02-02: APPROVED (npm audit fixed, 23 tests pass)
+  14d-v2-1-7d-leave-transfer-ui: done  # 3 pts - Leave/Transfer dialogs + view mode auto-switch [Part 4/7, DEPENDS: 1-7a, 14d-v2-0] - ECC Code Review APPROVED 2026-02-02 (10 fixes: 3 HIGH, 4 MEDIUM, 2 LOW + test updates)
+  14d-v2-1-7e-delete-ui-security-rules: done  # 2 pts - Delete dialog + Firestore security rules [Part 5/7, DEPENDS: 1-7b] - ECC Parallel Review 2026-02-03: APPROVED (8.9/10)
+  14d-v2-1-7f-integration-tests: done  # 2 pts - E2E integration tests [Part 6/7, DEPENDS: 1-7a through 1-7e] - ECC Parallel Review #2 APPROVED (8.5/10) - DRY items deferred to TD-14d-8
+  14d-v2-1-7g-edit-group-settings: done  # 3 pts - Edit group name/icon/color (owner-only) [Part 7/7, DEPENDS: 1-4] - ECC Parallel Review 2026-02-03: APPROVED (8.6/10, fixes: error toast, icon CSS, translations, E2E tests added)
+  14d-v2-1-8-cloud-function-changelog-writer: split  # SPLIT 2026-02-01: 11 tasks, 45 subtasks exceeded limits → split into 14d-v2-1-8a/b/c/d
+  14d-v2-1-8a-changelog-writer-foundation: done  # 2 pts - Core function + change detection + idempotency + entry creation [Part 1/4] - ECC Parallel Review 2026-02-03: APPROVED (31 tests, 8.3/10, 4 TD stories created)
+  14d-v2-1-8b-changelog-writer-validation: done  # 2 pts - Ownership + group membership validation + batch writing [Part 2/4, DEPENDS: 1-8a] - ECC Parallel Review 2026-02-04: APPROVED (42 tests, 8.25/10, batch writing + sanitization)
+  14d-v2-1-8c-changelog-writer-logging-export: done  # 1 pt - Structured logging + index export [Part 3/4, DEPENDS: 1-8b] - ECC Parallel Review 2026-02-04: APPROVED (53 tests, 8.0/10 code + LOW security)
+  14d-v2-1-8d-changelog-writer-tests-deploy: done  # 2 pts - Unit tests + deployment verification [Part 4/4, DEPENDS: 1-8c] - ECC Parallel Review 2026-02-04: APPROVED (8.25/10, 57 tests, 0 CRITICAL/HIGH)
+  14d-v2-1-9-firestore-ttl-offline: done  # 2 pts - 30-day TTL, offline persistence - ECC Parallel Review 2026-02-04: APPROVED (9.1/10) - 74 tests, all fixes verified, 3 TD stories created
+  # Story 1.10: SUPERSEDED 2026-02-01 - Split into 4 sub-stories for Epic 14e alignment
+  14d-v2-1-10-view-mode-switcher: superseded  # SUPERSEDED - Split into 1.10a-d per architecture alignment
+  14d-v2-1-10a-viewmode-store-integration: ready-for-dev  # 2 pts - Wire useViewModeStore to ViewModeSwitcher [DEPENDS: 14d-v2-0]
+  14d-v2-1-10b-viewmodeswitcher-ui: ready-for-dev  # 3 pts - Enable group list, remove "Coming soon" [DEPENDS: 14d-v2-1.10a, 1.4, 1.6]
+  14d-v2-1-10c-header-mode-indicator: ready-for-dev  # 2 pts - Header visual indicator + logo tap [DEPENDS: 14d-v2-1.10b]
+  14d-v2-1-10d-data-filtering-integration: ready-for-dev  # 3 pts - Filter all views by mode, clear filters on switch [DEPENDS: 14d-v2-1.10c, 1.2]
+  14d-v2-1-11-transaction-sharing-toggle-group: split  # SPLIT 2026-02-01: 6 tasks, 28 subtasks, 12 files exceeded limits → split into 14d-v2-1-11a/b/c
+  14d-v2-1-11a-foundation-types-cooldown: ready-for-dev  # 2 pts - Types + cooldown utility [Part 1/3, DEPENDS: none]
+  14d-v2-1-11b-service-layer-security: ready-for-dev  # 2 pts - Firestore service + security rules [Part 2/3, DEPENDS: 1-11a]
+  14d-v2-1-11c-ui-components-integration: ready-for-dev  # 2 pts - Toggle UI + Settings integration [Part 3/3, DEPENDS: 1-11a, 1-11b]
+  14d-v2-1-12-user-transaction-sharing-preference: split  # SPLIT 2026-02-01: 8 tasks, 34 subtasks, 8 files exceeded limits → split into 14d-v2-1-12a/b/c/d
+  14d-v2-1-12a-foundation-types-cooldown: ready-for-dev  # 2 pts - Types + cooldown utility [Part 1/4, DEPENDS: none]
+  14d-v2-1-12b-service-layer-security: ready-for-dev  # 2 pts - Firestore service + security rules [Part 2/4, DEPENDS: 1-12a]
+  14d-v2-1-12c-ui-component-hook: ready-for-dev  # 2 pts - Toggle component + hook [Part 3/4, DEPENDS: 1-12a, 1-12b]
+  14d-v2-1-12d-integration-cleanup: ready-for-dev  # 2 pts - Settings integration + leave cleanup [Part 4/4, DEPENDS: 1-12c]
   14d-v2-1-13-user-group-preferences-document: ready-for-dev  # 2 pts - Firestore schema for user per-group preferences - Story created 2026-01-22
-  14d-v2-1-14-join-flow-opt-in: ready-for-dev  # 3 pts - Prompt when joining sharing-enabled group - Atlas story created 2026-01-22
+  14d-v2-1-14-join-flow-opt-in: split  # SPLIT 2026-02-01: 7 tasks, 37 subtasks exceeded limits -> split into 14d-v2-1-14a/b/c/d
+  14d-v2-1-14a-dialog-component: ready-for-dev  # 2 pts - TransactionSharingOptInDialog component [Part 1/4, DEPENDS: none]
+  14d-v2-1-14b-service-flow-integration: ready-for-dev  # 3 pts - Service layer + AcceptInvitationDialog integration [Part 2/4, DEPENDS: 1-14a, 1-6, 1-13]
+  14d-v2-1-14c-polish-edge-cases: ready-for-dev  # 2 pts - Confirmation toasts, offline handling, analytics [Part 3/4, DEPENDS: 1-14b]
+  14d-v2-1-14d-integration-tests: ready-for-dev  # 2 pts - E2E tests for join flow [Part 4/4, DEPENDS: 1-14c]
+
+  # Tech Debt Stories (Epic 14d-v2) - Added 2026-02-03 from ECC Code Review #2
+  # These are pattern consistency improvements, not user-facing changes
+  TD-14d-1-zustand-migration: done  # 2-4 hrs - Migrate useGroupDialogs from 17 useState to Zustand store [Source: 14d-v2-1-7e ECC Review #2] - COMPLETED 2026-02-03
+  TD-14d-2-fsd-component-location: done  # 4-6 hrs - Move SharedGroups components to @features/shared-groups/components/ [Source: 14d-v2-1-7e ECC Review #2, DEPENDS: TD-14d-1] - COMPLETED 2026-02-03
+  TD-14d-3-gruposview-dialog-extraction: ready-for-dev  # 2-3 hrs - Extract dialog rendering (lines 654-782) to GruposViewDialogs.tsx [Source: 14d-v2-1-7e ECC Review #4, DEPENDS: TD-14d-1]
+  TD-14d-4-groupservice-modularization: ready-for-dev  # 4-6 hrs - Split groupService.ts (1068 lines) into groupService, groupDeletionService, groupMemberService [Source: 14d-v2-1-7e ECC Review #5]
+  TD-14d-5-invitation-read-restriction: ready-for-dev  # 2-3 hrs - Restrict pendingInvitations read to email match query [Source: 14d-v2-1-7e ECC Review #5, Security]
+  TD-14d-6-delete-rate-limiting: backlog  # 3-4 hrs - Add rate limiting for destructive group operations [Source: 14d-v2-1-7e ECC Review #5, Security]
+  TD-14d-7-dependency-vulnerability-tracking: ready-for-dev  # 1-2 hrs - Track and remediate npm audit vulnerabilities [Source: 14d-v2-1-7e ECC Review #5, Security]
+  TD-14d-8-integration-test-dry-refactor: ready-for-dev  # 2-3 hrs - DRY cleanup for integration tests [Source: 14d-v2-1-7f ECC Review]
+
+  # Tech Debt Stories (Epic 14d-v2 - Story 1-8a) - Added 2026-02-03 from ECC Parallel Review
+  TD-14d-9-type-sync-validation: ready-for-dev  # 1-2 hrs - CI validation for Cloud Function type synchronization [Source: 14d-v2-1-8a ECC Review]
+  TD-14d-10-changelog-data-sanitization: ready-for-dev  # 2-3 hrs - Evaluate changelog data sanitization policy (imageUrls) [Source: 14d-v2-1-8a ECC Review, Security]
+  TD-14d-11-toctou-membership-validation: ready-for-dev  # 2-3 hrs - Atomic membership validation with Firestore transactions [Source: 14d-v2-1-8a ECC Review, Security]
+  TD-14d-12-error-extraction-pattern: ready-for-dev  # 1-2 hrs - Standardize error extraction pattern across Cloud Functions [Source: 14d-v2-1-8a ECC Review]
+
+  # Tech Debt Stories (Epic 14d-v2 - Story 1-7d) - Added 2026-02-03 from ECC Code Review
+  TD-7d-5-hard-leave-mode: ready-for-dev  # 1-2 hrs - Implement hard leave when Cloud Function 14d-v2-1-7c is ready [Source: 14d-v2-1-7d, DEPENDS: 14d-v2-1-7c]
+  TD-7d-6-member-selector-loading: ready-for-dev  # 1 hr - Add loading state to MemberSelectorDialog confirm button [Source: 14d-v2-1-7d]
+
+  # Tech Debt Stories (Epic 14d-v2 - Story 1-9) - Added 2026-02-04 from ECC Parallel Review
+  TD-14d-17-recovery-prompt-test-coverage: ready-for-dev  # 1-2 hrs - Error state + focus management tests for RecoverySyncPrompt [Source: 14d-v2-1-9 ECC Review]
+  TD-14d-18-dialog-focus-cleanup: ready-for-dev  # 2-3 hrs - Consistent focus timeout cleanup across dialog components [Source: 14d-v2-1-9 ECC Review]
+
+# /bmad:bmm:workflows:dev-story
+# /bmad:bmm:workflows:atlas-dev-story
+# /bmad:bmm:workflows:ecc-dev-story
+# /bmad:bmm:workflows:code-review
+# /bmad:bmm:workflows:atlas-code-review
+# /bmad:bmm:workflows:ecc-code-review
+# /bmad:bmm:workflows:atlas-create-story
+# /bmad:bmm:workflows:ecc-create-story
+# /bmad:bmm:workflows:atlas-story-sizing
+# /bmad:bmm:workflows:atlas-deploy-story
+# /bmad:bmm:workflows:archie-refactor src/features/scan/
+
 
   # Sub-Epic 2: Changelog-Driven Sync (12 stories, ~45 pts)
   14d-v2-2-1-tag-transaction-to-group: backlog  # 3 pts - Assign sharedGroupId
@@ -594,22 +187,7 @@ development_status:
   14d-v2-2-10-multi-operation-sync-tests: backlog  # 8 pts - Prevent 14c regression
   14d-v2-2-11-cloud-function-visibility-filtering: backlog  # 5 pts - Double-gate enforcement
   14d-v2-2-12-sharing-disabled-empty-state: backlog  # 2 pts - Clear UX
-# | Command | Description |
-# |---------|-------------|
-# | `/bmad:bmm:workflows:atlas-dev-story` | Story implementation with pattern guidance |
-# | `/bmad:bmm:workflows:atlas-story-sizing` |  |
-# | `/bmad:bmm:workflows:atlas-code-review` | ADVERSARIAL code review with Atlas validation |
-# | `/bmad:bmm:workflows:atlas-create-story` | Story creation with workflow chain analysis |
-# | `/bmad:bmm:workflows:atlas-retrospective` | Epic retrospective with memory feeding |
-# | `/bmad:bmm:workflows:atlas-e2e` | Persona-driven E2E test generation |
-# | `/bmad:bmm:workflows:atlas-sprint-planning` | Sprint planning with Atlas context |
-# | `/bmad:bmm:workflows:atlas-sprint-status` | Sprint status check |
-# | `/bmad:bmm:workflows:atlas-correct-course` | Course correction during sprints |
-# | `/bmad:bmm:workflows:atlas-deploy-story` | Story deployment with validation |
-# | `/bmad:bmm:workflows:atlas-epic-tech-context` | Epic technical context preparation |
-# | `/bmad:bmm:workflows:atlas-story-context` | Story context loading |
-# | `/bmad:bmm:workflows:atlas-story-done` | Story completion marking |
-# | `/bmad:bmm:workflows:atlas-story-ready` | Story readiness verification |
+
   # Sub-Epic 3: Server-Side Analytics (10 stories, ~34 pts)
   14d-v2-3-1-analytics-document-structure: backlog  # 3 pts - /groups/{groupId}/analytics/*
   14d-v2-3-2-immediate-sum-count-updates: backlog  # 3 pts - FieldValue.increment()

@@ -1,0 +1,44 @@
+{
+  "version": "1.0.0",
+  "learning": {
+    "enabled": true,
+    "sessionEvaluationThreshold": 10,
+    "observationTruncateLength": 5000,
+    "maxObservationsPerSession": 1000
+  },
+  "instincts": {
+    "minConfidence": 0.3,
+    "maxConfidence": 0.9,
+    "initialConfidence": 0.4,
+    "reinforcementBoost": 0.1,
+    "confidenceDecayRate": 0.05,
+    "decayIntervalDays": 7,
+    "evolutionThreshold": 0.8,
+    "maxInstincts": 100,
+    "patterns": {
+      "userCorrections": true,
+      "errorResolutions": true,
+      "repeatedWorkflows": true,
+      "preferenceSignals": true
+    }
+  },
+  "observations": {
+    "captureTools": ["Edit", "Write", "Bash", "Read", "Grep", "Glob"],
+    "ignorePaths": ["node_modules/", ".git/", "*.log", "dist/", "coverage/"],
+    "sensitiveFields": ["password", "secret", "token", "key", "apiKey", "api_key"],
+    "archiveAfterProcessing": true,
+    "keepRecentCount": 100
+  },
+  "hooks": {
+    "sessionStart": {
+      "loadRecentContext": true,
+      "maxContextTokens": 2000,
+      "includeActiveInstincts": true,
+      "minInstinctConfidence": 0.6
+    },
+    "sessionEnd": {
+      "persistState": true,
+      "triggerEvaluation": true
+    }
+  }
+}

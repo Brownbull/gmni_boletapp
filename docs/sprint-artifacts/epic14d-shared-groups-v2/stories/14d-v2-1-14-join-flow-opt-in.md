@@ -1,6 +1,17 @@
 # Story 14d-v2-1.14: Join Flow Transaction Sharing Opt-In
 
-Status: ready-for-dev
+Status: split
+
+> **SPLIT 2026-02-01:** This story exceeded sizing limits (7 tasks, 37 subtasks vs 4/15 max).
+> Split into 4 sub-stories via Atlas Story Sizing workflow.
+>
+> **Sub-stories:**
+> - [14d-v2-1-14a](14d-v2-1-14a-dialog-component.md) - Dialog Component Foundation (2 pts)
+> - [14d-v2-1-14b](14d-v2-1-14b-service-flow-integration.md) - Service Layer & Flow Integration (3 pts)
+> - [14d-v2-1-14c](14d-v2-1-14c-polish-edge-cases.md) - Polish & Edge Cases (2 pts)
+> - [14d-v2-1-14d](14d-v2-1-14d-integration-tests.md) - Integration Tests (2 pts)
+>
+> **Original estimate:** 3 pts | **Revised total:** 9 pts
 
 ## Story
 

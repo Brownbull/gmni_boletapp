@@ -27,12 +27,12 @@ import { HistoryFilterBar } from '../components/history/HistoryFilterBar';
 // Story 14e-5: DeleteTransactionsModal now uses Modal Manager
 import type { TransactionPreview } from '../components/history/DeleteTransactionsModal';
 import { useModalActions } from '@managers/ModalManager';
-import { TransactionGroupSelector } from '../components/SharedGroups/TransactionGroupSelector';
+import { TransactionGroupSelector } from '@/features/shared-groups';
 import { useSelectionMode } from '../hooks/useSelectionMode';
 import { useAllUserGroups } from '../hooks/useAllUserGroups';
-import { deleteTransactionsBatch, updateTransaction } from '../services/firestore';
+import { deleteTransactionsBatch } from '../services/firestore';
 import { getFirestore } from 'firebase/firestore';
-import { useQueryClient } from '@tanstack/react-query';
+// Story 14d-v2-1.1: useQueryClient import removed - group cache invalidation disabled (Epic 14c cleanup)
 // Story 14c-refactor.4: clearGroupCacheById import REMOVED (IndexedDB cache deleted)
 // Story 9.12: Category translations
 // Story 14e-25b.2: Language type now comes from hook (useDashboardViewData)
@@ -124,8 +124,8 @@ interface Transaction {
     currency?: string;
     // Story 11.1: createdAt for sort by scan date
     createdAt?: any; // Firestore Timestamp or Date
-    // Group consolidation: Shared group IDs (replaces legacy groupId/groupName/groupColor)
-    sharedGroupIds?: string[];
+    // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
+    // Epic 14d will use sharedGroupId (single nullable string) instead
 }
 
 /**
@@ -602,13 +602,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
     // Group consolidation: Shared groups for group assignment
     const { groups, isLoading: groupsLoading } = useAllUserGroups(userId || undefined);
 
-    const queryClient = useQueryClient();
+    // Story 14d-v2-1.1: queryClient removed - group cache invalidation disabled (Epic 14c cleanup)
 
-    const getGroupColorForTransaction = useCallback((tx: Transaction): string | undefined => {
-        if (!tx.sharedGroupIds?.length || !groups.length) return undefined;
-        const group = groups.find(g => tx.sharedGroupIds?.includes(g.id));
-        return group?.color;
-    }, [groups]);
+    // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
+    // Epic 14d will use sharedGroupId (single nullable string) instead
+    const getGroupColorForTransaction = useCallback((_tx: Transaction): string | undefined => {
+        return undefined;
+    }, []);
 
     // Group consolidation: Modal states
     const [showGroupSelector, setShowGroupSelector] = useState(false);
@@ -2011,64 +2011,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
 
     // Story 14e-5: handleOpenDelete defined after getSelectedTransactions (see below)
 
-    // Group consolidation: Handle group assignment using TransactionGroupSelector
-    // Updates sharedGroupIds on all selected transactions
-    const handleGroupSelect = async (groupIds: string[]) => {
-        if (!userId || selectedIds.size === 0) return;
-
-        const selectedTxIds = Array.from(selectedIds);
-        const db = getFirestore();
-
-        // Get previous group IDs from selected transactions
-        const previousGroupIds = new Set<string>();
-        recentTransactions.forEach(tx => {
-            const transaction = tx as Transaction;
-            if (selectedIds.has(transaction.id)) {
-                (transaction.sharedGroupIds || []).forEach(gid => previousGroupIds.add(gid));
-            }
-        });
-
-        // All affected groups = union of previous and new
-        const affectedGroupIds = new Set([...previousGroupIds, ...groupIds]);
-
-        try {
-            // Update each selected transaction with the new sharedGroupIds
-            await Promise.all(
-                selectedTxIds.map(txId =>
-                    updateTransaction(db, userId, appId, txId, {
-                        sharedGroupIds: groupIds.length > 0 ? groupIds : [],
-                    })
-                )
-            );
-
-            // Story 14c-refactor.4: IndexedDB cache deleted - only React Query invalidation now
-            // TODO(14c-refactor.12): Dead code - sharedGroupTransactions query keys removed.
-            // This entire block is a no-op since shared groups are stubbed.
-            // Remove when shared groups feature is re-implemented in Epic 14d.
-            // Invalidate React Query cache for affected groups
-            await Promise.all(Array.from(affectedGroupIds).map(async groupId => {
-                // Reset React Query cache to clear in-memory data
-                await queryClient.resetQueries({
-                    queryKey: ['sharedGroupTransactions', groupId],
-                });
-                // THEN invalidate to trigger fresh fetch from Firestore
-                // Use refetchType: 'all' to force refetch even for inactive queries
-                queryClient.invalidateQueries({
-                    queryKey: ['sharedGroupTransactions', groupId],
-                    exact: false, // Invalidate all date ranges for this group
-                    refetchType: 'all',
-                });
-            }));
-
-            if (import.meta.env.DEV) {
-                console.log('[DashboardView] Invalidated React Query for groups:', Array.from(affectedGroupIds));
-            }
-
-            setShowGroupSelector(false);
-            exitSelectionMode();
-        } catch (error) {
-            console.error('Error assigning groups:', error);
-        }
+    // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
+    // Epic 14d will use sharedGroupId (single nullable string) instead
+    // Group assignment functionality disabled until Epic 14d
+    const handleGroupSelect = async (_groupIds: string[]) => {
+        console.warn('[DashboardView] Group assignment disabled - Epic 14c cleanup');
+        setShowGroupSelector(false);
+        exitSelectionMode();
     };
 
     // Story 14e-5: handleConfirmDelete logic moved into openDeleteModal callback
@@ -2145,7 +2094,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) 
                         thumbnailUrl: transaction.thumbnailUrl,
                         imageUrls: transaction.imageUrls,
                         items: transaction.items || [],
-                        sharedGroupIds: transaction.sharedGroupIds,
+                        // Story 14d-v2-1.1: sharedGroupIds removed (Epic 14c cleanup)
                     }}
                     groupColor={getGroupColorForTransaction(transaction)}
                     formatters={{

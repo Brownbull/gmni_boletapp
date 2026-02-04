@@ -1,3 +1,8 @@
+// CRITICAL: Import firebase config FIRST to ensure initializeFirestore with
+// long polling is called before any other code calls getFirestore()
+// This prevents CORS issues with the Firebase emulator
+import './config/firebase';
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -8,11 +13,10 @@ import { AppErrorBoundary } from './components/App';
 // Story 14c-refactor.9: AuthProvider for app-wide authentication context
 import { AuthProvider } from './contexts/AuthContext';
 // Story 14e-11: ScanProvider removed - Zustand store is global, no provider needed
-import { ViewModeProvider } from './contexts/ViewModeContext';
+// Story 14d-v2-0: ViewModeProvider removed - view mode state now managed by Zustand store
+// (useViewModeStore from @/shared/stores)
 // Story 14.35: Preload localized country data
 import { preloadCountries } from './services/locationService';
-// Story 14c-refactor.4: Clear legacy shared group cache on startup
-import { clearLegacySharedGroupCache } from './migrations/clearSharedGroupCache';
 // Story 14.35b: Flag icons CSS for foreign location display
 import 'flag-icons/css/flag-icons.min.css';
 import App from './App';
@@ -20,21 +24,17 @@ import App from './App';
 // Story 14.35: Warm location cache on app startup (fire-and-forget)
 preloadCountries();
 
-// Story 14c-refactor.4: Clear legacy shared group IndexedDB cache (fire-and-forget)
-clearLegacySharedGroupCache().catch(console.error);
-
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <QueryClientProvider client={queryClient}>
-            {/* Story 14c-refactor.9: AuthProvider wraps ViewModeProvider for user.uid availability */}
+            {/* Story 14c-refactor.9: AuthProvider for app-wide authentication */}
             <AuthProvider>
-                <ViewModeProvider>
-                    {/* Story 14e-11: ScanProvider removed - scan state now managed by Zustand store */}
-                    {/* Story 14c-refactor.11: Theme-aware error boundary */}
-                    <AppErrorBoundary>
-                        <App />
-                    </AppErrorBoundary>
-                </ViewModeProvider>
+                {/* Story 14d-v2-0: ViewModeProvider removed - Zustand store is global */}
+                {/* Story 14e-11: ScanProvider removed - scan state managed by Zustand */}
+                {/* Story 14c-refactor.11: Theme-aware error boundary */}
+                <AppErrorBoundary>
+                    <App />
+                </AppErrorBoundary>
             </AuthProvider>
             {/* Story 14.29: React Query DevTools - only in development */}
             {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}

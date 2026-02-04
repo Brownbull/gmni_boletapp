@@ -34,9 +34,8 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
-  Bookmark,
+  // Story 14d-v2-1.1: Bookmark, BookmarkPlus removed - group UI disabled (Epic 14c cleanup)
   BookMarked,
-  BookmarkPlus,
   X,
   Camera,
   RefreshCw,
@@ -93,7 +92,8 @@ import { DIALOG_TYPES } from '../types/scanStateMachine';
 import { useToast } from '@/shared/hooks';
 // Note: useModalActions imported above from @managers/ModalManager
 import { ItemViewToggle, type ItemViewMode } from '../components/items/ItemViewToggle';
-import { TransactionGroupSelector, type GroupWithMeta } from '../components/SharedGroups';
+// Story 14d-v2-1.1: TransactionGroupSelector removed - group UI disabled (Epic 14c cleanup)
+import type { GroupWithMeta } from '@/features/shared-groups';
 
 /**
  * Scan button state machine
@@ -251,7 +251,8 @@ export interface TransactionEditorViewProps {
   availableGroups?: GroupWithMeta[];
   /** Whether groups are loading */
   groupsLoading?: boolean;
-  /** Callback when sharedGroupIds changes */
+  /** Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
+   * Epic 14d will use sharedGroupId (single nullable string) instead */
   onGroupsChange?: (groupIds: string[]) => void;
 }
 
@@ -313,9 +314,10 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   itemNameMappings = [],
   // Batch mode
   onBatchModeClick,
-  availableGroups = [],
-  groupsLoading = false,
-  onGroupsChange,
+  // Story 14d-v2-1.1: Group props disabled (Epic 14c cleanup)
+  availableGroups: _availableGroups = [],
+  groupsLoading: _groupsLoading = false,
+  onGroupsChange: _onGroupsChange,
 }) => {
   const isDark = theme === 'dark';
   const prefersReducedMotion = useReducedMotion();
@@ -358,7 +360,8 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   // Story 14.38: Item view mode toggle (grouped vs original order)
   const [itemViewMode, setItemViewMode] = useState<ItemViewMode>('grouped');
-  const [showGroupSelector, setShowGroupSelector] = useState(false);
+  // Story 14d-v2-1.1: Group selector state disabled (Epic 14c cleanup)
+  const [_showGroupSelector, _setShowGroupSelector] = useState(false);
 
   // ScanCompleteModal state (for new transactions only)
   const [showScanCompleteModal, setShowScanCompleteModal] = useState(false);
@@ -1909,74 +1912,8 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
                 </button>
               )}
 
-              {/* View mode (readOnly): Only show if transaction HAS groups - displays group indicator */}
-              {/* Edit mode: Show button to add/modify groups */}
-              {(() => {
-                const hasAssignedGroups = (displayTransaction.sharedGroupIds || []).length > 0;
-                const shouldShow = readOnly ? hasAssignedGroups : (availableGroups.length > 0 || hasAssignedGroups);
-
-                if (!shouldShow) return null;
-
-                return (
-                  <button
-                    onClick={() => setShowGroupSelector(true)}
-                    className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95"
-                    style={{
-                      backgroundColor: hasAssignedGroups
-                        ? (availableGroups.find(g => g.id === displayTransaction.sharedGroupIds?.[0])?.color || 'var(--primary)')
-                        : 'var(--bg-tertiary)',
-                      cursor: 'pointer',
-                    }}
-                    aria-label={t('selectGroups')}
-                    title={hasAssignedGroups
-                      ? (displayTransaction.sharedGroupIds || []).map(id => availableGroups.find(g => g.id === id)?.name).filter(Boolean).join(', ')
-                      : t('selectGroups')
-                    }
-                  >
-                    {hasAssignedGroups ? (
-                      /* Show group icon/emoji or bookmark icon with count badge */
-                      <div className="relative flex items-center justify-center">
-                        {(() => {
-                          const firstGroup = availableGroups.find(g => g.id === displayTransaction.sharedGroupIds?.[0]);
-                          const groupCount = (displayTransaction.sharedGroupIds || []).length;
-                          return (
-                            <>
-                              {firstGroup?.icon ? (
-                                <span
-                                  style={{
-                                    fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif',
-                                    fontSize: '1.125rem',
-                                    lineHeight: 1,
-                                  }}
-                                >
-                                  {firstGroup.icon}
-                                </span>
-                              ) : (
-                                <Bookmark size={18} strokeWidth={2} className="text-white" fill="white" />
-                              )}
-                              {groupCount > 1 && (
-                                <div
-                                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold"
-                                  style={{
-                                    backgroundColor: 'var(--bg)',
-                                    color: 'var(--text-primary)',
-                                    border: '1px solid var(--border-light)',
-                                  }}
-                                >
-                                  {groupCount}
-                                </div>
-                              )}
-                            </>
-                          );
-                        })()}
-                      </div>
-                    ) : (
-                      /* Empty state: BookmarkPlus icon (edit mode only) */
-                      <BookmarkPlus size={16} style={{ color: 'var(--text-tertiary)' }} />
-                    )}
-                  </button>
-                );
-              })()}
+              {/* Story 14d-v2-1.1: Group selector UI disabled (Epic 14c cleanup)
+                  Epic 14d will use sharedGroupId (single nullable string) instead */}
             </div>
           </div>
 
@@ -2792,18 +2729,13 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
         </div>
       )}
 
+      {/* Story 14d-v2-1.1: TransactionGroupSelector disabled (Epic 14c cleanup)
+          Epic 14d will use sharedGroupId (single nullable string) instead
       {showGroupSelector && (
         <TransactionGroupSelector
           groups={availableGroups}
-          selectedIds={displayTransaction.sharedGroupIds || []}
-          onSelect={(groupIds) => {
-            if (transaction && onGroupsChange) {
-              // Deduplicate group IDs to prevent duplicates in array
-              const uniqueGroupIds = [...new Set(groupIds)];
-              onGroupsChange(uniqueGroupIds);
-              onUpdateTransaction({ ...transaction, sharedGroupIds: uniqueGroupIds });
-            }
-          }}
+          selectedIds={[]}
+          onSelect={() => {}}
           onClose={() => setShowGroupSelector(false)}
           t={t}
           theme={theme}
@@ -2811,6 +2743,7 @@ export const TransactionEditorView: React.FC<TransactionEditorViewProps> = ({
           readOnly={readOnly}
         />
       )}
+      */}
     </div>
   );
 };

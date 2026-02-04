@@ -25,7 +25,7 @@ import { useLocationDisplay } from '../../hooks/useLocations';
 import type { ForeignLocationDisplayFormat } from '../../services/userPreferencesService';
 import type { Language } from '../../types/settings';
 import type { MemberProfile } from '../../types/sharedGroup';
-import { ProfileIndicator } from '../SharedGroups/ProfileIndicator';
+import { ProfileIndicator } from '@/features/shared-groups';
 
 // ============================================================================
 // Types

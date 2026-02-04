@@ -1,4 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
+import { fileURLToPath } from 'url';
+import path from 'path';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
 
 /**
  * Playwright Configuration
@@ -6,10 +12,33 @@ import { defineConfig, devices } from '@playwright/test';
  * End-to-end testing configuration for Boletapp.
  * Tests run against the local development server (http://localhost:5174)
  *
+ * Authentication Strategy:
+ * ========================
+ * - Global setup creates test user in Firebase Auth Emulator
+ * - Authenticated state saved to tests/e2e/.auth/user.json
+ * - Two project configurations:
+ *   1. "authenticated" - Uses saved auth state for logged-in workflows
+ *   2. "unauthenticated" - Clean state for login screen tests
+ *
+ * Prerequisites:
+ * - Firebase emulators running: npm run emulators
+ * - Dev server running: npm run dev (or webServer config handles it)
+ *
  * See https://playwright.dev/docs/test-configuration
  */
+
+// ES module compatibility for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Path to authenticated storage state
+const AUTH_FILE = path.join(__dirname, 'tests/e2e/.auth/user.json');
+
 export default defineConfig({
   testDir: './tests/e2e',
+
+  /* Global setup - creates test user and saves auth state */
+  globalSetup: path.join(__dirname, 'tests/e2e/global-setup.ts'),
 
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -24,7 +53,10 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
 
   /* Reporter to use */
-  reporter: 'html',
+  reporter: [
+    ['html'],
+    ['list'], // Show test names in console
+  ],
 
   /* Shared settings for all the projects below */
   use: {
@@ -36,23 +68,91 @@ export default defineConfig({
 
     /* Screenshot on failure */
     screenshot: 'only-on-failure',
+
+    /* Video on failure for debugging */
+    video: 'on-first-retry',
   },
 
-  /* Configure projects for major browsers - using Chromium only for speed */
+  /* Configure projects for different auth states */
   projects: [
+    // =========================================================================
+    // Setup project - runs first to establish auth
+    // =========================================================================
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'setup',
+      testMatch: /global-setup\.ts/,
     },
 
-    // Uncomment to test on other browsers:
+    // =========================================================================
+    // Authenticated tests - use saved auth state
+    // =========================================================================
+    {
+      name: 'authenticated',
+      use: {
+        ...devices['Desktop Chrome'],
+        // Reuse authenticated state from global setup
+        storageState: AUTH_FILE,
+      },
+      // Only run files in 'authenticated' folder or with '.auth.' in name
+      testMatch: [
+        '**/authenticated/**/*.spec.ts',
+        '**/*.auth.spec.ts',
+      ],
+      dependencies: ['setup'],
+    },
+
+    // =========================================================================
+    // Unauthenticated tests - clean state (login screens, etc.)
+    // =========================================================================
+    {
+      name: 'unauthenticated',
+      use: {
+        ...devices['Desktop Chrome'],
+        // Start with clean state - no auth
+        storageState: { cookies: [], origins: [] },
+      },
+      // Default: files without 'authenticated', 'multi-user', or '.auth.' in path
+      testIgnore: [
+        '**/authenticated/**/*.spec.ts',
+        '**/multi-user/**/*.spec.ts',
+        '**/*.auth.spec.ts',
+      ],
+    },
+
+    // =========================================================================
+    // Multi-User tests - each test manages its own auth contexts
+    // =========================================================================
+    // Note: Requires VITE_E2E_MODE=emulator (Firebase emulators must be running)
+    {
+      name: 'multi-user',
+      use: {
+        ...devices['Desktop Chrome'],
+        // No storageState - each test creates its own authenticated contexts
+      },
+      testMatch: ['**/multi-user/**/*.spec.ts'],
+      // No dependency on setup - handles auth independently
+    },
+
+    // =========================================================================
+    // Optional: Cross-browser testing (uncomment to enable)
+    // =========================================================================
     // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
+    //   name: 'firefox-authenticated',
+    //   use: {
+    //     ...devices['Desktop Firefox'],
+    //     storageState: AUTH_FILE,
+    //   },
+    //   testMatch: ['**/authenticated/**/*.spec.ts', '**/*.auth.spec.ts'],
+    //   dependencies: ['setup'],
     // },
     // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
+    //   name: 'webkit-authenticated',
+    //   use: {
+    //     ...devices['Desktop Safari'],
+    //     storageState: AUTH_FILE,
+    //   },
+    //   testMatch: ['**/authenticated/**/*.spec.ts', '**/*.auth.spec.ts'],
+    //   dependencies: ['setup'],
     // },
   ],
 
