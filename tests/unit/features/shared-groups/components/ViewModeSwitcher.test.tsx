@@ -9,11 +9,11 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ViewModeSwitcher } from '../../../../src/components/SharedGroups/ViewModeSwitcher';
-import type { SharedGroup } from '../../../../src/types/sharedGroup';
+import { ViewModeSwitcher } from '@/features/shared-groups';
+import type { SharedGroup } from '@/types/sharedGroup';
 
-// Mock useViewMode context
-vi.mock('../../../../src/contexts/ViewModeContext', () => ({
+// Mock useViewModeStore (Story 14d-v2-0: Migrated from ViewModeContext to Zustand store)
+vi.mock('@/shared/stores/useViewModeStore', () => ({
   useViewMode: () => ({
     mode: 'personal',
     groupId: null,

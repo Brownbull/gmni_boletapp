@@ -423,7 +423,9 @@ describe('processScan utilities', () => {
       expect(result.sharedGroupIds).toBeUndefined();
     });
 
-    it('should include sharedGroupIds in group mode', () => {
+    // Story 14d-v2-1.1: sharedGroupIds removed (Epic 14c cleanup)
+    // Epic 14d will use sharedGroupId (single nullable string) instead
+    it('should NOT include sharedGroupIds in group mode (Epic 14c cleanup)', () => {
       const groupConfig: BuildTransactionConfig = {
         viewMode: 'group',
         activeGroupId: 'group-123',
@@ -437,7 +439,8 @@ describe('processScan utilities', () => {
         '2026-01-25',
         groupConfig
       );
-      expect(result.sharedGroupIds).toEqual(['group-123']);
+      // Story 14d-v2-1.1: sharedGroupIds no longer assigned
+      expect(result.sharedGroupIds).toBeUndefined();
     });
 
     it('should not include sharedGroupIds in group mode without activeGroupId', () => {

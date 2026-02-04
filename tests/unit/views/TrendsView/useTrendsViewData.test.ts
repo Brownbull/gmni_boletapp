@@ -98,11 +98,12 @@ vi.mock('@/contexts/ThemeContext', () => ({
     })),
 }));
 
-// Mock ViewModeContext
-vi.mock('@/contexts/ViewModeContext', () => ({
+// Mock ViewModeStore (Story 14d-v2-0: Migrated from ViewModeContext to Zustand store)
+vi.mock('@/shared/stores/useViewModeStore', () => ({
     useViewMode: vi.fn(() => ({
         mode: mockState.viewMode,
         group: mockState.viewModeGroup,
+        groupId: mockState.viewModeGroup?.id ?? null,
         isGroupMode: mockState.viewMode === 'group',
         setPersonalMode: vi.fn(),
         setGroupMode: vi.fn(),

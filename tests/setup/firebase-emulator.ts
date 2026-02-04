@@ -6,6 +6,9 @@
  * - Connecting to Auth and Firestore emulators
  * - Clearing emulator data between tests
  * - Creating test users and data
+ *
+ * Note: Security rules are read from firestore.rules file to avoid duplication.
+ * This ensures tests always validate against the production rules.
  */
 
 import {
@@ -15,6 +18,8 @@ import {
   assertFails,
 } from '@firebase/rules-unit-testing';
 import { setLogLevel } from 'firebase/firestore';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 
 // Emulator configuration
 const PROJECT_ID = 'boletapp-d609f';
@@ -24,6 +29,16 @@ const AUTH_HOST = 'localhost';
 const AUTH_PORT = 9099;
 
 let testEnv: RulesTestEnvironment | null = null;
+
+/**
+ * Read Firestore security rules from the project's firestore.rules file.
+ * This ensures tests always validate against production rules (no duplication).
+ */
+function readFirestoreRules(): string {
+  // Resolve path relative to project root (tests/setup -> project root)
+  const rulesPath = resolve(__dirname, '../../firestore.rules');
+  return readFileSync(rulesPath, 'utf-8');
+}
 
 /**
  * Initialize Firebase test environment with emulators
@@ -38,66 +53,15 @@ export async function setupFirebaseEmulator(): Promise<RulesTestEnvironment> {
   // Suppress Firestore warnings during tests
   setLogLevel('error');
 
+  // Read rules from the actual firestore.rules file to avoid duplication
+  const rules = readFirestoreRules();
+
   testEnv = await initializeTestEnvironment({
     projectId: PROJECT_ID,
     firestore: {
       host: FIRESTORE_HOST,
       port: FIRESTORE_PORT,
-      rules: `
-        rules_version = '2';
-        service cloud.firestore {
-          match /databases/{database}/documents {
-            // ============================================================================
-            // Transaction Access - Owner Only
-            // Simplified after Epic 14c-refactor: Cross-user shared group access removed
-            // ============================================================================
-            match /artifacts/{appId}/users/{userId}/transactions/{transactionId} {
-              allow read, write: if request.auth != null && request.auth.uid == userId;
-            }
-
-            // ============================================================================
-            // Collection Group Query - Denied
-            // Client-side collection group queries disabled for security (2026-01-17)
-            // ============================================================================
-            match /{path=**}/transactions/{transactionId} {
-              allow read: if false;
-            }
-
-            // ============================================================================
-            // User Data Isolation
-            // Each user can only access their own data (all subcollections)
-            // ============================================================================
-            match /artifacts/{appId}/users/{userId}/{document=**} {
-              allow read, write: if request.auth != null && request.auth.uid == userId;
-            }
-
-            // ============================================================================
-            // Shared Groups - Disabled until Epic 14d
-            // Epic 14c-refactor: All shared group functionality stubbed
-            // Will be rebuilt with proper architecture in Epic 14d
-            // ============================================================================
-            match /sharedGroups/{groupId} {
-              allow read, write: if false;
-            }
-
-            // ============================================================================
-            // Pending Invitations - Disabled until Epic 14d
-            // Epic 14c-refactor: All invitation functionality stubbed
-            // Will be rebuilt with proper architecture in Epic 14d
-            // ============================================================================
-            match /pendingInvitations/{invitationId} {
-              allow read, write: if false;
-            }
-
-            // ============================================================================
-            // Default Deny - All other paths
-            // ============================================================================
-            match /{document=**} {
-              allow read, write: if false;
-            }
-          }
-        }
-      `,
+      rules,
     },
   });
 
@@ -168,11 +132,13 @@ export { assertFails };
 
 /**
  * Test user IDs (matching test-environment-setup.md)
+ * ECC Review: Added USER_3 for multi-member group scenarios
  */
 export const TEST_USERS = {
   ADMIN: 'test-admin-uid',
   USER_1: 'test-user-1-uid',
   USER_2: 'test-user-2-uid',
+  USER_3: 'test-user-3-uid',
 } as const;
 
 /**
@@ -202,3 +168,31 @@ export function getAuthedFirestoreWithEmail(userId: string, email: string) {
  * Test data collection path
  */
 export const TEST_COLLECTION_PATH = 'artifacts/boletapp-d609f/users';
+
+/**
+ * Shared groups collection path (Epic 14d-v2)
+ */
+export const SHARED_GROUPS_PATH = 'sharedGroups';
+
+/**
+ * Pending invitations collection path (Epic 14d-v2 Story 1.5b-2)
+ */
+export const PENDING_INVITATIONS_PATH = 'pendingInvitations';
+
+/**
+ * Run a callback with security rules disabled to set up test data.
+ * Use this to create documents that the test user doesn't have permission to create.
+ *
+ * @param callback - Async function that receives a rules-disabled Firestore instance
+ */
+export async function withSecurityRulesDisabled(
+  callback: (firestore: ReturnType<typeof getAuthedFirestore>) => Promise<void>
+): Promise<void> {
+  if (!testEnv) {
+    throw new Error('Test environment not initialized. Call setupFirebaseEmulator() first.');
+  }
+
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await callback(context.firestore() as unknown as ReturnType<typeof getAuthedFirestore>);
+  });
+}

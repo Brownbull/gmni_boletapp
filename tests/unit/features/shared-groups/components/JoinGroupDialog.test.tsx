@@ -7,7 +7,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { JoinGroupDialog } from '../../../../src/components/SharedGroups/JoinGroupDialog';
+import { JoinGroupDialog } from '@/features/shared-groups';
 
 describe('JoinGroupDialog (Story 14c-refactor.5)', () => {
   const mockOnCancel = vi.fn();
