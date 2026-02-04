@@ -1,5 +1,6 @@
 /**
  * Story 14c-refactor.9: AuthContext - App-wide authentication context
+ * Task C1: Clear IndexedDB Cache on Logout (CRITICAL Security Fix)
  *
  * Provides authentication state and methods to the entire app via React Context.
  * Wraps the existing useAuth hook logic to enable context-based access.
@@ -9,6 +10,7 @@
  * - User state management
  * - Firebase services initialization (Auth, Firestore)
  * - Sign out with notification cleanup
+ * - CRITICAL: IndexedDB cache clearing on logout (OWASP A3 - Sensitive Data Exposure)
  *
  * Architecture Reference: Epic 14c-refactor - App Decomposition
  *
@@ -34,20 +36,17 @@ import {
     useMemo,
     type ReactNode,
 } from 'react';
-import { initializeApp, FirebaseApp, getApps } from 'firebase/app';
 import {
-    getAuth,
     Auth,
     User,
     onAuthStateChanged,
     GoogleAuthProvider,
     signInWithPopup,
     signInWithEmailAndPassword,
-    connectAuthEmulator,
     signOut as firebaseSignOut,
 } from 'firebase/auth';
-import { getFirestore, Firestore, connectFirestoreEmulator } from 'firebase/firestore';
-import { firebaseConfig } from '../config/firebase';
+import { Firestore, clearIndexedDbPersistence, terminate } from 'firebase/firestore';
+import { auth, db, firebaseConfig } from '../config/firebase';
 import {
     disableWebPushNotifications,
     WEB_PUSH_CONSTANTS,
@@ -132,35 +131,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const [services, setServices] = useState<Services | null>(null);
     const [initError, setInitError] = useState<string | null>(null);
 
-    // Initialize Firebase and set up auth listener
+    // Set up auth listener using shared Firebase services from config/firebase.ts
+    // Emulator connections are handled automatically in firebase.ts on module load
     useEffect(() => {
         try {
-            // Use the config from environment variables
             if (!firebaseConfig || !firebaseConfig.projectId) {
                 throw new Error('Firebase Config Missing');
-            }
-
-            // Initialize Firebase app (reuse existing if already initialized)
-            let app: FirebaseApp;
-            let auth: Auth;
-            let db: Firestore;
-
-            if (getApps().length > 0) {
-                app = getApps()[0];
-                auth = getAuth(app);
-                db = getFirestore(app);
-            } else {
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-
-                // Connect to Firebase emulators IMMEDIATELY after first init
-                // MUST be called before any auth operations
-                const isDev = import.meta.env.DEV || window.location.hostname === 'localhost';
-                if (isDev) {
-                    connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
-                    connectFirestoreEmulator(db, '127.0.0.1', 8080);
-                }
             }
 
             const appId = firebaseConfig.projectId;
@@ -243,6 +219,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const handleSignOut = useCallback(async () => {
         if (!services) return;
 
+        // CRITICAL: Clear IndexedDB to prevent user data leakage on shared devices
+        // (OWASP A3 - Sensitive Data Exposure)
+        try {
+            // Must terminate first, then clear persistence
+            await terminate(services.db);
+            await clearIndexedDbPersistence(services.db);
+        } catch {
+            // Don't block sign-out if cache clearing fails
+            // This can happen if persistence wasn't enabled or already terminated
+            if (import.meta.env.DEV) {
+                console.warn('[AuthContext] Could not clear IndexedDB persistence');
+            }
+        }
+
+        // Clean up web push notifications (existing code)
         // This is CRITICAL for proper notification routing when users share devices
         // If we don't delete the subscription, notifications will be sent to the wrong user
         try {

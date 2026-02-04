@@ -165,3 +165,162 @@ export const CURRENCY_INFO: Record<SupportedCurrency, { name: string; nameEs: st
  * List of supported currencies for dropdown options
  */
 export const SUPPORTED_CURRENCIES: SupportedCurrency[] = ['CLP', 'USD', 'EUR'];
+
+// ============================================================================
+// User Shared Groups Preferences (Story 14d-v2-1-6e)
+// ============================================================================
+
+import type {
+  UserSharedGroupsPreferences,
+  UserGroupPreference,
+} from '@/types/sharedGroup';
+import { DEFAULT_GROUP_PREFERENCE } from '@/types/sharedGroup';
+
+// Re-export for convenience
+export type { UserSharedGroupsPreferences, UserGroupPreference };
+
+/**
+ * Get the Firestore document reference for user shared groups preferences.
+ *
+ * Story 14d-v2-1-6e AC#2: User group preferences document location.
+ * Path: artifacts/{appId}/users/{userId}/preferences/sharedGroups
+ */
+function getSharedGroupsPreferencesDocRef(db: Firestore, appId: string, userId: string) {
+  return doc(db, 'artifacts', appId, 'users', userId, 'preferences', 'sharedGroups');
+}
+
+/**
+ * Get user's shared groups preferences.
+ *
+ * Story 14d-v2-1-6e: Retrieve user's per-group settings.
+ *
+ * @param db - Firestore instance
+ * @param userId - User ID from Firebase Auth
+ * @param appId - Application ID
+ * @returns User's shared groups preferences or empty object if none exist
+ */
+export async function getUserSharedGroupsPreferences(
+  db: Firestore,
+  userId: string,
+  appId: string
+): Promise<UserSharedGroupsPreferences> {
+  try {
+    const docRef = getSharedGroupsPreferencesDocRef(db, appId, userId);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      return {
+        groupPreferences: data.groupPreferences || {},
+      };
+    }
+
+    // Return empty preferences if none exist
+    return { groupPreferences: {} };
+  } catch (error) {
+    console.error('Error fetching user shared groups preferences:', error);
+    return { groupPreferences: {} };
+  }
+}
+
+/**
+ * Create or update a user's preference for a specific group.
+ *
+ * Story 14d-v2-1-6e AC#2, AC#3:
+ * - Called when user accepts a group invitation
+ * - Sets shareMyTransactions based on opt-in choice
+ * - Initializes toggle tracking fields
+ *
+ * @param db - Firestore instance
+ * @param userId - User ID from Firebase Auth
+ * @param appId - Application ID
+ * @param groupId - The group ID to set preferences for
+ * @param shareMyTransactions - Whether user opts to share their transactions
+ */
+export async function setGroupPreference(
+  db: Firestore,
+  userId: string,
+  appId: string,
+  groupId: string,
+  shareMyTransactions: boolean
+): Promise<void> {
+  try {
+    const docRef = getSharedGroupsPreferencesDocRef(db, appId, userId);
+
+    // Create the preference with initialized toggle tracking
+    const preference: UserGroupPreference = {
+      shareMyTransactions,
+      ...DEFAULT_GROUP_PREFERENCE,
+    };
+
+    // Use setDoc with merge to create or update
+    // This uses dot notation to set only the specific group's preferences
+    await setDoc(
+      docRef,
+      {
+        [`groupPreferences.${groupId}`]: preference,
+      },
+      { merge: true }
+    );
+  } catch (error) {
+    console.error('Error setting group preference:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get a user's preference for a specific group.
+ *
+ * @param db - Firestore instance
+ * @param userId - User ID from Firebase Auth
+ * @param appId - Application ID
+ * @param groupId - The group ID to get preferences for
+ * @returns The user's preference for this group, or null if not set
+ */
+export async function getGroupPreference(
+  db: Firestore,
+  userId: string,
+  appId: string,
+  groupId: string
+): Promise<UserGroupPreference | null> {
+  try {
+    const prefs = await getUserSharedGroupsPreferences(db, userId, appId);
+    return prefs.groupPreferences[groupId] || null;
+  } catch (error) {
+    console.error('Error getting group preference:', error);
+    return null;
+  }
+}
+
+/**
+ * Remove a user's preference for a specific group.
+ *
+ * Called when user leaves a group.
+ *
+ * @param db - Firestore instance
+ * @param userId - User ID from Firebase Auth
+ * @param appId - Application ID
+ * @param groupId - The group ID to remove preferences for
+ */
+export async function removeGroupPreference(
+  db: Firestore,
+  userId: string,
+  appId: string,
+  groupId: string
+): Promise<void> {
+  try {
+    const docRef = getSharedGroupsPreferencesDocRef(db, appId, userId);
+    const { deleteField } = await import('firebase/firestore');
+
+    await setDoc(
+      docRef,
+      {
+        [`groupPreferences.${groupId}`]: deleteField(),
+      },
+      { merge: true }
+    );
+  } catch (error) {
+    console.error('Error removing group preference:', error);
+    throw error;
+  }
+}

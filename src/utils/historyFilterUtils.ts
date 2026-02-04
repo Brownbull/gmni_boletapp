@@ -499,7 +499,7 @@ function matchesLocationFilter(
  * Supports multi-select (comma-separated groupIds)
  */
 function matchesGroupFilter(
-  tx: Transaction,
+  _tx: Transaction,
   filter: GroupFilterState
 ): boolean {
   // No group filter applied - include all transactions
@@ -509,10 +509,10 @@ function matchesGroupFilter(
   const selectedGroupIds = filter.groupIds.split(',').map(id => id.trim()).filter(Boolean);
   if (selectedGroupIds.length === 0) return true;
 
-  // Transaction must belong to one of the selected groups (Story 14c consolidation)
-  // Check sharedGroupIds array instead of legacy groupId field
-  const txGroupIds = tx.sharedGroupIds || [];
-  return txGroupIds.some(id => selectedGroupIds.includes(id));
+  // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
+  // Epic 14d will use sharedGroupId (single nullable string) instead
+  // For now, return false - no group-based filtering possible without field
+  return false;
 }
 
 // ============================================================================
