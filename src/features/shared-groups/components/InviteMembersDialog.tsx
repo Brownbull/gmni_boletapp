@@ -125,7 +125,7 @@ export const InviteMembersDialog: React.FC<InviteMembersDialogProps> = ({
             textArea.style.opacity = '0';
             document.body.appendChild(textArea);
             textArea.select();
-            document.execCommand('copy'); // eslint-disable-line deprecation/deprecation
+            document.execCommand('copy');
             document.body.removeChild(textArea);
             return true;
         }
