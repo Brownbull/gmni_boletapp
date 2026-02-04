@@ -111,10 +111,11 @@ export default defineConfig({
         // Start with clean state - no auth
         storageState: { cookies: [], origins: [] },
       },
-      // Default: files without 'authenticated', 'multi-user', or '.auth.' in path
+      // Default: files without 'authenticated', 'multi-user', 'staging', or '.auth.' in path
       testIgnore: [
         '**/authenticated/**/*.spec.ts',
         '**/multi-user/**/*.spec.ts',
+        '**/staging/**/*.spec.ts',
         '**/*.auth.spec.ts',
       ],
     },
