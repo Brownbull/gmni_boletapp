@@ -10,19 +10,23 @@ dotenv.config();
  * Playwright Configuration
  *
  * End-to-end testing configuration for Boletapp.
- * Tests run against the local development server (http://localhost:5174)
+ *
+ * E2E Testing Policy:
+ * ===================
+ * E2E tests run ONLY against the staging environment (boletapp-staging).
+ * No local/emulator-based E2E testing. For extreme cases, manually selected
+ * tests may run against production, but this is rare and requires explicit intent.
+ *
+ * Staging tests:  npm run test:e2e:staging
+ * Multi-user:     npm run test:e2e:multi-user (staging, pre-created accounts)
  *
  * Authentication Strategy:
  * ========================
- * - Global setup creates test user in Firebase Auth Emulator
+ * - Staging tests use TestUserMenu with pre-created test accounts
  * - Authenticated state saved to tests/e2e/.auth/user.json
  * - Two project configurations:
  *   1. "authenticated" - Uses saved auth state for logged-in workflows
  *   2. "unauthenticated" - Clean state for login screen tests
- *
- * Prerequisites:
- * - Firebase emulators running: npm run emulators
- * - Dev server running: npm run dev (or webServer config handles it)
  *
  * See https://playwright.dev/docs/test-configuration
  */
@@ -131,6 +135,21 @@ export default defineConfig({
         // No storageState - each test creates its own authenticated contexts
       },
       testMatch: ['**/multi-user/**/*.spec.ts'],
+      // No dependency on setup - handles auth independently
+    },
+
+    // =========================================================================
+    // Staging tests - standalone tests that handle their own auth
+    // =========================================================================
+    // These tests use TestUserMenu for authentication and don't need global setup
+    {
+      name: 'staging',
+      use: {
+        ...devices['Desktop Chrome'],
+        // No storageState - tests handle their own auth via TestUserMenu
+        storageState: { cookies: [], origins: [] },
+      },
+      testMatch: ['**/staging/**/*.spec.ts'],
       // No dependency on setup - handles auth independently
     },
 
