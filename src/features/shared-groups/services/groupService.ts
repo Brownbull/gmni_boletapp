@@ -45,16 +45,18 @@ import {
     arrayRemove,
     writeBatch,
 } from 'firebase/firestore';
+import { removeGroupPreference, validateGroupId } from '@/services/userPreferencesService';
 import type {
     SharedGroup,
     CreateSharedGroupInput,
     UpdateSharedGroupInput,
     MemberProfile,
 } from '@/types/sharedGroup';
-import { SHARED_GROUP_LIMITS } from '@/types/sharedGroup';
+import { SHARED_GROUP_LIMITS, createDefaultGroupPreference } from '@/types/sharedGroup';
 import { generateShareCode } from '@/services/sharedGroupService';
 import { sanitizeInput } from '@/utils/sanitize';
 import { validateAppId } from '@/utils/validationUtils';
+import { canToggleTransactionSharing, shouldResetDailyCount } from '@/utils/sharingCooldown';
 
 // =============================================================================
 // Constants
@@ -276,6 +278,7 @@ export async function createGroup(
         transactionSharingEnabled: input.transactionSharingEnabled,
         transactionSharingLastToggleAt: null,
         transactionSharingToggleCountToday: 0,
+        transactionSharingToggleCountResetAt: null,
     };
 
     // Create the document in Firestore
@@ -461,10 +464,17 @@ export async function joinGroupDirectly(
     db: Firestore,
     groupId: string,
     userId: string,
-    userProfile?: MemberProfile
+    userProfile?: MemberProfile,
+    appId?: string,
+    shareMyTransactions?: boolean
 ): Promise<SharedGroup> {
     if (!groupId || !userId) {
         throw new Error('Group ID and user ID are required');
+    }
+
+    // Story 14d-v2-1-13+14: Validate appId if provided (ECC Security Review fix)
+    if (appId && !validateAppId(appId)) {
+        throw new Error('Invalid application ID');
     }
 
     return await runTransaction(db, async (transaction) => {
@@ -510,6 +520,19 @@ export async function joinGroupDirectly(
         }
 
         transaction.update(groupRef, groupUpdate);
+
+        // Story 14d-v2-1-13+14: Write user group preference atomically (AC15)
+        if (appId) {
+            // H-1 fix: Validate groupId before dot-notation field path (prevents path injection)
+            validateGroupId(groupId);
+            const prefsDocRef = doc(db, 'artifacts', appId, 'users', userId, 'preferences', 'sharedGroups');
+            const preference = createDefaultGroupPreference({
+                shareMyTransactions: shareMyTransactions ?? false,
+            });
+            transaction.set(prefsDocRef, {
+                [`groupPreferences.${groupId}`]: preference,
+            }, { merge: true });
+        }
 
         // Return updated group (with the new member)
         return {
@@ -1247,5 +1270,236 @@ export async function updateGroup(
             fieldsUpdated: Object.keys(updateData).filter(k => k !== 'updatedAt'),
             timestamp: new Date().toISOString(),
         });
+    }
+}
+
+// =============================================================================
+// Transaction Sharing Toggle Function (Story 14d-v2-1-11b)
+// =============================================================================
+
+/**
+ * Update transaction sharing enabled state for a group.
+ *
+ * Story 14d-v2-1-11b: Service Layer & Security
+ *
+ * Atomically updates the transactionSharingEnabled field along with
+ * rate-limiting fields (cooldown timestamp, daily count).
+ *
+ * Security:
+ * - Only the group owner can toggle this setting
+ * - Uses Firestore transaction to prevent TOCTOU vulnerabilities
+ * - Enforces 15-minute cooldown between toggles
+ * - Enforces 3 toggles/day limit
+ *
+ * @param db - Firestore instance
+ * @param groupId - ID of the group to update
+ * @param userId - ID of the user attempting the update (must be owner)
+ * @param enabled - New value for transactionSharingEnabled
+ *
+ * @throws Error if groupId or userId is empty
+ * @throws Error if group not found
+ * @throws Error if user is not the owner
+ * @throws Error if cooldown is active (with wait time)
+ * @throws Error if daily toggle limit reached
+ *
+ * @example
+ * ```typescript
+ * // Enable transaction sharing
+ * await updateTransactionSharingEnabled(db, 'group-123', 'owner-uid', true);
+ *
+ * // Disable transaction sharing
+ * await updateTransactionSharingEnabled(db, 'group-123', 'owner-uid', false);
+ * ```
+ */
+export async function updateTransactionSharingEnabled(
+    db: Firestore,
+    groupId: string,
+    userId: string,
+    enabled: boolean
+): Promise<void> {
+    // Input validation
+    if (!groupId || !userId) {
+        throw new Error('Group ID and user ID are required');
+    }
+
+    const groupRef = doc(db, GROUPS_COLLECTION, groupId);
+
+    await runTransaction(db, async (transaction) => {
+        // Get the group document
+        const groupSnap = await transaction.get(groupRef);
+
+        if (!groupSnap.exists()) {
+            throw new Error('Group not found');
+        }
+
+        const group = groupSnap.data() as SharedGroup;
+
+        // Verify user is the owner (AC: Only owner can toggle)
+        if (group.ownerId !== userId) {
+            throw new Error('Only the group owner can toggle transaction sharing');
+        }
+
+        // Check cooldown and rate limiting
+        const cooldownResult = canToggleTransactionSharing(group);
+
+        if (!cooldownResult.allowed) {
+            if (cooldownResult.reason === 'cooldown') {
+                throw new Error(`Please wait ${cooldownResult.waitMinutes} minutes before toggling again`);
+            } else if (cooldownResult.reason === 'daily_limit') {
+                throw new Error('Daily toggle limit reached (3 changes per day)');
+            }
+        }
+
+        // Check if daily count needs to be reset (new day in group's timezone)
+        const needsReset = shouldResetDailyCount(
+            group.transactionSharingToggleCountResetAt ?? null,
+            group.timezone || 'UTC'
+        );
+
+        // Calculate new toggle count
+        const currentCount = needsReset ? 0 : (group.transactionSharingToggleCountToday ?? 0);
+        const newCount = currentCount + 1;
+
+        // Build atomic update
+        const updateData: Record<string, unknown> = {
+            transactionSharingEnabled: enabled,
+            transactionSharingLastToggleAt: serverTimestamp(),
+            transactionSharingToggleCountToday: newCount,
+            updatedAt: serverTimestamp(),
+        };
+
+        // Update reset timestamp if we're resetting the daily count
+        if (needsReset) {
+            updateData.transactionSharingToggleCountResetAt = serverTimestamp();
+        }
+
+        transaction.update(groupRef, updateData);
+    });
+
+    // Audit log in development
+    if (import.meta.env.DEV) {
+        console.log('[groupService] updateTransactionSharingEnabled completed', {
+            groupId,
+            userId,
+            enabled,
+            timestamp: new Date().toISOString(),
+        });
+    }
+}
+
+// =============================================================================
+// Leave Group with Cleanup Functions (Story 14d-v2-1-12d)
+// =============================================================================
+
+/**
+ * Leave group with preference cleanup.
+ *
+ * Story 14d-v2-1-12d: User Preferences Cleanup
+ * - AC#5: Deletes user's group preference when leaving a group
+ * - AC#7: Cleanup errors are logged but do NOT block leave operation
+ *
+ * This wrapper function:
+ * 1. Calls leaveGroup (throws if fails - blocking error)
+ * 2. Attempts to remove user's group preference (non-blocking, logged on failure)
+ *
+ * @param db - Firestore instance
+ * @param userId - ID of the user leaving the group
+ * @param groupId - ID of the group to leave
+ * @param appId - Application ID (e.g., 'boletapp')
+ *
+ * @throws Error if leaveGroup fails (user not member, is owner, group not found)
+ * @returns void (cleanup errors are logged but don't throw)
+ *
+ * @example
+ * ```typescript
+ * // Leave group and cleanup preferences
+ * await leaveGroupWithCleanup(db, 'user-123', 'group-456', 'boletapp');
+ * ```
+ */
+export async function leaveGroupWithCleanup(
+    db: Firestore,
+    userId: string,
+    groupId: string,
+    appId: string
+): Promise<void> {
+    // ECC Review Fix: Validate appId for consistency with other functions
+    if (!validateAppId(appId)) {
+        throw new Error('Invalid application ID');
+    }
+
+    // First leave the group (throws if fails - this is blocking)
+    await leaveGroup(db, userId, groupId);
+
+    // Then attempt cleanup (non-blocking per AC#7)
+    try {
+        await removeGroupPreference(db, userId, appId, groupId);
+    } catch (err) {
+        // AC#7: Cleanup errors are logged but do NOT block leave operation
+        if (import.meta.env.DEV) console.warn('[groupService] Preference cleanup failed (non-blocking):', err);
+    }
+}
+
+/**
+ * Transfer ownership, leave group, and cleanup preferences.
+ *
+ * Story 14d-v2-1-12d: User Preferences Cleanup
+ * - AC#6: Cleans up preference after ownership transfer + leave
+ * - AC#7: Cleanup errors are logged but do NOT block the operation
+ *
+ * This wrapper function:
+ * 1. Calls transferOwnership (throws if fails - blocking error)
+ * 2. Calls leaveGroup (throws if fails - blocking error)
+ * 3. Attempts to remove user's group preference (non-blocking, logged on failure)
+ *
+ * @param db - Firestore instance
+ * @param currentOwnerId - ID of the current owner transferring and leaving
+ * @param newOwnerId - ID of the new owner receiving ownership
+ * @param groupId - ID of the group
+ * @param appId - Application ID (e.g., 'boletapp')
+ *
+ * @throws Error if transferOwnership fails
+ * @throws Error if leaveGroup fails after transfer
+ * @returns void (cleanup errors are logged but don't throw)
+ *
+ * @example
+ * ```typescript
+ * // Transfer ownership, leave, and cleanup preferences
+ * await transferAndLeaveWithCleanup(
+ *   db,
+ *   'current-owner-123',
+ *   'new-owner-456',
+ *   'group-789',
+ *   'boletapp'
+ * );
+ * ```
+ */
+export async function transferAndLeaveWithCleanup(
+    db: Firestore,
+    currentOwnerId: string,
+    newOwnerId: string,
+    groupId: string,
+    appId: string
+): Promise<void> {
+    // Input validation (consistent with transferOwnership)
+    if (!currentOwnerId || !newOwnerId || !groupId) {
+        throw new Error('Current owner ID, new owner ID, and group ID are required');
+    }
+    // ECC Review Fix: Validate appId for consistency with other functions
+    if (!validateAppId(appId)) {
+        throw new Error('Invalid application ID');
+    }
+
+    // Step 1: Transfer ownership (throws if fails - blocking)
+    await transferOwnership(db, currentOwnerId, newOwnerId, groupId);
+
+    // Step 2: Leave group (throws if fails - blocking)
+    await leaveGroup(db, currentOwnerId, groupId);
+
+    // Step 3: Cleanup preferences (non-blocking per AC#7)
+    try {
+        await removeGroupPreference(db, currentOwnerId, appId, groupId);
+    } catch (err) {
+        // AC#7: Cleanup errors are logged but do NOT block the operation
+        if (import.meta.env.DEV) console.warn('[groupService] Preference cleanup failed (non-blocking):', err);
     }
 }

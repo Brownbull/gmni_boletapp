@@ -66,8 +66,8 @@ import { usePendingInvitations } from './hooks/usePendingInvitations';
 import { useInAppNotifications } from './hooks/useInAppNotifications';
 // Story 14d-v2-0: ViewMode migrated from Context to Zustand store
 import { useViewMode } from '@/shared/stores/useViewModeStore';
-import { useUserSharedGroups } from './hooks/useUserSharedGroups';
-import { ViewModeSwitcher } from '@/features/shared-groups';
+// Story 14d-v2-1-10d: useUserSharedGroups stub replaced with useGroups for ViewModeSwitcher
+import { ViewModeSwitcher, useGroups } from '@/features/shared-groups';
 import { useJoinLinkHandler } from './hooks/useJoinLinkHandler';
 // App-level handler hooks
 import { useTransactionHandlers, useScanHandlers, useDialogHandlers } from './hooks/app';
@@ -291,7 +291,8 @@ function App() {
         deleteNotification: deleteInAppNotification,
         deleteAllNotifications: deleteAllInAppNotifications,
     } = useInAppNotifications(db, user?.uid || null, services?.appId || null);
-    const { groups: userSharedGroups, isLoading: sharedGroupsLoading } = useUserSharedGroups(db, user?.uid);
+    // Story 14d-v2-1-10d: Use actual useGroups hook instead of stubbed useUserSharedGroups
+    const { data: userSharedGroups = [], isLoading: sharedGroupsLoading } = useGroups(user, services);
     const [showViewModeSwitcher, setShowViewModeSwitcher] = useState(false);
 
     // Stub for shared group transactions (feature disabled - see Epic 14d-v2)

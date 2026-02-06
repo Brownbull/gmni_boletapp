@@ -9,8 +9,11 @@ import {
   doc,
   getDoc,
   setDoc,
+  deleteField,
   serverTimestamp,
+  onSnapshot,
   Firestore,
+  Unsubscribe,
 } from 'firebase/firestore';
 
 /**
@@ -174,10 +177,39 @@ import type {
   UserSharedGroupsPreferences,
   UserGroupPreference,
 } from '@/types/sharedGroup';
-import { DEFAULT_GROUP_PREFERENCE } from '@/types/sharedGroup';
+import { createDefaultGroupPreference } from '@/types/sharedGroup';
+import { shouldResetUserDailyCount } from '@/utils/userSharingCooldown';
 
 // Re-export for convenience
 export type { UserSharedGroupsPreferences, UserGroupPreference };
+
+/**
+ * Regex pattern for validating groupId.
+ *
+ * Story 14d-v2-1-12c ECC Review #2: Enhanced validation with length limit and character whitelist.
+ *
+ * Rules:
+ * - Only alphanumeric characters, hyphens, and underscores allowed
+ * - Length must be between 1 and 128 characters
+ * - Prevents Firestore path injection and ensures consistent data
+ *
+ * @see TD-14d-55-groupid-validation for centralized validation discussion
+ */
+const VALID_GROUP_ID_REGEX = /^[a-zA-Z0-9_-]{1,128}$/;
+
+/**
+ * Validates a groupId against security and format constraints.
+ *
+ * @param groupId - The group ID to validate
+ * @throws Error if groupId is invalid
+ */
+export function validateGroupId(groupId: string): void {
+  if (!groupId || typeof groupId !== 'string' || !VALID_GROUP_ID_REGEX.test(groupId)) {
+    throw new Error(
+      'Invalid groupId: must be 1-128 characters containing only letters, numbers, hyphens, or underscores'
+    );
+  }
+}
 
 /**
  * Get the Firestore document reference for user shared groups preferences.
@@ -244,14 +276,26 @@ export async function setGroupPreference(
   groupId: string,
   shareMyTransactions: boolean
 ): Promise<void> {
+  // Validate inputs (Story 14d-v2-1-12b Task 4.2, 4.4 - input validation)
+  // userId and appId must be non-empty strings
+  if (!userId || typeof userId !== 'string') {
+    throw new Error('Invalid userId: must be a non-empty string');
+  }
+  if (!appId || typeof appId !== 'string') {
+    throw new Error('Invalid appId: must be a non-empty string');
+  }
+  // Story 14d-v2-1-12c ECC Review #2: Enhanced groupId validation with regex
+  validateGroupId(groupId);
+  // shareMyTransactions must be a boolean
+  if (typeof shareMyTransactions !== 'boolean') {
+    throw new Error('shareMyTransactions must be a boolean');
+  }
+
   try {
     const docRef = getSharedGroupsPreferencesDocRef(db, appId, userId);
 
-    // Create the preference with initialized toggle tracking
-    const preference: UserGroupPreference = {
-      shareMyTransactions,
-      ...DEFAULT_GROUP_PREFERENCE,
-    };
+    // Create the preference with initialized toggle tracking using factory
+    const preference = createDefaultGroupPreference({ shareMyTransactions });
 
     // Use setDoc with merge to create or update
     // This uses dot notation to set only the specific group's preferences
@@ -283,6 +327,9 @@ export async function getGroupPreference(
   appId: string,
   groupId: string
 ): Promise<UserGroupPreference | null> {
+  // Story 14d-v2-1-12c ECC Review: Added groupId validation for consistency
+  validateGroupId(groupId);
+
   try {
     const prefs = await getUserSharedGroupsPreferences(db, userId, appId);
     return prefs.groupPreferences[groupId] || null;
@@ -308,9 +355,19 @@ export async function removeGroupPreference(
   appId: string,
   groupId: string
 ): Promise<void> {
+  // Validate inputs (Story 14d-v2-1-12b Task 4.3 - userId/appId validation)
+  // userId and appId must be non-empty strings
+  if (!userId || typeof userId !== 'string') {
+    throw new Error('Invalid userId: must be a non-empty string');
+  }
+  if (!appId || typeof appId !== 'string') {
+    throw new Error('Invalid appId: must be a non-empty string');
+  }
+  // Story 14d-v2-1-12c ECC Review #2: Enhanced groupId validation with regex
+  validateGroupId(groupId);
+
   try {
     const docRef = getSharedGroupsPreferencesDocRef(db, appId, userId);
-    const { deleteField } = await import('firebase/firestore');
 
     await setDoc(
       docRef,
@@ -323,4 +380,152 @@ export async function removeGroupPreference(
     console.error('Error removing group preference:', error);
     throw error;
   }
+}
+
+/**
+ * Update user's shareMyTransactions preference for a specific group.
+ *
+ * Story 14d-v2-1-12b AC#2: Updates preference, tracks lastToggleAt, increments
+ * toggleCountToday, and uses merge behavior for partial updates.
+ *
+ * Story 14d-v2-1-12b AC#3: Creates document with defaults for new users.
+ *
+ * Features:
+ * - Updates shareMyTransactions to enabled value
+ * - Sets lastToggleAt to serverTimestamp
+ * - Increments toggleCountToday (or resets to 1 on new day)
+ * - Sets toggleCountResetAt to serverTimestamp when daily count resets
+ * - Uses setDoc with merge: true for partial document updates
+ *
+ * **Note on Rate Limiting (Story 14d-v2-1-12b Task 3.9):**
+ * Rate limiting for toggle operations is enforced **client-side only** via the
+ * `userSharingCooldown.ts` utility. The toggle count tracking (`toggleCountToday`,
+ * `toggleCountResetAt`) provides audit capability but does NOT prevent rapid writes.
+ * For server-side rate limiting, consider implementing Firestore security rules
+ * with rate limiting or Cloud Functions (see TD-14d-39-server-side-rate-limiting).
+ *
+ * @param db - Firestore instance
+ * @param userId - User ID from Firebase Auth
+ * @param appId - Application ID
+ * @param groupId - The group ID to update preferences for
+ * @param enabled - New value for shareMyTransactions
+ *
+ * @throws Error if Firestore operation fails or input validation fails
+ *
+ * @see {@link shouldResetUserDailyCount} for daily reset logic
+ * @see TD-14d-39-server-side-rate-limiting for server-side rate limiting enhancement
+ */
+export async function updateShareMyTransactions(
+  db: Firestore,
+  userId: string,
+  appId: string,
+  groupId: string,
+  enabled: boolean
+): Promise<void> {
+  // Validate inputs (Story 14d-v2-1-12b ECC Review fixes - Tasks 3.1, 3.4)
+  // userId and appId must be non-empty strings
+  if (!userId || typeof userId !== 'string') {
+    throw new Error('Invalid userId: must be a non-empty string');
+  }
+  if (!appId || typeof appId !== 'string') {
+    throw new Error('Invalid appId: must be a non-empty string');
+  }
+  // Story 14d-v2-1-12c ECC Review #2: Enhanced groupId validation with regex
+  validateGroupId(groupId);
+  if (typeof enabled !== 'boolean') {
+    throw new Error('enabled must be a boolean');
+  }
+
+  try {
+    const docRef = getSharedGroupsPreferencesDocRef(db, appId, userId);
+
+    // Get current preference directly (not using getGroupPreference which swallows errors)
+    // This allows us to propagate Firestore errors properly
+    const docSnap = await getDoc(docRef);
+    let currentPref: UserGroupPreference | null = null;
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      currentPref = data.groupPreferences?.[groupId] || null;
+    }
+
+    // Determine if daily count should reset
+    const resetAt = currentPref?.toggleCountResetAt ?? null;
+    const needsReset = shouldResetUserDailyCount(resetAt);
+
+    // Calculate new toggle count
+    const currentCount = currentPref?.toggleCountToday ?? 0;
+    const newToggleCount = needsReset ? 1 : currentCount + 1;
+
+    // Build update object with dot notation for nested field updates
+    const updateData: Record<string, unknown> = {
+      [`groupPreferences.${groupId}.shareMyTransactions`]: enabled,
+      [`groupPreferences.${groupId}.lastToggleAt`]: serverTimestamp(),
+      [`groupPreferences.${groupId}.toggleCountToday`]: newToggleCount,
+    };
+
+    // Only update toggleCountResetAt when resetting
+    if (needsReset) {
+      updateData[`groupPreferences.${groupId}.toggleCountResetAt`] = serverTimestamp();
+    }
+
+    // Use setDoc with merge: true for partial document updates
+    await setDoc(docRef, updateData, { merge: true });
+  } catch (error) {
+    console.error('Error updating shareMyTransactions:', error);
+    throw error;
+  }
+}
+
+/**
+ * Subscribe to real-time updates for a user's group preference.
+ *
+ * Story 14d-v2-1-12c AC#8: Multi-device real-time sync
+ *
+ * @param db - Firestore instance
+ * @param userId - User ID from Firebase Auth
+ * @param appId - Application ID
+ * @param groupId - Group ID to watch
+ * @param callback - Called with updated preference (null if not found or on error)
+ * @param onError - Optional callback for error handling (called before callback(null))
+ * @returns Unsubscribe function
+ */
+export function subscribeToUserGroupPreference(
+  db: Firestore,
+  userId: string,
+  appId: string,
+  groupId: string,
+  callback: (preference: UserGroupPreference | null) => void,
+  onError?: (error: Error) => void
+): Unsubscribe {
+  // Validate inputs (Story 14d-v2-1-12c ECC Security Review - consistent validation)
+  if (!userId || typeof userId !== 'string') {
+    throw new Error('Invalid userId: must be a non-empty string');
+  }
+  if (!appId || typeof appId !== 'string') {
+    throw new Error('Invalid appId: must be a non-empty string');
+  }
+  // Story 14d-v2-1-12c ECC Review #2: Enhanced groupId validation with regex
+  validateGroupId(groupId);
+
+  const docRef = getSharedGroupsPreferencesDocRef(db, appId, userId);
+
+  return onSnapshot(
+    docRef,
+    (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        const pref = data.groupPreferences?.[groupId] ?? null;
+        callback(pref);
+      } else {
+        callback(null);
+      }
+    },
+    (error) => {
+      console.error('Error subscribing to user group preference:', error);
+      // Call onError callback if provided (Story 14d-v2-1-12c Action Item)
+      onError?.(error);
+      callback(null);
+    }
+  );
 }

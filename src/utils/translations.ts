@@ -837,6 +837,12 @@ export const TRANSLATIONS = {
         acceptInvitation: "Accept",
         declineInvitation: "Decline",
         acceptInvitationSuccess: "Joined {groupName}!",
+        joinedGroupWithSharing: "You're now a member of {groupName}",
+        joinedGroupWithoutSharing: "You're now a member of {groupName}. You can change sharing preferences in group settings.",
+        joinedGroupDefault: "You're now a member of {groupName}. Transaction sharing is off by default.",
+        offlineCannotJoinGroup: "You're offline. Please connect to join groups.",
+        errorAcceptingInvitation: "Error accepting invitation",
+        transactionSharingError: "Failed to update setting. Please try again.",
         declineInvitationSuccess: "Invitation declined",
         invitationExpired: "This invitation has expired",
         groupFull: "This group is full",
@@ -1067,7 +1073,29 @@ export const TRANSLATIONS = {
         // Story 14d-v2-1-9: Recovery Sync Prompt
         recoverySyncTitle: "Sync Recovery Needed",
         recoverySyncMessage: "You've been offline for a while. Some sync history has expired. Please do a full sync to restore your group data.",
-        recoverySyncFullSync: "Full Sync"
+        recoverySyncFullSync: "Full Sync",
+        // Story 14d-v2-1-11c: TransactionSharingToggle Component
+        transactionSharingToggleLabel: "Transaction Sharing",
+        transactionSharingHelperText: "When enabled, members can choose to share their transaction details with the group.",
+        transactionSharingCooldownActive: "Please wait {minutes} minutes before changing this setting",
+        transactionSharingDailyLimitReached: "Daily limit reached. Try again tomorrow.",
+        transactionSharingOwnerOnly: "Only the group owner can change this setting",
+        transactionSharingEnabled: "Transaction sharing enabled",
+        transactionSharingDisabled: "Transaction sharing disabled",
+        // Story 14d-v2-1-12c: User Transaction Sharing Toggle
+        shareMyTransactionsLabel: "Share My Transactions",
+        shareMyTransactionsHelperText: "Your spending totals always appear in group statistics. This controls whether others see your individual transaction details.",
+        sharingPreferenceUpdated: "Sharing preference updated",
+        failedToUpdatePreference: "Failed to update preference. Please try again.",
+        userSharingCooldownActive: "Please wait {minutes} minutes before changing this setting",
+        userSharingDailyLimitReached: "Daily limit reached. Try again tomorrow.",
+        sharingDisabledByOwner: "Transaction sharing is disabled for this group by the owner",
+        // Story 14d-v2-1-12d: My Sharing Preferences Section
+        mySharingPreferences: "My Sharing Preferences",
+        mySharingPreferencesDesc: "Control what you share with this group",
+        doubleGateTooltip: "Transaction sharing requires two switches: the group owner's master switch AND your personal preference. Both must be on for your transactions to be visible.",
+        eventualConsistencyNotice: "Other members will stop seeing your transactions on their next sync.",
+        groupSharingDisabledWarning: "The group owner has disabled transaction sharing. Your preference will be saved but won't take effect until sharing is re-enabled."
     },
     es: {
         overview: "Resumen", welcome: "Rastreo Inteligente", totalSpent: "Total Gastado",
@@ -1907,6 +1935,12 @@ export const TRANSLATIONS = {
         acceptInvitation: "Aceptar",
         declineInvitation: "Rechazar",
         acceptInvitationSuccess: "¡Te uniste a {groupName}!",
+        joinedGroupWithSharing: "Ahora eres miembro de {groupName}",
+        joinedGroupWithoutSharing: "Ahora eres miembro de {groupName}. Puedes cambiar tus preferencias en la configuración del grupo.",
+        joinedGroupDefault: "Ahora eres miembro de {groupName}. Compartir transacciones está desactivado por defecto.",
+        offlineCannotJoinGroup: "Estás sin conexión. Conéctate para unirte a grupos.",
+        errorAcceptingInvitation: "Error al aceptar la invitación",
+        transactionSharingError: "Error al actualizar configuración. Intenta de nuevo.",
         declineInvitationSuccess: "Invitación rechazada",
         invitationExpired: "Esta invitación ha expirado",
         groupFull: "Este grupo está lleno",
@@ -2137,7 +2171,29 @@ export const TRANSLATIONS = {
         // Story 14d-v2-1-9: Recovery Sync Prompt
         recoverySyncTitle: "Recuperación de Sincronización",
         recoverySyncMessage: "Has estado desconectado por un tiempo. Parte del historial de sincronización ha expirado. Por favor haz una sincronización completa para restaurar los datos del grupo.",
-        recoverySyncFullSync: "Sincronización Completa"
+        recoverySyncFullSync: "Sincronización Completa",
+        // Story 14d-v2-1-11c: TransactionSharingToggle Component
+        transactionSharingToggleLabel: "Compartir Transacciones",
+        transactionSharingHelperText: "Cuando está habilitado, los miembros pueden elegir compartir sus detalles de transacciones con el grupo.",
+        transactionSharingCooldownActive: "Por favor espera {minutes} minutos antes de cambiar esta configuración",
+        transactionSharingDailyLimitReached: "Límite diario alcanzado. Intenta de nuevo mañana.",
+        transactionSharingOwnerOnly: "Solo el dueño del grupo puede cambiar esta configuración",
+        transactionSharingEnabled: "Compartir transacciones habilitado",
+        transactionSharingDisabled: "Compartir transacciones deshabilitado",
+        // Story 14d-v2-1-12c: User Transaction Sharing Toggle
+        shareMyTransactionsLabel: "Compartir Mis Transacciones",
+        shareMyTransactionsHelperText: "Tus totales de gastos siempre aparecen en las estadisticas del grupo. Esto controla si otros ven tus transacciones individuales.",
+        sharingPreferenceUpdated: "Preferencia de compartir actualizada",
+        failedToUpdatePreference: "Error al actualizar preferencia. Intenta de nuevo.",
+        userSharingCooldownActive: "Por favor espera {minutes} minutos antes de cambiar esta configuracion",
+        userSharingDailyLimitReached: "Limite diario alcanzado. Intenta manana.",
+        sharingDisabledByOwner: "El compartir transacciones esta deshabilitado para este grupo por el dueno",
+        // Story 14d-v2-1-12d: My Sharing Preferences Section
+        mySharingPreferences: "Mis Preferencias de Compartir",
+        mySharingPreferencesDesc: "Controla lo que compartes con este grupo",
+        doubleGateTooltip: "Compartir transacciones requiere dos interruptores: el del dueno del grupo Y tu preferencia personal. Ambos deben estar activos para que tus transacciones sean visibles.",
+        eventualConsistencyNotice: "Otros miembros dejaran de ver tus transacciones en su proxima sincronizacion.",
+        groupSharingDisabledWarning: "El dueno del grupo ha desactivado compartir transacciones. Tu preferencia se guardara pero no tendra efecto hasta que se reactive."
     }
 };
 

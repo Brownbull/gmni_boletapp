@@ -62,6 +62,8 @@ export type {
     UserSharedGroupMembership,
     PendingInvitation,
     PendingInvitationStatus,
+    UserGroupPreference,
+    UserSharedGroupsPreferences,
 } from './sharedGroup';
 
 export {
@@ -74,4 +76,5 @@ export {
     getInvitationTimeRemaining,
     extractGroupEmoji,
     extractGroupLabel,
+    createDefaultGroupPreference,
 } from './sharedGroup';

@@ -1,19 +1,18 @@
 # Source Tree Analysis: Boletapp
 
-**Last Updated:** 2026-02-01 (Post-Epic 14e - Feature Architecture + Zustand)
+**Last Updated:** 2026-02-05 (Post-Epic 14d-v2 - Shared Groups)
 
 ## Executive Summary
 
-Boletapp has evolved from a **single-file application** (621 lines) to a **feature-based architecture** with **200+ TypeScript files** organized into feature modules and shared layers. Epic 14e introduced **Zustand** for client state management with 7 stores, reducing App.tsx from 3,387 to 2,191 lines.
+Boletapp has evolved from a **single-file application** (621 lines) to a **feature-based architecture** with **539 TypeScript files** organized into feature modules and shared layers. Epic 14e introduced **Zustand** for client state management with 7 stores. Epic 14d-v2 added the **Shared Groups** feature with changelog-driven sync.
 
 **Architecture Pattern:** Feature-Based PWA (React + TypeScript + Zustand + TanStack Query)
 **State Management:** 7 Zustand stores + TanStack Query for server state
-**Total Source Files:** 200+ TypeScript files
-**Total Lines of Code:** ~25,000+ LOC
+**Total Source Files:** 539 TypeScript files (src/) + 25 (functions/)
 **Build Tool:** Vite 5.4.0 with HMR
 **Caching:** @tanstack/react-query for instant navigation
 **Production URL:** https://boletapp-d609f.web.app
-**Cloud Functions:** 2 functions (analyzeReceipt, onTransactionDeleted)
+**Cloud Functions:** 12 functions (see [cloud-functions.md](./cloud-functions.md))
 
 ---
 
@@ -36,7 +35,11 @@ boletapp/                                    # Project root
 │   │   │   └── store/                      # useTransactionEditorStore
 │   │   ├── categories/                     # Category management
 │   │   │   └── utils/                      # itemNameMappings
-│   │   └── credit/                         # Credit tracking
+│   │   ├── credit/                         # Credit tracking
+│   │   └── shared-groups/                  # Shared groups (Epic 14d-v2)
+│   │       ├── components/                 # EditGroupDialog, ViewModeSwitcher, etc.
+│   │       ├── hooks/                      # useGroups, useUserGroupPreference
+│   │       └── services/                   # groupService
 │   │
 │   ├── entities/                           # Domain entities (FSD pattern)
 │   │   └── transaction/
@@ -59,9 +62,12 @@ boletapp/                                    # Project root
 │   │   ├── firebase.ts                     # Firebase initialization
 │   │   └── gemini.ts                       # Gemini AI configuration
 │   │
-│   ├── types/                              # TypeScript type definitions (2 files)
+│   ├── types/                              # TypeScript type definitions
 │   │   ├── settings.ts                     # Language, currency, theme types
-│   │   └── transaction.ts                  # Transaction and item interfaces
+│   │   ├── transaction.ts                  # Transaction and item interfaces
+│   │   ├── sharedGroup.ts                  # SharedGroup, Invitation, Changelog types
+│   │   ├── changelog.ts                    # ChangelogEntry, sync types
+│   │   └── index.ts                        # Barrel exports
 │   │
 │   ├── services/                           # Business logic & API integrations (25 files)
 │   │   ├── firestore.ts                    # Firestore CRUD operations
@@ -890,6 +896,7 @@ Epic 14e introduced a feature-based architecture, organizing code by domain feat
 | `src/features/transaction-editor/` | Transaction editing | useTransactionEditorStore |
 | `src/features/categories/` | Category management | itemNameMappings |
 | `src/features/credit/` | Credit tracking | CreditFeature |
+| `src/features/shared-groups/` | Shared groups (Epic 14d-v2) | useGroups, groupService, EditGroupDialog, ViewModeSwitcher |
 | `src/entities/transaction/` | Transaction domain | reconciliation utils |
 | `src/shared/stores/` | Shared Zustand stores | useNavigationStore, useSettingsStore |
 | `src/managers/modal/` | Modal infrastructure | useModalStore |

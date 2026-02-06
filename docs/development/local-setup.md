@@ -13,6 +13,7 @@ Before you start, ensure you have:
 - **npm 9+** installed (`npm --version`)
 - **Firebase CLI** installed (`firebase --version`)
 - **Git** (for version control)
+- **dust** (optional) - visual directory size analyzer for context budgeting (`dust --version`)
 
 If missing, install them:
 ```bash
@@ -616,7 +617,7 @@ After getting the app running locally:
 3. **Read test strategy:** See [docs/testing/testing-guide.md](docs/testing/testing-guide.md) for writing tests
 4. **Check documentation:** Browse [docs/index.md](docs/index.md) for complete doc index
 5. **Read contribution guidelines:** See [CONTRIBUTING.md](CONTRIBUTING.md) for coverage requirements
-6. **Start developing:** Pick a story from [docs/planning/epics.md](docs/planning/epics.md)
+6. **Start developing:** Pick a story from [docs/epics.md](../epics.md)
 
 ---
 
@@ -626,10 +627,10 @@ After getting the app running locally:
 - **Development Guide:** [docs/development/development-guide.md](docs/development/development-guide.md)
 - **Testing Guide:** [docs/testing/testing-guide.md](docs/testing/testing-guide.md)
 - **Test Environment Setup:** [docs/testing/test-environment.md](docs/testing/test-environment.md)
-- **Deployment Guide:** [docs/development/deployment-guide.md](docs/development/deployment-guide.md)
+- **Deployment Guide:** [docs/ci-cd/deployment-guide.md](../ci-cd/deployment-guide.md)
 - **Component Inventory:** [docs/development/component-inventory.md](docs/development/component-inventory.md)
 - **CI/CD Pipeline:** [docs/ci-cd/README.md](docs/ci-cd/README.md)
-- **Performance Baselines:** [docs/performance/performance-baselines.md](docs/performance/performance-baselines.md) (Epic 3)
+- **Performance Baselines:** [docs/testing/performance-baselines.md](../testing/performance-baselines.md) (Epic 3)
 - **Contribution Guidelines:** [CONTRIBUTING.md](CONTRIBUTING.md) (Epic 3)
 
 **Live Production App:** https://boletapp-d609f.web.app

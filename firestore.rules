@@ -33,13 +33,6 @@ service cloud.firestore {
     // Story 14d-v2-1-4a: Types & Security Rules Foundation
     // ============================================================================
     match /sharedGroups/{groupId} {
-      // Helper: Is user authenticated and a member of this group?
-      // Uses members[] array which contains user IDs
-      function isGroupMember() {
-        return request.auth != null &&
-               request.auth.uid in resource.data.members;
-      }
-
       // Helper: Is user authenticated and the owner of this group?
       function isGroupOwner() {
         return request.auth != null &&
@@ -52,13 +45,15 @@ service cloud.firestore {
                request.auth.uid in get(/databases/$(database)/documents/sharedGroups/$(groupId)).data.members;
       }
 
-      // Read: Only authenticated group members can read
-      // - Document reads: Security rule enforces membership
-      // - List queries: Must include ARRAY_CONTAINS filter matching auth.uid
-      // - Aggregation queries (COUNT): getCountFromServer with member filter works
-      // AC#3: Non-members cannot read documents they're not members of
-      // Story 14d-v2-1-7d: ECC Security Review - enforce membership server-side
-      allow read: if request.auth != null && request.auth.uid in resource.data.members;
+      // Read: Any authenticated user can read group documents
+      // Group metadata (name, color, members) is NOT sensitive financial data.
+      // Transaction data remains strictly isolated in per-user subcollections.
+      // Non-member reads are required for:
+      //   - Share code lookups (JoinGroupByCode -> getGroupByShareCode)
+      //   - Invitation acceptance (AcceptInvitationDialog -> getDoc for group details)
+      //   - Join transactions (acceptInvitation -> transaction.get for validation)
+      // Story 14d-v2-1-14-polish: Fixed from member-only to authenticated
+      allow read: if request.auth != null;
 
       // Create: Authenticated users can create groups
       // AC#2: BC-1 (max 5 groups) is enforced client-side via SHARED_GROUP_LIMITS.MAX_OWNED_GROUPS
@@ -105,6 +100,12 @@ service cloud.firestore {
       // AC#4: Non-owners cannot update (except to join or leave)
       // Story 14d-v2-1-6c-2: Allow joining via share code
       // Story 14d-v2-1-7a: Allow members to leave group
+      // Story 14d-v2-1-11b: Transaction sharing toggle fields (owner-only via isGroupOwner)
+      //   - transactionSharingEnabled (AC6)
+      //   - transactionSharingLastToggleAt (AC7)
+      //   - transactionSharingToggleCountToday (AC8)
+      //   - transactionSharingToggleCountResetAt
+      //   Non-owners denied write (AC9) - enforced by isGroupOwner() check
       allow update: if isGroupOwner() || (request.auth != null && isUserJoining()) || (request.auth != null && isUserLeaving());
 
       // Delete: Only owner can delete group

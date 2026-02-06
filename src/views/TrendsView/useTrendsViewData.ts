@@ -35,6 +35,8 @@ import { useViewMode } from '@/shared/stores/useViewModeStore';
 import { useUserSharedGroups } from '@/hooks/useUserSharedGroups';
 import { useAnalyticsInitialState, useNavigationStore } from '@/shared/stores/useNavigationStore';
 import { TRANSLATIONS } from '@/utils/translations';
+// Story 14d-v2-1-10d: View mode filtering utility
+import { filterTransactionsByViewMode } from '@/utils/viewModeFilterUtils';
 import type { Transaction } from '@/types/transaction';
 import type { Language, Theme, ColorTheme, FontColorMode } from '@/types/settings';
 import type { AnalyticsNavigationState } from '@/types/analytics';
@@ -174,7 +176,7 @@ export function useTrendsViewData(): UseTrendsViewDataReturn {
     const { user, services } = useAuth();
 
     // === Transaction Data ===
-    const transactions = useTransactions(user, services);
+    const rawTransactions = useTransactions(user, services);
 
     // === Theme/Locale Settings ===
     const {
@@ -243,9 +245,18 @@ export function useTrendsViewData(): UseTrendsViewDataReturn {
     // Story 14e-25b.1: Empty map as default - real implementation would compute from shared transactions
     const spendingByMember = useMemo(() => new Map<string, number>(), []);
 
+    // Story 14d-v2-1-10d: Filter transactions by view mode (personal vs group)
+    const transactions = useMemo(() => {
+        return filterTransactionsByViewMode(
+            rawTransactions,
+            viewMode,
+            viewModeGroup?.id ?? null
+        );
+    }, [rawTransactions, viewMode, viewModeGroup?.id]);
+
     // === Return Complete Data ===
     return {
-        // Transaction data
+        // Transaction data - Story 14d-v2-1-10d: Filtered transactions
         transactions,
 
         // User info

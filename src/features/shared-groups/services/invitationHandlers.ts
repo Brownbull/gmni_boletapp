@@ -80,14 +80,16 @@ export async function handleAcceptInvitationService(
     db: Firestore,
     invitation: PendingInvitation,
     userId: string,
-    userProfile?: MemberProfile
+    userProfile?: MemberProfile,
+    appId?: string,
+    shareMyTransactions?: boolean
 ): Promise<void> {
     if (isSyntheticInvitation(invitation)) {
         // Synthetic invitation - join the group directly
-        await joinGroupDirectly(db, invitation.groupId, userId, userProfile);
+        await joinGroupDirectly(db, invitation.groupId, userId, userProfile, appId, shareMyTransactions);
     } else {
         // Real invitation - accept through the invitation service
-        await acceptInvitation(db, invitation.id!, userId, userProfile);
+        await acceptInvitation(db, invitation.id!, userId, userProfile, appId, shareMyTransactions);
     }
 }
 

@@ -69,7 +69,9 @@ development_status:
   # See: docs/sprint-artifacts/epic14d-shared-groups-v2/14d-v2-architecture-alignment-plan.md
   14d-v2-0-architecture-alignment: done  # 3 pts - Create useViewModeStore, feature directory, migrate consumers - Atlas Code Review APPROVED 2026-02-01
 
-  # Sub-Epic 1: Data Model & Group Foundation (14→18 stories after 1.10 split, ~50 pts)
+  # Sub-Epic 1: Data Model & Group Foundation (14→18 stories after splits, consolidated to 2 remaining, ~50 pts)
+  # Story sizing updated 2026-02-05: Opus 4.6 handles ~3x context of previous models
+  # 5 remaining stories (1-13, 1-14a/b/c/d) consolidated into 2 (1-13+14, 1-14-polish)
   14d-v2-1-1-legacy-cleanup: done  # 2-3 pts (reduced) - Remove Epic 14c code, preserve UI shells - Atlas Code Review APPROVED 2026-02-01
   14d-v2-1-2-transaction-type-migration: split  # SPLIT 2026-02-01: 6 tasks, 35 subtasks exceeded limits → split into 14d-v2-1-2a/b/c
   14d-v2-1-2a-transaction-types-periods: done  # 2 pts - Types + computePeriods utility [Part 1/3] - Atlas Code Review APPROVED 2026-02-01 (26 tests)
@@ -116,63 +118,74 @@ development_status:
   14d-v2-1-9-firestore-ttl-offline: done  # 2 pts - 30-day TTL, offline persistence - ECC Parallel Review 2026-02-04: APPROVED (9.1/10) - 74 tests, all fixes verified, 3 TD stories created
   # Story 1.10: SUPERSEDED 2026-02-01 - Split into 4 sub-stories for Epic 14e alignment
   14d-v2-1-10-view-mode-switcher: superseded  # SUPERSEDED - Split into 1.10a-d per architecture alignment
-  14d-v2-1-10a-viewmode-store-integration: ready-for-dev  # 2 pts - Wire useViewModeStore to ViewModeSwitcher [DEPENDS: 14d-v2-0]
-  14d-v2-1-10b-viewmodeswitcher-ui: ready-for-dev  # 3 pts - Enable group list, remove "Coming soon" [DEPENDS: 14d-v2-1.10a, 1.4, 1.6]
-  14d-v2-1-10c-header-mode-indicator: ready-for-dev  # 2 pts - Header visual indicator + logo tap [DEPENDS: 14d-v2-1.10b]
-  14d-v2-1-10d-data-filtering-integration: ready-for-dev  # 3 pts - Filter all views by mode, clear filters on switch [DEPENDS: 14d-v2-1.10c, 1.2]
+  14d-v2-1-10a-viewmode-store-integration: done  # 2 pts - Wire useViewModeStore to ViewModeSwitcher [DEPENDS: 14d-v2-0] - ECC Parallel Review 2026-02-04: APPROVED (9.1/10, 2 TD stories created)
+  14d-v2-1-10b-viewmodeswitcher-ui: done  # 3 pts - Enable group list, remove "Coming soon" [DEPENDS: 14d-v2-1.10a, 1.4, 1.6] - ECC Review #2 2026-02-04: ✅ APPROVED (9.4/10)
+  14d-v2-1-10c-header-mode-indicator: done  # 2 pts - Header visual indicator + logo tap [DEPENDS: 14d-v2-1.10b] - ECC Parallel Review 2026-02-04: APPROVED (9.25/10, 3 TD stories)
+  14d-v2-1-10d-data-filtering-integration: done  # 3 pts - Filter all views by mode, clear filters on switch [DEPENDS: 14d-v2-1.10c, 1.2] - ECC Parallel Review 2026-02-04: APPROVED (9.5/10, 6 TD stories)
   14d-v2-1-11-transaction-sharing-toggle-group: split  # SPLIT 2026-02-01: 6 tasks, 28 subtasks, 12 files exceeded limits → split into 14d-v2-1-11a/b/c
-  14d-v2-1-11a-foundation-types-cooldown: ready-for-dev  # 2 pts - Types + cooldown utility [Part 1/3, DEPENDS: none]
-  14d-v2-1-11b-service-layer-security: ready-for-dev  # 2 pts - Firestore service + security rules [Part 2/3, DEPENDS: 1-11a]
-  14d-v2-1-11c-ui-components-integration: ready-for-dev  # 2 pts - Toggle UI + Settings integration [Part 3/3, DEPENDS: 1-11a, 1-11b]
+  14d-v2-1-11a-foundation-types-cooldown: done  # 2 pts - Types + cooldown utility [Part 1/3, DEPENDS: none] - ECC Parallel Review 2026-02-04: APPROVED (9.5/10, 2 TD stories created)
+  14d-v2-1-11b-service-layer-security: done  # 2 pts - Firestore service + security rules [Part 2/3, DEPENDS: 1-11a] - ECC Parallel Review 2026-02-04: APPROVED (9.2/10, 9 TD stories created)
+  14d-v2-1-11c-ui-components-integration: done  # 2 pts - Toggle UI + Settings integration [Part 3/3, DEPENDS: 1-11a, 1-11b] - ECC Parallel Review 2026-02-04: APPROVED (8.5/10 Code, PASS Security) - Task 2 integration + E2E complete
   14d-v2-1-12-user-transaction-sharing-preference: split  # SPLIT 2026-02-01: 8 tasks, 34 subtasks, 8 files exceeded limits → split into 14d-v2-1-12a/b/c/d
-  14d-v2-1-12a-foundation-types-cooldown: ready-for-dev  # 2 pts - Types + cooldown utility [Part 1/4, DEPENDS: none]
-  14d-v2-1-12b-service-layer-security: ready-for-dev  # 2 pts - Firestore service + security rules [Part 2/4, DEPENDS: 1-12a]
-  14d-v2-1-12c-ui-component-hook: ready-for-dev  # 2 pts - Toggle component + hook [Part 3/4, DEPENDS: 1-12a, 1-12b]
-  14d-v2-1-12d-integration-cleanup: ready-for-dev  # 2 pts - Settings integration + leave cleanup [Part 4/4, DEPENDS: 1-12c]
-  14d-v2-1-13-user-group-preferences-document: ready-for-dev  # 2 pts - Firestore schema for user per-group preferences - Story created 2026-01-22
-  14d-v2-1-14-join-flow-opt-in: split  # SPLIT 2026-02-01: 7 tasks, 37 subtasks exceeded limits -> split into 14d-v2-1-14a/b/c/d
-  14d-v2-1-14a-dialog-component: ready-for-dev  # 2 pts - TransactionSharingOptInDialog component [Part 1/4, DEPENDS: none]
-  14d-v2-1-14b-service-flow-integration: ready-for-dev  # 3 pts - Service layer + AcceptInvitationDialog integration [Part 2/4, DEPENDS: 1-14a, 1-6, 1-13]
-  14d-v2-1-14c-polish-edge-cases: ready-for-dev  # 2 pts - Confirmation toasts, offline handling, analytics [Part 3/4, DEPENDS: 1-14b]
-  14d-v2-1-14d-integration-tests: ready-for-dev  # 2 pts - E2E tests for join flow [Part 4/4, DEPENDS: 1-14c]
+  14d-v2-1-12a-foundation-types-cooldown: done  # 2 pts - Types + cooldown utility [Part 1/4, DEPENDS: none] - ECC Parallel Review #2 2026-02-05: APPROVED (8.5/10, 4 TD stories)
+  14d-v2-1-12b-service-layer-security: done  # 2 pts - Firestore service + security rules [Part 2/4, DEPENDS: 1-12a] - ECC Review 2026-02-05: ALL FIXES APPLIED (53 tests, 10/10 action items complete)
+  14d-v2-1-12c-ui-component-hook: done  # 2 pts - Toggle component + hook [Part 3/4, DEPENDS: 1-12a, 1-12b] - ECC Parallel Review #3 2026-02-05: APPROVED (8.5/10, 0 blockers)
+  14d-v2-1-12d-integration-cleanup: done  # 2 pts - Settings integration + leave cleanup [Part 4/4, DEPENDS: 1-12c] - ECC Parallel Review #3 2026-02-05: APPROVED (9/10 resolved, 86 tests pass) - All HIGH/MEDIUM/LOW fixes applied
+  # CONSOLIDATED 2026-02-05: Stories 1-13, 1-14a/b/c/d merged into 2 stories (Opus 4.6 sizing)
+  # Original 5 stories (11 pts) -> 2 consolidated stories (11 pts), same scope, fewer context switches
+  14d-v2-1-13-user-group-preferences-document: consolidated  # CONSOLIDATED into 14d-v2-1-13+14 (2026-02-05)
+  14d-v2-1-14-join-flow-opt-in: consolidated  # CONSOLIDATED into 14d-v2-1-13+14 + 14d-v2-1-14-polish (2026-02-05)
+  14d-v2-1-14a-dialog-component: consolidated  # CONSOLIDATED into 14d-v2-1-13+14 (2026-02-05)
+  14d-v2-1-14b-service-flow-integration: consolidated  # CONSOLIDATED into 14d-v2-1-13+14 (2026-02-05)
+  14d-v2-1-14c-polish-edge-cases: consolidated  # CONSOLIDATED into 14d-v2-1-14-polish (2026-02-05)
+  14d-v2-1-14d-integration-tests: consolidated  # CONSOLIDATED into 14d-v2-1-14-polish (2026-02-05)
+  # New consolidated stories:
+  14d-v2-1-13+14-join-flow-foundation: done  # 7 pts - Preferences document + opt-in dialog + service integration [DEPENDS: 1-4, 1-5, 1-6, 1-12] - ECC Parallel Review 2026-02-05: APPROVED (7.55/10 weighted, 4 quick fixes applied: H-1 groupId validation, H-2 DEV guards, M-2 error toast, M-3 type re-exports, 426 tests pass)
+  14d-v2-1-14-polish-e2e: review  # 4 pts - Confirmation toasts + offline handling + analytics + E2E tests [DEPENDS: 1-13+14] - ECC Parallel Review 2026-02-05: APPROVED (code 7/10, security MEDIUM - H-1 sanitization fixed, type mismatch fixed, 94 GruposView tests + 38 OptInDialog tests pass)
 
-  # Tech Debt Stories (Epic 14d-v2) - Added 2026-02-03 from ECC Code Review #2
-  # These are pattern consistency improvements, not user-facing changes
-  TD-14d-1-zustand-migration: done  # 2-4 hrs - Migrate useGroupDialogs from 17 useState to Zustand store [Source: 14d-v2-1-7e ECC Review #2] - COMPLETED 2026-02-03
-  TD-14d-2-fsd-component-location: done  # 4-6 hrs - Move SharedGroups components to @features/shared-groups/components/ [Source: 14d-v2-1-7e ECC Review #2, DEPENDS: TD-14d-1] - COMPLETED 2026-02-03
-  TD-14d-3-gruposview-dialog-extraction: ready-for-dev  # 2-3 hrs - Extract dialog rendering (lines 654-782) to GruposViewDialogs.tsx [Source: 14d-v2-1-7e ECC Review #4, DEPENDS: TD-14d-1]
-  TD-14d-4-groupservice-modularization: ready-for-dev  # 4-6 hrs - Split groupService.ts (1068 lines) into groupService, groupDeletionService, groupMemberService [Source: 14d-v2-1-7e ECC Review #5]
-  TD-14d-5-invitation-read-restriction: ready-for-dev  # 2-3 hrs - Restrict pendingInvitations read to email match query [Source: 14d-v2-1-7e ECC Review #5, Security]
-  TD-14d-6-delete-rate-limiting: backlog  # 3-4 hrs - Add rate limiting for destructive group operations [Source: 14d-v2-1-7e ECC Review #5, Security]
-  TD-14d-7-dependency-vulnerability-tracking: ready-for-dev  # 1-2 hrs - Track and remediate npm audit vulnerabilities [Source: 14d-v2-1-7e ECC Review #5, Security]
-  TD-14d-8-integration-test-dry-refactor: ready-for-dev  # 2-3 hrs - DRY cleanup for integration tests [Source: 14d-v2-1-7f ECC Review]
-
-  # Tech Debt Stories (Epic 14d-v2 - Story 1-8a) - Added 2026-02-03 from ECC Parallel Review
-  TD-14d-9-type-sync-validation: ready-for-dev  # 1-2 hrs - CI validation for Cloud Function type synchronization [Source: 14d-v2-1-8a ECC Review]
-  TD-14d-10-changelog-data-sanitization: ready-for-dev  # 2-3 hrs - Evaluate changelog data sanitization policy (imageUrls) [Source: 14d-v2-1-8a ECC Review, Security]
-  TD-14d-11-toctou-membership-validation: ready-for-dev  # 2-3 hrs - Atomic membership validation with Firestore transactions [Source: 14d-v2-1-8a ECC Review, Security]
-  TD-14d-12-error-extraction-pattern: ready-for-dev  # 1-2 hrs - Standardize error extraction pattern across Cloud Functions [Source: 14d-v2-1-8a ECC Review]
-
-  # Tech Debt Stories (Epic 14d-v2 - Story 1-7d) - Added 2026-02-03 from ECC Code Review
-  TD-7d-5-hard-leave-mode: ready-for-dev  # 1-2 hrs - Implement hard leave when Cloud Function 14d-v2-1-7c is ready [Source: 14d-v2-1-7d, DEPENDS: 14d-v2-1-7c]
-  TD-7d-6-member-selector-loading: ready-for-dev  # 1 hr - Add loading state to MemberSelectorDialog confirm button [Source: 14d-v2-1-7d]
-
-  # Tech Debt Stories (Epic 14d-v2 - Story 1-9) - Added 2026-02-04 from ECC Parallel Review
-  TD-14d-17-recovery-prompt-test-coverage: ready-for-dev  # 1-2 hrs - Error state + focus management tests for RecoverySyncPrompt [Source: 14d-v2-1-9 ECC Review]
-  TD-14d-18-dialog-focus-cleanup: ready-for-dev  # 2-3 hrs - Consistent focus timeout cleanup across dialog components [Source: 14d-v2-1-9 ECC Review]
-
-# /bmad:bmm:workflows:dev-story
-# /bmad:bmm:workflows:atlas-dev-story
 # /bmad:bmm:workflows:ecc-dev-story
-# /bmad:bmm:workflows:code-review
-# /bmad:bmm:workflows:atlas-code-review
 # /bmad:bmm:workflows:ecc-code-review
-# /bmad:bmm:workflows:atlas-create-story
 # /bmad:bmm:workflows:ecc-create-story
-# /bmad:bmm:workflows:atlas-story-sizing
-# /bmad:bmm:workflows:atlas-deploy-story
 # /bmad:bmm:workflows:archie-refactor src/features/scan/
 
+  # ============================================================================
+  # TECH DEBT - CONSOLIDATED (Epic 14d-v2)
+  # ============================================================================
+  # Consolidated 2026-02-05 from 57+ individual TD stories into 15 actionable items
+  # Plan: docs/sprint-artifacts/epic14d-shared-groups-v2/TD-CONSOLIDATED-PLAN.md
+  # Archived originals: stories/TD-ARCHIVED/
+  # Completed pre-consolidation:
+  TD-14d-1-zustand-migration: done  # COMPLETED 2026-02-03
+  TD-14d-2-fsd-component-location: done  # COMPLETED 2026-02-03
+
+  # TIER 1: Code Bloat Prevention (MUST DO) - 11-16 hrs
+  TD-CONSOLIDATED-1-groupservice-modularization: ready-for-dev  # 4-6 hrs - Split 1,367 LOC into groupService, groupDeletionService, groupMemberService [from: TD-14d-4]
+  TD-CONSOLIDATED-2-gruposview-dialog-extraction: ready-for-dev  # 2-3 hrs - Extract dialog rendering to GruposViewDialogs.tsx [from: TD-14d-3, DEPENDS: TD-CONSOLIDATED-1]
+  TD-CONSOLIDATED-3-dry-utilities-extraction: ready-for-dev  # 3-4 hrs - Transaction merge, ViewMode type consolidation, shared test factory [from: TD-14d-30, 33, 34]
+  TD-CONSOLIDATED-4-cooldown-core-extraction: ready-for-dev  # 2-3 hrs - Extract ~80% duplicated cooldown logic to cooldownCore.ts [from: TD-14d-48 core, 36]
+
+  # TIER 2: Security (SHOULD DO) - 4-7 hrs
+  TD-CONSOLIDATED-5-invitation-read-restriction: ready-for-dev  # 2-3 hrs - Restrict pendingInvitations read to email match [from: TD-14d-5]
+  TD-CONSOLIDATED-6-groupid-validation: ready-for-dev  # 1-2 hrs - Validate groupId before Firestore field paths [from: TD-14d-55]
+  TD-CONSOLIDATED-7-css-color-injection-validation: ready-for-dev  # 1-2 hrs - Validate group.color before CSS injection [from: TD-14d-28]
+
+  # TIER 3: Test Quality (DO WHEN TOUCHING) - 4-6 hrs
+  TD-CONSOLIDATED-8-test-infrastructure-cleanup: ready-for-dev  # 4-6 hrs - DRY test helpers, type safety, naming conventions [from: TD-14d-8, 31, 34, 35, 37, 49]
+
+  # TIER 4: Documentation (DO WHEN NEEDED) - 2-3 hrs
+  TD-CONSOLIDATED-9-adr-documentation: ready-for-dev  # 2-3 hrs - Client-side filtering ADR-021, rate limiting ADR [from: TD-14d-32, 38]
+
+  # TIER 5: Technical Improvements (BACKLOG) - 12-17 hrs optional
+  TD-CONSOLIDATED-10-toctou-atomic-transactions: backlog  # 2-3 hrs - Wrap membership validation in Firestore transaction [from: TD-14d-11]
+  TD-CONSOLIDATED-11-server-side-rate-limiting: backlog  # 3-4 hrs - Rate limiting for destructive operations [from: TD-14d-6, 39]
+  TD-CONSOLIDATED-12-react-query-cache-staleness: backlog  # 2-3 hrs - Fix optimistic cache update [from: TD-14d-47]
+  TD-CONSOLIDATED-13-dialog-focus-management: backlog  # 2-3 hrs - Consistent focus cleanup across dialogs [from: TD-14d-17, 18]
+  TD-CONSOLIDATED-14-cloud-function-type-sync-ci: backlog  # 1-2 hrs - CI validation for type synchronization [from: TD-14d-9]
+  TD-CONSOLIDATED-15-dependency-vulnerability-tracking: ready-for-dev  # 1-2 hrs - npm audit remediation [from: TD-14d-7]
+
+  # ARCHIVED (42+ items) - Fix inline if encountered, not tracked individually
+  # See: stories/TD-ARCHIVED/ and TD-CONSOLIDATED-PLAN.md for full archive list
+  # Also archived (no story files): TD-7d-5, TD-7d-6 (deferred, depends on cloud function)
 
   # Sub-Epic 2: Changelog-Driven Sync (12 stories, ~45 pts)
   14d-v2-2-1-tag-transaction-to-group: backlog  # 3 pts - Assign sharedGroupId

@@ -39,6 +39,14 @@ const FIREBASE_API_KEY = process.env.VITE_FIREBASE_API_KEY || '';
  * Global setup function executed before all tests.
  */
 async function globalSetup(config: FullConfig) {
+  // Skip emulator auth for staging-only or multi-user runs (they handle their own auth via TestUserMenu)
+  const projectNames = config.projects.map(p => p.name);
+  const stagingOnlyProjects = projectNames.every(n => n === 'staging' || n === 'multi-user');
+  if (stagingOnlyProjects) {
+    console.log(`\n[E2E Global Setup] Skipping - staging/multi-user tests handle their own auth\n`);
+    return;
+  }
+
   const mode = USE_PRODUCTION_AUTH ? 'PRODUCTION' : 'EMULATOR';
   console.log(`\n🔐 [E2E Global Setup] Starting authentication setup (${mode} mode)...\n`);
 

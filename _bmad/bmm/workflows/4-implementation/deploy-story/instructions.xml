@@ -5,7 +5,7 @@
 
   <critical>This workflow deploys a completed story through the full branch pipeline</critical>
   <critical>NEVER skip safety confirmations - each merge step requires explicit approval</critical>
-  <critical>Atlas validation is REQUIRED before production deployment</critical>
+  <critical>Pre-deployment validation is REQUIRED before production deployment</critical>
 
   <step n="1" goal="Verify story is ready for deployment">
     <action>If {{story_path}} not provided, ask user which story to deploy</action>
@@ -51,50 +51,50 @@
       Deployment pipeline: {{current_branch}} → develop → staging → main</output>
   </step>
 
-  <step n="2" goal="Atlas pre-deployment validation">
-    <critical>Atlas validates the deployment before any merges</critical>
+  <step n="2" goal="Pre-deployment validation">
+    <critical>Validate deployment against project patterns before any merges</critical>
 
-    <action>Load Atlas memory from {atlas_memory}</action>
-    <action>Load architecture.md for pattern validation</action>
+    <action>Load project patterns from {project-root}/_bmad/bmm/knowledge/code-review-patterns.md</action>
+    <action>Load architecture docs from {project-root}/docs/architecture/</action>
 
-    <output>**Atlas Pre-Deployment Validation**
+    <output>**Pre-Deployment Validation**
 
-      Checking alignment with documented architecture and workflows...</output>
+      Checking alignment with documented architecture and patterns...</output>
 
-    <!-- Atlas Workflow Chain Analysis -->
+    <!-- Cross-cutting impact analysis -->
     <action>Identify workflows affected by this story's changes:
       1. Parse story acceptance criteria for user journey references
-      2. Map file changes to affected workflow chains
+      2. Map file changes to affected features
       3. Identify downstream impacts
     </action>
 
-    <!-- Atlas Architectural Alignment -->
-    <action>Check implementation against architecture.md:
+    <!-- Architectural alignment -->
+    <action>Check implementation against architecture docs:
       1. Verify patterns used match documented ADRs
       2. Check for undocumented architectural decisions
       3. Flag any deviations from standards
     </action>
 
     <check if="critical architectural conflicts found">
-      <output>**ATLAS DEPLOYMENT BLOCK**
+      <output>**DEPLOYMENT BLOCK**
 
         Critical architectural conflicts detected:
         {{conflict_list}}
 
         Resolve these issues before deployment.</output>
-      <ask>Override Atlas block? (Not recommended) [Y/N]</ask>
+      <ask>Override deployment block? (Not recommended) [Y/N]</ask>
       <check if="user says N">
         <action>EXIT workflow</action>
       </check>
       <check if="user says Y">
         <action>Log override decision</action>
-        <output>⚠️ Atlas block overridden by user. Proceeding with caution.</output>
+        <output>⚠️ Deployment block overridden by user. Proceeding with caution.</output>
       </check>
     </check>
 
-    <output>**Atlas Validation: PASSED ✅**
+    <output>**Validation: PASSED ✅**
 
-      Workflow chains validated: {{chain_count}}
+      Patterns validated: {{chain_count}}
       Architectural alignment: Confirmed
       Downstream impacts: {{impact_summary}}</output>
   </step>
@@ -252,36 +252,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"`</action>
     </check>
   </step>
 
-  <step n="7" goal="Update Atlas memory and sprint status">
-    <!-- Feed Atlas with deployment knowledge -->
-    <action>Load {atlas_memory}</action>
-
-    <action>Generate Atlas deployment nugget:
-      ```
-      ### Deployment - {{story_key}} - {{date}}
-
-      **Summary:** {{story_key}} deployed to {{final_environment}}.
-
-      **Changes Deployed:**
-      - {{change_summary}}
-
-      **Workflow Implications:**
-      - Workflows affected: {{affected_workflows}}
-      - Test scenarios validated: {{test_count}}
-
-      **Deployment Path:** {{current_branch}} → develop → staging → main
-
-      **Source:** {{story_file_path}}
-      ```
-    </action>
-
-    <ask>Update Atlas memory with deployment knowledge? [Y/N]</ask>
-    <check if="user says Y">
-      <action>Append nugget to Section 7 (Process &amp; Strategy) of {atlas_memory}</action>
-      <action>Update Sync History table</action>
-      <output>Atlas memory updated ✅</output>
-    </check>
-
+  <step n="7" goal="Update sprint status">
     <!-- Update sprint status -->
     <check if="{sprint_status} file exists">
       <action>Load {sprint_status}</action>
@@ -302,12 +273,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>"`</action>
 
       **Pipeline Executed:**
       ✅ Story status verified (done)
-      ✅ Atlas pre-deployment validation
+      ✅ Pre-deployment validation
       ✅ Merged to develop
       {{#if final_environment in ['staging', 'production']}}✅ Promoted to staging{{else}}⏸️ Staging skipped{{/if}}
       {{#if final_environment == 'production'}}✅ Deployed to production{{else}}⏸️ Production skipped{{/if}}
       {{#if branch_deleted}}✅ Feature branch deleted{{else}}ℹ️ Feature branch retained{{/if}}
-      ✅ Atlas memory updated
+      ✅ Sprint status synced
       ✅ Sprint status synced
 
       **Next Steps:**

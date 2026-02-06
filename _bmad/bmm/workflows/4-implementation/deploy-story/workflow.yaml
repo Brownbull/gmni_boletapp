@@ -1,6 +1,6 @@
 # Deploy Story Workflow
 name: deploy-story
-description: "Deploy a completed story through the full branch pipeline (feature → develop → staging → main), delete feature branch, and update Atlas memory. Includes safety gates at each promotion step."
+description: "Deploy a completed story through the full branch pipeline (feature → develop → staging → main), delete feature branch, and update sprint status. Includes safety gates at each promotion step."
 author: "Boletapp Team"
 
 # Critical variables from config
@@ -40,7 +40,9 @@ variables:
   # Project context
   project_context: "**/project-context.md"
   story_dir: "{sprint_artifacts}"
-  atlas_memory: "{project-root}/_bmad/agents/atlas/atlas-sidecar/atlas-memory.md"
+  # Project knowledge paths (replaces Atlas memory - migrated 2026-02-05)
+  project_knowledge_path: "{project-root}/_bmad/bmm/knowledge"
+  project_architecture_path: "{project-root}/docs/architecture"
 
 # Input file patterns
 input_file_patterns:
@@ -48,9 +50,9 @@ input_file_patterns:
     description: "System architecture for deployment validation"
     whole: "{output_folder}/*architecture*.md"
     load_strategy: "SELECTIVE_LOAD"
-  atlas_memory:
-    description: "Atlas memory for feeding deployment knowledge"
-    whole: "{project-root}/_bmad/agents/atlas/atlas-sidecar/atlas-memory.md"
-    load_strategy: "FULL_LOAD"
+  project_knowledge:
+    description: "Project patterns for deployment context"
+    whole: "{project-root}/_bmad/bmm/knowledge/code-review-patterns.md"
+    load_strategy: "SELECTIVE_LOAD"
 
 standalone: true

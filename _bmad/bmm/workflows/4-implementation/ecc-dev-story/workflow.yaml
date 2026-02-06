@@ -1,12 +1,12 @@
 # ECC-Enhanced Story Development Workflow
 name: ecc-dev-story
-description: "Story implementation using ECC agents orchestrated by Atlas Puppeteer - TDD-first development with parallel reviews"
-author: "BMad + Atlas Puppeteer"
+description: "Story implementation using ECC agents with TDD-first development and parallel reviews"
+author: "BMad"
 
-# ECC Integration - Atlas as Puppeteer Orchestrator
+# ECC Integration - Orchestrator Configuration
 ecc_orchestration:
   enabled: true
-  orchestrator: "Atlas Puppeteer"
+  orchestrator: "ECC Orchestrator"
 
   # ECC agents used in this workflow
   agents:
@@ -35,22 +35,19 @@ ecc_orchestration:
       agents: ["code-reviewer", "security-reviewer"]
       description: "Parallel self-review before marking story complete"
 
-# Atlas Integration
-atlas_features:
-  consult_architecture: true
-  consult_testing: true
-  consult_lessons: true
-  workflow_chain_awareness: true
-  memory_feeding: true
-  puppeteer_orchestration: true  # NEW: Enable ECC orchestration
-
-atlas_knowledge_fragments:
-  required:
-    - "04-architecture.md"
-    - "05-testing.md"
-    - "08-workflow-chains.md"
-  optional:
-    - "06-lessons.md"
+# Project Knowledge Integration (replaces Atlas - migrated 2026-02-05)
+project_knowledge:
+  enabled: true
+  load_at_session_start: true
+  files:
+    required:
+      - "{project-root}/_bmad/bmm/knowledge/code-review-patterns.md"
+      - "{project-root}/docs/architecture/TESTING-GUIDELINES.md"
+      - "{project-root}/docs/architecture/firestore-patterns.md"
+    optional:
+      - "{project-root}/docs/architecture/state-management.md"
+      - "{project-root}/docs/architecture/component-patterns.md"
+      - "{project-root}/tests/e2e/E2E-TEST-CONVENTIONS.md"  # Only if story has E2E
 
 # Critical variables from config
 config_source: "{project-root}/_bmad/bmm/config.yaml"
@@ -67,14 +64,72 @@ context_file: "{story_dir}/{{story_key}}.context.xml"
 sprint_artifacts: "{config_source}:sprint_artifacts"
 sprint_status: "{sprint_artifacts}/sprint-status.yaml || {output_folder}/sprint-status.yaml"
 
-# Atlas memory paths
-atlas_memory: "{project-root}/_bmad/agents/atlas/atlas-sidecar"
-atlas_index: "{atlas_memory}/atlas-index.csv"
-atlas_knowledge: "{atlas_memory}/knowledge"
+# Project knowledge paths (replaces Atlas memory - migrated 2026-02-05)
+project_knowledge_path: "{project-root}/_bmad/bmm/knowledge"
+project_architecture_path: "{project-root}/docs/architecture"
 
 # Workflow components
 installed_path: "{project-root}/_bmad/bmm/workflows/4-implementation/ecc-dev-story"
 instructions: "{installed_path}/instructions.xml"
 validation: "{installed_path}/checklist.md"
+
+# Workflow Optimizations (see docs/architecture/plans/ECC-WORKFLOW-OPTIMIZATIONS.md)
+workflow_optimizations:
+  tdd:
+    use_watch_mode: true
+    watch_timeout_minutes: 30
+    cache_test_content: true
+  validation:
+    consolidate_builds: true
+    skip_type_check_if_build_passes: true
+  progress_tracking:
+    mode: "batched"  # Options: immediate | batched | minimal
+    batch_at:
+      - task_complete     # Batch all subtask checkboxes into single story edit
+      - story_complete    # Update sprint-status.yaml only at story end
+  knowledge:
+    cache_at_session_start: true
+    summarize_for_story_type: true
+    cache_files:
+      - "_bmad/bmm/knowledge/code-review-patterns.md"
+      - "docs/architecture/TESTING-GUIDELINES.md"
+      - "docs/architecture/firestore-patterns.md"
+      - "docs/architecture/state-management.md"
+      - "docs/architecture/component-patterns.md"
+      - "tests/e2e/E2E-TEST-CONVENTIONS.md"  # Only if story has E2E
+
+# Mid-Story Sizing Configuration (see docs/architecture/plans/ECC-MID-STORY-SIZING-PLAN.md)
+mid_story_sizing:
+  enabled: true
+  post_planning_check: true     # Step 2.5: Check after planning
+  per_task_check: true          # Step 4 loop: Check after each task
+  pre_review_check: true        # Step 5.5: Check before review
+  auto_suggest_split: true      # Suggest split when thresholds exceeded
+  block_on_exceed: false        # Warning only — user always has control
+  record_metrics: true          # Save metrics in Dev Notes
+
+  # Thresholds
+  thresholds:
+    small:
+      max_tasks: 2
+      max_subtasks: 5
+      max_files: 2
+    medium:
+      max_tasks: 3
+      max_subtasks: 10
+      max_files: 4
+    large:
+      max_tasks: 4
+      max_subtasks: 15
+      max_files: 8
+    too_large:
+      description: "REQUIRES SPLIT"
+      trigger: ">4 tasks OR >15 subtasks OR >8 files"
+
+  # Growth alert thresholds
+  growth_alerts:
+    file_growth: 3        # Alert if files exceed original estimate by 3+
+    subtask_growth: 5     # Alert if subtasks exceed original by 5+
+    loc_per_task: 500     # Alert if LOC exceeds 500 per task
 
 standalone: true
