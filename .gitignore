@@ -87,7 +87,7 @@ docs/service-accounts/
 *-firebase-adminsdk-*.json
 
 # Tailwind templates
-docs/design-references/tailwind_templates
+docs/uxui/tailwind-templates/tailwind_templates
 
 # Windows file system alternate data streams
 *:Zone.Identifier
@@ -104,3 +104,9 @@ CLAUDE.md
 # Claude Code
 .claude/
 docs/development/tooling/wsl-chrome/backup/.credentials.json
+
+# Bun lockfile (project uses npm)
+bun.lock
+
+# Archive files
+docs/archive/

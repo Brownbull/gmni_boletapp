@@ -6,187 +6,129 @@ Thank you for your interest in contributing to Boletapp! This document provides 
 
 1. **Fork the repository** and clone it locally
 2. **Install dependencies**: `npm install`
-3. **Start Firebase emulators**: `npm run emulators`
-4. **Run tests** to ensure everything works: `npm run test:all`
+3. **Start Firebase emulators** (for integration tests): `npm run emulators`
+4. **Run tests** to ensure everything works: `npm run test:quick`
 
 ## Development Workflow
 
-### Branch Strategy
+### Branch Strategy (2-Branch Model)
 
-We use a **3-branch workflow** with develop, staging, and main branches:
+```
+main (production - auto-deploys to Firebase)
+  ^
+develop (integration branch)
+  ^
+feature/* | bugfix/* | chore/* (working branches)
+```
 
 | Branch | Purpose | Lifetime |
 |--------|---------|----------|
-| `main` | Production-ready code, always deployable | Permanent |
+| `main` | Production-ready code, auto-deploys on merge | Permanent |
 | `develop` | Integration branch for completed features | Permanent |
-| `staging` | Pre-production testing environment | Permanent |
-| `feature/*` | New features, bug fixes, epic work | Temporary (delete after merge) |
+| `feature/*` | New features, bug fixes, epic work | Temporary (auto-deleted after merge) |
 
 **Branch Naming Convention:**
 ```
 feature/epic{N}-{short-description}
+feature/fix-{description}
+chore/{description}
 ```
 
-**Examples:**
-- `feature/epic10-insight-engine`
-- `feature/epic10-foundation-refactor`
-- `feature/fix-bundle-size`
+**Branch Flow:**
+1. Create feature branch from `develop`: `feature/story-X.Y-description`
+2. Develop and test locally
+3. PR to `develop` - requires CI pass
+4. PR from `develop` to `main` - production deployment
+5. Auto-deploy to Firebase on merge to main
 
-All work should be done in feature branches created from `develop`:
+**Hotfix Flow:**
+1. Create `hotfix/*` branch from `main`
+2. PR directly to `main` (deploys immediately)
+3. Merge `main` back to `develop` to sync
+
+All work starts from latest `develop`:
 ```bash
-# Always start from latest develop
 git checkout develop
 git pull origin develop
-
-# Create feature branch
 git checkout -b feature/epic10-my-feature
 ```
+
+**Branch Protection:**
+- Both branches (main, develop) are protected
+- Require PR + passing CI before merge
+- No direct pushes allowed
+- Auto-delete head branches is enabled on GitHub
 
 ### Pull Request Process
 
 1. Create your feature branch from `develop` (always pull latest first!)
 2. Write tests for any new functionality
-3. Ensure all tests pass locally: `npm run test:all`
+3. Ensure tests pass locally: `npm run test:story`
 4. Push your branch and create a PR against `develop`
 5. Wait for CI checks to pass
 6. Request review from maintainers
-7. Merge after approval (merge commit, not squash for sync PRs)
-8. **Delete feature branch** immediately after merge
+7. Merge after approval
+8. Feature branch auto-deleted on GitHub; clean up locally: `git fetch --prune && git branch -d feature/...`
 
-### Deployment Pipeline
+### Merge Strategy
 
-The deployment workflow follows: `feature/* → develop → staging → main`
+| Scenario | Strategy |
+|----------|----------|
+| Feature PR to develop | Squash merge (default) |
+| develop to main | Merge commit (preserve history) |
+| Hotfix | Cherry-pick to all branches |
 
-1. **develop**: Integration testing, Firebase preview channel
-2. **staging**: Pre-production validation, Firebase preview channel
-3. **main**: Production deployment at https://boletapp-d609f.web.app
+## Testing
 
-Use the BMAD deploy-story workflow for automated deployment:
-```bash
-/bmad:bmm:workflows:deploy-story
-```
+### Test Types
 
-### Branch Cleanup (IMPORTANT)
+- **Unit tests** (`tests/unit/`): Pure functions and isolated logic
+- **Integration tests** (`tests/integration/`): Component interactions with Firebase emulator
+- **E2E tests** (`tests/e2e/staging/`): Complete user workflows against staging environment
 
-After every merged PR:
-- [ ] Feature branch deleted on GitHub (auto or manual)
-- [ ] Local feature branch deleted: `git branch -d feature/...`
-- [ ] Local develop updated: `git checkout develop && git pull`
-- [ ] No stale branches remain
+**E2E tests run ONLY against the staging environment** - no local/emulator e2e testing.
 
-**Cleaning up stale branches:**
-```bash
-# Delete merged local branch
-git branch -d feature/old-branch
-
-# Prune remote-tracking branches
-git fetch --prune
-```
-
-## Test Coverage Requirements
-
-### Minimum Coverage Thresholds
-
-CI enforces minimum test coverage thresholds. PRs that drop coverage below these thresholds will fail:
-
-| Metric | Minimum Threshold |
-|--------|-------------------|
-| Lines | 45% |
-| Branches | 30% |
-| Functions | 25% |
-| Statements | 40% |
-
-**Note:** These thresholds are baseline values. Future improvements will raise them incrementally.
-
-### Checking Coverage Locally
-
-Run the coverage report to see current coverage:
+### Running Tests
 
 ```bash
-npm run test:coverage
-```
+# Quick check (during development)
+npm run test:quick         # type-check + parallel unit tests (~35s)
 
-This generates:
-- **Terminal output** - Summary of coverage percentages
-- **HTML report** - Open `coverage/index.html` in your browser for detailed report
-- **JSON report** - `coverage/coverage-summary.json` for CI tools
+# Story validation (before marking story "review")
+npm run test:story         # type-check + unit + integration (~2min)
 
-### What to Do If Coverage Fails
+# Full suite (before deployment)
+npm run test:sprint        # unit + integration + e2e (~5min)
 
-If your PR fails coverage checks:
-
-1. **Identify uncovered code**: Check the HTML report (`coverage/index.html`) to see which lines aren't covered
-2. **Add tests for new code**: Every new function, component, or feature should have tests
-3. **Test edge cases**: Cover error handling paths, boundary conditions, and edge cases
-4. **Don't reduce coverage**: If removing code, ensure remaining code is still tested
-
-### Coverage Targets by Area
-
-| Area | Target | Priority |
-|------|--------|----------|
-| Critical paths (auth, security) | 90%+ | HIGH |
-| Services (Firestore, Gemini) | 80%+ | HIGH |
-| Utils (pure functions) | 80%+ | MEDIUM |
-| Components (UI) | 70%+ | MEDIUM |
-| Views (pages) | 60%+ | LOW |
-
-### PR Coverage Comments
-
-When you open a PR, a bot will automatically post a coverage report comment showing:
-- Current coverage percentages
-- Comparison to the base branch
-- Files with coverage changes
-
-Use this information to identify areas that need more tests.
-
-## Running Tests
-
-```bash
-# All tests
-npm run test:all
-
-# Unit tests only
-npm run test:unit
-
-# Integration tests only
-npm run test:integration
-
-# E2E tests only
-npm run test:e2e
+# Individual
+npm run test:unit          # Unit tests only
+npm run test:integration   # Integration tests only (requires emulators)
+npm run test:e2e:staging   # E2E tests (staging env)
 
 # Coverage report
 npm run test:coverage
 ```
 
-### Test Types
+Integration tests require Firebase emulators: `npm run emulators`
 
-- **Unit tests** (`tests/unit/`): Test pure functions and isolated logic
-- **Integration tests** (`tests/integration/`): Test component interactions with Firebase emulator
-- **E2E tests** (`tests/e2e/`): Test complete user workflows in real browser
+### Test Coverage
 
-### Firebase Emulators
-
-Integration tests require Firebase emulators running:
+CI enforces minimum thresholds. For detailed coverage targets by area and tiered testing strategy, see [Team Standards - Testing](docs/team-standards.md#testing-standards).
 
 ```bash
-npm run emulators
+# Generate coverage report
+npm run test:coverage
+# Open HTML report at coverage/index.html
 ```
-
-The emulators run on:
-- Firestore: `localhost:8080`
-- Auth: `localhost:9099`
-- Emulator UI: `localhost:4000`
 
 ## Security
 
 ### Pre-commit Hooks (Secrets Detection)
 
-This project uses **husky** and **gitleaks** to prevent accidental commit of secrets (API keys, credentials, etc.).
+This project uses **husky** and **gitleaks** to prevent accidental commit of secrets.
 
-**How it works:**
 - A pre-commit hook automatically scans staged files before every commit
 - If potential secrets are detected, the commit is blocked
-- You'll see a clear error message explaining what was found
 
 **Installing gitleaks (required for full protection):**
 
@@ -208,27 +150,7 @@ sudo mv gitleaks /usr/local/bin/
 3. Use `.env` files for local secrets (gitignored)
 4. Retry your commit
 
-**Emergency bypass (NOT RECOMMENDED):**
-```bash
-git commit --no-verify -m "your message"
-```
-Only use this if you're certain it's a false positive. Contact maintainers if unsure.
-
-### Manual Secrets Scanning
-
-You can manually scan for secrets at any time:
-
-```bash
-# Scan current files
-./scripts/scan-secrets.sh
-
-# Scan full git history
-./scripts/scan-secrets.sh --history
-```
-
-### Security Audit (Story 4.3)
-
-A comprehensive security audit script runs all security checks in one command:
+### Security Audit
 
 ```bash
 # Run full security audit (npm audit + gitleaks + eslint security)
@@ -238,71 +160,43 @@ npm run security:audit
 npm run security:lint
 ```
 
-**What the audit checks:**
-
-| Check | Description | Threshold |
-|-------|-------------|-----------|
-| npm audit | Scans dependencies for vulnerabilities | Zero HIGH/CRITICAL |
-| gitleaks | Scans for secrets in git history | Zero secrets |
-| ESLint security | Static analysis for dangerous patterns | Zero errors |
-
-**Security ESLint Rules:**
-
-The project uses `eslint-plugin-security` to detect dangerous code patterns:
-
-| Rule | Severity | Description |
-|------|----------|-------------|
-| detect-eval-with-expression | error | Blocks `eval()` usage |
-| detect-unsafe-regex | error | Blocks ReDoS-vulnerable regex |
-| detect-buffer-noassert | error | Blocks unsafe buffer operations |
-| detect-object-injection | warn | Warns on `obj[var]` patterns |
-| detect-possible-timing-attacks | warn | Warns on timing-sensitive comparisons |
-
-**Running Before PR:**
-
-Always run the security audit before creating a PR:
-
-```bash
-npm run security:audit
-```
-
 CI will fail PRs with HIGH/CRITICAL vulnerabilities or security lint errors.
 
-### Security Documentation
+For comprehensive security documentation, see [`docs/security/`](docs/security/).
 
-For comprehensive security information, see the [`docs/security/`](docs/security/) directory:
+## Git Staging Verification
 
-| Document | Description |
-|----------|-------------|
-| [Security Overview](docs/security/README.md) | Security practices, tools, and guidelines |
-| [OWASP Checklist](docs/security/owasp-checklist.md) | OWASP Top 10 (2021) validation |
-| [Audit Report](docs/security/audit-report.md) | Epic 4 security findings |
-| [Incident Response](docs/security/incident-response.md) | Security incident procedures |
-| [Secrets Scan Report](docs/security/secrets-scan-report.md) | gitleaks scan results |
+Before every commit, verify staged files with `git status --porcelain`:
 
----
+| Status | Meaning | Action |
+|--------|---------|--------|
+| `A ` | Staged (new file) | Ready to commit |
+| `M ` | Staged (modified) | Ready to commit |
+| ` M` | Unstaged modification | Need `git add` |
+| `??` | Untracked | Need `git add` |
+| `MM` | Split staged/unstaged | Re-stage with `git add` |
+| `D ` | Staged deletion | Ready to commit |
+
+### Common Pitfalls
+
+| Pitfall | Prevention |
+|---------|------------|
+| New files untracked (`??`) | `git add path/file` for each new file |
+| Security rules unstaged | Always verify `firestore.rules` staging |
+| Split staging (`MM`) | Re-stage full file before commit |
 
 ## Code Quality
 
-### Linting and Formatting
-
-- TypeScript is configured with strict mode
-- ESLint rules are enforced via Vite
+- TypeScript strict mode enforced
 - Format code consistently (use your editor's format-on-save)
-
-### Commit Messages
-
-Use clear, descriptive commit messages:
-- Start with a verb: "Add", "Fix", "Update", "Remove"
-- Reference issue numbers when applicable: "Fix #123: ..."
-- Keep the first line under 72 characters
+- Commit messages: start with a verb ("Add", "Fix", "Update"), keep first line under 72 characters
 
 ## Additional Resources
 
-- [Testing Guide](docs/testing/testing-guide.md) - Detailed testing patterns and best practices
+- [Team Standards](docs/team-standards.md) - Agreements, lessons learned, known gotchas
+- [Testing Guide](docs/testing/testing-guide.md) - Detailed testing patterns
 - [Test Environment](docs/testing/test-environment.md) - Test user and fixture management
-- [Architecture](docs/architecture/architecture.md) - System architecture documentation
-- [Epic Roadmap](docs/planning/epics.md) - Full epic definitions and roadmap
+- [Architecture](docs/architecture/architecture.md) - System architecture
 
 ## Questions?
 
@@ -313,5 +207,5 @@ If you have questions or need help:
 
 ---
 
-**Version:** 1.5
-**Last Updated:** 2025-12-18 (Restored 3-branch workflow: develop → staging → main)
+**Version:** 2.0
+**Last Updated:** 2026-02-05 (Updated to 2-branch model, staging-only e2e, deduplicated with team-standards)
