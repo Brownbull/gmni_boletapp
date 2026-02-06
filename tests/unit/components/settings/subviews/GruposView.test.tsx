@@ -29,6 +29,22 @@ import type { SharedGroup, PendingInvitation } from '@/types/sharedGroup';
 // Mock Setup
 // =============================================================================
 
+// Story 14d-v2-1-14-polish: Mock useOnlineStatus
+let mockIsOnline = true;
+vi.mock('@/hooks/app/useOnlineStatus', () => ({
+    useOnlineStatus: () => ({
+        isOnline: mockIsOnline,
+        wasOffline: false,
+        refreshStatus: vi.fn(),
+    }),
+}));
+
+// Story 14d-v2-1-14-polish: Mock analyticsService
+const mockTrackEvent = vi.fn();
+vi.mock('@/services/analyticsService', () => ({
+    trackEvent: (...args: unknown[]) => mockTrackEvent(...args),
+}));
+
 // Mock useAuth
 const mockUser = {
     uid: 'test-user-123',
@@ -175,6 +191,9 @@ const mockLeaveTransferHandlers = {
 // Story 14d-v2-1-7e: Mock deleteGroupAsOwner service
 const mockDeleteGroupAsOwner = vi.fn().mockResolvedValue(undefined);
 
+// Story 14d-v2-1-14-polish: Mock handleAcceptInvitationService (direct service call)
+const mockHandleAcceptInvitationService = vi.fn().mockResolvedValue(undefined);
+
 vi.mock('@/features/shared-groups', async (importOriginal) => {
     const original = await importOriginal<typeof import('@/features/shared-groups')>();
     return {
@@ -218,6 +237,8 @@ vi.mock('@/features/shared-groups', async (importOriginal) => {
         // Story 14d-v2-1-7e: Delete group service
         deleteGroupAsOwner: (...args: unknown[]) => mockDeleteGroupAsOwner(...args),
         useLeaveTransferFlow: () => mockLeaveTransferHandlers,
+        // Story 14d-v2-1-14-polish: Direct service call for context-specific toasts
+        handleAcceptInvitationService: (...args: unknown[]) => mockHandleAcceptInvitationService(...args),
     };
 });
 
@@ -461,6 +482,146 @@ vi.mock('@/features/shared-groups/components/DeleteGroupDialog', () => ({
     },
 }));
 
+// Story 14d-v2-1-13+14: Mock AcceptInvitationDialog
+// We need our own mock to capture the onOpenOptIn prop for testing
+vi.mock('@/features/shared-groups/components/AcceptInvitationDialog', () => ({
+    AcceptInvitationDialog: ({
+        open,
+        invitation,
+        onClose,
+        onAccept,
+        onDecline,
+        onOpenOptIn,
+        isPending,
+    }: {
+        open: boolean;
+        invitation: PendingInvitation | null;
+        onClose: () => void;
+        onAccept: (invitation: PendingInvitation) => void;
+        onDecline: (invitation: PendingInvitation) => void;
+        onOpenOptIn?: (invitation: PendingInvitation, group: SharedGroup) => void;
+        isPending: boolean;
+    }) => {
+        if (!open || !invitation) return null;
+        return (
+            <div data-testid="mock-accept-dialog">
+                <span data-testid="mock-accept-group-name">{invitation.groupName}</span>
+                <span data-testid="mock-accept-has-optin">{String(!!onOpenOptIn)}</span>
+                <button
+                    data-testid="mock-accept-btn"
+                    onClick={() => onAccept(invitation)}
+                    disabled={isPending}
+                >
+                    Accept
+                </button>
+                <button
+                    data-testid="mock-decline-btn"
+                    onClick={() => onDecline(invitation)}
+                    disabled={isPending}
+                >
+                    Decline
+                </button>
+                {onOpenOptIn && (
+                    <button
+                        data-testid="mock-trigger-optin"
+                        onClick={() => {
+                            // Simulate: group has transactionSharingEnabled, so trigger opt-in
+                            const mockGroup: SharedGroup = {
+                                id: invitation.groupId,
+                                name: invitation.groupName,
+                                ownerId: 'owner-123',
+                                appId: 'boletapp',
+                                color: invitation.groupColor || '#10b981',
+                                icon: invitation.groupIcon,
+                                members: ['owner-123'],
+                                memberUpdates: {},
+                                shareCode: 'TEST123',
+                                shareCodeExpiresAt: null as any,
+                                createdAt: null as any,
+                                updatedAt: null as any,
+                                timezone: 'UTC',
+                                transactionSharingEnabled: true,
+                                transactionSharingLastToggleAt: null,
+                                transactionSharingToggleCountToday: 0,
+                            };
+                            onOpenOptIn(invitation, mockGroup);
+                        }}
+                    >
+                        Trigger OptIn
+                    </button>
+                )}
+                <button data-testid="mock-accept-close" onClick={onClose}>
+                    Close
+                </button>
+            </div>
+        );
+    },
+}));
+
+// Story 14d-v2-1-13+14: Mock TransactionSharingOptInDialog
+// Story 14d-v2-1-14-polish: Added onDismiss prop for AC3 dismiss behavior
+vi.mock('@/features/shared-groups/components/TransactionSharingOptInDialog', () => ({
+    TransactionSharingOptInDialog: ({
+        open,
+        groupName,
+        groupColor,
+        groupIcon,
+        onJoin,
+        onCancel,
+        onDismiss,
+        isPending,
+    }: {
+        open: boolean;
+        groupName: string;
+        groupColor: string;
+        groupIcon?: string;
+        onJoin: (shareMyTransactions: boolean) => void;
+        onCancel: () => void;
+        onDismiss?: () => void;
+        isPending: boolean;
+    }) => {
+        if (!open) return null;
+        return (
+            <div data-testid="mock-optin-dialog">
+                <span data-testid="mock-optin-group-name">{groupName}</span>
+                <span data-testid="mock-optin-group-color">{groupColor}</span>
+                <span data-testid="mock-optin-is-pending">{String(isPending)}</span>
+                <span data-testid="mock-optin-has-dismiss">{String(!!onDismiss)}</span>
+                <button
+                    data-testid="mock-optin-join-share"
+                    onClick={() => onJoin(true)}
+                    disabled={isPending}
+                >
+                    Join with Share
+                </button>
+                <button
+                    data-testid="mock-optin-join-no-share"
+                    onClick={() => onJoin(false)}
+                    disabled={isPending}
+                >
+                    Join without Share
+                </button>
+                <button
+                    data-testid="mock-optin-cancel"
+                    onClick={onCancel}
+                    disabled={isPending}
+                >
+                    Cancel
+                </button>
+                {onDismiss && (
+                    <button
+                        data-testid="mock-optin-dismiss"
+                        onClick={onDismiss}
+                        disabled={isPending}
+                    >
+                        Dismiss
+                    </button>
+                )}
+            </div>
+        );
+    },
+}));
+
 // Story 14d-v2-1-7g: Mock EditGroupDialog
 vi.mock('@/features/shared-groups/components/EditGroupDialog', () => ({
     EditGroupDialog: ({
@@ -573,6 +734,12 @@ const mockT = (key: string, params?: Record<string, string | number>) => {
         errorLeavingGroup: 'Error leaving group',
         errorTransferringOwnership: 'Error transferring ownership',
         ownershipTransferred: 'Ownership transferred to {name}',
+        // Story 14d-v2-1-14-polish: Context-specific toast keys
+        joinedGroupWithSharing: "You're now a member of {groupName}",
+        joinedGroupWithoutSharing: "You're now a member of {groupName}. You can change sharing preferences in group settings.",
+        joinedGroupDefault: "You're now a member of {groupName}. Transaction sharing is off by default.",
+        offlineCannotJoinGroup: "You're offline. Please connect to join groups.",
+        errorAcceptingInvitation: 'Error accepting invitation',
     };
     let result = translations[key] || key;
     // Support parameter interpolation
@@ -652,6 +819,10 @@ describe('GruposView', () => {
         mockLeaveTransferHandlers.handleConfirmTransfer.mockResolvedValue(true);
         mockLeaveTransferHandlers.handleAcceptInvitation.mockResolvedValue(true);
         mockLeaveTransferHandlers.handleDeclineInvitation.mockResolvedValue(true);
+
+        // Story 14d-v2-1-14-polish: Reset new mocks
+        mockIsOnline = true;
+        mockHandleAcceptInvitationService.mockResolvedValue(undefined);
     });
 
     // =========================================================================
@@ -2120,6 +2291,465 @@ describe('GruposView', () => {
             await userEvent.click(screen.getByTestId('mock-edit-close'));
 
             expect(mockDialogActions.closeEditDialog).toHaveBeenCalled();
+        });
+    });
+
+    // =========================================================================
+    // Story 14d-v2-1-13+14: Transaction Sharing Opt-In Dialog Integration
+    // =========================================================================
+
+    describe('Transaction Sharing Opt-In Flow (Story 14d-v2-1-13+14)', () => {
+        const mockInvitation: PendingInvitation = {
+            id: 'inv-optin-1',
+            groupId: 'group-sharing',
+            groupName: 'Sharing Group',
+            groupColor: '#10b981',
+            groupIcon: '🏠',
+            invitedByName: 'Owner Person',
+            invitedByUid: 'owner-123',
+            invitedAt: null as any,
+            expiresAt: null as any,
+            status: 'pending',
+            userId: 'test-user-123',
+            appId: 'boletapp',
+        };
+
+        it('passes onOpenOptIn to AcceptInvitationDialog', () => {
+            // Pre-set dialog state with accept dialog open
+            mockDialogState.isAcceptDialogOpen = true;
+            mockDialogState.selectedInvitation = mockInvitation;
+
+            render(<GruposView {...defaultProps} />);
+
+            // Our mock exposes whether onOpenOptIn was provided
+            expect(screen.getByTestId('mock-accept-has-optin')).toHaveTextContent('true');
+        });
+
+        it('opens opt-in dialog when onOpenOptIn is triggered', async () => {
+            // Pre-set dialog state with accept dialog open
+            mockDialogState.isAcceptDialogOpen = true;
+            mockDialogState.selectedInvitation = mockInvitation;
+
+            render(<GruposView {...defaultProps} />);
+
+            // Trigger the opt-in flow (simulates clicking Accept on a group with transactionSharingEnabled)
+            await userEvent.click(screen.getByTestId('mock-trigger-optin'));
+
+            // Should close accept dialog
+            expect(mockDialogActions.closeAcceptDialog).toHaveBeenCalled();
+
+            // Opt-in dialog should now be rendered
+            // Note: We need to re-render because the mock state has changed
+            // But since our mock immediately renders based on internal state,
+            // we need to verify the opt-in dialog appears
+            await waitFor(() => {
+                expect(screen.getByTestId('mock-optin-dialog')).toBeInTheDocument();
+            });
+        });
+
+        it('displays correct group info in opt-in dialog', async () => {
+            // Pre-set dialog state with accept dialog open
+            mockDialogState.isAcceptDialogOpen = true;
+            mockDialogState.selectedInvitation = mockInvitation;
+
+            render(<GruposView {...defaultProps} />);
+
+            // Trigger the opt-in flow
+            await userEvent.click(screen.getByTestId('mock-trigger-optin'));
+
+            await waitFor(() => {
+                expect(screen.getByTestId('mock-optin-group-name')).toHaveTextContent('Sharing Group');
+                expect(screen.getByTestId('mock-optin-group-color')).toHaveTextContent('#10b981');
+            });
+        });
+
+        // Story 14d-v2-1-14-polish: Updated - handleOptInJoin now calls handleAcceptInvitationService directly
+        it('handles opt-in join with share=true and calls service directly', async () => {
+            mockDialogState.isAcceptDialogOpen = true;
+            mockDialogState.selectedInvitation = mockInvitation;
+
+            render(<GruposView {...defaultProps} />);
+
+            // Trigger the opt-in flow
+            await userEvent.click(screen.getByTestId('mock-trigger-optin'));
+
+            await waitFor(() => {
+                expect(screen.getByTestId('mock-optin-dialog')).toBeInTheDocument();
+            });
+
+            // Click "Join with Share" (share=true)
+            await userEvent.click(screen.getByTestId('mock-optin-join-share'));
+
+            await waitFor(() => {
+                // Should call the service directly (not the hook handler)
+                expect(mockHandleAcceptInvitationService).toHaveBeenCalledWith(
+                    mockServices.db,
+                    mockInvitation,
+                    'test-user-123',
+                    { displayName: 'Test User', email: 'test@example.com', photoURL: undefined },
+                    'boletapp',
+                    true
+                );
+            });
+        });
+
+        it('handles opt-in join with share=false and calls service directly', async () => {
+            mockDialogState.isAcceptDialogOpen = true;
+            mockDialogState.selectedInvitation = mockInvitation;
+
+            render(<GruposView {...defaultProps} />);
+
+            // Trigger the opt-in flow
+            await userEvent.click(screen.getByTestId('mock-trigger-optin'));
+
+            await waitFor(() => {
+                expect(screen.getByTestId('mock-optin-dialog')).toBeInTheDocument();
+            });
+
+            // Click "Join without Share" (share=false)
+            await userEvent.click(screen.getByTestId('mock-optin-join-no-share'));
+
+            await waitFor(() => {
+                expect(mockHandleAcceptInvitationService).toHaveBeenCalledWith(
+                    mockServices.db,
+                    mockInvitation,
+                    'test-user-123',
+                    { displayName: 'Test User', email: 'test@example.com', photoURL: undefined },
+                    'boletapp',
+                    false
+                );
+            });
+        });
+
+        it('closes opt-in dialog after successful join', async () => {
+            mockDialogState.isAcceptDialogOpen = true;
+            mockDialogState.selectedInvitation = mockInvitation;
+
+            render(<GruposView {...defaultProps} />);
+
+            // Trigger the opt-in flow
+            await userEvent.click(screen.getByTestId('mock-trigger-optin'));
+
+            await waitFor(() => {
+                expect(screen.getByTestId('mock-optin-dialog')).toBeInTheDocument();
+            });
+
+            // Join
+            await userEvent.click(screen.getByTestId('mock-optin-join-share'));
+
+            // After success, opt-in dialog should close
+            await waitFor(() => {
+                expect(screen.queryByTestId('mock-optin-dialog')).not.toBeInTheDocument();
+            });
+        });
+
+        it('cancels opt-in and returns to accept dialog', async () => {
+            mockDialogState.isAcceptDialogOpen = true;
+            mockDialogState.selectedInvitation = mockInvitation;
+
+            render(<GruposView {...defaultProps} />);
+
+            // Trigger the opt-in flow
+            await userEvent.click(screen.getByTestId('mock-trigger-optin'));
+
+            await waitFor(() => {
+                expect(screen.getByTestId('mock-optin-dialog')).toBeInTheDocument();
+            });
+
+            // Cancel opt-in
+            await userEvent.click(screen.getByTestId('mock-optin-cancel'));
+
+            // Opt-in dialog should close
+            await waitFor(() => {
+                expect(screen.queryByTestId('mock-optin-dialog')).not.toBeInTheDocument();
+            });
+
+            // Accept dialog should re-open with the same invitation
+            expect(mockDialogActions.openAcceptDialog).toHaveBeenCalledWith(mockInvitation);
+        });
+
+        it('shows pending state in opt-in dialog during join', async () => {
+            // Make the service call hang (never resolve)
+            mockHandleAcceptInvitationService.mockImplementation(
+                () => new Promise(() => {}) // Never resolves
+            );
+
+            mockDialogState.isAcceptDialogOpen = true;
+            mockDialogState.selectedInvitation = mockInvitation;
+
+            render(<GruposView {...defaultProps} />);
+
+            // Trigger the opt-in flow
+            await userEvent.click(screen.getByTestId('mock-trigger-optin'));
+
+            await waitFor(() => {
+                expect(screen.getByTestId('mock-optin-dialog')).toBeInTheDocument();
+            });
+
+            // Join (will set isAccepting = true but never resolve)
+            await userEvent.click(screen.getByTestId('mock-optin-join-share'));
+
+            // Verify setIsAccepting(true) was called
+            await waitFor(() => {
+                expect(mockDialogActions.setIsAccepting).toHaveBeenCalledWith(true);
+            });
+        });
+
+        it('does not render opt-in dialog when not triggered', () => {
+            render(<GruposView {...defaultProps} />);
+
+            expect(screen.queryByTestId('mock-optin-dialog')).not.toBeInTheDocument();
+        });
+
+        // =================================================================
+        // Story 14d-v2-1-14-polish: Context-Specific Toasts (AC1, AC2, AC3)
+        // =================================================================
+
+        it('shows context-specific toast for share=true join (AC1)', async () => {
+            mockDialogState.isAcceptDialogOpen = true;
+            mockDialogState.selectedInvitation = mockInvitation;
+
+            const mockOnShowToast = vi.fn();
+            render(<GruposView {...defaultProps} onShowToast={mockOnShowToast} />);
+
+            // Trigger opt-in flow then join with share
+            await userEvent.click(screen.getByTestId('mock-trigger-optin'));
+            await waitFor(() => {
+                expect(screen.getByTestId('mock-optin-dialog')).toBeInTheDocument();
+            });
+            await userEvent.click(screen.getByTestId('mock-optin-join-share'));
+
+            // ECC Review #4: Differentiate AC1 toast - "member of" without "preferences" or "default"
+            await waitFor(() => {
+                expect(mockOnShowToast).toHaveBeenCalledWith(
+                    expect.stringContaining("member of Sharing Group"),
+                    'success'
+                );
+            });
+            // AC1 toast should NOT contain the AC2/AC3 distinguishing phrases
+            const toastCall = mockOnShowToast.mock.calls.find(
+                (call: unknown[]) => typeof call[0] === 'string' && call[0].includes('member of Sharing Group')
+            );
+            expect(toastCall).toBeDefined();
+            expect(toastCall![0]).not.toContain('sharing preferences');
+            expect(toastCall![0]).not.toContain('off by default');
+        });
+
+        it('shows context-specific toast for share=false join (AC2)', async () => {
+            mockDialogState.isAcceptDialogOpen = true;
+            mockDialogState.selectedInvitation = mockInvitation;
+
+            const mockOnShowToast = vi.fn();
+            render(<GruposView {...defaultProps} onShowToast={mockOnShowToast} />);
+
+            await userEvent.click(screen.getByTestId('mock-trigger-optin'));
+            await waitFor(() => {
+                expect(screen.getByTestId('mock-optin-dialog')).toBeInTheDocument();
+            });
+            await userEvent.click(screen.getByTestId('mock-optin-join-no-share'));
+
+            // ECC Review #4: AC2 toast must contain "sharing preferences" to distinguish from AC1/AC3
+            await waitFor(() => {
+                expect(mockOnShowToast).toHaveBeenCalledWith(
+                    expect.stringContaining('sharing preferences'),
+                    'success'
+                );
+            });
+        });
+
+        it('handles dismiss as join with defaults (AC3)', async () => {
+            mockDialogState.isAcceptDialogOpen = true;
+            mockDialogState.selectedInvitation = mockInvitation;
+
+            const mockOnShowToast = vi.fn();
+            render(<GruposView {...defaultProps} onShowToast={mockOnShowToast} />);
+
+            await userEvent.click(screen.getByTestId('mock-trigger-optin'));
+            await waitFor(() => {
+                expect(screen.getByTestId('mock-optin-dialog')).toBeInTheDocument();
+            });
+
+            // Verify onDismiss prop is provided
+            expect(screen.getByTestId('mock-optin-has-dismiss')).toHaveTextContent('true');
+
+            // Click dismiss button (simulates backdrop/close/escape)
+            await userEvent.click(screen.getByTestId('mock-optin-dismiss'));
+
+            await waitFor(() => {
+                // Should call service with shareMyTransactions=false
+                expect(mockHandleAcceptInvitationService).toHaveBeenCalledWith(
+                    mockServices.db,
+                    mockInvitation,
+                    'test-user-123',
+                    expect.any(Object),
+                    'boletapp',
+                    false
+                );
+            });
+
+            // ECC Review #4: AC3 toast must contain "off by default" to distinguish from AC1/AC2
+            await waitFor(() => {
+                expect(mockOnShowToast).toHaveBeenCalledWith(
+                    expect.stringContaining('off by default'),
+                    'success'
+                );
+            });
+        });
+
+        // ECC Review #7: Test service failure path during opt-in join
+        it('shows error toast when opt-in join service fails', async () => {
+            mockHandleAcceptInvitationService.mockRejectedValueOnce(new Error('Network error'));
+            mockDialogState.isAcceptDialogOpen = true;
+            mockDialogState.selectedInvitation = mockInvitation;
+
+            const mockOnShowToast = vi.fn();
+            render(<GruposView {...defaultProps} onShowToast={mockOnShowToast} />);
+
+            await userEvent.click(screen.getByTestId('mock-trigger-optin'));
+            await waitFor(() => {
+                expect(screen.getByTestId('mock-optin-dialog')).toBeInTheDocument();
+            });
+            await userEvent.click(screen.getByTestId('mock-optin-join-share'));
+
+            await waitFor(() => {
+                expect(mockOnShowToast).toHaveBeenCalledWith(
+                    expect.stringContaining('Error accepting invitation'),
+                    'error'
+                );
+            });
+        });
+
+        // =================================================================
+        // Story 14d-v2-1-14-polish: Offline Handling (AC4)
+        // =================================================================
+
+        it('blocks accept invitation when offline (AC4)', async () => {
+            mockIsOnline = false;
+            mockDialogState.isAcceptDialogOpen = true;
+            mockDialogState.selectedInvitation = mockInvitation;
+
+            const mockOnShowToast = vi.fn();
+            render(<GruposView {...defaultProps} onShowToast={mockOnShowToast} />);
+
+            // Try to accept (non-opt-in path)
+            await userEvent.click(screen.getByTestId('mock-accept-btn'));
+
+            await waitFor(() => {
+                expect(mockOnShowToast).toHaveBeenCalledWith(
+                    expect.stringContaining('offline'),
+                    'error'
+                );
+            });
+
+            // Service should NOT have been called
+            expect(mockLeaveTransferHandlers.handleAcceptInvitation).not.toHaveBeenCalled();
+        });
+
+        it('blocks opt-in flow when offline (AC4)', async () => {
+            mockIsOnline = false;
+            mockDialogState.isAcceptDialogOpen = true;
+            mockDialogState.selectedInvitation = mockInvitation;
+
+            const mockOnShowToast = vi.fn();
+            render(<GruposView {...defaultProps} onShowToast={mockOnShowToast} />);
+
+            // Try to trigger opt-in
+            await userEvent.click(screen.getByTestId('mock-trigger-optin'));
+
+            await waitFor(() => {
+                expect(mockOnShowToast).toHaveBeenCalledWith(
+                    expect.stringContaining('offline'),
+                    'error'
+                );
+            });
+
+            // Opt-in dialog should NOT open
+            expect(screen.queryByTestId('mock-optin-dialog')).not.toBeInTheDocument();
+        });
+
+        // =================================================================
+        // Story 14d-v2-1-14-polish: Analytics Tracking (AC5, AC6)
+        // =================================================================
+
+        it('tracks opt-in dialog shown event (AC5)', async () => {
+            mockDialogState.isAcceptDialogOpen = true;
+            mockDialogState.selectedInvitation = mockInvitation;
+
+            render(<GruposView {...defaultProps} />);
+
+            await userEvent.click(screen.getByTestId('mock-trigger-optin'));
+
+            await waitFor(() => {
+                expect(mockTrackEvent).toHaveBeenCalledWith('group_join_optin_shown', {
+                    groupId: 'group-sharing',
+                    transactionSharingEnabled: true,
+                });
+            });
+        });
+
+        it('tracks opt-in choice event with choice=yes on share join (AC6)', async () => {
+            mockDialogState.isAcceptDialogOpen = true;
+            mockDialogState.selectedInvitation = mockInvitation;
+
+            render(<GruposView {...defaultProps} />);
+
+            await userEvent.click(screen.getByTestId('mock-trigger-optin'));
+            await waitFor(() => {
+                expect(screen.getByTestId('mock-optin-dialog')).toBeInTheDocument();
+            });
+
+            await userEvent.click(screen.getByTestId('mock-optin-join-share'));
+
+            await waitFor(() => {
+                expect(mockTrackEvent).toHaveBeenCalledWith('group_join_optin_choice', {
+                    groupId: 'group-sharing',
+                    choice: 'yes',
+                });
+            });
+        });
+
+        // ECC Review #6: AC6 analytics for "no" choice
+        it('tracks opt-in choice event with choice=no on no-share join (AC6)', async () => {
+            mockDialogState.isAcceptDialogOpen = true;
+            mockDialogState.selectedInvitation = mockInvitation;
+
+            render(<GruposView {...defaultProps} />);
+
+            await userEvent.click(screen.getByTestId('mock-trigger-optin'));
+            await waitFor(() => {
+                expect(screen.getByTestId('mock-optin-dialog')).toBeInTheDocument();
+            });
+
+            await userEvent.click(screen.getByTestId('mock-optin-join-no-share'));
+
+            await waitFor(() => {
+                expect(mockTrackEvent).toHaveBeenCalledWith('group_join_optin_choice', {
+                    groupId: 'group-sharing',
+                    choice: 'no',
+                });
+            });
+        });
+
+        // ECC Review #6: AC6 analytics for "dismiss" choice
+        it('tracks opt-in choice event with choice=dismiss on dialog dismiss (AC6)', async () => {
+            mockDialogState.isAcceptDialogOpen = true;
+            mockDialogState.selectedInvitation = mockInvitation;
+
+            render(<GruposView {...defaultProps} />);
+
+            await userEvent.click(screen.getByTestId('mock-trigger-optin'));
+            await waitFor(() => {
+                expect(screen.getByTestId('mock-optin-dialog')).toBeInTheDocument();
+            });
+
+            await userEvent.click(screen.getByTestId('mock-optin-dismiss'));
+
+            await waitFor(() => {
+                expect(mockTrackEvent).toHaveBeenCalledWith('group_join_optin_choice', {
+                    groupId: 'group-sharing',
+                    choice: 'dismiss',
+                });
+            });
         });
     });
 });

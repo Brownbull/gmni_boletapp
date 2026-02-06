@@ -32,8 +32,7 @@ const STAGING_URL = 'http://localhost:5174';
 // Test user - Alice is a group owner
 const ALICE = {
     name: 'alice',
-    email: 'alice@boletapp.test',
-    password: 'test-password-123!',
+    testId: 'test-user-alice',
 };
 
 // Unique group name to avoid conflicts
@@ -85,7 +84,7 @@ test.describe('Group Delete Journey (Staging)', () => {
         await page.waitForTimeout(500);
 
         // Click "Ajustes" (Settings) in the dropdown menu
-        const ajustesMenuItem = page.locator('text=Ajustes');
+        const ajustesMenuItem = page.getByRole('menuitem', { name: 'Ajustes' });
         await ajustesMenuItem.waitFor({ state: 'visible', timeout: 5000 });
         await ajustesMenuItem.click();
         await page.waitForTimeout(1000);
@@ -297,7 +296,7 @@ test.describe('Group Delete Journey (Staging)', () => {
         await page.waitForTimeout(500);
 
         // Click "Ajustes" in dropdown
-        const ajustesMenuItem = page.locator('text=Ajustes');
+        const ajustesMenuItem = page.getByRole('menuitem', { name: 'Ajustes' });
         await ajustesMenuItem.waitFor({ state: 'visible', timeout: 5000 });
         await ajustesMenuItem.click();
         await page.waitForTimeout(1000);
@@ -318,7 +317,7 @@ test.describe('Group Delete Journey (Staging)', () => {
         await page.waitForSelector('[data-testid="grupos-view"]', { timeout: 10000 });
 
         // Create a unique test group
-        const uniqueGroupName = `Partial Test ${Date.now()}`;
+        const uniqueGroupName = `E2E Partial Test ${Date.now()}`;
 
         const createBtn = page.locator('[data-testid="create-group-btn"], [data-testid="create-group-btn-empty"]');
         await createBtn.first().click();
@@ -332,6 +331,7 @@ test.describe('Group Delete Journey (Staging)', () => {
         await createDialogBtn.click();
         await page.waitForTimeout(2000);
 
+        try {
         // Click leave on the group (owner warning)
         const groupCard = page.locator(`[data-testid^="group-card-"]:has-text("${uniqueGroupName}")`);
         await groupCard.waitFor({ state: 'visible', timeout: 5000 });
@@ -368,5 +368,31 @@ test.describe('Group Delete Journey (Staging)', () => {
         await confirmInput.fill(uniqueGroupName);
         await deleteConfirmBtn.click();
         await page.waitForTimeout(2000);
+        } catch (error) {
+            console.log(`⚠️ Test assertion failed, attempting cleanup: ${error}`);
+            // Dismiss any open dialogs before cleanup
+            await page.keyboard.press('Escape');
+            await page.waitForTimeout(500);
+            await page.keyboard.press('Escape');
+            await page.waitForTimeout(500);
+            // Attempt to delete the test group
+            const cleanupCard = page.locator(`[data-testid^="group-card-"]:has-text("${uniqueGroupName}")`);
+            if (await cleanupCard.isVisible({ timeout: 3000 }).catch(() => false)) {
+                const cleanupLeaveBtn = cleanupCard.locator('[data-testid^="leave-btn-"]');
+                await cleanupLeaveBtn.click();
+                await page.waitForTimeout(500);
+                const cleanupDeleteBtn = page.locator('button:has-text("Eliminar Grupo"), button:has-text("Delete Group")');
+                if (await cleanupDeleteBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+                    await cleanupDeleteBtn.click();
+                    await page.waitForTimeout(500);
+                    const cleanupConfirmInput = page.locator('[data-testid="confirm-name-input"]');
+                    await cleanupConfirmInput.fill(uniqueGroupName);
+                    const cleanupConfirmBtn = page.locator('[data-testid="delete-confirm-btn"]');
+                    await cleanupConfirmBtn.click();
+                    await page.waitForTimeout(2000);
+                }
+            }
+            throw error; // Re-throw to fail the test
+        }
     });
 });

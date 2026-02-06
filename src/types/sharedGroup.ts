@@ -31,6 +31,7 @@
  *   transactionSharingEnabled: true,
  *   transactionSharingLastToggleAt: null,
  *   transactionSharingToggleCountToday: 0,
+ *   transactionSharingToggleCountResetAt: null,
  * };
  * ```
  */
@@ -68,6 +69,26 @@ export const SHARED_GROUP_LIMITS = {
     SHARE_CODE_LENGTH: 16,
     /** Share code expiry in days */
     SHARE_CODE_EXPIRY_DAYS: 7,
+    /**
+     * Cooldown period between transaction sharing toggles in minutes.
+     * Story 14d-v2-1-11: Transaction Sharing Toggle (FR-21)
+     */
+    TRANSACTION_SHARING_COOLDOWN_MINUTES: 15,
+    /**
+     * Maximum transaction sharing toggles allowed per day.
+     * Story 14d-v2-1-11: Transaction Sharing Toggle (FR-21)
+     */
+    TRANSACTION_SHARING_DAILY_LIMIT: 3,
+    /**
+     * Cooldown period between user sharing preference toggles in minutes.
+     * Story 14d-v2-1-12a: User Transaction Sharing Preference (FR-21)
+     */
+    USER_SHARING_COOLDOWN_MINUTES: 5,
+    /**
+     * Maximum user sharing preference toggles allowed per day.
+     * Story 14d-v2-1-12a: User Transaction Sharing Preference (FR-21)
+     */
+    USER_SHARING_DAILY_LIMIT: 3,
 } as const;
 
 /**
@@ -211,6 +232,14 @@ export interface SharedGroup {
      * Story 14d-v2-1-11: Transaction Sharing Toggle
      */
     transactionSharingToggleCountToday: number;
+
+    /**
+     * Timestamp when the daily toggle count was last reset (for rate limiting).
+     * Reset happens at midnight in the group's timezone.
+     * null if never reset (new group or pre-migration).
+     * Story 14d-v2-1-11: Transaction Sharing Toggle
+     */
+    transactionSharingToggleCountResetAt: Timestamp | null;
 }
 
 /**
@@ -334,6 +363,13 @@ export interface UserGroupPreference {
     lastToggleAt: Timestamp | null;
     /** Number of toggle changes today (reset daily, max 3/day) */
     toggleCountToday: number;
+    /**
+     * Timestamp when the daily toggle count was last reset.
+     * Reset happens at midnight in device's local timezone.
+     * null if never reset (new preference or pre-migration).
+     * Story 14d-v2-1-12a: User Transaction Sharing Preference
+     */
+    toggleCountResetAt: Timestamp | null;
 }
 
 /**
@@ -364,10 +400,45 @@ export interface UserSharedGroupsPreferences {
  * Default preference for a new group membership.
  * Used when a user joins a group via invitation.
  */
-export const DEFAULT_GROUP_PREFERENCE: Omit<UserGroupPreference, 'shareMyTransactions'> = {
+export const DEFAULT_GROUP_PREFERENCE: Omit<UserGroupPreference, 'shareMyTransactions' | 'toggleCountResetAt'> = {
     lastToggleAt: null,
     toggleCountToday: 0,
 };
+
+/**
+ * Creates a default UserGroupPreference with privacy-first defaults (LV-6).
+ *
+ * Story 14d-v2-1-12a: User Transaction Sharing Preference - Foundation
+ *
+ * Default values:
+ * - shareMyTransactions: false (privacy-first, user must opt-in)
+ * - lastToggleAt: null (no previous toggle)
+ * - toggleCountToday: 0 (no toggles today)
+ * - toggleCountResetAt: null (new preference)
+ *
+ * @param overrides - Optional partial values to override defaults
+ * @returns Complete UserGroupPreference object
+ *
+ * @example
+ * ```typescript
+ * // Create with all defaults
+ * const pref = createDefaultGroupPreference();
+ *
+ * // Create with opt-in sharing
+ * const optInPref = createDefaultGroupPreference({ shareMyTransactions: true });
+ * ```
+ */
+export function createDefaultGroupPreference(
+    overrides?: Partial<UserGroupPreference>
+): UserGroupPreference {
+    return {
+        shareMyTransactions: false,
+        lastToggleAt: null,
+        toggleCountToday: 0,
+        toggleCountResetAt: null,
+        ...overrides,
+    };
+}
 
 // ============================================================================
 // ============================================================================

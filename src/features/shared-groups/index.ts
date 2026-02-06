@@ -103,6 +103,11 @@ export {
   updateGroup,
   GROUP_COLORS,
   GROUP_ICONS,
+  // Story 14d-v2-1-11c: Transaction Sharing Toggle
+  updateTransactionSharingEnabled,
+  // Story 14d-v2-1-12d: Leave Group with Cleanup
+  leaveGroupWithCleanup,
+  transferAndLeaveWithCleanup,
 } from './services';
 
 // =============================================================================
@@ -120,6 +125,8 @@ export {
   useGroupDialogs,
   // Story 14d-v2-1-7g: Edit Group Settings
   useUpdateGroup,
+  // Story 14d-v2-1-12c: User Group Preference Hook
+  useUserGroupPreference,
 } from './hooks';
 
 export type {
@@ -137,6 +144,9 @@ export type {
   // Story 14d-v2-1-7g: Edit Group Settings
   UpdateGroupInput,
   UseUpdateGroupResult,
+  // Story 14d-v2-1-12c: User Group Preference Hook Types
+  UseUserGroupPreferenceResult,
+  UserGroupPreferenceServices,
 } from './hooks';
 
 // =============================================================================

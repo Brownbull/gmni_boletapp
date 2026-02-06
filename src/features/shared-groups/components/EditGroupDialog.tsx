@@ -33,6 +33,8 @@ import { useBodyScrollLock, useEscapeKey, useFocusTrap } from '@/shared/hooks';
 import { Z_INDEX } from '@/constants';
 import { EmojiPicker } from './EmojiPicker';
 import { ColorPicker } from './ColorPicker';
+import { TransactionSharingToggle } from './TransactionSharingToggle';
+import { MySharingPreferencesSection } from './MySharingPreferencesSection';
 import type { SharedGroup } from '@/types/sharedGroup';
 
 // =============================================================================
@@ -63,6 +65,12 @@ export interface EditGroupDialogProps {
     t: (key: string) => string;
     /** Language for fallback text */
     lang?: 'en' | 'es';
+    /** Story 14d-v2-1-11c: Whether current user is the group owner */
+    isOwner?: boolean;
+    /** Story 14d-v2-1-11c: Callback when transaction sharing toggle changes */
+    onToggleTransactionSharing?: (enabled: boolean) => Promise<void>;
+    /** Story 14d-v2-1-11c: Whether toggle operation is in progress */
+    isTogglePending?: boolean;
 }
 
 // =============================================================================
@@ -86,6 +94,10 @@ export const EditGroupDialog: React.FC<EditGroupDialogProps> = ({
     isPending,
     t,
     lang = 'es',
+    // Story 14d-v2-1-11c: Transaction sharing toggle props
+    isOwner = false,
+    onToggleTransactionSharing,
+    isTogglePending = false,
 }) => {
     // State
     const [name, setName] = useState('');
@@ -343,6 +355,31 @@ export const EditGroupDialog: React.FC<EditGroupDialogProps> = ({
                             </span>
                         </div>
                     </div>
+
+                    {/* Story 14d-v2-1-11c: Transaction Sharing Toggle (Owner only) */}
+                    {onToggleTransactionSharing && group && (
+                        <div className="mb-6">
+                            <TransactionSharingToggle
+                                group={group}
+                                isOwner={isOwner}
+                                onToggle={onToggleTransactionSharing}
+                                isPending={isTogglePending}
+                                t={t}
+                            />
+                        </div>
+                    )}
+
+                    {/* Story 14d-v2-1-12d: My Sharing Preferences Section (All members) */}
+                    {group && (
+                        <div className="mb-6">
+                            <MySharingPreferencesSection
+                                groupId={group.id ?? ''}
+                                groupSharingEnabled={group.transactionSharingEnabled ?? false}
+                                t={t}
+                                lang={lang}
+                            />
+                        </div>
+                    )}
 
                     {/* Action Buttons */}
                     <div className="flex flex-col gap-2">

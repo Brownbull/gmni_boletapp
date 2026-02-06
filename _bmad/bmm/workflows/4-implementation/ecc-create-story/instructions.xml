@@ -4,13 +4,13 @@
   <critical>Communicate all responses in {communication_language} and language MUST be tailored to {user_skill_level}</critical>
   <critical>Generate all documents in {document_output_language}</critical>
 
-  <critical>🎭 ECC-ORCHESTRATED STORY CREATION - Atlas Puppeteer spawns Planner + Architect agents!</critical>
+  <critical>🎭 ECC-ORCHESTRATED STORY CREATION - ECC Orchestrator spawns Planner + Architect agents!</critical>
   <critical>This workflow uses ECC agents to analyze requirements and provide technical guidance</critical>
   <critical>Sequence: planner → architect → [database-reviewer + security-reviewer] if needed</critical>
 
-  <!-- ATLAS PUPPETEER PROTOCOL -->
-  <puppeteer-protocol>
-    <principle>Atlas is the Puppeteer - coordinates story creation with ECC agent analysis</principle>
+  <!-- ECC ORCHESTRATOR PROTOCOL -->
+  <orchestrator-protocol>
+    <principle>ECC Orchestrator coordinates story creation with ECC agent analysis</principle>
     <principle>Planner analyzes requirements and identifies implementation risks</principle>
     <principle>Architect provides technical design and pattern recommendations</principle>
     <principle>Optional parallel technical review for complex stories</principle>
@@ -23,35 +23,29 @@
       | Database Reviewer | everything-claude-code:database-reviewer | Schema/query analysis |
       | Security Reviewer | everything-claude-code:security-reviewer | Security considerations |
     </available-agents>
-  </puppeteer-protocol>
+  </orchestrator-protocol>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 0: Atlas Initialization                                            -->
+  <!-- STEP 0: Project Knowledge Loading                                       -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="0" goal="Initialize Atlas and load context for story creation">
-    <check if="{atlas_index} exists">
-      <action>Load {atlas_index} to identify relevant fragments</action>
-      <action>Load {atlas_knowledge}/02-features.md for feature context</action>
-      <action>Load {atlas_knowledge}/04-architecture.md for patterns</action>
-      <action>Load {atlas_knowledge}/08-workflow-chains.md for user flows</action>
-      <action>Store as {{atlas_context}} for ECC agents</action>
+  <step n="0" goal="Load project knowledge for story creation context">
+    <action>Load and cache {project-root}/_bmad/bmm/knowledge/code-review-patterns.md → {{cached_review_patterns}}</action>
+    <action>Load and cache {project-root}/docs/architecture/firestore-patterns.md → {{cached_firestore}}</action>
+    <action>Load and cache {project-root}/docs/architecture/state-management.md → {{cached_state_mgmt}}</action>
+    <action>Load and cache {project-root}/docs/architecture/component-patterns.md → {{cached_components}}</action>
+    <action>Load and cache {project-root}/docs/architecture/TESTING-GUIDELINES.md → {{cached_testing_guidelines}}</action>
+    <action>Combine cached knowledge into {{project_patterns}} for ECC agents</action>
 
-      <output>🗺️ **Atlas Puppeteer Initialized for Story Creation**
+    <output>📋 **ECC Orchestrator Initialized for Story Creation**
 
-        Context loaded:
-        - Features: {{feature_summary}}
-        - Architecture patterns: {{architecture_summary}}
-        - Workflow chains: {{workflow_summary}}
+      Project knowledge loaded:
+      - Review patterns: {{cached_review_patterns_summary}}
+      - Architecture: firestore, state management, component patterns
+      - Testing guidelines: loaded
 
-        Ready to spawn ECC agents for story analysis.
-      </output>
-    </check>
-
-    <check if="{atlas_index} does NOT exist">
-      <action>Set {{atlas_context}} = "No Atlas context"</action>
-      <output>ℹ️ Atlas not configured - ECC agents will analyze without project context</output>
-    </check>
+      Ready to spawn ECC agents for story analysis.
+    </output>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
@@ -125,7 +119,7 @@
 
     <!-- Also check project-level architecture docs -->
     <action>Load project architecture documentation:
-      - {atlas_knowledge}/04-architecture.md (if exists)
+      - docs/architecture/firestore-patterns.md (if exists)
       - docs/architecture/*.md (if exists)
       - docs/tech-specs/*.md (if exists)
       - PRD architecture sections
@@ -196,7 +190,7 @@
 
         No architecture documents were found or referenced in:
         - Epic document: {{epic_file}}
-        - Atlas knowledge: {atlas_knowledge}/04-architecture.md
+        - Project patterns: docs/architecture/*.md
         - Project docs: docs/architecture/
 
         **Risk:** Without documented architecture, implementation may drift.
@@ -340,7 +334,8 @@
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
   <step n="2" goal="Spawn ECC Planner for requirements analysis">
-    <critical>🎭 ATLAS PUPPETEER: Spawning ECC Planner agent</critical>
+    <critical>🎭 ECC ORCHESTRATOR: Spawning ECC Planner agent</critical>
+    <critical>📏 SIZING AWARENESS: Planner must respect Opus 4.6 sizing guidelines when decomposing tasks</critical>
 
     <output>🎭 **Spawning ECC Planner...**
 
@@ -362,8 +357,35 @@
           **Acceptance Criteria:**
           {{acceptance_criteria}}
 
-          **Atlas Context:**
-          {{atlas_context}}
+          **Project Context:**
+          {{project_patterns}}
+
+          ---
+
+          ## 📏 SIZING GUIDELINES (Opus 4.6 - Updated 2026-02-05)
+
+          **CRITICAL:** Task decomposition MUST respect these sizing limits.
+          Opus 4.6 handles larger context windows than previous models.
+          Prefer fewer, larger stories over many micro-stories.
+
+          - **SMALL (1-2 pts):** 1-3 tasks, ≤10 subtasks total, ≤4 files
+          - **MEDIUM (3-5 pts):** 3-6 tasks, ≤25 subtasks total, ≤8 files
+          - **LARGE (5-8 pts):** 6-8 tasks, ≤40 subtasks total, ≤12 files
+          - **TOO LARGE (needs split):** >8 tasks OR >40 subtasks OR >12 files
+
+          **Sizing Principles:**
+          - Group related work into single tasks (types + service + tests for one layer = 1 task)
+          - Don't split by individual file - split by functional concern
+          - A story touching types → service → hook → component → tests is ONE MEDIUM story, not 4 micro-stories
+          - Foundation (types/schema) + integration (service/UI) can be ONE story if ≤8 tasks total
+          - E2E tests should be included in the story they verify, not split into separate stories
+
+          ---
+
+          **Pre-Analysis: Run `dust` on affected directories for context budgeting:**
+          - `dust src/features/<feature>/ -d 2` to assess existing feature size
+          - `dust tests/ -d 2` to assess test directory scope
+          - Use this to inform sizing classification and task breakdown
 
           **Analysis Required:**
 
@@ -382,22 +404,25 @@
              - Complexity factors
              - Unknown areas
 
-          4. **Task Decomposition**
+          4. **Task Decomposition** (MUST respect sizing guidelines above)
              - Suggested task breakdown
              - Estimated complexity per task
              - Recommended order
+             - **Sizing check:** Verify total tasks ≤8, subtasks ≤40, files ≤12
 
           5. **Testing Strategy**
-             - Key test scenarios
-             - Edge cases to cover
-             - Integration points to test
+             - Key unit test scenarios
+             - Integration test points
+             - **E2E testing:** Identify if story needs E2E coverage (new UI, critical user journey, multi-step flow)
+             - If E2E needed: Can existing E2E tests be extended, or is a new test required?
 
           **Output Format:**
           Structured analysis with:
           - Implementation approach recommendation
           - Risk assessment (HIGH/MEDIUM/LOW)
           - Task breakdown with estimates
-          - Testing strategy outline
+          - **Sizing classification:** SMALL/MEDIUM/LARGE (must not be TOO_LARGE)
+          - Testing strategy outline (unit + integration + E2E recommendation)
       </task-call>
     </ecc-spawn>
 
@@ -420,7 +445,7 @@
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
   <step n="3" goal="Spawn ECC Architect for technical design">
-    <critical>🎭 ATLAS PUPPETEER: Spawning ECC Architect agent</critical>
+    <critical>🎭 ECC ORCHESTRATOR: Spawning ECC Architect agent</critical>
     <critical>🏗️ ARCHITECTURE ENFORCEMENT: Architect MUST follow documented patterns and specify exact locations</critical>
 
     <output>🎭 **Spawning ECC Architect...**
@@ -444,8 +469,8 @@
           **Planner Analysis:**
           {{planner_analysis}}
 
-          **Atlas Architecture Patterns:**
-          {{atlas_context}}
+          **Architecture Patterns:**
+          {{project_patterns}}
 
           **Feature Context:**
           - Feature name: {{feature_name}}
@@ -666,35 +691,32 @@
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 5: Atlas Workflow Chain Analysis                                   -->
+  <!-- STEP 5: Cross-Cutting Impact Analysis                                   -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="5" goal="Atlas workflow chain impact analysis">
-    <critical>🗺️ ATLAS: Analyze workflow chain impacts</critical>
+  <step n="5" goal="Cross-cutting impact analysis">
+    <critical>🗺️ Analyze cross-cutting impacts on existing features</critical>
 
-    <check if="{{atlas_enabled}} == true">
-      <action>Load {atlas_knowledge}/08-workflow-chains.md</action>
-      <action>Analyze story impact on existing user flows</action>
-      <action>Identify upstream and downstream dependencies</action>
+    <action>Analyze story impact on existing user flows using project patterns</action>
+    <action>Identify upstream and downstream dependencies</action>
 
-      <output>🗺️ **Atlas Workflow Chain Analysis**
+    <output>🗺️ **Cross-Cutting Impact Analysis**
 
-        **Affected Workflows:**
-        {{affected_workflows}}
+      **Affected Workflows:**
+      {{affected_workflows}}
 
-        **Upstream Dependencies:**
-        {{upstream_deps}}
+      **Upstream Dependencies:**
+      {{upstream_deps}}
 
-        **Downstream Impacts:**
-        {{downstream_impacts}}
+      **Downstream Impacts:**
+      {{downstream_impacts}}
 
-        **Push Alerts:**
-        {{push_alerts}}
+      **Push Alerts:**
+      {{push_alerts}}
 
-        **Additional ACs Suggested:**
-        {{suggested_acs}}
-      </output>
-    </check>
+      **Additional ACs Suggested:**
+      {{suggested_acs}}
+    </output>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
@@ -776,17 +798,276 @@
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 5.75: E2E Testing Requirements Check                               -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="5.75" goal="Determine if E2E testing is required and load project conventions">
+    <critical>🧪 E2E TESTING POLICY: E2E tests run ONLY against staging environment. No local/emulator e2e testing. Tests target boletapp-staging with pre-created test accounts.</critical>
+    <critical>🧪 E2E TESTING CHECK: New user-facing features SHOULD have E2E test coverage</critical>
+
+    <output>🧪 **E2E Testing Requirements Analysis**
+
+      Analyzing story for E2E testing needs...
+    </output>
+
+    <!-- Check for E2E conventions file -->
+    <action>Search for E2E conventions documentation:
+      - tests/e2e/E2E-TEST-CONVENTIONS.md
+      - tests/e2e/README.md
+      - docs/testing/e2e-conventions.md
+      - docs/E2E-TESTING.md
+    </action>
+
+    <check if="E2E conventions file exists">
+      <action>Load E2E conventions as {{e2e_conventions}}</action>
+      <action>Extract:
+        - File structure conventions
+        - Test patterns (journey, fixture-based, etc.)
+        - Screenshot conventions
+        - TestId conventions
+        - Authentication patterns
+        - Cleanup patterns
+      </action>
+      <output>✅ **E2E Conventions Loaded**
+
+        **Source:** {{e2e_conventions_path}}
+
+        **Key Patterns:**
+        {{e2e_conventions_summary}}
+      </output>
+    </check>
+
+    <check if="NO E2E conventions file found">
+      <action>Set {{e2e_conventions}} = "No project E2E conventions found"</action>
+      <output>ℹ️ No E2E conventions file found - will use general E2E best practices if needed</output>
+    </check>
+
+    <!-- Analyze story for E2E testing requirements -->
+    <action>Analyze story to determine if E2E testing is required:
+
+      **E2E Testing Required When:**
+      1. New user-facing UI functionality (new screens, dialogs, flows)
+      2. Critical user journeys are affected (auth, checkout, core features)
+      3. Multi-step user interactions (wizards, forms with validation)
+      4. Features involving navigation changes
+      5. Features with complex state transitions visible to user
+      6. Integration points that affect user experience
+
+      **E2E Testing NOT Required When:**
+      1. Pure backend/API changes with no UI impact
+      2. Internal refactoring with no behavior change
+      3. Bug fixes that don't change user flows
+      4. Documentation-only changes
+      5. Unit-testable logic without UI interaction
+
+      **Story Analysis:**
+      - Story: {{story_key}}
+      - Requirements: {{story_requirements}}
+      - New UI components: {{new_ui_components_from_architect}}
+      - User flow impacts: {{affected_workflows}}
+    </action>
+
+    <action>Set {{e2e_required}} = true/false based on analysis</action>
+    <action>Set {{e2e_justification}} = reason for decision</action>
+
+    <check if="{{e2e_required}} == true">
+      <output>🧪 **E2E Testing Required**
+
+        **Justification:** {{e2e_justification}}
+
+        Checking existing E2E test coverage...
+      </output>
+
+      <!-- Check existing E2E tests for coverage -->
+      <action>Search existing E2E tests:
+        - tests/e2e/**/*.spec.ts
+        - tests/e2e/**/*.test.ts
+
+        **Analyze each test file for:**
+        - Feature/functionality being tested
+        - User journeys covered
+        - Components/views involved
+        - TestIds used
+      </action>
+
+      <action>Compare story requirements against existing E2E coverage:
+
+        **Check if existing tests cover:**
+        - Same view/screen the story affects
+        - Similar user journey/flow
+        - Related functionality that could be extended
+
+        **Set {{e2e_coverage_status}}:**
+        - "covered" = existing test fully covers the new functionality
+        - "extendable" = existing test can be modified to cover new functionality
+        - "new_required" = no existing test covers this; new test needed
+      </action>
+
+      <check if="{{e2e_coverage_status}} == 'covered'">
+        <output>✅ **Existing E2E Coverage Found**
+
+          **Covered by:** {{existing_test_file}}
+
+          The following existing test already covers this functionality:
+          - Test: {{existing_test_name}}
+          - File: {{existing_test_file}}
+          - Journey: {{existing_journey_description}}
+
+          **Recommendation:** Verify existing test still passes after implementation.
+          No new E2E test creation required.
+        </output>
+
+        <action>Set {{e2e_action}} = "verify_existing"</action>
+        <action>Set {{e2e_tasks}} = [
+          "- [ ] Verify existing E2E test ({{existing_test_file}}) still passes after changes",
+          "- [ ] Add any new TestIds required for new UI elements"
+        ]</action>
+      </check>
+
+      <check if="{{e2e_coverage_status}} == 'extendable'">
+        <output>🔄 **Existing E2E Test Can Be Extended**
+
+          **Extend:** {{existing_test_file}}
+
+          An existing test covers related functionality and can be extended:
+          - Test: {{existing_test_name}}
+          - File: {{existing_test_file}}
+          - Current coverage: {{existing_journey_description}}
+
+          **Recommended extension:**
+          {{extension_recommendation}}
+
+          **Reasoning:** Extending existing journey tests is preferred over creating duplicates
+          to maintain test cohesion and avoid redundant setup/teardown.
+        </output>
+
+        <action>Set {{e2e_action}} = "extend_existing"</action>
+        <action>Set {{e2e_test_location}} = {{existing_test_file}}</action>
+      </check>
+
+      <check if="{{e2e_coverage_status}} == 'new_required'">
+        <output>🆕 **New E2E Test Required**
+
+          No existing E2E test covers this functionality.
+
+          **Recommended test location:** {{e2e_test_location}}
+          **Recommended test type:** {{recommended_test_type}}
+        </output>
+
+        <action>Set {{e2e_action}} = "create_new"</action>
+      </check>
+
+      <output>🧪 **E2E Testing Decision**
+
+        **Action:** {{e2e_action}}
+        **Target:** {{e2e_test_location}}
+
+        **Recommended E2E Coverage:**
+        {{recommended_e2e_scenarios}}
+      </output>
+
+      <!-- Generate E2E-specific acceptance criteria based on action type -->
+      <action>Generate E2E testing ACs based on {{e2e_action}}:
+
+        {{#if e2e_action == "verify_existing"}}
+        **E2E Acceptance Criteria (Verify Existing):**
+        - AC-E2E-1: Existing E2E test ({{existing_test_file}}) passes after implementation
+        - AC-E2E-2: TestIds added to any new interactive elements
+        - AC-E2E-3: No regression in existing test coverage
+        {{/if}}
+
+        {{#if e2e_action == "extend_existing"}}
+        **E2E Acceptance Criteria (Extend Existing):**
+        - AC-E2E-1: Existing E2E test ({{existing_test_file}}) extended to cover new functionality
+        - AC-E2E-2: New test steps added following existing test patterns
+        - AC-E2E-3: Screenshots captured at new interaction points
+        - AC-E2E-4: TestIds added to new interactive elements
+        - AC-E2E-5: Test cleanup updated if new test data is created
+        {{/if}}
+
+        {{#if e2e_action == "create_new"}}
+        **E2E Acceptance Criteria (Create New):**
+        - AC-E2E-1: E2E test file created at {{e2e_test_location}} following project conventions
+        - AC-E2E-2: Test covers primary user journey for this feature
+        - AC-E2E-3: Screenshots captured at key interaction points
+        - AC-E2E-4: Test includes proper cleanup of test data
+        - AC-E2E-5: TestIds added to new interactive elements
+        {{/if}}
+
+        {{#if e2e_conventions}}
+        **Convention-Specific ACs (from {{e2e_conventions_path}}):**
+        {{convention_specific_acs}}
+        {{/if}}
+      </action>
+
+      <!-- Generate E2E tasks based on action type -->
+      <action>Generate E2E tasks to add to story based on {{e2e_action}}:
+
+        {{#if e2e_action == "verify_existing"}}
+        **E2E Testing Tasks (Verify Existing):**
+        - [ ] Add data-testid attributes to any new interactive elements
+        - [ ] Run existing E2E test ({{existing_test_file}}) to verify it still passes
+        - [ ] Document any TestId additions in the test conventions if needed
+        {{/if}}
+
+        {{#if e2e_action == "extend_existing"}}
+        **E2E Testing Tasks (Extend Existing):**
+        - [ ] Read component .tsx source files and extract TestId Map (all data-testid attributes)
+        - [ ] Read hook code and identify optimistic update patterns (PENDING, temp-, loading states)
+        - [ ] Add data-testid attributes to new interactive elements
+        - [ ] Extend {{existing_test_file}} with new test steps for this feature
+        - [ ] Add screenshots at new interaction points (per conventions)
+        - [ ] Update test cleanup (try/finally + pre-test residual cleanup) if new test data is created
+        - [ ] Verify extended test passes against staging: npx playwright test --project=staging
+        {{/if}}
+
+        {{#if e2e_action == "create_new"}}
+        **E2E Testing Tasks (Create New):**
+        - [ ] Read component .tsx source files and extract TestId Map (all data-testid attributes)
+        - [ ] Read hook code and identify optimistic update patterns (PENDING, temp-, loading states)
+        - [ ] Read firestore.rules for collections accessed by feature (verify cross-user ops allowed)
+        - [ ] Add data-testid attributes to new interactive elements
+        - [ ] Create E2E test file at {{e2e_test_location}}
+        - [ ] Implement journey test covering primary user flow
+        - [ ] Add screenshots at key steps (per conventions)
+        - [ ] Implement try/finally cleanup + pre-test residual data cleanup
+        - [ ] For multi-user: plan bidirectional cleanup (non-owner leaves, then owner deletes)
+        - [ ] Verify test passes against staging: npx playwright test --project=staging
+        {{/if}}
+      </action>
+
+      <action>Set {{e2e_acs}} = generated E2E acceptance criteria</action>
+      <action>Set {{e2e_tasks}} = generated E2E tasks</action>
+      <action>Set {{e2e_test_location}} = recommended file path per conventions</action>
+    </check>
+
+    <check if="{{e2e_required}} == false">
+      <output>ℹ️ **E2E Testing Not Required**
+
+        **Justification:** {{e2e_justification}}
+
+        Story does not introduce user-facing functionality requiring E2E coverage.
+      </output>
+
+      <action>Set {{e2e_acs}} = []</action>
+      <action>Set {{e2e_tasks}} = []</action>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <!-- STEP 6: Generate Story File                                             -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="6" goal="Generate comprehensive story file with mandatory architectural ACs">
+  <step n="6" goal="Generate comprehensive story file with mandatory architectural ACs and E2E requirements">
     <action>Compile story file from:
       - Original requirements and ACs from epic
       - **MANDATORY: Architectural ACs from Step 5.5**
+      - **E2E Testing ACs from Step 5.75 (if required)**
       - Planner task breakdown
+      - **E2E Tasks from Step 5.75 (if required)**
       - Architect technical design (with exact file paths)
       - Technical review notes
-      - Atlas workflow chain analysis
+      - Cross-cutting impact analysis
       - Suggested additional ACs
     </action>
 
@@ -834,6 +1115,37 @@
       ### Anti-Pattern Requirements (Must NOT Happen)
       {{antipattern_acs}}
 
+      {{#if e2e_required}}
+      ## E2E Testing Requirements
+
+      > 🧪 This story introduces user-facing functionality requiring E2E test coverage.
+
+      **E2E Action:** {{e2e_action}}
+      **E2E Conventions:** {{e2e_conventions_path}}
+      **Target Test File:** {{e2e_test_location}}
+
+      {{#if e2e_action == "verify_existing"}}
+      > ✅ **Existing Coverage:** An existing E2E test already covers this functionality.
+      > Verify it still passes after implementation.
+      {{/if}}
+
+      {{#if e2e_action == "extend_existing"}}
+      > 🔄 **Extend Existing:** Modify the existing test to cover new functionality.
+      > This maintains test cohesion and avoids redundant setup/teardown.
+      {{/if}}
+
+      {{#if e2e_action == "create_new"}}
+      > 🆕 **New Test Required:** No existing test covers this functionality.
+      > Create a new E2E test following project conventions.
+      {{/if}}
+
+      ### E2E Acceptance Criteria
+      {{e2e_acs}}
+
+      ### E2E Test Scenarios
+      {{recommended_e2e_scenarios}}
+      {{/if}}
+
       ## File Specification
 
       | File/Component | Exact Path | Pattern | AC Reference |
@@ -842,6 +1154,11 @@
 
       ## Tasks / Subtasks
       {{tasks_from_planner}}
+
+      {{#if e2e_required}}
+      ### E2E Testing Tasks
+      {{e2e_tasks}}
+      {{/if}}
 
       ## Dev Notes
 
@@ -866,8 +1183,10 @@
       - ✅ Story metadata
       - ✅ Functional Acceptance Criteria ({{functional_ac_count}} items)
       - ✅ **Architectural Acceptance Criteria ({{arch_ac_count}} items) - MANDATORY**
+      {{#if e2e_required}}- ✅ **E2E Testing Requirements ({{e2e_ac_count}} items)**{{/if}}
       - ✅ File Specification Table (exact paths)
       - ✅ Tasks/Subtasks ({{task_count}} tasks)
+      {{#if e2e_required}}- ✅ E2E Testing Tasks{{/if}}
       - ✅ Dev Notes (ECC-generated)
       - ✅ ECC Analysis Summary
 
@@ -877,8 +1196,8 @@
       {{#if involves_database}}- Database Reviewer: Schema recommendations{{/if}}
       {{#if involves_auth}}- Security Reviewer: Security requirements{{/if}}
 
-      **Atlas Enhancements:**
-      - Workflow chain analysis
+      **ECC Enhancements:**
+      - Cross-cutting impact analysis
       - Additional AC suggestions: {{suggested_ac_count}}
       - Push alerts: {{push_alert_count}}
 
@@ -886,6 +1205,18 @@
       - File location ACs: {{file_location_ac_count}}
       - Pattern ACs: {{pattern_ac_count}}
       - Anti-pattern ACs: {{antipattern_ac_count}}
+
+      {{#if e2e_required}}
+      **E2E Testing:**
+      - E2E Required: ✅ Yes
+      - Action: {{e2e_action}} {{#if e2e_action == "verify_existing"}}(verify existing test){{/if}}{{#if e2e_action == "extend_existing"}}(extend existing test){{/if}}{{#if e2e_action == "create_new"}}(create new test){{/if}}
+      - E2E Conventions: {{e2e_conventions_path}}
+      - Target Test: {{e2e_test_location}}
+      - E2E ACs: {{e2e_ac_count}}
+      {{else}}
+      **E2E Testing:**
+      - E2E Required: ❌ No ({{e2e_justification}})
+      {{/if}}
     </output>
   </step>
 
@@ -901,31 +1232,10 @@
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 8: Atlas Memory Feeding                                            -->
+  <!-- STEP 8: Story Creation Complete                                          -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="8" goal="Feed story creation insights to Atlas memory">
-    <check if="{{atlas_enabled}} == true">
-      <output>🗺️ **Atlas Memory Update**
-
-        Feed ECC story analysis to Atlas:
-
-        **Story:** {{story_key}}
-        **Patterns Identified:** {{patterns_identified}}
-        **Workflow Impacts:** {{workflow_impacts}}
-        **Technical Decisions:** {{technical_decisions}}
-
-        Update Atlas memory?
-      </output>
-
-      <ask>Update Atlas memory? [Y/N]</ask>
-
-      <check if="user confirms">
-        <action>Update {atlas_knowledge}/02-features.md with new feature context</action>
-        <action>Update {atlas_knowledge}/08-workflow-chains.md with flow impacts</action>
-        <output>✅ Atlas memory updated with story creation insights</output>
-      </check>
-    </check>
+  <step n="8" goal="Finalize story creation">
 
     <output>**✅ ECC Story Creation Complete!**
 

@@ -44,9 +44,15 @@ export interface TransactionSharingOptInDialogProps {
     /** Group icon (optional, falls back to extracted emoji from name) */
     groupIcon?: string;
     /** Callback when user confirms join (passes shareMyTransactions choice) */
-    onJoin: (shareMyTransactions: boolean) => void;
+    onJoin: (shareMyTransactions: boolean) => void | Promise<void>;
     /** Callback when user cancels (returns to accept dialog) */
     onCancel: () => void;
+    /**
+     * Callback when user dismisses dialog (backdrop/close/escape).
+     * When provided: dismiss triggers join with default sharing=false (AC3).
+     * When omitted: dismiss falls back to onCancel (returns to accept dialog).
+     */
+    onDismiss?: () => void;
     /** Whether join is in progress */
     isPending: boolean;
     /** Translation function */
@@ -66,6 +72,7 @@ export const TransactionSharingOptInDialog: React.FC<TransactionSharingOptInDial
     groupIcon,
     onJoin,
     onCancel,
+    onDismiss,
     isPending,
     t,
     lang = 'es',
@@ -85,18 +92,28 @@ export const TransactionSharingOptInDialog: React.FC<TransactionSharingOptInDial
         }
     }, [open]);
 
+    // Handle dismiss (backdrop/close/escape) - joins with defaults when onDismiss provided (AC3)
+    const handleDismiss = useCallback(() => {
+        if (isPending) return;
+        if (onDismiss) {
+            onDismiss();
+        } else {
+            onCancel();
+        }
+    }, [isPending, onDismiss, onCancel]);
+
     // Handle Escape key
     useEffect(() => {
         if (!open) return;
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape' && !isPending) {
                 e.preventDefault();
-                handleCancel();
+                handleDismiss();
             }
         };
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [open, isPending]);
+    }, [open, isPending, handleDismiss]);
 
     // Prevent body scroll
     useEffect(() => {
@@ -122,12 +139,10 @@ export const TransactionSharingOptInDialog: React.FC<TransactionSharingOptInDial
         onJoin(shareMyTransactions);
     }, [isPending, onJoin, shareMyTransactions]);
 
-    // Handle backdrop click (dismiss = no sharing)
+    // Handle backdrop click (dismiss = join with defaults when onDismiss provided, AC3)
     const handleBackdropClick = useCallback(() => {
-        if (isPending) return;
-        // Dismiss treated as cancel (back to accept dialog)
-        onCancel();
-    }, [isPending, onCancel]);
+        handleDismiss();
+    }, [handleDismiss]);
 
     // Don't render if closed
     if (!open) return null;
@@ -195,10 +210,10 @@ export const TransactionSharingOptInDialog: React.FC<TransactionSharingOptInDial
                 onClick={(e) => e.stopPropagation()}
                 data-testid="optin-dialog"
             >
-                {/* Close button */}
+                {/* Close button (X) - dismiss behavior: joins with defaults when onDismiss provided */}
                 <button
                     ref={closeButtonRef}
-                    onClick={handleCancel}
+                    onClick={handleDismiss}
                     disabled={isPending}
                     className="absolute right-4 top-4 p-2 rounded-full transition-colors disabled:opacity-50"
                     style={{ color: 'var(--secondary)', backgroundColor: 'var(--bg-tertiary)' }}

@@ -52,6 +52,11 @@ vi.mock('@/services/invitationService', () => ({
     declineInvitation: (...args: unknown[]) => mockDeclineInvitation(...args),
 }));
 
+// Mock config/constants
+vi.mock('@/config/constants', () => ({
+    APP_ID: 'boletapp',
+}));
+
 // Mock view mode store
 const mockSetPersonalMode = vi.fn();
 const mockViewModeState = {
@@ -488,7 +493,9 @@ describe('useLeaveTransferFlow', () => {
                 expect.objectContaining({
                     displayName: mockUser.displayName,
                     email: mockUser.email,
-                })
+                }),
+                'boletapp', // APP_ID (Story 14d-v2-1-13+14)
+                false       // shareMyTransactions default
             );
             expect(mockJoinGroupDirectly).not.toHaveBeenCalled();
             expect(mockRefetchGroups).toHaveBeenCalled();
@@ -533,7 +540,9 @@ describe('useLeaveTransferFlow', () => {
                 expect.objectContaining({
                     displayName: mockUser.displayName,
                     email: mockUser.email,
-                })
+                }),
+                'boletapp', // APP_ID (Story 14d-v2-1-13+14)
+                false       // shareMyTransactions default
             );
             expect(mockAcceptInvitation).not.toHaveBeenCalled();
             expect(mockRefetchGroups).toHaveBeenCalled();
@@ -615,6 +624,120 @@ describe('useLeaveTransferFlow', () => {
 
             expect(success).toBe(false);
             expect(mockAcceptInvitation).not.toHaveBeenCalled();
+        });
+
+        // ---------------------------------------------------------------------
+        // Story 14d-v2-1-13+14: shareMyTransactions passthrough
+        // ---------------------------------------------------------------------
+        describe('user group preference passthrough (Story 14d-v2-1-13+14)', () => {
+            it('passes APP_ID and shareMyTransactions=true to acceptInvitation for real invitations', async () => {
+                mockAcceptInvitation.mockResolvedValue(undefined);
+
+                const { result } = renderHook(() =>
+                    useLeaveTransferFlow({
+                        db: mockDb,
+                        user: mockUser,
+                        onShowToast: mockShowToast,
+                        t: mockT,
+                        lang: 'en',
+                        refetchGroups: mockRefetchGroups,
+                        refetchInvitations: mockRefetchInvitations,
+                    })
+                );
+
+                const invitation = createMockInvitation({ id: 'real-invitation-123' });
+
+                let success: boolean | undefined;
+                await act(async () => {
+                    success = await result.current.handleAcceptInvitation(invitation, true);
+                });
+
+                expect(success).toBe(true);
+                // The underlying acceptInvitation should receive APP_ID and shareMyTransactions
+                expect(mockAcceptInvitation).toHaveBeenCalledWith(
+                    mockDb,
+                    invitation.id,
+                    mockUser.uid,
+                    expect.objectContaining({
+                        displayName: mockUser.displayName,
+                        email: mockUser.email,
+                    }),
+                    'boletapp', // APP_ID
+                    true        // shareMyTransactions
+                );
+            });
+
+            it('passes APP_ID and shareMyTransactions=false to joinGroupDirectly for synthetic invitations', async () => {
+                mockJoinGroupDirectly.mockResolvedValue(createMockGroup());
+
+                const { result } = renderHook(() =>
+                    useLeaveTransferFlow({
+                        db: mockDb,
+                        user: mockUser,
+                        onShowToast: mockShowToast,
+                        t: mockT,
+                        lang: 'en',
+                        refetchGroups: mockRefetchGroups,
+                        refetchInvitations: mockRefetchInvitations,
+                    })
+                );
+
+                const invitation = createMockInvitation({
+                    id: 'group-abc123',
+                    groupId: 'abc123',
+                });
+
+                let success: boolean | undefined;
+                await act(async () => {
+                    success = await result.current.handleAcceptInvitation(invitation, false);
+                });
+
+                expect(success).toBe(true);
+                expect(mockJoinGroupDirectly).toHaveBeenCalledWith(
+                    mockDb,
+                    invitation.groupId,
+                    mockUser.uid,
+                    expect.objectContaining({
+                        displayName: mockUser.displayName,
+                        email: mockUser.email,
+                    }),
+                    'boletapp', // APP_ID
+                    false       // shareMyTransactions
+                );
+            });
+
+            it('defaults shareMyTransactions to false when not provided', async () => {
+                mockAcceptInvitation.mockResolvedValue(undefined);
+
+                const { result } = renderHook(() =>
+                    useLeaveTransferFlow({
+                        db: mockDb,
+                        user: mockUser,
+                        onShowToast: mockShowToast,
+                        t: mockT,
+                        lang: 'en',
+                        refetchGroups: mockRefetchGroups,
+                        refetchInvitations: mockRefetchInvitations,
+                    })
+                );
+
+                const invitation = createMockInvitation({ id: 'real-invitation-123' });
+
+                await act(async () => {
+                    // Call without shareMyTransactions parameter
+                    await result.current.handleAcceptInvitation(invitation);
+                });
+
+                // Should default to false
+                expect(mockAcceptInvitation).toHaveBeenCalledWith(
+                    mockDb,
+                    invitation.id,
+                    mockUser.uid,
+                    expect.any(Object),
+                    'boletapp', // APP_ID
+                    false       // shareMyTransactions defaults to false
+                );
+            });
         });
     });
 

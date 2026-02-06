@@ -39,6 +39,10 @@ import { useNavigationActions } from '@/shared/stores';
 import { formatCurrency as formatCurrencyUtil } from '@/utils/currency';
 import { formatDate as formatDateUtil } from '@/utils/date';
 import { TRANSLATIONS } from '@/utils/translations';
+// Story 14d-v2-1-10d: View mode filtering utility
+import { filterTransactionsByViewMode } from '@/utils/viewModeFilterUtils';
+// Story 14d-v2-1-10d: ViewMode store for filtering
+import { useViewMode } from '@/shared/stores/useViewModeStore';
 import type { Transaction } from '@/types/transaction';
 import type { Language, Theme, FontColorMode } from '@/types/settings';
 import type { ThemeName } from '@/config/categoryColors';
@@ -193,20 +197,23 @@ export function useDashboardViewData(): UseDashboardViewDataReturn {
     const defaultCountry = preferences?.defaultCountry || '';
     const foreignLocationFormat = preferences?.foreignLocationFormat || 'code';
 
+    // === View Mode (Story 14d-v2-1-10d) ===
+    const { mode: viewMode, group: viewModeGroup } = useViewMode();
+
     // === Transaction Data ===
     const { transactions: paginatedTransactions } = usePaginatedTransactions(user, services);
 
     // Recent scans for merge
-    const recentScans = useRecentScans(user, services);
+    const rawRecentScans = useRecentScans(user, services);
 
     // Merge recent scans with paginated transactions
     // Logic moved from App.tsx - deduplicates by transaction ID
     // Recent scans appear at TOP of list
     const transactionsWithRecentScans = useMemo(() => {
-        if (!recentScans?.length) return paginatedTransactions;
+        if (!rawRecentScans?.length) return paginatedTransactions;
 
         // Build set of recent scan IDs for deduplication
-        const recentIds = new Set(recentScans.filter((s) => s.id).map((s) => s.id));
+        const recentIds = new Set(rawRecentScans.filter((s) => s.id).map((s) => s.id));
 
         // Filter paginated to exclude duplicates
         const filteredPaginated = paginatedTransactions.filter(
@@ -214,8 +221,27 @@ export function useDashboardViewData(): UseDashboardViewDataReturn {
         );
 
         // Recent scans at top, then paginated
-        return [...recentScans, ...filteredPaginated];
-    }, [paginatedTransactions, recentScans]);
+        return [...rawRecentScans, ...filteredPaginated];
+    }, [paginatedTransactions, rawRecentScans]);
+
+    // Story 14d-v2-1-10d: Filter transactions by view mode (personal vs group)
+    const viewModeFilteredTransactions = useMemo(() => {
+        return filterTransactionsByViewMode(
+            transactionsWithRecentScans,
+            viewMode,
+            viewModeGroup?.id ?? null
+        );
+    }, [transactionsWithRecentScans, viewMode, viewModeGroup?.id]);
+
+    // Story 14d-v2-1-10d: Filter recentScans by view mode
+    const recentScans = useMemo(() => {
+        const scans = rawRecentScans || [];
+        return filterTransactionsByViewMode(
+            scans,
+            viewMode,
+            viewModeGroup?.id ?? null
+        );
+    }, [rawRecentScans, viewMode, viewModeGroup?.id]);
 
     // === Shared Groups ===
     const db = getFirestore();
@@ -304,10 +330,10 @@ export function useDashboardViewData(): UseDashboardViewDataReturn {
 
     // === Return Complete Data ===
     return {
-        // Transaction data
-        transactions: transactionsWithRecentScans,
-        allTransactions: transactionsWithRecentScans,
-        recentScans: recentScans || [],
+        // Transaction data - Story 14d-v2-1-10d: Use filtered transactions
+        transactions: viewModeFilteredTransactions,
+        allTransactions: viewModeFilteredTransactions,
+        recentScans: recentScans,
 
         // User info
         userId: user?.uid ?? null,

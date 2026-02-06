@@ -110,3 +110,23 @@ export { NotificationsList } from './NotificationsList';
 // Story 14d-v2-1-9: Recovery Sync Prompt
 export { RecoverySyncPrompt } from './RecoverySyncPrompt';
 export type { RecoverySyncPromptProps } from './RecoverySyncPrompt';
+
+// Story 14d-v2-1-10c: Header Mode Indicator
+export { HeaderModeIndicator } from './HeaderModeIndicator';
+export type { HeaderModeIndicatorProps } from './HeaderModeIndicator';
+
+// Story 14d-v2-1-11c: Transaction Sharing Toggle
+export { TransactionSharingToggle } from './TransactionSharingToggle';
+export type { TransactionSharingToggleProps } from './TransactionSharingToggle';
+
+// Story 14d-v2-1-12c: User Transaction Sharing Toggle
+export { UserTransactionSharingToggle } from './UserTransactionSharingToggle';
+export type { UserTransactionSharingToggleProps } from './UserTransactionSharingToggle';
+
+// Story 14d-v2-1-12d: My Sharing Preferences Section
+export { MySharingPreferencesSection } from './MySharingPreferencesSection';
+export type { MySharingPreferencesSectionProps } from './MySharingPreferencesSection';
+
+// Reusable Info Tooltip Component
+export { InfoTooltip } from './InfoTooltip';
+export type { InfoTooltipProps } from './InfoTooltip';

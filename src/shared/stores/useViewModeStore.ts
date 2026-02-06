@@ -1,5 +1,5 @@
 /**
- * Story 14d-v2-0: Architecture Alignment
+ * Story 14d-v2-1-10a: ViewMode Store Integration
  *
  * Zustand store for view mode state management, replacing ViewModeContext.
  * Follows the pattern established in Epic 14e (ADR-018: Zustand-only state management).
@@ -9,8 +9,7 @@
  * - Selected group ID
  * - Cached group data
  *
- * Note: Group mode is currently disabled (Epic 14c-refactor stub behavior preserved).
- * Full functionality will be enabled in Epic 14d-v2 stories 1.10a-d.
+ * Story 14d-v2-1-10a: setGroupMode and updateGroupData fully enabled.
  *
  * Architecture Reference:
  * - Atlas 04-architecture.md: Zustand Store Pattern (Epic 14e)
@@ -57,9 +56,7 @@ export interface ViewModeActions {
   /**
    * Switch to group mode.
    *
-   * NOTE: Currently disabled (Epic 14c-refactor stub behavior).
-   * Logs a warning in DEV but does nothing.
-   * Full functionality enabled in Story 14d-v2-1.10b.
+   * Story 14d-v2-1-10a: Fully functional.
    *
    * @param groupId - The shared group ID
    * @param group - Optional group data for display
@@ -69,7 +66,7 @@ export interface ViewModeActions {
   /**
    * Update cached group data without changing mode.
    *
-   * NOTE: Currently disabled (Epic 14c-refactor stub behavior).
+   * Story 14d-v2-1-10a: Fully functional.
    *
    * @param group - Updated group data
    */
@@ -112,30 +109,32 @@ export const useViewModeStore = create<ViewModeStore>()(
           'viewMode/setPersonalMode'
         ),
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      setGroupMode: (_groupId, _group) => {
-        // Epic 14c-refactor stub behavior: log warning, do nothing
-        // This will be enabled in Story 14d-v2-1.10b
-        if (import.meta.env.DEV) {
-          console.warn(
-            '[useViewModeStore] setGroupMode called but shared groups are disabled. ' +
-              'This feature will be re-enabled in Epic 14d-v2 stories.'
-          );
+      // Story 14d-v2-1-10a: setGroupMode fully enabled
+      setGroupMode: (groupId, group) => {
+        // Validate groupId to prevent invalid state (ECC Code Review fix)
+        if (!groupId || typeof groupId !== 'string' || groupId.trim() === '') {
+          if (import.meta.env.DEV) {
+            console.warn('[ViewModeStore] setGroupMode called with invalid groupId');
+          }
+          return;
         }
-        // Uncomment when enabling shared groups (Story 14d-v2-1.10b):
-        // set(
-        //   { mode: 'group', groupId: _groupId, group: _group ?? null },
-        //   false,
-        //   'viewMode/setGroupMode'
-        // );
+        // Validate group.id matches groupId if group is provided
+        if (group && group.id && group.id !== groupId) {
+          if (import.meta.env.DEV) {
+            console.warn('[ViewModeStore] setGroupMode: group.id does not match groupId');
+          }
+          return;
+        }
+        set(
+          { mode: 'group', groupId, group: group ?? null },
+          false,
+          'viewMode/setGroupMode'
+        );
       },
 
-      updateGroupData: (_group) => {
-        // Epic 14c-refactor stub behavior: do nothing
-        // This will be enabled in Story 14d-v2-1.10b
-        // Uncomment when enabling shared groups:
-        // set({ group }, false, 'viewMode/updateGroupData');
-      },
+      // Story 14d-v2-1-10a: updateGroupData fully enabled
+      updateGroupData: (group) =>
+        set({ group }, false, 'viewMode/updateGroupData'),
     }),
     { name: 'view-mode-store', enabled: import.meta.env.DEV }
   )
@@ -200,9 +199,10 @@ export const useViewModeActions = () =>
  * ```tsx
  * const { mode, isGroupMode, setPersonalMode, setGroupMode } = useViewMode();
  *
- * // Currently always personal mode (shared groups disabled)
- * console.log(mode); // 'personal'
- * console.log(isGroupMode); // false
+ * // Switch between personal and group modes
+ * setGroupMode('group-123', groupData);
+ * console.log(mode); // 'group'
+ * console.log(isGroupMode); // true
  * ```
  */
 export function useViewMode() {

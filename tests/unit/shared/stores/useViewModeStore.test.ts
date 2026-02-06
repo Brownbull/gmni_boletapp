@@ -1,20 +1,19 @@
 /**
- * Story 14d-v2-0: Architecture Alignment - useViewModeStore Unit Tests
+ * Story 14d-v2-1-10a: ViewMode Store Integration - Unit Tests
  *
  * Tests for the view mode Zustand store covering:
  * - Initial state (personal mode, null group)
  * - setPersonalMode clears group data
- * - setGroupMode stub behavior (logs warning, no state change)
- * - updateGroupData stub behavior
+ * - setGroupMode sets mode to 'group' with groupId and optional group data
+ * - updateGroupData updates group without changing mode
  * - Selector functions
  * - Action stability (same reference across renders)
  * - Convenience hook (useViewMode)
  *
- * Note: setGroupMode and updateGroupData are stubs until Story 14d-v2-1.10b.
- * Tests verify the stub behavior (warning in DEV, no state change).
+ * Story 14d-v2-1-10a: Full setGroupMode and updateGroupData functionality enabled.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import {
   useViewModeStore,
@@ -72,7 +71,7 @@ function createMockGroup(overrides: Partial<SharedGroup> = {}): SharedGroup {
     id: 'group-123',
     ownerId: 'user-abc',
     appId: 'boletapp',
-    name: '🏠 Gastos del Hogar',
+    name: 'Gastos del Hogar',
     color: '#10b981',
     icon: '🏠',
     shareCode: 'Ab3dEf7hIj9kLm0p',
@@ -85,19 +84,9 @@ function createMockGroup(overrides: Partial<SharedGroup> = {}): SharedGroup {
   };
 }
 
-// Suppress console.warn in tests for stub behavior
-const originalWarn = console.warn;
 beforeEach(() => {
   resetStore();
-  console.warn = vi.fn();
 });
-
-afterEach(() => {
-  console.warn = originalWarn;
-});
-
-// Need afterEach to restore console.warn
-import { afterEach } from 'vitest';
 
 // =============================================================================
 // Tests
@@ -165,62 +154,139 @@ describe('useViewModeStore', () => {
     });
   });
 
-  describe('setGroupMode (stub behavior)', () => {
-    it('logs warning in DEV mode', () => {
-      const { setGroupMode } = useViewModeStore.getState();
-      const mockGroup = createMockGroup();
-
-      setGroupMode('group-123', mockGroup);
-
-      // Check warning was logged
-      expect(console.warn).toHaveBeenCalledWith(
-        expect.stringContaining('setGroupMode called but shared groups are disabled')
-      );
-    });
-
-    it('does not change mode (stub behavior)', () => {
-      const { setGroupMode } = useViewModeStore.getState();
-      const mockGroup = createMockGroup();
-
-      setGroupMode('group-123', mockGroup);
-
-      // Mode should remain 'personal' (stub does nothing)
-      expect(getViewModeState().mode).toBe('personal');
-    });
-
-    it('does not set groupId (stub behavior)', () => {
+  // Story 14d-v2-1-10a: setGroupMode now fully functional
+  describe('setGroupMode', () => {
+    it('sets mode to group', () => {
       const { setGroupMode } = useViewModeStore.getState();
 
       setGroupMode('group-123');
 
+      expect(getViewModeState().mode).toBe('group');
+    });
+
+    it('sets groupId', () => {
+      const { setGroupMode } = useViewModeStore.getState();
+
+      setGroupMode('group-456');
+
+      expect(getViewModeState().groupId).toBe('group-456');
+    });
+
+    it('sets group data when provided', () => {
+      const { setGroupMode } = useViewModeStore.getState();
+      const mockGroup = createMockGroup({ id: 'group-789', name: 'Test Group' });
+
+      setGroupMode('group-789', mockGroup);
+
+      expect(getViewModeState().group).toEqual(mockGroup);
+      expect(getViewModeState().group?.name).toBe('Test Group');
+    });
+
+    it('sets group to null when group data not provided', () => {
+      const { setGroupMode } = useViewModeStore.getState();
+
+      setGroupMode('group-123');
+
+      expect(getViewModeState().group).toBeNull();
+    });
+
+    it('overwrites previous group selection', () => {
+      const { setGroupMode } = useViewModeStore.getState();
+      const firstGroup = createMockGroup({ id: 'group-1', name: 'First Group' });
+      const secondGroup = createMockGroup({ id: 'group-2', name: 'Second Group' });
+
+      // Select first group
+      setGroupMode('group-1', firstGroup);
+      expect(getViewModeState().groupId).toBe('group-1');
+      expect(getViewModeState().group?.name).toBe('First Group');
+
+      // Select second group
+      setGroupMode('group-2', secondGroup);
+      expect(getViewModeState().groupId).toBe('group-2');
+      expect(getViewModeState().group?.name).toBe('Second Group');
+    });
+
+    it('selectIsGroupMode returns true after setGroupMode', () => {
+      const { setGroupMode } = useViewModeStore.getState();
+
+      setGroupMode('group-123');
+
+      const state = useViewModeStore.getState();
+      expect(selectIsGroupMode(state)).toBe(true);
+    });
+
+    // ECC Code Review fix: Validation tests for invalid groupId
+    it('rejects empty string groupId', () => {
+      const { setGroupMode } = useViewModeStore.getState();
+
+      setGroupMode('');
+
+      // Should remain in personal mode
+      expect(getViewModeState().mode).toBe('personal');
       expect(getViewModeState().groupId).toBeNull();
     });
 
-    it('does not set group data (stub behavior)', () => {
+    it('rejects whitespace-only groupId', () => {
       const { setGroupMode } = useViewModeStore.getState();
-      const mockGroup = createMockGroup();
+
+      setGroupMode('   ');
+
+      // Should remain in personal mode
+      expect(getViewModeState().mode).toBe('personal');
+      expect(getViewModeState().groupId).toBeNull();
+    });
+
+    it('rejects mismatched group.id and groupId', () => {
+      const { setGroupMode } = useViewModeStore.getState();
+      const mockGroup = createMockGroup({ id: 'group-different', name: 'Mismatch Group' });
 
       setGroupMode('group-123', mockGroup);
 
-      expect(getViewModeState().group).toBeNull();
+      // Should remain in personal mode when group.id doesn't match groupId
+      expect(getViewModeState().mode).toBe('personal');
+      expect(getViewModeState().groupId).toBeNull();
     });
   });
 
-  describe('updateGroupData (stub behavior)', () => {
-    it('does not update group data (stub behavior)', () => {
+  // Story 14d-v2-1-10a: updateGroupData now fully functional
+  describe('updateGroupData', () => {
+    it('updates group data without changing mode', () => {
       const { updateGroupData } = useViewModeStore.getState();
-      const mockGroup = createMockGroup();
+      const mockGroup = createMockGroup({ name: 'Updated Group' });
+
+      // Set to group mode first
+      useViewModeStore.setState({ mode: 'group', groupId: 'group-123' });
 
       updateGroupData(mockGroup);
 
-      expect(getViewModeState().group).toBeNull();
+      expect(getViewModeState().mode).toBe('group');
+      expect(getViewModeState().group?.name).toBe('Updated Group');
     });
 
-    it('does not throw when called', () => {
+    it('can update group data even in personal mode', () => {
       const { updateGroupData } = useViewModeStore.getState();
-      const mockGroup = createMockGroup();
+      const mockGroup = createMockGroup({ name: 'Cached Group' });
 
-      expect(() => updateGroupData(mockGroup)).not.toThrow();
+      // Start in personal mode (default)
+      expect(getViewModeState().mode).toBe('personal');
+
+      updateGroupData(mockGroup);
+
+      // Mode should remain personal
+      expect(getViewModeState().mode).toBe('personal');
+      // But group data should be updated
+      expect(getViewModeState().group?.name).toBe('Cached Group');
+    });
+
+    it('does not change groupId', () => {
+      const { updateGroupData } = useViewModeStore.getState();
+      const mockGroup = createMockGroup({ id: 'different-id' });
+
+      useViewModeStore.setState({ mode: 'group', groupId: 'original-id' });
+
+      updateGroupData(mockGroup);
+
+      expect(getViewModeState().groupId).toBe('original-id');
     });
   });
 
@@ -275,6 +341,12 @@ describe('useViewModeStore', () => {
     it('useIsGroupMode returns false in personal mode', () => {
       const { result } = renderHook(() => useIsGroupMode());
       expect(result.current).toBe(false);
+    });
+
+    it('useIsGroupMode returns true in group mode', () => {
+      useViewModeStore.setState({ mode: 'group' });
+      const { result } = renderHook(() => useIsGroupMode());
+      expect(result.current).toBe(true);
     });
 
     it('useCurrentGroupId returns null initially', () => {
@@ -351,6 +423,20 @@ describe('useViewModeStore', () => {
 
       expect(result.current.groupId).toBeNull();
     });
+
+    it('setGroupMode action works', () => {
+      const { result } = renderHook(() => useViewMode());
+      const mockGroup = createMockGroup();
+
+      act(() => {
+        result.current.setGroupMode('group-123', mockGroup);
+      });
+
+      expect(result.current.mode).toBe('group');
+      expect(result.current.groupId).toBe('group-123');
+      expect(result.current.group).toEqual(mockGroup);
+      expect(result.current.isGroupMode).toBe(true);
+    });
   });
 
   describe('direct access (non-React)', () => {
@@ -370,14 +456,22 @@ describe('useViewModeStore', () => {
         expect(getViewModeState().groupId).toBeNull();
       });
 
-      it('setGroupMode logs warning (stub)', () => {
+      it('setGroupMode works', () => {
         viewModeActions.setGroupMode('group-123');
-        expect(console.warn).toHaveBeenCalled();
+        expect(getViewModeState().mode).toBe('group');
+        expect(getViewModeState().groupId).toBe('group-123');
       });
 
-      it('updateGroupData does not throw', () => {
+      it('setGroupMode with group data works', () => {
         const mockGroup = createMockGroup();
-        expect(() => viewModeActions.updateGroupData(mockGroup)).not.toThrow();
+        viewModeActions.setGroupMode('group-123', mockGroup);
+        expect(getViewModeState().group).toEqual(mockGroup);
+      });
+
+      it('updateGroupData works', () => {
+        const mockGroup = createMockGroup({ name: 'Direct Update' });
+        viewModeActions.updateGroupData(mockGroup);
+        expect(getViewModeState().group?.name).toBe('Direct Update');
       });
     });
   });
@@ -410,6 +504,55 @@ describe('useViewModeStore', () => {
       // Note: Zustand selector equality prevents re-render if value unchanged
       expect(modeResult.current).toBe('personal');
       expect(groupIdResult.current).toBe('new-group');
+    });
+  });
+
+  // Story 14d-v2-1-10a: Integration tests for complete flow
+  describe('Story 14d-v2-1-10a: Store Integration', () => {
+    it('complete flow: personal -> group -> personal', () => {
+      const mockGroup = createMockGroup({ id: 'test-group', name: 'Test' });
+
+      // Start in personal mode
+      expect(getStateOnly()).toEqual({
+        mode: 'personal',
+        groupId: null,
+        group: null,
+      });
+
+      // Switch to group mode
+      const { setGroupMode, setPersonalMode } = useViewModeStore.getState();
+      setGroupMode('test-group', mockGroup);
+
+      expect(getStateOnly()).toEqual({
+        mode: 'group',
+        groupId: 'test-group',
+        group: mockGroup,
+      });
+
+      // Switch back to personal mode
+      setPersonalMode();
+
+      expect(getStateOnly()).toEqual({
+        mode: 'personal',
+        groupId: null,
+        group: null,
+      });
+    });
+
+    it('setGroupMode updates state correctly for multiple groups', () => {
+      const group1 = createMockGroup({ id: 'g1', name: 'Group 1' });
+      const group2 = createMockGroup({ id: 'g2', name: 'Group 2' });
+
+      const { setGroupMode } = useViewModeStore.getState();
+
+      setGroupMode('g1', group1);
+      expect(selectIsGroupMode(useViewModeStore.getState())).toBe(true);
+      expect(getViewModeState().groupId).toBe('g1');
+
+      setGroupMode('g2', group2);
+      expect(selectIsGroupMode(useViewModeStore.getState())).toBe(true);
+      expect(getViewModeState().groupId).toBe('g2');
+      expect(getViewModeState().group?.name).toBe('Group 2');
     });
   });
 });

@@ -414,6 +414,72 @@ describe('TransactionSharingOptInDialog', () => {
     });
 
     // =========================================================================
+    // onDismiss Prop Behavior (Story 14d-v2-1-14-polish, ECC Review #5)
+    // =========================================================================
+
+    describe('onDismiss Prop Behavior (AC3)', () => {
+        const mockOnDismiss = vi.fn();
+
+        it('calls onDismiss (not onCancel) when close (X) button clicked and onDismiss provided', async () => {
+            render(<TransactionSharingOptInDialog {...defaultProps} onDismiss={mockOnDismiss} />);
+
+            const closeBtn = screen.getByTestId('close-btn');
+            await userEvent.click(closeBtn);
+
+            expect(mockOnDismiss).toHaveBeenCalled();
+            expect(mockOnCancel).not.toHaveBeenCalled();
+        });
+
+        it('calls onDismiss (not onCancel) when backdrop clicked and onDismiss provided', async () => {
+            render(<TransactionSharingOptInDialog {...defaultProps} onDismiss={mockOnDismiss} />);
+
+            const backdrop = screen.getByTestId('backdrop-overlay');
+            fireEvent.click(backdrop);
+
+            expect(mockOnDismiss).toHaveBeenCalled();
+            expect(mockOnCancel).not.toHaveBeenCalled();
+        });
+
+        it('calls onDismiss (not onCancel) on Escape key when onDismiss provided', () => {
+            render(<TransactionSharingOptInDialog {...defaultProps} onDismiss={mockOnDismiss} />);
+
+            fireEvent.keyDown(document, { key: 'Escape' });
+
+            expect(mockOnDismiss).toHaveBeenCalled();
+            expect(mockOnCancel).not.toHaveBeenCalled();
+        });
+
+        it('falls back to onCancel when onDismiss not provided and close clicked', async () => {
+            render(<TransactionSharingOptInDialog {...defaultProps} />);
+
+            const closeBtn = screen.getByTestId('close-btn');
+            await userEvent.click(closeBtn);
+
+            expect(mockOnCancel).toHaveBeenCalled();
+        });
+
+        it('still calls onCancel from Cancel button even when onDismiss provided', async () => {
+            render(<TransactionSharingOptInDialog {...defaultProps} onDismiss={mockOnDismiss} />);
+
+            const cancelBtn = screen.getByTestId('cancel-btn');
+            await userEvent.click(cancelBtn);
+
+            expect(mockOnCancel).toHaveBeenCalled();
+            expect(mockOnDismiss).not.toHaveBeenCalled();
+        });
+
+        it('does not call onDismiss during pending state', async () => {
+            render(<TransactionSharingOptInDialog {...defaultProps} onDismiss={mockOnDismiss} isPending={true} />);
+
+            const closeBtn = screen.getByTestId('close-btn');
+            await userEvent.click(closeBtn);
+
+            expect(mockOnDismiss).not.toHaveBeenCalled();
+            expect(mockOnCancel).not.toHaveBeenCalled();
+        });
+    });
+
+    // =========================================================================
     // Edge Cases
     // =========================================================================
 

@@ -44,6 +44,8 @@ import {
     handleDeclineInvitationService,
 } from '../services/invitationHandlers';
 import { useViewMode } from '@/shared/stores/useViewModeStore';
+import { APP_ID } from '@/config/constants';
+import { sanitizeInput } from '@/utils/sanitize';
 import type { LeaveMode } from '../types';
 
 // Re-export LeaveMode for convenience (consumers can import from hooks index)
@@ -103,9 +105,10 @@ export interface UseLeaveTransferFlowReturn {
      * Handles both real invitations (from pendingInvitations) and
      * synthetic invitations (from group share code).
      * @param invitation - The invitation to accept
+     * @param shareMyTransactions - Whether user opts in to sharing transactions (default: false)
      * @returns true if successful, false otherwise
      */
-    handleAcceptInvitation: (invitation: PendingInvitation) => Promise<boolean>;
+    handleAcceptInvitation: (invitation: PendingInvitation, shareMyTransactions?: boolean) => Promise<boolean>;
 
     /**
      * Handle declining an invitation.
@@ -207,7 +210,7 @@ export function useLeaveTransferFlow(
                 refetchGroups();
                 return true;
             } catch (err) {
-                console.error('[useLeaveTransferFlow] Error leaving group:', err);
+                if (import.meta.env.DEV) console.error('[useLeaveTransferFlow] Error leaving group:', err);
                 onShowToast?.(
                     t('errorLeavingGroup') ||
                         (lang === 'es'
@@ -250,7 +253,7 @@ export function useLeaveTransferFlow(
                 refetchGroups();
                 return true;
             } catch (err) {
-                console.error('[useLeaveTransferFlow] Error transferring ownership:', err);
+                if (import.meta.env.DEV) console.error('[useLeaveTransferFlow] Error transferring ownership:', err);
                 onShowToast?.(
                     t('errorTransferringOwnership') ||
                         (lang === 'es'
@@ -269,7 +272,7 @@ export function useLeaveTransferFlow(
     // =========================================================================
 
     const handleAcceptInvitation = useCallback(
-        async (invitation: PendingInvitation): Promise<boolean> => {
+        async (invitation: PendingInvitation, shareMyTransactions?: boolean): Promise<boolean> => {
             if (!db || !user || !invitation.id) {
                 return false;
             }
@@ -281,13 +284,15 @@ export function useLeaveTransferFlow(
                     photoURL: user.photoURL || undefined,
                 };
 
-                await handleAcceptInvitationService(db, invitation, user.uid, userProfile);
+                await handleAcceptInvitationService(db, invitation, user.uid, userProfile, APP_ID, shareMyTransactions ?? false);
 
+                // ECC Review #2: Sanitize group name before toast display (defense-in-depth)
+                const safeName = sanitizeInput(invitation.groupName, { maxLength: 100 });
                 onShowToast?.(
-                    t('acceptInvitationSuccess', { groupName: invitation.groupName }) ||
+                    t('acceptInvitationSuccess', { groupName: safeName }) ||
                         (lang === 'es'
-                            ? `Te uniste a "${invitation.groupName}"!`
-                            : `Joined "${invitation.groupName}"!`),
+                            ? `Te uniste a "${safeName}"!`
+                            : `Joined "${safeName}"!`),
                     'success'
                 );
 
@@ -295,7 +300,7 @@ export function useLeaveTransferFlow(
                 refetchInvitations?.();
                 return true;
             } catch (err) {
-                console.error('[useLeaveTransferFlow] Error accepting invitation:', err);
+                if (import.meta.env.DEV) console.error('[useLeaveTransferFlow] Error accepting invitation:', err);
                 onShowToast?.(
                     t('errorAcceptingInvitation') ||
                         (lang === 'es'
@@ -335,7 +340,7 @@ export function useLeaveTransferFlow(
                 refetchInvitations?.();
                 return true;
             } catch (err) {
-                console.error('[useLeaveTransferFlow] Error declining invitation:', err);
+                if (import.meta.env.DEV) console.error('[useLeaveTransferFlow] Error declining invitation:', err);
                 onShowToast?.(
                     t('errorDecliningInvitation') ||
                         (lang === 'es'

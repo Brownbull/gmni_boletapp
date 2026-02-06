@@ -24,6 +24,11 @@ export {
   updateGroup,
   GROUP_COLORS,
   GROUP_ICONS,
+  // Story 14d-v2-1-11c: Transaction Sharing Toggle
+  updateTransactionSharingEnabled,
+  // Story 14d-v2-1-12d: Leave Group with Cleanup
+  leaveGroupWithCleanup,
+  transferAndLeaveWithCleanup,
 } from './groupService';
 
 // Story 14d-v2-1-7d: Invitation Handler Services

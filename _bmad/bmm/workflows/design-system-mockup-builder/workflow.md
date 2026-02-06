@@ -136,14 +136,14 @@ background: #f8fafc;
 
 ## Related Resources
 
-### Atlas Lessons (Historical Patterns)
-When building interactive mockups with JavaScript (dropdowns, modals, animations), reference these patterns from Atlas Lessons:
+### Historical Patterns (from Atlas Migration)
+When building interactive mockups with JavaScript (dropdowns, modals, animations), reference these patterns:
 - **Pattern #31:** Unique Animation Keyframe Names
 - **Pattern #32:** JavaScript Style Reset Must Restore Defaults
 - **Pattern #33:** Nested Background Contrast with Border
 - **Pattern #34:** Centered Modal vs Bottom Sheet Patterns
 
-Location: `_bmad/agents/atlas/atlas-sidecar/knowledge/06-lessons.md` (Section: Patterns to Follow #31-34)
+Location: `docs/architecture/component-patterns.md` (migrated from Atlas 2026-02-05)
 
 ## Tool Integration
 

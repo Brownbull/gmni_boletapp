@@ -4,17 +4,17 @@
   <critical>Communicate all responses in {communication_language} and language MUST be tailored to {user_skill_level}</critical>
   <critical>Generate all documents in {document_output_language}</critical>
 
-  <critical>🎭 ECC-ORCHESTRATED STORY DEVELOPMENT - Atlas Puppeteer spawns specialized ECC agents!</critical>
+  <critical>🎭 ECC-ORCHESTRATED STORY DEVELOPMENT - ECC Orchestrator spawns specialized ECC agents!</critical>
   <critical>This workflow uses the Task tool to spawn ECC agents for focused tasks</critical>
-  <critical>Atlas coordinates: planner → tdd-guide → build-error-resolver → code-reviewer</critical>
+  <critical>Sequence: planner → tdd-guide → build-error-resolver → code-reviewer</critical>
 
-  <!-- ATLAS PUPPETEER PROTOCOL -->
-  <puppeteer-protocol>
-    <principle>Atlas is the Puppeteer - spawns specialized ECC agents, coordinates work, synthesizes outputs</principle>
+  <!-- ECC ORCHESTRATOR PROTOCOL -->
+  <orchestrator-protocol>
+    <principle>Orchestrator spawns specialized ECC agents, coordinates work, synthesizes outputs</principle>
     <principle>Use Task tool with appropriate subagent_type for each ECC agent</principle>
     <principle>For parallel tasks, spawn multiple agents in a SINGLE message with multiple Task calls</principle>
     <principle>Create handoff documents between sequential agent phases</principle>
-    <principle>Synthesize outputs with workflow chain analysis after each agent completes</principle>
+    <principle>Synthesize outputs after each agent completes</principle>
 
     <available-agents>
       | Agent | subagent_type | Purpose |
@@ -25,37 +25,74 @@
       | Code Reviewer | everything-claude-code:code-reviewer | Quality review |
       | Security Reviewer | everything-claude-code:security-reviewer | Security analysis |
     </available-agents>
-  </puppeteer-protocol>
+  </orchestrator-protocol>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 0: Atlas Knowledge Loading                                         -->
+  <!-- STEP 0: Project Knowledge Loading                                       -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="0" goal="Atlas initialization and knowledge loading" tag="atlas-init">
-    <critical>Load Atlas knowledge BEFORE orchestrating ECC agents</critical>
+  <step n="0" goal="Load project knowledge, cache patterns and testing guidelines" tag="knowledge-init">
+    <critical>📚 KNOWLEDGE CACHING: Load ALL project knowledge ONCE at session start, use throughout</critical>
+    <critical>Load project patterns BEFORE orchestrating ECC agents</critical>
 
-    <check if="{atlas_index} exists">
-      <action>Load {atlas_index} to identify relevant fragments</action>
-      <action>Load {atlas_knowledge}/04-architecture.md for tech patterns</action>
-      <action>Load {atlas_knowledge}/05-testing.md for test patterns</action>
-      <action>Load {atlas_knowledge}/08-workflow-chains.md for user flow context</action>
-      <action>Store as {{atlas_context}} for passing to ECC agents</action>
+    <!-- STEP 0A: Load and cache project knowledge files -->
+    <action>Load and cache {project-root}/_bmad/bmm/knowledge/code-review-patterns.md → {{cached_review_patterns}}</action>
+    <action>Load and cache {project-root}/docs/architecture/firestore-patterns.md → {{cached_firestore}}</action>
+    <action>Load and cache {project-root}/docs/architecture/state-management.md → {{cached_state_mgmt}}</action>
+    <action>Load and cache {project-root}/docs/architecture/component-patterns.md → {{cached_components}}</action>
+    <action>Store combined as {{project_patterns}} for passing to ECC agents</action>
 
-      <output>🗺️ **Atlas Puppeteer Initialized**
-
-        Knowledge loaded for ECC agent orchestration:
-        - Architecture patterns: {{architecture_summary}}
-        - Testing patterns: {{testing_summary}}
-        - Workflow chains: {{workflow_summary}}
-
-        ECC agents will receive this context for implementation guidance.
-      </output>
+    <!-- STEP 0B: Load and cache testing guidelines -->
+    <action>Load and cache docs/architecture/TESTING-GUIDELINES.md → {{cached_testing_guidelines}}</action>
+    <check if="story has E2E tasks or tests">
+      <action>Load and cache tests/e2e/E2E-TEST-CONVENTIONS.md → {{cached_e2e_conventions}}</action>
     </check>
+    <action>Store combined as {{project_testing_patterns}} for TDD Guide agents</action>
 
-    <check if="{atlas_index} does NOT exist">
-      <output>⚠️ Atlas not configured - ECC agents will operate without project context</output>
-      <action>Set {{atlas_context}} = "No Atlas context available"</action>
-    </check>
+    <!-- STEP 0C: Generate session knowledge summary -->
+    <action>Generate {{session_knowledge}} from cached files:
+      {{session_knowledge}} = {
+        patterns: summarized patterns from {{cached_review_patterns}} + {{cached_firestore}} + {{cached_state_mgmt}} + {{cached_components}},
+        testing: {
+          unit_max_lines: 300,
+          integration_max_lines: 500,
+          e2e_max_lines: 400,
+          use_shared_factories: true,
+          test_behavior_not_mocks: true,
+          max_assertions_per_test: 5
+        },
+        e2e: {
+          environment: 'staging_only',  // E2E tests run ONLY against staging, never local/emulator
+          viewport: { width: 360, height: 780 },
+          screenshots_required: true,
+          cleanup_required: true,
+          use_data_testid: true,
+          pre_flight_required: true,  // MUST read component source before writing E2E selectors
+          selector_priority: ['data-testid', 'getByRole', 'scoped_locator', 'text_last_resort'],
+          wait_strategy: 'observable_state_first_timeout_settling_only',  // element.waitFor() not waitForTimeout
+          optimistic_updates: 'poll_for_resolved_value',  // Never read DOM during PENDING state
+          multi_user: 'browser_newContext_with_try_finally',  // Independent auth contexts
+          cleanup_pattern: 'try_finally_with_pre_cleanup',  // try/finally + pre-test cleanup of residual data
+          spa_reload: 'always_re_navigate_after_reload',  // App resets to home on reload
+          bilingual: 'prefer_testid_over_text_selectors',  // ES/EN app, text selectors are fragile
+          never_use: ['text=Ajustes', 'networkidle', 'waitForTimeout(3000+)']  // Known anti-patterns
+        },
+        must_check: key patterns from {{cached_review_patterns}} (git staging, sanitization, TOCTOU, batch ops, exports)
+      }
+    </action>
+
+    <output>📚 **ECC Orchestrator Initialized — Project Knowledge Cached**
+
+      Knowledge loaded and cached for session (no re-reads needed):
+      - Code review patterns: {{review_patterns_summary}}
+      - Firestore patterns: {{firestore_summary}}
+      - State management: {{state_mgmt_summary}}
+      - Component patterns: {{components_summary}}
+      - Testing guidelines: cached (unit ≤300 LOC, integration ≤500 LOC, E2E ≤400 LOC)
+
+      Session knowledge: {{session_knowledge}}
+      ECC agents will receive cached context — no redundant file reads.
+    </output>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
@@ -130,18 +167,18 @@
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
   <step n="2" goal="Spawn ECC Planner for implementation planning" tag="ecc-planner">
-    <critical>🎭 ATLAS PUPPETEER: Spawning ECC Planner agent</critical>
+    <critical>🎭 ECC ORCHESTRATOR: Spawning ECC Planner agent</critical>
 
     <action>Prepare planner context:
       - Story requirements: {{story_context}}
-      - Atlas architecture patterns: {{atlas_context}}
+      - Architecture patterns: {{project_patterns}}
       - Incomplete tasks: {{task_list}}
     </action>
 
     <output>🎭 **Spawning ECC Planner...**
 
       Task: Create implementation plan for story {{story_key}}
-      Context: Atlas patterns + story requirements
+      Context: Project patterns + story requirements
     </output>
 
     <ecc-spawn agent="planner">
@@ -157,8 +194,8 @@
           **Tasks to Implement:**
           {{task_list}}
 
-          **Atlas Context (Architecture Patterns):**
-          {{atlas_context}}
+          **Architecture Patterns:**
+          {{project_patterns}}
 
           **Output Required:**
           1. Implementation approach for each task
@@ -182,6 +219,83 @@
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 2.5: Post-Planning Complexity Check                                -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="2.5" goal="Validate story size after planning reveals true scope" tag="post-planning-size">
+    <critical>📏 MID-STORY SIZING: Check if planning revealed hidden complexity</critical>
+
+    <action>Extract from {{implementation_plan}}:
+      - {{planned_files}}: Number of files planner identified for changes
+      - {{planned_subtasks}}: Subtasks inferred from plan
+      - {{dependencies_discovered}}: New dependencies found during planning
+    </action>
+
+    <action>Compare to original story metrics:
+      - {{original_files}}: From story File List / File Specification
+      - {{original_subtasks}}: From story Tasks section
+    </action>
+
+    <action>Calculate growth:
+      - {{file_growth}} = planned_files - original_files
+      - {{subtask_growth}} = planned_subtasks - original_subtasks
+    </action>
+
+    <check if="file_growth > 3 OR subtask_growth > 5">
+      <output>⚠️ **COMPLEXITY GROWTH DETECTED**
+
+        **Original Story Estimate:**
+        - Files: {{original_files}}
+        - Subtasks: {{original_subtasks}}
+
+        **After Planning:**
+        - Files: {{planned_files}} (+{{file_growth}})
+        - Subtasks: {{planned_subtasks}} (+{{subtask_growth}})
+
+        **Growth Alert Thresholds:**
+        - File growth > 3: {{file_growth > 3}}
+        - Subtask growth > 5: {{subtask_growth > 5}}
+
+        **Recommendation:** Consider splitting this story before proceeding.
+      </output>
+
+      <ask>How to proceed?
+        [C]ontinue - Accept increased scope (document risk)
+        [S]plit - Split story now before implementation
+        [A]bort - Stop and re-scope with SM
+
+        Choose [C], [S], or [A]:</ask>
+
+      <check if="user chooses C">
+        <action>Document in Dev Notes:
+          - Complexity Growth Accepted: {date}
+          - Original scope: {{original_files}} files, {{original_subtasks}} subtasks
+          - Actual scope: {{planned_files}} files, {{planned_subtasks}} subtasks
+          - Risk: May require extended implementation time
+        </action>
+        <output>⚠️ Proceeding with increased scope. Risk documented.</output>
+      </check>
+
+      <check if="user chooses S">
+        <action>Invoke story-sizing workflow for this story</action>
+        <action>Create split stories</action>
+        <action>Update sprint-status.yaml with new stories</action>
+        <action>Continue with first split story</action>
+      </check>
+
+      <check if="user chooses A">
+        <action>Mark story status as "blocked" in sprint-status.yaml</action>
+        <output>🛑 Story blocked for re-scoping. Run create-story to revise.</output>
+        <stop/>
+      </check>
+    </check>
+
+    <check if="file_growth &lt;= 3 AND subtask_growth &lt;= 5">
+      <output>✅ Planning scope matches story estimate. Proceeding.</output>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <!-- STEP 3: Mark Story In-Progress                                          -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
@@ -197,8 +311,46 @@
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
   <step n="4" goal="Spawn ECC TDD Guide for test-first implementation" tag="ecc-tdd">
-    <critical>🎭 ATLAS PUPPETEER: Spawning ECC TDD Guide agent for each task</critical>
+    <critical>🎭 ECC ORCHESTRATOR: Spawning ECC TDD Guide agent for each task</critical>
     <critical>🏗️ ARCHITECTURE ENFORCEMENT: Validate file locations after each task</critical>
+    <critical>🧪 TDD WATCH MODE: Start watcher once, cache files, avoid re-reads</critical>
+    <critical>📝 BATCHED PROGRESS: Track subtasks in memory, write story file only on task_complete</critical>
+
+    <!-- PROGRESS TRACKER: Initialize in-memory tracking to avoid per-subtask story edits -->
+    <action>Initialize progress tracker in memory:
+      {{progress_tracker}} = {
+        completed_subtasks: [],
+        completed_tasks: [],
+        current_task: null,
+        files_changed: []
+      }
+    </action>
+    <output>📝 Progress tracker initialized. Story file updates batched at task boundaries.</output>
+
+    <!-- SIZING METRICS: Track cumulative implementation size in memory -->
+    <action>Run `dust src/features/ -d 2` to capture baseline directory sizes for context budgeting</action>
+    <action>Initialize sizing metrics in memory:
+      {{sizing_metrics}} = {
+        current_files: 0,
+        current_loc: 0,
+        completed_task_count: 0,
+        remaining_tasks: length of {{task_list}},
+        baseline_dir_sizes: output of dust command
+      }
+    </action>
+
+    <!-- FILE CACHING: Read once, use throughout -->
+    <action>For each task's test + implementation file pair:
+      - Read test file: {{test_file_path}} → cache as {{test_content}}
+      - Read implementation file: {{impl_file_path}} → cache as {{impl_content}}
+    </action>
+    <output>📋 File content cached. No re-reads needed during TDD loop.</output>
+
+    <!-- WATCH MODE: Start test watcher for continuous feedback -->
+    <action>Start test watcher in background:
+      npm test -- --watch {{test_file_path}}
+    </action>
+    <output>🔄 Test watcher started. File edits will auto-run tests.</output>
 
     <loop for="each incomplete task in {{task_list}}">
       <output>🎭 **Spawning ECC TDD Guide for Task: {{current_task}}**
@@ -216,8 +368,25 @@
             **Implementation Plan (from Planner):**
             {{implementation_plan}}
 
-            **Atlas Testing Patterns:**
-            {{atlas_testing_patterns}}
+            **Testing Patterns:**
+            {{project_testing_patterns}}
+
+            **Cached Testing Guidelines (from TESTING-GUIDELINES.md):**
+            {{cached_testing_guidelines}}
+
+            **Session Testing Constraints:**
+            - Unit test max lines: {{session_knowledge.testing.unit_max_lines}}
+            - Integration test max lines: {{session_knowledge.testing.integration_max_lines}}
+            - E2E test max lines: {{session_knowledge.testing.e2e_max_lines}}
+            - Use shared factories: {{session_knowledge.testing.use_shared_factories}}
+            - Test behavior not mocks: {{session_knowledge.testing.test_behavior_not_mocks}}
+            - Max assertions per test: {{session_knowledge.testing.max_assertions_per_test}}
+
+            **E2E Conventions (if applicable):**
+            - Viewport: {{session_knowledge.e2e.viewport.width}}x{{session_knowledge.e2e.viewport.height}}
+            - Screenshots required: {{session_knowledge.e2e.screenshots_required}}
+            - Cleanup required: {{session_knowledge.e2e.cleanup_required}}
+            - Use data-testid: {{session_knowledge.e2e.use_data_testid}}
 
             ---
 
@@ -242,6 +411,12 @@
 
             ---
 
+            **TDD Watch Mode Active:**
+            - Test watcher is running: edits auto-trigger test runs
+            - Use cached file content (no re-reads): {{test_content}}, {{impl_content}}
+            - After each edit, wait for watcher output instead of running tests manually
+            - Update cached content in memory after each edit
+
             **Requirements:**
             1. Write FAILING tests first (RED phase)
             2. Implement MINIMAL code to pass tests (GREEN phase)
@@ -249,6 +424,9 @@
             4. Ensure 80%+ coverage for new code
             5. **Create files ONLY at locations specified in story File Specification**
             6. **Follow all patterns documented in {{architecture_reference}}**
+            7. **Use watcher output for test results (no separate npm test runs)**
+            8. **Do NOT run npm run build or npx tsc per task — defer to Step 5 consolidated validation**
+            9. **Do NOT edit the story file for subtask completion — report completed subtasks in your output, the orchestrator will batch-update**
 
             **Task Details:**
             {{current_task_details}}
@@ -257,6 +435,7 @@
             - Test files created/modified
             - Implementation files created/modified (AT SPECIFIED PATHS)
             - Coverage report
+            - List of completed subtasks (for batch tracking, NOT written to story file)
         </task-call>
       </ecc-spawn>
 
@@ -358,20 +537,103 @@
         </ecc-spawn>
       </check>
 
-      <action>Mark task [x] complete in story file</action>
-      <action>Update File List with changed files (verified locations)</action>
+      <!-- BATCHED PROGRESS: Track in memory, then single story file write per task -->
+      <action>Add completed subtasks from TDD Guide output to {{progress_tracker}}.completed_subtasks</action>
+      <action>Add {{current_task}} to {{progress_tracker}}.completed_tasks</action>
+      <action>Add changed files to {{progress_tracker}}.files_changed</action>
+
+      <!-- BATCH WRITE: Single story file edit for entire task (all subtasks + task checkbox) -->
+      <action>BATCH EDIT story file:
+        - Mark all subtasks in {{progress_tracker}}.completed_subtasks for this task as [x]
+        - Mark {{current_task}} as [x] complete
+        - Update File List with {{progress_tracker}}.files_changed
+      </action>
+      <action>Clear {{progress_tracker}}.completed_subtasks for next task</action>
+
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <!-- MID-TASK SIZING CHECK: Alert if implementation exceeds thresholds      -->
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <sizing-check tag="mid-task-size">
+        <action>Update {{sizing_metrics}} from task output (in memory, no file reads):
+          - Increment current_files with new files from this task
+          - Add LOC from this task to current_loc
+          - Increment completed_task_count
+          - Decrement remaining_tasks
+        </action>
+
+        <check if="sizing_metrics.current_files > 8 OR sizing_metrics.current_loc > (500 * sizing_metrics.completed_task_count)">
+          <action>Run `dust src/features/<feature>/ -d 2` to compare against baseline and show growth</action>
+          <output>⚠️ **MID-IMPLEMENTATION SIZE ALERT**
+
+            **Task Completed:** {{current_task}}
+
+            **Current Metrics:**
+            - Files modified: {{sizing_metrics.current_files}} (limit: 8)
+            - Lines added: {{sizing_metrics.current_loc}}
+            - Remaining tasks: {{sizing_metrics.remaining_tasks}}
+
+            **Projection:** At current rate, story will reach ~{{projected_files}} files and ~{{projected_loc}} LOC.
+
+            **Risk:** Story may be too large for single implementation cycle.
+          </output>
+
+          <ask>Continue with remaining tasks?
+            [C]ontinue - Accept current trajectory
+            [P]ause - Commit current work, create follow-up story for remaining tasks
+            [S]plit - Split remaining tasks into new story now
+
+            Choose [C], [P], or [S]:</ask>
+
+          <check if="user chooses C">
+            <action>Document in Dev Notes:
+              - Size Alert Accepted: {date}
+              - Files: {{sizing_metrics.current_files}}, LOC: {{sizing_metrics.current_loc}}
+              - Remaining tasks: {{sizing_metrics.remaining_tasks}}
+            </action>
+            <output>⚠️ Continuing. Size risk documented.</output>
+          </check>
+
+          <check if="user chooses P">
+            <action>Update story: mark remaining tasks as "Deferred to follow-up"</action>
+            <action>Create follow-up story with remaining tasks</action>
+            <action>Add cross-reference between stories</action>
+            <output>✅ Current work preserved. Follow-up story created for remaining tasks.</output>
+            <action>Jump to Step 5 (validation) — skip remaining tasks in loop</action>
+          </check>
+
+          <check if="user chooses S">
+            <action>Invoke story-sizing workflow with remaining tasks</action>
+            <action>Create split stories</action>
+            <action>Update sprint-status.yaml</action>
+            <action>Continue with first split story</action>
+          </check>
+        </check>
+      </sizing-check>
 
       <output>✅ **Task Complete:** {{current_task}}
 
         Files created (architecture validated):
         {{task_files_list}}
+        Subtasks batched in single edit: {{batched_subtask_count}}
       </output>
     </loop>
+
+    <!-- WATCH MODE: Stop watcher now that all tasks are complete -->
+    <action>Stop test watcher (Ctrl+C or timeout after {{watch_timeout_minutes}} min)</action>
+    <output>⏹️ Test watcher stopped.</output>
 
     <output>✅ **ECC TDD Guide Complete**
 
       Tasks implemented: {{completed_task_count}}
       Test coverage: {{coverage_percentage}}%
+
+      **TDD Watch Mode Stats:**
+      - File re-reads avoided: {{reads_saved}}
+      - Separate test runs avoided: {{test_runs_saved}}
+
+      **Batched Progress Stats:**
+      - Story file edits: {{actual_story_edits}} (saved {{story_edits_saved}} vs per-subtask)
+      - Sprint-status.yaml edits deferred to story completion (Step 7)
 
       **Architecture Validation:**
       - Files checked: {{files_validated_count}}
@@ -384,10 +646,11 @@
   <!-- STEP 5: Run Full Test Suite                                             -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="5" goal="Run full test suite and validate" tag="validation">
+  <step n="5" goal="Consolidated validation — build once, skip redundant type-checks" tag="validation">
+    <critical>🔨 CONSOLIDATED VALIDATION: Single build covers type checking. No separate npx tsc --noEmit.</critical>
+
+    <!-- 1. Run full test suite -->
     <action>Run full test suite: npm test or detected test command</action>
-    <action>Run linting: npm run lint or detected lint command</action>
-    <action>Run build: npm run build or detected build command</action>
 
     <check if="tests fail">
       <output>❌ Tests failing - spawning Build Resolver...</output>
@@ -409,12 +672,103 @@
       <action>Re-run tests after fixes</action>
     </check>
 
-    <output>✅ **Validation Complete**
+    <!-- 2. Run lint once -->
+    <action>Run linting: npm run lint or detected lint command</action>
+
+    <!-- 3. Single consolidated build (includes TypeScript type checking) -->
+    <action>Run build ONCE (includes type checking):
+      npm run build 2>&amp;1 | tee build.log
+    </action>
+
+    <check if="build fails">
+      <output>❌ Build failed - spawning Build Resolver...</output>
+
+      <ecc-spawn agent="build-resolver">
+        <task-call>
+          subagent_type: "everything-claude-code:build-error-resolver"
+          description: "Fix build/type errors"
+          prompt: |
+            Fix the build/TypeScript errors with MINIMAL changes.
+
+            **Build Output:**
+            {{build_errors}}
+
+            **Rules:**
+            - Fix ONLY what's needed to make build pass
+            - Do NOT refactor unrelated code
+            - Do NOT change architecture
+        </task-call>
+      </ecc-spawn>
+
+      <action>Re-run build ONLY if changes were made</action>
+    </check>
+
+    <!-- Do NOT run separate type-check if build passed -->
+    <check if="build passes">
+      <output>✅ Build passed (includes TypeScript type checking — no separate tsc needed)</output>
+    </check>
+
+    <output>✅ **Consolidated Validation Complete**
 
       Tests: {{test_result}}
       Lint: {{lint_result}}
-      Build: {{build_result}}
+      Build: {{build_result}} (includes type checking)
+
+      **Build commands saved:** No per-task builds, no separate tsc --noEmit
     </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 5.5: Pre-Review Final Size Check                                   -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="5.5" goal="Final size validation before review" tag="pre-review-size">
+    <critical>📏 FINAL SIZE CHECK: Validate implementation size and capture metrics</critical>
+
+    <action>Calculate final metrics from {{sizing_metrics}} and git diff:
+      - {{total_files}}: All files created/modified
+      - {{total_loc}}: Total lines added/changed
+      - {{total_tests}}: Test file count and test case count
+      - {{impl_loc}}: Implementation-only LOC (excluding tests)
+      - {{test_loc}}: Test-only LOC
+      - {{test_ratio}}: test_loc / impl_loc
+    </action>
+
+    <output>📏 **Pre-Review Size Report**
+
+      **Implementation Metrics:**
+      | Metric | Value | Limit | Status |
+      |--------|-------|-------|--------|
+      | Files | {{total_files}} | 8 | {{files_status}} |
+      | LOC Added | {{total_loc}} | - | Info |
+      | Impl LOC | {{impl_loc}} | - | Info |
+      | Test LOC | {{test_loc}} | - | Info |
+      | Tests | {{total_tests}} | - | Info |
+      | Test Ratio | {{test_ratio}} | 0.3-0.5 | {{ratio_status}} |
+
+      **Story Points:** {{original_points}} estimated → {{actual_complexity}} actual
+    </output>
+
+    <check if="total_files > 8">
+      <output>⚠️ **File Count Exceeded:** {{total_files}} files (limit: 8).
+        Consider breaking large commits into logical chunks for review.
+      </output>
+    </check>
+
+    <check if="test_ratio > 1.0">
+      <output>⚠️ **Test Ratio Warning:** Test code ({{test_loc}} LOC) exceeds implementation code ({{impl_loc}} LOC).
+        Review tests for over-testing per TESTING-GUIDELINES.md:
+        - Remove toHaveBeenCalled for pass-through functions
+        - Reduce excessive mock setup
+        - Test behavior, not implementation details
+      </output>
+    </check>
+
+    <action>Record metrics in story Dev Notes:
+      - Implementation Size: {{total_files}} files, {{total_loc}} LOC
+      - Test Ratio: {{test_ratio}}
+      - Estimated vs Actual: {{original_points}} → {{actual_complexity}}
+    </action>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
@@ -422,7 +776,7 @@
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
   <step n="6" goal="Parallel ECC review before marking complete" tag="ecc-parallel-review">
-    <critical>🎭 ATLAS PUPPETEER: Spawning PARALLEL review agents (SINGLE message, MULTIPLE Task calls)</critical>
+    <critical>🎭 ECC ORCHESTRATOR: Spawning PARALLEL review agents (SINGLE message, MULTIPLE Task calls)</critical>
 
     <!-- ═══════════════════════════════════════════════════════════════════════ -->
     <!-- EXPLICIT PARALLEL EXECUTION DIRECTIVE                                   -->
@@ -493,8 +847,8 @@
     <action>Collect outputs from both agents</action>
     <action>Merge findings by severity</action>
 
-    <!-- Atlas Synthesis -->
-    <output>🗺️ **Atlas Synthesis - Parallel Review Results**
+    <!-- Review Synthesis -->
+    <output>🗺️ **Review Synthesis - Parallel Review Results**
 
       **Code Review Findings:**
       {{code_review_findings}}
@@ -502,7 +856,7 @@
       **Security Review Findings:**
       {{security_review_findings}}
 
-      **Atlas Cross-Cutting Analysis:**
+      **Cross-Cutting Analysis:**
       - Workflow chain impacts: {{workflow_impacts}}
       - Architecture alignment: {{architecture_alignment}}
     </output>
@@ -674,35 +1028,10 @@
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 8: Atlas Memory Feeding                                            -->
+  <!-- STEP 8: Next Steps                                                      -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="8" goal="Feed learnings to Atlas memory" tag="atlas-feed">
-    <check if="{{atlas_enabled}} == true">
-      <output>🗺️ **Atlas Memory Update**
-
-        Preparing to feed implementation insights:
-
-        **Story:** {{story_key}}
-        **ECC Agents Used:** planner, tdd-guide, code-reviewer, security-reviewer
-        **Patterns Applied:** {{patterns_used}}
-        **Testing Approach:** TDD with {{coverage_percentage}}% coverage
-        **Challenges:** {{challenges_encountered}}
-        **Resolutions:** {{resolution_strategies}}
-
-        Would you like to update Atlas memory?
-      </output>
-
-      <ask>Update Atlas memory? [Y/N]</ask>
-
-      <check if="user confirms">
-        <action>Update {atlas_knowledge}/05-testing.md with testing patterns</action>
-        <action>Update {atlas_knowledge}/06-lessons.md with lessons learned</action>
-        <action>Update {atlas_knowledge}/09-sync-history.md with sync entry</action>
-        <output>✅ Atlas memory updated with ECC orchestration insights</output>
-      </check>
-    </check>
-
+  <step n="8" goal="Provide next steps after story completion" tag="next-steps">
     <output>**Next Steps:**
       - Run `ecc-code-review` for external review
       - Or proceed to deployment if approved

@@ -41,6 +41,8 @@ import {
 import { formatCurrency as formatCurrencyUtil } from '@/utils/currency';
 import { formatDate as formatDateUtil } from '@/utils/date';
 import { TRANSLATIONS } from '@/utils/translations';
+// Story 14d-v2-1-10d: View mode filtering utility
+import { filterTransactionsByViewMode } from '@/utils/viewModeFilterUtils';
 import type { Transaction } from '@/types/transaction';
 import type { HistoryFilterState } from '@/contexts/HistoryFiltersContext';
 import type { Language, Theme, ColorTheme, FontColorMode } from '@/types/settings';
@@ -257,6 +259,15 @@ export function useHistoryViewData(): UseHistoryViewDataReturn {
         return [...recentScans, ...filteredPaginated];
     }, [paginatedTransactions, recentScans]);
 
+    // Story 14d-v2-1-10d: Filter transactions by view mode (personal vs group)
+    const viewModeFilteredTransactions = useMemo(() => {
+        return filterTransactionsByViewMode(
+            transactionsWithRecentScans,
+            viewMode,
+            viewModeGroup?.id ?? null
+        );
+    }, [transactionsWithRecentScans, viewMode, viewModeGroup?.id]);
+
     // === User Info ===
     const userInfo: UserInfo = useMemo(
         () => ({
@@ -295,9 +306,9 @@ export function useHistoryViewData(): UseHistoryViewDataReturn {
 
     // === Return Complete Data ===
     return {
-        // Transaction data
-        transactions: transactionsWithRecentScans,
-        allTransactions: transactionsWithRecentScans,
+        // Transaction data - Story 14d-v2-1-10d: Use filtered transactions
+        transactions: viewModeFilteredTransactions,
+        allTransactions: viewModeFilteredTransactions,
 
         // Pagination
         hasMore,
