@@ -98,6 +98,16 @@ workflow_optimizations:
       - "docs/architecture/component-patterns.md"
       - "tests/e2e/E2E-TEST-CONVENTIONS.md"  # Only if story has E2E
 
+# Branch Guard Configuration
+branch_guard:
+  enabled: true
+  protected_branches: ["main", "develop"]
+  branch_from: "develop"
+  naming_convention: "feature/{{story_key}}"
+  sync_check: true          # Verify branch is up-to-date with develop
+  auto_create: true          # Offer to create feature branch if on protected branch
+  stash_uncommitted: true    # Stash changes before switching branches
+
 # Mid-Story Sizing Configuration (see docs/architecture/plans/ECC-MID-STORY-SIZING-PLAN.md)
 mid_story_sizing:
   enabled: true
