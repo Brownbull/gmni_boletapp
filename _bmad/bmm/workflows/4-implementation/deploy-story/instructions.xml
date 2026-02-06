@@ -3,8 +3,9 @@
   <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
   <critical>Communicate all responses in {communication_language} and language MUST be tailored to {user_skill_level}</critical>
 
-  <critical>This workflow deploys a completed story through the full branch pipeline</critical>
-  <critical>NEVER skip safety confirmations - each merge step requires explicit approval</critical>
+  <critical>This workflow deploys a completed story through the 2-branch PR-based pipeline</critical>
+  <critical>NEVER push directly to develop or main - always use PRs via `gh pr create` + `gh pr merge`</critical>
+  <critical>NEVER use `git merge` to merge into protected branches - use `gh pr merge` instead</critical>
   <critical>Pre-deployment validation is REQUIRED before production deployment</critical>
 
   <step n="1" goal="Verify story is ready for deployment">
@@ -29,7 +30,7 @@
         Please commit or stash changes before deployment.</output>
       <ask>Commit changes now? [Y/N]</ask>
       <check if="user says Y">
-        <action>Run `git add .`</action>
+        <action>Stage relevant files with `git add` (specific files, not -A)</action>
         <action>Run `git commit -m "chore: pre-deployment cleanup for {{story_key}}"`</action>
       </check>
       <check if="user says N">
@@ -40,19 +41,28 @@
 
     <action>Detect current branch with `git branch --show-current`</action>
     <action>Set {{current_branch}} = result</action>
-    <action>Determine if on feature branch, develop, or other</action>
+
+    <check if="{{current_branch}} == 'main' OR {{current_branch}} == 'develop'">
+      <output>**DEPLOYMENT BLOCKED**
+
+        You are on a protected branch ({{current_branch}}).
+        Deployments must originate from a feature/fix/chore branch.
+
+        Create a feature branch first: `git checkout -b feature/...`</output>
+      <action>EXIT workflow</action>
+    </check>
 
     <output>**Story Ready for Deployment**
 
       **Story:** {{story_key}}
       **Current Branch:** {{current_branch}}
-      **Status:** done ✅
+      **Status:** done
 
-      Deployment pipeline: {{current_branch}} → develop → staging → main</output>
+      Deployment pipeline: {{current_branch}} -> develop (squash PR) -> main (merge PR)</output>
   </step>
 
   <step n="2" goal="Pre-deployment validation">
-    <critical>Validate deployment against project patterns before any merges</critical>
+    <critical>Validate deployment against project patterns before any PRs</critical>
 
     <action>Load project patterns from {project-root}/_bmad/bmm/knowledge/code-review-patterns.md</action>
     <action>Load architecture docs from {project-root}/docs/architecture/</action>
@@ -88,183 +98,175 @@
       </check>
       <check if="user says Y">
         <action>Log override decision</action>
-        <output>⚠️ Deployment block overridden by user. Proceeding with caution.</output>
+        <output>Deployment block overridden by user. Proceeding with caution.</output>
       </check>
     </check>
 
-    <output>**Validation: PASSED ✅**
+    <output>**Validation: PASSED**
 
       Patterns validated: {{chain_count}}
       Architectural alignment: Confirmed
       Downstream impacts: {{impact_summary}}</output>
   </step>
 
-  <step n="3" goal="Merge to develop branch">
+  <step n="3" goal="Create PR to develop (squash merge)">
     <action>Run `git fetch origin`</action>
+    <action>Run `git push -u origin {{current_branch}}`</action>
 
-    <check if="{{current_branch}} != 'develop'">
-      <output>**Step 1/3: Merge to develop**
+    <output>**Step 1/2: PR to develop**
 
-        Merging {{current_branch}} → develop
+      Creating PR: {{current_branch}} -> develop (squash merge)
 
-        This integrates your feature into the development branch.</output>
+      This integrates your feature into the development branch.</output>
 
-      <ask>Proceed with merge to develop? [Y/N]</ask>
-      <check if="user says N">
-        <output>Deployment paused. Resume when ready.</output>
-        <action>EXIT workflow</action>
-      </check>
-
-      <action>Run `git checkout develop`</action>
-      <action>Run `git pull origin develop`</action>
-      <action>Run `git merge {{current_branch}} --no-ff -m "Merge {{current_branch}}: {{story_key}}"`</action>
-
-      <check if="merge conflict">
-        <output>**MERGE CONFLICT DETECTED**
-
-          Resolve conflicts manually and re-run deploy-story.</output>
-        <action>EXIT workflow</action>
-      </check>
-
-      <action>Run `git push origin develop`</action>
-
-      <output>**Merged to develop ✅**
-
-        Vercel will deploy to: {deployment_urls.develop}
-        Wait for deployment to complete...</output>
-
-      <action>Wait 30 seconds for Vercel deployment trigger</action>
-      <ask>Verify develop deployment is working at {deployment_urls.develop}. Continue? [Y/N]</ask>
-      <check if="user says N">
-        <output>Deployment paused at develop. Investigate and resume when ready.</output>
-        <action>EXIT workflow</action>
-      </check>
+    <ask>Proceed with PR to develop? [Y/N]</ask>
+    <check if="user says N">
+      <output>Deployment paused. Resume when ready.</output>
+      <action>EXIT workflow</action>
     </check>
 
-    <check if="{{current_branch}} == 'develop'">
-      <output>Already on develop branch. Skipping feature merge.</output>
+    <action>Run `gh pr create --base develop --title "{{story_key}}: {{story_title}}" --body "## Summary
+
+{{story_summary}}
+
+## Story
+{{story_key}}
+
+## Acceptance Criteria
+{{acceptance_criteria_summary}}
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"`</action>
+
+    <action>Set {{develop_pr_url}} = PR URL from output</action>
+
+    <output>**PR Created:** {{develop_pr_url}}
+
+      Waiting for CI checks to pass...</output>
+
+    <action>Run `gh pr checks {{develop_pr_url}} --watch` to wait for CI</action>
+
+    <check if="CI checks fail">
+      <output>**CI CHECKS FAILED**
+
+        Fix the failing checks on branch {{current_branch}} and push again.
+        The PR will re-run CI automatically.
+
+        Do NOT bypass CI - fix the issue first.</output>
+      <action>EXIT workflow</action>
     </check>
+
+    <output>**CI Checks Passed**
+
+      Squash-merging PR to develop...</output>
+
+    <action>Run `gh pr merge {{develop_pr_url}} --squash --delete-branch`</action>
+
+    <check if="merge fails">
+      <output>**MERGE FAILED**
+
+        Check the PR for merge conflicts or review requirements.
+        Resolve and retry.</output>
+      <action>EXIT workflow</action>
+    </check>
+
+    <output>**Merged to develop (squash)**
+
+      Feature branch {{current_branch}} auto-deleted.
+      CI validates on push to develop.</output>
   </step>
 
-  <step n="4" goal="Promote to staging branch">
-    <output>**Step 2/3: Promote to staging**
+  <step n="4" goal="Create PR to main (merge commit)">
+    <action>Run `git checkout develop`</action>
+    <action>Run `git pull origin develop`</action>
 
-      Merging develop → staging
+    <output>**Step 2/2: PR to main (production)**
 
-      This deploys to the pre-production environment for final verification.</output>
+      Creating PR: develop -> main (merge commit, preserves history)
 
-    <ask>Proceed with promotion to staging? [Y/N]</ask>
+      This deploys to production via Firebase auto-deploy on merge to main.</output>
+
+    <ask>**FINAL CONFIRMATION**: Create PR to main for production deployment? [Y/N]</ask>
     <check if="user says N">
-      <output>Deployment paused at develop. Story is integrated but not in staging/production.</output>
+      <output>Deployment paused at develop. Story is integrated but not in production.
+        You can create the PR to main later.</output>
       <action>Set {{final_environment}} = "develop"</action>
       <action>GOTO step 6</action>
     </check>
 
-    <action>Run `git checkout staging`</action>
-    <action>Run `git pull origin staging`</action>
-    <action>Run `git merge develop --no-ff -m "Promote develop to staging: {{story_key}}"`</action>
+    <action>Run `gh pr create --base main --title "Release: {{story_key}}" --body "## Release
 
-    <check if="merge conflict">
-      <output>**MERGE CONFLICT DETECTED**
+Promoting develop to main for story {{story_key}}.
 
-        Resolve conflicts manually and re-run deploy-story.</output>
+## Changes
+{{story_summary}}
+
+Auto-deploys to Firebase on merge.
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"`</action>
+
+    <action>Set {{main_pr_url}} = PR URL from output</action>
+
+    <output>**PR Created:** {{main_pr_url}}
+
+      Waiting for CI checks to pass...</output>
+
+    <action>Run `gh pr checks {{main_pr_url}} --watch` to wait for CI</action>
+
+    <check if="CI checks fail">
+      <output>**CI CHECKS FAILED**
+
+        Fix the failing checks on develop and push again.
+        The PR will re-run CI automatically.
+
+        Do NOT bypass CI - fix the issue first.</output>
       <action>EXIT workflow</action>
     </check>
 
-    <action>Run `git push origin staging`</action>
+    <output>**CI Checks Passed**
 
-    <output>**Promoted to staging ✅**
+      Merge-committing PR to main...</output>
 
-      Vercel will deploy to: {deployment_urls.staging}
-      Wait for deployment to complete...</output>
+    <action>Run `gh pr merge {{main_pr_url}} --merge`</action>
 
-    <action>Wait 30 seconds for Vercel deployment trigger</action>
-    <ask>Verify staging deployment is working at {deployment_urls.staging}. Continue to production? [Y/N]</ask>
-    <check if="user says N">
-      <output>Deployment paused at staging. Story is in pre-production but not live.</output>
-      <action>Set {{final_environment}} = "staging"</action>
-      <action>GOTO step 6</action>
-    </check>
-  </step>
+    <check if="merge fails">
+      <output>**MERGE FAILED**
 
-  <step n="5" goal="Deploy to production">
-    <output>**Step 3/3: Deploy to production**
-
-      Merging staging → main
-
-      ⚠️ This deploys to PRODUCTION at {deployment_urls.production}</output>
-
-    <ask>**FINAL CONFIRMATION**: Deploy to production? [Y/N]</ask>
-    <check if="user says N">
-      <output>Deployment paused at staging. Story is in pre-production but not live.</output>
-      <action>Set {{final_environment}} = "staging"</action>
-      <action>GOTO step 6</action>
-    </check>
-
-    <action>Run `git checkout main`</action>
-    <action>Run `git pull origin main`</action>
-    <action>Run `git merge staging --no-ff -m "Release to production: {{story_key}}
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>"`</action>
-
-    <check if="merge conflict">
-      <output>**MERGE CONFLICT DETECTED**
-
-        Resolve conflicts manually and re-run deploy-story.</output>
+        Check the PR for merge conflicts or review requirements.
+        Resolve and retry.</output>
       <action>EXIT workflow</action>
     </check>
 
-    <action>Run `git push origin main`</action>
     <action>Set {{final_environment}} = "production"</action>
 
-    <output>**Deployed to production ✅**
+    <output>**Deployed to production**
 
-      Live at: {deployment_urls.production}
-
-      Verifying deployment...</output>
-
-    <action>Wait 60 seconds for Vercel production deployment</action>
-    <action>Run health check on {deployment_urls.production}</action>
+      Firebase auto-deploy triggered on merge to main.
+      Production URL: {deployment_urls.production}</output>
   </step>
 
-  <step n="6" goal="Clean up feature branch">
-    <check if="{{current_branch}} starts with 'feature/' OR {{current_branch}} contains story key">
-      <output>**Feature Branch Cleanup**
+  <step n="5" goal="Branch cleanup and sync">
+    <action>Run `git fetch --prune`</action>
+    <action>Run `git checkout develop`</action>
+    <action>Run `git pull origin develop`</action>
 
-        Branch: {{current_branch}}</output>
+    <output>**Branch Cleanup**
 
-      <ask>Delete feature branch {{current_branch}}? [Y/N]</ask>
-      <check if="user says Y">
-        <action>Run `git checkout develop`</action>
-        <action>Run `git branch -d {{current_branch}}`</action>
-        <action>Run `git push origin --delete {{current_branch}}`</action>
-        <output>Feature branch deleted: {{current_branch}} ✅</output>
-      </check>
-      <check if="user says N">
-        <output>Feature branch retained: {{current_branch}}</output>
-      </check>
-    </check>
-
-    <check if="{{current_branch}} == 'develop' OR {{current_branch}} == 'staging' OR {{current_branch}} == 'main'">
-      <output>No feature branch to clean up (was working directly on {{current_branch}}).</output>
-    </check>
+      Remote branches pruned.
+      Local develop branch synced with origin.</output>
   </step>
 
-  <step n="7" goal="Update sprint status">
-    <!-- Update sprint status -->
+  <step n="6" goal="Update sprint status">
     <check if="{sprint_status} file exists">
       <action>Load {sprint_status}</action>
       <action>Update development_status[{{story_key}}] = "deployed"</action>
       <action>Add deployed_to: {{final_environment}}</action>
       <action>Add deployed_at: {{date}}</action>
       <action>Save file preserving structure</action>
-      <output>Sprint status updated: {{story_key}} → deployed ({{final_environment}})</output>
+      <output>Sprint status updated: {{story_key}} -> deployed ({{final_environment}})</output>
     </check>
   </step>
 
-  <step n="8" goal="Deployment summary">
+  <step n="7" goal="Deployment summary">
     <output>**DEPLOYMENT COMPLETE**
 
       **Story:** {{story_key}}
@@ -272,19 +274,18 @@ Co-Authored-By: Claude <noreply@anthropic.com>"`</action>
       **Production URL:** {deployment_urls.production}
 
       **Pipeline Executed:**
-      ✅ Story status verified (done)
-      ✅ Pre-deployment validation
-      ✅ Merged to develop
-      {{#if final_environment in ['staging', 'production']}}✅ Promoted to staging{{else}}⏸️ Staging skipped{{/if}}
-      {{#if final_environment == 'production'}}✅ Deployed to production{{else}}⏸️ Production skipped{{/if}}
-      {{#if branch_deleted}}✅ Feature branch deleted{{else}}ℹ️ Feature branch retained{{/if}}
-      ✅ Sprint status synced
-      ✅ Sprint status synced
+      - Story status verified (done)
+      - Pre-deployment validation passed
+      - PR to develop (squash merge) {{#if develop_pr_url}}{{develop_pr_url}}{{/if}}
+      {{#if final_environment == 'production'}}- PR to main (merge commit) {{main_pr_url}}
+      - Firebase auto-deploy triggered{{else}}- Production deployment skipped{{/if}}
+      - Branches cleaned up
+      - Sprint status synced
 
       **Next Steps:**
-      - Verify production functionality
-      - Run `/bmad:bmm:workflows:sprint-status` to see sprint progress
-      - Continue with next story via `/bmad:bmm:workflows:create-story`</output>
+      - Verify production functionality at {deployment_urls.production}
+      - Run `/sprint-status` to see sprint progress
+      - Continue with next story via `/ecc-create-story`</output>
   </step>
 
 </workflow>

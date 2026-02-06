@@ -1,6 +1,6 @@
 # Deploy Story Workflow
 name: deploy-story
-description: "Deploy a completed story through the full branch pipeline (feature → develop → staging → main), delete feature branch, and update sprint status. Includes safety gates at each promotion step."
+description: "Deploy a completed story through the 2-branch PR-based pipeline (feature → develop via squash PR → main via merge PR). Uses gh CLI for all PR operations. Includes CI gates at each step."
 author: "Boletapp Team"
 
 # Critical variables from config
@@ -22,18 +22,18 @@ template: false
 
 # Project-specific branching configuration
 branching:
-  strategy: "feature → develop → staging → main"
+  strategy: "feature → develop (squash PR) → main (merge PR)"
   feature_prefix: "feature/"
   develop_branch: "develop"
-  staging_branch: "staging"
   production_branch: "main"
+  merge_to_develop: "squash"
+  merge_to_main: "merge-commit"
   auto_delete_feature: true
   require_confirmation: true
 
 # Deployment URLs (Firebase Hosting)
 deployment_urls:
-  develop: "Firebase preview channel"
-  staging: "Firebase preview channel"
+  develop: "CI validates on push to develop"
   production: "https://boletapp-d609f.web.app"
 
 variables:

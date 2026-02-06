@@ -33,7 +33,6 @@ const STAGING_URL = 'http://localhost:5174';
 // Test users
 const ALICE = {
     name: 'alice',
-    email: 'alice@boletapp.test',
     testId: 'test-user-alice',
 };
 
