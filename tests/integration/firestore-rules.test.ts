@@ -666,9 +666,12 @@ describe('Shared Group Security Rules (Epic 14d-v2)', () => {
     });
 
     /**
-     * Test 2: Non-members cannot read group document (AC#3)
+     * Test 2: Any authenticated user can read group document
+     * Story 14d-v2-1-14-polish: Rule changed from member-only to any-authenticated.
+     * Group metadata (name, color, members) is NOT sensitive financial data.
+     * Non-member reads are required for share code lookups and invitation acceptance.
      */
-    it('should deny non-members from reading group document', async () => {
+    it('should allow any authenticated user to read group document', async () => {
         // Create a group with USER_1 as owner only
         await withSecurityRulesDisabled(async (firestore) => {
             await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID), {
@@ -677,15 +680,15 @@ describe('Shared Group Security Rules (Epic 14d-v2)', () => {
             });
         });
 
-        // ADMIN (not a member) cannot read
+        // ADMIN (not a member) CAN read - needed for share code lookups
         const adminFirestore = getAuthedFirestore(TEST_USERS.ADMIN);
         const groupDocAdmin = doc(adminFirestore, SHARED_GROUPS_PATH, TEST_GROUP_ID);
-        await assertFails(getDoc(groupDocAdmin));
+        await assertSucceeds(getDoc(groupDocAdmin));
 
-        // USER_2 (not a member) cannot read
+        // USER_2 (not a member) CAN read - needed for invitation acceptance
         const user2Firestore = getAuthedFirestore(TEST_USERS.USER_2);
         const groupDocUser2 = doc(user2Firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID);
-        await assertFails(getDoc(groupDocUser2));
+        await assertSucceeds(getDoc(groupDocUser2));
     });
 
     /**
