@@ -192,7 +192,7 @@ grep -r "networkidle" tests/e2e/
 grep -rA2 "afterEach\|afterAll\|cleanup" tests/e2e/
 ```
 
-**Historical frequency:** Story 14d-v2-1-14 consumed 23 test runs (60% AVOIDABLE) due to selector guessing, missing optimistic update handling, and orphan accumulation. See `docs/architecture/e2e-lessons-learned-2026-02-05.md`.
+**Historical frequency:** Story 14d-v2-1-14 consumed 23 test runs (60% AVOIDABLE) due to selector guessing, missing optimistic update handling, and orphan accumulation. Enforcement implemented 2026-02-05: pre-flight checklist, pre-edit hooks, conventions rewrite, shared helpers module.
 
 ---
 
