@@ -53,6 +53,13 @@ export type {
     UseOfflineRecoveryDetectionResult,
 } from './useOfflineRecoveryDetection';
 
+// Story 14d-v2-1-12c: User Group Preference Hook
+export { useUserGroupPreference } from './useUserGroupPreference';
+export type {
+    UseUserGroupPreferenceResult,
+    UserGroupPreferenceServices,
+} from './useUserGroupPreference';
+
 // Placeholder - additional hooks will be added in stories:
 // - 14d-v2-1-5: useInviteMembers
 // - 14d-v2-2-2: useGroupTransactions

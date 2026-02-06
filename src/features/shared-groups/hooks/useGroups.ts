@@ -335,6 +335,7 @@ export function useCreateGroup(
                 transactionSharingEnabled: input.transactionSharingEnabled,
                 transactionSharingLastToggleAt: null,
                 transactionSharingToggleCountToday: 0,
+                transactionSharingToggleCountResetAt: null,
             };
 
             // Optimistically update the groups list

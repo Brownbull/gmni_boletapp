@@ -46,10 +46,11 @@ import {
     arrayUnion,
 } from 'firebase/firestore';
 import type { PendingInvitation, SharedGroup } from '@/types/sharedGroup';
-import { SHARED_GROUP_LIMITS, isInvitationExpired } from '@/types/sharedGroup';
+import { SHARED_GROUP_LIMITS, isInvitationExpired, createDefaultGroupPreference } from '@/types/sharedGroup';
 import { generateShareCode, isValidShareCode } from '@/utils/shareCodeUtils';
-import { normalizeEmail } from '@/utils/validationUtils';
+import { normalizeEmail, validateAppId } from '@/utils/validationUtils';
 import { sanitizeInput } from '@/utils/sanitize';
+import { validateGroupId } from '@/services/userPreferencesService';
 
 // =============================================================================
 // Constants
@@ -631,10 +632,17 @@ export async function acceptInvitation(
     db: Firestore,
     invitationId: string,
     userId: string,
-    userProfile?: { displayName?: string; email?: string; photoURL?: string }
+    userProfile?: { displayName?: string; email?: string; photoURL?: string },
+    appId?: string,
+    shareMyTransactions?: boolean
 ): Promise<void> {
     if (!invitationId || !userId) {
         throw new Error('Invitation ID and user ID are required');
+    }
+
+    // Story 14d-v2-1-13+14: Validate appId if provided (ECC Security Review fix)
+    if (appId && !validateAppId(appId)) {
+        throw new Error('Invalid application ID');
     }
 
     await runTransaction(db, async (transaction) => {
@@ -705,6 +713,19 @@ export async function acceptInvitation(
         transaction.update(invitationRef, {
             status: 'accepted',
         });
+
+        // Story 14d-v2-1-13+14: Write user group preference atomically (AC15)
+        if (appId) {
+            // H-1 fix: Validate groupId before dot-notation field path (prevents path injection)
+            validateGroupId(invitation.groupId);
+            const prefsDocRef = doc(db, 'artifacts', appId, 'users', userId, 'preferences', 'sharedGroups');
+            const preference = createDefaultGroupPreference({
+                shareMyTransactions: shareMyTransactions ?? false,
+            });
+            transaction.set(prefsDocRef, {
+                [`groupPreferences.${invitation.groupId}`]: preference,
+            }, { merge: true });
+        }
     });
 }
 

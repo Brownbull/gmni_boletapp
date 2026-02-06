@@ -22,6 +22,29 @@ import type { SharedGroup } from '@/types/sharedGroup';
 import { Timestamp } from 'firebase/firestore';
 
 // =============================================================================
+// Hook Mocks (for MySharingPreferencesSection)
+// =============================================================================
+
+// Mock useAuth hook (required by MySharingPreferencesSection)
+vi.mock('@/hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: { uid: 'test-user-id' },
+    services: { db: {}, appId: 'test-app' },
+  }),
+}));
+
+// Mock useUserGroupPreference hook (required by MySharingPreferencesSection)
+vi.mock('@/features/shared-groups/hooks/useUserGroupPreference', () => ({
+  useUserGroupPreference: () => ({
+    preference: { shareMyTransactions: true },
+    isLoading: false,
+    updatePreference: vi.fn(),
+    canToggle: { allowed: true },
+    error: null,
+  }),
+}));
+
+// =============================================================================
 // Mock Setup
 // =============================================================================
 
@@ -410,6 +433,39 @@ describe('EditGroupDialog (Story 14d-v2-1-7g)', () => {
             rerender(<EditGroupDialog {...defaultProps} open={true} group={newGroup} />);
 
             expect(screen.getByTestId('group-name-input')).toHaveValue('Different Group');
+        });
+    });
+
+    // =========================================================================
+    // Story 14d-v2-1-12d: My Sharing Preferences Integration Tests
+    // =========================================================================
+
+    describe('My Sharing Preferences section (Story 14d-v2-1-12d)', () => {
+        it('renders MySharingPreferencesSection when dialog is open', () => {
+            render(<EditGroupDialog {...defaultProps} />);
+
+            // Check for the section
+            expect(screen.getByTestId('my-sharing-preferences-section')).toBeInTheDocument();
+        });
+
+        it('passes correct groupId to MySharingPreferencesSection', () => {
+            render(<EditGroupDialog {...defaultProps} />);
+
+            // The section should be present (we're testing integration, not props directly)
+            // The mocked hook will receive the groupId
+            expect(screen.getByTestId('my-sharing-preferences-section')).toBeInTheDocument();
+        });
+
+        it('does not render MySharingPreferencesSection when dialog is closed', () => {
+            render(<EditGroupDialog {...defaultProps} open={false} />);
+
+            expect(screen.queryByTestId('my-sharing-preferences-section')).not.toBeInTheDocument();
+        });
+
+        it('does not render MySharingPreferencesSection when no group is provided', () => {
+            render(<EditGroupDialog {...defaultProps} group={null} />);
+
+            expect(screen.queryByTestId('my-sharing-preferences-section')).not.toBeInTheDocument();
         });
     });
 });

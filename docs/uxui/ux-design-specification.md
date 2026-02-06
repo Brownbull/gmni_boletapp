@@ -37,7 +37,7 @@ _Generated using BMad Method - Create UX Design Workflow v1.0_
 - **Custom components** - Built with Tailwind classes
 
 **Enhancement:** Tailwind UI Premium Templates
-- Located at: `docs/design-references/tailwind_templates/`
+- Located at: `docs/uxui/tailwind-templates/tailwind_templates/`
 - Professional, production-ready component patterns
 - Dark theme support included
 

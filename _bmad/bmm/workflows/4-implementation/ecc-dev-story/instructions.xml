@@ -66,7 +66,16 @@
           viewport: { width: 360, height: 780 },
           screenshots_required: true,
           cleanup_required: true,
-          use_data_testid: true
+          use_data_testid: true,
+          pre_flight_required: true,  // MUST read component source before writing E2E selectors
+          selector_priority: ['data-testid', 'getByRole', 'scoped_locator', 'text_last_resort'],
+          wait_strategy: 'observable_state_first_timeout_settling_only',  // element.waitFor() not waitForTimeout
+          optimistic_updates: 'poll_for_resolved_value',  // Never read DOM during PENDING state
+          multi_user: 'browser_newContext_with_try_finally',  // Independent auth contexts
+          cleanup_pattern: 'try_finally_with_pre_cleanup',  // try/finally + pre-test cleanup of residual data
+          spa_reload: 'always_re_navigate_after_reload',  // App resets to home on reload
+          bilingual: 'prefer_testid_over_text_selectors',  // ES/EN app, text selectors are fragile
+          never_use: ['text=Ajustes', 'networkidle', 'waitForTimeout(3000+)']  // Known anti-patterns
         },
         must_check: key patterns from {{cached_review_patterns}} (git staging, sanitization, TOCTOU, batch ops, exports)
       }
@@ -319,12 +328,14 @@
     <output>📝 Progress tracker initialized. Story file updates batched at task boundaries.</output>
 
     <!-- SIZING METRICS: Track cumulative implementation size in memory -->
+    <action>Run `dust src/features/ -d 2` to capture baseline directory sizes for context budgeting</action>
     <action>Initialize sizing metrics in memory:
       {{sizing_metrics}} = {
         current_files: 0,
         current_loc: 0,
         completed_task_count: 0,
-        remaining_tasks: length of {{task_list}}
+        remaining_tasks: length of {{task_list}},
+        baseline_dir_sizes: output of dust command
       }
     </action>
 
@@ -551,6 +562,7 @@
         </action>
 
         <check if="sizing_metrics.current_files > 8 OR sizing_metrics.current_loc > (500 * sizing_metrics.completed_task_count)">
+          <action>Run `dust src/features/<feature>/ -d 2` to compare against baseline and show growth</action>
           <output>⚠️ **MID-IMPLEMENTATION SIZE ALERT**
 
             **Task Completed:** {{current_task}}

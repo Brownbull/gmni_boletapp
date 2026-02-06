@@ -382,6 +382,11 @@
 
           ---
 
+          **Pre-Analysis: Run `dust` on affected directories for context budgeting:**
+          - `dust src/features/<feature>/ -d 2` to assess existing feature size
+          - `dust tests/ -d 2` to assess test directory scope
+          - Use this to inform sizing classification and task breakdown
+
           **Analysis Required:**
 
           1. **Requirements Breakdown**
@@ -1007,21 +1012,27 @@
 
         {{#if e2e_action == "extend_existing"}}
         **E2E Testing Tasks (Extend Existing):**
+        - [ ] Read component .tsx source files and extract TestId Map (all data-testid attributes)
+        - [ ] Read hook code and identify optimistic update patterns (PENDING, temp-, loading states)
         - [ ] Add data-testid attributes to new interactive elements
         - [ ] Extend {{existing_test_file}} with new test steps for this feature
         - [ ] Add screenshots at new interaction points (per conventions)
-        - [ ] Update test cleanup if new test data is created
-        - [ ] Verify extended test passes locally before PR
+        - [ ] Update test cleanup (try/finally + pre-test residual cleanup) if new test data is created
+        - [ ] Verify extended test passes against staging: npx playwright test --project=staging
         {{/if}}
 
         {{#if e2e_action == "create_new"}}
         **E2E Testing Tasks (Create New):**
+        - [ ] Read component .tsx source files and extract TestId Map (all data-testid attributes)
+        - [ ] Read hook code and identify optimistic update patterns (PENDING, temp-, loading states)
+        - [ ] Read firestore.rules for collections accessed by feature (verify cross-user ops allowed)
         - [ ] Add data-testid attributes to new interactive elements
         - [ ] Create E2E test file at {{e2e_test_location}}
         - [ ] Implement journey test covering primary user flow
         - [ ] Add screenshots at key steps (per conventions)
-        - [ ] Implement cleanup for any test data created
-        - [ ] Verify test passes locally before PR
+        - [ ] Implement try/finally cleanup + pre-test residual data cleanup
+        - [ ] For multi-user: plan bidirectional cleanup (non-owner leaves, then owner deletes)
+        - [ ] Verify test passes against staging: npx playwright test --project=staging
         {{/if}}
       </action>
 

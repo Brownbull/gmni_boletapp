@@ -61,6 +61,8 @@ vi.mock('../../../src/utils/validationUtils', () => ({
         const trimmed = email.trim();
         return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(trimmed);
     }),
+    // Story 14d-v2-1-13+14: ECC Security Review fix
+    validateAppId: vi.fn((appId: string) => appId === 'boletapp'),
 }));
 
 import {
@@ -1894,6 +1896,169 @@ describe('invitationService', () => {
                 await expect(acceptInvitation(mockDb, validInvitationId, validUserId))
                     .resolves.toBeUndefined();
             });
+        });
+    });
+
+    // =========================================================================
+    // acceptInvitation - User Group Preference Tests (Story 14d-v2-1-13+14, AC15)
+    // =========================================================================
+    describe('acceptInvitation - user group preference (Story 14d-v2-1-13+14)', () => {
+        const validInvitationId = 'invitation-123';
+        const validUserId = 'user-xyz';
+        const validGroupId = 'group-abc';
+        const validAppId = 'boletapp';
+
+        /**
+         * Helper to create mock transaction for preference tests
+         */
+        function createMockPrefTransaction() {
+            const updates: any[] = [];
+            const sets: any[] = [];
+            return {
+                get: vi.fn(),
+                update: vi.fn((ref, data) => updates.push({ ref, data })),
+                set: vi.fn((ref, data, options) => sets.push({ ref, data, options })),
+                delete: vi.fn(),
+                _updates: updates,
+                _sets: sets,
+            };
+        }
+
+        /**
+         * Helper to setup a valid accept flow with invitation + group snapshots
+         */
+        function setupValidAcceptFlow(mockTx: ReturnType<typeof createMockPrefTransaction>) {
+            mockTx.get
+                .mockResolvedValueOnce({
+                    exists: () => true,
+                    id: validInvitationId,
+                    data: () => ({
+                        groupId: validGroupId,
+                        status: 'pending',
+                        expiresAt: createMockTimestamp(7),
+                    }),
+                })
+                .mockResolvedValueOnce({
+                    exists: () => true,
+                    id: validGroupId,
+                    data: () => ({
+                        ownerId: 'owner-123',
+                        members: ['owner-123'],
+                    }),
+                });
+        }
+
+        beforeEach(() => {
+            mockDoc.mockReturnValue({ id: 'mock-doc-ref' } as any);
+        });
+
+        it('should write user group preference atomically when appId provided', async () => {
+            const mockTx = createMockPrefTransaction();
+            setupValidAcceptFlow(mockTx);
+
+            mockRunTransaction.mockImplementation(async (db, callback) => {
+                return callback(mockTx as any);
+            });
+
+            await acceptInvitation(mockDb, validInvitationId, validUserId, undefined, validAppId);
+
+            // transaction.set should have been called for the preference write
+            expect(mockTx.set).toHaveBeenCalledTimes(1);
+            expect(mockTx.set).toHaveBeenCalledWith(
+                expect.anything(), // prefsDocRef
+                {
+                    [`groupPreferences.${validGroupId}`]: {
+                        shareMyTransactions: false,
+                        lastToggleAt: null,
+                        toggleCountToday: 0,
+                        toggleCountResetAt: null,
+                    },
+                },
+                { merge: true }
+            );
+        });
+
+        it('should create preference with shareMyTransactions=true when opted in', async () => {
+            const mockTx = createMockPrefTransaction();
+            setupValidAcceptFlow(mockTx);
+
+            mockRunTransaction.mockImplementation(async (db, callback) => {
+                return callback(mockTx as any);
+            });
+
+            await acceptInvitation(mockDb, validInvitationId, validUserId, undefined, validAppId, true);
+
+            expect(mockTx.set).toHaveBeenCalledTimes(1);
+            expect(mockTx.set).toHaveBeenCalledWith(
+                expect.anything(),
+                {
+                    [`groupPreferences.${validGroupId}`]: expect.objectContaining({
+                        shareMyTransactions: true,
+                    }),
+                },
+                { merge: true }
+            );
+        });
+
+        it('should create preference with shareMyTransactions=false by default', async () => {
+            const mockTx = createMockPrefTransaction();
+            setupValidAcceptFlow(mockTx);
+
+            mockRunTransaction.mockImplementation(async (db, callback) => {
+                return callback(mockTx as any);
+            });
+
+            // Call with appId but without shareMyTransactions
+            await acceptInvitation(mockDb, validInvitationId, validUserId, undefined, validAppId);
+
+            expect(mockTx.set).toHaveBeenCalledWith(
+                expect.anything(),
+                {
+                    [`groupPreferences.${validGroupId}`]: expect.objectContaining({
+                        shareMyTransactions: false,
+                    }),
+                },
+                { merge: true }
+            );
+        });
+
+        it('should skip preference write when appId not provided', async () => {
+            const mockTx = createMockPrefTransaction();
+            setupValidAcceptFlow(mockTx);
+
+            mockRunTransaction.mockImplementation(async (db, callback) => {
+                return callback(mockTx as any);
+            });
+
+            // Call without appId
+            await acceptInvitation(mockDb, validInvitationId, validUserId);
+
+            // transaction.set should NOT have been called
+            expect(mockTx.set).not.toHaveBeenCalled();
+        });
+
+        it('should build correct Firestore path for preference document', async () => {
+            const mockTx = createMockPrefTransaction();
+            setupValidAcceptFlow(mockTx);
+
+            mockRunTransaction.mockImplementation(async (db, callback) => {
+                return callback(mockTx as any);
+            });
+
+            await acceptInvitation(mockDb, validInvitationId, validUserId, undefined, validAppId);
+
+            // Verify doc() was called with the correct path segments for the preference
+            expect(mockDoc).toHaveBeenCalledWith(
+                mockDb,
+                'artifacts', validAppId, 'users', validUserId, 'preferences', 'sharedGroups'
+            );
+        });
+
+        // ECC Security Review fix: appId validation
+        it('should reject invalid appId', async () => {
+            await expect(
+                acceptInvitation(mockDb, validInvitationId, validUserId, undefined, 'invalid-app-id!', false)
+            ).rejects.toThrow('Invalid application ID');
         });
     });
 

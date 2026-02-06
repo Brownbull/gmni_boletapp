@@ -4,17 +4,16 @@
   <critical>Communicate all responses in {communication_language} and language MUST be tailored to {user_skill_level}</critical>
   <critical>Generate all documents in {document_output_language}</critical>
 
-  <critical>🎭 ECC PARALLEL CODE REVIEW - Atlas Puppeteer spawns 4 agents simultaneously!</critical>
-  <critical>This workflow spawns code-reviewer, security-reviewer, architect, and tdd-guide IN PARALLEL</critical>
+  <critical>🎭 ECC ADAPTIVE CODE REVIEW - ECC Orchestrator selects and spawns agents based on story complexity!</critical>
+  <critical>Step 1.5 classifies story as TRIVIAL/SIMPLE/STANDARD/COMPLEX → selects appropriate agents</critical>
   <critical>CRITICAL: Use a SINGLE message with MULTIPLE Task calls for true parallelism</critical>
 
-  <!-- ATLAS PUPPETEER PROTOCOL -->
-  <puppeteer-protocol>
-    <principle>Atlas is the Puppeteer - spawns 4 specialized ECC agents in parallel</principle>
+  <!-- ECC ORCHESTRATOR PROTOCOL -->
+  <orchestrator-protocol>
+    <principle>Orchestrator spawns specialized ECC agents in parallel</principle>
     <principle>SINGLE message, MULTIPLE Task calls = true parallel execution</principle>
-    <principle>Collect all outputs, then synthesize with workflow chain analysis</principle>
+    <principle>Collect all outputs, then synthesize findings</principle>
     <principle>Resolve conflicts between agent recommendations</principle>
-    <principle>Feed learnings back to Atlas memory</principle>
 
     <parallel-team>
       | Agent | subagent_type | Focus Area |
@@ -24,33 +23,34 @@
       | Architect | everything-claude-code:architect | Patterns, design |
       | TDD Guide | everything-claude-code:tdd-guide | Test coverage, TDD |
     </parallel-team>
-  </puppeteer-protocol>
+  </orchestrator-protocol>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 0: Atlas Initialization                                            -->
+  <!-- STEP 0: Project Knowledge Loading                                       -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="0" goal="Initialize Atlas and load context for ECC agents">
-    <check if="{atlas_index} exists">
-      <action>Load {atlas_index} to identify relevant fragments</action>
-      <action>Load {atlas_knowledge}/04-architecture.md for patterns</action>
-      <action>Load {atlas_knowledge}/05-testing.md for test standards</action>
-      <action>Store as {{atlas_context}} for ECC agents</action>
+  <step n="0" goal="Load project knowledge for ECC review agents" tag="knowledge-init">
+    <critical>📚 Load project patterns ONCE for all review agents</critical>
 
-      <output>🗺️ **Atlas Puppeteer Initialized for Parallel Review**
+    <action>Load {project-root}/_bmad/bmm/knowledge/code-review-patterns.md → {{cached_review_patterns}}</action>
+    <action>Load {project-root}/docs/architecture/firestore-patterns.md → {{cached_firestore}}</action>
+    <action>Load {project-root}/docs/architecture/state-management.md → {{cached_state_mgmt}}</action>
+    <action>Load {project-root}/docs/architecture/component-patterns.md → {{cached_components}}</action>
+    <action>Load docs/architecture/TESTING-GUIDELINES.md → {{cached_testing_guidelines}}</action>
+    <action>Store combined as {{project_patterns}} for ECC agents</action>
+    <action>Store testing content as {{project_testing_patterns}} for TDD Guide</action>
 
-        Context loaded for 4 parallel ECC agents:
-        - Architecture patterns: {{architecture_summary}}
-        - Testing standards: {{testing_summary}}
+    <output>📚 **ECC Orchestrator Initialized for Parallel Review**
 
-        Ready to spawn parallel review team.
-      </output>
-    </check>
+      Project knowledge loaded for review agents:
+      - Code review patterns (MUST CHECK): {{review_patterns_summary}}
+      - Firestore patterns: {{firestore_summary}}
+      - State management: {{state_mgmt_summary}}
+      - Component patterns: {{components_summary}}
+      - Testing guidelines: {{testing_summary}}
 
-    <check if="{atlas_index} does NOT exist">
-      <action>Set {{atlas_context}} = "No Atlas context"</action>
-      <output>ℹ️ Atlas not configured - ECC agents will use default patterns</output>
-    </check>
+      Ready to spawn parallel review team.
+    </output>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
@@ -115,12 +115,139 @@
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 2: PARALLEL ECC REVIEW - 4 Agents Simultaneously                   -->
+  <!-- STEP 1.5: Adaptive Story Classification                                  -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="2" goal="Spawn 4 ECC agents in parallel for comprehensive review">
-    <critical>🎭 ATLAS PUPPETEER: Spawning 4 ECC agents IN PARALLEL</critical>
-    <critical>CRITICAL: Send ALL 4 Task calls in a SINGLE message for true parallelism!</critical>
+  <step n="1.5" goal="Classify story complexity for adaptive review agent selection" tag="classification">
+    <critical>🎯 ADAPTIVE REVIEW: Select appropriate review agents based on story complexity</critical>
+    <critical>Not every story needs 4 agents — TRIVIAL stories get code-reviewer only</critical>
+
+    <!-- Parse story metrics -->
+    <action>Parse metrics from story file and {{files_to_review}}:
+      - {{task_count}}: Number of top-level tasks (checked + unchecked)
+      - {{subtask_count}}: Total subtasks across all tasks
+      - {{file_count}}: Number of files in File List / git diff
+      - {{file_paths}}: List of all file paths
+    </action>
+
+    <!-- Check for security-sensitive files -->
+    <action>Check if any {{file_paths}} match security patterns:
+      - "firestore.rules"
+      - "**/security/**"
+      - "**/functions/**"
+      - "**/auth/**"
+    </action>
+    <action>Set {{has_security_files}} = true/false</action>
+
+    <!-- Check for architecture-sensitive files -->
+    <action>Check if any {{file_paths}} match architecture patterns:
+      - "**/stores/**"
+      - "**/contexts/**"
+      - "**/features/**/index.ts"
+      - "**/*.types.ts"
+    </action>
+    <action>Set {{has_architecture_files}} = true/false</action>
+
+    <!-- Check for security keywords in story content -->
+    <action>Search story content for keywords: authentication, authorization, delete, cascade, password, token, secret</action>
+    <action>Set {{has_security_keywords}} = true/false</action>
+
+    <!-- Classification logic (evaluated top-down, first match wins) -->
+    <classification>
+      <!-- COMPLEX: exceeds standard thresholds OR has security/architecture flags -->
+      <check if="task_count > 4 OR file_count > 8 OR {{has_security_files}} OR {{has_security_keywords}}">
+        <check if="{{has_architecture_files}} OR task_count > 4">
+          <action>Set {{classification}} = "COMPLEX"</action>
+          <action>Set {{review_agents}} = ["code-reviewer", "security-reviewer", "architect", "tdd-guide"]</action>
+        </check>
+        <check if="NOT {{has_architecture_files}} AND task_count &lt;= 4">
+          <action>Set {{classification}} = "STANDARD"</action>
+          <action>Set {{review_agents}} = ["code-reviewer", "security-reviewer"]</action>
+        </check>
+      </check>
+
+      <!-- STANDARD: moderate size with service/state changes -->
+      <check if="task_count &lt;= 4 AND subtask_count &lt;= 15 AND file_count &lt;= 8">
+        <check if="any file_paths match **/services/** OR **/stores/** OR **/hooks/**">
+          <action>Set {{classification}} = "STANDARD"</action>
+          <action>Set {{review_agents}} = ["code-reviewer", "security-reviewer"]</action>
+        </check>
+      </check>
+
+      <!-- SIMPLE: small, UI-only changes -->
+      <check if="task_count &lt;= 3 AND subtask_count &lt;= 10 AND file_count &lt;= 5 AND NOT {{has_security_files}}">
+        <action>Set {{classification}} = "SIMPLE"</action>
+        <action>Set {{review_agents}} = ["code-reviewer", "tdd-guide"]</action>
+      </check>
+
+      <!-- TRIVIAL: tiny change, no sensitive files -->
+      <check if="task_count &lt;= 1 AND subtask_count &lt;= 3 AND file_count &lt;= 2 AND NOT {{has_security_files}} AND NOT {{has_architecture_files}}">
+        <action>Set {{classification}} = "TRIVIAL"</action>
+        <action>Set {{review_agents}} = ["code-reviewer"]</action>
+      </check>
+
+      <!-- Fallback: if no classification matched, default to STANDARD -->
+      <check if="{{classification}} is NOT set">
+        <action>Set {{classification}} = "STANDARD"</action>
+        <action>Set {{review_agents}} = ["code-reviewer", "security-reviewer"]</action>
+      </check>
+    </classification>
+
+    <!-- Force-include agents based on file sensitivity -->
+    <check if="{{has_security_files}} OR {{has_security_keywords}}">
+      <action>Force add "security-reviewer" to {{review_agents}} if not already present</action>
+    </check>
+    <check if="{{has_architecture_files}} AND task_count > 4">
+      <action>Force add "architect" to {{review_agents}} if not already present</action>
+    </check>
+
+    <output>🎯 **Adaptive Review Classification**
+
+      **Story:** {{story_key}}
+      **Classification:** {{classification}}
+
+      **Metrics:**
+      - Tasks: {{task_count}}
+      - Subtasks: {{subtask_count}}
+      - Files: {{file_count}}
+
+      **Sensitivity Flags:**
+      - Security-sensitive files: {{has_security_files}}
+      - Architecture-sensitive files: {{has_architecture_files}}
+      - Security keywords in story: {{has_security_keywords}}
+
+      **Selected Review Agents ({{agent_count}}):** {{review_agents}}
+    </output>
+
+    <ask>Proceed with {{classification}} review using {{agent_count}} agents? [Y/N/Override]</ask>
+
+    <check if="user says N">
+      <output>Review cancelled.</output>
+      <stop/>
+    </check>
+
+    <check if="user says Override">
+      <ask>Select agents: [C]ode, [S]ecurity, [A]rchitect, [T]DD
+        (e.g., "CS" for Code + Security, "CSAT" for all 4)</ask>
+      <action>Parse user selection:
+        C → "code-reviewer"
+        S → "security-reviewer"
+        A → "architect"
+        T → "tdd-guide"
+      </action>
+      <action>Set {{review_agents}} from parsed selection</action>
+      <action>Set {{classification}} = "OVERRIDE"</action>
+      <output>✅ Override accepted. Agents: {{review_agents}}</output>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 2: ADAPTIVE ECC REVIEW - Spawn Selected Agents                     -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="2" goal="Spawn selected ECC agents based on adaptive classification">
+    <critical>🎭 ECC ORCHESTRATOR: Spawning ONLY agents from {{review_agents}} ({{classification}} classification)</critical>
+    <critical>CRITICAL: Send ALL selected Task calls in a SINGLE message for true parallelism!</critical>
 
     <!-- ═══════════════════════════════════════════════════════════════════════ -->
     <!-- EXPLICIT PARALLEL EXECUTION DIRECTIVE                                   -->
@@ -128,38 +255,30 @@
     <parallel-execution-rule>
       🚨 HOW TO ACHIEVE TRUE PARALLELISM:
 
-      You MUST issue ALL 4 Task tool invocations in your NEXT SINGLE RESPONSE.
+      You MUST issue ALL selected agent Task calls in your NEXT SINGLE RESPONSE.
+      Only spawn agents listed in {{review_agents}} — skip the rest.
 
       ❌ WRONG (Sequential - slow):
-         Response 1: Task(code-reviewer) → wait → result
-         Response 2: Task(security-reviewer) → wait → result
-         Response 3: Task(architect) → wait → result
-         Response 4: Task(tdd-guide) → wait → result
+         Response 1: Task(agent-1) → wait → result
+         Response 2: Task(agent-2) → wait → result
 
       ✅ CORRECT (Parallel - fast):
-         Response 1: Task(code-reviewer) + Task(security-reviewer) + Task(architect) + Task(tdd-guide)
-         → All 4 run simultaneously → All 4 results returned together
+         Response 1: Task(agent-1) + Task(agent-2) + ...
+         → All run simultaneously → All results returned together
 
-      IN YOUR NEXT MESSAGE, you must include FOUR separate Task tool calls.
-      Do NOT wait for one to finish before calling the next.
-      Issue all four in the same response block.
+      IN YOUR NEXT MESSAGE, include Task calls ONLY for agents in {{review_agents}}.
     </parallel-execution-rule>
 
-    <output>🎭 **Spawning Parallel Review Team...**
+    <output>🎭 **Spawning {{classification}} Review Team...**
 
-      Agents launching simultaneously:
-      1. 🔍 Code Reviewer - Quality and maintainability
-      2. 🔒 Security Reviewer - OWASP and vulnerabilities
-      3. 🏗️ Architect - Patterns and design compliance
-      4. 🧪 TDD Guide - Test coverage and quality
-
-      Waiting for all agents to complete...
+      **Classification:** {{classification}}
+      **Agents launching:** {{review_agents}}
     </output>
 
-    <!-- PARALLEL SPAWN - ALL IN ONE MESSAGE -->
-    <ecc-parallel-spawn>
-      <!-- Task 1: Code Reviewer -->
-      <task-call id="code_review">
+    <!-- ADAPTIVE PARALLEL SPAWN - Only selected agents, ALL IN ONE MESSAGE -->
+    <ecc-parallel-spawn agents="{{review_agents}}">
+      <!-- Task 1: Code Reviewer (ALWAYS included — present in all classifications) -->
+      <task-call id="code_review" if="code-reviewer in {{review_agents}}">
         subagent_type: "everything-claude-code:code-reviewer"
         description: "Code quality review for {{story_key}}"
         prompt: |
@@ -173,8 +292,8 @@
           **Acceptance Criteria:**
           {{acceptance_criteria}}
 
-          **Atlas Context:**
-          {{atlas_context}}
+          **Project Context:**
+          {{project_patterns}}
 
           **Review Checklist:**
           1. Code quality and readability
@@ -204,8 +323,8 @@
           ```
       </task-call>
 
-      <!-- Task 2: Security Reviewer -->
-      <task-call id="security_review">
+      <!-- Task 2: Security Reviewer (STANDARD + COMPLEX only) -->
+      <task-call id="security_review" if="security-reviewer in {{review_agents}}">
         subagent_type: "everything-claude-code:security-reviewer"
         description: "Security review for {{story_key}}"
         prompt: |
@@ -255,8 +374,8 @@
           ```
       </task-call>
 
-      <!-- Task 3: Architect -->
-      <task-call id="architecture_review">
+      <!-- Task 3: Architect (COMPLEX only) -->
+      <task-call id="architecture_review" if="architect in {{review_agents}}">
         subagent_type: "everything-claude-code:architect"
         description: "Architecture review for {{story_key}}"
         prompt: |
@@ -267,8 +386,8 @@
           **Files to Review:**
           {{files_to_review}}
 
-          **Atlas Architecture Patterns:**
-          {{atlas_context}}
+          **Architecture Patterns:**
+          {{project_patterns}}
 
           **Architectural Acceptance Criteria (from story):**
           {{architectural_acs}}
@@ -387,8 +506,8 @@
           ```
       </task-call>
 
-      <!-- Task 4: TDD Guide -->
-      <task-call id="test_review">
+      <!-- Task 4: TDD Guide (SIMPLE + COMPLEX only) -->
+      <task-call id="test_review" if="tdd-guide in {{review_agents}}">
         subagent_type: "everything-claude-code:tdd-guide"
         description: "Test review for {{story_key}}"
         prompt: |
@@ -402,8 +521,8 @@
           **Acceptance Criteria:**
           {{acceptance_criteria}}
 
-          **Atlas Testing Patterns:**
-          {{atlas_testing_patterns}}
+          **Testing Patterns:**
+          {{project_testing_patterns}}
 
           **Review Checklist:**
           1. Test coverage percentage
@@ -438,19 +557,25 @@
       </task-call>
     </ecc-parallel-spawn>
 
-    <action>Wait for all 4 agents to complete</action>
-    <action>Collect outputs: {{code_review_output}}, {{security_review_output}}, {{architecture_review_output}}, {{test_review_output}}</action>
+    <action>Wait for all selected agents to complete</action>
+    <action>Collect outputs from spawned agents only:
+      - {{code_review_output}} (always present)
+      - {{security_review_output}} (if security-reviewer was spawned)
+      - {{architecture_review_output}} (if architect was spawned)
+      - {{test_review_output}} (if tdd-guide was spawned)
+    </action>
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 3: Atlas Synthesis - Merge and Analyze                             -->
+  <!-- STEP 3: Review Synthesis - Merge and Analyze                             -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="3" goal="Atlas synthesis of parallel review outputs">
-    <critical>🗺️ ATLAS SYNTHESIS - Merge findings, resolve conflicts, add workflow analysis</critical>
+  <step n="3" goal="Synthesis of parallel review outputs">
+    <critical>🗺️ REVIEW SYNTHESIS - Merge findings, resolve conflicts, add workflow analysis</critical>
     <critical>🏗️ ARCHITECTURE GATE: Architectural violations are BLOCKING</critical>
+    <critical>📊 WEIGHTED SCORING: Adjust weights based on which agents were used</critical>
 
-    <action>Merge findings from all 4 agents by severity:
+    <action>Merge findings from all spawned agents ({{review_agents}}) by severity:
       - CRITICAL: Security vulnerabilities requiring immediate fix
       - HIGH: Must fix before approval (includes architectural violations)
       - MEDIUM: Should fix, can be action items
@@ -458,8 +583,25 @@
     </action>
 
     <action>Identify conflicts between agent recommendations</action>
-    <action>Add Atlas workflow chain impact analysis</action>
-    <action>Calculate overall review score</action>
+    <action>Add cross-cutting impact analysis</action>
+
+    <!-- Weighted scoring based on active agents -->
+    <action>Calculate individual agent scores (1-10 scale) for each spawned agent</action>
+    <action>Calculate weighted average using adaptive weights:
+      Agent weights (redistribute across active agents to sum to 100%):
+      - Code Reviewer: 40% base weight (always present)
+      - Security Reviewer: 30% base weight (if included)
+      - Architect: 20% base weight (if included)
+      - TDD Guide: 10% base weight (if included)
+
+      If agent NOT included, redistribute its weight proportionally to active agents.
+
+      Examples:
+      - TRIVIAL [code-reviewer only]: Code = 100%
+      - SIMPLE [code + tdd]: Code = 80%, TDD = 20%
+      - STANDARD [code + security]: Code = 57%, Security = 43%
+      - COMPLEX [all 4]: Code = 40%, Security = 30%, Architect = 20%, TDD = 10%
+    </action>
 
     <!-- ARCHITECTURE ENFORCEMENT: Highlight architectural findings -->
     <action>Extract architectural findings from architect review:
@@ -468,11 +610,12 @@
       - Architectural AC validation results
     </action>
 
-    <output>## 🗺️ ECC Parallel Review Synthesis
+    <output>## 🗺️ ECC Adaptive Review Synthesis
 
       **Story:** {{story_key}}
       **Review Date:** {date}
-      **ECC Agents Used:** code-reviewer, security-reviewer, architect, tdd-guide
+      **Classification:** {{classification}}
+      **ECC Agents Used:** {{review_agents}}
 
       ---
 
@@ -515,7 +658,7 @@
 
       ---
 
-      ### 🗺️ Atlas Cross-Cutting Analysis
+      ### 🗺️ Cross-Cutting Analysis
 
       **Workflow Chain Impacts:**
       {{workflow_impacts}}
@@ -530,39 +673,39 @@
 
       ### 📊 Overall Assessment
 
-      | Category | Status | Score |
-      |----------|--------|-------|
-      | Code Quality | {{code_status}} | {{code_score}}/10 |
-      | Security | {{security_status}} | {{security_score}}/10 |
-      | Architecture | {{arch_status}} | {{arch_score}}/10 |
-      | **├─ File Location (per docs)** | {{file_location_status}} | - |
-      | **├─ Patterns (per docs)** | {{pattern_status}} | - |
-      | **├─ Anti-Patterns (per docs)** | {{antipattern_status}} | - |
-      | **└─ Architectural ACs** | {{arch_ac_pass_rate}} | - |
-      | Testing | {{test_status}} | {{test_score}}/10 |
-      | **OVERALL** | **{{overall_status}}** | **{{overall_score}}/10** |
+      | Category | Status | Score | Weight |
+      |----------|--------|-------|--------|
+      | Code Quality | {{code_status}} | {{code_score}}/10 | {{code_weight}}% |
+      {{#if security-reviewer in review_agents}}
+      | Security | {{security_status}} | {{security_score}}/10 | {{security_weight}}% |
+      {{/if}}
+      {{#if architect in review_agents}}
+      | Architecture | {{arch_status}} | {{arch_score}}/10 | {{arch_weight}}% |
+      | **├─ File Location (per docs)** | {{file_location_status}} | - | - |
+      | **├─ Patterns (per docs)** | {{pattern_status}} | - | - |
+      | **├─ Anti-Patterns (per docs)** | {{antipattern_status}} | - | - |
+      | **└─ Architectural ACs** | {{arch_ac_pass_rate}} | - | - |
+      {{/if}}
+      {{#if tdd-guide in review_agents}}
+      | Testing | {{test_status}} | {{test_score}}/10 | {{test_weight}}% |
+      {{/if}}
+      | **OVERALL** | **{{overall_status}}** | **{{overall_score}}/10** | 100% |
 
-      **Architecture Reference:** {{architecture_reference}}
+      **Classification:** {{classification}} | **Architecture Reference:** {{architecture_reference}}
 
       ---
 
-      ### 📋 Consolidated Action Items
+      ### 📋 Numbered Findings (Triaged)
 
-      **CRITICAL (Block deployment):**
-      {{critical_items}}
+      Each finding is auto-classified by estimated effort:
+      - ⚡ **QUICK** = Can fix in current session (minutes, localized change)
+      - 🔧 **COMPLEX** = Needs separate work (refactoring, multi-file, architectural)
 
-      **HIGH (Must fix - includes architectural violations):**
-      {{high_items}}
-      {{#if architectural_violations}}
-      🏗️ **Architectural Violations (HIGH):**
-      {{architectural_violations_list}}
-      {{/if}}
-
-      **MEDIUM (Should fix):**
-      {{medium_items}}
-
-      **LOW (Nice to have):**
-      {{low_items}}
+      | # | Sev | Agent | Finding | Effort | Suggested |
+      |---|-----|-------|---------|--------|-----------|
+      {{#each all_findings_numbered}}
+      | {{index}} | {{severity}} | {{agent}} | {{description}} [{{file}}:{{line}}] | {{effort_class}} | {{suggested_action}} |
+      {{/each}}
 
       ---
 
@@ -575,41 +718,188 @@
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 4: Handle Review Findings                                          -->
+  <!-- STEP 4: Smart Triage - Classify, Choose, Execute                        -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="4" goal="Handle review findings and fix issues">
-    <ask>What would you like to do with these findings?
+  <step n="4" goal="Auto-triage findings by effort, let user choose handling per item or batch">
+    <critical>🎯 SMART TRIAGE: Every finding gets an effort classification + suggested action</critical>
+    <critical>Goal: Always fix the easy wins NOW, give user control over what to defer</critical>
 
-      1. **[F]ix automatically** - Fix all HIGH and CRITICAL issues now
-      2. **[A]ction items** - Add findings to story as tasks
-      3. **[D]etails** - Show detailed findings from specific agent
-      4. **[T]ech debt stories** - Create TD stories for deferred items
-      5. **[S]kip** - Mark review complete without changes
+    <!-- ─── 4a: Auto-classify each finding by effort ─── -->
+    <action>For each finding from Step 3, classify effort:
 
-      Choose [F], [A], [D], [T], or [S]:</ask>
+      ⚡ QUICK (fix in current session) — criteria:
+      - Missing validation or guard clause (1-5 lines)
+      - Naming convention fix
+      - Missing error handling on a single call
+      - Adding a missing test assertion
+      - Import cleanup or unused variable
+      - Simple type fix
+      - Missing null check
+      - Documentation/comment fix
+      - Single-file, localized change
 
-    <check if="user chooses F">
-      <action>Fix all CRITICAL and HIGH severity issues</action>
+      🔧 COMPLEX (needs separate work) — criteria:
+      - Multi-file refactoring
+      - New abstraction or pattern introduction
+      - Architectural restructuring
+      - Service layer redesign
+      - New test infrastructure needed
+      - Security model change
+      - State management refactoring
+      - Performance optimization requiring profiling
+      - Changes touching >3 files
+    </action>
+
+    <action>Build {{numbered_findings}} list:
+      For each finding assign:
+      - {{index}}: sequential number (1, 2, 3...)
+      - {{severity}}: CRITICAL / HIGH / MEDIUM / LOW
+      - {{agent}}: which ECC agent found it
+      - {{description}}: one-line summary
+      - {{file}}: file path and line
+      - {{effort_class}}: ⚡ QUICK or 🔧 COMPLEX
+      - {{suggested_action}}: FIX_NOW (for QUICK) or DEFER (for COMPLEX)
+    </action>
+
+    <action>Count totals:
+      - {{quick_count}} = findings classified as ⚡ QUICK
+      - {{complex_count}} = findings classified as 🔧 COMPLEX
+      - {{total_findings}} = quick_count + complex_count
+    </action>
+
+    <!-- ─── 4b: Present triage options ─── -->
+    <ask>**Smart Triage** — {{quick_count}} quick fixes, {{complex_count}} complex items
+
+      **Default modes (recommended):**
+
+      1. **[Q]uick + TD** — Fix all ⚡ QUICK now → create TD stories for 🔧 COMPLEX *(Recommended)*
+      2. **[E]xpand scope** — Fix all ⚡ QUICK now → add 🔧 COMPLEX as action items on this story
+      3. **[F]ix all** — Fix everything now (only if you're sure it fits in the session)
+
+      **Granular control:**
+
+      4. **[C]ustom** — Choose per-item using range syntax:
+         - `fix 1-5` or `fix 1,3,5` — fix specific items now
+         - `td 6-8` — create tech debt stories for items
+         - `action 9-10` — add as action items on current story
+         - `skip 11` — ignore item
+         - Combine: `fix 1-5, td 6-8, action 9-10`
+
+      **Other:**
+
+      5. **[D]etails** — Show detailed findings from a specific agent
+      6. **[S]kip** — Mark review complete without changes
+
+      Choose [Q], [E], [F], [C], [D], or [S]:</ask>
+
+    <!-- ─── 4c: Execute chosen triage strategy ─── -->
+
+    <check if="user chooses Q (Quick + TD)">
+      <action>Fix all findings where effort_class = ⚡ QUICK</action>
+      <action>Re-run tests after fixes</action>
+      <action>Set {{fixed_items}} = list of fixed finding indices</action>
+      <action>Set {{fixed_count}} = number of QUICK items fixed</action>
+      <action>Set {{td_items}} = all findings where effort_class = 🔧 COMPLEX</action>
+      <action>Proceed to Step 4.5 with {{td_items}} pre-selected</action>
+    </check>
+
+    <check if="user chooses E (Expand scope)">
+      <action>Fix all findings where effort_class = ⚡ QUICK</action>
+      <action>Re-run tests after fixes</action>
+      <action>Set {{fixed_items}} = list of fixed finding indices</action>
+      <action>Set {{fixed_count}} = number of QUICK items fixed</action>
+      <action>Add "Review Follow-ups (ECC)" section to story Tasks for all 🔧 COMPLEX items</action>
+      <action>For each COMPLEX finding: `- [ ] [ECC-Review][{{severity}}][{{agent}}] {{description}}`</action>
+      <action>Set {{action_count}} = number of COMPLEX items added as action items</action>
+      <output>✅ **Triage Complete**
+
+        - ⚡ Fixed now: {{fixed_count}} items ({{fixed_items}})
+        - 📋 Added as action items: {{action_count}} items
+        - Story updated with follow-up tasks for next dev cycle
+      </output>
+    </check>
+
+    <check if="user chooses F (Fix all)">
+      <action>Fix ALL findings (both QUICK and COMPLEX)</action>
       <action>Re-run tests after fixes</action>
       <action>Update File List in story</action>
-      <action>Set {{fixed_count}} = number of issues fixed</action>
+      <action>Set {{fixed_count}} = total_findings</action>
     </check>
 
-    <check if="user chooses A">
-      <action>Add "Review Follow-ups (ECC)" section to story Tasks</action>
-      <action>For each finding: `- [ ] [ECC-Review][Severity][Agent] Description`</action>
-      <action>Set {{action_count}} = number of items added</action>
+    <check if="user chooses C (Custom)">
+      <ask>Enter triage commands using range syntax:
+
+        **Syntax:**
+        - `fix 1-5` or `fix 1,3,5` — fix these items now
+        - `td 6-8` — create tech debt stories
+        - `action 9-10` — add as action items on current story
+        - `skip 11` — ignore item
+
+        **Combine with commas:** `fix 1-5, td 6-8, action 9-10`
+
+        **Shortcuts:**
+        - `fix quick` — fix all ⚡ QUICK items
+        - `td complex` — TD stories for all 🔧 COMPLEX items
+        - `action complex` — action items for all 🔧 COMPLEX items
+
+        Enter triage commands:</ask>
+
+      <action>Parse user's triage commands:
+        - Extract ranges: "1-5" → [1,2,3,4,5]
+        - Extract lists: "1,3,5" → [1,3,5]
+        - Extract keywords: "quick" → all QUICK indices, "complex" → all COMPLEX indices
+        - Map each finding index to action: FIX / TD / ACTION / SKIP
+      </action>
+
+      <!-- Execute fixes -->
+      <action>Fix all findings assigned to FIX</action>
+      <action>Re-run tests after fixes</action>
+      <action>Set {{fixed_items}} = list of FIX indices</action>
+      <action>Set {{fixed_count}} = count of FIX items</action>
+
+      <!-- Execute action items -->
+      <check if="any findings assigned to ACTION">
+        <action>Add "Review Follow-ups (ECC)" section to story Tasks</action>
+        <action>For each ACTION finding: `- [ ] [ECC-Review][{{severity}}][{{agent}}] {{description}}`</action>
+        <action>Set {{action_items}} = list of ACTION indices</action>
+        <action>Set {{action_count}} = count of ACTION items</action>
+      </check>
+
+      <!-- Execute tech debt -->
+      <check if="any findings assigned to TD">
+        <action>Set {{td_items}} = all findings assigned to TD</action>
+        <action>Proceed to Step 4.5 with {{td_items}} pre-selected</action>
+      </check>
+
+      <!-- Report skipped -->
+      <check if="any findings assigned to SKIP">
+        <action>Set {{skipped_items}} = list of SKIP indices</action>
+      </check>
+
+      <output>✅ **Custom Triage Complete**
+
+        - ⚡ Fixed now: {{fixed_count}} items ({{fixed_items}})
+        {{#if action_count}}
+        - 📋 Action items: {{action_count}} items ({{action_items}})
+        {{/if}}
+        {{#if td_items}}
+        - 🗂️ Tech debt: {{td_item_count}} items → proceeding to TD story creation...
+        {{/if}}
+        {{#if skipped_items}}
+        - ⏭️ Skipped: {{skipped_items}}
+        {{/if}}
+      </output>
     </check>
 
-    <check if="user chooses D">
+    <check if="user chooses D (Details)">
       <ask>Which agent's details? [C]ode, [S]ecurity, [A]rchitect, [T]est</ask>
       <action>Show full output from selected agent</action>
-      <action>Return to handling decision</action>
+      <action>Return to triage decision (re-show options)</action>
     </check>
 
-    <check if="user chooses T">
-      <action>Proceed to Step 4.5: Tech Debt Story Creation</action>
+    <check if="user chooses S (Skip)">
+      <output>⏭️ Review marked complete without changes.</output>
     </check>
   </step>
 
@@ -621,13 +911,21 @@
     <critical>🗂️ TECH DEBT TRACKING - Convert deferred items to tracked stories</critical>
     <critical>Items marked "deferred" without stories become orphans - always create TD stories!</critical>
 
-    <!-- Identify deferred items -->
-    <action>Collect all items from synthesis marked as:
-      - "Deferred"
-      - "Accepted risk"
-      - "Consider for future"
-      - "Technical debt"
-    </action>
+    <!-- Handle pre-selected items from Step 4 Smart Triage -->
+    <check if="{{td_items}} already set from Step 4">
+      <action>Use {{td_items}} as the deferred items list (already selected by user in triage)</action>
+      <action>Skip the collection step below — items are pre-identified</action>
+    </check>
+
+    <!-- Identify deferred items (only if NOT pre-selected from Step 4) -->
+    <check if="{{td_items}} NOT pre-set">
+      <action>Collect all items from synthesis marked as:
+        - "Deferred"
+        - "Accepted risk"
+        - "Consider for future"
+        - "Technical debt"
+      </action>
+    </check>
 
     <action>Group deferred items by category:
       - {{code_debt_items}} - File size, complexity, refactoring needs
@@ -817,52 +1115,41 @@
   </step>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- STEP 6: Atlas Memory Feeding                                            -->
+  <!-- STEP 6: Review Complete                                                 -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-  <step n="6" goal="Feed review learnings to Atlas memory">
-    <check if="{{atlas_enabled}} == true">
-      <output>🗺️ **Atlas Memory Update**
-
-        Feed ECC review insights to Atlas knowledge base:
-
-        **Story:** {{story_key}}
-        **Pattern Observations:** {{pattern_observations}}
-        **Security Patterns:** {{security_patterns}}
-        **Architecture Decisions:** {{arch_decisions}}
-        **Testing Patterns:** {{test_patterns}}
-
-        Update Atlas memory?
-      </output>
-
-      <ask>Update Atlas memory? [Y/N]</ask>
-
-      <check if="user confirms">
-        <action>Update {atlas_knowledge}/04-architecture.md with pattern observations</action>
-        <action>Update {atlas_knowledge}/05-testing.md with test patterns</action>
-        <action>Update {atlas_knowledge}/06-lessons.md with review learnings</action>
-        <output>✅ Atlas memory updated with ECC review insights</output>
-      </check>
-    </check>
-
+  <step n="6" goal="Finalize review and report results">
     <output>**✅ ECC Code Review Complete!**
 
       **Story:** {{story_key}}
       **Status:** {{new_status}}
-      **Issues Fixed:** {{fixed_count}}
-      **Action Items:** {{action_count}}
+      **Classification:** {{classification}}
+
+      **Triage Summary:**
+      - ⚡ Fixed now: {{fixed_count}} items
+      {{#if action_count}}
+      - 📋 Action items added: {{action_count}} items
+      {{/if}}
+      {{#if td_story_count}}
+      - 🗂️ TD stories created: {{td_story_count}} stories
+      {{/if}}
+      {{#if skipped_items}}
+      - ⏭️ Skipped: {{skipped_count}} items
+      {{/if}}
 
       **ECC Agents Used:**
-      - Code Reviewer ✓
-      - Security Reviewer ✓
-      - Architect ✓
-      - TDD Guide ✓
+      {{#each review_agents}}
+      - {{agent}} ✓
+      {{/each}}
 
       **Next Steps:**
       {{#if new_status == "done"}}
       - Run `deploy-story` to deploy
+      {{else if action_count}}
+      - Address {{action_count}} action items in next dev cycle
+      - Re-run `ecc-code-review` after fixes
       {{else}}
-      - Address action items
+      - Address remaining issues
       - Re-run `ecc-code-review` after fixes
       {{/if}}
     </output>

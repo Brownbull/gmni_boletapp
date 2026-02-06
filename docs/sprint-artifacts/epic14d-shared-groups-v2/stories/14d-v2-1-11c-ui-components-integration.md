@@ -1,6 +1,66 @@
 # Story 14d-v2-1.11c: Transaction Sharing Toggle - UI Components & Integration
 
-Status: ready-for-dev
+Status: done
+
+## Implementation Notes (2026-02-04)
+
+### Files Changed
+
+**Task 1: Toggle UI Component**
+- `src/features/shared-groups/components/TransactionSharingToggle.tsx` - **NEW** Main component
+- `src/features/shared-groups/components/index.ts` - Added barrel export
+- `src/utils/translations.ts` - Added 7 translation keys (en + es)
+- `tests/unit/features/shared-groups/components/TransactionSharingToggle.test.tsx` - **NEW** 28 unit tests
+
+**Task 2: Integration into EditGroupDialog**
+- `src/features/shared-groups/components/EditGroupDialog.tsx` - Integrated TransactionSharingToggle
+- `src/features/shared-groups/services/index.ts` - Exported updateTransactionSharingEnabled
+- `src/features/shared-groups/index.ts` - Exported updateTransactionSharingEnabled
+- `src/components/settings/subviews/GruposView.tsx` - Wired up toggle handler
+- `tests/e2e/staging/transaction-sharing-toggle.spec.ts` - **NEW** E2E staging test
+
+### ECC Review Results
+- **Code Review:** 8.5/10 - APPROVED
+  - 0 CRITICAL, 0 HIGH, 3 MEDIUM (all fixed), 2 LOW, 2 INFO
+- **Security Review:** PASS
+  - 0 CRITICAL, 0 HIGH, 1 MEDIUM (theoretical CSS injection - not exploitable), 2 LOW
+
+### Features Implemented
+
+**Task 1: Toggle UI Component (AC#1-9)**
+- Toggle with helper text and current state display (AC#1, AC#2)
+- Cooldown UI with "wait X minutes" message (AC#3)
+- Daily limit UI with "limit reached" message (AC#4)
+- Read-only mode for non-owners (AC#5)
+- Optimistic updates with rollback on error (AC#7, AC#8)
+- 28 unit tests (exceeds AC#9 requirement of 10+)
+- ARIA accessibility improvements (aria-labelledby, aria-describedby)
+
+**Task 2: Integration (AC#10, AC#13)**
+- TransactionSharingToggle integrated into EditGroupDialog (AC#10)
+- E2E staging test covers full flow (AC#13)
+- Handler wired up with updateTransactionSharingEnabled service
+- Success/error toast notifications on toggle
+
+### Deferred Items
+- AC#11 (Sharing disabled notice in group transaction views) - Depends on Story 2.2
+- AC#12 (Info tooltip for double-gate model) - Can be added when Story 2.2 is implemented
+
+### Tech Debt Stories Created (ECC Review 2026-02-04)
+
+| TD Story | Description | Priority |
+|----------|-------------|----------|
+| [TD-14d-48](./TD-14d-48-cooldown-pluralization.md) | Fix cooldown message pluralization ("1 minutes" → "1 minute") | LOW |
+| [TD-14d-49](./TD-14d-49-missing-error-translation.md) | Add missing `transactionSharingError` translation key | LOW |
+| [TD-14d-50](./TD-14d-50-test-unused-lang-prop.md) | Remove unused `lang` prop from test defaults | LOW |
+| [TD-14d-51](./TD-14d-51-error-color-css-variable.md) | Use CSS variable for error color with fallback | LOW |
+| [TD-14d-52](./TD-14d-52-e2e-waitfortimeout-cleanup.md) | Replace E2E waitForTimeout with proper waits | MEDIUM |
+| [TD-14d-53](./TD-14d-53-centralized-logging-utility.md) | Create centralized logging utility | LOW |
+
+**Already Tracked:**
+- [TD-14d-3](./TD-14d-3-gruposview-dialog-extraction.md) - GruposView.tsx file size (now 921 lines, was 788)
+- [TD-14d-45](./TD-14d-45-runtime-boolean-validation.md) - Runtime boolean validation
+- [TD-14d-46](./TD-14d-46-production-audit-logging.md) - Production audit logging
 
 > **Split from Story 14d-v2-1.11:** 2026-02-01 via Atlas Story Sizing workflow
 > Original story exceeded all sizing limits (6 tasks, 28 subtasks, 12 files).

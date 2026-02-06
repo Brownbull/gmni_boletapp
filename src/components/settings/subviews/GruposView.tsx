@@ -21,10 +21,13 @@
  * and useLeaveTransferFlow for Firestore operations.
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Users, Plus, Loader2, UserPlus, LogOut, ArrowRightLeft, Settings } from 'lucide-react';
 import { APP_ID } from '@/config/constants';
 import { useAuth } from '@/hooks/useAuth';
+import { useOnlineStatus } from '@/hooks/app/useOnlineStatus';
+import { trackEvent } from '@/services/analyticsService';
+import { sanitizeInput } from '@/utils/sanitize';
 import {
     // Services & hooks
     useCreateGroup,
@@ -37,6 +40,8 @@ import {
     DEFAULT_GROUP_COLOR,
     // Story 14d-v2-1-7g: Edit group hook
     useUpdateGroup,
+    // Story 14d-v2-1-11c: Transaction sharing toggle service
+    updateTransactionSharingEnabled,
     // TD-14d-2: Components now from @features/shared-groups
     CreateGroupDialog,
     InviteMembersDialog,
@@ -50,8 +55,12 @@ import {
     DeleteGroupDialog,
     // Story 14d-v2-1-7g: Edit Group Dialog
     EditGroupDialog,
+    // Story 14d-v2-1-13+14: Transaction Sharing Opt-In Dialog
+    TransactionSharingOptInDialog,
+    // Story 14d-v2-1-14-polish: Direct service call for context-specific toasts
+    handleAcceptInvitationService,
 } from '@/features/shared-groups';
-import type { CreateGroupInput, LeaveMode, EditGroupDialogInput } from '@/features/shared-groups';
+import type { CreateGroupInput, LeaveMode, EditGroupDialogInput, MemberProfile } from '@/features/shared-groups';
 import { usePendingInvitationsCount } from '@/hooks/usePendingInvitationsCount';
 // TD-7d-1: useGroupDialogs hook for dialog state management
 // Uses the backward-compatible re-export from @/hooks for test mock compatibility
@@ -61,6 +70,13 @@ import type { SharedGroup, PendingInvitation } from '@/types/sharedGroup';
 // =============================================================================
 // Types
 // =============================================================================
+
+// Story 14d-v2-1-14-polish: Toast key mapping for opt-in choices (hoisted for performance)
+const OPT_IN_TOAST_KEYS: Record<string, string> = {
+    yes: 'joinedGroupWithSharing',
+    no: 'joinedGroupWithoutSharing',
+    dismiss: 'joinedGroupDefault',
+};
 
 export interface GruposViewProps {
     t: (key: string, params?: Record<string, string | number>) => string;
@@ -100,6 +116,9 @@ export const GruposView: React.FC<GruposViewProps> = ({
 
     // Auth state
     const { user, services } = useAuth();
+
+    // Story 14d-v2-1-14-polish: Offline detection (AC4)
+    const { isOnline } = useOnlineStatus();
 
     // Story 14d-v2-1-6c-1: Pending invitations for badge display (AC #1)
     const {
@@ -152,11 +171,13 @@ export const GruposView: React.FC<GruposViewProps> = ({
             });
             actions.closeCreateDialog();
             resetCreate();
+            // ECC Review: Sanitize name before display for defense-in-depth (#9)
+            const safeName = sanitizeInput(newGroup.name, { maxLength: 100 });
             onShowToast?.(
                 t('groupCreatedSuccess') ||
                     (lang === 'es'
-                        ? `Grupo "${newGroup.name}" creado`
-                        : `Group "${newGroup.name}" created`),
+                        ? `Grupo "${safeName}" creado`
+                        : `Group "${safeName}" created`),
                 'success'
             );
             // TODO (Story 14d-v2-1-10b): Navigate to newly created group view
@@ -235,8 +256,24 @@ export const GruposView: React.FC<GruposViewProps> = ({
         actions.closeAcceptDialog();
     }, [dialogs.isAccepting, actions]);
 
+    // Story 14d-v2-1-14-polish: Shared offline guard (AC4) - DRY extracted (#10)
+    const showOfflineError = useCallback(() => {
+        onShowToast?.(
+            t('offlineCannotJoinGroup') ||
+                (lang === 'es'
+                    ? 'Estás sin conexión. Conéctate para unirte a grupos.'
+                    : "You're offline. Please connect to join groups."),
+            'error'
+        );
+    }, [onShowToast, t, lang]);
+
     // TD-7d-1: Accept invitation now delegates to useLeaveTransferFlow hook
+    // Story 14d-v2-1-14-polish: Added offline check (AC4)
     const handleAcceptInvitation = useCallback(async (invitation: PendingInvitation) => {
+        if (!isOnline) {
+            showOfflineError();
+            return;
+        }
         actions.setIsAccepting(true);
         try {
             const success = await leaveTransferHandlers.handleAcceptInvitation(invitation);
@@ -246,7 +283,7 @@ export const GruposView: React.FC<GruposViewProps> = ({
         } finally {
             actions.setIsAccepting(false);
         }
-    }, [actions, leaveTransferHandlers]);
+    }, [actions, leaveTransferHandlers, isOnline, showOfflineError]);
 
     // TD-7d-1: Decline invitation now delegates to useLeaveTransferFlow hook
     const handleDeclineInvitation = useCallback(async (invitation: PendingInvitation) => {
@@ -338,7 +375,8 @@ export const GruposView: React.FC<GruposViewProps> = ({
         if (!dialogs.selectedGroupForAction?.id || !user || !services?.db) return;
 
         // Capture group name before deletion for toast message
-        const groupName = dialogs.selectedGroupForAction.name;
+        // ECC Review: Sanitize name before display for defense-in-depth (#9)
+        const groupName = sanitizeInput(dialogs.selectedGroupForAction.name, { maxLength: 100 });
 
         actions.setIsDeleting(true);
         try {
@@ -452,6 +490,159 @@ export const GruposView: React.FC<GruposViewProps> = ({
         if (isUpdatingGroup) return;
         actions.closeEditDialog();
     }, [isUpdatingGroup, actions]);
+
+    // =========================================================================
+    // Story 14d-v2-1-11c: Transaction Sharing Toggle Handlers
+    // =========================================================================
+
+    // Toggle pending state
+    const [isTogglePending, setIsTogglePending] = useState(false);
+
+    // Handle transaction sharing toggle
+    const handleToggleTransactionSharing = useCallback(async (enabled: boolean) => {
+        if (!dialogs.editingGroup?.id || !user?.uid || !services?.db) return;
+
+        setIsTogglePending(true);
+        try {
+            await updateTransactionSharingEnabled(
+                services.db,
+                dialogs.editingGroup.id,
+                user.uid,
+                enabled
+            );
+            // Refetch groups to update cached data
+            refetchGroups();
+            onShowToast?.(
+                enabled
+                    ? (t('transactionSharingEnabled') || (lang === 'es' ? 'Compartir transacciones habilitado' : 'Transaction sharing enabled'))
+                    : (t('transactionSharingDisabled') || (lang === 'es' ? 'Compartir transacciones deshabilitado' : 'Transaction sharing disabled')),
+                'success'
+            );
+        } catch (err) {
+            if (import.meta.env.DEV) {
+                console.error('[GruposView] Toggle transaction sharing failed:', err);
+            }
+            onShowToast?.(
+                t('transactionSharingError') ||
+                    (lang === 'es'
+                        ? 'Error al actualizar configuración. Intenta de nuevo.'
+                        : 'Failed to update setting. Please try again.'),
+                'error'
+            );
+            // Re-throw to trigger optimistic rollback in TransactionSharingToggle
+            throw err;
+        } finally {
+            setIsTogglePending(false);
+        }
+    }, [dialogs.editingGroup?.id, user?.uid, services?.db, refetchGroups, onShowToast, t, lang]);
+
+    // Check if current user is owner of the editing group
+    const isOwnerOfEditingGroup = dialogs.editingGroup?.ownerId === user?.uid;
+
+    // =========================================================================
+    // Story 14d-v2-1-13+14: Transaction Sharing Opt-In Flow
+    // When accepting an invitation to a group with transactionSharingEnabled,
+    // the opt-in dialog appears BEFORE completing the join.
+    // =========================================================================
+
+    const [optInInvitation, setOptInInvitation] = useState<PendingInvitation | null>(null);
+    const [optInGroup, setOptInGroup] = useState<SharedGroup | null>(null);
+    const [isOptInDialogOpen, setIsOptInDialogOpen] = useState(false);
+
+    // Called by AcceptInvitationDialog.onOpenOptIn when group has transactionSharingEnabled
+    // Story 14d-v2-1-14-polish: Added offline check (AC4) and analytics tracking (AC5)
+    const handleOpenOptIn = useCallback((invitation: PendingInvitation, group: SharedGroup) => {
+        if (!isOnline) {
+            showOfflineError();
+            return;
+        }
+        actions.closeAcceptDialog();
+        setOptInInvitation(invitation);
+        setOptInGroup(group);
+        setIsOptInDialogOpen(true);
+        // AC5: Track opt-in dialog impression
+        trackEvent('group_join_optin_shown', {
+            groupId: group.id || '',
+            transactionSharingEnabled: true,
+        });
+    }, [actions, isOnline, showOfflineError]);
+
+    // Called when user confirms join in opt-in dialog (with sharing preference)
+    // Story 14d-v2-1-14-polish: Calls service directly to show context-specific toasts (AC1, AC2)
+    // and tracks analytics (AC6). Bypasses hook's generic "Joined!" toast.
+    // Note: Parallel code path to leaveTransferHandlers.handleAcceptInvitation — keep in sync.
+    const handleOptInJoin = useCallback(async (shareMyTransactions: boolean, explicitChoice?: 'yes' | 'no' | 'dismiss') => {
+        const choice = explicitChoice ?? (shareMyTransactions ? 'yes' : 'no');
+        if (!optInInvitation || !user || !services?.db) return;
+        actions.setIsAccepting(true);
+        try {
+            const userProfile: MemberProfile = {
+                displayName: user.displayName || undefined,
+                email: user.email || undefined,
+                photoURL: user.photoURL || undefined,
+            };
+            await handleAcceptInvitationService(
+                services.db,
+                optInInvitation,
+                user.uid,
+                userProfile,
+                APP_ID,
+                shareMyTransactions
+            );
+
+            // Security review H-1: Re-sanitize groupName before toast interpolation
+            const rawGroupName = optInGroup?.name || optInInvitation.groupName;
+            const groupName = sanitizeInput(rawGroupName, { maxLength: 100 });
+
+            // AC6: Track user choice
+            trackEvent('group_join_optin_choice', {
+                groupId: optInGroup?.id || '',
+                choice,
+            });
+
+            setIsOptInDialogOpen(false);
+            setOptInInvitation(null);
+            setOptInGroup(null);
+
+            refetchGroups();
+            refetchInvitations();
+
+            // AC1/AC2/AC3: Context-specific toast based on choice
+            const toastKey = OPT_IN_TOAST_KEYS[choice];
+            const toastMessage = t(toastKey, { groupName });
+            if (toastMessage) {
+                onShowToast?.(toastMessage, 'success');
+            }
+        } catch (err: unknown) {
+            if (import.meta.env.DEV) {
+                console.error('[GruposView] Opt-in join failed:', err);
+            }
+            onShowToast?.(
+                t('errorAcceptingInvitation') ||
+                    (lang === 'es'
+                        ? 'Error al aceptar la invitación'
+                        : 'Error accepting invitation'),
+                'error'
+            );
+        } finally {
+            actions.setIsAccepting(false);
+        }
+    }, [optInInvitation, optInGroup, user, services?.db, actions, refetchGroups, refetchInvitations, onShowToast, t, lang]);
+
+    // Called when user cancels opt-in dialog via Cancel button (returns to accept dialog)
+    const handleOptInCancel = useCallback(() => {
+        setIsOptInDialogOpen(false);
+        if (optInInvitation) {
+            actions.openAcceptDialog(optInInvitation);
+        }
+        setOptInInvitation(null);
+        setOptInGroup(null);
+    }, [optInInvitation, actions]);
+
+    // Story 14d-v2-1-14-polish AC3: Dismiss (backdrop/close/escape) joins with defaults
+    const handleOptInDismiss = useCallback(() => {
+        handleOptInJoin(false, 'dismiss');
+    }, [handleOptInJoin]);
 
     // Translations
     const texts = {
@@ -754,12 +945,29 @@ export const GruposView: React.FC<GruposViewProps> = ({
 
             {/* Accept Invitation Dialog (Story 14d-v2-1-6c-2) */}
             {/* TD-7d-1: Updated to use dialogs state from useGroupDialogs */}
+            {/* Story 14d-v2-1-13+14: Added onOpenOptIn for transaction sharing opt-in flow */}
             <AcceptInvitationDialog
                 open={dialogs.isAcceptDialogOpen}
                 invitation={dialogs.selectedInvitation}
                 onClose={handleCloseAcceptDialog}
                 onAccept={handleAcceptInvitation}
                 onDecline={handleDeclineInvitation}
+                onOpenOptIn={handleOpenOptIn}
+                isPending={dialogs.isAccepting}
+                t={t}
+                lang={lang}
+            />
+
+            {/* Story 14d-v2-1-13+14: Transaction Sharing Opt-In Dialog */}
+            {/* Story 14d-v2-1-14-polish: Added onDismiss for AC3 (dismiss = join with defaults) */}
+            <TransactionSharingOptInDialog
+                open={isOptInDialogOpen}
+                groupName={optInGroup?.name || ''}
+                groupColor={optInGroup?.color || DEFAULT_GROUP_COLOR}
+                groupIcon={optInGroup?.icon}
+                onJoin={handleOptInJoin}
+                onCancel={handleOptInCancel}
+                onDismiss={handleOptInDismiss}
                 isPending={dialogs.isAccepting}
                 t={t}
                 lang={lang}
@@ -851,6 +1059,7 @@ export const GruposView: React.FC<GruposViewProps> = ({
             )}
 
             {/* Story 14d-v2-1-7g: Edit Group Dialog */}
+            {/* Story 14d-v2-1-11c: Added transaction sharing toggle props */}
             <EditGroupDialog
                 open={dialogs.isEditDialogOpen}
                 group={dialogs.editingGroup}
@@ -859,6 +1068,9 @@ export const GruposView: React.FC<GruposViewProps> = ({
                 isPending={isUpdatingGroup}
                 t={t}
                 lang={lang}
+                isOwner={isOwnerOfEditingGroup}
+                onToggleTransactionSharing={handleToggleTransactionSharing}
+                isTogglePending={isTogglePending}
             />
         </div>
     );

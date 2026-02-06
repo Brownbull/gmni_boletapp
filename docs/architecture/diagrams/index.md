@@ -70,7 +70,7 @@ All diagrams use [Mermaid](https://mermaid.js.org/) syntax, rendered natively in
 - [Architecture Overview](../architecture.md) - ADRs and patterns
 - [API Contracts](../api-contracts.md) - Cloud Function interfaces
 - [Data Models](../data-models.md) - Firestore schemas
-- [Testing Architecture](../testing-architecture.md) - Test coverage
+- [Testing Guide](../../testing/testing-guide.md) - Test coverage
 
 ---
 

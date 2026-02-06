@@ -883,6 +883,137 @@ describe('Shared Group Security Rules (Epic 14d-v2)', () => {
 
         await assertFails(deleteDoc(groupDoc));
     });
+
+    // ========================================================================
+    // Transaction Sharing Toggle Security (Story 14d-v2-1-11b)
+    // Tests AC#6-9: Owner-only write access to transaction sharing fields
+    // ========================================================================
+
+    /**
+     * Test 13: Owner can update transactionSharingEnabled (AC#6)
+     * Story 14d-v2-1-11b: Transaction Sharing Toggle - Service Layer & Security
+     */
+    it('should allow owner to update transactionSharingEnabled (AC#6)', async () => {
+        // Create a group with USER_1 as owner with toggle fields
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID), {
+                ...createValidSharedGroup(TEST_USERS.USER_1),
+                members: [TEST_USERS.USER_1, TEST_USERS.USER_2],
+                transactionSharingEnabled: true,
+                transactionSharingLastToggleAt: null,
+                transactionSharingToggleCountToday: 0,
+            });
+        });
+
+        // USER_1 (owner) can update transactionSharingEnabled
+        const user1Firestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const groupDoc = doc(user1Firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID);
+
+        await assertSucceeds(
+            updateDoc(groupDoc, {
+                transactionSharingEnabled: false,
+                updatedAt: Timestamp.now(),
+            })
+        );
+    });
+
+    /**
+     * Test 14: Owner can update transactionSharingLastToggleAt (AC#7)
+     */
+    it('should allow owner to update transactionSharingLastToggleAt (AC#7)', async () => {
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID), {
+                ...createValidSharedGroup(TEST_USERS.USER_1),
+                transactionSharingEnabled: true,
+                transactionSharingLastToggleAt: null,
+                transactionSharingToggleCountToday: 0,
+            });
+        });
+
+        const user1Firestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const groupDoc = doc(user1Firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID);
+
+        await assertSucceeds(
+            updateDoc(groupDoc, {
+                transactionSharingLastToggleAt: Timestamp.now(),
+                updatedAt: Timestamp.now(),
+            })
+        );
+    });
+
+    /**
+     * Test 15: Owner can update transactionSharingToggleCountToday (AC#8)
+     */
+    it('should allow owner to update transactionSharingToggleCountToday (AC#8)', async () => {
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID), {
+                ...createValidSharedGroup(TEST_USERS.USER_1),
+                transactionSharingEnabled: true,
+                transactionSharingLastToggleAt: null,
+                transactionSharingToggleCountToday: 0,
+            });
+        });
+
+        const user1Firestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const groupDoc = doc(user1Firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID);
+
+        await assertSucceeds(
+            updateDoc(groupDoc, {
+                transactionSharingToggleCountToday: 1,
+                updatedAt: Timestamp.now(),
+            })
+        );
+    });
+
+    /**
+     * Test 16: Non-owner member denied write to toggle fields (AC#9)
+     */
+    it('should deny non-owner member from updating toggle fields (AC#9)', async () => {
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID), {
+                ...createValidSharedGroup(TEST_USERS.USER_1),
+                members: [TEST_USERS.USER_1, TEST_USERS.USER_2],
+                transactionSharingEnabled: true,
+                transactionSharingLastToggleAt: null,
+                transactionSharingToggleCountToday: 0,
+            });
+        });
+
+        // USER_2 (member but not owner) cannot update toggle fields
+        const user2Firestore = getAuthedFirestore(TEST_USERS.USER_2);
+        const groupDoc = doc(user2Firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID);
+
+        await assertFails(
+            updateDoc(groupDoc, {
+                transactionSharingEnabled: false,
+            })
+        );
+    });
+
+    /**
+     * Test 17: Non-member denied write to toggle fields (AC#9)
+     */
+    it('should deny non-member from updating toggle fields (AC#9)', async () => {
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(doc(firestore, SHARED_GROUPS_PATH, TEST_GROUP_ID), {
+                ...createValidSharedGroup(TEST_USERS.USER_1),
+                members: [TEST_USERS.USER_1],
+                transactionSharingEnabled: true,
+                transactionSharingLastToggleAt: null,
+                transactionSharingToggleCountToday: 0,
+            });
+        });
+
+        // ADMIN (not a member) cannot update toggle fields
+        const adminFirestore = getAuthedFirestore(TEST_USERS.ADMIN);
+        const groupDoc = doc(adminFirestore, SHARED_GROUPS_PATH, TEST_GROUP_ID);
+
+        await assertFails(
+            updateDoc(groupDoc, {
+                transactionSharingEnabled: false,
+            })
+        );
+    });
 });
 
 /**
@@ -1754,5 +1885,260 @@ describe('Member Leave Security Rules (Epic 14d-v2 Story 1.7)', () => {
                 updatedAt: Timestamp.now(),
             })
         );
+    });
+});
+
+/**
+ * User Preferences Security Rules Tests - Epic 14d-v2 Story 14d-v2-1-12b
+ *
+ * Tests security rules for user preferences subcollection:
+ * - AC#5: Authenticated user X can read own /users/X/preferences/sharedGroups
+ * - AC#6: Authenticated user X cannot read /users/Y/preferences/sharedGroups (no cross-user)
+ * - AC#7: Authenticated user X can write to own preferences
+ * - AC#8: Unauthenticated users denied all access
+ *
+ * These tests verify that the existing wildcard rule at lines 26-28 of firestore.rules:
+ *   match /artifacts/{appId}/users/{userId}/{document=**} {
+ *     allow read, write: if request.auth != null && request.auth.uid == userId;
+ *   }
+ * correctly covers the preferences/sharedGroups path.
+ */
+describe('User Preferences Security Rules (Story 14d-v2-1-12b)', () => {
+    beforeAll(async () => {
+        await setupFirebaseEmulator();
+    });
+
+    afterAll(async () => {
+        await teardownFirebaseEmulator();
+    });
+
+    beforeEach(async () => {
+        await clearFirestoreData();
+    });
+
+    /**
+     * Helper: Get the full Firestore path for user preferences
+     * Path: /artifacts/boletapp-d609f/users/{userId}/preferences/sharedGroups
+     */
+    function getUserPreferencesPath(userId: string): string {
+        return `${TEST_COLLECTION_PATH}/${userId}/preferences/sharedGroups`;
+    }
+
+    /**
+     * Helper: Create a valid user preferences document for sharedGroups
+     *
+     * Matches the UserSharedGroupsPreferences interface from sharedGroup.ts:
+     * - groupPreferences: Record<string, UserGroupPreference>
+     *
+     * Story 14d-v2-1-12b Task 3.10: Updated to match actual document structure
+     */
+    function createValidPreferencesDoc() {
+        return {
+            groupPreferences: {
+                'test-group-id': {
+                    shareMyTransactions: true,
+                    lastToggleAt: Timestamp.now(),
+                    toggleCountToday: 1,
+                    toggleCountResetAt: Timestamp.now(),
+                },
+            },
+        };
+    }
+
+    // ========================================================================
+    // AC#5: Authenticated user can read own preferences
+    // ========================================================================
+
+    /**
+     * Test 1: Authenticated user can read own preferences (AC#5)
+     *
+     * Validates that the wildcard rule at /artifacts/{appId}/users/{userId}/{document=**}
+     * correctly allows authenticated users to read their own preferences subcollection.
+     */
+    it('should allow authenticated user to read own preferences (AC#5)', async () => {
+        // Create preferences document using withSecurityRulesDisabled
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(
+                doc(firestore, getUserPreferencesPath(TEST_USERS.USER_1)),
+                createValidPreferencesDoc()
+            );
+        });
+
+        // USER_1 can read their own preferences
+        const user1Firestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const prefsDoc = doc(user1Firestore, getUserPreferencesPath(TEST_USERS.USER_1));
+
+        await assertSucceeds(getDoc(prefsDoc));
+    });
+
+    // ========================================================================
+    // AC#6: Authenticated user cannot read other user's preferences
+    // ========================================================================
+
+    /**
+     * Test 2: Authenticated user cannot read other user's preferences (AC#6)
+     *
+     * Validates that cross-user access is denied. The wildcard rule enforces
+     * request.auth.uid == userId, preventing users from accessing other users' data.
+     */
+    it('should deny authenticated user from reading other user preferences (AC#6)', async () => {
+        // Create preferences document for USER_1
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(
+                doc(firestore, getUserPreferencesPath(TEST_USERS.USER_1)),
+                createValidPreferencesDoc()
+            );
+        });
+
+        // USER_2 cannot read USER_1's preferences
+        const user2Firestore = getAuthedFirestore(TEST_USERS.USER_2);
+        const prefsDoc = doc(user2Firestore, getUserPreferencesPath(TEST_USERS.USER_1));
+
+        await assertFails(getDoc(prefsDoc));
+    });
+
+    // ========================================================================
+    // AC#7: Authenticated user can write to own preferences
+    // ========================================================================
+
+    /**
+     * Test 3: Authenticated user can write to own preferences (AC#7)
+     *
+     * Validates that authenticated users can create and update their own
+     * preferences documents. Tests both setDoc (create) and updateDoc (update).
+     */
+    it('should allow authenticated user to write own preferences (AC#7)', async () => {
+        const user1Firestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const prefsDoc = doc(user1Firestore, getUserPreferencesPath(TEST_USERS.USER_1));
+
+        // USER_1 can create their own preferences
+        await assertSucceeds(
+            setDoc(prefsDoc, createValidPreferencesDoc())
+        );
+
+        // USER_1 can also update their own preferences
+        await assertSucceeds(
+            updateDoc(prefsDoc, {
+                viewMode: 'shared',
+                selectedGroupId: 'test-group-id',
+                lastUpdated: Timestamp.now(),
+            })
+        );
+    });
+
+    /**
+     * Test 3b: Authenticated user cannot write to other user's preferences (AC#7 negative case)
+     *
+     * Validates that users cannot write to other users' preferences.
+     */
+    it('should deny authenticated user from writing to other user preferences (AC#7)', async () => {
+        // Create preferences for USER_1
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(
+                doc(firestore, getUserPreferencesPath(TEST_USERS.USER_1)),
+                createValidPreferencesDoc()
+            );
+        });
+
+        // USER_2 cannot write to USER_1's preferences
+        const user2Firestore = getAuthedFirestore(TEST_USERS.USER_2);
+        const prefsDoc = doc(user2Firestore, getUserPreferencesPath(TEST_USERS.USER_1));
+
+        // Cannot create in another user's path
+        await assertFails(
+            setDoc(prefsDoc, createValidPreferencesDoc())
+        );
+
+        // Cannot update another user's document
+        await assertFails(
+            updateDoc(prefsDoc, { viewMode: 'shared' })
+        );
+    });
+
+    // ========================================================================
+    // AC#8: Unauthenticated users denied all access
+    // ========================================================================
+
+    /**
+     * Test 4: Unauthenticated user denied read access to preferences (AC#8)
+     *
+     * Validates that unauthenticated users cannot read any user preferences.
+     * The wildcard rule requires request.auth != null.
+     */
+    it('should deny unauthenticated user from reading preferences (AC#8)', async () => {
+        // Create preferences document
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(
+                doc(firestore, getUserPreferencesPath(TEST_USERS.USER_1)),
+                createValidPreferencesDoc()
+            );
+        });
+
+        // Unauthenticated user cannot read
+        const unauthFirestore = getUnauthFirestore();
+        const prefsDoc = doc(unauthFirestore, getUserPreferencesPath(TEST_USERS.USER_1));
+
+        await assertFails(getDoc(prefsDoc));
+    });
+
+    /**
+     * Test 5: Unauthenticated user denied write access to preferences (AC#8)
+     *
+     * Validates that unauthenticated users cannot write to any user preferences.
+     */
+    it('should deny unauthenticated user from writing preferences (AC#8)', async () => {
+        // Unauthenticated user cannot write
+        const unauthFirestore = getUnauthFirestore();
+        const prefsDoc = doc(unauthFirestore, getUserPreferencesPath(TEST_USERS.USER_1));
+
+        await assertFails(
+            setDoc(prefsDoc, createValidPreferencesDoc())
+        );
+    });
+
+    // ========================================================================
+    // Additional Edge Cases
+    // ========================================================================
+
+    /**
+     * Test 6: User can delete own preferences document
+     *
+     * Validates that the write permission includes delete operations.
+     */
+    it('should allow authenticated user to delete own preferences', async () => {
+        // Create preferences document
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(
+                doc(firestore, getUserPreferencesPath(TEST_USERS.USER_1)),
+                createValidPreferencesDoc()
+            );
+        });
+
+        // USER_1 can delete their own preferences
+        const user1Firestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const prefsDoc = doc(user1Firestore, getUserPreferencesPath(TEST_USERS.USER_1));
+
+        await assertSucceeds(deleteDoc(prefsDoc));
+    });
+
+    /**
+     * Test 7: User cannot delete other user's preferences
+     *
+     * Validates cross-user delete protection.
+     */
+    it('should deny authenticated user from deleting other user preferences', async () => {
+        // Create preferences document for USER_1
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(
+                doc(firestore, getUserPreferencesPath(TEST_USERS.USER_1)),
+                createValidPreferencesDoc()
+            );
+        });
+
+        // USER_2 cannot delete USER_1's preferences
+        const user2Firestore = getAuthedFirestore(TEST_USERS.USER_2);
+        const prefsDoc = doc(user2Firestore, getUserPreferencesPath(TEST_USERS.USER_1));
+
+        await assertFails(deleteDoc(prefsDoc));
     });
 });

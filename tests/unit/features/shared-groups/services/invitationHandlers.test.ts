@@ -126,7 +126,9 @@ describe('invitationHandlers', () => {
                 mockDb,
                 invitation.id,
                 userId,
-                userProfile
+                userProfile,
+                undefined, // appId
+                undefined  // shareMyTransactions
             );
             expect(mockJoinGroupDirectly).not.toHaveBeenCalled();
         });
@@ -150,7 +152,9 @@ describe('invitationHandlers', () => {
                 mockDb,
                 invitation.groupId,
                 userId,
-                userProfile
+                userProfile,
+                undefined, // appId
+                undefined  // shareMyTransactions
             );
             expect(mockAcceptInvitation).not.toHaveBeenCalled();
         });
@@ -167,7 +171,9 @@ describe('invitationHandlers', () => {
                 mockDb,
                 invitation.id,
                 userId,
-                undefined
+                undefined,
+                undefined, // appId
+                undefined  // shareMyTransactions
             );
         });
 
@@ -191,6 +197,79 @@ describe('invitationHandlers', () => {
             await expect(
                 handleAcceptInvitationService(mockDb, invitation, userId)
             ).rejects.toThrow('Group full');
+        });
+
+        // ---------------------------------------------------------------------
+        // Story 14d-v2-1-13+14: appId and shareMyTransactions passthrough
+        // ---------------------------------------------------------------------
+        describe('user group preference passthrough (Story 14d-v2-1-13+14)', () => {
+            it('passes appId and shareMyTransactions to acceptInvitation for real invitations', async () => {
+                mockAcceptInvitation.mockResolvedValue(undefined);
+
+                const invitation = createMockInvitation({ id: 'real-invitation-123' });
+                const userId = 'user-xyz';
+                const userProfile: MemberProfile = {
+                    displayName: 'Test User',
+                    email: 'test@example.com',
+                };
+
+                await handleAcceptInvitationService(
+                    mockDb, invitation, userId, userProfile, 'boletapp', true
+                );
+
+                expect(mockAcceptInvitation).toHaveBeenCalledWith(
+                    mockDb,
+                    invitation.id,
+                    userId,
+                    userProfile,
+                    'boletapp',
+                    true
+                );
+            });
+
+            it('passes appId and shareMyTransactions to joinGroupDirectly for synthetic invitations', async () => {
+                mockJoinGroupDirectly.mockResolvedValue({ id: 'group-abc123' });
+
+                const invitation = createMockInvitation({
+                    id: 'group-abc123',
+                    groupId: 'abc123',
+                });
+                const userId = 'user-xyz';
+                const userProfile: MemberProfile = {
+                    displayName: 'Test User',
+                };
+
+                await handleAcceptInvitationService(
+                    mockDb, invitation, userId, userProfile, 'boletapp', false
+                );
+
+                expect(mockJoinGroupDirectly).toHaveBeenCalledWith(
+                    mockDb,
+                    invitation.groupId,
+                    userId,
+                    userProfile,
+                    'boletapp',
+                    false
+                );
+            });
+
+            it('passes undefined appId when not provided (backward compatible)', async () => {
+                mockAcceptInvitation.mockResolvedValue(undefined);
+
+                const invitation = createMockInvitation();
+                const userId = 'user-xyz';
+
+                await handleAcceptInvitationService(mockDb, invitation, userId);
+
+                expect(mockAcceptInvitation).toHaveBeenCalledWith(
+                    mockDb,
+                    invitation.id,
+                    userId,
+                    undefined,
+                    undefined,
+                    undefined
+                );
+            });
         });
     });
 

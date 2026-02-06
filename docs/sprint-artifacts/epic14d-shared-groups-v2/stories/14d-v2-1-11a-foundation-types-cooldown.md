@@ -1,6 +1,6 @@
 # Story 14d-v2-1.11a: Transaction Sharing Toggle - Foundation (Types & Cooldown)
 
-Status: ready-for-dev
+Status: done
 
 > **Split from Story 14d-v2-1.11:** 2026-02-01 via Atlas Story Sizing workflow
 > Original story exceeded all sizing limits (6 tasks, 28 subtasks, 12 files).
@@ -45,19 +45,19 @@ The cooldown logic implements:
 
 ### Task 1: Extend SharedGroup Type (AC: 1-5)
 
-- [ ] 1.1 Add `transactionSharingEnabled: boolean` to SharedGroup type
-- [ ] 1.2 Add `transactionSharingLastToggleAt: Timestamp | null` field
-- [ ] 1.3 Add `transactionSharingToggleCountToday: number` field
-- [ ] 1.4 Add `transactionSharingToggleCountResetAt: Timestamp | null` field
-- [ ] 1.5 Add type documentation with migration notes for optional fields
+- [x] 1.1 Add `transactionSharingEnabled: boolean` to SharedGroup type (already existed)
+- [x] 1.2 Add `transactionSharingLastToggleAt: Timestamp | null` field (already existed)
+- [x] 1.3 Add `transactionSharingToggleCountToday: number` field (already existed)
+- [x] 1.4 Add `transactionSharingToggleCountResetAt: Timestamp | null` field (**NEW**)
+- [x] 1.5 Add type documentation with migration notes for optional fields
 
 ### Task 2: Toggle Cooldown Service Logic (AC: 6-10)
 
-- [ ] 2.1 Create `canToggleTransactionSharing(group): { allowed: boolean, waitMinutes?: number, reason?: string }` utility
-- [ ] 2.2 Implement 15-minute cooldown check using `transactionSharingLastToggleAt`
-- [ ] 2.3 Implement 3× daily limit check using `transactionSharingToggleCountToday`
-- [ ] 2.4 Implement midnight reset logic using group's timezone (IANA format)
-- [ ] 2.5 Write 12+ unit tests for cooldown scenarios:
+- [x] 2.1 Create `canToggleTransactionSharing(group): { allowed: boolean, waitMinutes?: number, reason?: string }` utility
+- [x] 2.2 Implement 15-minute cooldown check using `transactionSharingLastToggleAt`
+- [x] 2.3 Implement 3× daily limit check using `transactionSharingToggleCountToday`
+- [x] 2.4 Implement midnight reset logic using group's timezone (IANA format)
+- [x] 2.5 Write 12+ unit tests for cooldown scenarios: (**34 tests written**)
   - Toggle allowed (no previous toggle)
   - Toggle blocked (within 15 minutes)
   - Toggle allowed (exactly 15 minutes)
@@ -113,16 +113,47 @@ The cooldown logic implements:
 
 ### Agent Model Used
 
-(To be filled during development)
+Claude Opus 4.5 via ECC-orchestrated workflow (ecc-dev-story)
 
 ### Debug Log References
 
-(To be filled during development)
+- ECC Planner: Implementation planning completed
+- ECC TDD Guide: Task 1 (types) + Task 2 (cooldown utility) completed
+- ECC Code Reviewer: APPROVED (0 HIGH, 2 MEDIUM, 3 LOW)
+- ECC Security Reviewer: APPROVED (0 CRITICAL/HIGH/MEDIUM, 2 LOW - accepted tradeoffs)
 
 ### Completion Notes List
 
-(To be filled during development)
+1. **Task 1:** AC1-3 fields already existed in SharedGroup type from Story 14d-v2-1-4b. Added AC4 field (`transactionSharingToggleCountResetAt`) + constants.
+2. **Task 2:** Created comprehensive cooldown utility with 34 tests (exceeds 12+ requirement). 100% coverage on new code.
+3. **TDD Approach:** Tests written first, implementation followed RED-GREEN-REFACTOR cycle.
+4. **Migration Handling:** Fail-open design for corrupted/missing data - acceptable for UX, server-side rules provide security boundary.
 
 ### File List
 
-(To be filled during development)
+| File | Change Type | Lines |
+|------|-------------|-------|
+| `src/types/sharedGroup.ts` | Modified | +15 (field + constants + JSDoc) |
+| `src/utils/sharingCooldown.ts` | **New** | 142 |
+| `tests/unit/utils/sharingCooldown.test.ts` | **New** | 477 |
+| `src/features/shared-groups/hooks/useGroups.ts` | Modified | +1 (field init) |
+| `src/features/shared-groups/services/groupService.ts` | Modified | +1 (field init) |
+
+### ECC Review Summary (2026-02-04)
+
+**Code Review:** ✅ APPROVED
+- No HIGH severity issues
+- 2 MEDIUM: Timezone validation (documented), type enum (optional improvement)
+- 3 LOW: Documentation, test dates, magic numbers
+
+**Security Review:** ✅ APPROVED (9/10)
+- No CRITICAL/HIGH/MEDIUM issues
+- 2 LOW (acknowledged design tradeoffs): fail-open for migration, UTC fallback
+- Server-side rules (Story 11b) are the real security boundary
+
+### Tech Debt Stories Created
+
+| TD Story | Description | Priority |
+|----------|-------------|----------|
+| [TD-14d-36](./TD-14d-36-cooldown-reason-type-enum.md) | Refactor cooldown reason to const enum pattern | LOW |
+| [TD-14d-37](./TD-14d-37-sharingcooldown-test-quality.md) | Test quality improvements (magic numbers, JSDoc, typed factories) | LOW |

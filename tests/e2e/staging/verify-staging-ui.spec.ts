@@ -16,10 +16,10 @@ test.use({
 const STAGING_URL = 'http://localhost:5174';
 
 const STAGING_USERS = [
-  { name: 'alice', email: 'alice@boletapp.test', password: 'test-password-123!' },
-  { name: 'bob', email: 'bob@boletapp.test', password: 'test-password-123!' },
-  { name: 'charlie', email: 'charlie@boletapp.test', password: 'test-password-123!' },
-  { name: 'diana', email: 'diana@boletapp.test', password: 'test-password-123!' },
+  { name: 'alice' },
+  { name: 'bob' },
+  { name: 'charlie' },
+  { name: 'diana' },
 ];
 
 test.describe('Staging Transaction Verification', () => {
@@ -95,7 +95,7 @@ test.describe('Staging Transaction Verification', () => {
       expect(currentUrl).not.toContain('login');
 
       // Debug: Check if user is authenticated by looking for logout button or avatar
-      const hasAvatar = await page.locator('[data-testid="user-avatar"], .avatar, [class*="avatar"]').count();
+      const hasAvatar = await page.locator('[data-testid="profile-avatar"]').count();
       console.log(`${user.name}: Has avatar/auth indicator: ${hasAvatar > 0}`);
 
       // Take screenshot of dashboard

@@ -1,6 +1,6 @@
 # Cloud Functions Architecture
 
-> Last Updated: 2026-01-21 (Story 14c-refactor.15)
+> Last Updated: 2026-02-05 (Epic 14d-v2 additions)
 
 This document provides a comprehensive inventory of all Firebase Cloud Functions deployed for Boletapp, including their purposes, criticality levels, dependencies, and security considerations.
 
@@ -18,6 +18,8 @@ This document provides a comprehensive inventory of all Firebase Cloud Functions
 | `deleteWebPushSubscription` | HTTPS Callable | FEATURE | Delete VAPID subscription |
 | `adminTestWebPush` | HTTP | ADMIN | Test VAPID delivery |
 | `getVapidPublicKey` | HTTP | FEATURE | Return VAPID public key |
+| `onTransactionWrite` | Firestore Trigger (v2) | **CRITICAL** | Changelog sync for shared groups |
+| `onMemberRemoved` | Firestore Trigger | **CRITICAL** | Cleanup on member removal |
 
 ## Criticality Levels
 
@@ -104,6 +106,60 @@ artifacts/{appId}/users/{userId}/transactions/{transactionId}
 
 **Dependencies:**
 - `storageService.ts` - Firebase Storage delete operations
+
+---
+
+### onTransactionWrite
+
+**Type:** Firestore Trigger (2nd gen, `onDocumentWritten`)
+**File:** `functions/src/changelogWriter.ts`
+**Criticality:** CRITICAL
+**Added:** Epic 14d-v2 (Stories 14d-v2-1-8a/8b/8c)
+
+Primary sync mechanism for shared groups. Fires on any transaction document write (create, update, delete) and detects changes to the `sharedGroupId` field.
+
+**Trigger Path:**
+```
+artifacts/{appId}/users/{userId}/transactions/{transactionId}
+```
+
+**Handled Cases:**
+1. **Soft delete** (`deletedAt` set while in group) - writes `TRANSACTION_REMOVED`
+2. **Hard delete** (document deleted while in group) - writes `TRANSACTION_REMOVED`
+3. **Group change** (groupA to groupB) - atomic batch: `REMOVED` from old + `ADDED` to new
+4. **Removed from group** (group to null) - writes `TRANSACTION_REMOVED`
+5. **Added to group** (null to group) - writes `TRANSACTION_ADDED` with full data
+6. **Modified within group** (same group, data changed) - writes `TRANSACTION_MODIFIED`
+
+**Security:**
+- GroupId format validation
+- Group membership verification before writing
+- HTML tag sanitization on summary fields
+- Deterministic document IDs for idempotent retries
+- 30-day TTL on all changelog entries
+
+---
+
+### onMemberRemoved
+
+**Type:** Firestore Trigger (1st gen, `onUpdate`)
+**File:** `functions/src/triggers/onMemberRemoved.ts`
+**Criticality:** CRITICAL
+**Added:** Epic 14d-v2 (Story 14d-v2-1-7c)
+
+Detects when members are removed from a shared group's `members` array and creates `TRANSACTION_REMOVED` changelog entries for their shared transactions.
+
+**Trigger Path:**
+```
+sharedGroups/{groupId}
+```
+
+**Behavior:**
+1. Compares before/after `members` arrays to find removed members
+2. Queries removed member's transactions tagged with this `sharedGroupId`
+3. Creates `TRANSACTION_REMOVED` changelog entries for each transaction
+4. Uses deterministic IDs (`removed-{memberId}-{transactionId}`) for idempotency
+5. Processes in parallel batches of 50, safety cap of 500 transactions per member
 
 ---
 
@@ -323,8 +379,11 @@ functions/src/
 ├── analyzeReceipt.ts            # Receipt OCR (CRITICAL)
 ├── deleteTransactionImages.ts   # Cascade delete (CRITICAL)
 ├── cleanupStaleFcmTokens.ts     # Scheduled cleanup (MAINTENANCE)
+├── changelogWriter.ts           # Shared group sync (CRITICAL)
 ├── cleanupCrossUserFcmToken.ts  # FCM token utilities (FEATURE/ADMIN)
 ├── webPushService.ts            # VAPID web push (FEATURE/ADMIN)
+├── triggers/
+│   └── onMemberRemoved.ts      # Member removal handler (CRITICAL)
 ├── imageProcessing.ts           # Image resize/compress
 ├── storageService.ts            # Firebase Storage utilities
 ├── prompts/                     # AI prompt templates

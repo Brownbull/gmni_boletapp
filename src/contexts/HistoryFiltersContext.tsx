@@ -8,7 +8,8 @@
  * @see docs/sprint-artifacts/epic9/story-9.19-history-transaction-filters.md
  */
 
-import React, { createContext, useReducer, useMemo, useEffect } from 'react';
+import React, { createContext, useReducer, useMemo, useEffect, useCallback } from 'react';
+import { useViewModeFilterSync } from '@/hooks/useViewModeFilterSync';
 
 // ============================================================================
 // Types
@@ -273,6 +274,15 @@ export function HistoryFiltersProvider({
     historyFiltersReducer,
     initialState ?? getDefaultFilterState()
   );
+
+  // Story 14d-v2-1-10d: Clear filters when view mode changes
+  // AC#3: Filters cleared when switching from Personal to Group mode
+  // AC#5: Filters cleared but scroll position preserved
+  const handleModeChange = useCallback(() => {
+    dispatch({ type: 'CLEAR_ALL_FILTERS' });
+  }, []);
+
+  useViewModeFilterSync(handleModeChange);
 
   // Story 14.13b: Sync state changes to parent for persistence across navigation
   useEffect(() => {
