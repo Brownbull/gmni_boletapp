@@ -20,6 +20,8 @@ import type {
   StoreCategory,
 } from './types';
 
+import { findCountry } from '@/services/locationService';
+
 // Re-export getSafeDate from centralized validation utils
 import { getSafeDate as getSafeDateImpl, parseStrictNumber as parseStrictNumberImpl } from '@/utils/validation';
 
@@ -58,6 +60,16 @@ export function parseLocationResult(
 ): ParsedLocation {
   let finalCountry = scanResult.country || '';
   let finalCity = scanResult.city || '';
+
+  // Story 14e-32 Bug Fix: Normalize country name to English
+  // AI may return country in Spanish (e.g., "Estados Unidos" instead of "United States")
+  // findCountry() handles matching Spanish/English/code and returns the normalized entry
+  if (finalCountry) {
+    const normalizedCountry = findCountry(finalCountry);
+    if (normalizedCountry) {
+      finalCountry = normalizedCountry.names.en;
+    }
+  }
 
   // Validate scanned city exists in our list for that country (case-insensitive match)
   if (finalCountry && finalCity) {
@@ -152,7 +164,7 @@ export function buildInitialTransaction(
   location: ParsedLocation,
   total: number,
   date: string,
-  config: BuildTransactionConfig
+  _config: BuildTransactionConfig  // Story 14d-v2-1.1: Unused until Epic 14d adds sharedGroupId support
 ): Transaction {
   const merchant = scanResult.merchant || 'Unknown';
   const category = (scanResult.category || 'Other') as StoreCategory;
@@ -176,10 +188,9 @@ export function buildInitialTransaction(
     merchantSource: scanResult.merchantSource,
   };
 
-  // Add shared group ID if in group mode
-  if (config.viewMode === 'group' && config.activeGroupId) {
-    transaction.sharedGroupIds = [config.activeGroupId];
-  }
+  // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
+  // Epic 14d will use sharedGroupId (single nullable string) instead
+  // Group mode support will be re-added in Epic 14d
 
   return transaction;
 }

@@ -1,6 +1,6 @@
 # Story 14e-19: Transaction Entity Foundation
 
-Status: ready-for-dev
+Status: done
 
 <!-- Created by atlas-create-story workflow 2026-01-25 -->
 <!-- Atlas Analysis: 6 workflow impacts detected (all INDIRECT - re-organization story) -->
@@ -62,46 +62,46 @@ Placing it in `entities/` prevents circular dependencies and clarifies that Tran
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Update Entity Directory Structure** (AC: #1)
-  - [ ] 1.1: Update `src/entities/transaction/index.ts` from stub to proper barrel export
-  - [ ] 1.2: Create `src/entities/transaction/types.ts` with re-exports
-  - [ ] 1.3: Create `src/entities/transaction/hooks/` directory
-  - [ ] 1.4: Create `src/entities/transaction/utils/` directory
-  - [ ] 1.5: Verify path alias `@entities/transaction` works (already configured in 14e-1)
+- [x] **Task 1: Update Entity Directory Structure** (AC: #1)
+  - [x] 1.1: Update `src/entities/transaction/index.ts` from stub to proper barrel export
+  - [x] 1.2: Create `src/entities/transaction/types.ts` with re-exports
+  - [x] 1.3: Create `src/entities/transaction/hooks/` directory
+  - [x] 1.4: Create `src/entities/transaction/utils/` directory
+  - [x] 1.5: Verify path alias `@entities/transaction` works (already configured in 14e-1)
 
-- [ ] **Task 2: Centralize Transaction Types** (AC: #2)
-  - [ ] 2.1: Create `src/entities/transaction/types.ts`
-  - [ ] 2.2: Re-export all types from `src/types/transaction.ts`:
+- [x] **Task 2: Centralize Transaction Types** (AC: #2)
+  - [x] 2.1: Create `src/entities/transaction/types.ts`
+  - [x] 2.2: Re-export all types from `src/types/transaction.ts`:
     - `Transaction`, `TransactionItem`
     - `CategorySource`, `MerchantSource`
     - `StoreCategory`, `ItemCategory` (from unified schema)
-  - [ ] 2.3: Re-export type guards:
+  - [x] 2.3: Re-export type guards:
     - `hasTransactionImages`
     - `hasTransactionThumbnail`
     - `isOwnTransaction`
-  - [ ] 2.4: Export from entity `index.ts`
+  - [x] 2.4: Export from entity `index.ts`
 
-- [ ] **Task 3: Centralize Transaction Hooks** (AC: #3, #4)
-  - [ ] 3.1: Create `src/entities/transaction/hooks/index.ts`
-  - [ ] 3.2: Re-export `useTransactions` from `src/hooks/useTransactions.ts`
-  - [ ] 3.3: Re-export `usePaginatedTransactions` from `src/hooks/usePaginatedTransactions.ts`
-  - [ ] 3.4: Re-export `useActiveTransaction` from `src/hooks/useActiveTransaction.ts`
-  - [ ] 3.5: Re-export `useAnalyticsTransactions` from `src/hooks/useAnalyticsTransactions.ts`
-  - [ ] 3.6: Export hooks from entity `index.ts`
+- [x] **Task 3: Centralize Transaction Hooks** (AC: #3, #4)
+  - [x] 3.1: Create `src/entities/transaction/hooks/index.ts`
+  - [x] 3.2: Re-export `useTransactions` from `src/hooks/useTransactions.ts`
+  - [x] 3.3: Re-export `usePaginatedTransactions` from `src/hooks/usePaginatedTransactions.ts`
+  - [x] 3.4: Re-export `useActiveTransaction` from `src/hooks/useActiveTransaction.ts`
+  - [x] 3.5: Re-export `useAnalyticsTransactions` from `src/hooks/useAnalyticsTransactions.ts`
+  - [x] 3.6: Export hooks from entity `index.ts`
 
-- [ ] **Task 4: Create Transaction Utilities Module** (AC: #1)
-  - [ ] 4.1: Create `src/entities/transaction/utils/index.ts`
-  - [ ] 4.2: Re-export utilities from `src/utils/transactionNormalizer.ts` (if public API needed)
-  - [ ] 4.3: Document which utilities are internal vs public API
-  - [ ] 4.4: Export utils from entity `index.ts`
+- [x] **Task 4: Create Transaction Utilities Module** (AC: #1)
+  - [x] 4.1: Create `src/entities/transaction/utils/index.ts`
+  - [x] 4.2: Re-export utilities from `src/utils/transactionNormalizer.ts` (if public API needed)
+  - [x] 4.3: Document which utilities are internal vs public API
+  - [x] 4.4: Export utils from entity `index.ts`
 
-- [ ] **Task 5: Verification & Regression Testing** (AC: #5, #6-#10)
-  - [ ] 5.1: Verify original import paths still work (backward compatibility)
-  - [ ] 5.2: Test `@entities/transaction` imports in a feature file
-  - [ ] 5.3: Run full test suite - all ~5,700+ tests pass
-  - [ ] 5.4: Run build - no TypeScript errors
-  - [ ] 5.5: Smoke test: scan flow creates transaction correctly
-  - [ ] 5.6: Smoke test: history view displays transactions correctly
+- [x] **Task 5: Verification & Regression Testing** (AC: #5, #6-#10)
+  - [x] 5.1: Verify original import paths still work (backward compatibility)
+  - [x] 5.2: Test `@entities/transaction` imports in a feature file
+  - [x] 5.3: Run full test suite - all ~5,700+ tests pass (5,836 passed)
+  - [x] 5.4: Run build - no TypeScript errors
+  - [x] 5.5: Smoke test: scan flow creates transaction correctly (verified via tests)
+  - [x] 5.6: Smoke test: history view displays transactions correctly (verified via tests)
 
 ## Dev Notes
 
@@ -257,16 +257,50 @@ This is a **re-organization story**, not a functional change:
 
 ### Agent Model Used
 
-<!-- Filled by dev agent -->
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Debug Log References
 
-<!-- Filled by dev agent -->
+- TypeScript check passed after fixing category type re-export path
+- Build succeeded: `npm run build` - 9.22s
+- Test suite: 5,836 tests passed, 33 skipped (240 test files)
 
 ### Completion Notes List
 
-<!-- Filled by dev agent -->
+- **Task 1 Complete**: Created entity directory structure with `types.ts`, `hooks/index.ts`, `utils/index.ts`, and updated `index.ts` barrel export
+- **Task 2 Complete**: All types re-exported from `src/types/transaction.ts` - `Transaction`, `TransactionItem`, `CategorySource`, `MerchantSource`, `StoreCategory`, `ItemCategory`, type guards
+- **Task 3 Complete**: All 4 hooks re-exported - `useTransactions`, `usePaginatedTransactions`, `useActiveTransaction`, `useAnalyticsTransactions`
+- **Task 4 Complete**: Utilities re-exported - `normalizeTransaction`, `normalizeTransactions`, `DEFAULT_TIME`, `UserDefaults`
+- **Task 5 Complete**: All verification passed
+  - Original import paths continue working (backward compatibility confirmed)
+  - TypeScript check passes (`npx tsc --noEmit`)
+  - Build succeeds (`npm run build`)
+  - All 5,836 tests pass
+- **Path alias**: `@entities/transaction` configured in tsconfig.json (from Story 14e-1) ✅
 
 ### File List
 
-<!-- Filled by dev agent -->
+**Created:**
+- `src/entities/transaction/types.ts` - Type re-exports from `src/types/transaction.ts`
+- `src/entities/transaction/hooks/index.ts` - Hook re-exports from `src/hooks/`
+- `src/entities/transaction/utils/index.ts` - Utility re-exports from `src/utils/`
+
+**Modified:**
+- `src/entities/transaction/index.ts` - Updated from stub to proper barrel export
+- `docs/sprint-artifacts/sprint-status.yaml` - Status: ready-for-dev → in-progress → review → done
+
+### Code Review Fixes (Atlas Code Review 2026-01-27)
+
+**Issues Found:** 1 HIGH, 1 MEDIUM
+
+**HIGH: Files not staged for commit**
+- Created files (`types.ts`, `hooks/`, `utils/`) were untracked (`??` in git status)
+- Modified file (`index.ts`) was unstaged (` M` in git status)
+- **Fix Applied:** Staged all transaction entity files with `git add`
+
+**MEDIUM: Story File List vs git reality mismatch**
+- **Fix Applied:** Verified staging matches File List claims
+
+**Atlas Validation:** ✅ All passed (Architecture, Testing Patterns, Workflow Chains)
+
+**All 10 ACs verified implemented. 5,836 tests pass.**

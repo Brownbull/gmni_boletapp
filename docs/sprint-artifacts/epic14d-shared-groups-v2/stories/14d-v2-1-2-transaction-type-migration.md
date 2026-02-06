@@ -1,6 +1,12 @@
 # Story 14d-v2.1.2: Transaction Type Migration
 
-Status: ready-for-dev
+Status: split
+
+> **SPLIT 2026-02-01:** 6 tasks, 35 subtasks exceeded sizing limits (max 4 tasks, 15 subtasks)
+> Split into 3 sub-stories:
+> - [14d-v2-1-2a](14d-v2-1-2a-transaction-types-periods.md) - Types + Period Utility (2 tasks, 17 subtasks)
+> - [14d-v2-1-2b](14d-v2-1-2b-transaction-service-layer.md) - Service Layer (2 tasks, 10 subtasks)
+> - [14d-v2-1-2c](14d-v2-1-2c-transaction-queries-tests.md) - Queries + Tests (2 tasks, 8 subtasks)
 
 ## Story
 

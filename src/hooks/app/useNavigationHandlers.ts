@@ -12,9 +12,10 @@
  * - QuickSave dialog dismissal on navigation
  *
  * Architecture Reference: Epic 14c-refactor - App.tsx Handler Extraction
+ * Story 14e-45: NavigationContext removed - navigation via useNavigationStore
+ *
  * Dependencies:
  * - ScanContext (for dialog dismissal)
- * - NavigationContext (optional integration)
  * - HistoryFiltersContext (filter state management)
  *
  * @example
@@ -365,7 +366,7 @@ export function useNavigationHandlers(props: UseNavigationHandlersProps): UseNav
     // Return Result
     // ===========================================================================
 
-    // Story 14c-refactor.25: Memoize return object for ViewHandlersContext stability
+    // Story 14e-25d: ViewHandlersContext deleted - this hook used by App.tsx directly
     return useMemo<UseNavigationHandlersResult>(
         () => ({
             navigateToView,

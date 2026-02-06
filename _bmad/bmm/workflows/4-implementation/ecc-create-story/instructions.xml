@@ -1,0 +1,1257 @@
+<workflow>
+  <critical>The workflow execution engine is governed by: {project-root}/_bmad/core/tasks/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} and language MUST be tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+
+  <critical>🎭 ECC-ORCHESTRATED STORY CREATION - ECC Orchestrator spawns Planner + Architect agents!</critical>
+  <critical>This workflow uses ECC agents to analyze requirements and provide technical guidance</critical>
+  <critical>Sequence: planner → architect → [database-reviewer + security-reviewer] if needed</critical>
+
+  <!-- ECC ORCHESTRATOR PROTOCOL -->
+  <orchestrator-protocol>
+    <principle>ECC Orchestrator coordinates story creation with ECC agent analysis</principle>
+    <principle>Planner analyzes requirements and identifies implementation risks</principle>
+    <principle>Architect provides technical design and pattern recommendations</principle>
+    <principle>Optional parallel technical review for complex stories</principle>
+
+    <available-agents>
+      | Agent | subagent_type | Purpose |
+      |-------|---------------|---------|
+      | Planner | everything-claude-code:planner | Requirements analysis, risk identification |
+      | Architect | everything-claude-code:architect | Technical design, patterns |
+      | Database Reviewer | everything-claude-code:database-reviewer | Schema/query analysis |
+      | Security Reviewer | everything-claude-code:security-reviewer | Security considerations |
+    </available-agents>
+  </orchestrator-protocol>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 0: Project Knowledge Loading                                       -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="0" goal="Load project knowledge for story creation context">
+    <action>Load and cache {project-root}/_bmad/bmm/knowledge/code-review-patterns.md → {{cached_review_patterns}}</action>
+    <action>Load and cache {project-root}/docs/architecture/firestore-patterns.md → {{cached_firestore}}</action>
+    <action>Load and cache {project-root}/docs/architecture/state-management.md → {{cached_state_mgmt}}</action>
+    <action>Load and cache {project-root}/docs/architecture/component-patterns.md → {{cached_components}}</action>
+    <action>Load and cache {project-root}/docs/architecture/TESTING-GUIDELINES.md → {{cached_testing_guidelines}}</action>
+    <action>Combine cached knowledge into {{project_patterns}} for ECC agents</action>
+
+    <output>📋 **ECC Orchestrator Initialized for Story Creation**
+
+      Project knowledge loaded:
+      - Review patterns: {{cached_review_patterns_summary}}
+      - Architecture: firestore, state management, component patterns
+      - Testing guidelines: loaded
+
+      Ready to spawn ECC agents for story analysis.
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 1: Find Next Story from Epics                                      -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="1" goal="Identify next story to create from epics">
+    <action>Search {epics_dir} for epic files</action>
+    <action>Check {sprint_status} for stories already created</action>
+    <action>Find next uncreated story from epic requirements</action>
+
+    <check if="no epics found">
+      <output>⚠️ No epic files found in {epics_dir}
+
+        **Options:**
+        1. Create epics first with `/create-epics-and-stories`
+        2. Provide story requirements manually
+      </output>
+      <ask>Choose [1] or [2], or describe the story you want to create:</ask>
+    </check>
+
+    <check if="next story identified">
+      <action>Extract {{story_requirements}} from epic</action>
+      <action>Extract {{acceptance_criteria}} from epic</action>
+      <action>Set {{story_key}} from epic naming convention</action>
+
+      <output>📋 **Next Story Identified**
+
+        Story: {{story_key}}
+        Epic: {{epic_name}}
+        Requirements: {{story_requirements_summary}}
+      </output>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 1.25: Load Epic Architectural Context                              -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="1.25" goal="Load and extract architectural specifications from epic and project documentation">
+    <critical>🏗️ ARCHITECTURE CONTEXT: Load all architectural references to prevent technical debt</critical>
+    <critical>Stories MUST align with documented architecture - no ad-hoc patterns allowed</critical>
+
+    <output>🏗️ **Loading Architectural Context...**
+
+      Searching for architectural specifications in epic and project docs.
+    </output>
+
+    <!-- Load architectural context from multiple sources -->
+    <action>Search epic document ({{epic_file}}) for:
+      - "Architecture Reference" or "Technical Reference" sections
+      - Links to architecture documents
+      - Pattern specifications
+      - File structure requirements
+      - Technology stack decisions
+    </action>
+
+    <action>Extract {{epic_architecture_refs}} = list of architecture document paths from epic</action>
+
+    <!-- Load referenced architecture documents -->
+    <check if="architecture documents referenced in epic">
+      <action>For each referenced document in {{epic_architecture_refs}}:
+        - Load the document
+        - Extract pattern requirements
+        - Extract file location conventions
+        - Extract state management patterns
+        - Extract anti-patterns to avoid
+        - Extract technology constraints
+      </action>
+    </check>
+
+    <!-- Also check project-level architecture docs -->
+    <action>Load project architecture documentation:
+      - docs/architecture/firestore-patterns.md (if exists)
+      - docs/architecture/*.md (if exists)
+      - docs/tech-specs/*.md (if exists)
+      - PRD architecture sections
+    </action>
+
+    <!-- Compile all architectural patterns -->
+    <action>Compile {{documented_patterns}} from all sources:
+
+      **Pattern Categories:**
+      1. **File Structure Patterns**
+         - Component location conventions
+         - Service location conventions
+         - Hook location conventions
+         - Type definition locations
+         - Test file locations
+
+      2. **State Management Patterns**
+         - Preferred state management library/approach
+         - Store organization conventions
+         - State shape requirements
+         - Patterns to avoid (e.g., prop drilling, certain contexts)
+
+      3. **Code Organization Patterns**
+         - Feature module structure (if applicable)
+         - Shared vs feature-specific code rules
+         - Export/import conventions
+         - Naming conventions
+
+      4. **Technology Constraints**
+         - Required libraries/frameworks
+         - Forbidden libraries/patterns
+         - Version requirements
+
+      5. **Anti-Patterns**
+         - Explicitly forbidden approaches
+         - Legacy patterns to avoid
+         - Technical debt patterns to prevent
+    </action>
+
+    <action>Set {{architecture_source}} = "Epic: {{epic_name}}" + list of loaded docs</action>
+
+    <check if="documented_patterns found">
+      <output>✅ **Architectural Context Loaded**
+
+        **Source Documents:**
+        {{architecture_source}}
+
+        **Documented Patterns Found:**
+
+        **File Structure:**
+        {{file_structure_patterns}}
+
+        **State Management:**
+        {{state_management_patterns}}
+
+        **Code Organization:**
+        {{code_organization_patterns}}
+
+        **Anti-Patterns to Avoid:**
+        {{antipatterns_list}}
+
+        These patterns will be enforced via architectural ACs.
+      </output>
+    </check>
+
+    <check if="NO documented patterns found">
+      <output>⚠️ **Warning: No Architectural Documentation Found**
+
+        No architecture documents were found or referenced in:
+        - Epic document: {{epic_file}}
+        - Project patterns: docs/architecture/*.md
+        - Project docs: docs/architecture/
+
+        **Risk:** Without documented architecture, implementation may drift.
+      </output>
+
+      <ask>How to proceed?
+        [S]pecify - Manually specify architectural patterns now
+        [D]efault - Use default patterns (feature-based modules, component colocation)
+        [C]ontinue - Continue without architectural enforcement (NOT RECOMMENDED)</ask>
+
+      <check if="user chooses S">
+        <ask>Describe the architectural patterns for this epic:
+          - Where should components be placed?
+          - What state management approach should be used?
+          - What patterns should be avoided?</ask>
+        <action>Parse user input into {{documented_patterns}}</action>
+      </check>
+
+      <check if="user chooses D">
+        <action>Set {{documented_patterns}} = default_patterns:
+          - Components: colocated with feature
+          - State: project's standard approach
+          - Anti-patterns: scattered files, inconsistent naming
+        </action>
+      </check>
+
+      <check if="user chooses C">
+        <action>Set {{skip_architecture_enforcement}} = true</action>
+        <output>⚠️ Proceeding without architectural enforcement. Technical debt risk is HIGH.</output>
+      </check>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 1.5: Architectural Foundation Check                                -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="1.5" goal="Check if feature requires architectural foundation story first">
+    <critical>🏗️ ARCHITECTURE GATE: Detect if this is first story for a new feature</critical>
+    <critical>New features MUST have architectural foundation before functional stories</critical>
+
+    <check if="{{skip_architecture_enforcement}} == true">
+      <output>⚠️ Skipping foundation check (architecture enforcement disabled)</output>
+      <goto step="2"/>
+    </check>
+
+    <action>Identify {{feature_name}} from story requirements (e.g., "shared-groups", "batch-review")</action>
+
+    <!-- Check for existing feature structure based on documented patterns -->
+    <action>Based on {{documented_patterns}}.file_structure_patterns:
+      - Identify expected feature location from docs
+      - Check if feature module/directory exists at documented location
+      - Check sprint-status for any completed stories in this feature
+    </action>
+
+    <check if="feature structure does NOT exist AND no prior stories completed for this feature">
+      <output>⚠️ **Architectural Foundation Required**
+
+        Feature `{{feature_name}}` has no existing structure.
+
+        **Required Foundation (per documented architecture):**
+        ```
+        {{documented_patterns.expected_feature_structure}}
+        ```
+
+        **Source:** {{architecture_source}}
+
+        **Action Required:**
+        Before creating functional stories, an architectural foundation story
+        (e.g., `{{epic_key}}-0-architecture-setup`) must be created first.
+      </output>
+
+      <ask>Create architectural foundation story first? [Y/N]
+
+        [Y] - Create `{{epic_key}}-0-architecture-setup` to establish structure per documented architecture
+        [N] - Proceed anyway (NOT RECOMMENDED - causes architectural drift)</ask>
+
+      <check if="user chooses Y">
+        <action>Set {{story_key}} = "{{epic_key}}-0-architecture-setup"</action>
+        <action>Set {{is_foundation_story}} = true</action>
+        <action>Generate foundation story requirements from {{documented_patterns}}:
+          - Create directory structure per documented conventions
+          - Set up exports per documented patterns
+          - Create type definitions per documented conventions
+          - Configure state management per documented approach (if feature has state)
+          - Apply any other patterns specified in architecture docs
+        </action>
+        <output>📋 **Foundation Story Created**
+
+          Redirecting to create: {{story_key}}
+          This story establishes the architectural foundation per documented patterns.
+
+          **Architecture Source:** {{architecture_source}}
+        </output>
+      </check>
+
+      <check if="user chooses N">
+        <action>Set {{architectural_warning}} = "ARCHITECTURAL DRIFT RISK: No foundation story"</action>
+        <output>⚠️ Proceeding without foundation story - architectural ACs will be MANDATORY</output>
+      </check>
+    </check>
+
+    <check if="feature structure EXISTS">
+      <action>Scan existing feature structure and compare to documented patterns</action>
+      <action>Detect any drift between existing structure and documented architecture</action>
+      <action>Set {{existing_patterns}} = detected patterns from codebase</action>
+      <action>Set {{pattern_drift}} = differences between existing and documented patterns</action>
+
+      <check if="pattern drift detected">
+        <output>⚠️ **Pattern Drift Detected**
+
+          Existing structure differs from documented architecture:
+
+          **Documented Pattern:**
+          {{documented_patterns.summary}}
+
+          **Existing Pattern:**
+          {{existing_patterns.summary}}
+
+          **Drift:**
+          {{pattern_drift}}
+
+          New code should follow the DOCUMENTED patterns to avoid increasing drift.
+        </output>
+      </check>
+
+      <check if="no drift">
+        <output>✅ Feature structure exists and aligns with documented architecture
+
+          **Location:** {{existing_feature_location}}
+          **Pattern Compliance:** ✓ Aligned with {{architecture_source}}
+
+          Architectural ACs will enforce consistency with documented patterns.
+        </output>
+      </check>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 2: ECC Planner - Requirements Analysis                             -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="2" goal="Spawn ECC Planner for requirements analysis">
+    <critical>🎭 ECC ORCHESTRATOR: Spawning ECC Planner agent</critical>
+    <critical>📏 SIZING AWARENESS: Planner must respect Opus 4.6 sizing guidelines when decomposing tasks</critical>
+
+    <output>🎭 **Spawning ECC Planner...**
+
+      Task: Analyze story requirements and identify implementation approach
+    </output>
+
+    <ecc-spawn agent="planner">
+      <task-call>
+        subagent_type: "everything-claude-code:planner"
+        description: "Analyze story requirements for {{story_key}}"
+        prompt: |
+          ## Story Requirements Analysis
+
+          **Story:** {{story_key}}
+
+          **Requirements:**
+          {{story_requirements}}
+
+          **Acceptance Criteria:**
+          {{acceptance_criteria}}
+
+          **Project Context:**
+          {{project_patterns}}
+
+          ---
+
+          ## 📏 SIZING GUIDELINES (Opus 4.6 - Updated 2026-02-05)
+
+          **CRITICAL:** Task decomposition MUST respect these sizing limits.
+          Opus 4.6 handles larger context windows than previous models.
+          Prefer fewer, larger stories over many micro-stories.
+
+          - **SMALL (1-2 pts):** 1-3 tasks, ≤10 subtasks total, ≤4 files
+          - **MEDIUM (3-5 pts):** 3-6 tasks, ≤25 subtasks total, ≤8 files
+          - **LARGE (5-8 pts):** 6-8 tasks, ≤40 subtasks total, ≤12 files
+          - **TOO LARGE (needs split):** >8 tasks OR >40 subtasks OR >12 files
+
+          **Sizing Principles:**
+          - Group related work into single tasks (types + service + tests for one layer = 1 task)
+          - Don't split by individual file - split by functional concern
+          - A story touching types → service → hook → component → tests is ONE MEDIUM story, not 4 micro-stories
+          - Foundation (types/schema) + integration (service/UI) can be ONE story if ≤8 tasks total
+          - E2E tests should be included in the story they verify, not split into separate stories
+
+          ---
+
+          **Pre-Analysis: Run `dust` on affected directories for context budgeting:**
+          - `dust src/features/<feature>/ -d 2` to assess existing feature size
+          - `dust tests/ -d 2` to assess test directory scope
+          - Use this to inform sizing classification and task breakdown
+
+          **Analysis Required:**
+
+          1. **Requirements Breakdown**
+             - Core functionality needed
+             - Dependencies on existing code
+             - External integrations required
+
+          2. **Implementation Approach**
+             - Recommended approach
+             - Alternative approaches considered
+             - Trade-offs
+
+          3. **Risk Assessment**
+             - Technical risks
+             - Complexity factors
+             - Unknown areas
+
+          4. **Task Decomposition** (MUST respect sizing guidelines above)
+             - Suggested task breakdown
+             - Estimated complexity per task
+             - Recommended order
+             - **Sizing check:** Verify total tasks ≤8, subtasks ≤40, files ≤12
+
+          5. **Testing Strategy**
+             - Key unit test scenarios
+             - Integration test points
+             - **E2E testing:** Identify if story needs E2E coverage (new UI, critical user journey, multi-step flow)
+             - If E2E needed: Can existing E2E tests be extended, or is a new test required?
+
+          **Output Format:**
+          Structured analysis with:
+          - Implementation approach recommendation
+          - Risk assessment (HIGH/MEDIUM/LOW)
+          - Task breakdown with estimates
+          - **Sizing classification:** SMALL/MEDIUM/LARGE (must not be TOO_LARGE)
+          - Testing strategy outline (unit + integration + E2E recommendation)
+      </task-call>
+    </ecc-spawn>
+
+    <action>Collect planner output as {{planner_analysis}}</action>
+
+    <output>✅ **ECC Planner Complete**
+
+      **Implementation Approach:**
+      {{planner_approach}}
+
+      **Risk Level:** {{risk_level}}
+
+      **Task Breakdown:**
+      {{task_suggestions}}
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 3: ECC Architect - Technical Design                                -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="3" goal="Spawn ECC Architect for technical design">
+    <critical>🎭 ECC ORCHESTRATOR: Spawning ECC Architect agent</critical>
+    <critical>🏗️ ARCHITECTURE ENFORCEMENT: Architect MUST follow documented patterns and specify exact locations</critical>
+
+    <output>🎭 **Spawning ECC Architect...**
+
+      Task: Provide technical design following DOCUMENTED architectural patterns
+      Architecture Source: {{architecture_source}}
+    </output>
+
+    <ecc-spawn agent="architect">
+      <task-call>
+        subagent_type: "everything-claude-code:architect"
+        description: "Technical design for {{story_key}}"
+        prompt: |
+          ## Technical Design Task
+
+          **Story:** {{story_key}}
+
+          **Requirements:**
+          {{story_requirements}}
+
+          **Planner Analysis:**
+          {{planner_analysis}}
+
+          **Architecture Patterns:**
+          {{project_patterns}}
+
+          **Feature Context:**
+          - Feature name: {{feature_name}}
+          - Is foundation story: {{is_foundation_story}}
+          - Existing patterns in codebase: {{existing_patterns}}
+
+          ---
+
+          ## 🚨 CRITICAL: Documented Architecture Specification
+
+          **Architecture Source:** {{architecture_source}}
+
+          **You MUST follow these documented patterns. Deviation creates technical debt.**
+
+          ### Documented File Structure Patterns
+          {{documented_patterns.file_structure_patterns}}
+
+          ### Documented State Management Patterns
+          {{documented_patterns.state_management_patterns}}
+
+          ### Documented Code Organization Patterns
+          {{documented_patterns.code_organization_patterns}}
+
+          ### Documented Anti-Patterns (MUST NOT DO)
+          {{documented_patterns.antipatterns_list}}
+
+          ### Technology Constraints
+          {{documented_patterns.technology_constraints}}
+
+          ---
+
+          **Design Required:**
+
+          1. **Component Design**
+             - New components needed
+             - Existing components to modify
+             - Component interactions
+
+          2. **Pattern Compliance**
+             - How this story follows the documented patterns
+             - Any pattern decisions that need clarification
+             - Alignment with existing codebase patterns
+
+          3. **Data Model**
+             - Data structures needed
+             - Database changes (if any)
+             - API contracts
+
+          4. **Dependencies**
+             - Internal dependencies
+             - External packages needed
+             - Version considerations
+
+          5. **Dev Notes**
+             - Technical guidance for implementation
+             - Common pitfalls to avoid
+             - Reference implementations
+
+          ---
+
+          ## 🚨 MANDATORY: File Location & Pattern Specification
+
+          **CRITICAL:** You MUST specify EXACT file paths following the DOCUMENTED patterns above.
+          Vague locations like "in the components folder" are NOT ACCEPTABLE.
+
+          6. **File Location Specification (MANDATORY)**
+             For EACH new file/component, specify location per documented architecture:
+             ```
+             | File/Component | EXACT Path | Documented Pattern Reference |
+             |----------------|------------|------------------------------|
+             | ComponentName | {path per documented pattern} | {pattern name from docs} |
+             | HookName | {path per documented pattern} | {pattern name from docs} |
+             | ServiceName | {path per documented pattern} | {pattern name from docs} |
+             ```
+
+             ❌ WRONG: "Create a new dialog component"
+             ✅ CORRECT: "Create `CreateGroupDialog.tsx` at `{exact path per documented pattern}`"
+
+          7. **State Management Specification (MANDATORY if story has state)**
+             Follow the documented state management pattern:
+             - Location: per {{documented_patterns.state_management_patterns}}
+             - Pattern: per documented approach
+             - State shape: Define interface
+             - Actions: List all state mutations
+
+             ❌ WRONG: "Add state management"
+             ✅ CORRECT: "Create store at `{exact path per documented pattern}` following {documented state pattern}"
+
+          8. **Architectural Acceptance Criteria (MANDATORY)**
+             Generate testable ACs that enforce the DOCUMENTED patterns:
+             ```
+             ### Architectural ACs (Based on Documented Architecture)
+
+             **File Location ACs (per documented patterns):**
+             - AC-ARCH-LOC-1: {Component} located at {documented location}
+             - AC-ARCH-LOC-2: {Hook} located at {documented location}
+             ...
+
+             **Pattern Compliance ACs:**
+             - AC-ARCH-PATTERN-1: Follows {documented pattern name} for {aspect}
+             - AC-ARCH-PATTERN-2: {specific pattern requirement from docs}
+             ...
+
+             **Anti-Pattern ACs (things that must NOT happen per docs):**
+             - AC-ARCH-NO-1: {anti-pattern from documented list}
+             - AC-ARCH-NO-2: {anti-pattern from documented list}
+             ...
+             ```
+
+          **Output Format:**
+          Technical design document with:
+          - Architecture diagram (text-based)
+          - File changes list WITH EXACT PATHS per documented patterns (table format)
+          - Pattern compliance notes (how design follows documented architecture)
+          - State management specification following documented approach (if applicable)
+          - **MANDATORY: Architectural Acceptance Criteria based on documented patterns**
+          - Dev Notes for story file
+      </task-call>
+    </ecc-spawn>
+
+    <action>Collect architect output as {{architect_design}}</action>
+    <action>Extract {{file_locations}} from architect output</action>
+    <action>Extract {{architectural_acs}} from architect output</action>
+    <action>Extract {{state_management_spec}} from architect output</action>
+
+    <output>✅ **ECC Architect Complete**
+
+      **Architecture Source:** {{architecture_source}}
+
+      **Component Design:**
+      {{component_design}}
+
+      **Pattern Compliance:**
+      {{pattern_compliance_notes}}
+
+      **Files to Change (with exact paths per documented patterns):**
+      {{file_changes}}
+
+      **Architectural ACs Generated (based on documented architecture):**
+      {{architectural_acs}}
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 4: Optional Parallel Technical Review                              -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="4" goal="Optional parallel technical review for complex stories">
+    <!-- Check if story needs specialized review -->
+    <action>Analyze story for:
+      - Database changes → spawn database-reviewer
+      - Auth/security features → spawn security-reviewer
+    </action>
+
+    <check if="story involves database OR auth">
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <!-- EXPLICIT PARALLEL EXECUTION DIRECTIVE                                   -->
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <parallel-execution-rule>
+        🚨 HOW TO ACHIEVE TRUE PARALLELISM:
+
+        If BOTH database-reviewer AND security-reviewer are needed,
+        you MUST issue BOTH Task tool invocations in your NEXT SINGLE RESPONSE.
+
+        ❌ WRONG: Task(database-reviewer) → wait → Task(security-reviewer) → wait
+        ✅ CORRECT: Task(database-reviewer) + Task(security-reviewer) → both run simultaneously
+      </parallel-execution-rule>
+
+      <output>🎭 **Spawning Parallel Technical Reviewers...**
+
+        Story involves specialized areas - running additional analysis.
+      </output>
+
+      <ecc-parallel-spawn>
+        <task-call id="db_review" condition="involves_database">
+          subagent_type: "everything-claude-code:database-reviewer"
+          description: "Database analysis for {{story_key}}"
+          prompt: |
+            Analyze database requirements for story: {{story_key}}
+
+            **Architect Design:**
+            {{architect_design}}
+
+            **Check:**
+            - Schema design recommendations
+            - Index requirements
+            - Query optimization notes
+            - Security rules needed
+
+            Output: Database considerations for Dev Notes
+        </task-call>
+
+        <task-call id="security_review" condition="involves_auth">
+          subagent_type: "everything-claude-code:security-reviewer"
+          description: "Security analysis for {{story_key}}"
+          prompt: |
+            Analyze security requirements for story: {{story_key}}
+
+            **Requirements:**
+            {{story_requirements}}
+
+            **Check:**
+            - Authentication requirements
+            - Authorization model
+            - Input validation needs
+            - Security testing requirements
+
+            Output: Security considerations for Dev Notes
+        </task-call>
+      </ecc-parallel-spawn>
+
+      <action>Merge technical review outputs into {{technical_notes}}</action>
+    </check>
+
+    <check if="no specialized review needed">
+      <action>Set {{technical_notes}} = "No specialized technical review required"</action>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 5: Cross-Cutting Impact Analysis                                   -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="5" goal="Cross-cutting impact analysis">
+    <critical>🗺️ Analyze cross-cutting impacts on existing features</critical>
+
+    <action>Analyze story impact on existing user flows using project patterns</action>
+    <action>Identify upstream and downstream dependencies</action>
+
+    <output>🗺️ **Cross-Cutting Impact Analysis**
+
+      **Affected Workflows:**
+      {{affected_workflows}}
+
+      **Upstream Dependencies:**
+      {{upstream_deps}}
+
+      **Downstream Impacts:**
+      {{downstream_impacts}}
+
+      **Push Alerts:**
+      {{push_alerts}}
+
+      **Additional ACs Suggested:**
+      {{suggested_acs}}
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 5.5: Generate Mandatory Architectural ACs                          -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="5.5" goal="Generate and validate mandatory architectural acceptance criteria based on documented patterns">
+    <critical>🏗️ ARCHITECTURE ENFORCEMENT: Generate ACs from DOCUMENTED architecture, not hardcoded patterns</critical>
+
+    <check if="{{skip_architecture_enforcement}} == true">
+      <output>⚠️ Skipping architectural AC generation (enforcement disabled)</output>
+      <action>Set {{all_architectural_acs}} = []</action>
+      <goto step="6"/>
+    </check>
+
+    <output>🏗️ **Architectural AC Generation**
+
+      **Architecture Source:** {{architecture_source}}
+
+      Generating testable ACs based on documented patterns...
+    </output>
+
+    <action>Collect architectural ACs from architect output ({{architectural_acs}})</action>
+    <action>Validate each architectural AC is testable:
+      - Has specific file path or pattern to verify
+      - Can be checked during code review
+      - Has clear pass/fail criteria
+      - References documented pattern source
+    </action>
+
+    <action>Generate standardized architectural ACs from {{documented_patterns}}:
+
+      **Mandatory File Location ACs (from documented file structure):**
+      For each new component in {{file_locations}}:
+        - AC-ARCH-LOC-{n}: "{component_name}" is located at "{exact_path}" (per {pattern_source})
+
+      **Mandatory Pattern ACs (from documented patterns):**
+      For each pattern in {{documented_patterns.file_structure_patterns}}:
+        - AC-ARCH-PATTERN-{n}: {pattern_requirement} (source: {architecture_source})
+
+      For each pattern in {{documented_patterns.code_organization_patterns}}:
+        - AC-ARCH-ORG-{n}: {organization_requirement} (source: {architecture_source})
+
+      {{#if state_management_spec}}
+      **State Management ACs (from documented state patterns):**
+      For each pattern in {{documented_patterns.state_management_patterns}}:
+        - AC-ARCH-STATE-{n}: {state_pattern_requirement} (source: {architecture_source})
+      {{/if}}
+
+      **Anti-Pattern ACs (from documented anti-patterns):**
+      For each antipattern in {{documented_patterns.antipatterns_list}}:
+        - AC-ARCH-NO-{n}: {antipattern_description} must NOT occur (source: {architecture_source})
+    </action>
+
+    <output>**Architectural ACs Generated (based on documented architecture)**
+
+      **Architecture Source:** {{architecture_source}}
+
+      **File Location ACs:**
+      {{file_location_acs}}
+
+      **Pattern Compliance ACs:**
+      {{pattern_acs}}
+
+      **Anti-Pattern ACs (must NOT happen):**
+      {{antipattern_acs}}
+
+      **Summary:**
+      - Total architectural ACs: {{arch_ac_count}}
+      - Based on: {{architecture_source}}
+
+      These ACs are MANDATORY and will be validated during:
+      1. Implementation (ecc-dev-story - pattern validation)
+      2. Code review (ecc-code-review - architecture agent validates against documented patterns)
+    </output>
+
+    <action>Set {{all_architectural_acs}} = merged list of all architectural ACs</action>
+    <action>Set {{architecture_reference}} = {{architecture_source}} for traceability</action>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 5.75: E2E Testing Requirements Check                               -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="5.75" goal="Determine if E2E testing is required and load project conventions">
+    <critical>🧪 E2E TESTING POLICY: E2E tests run ONLY against staging environment. No local/emulator e2e testing. Tests target boletapp-staging with pre-created test accounts.</critical>
+    <critical>🧪 E2E TESTING CHECK: New user-facing features SHOULD have E2E test coverage</critical>
+
+    <output>🧪 **E2E Testing Requirements Analysis**
+
+      Analyzing story for E2E testing needs...
+    </output>
+
+    <!-- Check for E2E conventions file -->
+    <action>Search for E2E conventions documentation:
+      - tests/e2e/E2E-TEST-CONVENTIONS.md
+      - tests/e2e/README.md
+      - docs/testing/e2e-conventions.md
+      - docs/E2E-TESTING.md
+    </action>
+
+    <check if="E2E conventions file exists">
+      <action>Load E2E conventions as {{e2e_conventions}}</action>
+      <action>Extract:
+        - File structure conventions
+        - Test patterns (journey, fixture-based, etc.)
+        - Screenshot conventions
+        - TestId conventions
+        - Authentication patterns
+        - Cleanup patterns
+      </action>
+      <output>✅ **E2E Conventions Loaded**
+
+        **Source:** {{e2e_conventions_path}}
+
+        **Key Patterns:**
+        {{e2e_conventions_summary}}
+      </output>
+    </check>
+
+    <check if="NO E2E conventions file found">
+      <action>Set {{e2e_conventions}} = "No project E2E conventions found"</action>
+      <output>ℹ️ No E2E conventions file found - will use general E2E best practices if needed</output>
+    </check>
+
+    <!-- Analyze story for E2E testing requirements -->
+    <action>Analyze story to determine if E2E testing is required:
+
+      **E2E Testing Required When:**
+      1. New user-facing UI functionality (new screens, dialogs, flows)
+      2. Critical user journeys are affected (auth, checkout, core features)
+      3. Multi-step user interactions (wizards, forms with validation)
+      4. Features involving navigation changes
+      5. Features with complex state transitions visible to user
+      6. Integration points that affect user experience
+
+      **E2E Testing NOT Required When:**
+      1. Pure backend/API changes with no UI impact
+      2. Internal refactoring with no behavior change
+      3. Bug fixes that don't change user flows
+      4. Documentation-only changes
+      5. Unit-testable logic without UI interaction
+
+      **Story Analysis:**
+      - Story: {{story_key}}
+      - Requirements: {{story_requirements}}
+      - New UI components: {{new_ui_components_from_architect}}
+      - User flow impacts: {{affected_workflows}}
+    </action>
+
+    <action>Set {{e2e_required}} = true/false based on analysis</action>
+    <action>Set {{e2e_justification}} = reason for decision</action>
+
+    <check if="{{e2e_required}} == true">
+      <output>🧪 **E2E Testing Required**
+
+        **Justification:** {{e2e_justification}}
+
+        Checking existing E2E test coverage...
+      </output>
+
+      <!-- Check existing E2E tests for coverage -->
+      <action>Search existing E2E tests:
+        - tests/e2e/**/*.spec.ts
+        - tests/e2e/**/*.test.ts
+
+        **Analyze each test file for:**
+        - Feature/functionality being tested
+        - User journeys covered
+        - Components/views involved
+        - TestIds used
+      </action>
+
+      <action>Compare story requirements against existing E2E coverage:
+
+        **Check if existing tests cover:**
+        - Same view/screen the story affects
+        - Similar user journey/flow
+        - Related functionality that could be extended
+
+        **Set {{e2e_coverage_status}}:**
+        - "covered" = existing test fully covers the new functionality
+        - "extendable" = existing test can be modified to cover new functionality
+        - "new_required" = no existing test covers this; new test needed
+      </action>
+
+      <check if="{{e2e_coverage_status}} == 'covered'">
+        <output>✅ **Existing E2E Coverage Found**
+
+          **Covered by:** {{existing_test_file}}
+
+          The following existing test already covers this functionality:
+          - Test: {{existing_test_name}}
+          - File: {{existing_test_file}}
+          - Journey: {{existing_journey_description}}
+
+          **Recommendation:** Verify existing test still passes after implementation.
+          No new E2E test creation required.
+        </output>
+
+        <action>Set {{e2e_action}} = "verify_existing"</action>
+        <action>Set {{e2e_tasks}} = [
+          "- [ ] Verify existing E2E test ({{existing_test_file}}) still passes after changes",
+          "- [ ] Add any new TestIds required for new UI elements"
+        ]</action>
+      </check>
+
+      <check if="{{e2e_coverage_status}} == 'extendable'">
+        <output>🔄 **Existing E2E Test Can Be Extended**
+
+          **Extend:** {{existing_test_file}}
+
+          An existing test covers related functionality and can be extended:
+          - Test: {{existing_test_name}}
+          - File: {{existing_test_file}}
+          - Current coverage: {{existing_journey_description}}
+
+          **Recommended extension:**
+          {{extension_recommendation}}
+
+          **Reasoning:** Extending existing journey tests is preferred over creating duplicates
+          to maintain test cohesion and avoid redundant setup/teardown.
+        </output>
+
+        <action>Set {{e2e_action}} = "extend_existing"</action>
+        <action>Set {{e2e_test_location}} = {{existing_test_file}}</action>
+      </check>
+
+      <check if="{{e2e_coverage_status}} == 'new_required'">
+        <output>🆕 **New E2E Test Required**
+
+          No existing E2E test covers this functionality.
+
+          **Recommended test location:** {{e2e_test_location}}
+          **Recommended test type:** {{recommended_test_type}}
+        </output>
+
+        <action>Set {{e2e_action}} = "create_new"</action>
+      </check>
+
+      <output>🧪 **E2E Testing Decision**
+
+        **Action:** {{e2e_action}}
+        **Target:** {{e2e_test_location}}
+
+        **Recommended E2E Coverage:**
+        {{recommended_e2e_scenarios}}
+      </output>
+
+      <!-- Generate E2E-specific acceptance criteria based on action type -->
+      <action>Generate E2E testing ACs based on {{e2e_action}}:
+
+        {{#if e2e_action == "verify_existing"}}
+        **E2E Acceptance Criteria (Verify Existing):**
+        - AC-E2E-1: Existing E2E test ({{existing_test_file}}) passes after implementation
+        - AC-E2E-2: TestIds added to any new interactive elements
+        - AC-E2E-3: No regression in existing test coverage
+        {{/if}}
+
+        {{#if e2e_action == "extend_existing"}}
+        **E2E Acceptance Criteria (Extend Existing):**
+        - AC-E2E-1: Existing E2E test ({{existing_test_file}}) extended to cover new functionality
+        - AC-E2E-2: New test steps added following existing test patterns
+        - AC-E2E-3: Screenshots captured at new interaction points
+        - AC-E2E-4: TestIds added to new interactive elements
+        - AC-E2E-5: Test cleanup updated if new test data is created
+        {{/if}}
+
+        {{#if e2e_action == "create_new"}}
+        **E2E Acceptance Criteria (Create New):**
+        - AC-E2E-1: E2E test file created at {{e2e_test_location}} following project conventions
+        - AC-E2E-2: Test covers primary user journey for this feature
+        - AC-E2E-3: Screenshots captured at key interaction points
+        - AC-E2E-4: Test includes proper cleanup of test data
+        - AC-E2E-5: TestIds added to new interactive elements
+        {{/if}}
+
+        {{#if e2e_conventions}}
+        **Convention-Specific ACs (from {{e2e_conventions_path}}):**
+        {{convention_specific_acs}}
+        {{/if}}
+      </action>
+
+      <!-- Generate E2E tasks based on action type -->
+      <action>Generate E2E tasks to add to story based on {{e2e_action}}:
+
+        {{#if e2e_action == "verify_existing"}}
+        **E2E Testing Tasks (Verify Existing):**
+        - [ ] Add data-testid attributes to any new interactive elements
+        - [ ] Run existing E2E test ({{existing_test_file}}) to verify it still passes
+        - [ ] Document any TestId additions in the test conventions if needed
+        {{/if}}
+
+        {{#if e2e_action == "extend_existing"}}
+        **E2E Testing Tasks (Extend Existing):**
+        - [ ] Read component .tsx source files and extract TestId Map (all data-testid attributes)
+        - [ ] Read hook code and identify optimistic update patterns (PENDING, temp-, loading states)
+        - [ ] Add data-testid attributes to new interactive elements
+        - [ ] Extend {{existing_test_file}} with new test steps for this feature
+        - [ ] Add screenshots at new interaction points (per conventions)
+        - [ ] Update test cleanup (try/finally + pre-test residual cleanup) if new test data is created
+        - [ ] Verify extended test passes against staging: npx playwright test --project=staging
+        {{/if}}
+
+        {{#if e2e_action == "create_new"}}
+        **E2E Testing Tasks (Create New):**
+        - [ ] Read component .tsx source files and extract TestId Map (all data-testid attributes)
+        - [ ] Read hook code and identify optimistic update patterns (PENDING, temp-, loading states)
+        - [ ] Read firestore.rules for collections accessed by feature (verify cross-user ops allowed)
+        - [ ] Add data-testid attributes to new interactive elements
+        - [ ] Create E2E test file at {{e2e_test_location}}
+        - [ ] Implement journey test covering primary user flow
+        - [ ] Add screenshots at key steps (per conventions)
+        - [ ] Implement try/finally cleanup + pre-test residual data cleanup
+        - [ ] For multi-user: plan bidirectional cleanup (non-owner leaves, then owner deletes)
+        - [ ] Verify test passes against staging: npx playwright test --project=staging
+        {{/if}}
+      </action>
+
+      <action>Set {{e2e_acs}} = generated E2E acceptance criteria</action>
+      <action>Set {{e2e_tasks}} = generated E2E tasks</action>
+      <action>Set {{e2e_test_location}} = recommended file path per conventions</action>
+    </check>
+
+    <check if="{{e2e_required}} == false">
+      <output>ℹ️ **E2E Testing Not Required**
+
+        **Justification:** {{e2e_justification}}
+
+        Story does not introduce user-facing functionality requiring E2E coverage.
+      </output>
+
+      <action>Set {{e2e_acs}} = []</action>
+      <action>Set {{e2e_tasks}} = []</action>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 6: Generate Story File                                             -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="6" goal="Generate comprehensive story file with mandatory architectural ACs and E2E requirements">
+    <action>Compile story file from:
+      - Original requirements and ACs from epic
+      - **MANDATORY: Architectural ACs from Step 5.5**
+      - **E2E Testing ACs from Step 5.75 (if required)**
+      - Planner task breakdown
+      - **E2E Tasks from Step 5.75 (if required)**
+      - Architect technical design (with exact file paths)
+      - Technical review notes
+      - Cross-cutting impact analysis
+      - Suggested additional ACs
+    </action>
+
+    <output>📝 **Generating Story File...**
+
+      Combining ECC agent outputs into comprehensive story.
+      **Including MANDATORY architectural ACs.**
+    </output>
+
+    <action>Create story file at {story_dir}/{{story_key}}.md with:
+      - Story metadata
+      - **Functional Acceptance Criteria** (from epic)
+      - **Architectural Acceptance Criteria** (MANDATORY - from Step 5.5)
+      - Tasks/Subtasks (from planner)
+      - **File Specification Table** (exact paths from architect)
+      - Dev Notes (from architect + technical reviews)
+      - File List (predicted with exact paths)
+      - ECC Analysis Summary
+    </action>
+
+    <story-template>
+      ```markdown
+      # Story: {{story_key}}
+
+      ## Status: ready-for-dev
+      ## Epic: {{epic_name}}
+
+      ## Overview
+      {{story_requirements}}
+
+      ## Functional Acceptance Criteria
+      {{functional_acs}}
+
+      ## Architectural Acceptance Criteria (MANDATORY)
+
+      > ⚠️ These ACs are MANDATORY and will be validated during code review.
+      > Failure to meet these ACs will block story completion.
+
+      ### File Location Requirements
+      {{file_location_acs}}
+
+      ### Pattern Requirements
+      {{pattern_acs}}
+
+      ### Anti-Pattern Requirements (Must NOT Happen)
+      {{antipattern_acs}}
+
+      {{#if e2e_required}}
+      ## E2E Testing Requirements
+
+      > 🧪 This story introduces user-facing functionality requiring E2E test coverage.
+
+      **E2E Action:** {{e2e_action}}
+      **E2E Conventions:** {{e2e_conventions_path}}
+      **Target Test File:** {{e2e_test_location}}
+
+      {{#if e2e_action == "verify_existing"}}
+      > ✅ **Existing Coverage:** An existing E2E test already covers this functionality.
+      > Verify it still passes after implementation.
+      {{/if}}
+
+      {{#if e2e_action == "extend_existing"}}
+      > 🔄 **Extend Existing:** Modify the existing test to cover new functionality.
+      > This maintains test cohesion and avoids redundant setup/teardown.
+      {{/if}}
+
+      {{#if e2e_action == "create_new"}}
+      > 🆕 **New Test Required:** No existing test covers this functionality.
+      > Create a new E2E test following project conventions.
+      {{/if}}
+
+      ### E2E Acceptance Criteria
+      {{e2e_acs}}
+
+      ### E2E Test Scenarios
+      {{recommended_e2e_scenarios}}
+      {{/if}}
+
+      ## File Specification
+
+      | File/Component | Exact Path | Pattern | AC Reference |
+      |----------------|------------|---------|--------------|
+      {{file_specification_table}}
+
+      ## Tasks / Subtasks
+      {{tasks_from_planner}}
+
+      {{#if e2e_required}}
+      ### E2E Testing Tasks
+      {{e2e_tasks}}
+      {{/if}}
+
+      ## Dev Notes
+
+      ### Architecture Guidance
+      {{architect_notes}}
+
+      ### Technical Notes
+      {{technical_notes}}
+
+      ## ECC Analysis Summary
+      - Risk Level: {{risk_level}}
+      - Complexity: {{complexity_estimate}}
+      - Agents consulted: Planner, Architect{{#if involves_database}}, Database Reviewer{{/if}}{{#if involves_auth}}, Security Reviewer{{/if}}
+      ```
+    </story-template>
+
+    <output>## 📋 Story Created: {{story_key}}
+
+      **File:** {story_dir}/{{story_key}}.md
+
+      **Sections Generated:**
+      - ✅ Story metadata
+      - ✅ Functional Acceptance Criteria ({{functional_ac_count}} items)
+      - ✅ **Architectural Acceptance Criteria ({{arch_ac_count}} items) - MANDATORY**
+      {{#if e2e_required}}- ✅ **E2E Testing Requirements ({{e2e_ac_count}} items)**{{/if}}
+      - ✅ File Specification Table (exact paths)
+      - ✅ Tasks/Subtasks ({{task_count}} tasks)
+      {{#if e2e_required}}- ✅ E2E Testing Tasks{{/if}}
+      - ✅ Dev Notes (ECC-generated)
+      - ✅ ECC Analysis Summary
+
+      **ECC Agents Consulted:**
+      - Planner: Requirements analysis, task breakdown
+      - Architect: Technical design, patterns, **file locations**
+      {{#if involves_database}}- Database Reviewer: Schema recommendations{{/if}}
+      {{#if involves_auth}}- Security Reviewer: Security requirements{{/if}}
+
+      **ECC Enhancements:**
+      - Cross-cutting impact analysis
+      - Additional AC suggestions: {{suggested_ac_count}}
+      - Push alerts: {{push_alert_count}}
+
+      **Architecture Enforcement:**
+      - File location ACs: {{file_location_ac_count}}
+      - Pattern ACs: {{pattern_ac_count}}
+      - Anti-pattern ACs: {{antipattern_ac_count}}
+
+      {{#if e2e_required}}
+      **E2E Testing:**
+      - E2E Required: ✅ Yes
+      - Action: {{e2e_action}} {{#if e2e_action == "verify_existing"}}(verify existing test){{/if}}{{#if e2e_action == "extend_existing"}}(extend existing test){{/if}}{{#if e2e_action == "create_new"}}(create new test){{/if}}
+      - E2E Conventions: {{e2e_conventions_path}}
+      - Target Test: {{e2e_test_location}}
+      - E2E ACs: {{e2e_ac_count}}
+      {{else}}
+      **E2E Testing:**
+      - E2E Required: ❌ No ({{e2e_justification}})
+      {{/if}}
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 7: Update Sprint Status                                            -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="7" goal="Update sprint status with new story">
+    <check if="{{sprint_status}} file exists">
+      <action>Add {{story_key}}: ready-for-dev to sprint-status.yaml</action>
+      <output>✅ Sprint status updated: {{story_key}} → ready-for-dev</output>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 8: Story Creation Complete                                          -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="8" goal="Finalize story creation">
+
+    <output>**✅ ECC Story Creation Complete!**
+
+      **Story:** {{story_key}}
+      **Status:** ready-for-dev
+      **File:** {story_dir}/{{story_key}}.md
+
+      **ECC Analysis:**
+      - Risk Level: {{risk_level}}
+      - Tasks: {{task_count}}
+      - Complexity: {{complexity_estimate}}
+
+      **Next Steps:**
+      - Run `ecc-dev-story` to implement with ECC agents
+      - Or run `dev-story` for standard implementation
+    </output>
+  </step>
+
+</workflow>

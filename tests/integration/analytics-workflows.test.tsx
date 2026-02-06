@@ -48,6 +48,17 @@ import { TrendsView } from '../../src/views/TrendsView';
 import { AnalyticsProvider } from '../../src/contexts/AnalyticsContext';
 import { HistoryFiltersProvider } from '../../src/contexts/HistoryFiltersContext';
 import { exportToCSV } from '../../src/utils/csv';
+// Story 14e-25b.1: Import type for mock data
+import type { TrendsViewData } from '../../src/views/TrendsView/useTrendsViewData';
+
+// ============================================================================
+// Story 14e-25b.1: Mock useTrendsViewData hook
+// ============================================================================
+let mockHookReturnValue: Partial<TrendsViewData> = {};
+
+vi.mock('../../src/views/TrendsView/useTrendsViewData', () => ({
+  useTrendsViewData: vi.fn(() => mockHookReturnValue),
+}));
 
 const APP_ID = 'boletapp-d609f';
 
@@ -284,25 +295,36 @@ describe('Analytics & Export Workflows', () => {
   it('should handle empty data state gracefully', async () => {
     // No transactions loaded - empty state
 
-    // Props for new TrendsView interface
-    const emptyProps = {
+    // Story 14e-25b.1: Set mock hook return value for empty state
+    mockHookReturnValue = {
       transactions: [],
-      theme: 'light' as const,
+      theme: 'light',
+      colorTheme: 'mono',
+      fontColorMode: 'colorful',
       currency: 'USD',
       locale: 'en',
+      lang: 'en',
       t: (key: string) => key === 'noData' ? 'No Data' : key,
       onEditTransaction: vi.fn(),
-      onBackToDashboard: vi.fn(),
       exporting: false,
-      onExporting: vi.fn(),
-      onUpgradeRequired: vi.fn(),
+      userName: 'Test User',
+      userEmail: 'test@example.com',
+      userId: 'test-user-123',
+      appId: 'test-app-id',
+      user: { uid: 'test-user-123', displayName: 'Test User', email: 'test@example.com' },
+      isGroupMode: false,
+      groupName: undefined,
+      groupMembers: [],
+      spendingByMember: new Map(),
+      analyticsInitialState: null,
+      initialDistributionView: undefined,
     };
 
     // Wrap with AnalyticsProvider and HistoryFiltersProvider (required since Story 7.7/14.x)
     render(
       <HistoryFiltersProvider>
         <AnalyticsProvider>
-          <TrendsView {...emptyProps} />
+          <TrendsView />
         </AnalyticsProvider>
       </HistoryFiltersProvider>
     );

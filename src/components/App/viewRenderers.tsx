@@ -2,8 +2,7 @@
  * Story 14c-refactor.22: View Renderer Functions
  * Story 14c-refactor.22b: TypeScript Safety - Replace 63 `any` types
  * Story 14c-refactor.22c: renderViewSwitch + 7 missing render functions
- * Story 14c-refactor.25: ViewHandlersContext Integration
- * Story 14c-refactor.27: ViewHandlersContext Migration (7/9 views)
+ * Story 14e-25d: ViewHandlersContext Deleted - views use direct hooks
  *
  * Helper functions that render individual views with their view-scoped providers.
  * Moved from App.tsx to reduce its line count.
@@ -11,34 +10,13 @@
  * Props use ComponentProps to extract exact types from view components,
  * ensuring type safety at both the render function boundary and the JSX level.
  *
- * ## ViewHandlersContext Migration (Story 14c-refactor.27) - PARTIAL
+ * ## Navigation and Handler Access (Story 14e-25d)
  *
- * Views are now wrapped in ViewHandlersProvider (in App.tsx) which provides handler
- * bundles via React Context. Views now use `useViewHandlers()` to access these
- * handlers instead of receiving them via props.
- *
- * ### Migrated Views (Story 14c-refactor.27)
- *
- * | View | Props Migrated | Status |
- * |------|----------------|--------|
- * | TransactionEditorView | onShowToast, onCreditInfoClick | ✅ Complete |
- * | TrendsView | onNavigateToHistory, onBack, onNavigateToView | ✅ Complete (31a) |
- * | BatchReviewView | onBack, onCreditInfoClick | ✅ Complete |
- * | HistoryView | onBack, onNavigateToView | ✅ Complete |
- * | ItemsView | onBack, onNavigateToView | ✅ Complete |
- * | DashboardView | onNavigateToHistory | ✅ Complete |
- * | SettingsView | onShowToast | ✅ Complete |
- * | InsightsView | onBack, onNavigateToView | ⏳ Deferred (complex menu pattern) |
- * | ReportsView | onBack, onNavigateToView | ⏳ Deferred (complex drill-down pattern) |
- *
- * ### Deprecated Props (To Be Removed in Future - TODO(14c-refactor.29))
- *
- * The following props are marked @deprecated in view interfaces and will be removed:
- * - onShowToast → dialog.showToast
- * - onCreditInfoClick → dialog.openCreditInfoModal
- * - onBack → navigation.navigateBack
- * - onNavigateToView → navigation.navigateToView
- * - onNavigateToHistory → navigation.handleNavigateToHistory
+ * Views now use direct hooks for navigation and handlers:
+ * - Navigation: useNavigationActions() from @/shared/stores
+ * - Toast: useToast() from @/shared/hooks
+ * - Modals: useModalActions() from @/managers/ModalManager
+ * - History navigation: useHistoryNavigation() from @/shared/hooks
  *
  * ### Props That Should Remain
  *
@@ -46,7 +24,7 @@
  * - Data props (transactions, theme, currency, etc.)
  * - Mapping save callbacks (onSaveMapping, etc.) - learning system specific
  * - Batch navigation (onBatchPrevious, onBatchNext) - batch flow specific
- * - Scan flow callbacks (onPhotoSelect, onProcessScan) - ScanContext specific
+ * - Scan flow callbacks (onPhotoSelect, onProcessScan) - scan feature specific
  */
 
 import type { ComponentProps, ReactNode } from 'react';
@@ -142,7 +120,11 @@ export function renderTrendsView(props: RenderTrendsViewProps) {
 // Insights View
 // =============================================================================
 
-/** Props for renderInsightsView - extends InsightsViewProps with no additions */
+/**
+ * Story 14e-25c.2: Minimal props for InsightsView.
+ * Navigation callbacks migrated to useNavigationActions() hook.
+ * Story 14e-25d: Transaction edit uses useToast(), useModalActions() directly.
+ */
 export type RenderInsightsViewProps = InsightsViewProps;
 
 export function renderInsightsView(props: RenderInsightsViewProps) {
@@ -153,8 +135,11 @@ export function renderInsightsView(props: RenderInsightsViewProps) {
 // History View
 // =============================================================================
 
-/** Props for renderHistoryView - extends HistoryViewProps with filter state management */
-export interface RenderHistoryViewProps extends Omit<HistoryViewProps, 'historyPage' | 'totalHistoryPages' | 'onSetHistoryPage'> {
+/**
+ * Story 14e-25a.2b: RenderHistoryViewProps updated for data-owning HistoryView.
+ * HistoryView now gets its data via useHistoryViewData hook internally.
+ */
+export interface RenderHistoryViewProps extends HistoryViewProps {
     /** Initial filter state for HistoryFiltersProvider */
     initialState?: HistoryFilterState;
     /** Callback when filter state changes */
@@ -162,18 +147,13 @@ export interface RenderHistoryViewProps extends Omit<HistoryViewProps, 'historyP
 }
 
 export function renderHistoryView(props: RenderHistoryViewProps) {
-    const { initialState, onStateChange, ...historyProps } = props;
+    const { initialState, onStateChange, _testOverrides } = props;
     return (
         <HistoryFiltersProvider
             initialState={initialState}
             onStateChange={onStateChange}
         >
-            <HistoryView
-                {...historyProps}
-                historyPage={1}
-                totalHistoryPages={1}
-                onSetHistoryPage={() => {}}
-            />
+            <HistoryView _testOverrides={_testOverrides} />
         </HistoryFiltersProvider>
     );
 }
@@ -182,7 +162,12 @@ export function renderHistoryView(props: RenderHistoryViewProps) {
 // Items View
 // =============================================================================
 
-/** Props for renderItemsView - extends ItemsViewProps with filter state management */
+/**
+ * Story 14e-25c.2: Minimal props for ItemsView.
+ * Transactions obtained via internal hooks.
+ * User info obtained via useAuth().
+ * Theme settings obtained via useTheme().
+ */
 export interface RenderItemsViewProps extends ItemsViewProps {
     /** Initial filter state for HistoryFiltersProvider */
     initialState?: HistoryFilterState;
@@ -217,7 +202,11 @@ export function renderRecentScansView(props: RenderRecentScansViewProps) {
 // Reports View
 // =============================================================================
 
-/** Props for renderReportsView - extends ReportsViewProps with no additions */
+/**
+ * Story 14e-25c.2: Minimal props for ReportsView.
+ * Navigation callbacks migrated to useNavigation() hook.
+ * Transactions obtained via internal hooks.
+ */
 export type RenderReportsViewProps = ReportsViewProps;
 
 export function renderReportsView(props: RenderReportsViewProps) {
@@ -272,7 +261,11 @@ export function renderTransactionEditorView(props: RenderTransactionEditorViewPr
 // Story 14c-refactor.22c: Batch Capture View
 // =============================================================================
 
-/** Props for renderBatchCaptureView - extends BatchCaptureViewProps with no additions */
+/**
+ * Story 14e-25c.2: Minimal props for BatchCaptureView.
+ * Navigation uses useNavigation() hook.
+ * Batch state accessed via useScanStore().
+ */
 export type RenderBatchCaptureViewProps = BatchCaptureViewProps;
 
 export function renderBatchCaptureView(props: RenderBatchCaptureViewProps) {

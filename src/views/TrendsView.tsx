@@ -39,7 +39,7 @@ import {
 } from '../utils/historyFilterUtils';
 import type { HistoryFilterState } from '../contexts/HistoryFiltersContext';
 import { useAllUserGroups } from '../hooks/useAllUserGroups';
-import { MemberContributionChart } from '../components/SharedGroups/MemberContributionChart';
+import { MemberContributionChart } from '@/features/shared-groups';
 import { calculateMemberContributions, type AnalyticsMember } from '../hooks/useAnalyticsTransactions';
 // Story 14.13: Hooks
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
@@ -54,6 +54,7 @@ import { normalizeItemCategory } from '../utils/categoryNormalizer';
 import {
     getCategoryColorsAuto,
     getCategoryPillColors,
+    getContrastTextColor,
     ALL_STORE_CATEGORY_GROUPS,
     ALL_ITEM_CATEGORY_GROUPS,
     STORE_CATEGORY_GROUPS,
@@ -83,7 +84,7 @@ import type { Transaction } from '../types/transaction';
 // Story 14.13.3: Sankey chart for flow visualization
 import { SankeyChart, type SankeySelectionData } from '../components/analytics/SankeyChart';
 import type { SankeyMode } from '../utils/sankeyDataBuilder';
-import type { ColorTheme } from '../types/settings';
+// Story 14e-25b.1: ColorTheme now comes from TrendsViewData type
 // Story 14.13.2: Period comparison utilities
 import {
     getPreviousPeriod,
@@ -91,10 +92,13 @@ import {
     isDateInPeriod,
     type PeriodIdentifier,
 } from '../utils/periodComparison';
-// Story 14c-refactor.27: ViewHandlersContext for navigation handlers
-import { useViewHandlers } from '../contexts/ViewHandlersContext';
+// Story 14e-25d: Direct navigation from store and shared hooks (ViewHandlersContext deleted)
+import { useNavigationActions } from '@/shared/stores';
+import { useHistoryNavigation } from '@/shared/hooks';
 // Story 14c-refactor.31a: View type for proper type assertion
 import type { View } from '../components/App/types';
+// Story 14e-25b.1: Internal data hook for view-owned data pattern
+import { useTrendsViewData, type TrendsViewData } from './TrendsView/useTrendsViewData';
 
 // ============================================================================
 // Types
@@ -196,43 +200,20 @@ export interface HistoryNavigationPayload {
     drillDownPath?: DrillDownPath;
 }
 
+/**
+ * Story 14e-25b.1: TrendsView props interface.
+ *
+ * The view now owns its data via useTrendsViewData() hook internally.
+ * Props are ONLY used for test data injection via __testData.
+ * In production, App.tsx renders <TrendsView /> with no props.
+ */
 export interface TrendsViewProps {
-    /** All transactions from the user */
-    transactions: Transaction[];
-    /** Theme for styling */
-    theme: 'light' | 'dark';
-    /** Color theme for branding */
-    colorTheme?: ColorTheme;
-    /** Currency code for formatting */
-    currency: string;
-    /** Locale for date/currency formatting */
-    locale: string;
-    /** Translation function */
-    t: (key: string) => string;
-    /** Callback to edit a transaction */
-    onEditTransaction: (transaction: Transaction) => void;
-    /** Whether export is in progress */
-    exporting?: boolean;
-    /** Callback to set exporting state */
-    onExporting?: (value: boolean) => void;
-    /** Callback for premium upgrade prompt */
-    onUpgradeRequired?: () => void;
-    /** Story 14.14b: User name for profile avatar */
-    userName?: string;
-    /** Story 14.14b: User email for profile dropdown */
-    userEmail?: string;
-    /** Story 14.14b: User ID for groups hook */
-    userId?: string;
-    /** Story 14.14b: App ID for groups hook */
-    appId?: string;
-    /** Story 14.13 Session 7: Initial distribution view for back navigation restoration */
-    initialDistributionView?: 'treemap' | 'donut';
-    /** Story 14.13: Font color mode for category text colors (colorful vs plain) */
-    fontColorMode?: 'colorful' | 'plain';
-    isGroupMode?: boolean;
-    groupName?: string;
-    groupMembers?: Array<{ uid: string; displayName?: string; email?: string; avatarColor?: string }>;
-    spendingByMember?: Map<string, number>;
+    /**
+     * Story 14e-25b.1: Test data override for testing.
+     * When provided, these values override the hook data.
+     * Production code should NOT pass this prop.
+     */
+    __testData?: Partial<TrendsViewData>;
 }
 
 // ============================================================================
@@ -2780,42 +2761,47 @@ const TrendListItem: React.FC<{
 // Main Component
 // ============================================================================
 
-export const TrendsView: React.FC<TrendsViewProps> = ({
-    transactions,
-    theme,
-    colorTheme: _colorTheme,
-    currency,
-    locale,
-    t,
-    // Props kept for API compatibility but not used in redesigned view
-    onEditTransaction: _onEditTransaction,
-    exporting: _exporting = false,
-    onExporting: _onExporting,
-    onUpgradeRequired: _onUpgradeRequired,
-    // Story 14.14b: New props for header consistency
-    userName = '',
-    userEmail = '',
-    userId = '',
-    appId: _appId = '',
-    // Story 14.13 Session 7: Initial distribution view for back navigation
-    initialDistributionView,
-    // Story 14.13: Font color mode - receiving this prop triggers re-render when setting changes
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    fontColorMode: _fontColorMode,
-    isGroupMode = false,
-    groupName: _groupName,
-    groupMembers = [],
-    spendingByMember: _spendingByMember,
-}) => {
+export const TrendsView: React.FC<TrendsViewProps> = ({ __testData }) => {
+    // Story 14e-25b.1: Get all data from internal hook
+    const hookData = useTrendsViewData();
+
+    // Merge hook data with test overrides (test overrides take precedence)
+    const {
+        transactions,
+        theme,
+        colorTheme: _colorTheme,
+        currency,
+        locale,
+        lang: _lang,
+        t,
+        // Props kept for API compatibility but not used in redesigned view
+        onEditTransaction: _onEditTransaction,
+        exporting: _exporting = false,
+        // Story 14.14b: User info for header consistency
+        userName = '',
+        userEmail = '',
+        userId = '',
+        appId: _appId = '',
+        // Story 14.13 Session 7: Initial distribution view for back navigation
+        initialDistributionView,
+        // Story 14.13: Font color mode - receiving this prop triggers re-render when setting changes
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        fontColorMode: _fontColorMode,
+        isGroupMode = false,
+        groupName: _groupName,
+        groupMembers = [],
+        spendingByMember: _spendingByMember,
+    } = { ...hookData, ...__testData } as TrendsViewData;
     const isDark = theme === 'dark';
     const prefersReducedMotion = useReducedMotion();
     const carouselRef = useRef<HTMLDivElement>(null);
 
-    // Story 14c-refactor.27/31a: Get navigation handlers from ViewHandlersContext
-    const { navigation } = useViewHandlers();
-    const onNavigateToHistory = navigation.handleNavigateToHistory;
-    const onBack = navigation.navigateBack;
-    const navigateToView = navigation.navigateToView;
+    // Story 14e-25d: Direct navigation from store and shared hooks (ViewHandlersContext deleted)
+    const { handleNavigateToHistory } = useHistoryNavigation();
+    const { navigateBack, setView } = useNavigationActions();
+    const onNavigateToHistory = handleNavigateToHistory;
+    const onBack = navigateBack;
+    const navigateToView = setView;
 
     const carouselTitles = isGroupMode ? CAROUSEL_TITLES_GROUP : CAROUSEL_TITLES_BASE;
     const maxCarouselSlide = isGroupMode ? 2 : 1;
@@ -3232,7 +3218,7 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
 
     // Note: Filter dropdown states moved to IconFilterBar component via HistoryFiltersProvider
 
-    // Story 14.14b/14c-refactor.31a: Handle profile navigation via ViewHandlersContext
+    // Story 14.14b/14e-25d: Handle profile navigation via direct store actions
     const handleProfileNavigate = useCallback((view: string) => {
         setIsProfileOpen(false);
         navigateToView(view as View);
@@ -4543,9 +4529,9 @@ export const TrendsView: React.FC<TrendsViewProps> = ({
             }
         }
 
-        // Story 14.44: Get foreground color respecting fontColorMode (colorful vs plain)
-        const categoryColors = getCategoryColorsAuto(categoryName);
-        const fgColor = categoryColors.fg;
+        // Story 14.44: Get contrasting text color for popup header/button
+        // The popup header uses category color as background, so we need a contrasting text color
+        const fgColor = getContrastTextColor(color);
 
         setStatsPopupCategory({ name: categoryName, emoji, color, fgColor, type });
         setStatsPopupOpen(true);

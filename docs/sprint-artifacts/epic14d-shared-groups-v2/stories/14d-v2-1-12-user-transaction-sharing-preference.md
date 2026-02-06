@@ -1,6 +1,20 @@
 # Story 14d-v2-1.12: User Transaction Sharing Preference
 
-Status: ready-for-dev
+Status: split
+
+> **SPLIT (2026-02-01):** This story exceeded sizing limits (8 tasks, 34 subtasks, 8 files).
+> Split into 4 sub-stories using by_layer strategy:
+> - [14d-v2-1-12a](14d-v2-1-12a-foundation-types-cooldown.md) - Foundation (Types + Cooldown) - 2 pts
+> - [14d-v2-1-12b](14d-v2-1-12b-service-layer-security.md) - Service (Backend + Security) - 2 pts
+> - [14d-v2-1-12c](14d-v2-1-12c-ui-component-hook.md) - UI (Component + Hook) - 2 pts
+> - [14d-v2-1-12d](14d-v2-1-12d-integration-cleanup.md) - Integration (Settings + Cleanup) - 2 pts
+>
+> Original estimate: 3 pts → Actual: 8 pts after split
+
+> **Architecture Alignment Review (2026-02-01):**
+> Reviewed during Epic 14d-v2 alignment with Epic 14e Zustand patterns.
+> No changes required - this story manages Firestore state (user preferences), not client state.
+> See [14d-v2-architecture-alignment-plan.md](../14d-v2-architecture-alignment-plan.md)
 
 ## Story
 

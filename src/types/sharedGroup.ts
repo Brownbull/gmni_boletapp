@@ -1,15 +1,15 @@
 /**
  * Shared Group Types
  *
- * Epic 14c: Shared Groups (Household Sharing)
+ * Epic 14d-v2: Shared Groups v2 (Household Sharing)
  *
  * Shared groups allow users to share transactions with family/friends.
  * Unlike personal TransactionGroups (stored in user's subcollection),
  * SharedGroups are stored at top-level: sharedGroups/{groupId}
  *
- * Architecture: Option 4 - Hybrid Model
+ * Architecture: Epic 14d-v2 Simplified Model
  * - SharedGroup document at top-level for cross-user access
- * - Transactions stay in user's subcollection with sharedGroupIds[] reference
+ * - Transactions use sharedGroupId: string | null (single group, not array)
  * - Security rules use members[] array for read access control
  *
  * @example
@@ -27,6 +27,11 @@
  *   memberUpdates: {},
  *   createdAt: Timestamp.now(),
  *   updatedAt: Timestamp.now(),
+ *   timezone: 'America/Santiago',
+ *   transactionSharingEnabled: true,
+ *   transactionSharingLastToggleAt: null,
+ *   transactionSharingToggleCountToday: 0,
+ *   transactionSharingToggleCountResetAt: null,
  * };
  * ```
  */
@@ -41,14 +46,49 @@ export const SHARED_GROUP_LIMITS = {
     MAX_OWNED_GROUPS: 5,
     /** Maximum number of shared groups a user can be a member of */
     MAX_MEMBER_OF_GROUPS: 10,
-    /** Maximum members per shared group */
+    /**
+     * Maximum contributors per shared group (BC-2).
+     * Contributors can add/edit transactions in the group.
+     * Story 14d-v2-1-5b-2: Validation & Security Rules
+     */
+    MAX_CONTRIBUTORS_PER_GROUP: 10,
+    /**
+     * Maximum viewers per shared group (BC-3).
+     * Viewers can see transactions but cannot add/edit.
+     * Story 14d-v2-1-5b-2: Validation & Security Rules
+     */
+    MAX_VIEWERS_PER_GROUP: 200,
+    /** Maximum members per shared group (legacy alias for MAX_CONTRIBUTORS_PER_GROUP) */
     MAX_MEMBERS_PER_GROUP: 10,
-    /** Maximum number of shared groups a transaction can belong to */
-    MAX_GROUPS_PER_TRANSACTION: 5,
+    /**
+     * @deprecated Epic 14d-v2 uses single sharedGroupId (not array), so a transaction
+     * can only belong to 1 group. Kept for backward compatibility with UI components.
+     */
+    MAX_GROUPS_PER_TRANSACTION: 1,
     /** Share code length (nanoid default) */
     SHARE_CODE_LENGTH: 16,
     /** Share code expiry in days */
     SHARE_CODE_EXPIRY_DAYS: 7,
+    /**
+     * Cooldown period between transaction sharing toggles in minutes.
+     * Story 14d-v2-1-11: Transaction Sharing Toggle (FR-21)
+     */
+    TRANSACTION_SHARING_COOLDOWN_MINUTES: 15,
+    /**
+     * Maximum transaction sharing toggles allowed per day.
+     * Story 14d-v2-1-11: Transaction Sharing Toggle (FR-21)
+     */
+    TRANSACTION_SHARING_DAILY_LIMIT: 3,
+    /**
+     * Cooldown period between user sharing preference toggles in minutes.
+     * Story 14d-v2-1-12a: User Transaction Sharing Preference (FR-21)
+     */
+    USER_SHARING_COOLDOWN_MINUTES: 5,
+    /**
+     * Maximum user sharing preference toggles allowed per day.
+     * Story 14d-v2-1-12a: User Transaction Sharing Preference (FR-21)
+     */
+    USER_SHARING_DAILY_LIMIT: 3,
 } as const;
 
 /**
@@ -73,6 +113,49 @@ export interface MemberProfile {
     email?: string;
     /** Profile photo URL */
     photoURL?: string;
+}
+
+/**
+ * Full member object for a shared group.
+ *
+ * Contains complete member information including role and join timestamp.
+ * Used when full member details are needed (e.g., member list UI, permissions checks).
+ *
+ * Story 14d-v2-1-4a: Types & Security Rules Foundation
+ *
+ * @example
+ * ```typescript
+ * const member: SharedGroupMember = {
+ *   id: 'user-xyz',
+ *   displayName: 'Juan García',
+ *   email: 'juan@example.com',
+ *   role: 'member',
+ *   joinedAt: Timestamp.now(),
+ * };
+ * ```
+ */
+export interface SharedGroupMember {
+    /** User ID from Firebase Auth */
+    id: string;
+
+    /** Display name from Firebase Auth or user preferences */
+    displayName: string;
+
+    /** Email address for identification */
+    email: string;
+
+    /** Profile photo URL (optional) */
+    photoURL?: string;
+
+    /**
+     * Role within the shared group.
+     * - 'owner': Can manage group settings, invite members, delete group
+     * - 'member': Can view shared transactions, leave group
+     */
+    role: 'owner' | 'member';
+
+    /** Timestamp when the member joined the group */
+    joinedAt: Timestamp;
 }
 
 /**
@@ -120,16 +203,67 @@ export interface SharedGroup {
 
     /** Timestamp when the group was last modified */
     updatedAt: Timestamp;
+
+    /**
+     * Device timezone in IANA format (e.g., "America/Santiago").
+     * Set when the group is created, uses creator's timezone.
+     * Story 14d-v2-1-4b: Service & Hook Layer
+     */
+    timezone: string;
+
+    /**
+     * Whether transaction sharing is enabled for this group.
+     * When enabled, members can see each other's tagged transactions.
+     * Story 14d-v2-1-4b: Service & Hook Layer (foundation)
+     * Story 14d-v2-1-11: Toggle logic and cooldown
+     */
+    transactionSharingEnabled: boolean;
+
+    /**
+     * Last time transaction sharing was toggled (for cooldown enforcement).
+     * null if never toggled since creation.
+     * Story 14d-v2-1-11: Transaction Sharing Toggle
+     */
+    transactionSharingLastToggleAt: Timestamp | null;
+
+    /**
+     * Count of toggles today (for rate limiting).
+     * Reset daily, max 3 toggles per day.
+     * Story 14d-v2-1-11: Transaction Sharing Toggle
+     */
+    transactionSharingToggleCountToday: number;
+
+    /**
+     * Timestamp when the daily toggle count was last reset (for rate limiting).
+     * Reset happens at midnight in the group's timezone.
+     * null if never reset (new group or pre-migration).
+     * Story 14d-v2-1-11: Transaction Sharing Toggle
+     */
+    transactionSharingToggleCountResetAt: Timestamp | null;
 }
 
 /**
  * Data required to create a new shared group.
- * Typically created from an existing TransactionGroup.
+ * Story 14d-v2-1-4b: Service & Hook Layer
+ *
+ * @example
+ * ```typescript
+ * const input: CreateSharedGroupInput = {
+ *   name: '🏠 Gastos del Hogar',
+ *   transactionSharingEnabled: true,
+ *   color: '#10b981',
+ * };
+ * ```
  */
 export interface CreateSharedGroupInput {
     /** Group name */
     name: string;
-    /** Group color (hex code) */
+    /**
+     * Whether transaction sharing is enabled from the start.
+     * When true, members will be able to see each other's transactions.
+     */
+    transactionSharingEnabled: boolean;
+    /** Group color (hex code) - defaults to green if not provided */
     color?: string;
     /** Optional emoji icon */
     icon?: string;
@@ -211,6 +345,102 @@ export interface UserSharedGroupMembership {
 }
 
 // ============================================================================
+// User Group Preferences (Story 14d-v2-1-6e)
+// ============================================================================
+
+/**
+ * Per-group user preferences for transaction sharing control.
+ *
+ * Story 14d-v2-1-6e AC#2, AC#3:
+ * - shareMyTransactions: Whether user shares their transactions in this group
+ * - lastToggleAt: Last time the toggle was changed (for cooldown)
+ * - toggleCountToday: Number of toggles today (rate limiting)
+ */
+export interface UserGroupPreference {
+    /** Whether this user shares their transactions with this group */
+    shareMyTransactions: boolean;
+    /** Last time the sharing toggle was changed (for cooldown enforcement) */
+    lastToggleAt: Timestamp | null;
+    /** Number of toggle changes today (reset daily, max 3/day) */
+    toggleCountToday: number;
+    /**
+     * Timestamp when the daily toggle count was last reset.
+     * Reset happens at midnight in device's local timezone.
+     * null if never reset (new preference or pre-migration).
+     * Story 14d-v2-1-12a: User Transaction Sharing Preference
+     */
+    toggleCountResetAt: Timestamp | null;
+}
+
+/**
+ * User's per-group preferences document.
+ *
+ * Story 14d-v2-1-6e: Created when user accepts a group invitation.
+ * Path: artifacts/{appId}/users/{userId}/preferences/sharedGroups
+ *
+ * @example
+ * ```typescript
+ * const prefs: UserSharedGroupsPreferences = {
+ *   groupPreferences: {
+ *     'group-123': {
+ *       shareMyTransactions: true,
+ *       lastToggleAt: null,
+ *       toggleCountToday: 0,
+ *     },
+ *   },
+ * };
+ * ```
+ */
+export interface UserSharedGroupsPreferences {
+    /** Per-group settings keyed by groupId */
+    groupPreferences: Record<string, UserGroupPreference>;
+}
+
+/**
+ * Default preference for a new group membership.
+ * Used when a user joins a group via invitation.
+ */
+export const DEFAULT_GROUP_PREFERENCE: Omit<UserGroupPreference, 'shareMyTransactions' | 'toggleCountResetAt'> = {
+    lastToggleAt: null,
+    toggleCountToday: 0,
+};
+
+/**
+ * Creates a default UserGroupPreference with privacy-first defaults (LV-6).
+ *
+ * Story 14d-v2-1-12a: User Transaction Sharing Preference - Foundation
+ *
+ * Default values:
+ * - shareMyTransactions: false (privacy-first, user must opt-in)
+ * - lastToggleAt: null (no previous toggle)
+ * - toggleCountToday: 0 (no toggles today)
+ * - toggleCountResetAt: null (new preference)
+ *
+ * @param overrides - Optional partial values to override defaults
+ * @returns Complete UserGroupPreference object
+ *
+ * @example
+ * ```typescript
+ * // Create with all defaults
+ * const pref = createDefaultGroupPreference();
+ *
+ * // Create with opt-in sharing
+ * const optInPref = createDefaultGroupPreference({ shareMyTransactions: true });
+ * ```
+ */
+export function createDefaultGroupPreference(
+    overrides?: Partial<UserGroupPreference>
+): UserGroupPreference {
+    return {
+        shareMyTransactions: false,
+        lastToggleAt: null,
+        toggleCountToday: 0,
+        toggleCountResetAt: null,
+        ...overrides,
+    };
+}
+
+// ============================================================================
 // ============================================================================
 
 /**
@@ -225,6 +455,8 @@ export type PendingInvitationStatus = 'pending' | 'accepted' | 'declined' | 'exp
  *
  * When a user is invited to a shared group by email, a PendingInvitation
  * document is created. The invited user can then accept or decline.
+ *
+ * Story 14d-v2-1-5b-1: Added shareCode field for deep link support.
  */
 export interface PendingInvitation {
     /** Firestore document ID */
@@ -241,6 +473,13 @@ export interface PendingInvitation {
 
     /** Group icon (denormalized for display) */
     groupIcon?: string;
+
+    /**
+     * 16-character URL-safe share code for this invitation.
+     * Used for deep links: /invite/{shareCode}
+     * Story 14d-v2-1-5b-1: Core Invitation Service
+     */
+    shareCode: string;
 
     /** Email address of the invited user (lowercase) */
     invitedEmail: string;

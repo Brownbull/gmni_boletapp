@@ -54,6 +54,6 @@ Firebase console procedures for administrative tasks.
 
 ## Related Documents
 
-- [Epic 7: Subscription & Monetization](../planning/epics.md#epic-7-subscription--monetization)
+- [Epic 7: Subscription & Monetization](../epics.md#epic-7-subscription--monetization)
 - [Epic 4.5: Receipt Image Storage](../sprint-artifacts/epic4/epic-4-retro-2025-11-29.md)
 - [Architecture: Security & Authentication](../architecture/architecture.md)

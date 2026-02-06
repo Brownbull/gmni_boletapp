@@ -93,6 +93,22 @@ export const useScanActiveDialog = () => useScanStore((s) => s.activeDialog);
  */
 export const useScanError = () => useScanStore((s) => s.error);
 
+// =============================================================================
+// UI Flag Selectors (Story 14e-38)
+// =============================================================================
+
+/**
+ * Get skipScanCompleteModal flag (skip scan_complete dialog in QuickSaveCard flow).
+ * Story 14e-38: Added for App.tsx migration.
+ */
+export const useSkipScanCompleteModal = () => useScanStore((s) => s.skipScanCompleteModal);
+
+/**
+ * Get isRescanning flag (rescan in progress, button disabled state).
+ * Story 14e-38: Added for App.tsx migration.
+ */
+export const useIsRescanning = () => useScanStore((s) => s.isRescanning);
+
 /**
  * Get all scan results (transactions).
  * Story 14e-9b: Added for component migration to Zustand.
@@ -207,6 +223,12 @@ export const useProcessingProgress = () =>
 // =============================================================================
 
 /**
+ * Get all captured images (base64 strings).
+ * Story 14e-34a: Added for BatchUploadPreview migration from props to store.
+ */
+export const useScanImages = () => useScanStore((s) => s.images);
+
+/**
  * Number of images currently captured.
  */
 export const useImageCount = () => useScanStore((s) => s.images.length);
@@ -284,6 +306,10 @@ export const useScanActions = () =>
       reset: s.reset,
       restoreState: s.restoreState,
       refundCredit: s.refundCredit,
+
+      // UI flag actions (Story 14e-38)
+      setSkipScanCompleteModal: s.setSkipScanCompleteModal,
+      setIsRescanning: s.setIsRescanning,
     }))
   );
 
@@ -371,6 +397,11 @@ export const scanActions = {
   reset: () => useScanStore.getState().reset(),
   restoreState: (state: Partial<ScanState>) => useScanStore.getState().restoreState(state),
   refundCredit: () => useScanStore.getState().refundCredit(),
+
+  // UI flag actions (Story 14e-38)
+  setSkipScanCompleteModal: (value: boolean) =>
+    useScanStore.getState().setSkipScanCompleteModal(value),
+  setIsRescanning: (value: boolean) => useScanStore.getState().setIsRescanning(value),
 } as const;
 
 // Export the type for scanActions

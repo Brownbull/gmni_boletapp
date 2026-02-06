@@ -25,12 +25,12 @@
 // Shared Types (re-export from types.ts)
 // =============================================================================
 
+// Story 14e-22: AppProvidersProps moved to src/app/types.ts
 export type {
     View,
     Theme,
     ColorTheme,
     FontFamily,
-    AppProvidersProps,
     AppLayoutProps,
     AppMainContentProps,
     AppRoutesProps,
@@ -54,8 +54,8 @@ export { AppErrorBoundary } from './AppErrorBoundary';
 // =============================================================================
 // Provider Composition
 // =============================================================================
-
-export { AppProviders } from './AppProviders';
+// Story 14e-22: AppProviders moved to src/app/AppProviders.tsx
+// Use: import { AppProviders } from '@app/AppProviders';
 
 // =============================================================================
 // Layout Components

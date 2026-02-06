@@ -2,13 +2,14 @@
  * Unit tests for useScanHandlers hook
  *
  * Story 14c-refactor.20b: Unit tests for extracted App handler hooks
+ * Story 14e-41: reconcileItemsTotal now imported from @entities/transaction (mocked)
  *
  * Tests scan flow handlers:
  * - Scan overlay handlers (cancel, retry, dismiss)
  * - Quick save handlers (save, edit, cancel, complete)
  * - Currency mismatch handlers
  * - Total mismatch handlers
- * - Utility functions (applyItemNameMappings, reconcileItemsTotal)
+ * - Utility functions (applyItemNameMappings, reconcileItemsTotal wrapper)
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -52,6 +53,35 @@ vi.mock('../../../../src/utils/confidenceCheck', () => ({
     shouldShowQuickSave: vi.fn(() => true),
     calculateConfidence: vi.fn(() => 0.9),
 }));
+
+// Story 14e-41: Mock entity reconcileItemsTotal (used by hook wrapper)
+vi.mock('@entities/transaction', async (importOriginal) => {
+    const actual = await importOriginal<Record<string, unknown>>();
+    return {
+        ...actual,
+        reconcileItemsTotal: vi.fn((items, receiptTotal, lang) => {
+            // Actual implementation for integration tests
+            const itemsSum = items.reduce((sum: number, item: { price: number }) => sum + item.price, 0);
+            const roundedItemsSum = Math.round(itemsSum * 100) / 100;
+            const roundedReceiptTotal = Math.round(receiptTotal * 100) / 100;
+            const difference = Math.round((roundedReceiptTotal - roundedItemsSum) * 100) / 100;
+
+            if (Math.abs(difference) < 1) {
+                return { items, hasDiscrepancy: false, discrepancyAmount: 0 };
+            }
+
+            const adjustmentName = difference > 0
+                ? (lang === 'es' ? 'Cargo sin detallar' : 'Unitemized charge')
+                : (lang === 'es' ? 'Descuento/Ajuste' : 'Discount/Adjustment');
+
+            return {
+                items: [...items, { name: adjustmentName, price: difference, qty: 1, category: 'Other' }],
+                hasDiscrepancy: true,
+                discrepancyAmount: difference,
+            };
+        }),
+    };
+});
 
 // Import after mocking
 import { useScanHandlers } from '../../../../src/hooks/app/useScanHandlers';

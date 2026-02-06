@@ -1,6 +1,7 @@
 /**
  * Story 11.1: One Image = One Transaction - Batch Upload Preview Component
  * Story 14.15: Updated to match scan-overlay.html State 0.5b mockup design
+ * Story 14e-34a: Migrated from props to useScanStore for images (AC2)
  *
  * Shows preview when user selects multiple images, confirming that each image
  * will create a separate transaction. Displays thumbnails, credit usage info,
@@ -11,13 +12,16 @@
  */
 import React, { useState } from 'react';
 import { X, ChevronDown, ChevronUp, Image, AlertTriangle, Minus, Clock, ArrowRight, ScanLine } from 'lucide-react';
+import { useScanImages } from '@/features/scan/store';
 
 /** Maximum images allowed per batch (AC #7) */
 export const MAX_BATCH_IMAGES = 10;
 
 export interface BatchUploadPreviewProps {
-  /** Array of base64 encoded images */
-  images: string[];
+  /**
+   * Story 14e-34a: images prop removed - now reads from useScanStore.images directly.
+   * This eliminates prop drilling and ensures single source of truth.
+   */
   /** Theme for styling */
   theme: 'light' | 'dark';
   /** Translation function */
@@ -45,7 +49,6 @@ export interface BatchUploadPreviewProps {
  * - Cancel and Process buttons with icons
  */
 export const BatchUploadPreview: React.FC<BatchUploadPreviewProps> = ({
-  images,
   theme,
   t,
   onConfirm,
@@ -55,6 +58,9 @@ export const BatchUploadPreview: React.FC<BatchUploadPreviewProps> = ({
   usesSuperCredits = false,
 }) => {
   const [showThumbnails, setShowThumbnails] = useState(false);
+
+  // Story 14e-34a: Read images from scan store (single source of truth)
+  const images = useScanImages();
 
   const isDark = theme === 'dark';
   const count = images.length;
@@ -145,19 +151,21 @@ export const BatchUploadPreview: React.FC<BatchUploadPreviewProps> = ({
                   <div className="absolute bottom-0.5 left-0.5 w-4 h-4 bg-[var(--primary)] text-white rounded flex items-center justify-center text-xs font-semibold">
                     {index + 1}
                   </div>
-                  {/* Remove button on hover */}
+                  {/* Remove button - always visible for mobile/touch (Story 14e-33 AC1) */}
                   {onRemoveImage && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         onRemoveImage(index);
                       }}
-                      className={`absolute top-0.5 right-0.5 p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${
-                        isDark ? 'bg-slate-900/80 text-white' : 'bg-white/90 text-slate-900'
+                      className={`absolute -top-2 -right-2 min-w-[44px] min-h-[44px] w-7 h-7 flex items-center justify-center rounded-full shadow-sm border ${
+                        isDark
+                          ? 'bg-slate-800/90 text-white border-slate-600 hover:bg-slate-700'
+                          : 'bg-white/95 text-slate-700 border-slate-300 hover:bg-slate-100'
                       }`}
                       aria-label={`${t('removeImage')} ${index + 1}`}
                     >
-                      <X size={12} />
+                      <X size={14} />
                     </button>
                   )}
                 </div>

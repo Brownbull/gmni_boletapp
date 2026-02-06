@@ -5,6 +5,7 @@
  * Uses mocked dependencies to test each step of the workflow.
  *
  * Story 14e-8c: Main handler integration
+ * Story 14e-43: Updated to mock Zustand stores instead of UI callbacks
  *
  * @module tests/unit/features/scan/handlers/processScan/processScan.test
  */
@@ -23,6 +24,50 @@ import type {
   ScanResult,
   Transaction,
 } from '../../../../../../src/features/scan/handlers/processScan/types';
+
+// =============================================================================
+// Story 14e-43: Mock Zustand Stores
+// =============================================================================
+// processScan now uses store actions directly instead of UI callbacks.
+// We mock the store modules so tests can verify the correct actions are called.
+// Using vi.hoisted() to ensure mocks are available when vi.mock factories run.
+
+const { mockScanActions, mockTransactionEditorActions, mockNavigationActions, mockInsightActions } =
+  vi.hoisted(() => ({
+    mockScanActions: {
+      processError: vi.fn(),
+      processStart: vi.fn(),
+      processSuccess: vi.fn(),
+      showDialog: vi.fn(),
+      setImages: vi.fn(),
+      setSkipScanCompleteModal: vi.fn(),
+    },
+    mockTransactionEditorActions: {
+      setTransaction: vi.fn(),
+      setCreditUsed: vi.fn(),
+      setAnimateItems: vi.fn(),
+    },
+    mockNavigationActions: {
+      setView: vi.fn(),
+    },
+    mockInsightActions: {
+      showInsight: vi.fn(),
+      showBatchSummaryOverlay: vi.fn(),
+    },
+  }));
+
+vi.mock('@features/scan/store', () => ({
+  scanActions: mockScanActions,
+}));
+
+vi.mock('@features/transaction-editor/store', () => ({
+  transactionEditorActions: mockTransactionEditorActions,
+}));
+
+vi.mock('@shared/stores', () => ({
+  navigationActions: mockNavigationActions,
+  insightActions: mockInsightActions,
+}));
 
 // =============================================================================
 // Mock Factories
@@ -66,10 +111,8 @@ function createMockMappingDeps(overrides: Partial<MappingDependencies> = {}): Ma
       appliedMappingIds: [],
     })),
     findMerchantMatch: vi.fn().mockReturnValue(null),
-    applyItemNameMappings: vi.fn().mockImplementation((tx) => ({
-      transaction: tx,
-      appliedIds: [],
-    })),
+    // Story 14e-42: Now uses findItemNameMatch for DI to pure utility
+    findItemNameMatch: vi.fn().mockReturnValue(null),
     incrementMappingUsage: vi.fn(),
     incrementMerchantMappingUsage: vi.fn(),
     incrementItemNameMappingUsage: vi.fn(),
@@ -78,24 +121,14 @@ function createMockMappingDeps(overrides: Partial<MappingDependencies> = {}): Ma
 }
 
 /**
- * Create mock UI dependencies with all callbacks mocked.
+ * Create mock UI dependencies with only required callbacks.
+ * Story 14e-43: Most UI callbacks are now handled via Zustand stores.
+ * Only setToastMessage is still injected from App.tsx.
  */
 function createMockUIDeps(overrides: Partial<UIDependencies> = {}): UIDependencies {
   return {
-    setScanError: vi.fn(),
-    setCurrentTransaction: vi.fn(),
-    setView: vi.fn(),
-    showScanDialog: vi.fn(),
-    dismissScanDialog: vi.fn(),
-    dispatchProcessStart: vi.fn(),
-    dispatchProcessSuccess: vi.fn(),
-    dispatchProcessError: vi.fn(),
+    // Story 14e-43: Only setToastMessage is required - other callbacks are deprecated
     setToastMessage: vi.fn(),
-    setIsAnalyzing: vi.fn(),
-    setScanImages: vi.fn(),
-    setAnimateEditViewItems: vi.fn(),
-    setSkipScanCompleteModal: vi.fn(),
-    setCreditUsedInSession: vi.fn(),
     ...overrides,
   };
 }
@@ -205,6 +238,11 @@ function createMockParams(
 describe('processScan', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Story 14e-43: Also reset all store action mocks
+    Object.values(mockScanActions).forEach((fn) => fn.mockClear());
+    Object.values(mockTransactionEditorActions).forEach((fn) => fn.mockClear());
+    Object.values(mockNavigationActions).forEach((fn) => fn.mockClear());
+    Object.values(mockInsightActions).forEach((fn) => fn.mockClear());
   });
 
   // ===========================================================================
@@ -221,7 +259,8 @@ describe('processScan', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('No images to scan');
-      expect(params.ui.setScanError).toHaveBeenCalledWith(expect.any(String));
+      // Story 14e-43: Now uses store action instead of ui callback
+      expect(mockScanActions.processError).toHaveBeenCalledWith(expect.any(String));
       expect(params.services.analyzeReceipt).not.toHaveBeenCalled();
     });
 
@@ -251,7 +290,8 @@ describe('processScan', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('No credits');
-      expect(params.ui.setScanError).toHaveBeenCalled();
+      // Story 14e-43: Now uses store action instead of ui callback
+      expect(mockScanActions.processError).toHaveBeenCalled();
       expect(params.ui.setToastMessage).toHaveBeenCalledWith({
         text: 'noCreditsMessage',
         type: 'info',
@@ -330,8 +370,9 @@ describe('processScan', () => {
 
       await processScan(params);
 
-      expect(params.ui.setCreditUsedInSession).toHaveBeenCalledWith(true);
-      expect(params.ui.dispatchProcessStart).toHaveBeenCalledWith('normal', 1);
+      // Story 14e-43: Now uses store actions instead of ui callbacks
+      expect(mockTransactionEditorActions.setCreditUsed).toHaveBeenCalledWith(true);
+      expect(mockScanActions.processStart).toHaveBeenCalledWith('normal', 1);
       expect(params.scanOverlay.startUpload).toHaveBeenCalled();
       expect(params.scanOverlay.setProgress).toHaveBeenCalledWith(100);
       expect(params.scanOverlay.startProcessing).toHaveBeenCalled();
@@ -384,7 +425,8 @@ describe('processScan', () => {
 
       expect(result.success).toBe(true);
       expect(result.route).toBe('edit-view');
-      expect(params.ui.setAnimateEditViewItems).toHaveBeenCalledWith(true);
+      // Story 14e-43: Now uses store action instead of ui callback
+      expect(mockTransactionEditorActions.setAnimateItems).toHaveBeenCalledWith(true);
     });
 
     it('should set current transaction on success', async () => {
@@ -392,7 +434,8 @@ describe('processScan', () => {
 
       await processScan(params);
 
-      expect(params.ui.setCurrentTransaction).toHaveBeenCalledWith(
+      // Story 14e-43: Now uses store action instead of ui callback
+      expect(mockTransactionEditorActions.setTransaction).toHaveBeenCalledWith(
         expect.objectContaining({
           merchant: 'Test Merchant',
           total: 10000,
@@ -405,7 +448,8 @@ describe('processScan', () => {
 
       await processScan(params);
 
-      expect(params.ui.dispatchProcessSuccess).toHaveBeenCalledWith([
+      // Story 14e-43: Now uses store action instead of ui callback
+      expect(mockScanActions.processSuccess).toHaveBeenCalledWith([
         expect.objectContaining({
           merchant: 'Test Merchant',
         }),
@@ -448,8 +492,9 @@ describe('processScan', () => {
       expect(mockSaveTransaction).toHaveBeenCalled();
       expect(mockGenerateInsight).toHaveBeenCalled();
       expect(mockAddToBatch).toHaveBeenCalled();
-      expect(params.ui.setScanImages).toHaveBeenCalledWith([]);
-      expect(params.ui.setView).toHaveBeenCalledWith('dashboard');
+      // Story 14e-43: Now uses store actions instead of ui callbacks
+      expect(mockScanActions.setImages).toHaveBeenCalledWith([]);
+      expect(mockNavigationActions.setView).toHaveBeenCalledWith('dashboard');
     });
 
     it('should fall back to quicksave if trusted auto-save fails', async () => {
@@ -465,7 +510,11 @@ describe('processScan', () => {
       expect(result.success).toBe(true);
       expect(result.route).toBe('quicksave');
       expect(result.isTrusted).toBe(true); // Was trusted, but save failed
-      expect(params.ui.showScanDialog).toHaveBeenCalledWith('quicksave', expect.any(Object));
+      // Story 14e-43: Now uses store action instead of ui callback
+      expect(mockScanActions.showDialog).toHaveBeenCalledWith({
+        type: 'quicksave',
+        data: expect.any(Object),
+      });
     });
   });
 
@@ -495,14 +544,15 @@ describe('processScan', () => {
 
       await processScan(params);
 
-      expect(params.ui.setCurrentTransaction).toHaveBeenCalledWith(
+      // Story 14e-43: Now uses store action instead of ui callback
+      expect(mockTransactionEditorActions.setTransaction).toHaveBeenCalledWith(
         expect.objectContaining({
           date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
         })
       );
 
       // Verify the date is current year, not future
-      const call = (params.ui.setCurrentTransaction as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const call = mockTransactionEditorActions.setTransaction.mock.calls[0][0];
       const year = new Date(call.date).getFullYear();
       expect(year).toBe(new Date().getFullYear());
     });
@@ -551,7 +601,8 @@ describe('processScan', () => {
       await processScan(params);
 
       expect(mockFindMerchantMatch).toHaveBeenCalled();
-      expect(params.ui.setCurrentTransaction).toHaveBeenCalledWith(
+      // Story 14e-43: Now uses store action instead of ui callback
+      expect(mockTransactionEditorActions.setTransaction).toHaveBeenCalledWith(
         expect.objectContaining({
           alias: 'Normalized Merchant',
           merchantSource: 'learned',
@@ -578,7 +629,8 @@ describe('processScan', () => {
       await processScan(params);
 
       // Should not have alias from mapping
-      expect(params.ui.setCurrentTransaction).toHaveBeenCalledWith(
+      // Story 14e-43: Now uses store action instead of ui callback
+      expect(mockTransactionEditorActions.setTransaction).toHaveBeenCalledWith(
         expect.not.objectContaining({
           alias: 'Normalized Merchant',
         })
@@ -604,7 +656,8 @@ describe('processScan', () => {
       const result = await processScan(params);
 
       expect(result.success).toBe(false);
-      expect(params.ui.dispatchProcessError).toHaveBeenCalledWith(expect.stringContaining('API Error'));
+      // Story 14e-43: Now uses store action instead of ui callback
+      expect(mockScanActions.processError).toHaveBeenCalledWith(expect.stringContaining('API Error'));
       expect(params.scanOverlay.setError).toHaveBeenCalledWith('api', expect.any(String));
     });
 

@@ -1,0 +1,299 @@
+[
+  {
+    "id": "mock-tx-001",
+    "date": "2026-01-28",
+    "time": "14:35",
+    "merchant": "Walmart Supercenter",
+    "alias": "Walmart",
+    "category": "grocery",
+    "total": 87.54,
+    "currency": "USD",
+    "country": "United States",
+    "city": "Austin",
+    "receiptType": "receipt",
+    "promptVersion": "2.6.0",
+    "merchantSource": "scan",
+    "items": [
+      { "name": "Organic Milk 1 Gal", "qty": 2, "price": 6.99, "category": "dairy", "categorySource": "scan" },
+      { "name": "Whole Wheat Bread", "qty": 1, "price": 3.49, "category": "bakery", "categorySource": "scan" },
+      { "name": "Chicken Breast 2lb", "qty": 1, "price": 12.99, "category": "meat", "categorySource": "scan" },
+      { "name": "Bananas 1 bunch", "qty": 1, "price": 1.89, "category": "produce", "categorySource": "scan" },
+      { "name": "Pasta Sauce", "qty": 2, "price": 4.29, "category": "pantry", "categorySource": "scan" },
+      { "name": "Spaghetti 16oz", "qty": 2, "price": 1.99, "category": "pantry", "categorySource": "scan" },
+      { "name": "Cheddar Cheese 8oz", "qty": 1, "price": 5.49, "category": "dairy", "categorySource": "scan" },
+      { "name": "Orange Juice 64oz", "qty": 1, "price": 4.99, "category": "beverages", "categorySource": "scan" },
+      { "name": "Eggs Large Dozen", "qty": 1, "price": 4.29, "category": "dairy", "categorySource": "scan" },
+      { "name": "Greek Yogurt 4pk", "qty": 1, "price": 6.99, "category": "dairy", "categorySource": "scan" }
+    ],
+    "periods": {
+      "day": "2026-01-28",
+      "week": "2026-W05",
+      "month": "2026-01",
+      "quarter": "2026-Q1",
+      "year": "2026"
+    },
+    "version": 1
+  },
+  {
+    "id": "mock-tx-002",
+    "date": "2026-01-27",
+    "time": "19:22",
+    "merchant": "Chipotle Mexican Grill",
+    "category": "restaurant",
+    "total": 15.87,
+    "currency": "USD",
+    "country": "United States",
+    "city": "Austin",
+    "receiptType": "receipt",
+    "promptVersion": "2.6.0",
+    "merchantSource": "scan",
+    "items": [
+      { "name": "Burrito Bowl", "qty": 1, "price": 11.95, "category": "food", "categorySource": "scan" },
+      { "name": "Chips & Guacamole", "qty": 1, "price": 3.92, "category": "food", "categorySource": "scan" }
+    ],
+    "periods": {
+      "day": "2026-01-27",
+      "week": "2026-W05",
+      "month": "2026-01",
+      "quarter": "2026-Q1",
+      "year": "2026"
+    },
+    "version": 1
+  },
+  {
+    "id": "mock-tx-003",
+    "date": "2026-01-26",
+    "time": "10:45",
+    "merchant": "Shell Gas Station",
+    "category": "gas_station",
+    "total": 48.72,
+    "currency": "USD",
+    "country": "United States",
+    "city": "Austin",
+    "receiptType": "receipt",
+    "promptVersion": "2.6.0",
+    "merchantSource": "scan",
+    "items": [
+      { "name": "Regular Unleaded 15.24 gal", "qty": 1, "price": 48.72, "category": "fuel", "categorySource": "scan" }
+    ],
+    "periods": {
+      "day": "2026-01-26",
+      "week": "2026-W04",
+      "month": "2026-01",
+      "quarter": "2026-Q1",
+      "year": "2026"
+    },
+    "version": 1
+  },
+  {
+    "id": "mock-tx-004",
+    "date": "2026-01-25",
+    "time": "16:30",
+    "merchant": "Amazon Fresh",
+    "alias": "Amazon",
+    "category": "grocery",
+    "total": 124.67,
+    "currency": "USD",
+    "country": "United States",
+    "city": "Austin",
+    "receiptType": "receipt",
+    "promptVersion": "2.6.0",
+    "merchantSource": "scan",
+    "items": [
+      { "name": "Coffee Beans 2lb", "qty": 1, "price": 18.99, "category": "beverages", "categorySource": "scan" },
+      { "name": "Almond Milk 64oz", "qty": 2, "price": 5.49, "category": "dairy", "categorySource": "scan" },
+      { "name": "Avocados 6ct", "qty": 1, "price": 6.99, "category": "produce", "categorySource": "scan" },
+      { "name": "Salmon Fillet 1lb", "qty": 2, "price": 14.99, "category": "seafood", "categorySource": "scan" },
+      { "name": "Mixed Greens 5oz", "qty": 2, "price": 4.99, "category": "produce", "categorySource": "scan" },
+      { "name": "Olive Oil 500ml", "qty": 1, "price": 12.99, "category": "pantry", "categorySource": "scan" },
+      { "name": "Cherry Tomatoes", "qty": 1, "price": 4.49, "category": "produce", "categorySource": "scan" },
+      { "name": "Parmesan Cheese", "qty": 1, "price": 8.99, "category": "dairy", "categorySource": "scan" }
+    ],
+    "periods": {
+      "day": "2026-01-25",
+      "week": "2026-W04",
+      "month": "2026-01",
+      "quarter": "2026-Q1",
+      "year": "2026"
+    },
+    "version": 1
+  },
+  {
+    "id": "mock-tx-005",
+    "date": "2026-01-24",
+    "time": "08:15",
+    "merchant": "Starbucks",
+    "category": "coffee_shop",
+    "total": 7.85,
+    "currency": "USD",
+    "country": "United States",
+    "city": "Austin",
+    "receiptType": "receipt",
+    "promptVersion": "2.6.0",
+    "merchantSource": "scan",
+    "items": [
+      { "name": "Grande Latte", "qty": 1, "price": 5.95, "category": "beverages", "categorySource": "scan" },
+      { "name": "Blueberry Muffin", "qty": 1, "price": 3.45, "category": "bakery", "categorySource": "scan" }
+    ],
+    "periods": {
+      "day": "2026-01-24",
+      "week": "2026-W04",
+      "month": "2026-01",
+      "quarter": "2026-Q1",
+      "year": "2026"
+    },
+    "version": 1
+  },
+  {
+    "id": "mock-tx-006",
+    "date": "2026-01-22",
+    "time": "20:10",
+    "merchant": "Target",
+    "category": "department_store",
+    "total": 156.32,
+    "currency": "USD",
+    "country": "United States",
+    "city": "Austin",
+    "receiptType": "receipt",
+    "promptVersion": "2.6.0",
+    "merchantSource": "scan",
+    "items": [
+      { "name": "Laundry Detergent", "qty": 1, "price": 14.99, "category": "household", "categorySource": "scan" },
+      { "name": "Paper Towels 6pk", "qty": 1, "price": 12.99, "category": "household", "categorySource": "scan" },
+      { "name": "Shampoo", "qty": 2, "price": 8.99, "category": "personal_care", "categorySource": "scan" },
+      { "name": "Toothpaste 3pk", "qty": 1, "price": 9.99, "category": "personal_care", "categorySource": "scan" },
+      { "name": "Hand Soap 3pk", "qty": 1, "price": 7.49, "category": "personal_care", "categorySource": "scan" },
+      { "name": "Trash Bags 50ct", "qty": 1, "price": 11.99, "category": "household", "categorySource": "scan" },
+      { "name": "Dish Soap", "qty": 1, "price": 4.99, "category": "household", "categorySource": "scan" },
+      { "name": "T-Shirt", "qty": 2, "price": 14.99, "category": "clothing", "categorySource": "scan" },
+      { "name": "Socks 6pk", "qty": 1, "price": 12.99, "category": "clothing", "categorySource": "scan" }
+    ],
+    "periods": {
+      "day": "2026-01-22",
+      "week": "2026-W04",
+      "month": "2026-01",
+      "quarter": "2026-Q1",
+      "year": "2026"
+    },
+    "version": 1
+  },
+  {
+    "id": "mock-tx-007",
+    "date": "2026-01-20",
+    "time": "12:30",
+    "merchant": "Costco Wholesale",
+    "alias": "Costco",
+    "category": "wholesale_club",
+    "total": 287.45,
+    "currency": "USD",
+    "country": "United States",
+    "city": "Austin",
+    "receiptType": "receipt",
+    "promptVersion": "2.6.0",
+    "merchantSource": "scan",
+    "items": [
+      { "name": "Kirkland Olive Oil 2L", "qty": 1, "price": 19.99, "category": "pantry", "categorySource": "scan" },
+      { "name": "Rotisserie Chicken", "qty": 1, "price": 4.99, "category": "prepared_foods", "categorySource": "scan" },
+      { "name": "Ground Beef 4lb", "qty": 1, "price": 22.99, "category": "meat", "categorySource": "scan" },
+      { "name": "Toilet Paper 30pk", "qty": 1, "price": 28.99, "category": "household", "categorySource": "scan" },
+      { "name": "Mixed Nuts 2.5lb", "qty": 1, "price": 18.99, "category": "snacks", "categorySource": "scan" },
+      { "name": "Kirkland Water 40pk", "qty": 1, "price": 5.99, "category": "beverages", "categorySource": "scan" },
+      { "name": "Bananas 3lb", "qty": 1, "price": 1.99, "category": "produce", "categorySource": "scan" },
+      { "name": "Apples 5lb bag", "qty": 1, "price": 8.99, "category": "produce", "categorySource": "scan" },
+      { "name": "Milk 2 Gal", "qty": 1, "price": 6.49, "category": "dairy", "categorySource": "scan" },
+      { "name": "Batteries AA 48pk", "qty": 1, "price": 16.99, "category": "electronics", "categorySource": "scan" }
+    ],
+    "periods": {
+      "day": "2026-01-20",
+      "week": "2026-W04",
+      "month": "2026-01",
+      "quarter": "2026-Q1",
+      "year": "2026"
+    },
+    "version": 1
+  },
+  {
+    "id": "mock-tx-008",
+    "date": "2026-01-18",
+    "time": "18:45",
+    "merchant": "CVS Pharmacy",
+    "category": "pharmacy",
+    "total": 42.87,
+    "currency": "USD",
+    "country": "United States",
+    "city": "Austin",
+    "receiptType": "receipt",
+    "promptVersion": "2.6.0",
+    "merchantSource": "scan",
+    "items": [
+      { "name": "Ibuprofen 200ct", "qty": 1, "price": 12.99, "category": "health", "categorySource": "scan" },
+      { "name": "Vitamins D3", "qty": 1, "price": 14.99, "category": "health", "categorySource": "scan" },
+      { "name": "Band-Aids 100ct", "qty": 1, "price": 8.99, "category": "health", "categorySource": "scan" },
+      { "name": "Lip Balm 3pk", "qty": 1, "price": 5.99, "category": "personal_care", "categorySource": "scan" }
+    ],
+    "periods": {
+      "day": "2026-01-18",
+      "week": "2026-W03",
+      "month": "2026-01",
+      "quarter": "2026-Q1",
+      "year": "2026"
+    },
+    "version": 1
+  },
+  {
+    "id": "mock-tx-009",
+    "date": "2026-01-15",
+    "time": "13:20",
+    "merchant": "Whole Foods Market",
+    "alias": "Whole Foods",
+    "category": "grocery",
+    "total": 98.23,
+    "currency": "USD",
+    "country": "United States",
+    "city": "Austin",
+    "receiptType": "receipt",
+    "promptVersion": "2.6.0",
+    "merchantSource": "scan",
+    "items": [
+      { "name": "Organic Spinach 5oz", "qty": 2, "price": 5.99, "category": "produce", "categorySource": "scan" },
+      { "name": "Grass-Fed Beef 1lb", "qty": 1, "price": 15.99, "category": "meat", "categorySource": "scan" },
+      { "name": "Kombucha 4pk", "qty": 1, "price": 12.99, "category": "beverages", "categorySource": "scan" },
+      { "name": "Almond Butter 16oz", "qty": 1, "price": 11.99, "category": "pantry", "categorySource": "scan" },
+      { "name": "Organic Eggs Dozen", "qty": 1, "price": 7.99, "category": "dairy", "categorySource": "scan" },
+      { "name": "Sourdough Bread", "qty": 1, "price": 6.49, "category": "bakery", "categorySource": "scan" },
+      { "name": "Hummus 10oz", "qty": 2, "price": 5.99, "category": "deli", "categorySource": "scan" }
+    ],
+    "periods": {
+      "day": "2026-01-15",
+      "week": "2026-W03",
+      "month": "2026-01",
+      "quarter": "2026-Q1",
+      "year": "2026"
+    },
+    "version": 1
+  },
+  {
+    "id": "mock-tx-010",
+    "date": "2026-01-12",
+    "time": "21:00",
+    "merchant": "Netflix",
+    "category": "entertainment",
+    "total": 15.99,
+    "currency": "USD",
+    "country": "United States",
+    "receiptType": "invoice",
+    "promptVersion": "2.6.0",
+    "merchantSource": "scan",
+    "items": [
+      { "name": "Monthly Subscription - Standard", "qty": 1, "price": 15.99, "category": "subscription", "categorySource": "scan" }
+    ],
+    "periods": {
+      "day": "2026-01-12",
+      "week": "2026-W02",
+      "month": "2026-01",
+      "quarter": "2026-Q1",
+      "year": "2026"
+    },
+    "version": 1
+  }
+]

@@ -2,6 +2,7 @@
  * BatchSummary Component
  *
  * Story 10.7: Batch Mode Summary
+ * Story 14e-37: Migrated to use Zustand store (optional)
  * Displays a unified summary after scanning multiple receipts in one session.
  *
  * Features:
@@ -11,12 +12,16 @@
  * - Top insight highlighted (AC #5)
  * - Silence insights option (AC #6, #7, #8)
  * - Dark mode support (AC #9)
+ *
+ * Story 14e-37: Can now use store for dismiss action.
+ * onDismiss is optional - if not provided, uses useInsightStore.
  */
 
 // Story 10.7: BatchSummary component
 import { Receipt, TrendingUp, TrendingDown, Bell, BellOff } from 'lucide-react';
 import { Transaction } from '../../types/transaction';
 import { Insight } from '../../types/insight';
+import { useInsightActions } from '@/shared/stores';
 
 interface BatchSummaryProps {
   /** Receipts saved in this batch session */
@@ -29,8 +34,8 @@ interface BatchSummaryProps {
   lastWeekTotal?: number;
   /** Handler for silence toggle */
   onSilence: () => void;
-  /** Handler for dismissing the summary */
-  onDismiss: () => void;
+  /** Handler for dismissing the summary. Optional - uses store action if not provided (Story 14e-37) */
+  onDismiss?: () => void;
   /** Whether insights are currently silenced */
   isSilenced: boolean;
   /** Current theme */
@@ -40,6 +45,8 @@ interface BatchSummaryProps {
 /**
  * BatchSummary displays aggregated information about a multi-receipt scanning session.
  * Shows after 3+ receipts are scanned within a 30-minute window (AC #1).
+ *
+ * Story 14e-37: Can use store for dismiss action.
  */
 export function BatchSummary({
   receipts,
@@ -47,10 +54,13 @@ export function BatchSummary({
   totalAmount,
   lastWeekTotal,
   onSilence,
-  onDismiss,
+  onDismiss: onDismissProp,
   isSilenced,
   theme,
 }: BatchSummaryProps) {
+  // Story 14e-37: Use store action if onDismiss not provided
+  const { hideBatchSummaryOverlay } = useInsightActions();
+  const onDismiss = onDismissProp ?? hideBatchSummaryOverlay;
   // Find top insight by priority (AC #5)
   const topInsight = insights.length > 0
     ? insights.reduce((best, current) =>

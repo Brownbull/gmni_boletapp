@@ -32,30 +32,28 @@ import {
 } from '../utils/reportUtils';
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
 import { useReducedMotion } from '../hooks/useReducedMotion';
+// Story 14e-25c.2: Internal data hooks
+import { useAuth } from '../hooks/useAuth';
+import { usePaginatedTransactions } from '../hooks/usePaginatedTransactions';
+import { useRecentScans } from '../hooks/useRecentScans';
+// Story 14e-25c.2: Navigation via Zustand store
+import { useNavigation, useNavigationActions } from '../shared/stores/useNavigationStore';
+import type { View } from '../app/types';
 import type { Transaction } from '../types/transaction';
 import type { ReportPeriodType } from '../types/report';
 import type { TemporalFilterState, HistoryFilterState } from '../contexts/HistoryFiltersContext';
 import { getDefaultFilterState } from '../contexts/HistoryFiltersContext';
 
+/**
+ * Story 14e-25c.2: Minimal props interface for ReportsView.
+ * Navigation callbacks migrated to useNavigation() hook.
+ * Transactions obtained via internal hooks.
+ */
 interface ReportsViewProps {
-  /** All user transactions */
-  transactions: Transaction[];
   /** Translation function */
   t: (key: string) => string;
   /** Theme for styling */
   theme: string;
-  /** User name for profile avatar */
-  userName?: string;
-  /** User email for profile dropdown */
-  userEmail?: string;
-  /** Handler for back button click */
-  onBack?: () => void;
-  /** Handler for profile menu click (deprecated - use onNavigateToView) */
-  onProfileClick?: () => void;
-  /** General navigation handler for profile dropdown menu items */
-  onNavigateToView?: (view: string) => void;
-  /** Handler for setting pending history filters before navigating to history */
-  onSetPendingHistoryFilters?: (filters: HistoryFilterState) => void;
 }
 
 interface SectionState {
@@ -86,28 +84,44 @@ function getAvailableYears(transactions: Transaction[]): number[] {
  * ReportsView - Reports Hub with collapsible sections
  */
 export const ReportsView: React.FC<ReportsViewProps> = ({
-  transactions,
   t,
   theme,
-  userName = '',
-  userEmail = '',
-  onBack,
-  onProfileClick,
-  onNavigateToView,
-  onSetPendingHistoryFilters,
 }) => {
+  // Story 14e-25c.2: Get navigation from Zustand store
+  const { navigateBack, navigateToView } = useNavigation();
+  const { setPendingHistoryFilters } = useNavigationActions();
+
+  // Story 14e-25c.2: Get auth and transactions from internal hooks
+  const { user, services } = useAuth();
+
+  // Get transactions via hooks (same pattern as HistoryView)
+  const {
+    transactions: paginatedTransactions,
+  } = usePaginatedTransactions(user, services);
+  const recentScans = useRecentScans(user, services);
+
+  // Merge recent scans with paginated transactions (deduplication)
+  const transactions = useMemo(() => {
+    if (!recentScans?.length) return paginatedTransactions;
+    const recentIds = new Set(recentScans.filter((s) => s.id).map((s) => s.id));
+    const filteredPaginated = paginatedTransactions.filter(
+      (tx) => tx.id && !recentIds.has(tx.id)
+    );
+    return [...recentScans, ...filteredPaginated];
+  }, [paginatedTransactions, recentScans]);
+
+  // Story 14e-25c.2: User info from auth
+  const userName = user?.displayName ?? '';
+  const userEmail = user?.email ?? '';
+
   // Profile dropdown state
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Handle profile navigation - supports both new onNavigateToView and legacy onProfileClick
+  // Story 14e-25c.2: Handle profile navigation via Zustand store
   const handleProfileNavigate = useCallback((view: string) => {
-    if (view === 'settings' && onProfileClick) {
-      onProfileClick();
-    } else if (onNavigateToView) {
-      onNavigateToView(view);
-    }
-  }, [onProfileClick, onNavigateToView]);
+    navigateToView(view as View);
+  }, [navigateToView]);
 
   const prefersReducedMotion = useReducedMotion();
 
@@ -246,9 +260,8 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
 
   // Handle viewing transactions for a report period
   // Converts the date range to temporal filters and navigates to history
+  // Story 14e-25c.2: Uses navigation store instead of prop callbacks
   const handleViewTransactions = useCallback((dateRange: { start: Date; end: Date }) => {
-    if (!onSetPendingHistoryFilters || !onNavigateToView) return;
-
     // Determine the filter level based on the date range duration
     const startDate = dateRange.start;
     const endDate = dateRange.end;
@@ -319,11 +332,11 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
       temporal: temporalFilter,
     };
 
-    // Set the pending filters and navigate to history
-    onSetPendingHistoryFilters(historyFilters);
+    // Story 14e-25c.2: Set the pending filters and navigate to history via store
+    setPendingHistoryFilters(historyFilters);
     closeOverlay();
-    onNavigateToView('history');
-  }, [onSetPendingHistoryFilters, onNavigateToView, closeOverlay]);
+    navigateToView('history');
+  }, [setPendingHistoryFilters, navigateToView, closeOverlay]);
 
   // Get placeholder message based on period type
   const getEmptyPlaceholder = (periodType: string): string => {
@@ -407,7 +420,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
           <div className="flex items-center gap-0">
             {/* Back button - ChevronLeft style (< without dash) */}
             <button
-              onClick={onBack}
+              onClick={navigateBack}
               className="min-w-10 min-h-10 flex items-center justify-center -ml-1"
               aria-label="Volver"
               data-testid="back-button"

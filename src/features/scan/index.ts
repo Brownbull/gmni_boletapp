@@ -40,9 +40,9 @@
  * ```
  */
 
-// Re-export ScanFeature orchestrator (Story 14e-10)
+// Re-export ScanFeature orchestrator (Story 14e-10, 14e-23a)
 export { ScanFeature } from './ScanFeature';
-export type { ScanFeatureProps } from './ScanFeature';
+export type { ScanFeatureProps, ActiveGroupInfo } from './ScanFeature';
 
 // Re-export entire store module
 export * from './store';
@@ -52,3 +52,9 @@ export * from './handlers';
 
 // Re-export components (Story 14e-9a)
 export * from './components';
+
+// Re-export hooks (Story 14e-30)
+export * from './hooks';
+
+// Re-export utils (Story 14e-40)
+export * from './utils';

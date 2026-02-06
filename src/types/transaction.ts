@@ -5,6 +5,12 @@
  * See: shared/schema/categories.ts
  *
  * DO NOT define StoreCategory or ItemCategory here - import from unified schema.
+ *
+ * Epic 14d-v2 Fields:
+ * - sharedGroupId: Single group association (not array) - enables efficient queries
+ * - deletedAt/deletedBy: Soft delete for shared group sync
+ * - updatedAt/version: Optimistic concurrency control
+ * - periods: Pre-computed temporal keys for efficient filtering
  */
 
 // Re-export types from unified schema for convenience
@@ -12,6 +18,39 @@ export type { StoreCategory, ItemCategory } from '../../shared/schema/categories
 
 // Import for use in this file
 import type { StoreCategory, ItemCategory } from '../../shared/schema/categories';
+import type { Timestamp } from 'firebase/firestore';
+
+/**
+ * Pre-computed period identifiers for efficient temporal queries.
+ * Computed from transaction date using ISO standards.
+ *
+ * Epic 14d-v2 Architecture Decision AD-5:
+ * Pre-computing periods eliminates runtime date parsing and enables
+ * efficient Firestore queries (e.g., `where('periods.month', '==', '2026-01')`)
+ *
+ * @example
+ * ```typescript
+ * const periods: TransactionPeriods = {
+ *   day: '2026-01-22',     // YYYY-MM-DD
+ *   week: '2026-W04',      // ISO week (Monday start)
+ *   month: '2026-01',      // YYYY-MM
+ *   quarter: '2026-Q1',    // YYYY-Qn
+ *   year: '2026'           // YYYY
+ * };
+ * ```
+ */
+export interface TransactionPeriods {
+    /** Day identifier: YYYY-MM-DD (e.g., "2026-01-22") */
+    day: string;
+    /** ISO week identifier: YYYY-Www (e.g., "2026-W04") - Monday as week start */
+    week: string;
+    /** Month identifier: YYYY-MM (e.g., "2026-01") */
+    month: string;
+    /** Quarter identifier: YYYY-Qn (e.g., "2026-Q1") */
+    quarter: string;
+    /** Year identifier: YYYY (e.g., "2026") */
+    year: string;
+}
 
 /**
  * Source of the category assignment for an item.
@@ -57,8 +96,16 @@ export interface Transaction {
     items: TransactionItem[];
     imageUrls?: string[];
     thumbnailUrl?: string;
-    createdAt?: any;
-    updatedAt?: any;
+
+    // Timestamp fields (Firestore Timestamp | Date | string for backward compatibility)
+    /** When the transaction was first created */
+    createdAt?: Timestamp | Date | string;
+    /**
+     * When the transaction was last updated (any change).
+     * Epic 14d-v2 AD-8: Auto-populated on every save/update for changelog tracking.
+     * Note: Accepts multiple types for backward compatibility; Firestore uses serverTimestamp().
+     */
+    updatedAt?: Timestamp | Date | string;
 
     // v2.6.0 prompt fields (all optional for backward compatibility)
     /** Purchase time in HH:mm format (e.g., "15:01") */
@@ -78,10 +125,44 @@ export interface Transaction {
     /** Source of the merchant name (scan, learned, or user) */
     merchantSource?: MerchantSource;
 
-    /** Array of shared group IDs this transaction belongs to (max 5) */
-    sharedGroupIds?: string[];
-    /** Soft delete timestamp for shared group sync (null = not deleted) */
-    deletedAt?: any; // Firestore Timestamp
+    // ============================================================================
+    // Epic 14d-v2 Fields: Shared Groups Support
+    // ============================================================================
+
+    /**
+     * Shared group ID this transaction is tagged to.
+     * Epic 14d-v2 AD-1: Single group (not array) eliminates array-contains query limitations.
+     * null = personal transaction (not shared with any group)
+     */
+    sharedGroupId?: string | null;
+
+    /**
+     * Soft delete timestamp for shared group sync.
+     * Epic 14d-v2 AD-8: null = not deleted, Timestamp = when soft-deleted.
+     * Enables changelog-driven sync to propagate deletions to group members.
+     */
+    deletedAt?: Timestamp | null;
+
+    /**
+     * User ID of who deleted this transaction.
+     * Epic 14d-v2 AD-8: Enables audit trail for shared transactions.
+     * Only set when deletedAt is set.
+     */
+    deletedBy?: string | null;
+
+    /**
+     * Optimistic concurrency version number.
+     * Epic 14d-v2 AD-8: Incremented on every update.
+     * Starts at 1 for new transactions.
+     */
+    version?: number;
+
+    /**
+     * Pre-computed period identifiers for efficient temporal queries.
+     * Epic 14d-v2 AD-5: Computed from date field on save/update.
+     * Enables efficient Firestore queries without runtime date parsing.
+     */
+    periods?: TransactionPeriods;
 
     /**
      * Owner's user ID - set client-side when merging transactions from multiple members.

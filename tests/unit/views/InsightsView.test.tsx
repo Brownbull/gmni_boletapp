@@ -59,6 +59,17 @@ vi.mock('../../../src/hooks/useInsightProfile', () => ({
   })),
 }));
 
+// Story 14e-25c.2: Mock navigation store for InsightsView
+const mockNavigateBack = vi.fn();
+const mockNavigateToView = vi.fn();
+vi.mock('../../../src/shared/stores/useNavigationStore', () => ({
+  useNavigation: () => ({
+    navigateBack: mockNavigateBack,
+    navigateToView: mockNavigateToView,
+    view: 'insights',
+  }),
+}));
+
 import { useAuth } from '../../../src/hooks/useAuth';
 import { getUserInsightProfile } from '../../../src/services/insightEngineService';
 
@@ -86,9 +97,8 @@ function createMockTimestamp(daysAgo: number): Timestamp {
 const mockUser = { uid: 'test-user-id' };
 const mockServices = { db: {}, appId: 'test-app' };
 
-// Default props for InsightsView
+// Story 14e-25c.2: Minimal props for InsightsView (onBack removed, now via useNavigation)
 const defaultProps = {
-  onBack: vi.fn(),
   onEditTransaction: vi.fn(),
   theme: 'light',
   t: (key: string) => {
@@ -483,14 +493,15 @@ describe('InsightsView', () => {
   });
 
   // Navigation (back button)
+  // Story 14e-25c.2: Navigation via useNavigation() hook instead of props
   describe('Back Button', () => {
-    it('calls onBack when back button is clicked', async () => {
-      const onBack = vi.fn();
+    it('calls navigateBack when back button is clicked', async () => {
+      mockNavigateBack.mockClear();
       (getUserInsightProfile as ReturnType<typeof vi.fn>).mockResolvedValue({
         recentInsights: [],
       });
 
-      render(<InsightsView {...defaultProps} onBack={onBack} />);
+      render(<InsightsView {...defaultProps} />);
 
       await waitFor(() => {
         expect(screen.getByText('No insights yet')).toBeInTheDocument();
@@ -500,7 +511,7 @@ describe('InsightsView', () => {
       const backButton = screen.getByRole('button', { name: /back/i });
       fireEvent.click(backButton);
 
-      expect(onBack).toHaveBeenCalledTimes(1);
+      expect(mockNavigateBack).toHaveBeenCalledTimes(1);
     });
   });
 

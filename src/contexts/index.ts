@@ -23,15 +23,16 @@ export {
     type Services,
 } from './AuthContext';
 
-// NavigationContext - View navigation state
-export {
-    NavigationProvider,
-    useNavigation,
-    useNavigationOptional,
-    type NavigationContextValue,
-    type View,
-    type SettingsSubview,
-} from './NavigationContext';
+// =============================================================================
+// Story 14e-45: NavigationContext DELETED
+// =============================================================================
+//
+// NavigationContext was removed in Story 14e-45. Navigation now uses Zustand:
+// - State: useNavigationStore from @/shared/stores
+// - Actions: useNavigationActions() from @/shared/stores
+// - Combined: useNavigation() from @/shared/stores
+// - View type: import { View } from '@app/types'
+// - SettingsSubview type: import { SettingsSubview } from '@/shared/stores/useNavigationStore'
 
 // ThemeContext - Theme and locale preferences
 export {
@@ -59,18 +60,18 @@ export {
 } from './AppStateContext';
 
 // =============================================================================
-// Existing Contexts (pre-14c-refactor.9)
+// Story 14d-v2-0: ViewModeContext DELETED
 // =============================================================================
-
-// ViewModeContext - Personal vs shared group mode
-// Story 14c-refactor.13: VIEW_MODE_STORAGE_KEY removed (no localStorage persistence)
-export {
-    ViewModeProvider,
-    useViewMode,
-    useViewModeOptional,
-    type ViewModeContextValue,
-    type ViewMode,
-} from './ViewModeContext';
+//
+// ViewModeContext was removed in Story 14d-v2-0. View mode now uses Zustand:
+// - State: useViewModeStore from @/shared/stores
+// - Actions: useViewModeActions() from @/shared/stores
+// - Combined: useViewMode() from @/shared/stores/useViewModeStore
+// - Selectors: useIsGroupMode(), useCurrentGroupId(), useCurrentGroup()
+// - Types: import { ViewMode, ViewModeState } from '@/shared/stores/useViewModeStore'
+//
+// Note: useViewModeOptional() is no longer needed. The Zustand store is always
+// available - use useViewMode() directly. The store initializes automatically.
 
 // Story 14e-11: ScanContext removed - scan state now managed by Zustand store
 // Use @features/scan/store for scan state and actions
@@ -88,19 +89,11 @@ export {
 } from './HistoryFiltersContext';
 
 // =============================================================================
-// Story 14c-refactor.25: ViewHandlersContext
+// Story 14e-25d: ViewHandlersContext DELETED
 // =============================================================================
-
-// ViewHandlersContext - Handler bundles for views (eliminates prop drilling)
-export {
-    ViewHandlersProvider,
-    useViewHandlers,
-    useViewHandlersOptional,
-    ViewHandlersContext,
-    type ViewHandlersContextValue,
-    type ViewHandlersProviderProps,
-    type TransactionHandlers,
-    type ScanHandlers,
-    type NavigationHandlers,
-    type DialogHandlers,
-} from './ViewHandlersContext';
+//
+// ViewHandlersContext was removed in Story 14e-25d. Views now use direct hooks:
+// - Navigation: useNavigationActions() from @/shared/stores
+// - Toast: useToast() from @/shared/hooks
+// - Modals: useModalActions() from @/managers/ModalManager
+// - History navigation: useHistoryNavigation() from @/shared/hooks

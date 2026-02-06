@@ -107,7 +107,7 @@ export const PersonalRecordBanner: React.FC<PersonalRecordBannerProps> = ({
     return (
         <div
             className={`
-                fixed top-4 left-4 right-4 z-50
+                fixed left-4 right-4 z-[60]
                 rounded-2xl shadow-lg
                 p-4
                 flex items-center gap-3
@@ -116,6 +116,8 @@ export const PersonalRecordBanner: React.FC<PersonalRecordBannerProps> = ({
                 ${isVisible && !isExiting ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}
             `}
             style={{
+                // Position below the 72px header + safe area + small gap
+                top: 'calc(72px + env(safe-area-inset-top, 0px) + 8px)',
                 backgroundColor: 'var(--insight-celebration-bg)',
                 borderColor: 'var(--border-light)',
             }}

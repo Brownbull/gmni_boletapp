@@ -22,6 +22,7 @@ import {
   SessionContext,
   SessionAction,
 } from '../../../../src/components/session/SessionComplete';
+import { useInsightStore } from '../../../../src/shared/stores';
 
 // Mock translation function
 const mockT = vi.fn((key: string) => {
@@ -76,6 +77,8 @@ describe('SessionComplete', () => {
     vi.useFakeTimers();
     mockMatchMedia(false); // Default: animations enabled
     vi.clearAllMocks();
+    // Reset Zustand store to prevent cross-test pollution (Story 14e-37)
+    useInsightStore.getState().reset();
   });
 
   afterEach(() => {
@@ -84,77 +87,80 @@ describe('SessionComplete', () => {
     vi.restoreAllMocks();
   });
 
+  // Helper to render component and wait for initial effects to settle
+  const renderSessionComplete = async (props: Parameters<typeof SessionComplete>[0]) => {
+    let result: ReturnType<typeof render>;
+    await act(async () => {
+      result = render(<SessionComplete {...props} />);
+      // Allow microtasks to settle (store subscriptions)
+      await Promise.resolve();
+    });
+    return result!;
+  };
+
   // ==========================================================================
   // AC #1: Component renders properly
   // ==========================================================================
 
   describe('AC #1: Component display', () => {
-    it('renders the component with title', () => {
+    it('renders the component with title', async () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
+      });
 
       expect(screen.getByText('Session Complete')).toBeInTheDocument();
     });
 
-    it('has proper ARIA attributes for accessibility', () => {
+    it('has proper ARIA attributes for accessibility', async () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
+      });
 
       const container = screen.getByRole('status');
       expect(container).toHaveAttribute('aria-live', 'polite');
     });
 
-    it('renders in dark theme correctly', () => {
+    it('renders in dark theme correctly', async () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="dark"
-        />
-      );
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'dark',
+      });
 
       const container = screen.getByRole('status');
       expect(container.className).toContain('bg-gray-800');
     });
 
-    it('renders in light theme correctly', () => {
+    it('renders in light theme correctly', async () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
+      });
 
       const container = screen.getByRole('status');
       expect(container.className).toContain('bg-white');
@@ -232,7 +238,7 @@ describe('SessionComplete', () => {
       });
     });
 
-    it('displays the correct message with placeholder substitution', () => {
+    it('displays the correct message with placeholder substitution', async () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
       const context: SessionContext = {
@@ -240,15 +246,13 @@ describe('SessionComplete', () => {
         consecutiveDays: 10,
       };
 
-      render(
-        <SessionComplete
-          context={context}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
+      await renderSessionComplete({
+        context,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
+      });
 
       expect(screen.getByText("Amazing! You've been tracking for 10 days")).toBeInTheDocument();
     });
@@ -259,25 +263,23 @@ describe('SessionComplete', () => {
   // ==========================================================================
 
   describe('AC #3: Session summary', () => {
-    it('displays total amount when > 0', () => {
+    it('displays total amount when > 0', async () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
+      });
 
       // CLP formatting: $15.000
       expect(screen.getByText(/Total saved:/)).toBeInTheDocument();
     });
 
-    it('does not display total when amount is 0', () => {
+    it('does not display total when amount is 0', async () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
       const context: SessionContext = {
@@ -285,37 +287,33 @@ describe('SessionComplete', () => {
         totalAmount: 0,
       };
 
-      render(
-        <SessionComplete
-          context={context}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
+      await renderSessionComplete({
+        context,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
+      });
 
       expect(screen.queryByText(/Total saved:/)).not.toBeInTheDocument();
     });
 
-    it('displays single category name when one category', () => {
+    it('displays single category name when one category', async () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
+      });
 
       expect(screen.getByText('Supermercado')).toBeInTheDocument();
     });
 
-    it('displays category count when multiple categories', () => {
+    it('displays category count when multiple categories', async () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
       const context: SessionContext = {
@@ -323,15 +321,13 @@ describe('SessionComplete', () => {
         categoriesTouched: ['Supermercado', 'Restaurante', 'Farmacia'],
       };
 
-      render(
-        <SessionComplete
-          context={context}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
+      await renderSessionComplete({
+        context,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
+      });
 
       expect(screen.getByText('3 categories')).toBeInTheDocument();
     });
@@ -372,37 +368,33 @@ describe('SessionComplete', () => {
       });
     });
 
-    it('renders suggestion buttons', () => {
+    it('renders suggestion buttons', async () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
+      });
 
       expect(screen.getByText('View your week')).toBeInTheDocument();
       expect(screen.getByText('Scan another')).toBeInTheDocument();
     });
 
-    it('calls onAction when suggestion is clicked', () => {
+    it('calls onAction when suggestion is clicked', async () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
+      });
 
       fireEvent.click(screen.getByText('View your week'));
 
@@ -413,19 +405,17 @@ describe('SessionComplete', () => {
       expect(onAction).toHaveBeenCalledWith('analytics');
     });
 
-    it('dismisses component when suggestion is clicked', () => {
+    it('dismisses component when suggestion is clicked', async () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
+      });
 
       fireEvent.click(screen.getByText('View your week'));
 
@@ -442,19 +432,17 @@ describe('SessionComplete', () => {
   // ==========================================================================
 
   describe('AC #5: Auto-dismiss functionality', () => {
-    it('auto-dismisses after default 5 seconds', () => {
+    it('auto-dismisses after default 5 seconds', async () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
+      });
 
       // Should not be dismissed yet
       expect(onDismiss).not.toHaveBeenCalled();
@@ -467,20 +455,18 @@ describe('SessionComplete', () => {
       expect(onDismiss).toHaveBeenCalledTimes(1);
     });
 
-    it('auto-dismisses after custom duration', () => {
+    it('auto-dismisses after custom duration', async () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-          autoDismissMs={3000}
-        />
-      );
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
+        autoDismissMs: 3000,
+      });
 
       // Should not be dismissed at 2 seconds
       act(() => {
@@ -495,19 +481,17 @@ describe('SessionComplete', () => {
       expect(onDismiss).toHaveBeenCalledTimes(1);
     });
 
-    it('pauses timer on mouse enter', () => {
+    it('pauses timer on mouse enter', async () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
+      });
 
       const container = screen.getByRole('status');
 
@@ -523,19 +507,17 @@ describe('SessionComplete', () => {
       expect(onDismiss).not.toHaveBeenCalled();
     });
 
-    it('resumes timer on mouse leave', () => {
+    it('resumes timer on mouse leave', async () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
+      });
 
       const container = screen.getByRole('status');
 
@@ -551,19 +533,17 @@ describe('SessionComplete', () => {
       expect(onDismiss).toHaveBeenCalledTimes(1);
     });
 
-    it('dismisses on close button click', () => {
+    it('dismisses on close button click', async () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
+      });
 
       fireEvent.click(screen.getByLabelText('Close'));
 
@@ -574,19 +554,17 @@ describe('SessionComplete', () => {
       expect(onDismiss).toHaveBeenCalledTimes(1);
     });
 
-    it('pauses timer on touch start', () => {
+    it('pauses timer on touch start', async () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
+      });
 
       const container = screen.getByRole('status');
 
@@ -603,19 +581,17 @@ describe('SessionComplete', () => {
       expect(onDismiss).not.toHaveBeenCalled();
     });
 
-    it('dismisses on swipe down (> 50px threshold)', () => {
+    it('dismisses on swipe down (> 50px threshold)', async () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
+      });
 
       const container = screen.getByRole('status');
 
@@ -637,19 +613,17 @@ describe('SessionComplete', () => {
       expect(onDismiss).toHaveBeenCalledTimes(1);
     });
 
-    it('does not dismiss on small swipe (< 50px threshold)', () => {
+    it('does not dismiss on small swipe (< 50px threshold)', async () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
+      });
 
       const container = screen.getByRole('status');
 
@@ -693,19 +667,12 @@ describe('SessionComplete', () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
-
-      // Allow any pending effects to settle
-      await act(async () => {
-        await Promise.resolve();
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
       });
 
       const container = screen.getByRole('status');
@@ -716,19 +683,12 @@ describe('SessionComplete', () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
-
-      // Allow any pending effects to settle
-      await act(async () => {
-        await Promise.resolve();
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
       });
 
       const container = screen.getByRole('status');
@@ -740,19 +700,12 @@ describe('SessionComplete', () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
-
-      // Allow any pending effects to settle
-      await act(async () => {
-        await Promise.resolve();
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
       });
 
       const container = screen.getByRole('status');
@@ -771,19 +724,12 @@ describe('SessionComplete', () => {
       const onDismiss = vi.fn();
       const onAction = vi.fn();
 
-      render(
-        <SessionComplete
-          context={defaultContext}
-          onDismiss={onDismiss}
-          onAction={onAction}
-          t={mockT}
-          theme="light"
-        />
-      );
-
-      // Allow any pending effects to settle
-      await act(async () => {
-        await Promise.resolve();
+      await renderSessionComplete({
+        context: defaultContext,
+        onDismiss,
+        onAction,
+        t: mockT,
+        theme: 'light',
       });
 
       // With reduced motion, dismiss should be instant (no animation delay)

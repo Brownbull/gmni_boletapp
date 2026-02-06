@@ -114,7 +114,7 @@ export const MODAL_REGISTRY: Record<ModalType, LazyModalComponent> = {
   quickSave: createLazyStub('quickSave'),
   scanComplete: createLazyStub('scanComplete'),
   batchComplete: createLazyStub('batchComplete'),
-  batchDiscard: createLazyStub('batchDiscard'),
+  batchDiscard: React.lazy(() => import('@/components/batch/BatchDiscardDialog')),
   creditWarning: createLazyStub('creditWarning'),
 
   // ---------------------------------------------------------------------------

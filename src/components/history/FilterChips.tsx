@@ -156,11 +156,19 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
             }}
             className={chipBase}
             style={activeChipStyle}
-            aria-label={`${t('remove')} ${translateStoreCategory(category.drillDownPath.storeCategory || category.drillDownPath.storeGroup || '', locale as Language)}`}
+            aria-label={`${t('remove')} ${
+              (category.drillDownPath.storeCategory || category.drillDownPath.storeGroup || '')
+                .split(',')
+                .map(c => translateStoreCategory(c.trim(), locale as Language))
+                .join(',')
+            }`}
           >
             <Tag size={14} />
             <span style={labelStyle}>
-              {translateStoreCategory(category.drillDownPath.storeCategory || category.drillDownPath.storeGroup || '', locale as Language)}
+              {(category.drillDownPath.storeCategory || category.drillDownPath.storeGroup || '')
+                .split(',')
+                .map(c => translateStoreCategory(c.trim(), locale as Language))
+                .join(',')}
             </span>
             <X size={12} className="ml-0.5" />
           </button>

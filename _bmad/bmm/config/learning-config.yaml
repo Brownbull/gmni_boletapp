@@ -1,0 +1,46 @@
+# Boletapp Learning Configuration
+# Created: 2026-02-05
+# Reference: docs/architecture/plans/ECC-LEARNING-CYCLE-IMPROVEMENTS.md (Section 5)
+# Decision: All knowledge stays in project-level docs (no ~/.claude/homunculus/)
+
+project: boletapp
+root: /home/khujta/projects/bmad/boletapp
+
+learning:
+  enabled: true
+
+  # Session Evaluation Threshold
+  # Only extract patterns from meaningful sessions to prevent over-recording
+  session_evaluation:
+    minimum_messages: 10
+    minimum_tool_uses: 5
+    exclude_patterns:
+      - "help"
+      - "status"
+      - "read-only exploration"
+    extraction_triggers:
+      - error_resolved_successfully
+      - user_expressed_satisfaction
+      - complex_workflow_completed
+
+  # Observation Settings
+  observation:
+    enabled: true
+    capture_tools: [Edit, Write, Bash, Read, Grep, Glob]
+    exclude_tools: [TodoWrite]
+
+  # Instinct Thresholds
+  instincts:
+    min_confidence: 0.3
+    auto_apply_threshold: 0.7
+    source_directories:
+      - _bmad/bmm/knowledge/
+      - docs/architecture/
+
+  # Enforcement (hooks already configured in .claude/settings.json)
+  enforcement:
+    hooks_enabled: true
+    hook_scripts:
+      - .claude/hooks/ecc-pre-edit-guard.py
+      - .claude/hooks/ecc-post-edit-warn.py
+      - .claude/hooks/ecc-post-edit-typecheck.sh

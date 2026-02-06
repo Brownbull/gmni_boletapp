@@ -1,7 +1,7 @@
 # Epic 14e: Feature-Based Architecture - Architecture Decision
 
 **Date:** 2026-01-24
-**Updated:** 2026-01-24 (ADR-018: Zustand-only state management)
+**Updated:** 2026-02-01 (Epic 14e Complete - Final Metrics)
 **Status:** Approved
 **Author:** Archie (React Opinionated Architect)
 **Stakeholder:** Gabe
@@ -150,7 +150,7 @@ src/
 │       └── types.ts
 │
 ├── app/                             # App shell
-│   ├── App.tsx                      # ~500-800 lines target
+│   ├── App.tsx                      # ~2,200 lines (revised from 500-800)
 │   ├── AppProviders.tsx
 │   └── FeatureOrchestrator.tsx
 │
@@ -439,14 +439,44 @@ export const ModalManager = () => {
 
 ## Success Metrics
 
-| Metric | Current | Target | Measurement |
-|--------|---------|--------|-------------|
-| App.tsx Lines | 3,387 | 500-800 | `wc -l src/App.tsx` |
-| Max Feature Size | N/A | <1,000 lines | Largest feature module |
-| Zustand Store Coverage | 0% | Scan + Batch + Modal | All complex client state |
-| Modal Manager Coverage | 0% | 100% | All modals registered |
-| Test Coverage | ~60% | >70% | Feature-level tests |
-| State Paradigms | 2.5 | 2 | TanStack Query + Zustand only |
+| Metric | Initial | Target | Final | Notes |
+|--------|---------|--------|-------|-------|
+| App.tsx Lines | 3,387 | 500-800 | **2,191** | See "Line Count Justification" below |
+| Max Feature Size | N/A | <1,000 lines | ~800 | BatchReviewFeature largest |
+| Zustand Store Coverage | 0% | Scan + Batch + Modal | **100%** | 7 stores created |
+| Modal Manager Coverage | 0% | 100% | **100%** | All modals via ModalManager |
+| Test Coverage | ~60% | >70% | **~65%** | Feature-level tests added |
+| State Paradigms | 2.5 | 2 | **2** | TanStack Query + Zustand only |
+
+### Line Count Justification
+
+**Original target (500-800 lines)** was based on the assumption that ViewHandlersContext would eliminate all view props. This proved incorrect:
+
+1. **Views still need data props** - Transactions, filters, user info must be passed
+2. **ViewHandlersContext deleted (14e-25d)** - Views now own their data fetching
+3. **View rendering switch statement** - ~1,000+ lines unavoidable for 10+ views
+4. **Handler wrappers required** - Thin wrappers needed for dependency injection
+
+**Revised target (1,800-2,200 lines)** was set in story 14e-44 based on architectural realities.
+
+**Final result (2,191 lines)** is within revised target. Remaining App.tsx responsibilities:
+- Auth initialization and user state management
+- View routing (renderViewSwitch)
+- Feature orchestration (FeatureOrchestrator)
+- Global effects (deep linking, push notifications)
+- Thin handler wrappers for features
+
+### Zustand Stores Created
+
+| Store | Location | Purpose |
+|-------|----------|---------|
+| useScanStore | `@features/scan/store` | Scan flow state machine |
+| useBatchReviewStore | `@features/batch-review/store` | Batch review state machine |
+| useNavigationStore | `@shared/stores` | App-wide navigation state |
+| useSettingsStore | `@shared/stores` | User settings with persistence |
+| useTransactionEditorStore | `@features/transaction-editor/store` | Transaction editing state |
+| useInsightStore | `@shared/stores` | Insight/session state |
+| useModalStore | `@managers/ModalManager` | Modal rendering state |
 
 ---
 
@@ -536,6 +566,82 @@ After this epic, the state management philosophy is:
 | **Local Component State** | useState | Form inputs, toggle states |
 
 **One rule**: If it's fetched from Firebase → TanStack Query. Everything else → Zustand (or useState for truly local state).
+
+---
+
+## Local State Patterns (Story 14e-45)
+
+While Zustand is the primary client state management solution, `useState` remains appropriate for certain patterns. This section documents when local component state is the correct choice.
+
+### When to Use useState
+
+| Pattern | Example | Why Local State |
+|---------|---------|-----------------|
+| **Animation State** | `isExiting`, `isPaused`, `animationPhase` | Transient UI state, no cross-component sharing needed |
+| **Modal Gate State** | `deleteTarget`, `editTarget` | Temporary state for confirmation dialogs, cleared after action |
+| **Isolated Component Forms** | Form field values before submission | Truly local, only used within one component |
+| **Ephemeral UI Toggles** | `isExpanded`, `showTooltip` | Component-scoped, no persistence needed |
+
+### When NOT to Use useState
+
+| Pattern | Use Instead | Why |
+|---------|-------------|-----|
+| **Navigation State** | `useNavigationStore` | Shared across many components, persisted |
+| **Scan Flow State** | `useScanStore` | Complex flow with phase guards |
+| **Batch Review State** | `useBatchReviewStore` | Multi-step flow shared by multiple views |
+| **Settings** | `useSettingsStore` | Persisted to Firestore, shared app-wide |
+| **Modal Registry** | `useModalStore` | Global modal coordination |
+
+### Examples
+
+**Good: Animation state with useState**
+```typescript
+// Local animation state - no sharing needed
+const [isExiting, setIsExiting] = useState(false);
+
+const handleClose = () => {
+  setIsExiting(true);
+  setTimeout(onClose, 300); // Animation duration
+};
+```
+
+**Good: Modal gate state with useState**
+```typescript
+// Local gate state for confirmation
+const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+const handleDeleteClick = (id: string) => setDeleteTarget(id);
+const handleConfirm = () => {
+  if (deleteTarget) {
+    deleteItem(deleteTarget);
+    setDeleteTarget(null);
+  }
+};
+```
+
+**Bad: Would require Zustand instead**
+```typescript
+// ❌ Don't do this - navigation is shared
+const [currentView, setCurrentView] = useState('dashboard');
+
+// ✅ Use Zustand instead
+const { view, setView } = useNavigationStore();
+```
+
+### Migration Note (Story 14e-45)
+
+`NavigationContext` was deleted in Story 14e-45. Navigation now uses `useNavigationStore`:
+
+```typescript
+// Before (NavigationContext - deleted)
+import { useNavigation } from '@/contexts/NavigationContext';
+const { view, setView, goBack } = useNavigation();
+
+// After (useNavigationStore)
+import { useNavigation } from '@/shared/stores/useNavigationStore';
+const { view, setView, navigateBack, goBack } = useNavigation();
+// Note: goBack is an alias for navigateBack for API compatibility
+```
 
 ---
 

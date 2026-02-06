@@ -27,15 +27,15 @@ import { HistoryFilterBar } from '../components/history/HistoryFilterBar';
 // Story 14e-5: DeleteTransactionsModal now uses Modal Manager
 import type { TransactionPreview } from '../components/history/DeleteTransactionsModal';
 import { useModalActions } from '@managers/ModalManager';
-import { TransactionGroupSelector } from '../components/SharedGroups/TransactionGroupSelector';
+import { TransactionGroupSelector } from '@/features/shared-groups';
 import { useSelectionMode } from '../hooks/useSelectionMode';
 import { useAllUserGroups } from '../hooks/useAllUserGroups';
-import { deleteTransactionsBatch, updateTransaction } from '../services/firestore';
+import { deleteTransactionsBatch } from '../services/firestore';
 import { getFirestore } from 'firebase/firestore';
-import { useQueryClient } from '@tanstack/react-query';
+// Story 14d-v2-1.1: useQueryClient import removed - group cache invalidation disabled (Epic 14c cleanup)
 // Story 14c-refactor.4: clearGroupCacheById import REMOVED (IndexedDB cache deleted)
 // Story 9.12: Category translations
-import type { Language } from '../utils/translations';
+// Story 14e-25b.2: Language type now comes from hook (useDashboardViewData)
 import { translateCategory } from '../utils/categoryTranslations';
 // Story 10a.1: Filter and duplicate detection utilities (AC #2, #4)
 import { useHistoryFilters } from '../hooks/useHistoryFilters';
@@ -71,7 +71,7 @@ import {
     expandItemCategoryGroup,   // Story 14.13 Session 13: For "Más" expansion
     type StoreCategoryGroup,
     type ItemCategoryGroup,
-    type ThemeName,
+    // Story 14e-25b.2: ThemeName type now comes from hook (useDashboardViewData)
 } from '../config/categoryColors';
 import { getCategoryEmoji } from '../utils/categoryEmoji';
 // Story 14.13 Session 4: Category translations for view mode labels
@@ -89,8 +89,11 @@ import { normalizeItemNameForGrouping } from '../hooks/useItems';
 import { calculateTreemapLayout } from '../utils/treemapLayout';
 // Story 14.13 Session 4: Navigation payload for treemap cell clicks
 import { HistoryNavigationPayload, DrillDownPath } from '../utils/analyticsToHistoryFilters';
-// Story 14c-refactor.27: ViewHandlersContext for navigation handlers
-import { useViewHandlers } from '../contexts/ViewHandlersContext';
+// Story 14e-25d: Direct navigation hooks (ViewHandlersContext deleted)
+import { useHistoryNavigation } from '@/shared/hooks';
+import { useNavigationActions } from '@/shared/stores';
+// Story 14e-25b.2: DashboardView data hook
+import { useDashboardViewData, type UseDashboardViewDataReturn } from './DashboardView/useDashboardViewData';
 // Story 14.15b: Use consolidated TransactionCard from shared transactions folder
 import { TransactionCard } from '../components/transactions';
 // Story 14.12: Radar chart uses inline SVG (matching mockup hexagonal design)
@@ -121,61 +124,27 @@ interface Transaction {
     currency?: string;
     // Story 11.1: createdAt for sort by scan date
     createdAt?: any; // Firestore Timestamp or Date
-    // Group consolidation: Shared group IDs (replaces legacy groupId/groupName/groupColor)
-    sharedGroupIds?: string[];
+    // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
+    // Epic 14d will use sharedGroupId (single nullable string) instead
 }
 
-interface DashboardViewProps {
-    /** Story 10a.1: Used as fallback when allTransactions is empty */
-    transactions: Transaction[];
-    t: (key: string) => string;
-    currency: string;
-    dateFormat: string;
-    theme: string;
-    formatCurrency: (amount: number, currency: string) => string;
-    formatDate: (date: string, format: string) => string;
-    getSafeDate: (val: any) => string;
-    onCreateNew: () => void;
-    onViewTrends: (month: string | null) => void;
-    onEditTransaction: (transaction: Transaction) => void;
-    /** Story 14.12: Trigger scan action for quick action button */
-    onTriggerScan?: () => void;
-    /** Story 10a.1: All transactions for display (now used for full paginated list) */
-    allTransactions?: Transaction[];
-    /** Story 9.12: Language for category translations */
-    lang?: Language;
-    /** Story 14.12: Navigate to history view */
-    onViewHistory?: () => void;
+/**
+ * Story 14e-25b.2: DashboardView Props
+ *
+ * DashboardView now owns its data via useDashboardViewData hook.
+ * Props are minimal - only test overrides for testing and callbacks
+ * that need App-level state coordination.
+ */
+export interface DashboardViewProps {
     /**
-     * @deprecated Story 14c-refactor.27: Use useViewHandlers().navigation.handleNavigateToHistory instead.
-     * Story 14.13 Session 4: Navigate to history with category filter (for treemap cell clicks) - will be removed in future version.
+     * Optional overrides for testing and production callbacks.
+     * In production, App.tsx passes callbacks that need App-level coordination.
+     * In tests, can inject mock data without needing to mock hooks.
      */
-    onNavigateToHistory?: (payload: HistoryNavigationPayload) => void;
-    /** Story 14.14: Color theme for unified category colors */
-    colorTheme?: ThemeName;
-    // Story 14.15b: Selection mode props for Dashboard
-    /** Authenticated user ID for group operations */
-    userId?: string | null;
-    /** App ID for Firestore path */
-    appId?: string;
-    /** Callback when transactions are deleted */
-    onTransactionsDeleted?: (deletedIds: string[]) => void;
-    /**
-     * v9.7.0: Recent scans for "Últimos Escaneados" carousel.
-     * Separate Firestore query ordered by createdAt (scan timestamp) instead of date.
-     * Ensures recently scanned receipts with old transaction dates appear.
-     */
-    recentScans?: Transaction[];
-    /** Story 14.13: Font color mode for category text colors (colorful vs plain) */
-    fontColorMode?: 'colorful' | 'plain';
-    /** Story 14.31: Navigate to recent scans view (Ver todo) */
-    onViewRecentScans?: () => void;
-    /** Story 14.35b: User's default country for foreign location detection */
-    defaultCountry?: string;
-    /** Story 14.35b: How to display foreign locations (code or flag) */
-    foreignLocationFormat?: 'code' | 'flag';
-    /** Group consolidation: Shared groups for dynamic group color lookup */
-    sharedGroups?: Array<{ id: string; color: string }>;
+    _testOverrides?: Partial<UseDashboardViewDataReturn & {
+        /** Callback when transactions are deleted */
+        onTransactionsDeleted?: (deletedIds: string[]) => void;
+    }>;
 }
 
 // Story 14.12: Number of recent transactions to show (collapsed/expanded)
@@ -444,49 +413,50 @@ const AnimatedTreemapCard: React.FC<AnimatedTreemapCardProps> = ({
     );
 };
 
-export const DashboardView: React.FC<DashboardViewProps> = ({
-    transactions,
-    t,
-    currency,
-    dateFormat,
-    theme,
-    formatCurrency,
-    formatDate,
-    // onCreateNew - kept in interface for backwards compatibility, unused per mockup alignment
-    onViewTrends,
-    onEditTransaction,
-    // onTriggerScan - kept in interface for backwards compatibility, FAB in nav handles scan
-    allTransactions = [],
-    // Story 9.12: Language for translations
-    lang = 'en',
-    onViewHistory,
-    // Story 14c-refactor.27: onNavigateToHistory moved to useViewHandlers().navigation.handleNavigateToHistory
-    onNavigateToHistory: _deprecatedOnNavigateToHistory,
-    // Story 14.14: Color theme for unified category colors
-    colorTheme = 'normal',
-    // Story 14.15b: Selection mode props
-    userId = null,
-    appId = 'boletapp',
-    onTransactionsDeleted,
-    // v9.7.0: Recent scans for "Últimos Escaneados" carousel
-    recentScans = [],
-    // Story 14.13: Font color mode - receiving this prop triggers re-render when setting changes
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    fontColorMode: _fontColorMode,
-    // Story 14.31: Navigate to recent scans view (Ver todo)
-    onViewRecentScans,
-    // Story 14.35b: Foreign location display settings
-    defaultCountry = '',
-    foreignLocationFormat = 'code',
-    // Group consolidation: Shared groups for dynamic color lookup (DEPRECATED - now using useAllUserGroups internally)
-    sharedGroups: _sharedGroups = [],
-}) => {
+export const DashboardView: React.FC<DashboardViewProps> = ({ _testOverrides }) => {
+    // Story 14e-25b.2: Get all data from internal hook
+    const hookData = useDashboardViewData();
+
+    // Merge hook data with test overrides (test overrides take precedence)
+    // Pattern: HistoryView lines 186-209
+    const {
+        transactions,
+        allTransactions,
+        recentScans,
+        userId,
+        appId,
+        theme,
+        colorTheme,
+        fontColorMode: _fontColorMode,
+        lang,
+        currency,
+        dateFormat,
+        defaultCountry,
+        foreignLocationFormat,
+        t,
+        formatCurrency,
+        formatDate,
+        getSafeDate: _getSafeDate,
+        sharedGroups: _sharedGroups,
+        onCreateNew: _onCreateNew,
+        onViewTrends,
+        onEditTransaction,
+        onTriggerScan: _onTriggerScan,
+        onViewRecentScans,
+    } = { ...hookData, ..._testOverrides };
+
+    // Extract onTransactionsDeleted from overrides (not in hook)
+    const onTransactionsDeleted = _testOverrides?.onTransactionsDeleted;
+
     // Story 7.12: Theme-aware styling using CSS variables (AC #1, #2, #8)
     const isDark = theme === 'dark';
 
-    // Story 14c-refactor.27: Get navigation handlers from ViewHandlersContext
-    const { navigation } = useViewHandlers();
-    const onNavigateToHistory = navigation.handleNavigateToHistory;
+    // Story 14e-25d: Direct navigation hooks (ViewHandlersContext deleted)
+    const { handleNavigateToHistory } = useHistoryNavigation();
+    const { setView } = useNavigationActions();
+    const onNavigateToHistory = handleNavigateToHistory;
+    // Story 14e-25b.2: onViewHistory from navigation (fallback for "Ver todo")
+    const onViewHistory = () => setView('history');
 
     // Story 14.12: Reduced motion preference (available for future use)
     useReducedMotion();
@@ -632,13 +602,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     // Group consolidation: Shared groups for group assignment
     const { groups, isLoading: groupsLoading } = useAllUserGroups(userId || undefined);
 
-    const queryClient = useQueryClient();
+    // Story 14d-v2-1.1: queryClient removed - group cache invalidation disabled (Epic 14c cleanup)
 
-    const getGroupColorForTransaction = useCallback((tx: Transaction): string | undefined => {
-        if (!tx.sharedGroupIds?.length || !groups.length) return undefined;
-        const group = groups.find(g => tx.sharedGroupIds?.includes(g.id));
-        return group?.color;
-    }, [groups]);
+    // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
+    // Epic 14d will use sharedGroupId (single nullable string) instead
+    const getGroupColorForTransaction = useCallback((_tx: Transaction): string | undefined => {
+        return undefined;
+    }, []);
 
     // Group consolidation: Modal states
     const [showGroupSelector, setShowGroupSelector] = useState(false);
@@ -2041,64 +2011,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
     // Story 14e-5: handleOpenDelete defined after getSelectedTransactions (see below)
 
-    // Group consolidation: Handle group assignment using TransactionGroupSelector
-    // Updates sharedGroupIds on all selected transactions
-    const handleGroupSelect = async (groupIds: string[]) => {
-        if (!userId || selectedIds.size === 0) return;
-
-        const selectedTxIds = Array.from(selectedIds);
-        const db = getFirestore();
-
-        // Get previous group IDs from selected transactions
-        const previousGroupIds = new Set<string>();
-        recentTransactions.forEach(tx => {
-            const transaction = tx as Transaction;
-            if (selectedIds.has(transaction.id)) {
-                (transaction.sharedGroupIds || []).forEach(gid => previousGroupIds.add(gid));
-            }
-        });
-
-        // All affected groups = union of previous and new
-        const affectedGroupIds = new Set([...previousGroupIds, ...groupIds]);
-
-        try {
-            // Update each selected transaction with the new sharedGroupIds
-            await Promise.all(
-                selectedTxIds.map(txId =>
-                    updateTransaction(db, userId, appId, txId, {
-                        sharedGroupIds: groupIds.length > 0 ? groupIds : [],
-                    })
-                )
-            );
-
-            // Story 14c-refactor.4: IndexedDB cache deleted - only React Query invalidation now
-            // TODO(14c-refactor.12): Dead code - sharedGroupTransactions query keys removed.
-            // This entire block is a no-op since shared groups are stubbed.
-            // Remove when shared groups feature is re-implemented in Epic 14d.
-            // Invalidate React Query cache for affected groups
-            await Promise.all(Array.from(affectedGroupIds).map(async groupId => {
-                // Reset React Query cache to clear in-memory data
-                await queryClient.resetQueries({
-                    queryKey: ['sharedGroupTransactions', groupId],
-                });
-                // THEN invalidate to trigger fresh fetch from Firestore
-                // Use refetchType: 'all' to force refetch even for inactive queries
-                queryClient.invalidateQueries({
-                    queryKey: ['sharedGroupTransactions', groupId],
-                    exact: false, // Invalidate all date ranges for this group
-                    refetchType: 'all',
-                });
-            }));
-
-            if (import.meta.env.DEV) {
-                console.log('[DashboardView] Invalidated React Query for groups:', Array.from(affectedGroupIds));
-            }
-
-            setShowGroupSelector(false);
-            exitSelectionMode();
-        } catch (error) {
-            console.error('Error assigning groups:', error);
-        }
+    // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
+    // Epic 14d will use sharedGroupId (single nullable string) instead
+    // Group assignment functionality disabled until Epic 14d
+    const handleGroupSelect = async (_groupIds: string[]) => {
+        console.warn('[DashboardView] Group assignment disabled - Epic 14c cleanup');
+        setShowGroupSelector(false);
+        exitSelectionMode();
     };
 
     // Story 14e-5: handleConfirmDelete logic moved into openDeleteModal callback
@@ -2175,7 +2094,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         thumbnailUrl: transaction.thumbnailUrl,
                         imageUrls: transaction.imageUrls,
                         items: transaction.items || [],
-                        sharedGroupIds: transaction.sharedGroupIds,
+                        // Story 14d-v2-1.1: sharedGroupIds removed (Epic 14c cleanup)
                     }}
                     groupColor={getGroupColorForTransaction(transaction)}
                     formatters={{
@@ -2192,7 +2111,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     userDefaultCountry={defaultCountry}
                     foreignLocationFormat={foreignLocationFormat}
                     isDuplicate={isDuplicate}
-                    onClick={() => onEditTransaction(transaction)}
+                    onClick={() => onEditTransaction(transaction as any)}
                     onThumbnailClick={() => handleThumbnailClick(transaction)}
                     selection={isSelectionMode ? {
                         isSelectionMode,

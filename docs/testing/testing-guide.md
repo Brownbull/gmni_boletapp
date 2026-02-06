@@ -1,54 +1,58 @@
-# Testing Guide - Boletapp
+# Testing Guide - BoletApp
 
-**Version:** 3.0
-**Last Updated:** 2025-12-07 (Epic 7 Test Optimization)
+**Version:** 4.0
+**Last Updated:** 2026-02-05
 **Status:** Active
+**Total Tests:** ~3,200+
+
+---
 
 ## Overview
 
-This guide covers testing patterns and best practices for Boletapp's three-tier testing framework:
+BoletApp employs a multi-layered testing strategy with ~3,200+ tests across 200+ test files. The testing pyramid follows industry best practices:
 
-1. **Unit Tests** (Vitest) - Test pure functions and isolated components
-2. **Integration Tests** (React Testing Library) - Test component interactions
-3. **E2E Tests** (Playwright) - Test complete user workflows
-4. **Accessibility Tests** (axe-core/Playwright) - Test WCAG 2.1 Level AA compliance (Epic 3)
-5. **Performance Tests** (Lighthouse CI) - Test performance baselines (Epic 3)
+```
+                    +----------+
+                    |   E2E    |  7 specs - User journeys (~50 tests)
+                   -+----------+-
+                  / |          | \
+                 /  |Integrat. |  \  25 files - Service integration (~200 tests)
+                /   |  Tests   |   \
+              -/----+----------+----\-
+             /      |          |      \
+            /       |   Unit   |       \  170 files - Isolated logic (~3,000 tests)
+           /        |  Tests   |        \
+          ----------+----------+----------
+```
 
-## Testing Framework Stack
+### Testing Framework Stack
 
-| Framework | Purpose | Files Location |
-|-----------|---------|----------------|
-| **Vitest** | Unit tests | `tests/unit/` |
-| **React Testing Library** | Integration tests | `tests/integration/` |
-| **Playwright** | E2E tests | `tests/e2e/` |
-| **@firebase/rules-unit-testing** | Security rules tests | `tests/integration/` |
-| **@axe-core/playwright** | Accessibility tests | `tests/e2e/accessibility.spec.ts` |
-| **playwright-lighthouse** | Performance tests | `tests/e2e/lighthouse.spec.ts` |
+| Layer | Technology | Version | Config File |
+|-------|-----------|---------|-------------|
+| **Unit Tests** | Vitest | 4.0.13 | `vite.config.ts` / `vitest.config.unit.ts` |
+| **Integration Tests** | React Testing Library | 16.3.0 | `tests/setup/test-utils.tsx` |
+| **E2E Tests** | Playwright | 1.56.1 | `playwright.config.ts` |
+| **Coverage** | @vitest/coverage-v8 | 4.0.13 | `vite.config.ts` |
+| **Security Rules** | @firebase/rules-unit-testing | -- | `tests/integration/` |
+| **Accessibility** | @axe-core/playwright | -- | `tests/e2e/accessibility.spec.ts` |
+| **Performance** | playwright-lighthouse | -- | `tests/e2e/lighthouse.spec.ts` |
+| **Emulators** | Firebase | 10.14.1 | `firebase.json` |
+| **Security Lint** | ESLint Security | -- | `eslint.config.security.mjs` |
+
+---
 
 ## Quick Start
 
 ### Prerequisites
 
-1. **Install Dependencies** (already done if you followed the development guide)
 ```bash
-npm install
+npm install             # Install dependencies
+npm run emulators       # Start Firebase Emulators (required for integration tests)
 ```
 
-2. **Start Firebase Emulators** (required for integration tests)
-```bash
-npm run emulators
-```
+The emulators start on: Firestore `localhost:8080`, Auth `localhost:9099`, UI `localhost:4000`.
 
-The emulators will start on:
-- Firestore Emulator: `localhost:8080`
-- Auth Emulator: `localhost:9099`
-- Emulator UI: `localhost:4000`
-
-### Running Tests
-
-#### Tiered Test Commands (Epic 7+)
-
-Use tiered tests based on your current phase:
+### Tiered Test Commands
 
 | Command | Duration | Use When |
 |---------|----------|----------|
@@ -57,7 +61,7 @@ Use tiered tests based on your current phase:
 | `npm run test:sprint` | ~5min | End of epic, before deployment |
 
 ```bash
-# RECOMMENDED: Tiered testing (fastest to most comprehensive)
+# Tiered testing (fastest to most comprehensive)
 npm run test:quick      # TypeScript + parallel unit tests (~35s)
 npm run test:story      # Quick + integration tests (~2min)
 npm run test:sprint     # Full suite: unit + integration + E2E (~5min)
@@ -74,21 +78,33 @@ npm test                       # Watch mode (useful during development)
 npm run test:coverage          # Tests + coverage report
 
 # Specialized tests
-npm run test:accessibility     # Accessibility tests (Epic 3)
-npm run test:lighthouse        # Lighthouse performance tests (Epic 3)
+npm run test:accessibility     # Accessibility tests
+npm run test:lighthouse        # Lighthouse performance tests
+npm run security:lint          # Security static analysis
 ```
 
-**Why tiered testing?**
-- Unit tests (610+) run in parallel via `vitest.config.unit.ts`
-- Integration tests (300+) must run sequentially (Firebase emulator)
-- E2E tests are slow - only needed for epic completion
+### Running Specific Tests
+
+```bash
+# Single file
+npx vitest run tests/unit/utils/currency.test.ts
+npx vitest run tests/integration/auth-flow.test.tsx
+npx playwright test tests/e2e/login.spec.ts
+
+# Watch mode on directory
+npx vitest tests/unit
+
+# Interactive UI
+npx vitest --ui    # Opens at http://localhost:51204
+```
+
+---
 
 ## Writing Unit Tests
 
 Unit tests verify individual functions, utilities, and isolated logic without rendering components or making network calls.
 
-### Location
-`tests/unit/`
+**Location:** `tests/unit/` (170 files, ~3,000 tests)
 
 ### Example: Testing Utility Functions
 
@@ -105,20 +121,8 @@ describe('formatCurrency', () => {
   it('should handle zero correctly', () => {
     expect(formatCurrency(0, 'USD')).toBe('$0.00');
   });
-
-  it('should round to 2 decimal places', () => {
-    expect(formatCurrency(1.999, 'USD')).toBe('$2.00');
-  });
 });
 ```
-
-### Best Practices
-
-- **Test pure functions first** - They're easiest to test and provide the most value
-- **One concept per test** - Each `it()` should verify one specific behavior
-- **Use descriptive test names** - "should X when Y" format
-- **Test edge cases** - Zero, negative numbers, empty strings, null, undefined
-- **Mock external dependencies** - Use `vi.mock()` to mock services, APIs, etc.
 
 ### Mocking Example
 
@@ -126,7 +130,6 @@ describe('formatCurrency', () => {
 import { describe, it, expect, vi } from 'vitest';
 import { analyzeReceipt } from '../../../src/services/gemini';
 
-// Mock the Gemini API
 vi.mock('../../../src/services/gemini', () => ({
   analyzeReceipt: vi.fn().mockResolvedValue({
     merchant: 'Test Store',
@@ -144,109 +147,49 @@ describe('Receipt Analysis', () => {
 });
 ```
 
-### Common Pitfalls & Solutions
+### Common Pitfalls
 
 #### Pitfall 1: Default Array/Object Parameters Cause Infinite Loops
 
-**Problem (Story 14.30.8):** React components with default array/object parameters can cause infinite render loops in tests:
+In JavaScript, `[] !== []` because each creates a new reference. When used as a default parameter, every render creates a new array, triggering useEffect dependencies infinitely.
 
 ```typescript
-// ❌ BAD: Creates new array reference on every render
-const MyComponent = ({ items = [] }) => {
-  useEffect(() => {
-    // This runs INFINITELY because [] !== [] (different references)
-    processItems(items);
-  }, [items]);
-  // ...
-}
-```
+// BAD: Creates new array reference on every render
+const MyComponent = ({ items = [] }) => { ... }
 
-**Root Cause:** In JavaScript, `[] !== []` because each `[]` creates a new object reference. When used as a default parameter, every render creates a new array, which triggers useEffect dependencies, causing re-renders, ad infinitum.
-
-**Solution - In Components:**
-```typescript
-// ✅ GOOD: Use a stable constant for default arrays/objects
+// GOOD: Use a stable constant for default arrays/objects
 const EMPTY_ITEMS: Item[] = [];
-
-const MyComponent = ({ items = EMPTY_ITEMS }) => {
-  useEffect(() => {
-    processItems(items);
-  }, [items]); // Now stable - won't trigger infinite loops
-  // ...
-}
+const MyComponent = ({ items = EMPTY_ITEMS }) => { ... }
 ```
 
-**Solution - In Tests (if you can't modify component):**
+**In tests:** Provide stable references in test props:
 ```typescript
-// ✅ GOOD: Provide stable reference in test props
 const STABLE_EMPTY_ARRAY: never[] = [];
-
-const defaultProps = {
-  items: STABLE_EMPTY_ARRAY, // CRITICAL: Must be stable reference
-  // ... other props
-};
+const defaultProps = { items: STABLE_EMPTY_ARRAY };
 ```
-
-**How to Detect:** If a test hangs during render (not during assertions), check for:
-1. Default array/object parameters in component props
-2. useEffect dependencies that include those props
-3. State updates inside useEffects that could cause re-renders
 
 #### Pitfall 2: setTimeout in Components Causes Test Hangs
 
-**Problem:** Components using `setTimeout` for focus management, animations, or debouncing can hang in tests:
-
-```typescript
-// Component with setTimeout
-useEffect(() => {
-  if (isOpen) {
-    setTimeout(() => closeButtonRef.current?.focus(), 0);
-  }
-}, [isOpen]);
-```
-
-**Solution:** Use fake timers and advance them after render:
-
 ```typescript
 describe('DialogComponent', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.useRealTimers(); });
 
   it('should render dialog', () => {
     render(<DialogComponent isOpen={true} />);
-    act(() => { vi.runAllTimers(); }); // Process setTimeout calls
+    act(() => { vi.runAllTimers(); });
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 });
 ```
 
-**Important:** When using fake timers, use `fireEvent` instead of `userEvent` for clicks/interactions. `userEvent` doesn't work well with fake timers.
+**Important:** When using fake timers, use `fireEvent` instead of `userEvent` for clicks/interactions.
 
 #### Pitfall 3: useMemo Dependencies in useEffect Cause Infinite Loops
 
-**Problem (Story 14.30.8):** Using a `useMemo` result as a `useEffect` dependency can cause infinite loops if the effect calls `setState`:
+Using a `useMemo` result as a `useEffect` dependency can cause infinite loops if the effect calls `setState`. Use a ref to track when source data actually changes:
 
 ```typescript
-// ❌ BAD: initialReceipts can trigger infinite loop
-const initialReceipts = useMemo(() =>
-  createReceipts(processingResults), [processingResults]);
-
-const [localReceipts, setLocalReceipts] = useState(initialReceipts);
-
-useEffect(() => {
-  setLocalReceipts(initialReceipts); // Triggers re-render → useMemo re-evaluates → useEffect runs again
-}, [initialReceipts]); // ← Problematic dependency
-```
-
-**Solution:** Use a ref to track when the source data actually changes:
-
-```typescript
-// ✅ GOOD: Track source data reference to prevent spurious syncs
 const prevProcessingResultsRef = useRef(processingResults);
 
 useEffect(() => {
@@ -254,58 +197,18 @@ useEffect(() => {
     prevProcessingResultsRef.current = processingResults;
     setLocalReceipts(initialReceipts);
   }
-}, [processingResults, initialReceipts]); // Only syncs when actual data changes
+}, [processingResults, initialReceipts]);
 ```
 
-**Real-world example:** `useBatchReview` hook had this exact issue. After `updateReceipt()` called `setLocalReceipts()`, the useEffect would overwrite the update with `initialReceipts`, causing an infinite loop.
-
-#### Pitfall 4: Modal Content Hidden Behind Bottom Navigation
-
-**Problem:** Modal dialogs can be cut off by bottom navigation bars on mobile:
-
-**Solution:** Add proper constraints to modal containers:
-```typescript
-// ❌ BAD: No height constraint
-<div className="fixed inset-0 flex items-center justify-center p-4">
-
-// ✅ GOOD: Account for bottom nav and allow scrolling
-<div className="fixed inset-0 flex items-center justify-center p-4 pb-20">
-  <div className="max-h-[calc(100vh-6rem)] overflow-y-auto">
-    {/* Modal content */}
-  </div>
-</div>
-```
+---
 
 ## Writing Integration Tests
 
 Integration tests verify that React components render correctly and interact with each other properly.
 
-### Location
-`tests/integration/`
+**Location:** `tests/integration/` (25 files, ~200 tests)
 
 ### Example: Testing React Components
-
-```typescript
-// tests/integration/CategoryBadge.test.tsx
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '../setup/test-utils';
-import { CategoryBadge } from '../../src/components/CategoryBadge';
-
-describe('CategoryBadge Component', () => {
-  it('should render the category name', () => {
-    render(<CategoryBadge category="Groceries" />);
-    expect(screen.getByText('Groceries')).toBeInTheDocument();
-  });
-
-  it('should apply correct color class for category', () => {
-    const { container } = render(<CategoryBadge category="Groceries" />);
-    const badge = container.querySelector('.bg-green-100');
-    expect(badge).toBeInTheDocument();
-  });
-});
-```
-
-### Testing User Interactions
 
 ```typescript
 import { render, screen } from '../setup/test-utils';
@@ -327,241 +230,122 @@ describe('EditView Component', () => {
 
 ### Best Practices
 
-- **Use custom render from test-utils.tsx** - It wraps components with necessary providers
+- **Use custom render from test-utils.tsx** - Wraps components with necessary providers
 - **Query by role/label, not by implementation** - `getByRole('button')` not `querySelector('.btn')`
-- **Test user interactions** - Click, type, submit forms
 - **Wait for async updates** - Use `await waitFor()` for async state changes
-- **Test accessibility** - Ensure proper ARIA labels and roles
+
+---
 
 ## Writing E2E Tests
 
-E2E tests verify complete user workflows in a real browser, simulating actual user behavior.
+E2E tests verify complete user workflows in a real browser.
 
-### Location
-`tests/e2e/`
+**Location:** `tests/e2e/` (7 spec files, ~50 tests)
 
-### Example: Testing Login Flow
+### E2E Conventions
 
-```typescript
-// tests/e2e/login.spec.ts
-import { test, expect } from '@playwright/test';
+| Convention | Requirement |
+|------------|-------------|
+| Viewport | Always mobile: `{ width: 360, height: 780 }` |
+| Timeout | 60-120s for journey tests |
+| Screenshots | At each step: `fullPage: true` |
+| Naming | `{story-id}-{step}-{description}.png` |
+| Cleanup | Always delete test data at end |
 
-test.describe('Authentication Flow', () => {
-  test('should login with Google OAuth', async ({ page }) => {
-    // Navigate to app
-    await page.goto('/');
+### When to Write E2E vs Integration
 
-    // Click "Sign in with Google"
-    await page.click('text=Sign in with Google');
+| Scenario | Test Type | Reason |
+|----------|-----------|--------|
+| Form validation | Integration | Faster, no browser |
+| API response handling | Integration | Mock responses |
+| Multi-view workflow | E2E | Requires navigation |
+| Data persistence check | E2E | Needs real/emulated DB |
+| User authentication flow | E2E | Browser state required |
 
-    // Wait for redirect (in emulator, this is simplified)
-    await page.waitForURL('**/dashboard');
-
-    // Verify user is logged in
-    await expect(page.locator('text=Dashboard')).toBeVisible();
-  });
-});
-```
-
-### Testing Receipt Scanning Flow
+### E2E Anti-Patterns
 
 ```typescript
-test('should scan receipt and create transaction', async ({ page }) => {
-  // Login first
-  await page.goto('/');
-  await page.click('text=Sign in with Google');
+// BAD: Testing implementation details
+await expect(page.locator('.internal-class')).toBeVisible();
+// GOOD: Testing user-visible behavior via data-testid
+await expect(page.locator('[data-testid="group-card-123"]')).toBeVisible();
 
-  // Navigate to scan view
-  await page.click('text=Scan');
+// BAD: Arbitrary waits
+await page.waitForTimeout(5000);
+// GOOD: Wait for specific condition
+await page.waitForSelector('[data-testid="grupos-view"]', { timeout: 10000 });
 
-  // Upload receipt image
-  await page.setInputFiles('input[type="file"]', './tests/fixtures/receipt-images/sample-receipt.jpg');
-
-  // Wait for AI analysis
-  await page.waitForSelector('text=Merchant:');
-
-  // Verify extracted data is displayed
-  expect(await page.textContent('input[name="merchant"]')).toContain('Walmart');
-
-  // Save transaction
-  await page.click('text=Save');
-
-  // Verify transaction appears in history
-  await expect(page.locator('text=Walmart')).toBeVisible();
-});
+// BAD: No cleanup - test data left behind
+// GOOD: Always cleanup at end of test
 ```
 
-### Best Practices
+**Full E2E reference:** `tests/e2e/E2E-TEST-CONVENTIONS.md`
 
-- **Start tests from a clean state** - Reset database before each test
-- **Use page.goto() sparingly** - Navigate using UI clicks when possible
-- **Wait for elements, don't use arbitrary timeouts** - `await page.waitForSelector()`
-- **Take screenshots on failure** - Configured automatically in playwright.config.ts
-- **Test critical paths only** - E2E tests are slow, focus on HIGH risk workflows
+---
 
-## Writing Accessibility Tests (Epic 3)
+## Prompt Tests
 
-Accessibility tests verify WCAG 2.1 Level AA compliance using automated axe-core scans.
+**Total Tests:** 134
+**Purpose:** AI prompt validation and versioning across 3 locations
 
-### Location
-`tests/e2e/accessibility.spec.ts`
+| Location | Tests | Purpose |
+|----------|-------|---------|
+| `shared/prompts/__tests__/index.test.ts` | 62 | Core prompt library (active prompt, V1, V2, registry) |
+| `prompt-testing/prompts/__tests__/index.test.ts` | 72 | V3 prompt with expanded categories (36 store, 39 item) |
+| `functions/src/prompts/__tests__/index.test.ts` | SKIPPED | Module resolution issue; covered by above |
 
-### Example: Testing View Accessibility
+Key test areas: prompt retrieval, variable substitution, currency context, receipt type descriptions, complete prompt building, version compatibility (V1/V2/V3).
 
-```typescript
-// tests/e2e/accessibility.spec.ts
-import { test, expect } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
+---
 
-test('Dashboard view should have no critical/serious accessibility violations', async ({ page }) => {
-  await page.goto('/');
-  await page.waitForLoadState('networkidle');
+## Cloud Function Tests
 
-  // Authenticate via test login button
-  await page.getByTestId('test-login-button').click();
-  await page.waitForSelector('text=/Dashboard|Inicio/i', { timeout: 10000 });
+**Location:** `functions/src/__tests__/` (2 files)
 
-  // Run axe scan
-  const accessibilityScanResults = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa'])
-    .analyze();
+| File | Purpose | Key Tests |
+|------|---------|-----------|
+| `analyzeReceipt.test.ts` | Receipt analysis Cloud Function | Auth, input validation, Gemini API, response parsing, rate limiting |
+| `imageProcessing.test.ts` | Image preprocessing | Compression, format validation, EXIF metadata, OCR preprocessing |
 
-  const critical = accessibilityScanResults.violations.filter(v => v.impact === 'critical');
-  const serious = accessibilityScanResults.violations.filter(v => v.impact === 'serious');
+---
 
-  expect(critical).toEqual([]);
-  expect(serious).toEqual([]);
-});
-```
+## Accessibility Tests
 
-### Test User Setup for Authenticated Tests
+**Location:** `tests/e2e/accessibility.spec.ts`
 
-Create a test user in the Firebase Auth emulator:
+Tests WCAG 2.1 Level AA compliance using axe-core scans across all major views. Focuses on critical/serious violations, keyboard navigation, ARIA labels, and both English/Spanish language support.
 
-```bash
-npm run emulators  # Terminal 1
-npm run test:create-user  # Terminal 2 (one-time setup)
-```
+---
 
-This creates a test user (`khujta@gmail.com` / `password.123`) that the test login button uses.
+## Performance Tests
 
-### Best Practices
+**Location:** `tests/e2e/lighthouse.spec.ts`
 
-- **Test all major views** - Login, Dashboard, Scan, History, Trends, Settings
-- **Focus on critical/serious violations** - Minor violations can be informational
-- **Include keyboard navigation tests** - Ensure all interactive elements are accessible
-- **Check ARIA labels** - All buttons, inputs, and interactive elements need labels
-- **Test both languages** - App supports English and Spanish
+Uses Lighthouse CI for performance baselines: Performance > 50, Accessibility > 80, Best Practices > 80, SEO > 70.
 
-## Writing Performance Tests (Epic 3)
-
-Performance tests use Lighthouse CI to establish and monitor performance baselines.
-
-### Location
-`tests/e2e/lighthouse.spec.ts`
-
-### Example: Testing View Performance
-
-```typescript
-// tests/e2e/lighthouse.spec.ts
-import { test, expect } from '@playwright/test';
-import { playAudit } from 'playwright-lighthouse';
-
-test('Dashboard view should meet performance thresholds', async ({ page }) => {
-  await page.goto('/');
-
-  // Authenticate first
-  await page.getByTestId('test-login-button').click();
-  await page.waitForSelector('text=/Dashboard|Inicio/i');
-
-  // Run Lighthouse audit
-  const report = await playAudit({
-    page,
-    thresholds: {
-      performance: 50,
-      accessibility: 80,
-      'best-practices': 80,
-      seo: 70,
-    },
-    port: 9222,
-  });
-
-  expect(report.lhr.categories.performance.score * 100).toBeGreaterThanOrEqual(50);
-});
-```
-
-### Best Practices
-
-- **Use warn mode in CI** - Performance can vary, don't fail CI on minor drops
-- **Track baselines over time** - Document baseline scores in [docs/performance/performance-baselines.md](../performance/performance-baselines.md)
-- **Test on consistent hardware** - CI provides consistent environment
-- **Focus on critical views** - Login, Dashboard, Scan are most important
+---
 
 ## Testing with Firebase Emulators
 
-### Setup
-
-The test environment automatically connects to Firebase emulators via environment variables set in `vitest.setup.ts`:
-
+Tests automatically connect to emulators via `vitest.setup.ts`:
 ```typescript
 process.env.FIRESTORE_EMULATOR_HOST = 'localhost:8080';
 process.env.FIREBASE_AUTH_EMULATOR_HOST = 'localhost:9099';
 ```
 
-### Writing Firestore Tests
-
-```typescript
-import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest';
-import {
-  setupFirebaseEmulator,
-  clearFirestoreData,
-  teardownFirebaseEmulator,
-  getAuthedFirestore,
-  TEST_USERS,
-  assertSucceeds,
-  assertFails,
-} from '../setup/firebase-emulator';
-
-describe('Firestore Security Rules', () => {
-  beforeAll(async () => {
-    await setupFirebaseEmulator();
-  });
-
-  afterEach(async () => {
-    await clearFirestoreData();
-  });
-
-  afterAll(async () => {
-    await teardownFirebaseEmulator();
-  });
-
-  it('should allow users to read their own data', async () => {
-    const db = getAuthedFirestore(TEST_USERS.USER_1);
-    const docRef = db.collection('artifacts/boletapp-d609f/users/test-user-1-uid/transactions').doc('tx1');
-
-    await assertSucceeds(docRef.get());
-  });
-
-  it('should deny users from reading other users data', async () => {
-    const db = getAuthedFirestore(TEST_USERS.USER_1);
-    const docRef = db.collection('artifacts/boletapp-d609f/users/test-user-2-uid/transactions').doc('tx1');
-
-    await assertFails(docRef.get());
-  });
-});
-```
-
 ### Test Data Management
 
-Use the reset script to populate test data:
-
 ```bash
-# Reset test data to fixtures
-npm run test:reset-data
-
-# View current emulator data
-npm run test:view-data
+npm run test:reset-data    # Reset test data to fixtures
+npm run test:view-data     # View current emulator data
+npm run test:create-user   # One-time: create test user for E2E
 ```
+
+### Security Rules Tests
+
+Validates Firestore and Storage rules: user data isolation (`request.auth.uid == userId`), cross-user access blocked, unauthenticated access blocked, write validation, field-level security.
+
+---
 
 ## Test Coverage
 
@@ -569,16 +353,10 @@ npm run test:view-data
 
 ```bash
 npm run test:coverage
+# Terminal output, HTML at coverage/index.html, JSON at coverage/coverage-final.json
 ```
 
-This generates:
-- **Terminal output** - Summary of coverage percentages
-- **HTML report** - Open `coverage/index.html` in a browser
-- **JSON report** - `coverage/coverage-final.json` for CI tools
-
-### Coverage Thresholds (Epic 3)
-
-Coverage thresholds are enforced in CI via `vite.config.ts`:
+### CI Enforcement Thresholds
 
 | Metric | Threshold | Current |
 |--------|-----------|---------|
@@ -587,92 +365,253 @@ Coverage thresholds are enforced in CI via `vite.config.ts`:
 | **Functions** | 25% | ~30% |
 | **Statements** | 40% | ~46% |
 
-**Note:** Coverage below thresholds will cause CI to fail.
+### Coverage Targets by Code Type
 
-See [CONTRIBUTING.md](../../CONTRIBUTING.md) for full coverage requirements.
+| Code Type | Target Coverage | Notes |
+|-----------|-----------------|-------|
+| **Critical paths** (auth, data isolation) | 90%+ | Security-critical |
+| **Utility functions** | 90%+ | Pure, easy to test |
+| **Services** (Firestore, Gemini) | 80%+ | Business logic critical |
+| **Hooks** | 70%+ | Integration tests preferred |
+| **Components** (UI) | 60%+ | Focus on user interactions |
+| **Types/constants** | 0% | Not testable code |
 
-### Coverage Goals
+---
 
-| Category | Target | Priority |
-|----------|--------|----------|
-| **Critical paths** (auth, data isolation, security) | 90%+ | HIGH |
-| **Services** (Firestore, Gemini) | 80%+ | HIGH |
-| **Utils** (pure functions) | 80%+ | MEDIUM |
-| **Components** (UI) | 70%+ | MEDIUM |
-| **Views** (pages) | 60%+ | LOW |
+## What TO Test (High Value)
+
+### Always Unit Test
+- **Pure utility functions** (date/time, formatting, calculations, validation)
+- **State machine logic** (Zustand store reducers, complex conditionals)
+- **Data transformations** (normalization, type converters)
+
+### Always Integration Test
+- **Hooks with dependencies** (React Query, Firestore, Context)
+- **Component + Store interactions**
+- **Service layer with mocked Firebase**
+- **Form validation flows**
+
+### Always E2E Test
+- **Critical user journeys** (login, scan transaction, view history)
+- **Multi-step workflows** (create group, invite member, accept)
+- **Data persistence verification**
+
+---
+
+## What NOT to Test (Low Value)
+
+| Pattern | Reason | Alternative |
+|---------|--------|-------------|
+| React component renders alone | React is tested by Meta | Integration test with user interaction |
+| Firebase mock implementations | Testing the mock, not the code | Integration test with emulator |
+| TypeScript types compile | TS compiler does this | Remove |
+| Constants have correct values | Trivial | Remove |
+| Implementation details (`mock.toHaveBeenCalled`) | Brittle, tests internals | Test behavior outcomes |
+| 10+ assertions for one function | Over-testing | 2-3 assertions per test |
+
+### Red Flags in Existing Tests
+
+```typescript
+// BAD: Testing mock was called (implementation detail)
+expect(mockAddDoc).toHaveBeenCalledWith(
+  expect.anything(),
+  expect.objectContaining({ name: 'Test' })
+);
+
+// GOOD: Testing behavior outcome
+const groups = await getUserGroups(userId);
+expect(groups).toHaveLength(1);
+expect(groups[0].name).toBe('Test');
+```
+
+---
+
+## Test Writing Rules
+
+### DRY in Tests
+
+```typescript
+// BAD: Repeated setup in every test
+it('creates a group', async () => {
+  const mockUser = { uid: 'user-1', email: 'test@test.com' };
+  // ... test
+});
+it('validates name', async () => {
+  const mockUser = { uid: 'user-1', email: 'test@test.com' };
+  // ... test
+});
+
+// GOOD: Shared setup
+const mockUser = createMockUser();
+it('creates a group', async () => { /* uses mockUser */ });
+it('validates name', async () => { /* uses mockUser */ });
+```
+
+### Test One Thing
+
+```typescript
+// BAD: Testing multiple behaviors in one test with 15 assertions
+// GOOD: Focused tests
+it('creates a group with owner as first member', async () => { /* 2 assertions */ });
+it('rejects empty name', async () => { /* 1 assertion */ });
+```
+
+### Avoid Implementation Testing
+
+```typescript
+// BAD: Testing internal implementation
+expect(mockAddDoc).toHaveBeenCalledWith(/* specific params */);
+
+// GOOD: Testing observable behavior
+await createGroup(userId, { name: 'Test' });
+const groups = await getUserGroups(userId);
+expect(groups).toContainEqual(expect.objectContaining({ name: 'Test' }));
+```
+
+---
+
+## Test File Size Guidelines
+
+| Test Type | Max Lines | Reasoning |
+|-----------|-----------|-----------|
+| Unit | 300 | Single module focus |
+| Integration | 500 | Multiple modules |
+| E2E | 400 | Journey-focused |
+
+A test file needs review if: file exceeds 500 lines, test-to-source ratio > 2:1, > 50% mock setup code, or > 20 `toHaveBeenCalled` assertions.
+
+---
+
+## Review Checklist for New Tests
+
+Before merging new tests, verify:
+
+- [ ] Test file < 300 lines (unit) or < 500 lines (integration)
+- [ ] No `toHaveBeenCalled` for simple pass-through functions
+- [ ] Uses shared factories from `tests/helpers/`
+- [ ] Tests behavior, not implementation
+- [ ] < 5 assertions per test
+- [ ] No duplicate mock setup (extracted to beforeEach)
+- [ ] File named according to conventions
+
+---
+
+## CI/CD Pipeline
+
+### Pipeline Structure
+
+```
+gitleaks (parallel) -------------------------------------------------+
+setup --+---> test-unit-1 ----------+                                 |
+        +---> test-unit-2 ----------+---> test-unit --+---> test -----+---> deploy
+        +---> test-unit-3 ----------+                 |
+        +---> test-coverage (PR only, non-blocking)   |
+        +---> test-integration -----------------------+
+        +---> test-e2e -------------------------------+
+        +---> security --------------------------------
+        +---> lighthouse (main push only)
+```
+
+### Job Timing Targets
+
+| Job | Target | Max Allowed |
+|-----|--------|-------------|
+| gitleaks | ~10s | 5 min |
+| setup | ~2 min | 10 min |
+| test-unit (per shard) | ~3-5 min | 15 min |
+| test-integration | ~1.5 min | 10 min |
+| test-e2e | ~2.5 min | 15 min |
+| security | ~2 min | 10 min |
+| **Total Pipeline** | **~8 min** | **20 min** |
+
+### Test Infrastructure Config Files
+
+| File | Purpose |
+|------|---------|
+| `vitest.config.unit.ts` | Local unit test config (parallel, fast) |
+| `vitest.config.ci.ts` | CI config (forks, memory-safe) |
+| `playwright.config.ts` | E2E test config (baseURL `localhost:5174`) |
+| `tests/setup/vitest.setup.ts` | Test initialization |
+| `tests/setup/test-utils.tsx` | React Testing Library utilities |
+| `tests/setup/firebase-emulator.ts` | Emulator setup |
+
+---
+
+## Debugging Tests
+
+### Debug Vitest in VS Code
+
+Add breakpoints and run:
+```bash
+npx vitest --inspect-brk
+```
+Then attach VS Code debugger (Node.js).
+
+### Debug Playwright Tests
+
+```bash
+npx playwright test --debug
+```
+Opens Playwright Inspector for step-by-step debugging.
+
+### View Test Artifacts
+
+- **Playwright screenshots on failure:** `test-results/`
+- **Playwright HTML report:** `npx playwright show-report`
+- **Vitest UI:** `npx vitest --ui`
+
+**Note:** BoletApp uses port 5174 for the dev server (not 5173) to avoid conflicts.
+
+---
 
 ## Troubleshooting
 
-### Tests fail with "Firestore emulator not running"
+| Problem | Solution |
+|---------|----------|
+| "Firestore emulator not running" | Run `npm run emulators` before tests |
+| "Cannot find module" | Check TypeScript paths in `tsconfig.json` and `vite.config.ts` |
+| E2E tests timeout | Increase timeout in `playwright.config.ts` |
+| Coverage reports missing files | Check `coverage.exclude` in `vite.config.ts` |
+| Playwright times out on startup | Increase `webServer.timeout` in `playwright.config.ts` |
+| Coverage report empty | Verify `vite.config.ts` uses `provider: 'v8'` |
+| Tests pass locally, fail in CI | Check emulators start in CI workflow |
 
-**Solution:** Start the emulators before running tests:
-```bash
-npm run emulators
-```
+---
 
-### Tests fail with "Cannot find module"
+## Known Issues & Technical Debt
 
-**Solution:** Check that TypeScript paths are configured correctly in `tsconfig.json` and `vite.config.ts`.
+| Issue | Impact | Status |
+|-------|--------|--------|
+| Shard 2 timeout | CI failures | Sub-story 14.30.2 created |
+| Coverage job redundant | +14 min CI time | Sub-story 14.30.1 created |
+| Memory accumulation | Flaky tests | Mitigated with forks pool |
+| Firebase emulator restart per job | ~30s overhead per job | Sub-story 14.30.4 created |
+| Prompt test in 3 locations | Maintenance burden | Sub-story 14.30.5 created |
+| Functions module resolution | Skipped test file | Covered by shared tests |
+| E2E coverage gaps | Analytics, insights not covered | Backlog |
 
-### E2E tests timeout
-
-**Solution:** Increase timeout in `playwright.config.ts`:
-```typescript
-timeout: 60000, // 60 seconds
-```
-
-### Coverage reports missing files
-
-**Solution:** Check `coverage.exclude` in `vite.config.ts` and ensure you're not excluding source files.
-
-## Best Practices Summary
-
-### General
-
-- **Write tests before fixing bugs** - Reproduce the bug in a test first
-- **Keep tests fast** - Mock slow operations (network, file I/O)
-- **Make tests independent** - Each test should work in isolation
-- **Use descriptive names** - "should X when Y" pattern
-- **Follow AAA pattern** - Arrange, Act, Assert
-
-### What to Test
-
-✅ **DO test:**
-- Business logic and calculations
-- User interactions and workflows
-- Error handling and edge cases
-- Security rules and data isolation
-- Critical user paths
-
-❌ **DON'T test:**
-- Third-party libraries (Firebase, React)
-- Implementation details (internal state)
-- Trivial getters/setters
-- Generated code
+---
 
 ## Next Steps
 
-After reading this guide:
-
-1. ✅ Review existing smoke tests in `tests/unit/smoke.test.ts`, `tests/integration/smoke.test.tsx`, `tests/e2e/smoke.spec.ts`
-2. ✅ Run quick tests to verify setup: `npm run test:quick`
-3. ✅ Read [Test Environment Guide](./test-environment.md) for test user management
-4. ✅ Read [Test Strategy & Risk Register](./test-strategy.md) for test prioritization
-5. ✅ Review [CONTRIBUTING.md](../../CONTRIBUTING.md) for coverage requirements
-6. ✅ Start writing tests for your features!
+1. Run quick tests to verify setup: `npm run test:quick`
+2. Read [Test Environment Guide](./test-environment.md) for test user management
+3. Review [CONTRIBUTING.md](../../CONTRIBUTING.md) for coverage requirements
+4. Start writing tests for your features!
 
 ---
 
 **Related Documentation:**
 - [Test Environment Guide](./test-environment.md) - Test users and data fixtures
-- [Test Strategy & Risk Register](./test-strategy.md) - Risk analysis and test prioritization
+- [E2E Test Conventions](../../tests/e2e/E2E-TEST-CONVENTIONS.md) - E2E patterns and standards
 - [Architecture Document](../architecture/architecture.md) - System architecture
 - [Development Guide](../development/development-guide.md) - Development setup
-- [Performance Baselines](../performance/performance-baselines.md) - Lighthouse baselines (Epic 3)
-- [CONTRIBUTING.md](../../CONTRIBUTING.md) - Coverage requirements (Epic 3)
+- [Performance Baselines](./performance-baselines.md) - Lighthouse baselines
+- [CONTRIBUTING.md](../../CONTRIBUTING.md) - Coverage requirements
 - [CI/CD Pipeline](../ci-cd/README.md) - Automated testing workflow
 
 **Version History:**
+- 4.0 (2026-02-05) - Consolidated testing-quickstart, testing-architecture, and TESTING-GUIDELINES into single guide
 - 3.0 (2025-12-07) - Added tiered test strategy with parallel unit tests (Epic 7)
 - 2.0 (2025-11-26) - Added accessibility testing, performance testing, coverage thresholds (Epic 3)
 - 1.0 (2025-11-22) - Initial version (Epic 2, Story 2.3)

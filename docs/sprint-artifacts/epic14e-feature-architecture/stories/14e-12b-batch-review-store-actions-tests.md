@@ -1,6 +1,6 @@
 # Story 14e.12b: Batch Review Store Save/Edit Actions & Tests
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -102,26 +102,26 @@ Story 14e-12a must be completed first - this story extends that store with:
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Implement save actions** (AC: 1)
-  - [ ] 1.1 Add `saveStart()` action with phase guard
-  - [ ] 1.2 Add `saveItemSuccess(id)` action
-  - [ ] 1.3 Add `saveItemFailure(id, error)` action
-  - [ ] 1.4 Add `saveComplete()` action with transition logic
+- [x] **Task 1: Implement save actions** (AC: 1)
+  - [x] 1.1 Add `saveStart()` action with phase guard
+  - [x] 1.2 Add `saveItemSuccess(id)` action
+  - [x] 1.3 Add `saveItemFailure(id, error)` action
+  - [x] 1.4 Add `saveComplete()` action with transition logic
 
-- [ ] **Task 2: Implement edit actions** (AC: 2)
-  - [ ] 2.1 Add `startEditing(id)` action with phase guard
-  - [ ] 2.2 Add `finishEditing()` action with phase guard
+- [x] **Task 2: Implement edit actions** (AC: 2)
+  - [x] 2.1 Add `startEditing(id)` action with phase guard
+  - [x] 2.2 Add `finishEditing()` action with phase guard
 
-- [ ] **Task 3: Add remaining phase guards** (AC: 3, 4, 5)
-  - [ ] 3.1 Add phase guard to `loadBatch()` - only from idle
-  - [ ] 3.2 Add phase guard to `discardItem()` - blocked during saving
-  - [ ] 3.3 Verify all guards log warnings with action name and current phase
+- [x] **Task 3: Add remaining phase guards** (AC: 3, 4, 5)
+  - [x] 3.1 Add phase guard to `loadBatch()` - only from idle (already in 14e-12a)
+  - [x] 3.2 Add phase guard to `discardItem()` - blocked during saving with specific message
+  - [x] 3.3 Verify all guards log warnings with action name and current phase
 
-- [ ] **Task 4: Write comprehensive tests** (AC: 6)
-  - [ ] 4.1 Test all valid phase transitions from matrix
-  - [ ] 4.2 Test all BLOCKED transitions with warning verification
-  - [ ] 4.3 Test edge cases: empty batch, single item, rapid calls
-  - [ ] 4.4 Test save completion scenarios (all success, mixed, all fail)
+- [x] **Task 4: Write comprehensive tests** (AC: 6)
+  - [x] 4.1 Test all valid phase transitions from matrix
+  - [x] 4.2 Test all BLOCKED transitions with warning verification
+  - [x] 4.3 Test edge cases: empty batch, single item, rapid calls
+  - [x] 4.4 Test save completion scenarios (all success, mixed, all fail)
 
 ## Dev Notes
 
@@ -212,10 +212,27 @@ it('blocks saveStart when not in reviewing phase', () => {
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Debug Log References
 
+None - clean implementation
+
 ### Completion Notes List
 
+- Implemented 6 new store actions: `saveStart`, `saveItemSuccess`, `saveItemFailure`, `saveComplete`, `startEditing`, `finishEditing`
+- Added phase guards following Atlas-documented Zustand patterns with DEV-only console warnings
+- Enhanced `discardItem` phase guard to show specific "save in progress" message (AC5)
+- Added `startEditing` validation to verify receipt exists before transitioning
+- Added 57 new tests covering: save actions, edit actions, phase transition matrix, edge cases
+- Total store tests: 78 (21 from 14e-12a + 57 new)
+- Full test suite passes: 5,517 tests (225 test files)
+- All 6 Acceptance Criteria satisfied
+
 ### File List
+
+**Modified:**
+- `src/features/batch-review/store/types.ts` - Added save/edit action types to BatchReviewActions interface
+- `src/features/batch-review/store/useBatchReviewStore.ts` - Implemented save/edit actions with phase guards
+- `tests/unit/features/batch-review/store/useBatchReviewStore.test.ts` - Added 57 comprehensive tests
+- `docs/sprint-artifacts/sprint-status.yaml` - Status updated to in-progress → review

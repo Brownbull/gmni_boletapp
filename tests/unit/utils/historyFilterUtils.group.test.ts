@@ -2,6 +2,9 @@
  * History Filter Utils - Group Filter Tests
  *
  * Story 14.15b: Transaction Selection Mode & Groups (AC #7)
+ * Story 14d-v2-1.1: SKIPPED - sharedGroupIds[] removed (Epic 14c cleanup)
+ * Epic 14d will use sharedGroupId (single nullable string) instead.
+ *
  * Group consolidation: Updated to use sharedGroupIds array instead of groupId string
  * Tests for group-based transaction filtering.
  */
@@ -40,7 +43,9 @@ function createDefaultFilters(): HistoryFilterState {
 // Group Filter Tests
 // ============================================================================
 
-describe('filterTransactionsByHistoryFilters - Group Filter', () => {
+// Story 14d-v2-1.1: Group filtering disabled (Epic 14c cleanup)
+// These tests are skipped until Epic 14d re-implements group filtering with sharedGroupId
+describe.skip('filterTransactionsByHistoryFilters - Group Filter', () => {
   describe('Basic Filtering', () => {
     it('includes all transactions when no group filter is applied', () => {
       const transactions = [

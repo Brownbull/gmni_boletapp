@@ -51,6 +51,24 @@ vi.mock('../../../../src/utils/csvExport', () => ({
     downloadBasicData: vi.fn(),
 }));
 
+// Story 14e-34b: Mock batch review actions including atomic actions
+// Use vi.hoisted to handle mock hoisting
+const { mockAtomicActions, mockBatchReviewActions } = vi.hoisted(() => ({
+    mockAtomicActions: {
+        discardReceiptAtomic: vi.fn(),
+        updateReceiptAtomic: vi.fn(),
+    },
+    mockBatchReviewActions: {
+        finishEditing: vi.fn(),
+        reset: vi.fn(),
+        discardItem: vi.fn(),
+    },
+}));
+vi.mock('@features/batch-review', () => ({
+    atomicBatchActions: mockAtomicActions,
+    batchReviewActions: mockBatchReviewActions,
+}));
+
 // Import after mocking
 import { useTransactionHandlers } from '../../../../src/hooks/app/useTransactionHandlers';
 import * as firestoreService from '../../../../src/services/firestore';
@@ -136,7 +154,7 @@ describe('useTransactionHandlers', () => {
         batchEditingIndex: null,
         clearBatchEditingIndex: vi.fn(),
         batchReceipts: null,
-        discardBatchReceipt: vi.fn(),
+        // Story 14e-34b: discardBatchReceipt removed - now uses atomicBatchActions internally
         t: vi.fn((key) => key),
         ...overrides,
     });
@@ -188,7 +206,9 @@ describe('useTransactionHandlers', () => {
             expect(tx.sharedGroupIds).toBeUndefined();
         });
 
-        it('should include sharedGroupIds in group view mode', () => {
+        // Story 14d-v2-1.1: sharedGroupIds removed (Epic 14c cleanup)
+        // Epic 14d will use sharedGroupId (single nullable string) instead
+        it('should NOT include sharedGroupIds in group view mode (Epic 14c cleanup)', () => {
             const props = createDefaultProps({
                 viewMode: 'group',
                 activeGroup: mockSharedGroup,
@@ -197,7 +217,8 @@ describe('useTransactionHandlers', () => {
 
             const tx = result.current.createDefaultTransaction();
 
-            expect(tx.sharedGroupIds).toEqual(['group-123']);
+            // Story 14d-v2-1.1: sharedGroupIds no longer assigned
+            expect(tx.sharedGroupIds).toBeUndefined();
         });
 
         it('should not include sharedGroupIds in group mode without activeGroup', () => {
@@ -497,11 +518,10 @@ describe('useTransactionHandlers', () => {
         it('should navigate to batch-review when in batch editing mode', async () => {
             const setView = vi.fn();
             const clearBatchEditingIndex = vi.fn();
-            const discardBatchReceipt = vi.fn();
+            // Story 14e-34b: discardBatchReceipt prop removed
             const props = createDefaultProps({
                 setView,
                 clearBatchEditingIndex,
-                discardBatchReceipt,
                 batchEditingIndex: 0,
                 batchReceipts: [{ id: 'receipt-1' }, { id: 'receipt-2' }],
             });
@@ -516,10 +536,9 @@ describe('useTransactionHandlers', () => {
         });
 
         it('should discard batch receipt after saving in batch editing mode', async () => {
-            const discardBatchReceipt = vi.fn();
+            // Story 14e-34b: discardBatchReceipt prop removed - now uses atomicBatchActions internally
             const clearBatchEditingIndex = vi.fn();
             const props = createDefaultProps({
-                discardBatchReceipt,
                 clearBatchEditingIndex,
                 batchEditingIndex: 1, // Editing the second receipt
                 batchReceipts: [{ id: 'receipt-1' }, { id: 'receipt-2' }, { id: 'receipt-3' }],
@@ -530,15 +549,14 @@ describe('useTransactionHandlers', () => {
                 await result.current.saveTransaction(mockTransaction);
             });
 
-            // Should discard the receipt at index 1 (receipt-2)
-            expect(discardBatchReceipt).toHaveBeenCalledWith('receipt-2');
+            // Story 14e-34b: Should discard the receipt at index 1 (receipt-2) using atomic action
+            expect(mockAtomicActions.discardReceiptAtomic).toHaveBeenCalledWith('receipt-2');
         });
 
         it('should not discard batch receipt when batchReceipts is null', async () => {
-            const discardBatchReceipt = vi.fn();
+            // Story 14e-34b: Uses atomicBatchActions internally
             const clearBatchEditingIndex = vi.fn();
             const props = createDefaultProps({
-                discardBatchReceipt,
                 clearBatchEditingIndex,
                 batchEditingIndex: 0,
                 batchReceipts: null, // No batch receipts
@@ -549,8 +567,8 @@ describe('useTransactionHandlers', () => {
                 await result.current.saveTransaction(mockTransaction);
             });
 
-            // Should not call discardBatchReceipt when no receipts
-            expect(discardBatchReceipt).not.toHaveBeenCalled();
+            // Story 14e-34b: Should not call atomic discard when no receipts
+            expect(mockAtomicActions.discardReceiptAtomic).not.toHaveBeenCalled();
             expect(clearBatchEditingIndex).toHaveBeenCalled();
         });
 

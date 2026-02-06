@@ -32,7 +32,7 @@ import { SortControl } from '../components/history/SortControl';
 import type { SortOption } from '../components/history/SortControl';
 import { SelectionBar } from '../components/history/SelectionBar';
 // Group consolidation: Replaced personal group modals with TransactionGroupSelector
-import { TransactionGroupSelector } from '../components/SharedGroups/TransactionGroupSelector';
+import { TransactionGroupSelector } from '@/features/shared-groups';
 // Story 14e-5: DeleteTransactionsModal now uses Modal Manager
 import type { TransactionPreview } from '../components/history/DeleteTransactionsModal';
 import { useModalActions } from '@managers/ModalManager';
@@ -52,15 +52,17 @@ import { useSelectionMode } from '../hooks/useSelectionMode';
 // Group consolidation: Use useAllUserGroups instead of useGroups for shared groups
 import { useAllUserGroups } from '../hooks/useAllUserGroups';
 import { getFirestore } from 'firebase/firestore';
-import { deleteTransactionsBatch, updateTransaction } from '../services/firestore';
+import { deleteTransactionsBatch } from '../services/firestore';
 // Story 9.12: Category translations (AC #1, #2)
-import type { Language } from '../utils/translations';
+// Note: Language type now comes from useHistoryViewData hook
 // Story 14.15c: CSV Export utilities
 import { downloadMonthlyTransactions, downloadYearlyStatistics } from '../utils/csvExport';
-// Story 14c-refactor.27: ViewHandlersContext for navigation handlers
-import { useViewHandlers } from '../contexts/ViewHandlersContext';
+// Story 14e-25d: Direct navigation from store (ViewHandlersContext deleted)
+import { useNavigationActions } from '@/shared/stores';
 // Story 14c-refactor.27: View type for navigation
 import type { View } from '../components/App';
+// Story 14e-25a.2b: HistoryView data hook
+import { useHistoryViewData, type UseHistoryViewDataReturn } from './HistoryView/useHistoryViewData';
 
 // ============================================================================
 // Constants
@@ -148,98 +150,21 @@ function sortTransactionsWithinGroups(
 // Types
 // ============================================================================
 
-// Story 9.11: Extended transaction interface with v2.6.0 fields for unified display
-interface Transaction {
-    id: string;
-    merchant: string;
-    alias?: string;
-    date: string;
-    total: number;
-    category: string;
-    imageUrls?: string[];
-    thumbnailUrl?: string;
-    items?: Array<{
-        name: string;
-        price: number;
-        category?: string;
-        subcategory?: string;
-    }>;
-    // v2.6.0 fields for unified card display (Story 9.11 AC #3)
-    time?: string;
-    city?: string;
-    country?: string;
-    currency?: string;
-    // Group consolidation: Shared group IDs (replaces legacy groupId/groupName/groupColor)
-    sharedGroupIds?: string[];
-    // Story 14.31: Scan date for sorting by when transaction was added
-    createdAt?: any; // Firestore Timestamp or Date
-    _ownerId?: string;
-}
+// Story 14e-25a.2b: Use imported Transaction type from shared types
+import type { Transaction } from '@/types/transaction';
 
+/**
+ * Story 14e-25a.2b: HistoryView Props
+ *
+ * HistoryView now owns its data via useHistoryViewData hook.
+ * Props are minimal - only test overrides for testing.
+ */
 interface HistoryViewProps {
-    transactions: Transaction[];
-    historyPage: number;
-    totalHistoryPages: number;
-    theme: string;
-    /** Story 14.21: Color theme for unified category colors */
-    colorTheme?: 'normal' | 'professional' | 'mono';
-    currency: string;
-    dateFormat: string;
-    t: (key: string) => string;
-    formatCurrency: (amount: number, currency: string) => string;
-    formatDate: (date: string, format: string) => string;
     /**
-     * @deprecated Story 14c-refactor.27: Use useViewHandlers().navigation.navigateBack instead.
-     * Back button handler - will be removed in future version.
+     * Optional overrides for testing.
+     * Allows tests to inject mock data without needing to mock hooks.
      */
-    onBack: () => void;
-    onSetHistoryPage: (page: number | ((prev: number) => number)) => void;
-    onEditTransaction: (transaction: Transaction) => void;
-    // Story 9.11: Additional props for duplicate detection and normalization
-    /** All transactions for duplicate detection across pages (AC #4, #6, #7) */
-    allTransactions?: Transaction[];
-    /** User's default city for legacy transactions (AC #2) */
-    defaultCity?: string;
-    /** User's default country for legacy transactions (AC #2) */
-    defaultCountry?: string;
-    /** Story 9.12: Language for category translations (AC #1, #2) */
-    lang?: Language;
-    // Story 14.15: User and app IDs for group operations
-    /** Authenticated user ID */
-    userId?: string | null;
-    /** App ID for Firestore path */
-    appId?: string;
-    /** Callback when transactions are deleted */
-    onTransactionsDeleted?: (deletedIds: string[]) => void;
-    // Story 14.15b: Profile dropdown props (same as ReportsView)
-    /** User name for profile avatar */
-    userName?: string;
-    /** User email for profile dropdown */
-    userEmail?: string;
-    /**
-     * @deprecated Story 14c-refactor.27: Use useViewHandlers().navigation.navigateToView instead.
-     * General navigation handler for profile dropdown menu items - will be removed in future version.
-     */
-    onNavigateToView?: (view: string) => void;
-    // Story 14.27: Pagination props for loading older transactions
-    /** True if more pages are available beyond current transactions */
-    hasMore?: boolean;
-    /** Callback to load more transactions from Firestore */
-    onLoadMoreTransactions?: () => void;
-    /** True while loading more transactions */
-    isLoadingMore?: boolean;
-    /** True if at listener limit (100 transactions) - indicates pagination available */
-    isAtListenerLimit?: boolean;
-    /** Story 14.13: Font color mode for category text colors (colorful vs plain) */
-    fontColorMode?: 'colorful' | 'plain';
-    /** Story 14.35b: How to display foreign locations (code or flag) */
-    foreignLocationFormat?: 'code' | 'flag';
-    activeGroup?: {
-        id: string;
-        memberProfiles?: Record<string, { displayName?: string; photoURL?: string }>;
-    } | null;
-    /** Shared groups for dynamic group color lookup */
-    sharedGroups?: Array<{ id: string; color: string }>;
+    _testOverrides?: Partial<UseHistoryViewDataReturn>;
 }
 
 // ============================================================================
@@ -249,57 +174,49 @@ interface HistoryViewProps {
 /**
  * Inner component that uses the filter context.
  * Must be rendered inside HistoryFiltersProvider.
+ *
+ * Story 14e-25a.2b: Now owns its data via useHistoryViewData hook.
+ * Receives NO props from App.tsx except optional test overrides.
  */
-const HistoryViewInner: React.FC<HistoryViewProps> = ({
-    transactions,
-    // Story 14.14: historyPage and onSetHistoryPage now managed internally
-    historyPage: _historyPage,
-    totalHistoryPages: _totalHistoryPages,
-    theme,
-    // Story 14.21: Color theme for unified category colors
-    colorTheme = 'normal',
-    currency,
-    dateFormat,
-    t,
-    formatCurrency,
-    formatDate,
-    // Story 14c-refactor.27: onBack moved to useViewHandlers().navigation.navigateBack
-    onBack: _deprecatedOnBack,
-    onSetHistoryPage: _onSetHistoryPage,
-    onEditTransaction,
-    // Story 9.11: New props for duplicate detection and normalization
-    allTransactions = [],
-    defaultCity = '',
-    defaultCountry = '',
-    // Story 9.12: Language for translations
-    lang = 'en',
-    // Story 14.15: User and app IDs for group operations
-    userId = null,
-    appId = 'boletapp',
-    onTransactionsDeleted,
-    // Story 14.15b: Profile dropdown props
-    userName = '',
-    userEmail = '',
-    // Story 14c-refactor.27: onNavigateToView moved to useViewHandlers().navigation.navigateToView
-    onNavigateToView: _deprecatedOnNavigateToView,
-    // Story 14.27: Pagination props for loading older transactions
-    hasMore = false,
-    onLoadMoreTransactions,
-    isLoadingMore = false,
-    isAtListenerLimit = false,
-    // Story 14.13: Font color mode - receiving this prop triggers re-render when setting changes
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    fontColorMode: _fontColorMode,
-    // Story 14.35b: Foreign location display format
-    foreignLocationFormat = 'code',
-    activeGroup = null,
-    // Shared groups for dynamic color lookup (DEPRECATED - now using useAllUserGroups internally)
-    sharedGroups: _sharedGroups = [],
-}) => {
-    // Story 14c-refactor.27: Get navigation handlers from ViewHandlersContext
-    const { navigation } = useViewHandlers();
-    const onBack = navigation.navigateBack;
-    const onNavigateToView = navigation.navigateToView;
+const HistoryViewInner: React.FC<HistoryViewProps> = ({ _testOverrides }) => {
+    // Story 14e-25a.2b: Get all data from hook
+    const hookData = useHistoryViewData();
+
+    // Merge hook data with test overrides (test overrides take precedence)
+    // Story 14e-25a.2b: Only destructure values actually used by the component
+    const {
+        transactions,
+        allTransactions,
+        hasMore,
+        loadMore: onLoadMoreTransactions,
+        isLoadingMore,
+        isAtListenerLimit,
+        user,
+        appId,
+        theme,
+        colorTheme,
+        lang,
+        currency,
+        dateFormat,
+        defaultCity,
+        defaultCountry,
+        foreignLocationFormat,
+        t,
+        formatCurrency,
+        formatDate,
+        activeGroup,
+        onEditTransaction,
+    } = { ...hookData, ..._testOverrides };
+
+    // Derive additional values from hook data
+    const userId = user.uid;
+    const userName = user.displayName || '';
+    const userEmail = user.email || '';
+
+    // Story 14e-25d: Direct navigation from store (ViewHandlersContext deleted)
+    const { navigateBack, setView } = useNavigationActions();
+    const onBack = navigateBack;
+    const onNavigateToView = setView;
 
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     // Story 14.14: Search functionality
@@ -311,11 +228,11 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
     // Story 14.14: Collapsible header state
     const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
     // Story 14.15: Selection mode for batch operations
+    // Story 14e-25a.2b: Only destructure values actually used
     const {
         isSelectionMode,
         selectedIds,
         selectedCount,
-        enterSelectionMode: _enterSelectionMode,
         exitSelectionMode,
         toggleSelection,
         selectAll,
@@ -350,11 +267,11 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
     // Group consolidation: Use shared groups hook instead of personal groups
     const { groups, isLoading: groupsLoading } = useAllUserGroups(userId || undefined);
 
-    const getGroupColorForTransaction = useCallback((tx: Transaction): string | undefined => {
-        if (!tx.sharedGroupIds?.length || !groups.length) return undefined;
-        const group = groups.find(g => tx.sharedGroupIds?.includes(g.id));
-        return group?.color;
-    }, [groups]);
+    // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
+    // Epic 14d will use sharedGroupId (single nullable string) instead
+    const getGroupColorForTransaction = useCallback((_tx: Transaction): string | undefined => {
+        return undefined;
+    }, []);
 
     const lastScrollY = useRef(0);
     const scrollThreshold = 80; // Pixels to scroll before collapsing (increased for stability)
@@ -654,45 +571,27 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
     // Story 14.15: Get selected transactions for modals
     const getSelectedTransactions = useCallback((): Transaction[] => {
         const allTx = allTransactions.length > 0 ? allTransactions : transactions;
-        return allTx.filter((tx: Transaction) => selectedIds.has(tx.id));
+        return allTx.filter((tx: Transaction) => tx.id && selectedIds.has(tx.id));
     }, [allTransactions, transactions, selectedIds]);
 
     // Story 14.15: Get transaction previews for delete modal
     const getTransactionPreviews = useCallback((): TransactionPreview[] => {
         return getSelectedTransactions().map((tx) => ({
-            id: tx.id,
+            id: tx.id!, // Safe: filtered to have IDs
             displayName: tx.alias || tx.merchant,
             total: tx.total,
             currency: tx.currency || currency,
         }));
     }, [getSelectedTransactions, currency]);
 
-    // Group consolidation: Handle group assignment using TransactionGroupSelector
-    // Updates sharedGroupIds on all selected transactions
-    const handleGroupSelect = useCallback(async (groupIds: string[]) => {
-        if (!userId) {
-            console.error('[HistoryView] Cannot assign group: User not authenticated');
-            return;
-        }
-
-        const selectedTxIds = Array.from(selectedIds);
-        const db = getFirestore();
-
-        try {
-            // Update each selected transaction with the new sharedGroupIds
-            await Promise.all(
-                selectedTxIds.map(txId =>
-                    updateTransaction(db, userId, appId, txId, {
-                        sharedGroupIds: groupIds.length > 0 ? groupIds : [],
-                    })
-                )
-            );
-            setShowGroupSelector(false);
-            exitSelectionMode();
-        } catch (err) {
-            console.error('[HistoryView] Failed to assign groups:', err);
-        }
-    }, [userId, appId, selectedIds, exitSelectionMode]);
+    // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
+    // Epic 14d will use sharedGroupId (single nullable string) instead
+    // Group assignment functionality disabled until Epic 14d
+    const handleGroupSelect = useCallback(async (_groupIds: string[]) => {
+        console.warn('[HistoryView] Group assignment disabled - Epic 14c cleanup');
+        setShowGroupSelector(false);
+        exitSelectionMode();
+    }, [exitSelectionMode]);
 
     // Story 14.15: Handle batch delete
     // Story 14e-5: Now uses Modal Manager
@@ -708,12 +607,13 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
             await deleteTransactionsBatch(db, userId, appId, transactionIds);
             closeModal(); // Story 14e-5: Use Modal Manager to close
             exitSelectionMode();
-            onTransactionsDeleted?.(transactionIds);
+            // Story 14e-25a.2b: No onTransactionsDeleted callback needed
+            // Hook data auto-refreshes via Firestore listeners
         } catch (err) {
             console.error('[HistoryView] Failed to delete transactions:', err);
             throw err; // Re-throw so modal can show error
         }
-    }, [userId, appId, selectedIds, exitSelectionMode, onTransactionsDeleted, closeModal]);
+    }, [userId, appId, selectedIds, exitSelectionMode, closeModal]);
 
     return (
         <PageTransition viewKey="history" direction="forward">
@@ -1110,10 +1010,10 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                                             staggerMs={0}
                                         >
                                             <div
-                                                onTouchStart={() => handleLongPressStart(tx.id)}
+                                                onTouchStart={() => handleLongPressStart(tx.id!)}
                                                 onTouchEnd={handleLongPressEnd}
                                                 onTouchMove={handleLongPressMove}
-                                                onMouseDown={() => handleLongPressStart(tx.id)}
+                                                onMouseDown={() => handleLongPressStart(tx.id!)}
                                                 onMouseUp={handleLongPressEnd}
                                                 onMouseLeave={handleLongPressEnd}
                                             >
@@ -1132,12 +1032,12 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                                                         thumbnailUrl: tx.thumbnailUrl,
                                                         imageUrls: tx.imageUrls,
                                                         items: tx.items || [],
-                                                        sharedGroupIds: tx.sharedGroupIds,
+                                                        // Story 14d-v2-1.1: sharedGroupIds removed (Epic 14c cleanup)
                                                     }}
                                                     groupColor={getGroupColorForTransaction(tx)}
                                                     formatters={{
                                                         formatCurrency,
-                                                        formatDate,
+                                                        formatDate: formatDate as (date: string, format: string) => string,
                                                         t,
                                                     }}
                                                     theme={{
@@ -1154,8 +1054,8 @@ const HistoryViewInner: React.FC<HistoryViewProps> = ({
                                                     onThumbnailClick={() => handleThumbnailClick(tx)}
                                                     selection={{
                                                         isSelectionMode,
-                                                        isSelected: isSelected(tx.id),
-                                                        onToggleSelect: () => toggleSelection(tx.id),
+                                                        isSelected: isSelected(tx.id!),
+                                                        onToggleSelect: () => toggleSelection(tx.id!),
                                                     }}
                                                     ownership={tx._ownerId && userId ? {
                                                         ownerId: tx._ownerId,

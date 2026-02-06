@@ -1,6 +1,6 @@
 # Boletapp Team Standards & Knowledge Base
 
-**Last Updated:** 2025-12-16 (Epic 9 - Simplified 2-Branch Strategy)
+**Last Updated:** 2026-02-05 (Branch strategy moved to CONTRIBUTING.md, staging-only e2e policy)
 **Purpose:** Single source of truth for team agreements, workflow standards, and lessons learned
 
 ---
@@ -140,7 +140,7 @@ Agreements made in retrospectives that define how we work as a team.
     - *Source: Epic 6 Retrospective*
 
 20. **Design references are gitignored but available locally**
-    - Premium templates (Tailwind UI) stay local at `docs/design-references/`
+    - Premium templates (Tailwind UI) stay local at `docs/uxui/tailwind-templates/`
     - Reference during development, don't commit to repo
     - *Source: Epic 6 Retrospective*
 
@@ -190,48 +190,11 @@ Agreements made in retrospectives that define how we work as a team.
 
 ## Workflow Standards
 
-### Git Branching Strategy (Simplified 2-Branch Model)
+### Git Branching Strategy
 
-```
-main (production)
-  ↑
-develop (integration branch)
-  ↑
-feature/* | bugfix/* | chore/* (working branches)
-```
+See [CONTRIBUTING.md](../CONTRIBUTING.md#branch-strategy-2-branch-model) for the full branch strategy (2-branch model: develop + main).
 
-**Branch Flow:**
-1. Create feature branch from `develop`: `feature/story-X.Y-description`
-2. Develop and test locally
-3. PR to `develop` - requires CI pass
-4. PR from `develop` to `main` - production deployment
-5. Auto-deploy to Firebase on merge to main
-
-**GitHub Repository Settings:**
-- ✅ **"Automatically delete head branches"** is ENABLED
-  - Feature branches are auto-deleted after PR merge
-  - No manual cleanup needed on GitHub
-  - Clean up local branches with: `git fetch --prune && git branch -d <branch>`
-
-**Branch Protection:**
-- Both branches (main, develop) are protected
-- Require PR + passing CI before merge
-- No direct pushes allowed
-
-**Hotfix Flow:**
-1. Create `hotfix/*` branch from `main`
-2. PR directly to `main` (deploys immediately)
-3. Merge `main` back to `develop` to sync
-
-**Why 2 branches instead of 3?**
-- Eliminates sync branch overhead (no more staging drift)
-- Fewer stale branches accumulating
-- Firebase Preview URLs provide per-PR testing (replaces staging)
-- Feature flags enable production testing without separate branch
-
-*Source: Epic 9 - Branching Strategy Simplification (2025-12-16)*
-
-See: [docs/branching-strategy.md](branching-strategy.md)
+*Simplified from 3-branch to 2-branch in Epic 9 (2025-12-16). Rationale: eliminates sync branch overhead, fewer stale branches, Firebase Preview URLs replace staging branch.*
 
 ### Pull Request Process
 
@@ -341,7 +304,8 @@ npm run test:sprint
 **Why it works:**
 - Unit tests run in parallel (6 threads) via `vitest.config.unit.ts`
 - Integration tests run sequentially (Firebase emulator race conditions)
-- E2E tests only needed for epic completion, not per-story
+- E2E tests run ONLY against staging environment (no local/emulator e2e)
+- E2E only needed for epic completion, not per-story
 
 **Manual test targeting (for debugging):**
 ```bash
@@ -560,7 +524,7 @@ brew install gitleaks  # macOS
 
 | Resource | Location | Notes |
 |----------|----------|-------|
-| Tailwind UI Templates | `docs/design-references/tailwind_templates/` | Premium (gitignored) |
+| Tailwind UI Templates | `docs/uxui/tailwind-templates/tailwind_templates/` | Premium (gitignored) |
 
 ---
 
@@ -814,4 +778,4 @@ This document should be updated:
 - When standards change
 - When new documentation is created
 
-**Last updated by:** Epic 9 - Simplified 2-Branch Strategy & Auto-Delete Branches (2025-12-16)
+**Last updated by:** Cleanup session 2026-02-05 - Branch strategy consolidated to CONTRIBUTING.md, staging-only e2e policy

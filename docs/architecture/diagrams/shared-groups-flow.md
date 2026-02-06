@@ -248,9 +248,9 @@ flowchart TB
 
 ## Related Documentation
 
-- [Shared Groups Architecture](../shared-groups-architecture.md) - Full decision document
+- [Shared Groups Architecture](../../archive/shared-groups-architecture.md) - Full decision document
 - [Architecture Overview](../architecture.md) - ADR-011
-- [Epic 14c Stories](../../sprint-artifacts/epic14c/)
+- [Epic 14c Stories](../../sprint-artifacts/epic14c-refactor/)
 
 ---
 

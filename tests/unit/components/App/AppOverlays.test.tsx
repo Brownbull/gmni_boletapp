@@ -1,49 +1,31 @@
 /**
  * Story 14c-refactor.22d: AppOverlays Unit Tests
+ * Story 14e-23a: Scan overlays migrated to ScanFeature
+ * Story 14e-23b: NavigationBlocker and PWAUpdatePrompt moved to App.tsx
  *
- * Tests for the AppOverlays component that centralizes all overlay/modal rendering.
- * Verifies conditional rendering logic for 15 overlay components across z-index layers.
+ * Tests for the AppOverlays component that centralizes non-scan overlay/modal rendering.
+ * Scan overlays (ScanOverlay, QuickSaveCard, BatchCompleteModal, CurrencyMismatchDialog,
+ * TotalMismatchDialog) are now rendered by ScanFeature - test those in ScanFeature tests.
  *
  * Test categories:
- * - Always-rendered overlays (NavigationBlocker, PWAUpdatePrompt, ScanOverlay, etc.)
  * - Conditional visibility overlays (InsightCard, SessionComplete, etc.)
  * - Props passing to child components
  * - React.memo behavior
+ *
+ * Story 14e-23b: NavigationBlocker and PWAUpdatePrompt are now rendered directly in App.tsx
+ * and are no longer tested here.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { AppOverlays, type AppOverlaysProps } from '../../../../src/components/App/AppOverlays';
-import { DIALOG_TYPES } from '../../../../src/types/scanStateMachine';
 
 // =============================================================================
 // Mock all overlay components to isolate AppOverlays logic
 // =============================================================================
 
-vi.mock('../../../../src/components/NavigationBlocker', () => ({
-    NavigationBlocker: ({ currentView }: { currentView: string }) => (
-        <div data-testid="navigation-blocker" data-current-view={currentView}>
-            NavigationBlocker
-        </div>
-    ),
-}));
-
-vi.mock('../../../../src/components/PWAUpdatePrompt', () => ({
-    PWAUpdatePrompt: ({ language }: { language: string }) => (
-        <div data-testid="pwa-update-prompt" data-language={language}>
-            PWAUpdatePrompt
-        </div>
-    ),
-}));
-
-vi.mock('../../../../src/components/scan', () => ({
-    ScanOverlay: ({ visible }: { visible: boolean }) => (
-        visible ? <div data-testid="scan-overlay">ScanOverlay</div> : null
-    ),
-    QuickSaveCard: () => <div data-testid="quick-save-card">QuickSaveCard</div>,
-    BatchCompleteModal: () => <div data-testid="batch-complete-modal">BatchCompleteModal</div>,
-    CurrencyMismatchDialog: () => <div data-testid="currency-mismatch-dialog">CurrencyMismatchDialog</div>,
-    TotalMismatchDialog: () => <div data-testid="total-mismatch-dialog">TotalMismatchDialog</div>,
-}));
+// Story 14e-23b: NavigationBlocker and PWAUpdatePrompt mocks removed
+// These components are now rendered directly in App.tsx
+// Story 14e-23a: Scan overlays moved to ScanFeature - mocks removed
 
 vi.mock('../../../../src/components/insights/InsightCard', () => ({
     InsightCard: ({ insight }: { insight: { id: string } }) => (
@@ -77,23 +59,12 @@ vi.mock('../../../../src/components/session', () => ({
     ),
 }));
 
-vi.mock('../../../../src/components/TrustMerchantPrompt', () => ({
-    TrustMerchantPrompt: ({ merchantName }: { merchantName: string }) => (
-        <div data-testid="trust-merchant-prompt" data-merchant={merchantName}>
-            TrustMerchantPrompt
-        </div>
-    ),
-}));
+// Story 14e-39: TrustMerchantPrompt mock removed - now rendered by CreditFeature
 
-vi.mock('../../../../src/components/batch', () => ({
-    CreditWarningDialog: ({ creditCheck }: { creditCheck: { hasEnoughCredits: boolean } }) => (
-        <div data-testid="credit-warning-dialog" data-has-credits={String(creditCheck.hasEnoughCredits)}>
-            CreditWarningDialog
-        </div>
-    ),
-}));
-
+// Story 14e-18c: CreditWarningDialog mock removed - now rendered by CreditFeature
 // Story 14e-5: TransactionConflictDialog mock removed - now rendered by ModalManager, not AppOverlays
+// Story 14e-23a: ScanOverlay, QuickSaveCard, BatchCompleteModal, CurrencyMismatchDialog, TotalMismatchDialog
+//               mocks removed - now rendered by ScanFeature
 
 // =============================================================================
 // Test Fixtures
@@ -101,48 +72,11 @@ vi.mock('../../../../src/components/batch', () => ({
 
 const createMockProps = (overrides: Partial<AppOverlaysProps> = {}): AppOverlaysProps => ({
     // Core dependencies
-    currentView: 'dashboard',
-    lang: 'en',
+    // Story 14e-23b: currentView and lang removed (now passed directly in App.tsx)
     theme: 'light',
     t: (key: string) => key,
 
-    // ScanContext state
-    scanState: {
-        phase: 'idle',
-        mode: 'single',
-        activeDialog: null,
-        pendingTransaction: null,
-        batchReceipts: [],
-        error: null,
-    },
-    scanOverlay: {
-        state: 'idle',
-        progress: 0,
-        eta: null,
-        error: null,
-        startProcessing: vi.fn(),
-        updateProgress: vi.fn(),
-        setError: vi.fn(),
-        reset: vi.fn(),
-    },
-    isAnalyzing: false,
-    scanImages: [],
-
-    // Scan overlay handlers
-    onScanOverlayCancel: vi.fn(),
-    onScanOverlayRetry: vi.fn(),
-    onScanOverlayDismiss: vi.fn(),
-
-    // QuickSaveCard props
-    onQuickSave: vi.fn(),
-    onQuickSaveEdit: vi.fn(),
-    onQuickSaveCancel: vi.fn(),
-    onQuickSaveComplete: vi.fn(),
-    isQuickSaving: false,
-    currency: 'CLP',
-    formatCurrency: (amount: number, curr: string) => `${curr} ${amount}`,
-    userDefaultCountry: 'CL',
-    activeGroupForQuickSave: null,
+    // Story 14e-23a: Scan-related props removed (now in ScanFeature)
 
     // Insight card props
     showInsightCard: false,
@@ -160,14 +94,6 @@ const createMockProps = (overrides: Partial<AppOverlaysProps> = {}): AppOverlays
     recordToCelebrate: null,
     onRecordDismiss: vi.fn(),
 
-    // Credit warning dialog props
-    showCreditWarning: false,
-    creditCheckResult: null,
-    batchImageCount: 0,
-    onCreditWarningConfirm: vi.fn(),
-    onCreditWarningCancel: vi.fn(),
-    onReduceBatch: vi.fn(),
-
     // Batch summary props
     showBatchSummary: false,
     batchSession: null,
@@ -176,28 +102,7 @@ const createMockProps = (overrides: Partial<AppOverlaysProps> = {}): AppOverlays
     onBatchSummarySilence: vi.fn(),
     onBatchSummaryDismiss: vi.fn(),
 
-    // Trust merchant prompt props
-    showTrustPrompt: false,
-    trustPromptData: null,
-    onAcceptTrust: vi.fn(),
-    onDeclineTrust: vi.fn(),
-
-    // Currency/Total mismatch dialog props
-    userCurrency: 'CLP',
-    onCurrencyUseDetected: vi.fn(),
-    onCurrencyUseDefault: vi.fn(),
-    onCurrencyMismatchCancel: vi.fn(),
-    onTotalUseItemsSum: vi.fn(),
-    onTotalKeepOriginal: vi.fn(),
-    onTotalMismatchCancel: vi.fn(),
-
-    // Story 14e-5: Transaction conflict dialog props removed - now uses Modal Manager
-
-    // Batch complete modal props
-    userCreditsRemaining: 10,
-    onBatchCompleteDismiss: vi.fn(),
-    onBatchCompleteNavigateToHistory: vi.fn(),
-    onBatchCompleteGoHome: vi.fn(),
+    // Story 14e-39: Trust merchant prompt props removed - now managed by CreditFeature
 
     // Utility functions
     getLastWeekTotal: vi.fn(() => 0),
@@ -215,87 +120,10 @@ describe('AppOverlays', () => {
         vi.clearAllMocks();
     });
 
-    describe('Always-rendered overlays', () => {
-        it('renders NavigationBlocker with currentView prop', () => {
-            const props = createMockProps({ currentView: 'scan' });
-            render(<AppOverlays {...props} />);
-
-            const blocker = screen.getByTestId('navigation-blocker');
-            expect(blocker).toBeInTheDocument();
-            expect(blocker).toHaveAttribute('data-current-view', 'scan');
-        });
-
-        it('renders PWAUpdatePrompt with language prop', () => {
-            const props = createMockProps({ lang: 'es' });
-            render(<AppOverlays {...props} />);
-
-            const prompt = screen.getByTestId('pwa-update-prompt');
-            expect(prompt).toBeInTheDocument();
-            expect(prompt).toHaveAttribute('data-language', 'es');
-        });
-
-        it('renders QuickSaveCard (unconditionally - reads from ScanContext)', () => {
-            const props = createMockProps();
-            render(<AppOverlays {...props} />);
-
-            expect(screen.getByTestId('quick-save-card')).toBeInTheDocument();
-        });
-
-        it('renders CurrencyMismatchDialog (unconditionally - reads from ScanContext)', () => {
-            const props = createMockProps();
-            render(<AppOverlays {...props} />);
-
-            expect(screen.getByTestId('currency-mismatch-dialog')).toBeInTheDocument();
-        });
-
-        it('renders TotalMismatchDialog (unconditionally - reads from ScanContext)', () => {
-            const props = createMockProps();
-            render(<AppOverlays {...props} />);
-
-            expect(screen.getByTestId('total-mismatch-dialog')).toBeInTheDocument();
-        });
-    });
-
-    describe('ScanOverlay visibility', () => {
-        it('shows ScanOverlay when isAnalyzing is true and on scan view', () => {
-            const props = createMockProps({
-                isAnalyzing: true,
-                currentView: 'scan',
-            });
-            render(<AppOverlays {...props} />);
-
-            expect(screen.getByTestId('scan-overlay')).toBeInTheDocument();
-        });
-
-        it('shows ScanOverlay when scanOverlay.state is error', () => {
-            const props = createMockProps({
-                currentView: 'scan',
-                scanOverlay: {
-                    state: 'error',
-                    progress: 0,
-                    eta: null,
-                    error: 'Test error',
-                    startProcessing: vi.fn(),
-                    updateProgress: vi.fn(),
-                    setError: vi.fn(),
-                    reset: vi.fn(),
-                },
-            });
-            render(<AppOverlays {...props} />);
-
-            expect(screen.getByTestId('scan-overlay')).toBeInTheDocument();
-        });
-
-        it('hides ScanOverlay when not analyzing and no error on dashboard', () => {
-            const props = createMockProps({
-                isAnalyzing: false,
-                currentView: 'dashboard',
-            });
-            render(<AppOverlays {...props} />);
-
-            expect(screen.queryByTestId('scan-overlay')).not.toBeInTheDocument();
-        });
-    });
+    // Story 14e-23b: NavigationBlocker and PWAUpdatePrompt tests removed
+    // These components are now rendered directly in App.tsx, not via AppOverlays
+    // Story 14e-23a: ScanOverlay visibility tests moved to ScanFeature tests
+    // These overlays are now rendered by ScanFeature based on phase, not view
 
     describe('InsightCard visibility', () => {
         it('shows InsightCard when showInsightCard is true and insight exists', () => {
@@ -410,34 +238,7 @@ describe('AppOverlays', () => {
         });
     });
 
-    describe('CreditWarningDialog visibility', () => {
-        it('shows CreditWarningDialog when showCreditWarning is true and result exists', () => {
-            const props = createMockProps({
-                showCreditWarning: true,
-                creditCheckResult: {
-                    hasEnoughCredits: false,
-                    availableCredits: 2,
-                    requiredCredits: 5,
-                    maxProcessable: 2,
-                },
-            });
-            render(<AppOverlays {...props} />);
-
-            const dialog = screen.getByTestId('credit-warning-dialog');
-            expect(dialog).toBeInTheDocument();
-            expect(dialog).toHaveAttribute('data-has-credits', 'false');
-        });
-
-        it('hides CreditWarningDialog when showCreditWarning is false', () => {
-            const props = createMockProps({
-                showCreditWarning: false,
-                creditCheckResult: { hasEnoughCredits: true, availableCredits: 10, requiredCredits: 5, maxProcessable: 5 },
-            });
-            render(<AppOverlays {...props} />);
-
-            expect(screen.queryByTestId('credit-warning-dialog')).not.toBeInTheDocument();
-        });
-    });
+    // Story 14e-18c: CreditWarningDialog visibility tests moved to CreditFeature.test.tsx
 
     describe('BatchSummary visibility', () => {
         it('shows BatchSummary when showBatchSummary is true and data exists', () => {
@@ -471,100 +272,10 @@ describe('AppOverlays', () => {
         });
     });
 
-    describe('TrustMerchantPrompt visibility', () => {
-        it('shows TrustMerchantPrompt when showTrustPrompt is true and data exists', () => {
-            const props = createMockProps({
-                showTrustPrompt: true,
-                trustPromptData: {
-                    eligible: true,
-                    merchant: {
-                        merchantName: 'Test Store',
-                        scanCount: 3,
-                    },
-                },
-            });
-            render(<AppOverlays {...props} />);
-
-            const prompt = screen.getByTestId('trust-merchant-prompt');
-            expect(prompt).toBeInTheDocument();
-            expect(prompt).toHaveAttribute('data-merchant', 'Test Store');
-        });
-
-        it('hides TrustMerchantPrompt when showTrustPrompt is false', () => {
-            const props = createMockProps({
-                showTrustPrompt: false,
-                trustPromptData: { eligible: true, merchant: { merchantName: 'Test', scanCount: 3 } },
-            });
-            render(<AppOverlays {...props} />);
-
-            expect(screen.queryByTestId('trust-merchant-prompt')).not.toBeInTheDocument();
-        });
-    });
+    // Story 14e-39: TrustMerchantPrompt visibility tests removed - now rendered by CreditFeature
 
     // Story 14e-5: TransactionConflictDialog tests removed - now rendered by ModalManager, not AppOverlays
-    // Test TransactionConflictDialog via ModalManager integration tests instead
-
-    describe('BatchCompleteModal visibility', () => {
-        it('shows BatchCompleteModal when activeDialog is BATCH_COMPLETE with transactions', () => {
-            const props = createMockProps({
-                scanState: {
-                    phase: 'idle',
-                    mode: 'batch',
-                    activeDialog: {
-                        type: DIALOG_TYPES.BATCH_COMPLETE,
-                        data: {
-                            transactions: [{ id: 'tx-1' }, { id: 'tx-2' }],
-                            creditsUsed: 2,
-                        },
-                    },
-                    pendingTransaction: null,
-                    batchReceipts: [],
-                    error: null,
-                },
-            });
-            render(<AppOverlays {...props} />);
-
-            expect(screen.getByTestId('batch-complete-modal')).toBeInTheDocument();
-        });
-
-        it('hides BatchCompleteModal when no activeDialog', () => {
-            const props = createMockProps({
-                scanState: {
-                    phase: 'idle',
-                    mode: 'single',
-                    activeDialog: null,
-                    pendingTransaction: null,
-                    batchReceipts: [],
-                    error: null,
-                },
-            });
-            render(<AppOverlays {...props} />);
-
-            expect(screen.queryByTestId('batch-complete-modal')).not.toBeInTheDocument();
-        });
-
-        it('hides BatchCompleteModal when transactions array is empty', () => {
-            const props = createMockProps({
-                scanState: {
-                    phase: 'idle',
-                    mode: 'batch',
-                    activeDialog: {
-                        type: DIALOG_TYPES.BATCH_COMPLETE,
-                        data: {
-                            transactions: [],
-                            creditsUsed: 0,
-                        },
-                    },
-                    pendingTransaction: null,
-                    batchReceipts: [],
-                    error: null,
-                },
-            });
-            render(<AppOverlays {...props} />);
-
-            expect(screen.queryByTestId('batch-complete-modal')).not.toBeInTheDocument();
-        });
-    });
+    // Story 14e-23a: BatchCompleteModal tests moved to ScanFeature tests
 
     describe('Component memoization', () => {
         it('is wrapped with React.memo', () => {

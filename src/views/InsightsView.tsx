@@ -54,23 +54,25 @@ import { useAuth } from '../hooks/useAuth';
 import { useInsightProfile } from '../hooks/useInsightProfile';
 import { getISOWeekNumber, LONG_PRESS_DELAY_MS } from '../utils/dateHelpers';
 import { ProfileDropdown, ProfileAvatar, getInitials } from '../components/ProfileDropdown';
+// Story 14e-25c.2: Navigation via Zustand store
+import { useNavigation } from '../shared/stores/useNavigationStore';
+import type { View } from '../app/types';
 
 // localStorage key for view preference persistence
 const INSIGHTS_VIEW_KEY = 'boletapp_insights_view';
 
+/**
+ * Story 14e-25c.2: Minimal props interface for InsightsView.
+ * Navigation callbacks migrated to useNavigation() hook.
+ * onEditTransaction remains as prop (requires App.tsx coordination).
+ */
 interface InsightsViewProps {
-  /** Navigate back to dashboard */
-  onBack: () => void;
+  /** Navigate to edit a specific transaction */
   onEditTransaction: (transactionId: string) => void;
-  /** Navigate to other views (for profile dropdown) */
-  onNavigateToView?: (view: string) => void;
-  /** Navigate to settings (for profile dropdown) */
-  onMenuClick?: () => void;
+  /** Theme for styling */
   theme: string;
+  /** Translation function */
   t: (key: string) => string;
-  /** User info for profile avatar */
-  userName?: string;
-  userEmail?: string;
 }
 
 // Group insights by week (AC2)
@@ -211,16 +213,18 @@ function saveViewPreference(view: InsightsViewMode): void {
 }
 
 export const InsightsView: React.FC<InsightsViewProps> = ({
-  onBack,
   onEditTransaction,
-  onNavigateToView,
-  onMenuClick,
   theme,
   t,
-  userName = '',
-  userEmail = '',
 }) => {
+  // Story 14e-25c.2: Get navigation from Zustand store
+  const { navigateBack, navigateToView } = useNavigation();
+
   const { user, services } = useAuth();
+
+  // Story 14e-25c.2: User info from auth instead of props
+  const userName = user?.displayName ?? '';
+  const userEmail = user?.email ?? '';
   const { removeInsight, removeInsights } = useInsightProfile(user, services);
   const [insights, setInsights] = useState<InsightRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -241,14 +245,10 @@ export const InsightsView: React.FC<InsightsViewProps> = ({
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Handle profile navigation
+  // Story 14e-25c.2: Handle profile navigation via Zustand store
   const handleProfileNavigate = useCallback((view: string) => {
-    if (view === 'settings' && onMenuClick) {
-      onMenuClick();
-    } else if (onNavigateToView) {
-      onNavigateToView(view);
-    }
-  }, [onMenuClick, onNavigateToView]);
+    navigateToView(view as View);
+  }, [navigateToView]);
 
   const initials = getInitials(userName);
 
@@ -434,7 +434,7 @@ export const InsightsView: React.FC<InsightsViewProps> = ({
             {/* Left: Back button + Title */}
             <div className="flex items-center gap-0">
               <button
-                onClick={onBack}
+                onClick={navigateBack}
                 className="min-w-10 min-h-10 flex items-center justify-center -ml-1"
                 aria-label={t('back') || 'Go back'}
                 style={{ color: 'var(--text-primary)' }}
@@ -498,7 +498,7 @@ export const InsightsView: React.FC<InsightsViewProps> = ({
           {/* Left: Back button + Title */}
           <div className="flex items-center gap-0">
             <button
-              onClick={onBack}
+              onClick={navigateBack}
               className="min-w-10 min-h-10 flex items-center justify-center -ml-1"
               aria-label={t('back') || 'Go back'}
               style={{ color: 'var(--text-primary)' }}
@@ -746,7 +746,7 @@ export const InsightsView: React.FC<InsightsViewProps> = ({
       {/* VIEW: CELEBRATION (Achievement) - Story 14.33d: Celebration & Personal Records Display */}
       {activeView === 'celebration' && (
         <CelebrationView
-          onBack={onBack}
+          onBack={navigateBack}
           theme={theme}
           t={t}
           db={services?.db ?? null}

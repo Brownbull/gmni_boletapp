@@ -337,4 +337,4 @@ With React Query in place, we can now implement:
 
 - [TanStack React Query Docs](https://tanstack.com/query/latest)
 - Story 14.29: `docs/sprint-artifacts/epic14/stories/story-14.29-react-query-migration.md`
-- Atlas Lessons: `_bmad/agents/atlas/atlas-sidecar/knowledge/06-lessons.md` (React Query section)
+- Project Patterns: `_bmad/bmm/knowledge/code-review-patterns.md` (migrated from Atlas 2026-02-05)

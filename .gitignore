@@ -20,12 +20,16 @@ dist-ssr
 # Environment variables
 .env
 .env.local
+.env.staging
 .env.*.local
 
 # Firebase service account keys (NEVER commit these)
 serviceAccountKey.json
+serviceAccountKey.staging.json
 **/serviceAccountKey.json
+**/serviceAccountKey.*.json
 *.json.enc
+scripts/keys/
 
 # Editor directories and files
 .vscode/*
@@ -53,6 +57,10 @@ playwright-report/
 lighthouse-reports/
 .lighthouseci/
 
+# E2E test auth state (contains tokens - auto-generated)
+tests/e2e/.auth/user.json
+tests/e2e/.auth/*.png
+
 # Prompt testing results (keep structure, ignore generated files)
 prompt-testing/results/*
 !prompt-testing/results/.gitkeep
@@ -79,7 +87,7 @@ docs/service-accounts/
 *-firebase-adminsdk-*.json
 
 # Tailwind templates
-docs/design-references/tailwind_templates
+docs/uxui/tailwind-templates/tailwind_templates
 
 # Windows file system alternate data streams
 *:Zone.Identifier
@@ -96,3 +104,9 @@ CLAUDE.md
 # Claude Code
 .claude/
 docs/development/tooling/wsl-chrome/backup/.credentials.json
+
+# Bun lockfile (project uses npm)
+bun.lock
+
+# Archive files
+docs/archive/

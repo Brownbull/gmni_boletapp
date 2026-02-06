@@ -74,15 +74,20 @@ function sortByCreatedAtDesc(transactions: Transaction[]): Transaction[] {
             const ca = tx.createdAt;
             if (!ca) return 0;
             // Handle Firestore Timestamp (has .toDate() method)
-            if (typeof ca.toDate === 'function') {
-                return ca.toDate().getTime();
+            if (typeof ca === 'object' && ca !== null && 'toDate' in ca && typeof (ca as { toDate: unknown }).toDate === 'function') {
+                return (ca as { toDate: () => Date }).toDate().getTime();
             }
             // Handle Firestore Timestamp serialized as {seconds, nanoseconds}
-            if (typeof ca === 'object' && 'seconds' in ca) {
-                return ca.seconds * 1000 + (ca.nanoseconds || 0) / 1000000;
+            if (typeof ca === 'object' && ca !== null && 'seconds' in ca) {
+                const ts = ca as { seconds: number; nanoseconds?: number };
+                return ts.seconds * 1000 + (ts.nanoseconds || 0) / 1000000;
+            }
+            // Handle Date objects
+            if (ca instanceof Date) {
+                return ca.getTime();
             }
             // Fallback to Date parsing for ISO strings
-            return new Date(ca).getTime();
+            return new Date(ca as string).getTime();
         };
         return getTime(b) - getTime(a); // Descending order (newest first)
     });
@@ -195,13 +200,14 @@ export function RecentScansView({
         handleLongPressEnd();
     }, [handleLongPressEnd]);
 
-    const { groups } = useAllUserGroups(userId || undefined);
+    // Story 14d-v2-1.1: groups unused - group colors disabled (Epic 14c cleanup)
+    useAllUserGroups(userId || undefined);
 
-    const getGroupColorForTransaction = useCallback((tx: Transaction): string | undefined => {
-        if (!tx.sharedGroupIds?.length || !groups.length) return undefined;
-        const group = groups.find(g => tx.sharedGroupIds?.includes(g.id));
-        return group?.color;
-    }, [groups]);
+    // Story 14d-v2-1.1: sharedGroupIds[] removed (Epic 14c cleanup)
+    // Epic 14d will use sharedGroupId (single nullable string) instead
+    const getGroupColorForTransaction = useCallback((_tx: Transaction): string | undefined => {
+        return undefined;
+    }, []);
 
     // Sort transactions by createdAt descending
     const sortedTransactions = useMemo(

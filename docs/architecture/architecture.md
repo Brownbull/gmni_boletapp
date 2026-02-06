@@ -1,6 +1,6 @@
 # Architecture Document - Boletapp
 
-**Last Updated:** 2026-01-22 (Epic 14c-refactor: App.tsx Decomposition + Caching Simplification)
+**Last Updated:** 2026-02-01 (Epic 14e: Feature Architecture + Zustand State Management)
 
 ## Executive Summary
 
@@ -59,7 +59,7 @@ graph TD
 | | TypeScript | 5.3.3 | Type-safe development |
 | | Lucide React | 0.460.0 | Icon library |
 | **Styling** | Tailwind CSS | 3.x | Utility-first CSS (via CDN) |
-| **State Management** | React Hooks + React Query | Built-in + 5.x | `useState`, `useEffect`, `useMemo` + Custom hooks |
+| **State Management** | Zustand + React Query | 5.x + 5.x | Client state (Zustand), server state (TanStack Query) |
 | **Caching** | @tanstack/react-query | 5.x | Cache-first data loading, instant navigation |
 | **Authentication** | Firebase Auth | 10.14.1 | Google OAuth 2.0 |
 | **Database** | Cloud Firestore | 10.14.1 | NoSQL document store with real-time sync |
@@ -76,47 +76,52 @@ graph TD
 
 **Evolution:** Migrated from single-file (621 lines) to modular structure (31 files) during Epic 1.
 
-**Current Structure:**
+**Current Structure (Epic 14e Feature Architecture):**
 ```
 src/
-├── config/          # Configuration and initialization (3 files)
-│   ├── constants.ts     # App constants (categories, pagination)
-│   ├── firebase.ts      # Firebase initialization
-│   └── gemini.ts        # Gemini AI configuration
-├── types/           # TypeScript type definitions (2 files)
-│   ├── settings.ts      # Language, currency, theme types
-│   └── transaction.ts   # Transaction and item interfaces
-├── services/        # External API integrations (2 files)
-│   ├── firestore.ts     # Firestore CRUD operations
-│   └── gemini.ts        # Gemini AI receipt analysis
-├── hooks/           # Custom React hooks (2 files)
-│   ├── useAuth.ts       # Authentication state management
-│   └── useTransactions.ts  # Firestore real-time data sync
-├── utils/           # Pure utility functions (7 files)
-│   ├── colors.ts        # Color palette for categories
-│   ├── csv.ts           # CSV export functionality
-│   ├── currency.ts      # Currency formatting
-│   ├── date.ts          # Date formatting
-│   ├── json.ts          # JSON utilities
-│   ├── translations.ts  # i18n strings (Spanish/English)
-│   └── validation.ts    # Input parsing and validation
-├── components/      # Reusable UI components (5 files)
-│   ├── CategoryBadge.tsx   # Category display badge
-│   ├── ErrorBoundary.tsx   # Error handling wrapper
-│   ├── Nav.tsx             # Navigation component
-│   └── charts/
-│       ├── SimplePieChart.tsx    # Pie chart visualization
-│       └── GroupedBarChart.tsx   # Grouped bar chart
-├── views/           # Page-level view components (7 files)
-│   ├── LoginScreen.tsx     # Google OAuth sign-in
-│   ├── DashboardView.tsx   # Summary stats and shortcuts
-│   ├── ScanView.tsx        # Receipt camera/upload interface
-│   ├── EditView.tsx        # Transaction creation/editing
-│   ├── TrendsView.tsx      # Analytics and charts
-│   ├── HistoryView.tsx     # Transaction list with pagination
-│   └── SettingsView.tsx    # App preferences
-├── App.tsx          # Main application orchestrator
-└── main.tsx         # React DOM root entry point
+├── features/                    # Feature-based modules (Epic 14e)
+│   ├── scan/                    # Receipt scanning feature
+│   │   ├── store/               # useScanStore + selectors
+│   │   ├── handlers/            # processScan, batch handlers
+│   │   ├── hooks/               # useScanInitiation, useScanFlow
+│   │   └── index.ts             # Public API barrel
+│   ├── batch-review/            # Batch transaction review
+│   │   ├── store/               # useBatchReviewStore + selectors
+│   │   ├── handlers/            # save, batch operations
+│   │   ├── hooks/               # useBatchReviewHandlers
+│   │   └── index.ts
+│   ├── transaction-editor/      # Transaction creation/editing
+│   │   ├── store/               # useTransactionEditorStore
+│   │   └── index.ts
+│   ├── categories/              # Category management
+│   │   ├── utils/               # itemNameMappings
+│   │   └── index.ts
+│   └── credit/                  # Credit tracking feature
+│       └── CreditFeature.tsx
+├── entities/                    # Domain entities (FSD pattern)
+│   └── transaction/
+│       ├── model/               # Types, schemas
+│       └── utils/               # reconciliation, transformations
+├── shared/                      # Cross-cutting concerns
+│   ├── stores/                  # Shared Zustand stores
+│   │   ├── useNavigationStore.ts
+│   │   ├── useSettingsStore.ts
+│   │   └── useInsightStore.ts
+│   ├── lib/                     # Utilities (currency, date, etc.)
+│   └── ui/                      # Shared UI components
+├── managers/                    # Infrastructure managers
+│   └── modal/                   # Global modal management
+│       └── useModalStore.ts
+├── contexts/                    # React Context providers
+├── hooks/                       # App-level hooks
+│   └── app/                     # useAppInitialization, etc.
+├── components/                  # Shared UI components
+│   └── App/                     # AppProviders, AppRoutes
+├── views/                       # Page-level view components
+├── config/                      # Configuration files
+├── services/                    # External API integrations
+├── App.tsx                      # Main orchestrator (~2,191 lines)
+└── main.tsx                     # React DOM entry point
 ```
 
 **Architecture Benefits:**
@@ -473,19 +478,71 @@ onSnapshot(collectionRef, (snapshot) => {
 
 ## State Management
 
-**Pattern:** React Hooks (useState, useEffect, useRef)
+> **Updated:** 2026-02-01 (Epic 14e: Feature Architecture)
 
-**State Distribution:**
-- **App-level State** (App.tsx): View navigation, current transaction, UI toggles, settings
-- **Hooks** (useAuth, useTransactions): Authentication and data fetching
-- **Local Component State**: View-specific UI (e.g., `TrendsView` analytics filters)
+**Pattern:** 2-Paradigm Approach
+- **Zustand** - Client state (UI state, feature state, navigation)
+- **TanStack Query** - Server state (Firestore data with real-time sync)
 
-**No Global State Library:** Complexity doesn't justify Redux/Zustand yet. Props drilling is manageable with current component depth.
+### Zustand Stores (7 Total)
 
-**State Updates:**
-- User actions → callbacks → App.tsx updates state
-- Firestore changes → `useTransactions` hook → automatic re-render
-- Settings changes → localStorage persistence + state update
+| Store | Location | Purpose |
+|-------|----------|---------|
+| `useScanStore` | `src/features/scan/store/` | Scan workflow state machine, batch images, processing phase |
+| `useBatchReviewStore` | `src/features/batch-review/store/` | Batch review state, transaction edits, completion status |
+| `useNavigationStore` | `src/shared/stores/` | View navigation, scroll positions, history filters |
+| `useSettingsStore` | `src/shared/stores/` | App settings (locale, currency, theme), localStorage persistence |
+| `useTransactionEditorStore` | `src/features/transaction-editor/store/` | Transaction form state, edit mode, dirty tracking |
+| `useInsightStore` | `src/shared/stores/` | Insight flags (batch saved, session complete) |
+| `useModalStore` | `src/managers/modal/` | Global modal state, modal queue management |
+
+### Store Architecture Patterns
+
+**Selector Hooks:** Each store exports granular selectors for optimal re-render performance:
+```typescript
+// Example: useScanStore selectors
+const phase = useScanPhase();           // Only re-renders on phase change
+const batchImages = useBatchImages();   // Only re-renders on images change
+const { startBatch, completeScan } = useScanActions(); // Actions never cause re-renders
+```
+
+**Feature-Scoped Stores:** Stores live in feature directories when they support a single feature:
+```
+src/features/scan/store/
+├── index.ts                    # Barrel exports
+├── useScanStore.ts             # Store definition
+├── selectors.ts                # Selector hooks
+└── types.ts                    # Store types
+```
+
+**Shared Stores:** Cross-feature state lives in `src/shared/stores/`:
+```
+src/shared/stores/
+├── index.ts                    # Barrel exports
+├── useNavigationStore.ts       # Navigation state
+├── useSettingsStore.ts         # App settings
+└── useInsightStore.ts          # Insight flags
+```
+
+### Local State Guidelines
+
+**When to use Zustand:**
+- State shared across multiple components
+- State that persists across view navigation
+- Complex state with multiple update patterns
+
+**When to use local useState:**
+- Animation state (isExiting, isPaused) - resets on unmount is correct
+- Modal gate state (deleteTarget, editTarget) - component-specific confirmation
+- Isolated form inputs in components not rendered simultaneously
+
+### State Updates Flow
+
+```
+User Action → Zustand Store Action → State Update → Subscribed Components Re-render
+                                                            ↓
+Firestore Changes → TanStack Query → Cache Update → Components with useQuery Re-render
+```
 
 ---
 
@@ -1262,6 +1319,74 @@ match /{path=**}/transactions/{transactionId} {
 
 ---
 
+### ADR-012: Feature-Based Architecture with Zustand (Epic 14e)
+
+**Decision:** Adopt Zustand for client state management and reorganize codebase into feature-based modules
+**Context:** App.tsx grew to 3,387 lines with complex state management. Need consistent state patterns and better code organization.
+**Date:** 2026-02-01 (Epic 14e)
+
+**Key Architectural Changes:**
+
+| Change | Before | After |
+|--------|--------|-------|
+| State Management | React Context + useState | Zustand stores (7 total) |
+| Code Organization | Monolithic App.tsx | Feature-based modules in `src/features/` |
+| App.tsx Size | 3,387 lines | 2,191 lines |
+| Business Logic | Mixed in App.tsx | Extracted to feature handlers |
+
+**Zustand Store Inventory:**
+
+| Store | Scope | Purpose |
+|-------|-------|---------|
+| `useScanStore` | Feature | Scan workflow, batch images, processing phase |
+| `useBatchReviewStore` | Feature | Batch review state, transaction edits |
+| `useNavigationStore` | Shared | View navigation, scroll positions |
+| `useSettingsStore` | Shared | App settings with localStorage persistence |
+| `useTransactionEditorStore` | Feature | Transaction form state, dirty tracking |
+| `useInsightStore` | Shared | Insight flags (batch saved, session complete) |
+| `useModalStore` | Manager | Global modal queue management |
+
+**2-Paradigm State Approach:**
+```
+Client State (UI, navigation, forms) → Zustand Stores
+Server State (Firestore data)        → TanStack Query
+```
+
+**Feature Module Structure:**
+```
+src/features/{feature}/
+├── store/           # Zustand store + selectors
+├── handlers/        # Business logic functions
+├── hooks/           # Feature-specific React hooks
+├── components/      # Feature UI components (if any)
+└── index.ts         # Public API barrel export
+```
+
+**Local State Patterns (Documented):**
+- Animation state (isExiting, isPaused) → `useState` (resets on unmount is correct)
+- Modal gate state (deleteTarget) → `useState` (component-specific)
+- Isolated forms → `useState` (not shared across components)
+
+**Adversarial Review Results:**
+Epic 14e included an adversarial review that prevented 12 points of unnecessary work:
+- **Rejected:** Mapping store migration (accordion pattern = local state correct)
+- **Rejected:** Toast/Notification merge (different purposes, not duplicates)
+- **Rejected:** Animation state review (local state is appropriate)
+- **Approved:** NavigationContext deletion (duplicate of useNavigationStore)
+
+**Consequences:**
+- ✅ Consistent state management patterns across all features
+- ✅ Feature isolation enables parallel development
+- ✅ Business logic testable outside React components
+- ✅ Reduced App.tsx complexity by 35%
+- ✅ Granular re-renders via selector hooks
+- ⚠️ Learning curve for Zustand patterns
+- ⚠️ Migration of remaining NavigationContext consumers pending (Story 14e-45)
+
+**Status:** Accepted (Epic 14e Complete, Story 14e-45 pending)
+
+---
+
 ## Conclusion
 
 Boletapp's architecture has evolved from a **rapid MVP prototype** (single-file SPA) to a **production-ready modular application** while maintaining its core strengths: simplicity, serverless infrastructure, and AI-powered intelligence.
@@ -1338,6 +1463,6 @@ Component → useFirestoreSubscription → React Query Cache + Firestore onSnaps
 
 ---
 
-**Document Version:** 7.0
-**Last Updated:** 2026-01-22
-**Epic:** Epic 14c-refactor (App.tsx Decomposition + Caching Simplification)
+**Document Version:** 8.0
+**Last Updated:** 2026-02-01
+**Epic:** Epic 14e (Feature Architecture + Zustand State Management)

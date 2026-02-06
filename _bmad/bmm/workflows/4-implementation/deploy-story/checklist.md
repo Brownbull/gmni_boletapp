@@ -14,9 +14,9 @@
 - [ ] Origin is reachable
 - [ ] No merge conflicts anticipated
 
-### Atlas Validation
-- [ ] Atlas memory loaded
-- [ ] Workflow chains identified for this story
+### Pattern Validation
+- [ ] Project patterns loaded (code-review-patterns.md)
+- [ ] Affected features identified for this story
 - [ ] Architectural alignment verified
 - [ ] No critical conflicts detected
 
@@ -49,8 +49,7 @@
 - [ ] Feature branch deleted locally (if applicable)
 - [ ] Feature branch deleted from origin (if applicable)
 
-### Knowledge Sync
-- [ ] Atlas memory updated with deployment nugget
+### Status Sync
 - [ ] Sprint status file updated
 - [ ] Story marked as "deployed"
 
@@ -88,10 +87,9 @@ git push origin main --force
 | End of sprint | Ensure all done stories deployed |
 | Hotfix needed | Deploy directly to main (emergency) |
 
-## Atlas Integration Notes
+## Validation Notes
 
-Atlas participates in deployment by:
-1. **Pre-validation:** Checking for architectural conflicts
-2. **Workflow analysis:** Identifying affected user journeys
-3. **Knowledge capture:** Recording deployment to memory
-4. **Future reference:** Enabling questions like "When was X deployed?"
+Pre-deployment validation checks:
+1. **Pattern validation:** Checking against documented project patterns
+2. **Impact analysis:** Identifying affected user journeys
+3. **Architectural alignment:** Verifying patterns match documented architecture

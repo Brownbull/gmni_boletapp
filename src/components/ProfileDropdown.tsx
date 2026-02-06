@@ -14,7 +14,8 @@
  * - Escape key to close
  */
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Receipt, FileText, Target, Settings, Package } from 'lucide-react';
 
 export interface ProfileDropdownProps {
@@ -51,6 +52,18 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
 }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isDark = theme === 'dark';
+  const [position, setPosition] = useState({ top: 0, right: 0 });
+
+  // Calculate position based on trigger button location
+  useEffect(() => {
+    if (isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + 4, // 4px gap below trigger
+        right: window.innerWidth - rect.right, // Align to right edge of trigger
+      });
+    }
+  }, [isOpen, triggerRef]);
 
   // Close on click outside (excluding the trigger button)
   useEffect(() => {
@@ -96,12 +109,15 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
     { key: 'goals', icon: Target, label: t('goals'), action: () => onNavigate('goals'), disabled: true, badge: t('comingSoon') },
   ];
 
-  return (
+  // Use portal to render outside header's stacking context
+  return createPortal(
     <div
       ref={dropdownRef}
       data-testid="profile-dropdown"
-      className="absolute top-11 right-0 z-[100] min-w-[160px] rounded-lg shadow-lg animate-in fade-in slide-in-from-top-2 duration-200"
+      className="fixed z-[9999] min-w-[160px] rounded-lg shadow-lg animate-in fade-in slide-in-from-top-2 duration-200"
       style={{
+        top: `${position.top}px`,
+        right: `${position.right}px`,
         backgroundColor: 'var(--bg-secondary, #ffffff)',
         border: `1px solid ${isDark ? 'var(--border-light, #334155)' : 'var(--border-light, #e2e8f0)'}`,
       }}
@@ -171,7 +187,8 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
           <span className="text-sm font-medium">{t('settings')}</span>
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -1,6 +1,7 @@
 {
   "projects": {
-    "default": "boletapp-d609f"
+    "default": "boletapp-d609f",
+    "staging": "boletapp-staging"
   },
   "targets": {},
   "etags": {}

@@ -6,9 +6,9 @@
  * - applyAllMappings: Category + merchant + item name mappings
  * - handleCurrencyDetection: Currency check + dialog trigger
  * - handleScanSuccess: QuickSave/Trusted/EditView routing
- * - reconcileItemsTotal: Items reconciliation utility
  *
  * Story 14e-8b: Sub-handlers extraction
+ * Story 14e-41: reconcileItemsTotal tests moved to entities/transaction/utils/reconciliation.test.ts
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -17,7 +17,7 @@ import {
   applyAllMappings,
   handleCurrencyDetection,
   handleScanSuccess,
-  reconcileItemsTotal,
+  // Story 14e-41: reconcileItemsTotal moved to @entities/transaction
   type ValidateScanResultDeps,
   type ApplyAllMappingsDeps,
   type HandleCurrencyDetectionDeps,
@@ -75,7 +75,8 @@ function createMockMappingDeps(overrides?: Partial<MappingDependencies>): Mappin
     mappings: [],
     applyCategoryMappings: vi.fn((tx, _mappings) => ({ transaction: tx, appliedMappingIds: [] })),
     findMerchantMatch: vi.fn(() => null),
-    applyItemNameMappings: vi.fn((tx, _merchant) => ({ transaction: tx, appliedIds: [] })),
+    // Story 14e-42: Now uses findItemNameMatch for dependency injection to pure utility
+    findItemNameMatch: vi.fn(() => null),
     incrementMappingUsage: vi.fn(),
     incrementMerchantMappingUsage: vi.fn(),
     incrementItemNameMappingUsage: vi.fn(),
@@ -134,7 +135,7 @@ describe('validateScanResult', () => {
     expect(result.isValid).toBe(false);
     expect(result.shouldContinue).toBe(false);
     expect(deps.showScanDialog).toHaveBeenCalledWith('total_mismatch', expect.any(Object));
-    expect(deps.setIsAnalyzing).toHaveBeenCalledWith(false);
+    // Story 14e-25d: setIsAnalyzing removed - state managed by state machine
     expect(deps.scanOverlay.setReady).toHaveBeenCalled();
   });
 
@@ -296,10 +297,24 @@ describe('applyAllMappings', () => {
 
   it('should apply item name mappings when merchant is matched', () => {
     const transaction = createMockTransaction({ merchant: 'WALMART' });
-    const mappedTx = {
-      ...transaction,
-      items: [{ ...transaction.items[0], name: 'Organic Milk' }],
-    };
+
+    // Story 14e-42: Now uses findItemNameMatch for dependency injection to pure utility
+    const mockFindItemNameMatch = vi.fn((merchant: string, itemName: string) => {
+      // Return matches for our test items
+      if (itemName === 'Item 1') {
+        return {
+          mapping: { id: 'item-1', targetItemName: 'Organic Milk' },
+          confidence: 0.9,
+        };
+      }
+      if (itemName === 'Item 2') {
+        return {
+          mapping: { id: 'item-2', targetItemName: 'Fresh Bread' },
+          confidence: 0.85,
+        };
+      }
+      return null;
+    });
 
     const deps: ApplyAllMappingsDeps = {
       mapping: createMockMappingDeps({
@@ -311,19 +326,21 @@ describe('applyAllMappings', () => {
           },
           confidence: 0.9,
         })),
-        applyItemNameMappings: vi.fn((_tx, _merchant) => ({
-          transaction: mappedTx,
-          appliedIds: ['item-1', 'item-2'],
-        })),
+        findItemNameMatch: mockFindItemNameMatch,
       }),
       userId: 'test-user',
     };
 
     const result = applyAllMappings(transaction, deps);
 
-    expect(deps.mapping.applyItemNameMappings).toHaveBeenCalledWith(expect.any(Object), 'walmart');
+    // Verify findItemNameMatch was called for each item with the normalized merchant
+    expect(mockFindItemNameMatch).toHaveBeenCalledWith('walmart', 'Item 1');
+    expect(mockFindItemNameMatch).toHaveBeenCalledWith('walmart', 'Item 2');
     expect(result.appliedItemNameMappingIds).toEqual(['item-1', 'item-2']);
     expect(deps.mapping.incrementItemNameMappingUsage).toHaveBeenCalledTimes(2);
+    // Verify item names were actually updated
+    expect(result.transaction.items[0].name).toBe('Organic Milk');
+    expect(result.transaction.items[1].name).toBe('Fresh Bread');
   });
 
   it('should not increment usage when no userId provided', () => {
@@ -382,7 +399,7 @@ describe('handleCurrencyDetection', () => {
       pendingTransaction: transaction,
       hasDiscrepancy: false,
     });
-    expect(deps.setIsAnalyzing).toHaveBeenCalledWith(false);
+    // Story 14e-25d: setIsAnalyzing removed - state managed by state machine
     expect(deps.scanOverlay.setReady).toHaveBeenCalled();
   });
 
@@ -522,118 +539,4 @@ describe('handleScanSuccess', () => {
   });
 });
 
-// =============================================================================
-// reconcileItemsTotal Tests
-// =============================================================================
-
-describe('reconcileItemsTotal', () => {
-  it('should return unchanged items when totals match', () => {
-    const items: TransactionItem[] = [
-      { name: 'Item 1', price: 5000, qty: 1 },
-      { name: 'Item 2', price: 5000, qty: 1 },
-    ];
-
-    const result = reconcileItemsTotal(items, 10000, 'en');
-
-    expect(result.items).toEqual(items);
-    expect(result.hasDiscrepancy).toBe(false);
-    expect(result.discrepancyAmount).toBe(0);
-  });
-
-  it('should allow small discrepancies (< $1)', () => {
-    const items: TransactionItem[] = [{ name: 'Item 1', price: 9999.5, qty: 1 }];
-
-    const result = reconcileItemsTotal(items, 10000, 'en');
-
-    expect(result.items).toEqual(items);
-    expect(result.hasDiscrepancy).toBe(false);
-  });
-
-  it('should add surplus item when receipt > items', () => {
-    const items: TransactionItem[] = [{ name: 'Item 1', price: 8000, qty: 1 }];
-
-    const result = reconcileItemsTotal(items, 10000, 'en');
-
-    expect(result.items.length).toBe(2);
-    expect(result.hasDiscrepancy).toBe(true);
-    expect(result.discrepancyAmount).toBe(2000);
-
-    const adjustmentItem = result.items[1];
-    expect(adjustmentItem.name).toBe('Unitemized charge');
-    expect(adjustmentItem.price).toBe(2000);
-  });
-
-  it('should add discount item when items > receipt', () => {
-    const items: TransactionItem[] = [{ name: 'Item 1', price: 12000, qty: 1 }];
-
-    const result = reconcileItemsTotal(items, 10000, 'en');
-
-    expect(result.items.length).toBe(2);
-    expect(result.hasDiscrepancy).toBe(true);
-    expect(result.discrepancyAmount).toBe(-2000);
-
-    const adjustmentItem = result.items[1];
-    expect(adjustmentItem.name).toBe('Discount/Adjustment');
-    expect(adjustmentItem.price).toBe(-2000);
-  });
-
-  it('should use Spanish translations when lang is es', () => {
-    const items: TransactionItem[] = [{ name: 'Item 1', price: 8000, qty: 1 }];
-
-    const result = reconcileItemsTotal(items, 10000, 'es');
-
-    const adjustmentItem = result.items[1];
-    expect(adjustmentItem.name).toBe('Cargo sin detallar');
-  });
-
-  it('should use Spanish discount translation for negative discrepancy', () => {
-    const items: TransactionItem[] = [{ name: 'Item 1', price: 12000, qty: 1 }];
-
-    const result = reconcileItemsTotal(items, 10000, 'es');
-
-    const adjustmentItem = result.items[1];
-    expect(adjustmentItem.name).toBe('Descuento/Ajuste');
-  });
-
-  it('should handle empty items array', () => {
-    const result = reconcileItemsTotal([], 10000, 'en');
-
-    expect(result.items.length).toBe(1);
-    expect(result.hasDiscrepancy).toBe(true);
-    expect(result.items[0].name).toBe('Unitemized charge');
-    expect(result.items[0].price).toBe(10000);
-  });
-
-  it('should handle zero receipt total', () => {
-    const items: TransactionItem[] = [{ name: 'Item 1', price: 5000, qty: 1 }];
-
-    const result = reconcileItemsTotal(items, 0, 'en');
-
-    expect(result.items.length).toBe(2);
-    expect(result.hasDiscrepancy).toBe(true);
-    expect(result.discrepancyAmount).toBe(-5000);
-  });
-
-  it('should set adjustment item category to Other', () => {
-    const items: TransactionItem[] = [{ name: 'Item 1', price: 8000, qty: 1 }];
-
-    const result = reconcileItemsTotal(items, 10000, 'en');
-
-    const adjustmentItem = result.items[1];
-    expect(adjustmentItem.category).toBe('Other');
-    expect(adjustmentItem.qty).toBe(1);
-  });
-
-  it('should handle floating point rounding correctly', () => {
-    const items: TransactionItem[] = [
-      { name: 'Item 1', price: 33.33, qty: 1 },
-      { name: 'Item 2', price: 33.33, qty: 1 },
-      { name: 'Item 3', price: 33.33, qty: 1 },
-    ];
-
-    // Total is 99.99, items sum is 99.99
-    const result = reconcileItemsTotal(items, 99.99, 'en');
-
-    expect(result.hasDiscrepancy).toBe(false);
-  });
-});
+// NOTE: reconcileItemsTotal tests moved to tests/unit/entities/transaction/utils/reconciliation.test.ts (Story 14e-41)

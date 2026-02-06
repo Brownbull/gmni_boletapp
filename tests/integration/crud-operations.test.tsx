@@ -296,4 +296,185 @@ describe('Transaction CRUD Operations', () => {
     expect(allTransactions[1].merchant).toBe('Middle');
     expect(allTransactions[2].merchant).toBe('Oldest');
   });
+
+  // Story 14d-v2-1-2c: Tests for Epic 14d-v2 fields
+  describe('Epic 14d-v2 Fields', () => {
+    /**
+     * Test 9: New transaction gets version=1 and updatedAt set
+     * Story 14d-v2-1.2b: Optimistic concurrency control
+     */
+    it('should set version=1 and updatedAt for new transactions', async () => {
+      const db = getAuthedFirestore(TEST_USERS.USER_1);
+
+      const transaction: Omit<Transaction, 'id' | 'createdAt'> = {
+        date: '2026-01-22',
+        merchant: 'Version Test Store',
+        category: 'Supermarket',
+        total: 100.00,
+        items: []
+      };
+
+      const docId = await addTransaction(db, TEST_USERS.USER_1, APP_ID, transaction);
+
+      // Verify the fields were set
+      const collectionRef = collection(db, 'artifacts', APP_ID, 'users', TEST_USERS.USER_1, 'transactions');
+      const snapshot = await getDocs(collectionRef);
+      const doc = snapshot.docs[0];
+      const data = doc.data();
+
+      expect(data.version).toBe(1);
+      expect(data.updatedAt).toBeDefined();
+      expect(data.createdAt).toBeDefined();
+    });
+
+    /**
+     * Test 10: New transaction gets periods computed from date
+     * Story 14d-v2-1.2b: Efficient temporal queries
+     */
+    it('should compute periods from date for new transactions', async () => {
+      const db = getAuthedFirestore(TEST_USERS.USER_1);
+
+      const transaction: Omit<Transaction, 'id' | 'createdAt'> = {
+        date: '2026-01-22',
+        merchant: 'Periods Test Store',
+        category: 'Supermarket',
+        total: 50.00,
+        items: []
+      };
+
+      const docId = await addTransaction(db, TEST_USERS.USER_1, APP_ID, transaction);
+
+      // Verify periods were computed
+      const collectionRef = collection(db, 'artifacts', APP_ID, 'users', TEST_USERS.USER_1, 'transactions');
+      const snapshot = await getDocs(collectionRef);
+      const doc = snapshot.docs[0];
+      const data = doc.data();
+
+      expect(data.periods).toBeDefined();
+      expect(data.periods.day).toBe('2026-01-22');
+      expect(data.periods.month).toBe('2026-01');
+      expect(data.periods.quarter).toBe('2026-Q1');
+      expect(data.periods.year).toBe('2026');
+    });
+
+    /**
+     * Test 11: Update increments version
+     * Story 14d-v2-1.2b: Optimistic concurrency control
+     */
+    it('should increment version on update', async () => {
+      const db = getAuthedFirestore(TEST_USERS.USER_1);
+
+      const transaction: Omit<Transaction, 'id' | 'createdAt'> = {
+        date: '2026-01-22',
+        merchant: 'Increment Test Store',
+        category: 'Supermarket',
+        total: 100.00,
+        items: []
+      };
+
+      const docId = await addTransaction(db, TEST_USERS.USER_1, APP_ID, transaction);
+
+      // Update the transaction
+      await updateTransaction(db, TEST_USERS.USER_1, APP_ID, docId, {
+        total: 150.00
+      });
+
+      // Verify version was incremented
+      const collectionRef = collection(db, 'artifacts', APP_ID, 'users', TEST_USERS.USER_1, 'transactions');
+      const snapshot = await getDocs(collectionRef);
+      const doc = snapshot.docs[0];
+      const data = doc.data();
+
+      expect(data.version).toBe(2);
+      expect(data.total).toBe(150.00);
+    });
+
+    /**
+     * Test 12: Update recomputes periods when date changes
+     * Story 14d-v2-1.2b: Period consistency
+     */
+    it('should recompute periods when date is updated', async () => {
+      const db = getAuthedFirestore(TEST_USERS.USER_1);
+
+      const transaction: Omit<Transaction, 'id' | 'createdAt'> = {
+        date: '2026-01-22',
+        merchant: 'Date Update Test Store',
+        category: 'Supermarket',
+        total: 100.00,
+        items: []
+      };
+
+      const docId = await addTransaction(db, TEST_USERS.USER_1, APP_ID, transaction);
+
+      // Update the date
+      await updateTransaction(db, TEST_USERS.USER_1, APP_ID, docId, {
+        date: '2026-04-15'
+      });
+
+      // Verify periods were recomputed
+      const collectionRef = collection(db, 'artifacts', APP_ID, 'users', TEST_USERS.USER_1, 'transactions');
+      const snapshot = await getDocs(collectionRef);
+      const doc = snapshot.docs[0];
+      const data = doc.data();
+
+      expect(data.periods.day).toBe('2026-04-15');
+      expect(data.periods.month).toBe('2026-04');
+      expect(data.periods.quarter).toBe('2026-Q2');
+      expect(data.periods.year).toBe('2026');
+    });
+
+    /**
+     * Test 13: Subscription excludes soft-deleted transactions
+     * Story 14d-v2-1-2c: Soft delete filtering
+     */
+    it('should exclude soft-deleted transactions from subscription', async () => {
+      const db = getAuthedFirestore(TEST_USERS.USER_1);
+
+      // Create two transactions
+      const tx1: Omit<Transaction, 'id' | 'createdAt'> = {
+        date: '2026-01-22',
+        merchant: 'Active Store',
+        category: 'Supermarket',
+        total: 100.00,
+        items: []
+      };
+
+      const tx2: Omit<Transaction, 'id' | 'createdAt'> = {
+        date: '2026-01-23',
+        merchant: 'Soon Deleted Store',
+        category: 'Restaurante',
+        total: 50.00,
+        items: []
+      };
+
+      await addTransaction(db, TEST_USERS.USER_1, APP_ID, tx1);
+      const docId2 = await addTransaction(db, TEST_USERS.USER_1, APP_ID, tx2);
+
+      // Soft delete the second transaction (simulate by updating with deletedAt)
+      await updateTransaction(db, TEST_USERS.USER_1, APP_ID, docId2, {
+        deletedAt: new Date() as any, // Firestore Timestamp simulation
+        deletedBy: TEST_USERS.USER_1,
+      });
+
+      // Subscribe to transactions
+      let receivedTransactions: Transaction[] = [];
+      const unsubscribe = subscribeToTransactions(
+        db,
+        TEST_USERS.USER_1,
+        APP_ID,
+        (transactions) => {
+          receivedTransactions = transactions;
+        }
+      );
+
+      // Wait for subscription to receive data
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Verify only non-deleted transaction is returned
+      expect(receivedTransactions).toHaveLength(1);
+      expect(receivedTransactions[0].merchant).toBe('Active Store');
+
+      unsubscribe();
+    });
+  });
 });

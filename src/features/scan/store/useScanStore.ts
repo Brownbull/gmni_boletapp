@@ -26,14 +26,29 @@ import type { Transaction } from '@/types/transaction';
 import type { BatchReceipt } from '@/types/batchReceipt';
 
 // =============================================================================
-// Initial State (matches useScanStateMachine.ts exactly)
+// UI State Extensions (Story 14e-38)
+// =============================================================================
+
+/**
+ * UI-specific state flags managed by the scan store.
+ * These flags control UI behavior during scan flows.
+ */
+interface ScanUIState {
+  /** Skip scan_complete dialog (QuickSaveCard flow) */
+  skipScanCompleteModal: boolean;
+  /** Rescan in progress (button disabled state) */
+  isRescanning: boolean;
+}
+
+// =============================================================================
+// Initial State
 // =============================================================================
 
 /**
  * Initial idle state for the scan store.
- * Matches initialScanState from useScanStateMachine.ts exactly.
+ * Includes core ScanState from scanStateMachine plus UI-specific flags.
  */
-export const initialScanState: ScanState = {
+export const initialScanState: ScanState & ScanUIState = {
   // Core state
   phase: 'idle',
   mode: 'single',
@@ -69,6 +84,10 @@ export const initialScanState: ScanState = {
   // Pre-scan options
   storeType: null,
   currency: null,
+
+  // UI flags (Story 14e-38)
+  skipScanCompleteModal: false,
+  isRescanning: false,
 };
 
 // =============================================================================
@@ -122,6 +141,10 @@ interface ScanStoreActions {
   restoreState: (state: Partial<ScanState>) => void;
   refundCredit: () => void;
 
+  // UI flag actions (Story 14e-38)
+  setSkipScanCompleteModal: (value: boolean) => void;
+  setIsRescanning: (value: boolean) => void;
+
   // Internal helper
   _guardPhase: (expected: ScanPhase | ScanPhase[], actionName: string) => boolean;
 }
@@ -130,7 +153,7 @@ interface ScanStoreActions {
 // Store Implementation
 // =============================================================================
 
-export const useScanStore = create<ScanState & ScanStoreActions>()(
+export const useScanStore = create<ScanState & ScanUIState & ScanStoreActions>()(
   devtools(
     (set, get) => ({
       ...initialScanState,
@@ -901,6 +924,18 @@ export const useScanStore = create<ScanState & ScanStoreActions>()(
           false,
           'scan/refundCredit'
         );
+      },
+
+      // =========================================================================
+      // UI Flag Actions - Story 14e-38
+      // =========================================================================
+
+      setSkipScanCompleteModal: (value: boolean) => {
+        set({ skipScanCompleteModal: value }, false, 'scan/setSkipScanCompleteModal');
+      },
+
+      setIsRescanning: (value: boolean) => {
+        set({ isRescanning: value }, false, 'scan/setIsRescanning');
       },
     }),
     {

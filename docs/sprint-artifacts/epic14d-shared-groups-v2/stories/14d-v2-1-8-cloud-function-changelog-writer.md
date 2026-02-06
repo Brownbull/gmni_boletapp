@@ -1,6 +1,20 @@
 # Story 14d-v2.1.8: Cloud Function - Changelog Writer
 
-Status: ready-for-dev
+Status: split
+
+> **⚠️ SPLIT:** This story was split into 4 sub-stories on 2026-02-01
+> **Reason:** 11 tasks, 45 subtasks exceeded sizing limits (max 4 tasks, 15 subtasks)
+> **Strategy:** by_phase (foundation → validation → polish → testing)
+>
+> **Sub-stories:**
+> - [14d-v2-1-8a: Foundation](14d-v2-1-8a-changelog-writer-foundation.md) - Tasks 1-4 (16 subtasks)
+> - [14d-v2-1-8b: Validation](14d-v2-1-8b-changelog-writer-validation.md) - Tasks 5-7 (9 subtasks)
+> - [14d-v2-1-8c: Logging & Export](14d-v2-1-8c-changelog-writer-logging-export.md) - Tasks 8-9 (7 subtasks)
+> - [14d-v2-1-8d: Tests & Deploy](14d-v2-1-8d-changelog-writer-tests-deploy.md) - Tasks 10-11 (13 subtasks)
+
+---
+
+## Original Story (Archived)
 
 ## Story
 

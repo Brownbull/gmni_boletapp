@@ -16,7 +16,7 @@ export default [
       'src/hooks/useChangeDetection.ts',
       'src/components/celebrations/PersonalRecordBanner.tsx',
       'src/components/history/IconFilterBar.tsx',
-      'src/views/ItemsView.tsx',
+      'src/views/ItemsView/ItemsView.tsx',
     ]
   },
   {

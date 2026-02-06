@@ -1,5 +1,6 @@
 /**
  * Story 14c-refactor.9: ThemeContext - App-wide theme and appearance context
+ * Story 14e-35: Locale settings migrated to Zustand store
  *
  * Provides theme preferences and locale settings to the entire app via React Context.
  * Manages visual appearance (light/dark, color themes) and localization (language, date format).
@@ -9,14 +10,16 @@
  * - Color theme (normal, professional, mono)
  * - Font color mode (colorful, plain)
  * - Font size scaling (small, normal)
- * - Language setting (es, en)
- * - Date format preference (LatAm, US)
- * - Currency display preference
- * - localStorage persistence for all settings
+ * - Language setting (es, en) - from useSettingsStore
+ * - Date format preference (LatAm, US) - from useSettingsStore
+ * - Currency display preference - from useSettingsStore
+ * - localStorage persistence for visual settings (locale via Zustand)
  *
  * Note: fontFamily is persisted via Firestore (useUserPreferences) and passed through props
+ * Note: Locale settings (lang, currency, dateFormat) now use useSettingsStore (Zustand)
+ *       to eliminate dual-sync race condition with App.tsx
  *
- * Architecture Reference: Epic 14c-refactor - App Decomposition
+ * Architecture Reference: Epic 14c-refactor - App Decomposition, Epic 14e - Feature Architecture
  *
  * @example
  * ```tsx
@@ -49,6 +52,13 @@ import type {
     FontSize,
     FontFamily,
 } from '../types/settings';
+// Story 14e-35: Use Zustand store for locale settings (eliminates dual-sync race condition)
+import {
+    useLang,
+    useCurrency,
+    useDateFormat,
+    settingsActions,
+} from '../shared/stores/useSettingsStore';
 
 // =============================================================================
 // Types
@@ -152,8 +162,9 @@ function loadTheme(): Theme {
 /**
  * Load language from localStorage.
  * Story 14c-refactor.9: Language persistence
+ * Exported for use in App.tsx (before ThemeProvider is available)
  */
-function loadLanguage(): Language {
+export function loadLanguage(): Language {
     const saved = localStorage.getItem('lang');
     if (saved === 'es' || saved === 'en') return saved as Language;
     return 'es'; // Default to Spanish (target market: Chile)
@@ -162,8 +173,9 @@ function loadLanguage(): Language {
 /**
  * Load currency from localStorage.
  * Story 14c-refactor.9: Currency persistence
+ * Exported for use in App.tsx (before ThemeProvider is available)
  */
-function loadCurrency(): Currency {
+export function loadCurrency(): Currency {
     const saved = localStorage.getItem('currency');
     if (saved === 'CLP' || saved === 'USD' || saved === 'EUR') return saved as Currency;
     return 'CLP'; // Default to Chilean Pesos (target market)
@@ -172,8 +184,9 @@ function loadCurrency(): Currency {
 /**
  * Load date format from localStorage.
  * Story 14c-refactor.9: Date format persistence
+ * Exported for use in App.tsx (before ThemeProvider is available)
  */
-function loadDateFormat(): 'LatAm' | 'US' {
+export function loadDateFormat(): 'LatAm' | 'US' {
     const saved = localStorage.getItem('dateFormat');
     if (saved === 'LatAm' || saved === 'US') return saved;
     return 'LatAm'; // Default to Latin American format (target market)
@@ -215,10 +228,11 @@ export function ThemeProvider({
     const [fontColorMode, setFontColorModeState] = useState<FontColorMode>(loadFontColorMode);
     const [fontSize, setFontSizeState] = useState<FontSize>(loadFontSize);
 
-    // Locale settings with localStorage initialization
-    const [lang, setLangState] = useState<Language>(loadLanguage);
-    const [currency, setCurrencyState] = useState<Currency>(loadCurrency);
-    const [dateFormat, setDateFormatState] = useState<'LatAm' | 'US'>(loadDateFormat);
+    // Story 14e-35: Locale settings from Zustand store (single source of truth)
+    // Eliminates dual-sync race condition between App.tsx useState and ThemeContext
+    const lang = useLang();
+    const currency = useCurrency();
+    const dateFormat = useDateFormat();
 
     // ===========================================================================
     // localStorage Persistence Effects
@@ -244,20 +258,8 @@ export function ThemeProvider({
         localStorage.setItem('fontSize', fontSize);
     }, [fontSize]);
 
-    // Story 14c-refactor.9: Persist language to localStorage
-    useEffect(() => {
-        localStorage.setItem('lang', lang);
-    }, [lang]);
-
-    // Story 14c-refactor.9: Persist currency to localStorage
-    useEffect(() => {
-        localStorage.setItem('currency', currency);
-    }, [currency]);
-
-    // Story 14c-refactor.9: Persist date format to localStorage
-    useEffect(() => {
-        localStorage.setItem('dateFormat', dateFormat);
-    }, [dateFormat]);
+    // Story 14e-35: Locale settings persistence removed
+    // Now handled by useSettingsStore (Zustand persist middleware)
 
     // ===========================================================================
     // Action Functions
@@ -279,16 +281,18 @@ export function ThemeProvider({
         setFontSizeState(size);
     }, []);
 
+    // Story 14e-35: Locale setters use Zustand store actions (eliminates custom events)
+    // Store actions handle localStorage persistence automatically
     const setLang = useCallback((newLang: Language) => {
-        setLangState(newLang);
+        settingsActions.setLang(newLang);
     }, []);
 
     const setCurrency = useCallback((newCurrency: Currency) => {
-        setCurrencyState(newCurrency);
+        settingsActions.setCurrency(newCurrency);
     }, []);
 
     const setDateFormat = useCallback((format: 'LatAm' | 'US') => {
-        setDateFormatState(format);
+        settingsActions.setDateFormat(format);
     }, []);
 
     // ===========================================================================

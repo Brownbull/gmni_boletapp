@@ -1,18 +1,18 @@
 # Source Tree Analysis: Boletapp
 
-**Last Updated:** 2026-01-22 (Post-Epic 14c-refactor - App.tsx Decomposition)
+**Last Updated:** 2026-02-05 (Post-Epic 14d-v2 - Shared Groups)
 
 ## Executive Summary
 
-Boletapp has evolved from a **single-file application** (621 lines) to a **modular architecture** with **100+ TypeScript files** organized into multiple logical layers. This transformation (Epic 1-14) enables better testability, maintainability, and collaboration while maintaining the application's core functionality.
+Boletapp has evolved from a **single-file application** (621 lines) to a **feature-based architecture** with **539 TypeScript files** organized into feature modules and shared layers. Epic 14e introduced **Zustand** for client state management with 7 stores. Epic 14d-v2 added the **Shared Groups** feature with changelog-driven sync.
 
-**Architecture Pattern:** Modular PWA (React + TypeScript + Vite + React Query)
-**Total Source Files:** 200+ TypeScript files
-**Total Lines of Code:** ~25,000+ LOC
+**Architecture Pattern:** Feature-Based PWA (React + TypeScript + Zustand + TanStack Query)
+**State Management:** 7 Zustand stores + TanStack Query for server state
+**Total Source Files:** 539 TypeScript files (src/) + 25 (functions/)
 **Build Tool:** Vite 5.4.0 with HMR
 **Caching:** @tanstack/react-query for instant navigation
 **Production URL:** https://boletapp-d609f.web.app
-**Cloud Functions:** 2 functions (analyzeReceipt, onTransactionDeleted)
+**Cloud Functions:** 12 functions (see [cloud-functions.md](./cloud-functions.md))
 
 ---
 
@@ -20,15 +20,54 @@ Boletapp has evolved from a **single-file application** (621 lines) to a **modul
 
 ```
 boletapp/                                    # Project root
-├── src/                                    # 🎯 APPLICATION SOURCE CODE (31 files)
+├── src/                                    # 🎯 APPLICATION SOURCE CODE
+│   ├── features/                           # Feature modules (Epic 14e)
+│   │   ├── scan/                           # Receipt scanning feature
+│   │   │   ├── store/                      # useScanStore + selectors
+│   │   │   ├── handlers/                   # processScan, batch handlers
+│   │   │   ├── hooks/                      # useScanInitiation, useScanFlow
+│   │   │   └── index.ts                    # Public API barrel
+│   │   ├── batch-review/                   # Batch transaction review
+│   │   │   ├── store/                      # useBatchReviewStore + selectors
+│   │   │   ├── handlers/                   # save, batch operations
+│   │   │   └── hooks/                      # useBatchReviewHandlers
+│   │   ├── transaction-editor/             # Transaction editing
+│   │   │   └── store/                      # useTransactionEditorStore
+│   │   ├── categories/                     # Category management
+│   │   │   └── utils/                      # itemNameMappings
+│   │   ├── credit/                         # Credit tracking
+│   │   └── shared-groups/                  # Shared groups (Epic 14d-v2)
+│   │       ├── components/                 # EditGroupDialog, ViewModeSwitcher, etc.
+│   │       ├── hooks/                      # useGroups, useUserGroupPreference
+│   │       └── services/                   # groupService
+│   │
+│   ├── entities/                           # Domain entities (FSD pattern)
+│   │   └── transaction/
+│   │       ├── model/                      # Types, schemas
+│   │       └── utils/                      # reconciliation, transformations
+│   │
+│   ├── shared/                             # Cross-cutting concerns
+│   │   ├── stores/                         # Shared Zustand stores
+│   │   │   ├── useNavigationStore.ts       # View navigation
+│   │   │   ├── useSettingsStore.ts         # App settings
+│   │   │   └── useInsightStore.ts          # Insight flags
+│   │   ├── lib/                            # Utilities
+│   │   └── ui/                             # Shared UI components
+│   │
+│   ├── managers/                           # Infrastructure managers
+│   │   └── modal/                          # useModalStore
+│   │
 │   ├── config/                             # Configuration & initialization (3 files)
 │   │   ├── constants.ts                    # App constants (categories, pagination)
 │   │   ├── firebase.ts                     # Firebase initialization
 │   │   └── gemini.ts                       # Gemini AI configuration
 │   │
-│   ├── types/                              # TypeScript type definitions (2 files)
+│   ├── types/                              # TypeScript type definitions
 │   │   ├── settings.ts                     # Language, currency, theme types
-│   │   └── transaction.ts                  # Transaction and item interfaces
+│   │   ├── transaction.ts                  # Transaction and item interfaces
+│   │   ├── sharedGroup.ts                  # SharedGroup, Invitation, Changelog types
+│   │   ├── changelog.ts                    # ChangelogEntry, sync types
+│   │   └── index.ts                        # Barrel exports
 │   │
 │   ├── services/                           # Business logic & API integrations (25 files)
 │   │   ├── firestore.ts                    # Firestore CRUD operations
@@ -601,27 +640,40 @@ boletapp/                                    # Project root
 
 **Error Handling:** Graceful fallback to manual entry if AI fails
 
-### State Management
+### State Management (Epic 14e)
 
-**Pattern:** React Hooks + Props Drilling
-**No Redux/Zustand:** Complexity doesn't justify global state library yet
+**Pattern:** 2-Paradigm Approach
+- **Zustand** - Client state (7 stores for UI, navigation, feature state)
+- **TanStack Query** - Server state (Firestore data with real-time sync)
+
+**Zustand Store Inventory:**
+
+| Store | Location | Purpose |
+|-------|----------|---------|
+| `useScanStore` | `src/features/scan/store/` | Scan workflow, batch images, processing |
+| `useBatchReviewStore` | `src/features/batch-review/store/` | Batch review state, transaction edits |
+| `useNavigationStore` | `src/shared/stores/` | View navigation, scroll positions |
+| `useSettingsStore` | `src/shared/stores/` | App settings, localStorage persistence |
+| `useTransactionEditorStore` | `src/features/transaction-editor/store/` | Transaction form state |
+| `useInsightStore` | `src/shared/stores/` | Insight flags (batch saved, session complete) |
+| `useModalStore` | `src/managers/modal/` | Global modal queue management |
 
 **State Distribution:**
-- **App.tsx:** View navigation, current transaction, settings, analytics filters
-- **useAuth:** Authentication state (user, loading, sign-in/out functions)
-- **useTransactions:** Transaction data (real-time sync from Firestore)
-- **View Components:** Local UI state (form inputs, modals, loading states)
+- **Feature Stores:** Feature-specific state in `src/features/{feature}/store/`
+- **Shared Stores:** Cross-feature state in `src/shared/stores/`
+- **TanStack Query:** Server state (Firestore data with real-time sync)
+- **Local useState:** Animation state, modal gates, isolated forms
 
 **Data Flow:**
 ```
 User Action
-  → View Component (event handler)
-  → App.tsx (callback prop)
-  → Service Function (API call)
-  → Firestore Update
-  → Real-time Listener (useTransactions hook)
+  → Zustand Store Action
   → State Update
-  → Re-render
+  → Subscribed Components Re-render
+
+Firestore Changes
+  → TanStack Query Cache Update
+  → Components with useQuery Re-render
 ```
 
 ---
@@ -827,6 +879,75 @@ Epic 14c-refactor decomposed the monolithic App.tsx (~5074 lines) into modular c
 
 ---
 
-*Document Version: 5.0*
-*Last Updated: 2026-01-22*
-*Updated by: BMAD Documentation Workflow (Epic 14c-refactor.19)*
+## Key Additions (Epic 14e)
+
+> **Added:** 2026-02-01 (Feature Architecture + Zustand State Management)
+
+### Feature-Based Architecture
+
+Epic 14e introduced a feature-based architecture, organizing code by domain feature rather than technical layer.
+
+**New Directories:**
+
+| Directory | Purpose | Key Files |
+|-----------|---------|-----------|
+| `src/features/scan/` | Receipt scanning | useScanStore, processScan, useScanInitiation |
+| `src/features/batch-review/` | Batch review | useBatchReviewStore, save handlers |
+| `src/features/transaction-editor/` | Transaction editing | useTransactionEditorStore |
+| `src/features/categories/` | Category management | itemNameMappings |
+| `src/features/credit/` | Credit tracking | CreditFeature |
+| `src/features/shared-groups/` | Shared groups (Epic 14d-v2) | useGroups, groupService, EditGroupDialog, ViewModeSwitcher |
+| `src/entities/transaction/` | Transaction domain | reconciliation utils |
+| `src/shared/stores/` | Shared Zustand stores | useNavigationStore, useSettingsStore |
+| `src/managers/modal/` | Modal infrastructure | useModalStore |
+
+### Zustand State Management
+
+**7 Zustand Stores:**
+
+| Store | Scope | Key Selectors |
+|-------|-------|---------------|
+| `useScanStore` | Feature | `useScanPhase`, `useBatchImages`, `useScanActions` |
+| `useBatchReviewStore` | Feature | `useBatchReviewState`, `useBatchReviewActions` |
+| `useNavigationStore` | Shared | `useCurrentView`, `useNavigationActions` |
+| `useSettingsStore` | Shared | `useSettings`, `useSettingsActions` |
+| `useTransactionEditorStore` | Feature | `useTransactionEditorState`, `useEditorActions` |
+| `useInsightStore` | Shared | `useInsightFlags`, `useInsightActions` |
+| `useModalStore` | Manager | `useModalState`, `useModalActions` |
+
+**Store Pattern:**
+```typescript
+// Feature store with selectors
+src/features/scan/store/
+├── index.ts                    # Barrel exports
+├── useScanStore.ts             # Store definition
+├── selectors.ts                # Granular selector hooks
+└── types.ts                    # Store types
+```
+
+### Business Logic Extraction
+
+**Before (App.tsx):** 3,387 lines with mixed concerns
+**After (App.tsx):** 2,191 lines as composition root
+
+**Extracted to Features:**
+- Scan workflow → `src/features/scan/handlers/`
+- Batch processing → `src/features/batch-review/handlers/`
+- Category mappings → `src/features/categories/utils/`
+- Reconciliation → `src/entities/transaction/utils/`
+
+### Adversarial Review Results
+
+Epic 14e included an adversarial review that prevented 12 points of unnecessary work:
+- **Rejected:** Mapping store migration (local state is correct)
+- **Rejected:** Toast/Notification merge (different purposes)
+- **Rejected:** Animation state review (local state is appropriate)
+- **Approved:** NavigationContext deletion (Story 14e-45, pending)
+
+**Reference:** `docs/sprint-artifacts/epic14e-feature-architecture/stories/14e-consistency-plan.md`
+
+---
+
+*Document Version: 6.0*
+*Last Updated: 2026-02-01*
+*Updated by: BMAD Documentation Workflow (Epic 14e)*

@@ -5,7 +5,7 @@
  * Epic 14c: Shared Groups (Household Sharing)
  *
  * Tests the unified analytics data source that switches between
- * personal and shared group transactions based on ViewModeContext.
+ * personal and shared group transactions based on useViewModeStore.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -26,19 +26,19 @@ import type { AnalyticsMember } from '../../../src/hooks/useAnalyticsTransaction
 // Mocks
 // ============================================================================
 
-// Mock ViewModeContext
-const mockViewModeContext = {
+// Mock ViewModeStore (Story 14d-v2-0: Migrated from ViewModeContext to Zustand store)
+const mockViewModeStore = {
     mode: 'personal' as 'personal' | 'group',
-    groupId: undefined as string | undefined,
-    group: undefined as SharedGroup | undefined,
+    groupId: null as string | null,
+    group: null as SharedGroup | null,
     isGroupMode: false,
     setPersonalMode: vi.fn(),
     setGroupMode: vi.fn(),
     updateGroupData: vi.fn(),
 };
 
-vi.mock('../../../src/contexts/ViewModeContext', () => ({
-    useViewMode: () => mockViewModeContext,
+vi.mock('@/shared/stores/useViewModeStore', () => ({
+    useViewMode: () => mockViewModeStore,
 }));
 
 // ============================================================================
@@ -87,10 +87,10 @@ const createMockGroup = (overrides: Partial<SharedGroup> = {}): SharedGroup => (
 describe('useAnalyticsTransactions', () => {
     beforeEach(() => {
         // Reset to personal mode
-        mockViewModeContext.mode = 'personal';
-        mockViewModeContext.isGroupMode = false;
-        mockViewModeContext.groupId = undefined;
-        mockViewModeContext.group = undefined;
+        mockViewModeStore.mode = 'personal';
+        mockViewModeStore.isGroupMode = false;
+        mockViewModeStore.groupId = null;
+        mockViewModeStore.group = null;
     });
 
     afterEach(() => {
@@ -146,10 +146,10 @@ describe('useAnalyticsTransactions', () => {
         const mockGroup = createMockGroup();
 
         beforeEach(() => {
-            mockViewModeContext.mode = 'group';
-            mockViewModeContext.isGroupMode = true;
-            mockViewModeContext.groupId = 'group-123';
-            mockViewModeContext.group = mockGroup;
+            mockViewModeStore.mode = 'group';
+            mockViewModeStore.isGroupMode = true;
+            mockViewModeStore.groupId = 'group-123';
+            mockViewModeStore.group = mockGroup;
         });
 
         it('should return group transactions when in group mode', () => {
@@ -240,7 +240,7 @@ describe('useAnalyticsTransactions', () => {
         });
 
         it('should fallback to "Shared Group" if no group name', () => {
-            mockViewModeContext.group = { ...mockGroup, name: undefined as unknown as string };
+            mockViewModeStore.group = { ...mockGroup, name: undefined as unknown as string };
 
             const { result } = renderHook(() =>
                 useAnalyticsTransactions({
@@ -266,10 +266,10 @@ describe('useAnalyticsTransactions', () => {
         });
 
         it('should handle undefined group in group mode gracefully', () => {
-            mockViewModeContext.mode = 'group';
-            mockViewModeContext.isGroupMode = true;
-            mockViewModeContext.groupId = 'group-123';
-            mockViewModeContext.group = undefined;
+            mockViewModeStore.mode = 'group';
+            mockViewModeStore.isGroupMode = true;
+            mockViewModeStore.groupId = 'group-123';
+            mockViewModeStore.group = undefined;
 
             const { result } = renderHook(() =>
                 useAnalyticsTransactions({

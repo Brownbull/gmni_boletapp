@@ -9,8 +9,7 @@
 import React, { useState, useRef } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { ProfileDropdown, ProfileAvatar, getInitials } from '../components/ProfileDropdown';
-import { PendingInvitationsSection } from '../components/SharedGroups/PendingInvitationsSection';
-import { NotificationsList } from '../components/SharedGroups/NotificationsList';
+import { PendingInvitationsSection, NotificationsList } from '@/features/shared-groups';
 import type { SharedGroup } from '../types/sharedGroup';
 import type { InAppNotificationClient } from '../types/notification';
 import type { User } from 'firebase/auth';

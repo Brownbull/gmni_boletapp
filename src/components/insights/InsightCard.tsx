@@ -2,6 +2,7 @@
  * InsightCard Component
  *
  * Story 10.6: Scan Complete Insight Card
+ * Story 14e-37: Migrated to use Zustand store (optional)
  * Architecture: architecture-epic10-insight-engine.md
  *
  * Displays a personalized insight after saving a transaction.
@@ -11,17 +12,25 @@
  * - Slide-up entry animation, fade-out exit animation
  * - Respects prefers-reduced-motion
  * - Dark mode support
+ *
+ * Story 14e-37: Can now use store directly for insight data and dismiss action.
+ * Props are optional - if not provided, uses useInsightStore.
  */
 
 import { useEffect, useState, useCallback, ComponentType } from 'react';
 import { X, Sparkles, LucideProps } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { Insight } from '../../types/insight';
+import { useCurrentInsight, useInsightActions } from '@/shared/stores';
 
 interface InsightCardProps {
-  insight: Insight;
-  onDismiss: () => void;
+  /** Insight to display. Optional - uses store if not provided (Story 14e-37) */
+  insight?: Insight;
+  /** Dismiss callback. Optional - uses store action if not provided (Story 14e-37) */
+  onDismiss?: () => void;
+  /** Auto-dismiss delay in ms. Default: 5000 */
   autoDismissMs?: number;
+  /** Theme for styling */
   theme: 'light' | 'dark';
 }
 
@@ -35,12 +44,20 @@ function getIconByName(name: string | undefined): LucideIcon {
 }
 
 export function InsightCard({
-  insight,
-  onDismiss,
+  insight: insightProp,
+  onDismiss: onDismissProp,
   autoDismissMs = 5000,
   theme,
 }: InsightCardProps) {
   const [isExiting, setIsExiting] = useState(false);
+
+  // Story 14e-37: Use store if props not provided
+  const storeInsight = useCurrentInsight();
+  const { hideInsight } = useInsightActions();
+
+  // Use prop if provided, otherwise fall back to store
+  const insight = insightProp ?? storeInsight;
+  const onDismiss = onDismissProp ?? hideInsight;
 
   // Memoize dismiss handler to avoid useEffect dependency issues
   const handleDismiss = useCallback(() => {
@@ -50,13 +67,22 @@ export function InsightCard({
   }, [onDismiss]);
 
   // Auto-dismiss timer (AC #5)
+  // Only runs when insight is present
   useEffect(() => {
+    if (!insight) return;
+
     const timer = setTimeout(() => {
       handleDismiss();
     }, autoDismissMs);
 
     return () => clearTimeout(timer);
-  }, [autoDismissMs, handleDismiss]);
+  }, [insight, autoDismissMs, handleDismiss]);
+
+  // Story 14e-37: If no insight (prop or store), don't render
+  // Note: When using store, parent should check showInsightCard before rendering
+  if (!insight) {
+    return null;
+  }
 
   // Get icon component dynamically from insight.icon string (AC #1)
   // Falls back to Sparkles if icon not found
