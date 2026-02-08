@@ -15,6 +15,7 @@ import {
     getInvitationTimeRemaining,
     type PendingInvitation,
 } from '../../../src/types/sharedGroup';
+import { createMockInvitation } from '@helpers/sharedGroupFactory';
 
 // =============================================================================
 // Test Helpers
@@ -31,28 +32,7 @@ function createMockTimestamp(date: Date): Timestamp {
     } as unknown as Timestamp;
 }
 
-/**
- * Create a mock PendingInvitation for testing
- */
-function createMockInvitation(overrides: Partial<PendingInvitation> = {}): PendingInvitation {
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
-
-    return {
-        id: 'test-invitation-id',
-        groupId: 'test-group-id',
-        groupName: 'Test Group',
-        groupColor: '#10b981',
-        shareCode: 'MockShareCode12345', // Story 14d-v2-1-5b-1: Added shareCode
-        invitedEmail: 'invitee@example.com',
-        invitedByUserId: 'inviter-user-id',
-        invitedByName: 'John Doe',
-        createdAt: createMockTimestamp(now),
-        expiresAt: createMockTimestamp(expiresAt),
-        status: 'pending',
-        ...overrides,
-    };
-}
+// createMockInvitation imported from tests/helpers/sharedGroupFactory
 
 // =============================================================================
 // Tests

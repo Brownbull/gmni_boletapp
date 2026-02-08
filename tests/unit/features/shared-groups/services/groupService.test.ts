@@ -25,6 +25,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Firestore, DocumentReference, DocumentSnapshot } from 'firebase/firestore';
 import { Timestamp } from 'firebase/firestore';
 import type { SharedGroup } from '@/types/sharedGroup';
+import { createMockGroup } from '@helpers/sharedGroupFactory';
 
 // =============================================================================
 // Mocks
@@ -83,26 +84,13 @@ function createMockDb(): Firestore {
     return {} as Firestore;
 }
 
-function createMockGroup(overrides: Partial<SharedGroup> = {}): SharedGroup {
-    return {
-        id: 'group-123',
+// Wrap shared factory with groupService-specific defaults
+function createServiceMockGroup(overrides: Partial<SharedGroup> = {}): SharedGroup {
+    return createMockGroup({
         ownerId: 'owner-user-123',
-        appId: 'boletapp',
-        name: 'Test Group',
-        color: '#10b981',
-        icon: '🏠',
-        shareCode: 'TestShareCode1234',
-        shareCodeExpiresAt: Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
         members: ['owner-user-123', 'member-456'],
-        memberUpdates: {},
-        createdAt: Timestamp.fromDate(new Date()),
-        updatedAt: Timestamp.fromDate(new Date()),
-        timezone: 'America/Santiago',
-        transactionSharingEnabled: true,
-        transactionSharingLastToggleAt: null,
-        transactionSharingToggleCountToday: 0,
         ...overrides,
-    };
+    });
 }
 
 function createMockDocRef(): DocumentReference {
@@ -124,7 +112,7 @@ function createMockDocSnapshot(exists: boolean, data?: SharedGroup): DocumentSna
 describe('updateGroup (Story 14d-v2-1-7g)', () => {
     const mockDb = createMockDb();
     const mockDocRef = createMockDocRef();
-    const mockGroup = createMockGroup();
+    const mockGroup = createServiceMockGroup();
     const mockTimestamp = { toDate: () => new Date() };
 
     beforeEach(() => {
@@ -483,7 +471,7 @@ describe('updateTransactionSharingEnabled (Story 14d-v2-1-11b)', () => {
 
     describe('successful updates', () => {
         it('enables transaction sharing when cooldown allows', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 transactionSharingEnabled: false,
                 transactionSharingToggleCountToday: 1,
             });
@@ -500,7 +488,7 @@ describe('updateTransactionSharingEnabled (Story 14d-v2-1-11b)', () => {
         });
 
         it('disables transaction sharing when cooldown allows', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 transactionSharingEnabled: true,
                 transactionSharingToggleCountToday: 0,
             });
@@ -517,7 +505,7 @@ describe('updateTransactionSharingEnabled (Story 14d-v2-1-11b)', () => {
         });
 
         it('atomically updates all toggle-related fields', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 transactionSharingEnabled: false,
                 transactionSharingToggleCountToday: 1,
             });
@@ -543,7 +531,7 @@ describe('updateTransactionSharingEnabled (Story 14d-v2-1-11b)', () => {
 
     describe('authorization', () => {
         it('throws error if user is not the group owner', async () => {
-            const group = createMockGroup({ ownerId: 'owner-user-123' });
+            const group = createServiceMockGroup({ ownerId: 'owner-user-123' });
             mockTransactionGet.mockResolvedValue(createMockDocSnapshot(true, group));
 
             await expect(
@@ -566,7 +554,7 @@ describe('updateTransactionSharingEnabled (Story 14d-v2-1-11b)', () => {
 
     describe('cooldown enforcement', () => {
         it('throws error with wait time when cooldown is active', async () => {
-            const group = createMockGroup();
+            const group = createServiceMockGroup();
             mockTransactionGet.mockResolvedValue(createMockDocSnapshot(true, group));
             mockCanToggleTransactionSharing.mockReturnValue({
                 allowed: false,
@@ -580,7 +568,7 @@ describe('updateTransactionSharingEnabled (Story 14d-v2-1-11b)', () => {
         });
 
         it('throws error when daily toggle limit reached', async () => {
-            const group = createMockGroup();
+            const group = createServiceMockGroup();
             mockTransactionGet.mockResolvedValue(createMockDocSnapshot(true, group));
             mockCanToggleTransactionSharing.mockReturnValue({
                 allowed: false,
@@ -593,7 +581,7 @@ describe('updateTransactionSharingEnabled (Story 14d-v2-1-11b)', () => {
         });
 
         it('resets daily count when toggling on a new day', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 transactionSharingEnabled: false,
                 transactionSharingToggleCountToday: 2, // Previous day's count
             });
@@ -657,7 +645,7 @@ describe('leaveGroupWithCleanup (Story 14d-v2-1-12d)', () => {
     describe('AC#5: preference cleanup after leave', () => {
         it('calls removeGroupPreference after successful leaveGroup', async () => {
             // Setup: User is a non-owner member of the group
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 ownerId: 'owner-user-123',
                 members: ['owner-user-123', 'member-456'],
             });
@@ -679,7 +667,7 @@ describe('leaveGroupWithCleanup (Story 14d-v2-1-12d)', () => {
         });
 
         it('calls removeGroupPreference exactly once', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 ownerId: 'owner-user-123',
                 members: ['owner-user-123', 'member-456'],
             });
@@ -698,7 +686,7 @@ describe('leaveGroupWithCleanup (Story 14d-v2-1-12d)', () => {
 
     describe('AC#7: cleanup errors do not block leave', () => {
         it('succeeds even when removeGroupPreference throws an error', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 ownerId: 'owner-user-123',
                 members: ['owner-user-123', 'member-456'],
             });
@@ -714,7 +702,7 @@ describe('leaveGroupWithCleanup (Story 14d-v2-1-12d)', () => {
         });
 
         it('logs warning when cleanup fails in dev mode', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 ownerId: 'owner-user-123',
                 members: ['owner-user-123', 'member-456'],
             });
@@ -740,7 +728,7 @@ describe('leaveGroupWithCleanup (Story 14d-v2-1-12d)', () => {
 
     describe('edge cases', () => {
         it('handles already-deleted preference gracefully', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 ownerId: 'owner-user-123',
                 members: ['owner-user-123', 'member-456'],
             });
@@ -767,7 +755,7 @@ describe('leaveGroupWithCleanup (Story 14d-v2-1-12d)', () => {
         });
 
         it('throws if user is the owner (cannot leave without transfer)', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 ownerId: 'owner-user-123',
                 members: ['owner-user-123', 'member-456'],
             });
@@ -851,7 +839,7 @@ describe('transferAndLeaveWithCleanup (Story 14d-v2-1-12d)', () => {
                 if (transactionCallCount === 1) {
                     // First transaction: transferOwnership
                     // Mock group where current user is owner
-                    const transferGroup = createMockGroup({
+                    const transferGroup = createServiceMockGroup({
                         ownerId: 'owner-user-123',
                         members: ['owner-user-123', 'new-owner-456'],
                     });
@@ -860,7 +848,7 @@ describe('transferAndLeaveWithCleanup (Story 14d-v2-1-12d)', () => {
                 } else if (transactionCallCount === 2) {
                     // Second transaction: leaveGroup
                     // After transfer, ownerId is now new-owner-456, so old owner can leave
-                    const leaveGroup = createMockGroup({
+                    const leaveGroup = createServiceMockGroup({
                         ownerId: 'new-owner-456', // Already transferred
                         members: ['owner-user-123', 'new-owner-456'],
                     });
@@ -892,7 +880,7 @@ describe('transferAndLeaveWithCleanup (Story 14d-v2-1-12d)', () => {
 
         it('passes correct arguments to removeGroupPreference', async () => {
             // Setup both transactions to succeed
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 ownerId: 'owner-user-123',
                 members: ['owner-user-123', 'new-owner-456'],
             });
@@ -936,7 +924,7 @@ describe('transferAndLeaveWithCleanup (Story 14d-v2-1-12d)', () => {
 
     describe('AC#7: cleanup failure after transfer+leave does not throw', () => {
         it('succeeds even when removeGroupPreference throws after successful transfer+leave', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 ownerId: 'owner-user-123',
                 members: ['owner-user-123', 'new-owner-456'],
             });
@@ -969,7 +957,7 @@ describe('transferAndLeaveWithCleanup (Story 14d-v2-1-12d)', () => {
         });
 
         it('transfer and leave complete successfully even if cleanup fails', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 ownerId: 'owner-user-123',
                 members: ['owner-user-123', 'new-owner-456'],
             });
@@ -1010,7 +998,7 @@ describe('transferAndLeaveWithCleanup (Story 14d-v2-1-12d)', () => {
     describe('error propagation', () => {
         it('throws if transferOwnership fails (user not owner)', async () => {
             // Group exists but user is not the owner
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 ownerId: 'different-owner',
                 members: ['different-owner', 'new-owner-456'],
             });
@@ -1031,7 +1019,7 @@ describe('transferAndLeaveWithCleanup (Story 14d-v2-1-12d)', () => {
         });
 
         it('throws if leaveGroup fails after successful transfer', async () => {
-            const group = createMockGroup({
+            const group = createServiceMockGroup({
                 ownerId: 'owner-user-123',
                 members: ['owner-user-123', 'new-owner-456'],
             });
@@ -1117,7 +1105,7 @@ describe('joinGroupDirectly - user group preference (Story 14d-v2-1-13+14)', () 
     const validAppId = 'boletapp';
 
     function createJoinableGroup(overrides: Partial<SharedGroup> = {}): SharedGroup {
-        return createMockGroup({
+        return createServiceMockGroup({
             id: validGroupId,
             ownerId: 'owner-user-123',
             members: ['owner-user-123'], // User not yet a member

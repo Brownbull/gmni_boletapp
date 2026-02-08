@@ -37,6 +37,7 @@ export const baseCiConfig: UserConfig = {
       '@managers': path.resolve(__dirname, '../../src/managers'),
       '@shared': path.resolve(__dirname, '../../src/shared'),
       '@app': path.resolve(__dirname, '../../src/app'),
+      '@helpers': path.resolve(__dirname, '../helpers'),
       '@': path.resolve(__dirname, '../../src'),
     },
   },

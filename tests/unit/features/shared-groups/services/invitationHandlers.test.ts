@@ -11,8 +11,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Firestore } from 'firebase/firestore';
-import type { PendingInvitation, MemberProfile } from '@/types/sharedGroup';
-import { Timestamp } from 'firebase/firestore';
+import type { MemberProfile } from '@/types/sharedGroup';
 
 // =============================================================================
 // Mocks
@@ -40,6 +39,7 @@ import {
     handleDeclineInvitationService,
     isSyntheticInvitation,
 } from '@/features/shared-groups/services/invitationHandlers';
+import { createMockInvitation } from '@helpers/sharedGroupFactory';
 
 // =============================================================================
 // Test Fixtures
@@ -47,23 +47,6 @@ import {
 
 function createMockDb(): Firestore {
     return {} as Firestore;
-}
-
-function createMockInvitation(overrides: Partial<PendingInvitation> = {}): PendingInvitation {
-    return {
-        id: 'invitation-123',
-        groupId: 'group-abc123',
-        groupName: 'Test Group',
-        groupColor: '#10b981',
-        shareCode: 'InviteCode12345678',
-        invitedEmail: 'test@example.com',
-        invitedByUserId: 'owner-xyz',
-        invitedByName: 'Owner User',
-        createdAt: Timestamp.fromDate(new Date()),
-        expiresAt: Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
-        status: 'pending',
-        ...overrides,
-    };
 }
 
 // =============================================================================

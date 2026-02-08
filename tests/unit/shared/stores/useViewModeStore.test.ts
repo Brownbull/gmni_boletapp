@@ -32,6 +32,7 @@ import {
 } from '@shared/stores/useViewModeStore';
 import type { SharedGroup } from '@/types/sharedGroup';
 import type { Timestamp } from 'firebase/firestore';
+import { createMockGroup } from '@helpers/sharedGroupFactory';
 
 // =============================================================================
 // Test Helpers
@@ -56,33 +57,7 @@ function getStateOnly() {
   };
 }
 
-/**
- * Create a mock SharedGroup for testing.
- */
-function createMockGroup(overrides: Partial<SharedGroup> = {}): SharedGroup {
-  const now = new Date();
-  const mockTimestamp = {
-    toDate: () => now,
-    seconds: Math.floor(now.getTime() / 1000),
-    nanoseconds: 0,
-  } as Timestamp;
-
-  return {
-    id: 'group-123',
-    ownerId: 'user-abc',
-    appId: 'boletapp',
-    name: 'Gastos del Hogar',
-    color: '#10b981',
-    icon: '🏠',
-    shareCode: 'Ab3dEf7hIj9kLm0p',
-    shareCodeExpiresAt: mockTimestamp,
-    members: ['user-abc', 'user-xyz'],
-    memberUpdates: {},
-    createdAt: mockTimestamp,
-    updatedAt: mockTimestamp,
-    ...overrides,
-  };
-}
+// createMockGroup imported from tests/helpers/sharedGroupFactory
 
 beforeEach(() => {
   resetStore();

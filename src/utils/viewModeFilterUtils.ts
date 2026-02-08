@@ -13,13 +13,9 @@
  */
 
 import type { Transaction } from '../types/transaction';
+import type { ViewMode } from '@/shared/stores/useViewModeStore';
 
-/**
- * View mode type for transaction filtering.
- * - 'personal': Show only personal transactions (no sharedGroupId)
- * - 'group': Show only transactions for a specific group
- */
-export type ViewMode = 'personal' | 'group';
+export type { ViewMode };
 
 /**
  * Check if a sharedGroupId represents a "falsy" or empty group assignment.

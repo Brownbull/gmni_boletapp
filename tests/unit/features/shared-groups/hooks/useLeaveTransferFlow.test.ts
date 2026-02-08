@@ -27,6 +27,7 @@ import type { User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import type { SharedGroup, PendingInvitation } from '@/types/sharedGroup';
 import { Timestamp } from 'firebase/firestore';
+import { createMockGroup as createMockGroupBase, createMockInvitation } from '@helpers/sharedGroupFactory';
 
 // =============================================================================
 // Mocks
@@ -100,42 +101,14 @@ function createMockUser(overrides: Partial<User> = {}): User {
     } as User;
 }
 
+// Wrap shared factory with leave/transfer-specific defaults
 function createMockGroup(overrides: Partial<SharedGroup> = {}): SharedGroup {
-    return {
+    return createMockGroupBase({
         id: 'group-abc123',
-        name: 'Test Group',
         ownerId: 'owner-xyz',
-        appId: 'boletapp',
-        color: '#10b981',
-        shareCode: 'MockShareCode12345',
-        shareCodeExpiresAt: Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
         members: ['owner-xyz', 'user-123'],
-        memberUpdates: {},
-        createdAt: Timestamp.fromDate(new Date()),
-        updatedAt: Timestamp.fromDate(new Date()),
-        timezone: 'America/Santiago',
-        transactionSharingEnabled: true,
-        transactionSharingLastToggleAt: null,
-        transactionSharingToggleCountToday: 0,
         ...overrides,
-    };
-}
-
-function createMockInvitation(overrides: Partial<PendingInvitation> = {}): PendingInvitation {
-    return {
-        id: 'invitation-123',
-        groupId: 'group-abc123',
-        groupName: 'Test Group',
-        groupColor: '#10b981',
-        shareCode: 'InviteCode12345678',
-        invitedEmail: 'test@example.com',
-        invitedByUserId: 'owner-xyz',
-        invitedByName: 'Owner User',
-        createdAt: Timestamp.fromDate(new Date()),
-        expiresAt: Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
-        status: 'pending',
-        ...overrides,
-    };
+    });
 }
 
 function createMockDb(): Firestore {

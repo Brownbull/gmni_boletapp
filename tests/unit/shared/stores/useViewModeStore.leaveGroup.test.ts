@@ -35,6 +35,7 @@ import {
 } from '@shared/stores/useViewModeStore';
 import type { SharedGroup } from '@/types/sharedGroup';
 import type { Timestamp } from 'firebase/firestore';
+import { createMockGroup } from '@helpers/sharedGroupFactory';
 
 // =============================================================================
 // Test Helpers
@@ -47,36 +48,7 @@ function resetStore() {
     useViewModeStore.setState(initialViewModeState);
 }
 
-/**
- * Create a mock SharedGroup for testing.
- */
-function createMockGroup(id: string, overrides: Partial<SharedGroup> = {}): SharedGroup {
-    const now = new Date();
-    const mockTimestamp = {
-        toDate: () => now,
-        seconds: Math.floor(now.getTime() / 1000),
-        nanoseconds: 0,
-    } as Timestamp;
-
-    return {
-        id,
-        ownerId: 'user-abc',
-        appId: 'boletapp',
-        name: 'Test Group',
-        color: '#10b981',
-        shareCode: 'Ab3dEf7hIj9kLm0p',
-        shareCodeExpiresAt: mockTimestamp,
-        members: ['user-abc', 'user-xyz'],
-        memberUpdates: {},
-        createdAt: mockTimestamp,
-        updatedAt: mockTimestamp,
-        timezone: 'America/Santiago',
-        transactionSharingEnabled: true,
-        transactionSharingLastToggleAt: null,
-        transactionSharingToggleCountToday: 0,
-        ...overrides,
-    };
-}
+// createMockGroup imported from tests/helpers/sharedGroupFactory
 
 /**
  * Simulate setting group mode directly (bypassing the stub for testing).
@@ -112,7 +84,7 @@ describe('useViewModeStore Leave Group Behavior (Story 14d-v2-1-7f)', () => {
     it('should switch to Personal mode when leaving currently viewed group', () => {
         // ARRANGE: Simulate being in group mode viewing a specific group
         const groupId = 'group-to-leave';
-        const mockGroup = createMockGroup(groupId);
+        const mockGroup = createMockGroup({ id: groupId });
         simulateGroupMode(groupId, mockGroup);
 
         // Verify initial state
@@ -135,7 +107,7 @@ describe('useViewModeStore Leave Group Behavior (Story 14d-v2-1-7f)', () => {
     it('should clear cached group data when leaving group', () => {
         // ARRANGE: Simulate being in group mode with cached data
         const groupId = 'group-with-data';
-        const mockGroup = createMockGroup(groupId, {
+        const mockGroup = createMockGroup({ id: groupId,
             name: 'Cached Group Data',
             members: ['user-1', 'user-2', 'user-3'],
         });
@@ -162,7 +134,7 @@ describe('useViewModeStore Leave Group Behavior (Story 14d-v2-1-7f)', () => {
     it('should preserve mode when context determines a different group is left', () => {
         // ARRANGE: Simulate being in group mode viewing group-A
         const currentGroupId = 'group-A';
-        const currentGroup = createMockGroup(currentGroupId, { name: 'Group A' });
+        const currentGroup = createMockGroup({ id: currentGroupId, name: 'Group A' });
         simulateGroupMode(currentGroupId, currentGroup);
 
         // SIMULATE: User leaves group-B (different from current view)
@@ -195,8 +167,8 @@ describe('useViewModeStore Leave Group Behavior (Story 14d-v2-1-7f)', () => {
         // ACT: Rapid succession of mode changes
         act(() => {
             // Simulate rapid switches (e.g., user clicking quickly)
-            const group1 = createMockGroup('group-1');
-            const group2 = createMockGroup('group-2');
+            const group1 = createMockGroup({ id: 'group-1' });
+            const group2 = createMockGroup({ id: 'group-2' });
 
             // Note: setGroupMode is a stub in current implementation
             // We simulate the state directly for testing the store behavior
@@ -218,7 +190,7 @@ describe('useViewModeStore Leave Group Behavior (Story 14d-v2-1-7f)', () => {
     it('should emit correct devtools action name when switching to personal', () => {
         // ARRANGE: Set up a mock to capture devtools calls
         // Note: The devtools middleware uses the third parameter as the action name
-        const mockGroup = createMockGroup('test-group');
+        const mockGroup = createMockGroup({ id: 'test-group' });
         simulateGroupMode('test-group', mockGroup);
 
         // ACT: Call setPersonalMode
@@ -238,7 +210,7 @@ describe('useViewModeStore Leave Group Behavior (Story 14d-v2-1-7f)', () => {
     // =========================================================================
     it('should work correctly when integrated with toast notifications', () => {
         // ARRANGE: Set up in group mode
-        const mockGroup = createMockGroup('leave-group');
+        const mockGroup = createMockGroup({ id: 'leave-group' });
         simulateGroupMode('leave-group', mockGroup);
 
         // Mock toast notification function
@@ -286,7 +258,7 @@ describe('useViewModeStore Leave Group Behavior (Story 14d-v2-1-7f)', () => {
 
         it('should work correctly with useViewMode hook', () => {
             // ARRANGE: Set up group mode
-            const mockGroup = createMockGroup('hook-test-group');
+            const mockGroup = createMockGroup({ id: 'hook-test-group' });
             simulateGroupMode('hook-test-group', mockGroup);
 
             // ACT: Use hook and trigger setPersonalMode

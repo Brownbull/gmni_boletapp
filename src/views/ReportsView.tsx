@@ -36,6 +36,7 @@ import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useAuth } from '../hooks/useAuth';
 import { usePaginatedTransactions } from '../hooks/usePaginatedTransactions';
 import { useRecentScans } from '../hooks/useRecentScans';
+import { mergeTransactionsWithRecentScans } from '../utils/transactionMerge';
 // Story 14e-25c.2: Navigation via Zustand store
 import { useNavigation, useNavigationActions } from '../shared/stores/useNavigationStore';
 import type { View } from '../app/types';
@@ -101,14 +102,10 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
   const recentScans = useRecentScans(user, services);
 
   // Merge recent scans with paginated transactions (deduplication)
-  const transactions = useMemo(() => {
-    if (!recentScans?.length) return paginatedTransactions;
-    const recentIds = new Set(recentScans.filter((s) => s.id).map((s) => s.id));
-    const filteredPaginated = paginatedTransactions.filter(
-      (tx) => tx.id && !recentIds.has(tx.id)
-    );
-    return [...recentScans, ...filteredPaginated];
-  }, [paginatedTransactions, recentScans]);
+  const transactions = useMemo(
+    () => mergeTransactionsWithRecentScans(paginatedTransactions, recentScans),
+    [paginatedTransactions, recentScans]
+  );
 
   // Story 14e-25c.2: User info from auth
   const userName = user?.displayName ?? '';

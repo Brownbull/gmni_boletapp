@@ -22,7 +22,8 @@
       "@entities/*": ["src/entities/*"],
       "@managers/*": ["src/managers/*"],
       "@shared/*": ["src/shared/*"],
-      "@app/*": ["src/app/*"]
+      "@app/*": ["src/app/*"],
+      "@helpers/*": ["tests/helpers/*"]
     },
 
     /* Linting */
@@ -31,6 +32,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],
+  "include": ["src", "tests/helpers"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -75,6 +75,7 @@ export default defineConfig({
       '@managers': path.resolve(__dirname, 'src/managers'),
       '@shared': path.resolve(__dirname, 'src/shared'),
       '@app': path.resolve(__dirname, 'src/app'),
+      '@helpers': path.resolve(__dirname, 'tests/helpers'),
       '@': path.resolve(__dirname, 'src'),
     },
   },

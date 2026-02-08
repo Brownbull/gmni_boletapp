@@ -20,6 +20,7 @@ import userEvent from '@testing-library/user-event';
 import { EditGroupDialog } from '@/features/shared-groups/components/EditGroupDialog';
 import type { SharedGroup } from '@/types/sharedGroup';
 import { Timestamp } from 'firebase/firestore';
+import { createMockGroup } from '@helpers/sharedGroupFactory';
 
 // =============================================================================
 // Hook Mocks (for MySharingPreferencesSection)
@@ -74,27 +75,7 @@ const mockT = (key: string) => {
     return translations[key] || key;
 };
 
-function createMockGroup(overrides: Partial<SharedGroup> = {}): SharedGroup {
-    return {
-        id: 'group-123',
-        ownerId: 'user-123',
-        appId: 'boletapp',
-        name: 'Test Group',
-        color: '#10b981',
-        icon: '🏠',
-        shareCode: 'TestShareCode1234',
-        shareCodeExpiresAt: Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
-        members: ['user-123'],
-        memberUpdates: {},
-        createdAt: Timestamp.fromDate(new Date()),
-        updatedAt: Timestamp.fromDate(new Date()),
-        timezone: 'America/Santiago',
-        transactionSharingEnabled: true,
-        transactionSharingLastToggleAt: null,
-        transactionSharingToggleCountToday: 0,
-        ...overrides,
-    };
-}
+// createMockGroup imported from tests/helpers/sharedGroupFactory
 
 const mockGroup = createMockGroup();
 

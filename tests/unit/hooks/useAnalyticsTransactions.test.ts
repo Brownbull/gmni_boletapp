@@ -21,6 +21,7 @@ import {
 import type { Transaction } from '../../../src/types/transaction';
 import type { SharedGroup } from '../../../src/types/sharedGroup';
 import type { AnalyticsMember } from '../../../src/hooks/useAnalyticsTransactions';
+import { createMockGroup } from '@helpers/sharedGroupFactory';
 
 // ============================================================================
 // Mocks
@@ -64,21 +65,16 @@ const createMockMember = (overrides: Partial<AnalyticsMember> = {}): AnalyticsMe
     ...overrides,
 });
 
-const createMockGroup = (overrides: Partial<SharedGroup> = {}): SharedGroup => ({
-    id: 'group-123',
-    name: 'Test Family',
-    icon: '👨‍👩‍👧',
-    color: '#3B82F6',
-    ownerId: 'user-1',
-    appId: 'boletapp',
-    shareCode: 'abc123',
-    shareCodeExpiresAt: { toDate: () => new Date() } as any,
-    members: ['user-1', 'user-2'], // string[] of user IDs
-    memberUpdates: {},
-    createdAt: { toDate: () => new Date() } as any,
-    updatedAt: { toDate: () => new Date() } as any,
-    ...overrides,
-});
+/** Analytics-specific mock group defaults */
+const createAnalyticsMockGroup = (overrides: Partial<SharedGroup> = {}): SharedGroup =>
+    createMockGroup({
+        name: 'Test Family',
+        icon: '👨‍👩‍👧',
+        color: '#3B82F6',
+        ownerId: 'user-1',
+        members: ['user-1', 'user-2'],
+        ...overrides,
+    });
 
 // ============================================================================
 // Hook Tests
@@ -143,7 +139,7 @@ describe('useAnalyticsTransactions', () => {
     });
 
     describe('Group Mode', () => {
-        const mockGroup = createMockGroup();
+        const mockGroup = createAnalyticsMockGroup();
 
         beforeEach(() => {
             mockViewModeStore.mode = 'group';

@@ -22,6 +22,7 @@ import { TransactionSharingToggle } from '@/features/shared-groups/components/Tr
 import type { TransactionSharingToggleProps } from '@/features/shared-groups/components/TransactionSharingToggle';
 import type { SharedGroup } from '@/types/sharedGroup';
 import type { Timestamp } from 'firebase/firestore';
+import { createMockGroup } from '@helpers/sharedGroupFactory';
 
 // =============================================================================
 // Mock Setup
@@ -38,40 +39,7 @@ vi.mock('@/utils/sharingCooldown', () => ({
 // Test Fixtures
 // =============================================================================
 
-/**
- * Creates a mock Timestamp for testing.
- */
-const createMockTimestamp = (date: Date): Timestamp => ({
-    toDate: () => date,
-    toMillis: () => date.getTime(),
-    seconds: Math.floor(date.getTime() / 1000),
-    nanoseconds: 0,
-    isEqual: () => false,
-    valueOf: () => '',
-} as Timestamp);
-
-/**
- * Creates a mock SharedGroup with customizable properties.
- */
-const createMockGroup = (overrides: Partial<SharedGroup> = {}): SharedGroup => ({
-    id: 'group-123',
-    name: 'Test Group',
-    ownerId: 'owner-user-id',
-    appId: 'boletapp',
-    color: '#10b981',
-    shareCode: 'ABC123DEF456GHIJ',
-    shareCodeExpiresAt: createMockTimestamp(new Date('2026-03-01')),
-    members: ['owner-user-id', 'member-user-id'],
-    memberUpdates: {},
-    createdAt: createMockTimestamp(new Date('2026-01-01')),
-    updatedAt: createMockTimestamp(new Date('2026-01-15')),
-    timezone: 'America/Santiago',
-    transactionSharingEnabled: true,
-    transactionSharingLastToggleAt: null,
-    transactionSharingToggleCountToday: 0,
-    transactionSharingToggleCountResetAt: null,
-    ...overrides,
-});
+// createMockGroup imported from tests/helpers/sharedGroupFactory
 
 /**
  * Mock translation function.
