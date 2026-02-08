@@ -796,6 +796,7 @@ export const GruposView: React.FC<GruposViewProps> = ({
                                         <p
                                             className="font-medium truncate"
                                             style={{ color: 'var(--text-primary)' }}
+                                            data-testid={`group-name-${group.id}`}
                                         >
                                             {group.name}
                                         </p>
@@ -1071,6 +1072,7 @@ export const GruposView: React.FC<GruposViewProps> = ({
                 isOwner={isOwnerOfEditingGroup}
                 onToggleTransactionSharing={handleToggleTransactionSharing}
                 isTogglePending={isTogglePending}
+                onShowToast={onShowToast}
             />
         </div>
     );

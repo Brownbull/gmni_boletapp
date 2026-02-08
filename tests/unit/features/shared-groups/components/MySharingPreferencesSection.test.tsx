@@ -60,6 +60,7 @@ const mockT = vi.fn((key: string): string => {
     shareMyTransactionsLabel: 'Share My Transactions',
     groupSharingDisabledWarning: 'The group owner has disabled transaction sharing. Your preference will be saved but won\'t take effect until sharing is re-enabled.',
     failedToUpdatePreference: 'Failed to update preference. Please try again.',
+    sharingPreferenceUpdated: 'Sharing preference updated',
   };
   return translations[key] || key;
 });
@@ -414,6 +415,102 @@ describe('MySharingPreferencesSection (Story 14d-v2-1-12d)', () => {
       renderSection();
 
       // Click the toggle button to trigger onToggle
+      const toggle = screen.getByTestId('mock-toggle');
+      fireEvent.click(toggle);
+
+      await waitFor(() => {
+        expect(mockUpdatePreference).toHaveBeenCalledWith(false);
+      });
+    });
+
+    it('calls onShowToast with success message when toggle succeeds', async () => {
+      const mockUpdatePreference = vi.fn().mockResolvedValue(undefined);
+      const mockOnShowToast = vi.fn();
+      mockUseUserGroupPreference.mockReturnValue({
+        preference: { shareMyTransactions: true },
+        isLoading: false,
+        updatePreference: mockUpdatePreference,
+        canToggle: { allowed: true },
+        error: null,
+      });
+
+      const { UserTransactionSharingToggle } = await import('@/features/shared-groups/components/UserTransactionSharingToggle');
+      (UserTransactionSharingToggle as Mock).mockImplementation(
+        ({ onToggle, t }: { onToggle: (enabled: boolean) => Promise<void>; t: (key: string) => string }) => (
+          <div data-testid="mock-user-sharing-toggle">
+            <button data-testid="mock-toggle" onClick={() => onToggle(false)}>
+              {t('shareMyTransactionsLabel')}
+            </button>
+          </div>
+        )
+      );
+
+      renderSection({ onShowToast: mockOnShowToast });
+
+      const toggle = screen.getByTestId('mock-toggle');
+      fireEvent.click(toggle);
+
+      await waitFor(() => {
+        expect(mockOnShowToast).toHaveBeenCalledWith('Sharing preference updated', 'success');
+      });
+    });
+
+    it('calls onShowToast with error message and re-throws when toggle fails', async () => {
+      const mockUpdatePreference = vi.fn().mockRejectedValue(new Error('Network error'));
+      const mockOnShowToast = vi.fn();
+      mockUseUserGroupPreference.mockReturnValue({
+        preference: { shareMyTransactions: true },
+        isLoading: false,
+        updatePreference: mockUpdatePreference,
+        canToggle: { allowed: true },
+        error: null,
+      });
+
+      const { UserTransactionSharingToggle } = await import('@/features/shared-groups/components/UserTransactionSharingToggle');
+      (UserTransactionSharingToggle as Mock).mockImplementation(
+        ({ onToggle, t }: { onToggle: (enabled: boolean) => Promise<void>; t: (key: string) => string }) => (
+          <div data-testid="mock-user-sharing-toggle">
+            <button data-testid="mock-toggle" onClick={() => onToggle(false).catch(() => { /* expected re-throw */ })}>
+              {t('shareMyTransactionsLabel')}
+            </button>
+          </div>
+        )
+      );
+
+      renderSection({ onShowToast: mockOnShowToast });
+
+      const toggle = screen.getByTestId('mock-toggle');
+      fireEvent.click(toggle);
+
+      await waitFor(() => {
+        expect(mockOnShowToast).toHaveBeenCalledWith('Failed to update preference. Please try again.', 'error');
+      });
+    });
+
+    it('does not crash when onShowToast is not provided', async () => {
+      const mockUpdatePreference = vi.fn().mockResolvedValue(undefined);
+      mockUseUserGroupPreference.mockReturnValue({
+        preference: { shareMyTransactions: true },
+        isLoading: false,
+        updatePreference: mockUpdatePreference,
+        canToggle: { allowed: true },
+        error: null,
+      });
+
+      const { UserTransactionSharingToggle } = await import('@/features/shared-groups/components/UserTransactionSharingToggle');
+      (UserTransactionSharingToggle as Mock).mockImplementation(
+        ({ onToggle, t }: { onToggle: (enabled: boolean) => Promise<void>; t: (key: string) => string }) => (
+          <div data-testid="mock-user-sharing-toggle">
+            <button data-testid="mock-toggle" onClick={() => onToggle(false)}>
+              {t('shareMyTransactionsLabel')}
+            </button>
+          </div>
+        )
+      );
+
+      // No onShowToast prop - should not crash
+      renderSection();
+
       const toggle = screen.getByTestId('mock-toggle');
       fireEvent.click(toggle);
 

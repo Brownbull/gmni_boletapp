@@ -1,10 +1,10 @@
-# Agent Customization - Boletapp Dev Agent
-# Last Updated: 2025-12-17
+# Agent Customization
+# Customize any section below - all are optional
 
 # Override agent name
 agent:
   metadata:
-    name: "Boletapp Dev"
+    name: ""
 
 # Replace entire persona (not merged)
 persona:
@@ -14,94 +14,28 @@ persona:
   principles: []
 
 # Add custom critical actions (appended after standard config loading)
-critical_actions:
-  - "ALWAYS follow the 2-branch Git strategy: feature/* → develop → main"
-  - "NEVER push directly to main or develop - always use PRs"
-  - "ALWAYS verify deployment at https://boletapp-d609f.web.app after merge to main"
-  - "ALWAYS delete local feature branch after PR is merged (remote auto-deletes)"
-  - "Request TEA agent review for test quality during code-review workflow"
+critical_actions: []
 
 # Add persistent memories for the agent
-memories:
-  # === PROJECT CONTEXT ===
-  - "Project: Boletapp - Receipt scanning app with React/TypeScript, Firebase backend, Playwright E2E"
-  - "Production URL: https://boletapp-d609f.web.app"
-  - "Current Epic: Epic 10 - Foundation + Engagement & Insight Engine"
-
-  # === GIT BRANCHING STRATEGY (2-Branch Model) ===
-  - |
-    GIT WORKFLOW - 2-Branch Model:
-    1. Create feature branch from develop: git checkout develop && git pull && git checkout -b feature/story-X.Y-description
-    2. Develop and commit changes locally
-    3. Push feature branch: git push -u origin feature/story-X.Y-description
-    4. Create PR to develop - wait for CI to pass
-    5. After PR merged to develop, create PR from develop to main
-    6. After merge to main, auto-deploy triggers to Firebase
-    7. VERIFY deployment at https://boletapp-d609f.web.app
-    8. Clean up local branch: git checkout develop && git pull && git branch -d feature/story-X.Y-description
-    NOTE: GitHub auto-deletes remote feature branches after merge (setting enabled)
-
-  - |
-    BRANCH PROTECTION RULES:
-    - main and develop are protected branches
-    - Require PR + passing CI before merge
-    - No direct pushes allowed
-    - Feature branches: feature/*, bugfix/*, chore/*
-
-  - |
-    HOTFIX FLOW (urgent production fixes only):
-    1. Create hotfix/* branch from main
-    2. PR directly to main (deploys immediately)
-    3. After merge, sync main back to develop: git checkout develop && git merge main
-
-  # === DEPLOYMENT VERIFICATION ===
-  - |
-    POST-DEPLOYMENT VERIFICATION CHECKLIST:
-    1. Visit https://boletapp-d609f.web.app
-    2. Test authentication (sign in/out)
-    3. Test critical user flows relevant to the story
-    4. Check browser console for errors
-    5. Check Firebase console for function errors if applicable
-    Story is NOT done until deployment is verified!
-
-  # === TESTING STRATEGY ===
-  - |
-    TESTING COMMANDS:
-    - npm run test:quick (~35s) - During development, per task
-    - npm run test:story (~2min) - Before marking story as "review"
-    - npm run test:sprint (~5min) - End of epic, before deployment
-    - npm run test:e2e - Full E2E suite with Playwright
-
-  - |
-    TESTARCH INTEGRATION (Gradual - Epic 10+):
-    - Tests do NOT drive implementation (no ATDD approach)
-    - Use testarch-automate AFTER implementation to expand coverage
-    - TEA agent reviews test quality during code-review
-    - Run /bmad:bmm:workflows:testarch-automate after implementing features with complex logic
-
-  # === STORY WORKFLOW ===
-  - |
-    STORY STATUS RULES:
-    - Developer marks story as "review" only
-    - Only REVIEWER marks story as "done" after approval
-    - Deployment is part of the deliverable - story not done until deployed and verified
-
-  # === TEST CREDENTIALS ===
-  - |
-    TESTING CREDENTIALS:
-    - E2E and integration tests use dedicated testing credentials
-    - NEVER use production user credentials in tests
-    - Test credentials are environment-configured for CI/local
-
-  # === COMMON GOTCHAS ===
-  - "Never switch to main before PR is merged - you'll lose local changes"
-  - "Test Cloud Functions build locally before pushing: cd functions && npm run build"
-  - "Firebase emulator must be running for integration tests"
-  - "13 E2E tests are skipped due to Firebase Auth OAuth limitations - this is expected"
-  - "Always use testing credentials for test files, never production data"
+memories: []
+# Example:
+# memories:
+#   - "User prefers detailed technical explanations"
+#   - "Current project uses React and TypeScript"
 
 # Add custom menu items (appended to base menu)
+# Don't include * prefix or help/exit - auto-injected
 menu: []
+# Example:
+# menu:
+#   - trigger: my-workflow
+#     workflow: "{project-root}/custom/my.yaml"
+#     description: My custom workflow
 
 # Add custom prompts (for action="#id" handlers)
 prompts: []
+# Example:
+# prompts:
+# - id: my-prompt
+#   content: |
+#     Prompt instructions here

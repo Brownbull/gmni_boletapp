@@ -80,7 +80,7 @@ test.describe('Transaction Sharing Toggle Journey (Staging)', () => {
         console.log('✅ Alice logged in successfully');
 
         await page.screenshot({
-            path: 'test-results/staging-sharing-toggle-01-logged-in.png',
+            path: 'test-results/transaction-sharing-toggle/01-logged-in.png',
             fullPage: true,
         });
 
@@ -122,7 +122,7 @@ test.describe('Transaction Sharing Toggle Journey (Staging)', () => {
         console.log('✅ GruposView loaded');
 
         await page.screenshot({
-            path: 'test-results/staging-sharing-toggle-02-grupos-view.png',
+            path: 'test-results/transaction-sharing-toggle/02-grupos-view.png',
             fullPage: true,
         });
 
@@ -181,7 +181,7 @@ test.describe('Transaction Sharing Toggle Journey (Staging)', () => {
         console.log('✅ Edit dialog opened');
 
         await page.screenshot({
-            path: 'test-results/staging-sharing-toggle-03-edit-dialog.png',
+            path: 'test-results/transaction-sharing-toggle/03-edit-dialog.png',
             fullPage: true,
         });
 
@@ -201,7 +201,7 @@ test.describe('Transaction Sharing Toggle Journey (Staging)', () => {
         console.log('✅ Helper text info tooltip button is visible (AC#2)');
 
         await page.screenshot({
-            path: 'test-results/staging-sharing-toggle-04-toggle-visible.png',
+            path: 'test-results/transaction-sharing-toggle/04-toggle-visible.png',
             fullPage: true,
         });
 
@@ -235,7 +235,7 @@ test.describe('Transaction Sharing Toggle Journey (Staging)', () => {
             console.log('✅ Verified: Disabled toggle shows restriction message (AC#5)');
 
             await page.screenshot({
-                path: 'test-results/staging-sharing-toggle-05-disabled-state.png',
+                path: 'test-results/transaction-sharing-toggle/05-disabled-state.png',
                 fullPage: true,
             });
         } else {
@@ -287,7 +287,7 @@ test.describe('Transaction Sharing Toggle Journey (Staging)', () => {
             }
 
             await page.screenshot({
-                path: 'test-results/staging-sharing-toggle-05-after-toggle.png',
+                path: 'test-results/transaction-sharing-toggle/05-after-toggle.png',
                 fullPage: true,
             });
 
@@ -323,7 +323,7 @@ test.describe('Transaction Sharing Toggle Journey (Staging)', () => {
             }
 
             await page.screenshot({
-                path: 'test-results/staging-sharing-toggle-06-cooldown-state.png',
+                path: 'test-results/transaction-sharing-toggle/06-cooldown-state.png',
                 fullPage: true,
             });
         }
@@ -348,7 +348,7 @@ test.describe('Transaction Sharing Toggle Journey (Staging)', () => {
         console.log('✅ Edit dialog closed');
 
         await page.screenshot({
-            path: 'test-results/staging-sharing-toggle-07-complete.png',
+            path: 'test-results/transaction-sharing-toggle/07-complete.png',
             fullPage: true,
         });
 

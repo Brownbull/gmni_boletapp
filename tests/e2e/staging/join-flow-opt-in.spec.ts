@@ -1,4 +1,4 @@
-/** E2E: Join Flow with Opt-In Dialog (AC7-AC12) - Story 14d-v2-1.14-polish */
+/** E2E: Join Flow with Opt-In Dialog (AC8-AC14) - Story 14d-v2-1-13+14 */
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 
 test.use({ storageState: { cookies: [], origins: [] }, viewport: { width: 360, height: 780 } });
@@ -164,10 +164,13 @@ async function bidirectionalCleanup(alicePage: Page, bobPage: Page): Promise<voi
   }
 }
 
-test.describe('Join Flow with Opt-In (14d-v2-1-14)', () => {
+test.describe('Join Flow with Opt-In (14d-v2-1-13+14)', () => {
+  // Serial mode: all tests share same staging Alice/Bob accounts.
+  // Parallel workers cause bidirectionalCleanup races (one worker deletes another's groups).
+  test.describe.configure({ mode: 'serial' });
   test.setTimeout(180000);
 
-  test('AC7+AC11+AC12: Join sharing-ON group, choose Yes, persistence, ViewModeSwitcher', async ({ browser }) => {
+  test('AC8+AC9+AC12+AC14: Join sharing-ON group, choose Yes, verify dialog content + default + persistence', async ({ browser }) => {
     const NAME = `E2E Yes ${Date.now()}`;
     let ac: BrowserContext | null = null;
     let bc: BrowserContext | null = null;
@@ -187,27 +190,47 @@ test.describe('Join Flow with Opt-In (14d-v2-1-14)', () => {
       await createGroup(ap, NAME, true);
       const code = await getShareCode(ap, NAME);
       expect(code.length).toBeGreaterThanOrEqual(10);
-      await ap.screenshot({ path: 'test-results/14d-v2-1-14-ac7-01-alice-created.png', fullPage: true });
+      await ap.screenshot({ path: 'test-results/join-flow-opt-in/ac7-01-alice-created.png', fullPage: true });
 
       await navigateToGrupos(bp);
       await enterShareCode(bp, code);
 
       const acceptDlg = bp.locator('[data-testid="accept-invitation-dialog"]');
       await acceptDlg.waitFor({ state: 'visible', timeout: 10000 });
-      await bp.screenshot({ path: 'test-results/14d-v2-1-14-ac7-02-accept-dialog.png', fullPage: true });
+      await bp.screenshot({ path: 'test-results/join-flow-opt-in/ac7-02-accept-dialog.png', fullPage: true });
       await bp.locator('[data-testid="accept-btn"]').click();
       await bp.waitForTimeout(1000);
 
       const optDlg = bp.locator('[data-testid="optin-dialog"]');
       await optDlg.waitFor({ state: 'visible', timeout: 5000 });
-      await bp.screenshot({ path: 'test-results/14d-v2-1-14-ac7-03-optin-dialog.png', fullPage: true });
+      await bp.screenshot({ path: 'test-results/join-flow-opt-in/ac7-03-optin-dialog.png', fullPage: true });
+
+      // AC8: Verify dialog content displays correctly
+      const dialogText = await optDlg.textContent() || '';
+      // Title includes group name context + "transaction sharing" (EN or ES)
+      expect(dialogText).toMatch(/(permite compartir transacciones|allows transaction sharing)/i);
+      // Description asks about sharing transaction details
+      expect(dialogText).toMatch(/(compartir los detalles|share your transaction details|detalles de tus transacciones)/i);
+      // Statistics note about spending totals always visible
+      expect(dialogText).toMatch(/(totales de gasto|spending totals|totales.*visibles)/i);
+      // Privacy note about changing preference later
+      expect(dialogText).toMatch(/(cambiar esto.*tarde|change this later)/i);
+      // Both option labels present
+      expect(dialogText).toMatch(/(compartir mis transacciones|share my transactions)/i);
+      expect(dialogText).toMatch(/(solo estad.sticas|just statistics)/i);
+
+      // AC9: Default selection is "No, just statistics" (privacy-first, LV-6)
+      const noRadio = optDlg.locator('[data-testid="share-no-btn"]');
+      expect(await noRadio.isChecked()).toBe(true);
+      const yesRadio = optDlg.locator('[data-testid="share-yes-btn"]');
+      expect(await yesRadio.isChecked()).toBe(false);
 
       await bp.locator('[data-testid="option-yes-label"]').click();
       await bp.waitForTimeout(300);
       await bp.locator('[data-testid="join-btn"]').click();
       await optDlg.waitFor({ state: 'hidden', timeout: 15000 });
       await bp.waitForTimeout(2000);
-      await bp.screenshot({ path: 'test-results/14d-v2-1-14-ac7-04-joined.png', fullPage: true });
+      await bp.screenshot({ path: 'test-results/join-flow-opt-in/ac7-04-joined.png', fullPage: true });
       try {
         const toast = bp.getByText(new RegExp(`(miembro|member)`, 'i'));
         await expect(toast.first()).toBeVisible({ timeout: 3000 });
@@ -217,7 +240,7 @@ test.describe('Join Flow with Opt-In (14d-v2-1-14)', () => {
       await bp.waitForTimeout(3000);
       await navigateToGrupos(bp);
       await expect(bp.locator(`[data-testid^="group-card-"]:has-text("${NAME}")`)).toBeVisible({ timeout: 10000 });
-      await bp.screenshot({ path: 'test-results/14d-v2-1-14-ac7-05-persisted.png', fullPage: true });
+      await bp.screenshot({ path: 'test-results/join-flow-opt-in/ac7-05-persisted.png', fullPage: true });
 
       await bp.goto(STAGING_URL);
       await bp.waitForTimeout(2000);
@@ -227,7 +250,11 @@ test.describe('Join Flow with Opt-In (14d-v2-1-14)', () => {
       await bp.waitForTimeout(500);
       await bp.locator('[data-testid="view-mode-switcher"]').waitFor({ state: 'visible', timeout: 5000 });
       await expect(bp.locator(`[data-testid^="view-mode-option-group-"]:has-text("${NAME}")`)).toBeVisible({ timeout: 5000 });
-      await bp.screenshot({ path: 'test-results/14d-v2-1-14-ac7-06-viewmode.png', fullPage: true });
+      await bp.screenshot({ path: 'test-results/join-flow-opt-in/ac7-06-viewmode.png', fullPage: true });
+
+      // Note: Post-join preference toggle verification (Bob chose "Yes" → toggle ON)
+      // is covered by user-sharing-preferences.spec.ts. Not duplicated here to keep
+      // this multi-user test within the 180s budget.
     } finally {
       try {
         if (bp) { await navigateToGrupos(bp); await leaveGroupAsMember(bp, NAME); }
@@ -265,14 +292,14 @@ test.describe('Join Flow with Opt-In (14d-v2-1-14)', () => {
 
       const optDlg = bp.locator('[data-testid="optin-dialog"]');
       await optDlg.waitFor({ state: 'visible', timeout: 5000 });
-      await bp.screenshot({ path: 'test-results/14d-v2-1-14-ac8-01-optin.png', fullPage: true });
+      await bp.screenshot({ path: 'test-results/join-flow-opt-in/ac8-01-optin.png', fullPage: true });
 
       await bp.locator('[data-testid="option-no-label"]').click();
       await bp.waitForTimeout(300);
       await bp.locator('[data-testid="join-btn"]').click();
       await optDlg.waitFor({ state: 'hidden', timeout: 15000 });
       await bp.waitForTimeout(2000);
-      await bp.screenshot({ path: 'test-results/14d-v2-1-14-ac8-02-joined.png', fullPage: true });
+      await bp.screenshot({ path: 'test-results/join-flow-opt-in/ac8-02-joined.png', fullPage: true });
 
       try {
         const toast = bp.getByText(new RegExp(`(preferencias|preferences|configuraci|settings)`, 'i'));
@@ -287,7 +314,7 @@ test.describe('Join Flow with Opt-In (14d-v2-1-14)', () => {
     }
   });
 
-  test('AC9: Join sharing-ON group, dismiss dialog - defaults to false', async ({ browser }) => {
+  test('AC9+AC11: Join sharing-ON group, dismiss via Escape - defaults to false, keyboard a11y', async ({ browser }) => {
     const NAME = `E2E Dismiss ${Date.now()}`;
     let ac: BrowserContext | null = null;
     let bc: BrowserContext | null = null;
@@ -315,12 +342,21 @@ test.describe('Join Flow with Opt-In (14d-v2-1-14)', () => {
 
       const optDlg = bp.locator('[data-testid="optin-dialog"]');
       await optDlg.waitFor({ state: 'visible', timeout: 5000 });
-      await bp.screenshot({ path: 'test-results/14d-v2-1-14-ac9-01-optin.png', fullPage: true });
+      await bp.screenshot({ path: 'test-results/join-flow-opt-in/ac9-01-optin.png', fullPage: true });
 
-      await optDlg.locator('[data-testid="close-btn"]').click();
+      // AC11: Verify ARIA attributes for accessibility
+      expect(await optDlg.getAttribute('role')).toBe('dialog');
+      expect(await optDlg.getAttribute('aria-modal')).toBe('true');
+
+      // AC11: Verify close button receives initial focus (keyboard-accessible)
+      const closeBtn = optDlg.locator('[data-testid="close-btn"]');
+      await expect(closeBtn).toBeFocused({ timeout: 3000 });
+
+      // AC11+AC10: Dismiss via Escape key (keyboard navigation)
+      await bp.keyboard.press('Escape');
       await optDlg.waitFor({ state: 'hidden', timeout: 15000 });
       await bp.waitForTimeout(2000);
-      await bp.screenshot({ path: 'test-results/14d-v2-1-14-ac9-02-dismissed.png', fullPage: true });
+      await bp.screenshot({ path: 'test-results/join-flow-opt-in/ac9-02-dismissed.png', fullPage: true });
 
       try {
         const toast = bp.getByText(new RegExp(`(defecto|default|desactivado|off)`, 'i'));
@@ -358,14 +394,14 @@ test.describe('Join Flow with Opt-In (14d-v2-1-14)', () => {
       await navigateToGrupos(ap);
       await bidirectionalCleanup(ap, bp);
       await createGroup(ap, NAME, false);
-      await ap.screenshot({ path: 'test-results/14d-v2-1-14-ac10-01-no-sharing.png', fullPage: true });
+      await ap.screenshot({ path: 'test-results/join-flow-opt-in/ac10-01-no-sharing.png', fullPage: true });
       const code = await getShareCode(ap, NAME);
 
       await navigateToGrupos(bp);
       await enterShareCode(bp, code);
       const acceptDlg = bp.locator('[data-testid="accept-invitation-dialog"]');
       await acceptDlg.waitFor({ state: 'visible', timeout: 10000 });
-      await bp.screenshot({ path: 'test-results/14d-v2-1-14-ac10-02-accept.png', fullPage: true });
+      await bp.screenshot({ path: 'test-results/join-flow-opt-in/ac10-02-accept.png', fullPage: true });
 
       expect(await bp.locator('[data-testid="sharing-notice"]').isVisible({ timeout: 1000 }).catch(() => false)).toBe(false);
 
@@ -374,7 +410,7 @@ test.describe('Join Flow with Opt-In (14d-v2-1-14)', () => {
       await bp.waitForTimeout(2000);
 
       expect(await bp.locator('[data-testid="optin-dialog"]').isVisible({ timeout: 2000 }).catch(() => false)).toBe(false);
-      await bp.screenshot({ path: 'test-results/14d-v2-1-14-ac10-03-no-dialog.png', fullPage: true });
+      await bp.screenshot({ path: 'test-results/join-flow-opt-in/ac10-03-no-dialog.png', fullPage: true });
 
       try {
         const escaped = NAME.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

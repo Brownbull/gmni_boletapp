@@ -332,10 +332,44 @@ const groupName = `E2E Test ${Date.now()}`; // Unique, identifiable, cleanable
 
 ## Screenshot Convention
 
+### Persistent Screenshots vs Playwright Artifacts
+
+The project separates **manual screenshots** (persistent) from **Playwright auto-artifacts** (cleaned per run):
+
+| Directory | Contents | Lifecycle |
+|-----------|----------|-----------|
+| `test-results/` | Manual screenshots saved by specs | **Persistent** — never wiped by Playwright |
+| `playwright-artifacts/` | Traces, failure screenshots, videos | Cleaned by Playwright before each run |
+
+This separation is configured in `playwright.config.ts` via `outputDir: './playwright-artifacts'`.
+Both directories are git-ignored.
+
+### Directory Structure
+
+Each spec file saves screenshots in its own subdirectory under `test-results/`:
+
+```
+test-results/
+├── join-flow-opt-in/          # join-flow-opt-in.spec.ts
+│   ├── ac7-01-alice-created.png
+│   └── ac7-02-accept-dialog.png
+├── group-delete-journey/      # group-delete-journey.spec.ts
+│   └── step-01-initial.png
+└── verify-staging-ui/         # verify-staging-ui.spec.ts
+    └── alice-dashboard.png
+```
+
+**Folder name** = spec filename without `.spec.ts` extension.
+
+**Persistence rules:**
+- Re-running a single spec only overwrites **that spec's folder**. All other folders persist.
+- You can run specs independently without losing screenshots from other specs.
+- To get a full refresh: delete `test-results/` manually, then run the full E2E suite.
+
 ### Naming Pattern
 
 ```
-test-results/{story-id}-{step-number}-{description}.png
+test-results/{spec-name}/{step-number}-{description}.png
 ```
 
 ### When to Screenshot
@@ -349,7 +383,7 @@ test-results/{story-id}-{step-number}-{description}.png
 
 ```typescript
 await page.screenshot({
-  path: 'test-results/14d-v2-1-14-01-app-loaded.png',
+  path: 'test-results/join-flow-opt-in/ac7-01-app-loaded.png',
   fullPage: true,
 });
 ```
@@ -379,10 +413,17 @@ await page.screenshot({
 - `delete-confirm-btn` - Delete confirmation button
 - `confirm-name-input` - Name confirmation input (delete)
 - `leave-group-confirm-btn` - Leave group confirmation button
-- `opt-in-dialog` - Transaction sharing opt-in dialog
-- `opt-in-yes-option` - Opt-in yes option
-- `opt-in-no-option` - Opt-in no option
-- `opt-in-confirm-btn` - Opt-in confirm button
+- `optin-dialog` - Transaction sharing opt-in dialog container
+- `optin-dialog-backdrop` - Opt-in dialog backdrop
+- `option-yes-label` - Opt-in "Yes, share" option label (clickable)
+- `option-no-label` - Opt-in "No, just statistics" option label (clickable)
+- `share-yes-btn` - Opt-in yes radio input (sr-only)
+- `share-no-btn` - Opt-in no radio input (sr-only)
+- `join-btn` - Join Group confirm button
+- `close-btn` - Dialog close/dismiss button (X)
+- `cancel-btn` - Cancel button (returns to accept dialog)
+- `statistics-note` - "Totals always visible" info box
+- `privacy-note` - "Change later in settings" note
 
 ### ViewModeSwitcher
 - `app-logo-button` - Clickable button to open ViewModeSwitcher

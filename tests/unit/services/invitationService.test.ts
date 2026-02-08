@@ -1967,11 +1967,13 @@ describe('invitationService', () => {
             expect(mockTx.set).toHaveBeenCalledWith(
                 expect.anything(), // prefsDocRef
                 {
-                    [`groupPreferences.${validGroupId}`]: {
-                        shareMyTransactions: false,
-                        lastToggleAt: null,
-                        toggleCountToday: 0,
-                        toggleCountResetAt: null,
+                    groupPreferences: {
+                        [validGroupId]: {
+                            shareMyTransactions: false,
+                            lastToggleAt: null,
+                            toggleCountToday: 0,
+                            toggleCountResetAt: null,
+                        },
                     },
                 },
                 { merge: true }
@@ -1992,9 +1994,11 @@ describe('invitationService', () => {
             expect(mockTx.set).toHaveBeenCalledWith(
                 expect.anything(),
                 {
-                    [`groupPreferences.${validGroupId}`]: expect.objectContaining({
-                        shareMyTransactions: true,
-                    }),
+                    groupPreferences: {
+                        [validGroupId]: expect.objectContaining({
+                            shareMyTransactions: true,
+                        }),
+                    },
                 },
                 { merge: true }
             );
@@ -2014,9 +2018,11 @@ describe('invitationService', () => {
             expect(mockTx.set).toHaveBeenCalledWith(
                 expect.anything(),
                 {
-                    [`groupPreferences.${validGroupId}`]: expect.objectContaining({
-                        shareMyTransactions: false,
-                    }),
+                    groupPreferences: {
+                        [validGroupId]: expect.objectContaining({
+                            shareMyTransactions: false,
+                        }),
+                    },
                 },
                 { merge: true }
             );
