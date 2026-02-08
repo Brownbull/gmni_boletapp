@@ -47,3 +47,6 @@ Multiple test quality issues accumulated across the shared-groups feature:
 - **ECC Review 14d-v2-1-14 (2026-02-05):** Added 2 items:
   - GruposView.test.tsx at 2679 lines exceeds 300-line test file guideline (split into describe-level files)
   - E2E toast assertions wrapped in try/catch are effectively optional - add retry/waitFor patterns
+- **ECC Review 14d-v2-1-13+14 (2026-02-07):** Added 2 items:
+  - `expect.anything()` used for docRef params in 13+ assertions across userPreferencesService.test.ts — replace with `mockDoc()` return value or `expect.objectContaining` for stronger verification
+  - userPreferencesService.test.ts at 840+ lines — split into domain-specific test files (preference-crud, sharing-toggle, cooldown-logic)

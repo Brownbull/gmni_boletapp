@@ -21,7 +21,7 @@
 import type { Firestore } from 'firebase/firestore';
 import type { MemberProfile, PendingInvitation } from '@/types/sharedGroup';
 import { acceptInvitation, declineInvitation } from '@/services/invitationService';
-import { joinGroupDirectly } from './groupService';
+import { joinGroupDirectly } from './groupMemberService';
 
 // =============================================================================
 // Constants

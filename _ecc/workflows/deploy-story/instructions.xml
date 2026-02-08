@@ -238,13 +238,99 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"`</action>
 
     <action>Set {{final_environment}} = "production"</action>
 
-    <output>**Deployed to production**
+    <output>**Merged to main**
 
-      Firebase auto-deploy triggered on merge to main.
-      Production URL: {deployment_urls.production}</output>
+      Firebase Hosting auto-deploys on merge to main.
+      Production URL: {deployment_urls.production}
+
+      Checking if Firebase backend deployment is needed...</output>
   </step>
 
-  <step n="5" goal="Branch cleanup and sync">
+  <step n="5" goal="Firebase backend deployment (if needed)">
+    <critical>Hosting auto-deploys on merge, but rules/indexes/functions do NOT.
+      See docs/firebase/DEPLOYMENT-MANIFEST.md for the full artifact inventory.</critical>
+
+    <action>Run `git diff origin/main~1..origin/main --name-only | grep -E '^(firestore\.(rules|indexes\.json)|storage\.rules|functions/src/)'`</action>
+    <action>Set {{backend_files_changed}} = result (may be empty)</action>
+
+    <check if="{{backend_files_changed}} is empty">
+      <output>**No Firebase backend changes detected** — hosting-only deployment.
+        Skipping backend deploy.</output>
+      <action>GOTO step 6</action>
+    </check>
+
+    <output>**Firebase Backend Changes Detected**
+
+      The following backend files changed in this deployment:
+      ```
+      {{backend_files_changed}}
+      ```
+
+      These require manual `firebase deploy` after merge to main.</output>
+
+    <!-- Determine deploy targets -->
+    <action>Set {{deploy_targets}} = ""</action>
+    <check if="firestore.rules in {{backend_files_changed}}">
+      <action>Append "firestore:rules" to {{deploy_targets}}</action>
+    </check>
+    <check if="firestore.indexes.json in {{backend_files_changed}}">
+      <action>Append "firestore:indexes" to {{deploy_targets}}</action>
+    </check>
+    <check if="storage.rules in {{backend_files_changed}}">
+      <action>Append "storage" to {{deploy_targets}}</action>
+    </check>
+    <check if="functions/src/ files in {{backend_files_changed}}">
+      <action>Run `cd functions && npm run build && cd ..`</action>
+      <action>Append "functions" to {{deploy_targets}}</action>
+    </check>
+
+    <ask>Deploy Firebase backend to production?
+
+      Targets: {{deploy_targets}}
+      Command: `firebase deploy --only {{deploy_targets}} --project boletapp-d609f`
+
+      [Y/N]</ask>
+
+    <check if="user says Y">
+      <action>Run `firebase deploy --only {{deploy_targets}} --project boletapp-d609f`</action>
+
+      <check if="deploy fails">
+        <output>**BACKEND DEPLOY FAILED**
+
+          Check error output above. Common issues:
+          - Eventarc permissions for v2 functions (retry in 2-5 min)
+          - Storage not initialized on project
+          - Build errors in functions/
+
+          Fix and retry: `firebase deploy --only {{deploy_targets}} --project boletapp-d609f`</output>
+      </check>
+
+      <check if="deploy succeeds">
+        <output>**Backend deployed to production**
+
+          Deployed: {{deploy_targets}}
+
+          Syncing to staging (rules + indexes only)...</output>
+
+        <!-- Keep staging in sync for Firestore rules/indexes -->
+        <check if="firestore:rules or firestore:indexes in {{deploy_targets}}">
+          <action>Run `firebase deploy --only firestore:rules,firestore:indexes --project boletapp-staging`</action>
+          <output>Staging Firestore rules/indexes synced.</output>
+        </check>
+      </check>
+    </check>
+
+    <check if="user says N">
+      <output>**Backend deployment skipped.**
+
+        You can deploy later with:
+        `firebase deploy --only {{deploy_targets}} --project boletapp-d609f`
+
+        See `docs/firebase/DEPLOYMENT-MANIFEST.md` for full reference.</output>
+    </check>
+  </step>
+
+  <step n="6" goal="Branch cleanup and sync">
     <action>Run `git fetch --prune`</action>
     <action>Run `git checkout develop`</action>
     <action>Run `git pull origin develop`</action>
@@ -255,7 +341,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"`</action>
       Local develop branch synced with origin.</output>
   </step>
 
-  <step n="6" goal="Update sprint status">
+  <step n="7" goal="Update sprint status">
     <check if="{sprint_status} file exists">
       <action>Load {sprint_status}</action>
       <action>Update development_status[{{story_key}}] = "deployed"</action>
@@ -266,7 +352,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"`</action>
     </check>
   </step>
 
-  <step n="7" goal="Deployment summary">
+  <step n="8" goal="Deployment summary">
     <output>**DEPLOYMENT COMPLETE**
 
       **Story:** {{story_key}}
@@ -278,12 +364,16 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"`</action>
       - Pre-deployment validation passed
       - PR to develop (squash merge) {{#if develop_pr_url}}{{develop_pr_url}}{{/if}}
       {{#if final_environment == 'production'}}- PR to main (merge commit) {{main_pr_url}}
-      - Firebase auto-deploy triggered{{else}}- Production deployment skipped{{/if}}
+      - Firebase Hosting auto-deployed
+      {{#if deploy_targets}}- Firebase backend deployed: {{deploy_targets}}
+      - Staging synced (rules + indexes){{else}}- No backend changes detected{{/if}}{{else}}- Production deployment skipped{{/if}}
       - Branches cleaned up
       - Sprint status synced
 
       **Next Steps:**
       - Verify production functionality at {deployment_urls.production}
+      {{#if deploy_targets}}- Verify backend in Firebase Console (functions list, rules, indexes)
+      - Update `docs/firebase/DEPLOYMENT-MANIFEST.md` parity table{{/if}}
       - Run `/sprint-status` to see sprint progress
       - Continue with next story via `/ecc-create-story`</output>
   </step>

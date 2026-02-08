@@ -42,6 +42,28 @@
 - [ ] Firebase auto-deploy triggered
 - [ ] Production accessible at https://boletapp-d609f.web.app
 
+## Firebase Backend Deployment (if applicable)
+
+Stories that modify `firestore.rules`, `firestore.indexes.json`, `storage.rules`, or `functions/src/**`
+require manual Firebase deployment after merge to main. Hosting auto-deploys; backend does NOT.
+
+Reference: `docs/firebase/DEPLOYMENT-MANIFEST.md`
+
+### Detection
+- [ ] Checked for backend file changes: `git diff origin/main~1..origin/main --name-only | grep -E '^(firestore\.(rules|indexes\.json)|storage\.rules|functions/src/)'`
+- [ ] If no backend changes: skip this section
+
+### Production Deploy
+- [ ] Cloud Functions built: `cd functions && npm run build` (if functions changed)
+- [ ] Deployed to production: `firebase deploy --only <targets> --project boletapp-d609f`
+- [ ] Verified in Firebase Console (functions list, rules tab, indexes tab)
+
+### Staging Sync
+- [ ] Firestore rules + indexes synced to staging: `firebase deploy --only firestore:rules,firestore:indexes --project boletapp-staging`
+
+### Manifest Update
+- [ ] Updated parity table in `docs/firebase/DEPLOYMENT-MANIFEST.md` with today's date
+
 ## Post-Deployment Checks
 
 ### Branch Cleanup

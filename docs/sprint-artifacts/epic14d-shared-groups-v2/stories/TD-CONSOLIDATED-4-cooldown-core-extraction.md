@@ -32,3 +32,4 @@ So that **cooldown behavior is consistent and changes only need to happen in one
 - **Original story:** [TD-14d-48](TD-ARCHIVED/TD-14d-48-cooldown-pluralization.md) (cooldown core, not pluralization)
 - **Also absorbs:** TD-14d-36 (cooldown reason type enum, archived)
 - **Source:** ECC Parallel Review (2026-02-05) on story 14d-v2-1-12a
+- **ECC Review 14d-v2-1-13+14 (2026-02-07):** Duplicate join logic between `acceptByLink` and `acceptByCode` in invitationHandlers.ts — both call `checkAndRefreshInvitation`, `joinGroupFromInvitation`, then handle opt-in. Extract shared `processAcceptInvitation` handler

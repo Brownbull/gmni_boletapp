@@ -300,6 +300,9 @@ export async function setGroupPreference(
 
     // Use setDoc with merge to create or update
     // Uses nested object (not dot-notation) because setDoc treats dot-notation keys as literal field names
+    // WRONG pattern (setDoc interprets dot-notation keys as literal field names, not nested paths):
+    //   setDoc(docRef, { [`groupPreferences.${groupId}.shareMyTransactions`]: true }, { merge: true })
+    // CORRECT pattern (nested object preserves structure):
     await setDoc(
       docRef,
       {
@@ -463,6 +466,9 @@ export async function updateShareMyTransactions(
     // This handles the race condition where user toggles immediately after joining
     if (!docSnap.exists()) {
       const preference = createDefaultGroupPreference({ shareMyTransactions: enabled });
+      // Cast serverTimestamp() through unknown because Firestore's FieldValue type
+      // doesn't match the model's Timestamp|null type at write time — the server
+      // replaces the sentinel with an actual Timestamp on commit.
       preference.lastToggleAt = serverTimestamp() as unknown as null;
       preference.toggleCountToday = 1;
       preference.toggleCountResetAt = serverTimestamp() as unknown as null;

@@ -37,7 +37,7 @@ const mockLeaveGroup = vi.fn();
 const mockTransferOwnership = vi.fn();
 const mockJoinGroupDirectly = vi.fn();
 
-vi.mock('@/features/shared-groups/services/groupService', () => ({
+vi.mock('@/features/shared-groups/services/groupMemberService', () => ({
     leaveGroup: (...args: unknown[]) => mockLeaveGroup(...args),
     transferOwnership: (...args: unknown[]) => mockTransferOwnership(...args),
     joinGroupDirectly: (...args: unknown[]) => mockJoinGroupDirectly(...args),

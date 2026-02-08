@@ -38,7 +38,7 @@ import { useCallback } from 'react';
 import type { User } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import type { SharedGroup, PendingInvitation, MemberProfile } from '@/types/sharedGroup';
-import { leaveGroup, transferOwnership } from '../services/groupService';
+import { leaveGroup, transferOwnership } from '../services/groupMemberService';
 import {
     handleAcceptInvitationService,
     handleDeclineInvitationService,

@@ -31,3 +31,4 @@ So that **GruposView.tsx stays under the 400-line guideline and is easier to mai
 - **Original story:** [TD-14d-3](TD-ARCHIVED/TD-14d-3-gruposview-dialog-extraction.md)
 - **Blocked by:** TD-CONSOLIDATED-1 (groupService modularization)
 - **Source:** ECC Code Review #4 (2026-02-03) on story 14d-v2-1-7e
+- **ECC Review 14d-v2-1-13+14 (2026-02-07):** GruposView.tsx now 1082 lines (exceeds 800 max). Parallel accept code paths (dialog-based vs auto-accept) share duplicate opt-in wiring — extract to shared handler during dialog extraction

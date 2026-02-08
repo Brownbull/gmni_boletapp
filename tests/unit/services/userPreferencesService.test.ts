@@ -660,7 +660,7 @@ describe('updateShareMyTransactions', () => {
         expect(mockSetDoc).not.toHaveBeenCalled();
     });
 
-    it('should throw error on Firestore failure', async () => {
+    it('should throw error on Firestore failure without writing', async () => {
         // Arrange
         mockGetDoc.mockRejectedValue(new Error('Network error'));
 
@@ -668,6 +668,10 @@ describe('updateShareMyTransactions', () => {
         await expect(
             updateShareMyTransactions(mockDb, TEST_USER_ID, TEST_APP_ID, TEST_GROUP_ID, true)
         ).rejects.toThrow('Network error');
+
+        // No partial writes should occur when read fails
+        expect(mockSetDoc).not.toHaveBeenCalled();
+        expect(mockUpdateDoc).not.toHaveBeenCalled();
     });
 
     it('should use correct document path', async () => {

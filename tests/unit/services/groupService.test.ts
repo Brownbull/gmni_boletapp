@@ -375,13 +375,13 @@ describe('groupService', () => {
             await createGroup(mockDb, userId, appId, {
                 name: 'Test Group',
                 transactionSharingEnabled: true,
-                color: '#ff0000',
+                color: '#3b82f6',
             });
 
             const addDocCall = mockAddDoc.mock.calls[0];
             const groupData = addDocCall[1] as Partial<SharedGroup>;
 
-            expect(groupData.color).toBe('#ff0000');
+            expect(groupData.color).toBe('#3b82f6');
         });
 
         it('includes icon when provided', async () => {

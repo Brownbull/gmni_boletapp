@@ -140,16 +140,8 @@ development_status:
   14d-v2-1-14c-polish-edge-cases: consolidated  # CONSOLIDATED into 14d-v2-1-14-polish (2026-02-05)
   14d-v2-1-14d-integration-tests: consolidated  # CONSOLIDATED into 14d-v2-1-14-polish (2026-02-05)
   # New consolidated stories:
-  14d-v2-1-13+14-join-flow-foundation: review  # 7 pts - Preferences document + opt-in dialog + service integration [DEPENDS: 1-4, 1-5, 1-6, 1-12] - Task 8 bugfix COMPLETE: setDoc dot-notation fixed in 5 functions, security review defense added (2026-02-06)
-  14d-v2-1-14-polish-e2e: review  # 4 pts - Confirmation toasts + offline handling + analytics + E2E tests [DEPENDS: 1-13+14] - ECC Parallel Review 2026-02-05: APPROVED (code 7/10, security MEDIUM - H-1 sanitization fixed, type mismatch fixed, 94 GruposView tests + 38 OptInDialog tests pass)
-
-# /ecc-code-review
-# /ecc-create-story
-# /deploy-story
-# /story-sizing
-# /ecc-e2e
-# /ecc-impact-analysis
-# /design-system-mockup-builder
+  14d-v2-1-13+14-join-flow-foundation: done  # 7 pts - ECC Review APPROVED (2026-02-07): code 8.5/10, security 9/10, architect 9/10, TDD 85/100. 4 quick fixes applied, 5 complex items deferred to TD-CONSOLIDATED-2/4/8
+  14d-v2-1-14-polish-e2e: done  # 4 pts - Confirmation toasts + offline handling + analytics + E2E tests [DEPENDS: 1-13+14] - ECC Review #3 2026-02-07: APPROVED (9/10, TRIVIAL classification, 1 quick fix applied)
 
   # ============================================================================
   # TECH DEBT - CONSOLIDATED (Epic 14d-v2)
@@ -162,7 +154,7 @@ development_status:
   TD-14d-2-fsd-component-location: done  # COMPLETED 2026-02-03
 
   # TIER 1: Code Bloat Prevention (MUST DO) - 11-16 hrs
-  TD-CONSOLIDATED-1-groupservice-modularization: ready-for-dev  # 4-6 hrs - Split 1,367 LOC into groupService, groupDeletionService, groupMemberService [from: TD-14d-4]
+  TD-CONSOLIDATED-1-groupservice-modularization: done  # 4-6 hrs - Split 1,509 LOC into 4 modules [from: TD-14d-4] - ECC Code Review 2026-02-07: APPROVED (8/10, 8 quick fixes applied, 3 complex deferred to TD-17/18)
   TD-CONSOLIDATED-2-gruposview-dialog-extraction: ready-for-dev  # 2-3 hrs - Extract dialog rendering to GruposViewDialogs.tsx [from: TD-14d-3, DEPENDS: TD-CONSOLIDATED-1]
   TD-CONSOLIDATED-3-dry-utilities-extraction: ready-for-dev  # 3-4 hrs - Transaction merge, ViewMode type consolidation, shared test factory [from: TD-14d-30, 33, 34]
   TD-CONSOLIDATED-4-cooldown-core-extraction: ready-for-dev  # 2-3 hrs - Extract ~80% duplicated cooldown logic to cooldownCore.ts [from: TD-14d-48 core, 36]
@@ -186,9 +178,22 @@ development_status:
   TD-CONSOLIDATED-14-cloud-function-type-sync-ci: backlog  # 1-2 hrs - CI validation for type synchronization [from: TD-14d-9]
   TD-CONSOLIDATED-15-dependency-vulnerability-tracking: ready-for-dev  # 1-2 hrs - npm audit remediation [from: TD-14d-7]
 
+  # Added from TD-CONSOLIDATED-1 code review (2026-02-07)
+  TD-CONSOLIDATED-17-deletion-cascade-dry: ready-for-dev  # 1-2 hrs - Extract duplicated cascade cleanup helper in groupDeletionService [from: TD-CONSOLIDATED-1 review #5, DEPENDS: TD-CONSOLIDATED-1]
+  TD-CONSOLIDATED-18-group-service-validation-gaps: ready-for-dev  # 1-2 hrs - photoURL URL validation + createGroup BC-1 atomicity [from: TD-CONSOLIDATED-1 review #9/#10]
+
   # ARCHIVED (42+ items) - Fix inline if encountered, not tracked individually
   # See: stories/TD-ARCHIVED/ and TD-CONSOLIDATED-PLAN.md for full archive list
   # Also archived (no story files): TD-7d-5, TD-7d-6 (deferred, depends on cloud function)
+
+# /ecc-dev-story
+# /ecc-code-review
+# /ecc-create-story
+# /deploy-story
+# /story-sizing
+# /ecc-e2e
+# /ecc-impact-analysis
+# /design-system-mockup-builder
 
   # Sub-Epic 2: Changelog-Driven Sync (12 stories, ~45 pts)
   14d-v2-2-1-tag-transaction-to-group: backlog  # 3 pts - Assign sharedGroupId

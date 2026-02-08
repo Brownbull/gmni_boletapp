@@ -27,10 +27,10 @@ vi.mock('@/services/invitationService', () => ({
     declineInvitation: (...args: unknown[]) => mockDeclineInvitation(...args),
 }));
 
-// Mock groupService
+// Mock groupMemberService (canonical source for joinGroupDirectly)
 const mockJoinGroupDirectly = vi.fn();
 
-vi.mock('@/features/shared-groups/services/groupService', () => ({
+vi.mock('@/features/shared-groups/services/groupMemberService', () => ({
     joinGroupDirectly: (...args: unknown[]) => mockJoinGroupDirectly(...args),
 }));
 
