@@ -1,7 +1,8 @@
 /**
- * Sharing Cooldown Utilities
+ * Sharing Cooldown Utilities - Group Level
  *
  * Story 14d-v2-1-11a: Transaction Sharing Toggle - Foundation
+ * Refactored in TD-CONSOLIDATED-4: Delegates to cooldownCore.ts
  *
  * Provides cooldown and rate-limiting logic for group-level
  * transaction sharing toggle. Implements:
@@ -13,46 +14,16 @@
 import type { Timestamp } from 'firebase/firestore';
 import type { SharedGroup } from '@/types/sharedGroup';
 import { SHARED_GROUP_LIMITS } from '@/types/sharedGroup';
+import {
+    getCooldownRemainingMinutes,
+    checkCooldownAllowed,
+    type CooldownResult,
+} from './cooldownCore';
 
-/**
- * Result of toggle cooldown check.
- */
-export interface ToggleCooldownResult {
-    /** Whether toggling is allowed */
-    allowed: boolean;
-    /** Minutes to wait if cooldown active (only when allowed=false) */
-    waitMinutes?: number;
-    /** Reason if not allowed: 'cooldown' or 'daily_limit' */
-    reason?: 'cooldown' | 'daily_limit';
-}
-
-/**
- * Calculates remaining cooldown minutes.
- *
- * @param lastToggleAt - Last toggle timestamp (may be null)
- * @param cooldownMinutes - Cooldown period in minutes
- * @param now - Current time (for testing)
- * @returns Minutes remaining in cooldown, or 0 if cooldown expired
- */
-export function getCooldownRemainingMinutes(
-    lastToggleAt: Timestamp | null,
-    cooldownMinutes: number,
-    now: Date = new Date()
-): number {
-    if (!lastToggleAt) return 0;
-
-    try {
-        const toggleTime = lastToggleAt.toDate();
-        const elapsedMs = now.getTime() - toggleTime.getTime();
-        const elapsedMinutes = elapsedMs / (1000 * 60);
-        const remaining = cooldownMinutes - elapsedMinutes;
-
-        return remaining > 0 ? Math.ceil(remaining) : 0;
-    } catch {
-        // Invalid timestamp - no cooldown (safe default for migration)
-        return 0;
-    }
-}
+// Backwards-compatible re-exports
+export { getCooldownRemainingMinutes };
+/** @deprecated Import CooldownResult from './cooldownCore' instead */
+export type ToggleCooldownResult = CooldownResult;
 
 /**
  * Checks if the daily toggle count should be reset.
@@ -118,24 +89,13 @@ export function canToggleTransactionSharing(
     const resetAt = group.transactionSharingToggleCountResetAt ?? null;
     const timezone = group.timezone || 'UTC';
 
-    // Check 1: 15-minute cooldown
-    const waitMinutes = getCooldownRemainingMinutes(
+    return checkCooldownAllowed({
         lastToggleAt,
-        SHARED_GROUP_LIMITS.TRANSACTION_SHARING_COOLDOWN_MINUTES,
-        now
-    );
-
-    if (waitMinutes > 0) {
-        return { allowed: false, waitMinutes, reason: 'cooldown' };
-    }
-
-    // Check 2: Daily limit (considering midnight reset)
-    const needsReset = shouldResetDailyCount(resetAt, timezone, now);
-    const effectiveCount = needsReset ? 0 : toggleCountToday;
-
-    if (effectiveCount >= SHARED_GROUP_LIMITS.TRANSACTION_SHARING_DAILY_LIMIT) {
-        return { allowed: false, reason: 'daily_limit' };
-    }
-
-    return { allowed: true };
+        toggleCountToday,
+        toggleCountResetAt: resetAt,
+        cooldownMinutes: SHARED_GROUP_LIMITS.TRANSACTION_SHARING_COOLDOWN_MINUTES,
+        dailyLimit: SHARED_GROUP_LIMITS.TRANSACTION_SHARING_DAILY_LIMIT,
+        shouldReset: (ra, n) => shouldResetDailyCount(ra, timezone, n),
+        now,
+    });
 }

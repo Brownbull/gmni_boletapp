@@ -157,7 +157,7 @@ development_status:
   TD-CONSOLIDATED-1-groupservice-modularization: done  # 4-6 hrs - Split 1,509 LOC into 4 modules [from: TD-14d-4] - ECC Code Review 2026-02-07: APPROVED (8/10, 8 quick fixes applied, 3 complex deferred to TD-17/18)
   TD-CONSOLIDATED-2-gruposview-dialog-extraction: done  # 2-3 hrs - Extract dialog rendering to GruposViewDialogs.tsx [from: TD-14d-3, DEPENDS: TD-CONSOLIDATED-1] - ECC Code Review 2026-02-08: APPROVED (8.5/10, 2 quick fixes applied, 1 TD story created: TD-19)
   TD-CONSOLIDATED-3-dry-utilities-extraction: done  # 3-4 hrs - Transaction merge, ViewMode type consolidation, shared test factory [from: TD-14d-30, 33, 34] - ECC Code Review 2026-02-08: APPROVED (9/10, 3 quick fixes applied, 0 blockers)
-  TD-CONSOLIDATED-4-cooldown-core-extraction: review  # 2-3 hrs - Extract ~80% duplicated cooldown logic to cooldownCore.ts [from: TD-14d-48 core, 36] - ECC Dev 2026-02-08: 96 tests pass, code 6-LOW, security PASS
+  TD-CONSOLIDATED-4-cooldown-core-extraction: done  # 2-3 hrs - Extract ~80% duplicated cooldown logic to cooldownCore.ts [from: TD-14d-48 core, 36] - ECC Code Review 2026-02-08: APPROVED (9/10, 4 quick fixes applied, 100 tests pass)
 
   # TIER 2: Security (SHOULD DO) - 4-7 hrs
   TD-CONSOLIDATED-5-invitation-read-restriction: ready-for-dev  # 2-3 hrs - Restrict pendingInvitations read to email match [from: TD-14d-5]

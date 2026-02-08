@@ -12,7 +12,6 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import type { Timestamp } from 'firebase/firestore';
 import {
     canToggleTransactionSharing,
     getCooldownRemainingMinutes,
@@ -20,15 +19,7 @@ import {
     type ToggleCooldownResult,
 } from '../../../src/utils/sharingCooldown';
 import { SHARED_GROUP_LIMITS } from '../../../src/types/sharedGroup';
-
-// Test helper: Create mock Timestamp
-function createMockTimestamp(date: Date): Timestamp {
-    return {
-        toDate: () => date,
-        seconds: Math.floor(date.getTime() / 1000),
-        nanoseconds: 0,
-    } as unknown as Timestamp;
-}
+import { createMockTimestamp } from '../../helpers';
 
 describe('sharingCooldown', () => {
     // =========================================================================
