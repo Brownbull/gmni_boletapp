@@ -529,8 +529,11 @@ export async function joinGroupDirectly(
             const preference = createDefaultGroupPreference({
                 shareMyTransactions: shareMyTransactions ?? false,
             });
+            // Uses nested object (not dot-notation) because transaction.set treats dot-notation keys as literal field names
             transaction.set(prefsDocRef, {
-                [`groupPreferences.${groupId}`]: preference,
+                groupPreferences: {
+                    [groupId]: preference,
+                },
             }, { merge: true });
         }
 

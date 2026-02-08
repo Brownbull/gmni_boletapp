@@ -9,6 +9,7 @@ import {
   doc,
   getDoc,
   setDoc,
+  updateDoc,
   deleteField,
   serverTimestamp,
   onSnapshot,
@@ -298,11 +299,13 @@ export async function setGroupPreference(
     const preference = createDefaultGroupPreference({ shareMyTransactions });
 
     // Use setDoc with merge to create or update
-    // This uses dot notation to set only the specific group's preferences
+    // Uses nested object (not dot-notation) because setDoc treats dot-notation keys as literal field names
     await setDoc(
       docRef,
       {
-        [`groupPreferences.${groupId}`]: preference,
+        groupPreferences: {
+          [groupId]: preference,
+        },
       },
       { merge: true }
     );
@@ -369,13 +372,19 @@ export async function removeGroupPreference(
   try {
     const docRef = getSharedGroupsPreferencesDocRef(db, appId, userId);
 
-    await setDoc(
-      docRef,
-      {
-        [`groupPreferences.${groupId}`]: deleteField(),
-      },
-      { merge: true }
-    );
+    // Check document exists before updateDoc (updateDoc fails on missing docs)
+    // If doc doesn't exist, preference is already absent — return early (idempotent)
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) {
+      return;
+    }
+
+    // Use updateDoc (not setDoc) because:
+    // 1. deleteField() sentinel only works with updateDoc
+    // 2. updateDoc correctly interprets dot-notation as nested field paths
+    await updateDoc(docRef, {
+      [`groupPreferences.${groupId}`]: deleteField(),
+    });
   } catch (error) {
     console.error('Error removing group preference:', error);
     throw error;
@@ -395,7 +404,8 @@ export async function removeGroupPreference(
  * - Sets lastToggleAt to serverTimestamp
  * - Increments toggleCountToday (or resets to 1 on new day)
  * - Sets toggleCountResetAt to serverTimestamp when daily count resets
- * - Uses setDoc with merge: true for partial document updates
+ * - Uses updateDoc for partial nested field updates (dot-notation interpreted as paths)
+ * - Falls back to setDoc with nested objects if document doesn't exist yet
  *
  * **Note on Rate Limiting (Story 14d-v2-1-12b Task 3.9):**
  * Rate limiting for toggle operations is enforced **client-side only** via the
@@ -449,6 +459,25 @@ export async function updateShareMyTransactions(
       currentPref = data.groupPreferences?.[groupId] || null;
     }
 
+    // If document doesn't exist, create it with setDoc (updateDoc requires existing doc)
+    // This handles the race condition where user toggles immediately after joining
+    if (!docSnap.exists()) {
+      const preference = createDefaultGroupPreference({ shareMyTransactions: enabled });
+      preference.lastToggleAt = serverTimestamp() as unknown as null;
+      preference.toggleCountToday = 1;
+      preference.toggleCountResetAt = serverTimestamp() as unknown as null;
+      await setDoc(
+        docRef,
+        {
+          groupPreferences: {
+            [groupId]: preference,
+          },
+        },
+        { merge: true }
+      );
+      return;
+    }
+
     // Determine if daily count should reset
     const resetAt = currentPref?.toggleCountResetAt ?? null;
     const needsReset = shouldResetUserDailyCount(resetAt);
@@ -458,6 +487,7 @@ export async function updateShareMyTransactions(
     const newToggleCount = needsReset ? 1 : currentCount + 1;
 
     // Build update object with dot notation for nested field updates
+    // Use updateDoc (not setDoc) because updateDoc correctly interprets dot-notation as nested field paths
     const updateData: Record<string, unknown> = {
       [`groupPreferences.${groupId}.shareMyTransactions`]: enabled,
       [`groupPreferences.${groupId}.lastToggleAt`]: serverTimestamp(),
@@ -469,8 +499,7 @@ export async function updateShareMyTransactions(
       updateData[`groupPreferences.${groupId}.toggleCountResetAt`] = serverTimestamp();
     }
 
-    // Use setDoc with merge: true for partial document updates
-    await setDoc(docRef, updateData, { merge: true });
+    await updateDoc(docRef, updateData);
   } catch (error) {
     console.error('Error updating shareMyTransactions:', error);
     throw error;

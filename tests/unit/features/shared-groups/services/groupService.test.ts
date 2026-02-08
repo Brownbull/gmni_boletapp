@@ -1145,16 +1145,18 @@ describe('joinGroupDirectly - user group preference (Story 14d-v2-1-13+14)', () 
 
         await joinGroupDirectly(mockDb, validGroupId, validUserId, undefined, validAppId);
 
-        // transaction.set should have been called for the preference write
+        // transaction.set should have been called for the preference write (nested object, not dot-notation)
         expect(mockTransactionSet).toHaveBeenCalledTimes(1);
         expect(mockTransactionSet).toHaveBeenCalledWith(
             expect.anything(), // prefsDocRef
             {
-                [`groupPreferences.${validGroupId}`]: {
-                    shareMyTransactions: false,
-                    lastToggleAt: null,
-                    toggleCountToday: 0,
-                    toggleCountResetAt: null,
+                groupPreferences: {
+                    [validGroupId]: {
+                        shareMyTransactions: false,
+                        lastToggleAt: null,
+                        toggleCountToday: 0,
+                        toggleCountResetAt: null,
+                    },
                 },
             },
             { merge: true }
@@ -1170,9 +1172,11 @@ describe('joinGroupDirectly - user group preference (Story 14d-v2-1-13+14)', () 
         expect(mockTransactionSet).toHaveBeenCalledWith(
             expect.anything(),
             {
-                [`groupPreferences.${validGroupId}`]: expect.objectContaining({
-                    shareMyTransactions: true,
-                }),
+                groupPreferences: {
+                    [validGroupId]: expect.objectContaining({
+                        shareMyTransactions: true,
+                    }),
+                },
             },
             { merge: true }
         );
@@ -1187,9 +1191,11 @@ describe('joinGroupDirectly - user group preference (Story 14d-v2-1-13+14)', () 
         expect(mockTransactionSet).toHaveBeenCalledWith(
             expect.anything(),
             {
-                [`groupPreferences.${validGroupId}`]: expect.objectContaining({
-                    shareMyTransactions: false,
-                }),
+                groupPreferences: {
+                    [validGroupId]: expect.objectContaining({
+                        shareMyTransactions: false,
+                    }),
+                },
             },
             { merge: true }
         );

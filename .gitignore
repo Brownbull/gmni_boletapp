@@ -68,8 +68,12 @@ prompt-testing/results/*
 # Generated test/demo data (scripts are kept, output is ignored)
 scripts/generated-data/
 
-# Legacy test-results (deprecated - use prompt-testing/results/)
-test-results/
+# E2E manual screenshots (persistent per-spec folders, updated on re-run)
+test-results/*
+!test-results/INDEX.md
+
+# Playwright auto-artifacts (traces, failure screenshots, videos - cleaned per run)
+playwright-artifacts/
 
 # Backup files
 *.backup

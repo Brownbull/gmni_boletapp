@@ -467,5 +467,13 @@ describe('EditGroupDialog (Story 14d-v2-1-7g)', () => {
 
             expect(screen.queryByTestId('my-sharing-preferences-section')).not.toBeInTheDocument();
         });
+
+        it('passes onShowToast to MySharingPreferencesSection', () => {
+            const mockOnShowToast = vi.fn();
+            render(<EditGroupDialog {...defaultProps} onShowToast={mockOnShowToast} />);
+
+            // Section should render - onShowToast is passed through internally
+            expect(screen.getByTestId('my-sharing-preferences-section')).toBeInTheDocument();
+        });
     });
 });

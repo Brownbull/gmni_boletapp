@@ -1,0 +1,90 @@
+# ECC-Enhanced Story Creation Workflow
+name: ecc-create-story
+description: "Story creation using ECC agents orchestrated by ECC Orchestrator - Planner + Architect for technical analysis"
+author: "BMad"
+
+# ECC Integration - Orchestrator Configuration
+ecc_orchestration:
+  enabled: true
+  orchestrator: "ECC Orchestrator"
+
+  # ECC agents used in this workflow
+  agents:
+    planner:
+      subagent_type: "everything-claude-code:planner"
+      purpose: "Analyze requirements, identify risks, plan implementation approach"
+    architect:
+      subagent_type: "everything-claude-code:architect"
+      purpose: "Technical design, pattern recommendations, dependency analysis"
+    database-reviewer:
+      subagent_type: "everything-claude-code:database-reviewer"
+      purpose: "Schema/query analysis for stories involving database changes"
+    security-reviewer:
+      subagent_type: "everything-claude-code:security-reviewer"
+      purpose: "Security considerations for stories involving auth or sensitive data"
+
+  # Sequential with parallel option
+  sequence: "planner → architect → (parallel: database-reviewer + security-reviewer if needed)"
+
+  # Optional parallel technical review
+  parallel_phases:
+    technical_review:
+      agents: ["database-reviewer", "security-reviewer"]
+      condition: "story involves database changes or auth/sensitive data"
+      description: "Parallel specialized review for complex stories"
+
+# Project Knowledge Integration (replaces Atlas - migrated 2026-02-05)
+project_knowledge:
+  enabled: true
+  load_at_session_start: true
+  files:
+    required:
+      - "{project-root}/_ecc/knowledge/code-review-patterns.md"
+      - "{project-root}/.claude/rules/testing.md"
+      - "{project-root}/docs/architecture/firestore-patterns.md"
+    optional:
+      - "{project-root}/docs/architecture/state-management.md"
+      - "{project-root}/docs/architecture/component-patterns.md"
+
+# Story Sizing Guidelines (Opus 4.6 - Updated 2026-02-05)
+sizing_guidelines:
+  model: "Opus 4.6"
+  updated: "2026-02-05"
+  small: { tasks: "1-3", subtasks: "≤10", files: "≤4", points: "1-2" }
+  medium: { tasks: "3-6", subtasks: "≤25", files: "≤8", points: "3-5" }
+  large: { tasks: "6-8", subtasks: "≤40", files: "≤12", points: "5-8" }
+  too_large: { tasks: ">8", subtasks: ">40", files: ">12", action: "split" }
+  principles:
+    - "Prefer fewer larger stories over many micro-stories"
+    - "Group related layers (types→service→UI→tests) into single stories"
+    - "Foundation + integration can be ONE story if within limits"
+
+# Project knowledge paths (replaces Atlas memory - migrated 2026-02-05)
+project_knowledge_path: "{project-root}/_ecc/knowledge"
+project_architecture_path: "{project-root}/docs/architecture"
+
+# Critical variables from config
+config_source: "{project-root}/_bmad/bmm/config.yaml"
+output_folder: "{config_source}:output_folder"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+user_skill_level: "{config_source}:user_skill_level"
+document_output_language: "{config_source}:document_output_language"
+date: system-generated
+
+sprint_artifacts: "{project-root}/docs/sprint-artifacts"
+story_dir: "{sprint_artifacts}/stories"
+sprint_status: "{sprint_artifacts}/sprint-status.yaml"
+epics_dir: "{output_folder}"
+
+# Knowledge cache files
+knowledge_cache_files:
+  - "_ecc/knowledge/code-review-patterns.md"
+  - ".claude/rules/testing.md"
+  - "docs/architecture/firestore-patterns.md"
+
+# Workflow components
+installed_path: "{project-root}/_ecc/workflows/ecc-create-story"
+instructions: "{installed_path}/instructions.xml"
+
+standalone: true

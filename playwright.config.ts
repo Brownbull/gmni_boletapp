@@ -41,6 +41,11 @@ const AUTH_FILE = path.join(__dirname, 'tests/e2e/.auth/user.json');
 export default defineConfig({
   testDir: './tests/e2e',
 
+  /* Playwright auto-artifacts (traces, failure screenshots, videos) go here.
+   * Separated from test-results/ so Playwright's per-run cleanup doesn't wipe
+   * manual screenshots saved by specs into test-results/{spec-name}/. */
+  outputDir: './playwright-artifacts',
+
   /* Global setup - creates test user and saves auth state */
   globalSetup: path.join(__dirname, 'tests/e2e/global-setup.ts'),
 

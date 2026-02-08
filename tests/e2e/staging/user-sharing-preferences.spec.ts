@@ -58,7 +58,7 @@ test.describe('Feature: User Sharing Preferences (14d-v2-1-12d)', () => {
         }
 
         await page.screenshot({
-            path: 'test-results/14d-v2-1-12d-01-app-loaded.png',
+            path: 'test-results/user-sharing-preferences/01-app-loaded.png',
             fullPage: true,
         });
         console.log('✅ App loaded');
@@ -99,7 +99,7 @@ test.describe('Feature: User Sharing Preferences (14d-v2-1-12d)', () => {
         await page.waitForSelector('[data-testid="grupos-view"]', { timeout: 10000 });
 
         await page.screenshot({
-            path: 'test-results/14d-v2-1-12d-02-grupos-view.png',
+            path: 'test-results/user-sharing-preferences/02-grupos-view.png',
             fullPage: true,
         });
         console.log('✅ GruposView loaded');
@@ -153,7 +153,7 @@ test.describe('Feature: User Sharing Preferences (14d-v2-1-12d)', () => {
         await page.waitForSelector('[data-testid="edit-group-dialog"]', { timeout: 10000 });
 
         await page.screenshot({
-            path: 'test-results/14d-v2-1-12d-03-edit-dialog-open.png',
+            path: 'test-results/user-sharing-preferences/03-edit-dialog-open.png',
             fullPage: true,
         });
         console.log('✅ Edit dialog opened');
@@ -201,7 +201,7 @@ test.describe('Feature: User Sharing Preferences (14d-v2-1-12d)', () => {
         if (!loadingComplete) {
             // Take screenshot for debugging
             await page.screenshot({
-                path: 'test-results/14d-v2-1-12d-04a-loading-state.png',
+                path: 'test-results/user-sharing-preferences/04a-loading-state.png',
                 fullPage: true,
             });
             console.log('ℹ️ Component in loading state - verifying loading UI');
@@ -238,7 +238,7 @@ test.describe('Feature: User Sharing Preferences (14d-v2-1-12d)', () => {
         console.log('  → Section header text verified');
 
         await page.screenshot({
-            path: 'test-results/14d-v2-1-12d-04-section-visible.png',
+            path: 'test-results/user-sharing-preferences/04-section-visible.png',
             fullPage: true,
         });
         console.log('✅ AC1 verified - MySharingPreferencesSection visible');
@@ -264,7 +264,7 @@ test.describe('Feature: User Sharing Preferences (14d-v2-1-12d)', () => {
         }
 
         await page.screenshot({
-            path: 'test-results/14d-v2-1-12d-05-consistency-notice.png',
+            path: 'test-results/user-sharing-preferences/05-consistency-notice.png',
             fullPage: true,
         });
 
@@ -336,7 +336,7 @@ test.describe('Feature: User Sharing Preferences (14d-v2-1-12d)', () => {
         }
 
         await page.screenshot({
-            path: 'test-results/14d-v2-1-12d-06-tooltip-open.png',
+            path: 'test-results/user-sharing-preferences/06-tooltip-open.png',
             fullPage: true,
         });
 
@@ -378,7 +378,7 @@ test.describe('Feature: User Sharing Preferences (14d-v2-1-12d)', () => {
         }
 
         await page.screenshot({
-            path: 'test-results/14d-v2-1-12d-07-toggle-state.png',
+            path: 'test-results/user-sharing-preferences/07-toggle-state.png',
             fullPage: true,
         });
 
@@ -400,7 +400,7 @@ test.describe('Feature: User Sharing Preferences (14d-v2-1-12d)', () => {
         }
 
         await page.screenshot({
-            path: 'test-results/14d-v2-1-12d-08-complete.png',
+            path: 'test-results/user-sharing-preferences/08-complete.png',
             fullPage: true,
         });
         console.log('✅ Edit dialog closed');
@@ -489,7 +489,7 @@ test.describe('Feature: User Sharing Preferences (14d-v2-1-12d)', () => {
         await page.waitForSelector('[data-testid="edit-group-dialog"]', { timeout: 10000 });
 
         await page.screenshot({
-            path: 'test-results/14d-v2-1-12d-toggle-01-dialog-open.png',
+            path: 'test-results/user-sharing-preferences/toggle-01-dialog-open.png',
             fullPage: true,
         });
         console.log('✅ Edit dialog opened');
@@ -531,7 +531,7 @@ test.describe('Feature: User Sharing Preferences (14d-v2-1-12d)', () => {
 
         if (!loadingComplete) {
             await page.screenshot({
-                path: 'test-results/14d-v2-1-12d-toggle-01a-loading.png',
+                path: 'test-results/user-sharing-preferences/toggle-01a-loading.png',
                 fullPage: true,
             });
             // Try extended wait
@@ -575,7 +575,7 @@ test.describe('Feature: User Sharing Preferences (14d-v2-1-12d)', () => {
             }
 
             await page.screenshot({
-                path: 'test-results/14d-v2-1-12d-toggle-02-disabled-state.png',
+                path: 'test-results/user-sharing-preferences/toggle-02-disabled-state.png',
                 fullPage: true,
             });
             console.log('✅ Toggle disabled state verified');
@@ -592,7 +592,7 @@ test.describe('Feature: User Sharing Preferences (14d-v2-1-12d)', () => {
             console.log(`  → State after click: ${stateAfterClick}`);
 
             await page.screenshot({
-                path: 'test-results/14d-v2-1-12d-toggle-02-after-toggle.png',
+                path: 'test-results/user-sharing-preferences/toggle-02-after-toggle.png',
                 fullPage: true,
             });
 
@@ -626,7 +626,7 @@ test.describe('Feature: User Sharing Preferences (14d-v2-1-12d)', () => {
         }
 
         await page.screenshot({
-            path: 'test-results/14d-v2-1-12d-toggle-03-complete.png',
+            path: 'test-results/user-sharing-preferences/toggle-03-complete.png',
             fullPage: true,
         });
         console.log('✅ Dialog closed');

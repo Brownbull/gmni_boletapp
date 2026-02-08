@@ -722,8 +722,11 @@ export async function acceptInvitation(
             const preference = createDefaultGroupPreference({
                 shareMyTransactions: shareMyTransactions ?? false,
             });
+            // Uses nested object (not dot-notation) because transaction.set treats dot-notation keys as literal field names
             transaction.set(prefsDocRef, {
-                [`groupPreferences.${invitation.groupId}`]: preference,
+                groupPreferences: {
+                    [invitation.groupId]: preference,
+                },
             }, { merge: true });
         }
     });

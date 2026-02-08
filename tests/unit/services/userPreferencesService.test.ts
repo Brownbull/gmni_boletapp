@@ -21,6 +21,7 @@ vi.mock('firebase/firestore', async () => {
         doc: vi.fn(),
         getDoc: vi.fn(),
         setDoc: vi.fn(),
+        updateDoc: vi.fn(),
         deleteField: vi.fn(() => ({ _deleteField: true })),
         serverTimestamp: vi.fn(() => ({ _serverTimestamp: true })),
         onSnapshot: vi.fn(),
@@ -36,6 +37,7 @@ import {
     doc,
     getDoc,
     setDoc,
+    updateDoc,
     serverTimestamp,
     onSnapshot,
 } from 'firebase/firestore';
@@ -53,6 +55,7 @@ import type { UserGroupPreference } from '../../../src/types/sharedGroup';
 const mockDoc = vi.mocked(doc);
 const mockGetDoc = vi.mocked(getDoc);
 const mockSetDoc = vi.mocked(setDoc);
+const mockUpdateDoc = vi.mocked(updateDoc);
 const mockServerTimestamp = vi.mocked(serverTimestamp);
 const mockOnSnapshot = vi.mocked(onSnapshot);
 const mockShouldResetUserDailyCount = vi.mocked(shouldResetUserDailyCount);
@@ -187,34 +190,38 @@ describe('setGroupPreference', () => {
         mockSetDoc.mockResolvedValue(undefined);
     });
 
-    it('should create preference with shareMyTransactions=true (Story 14d-v2-1-6e AC #2)', async () => {
+    it('should create preference with shareMyTransactions=true using nested object (Story 14d-v2-1-6e AC #2)', async () => {
         await setGroupPreference(mockDb, TEST_USER_ID, TEST_APP_ID, TEST_GROUP_ID, true);
 
         expect(mockSetDoc).toHaveBeenCalledWith(
             expect.anything(),
             {
-                [`groupPreferences.${TEST_GROUP_ID}`]: {
-                    shareMyTransactions: true,
-                    lastToggleAt: null,
-                    toggleCountToday: 0,
-                    toggleCountResetAt: null,
+                groupPreferences: {
+                    [TEST_GROUP_ID]: {
+                        shareMyTransactions: true,
+                        lastToggleAt: null,
+                        toggleCountToday: 0,
+                        toggleCountResetAt: null,
+                    },
                 },
             },
             { merge: true }
         );
     });
 
-    it('should create preference with shareMyTransactions=false', async () => {
+    it('should create preference with shareMyTransactions=false using nested object', async () => {
         await setGroupPreference(mockDb, TEST_USER_ID, TEST_APP_ID, TEST_GROUP_ID, false);
 
         expect(mockSetDoc).toHaveBeenCalledWith(
             expect.anything(),
             {
-                [`groupPreferences.${TEST_GROUP_ID}`]: {
-                    shareMyTransactions: false,
-                    lastToggleAt: null,
-                    toggleCountToday: 0,
-                    toggleCountResetAt: null,
+                groupPreferences: {
+                    [TEST_GROUP_ID]: {
+                        shareMyTransactions: false,
+                        lastToggleAt: null,
+                        toggleCountToday: 0,
+                        toggleCountResetAt: null,
+                    },
                 },
             },
             { merge: true }
@@ -224,8 +231,8 @@ describe('setGroupPreference', () => {
     it('should initialize toggle tracking fields (Story 14d-v2-1-6e AC #3, updated 14d-v2-1-12a)', async () => {
         await setGroupPreference(mockDb, TEST_USER_ID, TEST_APP_ID, TEST_GROUP_ID, true);
 
-        const calledWith = mockSetDoc.mock.calls[0][1];
-        const preference = calledWith[`groupPreferences.${TEST_GROUP_ID}`];
+        const calledWith = mockSetDoc.mock.calls[0][1] as Record<string, any>;
+        const preference = calledWith.groupPreferences[TEST_GROUP_ID];
 
         expect(preference.lastToggleAt).toBeNull();
         expect(preference.toggleCountToday).toBe(0);
@@ -361,23 +368,35 @@ describe('removeGroupPreference', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockDoc.mockReturnValue({ id: 'sharedGroups' } as any);
-        mockSetDoc.mockResolvedValue(undefined);
+        mockGetDoc.mockResolvedValue(createMockDocSnapshot({ groupPreferences: {} }) as any);
+        mockUpdateDoc.mockResolvedValue(undefined);
     });
 
-    it('should remove group preference using deleteField', async () => {
+    it('should remove group preference using updateDoc with deleteField', async () => {
         await removeGroupPreference(mockDb, TEST_USER_ID, TEST_APP_ID, TEST_GROUP_ID);
 
-        expect(mockSetDoc).toHaveBeenCalledWith(
+        expect(mockUpdateDoc).toHaveBeenCalledWith(
             expect.anything(),
-            expect.objectContaining({
+            {
                 [`groupPreferences.${TEST_GROUP_ID}`]: expect.anything(),
-            }),
-            { merge: true }
+            }
         );
+        // Must use updateDoc, not setDoc — deleteField() only works with updateDoc
+        expect(mockSetDoc).not.toHaveBeenCalled();
+    });
+
+    it('should return early if document does not exist (idempotent)', async () => {
+        mockGetDoc.mockResolvedValue(createMockDocSnapshotNotExists() as any);
+
+        await removeGroupPreference(mockDb, TEST_USER_ID, TEST_APP_ID, TEST_GROUP_ID);
+
+        // Should not call updateDoc — nothing to delete
+        expect(mockUpdateDoc).not.toHaveBeenCalled();
+        expect(mockSetDoc).not.toHaveBeenCalled();
     });
 
     it('should throw error on Firestore failure', async () => {
-        mockSetDoc.mockRejectedValue(new Error('Permission denied'));
+        mockUpdateDoc.mockRejectedValue(new Error('Permission denied'));
 
         await expect(
             removeGroupPreference(mockDb, TEST_USER_ID, TEST_APP_ID, TEST_GROUP_ID)
@@ -413,11 +432,11 @@ describe('updateShareMyTransactions', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockDoc.mockReturnValue({ id: 'sharedGroups' } as any);
-        mockSetDoc.mockResolvedValue(undefined);
+        mockUpdateDoc.mockResolvedValue(undefined);
         mockServerTimestamp.mockReturnValue(SERVER_TIMESTAMP_MARKER as any);
     });
 
-    it('should update existing preference with enabled=true (Story 14d-v2-1-12b AC#2)', async () => {
+    it('should update existing preference with enabled=true using updateDoc (Story 14d-v2-1-12b AC#2)', async () => {
         // Arrange: Existing preference with sharing disabled
         const existingPref: UserGroupPreference = {
             shareMyTransactions: false,
@@ -433,17 +452,17 @@ describe('updateShareMyTransactions', () => {
         // Act
         await updateShareMyTransactions(mockDb, TEST_USER_ID, TEST_APP_ID, TEST_GROUP_ID, true);
 
-        // Assert
-        expect(mockSetDoc).toHaveBeenCalledWith(
+        // Assert: Must use updateDoc (dot-notation interpreted as nested paths)
+        expect(mockUpdateDoc).toHaveBeenCalledWith(
             expect.anything(),
             expect.objectContaining({
                 [`groupPreferences.${TEST_GROUP_ID}.shareMyTransactions`]: true,
-            }),
-            { merge: true }
+            })
         );
+        expect(mockSetDoc).not.toHaveBeenCalled();
     });
 
-    it('should update existing preference with enabled=false (Story 14d-v2-1-12b AC#2)', async () => {
+    it('should update existing preference with enabled=false using updateDoc (Story 14d-v2-1-12b AC#2)', async () => {
         // Arrange: Existing preference with sharing enabled
         const existingPref: UserGroupPreference = {
             shareMyTransactions: true,
@@ -460,12 +479,11 @@ describe('updateShareMyTransactions', () => {
         await updateShareMyTransactions(mockDb, TEST_USER_ID, TEST_APP_ID, TEST_GROUP_ID, false);
 
         // Assert
-        expect(mockSetDoc).toHaveBeenCalledWith(
+        expect(mockUpdateDoc).toHaveBeenCalledWith(
             expect.anything(),
             expect.objectContaining({
                 [`groupPreferences.${TEST_GROUP_ID}.shareMyTransactions`]: false,
-            }),
-            { merge: true }
+            })
         );
     });
 
@@ -486,12 +504,11 @@ describe('updateShareMyTransactions', () => {
         await updateShareMyTransactions(mockDb, TEST_USER_ID, TEST_APP_ID, TEST_GROUP_ID, true);
 
         // Assert: Should increment from 1 to 2
-        expect(mockSetDoc).toHaveBeenCalledWith(
+        expect(mockUpdateDoc).toHaveBeenCalledWith(
             expect.anything(),
             expect.objectContaining({
                 [`groupPreferences.${TEST_GROUP_ID}.toggleCountToday`]: 2,
-            }),
-            { merge: true }
+            })
         );
     });
 
@@ -513,12 +530,11 @@ describe('updateShareMyTransactions', () => {
         await updateShareMyTransactions(mockDb, TEST_USER_ID, TEST_APP_ID, TEST_GROUP_ID, false);
 
         // Assert: Should reset to 1 (not increment the old count)
-        expect(mockSetDoc).toHaveBeenCalledWith(
+        expect(mockUpdateDoc).toHaveBeenCalledWith(
             expect.anything(),
             expect.objectContaining({
                 [`groupPreferences.${TEST_GROUP_ID}.toggleCountToday`]: 1,
-            }),
-            { merge: true }
+            })
         );
     });
 
@@ -539,12 +555,11 @@ describe('updateShareMyTransactions', () => {
         await updateShareMyTransactions(mockDb, TEST_USER_ID, TEST_APP_ID, TEST_GROUP_ID, true);
 
         // Assert
-        expect(mockSetDoc).toHaveBeenCalledWith(
+        expect(mockUpdateDoc).toHaveBeenCalledWith(
             expect.anything(),
             expect.objectContaining({
                 [`groupPreferences.${TEST_GROUP_ID}.lastToggleAt`]: SERVER_TIMESTAMP_MARKER,
-            }),
-            { merge: true }
+            })
         );
     });
 
@@ -566,12 +581,11 @@ describe('updateShareMyTransactions', () => {
         await updateShareMyTransactions(mockDb, TEST_USER_ID, TEST_APP_ID, TEST_GROUP_ID, false);
 
         // Assert: toggleCountResetAt should be set to serverTimestamp
-        expect(mockSetDoc).toHaveBeenCalledWith(
+        expect(mockUpdateDoc).toHaveBeenCalledWith(
             expect.anything(),
             expect.objectContaining({
                 [`groupPreferences.${TEST_GROUP_ID}.toggleCountResetAt`]: SERVER_TIMESTAMP_MARKER,
-            }),
-            { merge: true }
+            })
         );
     });
 
@@ -593,33 +607,36 @@ describe('updateShareMyTransactions', () => {
         await updateShareMyTransactions(mockDb, TEST_USER_ID, TEST_APP_ID, TEST_GROUP_ID, true);
 
         // Assert: toggleCountResetAt should NOT be in the update
-        const setDocCalls = mockSetDoc.mock.calls;
-        const updateData = setDocCalls[0][1] as Record<string, unknown>;
+        const updateDocCalls = mockUpdateDoc.mock.calls;
+        const updateData = updateDocCalls[0][1] as Record<string, unknown>;
         expect(updateData).not.toHaveProperty(`groupPreferences.${TEST_GROUP_ID}.toggleCountResetAt`);
     });
 
-    it('should create document for new user (first write) (Story 14d-v2-1-12b AC#3)', async () => {
-        // Arrange: No existing preferences document
+    it('should create document with setDoc when doc does not exist (race condition defense)', async () => {
+        // Arrange: No existing preferences document (user toggles immediately after joining)
         mockGetDoc.mockResolvedValue(createMockDocSnapshotNotExists() as any);
-        mockShouldResetUserDailyCount.mockReturnValue(true); // No existing resetAt means reset
+        mockSetDoc.mockResolvedValue(undefined);
 
         // Act
         await updateShareMyTransactions(mockDb, TEST_USER_ID, TEST_APP_ID, TEST_GROUP_ID, true);
 
-        // Assert: Should create with merge behavior
+        // Assert: Falls back to setDoc with nested object (not updateDoc which fails on missing doc)
         expect(mockSetDoc).toHaveBeenCalledWith(
             expect.anything(),
-            expect.objectContaining({
-                [`groupPreferences.${TEST_GROUP_ID}.shareMyTransactions`]: true,
-                [`groupPreferences.${TEST_GROUP_ID}.lastToggleAt`]: SERVER_TIMESTAMP_MARKER,
-                [`groupPreferences.${TEST_GROUP_ID}.toggleCountToday`]: 1,
-                [`groupPreferences.${TEST_GROUP_ID}.toggleCountResetAt`]: SERVER_TIMESTAMP_MARKER,
-            }),
+            {
+                groupPreferences: {
+                    [TEST_GROUP_ID]: expect.objectContaining({
+                        shareMyTransactions: true,
+                        toggleCountToday: 1,
+                    }),
+                },
+            },
             { merge: true }
         );
+        expect(mockUpdateDoc).not.toHaveBeenCalled();
     });
 
-    it('should use merge behavior (setDoc with merge: true) (Story 14d-v2-1-12b AC#2)', async () => {
+    it('should use updateDoc (not setDoc) for partial updates (Story 14d-v2-1-13+14 Task 8)', async () => {
         // Arrange
         const existingPref: UserGroupPreference = {
             shareMyTransactions: false,
@@ -635,12 +652,12 @@ describe('updateShareMyTransactions', () => {
         // Act
         await updateShareMyTransactions(mockDb, TEST_USER_ID, TEST_APP_ID, TEST_GROUP_ID, true);
 
-        // Assert
-        expect(mockSetDoc).toHaveBeenCalledWith(
+        // Assert: updateDoc correctly interprets dot-notation as nested paths
+        expect(mockUpdateDoc).toHaveBeenCalledWith(
             expect.anything(),
-            expect.any(Object),
-            { merge: true }
+            expect.any(Object)
         );
+        expect(mockSetDoc).not.toHaveBeenCalled();
     });
 
     it('should throw error on Firestore failure', async () => {
@@ -790,9 +807,9 @@ describe('updateShareMyTransactions', () => {
         ).resolves.not.toThrow();
     });
 
-    // Task 3.8: Test for setDoc failure after successful getDoc
-    it('should throw error when setDoc fails after successful getDoc', async () => {
-        // Arrange: getDoc succeeds but setDoc fails
+    // Task 3.8: Test for updateDoc failure after successful getDoc
+    it('should throw error when updateDoc fails after successful getDoc', async () => {
+        // Arrange: getDoc succeeds but updateDoc fails
         const existingPref: UserGroupPreference = {
             shareMyTransactions: false,
             lastToggleAt: null,
@@ -803,7 +820,7 @@ describe('updateShareMyTransactions', () => {
             groupPreferences: { [TEST_GROUP_ID]: existingPref },
         }) as any);
         mockShouldResetUserDailyCount.mockReturnValue(false);
-        mockSetDoc.mockRejectedValue(new Error('Firestore write failed'));
+        mockUpdateDoc.mockRejectedValue(new Error('Firestore write failed'));
 
         // Act & Assert
         await expect(
@@ -876,9 +893,11 @@ describe('setGroupPreference - Input Validation', () => {
 
         expect(mockSetDoc).toHaveBeenCalledWith(
             expect.anything(),
-            expect.objectContaining({
-                [`groupPreferences.${groupId}`]: expect.any(Object),
-            }),
+            {
+                groupPreferences: {
+                    [groupId]: expect.any(Object),
+                },
+            },
             { merge: true }
         );
     });
@@ -965,7 +984,8 @@ describe('removeGroupPreference - Input Validation', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockDoc.mockReturnValue({ id: 'sharedGroups' } as any);
-        mockSetDoc.mockResolvedValue(undefined);
+        mockGetDoc.mockResolvedValue(createMockDocSnapshot({ groupPreferences: {} }) as any);
+        mockUpdateDoc.mockResolvedValue(undefined);
     });
 
     it('should throw error for empty groupId', async () => {

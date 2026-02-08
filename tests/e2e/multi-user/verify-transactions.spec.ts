@@ -130,7 +130,7 @@ test.describe('Verify Seeded Transactions', () => {
     console.log(`  📊 UI displays: ${uiCount} transactions`);
 
     // Take screenshot showing transactions in Recent Scans view
-    await alicePage.screenshot({ path: 'test-results/alice-transactions.png', fullPage: true });
+    await alicePage.screenshot({ path: 'test-results/verify-transactions/alice-transactions.png', fullPage: true });
 
     // Verify count is not null (UI found the count)
     expect(uiCount, 'Transaction count should be visible in UI').not.toBeNull();
@@ -161,7 +161,7 @@ test.describe('Verify Seeded Transactions', () => {
     const uiCount = await getTransactionCountFromUI(bobPage);
     console.log(`  📊 UI displays: ${uiCount} transactions`);
 
-    await bobPage.screenshot({ path: 'test-results/bob-transactions.png', fullPage: true });
+    await bobPage.screenshot({ path: 'test-results/verify-transactions/bob-transactions.png', fullPage: true });
 
     expect(uiCount, 'Transaction count should be visible in UI').not.toBeNull();
     expect(uiCount).toBeGreaterThan(0);
@@ -187,7 +187,7 @@ test.describe('Verify Seeded Transactions', () => {
     const uiCount = await getTransactionCountFromUI(charliePage);
     console.log(`  📊 UI displays: ${uiCount} transactions`);
 
-    await charliePage.screenshot({ path: 'test-results/charlie-transactions.png', fullPage: true });
+    await charliePage.screenshot({ path: 'test-results/verify-transactions/charlie-transactions.png', fullPage: true });
 
     expect(uiCount, 'Transaction count should be visible in UI').not.toBeNull();
     expect(uiCount).toBeGreaterThan(0);
@@ -213,7 +213,7 @@ test.describe('Verify Seeded Transactions', () => {
     const uiCount = await getTransactionCountFromUI(dianaPage);
     console.log(`  📊 UI displays: ${uiCount} transactions`);
 
-    await dianaPage.screenshot({ path: 'test-results/diana-transactions.png', fullPage: true });
+    await dianaPage.screenshot({ path: 'test-results/verify-transactions/diana-transactions.png', fullPage: true });
 
     expect(uiCount, 'Transaction count should be visible in UI').not.toBeNull();
     expect(uiCount).toBeGreaterThan(0);

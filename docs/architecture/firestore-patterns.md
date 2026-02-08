@@ -14,6 +14,7 @@
 | Batch commit retry | `commitBatchWithRetry()` with exponential backoff |
 | Cross-user queries | Cloud Function with server-side validation |
 | 500-operation chunking | All `writeBatch()` operations must chunk at 500 |
+| setDoc vs updateDoc | Never use dot-notation keys with `setDoc`; use nested objects or `updateDoc` |
 
 ---
 
@@ -169,4 +170,34 @@ Type duplication between client (`src/types/`) and Cloud Functions (`functions/s
 
 ---
 
-*Source: Atlas Migration 2026-02-05 - Extracted from Epic 14d-v2 code reviews and security reviews*
+## setDoc vs updateDoc for Nested Fields
+
+**Severity:** CRITICAL - Wrong API creates literal field names instead of nested paths
+
+| Scenario | Correct API | Why |
+|----------|-------------|-----|
+| Create/set entire nested object | `setDoc(ref, { field: { nested: value } }, { merge: true })` | Nested object structure preserved |
+| Update sub-fields via dot-notation | `updateDoc(ref, { "field.nested": value })` | Dot-notation interpreted as path |
+| Delete a nested field | `updateDoc(ref, { "field.nested": deleteField() })` | `deleteField()` only works with `updateDoc` |
+| Transaction create | `transaction.set(ref, { field: { nested: value } }, { merge: true })` | Same as setDoc — no dot-notation |
+
+**The trap:** `setDoc` with `{ merge: true }` treats dot-notation keys as **literal field names**:
+
+```typescript
+// WRONG: Creates top-level field named "groupPreferences.groupId123"
+setDoc(ref, { 'groupPreferences.groupId123': value }, { merge: true });
+
+// CORRECT: Creates nested structure { groupPreferences: { groupId123: value } }
+setDoc(ref, { groupPreferences: { [groupId]: value } }, { merge: true });
+
+// ALSO CORRECT: updateDoc interprets dot-notation as nested path
+updateDoc(ref, { 'groupPreferences.groupId123': value });
+```
+
+**Important:** `updateDoc` fails if the document doesn't exist. Always check existence or handle the error when switching from `setDoc` to `updateDoc`.
+
+*Added: 2026-02-06, Story 14d-v2-1-13+14 Task 8 bugfix*
+
+---
+
+*Source: Atlas Migration 2026-02-05 + Story 14d-v2-1-13+14 Task 8 (setDoc bugfix 2026-02-06)*
