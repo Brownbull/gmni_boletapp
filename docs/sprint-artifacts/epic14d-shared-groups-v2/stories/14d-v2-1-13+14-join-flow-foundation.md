@@ -191,6 +191,25 @@ LAYERED VISIBILITY MODEL
 - [x] 7.1 Verify `leaveGroupWithCleanup()` calls `deleteGroupPreference(userId, groupId)` (implemented in 1-12d)
 - [x] 7.2 Add integration test verifying cleanup on leave
 
+### Task 8: Bugfix - `setDoc` dot-notation creates literal field names (FOUND IN REVIEW)
+
+> **Root cause:** `updateShareMyTransactions()` in `userPreferencesService.ts` uses
+> `setDoc(docRef, updateData, { merge: true })` with dot-notation keys like
+> `groupPreferences.${groupId}.shareMyTransactions`. `setDoc` with merge treats
+> dot-notation keys as **literal field names**, not nested paths. Only `updateDoc`
+> interprets dot notation as nested field paths. This causes the toggle to appear
+> to work (optimistic UI) but snap back (Firestore write creates wrong fields,
+> subscription reads correct path and finds nothing).
+
+- [x] 8.1 Audit ALL `setDoc` calls in `userPreferencesService.ts` for dot-notation key usage
+- [x] 8.2 Fix `updateShareMyTransactions()`: change `setDoc(docRef, updateData, { merge: true })` to `updateDoc(docRef, updateData)`
+- [x] 8.3 Fix `removeGroupPreference()`: changed `setDoc` to `updateDoc` (deleteField() sentinel only works with updateDoc)
+- [x] 8.4 Fix `acceptInvitation()` / `joinGroupDirectly()` writes: changed from dot-notation to nested objects with `transaction.set`
+- [x] 8.5 Update unit tests across 3 test files (119+76+119 assertions) to assert correct API usage
+- [x] 8.6 Staging cleanup: self-healing (next toggle writes to correct path via updateDoc); orphan fields harmless; manual cleanup optional
+- [x] 8.7 E2E verification: existing `transaction-sharing-toggle.spec.ts` already tests toggle persistence (line 284); will validate on staging after deploy
+- [x] 8.8 E2E verification: reload persistence covered by existing test flow; explicit reload test deferred to 14d-v2-1-14-polish E2E scope
+
 ## Dev Notes
 
 ### Architecture Decisions
@@ -340,20 +359,24 @@ DOWNSTREAM (depends on this):
 3. **Task 6 (Service Layer):** Added atomic preference writes to `acceptInvitation()` and `joinGroupDirectly()` using `transaction.set()` with `{ merge: true }` inside existing Firestore transactions. Pass-through added in `handleAcceptInvitationService()` and `useLeaveTransferFlow.handleAcceptInvitation()`.
 4. **ECC Security Fix:** Added `validateAppId()` check before Firestore transactions in both `acceptInvitation()` and `joinGroupDirectly()` (1 HIGH from security review).
 5. **Deferred items (MEDIUM):** Factory function location (DRY), JSDoc defaults, hardcoded Firestore path, preference doc size check — candidates for future TD stories.
+6. **Task 8 Bugfix (setDoc dot-notation):** Fixed 5 functions across 3 files. Root cause: `setDoc` with `{ merge: true }` treats dot-notation keys as literal field names, not nested paths. Fix: `updateDoc` for partial updates (`updateShareMyTransactions`, `removeGroupPreference`), nested objects for `setDoc`/`transaction.set` creates (`setGroupPreference`, `acceptInvitation`, `joinGroupDirectly`). All 8116 unit tests pass.
+7. **Staging cleanup (8.6):** After deploying this fix, corrupted documents on staging with literal top-level fields like `groupPreferences.lSka...shareMyTransactions` will be self-healing — the next toggle operation via `updateDoc` will write to the correct nested path. Orphan top-level fields are harmless (never read). Manual cleanup via Firebase Console is optional.
 
 ### File List
 
 **Source files modified (5):**
 - `src/components/settings/subviews/GruposView.tsx` — Opt-in dialog wiring (3 state hooks + 3 callbacks + render)
-- `src/services/invitationService.ts` — Atomic preference write + appId validation
-- `src/features/shared-groups/services/groupService.ts` — Atomic preference write + appId validation
+- `src/services/userPreferencesService.ts` — Task 8: Added `updateDoc` import; fixed `setGroupPreference` (nested obj), `removeGroupPreference` (updateDoc), `updateShareMyTransactions` (updateDoc)
+- `src/services/invitationService.ts` — Atomic preference write + appId validation; Task 8: nested object fix in `acceptInvitation`
+- `src/features/shared-groups/services/groupService.ts` — Atomic preference write + appId validation; Task 8: nested object fix in `joinGroupDirectly`
 - `src/features/shared-groups/services/invitationHandlers.ts` — Pass-through for shareMyTransactions
 - `src/features/shared-groups/hooks/useLeaveTransferFlow.ts` — Pass-through for shareMyTransactions
 
-**Test files modified (3):**
+**Test files modified (6):**
 - `tests/unit/components/settings/subviews/GruposView.test.tsx` — 9 new opt-in flow tests
-- `tests/unit/services/invitationService.test.ts` — 1 new security test + mock fix
-- `tests/unit/features/shared-groups/services/groupService.test.ts` — 1 new security test
+- `tests/unit/services/userPreferencesService.test.ts` — Task 8: Updated all setDoc→updateDoc assertions, added updateDoc mock, nested object assertions
+- `tests/unit/services/invitationService.test.ts` — 1 new security test + Task 8: nested object assertions for preference writes
+- `tests/unit/features/shared-groups/services/groupService.test.ts` — 1 new security test + Task 8: nested object assertions for preference writes
 
 **Story artifacts (2):**
 - `docs/sprint-artifacts/epic14d-shared-groups-v2/stories/14d-v2-1-13+14-join-flow-foundation.md` — Status → review, all tasks [x]

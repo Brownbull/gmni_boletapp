@@ -45,7 +45,7 @@ test.describe('Staging Transaction Verification', () => {
 
       // Take screenshot of menu open
       await page.screenshot({
-        path: `test-results/staging-${user.name}-00-menu-open.png`,
+        path: `test-results/verify-staging-ui/${user.name}-00-menu-open.png`,
         fullPage: true
       });
 
@@ -79,7 +79,7 @@ test.describe('Staging Transaction Verification', () => {
       // Take screenshot immediately after click to see loading state
       await page.waitForTimeout(500);
       await page.screenshot({
-        path: `test-results/staging-${user.name}-00b-after-click.png`,
+        path: `test-results/verify-staging-ui/${user.name}-00b-after-click.png`,
         fullPage: true
       });
 
@@ -100,7 +100,7 @@ test.describe('Staging Transaction Verification', () => {
 
       // Take screenshot of dashboard
       await page.screenshot({
-        path: `test-results/staging-${user.name}-01-dashboard.png`,
+        path: `test-results/verify-staging-ui/${user.name}-01-dashboard.png`,
         fullPage: true
       });
 
@@ -112,7 +112,7 @@ test.describe('Staging Transaction Verification', () => {
 
       // Take screenshot of trends page
       await page.screenshot({
-        path: `test-results/staging-${user.name}-02-tendencias.png`,
+        path: `test-results/verify-staging-ui/${user.name}-02-tendencias.png`,
         fullPage: true
       });
 
@@ -121,7 +121,7 @@ test.describe('Staging Transaction Verification', () => {
       await page.waitForTimeout(2000);
 
       await page.screenshot({
-        path: `test-results/staging-${user.name}-03-historial-current.png`,
+        path: `test-results/verify-staging-ui/${user.name}-03-historial-current.png`,
         fullPage: true
       });
 
@@ -140,7 +140,7 @@ test.describe('Staging Transaction Verification', () => {
       await page.waitForTimeout(1000);
 
       await page.screenshot({
-        path: `test-results/staging-${user.name}-04-historial-after-nav.png`,
+        path: `test-results/verify-staging-ui/${user.name}-04-historial-after-nav.png`,
         fullPage: true
       });
 

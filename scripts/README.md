@@ -104,6 +104,7 @@ Scripts for test setup and Firebase emulator operations.
 | Script | Description |
 |--------|-------------|
 | `create-test-user.ts` | Create test users in emulator |
+| `reset-e2e-cooldowns.ts` | Reset toggle cooldown fields in staging (E2E) |
 | `reset-test-data.ts` | Reset emulator to clean state |
 | `test-data-fixtures.ts` | Load test fixtures into emulator |
 | `test-local.sh` | Run tests with local emulator |
@@ -115,6 +116,10 @@ Scripts for test setup and Firebase emulator operations.
 npx tsx scripts/testing/create-test-user.ts
 npx tsx scripts/testing/reset-test-data.ts
 ./scripts/testing/test-local.sh
+
+# Reset E2E cooldowns (staging only, requires service account key):
+npx tsx scripts/testing/reset-e2e-cooldowns.ts --group-id <id> --execute
+npx tsx scripts/testing/reset-e2e-cooldowns.ts --group-id <id> --user-email bob@boletapp.test --execute
 ```
 
 ---

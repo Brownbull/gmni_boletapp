@@ -1,0 +1,940 @@
+<workflow>
+  <critical>The workflow execution engine is governed by: {project-root}/_bmad/core/tasks/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} and language MUST be tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+
+  <critical>🎭 ECC ADAPTIVE CODE REVIEW - ECC Orchestrator selects and spawns agents based on story complexity!</critical>
+  <critical>Step 1.5 classifies story as TRIVIAL/SIMPLE/STANDARD/COMPLEX → selects appropriate agents</critical>
+  <critical>CRITICAL: Use a SINGLE message with MULTIPLE Task calls for true parallelism</critical>
+
+  <!-- ECC ORCHESTRATOR PROTOCOL -->
+  <orchestrator-protocol>
+    <principle>Orchestrator spawns specialized ECC agents in parallel</principle>
+    <principle>SINGLE message, MULTIPLE Task calls = true parallel execution</principle>
+    <principle>Collect all outputs, then synthesize findings</principle>
+    <principle>Resolve conflicts between agent recommendations</principle>
+
+    <parallel-team>
+      | Agent | subagent_type | Focus Area |
+      |-------|---------------|------------|
+      | Code Reviewer | everything-claude-code:code-reviewer | Quality, maintainability |
+      | Security Reviewer | everything-claude-code:security-reviewer | OWASP, vulnerabilities |
+      | Architect | everything-claude-code:architect | Patterns, design |
+      | TDD Guide | everything-claude-code:tdd-guide | Test coverage, TDD |
+    </parallel-team>
+  </orchestrator-protocol>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 0: Project Knowledge Loading                                       -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="0" goal="Load project knowledge for ECC review agents" tag="knowledge-init">
+    <critical>📚 Load project patterns ONCE for all review agents</critical>
+
+    <action>Load {project-root}/_ecc/knowledge/code-review-patterns.md → {{cached_review_patterns}}</action>
+    <action>Load {project-root}/docs/architecture/firestore-patterns.md → {{cached_firestore}}</action>
+    <action>Load {project-root}/docs/architecture/state-management.md → {{cached_state_mgmt}}</action>
+    <action>Load {project-root}/docs/architecture/component-patterns.md → {{cached_components}}</action>
+    <action>Load .claude/rules/testing.md → {{cached_testing_guidelines}}</action>
+    <action>Store combined as {{project_patterns}} for ECC agents</action>
+    <action>Store testing content as {{project_testing_patterns}} for TDD Guide</action>
+
+    <output>📚 **ECC Orchestrator Initialized for Parallel Review**
+
+      Project knowledge loaded for review agents:
+      - Code review patterns (MUST CHECK): {{review_patterns_summary}}
+      - Firestore patterns: {{firestore_summary}}
+      - State management: {{state_mgmt_summary}}
+      - Component patterns: {{components_summary}}
+      - Testing guidelines: {{testing_summary}}
+
+      Ready to spawn parallel review team.
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 1: Load Story and Discover Changes                                 -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="1" goal="Load story and discover files to review">
+    <action>Use provided {{story_path}} or ask user which story to review</action>
+    <action>Read COMPLETE story file</action>
+    <action>Extract {{story_key}} from filename</action>
+    <action>Extract {{epic_id}} from {{story_key}} (e.g., "14d-v2-1-13" → epic_id = "14d-v2")</action>
+    <action>Parse sections: Acceptance Criteria, Tasks, File List</action>
+
+    <!-- ARCHITECTURE ENFORCEMENT: Extract architectural ACs -->
+    <critical>🏗️ ARCHITECTURE ENFORCEMENT: Extract architectural ACs for validation</critical>
+    <action>Parse "Architectural Acceptance Criteria" section from story</action>
+    <action>Extract {{architectural_acs}} - all architectural ACs</action>
+    <action>Extract {{file_specification_table}} from "File Specification" section</action>
+    <action>Identify {{feature_name}} from story context</action>
+
+    <action>Extract {{architecture_reference}} - source of architectural patterns</action>
+
+    <check if="architectural ACs found">
+      <output>🏗️ **Architectural ACs Loaded for Review**
+
+        **Architecture Source:** {{architecture_reference}}
+
+        - File Location ACs: {{file_location_ac_count}}
+        - Pattern ACs: {{pattern_ac_count}}
+        - Anti-Pattern ACs: {{antipattern_ac_count}}
+
+        Architecture agent will validate against documented patterns.
+      </output>
+    </check>
+
+    <check if="NO architectural ACs found">
+      <action>Set {{architectural_acs}} = "No architectural ACs specified in story"</action>
+      <output>⚠️ **Warning: No Architectural ACs in Story**
+
+        This story lacks architectural acceptance criteria from documented architecture.
+        Architecture review will flag any obvious pattern violations but cannot
+        validate against specific documented patterns.
+
+        **Recommendation:** Re-create story using `ecc-create-story` to generate
+        ACs from architecture documentation.
+      </output>
+    </check>
+
+    <!-- Git discovery -->
+    <check if="git repository exists">
+      <action>Run `git status --porcelain` to find uncommitted changes</action>
+      <action>Run `git diff --name-only` to see modified files</action>
+      <action>Compile {{files_to_review}} from git + story File List</action>
+    </check>
+
+    <output>📋 **Review Target Identified**
+
+      Story: {{story_key}}
+      Files to review: {{file_count}}
+      Functional ACs to validate: {{functional_ac_count}}
+      Architectural ACs to validate: {{arch_ac_count}}
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 1.5: Adaptive Story Classification                                  -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="1.5" goal="Classify story complexity for adaptive review agent selection" tag="classification">
+    <critical>🎯 ADAPTIVE REVIEW: Select appropriate review agents based on story complexity</critical>
+    <critical>Not every story needs 4 agents — TRIVIAL stories get code-reviewer only</critical>
+
+    <!-- Parse story metrics -->
+    <action>Parse metrics from story file and {{files_to_review}}:
+      - {{task_count}}: Number of top-level tasks (checked + unchecked)
+      - {{subtask_count}}: Total subtasks across all tasks
+      - {{file_count}}: Number of files in File List / git diff
+      - {{file_paths}}: List of all file paths
+    </action>
+
+    <!-- Check for security-sensitive files -->
+    <action>Check if any {{file_paths}} match security patterns:
+      - "firestore.rules"
+      - "**/security/**"
+      - "**/functions/**"
+      - "**/auth/**"
+    </action>
+    <action>Set {{has_security_files}} = true/false</action>
+
+    <!-- Check for architecture-sensitive files -->
+    <action>Check if any {{file_paths}} match architecture patterns:
+      - "**/stores/**"
+      - "**/contexts/**"
+      - "**/features/**/index.ts"
+      - "**/*.types.ts"
+    </action>
+    <action>Set {{has_architecture_files}} = true/false</action>
+
+    <!-- Check for security keywords in story content -->
+    <action>Search story content for keywords: authentication, authorization, delete, cascade, password, token, secret</action>
+    <action>Set {{has_security_keywords}} = true/false</action>
+
+    <!-- Classification logic (evaluated top-down, first match wins) -->
+    <classification>
+      <!-- COMPLEX: exceeds standard thresholds OR has security/architecture flags -->
+      <check if="task_count > 4 OR file_count > 8 OR {{has_security_files}} OR {{has_security_keywords}}">
+        <check if="{{has_architecture_files}} OR task_count > 4">
+          <action>Set {{classification}} = "COMPLEX"</action>
+          <action>Set {{review_agents}} = ["code-reviewer", "security-reviewer", "architect", "tdd-guide"]</action>
+        </check>
+        <check if="NOT {{has_architecture_files}} AND task_count &lt;= 4">
+          <action>Set {{classification}} = "STANDARD"</action>
+          <action>Set {{review_agents}} = ["code-reviewer", "security-reviewer"]</action>
+        </check>
+      </check>
+
+      <!-- STANDARD: moderate size with service/state changes -->
+      <check if="task_count &lt;= 4 AND subtask_count &lt;= 15 AND file_count &lt;= 8">
+        <check if="any file_paths match **/services/** OR **/stores/** OR **/hooks/**">
+          <action>Set {{classification}} = "STANDARD"</action>
+          <action>Set {{review_agents}} = ["code-reviewer", "security-reviewer"]</action>
+        </check>
+      </check>
+
+      <!-- SIMPLE: small, UI-only changes -->
+      <check if="task_count &lt;= 3 AND subtask_count &lt;= 10 AND file_count &lt;= 5 AND NOT {{has_security_files}}">
+        <action>Set {{classification}} = "SIMPLE"</action>
+        <action>Set {{review_agents}} = ["code-reviewer", "tdd-guide"]</action>
+      </check>
+
+      <!-- TRIVIAL: tiny change, no sensitive files -->
+      <check if="task_count &lt;= 1 AND subtask_count &lt;= 3 AND file_count &lt;= 2 AND NOT {{has_security_files}} AND NOT {{has_architecture_files}}">
+        <action>Set {{classification}} = "TRIVIAL"</action>
+        <action>Set {{review_agents}} = ["code-reviewer"]</action>
+      </check>
+
+      <!-- Fallback: if no classification matched, default to STANDARD -->
+      <check if="{{classification}} is NOT set">
+        <action>Set {{classification}} = "STANDARD"</action>
+        <action>Set {{review_agents}} = ["code-reviewer", "security-reviewer"]</action>
+      </check>
+    </classification>
+
+    <!-- Force-include agents based on file sensitivity -->
+    <check if="{{has_security_files}} OR {{has_security_keywords}}">
+      <action>Force add "security-reviewer" to {{review_agents}} if not already present</action>
+    </check>
+    <check if="{{has_architecture_files}} AND task_count > 4">
+      <action>Force add "architect" to {{review_agents}} if not already present</action>
+    </check>
+
+    <output>🎯 **Adaptive Review Classification**
+
+      **Story:** {{story_key}}
+      **Classification:** {{classification}}
+
+      **Metrics:**
+      - Tasks: {{task_count}}
+      - Subtasks: {{subtask_count}}
+      - Files: {{file_count}}
+
+      **Sensitivity Flags:**
+      - Security-sensitive files: {{has_security_files}}
+      - Architecture-sensitive files: {{has_architecture_files}}
+      - Security keywords in story: {{has_security_keywords}}
+
+      **Selected Review Agents ({{agent_count}}):** {{review_agents}}
+    </output>
+
+    <ask>Proceed with {{classification}} review using {{agent_count}} agents? [Y/N/Override]</ask>
+
+    <check if="user says N">
+      <output>Review cancelled.</output>
+      <stop/>
+    </check>
+
+    <check if="user says Override">
+      <ask>Select agents: [C]ode, [S]ecurity, [A]rchitect, [T]DD
+        (e.g., "CS" for Code + Security, "CSAT" for all 4)</ask>
+      <action>Parse user selection:
+        C → "code-reviewer"
+        S → "security-reviewer"
+        A → "architect"
+        T → "tdd-guide"
+      </action>
+      <action>Set {{review_agents}} from parsed selection</action>
+      <action>Set {{classification}} = "OVERRIDE"</action>
+      <output>✅ Override accepted. Agents: {{review_agents}}</output>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 2: ADAPTIVE ECC REVIEW - Spawn Selected Agents                     -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="2" goal="Spawn selected ECC agents based on adaptive classification">
+    <critical>🎭 ECC ORCHESTRATOR: Spawning ONLY agents from {{review_agents}} ({{classification}} classification)</critical>
+    <critical>CRITICAL: Send ALL selected Task calls in a SINGLE message for true parallelism!</critical>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- EXPLICIT PARALLEL EXECUTION DIRECTIVE                                   -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <parallel-execution-rule>
+      🚨 HOW TO ACHIEVE TRUE PARALLELISM:
+
+      You MUST issue ALL selected agent Task calls in your NEXT SINGLE RESPONSE.
+      Only spawn agents listed in {{review_agents}} — skip the rest.
+
+      ❌ WRONG (Sequential - slow):
+         Response 1: Task(agent-1) → wait → result
+         Response 2: Task(agent-2) → wait → result
+
+      ✅ CORRECT (Parallel - fast):
+         Response 1: Task(agent-1) + Task(agent-2) + ...
+         → All run simultaneously → All results returned together
+
+      IN YOUR NEXT MESSAGE, include Task calls ONLY for agents in {{review_agents}}.
+    </parallel-execution-rule>
+
+    <output>🎭 **Spawning {{classification}} Review Team...**
+
+      **Classification:** {{classification}}
+      **Agents launching:** {{review_agents}}
+    </output>
+
+    <!-- ADAPTIVE PARALLEL SPAWN - Only selected agents, ALL IN ONE MESSAGE -->
+    <ecc-parallel-spawn agents="{{review_agents}}">
+      <!-- Task 1: Code Reviewer (ALWAYS included — present in all classifications) -->
+      <task-call id="code_review" if="code-reviewer in {{review_agents}}">
+        subagent_type: "everything-claude-code:code-reviewer"
+        description: "Code quality review for {{story_key}}"
+        prompt: |
+          ## Code Review Task
+
+          **Story:** {{story_key}}
+
+          **Files to Review:**
+          {{files_to_review}}
+
+          **Acceptance Criteria:**
+          {{acceptance_criteria}}
+
+          **Project Context:**
+          {{project_patterns}}
+
+          **Review Checklist:**
+          1. Code quality and readability
+          2. Error handling completeness
+          3. Performance considerations
+          4. Naming conventions
+          5. DRY principle compliance
+          6. Complexity analysis
+          7. Documentation quality
+
+          **Output Format:**
+          ```
+          ## Code Review Findings
+
+          ### HIGH Severity
+          - [Finding]: [Description] [file:line]
+
+          ### MEDIUM Severity
+          - [Finding]: [Description] [file:line]
+
+          ### LOW Severity
+          - [Finding]: [Description] [file:line]
+
+          ### Summary
+          - Total issues: X
+          - Recommendation: APPROVE / CHANGES REQUESTED
+          ```
+      </task-call>
+
+      <!-- Task 2: Security Reviewer (STANDARD + COMPLEX only) -->
+      <task-call id="security_review" if="security-reviewer in {{review_agents}}">
+        subagent_type: "everything-claude-code:security-reviewer"
+        description: "Security review for {{story_key}}"
+        prompt: |
+          ## Security Review Task
+
+          **Story:** {{story_key}}
+
+          **Files to Review:**
+          {{files_to_review}}
+
+          **Security Checklist (OWASP Top 10):**
+          1. Injection vulnerabilities (SQL, command, XSS)
+          2. Broken authentication
+          3. Sensitive data exposure
+          4. XML external entities (XXE)
+          5. Broken access control
+          6. Security misconfiguration
+          7. Cross-site scripting (XSS)
+          8. Insecure deserialization
+          9. Using components with known vulnerabilities
+          10. Insufficient logging and monitoring
+
+          **Additional Checks:**
+          - Hardcoded secrets (API keys, passwords, tokens)
+          - Input validation
+          - Output encoding
+          - CSRF protection
+          - Rate limiting
+
+          **Output Format:**
+          ```
+          ## Security Review Findings
+
+          ### CRITICAL
+          - [Vulnerability]: [Description] [file:line] [REMEDIATION]
+
+          ### HIGH
+          - [Vulnerability]: [Description] [file:line] [REMEDIATION]
+
+          ### MEDIUM
+          - [Vulnerability]: [Description] [file:line] [REMEDIATION]
+
+          ### Summary
+          - Vulnerabilities found: X
+          - Secrets detected: Y/N
+          - Recommendation: APPROVE / BLOCK / CHANGES REQUESTED
+          ```
+      </task-call>
+
+      <!-- Task 3: Architect (COMPLEX only) -->
+      <task-call id="architecture_review" if="architect in {{review_agents}}">
+        subagent_type: "everything-claude-code:architect"
+        description: "Architecture review for {{story_key}}"
+        prompt: |
+          ## Architecture Review Task
+
+          **Story:** {{story_key}}
+
+          **Files to Review:**
+          {{files_to_review}}
+
+          **Architecture Patterns:**
+          {{project_patterns}}
+
+          **Architectural Acceptance Criteria (from story):**
+          {{architectural_acs}}
+
+          **Expected File Specification (from story):**
+          {{file_specification_table}}
+
+          ---
+
+          ## 🚨 CRITICAL: Documented Architecture Compliance Check
+
+          **Architecture Source:** {{architecture_reference}}
+
+          **This review MUST validate compliance with DOCUMENTED architectural patterns.**
+          Do not use hardcoded assumptions - validate against what's documented.
+
+          ### 1. File Location Compliance (per documented patterns)
+
+          **Documented File Location Requirements:**
+          {{file_location_acs}}
+
+          For EACH new/modified file, verify it matches the documented file structure.
+
+          **Flag as HIGH severity if:**
+          - File location violates documented pattern
+          - Files are scattered outside documented structure
+          - File Specification in story was not followed
+
+          ### 2. Pattern Compliance (per documented patterns)
+
+          **Documented Pattern Requirements:**
+          {{pattern_acs}}
+
+          For each pattern requirement from documentation, verify compliance.
+
+          **Flag as HIGH severity if:**
+          - Implementation deviates from documented patterns
+          - Patterns not specified in architecture docs were introduced
+
+          ### 3. Anti-Pattern Compliance (per documented anti-patterns)
+
+          **Documented Anti-Patterns (must NOT occur):**
+          {{antipattern_acs}}
+
+          **Flag as HIGH severity if:**
+          - Any documented anti-pattern is detected in the implementation
+
+          ### 4. Architectural AC Validation (from story)
+
+          **Architectural ACs from Story:**
+          {{architectural_acs}}
+
+          For EACH architectural AC, verify:
+          - AC is satisfied by the implementation
+          - File paths match specification
+          - Patterns followed correctly
+
+          **Flag as CRITICAL if:**
+          - Architectural AC explicitly violated
+          - File at completely wrong location vs specification
+          - Implementation creates technical debt vs documented architecture
+
+          ---
+
+          **Standard Review Checklist:**
+          1. Pattern compliance with documented architecture
+          2. Separation of concerns
+          3. Dependency management
+          4. Layer violations
+          5. API design consistency
+          6. Data flow correctness
+          7. Scalability considerations
+          8. Coupling and cohesion
+
+          **Output Format:**
+          ```
+          ## Architecture Review Findings
+
+          **Architecture Source:** {{architecture_reference}}
+
+          ### 🏗️ File Location Compliance (per documented patterns)
+          - Files in documented locations: X/Y
+          - Location violations: [list with references to violated ACs]
+
+          ### 📋 Pattern Compliance (per documented patterns)
+          - Pattern requirements met: X/Y
+          - Pattern violations: [list]
+
+          ### 🚫 Anti-Pattern Compliance (per documented anti-patterns)
+          - Anti-patterns detected: [list with AC references]
+          - Clean: [count of checks passed]
+
+          ### 📋 Architectural AC Validation
+          | AC ID | Description | Status | Notes |
+          |-------|-------------|--------|-------|
+          | AC-ARCH-LOC-1 | ... | ✅/❌ | ... |
+          | AC-ARCH-PATTERN-1 | ... | ✅/❌ | ... |
+          | AC-ARCH-NO-1 | ... | ✅/❌ | ... |
+
+          ### Pattern Violations (HIGH Severity)
+          - [Pattern from docs]: Expected [X], Found [Y] [file:line]
+
+          ### Design Issues
+          - [Issue]: [Description] [RECOMMENDATION]
+
+          ### Drift from Documented Architecture
+          - [Drift]: [Description] [IMPACT] [Source: architecture_reference]
+
+          ### Summary
+          - File location compliance: X%
+          - Pattern compliance: X%
+          - Anti-pattern compliance: X%
+          - Architectural ACs: X/Y passed
+          - Architecture alignment: ALIGNED WITH DOCS / DRIFT DETECTED
+          - Recommendation: APPROVE / CHANGES REQUESTED / BLOCKED
+          ```
+      </task-call>
+
+      <!-- Task 4: TDD Guide (SIMPLE + COMPLEX only) -->
+      <task-call id="test_review" if="tdd-guide in {{review_agents}}">
+        subagent_type: "everything-claude-code:tdd-guide"
+        description: "Test review for {{story_key}}"
+        prompt: |
+          ## Test Coverage Review Task
+
+          **Story:** {{story_key}}
+
+          **Files to Review:**
+          {{files_to_review}}
+
+          **Acceptance Criteria:**
+          {{acceptance_criteria}}
+
+          **Testing Patterns:**
+          {{project_testing_patterns}}
+
+          **Review Checklist:**
+          1. Test coverage percentage
+          2. AC coverage - each AC has corresponding test
+          3. Edge case coverage
+          4. Error scenario coverage
+          5. Test quality (real assertions vs placeholders)
+          6. TDD compliance (tests written first?)
+          7. Test naming conventions
+          8. Mock/stub appropriateness
+
+          **TEA 5-Dimension Test Quality Scoring:**
+          Score each dimension 0-100:
+          1. **Determinism**: No random/time-dependent failures, no flaky tests
+          2. **Isolation**: No shared state between tests, proper setup/teardown
+          3. **Maintainability**: Readable, follows project patterns, DRY test helpers
+          4. **Coverage**: Happy path + critical error paths covered, ACs tested
+          5. **Performance**: Tests run within tier time budgets (unit ~35s, story ~2min)
+
+          Overall = weighted average. Threshold: 70+ = GOOD, <70 = NEEDS IMPROVEMENT.
+
+          **Output Format:**
+          ```
+          ## Test Review Findings
+
+          ### Coverage Gaps
+          - [AC/Feature]: Missing test for [scenario] [file]
+
+          ### Test Quality Issues
+          - [Test]: [Issue] [file:line]
+
+          ### TEA 5-Dimension Quality Score
+          | Dimension | Score | Notes |
+          |-----------|-------|-------|
+          | Determinism | X/100 | [details] |
+          | Isolation | X/100 | [details] |
+          | Maintainability | X/100 | [details] |
+          | Coverage | X/100 | [details] |
+          | Performance | X/100 | [details] |
+          | **Overall** | **X/100** | **GOOD / NEEDS IMPROVEMENT** |
+
+          ### Metrics
+          - Estimated coverage: X%
+          - ACs tested: Y/Z
+          - Edge cases: covered/missing
+
+          ### Summary
+          - Test quality: GOOD / NEEDS IMPROVEMENT (based on 5-dimension score)
+          - TDD compliance: COMPLIANT / NON-COMPLIANT
+          - Recommendation: APPROVE / CHANGES REQUESTED
+          ```
+      </task-call>
+    </ecc-parallel-spawn>
+
+    <action>Wait for all selected agents to complete</action>
+    <action>Collect outputs from spawned agents only:
+      - {{code_review_output}} (always present)
+      - {{security_review_output}} (if security-reviewer was spawned)
+      - {{architecture_review_output}} (if architect was spawned)
+      - {{test_review_output}} (if tdd-guide was spawned)
+    </action>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 3: Review Synthesis - Merge and Analyze                             -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="3" goal="Synthesis of parallel review outputs">
+    <critical>🗺️ REVIEW SYNTHESIS - Merge findings, resolve conflicts, add workflow analysis</critical>
+    <critical>🏗️ ARCHITECTURE GATE: Architectural violations are BLOCKING</critical>
+    <critical>📊 WEIGHTED SCORING: Adjust weights based on which agents were used</critical>
+
+    <action>Merge findings from all spawned agents ({{review_agents}}) by severity:
+      - CRITICAL: Security vulnerabilities requiring immediate fix
+      - HIGH: Must fix before approval (includes architectural violations)
+      - MEDIUM: Should fix, can be action items
+      - LOW: Nice to have improvements
+    </action>
+
+    <action>Identify conflicts between agent recommendations</action>
+    <action>Add cross-cutting impact analysis:
+      - Check if {{files_to_review}} span multiple src/features/ directories
+      - If cross-feature changes detected, recommend: "Run `/ecc-impact-analysis {{story_key}}` to assess full blast radius"
+      - Note any shared services/types modified that may affect other features
+    </action>
+
+    <!-- Scoring: average of active agent scores -->
+    <action>Calculate individual agent scores (1-10 scale) for each spawned agent</action>
+    <action>Calculate overall score as average of all active agent scores</action>
+
+    <!-- ARCHITECTURE ENFORCEMENT: Highlight architectural findings -->
+    <action>Extract architectural findings from architect review:
+      - FSD compliance status
+      - Zustand compliance status
+      - Architectural AC validation results
+    </action>
+
+    <output>## 🗺️ ECC Adaptive Review Synthesis
+
+      **Story:** {{story_key}} | **Date:** {date} | **Classification:** {{classification}} | **Agents:** {{review_agents}}
+
+      ---
+
+      ### 📊 Overall Assessment
+
+      | Agent | Score | Status |
+      |-------|-------|--------|
+      | Code Quality | {{code_score}}/10 | {{code_status}} |
+      {{#if security-reviewer in review_agents}}
+      | Security | {{security_score}}/10 | {{security_status}} |
+      {{/if}}
+      {{#if architect in review_agents}}
+      | Architecture | {{arch_score}}/10 | {{arch_status}} |
+      {{/if}}
+      {{#if tdd-guide in review_agents}}
+      | Testing | {{test_score}}/10 | {{test_status}} |
+      {{/if}}
+      | **OVERALL** | **{{overall_score}}/10** | **{{overall_status}}** |
+
+      {{#if architectural_violations}}
+      ⚠️ **ARCHITECTURAL VIOLATIONS (blocks approval):**
+      {{architectural_violations}}
+      {{/if}}
+
+      ---
+
+      ### 📋 Numbered Findings
+
+      Each finding is auto-classified: ⚡ **QUICK** (fix now) or 🔧 **COMPLEX** (needs separate work)
+
+      | # | Sev | Agent | Finding | Effort |
+      |---|-----|-------|---------|--------|
+      {{#each all_findings_numbered}}
+      | {{index}} | {{severity}} | {{agent}} | {{description}} [{{file}}:{{line}}] | {{effort_class}} |
+      {{/each}}
+
+      ---
+
+      **Recommendation:** {{final_recommendation}}
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 4: Smart Triage - Classify, Choose, Execute                        -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="4" goal="Auto-triage findings by effort, let user choose handling per item or batch">
+    <critical>🎯 SMART TRIAGE: Every finding gets an effort classification + suggested action</critical>
+    <critical>Goal: Always fix the easy wins NOW, give user control over what to defer</critical>
+
+    <!-- ─── 4a: Auto-classify each finding by effort ─── -->
+    <action>For each finding from Step 3, classify effort:
+
+      ⚡ QUICK (fix in current session) — criteria:
+      - Missing validation or guard clause (1-5 lines)
+      - Naming convention fix
+      - Missing error handling on a single call
+      - Adding a missing test assertion
+      - Import cleanup or unused variable
+      - Simple type fix
+      - Missing null check
+      - Documentation/comment fix
+      - Single-file, localized change
+
+      🔧 COMPLEX (needs separate work) — criteria:
+      - Multi-file refactoring
+      - New abstraction or pattern introduction
+      - Architectural restructuring
+      - Service layer redesign
+      - New test infrastructure needed
+      - Security model change
+      - State management refactoring
+      - Performance optimization requiring profiling
+      - Changes touching >3 files
+    </action>
+
+    <action>Build {{numbered_findings}} list:
+      For each finding assign:
+      - {{index}}: sequential number (1, 2, 3...)
+      - {{severity}}: CRITICAL / HIGH / MEDIUM / LOW
+      - {{agent}}: which ECC agent found it
+      - {{description}}: one-line summary
+      - {{file}}: file path and line
+      - {{effort_class}}: ⚡ QUICK or 🔧 COMPLEX
+      - {{suggested_action}}: FIX_NOW (for QUICK) or DEFER (for COMPLEX)
+    </action>
+
+    <action>Count totals:
+      - {{quick_count}} = findings classified as ⚡ QUICK
+      - {{complex_count}} = findings classified as 🔧 COMPLEX
+      - {{total_findings}} = quick_count + complex_count
+    </action>
+
+    <!-- ─── 4b: Present triage options ─── -->
+    <ask>**Smart Triage** — {{quick_count}} quick fixes, {{complex_count}} complex items
+
+      1. **[Q]uick + Defer** — Fix all ⚡ QUICK now → create TD stories for 🔧 COMPLEX *(Recommended)*
+      2. **[F]ix all** — Fix everything now (only if scope fits in session)
+      3. **[C]ustom** — Per-item control with range syntax (e.g., `fix 1-3, defer 4-6`)
+      4. **[S]kip** — Mark review complete without changes
+
+      Choose [Q], [F], [C], or [S]:</ask>
+
+    <!-- ─── 4c: Execute chosen triage strategy ─── -->
+
+    <check if="user chooses Q (Quick + Defer)">
+      <action>Fix all findings where effort_class = ⚡ QUICK</action>
+      <action>Re-run tests after fixes</action>
+      <action>Set {{fixed_items}} = list of fixed finding indices</action>
+      <action>Set {{fixed_count}} = number of QUICK items fixed</action>
+      <action>Set {{td_items}} = all findings where effort_class = 🔧 COMPLEX</action>
+      <action>Proceed to Step 4.5 with {{td_items}} — TD stories WILL be created</action>
+    </check>
+
+    <check if="user chooses F (Fix all)">
+      <action>Fix ALL findings (both QUICK and COMPLEX)</action>
+      <action>Re-run tests after fixes</action>
+      <action>Update File List in story</action>
+      <action>Set {{fixed_count}} = total_findings</action>
+    </check>
+
+    <check if="user chooses C (Custom)">
+      <ask>Enter triage commands using range syntax:
+
+        - `fix 1-5` or `fix 1,3,5` — fix these items now
+        - `defer 6-8` — create TD stories for these items
+        - Combine: `fix 1-3, defer 4-6`
+        - Shortcuts: `fix quick`, `defer complex`
+
+        Every `defer` item WILL become a tracked TD story.
+
+        Enter triage commands:</ask>
+
+      <action>Parse user's triage commands:
+        - Extract ranges: "1-5" → [1,2,3,4,5]
+        - Extract lists: "1,3,5" → [1,3,5]
+        - Extract keywords: "quick" → all QUICK indices, "complex" → all COMPLEX indices
+        - Map each finding index to: FIX or DEFER
+      </action>
+
+      <action>Fix all findings assigned to FIX</action>
+      <action>Re-run tests after fixes</action>
+      <action>Set {{fixed_items}} = list of FIX indices</action>
+      <action>Set {{fixed_count}} = count of FIX items</action>
+
+      <check if="any findings assigned to DEFER">
+        <action>Set {{td_items}} = all findings assigned to DEFER</action>
+        <action>Proceed to Step 4.5 with {{td_items}} — TD stories WILL be created</action>
+      </check>
+
+      <output>✅ **Custom Triage Complete**
+
+        - ⚡ Fixed now: {{fixed_count}} items ({{fixed_items}})
+        {{#if td_items}}
+        - 🗂️ Deferred: {{td_item_count}} items → creating TD stories...
+        {{/if}}
+      </output>
+    </check>
+
+    <check if="user chooses S (Skip)">
+      <output>⏭️ Review marked complete without changes.</output>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 4.5: Tech Debt Story Creation (Optional)                           -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="4.5" goal="Create tech debt stories for deferred items">
+    <critical>🗂️ TECH DEBT TRACKING - Every deferred item becomes a tracked TD story</critical>
+    <critical>NO dark void — deferred items ALWAYS get stories + sprint-status updates</critical>
+
+    <action>Use {{td_items}} from Step 4 (pre-selected by user in triage)</action>
+
+    <action>Group deferred items by theme to minimize story count:
+      - Related items in same file/feature → single TD story
+      - Unrelated items → separate TD stories
+    </action>
+
+    <!-- Create TD stories -->
+    <action>For each TD story group, create story using template:
+
+      ```markdown
+      # Tech Debt Story TD-{{epic_id}}-{{td_number}}: {{title}}
+
+      Status: ready-for-dev
+
+      > **Source:** ECC Code Review ({{date}}) on story {{story_key}}
+      > **Priority:** {{priority}}
+      > **Estimated Effort:** {{effort_estimate}}
+
+      ## Story
+
+      As a **developer**,
+      I want **{{what}}**,
+      So that **{{why}}**.
+
+      ## Acceptance Criteria
+
+      {{acceptance_criteria}}
+
+      ## Tasks / Subtasks
+
+      {{tasks}}
+
+      ## Dev Notes
+
+      - Source story: [{{story_key}}](./{{story_filename}})
+      - Review findings: {{finding_indices}}
+      - Files affected: {{affected_files}}
+      ```
+    </action>
+
+    <action>Write story files to: {sprint_artifacts}/stories/TD-{{epic_id}}-{{td_number}}-{{slug}}.md</action>
+
+    <!-- Update sprint-status.yaml — MANDATORY -->
+    <action>Add each TD story to sprint-status.yaml:
+      - Status: ready-for-dev
+      - DEPENDS: {{story_key}} (source story)
+    </action>
+
+    <!-- Update source story with TD links -->
+    <action>Add to story {{story_key}}:
+      ```markdown
+      ### Tech Debt Stories Created
+
+      | TD Story | Description | Priority |
+      |----------|-------------|----------|
+      {{#each created_td_stories}}
+      | [{{id}}](./{{filename}}) | {{description}} | {{priority}} |
+      {{/each}}
+      ```
+    </action>
+
+    <output>✅ **Tech Debt Stories Created**
+
+      Created {{td_story_count}} TD stories:
+      {{#each created_td_stories}}
+      - **{{id}}**: {{title}} ({{priority}}) → `{{filepath}}`
+      {{/each}}
+
+      Sprint status updated. Stories ready for sprint planning.
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 5: Update Story Status                                             -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="5" goal="Update story status based on review outcome">
+    <check if="no CRITICAL or HIGH issues OR all fixed">
+      <action>Update story Status to "done"</action>
+      <action>Set {{new_status}} = "done"</action>
+    </check>
+
+    <check if="CRITICAL or HIGH issues remain">
+      <action>Update story Status to "in-progress"</action>
+      <action>Set {{new_status}} = "in-progress"</action>
+    </check>
+
+    <check if="{{sprint_status}} file exists">
+      <action>Update sprint-status.yaml: {{story_key}} → {{new_status}}</action>
+    </check>
+
+    <action>Add "Senior Developer Review (ECC)" section to story with:
+      - Review date
+      - ECC agents used
+      - Outcome
+      - Action items count
+    </action>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 6: Review Complete                                                 -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="6" goal="Finalize review and report results">
+    <!-- Check for UI changes without E2E coverage -->
+    <action>Check if any {{files_to_review}} are .tsx components/views</action>
+    <action>Search tests/e2e/staging/*.spec.ts for TestIds matching those components</action>
+    <action>Set {{ui_missing_e2e}} = true if UI changes found without matching E2E specs</action>
+
+    <output>**✅ ECC Code Review Complete!**
+
+      **Story:** {{story_key}}
+      **Status:** {{new_status}}
+      **Classification:** {{classification}}
+
+      **Triage Summary:**
+      - ⚡ Fixed now: {{fixed_count}} items
+      {{#if td_story_count}}
+      - 🗂️ TD stories created: {{td_story_count}} stories
+      {{/if}}
+
+      **ECC Agents Used:**
+      {{#each review_agents}}
+      - {{agent}} ✓
+      {{/each}}
+
+      **Next Steps:**
+      {{#if new_status == "done"}}
+      - Run `deploy-story` to deploy
+      {{/if}}
+      {{#if ui_missing_e2e}}
+      - Recommend: Run `/ecc-e2e` to add E2E coverage for new UI changes
+      {{/if}}
+      {{#if new_status != "done"}}
+      - Address remaining issues
+      - Re-run `ecc-code-review` after fixes
+      {{/if}}
+    </output>
+  </step>
+
+</workflow>

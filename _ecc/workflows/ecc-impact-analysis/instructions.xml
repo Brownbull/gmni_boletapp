@@ -1,0 +1,254 @@
+<workflow name="ecc-impact-analysis" version="1.0">
+
+  <critical>The workflow execution engine is governed by: {project-root}/_bmad/core/tasks/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language}</critical>
+
+  <critical>This is a lightweight analysis workflow. No ECC agents are spawned.</critical>
+  <critical>It answers: "If I change these files, what else is affected?"</critical>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 1: Resolve Input Files                                            -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="1" goal="Determine which files to analyze" tag="resolve-input">
+
+    <!-- Accept multiple input modes -->
+    <action>Detect input mode from user argument:
+      1. Story key (e.g., "14d-v2-1-13") → load story from {sprint_artifacts}, extract File Specification
+      2. File path(s) (e.g., "src/features/shared-groups/services/groupService.ts") → use directly
+      3. Directory (e.g., "src/features/shared-groups/") → use all .ts/.tsx files in directory
+      4. No argument → extract from `git diff develop...HEAD --name-only` (current branch changes)
+    </action>
+
+    <check if="story key provided">
+      <action>Search {sprint_artifacts} for story file matching the key</action>
+      <action>Parse "File Specification" table from story</action>
+      <action>Extract all file paths → {{input_files}}</action>
+      <action>Set {{story_key}} from input</action>
+    </check>
+
+    <check if="file paths provided">
+      <action>Set {{input_files}} = provided paths</action>
+      <action>Set {{story_key}} = "manual"</action>
+    </check>
+
+    <check if="directory provided">
+      <action>List all .ts/.tsx files in directory → {{input_files}}</action>
+      <action>Set {{story_key}} = "directory: {directory}"</action>
+    </check>
+
+    <check if="no argument">
+      <action>Run `git diff develop...HEAD --name-only` → filter to src/**/*.{ts,tsx}</action>
+      <action>Set {{input_files}} from git diff output</action>
+      <action>Extract story key from branch name if possible</action>
+    </check>
+
+    <check if="{{input_files}} is empty">
+      <output>No files to analyze. Provide a story key, file paths, or ensure you have changes on your branch.</output>
+      <action>Stop workflow</action>
+    </check>
+
+    <output>**Impact Analysis: {{story_key}}**
+
+      Analyzing {{input_file_count}} files:
+      {{#each input_files}}
+      - {{file}}
+      {{/each}}
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 2: Build Dependency Graph                                         -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="2" goal="Generate full project dependency graph with madge" tag="build-graph">
+
+    <action>Run: `npx madge --json --ts-config tsconfig.json --extensions ts,tsx src/ > /tmp/dep-graph.json`</action>
+
+    <check if="madge fails or output is empty">
+      <output>Madge failed to generate dependency graph. Falling back to grep-based analysis.</output>
+      <action>For each file in {{input_files}}, grep the codebase for import statements referencing that file</action>
+      <action>Set {{fallback_mode}} = true</action>
+    </check>
+
+    <check if="madge succeeds">
+      <action>Parse /tmp/dep-graph.json → {{dep_graph}}</action>
+      <action>Count total files in graph → {{graph_size}}</action>
+      <action>Set {{fallback_mode}} = false</action>
+    </check>
+
+    <output>Dependency graph: {{graph_size}} files indexed</output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 3: Walk Graph for Dependents                                      -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="3" goal="Find direct and transitive dependents of input files" tag="walk-graph">
+
+    <!-- Build reverse index: for each file, who imports it? -->
+    <action>Build {{reverse_index}} from {{dep_graph}}:
+      For each (file → [dependencies]) in graph:
+        For each dependency:
+          reverse_index[dependency].add(file)
+    </action>
+
+    <!-- Walk graph for each input file -->
+    <action>For each file in {{input_files}}:
+      - Normalize path to match graph keys (strip "src/" prefix if graph uses relative paths)
+      - Hop 1 (direct): {{reverse_index}}[file] → add to {{direct_dependents}}
+      - Hop 2: for each direct dependent, look up {{reverse_index}}[dependent] → add to {{transitive_2}}
+      - Hop 3: for each hop-2 dependent, look up {{reverse_index}} → add to {{transitive_3}}
+      - Deduplicate across all hops
+      - Exclude input files themselves from results
+    </action>
+
+    <!-- Identify feature boundaries -->
+    <action>For each dependent file, extract feature module:
+      - "features/{name}/*" → feature = {name}
+      - "components/*" → feature = "shared-components"
+      - "services/*" → feature = "shared-services"
+      - "stores/*" → feature = "shared-stores"
+      - Other → feature = "other"
+    </action>
+
+    <action>Group dependents by feature → {{affected_features}}</action>
+    <action>Identify primary feature (most dependents) and secondary features</action>
+
+    <output>**Dependency Analysis**
+
+      **Direct dependents (1 hop):** {{direct_count}} files
+      {{#each direct_dependents}}
+      - {{file}} ({{feature}})
+      {{/each}}
+
+      **Transitive dependents (2 hops):** {{transitive_2_count}} files
+      {{#each transitive_2}}
+      - {{file}} ({{feature}})
+      {{/each}}
+
+      {{#if transitive_3}}
+      **Deep dependents (3 hops):** {{transitive_3_count}} files
+      {{#each transitive_3}}
+      - {{file}} ({{feature}})
+      {{/each}}
+      {{/if}}
+
+      **Feature boundaries affected:**
+      {{#each affected_features}}
+      - {{feature}}: {{count}} files ({{role}})
+      {{/each}}
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 4: Sprint Conflict Check                                          -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="4" goal="Cross-reference affected files against sprint status" tag="sprint-check">
+
+    <check if="{sprint_status} file exists">
+      <action>Load {sprint_status}</action>
+      <action>Collect all stories with status "in-progress" or "ready-for-dev"</action>
+
+      <!-- For each active story, load its File Specification -->
+      <action>For each active story:
+        - Load story file from {sprint_artifacts}
+        - Parse File Specification table → story_files
+        - Check if any story_files overlap with {{all_dependents}} (direct + transitive)
+        - If overlap found → add to {{conflicts}}
+      </action>
+
+      <!-- Check DEPENDS tags -->
+      <action>Search active stories for DEPENDS: tags that reference {{story_key}}</action>
+      <action>Search {{story_key}} for DEPENDS: tags referencing active stories</action>
+    </check>
+
+    <check if="{sprint_status} file does NOT exist">
+      <action>Set {{conflicts}} = empty (no sprint status available)</action>
+      <output>Sprint status not found — skipping conflict check.</output>
+    </check>
+
+    <check if="{{conflicts}} is not empty">
+      <output>**Sprint Conflict Check**
+
+        {{#each conflicts}}
+        - [{{severity}}] **{{story_id}}** ({{story_status}}) touches {{overlap_file}}
+          {{#if suggestion}}Suggestion: {{suggestion}}{{/if}}
+        {{/each}}
+      </output>
+    </check>
+
+    <check if="{{conflicts}} is empty">
+      <output>**Sprint Conflict Check:** No conflicts with active stories.</output>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 5: Generate Impact Report                                         -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="5" goal="Produce structured impact report with recommendations" tag="report">
+
+    <!-- Assess overall risk -->
+    <action>Calculate impact risk:
+      - LOW: 0 conflicts, ≤1 feature affected, ≤5 direct dependents
+      - MEDIUM: 0-1 conflicts, 2 features affected, or 6-15 direct dependents
+      - HIGH: ≥2 conflicts, or ≥3 features affected, or >15 direct dependents
+    </action>
+
+    <!-- Generate recommendations -->
+    <action>Generate recommendations based on findings:
+      - If conflicts exist → "Coordinate with {story_id} before merging"
+      - If multiple features affected → "Add DEPENDS: tags to story"
+      - If deep transitive chain (3 hops) → "Run integration tests for {features}"
+      - If >15 dependents → "Consider splitting changes to reduce blast radius"
+    </action>
+
+    <output>## Impact Analysis Report: {{story_key}}
+
+      **Date:** {{date}}
+      **Risk Level:** {{impact_risk}}
+
+      ### Files Changed
+      {{#each input_files}}
+      - {{file}}
+      {{/each}}
+
+      ### Direct Dependents ({{direct_count}} files)
+      {{#each direct_dependents}}
+      - {{file}} ({{feature}})
+      {{/each}}
+
+      ### Transitive Dependents ({{transitive_total}} files, max depth {{max_depth_reached}})
+      {{#each transitive_all}}
+      - {{file}} ({{feature}}, hop {{depth}})
+      {{/each}}
+
+      ### Feature Boundaries
+      | Feature | Files Affected | Role |
+      |---------|---------------|------|
+      {{#each affected_features}}
+      | {{feature}} | {{count}} | {{role}} |
+      {{/each}}
+
+      ### Sprint Conflicts
+      {{#if conflicts}}
+      | Story | Status | Overlap | Action |
+      |-------|--------|---------|--------|
+      {{#each conflicts}}
+      | {{story_id}} | {{story_status}} | {{overlap_file}} | {{suggestion}} |
+      {{/each}}
+      {{else}}
+      No conflicts with active stories.
+      {{/if}}
+
+      ### Recommendations
+      {{#each recommendations}}
+      - {{recommendation}}
+      {{/each}}
+    </output>
+  </step>
+
+</workflow>

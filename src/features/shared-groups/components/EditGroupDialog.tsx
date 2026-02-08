@@ -71,6 +71,8 @@ export interface EditGroupDialogProps {
     onToggleTransactionSharing?: (enabled: boolean) => Promise<void>;
     /** Story 14d-v2-1-11c: Whether toggle operation is in progress */
     isTogglePending?: boolean;
+    /** Toast notification callback for user sharing preference feedback */
+    onShowToast?: (message: string, type?: 'success' | 'error') => void;
 }
 
 // =============================================================================
@@ -98,6 +100,7 @@ export const EditGroupDialog: React.FC<EditGroupDialogProps> = ({
     isOwner = false,
     onToggleTransactionSharing,
     isTogglePending = false,
+    onShowToast,
 }) => {
     // State
     const [name, setName] = useState('');
@@ -377,6 +380,7 @@ export const EditGroupDialog: React.FC<EditGroupDialogProps> = ({
                                 groupSharingEnabled={group.transactionSharingEnabled ?? false}
                                 t={t}
                                 lang={lang}
+                                onShowToast={onShowToast}
                             />
                         </div>
                     )}

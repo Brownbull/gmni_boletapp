@@ -114,7 +114,7 @@ export const JoinGroupByCode: React.FC<JoinGroupByCodeProps> = ({
             shareCode: group.shareCode,
             invitedEmail: '', // No email for direct share code join
             invitedByUserId: group.ownerId,
-            invitedByName: group.memberProfiles?.[group.ownerId]?.displayName || 'Group Owner',
+            invitedByName: group.memberProfiles?.[group.ownerId]?.displayName || '',
             createdAt: group.createdAt || Timestamp.now(),
             expiresAt: Timestamp.fromDate(expiresAt),
             status: 'pending',

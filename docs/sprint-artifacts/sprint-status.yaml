@@ -140,13 +140,16 @@ development_status:
   14d-v2-1-14c-polish-edge-cases: consolidated  # CONSOLIDATED into 14d-v2-1-14-polish (2026-02-05)
   14d-v2-1-14d-integration-tests: consolidated  # CONSOLIDATED into 14d-v2-1-14-polish (2026-02-05)
   # New consolidated stories:
-  14d-v2-1-13+14-join-flow-foundation: done  # 7 pts - Preferences document + opt-in dialog + service integration [DEPENDS: 1-4, 1-5, 1-6, 1-12] - ECC Parallel Review 2026-02-05: APPROVED (7.55/10 weighted, 4 quick fixes applied: H-1 groupId validation, H-2 DEV guards, M-2 error toast, M-3 type re-exports, 426 tests pass)
+  14d-v2-1-13+14-join-flow-foundation: review  # 7 pts - Preferences document + opt-in dialog + service integration [DEPENDS: 1-4, 1-5, 1-6, 1-12] - Task 8 bugfix COMPLETE: setDoc dot-notation fixed in 5 functions, security review defense added (2026-02-06)
   14d-v2-1-14-polish-e2e: review  # 4 pts - Confirmation toasts + offline handling + analytics + E2E tests [DEPENDS: 1-13+14] - ECC Parallel Review 2026-02-05: APPROVED (code 7/10, security MEDIUM - H-1 sanitization fixed, type mismatch fixed, 94 GruposView tests + 38 OptInDialog tests pass)
 
-# /bmad:bmm:workflows:ecc-dev-story
-# /bmad:bmm:workflows:ecc-code-review
-# /bmad:bmm:workflows:ecc-create-story
-# /bmad:bmm:workflows:archie-refactor src/features/scan/
+# /ecc-code-review
+# /ecc-create-story
+# /deploy-story
+# /story-sizing
+# /ecc-e2e
+# /ecc-impact-analysis
+# /design-system-mockup-builder
 
   # ============================================================================
   # TECH DEBT - CONSOLIDATED (Epic 14d-v2)

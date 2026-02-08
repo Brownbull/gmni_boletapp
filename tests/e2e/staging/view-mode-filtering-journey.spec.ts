@@ -53,7 +53,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     await testLoginBtn.waitFor({ state: 'visible', timeout: 15000 });
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-01-login-page.png',
+      path: 'test-results/view-mode-filtering-journey/01-login-page.png',
       fullPage: true,
     });
 
@@ -75,7 +75,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     expect(currentUrl).not.toContain('login');
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-02-authenticated.png',
+      path: 'test-results/view-mode-filtering-journey/02-authenticated.png',
       fullPage: true,
     });
     console.log(`  -> Authenticated as ${TEST_USER}`);
@@ -96,7 +96,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     await gLogo.isVisible({ timeout: 3000 }).catch(() => false);
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-03-personal-mode-default.png',
+      path: 'test-results/view-mode-filtering-journey/03-personal-mode-default.png',
       fullPage: true,
     });
 
@@ -122,7 +122,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     await viewModeSwitcher.waitFor({ state: 'visible', timeout: 5000 });
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-04-switcher-open.png',
+      path: 'test-results/view-mode-filtering-journey/04-switcher-open.png',
       fullPage: true,
     });
     console.log('  -> ViewModeSwitcher opened');
@@ -147,7 +147,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
       if (hasCreateBtn) {
         console.log('  -> Create Group button visible (empty state)');
         await page.screenshot({
-          path: 'test-results/14d-v2-1-10d-05-no-groups-empty-state.png',
+          path: 'test-results/view-mode-filtering-journey/05-no-groups-empty-state.png',
           fullPage: true,
         });
       }
@@ -186,7 +186,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     await expect(viewModeSwitcher).not.toBeVisible({ timeout: 3000 });
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-05-group-mode-selected.png',
+      path: 'test-results/view-mode-filtering-journey/05-group-mode-selected.png',
       fullPage: true,
     });
     console.log('  -> Group mode selected, switcher closed');
@@ -209,7 +209,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     }
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-06-group-mode-active.png',
+      path: 'test-results/view-mode-filtering-journey/06-group-mode-active.png',
       fullPage: true,
     });
     console.log('  -> Group mode confirmed');
@@ -239,7 +239,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     console.log('  -> Selected group is active (aria-selected=true)');
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-07-group-selection-verified.png',
+      path: 'test-results/view-mode-filtering-journey/07-group-selection-verified.png',
       fullPage: true,
     });
 
@@ -256,7 +256,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     await expect(viewModeSwitcher).not.toBeVisible({ timeout: 3000 });
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-08-personal-mode-restored.png',
+      path: 'test-results/view-mode-filtering-journey/08-personal-mode-restored.png',
       fullPage: true,
     });
     console.log('  -> Personal mode selected');
@@ -278,7 +278,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     console.log('  -> "G" logo restored');
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-09-personal-mode-verified.png',
+      path: 'test-results/view-mode-filtering-journey/09-personal-mode-verified.png',
       fullPage: true,
     });
 
@@ -300,7 +300,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     await viewModeSwitcher.waitFor({ state: 'visible', timeout: 5000 });
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-10-switcher-open-for-keyboard.png',
+      path: 'test-results/view-mode-filtering-journey/10-switcher-open-for-keyboard.png',
       fullPage: true,
     });
 
@@ -314,7 +314,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     console.log('  -> Switcher closed via Escape key');
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-11-switcher-closed-keyboard.png',
+      path: 'test-results/view-mode-filtering-journey/11-switcher-closed-keyboard.png',
       fullPage: true,
     });
 
@@ -359,7 +359,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     await viewModeSwitcher.waitFor({ state: 'visible', timeout: 5000 });
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-overlay-01-open.png',
+      path: 'test-results/view-mode-filtering-journey/overlay-01-open.png',
       fullPage: true,
     });
 
@@ -373,7 +373,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     console.log('  -> Overlay click closes switcher');
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-overlay-02-closed.png',
+      path: 'test-results/view-mode-filtering-journey/overlay-02-closed.png',
       fullPage: true,
     });
 
@@ -414,7 +414,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     console.log(`  -> Personal option text: "${personalText}"`);
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-personal-option.png',
+      path: 'test-results/view-mode-filtering-journey/personal-option.png',
       fullPage: true,
     });
 
@@ -460,7 +460,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     await page.waitForTimeout(3000);
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-full-01-logged-in.png',
+      path: 'test-results/view-mode-filtering-journey/full-01-logged-in.png',
       fullPage: true,
     });
     console.log('✅ Logged in as Alice');
@@ -499,7 +499,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     console.log('✅ Navigated to Grupos view');
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-full-02-grupos-view.png',
+      path: 'test-results/view-mode-filtering-journey/full-02-grupos-view.png',
       fullPage: true,
     });
 
@@ -594,7 +594,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     await deleteOldTestGroups(3);
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-full-02b-after-cleanup.png',
+      path: 'test-results/view-mode-filtering-journey/full-02b-after-cleanup.png',
       fullPage: true,
     });
 
@@ -646,7 +646,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     console.log('✅ Group A created');
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-full-03-group-a-created.png',
+      path: 'test-results/view-mode-filtering-journey/full-03-group-a-created.png',
       fullPage: true,
     });
 
@@ -671,7 +671,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     console.log('✅ Group B created');
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-full-04-group-b-created.png',
+      path: 'test-results/view-mode-filtering-journey/full-04-group-b-created.png',
       fullPage: true,
     });
 
@@ -690,7 +690,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     await page.waitForTimeout(2000);
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-full-05-back-to-home.png',
+      path: 'test-results/view-mode-filtering-journey/full-05-back-to-home.png',
       fullPage: true,
     });
     console.log('✅ Back to Home');
@@ -721,7 +721,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     await viewModeSwitcher.waitFor({ state: 'visible', timeout: 5000 });
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-full-06-switcher-with-groups.png',
+      path: 'test-results/view-mode-filtering-journey/full-06-switcher-with-groups.png',
       fullPage: true,
     });
 
@@ -738,7 +738,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     await groupModeIcon.waitFor({ state: 'visible', timeout: 5000 });
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-full-07-group-a-selected.png',
+      path: 'test-results/view-mode-filtering-journey/full-07-group-a-selected.png',
       fullPage: true,
     });
     console.log('✅ Switched to Group A');
@@ -760,7 +760,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     console.log('  -> Group A is currently selected');
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-full-08-switcher-group-a-active.png',
+      path: 'test-results/view-mode-filtering-journey/full-08-switcher-group-a-active.png',
       fullPage: true,
     });
 
@@ -777,7 +777,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     await groupModeIcon.waitFor({ state: 'visible', timeout: 5000 });
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-full-09-group-b-selected.png',
+      path: 'test-results/view-mode-filtering-journey/full-09-group-b-selected.png',
       fullPage: true,
     });
     console.log('✅ Switched from Group A to Group B (group-to-group switch)');
@@ -801,7 +801,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     expect(groupANotSelected).toBe('false');
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-full-10-group-b-verified.png',
+      path: 'test-results/view-mode-filtering-journey/full-10-group-b-verified.png',
       fullPage: true,
     });
     console.log('✅ Group B selection verified');
@@ -823,7 +823,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     expect(isGroupModeAfter).toBe(false);
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-full-11-personal-restored.png',
+      path: 'test-results/view-mode-filtering-journey/full-11-personal-restored.png',
       fullPage: true,
     });
     console.log('✅ Switched back to Personal mode');
@@ -910,7 +910,7 @@ test.describe('Feature: View Mode Filtering (14d-v2-1-10d)', () => {
     }
 
     await page.screenshot({
-      path: 'test-results/14d-v2-1-10d-full-12-cleanup-complete.png',
+      path: 'test-results/view-mode-filtering-journey/full-12-cleanup-complete.png',
       fullPage: true,
     });
     } // end finally

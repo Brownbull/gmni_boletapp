@@ -1,0 +1,879 @@
+<workflow>
+  <critical>The workflow execution engine is governed by: {project-root}/_bmad/core/tasks/workflow.xml</critical>
+  <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
+  <critical>Communicate all responses in {communication_language} and language MUST be tailored to {user_skill_level}</critical>
+  <critical>Generate all documents in {document_output_language}</critical>
+
+  <critical>🎭 ECC-ORCHESTRATED STORY DEVELOPMENT - ECC Orchestrator spawns specialized ECC agents!</critical>
+  <critical>This workflow uses the Task tool to spawn ECC agents for focused tasks</critical>
+  <critical>Sequence: planner → tdd-guide → build-error-resolver → code-reviewer</critical>
+
+  <!-- ECC ORCHESTRATOR PROTOCOL -->
+  <orchestrator-protocol>
+    <principle>Orchestrator spawns specialized ECC agents, coordinates work, synthesizes outputs</principle>
+    <principle>Use Task tool with appropriate subagent_type for each ECC agent</principle>
+    <principle>For parallel tasks, spawn multiple agents in a SINGLE message with multiple Task calls</principle>
+    <principle>Create handoff documents between sequential agent phases</principle>
+    <principle>Synthesize outputs after each agent completes</principle>
+
+    <available-agents>
+      | Agent | subagent_type | Purpose |
+      |-------|---------------|---------|
+      | Planner | everything-claude-code:planner | Implementation planning |
+      | TDD Guide | everything-claude-code:tdd-guide | Test-first development |
+      | Build Resolver | everything-claude-code:build-error-resolver | Fix build errors |
+      | Code Reviewer | everything-claude-code:code-reviewer | Quality review |
+      | Security Reviewer | everything-claude-code:security-reviewer | Security analysis |
+    </available-agents>
+  </orchestrator-protocol>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 0: Project Knowledge Loading                                       -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="0" goal="Load project knowledge once at session start" tag="knowledge-init">
+    <critical>📚 Load ALL project knowledge ONCE at session start, pass to ECC agents</critical>
+
+    <action>Load and cache {project-root}/_ecc/knowledge/code-review-patterns.md → {{cached_review_patterns}}</action>
+    <action>Load and cache {project-root}/docs/architecture/firestore-patterns.md → {{cached_firestore}}</action>
+    <action>Load and cache {project-root}/docs/architecture/state-management.md → {{cached_state_mgmt}}</action>
+    <action>Load and cache {project-root}/docs/architecture/component-patterns.md → {{cached_components}}</action>
+    <action>Store combined as {{project_patterns}} for passing to ECC agents</action>
+
+    <action>Load and cache .claude/rules/testing.md → {{cached_testing_guidelines}}</action>
+    <action>Store as {{project_testing_patterns}} for TDD Guide agents</action>
+
+    <output>📚 **ECC Orchestrator Initialized — Project Knowledge Cached**
+
+      Knowledge loaded for session:
+      - Code review patterns: {{review_patterns_summary}}
+      - Architecture: firestore, state management, component patterns
+      - Testing guidelines: loaded
+
+      ECC agents will receive cached context.
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 1: Find and Load Story                                             -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="1" goal="Find next ready story and load it" tag="story-discovery">
+    <check if="{{story_path}} is provided">
+      <action>Use {{story_path}} directly</action>
+      <action>Read COMPLETE story file</action>
+      <action>Extract story_key from filename or metadata</action>
+      <goto anchor="task_check" />
+    </check>
+
+    <check if="{{sprint_status}} file exists">
+      <action>Load the FULL file: {{sprint_status}}</action>
+      <action>Find the FIRST story with status "ready-for-dev"</action>
+
+      <check if="no ready-for-dev story found">
+        <output>📋 No ready-for-dev stories found in sprint-status.yaml
+
+          **Options:**
+          1. Run `ecc-create-story` to create next story with ECC planning
+          2. Specify a particular story file path
+        </output>
+        <ask>Choose option [1] or [2], or provide story path:</ask>
+      </check>
+    </check>
+
+    <anchor id="task_check" />
+    <action>Parse sections: Story, Acceptance Criteria, Tasks/Subtasks, Dev Notes</action>
+    <action>Identify first incomplete task (unchecked [ ])</action>
+    <action>Set {{story_context}} = summary of story requirements for ECC agents</action>
+
+    <!-- ARCHITECTURE ENFORCEMENT: Load architectural ACs and documented patterns -->
+    <critical>🏗️ ARCHITECTURE ENFORCEMENT: Extract architectural ACs and pattern documentation</critical>
+    <action>Parse "Architectural Acceptance Criteria" section from story</action>
+    <action>Extract {{file_location_acs}} - list of required file paths</action>
+    <action>Extract {{pattern_acs}} - required patterns from documented architecture</action>
+    <action>Extract {{antipattern_acs}} - things that must NOT happen per docs</action>
+    <action>Parse "File Specification" table for {{expected_file_paths}}</action>
+    <action>Extract {{architecture_reference}} - source of architectural patterns</action>
+
+    <check if="architectural ACs found">
+      <output>🏗️ **Architectural Requirements Loaded**
+
+        **Architecture Source:** {{architecture_reference}}
+
+        **File Location ACs:** {{file_location_ac_count}}
+        **Pattern ACs:** {{pattern_ac_count}}
+        **Anti-Pattern ACs:** {{antipattern_ac_count}}
+
+        Implementation will be validated against documented patterns.
+      </output>
+    </check>
+
+    <check if="NO architectural ACs found">
+      <output>⚠️ **Warning: No Architectural ACs Found**
+
+        This story was created without architectural acceptance criteria.
+        This may lead to deviation from documented architecture.
+
+        **Recommended Action:** Re-create story using `ecc-create-story` workflow
+        to generate ACs from architecture documentation.
+      </output>
+      <ask>Continue without architectural validation? [Y/N]</ask>
+    </check>
+
+    <!-- IMPACT ANALYSIS PRE-FLIGHT: Check for cross-cutting risks -->
+    <check if="story File Specification touches files in multiple src/features/ OR shared services/components">
+      <output>**Pre-flight:** This story crosses feature boundaries.
+        Consider running `/ecc-impact-analysis {{story_key}}` to check for sprint conflicts and transitive dependents before starting implementation.
+      </output>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 1.5: Branch Verification & Setup                                   -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="1.5" goal="Ensure correct feature branch before any code changes" tag="branch-check">
+    <critical>BRANCH GUARD: All development MUST happen on a feature branch off develop.</critical>
+    <critical>NEVER start coding on main or develop - always use a feature branch.</critical>
+
+    <action>Run `git branch --show-current` → {{current_branch}}</action>
+    <action>Run `git status --porcelain` → {{git_status}}</action>
+
+    <!-- Case 1: On a protected branch (main or develop) -->
+    <check if="{{current_branch}} == 'main' OR {{current_branch}} == 'develop'">
+      <check if="{{git_status}} has uncommitted changes">
+        <output>**BRANCH WARNING**
+
+          You are on **{{current_branch}}** (protected) with uncommitted changes.
+          These changes must be moved to a feature branch before proceeding.</output>
+        <ask>Stash changes and create feature branch? [Y/N]</ask>
+        <check if="user says Y">
+          <action>Run `git stash`</action>
+        </check>
+        <check if="user says N">
+          <output>Cannot proceed on a protected branch. Commit or stash changes, then create a feature branch.</output>
+          <action>EXIT workflow</action>
+        </check>
+      </check>
+
+      <action>Run `git checkout develop`</action>
+      <action>Run `git pull origin develop`</action>
+      <action>Derive branch name from story key: feature/{{story_key}}</action>
+      <action>Run `git checkout -b feature/{{story_key}}`</action>
+
+      <check if="stashed changes exist">
+        <action>Run `git stash pop`</action>
+        <output>Stashed changes restored on feature branch.</output>
+      </check>
+
+      <action>Set {{current_branch}} = feature/{{story_key}}</action>
+      <output>**Feature Branch Created**
+
+        Branch: feature/{{story_key}} (from develop)
+
+        All development will happen on this branch.</output>
+    </check>
+
+    <!-- Case 2: Already on a feature branch -->
+    <check if="{{current_branch}} != 'main' AND {{current_branch}} != 'develop'">
+      <!-- Verify branch is up-to-date with develop -->
+      <action>Run `git fetch origin`</action>
+      <action>Run `git log HEAD..origin/develop --oneline` → {{behind_commits}}</action>
+
+      <check if="{{behind_commits}} is not empty">
+        <output>**BRANCH SYNC WARNING**
+
+          Branch **{{current_branch}}** is behind develop by commits:
+          {{behind_commits}}
+
+          Rebasing before development prevents merge conflicts later.</output>
+        <ask>Rebase onto latest develop? [Y/N]</ask>
+        <check if="user says Y">
+          <action>Run `git rebase origin/develop`</action>
+          <check if="rebase conflict">
+            <output>**REBASE CONFLICT** — Resolve manually and re-run ecc-dev-story.</output>
+            <action>EXIT workflow</action>
+          </check>
+          <output>Branch rebased onto latest develop.</output>
+        </check>
+        <check if="user says N">
+          <output>Proceeding with potentially outdated branch. Merge conflicts may occur later.</output>
+        </check>
+      </check>
+
+      <check if="{{behind_commits}} is empty">
+        <output>**Branch Verified**
+
+          Branch: {{current_branch}} (up-to-date with develop)
+
+          Ready to proceed with development.</output>
+      </check>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 2: ECC Planner - Implementation Planning                           -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="2" goal="Spawn ECC Planner for implementation planning" tag="ecc-planner">
+    <critical>🎭 ECC ORCHESTRATOR: Spawning ECC Planner agent</critical>
+
+    <action>Prepare planner context:
+      - Story requirements: {{story_context}}
+      - Architecture patterns: {{project_patterns}}
+      - Incomplete tasks: {{task_list}}
+    </action>
+
+    <output>🎭 **Spawning ECC Planner...**
+
+      Task: Create implementation plan for story {{story_key}}
+      Context: Project patterns + story requirements
+    </output>
+
+    <ecc-spawn agent="planner">
+      <task-call>
+        subagent_type: "everything-claude-code:planner"
+        description: "Plan story implementation"
+        prompt: |
+          Plan the implementation for story: {{story_key}}
+
+          **Story Requirements:**
+          {{story_context}}
+
+          **Tasks to Implement:**
+          {{task_list}}
+
+          **Architecture Patterns:**
+          {{project_patterns}}
+
+          **Output Required:**
+          1. Implementation approach for each task
+          2. File changes required
+          3. Dependencies and order
+          4. Risk assessment
+          5. Testing strategy alignment
+
+          Create a clear implementation plan that the TDD Guide agent can follow.
+      </task-call>
+    </ecc-spawn>
+
+    <action>Collect planner output as {{implementation_plan}}</action>
+    <action>Store in Dev Agent Record → Implementation Plan</action>
+
+    <output>✅ **ECC Planner Complete**
+
+      Implementation plan created:
+      {{implementation_plan_summary}}
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 2.5: Post-Planning Complexity Check                                -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="2.5" goal="Validate story size after planning reveals true scope" tag="post-planning-size">
+    <critical>📏 MID-STORY SIZING: Check if planning revealed hidden complexity</critical>
+
+    <action>Extract from {{implementation_plan}}:
+      - {{planned_files}}: Number of files planner identified for changes
+      - {{planned_subtasks}}: Subtasks inferred from plan
+      - {{dependencies_discovered}}: New dependencies found during planning
+    </action>
+
+    <action>Compare to original story metrics:
+      - {{original_files}}: From story File List / File Specification
+      - {{original_subtasks}}: From story Tasks section
+    </action>
+
+    <action>Calculate growth:
+      - {{file_growth}} = planned_files - original_files
+      - {{subtask_growth}} = planned_subtasks - original_subtasks
+    </action>
+
+    <check if="file_growth > 3 OR subtask_growth > 5">
+      <output>⚠️ **COMPLEXITY GROWTH DETECTED**
+
+        **Original Story Estimate:**
+        - Files: {{original_files}}
+        - Subtasks: {{original_subtasks}}
+
+        **After Planning:**
+        - Files: {{planned_files}} (+{{file_growth}})
+        - Subtasks: {{planned_subtasks}} (+{{subtask_growth}})
+
+        **Growth Alert Thresholds:**
+        - File growth > 3: {{file_growth > 3}}
+        - Subtask growth > 5: {{subtask_growth > 5}}
+
+        **Recommendation:** Consider splitting this story before proceeding.
+      </output>
+
+      <ask>How to proceed?
+        [C]ontinue - Accept increased scope (document risk)
+        [S]plit - Split story now before implementation
+        [A]bort - Stop and re-scope with SM
+
+        Choose [C], [S], or [A]:</ask>
+
+      <check if="user chooses C">
+        <action>Document in Dev Notes:
+          - Complexity Growth Accepted: {date}
+          - Original scope: {{original_files}} files, {{original_subtasks}} subtasks
+          - Actual scope: {{planned_files}} files, {{planned_subtasks}} subtasks
+          - Risk: May require extended implementation time
+        </action>
+        <output>⚠️ Proceeding with increased scope. Risk documented.</output>
+      </check>
+
+      <check if="user chooses S">
+        <action>Invoke story-sizing workflow for this story</action>
+        <action>Create split stories</action>
+        <action>Update sprint-status.yaml with new stories</action>
+        <action>Continue with first split story</action>
+      </check>
+
+      <check if="user chooses A">
+        <action>Mark story status as "blocked" in sprint-status.yaml</action>
+        <output>🛑 Story blocked for re-scoping. Run create-story to revise.</output>
+        <stop/>
+      </check>
+    </check>
+
+    <check if="file_growth &lt;= 3 AND subtask_growth &lt;= 5">
+      <output>✅ Planning scope matches story estimate. Proceeding.</output>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 3: Mark Story In-Progress                                          -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="3" goal="Mark story in-progress" tag="status-update">
+    <check if="{{sprint_status}} file exists">
+      <action>Update story status: ready-for-dev → in-progress</action>
+      <output>🚀 Story {{story_key}} marked in-progress</output>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 4: ECC TDD Guide - Test-First Implementation                       -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="4" goal="Spawn ECC TDD Guide for test-first implementation" tag="ecc-tdd">
+    <critical>🎭 ECC ORCHESTRATOR: Spawning ECC TDD Guide agent for each task</critical>
+    <critical>🏗️ ARCHITECTURE ENFORCEMENT: Validate file locations after each task</critical>
+    <critical>🧪 TDD WATCH MODE: Start watcher once, cache files, avoid re-reads</critical>
+    <critical>📝 BATCHED PROGRESS: Track subtasks in memory, write story file only on task_complete</critical>
+
+    <!-- PROGRESS TRACKER: Initialize in-memory tracking to avoid per-subtask story edits -->
+    <action>Initialize progress tracker in memory:
+      {{progress_tracker}} = {
+        completed_subtasks: [],
+        completed_tasks: [],
+        current_task: null,
+        files_changed: []
+      }
+    </action>
+    <output>📝 Progress tracker initialized. Story file updates batched at task boundaries.</output>
+
+    <!-- SIZING METRICS: Track cumulative implementation size in memory -->
+    <action>Run `dust src/features/ -d 2` to capture baseline directory sizes for context budgeting</action>
+    <action>Initialize sizing metrics in memory:
+      {{sizing_metrics}} = {
+        current_files: 0,
+        current_loc: 0,
+        completed_task_count: 0,
+        remaining_tasks: length of {{task_list}},
+        baseline_dir_sizes: output of dust command
+      }
+    </action>
+
+    <!-- TDD EFFICIENCY: Minimize redundant reads and test runs -->
+    <action>For each task, read test + implementation files ONCE before starting TDD loop.
+      After editing, context already has new content — avoid redundant re-reads of unchanged files.
+      Run tests per-edit with `npx vitest run <path>` — do NOT run full suite per subtask.
+    </action>
+
+    <loop for="each incomplete task in {{task_list}}">
+      <output>🎭 **Spawning ECC TDD Guide for Task: {{current_task}}**
+
+        Phase: RED-GREEN-REFACTOR cycle
+      </output>
+
+      <ecc-spawn agent="tdd-guide">
+        <task-call>
+          subagent_type: "everything-claude-code:tdd-guide"
+          description: "TDD implementation for {{current_task}}"
+          prompt: |
+            Implement task using strict TDD methodology: {{current_task}}
+
+            **Implementation Plan (from Planner):**
+            {{implementation_plan}}
+
+            **Testing Patterns:**
+            {{project_testing_patterns}}
+
+            **Cached Testing Guidelines (from .claude/rules/testing.md):**
+            {{cached_testing_guidelines}}
+
+            ---
+
+            ## 🚨 MANDATORY: Documented Architecture Compliance
+
+            **Architecture Source:** {{architecture_reference}}
+
+            **You MUST follow the documented architectural patterns.**
+            Creating files outside documented locations creates technical debt.
+
+            **Expected File Paths (from story File Specification):**
+            {{expected_file_paths}}
+
+            **Documented File Structure Patterns:**
+            {{file_location_acs}}
+
+            **Documented Pattern Requirements:**
+            {{pattern_acs}}
+
+            **Anti-Patterns from Documentation (MUST NOT DO):**
+            {{antipattern_acs}}
+
+            ---
+
+            **Requirements:**
+            1. Write FAILING tests first (RED phase)
+            2. Implement MINIMAL code to pass tests (GREEN phase)
+            3. Refactor while keeping tests green (REFACTOR phase)
+            4. Ensure 80%+ coverage for new code
+            5. **Create files ONLY at locations specified in story File Specification**
+            6. **Follow all patterns documented in {{architecture_reference}}**
+            7. **Run tests per-edit with `npx vitest run <path>` — avoid full suite per subtask**
+            8. **Do NOT run npm run build or npx tsc per task — defer to Step 5 consolidated validation**
+            9. **Do NOT edit the story file for subtask completion — report completed subtasks in your output, the orchestrator will batch-update**
+
+            **Task Details:**
+            {{current_task_details}}
+
+            **Expected Output:**
+            - Test files created/modified
+            - Implementation files created/modified (AT SPECIFIED PATHS)
+            - Coverage report
+            - List of completed subtasks (for batch tracking, NOT written to story file)
+        </task-call>
+      </ecc-spawn>
+
+      <action>Collect TDD output for {{current_task}}</action>
+
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <!-- ARCHITECTURE VALIDATION: Check file locations after each task          -->
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <action>Identify new files created by TDD Guide</action>
+      <action>Validate each new file against {{expected_file_paths}} and architectural ACs</action>
+
+      <check if="file location violation detected">
+        <output>🚨 **ARCHITECTURAL VIOLATION DETECTED**
+
+          **Violation Type:** File Location Mismatch
+
+          **Expected:** {{expected_path}}
+          **Actual:** {{actual_path}}
+
+          **Affected AC:** {{violated_ac}}
+
+          This violates the story's architectural requirements.
+        </output>
+
+        <ask>How to handle?
+          [F]ix - Move file to correct location and update imports
+          [E]xception - Document exception (requires justification)
+          [A]bort - Stop implementation until resolved</ask>
+
+        <check if="user chooses F">
+          <action>Move file from {{actual_path}} to {{expected_path}}</action>
+          <action>Update all imports referencing the old path</action>
+          <action>Re-run tests to ensure nothing broke</action>
+          <output>✅ File moved to correct location. Imports updated.</output>
+        </check>
+
+        <check if="user chooses E">
+          <ask>Provide justification for exception:</ask>
+          <action>Document exception in story Dev Notes:
+            - Architectural exception for: {{actual_path}}
+            - Expected: {{expected_path}}
+            - Justification: {{user_justification}}
+            - Date: {date}
+          </action>
+          <output>⚠️ Exception documented. Will be flagged in code review.</output>
+        </check>
+
+        <check if="user chooses A">
+          <action>Mark story as blocked</action>
+          <output>🛑 Implementation paused. Resolve architectural issue before continuing.</output>
+          <stop/>
+        </check>
+      </check>
+
+      <!-- Anti-pattern validation (based on documented anti-patterns) -->
+      <check if="file violates any documented anti-pattern in {{antipattern_acs}}">
+        <output>🚨 **ANTI-PATTERN VIOLATION**
+
+          **Architecture Source:** {{architecture_reference}}
+
+          **Issue:** File violates documented anti-pattern
+          **Path:** {{actual_path}}
+
+          **Anti-Pattern AC Violated:** {{violated_antipattern_ac}}
+
+          **Documented Requirement:**
+          {{antipattern_ac.description}}
+
+          **Expected Location (per documented patterns):**
+          {{expected_location_from_docs}}
+        </output>
+
+        <action>Move file to location per documented patterns</action>
+        <action>Update imports</action>
+      </check>
+
+      <!-- Handle build errors with Build Resolver -->
+      <check if="build errors detected">
+        <output>⚠️ Build errors detected - spawning Build Resolver...</output>
+
+        <ecc-spawn agent="build-resolver">
+          <task-call>
+            subagent_type: "everything-claude-code:build-error-resolver"
+            description: "Fix build errors"
+            prompt: |
+              Fix the build/TypeScript errors with MINIMAL changes.
+
+              **Errors:**
+              {{build_errors}}
+
+              **Rules:**
+              - Fix ONLY what's needed to make build pass
+              - Do NOT refactor unrelated code
+              - Do NOT change architecture
+              - Do NOT move files to different locations
+              - Add type annotations where missing
+              - Fix imports/exports
+          </task-call>
+        </ecc-spawn>
+      </check>
+
+      <!-- BATCHED PROGRESS: Track in memory, then single story file write per task -->
+      <action>Add completed subtasks from TDD Guide output to {{progress_tracker}}.completed_subtasks</action>
+      <action>Add {{current_task}} to {{progress_tracker}}.completed_tasks</action>
+      <action>Add changed files to {{progress_tracker}}.files_changed</action>
+
+      <!-- BATCH WRITE: Single story file edit for entire task (all subtasks + task checkbox) -->
+      <action>BATCH EDIT story file:
+        - Mark all subtasks in {{progress_tracker}}.completed_subtasks for this task as [x]
+        - Mark {{current_task}} as [x] complete
+        - Update File List with {{progress_tracker}}.files_changed
+      </action>
+      <action>Clear {{progress_tracker}}.completed_subtasks for next task</action>
+
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <!-- MID-TASK SIZING CHECK: Alert if implementation exceeds thresholds      -->
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <sizing-check tag="mid-task-size">
+        <action>Update {{sizing_metrics}} from task output (in memory, no file reads):
+          - Increment current_files with new files from this task
+          - Add LOC from this task to current_loc
+          - Increment completed_task_count
+          - Decrement remaining_tasks
+        </action>
+
+        <check if="sizing_metrics.current_files > 8 OR sizing_metrics.current_loc > (500 * sizing_metrics.completed_task_count)">
+          <action>Run `dust src/features/<feature>/ -d 2` to compare against baseline and show growth</action>
+          <output>⚠️ **MID-IMPLEMENTATION SIZE ALERT**
+
+            **Task Completed:** {{current_task}}
+
+            **Current Metrics:**
+            - Files modified: {{sizing_metrics.current_files}} (limit: 8)
+            - Lines added: {{sizing_metrics.current_loc}}
+            - Remaining tasks: {{sizing_metrics.remaining_tasks}}
+
+            **Projection:** At current rate, story will reach ~{{projected_files}} files and ~{{projected_loc}} LOC.
+
+            **Risk:** Story may be too large for single implementation cycle.
+          </output>
+
+          <ask>Continue with remaining tasks?
+            [C]ontinue - Accept current trajectory
+            [P]ause - Commit current work, create follow-up story for remaining tasks
+            [S]plit - Split remaining tasks into new story now
+
+            Choose [C], [P], or [S]:</ask>
+
+          <check if="user chooses C">
+            <action>Document in Dev Notes:
+              - Size Alert Accepted: {date}
+              - Files: {{sizing_metrics.current_files}}, LOC: {{sizing_metrics.current_loc}}
+              - Remaining tasks: {{sizing_metrics.remaining_tasks}}
+            </action>
+            <output>⚠️ Continuing. Size risk documented.</output>
+          </check>
+
+          <check if="user chooses P">
+            <action>Update story: mark remaining tasks as "Deferred to follow-up"</action>
+            <action>Create follow-up story with remaining tasks</action>
+            <action>Add cross-reference between stories</action>
+            <output>✅ Current work preserved. Follow-up story created for remaining tasks.</output>
+            <action>Jump to Step 5 (validation) — skip remaining tasks in loop</action>
+          </check>
+
+          <check if="user chooses S">
+            <action>Invoke story-sizing workflow with remaining tasks</action>
+            <action>Create split stories</action>
+            <action>Update sprint-status.yaml</action>
+            <action>Continue with first split story</action>
+          </check>
+        </check>
+      </sizing-check>
+
+      <output>✅ **Task Complete:** {{current_task}}
+
+        Files created (architecture validated):
+        {{task_files_list}}
+        Subtasks batched in single edit: {{batched_subtask_count}}
+      </output>
+    </loop>
+
+    <output>✅ **ECC TDD Guide Complete**
+
+      Tasks implemented: {{completed_task_count}}
+      Test coverage: {{coverage_percentage}}%
+      Architecture violations fixed: {{violations_fixed_count}}
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 5: Run Full Test Suite                                             -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="5" goal="Consolidated validation — build once, skip redundant type-checks" tag="validation">
+    <critical>🔨 CONSOLIDATED VALIDATION: Single build covers type checking. No separate npx tsc --noEmit.</critical>
+
+    <!-- 1. Run full test suite -->
+    <action>Run full test suite: npm test or detected test command</action>
+
+    <check if="tests fail">
+      <output>❌ Tests failing - spawning Build Resolver...</output>
+
+      <ecc-spawn agent="build-resolver">
+        <task-call>
+          subagent_type: "everything-claude-code:build-error-resolver"
+          description: "Fix test failures"
+          prompt: |
+            Fix the failing tests with minimal changes.
+
+            **Test Failures:**
+            {{test_failures}}
+
+            Fix only what's needed to make tests pass.
+        </task-call>
+      </ecc-spawn>
+
+      <action>Re-run tests after fixes</action>
+    </check>
+
+    <!-- 2. Run lint once -->
+    <action>Run linting: npm run lint or detected lint command</action>
+
+    <!-- 3. Single consolidated build (includes TypeScript type checking) -->
+    <action>Run build ONCE (includes type checking):
+      npm run build 2>&amp;1 | tee build.log
+    </action>
+
+    <check if="build fails">
+      <output>❌ Build failed - spawning Build Resolver...</output>
+
+      <ecc-spawn agent="build-resolver">
+        <task-call>
+          subagent_type: "everything-claude-code:build-error-resolver"
+          description: "Fix build/type errors"
+          prompt: |
+            Fix the build/TypeScript errors with MINIMAL changes.
+
+            **Build Output:**
+            {{build_errors}}
+
+            **Rules:**
+            - Fix ONLY what's needed to make build pass
+            - Do NOT refactor unrelated code
+            - Do NOT change architecture
+        </task-call>
+      </ecc-spawn>
+
+      <action>Re-run build ONLY if changes were made</action>
+    </check>
+
+    <!-- Do NOT run separate type-check if build passed -->
+    <check if="build passes">
+      <output>✅ Build passed (includes TypeScript type checking — no separate tsc needed)</output>
+    </check>
+
+    <output>✅ **Consolidated Validation Complete**
+
+      Tests: {{test_result}}
+      Lint: {{lint_result}}
+      Build: {{build_result}} (includes type checking)
+
+      **Build commands saved:** No per-task builds, no separate tsc --noEmit
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 6: Parallel Pre-Completion Review                                  -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="6" goal="Parallel ECC review before marking complete" tag="ecc-parallel-review">
+    <critical>🎭 ECC ORCHESTRATOR: Spawning PARALLEL review agents (SINGLE message, MULTIPLE Task calls)</critical>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- EXPLICIT PARALLEL EXECUTION DIRECTIVE                                   -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <parallel-execution-rule>
+      🚨 HOW TO ACHIEVE TRUE PARALLELISM:
+
+      You MUST issue BOTH Task tool invocations in your NEXT SINGLE RESPONSE.
+
+      ❌ WRONG (Sequential - slow):
+         Response 1: Task(code-reviewer) → wait → result
+         Response 2: Task(security-reviewer) → wait → result
+
+      ✅ CORRECT (Parallel - fast):
+         Response 1: Task(code-reviewer) + Task(security-reviewer)
+         → Both run simultaneously → Both results returned together
+
+      IN YOUR NEXT MESSAGE, include BOTH Task tool calls at once.
+    </parallel-execution-rule>
+
+    <output>🎭 **Spawning Parallel Review Team...**
+
+      Agents running in parallel:
+      1. Code Reviewer - Quality and best practices
+      2. Security Reviewer - Vulnerability analysis
+    </output>
+
+    <!-- CRITICAL: These must be in a SINGLE message for true parallelism -->
+    <ecc-spawn-parallel>
+      <task-call-1>
+        subagent_type: "everything-claude-code:code-reviewer"
+        description: "Code quality review"
+        prompt: |
+          Review the implementation for story: {{story_key}}
+
+          **Files Changed:**
+          {{file_list}}
+
+          **Check for:**
+          - Code quality and maintainability
+          - Error handling
+          - Performance issues
+          - Test quality
+          - Documentation
+
+          Output: List of findings with severity (HIGH/MEDIUM/LOW)
+      </task-call-1>
+
+      <task-call-2>
+        subagent_type: "everything-claude-code:security-reviewer"
+        description: "Security review"
+        prompt: |
+          Security review for story: {{story_key}}
+
+          **Files Changed:**
+          {{file_list}}
+
+          **Check for:**
+          - OWASP Top 10 vulnerabilities
+          - Hardcoded secrets
+          - Input validation
+          - Authentication/authorization issues
+
+          Output: Security findings with severity and remediation
+      </task-call-2>
+    </ecc-spawn-parallel>
+
+    <action>Collect outputs from both agents</action>
+    <action>Merge findings by severity</action>
+
+    <!-- Review Synthesis -->
+    <output>🗺️ **Review Synthesis - Parallel Review Results**
+
+      **Code Review Findings:**
+      {{code_review_findings}}
+
+      **Security Review Findings:**
+      {{security_review_findings}}
+
+      **Cross-Cutting Analysis:**
+      - Workflow chain impacts: {{workflow_impacts}}
+      - Architecture alignment: {{architecture_alignment}}
+    </output>
+
+    <check if="HIGH severity issues found">
+      <action>Fix HIGH severity issues before proceeding</action>
+      <action>Re-run affected tests</action>
+    </check>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 7: Story Completion                                                -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="7" goal="Mark story complete and update status" tag="completion">
+    <action>Verify ALL tasks marked [x] complete</action>
+    <action>Verify ALL functional acceptance criteria satisfied</action>
+    <action>Verify ALL architectural acceptance criteria satisfied (validated per-task in Step 4)</action>
+    <action>Update story Status to "review"</action>
+
+    <check if="{{sprint_status}} file exists">
+      <action>Update sprint-status.yaml: {{story_key}} → review</action>
+    </check>
+
+    <output>✅ **Story Implementation Complete**
+
+      Story: {{story_key}}
+      Status: Ready for review
+      Tasks completed: {{task_count}}
+      Coverage: {{coverage_percentage}}%
+
+      **ECC Agents Used:**
+      - Planner: Implementation planning
+      - TDD Guide: Test-first development
+      - Build Resolver: Error fixing (if needed)
+      - Code Reviewer: Quality review
+      - Security Reviewer: Security analysis
+
+      **Architectural Validation:**
+      - File Location ACs: ✅ {{file_location_passed}}/{{file_location_total}}
+      - Pattern ACs: ✅ {{pattern_passed}}/{{pattern_total}}
+      - Anti-Pattern ACs: ✅ {{antipattern_passed}}/{{antipattern_total}}
+      {{#if exceptions_count > 0}}
+      - ⚠️ Exceptions documented: {{exceptions_count}} (will be reviewed in code review)
+      {{/if}}
+    </output>
+  </step>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STEP 8: Next Steps                                                      -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <step n="8" goal="Provide next steps after story completion" tag="next-steps">
+    <!-- Check if story touched UI components that may need E2E coverage -->
+    <action>Check if any files in {{progress_tracker}}.files_changed match *.tsx in components/ or views/</action>
+    <action>Set {{has_ui_changes}} = true/false</action>
+
+    <output>**Next Steps:**
+      - Run `ecc-code-review` for external review
+      {{#if has_ui_changes}}
+      - Run `/ecc-e2e` for E2E test coverage (UI changes detected)
+      {{/if}}
+      - Or proceed to deployment if approved
+    </output>
+  </step>
+
+</workflow>

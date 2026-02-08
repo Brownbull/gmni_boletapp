@@ -51,6 +51,8 @@ export interface MySharingPreferencesSectionProps {
   lang?: 'en' | 'es';
   /** Theme for styling */
   theme?: string;
+  /** Toast notification callback for toggle feedback */
+  onShowToast?: (message: string, type?: 'success' | 'error') => void;
 }
 
 // =============================================================================
@@ -73,6 +75,7 @@ export const MySharingPreferencesSection: React.FC<MySharingPreferencesSectionPr
   t,
   lang = 'es',
   theme = 'light',
+  onShowToast,
 }) => {
   const [isPending, setIsPending] = useState(false);
   const isMountedRef = useRef(true);
@@ -106,12 +109,15 @@ export const MySharingPreferencesSection: React.FC<MySharingPreferencesSectionPr
       setIsPending(true);
       try {
         await updatePreference(enabled);
-        // Success - preference updated (toast shown by parent or via context)
+        onShowToast?.(t('sharingPreferenceUpdated'), 'success');
+      } catch (err) {
+        onShowToast?.(t('failedToUpdatePreference'), 'error');
+        throw err; // Re-throw to trigger optimistic rollback in UserTransactionSharingToggle
       } finally {
         if (isMountedRef.current) setIsPending(false);
       }
     },
-    [updatePreference]
+    [updatePreference, onShowToast, t]
   );
 
   // Show loading state

@@ -92,7 +92,7 @@ test.describe('Group Delete Journey (Staging)', () => {
 
         // Take screenshot to see where we are
         await page.screenshot({
-            path: 'test-results/staging-delete-01b-settings.png',
+            path: 'test-results/group-delete-journey/01b-settings.png',
             fullPage: true,
         });
 
@@ -119,7 +119,7 @@ test.describe('Group Delete Journey (Staging)', () => {
 
         // Take screenshot
         await page.screenshot({
-            path: 'test-results/staging-delete-01-grupos-view.png',
+            path: 'test-results/group-delete-journey/01-grupos-view.png',
             fullPage: true,
         });
 
@@ -148,7 +148,7 @@ test.describe('Group Delete Journey (Staging)', () => {
 
         // Take screenshot
         await page.screenshot({
-            path: 'test-results/staging-delete-02-group-created.png',
+            path: 'test-results/group-delete-journey/02-group-created.png',
             fullPage: true,
         });
 
@@ -172,7 +172,7 @@ test.describe('Group Delete Journey (Staging)', () => {
 
         // Take screenshot
         await page.screenshot({
-            path: 'test-results/staging-delete-03-owner-warning.png',
+            path: 'test-results/group-delete-journey/03-owner-warning.png',
             fullPage: true,
         });
 
@@ -191,7 +191,7 @@ test.describe('Group Delete Journey (Staging)', () => {
 
         // Take screenshot
         await page.screenshot({
-            path: 'test-results/staging-delete-04-delete-dialog.png',
+            path: 'test-results/group-delete-journey/04-delete-dialog.png',
             fullPage: true,
         });
 
@@ -221,7 +221,7 @@ test.describe('Group Delete Journey (Staging)', () => {
 
         // Take screenshot
         await page.screenshot({
-            path: 'test-results/staging-delete-05-name-typed.png',
+            path: 'test-results/group-delete-journey/05-name-typed.png',
             fullPage: true,
         });
 
@@ -267,7 +267,7 @@ test.describe('Group Delete Journey (Staging)', () => {
 
         // Take final screenshot
         await page.screenshot({
-            path: 'test-results/staging-delete-07-group-removed.png',
+            path: 'test-results/group-delete-journey/07-group-removed.png',
             fullPage: true,
         });
 
