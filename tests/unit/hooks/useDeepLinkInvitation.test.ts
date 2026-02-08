@@ -26,6 +26,13 @@ import {
 import type { PendingInvitation } from '../../../src/types/sharedGroup';
 import { Timestamp } from 'firebase/firestore';
 
+// Mock Firebase Auth (TD-CONSOLIDATED-5: getAuth used for email in security rules)
+vi.mock('firebase/auth', () => ({
+    getAuth: vi.fn(() => ({
+        currentUser: { email: 'friend@example.com' },
+    })),
+}));
+
 // Mock the deep link handler utilities
 vi.mock('../../../src/utils/deepLinkHandler', () => ({
     parseShareCodeFromUrl: vi.fn(),
@@ -239,7 +246,7 @@ describe('useDeepLinkInvitation', () => {
                 expect(result.current.invitation).toEqual(MOCK_INVITATION);
             });
 
-            expect(mockGetInvitationByShareCode).toHaveBeenCalledWith(MOCK_DB, VALID_SHARE_CODE);
+            expect(mockGetInvitationByShareCode).toHaveBeenCalledWith(MOCK_DB, VALID_SHARE_CODE, 'friend@example.com');
         });
 
         it('should set loading state during fetch', async () => {
@@ -438,7 +445,7 @@ describe('useDeepLinkInvitation', () => {
             rerender({ isAuth: true, userId: mockUserId });
 
             await waitFor(() => {
-                expect(mockGetInvitationByShareCode).toHaveBeenCalledWith(MOCK_DB, VALID_SHARE_CODE);
+                expect(mockGetInvitationByShareCode).toHaveBeenCalledWith(MOCK_DB, VALID_SHARE_CODE, 'friend@example.com');
             });
         });
 
@@ -705,7 +712,7 @@ describe('useDeepLinkInvitation', () => {
                 expect(result.current.shareCode).toBe(urlCode);
             });
 
-            expect(mockGetInvitationByShareCode).toHaveBeenCalledWith(MOCK_DB, urlCode);
+            expect(mockGetInvitationByShareCode).toHaveBeenCalledWith(MOCK_DB, urlCode, 'friend@example.com');
         });
     });
 });

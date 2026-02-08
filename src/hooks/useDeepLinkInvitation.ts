@@ -42,6 +42,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { getAuth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import type { PendingInvitation } from '../types/sharedGroup';
 import { getInvitationByShareCode } from '../services/invitationService';
@@ -195,7 +196,9 @@ export function useDeepLinkInvitation({
         setShareCode(code);
 
         try {
-            const result = await getInvitationByShareCode(db, code);
+            // TD-CONSOLIDATED-5: Pass user email to comply with security rules
+            const userEmail = getAuth().currentUser?.email ?? null;
+            const result = await getInvitationByShareCode(db, code, userEmail);
 
             if (!result) {
                 setError('NOT_FOUND');
@@ -212,7 +215,9 @@ export function useDeepLinkInvitation({
                 }
             }
         } catch (err) {
-            console.error('[useDeepLinkInvitation] Error fetching invitation:', err);
+            if (import.meta.env.DEV) {
+                console.error('[useDeepLinkInvitation] Error fetching invitation:', err);
+            }
 
             if (err instanceof Error) {
                 if (err.message.includes('network') || err.message.includes('offline')) {

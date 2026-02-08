@@ -25,7 +25,7 @@ import {
 } from 'firebase/firestore';
 import type { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import type { SharedGroup } from '@/types/sharedGroup';
-import { validateAppId } from '@/utils/validationUtils';
+import { validateAppId, validateGroupId } from '@/utils/validationUtils';
 import {
     GROUPS_COLLECTION,
     CHANGELOG_SUBCOLLECTION,
@@ -164,19 +164,27 @@ async function deleteSubcollection(
  * Delete all pending invitations for a specific group.
  *
  * Story 14d-v2-1-7b: Deletion Service Logic
+ * TD-CONSOLIDATED-5: Must filter by invitedByUserId to comply with list security rules
  *
  * @param db - Firestore instance
  * @param groupId - Group ID
+ * @param userId - User ID of the inviter (group owner) - required for security rules
  * @returns {Promise<void>}
  *
  * @internal
  */
 async function deletePendingInvitationsForGroup(
     db: Firestore,
-    groupId: string
+    groupId: string,
+    userId: string
 ): Promise<void> {
     const invitationsRef = collection(db, INVITATIONS_COLLECTION);
-    const q = query(invitationsRef, where('groupId', '==', groupId));
+    // TD-CONSOLIDATED-5: Security rules require list queries to filter by invitedByUserId
+    const q = query(
+        invitationsRef,
+        where('groupId', '==', groupId),
+        where('invitedByUserId', '==', userId)
+    );
     const snapshot = await getDocs(q);
 
     if (!snapshot.empty) {
@@ -229,6 +237,8 @@ export async function deleteGroupAsLastMember(
     if (!userId || !groupId) {
         throw new Error('User ID and group ID are required');
     }
+    // TD-CONSOLIDATED-6: Validate groupId before Firestore path construction
+    validateGroupId(groupId);
 
     // ECC Review: HIGH severity fix - validate appId to prevent path traversal
     if (!validateAppId(appId)) {
@@ -300,7 +310,10 @@ export async function deleteGroupAsLastMember(
         }
 
         // 4. Delete pending invitations for the group
-        await deletePendingInvitationsForGroup(db, groupId);
+        // TD-CONSOLIDATED-5: Pass userId for security rule compliance.
+        // Note: Only deletes invitations created by this userId. If ownership was
+        // transferred, invitations from previous owners remain but expire via 7-day TTL.
+        await deletePendingInvitationsForGroup(db, groupId, userId);
     } catch (cascadeError) {
         // ECC Review: MEDIUM severity fix - structured logging for cascade failures
         if (import.meta.env.DEV) {
@@ -383,6 +396,8 @@ export async function deleteGroupAsOwner(
     if (!ownerId || !groupId) {
         throw new Error('Owner ID and group ID are required');
     }
+    // TD-CONSOLIDATED-6: Validate groupId before Firestore path construction
+    validateGroupId(groupId);
 
     // ECC Review: HIGH severity fix - validate appId to prevent path traversal
     if (!validateAppId(appId)) {
@@ -453,7 +468,10 @@ export async function deleteGroupAsOwner(
         }
 
         // 4. Delete pending invitations for the group
-        await deletePendingInvitationsForGroup(db, groupId);
+        // TD-CONSOLIDATED-5: Pass ownerId for security rule compliance.
+        // Note: Only deletes invitations created by this ownerId. Invitations from
+        // previous owners (if ownership was transferred) expire via 7-day TTL.
+        await deletePendingInvitationsForGroup(db, groupId, ownerId);
     } catch (cascadeError) {
         // ECC Review: MEDIUM severity fix - structured logging for cascade failures
         if (import.meta.env.DEV) {

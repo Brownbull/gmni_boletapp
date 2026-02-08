@@ -63,7 +63,16 @@ vi.mock('../../../src/utils/validationUtils', () => ({
     }),
     // Story 14d-v2-1-13+14: ECC Security Review fix
     validateAppId: vi.fn((appId: string) => appId === 'boletapp'),
+    // TD-CONSOLIDATED-6: validateGroupId with real validation behavior
+    validateGroupId: vi.fn((groupId: string) => {
+        if (!groupId || typeof groupId !== 'string' || !/^[a-zA-Z0-9_-]{1,128}$/.test(groupId)) {
+            throw new Error('Invalid groupId: must be 1-128 characters containing only letters, numbers, hyphens, or underscores');
+        }
+    }),
 }));
+
+// Mock userPreferencesService (re-export removed, import now from validationUtils)
+vi.mock('../../../src/services/userPreferencesService', () => ({}));
 
 import {
     collection,
@@ -371,13 +380,15 @@ describe('invitationService', () => {
     // getInvitationByShareCode Tests (AC #1)
     // =========================================================================
     describe('getInvitationByShareCode', () => {
+        const TEST_EMAIL = 'friend@example.com';
+
         it('queries pendingInvitations collection', async () => {
             mockGetDocs.mockResolvedValue({
                 docs: [],
                 empty: true,
             } as any);
 
-            await getInvitationByShareCode(mockDb, 'Ab3dEf7hIj9kLm0p');
+            await getInvitationByShareCode(mockDb, 'Ab3dEf7hIj9kLm0p', TEST_EMAIL);
 
             expect(mockCollection).toHaveBeenCalledWith(mockDb, 'pendingInvitations');
         });
@@ -388,7 +399,7 @@ describe('invitationService', () => {
                 empty: true,
             } as any);
 
-            await getInvitationByShareCode(mockDb, 'Ab3dEf7hIj9kLm0p');
+            await getInvitationByShareCode(mockDb, 'Ab3dEf7hIj9kLm0p', TEST_EMAIL);
 
             expect(mockWhere).toHaveBeenCalledWith('shareCode', '==', 'Ab3dEf7hIj9kLm0p');
         });
@@ -399,7 +410,7 @@ describe('invitationService', () => {
                 empty: true,
             } as any);
 
-            await getInvitationByShareCode(mockDb, 'Ab3dEf7hIj9kLm0p');
+            await getInvitationByShareCode(mockDb, 'Ab3dEf7hIj9kLm0p', TEST_EMAIL);
 
             expect(mockWhere).toHaveBeenCalledWith('status', '==', 'pending');
         });
@@ -410,7 +421,7 @@ describe('invitationService', () => {
                 empty: true,
             } as any);
 
-            await getInvitationByShareCode(mockDb, 'Ab3dEf7hIj9kLm0p');
+            await getInvitationByShareCode(mockDb, 'Ab3dEf7hIj9kLm0p', TEST_EMAIL);
 
             expect(mockLimit).toHaveBeenCalledWith(1);
         });
@@ -434,7 +445,7 @@ describe('invitationService', () => {
                 empty: false,
             } as any);
 
-            const result = await getInvitationByShareCode(mockDb, 'Ab3dEf7hIj9kLm0p');
+            const result = await getInvitationByShareCode(mockDb, 'Ab3dEf7hIj9kLm0p', TEST_EMAIL);
 
             expect(result).not.toBeNull();
             expect(result!.id).toBe('invitation-123');
@@ -448,21 +459,48 @@ describe('invitationService', () => {
                 empty: true,
             } as any);
 
-            const result = await getInvitationByShareCode(mockDb, 'InvalidCode123');
+            const result = await getInvitationByShareCode(mockDb, 'InvalidCode123', TEST_EMAIL);
 
             expect(result).toBeNull();
         });
 
         it('returns null for empty shareCode', async () => {
-            const result = await getInvitationByShareCode(mockDb, '');
+            const result = await getInvitationByShareCode(mockDb, '', TEST_EMAIL);
 
             expect(result).toBeNull();
             expect(mockGetDocs).not.toHaveBeenCalled();
         });
 
         it('returns null for null shareCode', async () => {
-            const result = await getInvitationByShareCode(mockDb, null as any);
+            const result = await getInvitationByShareCode(mockDb, null as any, TEST_EMAIL);
 
+            expect(result).toBeNull();
+            expect(mockGetDocs).not.toHaveBeenCalled();
+        });
+
+        it('adds invitedEmail filter when userEmail is provided (TD-CONSOLIDATED-5)', async () => {
+            mockGetDocs.mockResolvedValue({
+                docs: [],
+                empty: true,
+            } as any);
+
+            await getInvitationByShareCode(mockDb, 'Ab3dEf7hIj9kLm0p', 'user@example.com');
+
+            expect(mockWhere).toHaveBeenCalledWith('invitedEmail', '==', 'user@example.com');
+        });
+
+        it('returns null early when userEmail is null (TD-CONSOLIDATED-5)', async () => {
+            const result = await getInvitationByShareCode(mockDb, 'Ab3dEf7hIj9kLm0p', null);
+
+            // Should return null without querying Firestore
+            expect(result).toBeNull();
+            expect(mockGetDocs).not.toHaveBeenCalled();
+        });
+
+        it('returns null early when userEmail is undefined (TD-CONSOLIDATED-5)', async () => {
+            const result = await getInvitationByShareCode(mockDb, 'Ab3dEf7hIj9kLm0p');
+
+            // Should return null without querying Firestore
             expect(result).toBeNull();
             expect(mockGetDocs).not.toHaveBeenCalled();
         });
@@ -705,7 +743,7 @@ describe('invitationService', () => {
                 empty: false,
             } as any);
 
-            const foundInvitation = await getInvitationByShareCode(mockDb, 'MockShareCode12345');
+            const foundInvitation = await getInvitationByShareCode(mockDb, 'MockShareCode12345', 'friend@example.com');
 
             expect(foundInvitation).not.toBeNull();
             expect(foundInvitation!.id).toBe(newInvitationId);
@@ -842,7 +880,7 @@ describe('invitationService', () => {
 
                 expect(result.canAddContributor).toBe(false);
                 expect(result.canAddViewer).toBe(false);
-                expect(result.reason).toBe('Group ID is required');
+                expect(result.reason).toBe('Invalid group ID');
                 expect(mockGetDoc).not.toHaveBeenCalled();
             });
 
@@ -851,7 +889,7 @@ describe('invitationService', () => {
 
                 expect(result.canAddContributor).toBe(false);
                 expect(result.canAddViewer).toBe(false);
-                expect(result.reason).toBe('Group ID is required');
+                expect(result.reason).toBe('Invalid group ID');
             });
 
             it('returns error result for undefined groupId', async () => {
@@ -859,7 +897,7 @@ describe('invitationService', () => {
 
                 expect(result.canAddContributor).toBe(false);
                 expect(result.canAddViewer).toBe(false);
-                expect(result.reason).toBe('Group ID is required');
+                expect(result.reason).toBe('Invalid group ID');
             });
         });
 

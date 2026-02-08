@@ -26,6 +26,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { KeyRound, Search, Loader2, AlertCircle } from 'lucide-react';
+import { getAuth } from 'firebase/auth';
 import { getFirestore, Timestamp } from 'firebase/firestore';
 import { isValidShareCode } from '@/utils/shareCodeUtils';
 import { getInvitationByShareCode } from '@/services/invitationService';
@@ -137,8 +138,11 @@ export const JoinGroupByCode: React.FC<JoinGroupByCodeProps> = ({
         try {
             const db = getFirestore();
 
+            // TD-CONSOLIDATED-5: Pass user email to comply with security rules
+            const userEmail = getAuth().currentUser?.email ?? null;
+
             // First, try to find a pending invitation with this share code
-            const invitation = await getInvitationByShareCode(db, code);
+            const invitation = await getInvitationByShareCode(db, code, userEmail);
 
             if (invitation) {
                 // Found an invitation - check if expired
@@ -183,7 +187,9 @@ export const JoinGroupByCode: React.FC<JoinGroupByCodeProps> = ({
             setIsLoading(false);
 
         } catch (err) {
-            console.error('[JoinGroupByCode] Error fetching invitation:', err);
+            if (import.meta.env.DEV) {
+                console.error('[JoinGroupByCode] Error fetching invitation:', err);
+            }
             setError(texts.networkError);
             setIsLoading(false);
             onShowToast?.(texts.networkError, 'error');

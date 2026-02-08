@@ -24,6 +24,13 @@ vi.mock('firebase/firestore', () => ({
     getFirestore: vi.fn(() => ({})),
 }));
 
+// Mock Firebase Auth (TD-CONSOLIDATED-5: getAuth used for email in security rules)
+vi.mock('firebase/auth', () => ({
+    getAuth: vi.fn(() => ({
+        currentUser: { email: 'test@example.com' },
+    })),
+}));
+
 // Mock invitation service
 const mockGetInvitationByShareCode = vi.fn();
 vi.mock('@/services/invitationService', () => ({
@@ -214,7 +221,8 @@ describe('JoinGroupByCode', () => {
             await waitFor(() => {
                 expect(mockGetInvitationByShareCode).toHaveBeenCalledWith(
                     expect.anything(),
-                    'aB3dEfGhIjKlMnOp'
+                    'aB3dEfGhIjKlMnOp',
+                    'test@example.com'
                 );
             });
         });

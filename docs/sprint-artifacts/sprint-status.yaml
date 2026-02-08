@@ -160,8 +160,8 @@ development_status:
   TD-CONSOLIDATED-4-cooldown-core-extraction: done  # 2-3 hrs - Extract ~80% duplicated cooldown logic to cooldownCore.ts [from: TD-14d-48 core, 36] - ECC Code Review 2026-02-08: APPROVED (9/10, 4 quick fixes applied, 100 tests pass)
 
   # TIER 2: Security (SHOULD DO) - 4-7 hrs
-  TD-CONSOLIDATED-5-invitation-read-restriction: ready-for-dev  # 2-3 hrs - Restrict pendingInvitations read to email match [from: TD-14d-5]
-  TD-CONSOLIDATED-6-groupid-validation: ready-for-dev  # 1-2 hrs - Validate groupId before Firestore field paths [from: TD-14d-55]
+  TD-CONSOLIDATED-5-invitation-read-restriction: done  # 2-3 hrs - Restrict pendingInvitations read to email match [from: TD-14d-5] - ECC Code Review 2026-02-08: APPROVED (8/10, 6 quick fixes applied, 0 blockers)
+  TD-CONSOLIDATED-6-groupid-validation: review  # 1-2 hrs - Validate groupId before Firestore field paths [from: TD-14d-55]
   TD-CONSOLIDATED-7-css-color-injection-validation: ready-for-dev  # 1-2 hrs - Validate group.color before CSS injection [from: TD-14d-28]
 
   # TIER 3: Test Quality (DO WHEN TOUCHING) - 4-6 hrs

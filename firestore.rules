@@ -185,9 +185,22 @@ service cloud.firestore {
         && request.resource.data.groupId is string
         && isGroupOwnerForInvitation(request.resource.data.groupId);
 
-      // Read: Any authenticated user can read invitations (AC #3)
-      // This allows users to see invitations sent to their email
-      allow read: if request.auth != null;
+      // Get (single document by ID): Any authenticated user can read
+      // Needed for accept/decline flows that use document IDs
+      allow get: if request.auth != null;
+
+      // List (collection query): Restricted to own invitations or own-created invitations
+      // TD-CONSOLIDATED-5: Restrict pendingInvitations list to prevent email/status exposure
+      // Two valid query patterns:
+      //   1. Invitee: filter by invitedEmail == auth email (view own invitations)
+      //   2. Inviter: filter by invitedByUserId == auth uid (owner cleanup on group deletion)
+      // Note: App uses Google Sign-In exclusively, so all users have email in token
+      allow list: if request.auth != null
+        && (
+          (request.auth.token.email != null
+            && resource.data.invitedEmail == request.auth.token.email)
+          || resource.data.invitedByUserId == request.auth.uid
+        );
 
       // Update: Only invited user can accept/decline (Story 14d-v2-1-6e AC #1)
       // Validates: email matches, status is pending, new status is terminal

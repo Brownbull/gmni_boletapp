@@ -25,7 +25,7 @@ import {
     assertSucceeds,
     assertFails,
 } from '../setup/firebase-emulator';
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, setDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, setDoc, Timestamp, query, where } from 'firebase/firestore';
 
 describe('Firestore Security Rules', () => {
     beforeAll(async () => {
@@ -1125,13 +1125,15 @@ describe('Pending Invitations Security Rules (Epic 14d-v2 Story 1.5b-2)', () => 
     });
 
     // ========================================================================
-    // AC#3: Read - Any authenticated user can read invitations
+    // AC#3: Read - get (single doc) open to auth, list restricted by email
+    // TD-CONSOLIDATED-5: Invitation Read Restriction
     // ========================================================================
 
     /**
-     * Test 5: Authenticated user can read invitation
+     * Test 5: Authenticated user can get a single invitation by document ID
+     * (get rule: any authenticated user)
      */
-    it('should allow authenticated user to read invitation (AC #3)', async () => {
+    it('should allow authenticated user to get invitation by ID (AC #3)', async () => {
         // Create an invitation
         await withSecurityRulesDisabled(async (firestore) => {
             await setDoc(
@@ -1140,7 +1142,7 @@ describe('Pending Invitations Security Rules (Epic 14d-v2 Story 1.5b-2)', () => 
             );
         });
 
-        // Any authenticated user can read
+        // Any authenticated user can get by document ID
         const user2Firestore = getAuthedFirestore(TEST_USERS.USER_2);
         const invitationDoc = doc(user2Firestore, PENDING_INVITATIONS_PATH, TEST_INVITATION_ID);
 
@@ -1148,9 +1150,31 @@ describe('Pending Invitations Security Rules (Epic 14d-v2 Story 1.5b-2)', () => 
     });
 
     /**
-     * Test 6: Authenticated user can list invitations
+     * Test 6: Authenticated user can list invitations filtered by their own email
+     * TD-CONSOLIDATED-5: list rule requires invitedEmail == auth.token.email
      */
-    it('should allow authenticated user to list invitations (AC #3)', async () => {
+    it('should allow authenticated user to list invitations filtered by own email (TD-CONSOLIDATED-5)', async () => {
+        // Create an invitation for USER_2's email
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(
+                doc(firestore, PENDING_INVITATIONS_PATH, TEST_INVITATION_ID),
+                { ...createValidInvitation(), invitedEmail: TEST_EMAILS.USER_2 }
+            );
+        });
+
+        // USER_2 with email can list with their own email filter
+        const user2Firestore = getAuthedFirestoreWithEmail(TEST_USERS.USER_2, TEST_EMAILS.USER_2);
+        const invitationsRef = collection(user2Firestore, PENDING_INVITATIONS_PATH);
+        const q = query(invitationsRef, where('invitedEmail', '==', TEST_EMAILS.USER_2));
+
+        await assertSucceeds(getDocs(q));
+    });
+
+    /**
+     * Test 6b: Authenticated user CANNOT list invitations without email filter
+     * TD-CONSOLIDATED-5: unfiltered list queries are denied
+     */
+    it('should deny authenticated user from listing invitations without email filter (TD-CONSOLIDATED-5)', async () => {
         // Create an invitation
         await withSecurityRulesDisabled(async (firestore) => {
             await setDoc(
@@ -1159,11 +1183,32 @@ describe('Pending Invitations Security Rules (Epic 14d-v2 Story 1.5b-2)', () => 
             );
         });
 
-        // Any authenticated user can list
-        const user2Firestore = getAuthedFirestore(TEST_USERS.USER_2);
-        const invitationsCollection = collection(user2Firestore, PENDING_INVITATIONS_PATH);
+        // Unfiltered list should be denied
+        const user2Firestore = getAuthedFirestoreWithEmail(TEST_USERS.USER_2, TEST_EMAILS.USER_2);
+        const invitationsRef = collection(user2Firestore, PENDING_INVITATIONS_PATH);
 
-        await assertSucceeds(getDocs(invitationsCollection));
+        await assertFails(getDocs(invitationsRef));
+    });
+
+    /**
+     * Test 6c: Authenticated user CANNOT list invitations with another user's email filter
+     * TD-CONSOLIDATED-5: cannot query for someone else's invitations
+     */
+    it('should deny authenticated user from listing invitations with different email filter (TD-CONSOLIDATED-5)', async () => {
+        // Create an invitation for USER_1's email
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(
+                doc(firestore, PENDING_INVITATIONS_PATH, TEST_INVITATION_ID),
+                { ...createValidInvitation(), invitedEmail: TEST_EMAILS.USER_1 }
+            );
+        });
+
+        // USER_2 tries to query USER_1's invitations - should be denied
+        const user2Firestore = getAuthedFirestoreWithEmail(TEST_USERS.USER_2, TEST_EMAILS.USER_2);
+        const invitationsRef = collection(user2Firestore, PENDING_INVITATIONS_PATH);
+        const q = query(invitationsRef, where('invitedEmail', '==', TEST_EMAILS.USER_1));
+
+        await assertFails(getDocs(q));
     });
 
     /**
@@ -1183,6 +1228,48 @@ describe('Pending Invitations Security Rules (Epic 14d-v2 Story 1.5b-2)', () => 
         const invitationDoc = doc(unauthFirestore, PENDING_INVITATIONS_PATH, TEST_INVITATION_ID);
 
         await assertFails(getDoc(invitationDoc));
+    });
+
+    /**
+     * Test 6d: Group owner (inviter) can list invitations they created
+     * TD-CONSOLIDATED-5: invitedByUserId match allows owner cleanup
+     */
+    it('should allow group owner to list invitations by invitedByUserId (TD-CONSOLIDATED-5)', async () => {
+        // Create an invitation where USER_1 is the inviter
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(
+                doc(firestore, PENDING_INVITATIONS_PATH, TEST_INVITATION_ID),
+                createValidInvitation() // invitedByUserId defaults to TEST_USERS.USER_1
+            );
+        });
+
+        // USER_1 can list by their own invitedByUserId
+        const user1Firestore = getAuthedFirestore(TEST_USERS.USER_1);
+        const invitationsRef = collection(user1Firestore, PENDING_INVITATIONS_PATH);
+        const q = query(invitationsRef, where('invitedByUserId', '==', TEST_USERS.USER_1));
+
+        await assertSucceeds(getDocs(q));
+    });
+
+    /**
+     * Test 6e: Non-owner cannot list invitations by another user's invitedByUserId
+     * TD-CONSOLIDATED-5: prevents cross-user invitation enumeration
+     */
+    it('should deny non-owner from listing invitations by different invitedByUserId (TD-CONSOLIDATED-5)', async () => {
+        // Create an invitation where USER_1 is the inviter
+        await withSecurityRulesDisabled(async (firestore) => {
+            await setDoc(
+                doc(firestore, PENDING_INVITATIONS_PATH, TEST_INVITATION_ID),
+                createValidInvitation()
+            );
+        });
+
+        // USER_2 tries to query USER_1's created invitations - should fail
+        const user2Firestore = getAuthedFirestore(TEST_USERS.USER_2);
+        const invitationsRef = collection(user2Firestore, PENDING_INVITATIONS_PATH);
+        const q = query(invitationsRef, where('invitedByUserId', '==', TEST_USERS.USER_1));
+
+        await assertFails(getDocs(q));
     });
 
     // ========================================================================
