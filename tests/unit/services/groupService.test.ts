@@ -1936,14 +1936,6 @@ describe('groupService', () => {
 
         // TD-CONSOLIDATED-10: Concurrent Operation Protection (AC-5)
         describe('concurrent operation protection (TOCTOU)', () => {
-            function createMockBatch() {
-                return {
-                    update: vi.fn(),
-                    delete: vi.fn(),
-                    commit: vi.fn().mockResolvedValue(undefined),
-                };
-            }
-
             it('validation gate rejects when membership removed concurrently', async () => {
                 // Simulates: user was a member, but removed concurrently before
                 // the validation gate transaction reads the document
@@ -2622,14 +2614,6 @@ describe('groupService', () => {
 
         // TD-CONSOLIDATED-10: Concurrent Operation Protection (AC-5)
         describe('concurrent operation protection (TOCTOU)', () => {
-            function createMockBatch() {
-                return {
-                    update: vi.fn(),
-                    delete: vi.fn(),
-                    commit: vi.fn().mockResolvedValue(undefined),
-                };
-            }
-
             it('validation gate rejects when ownership transferred concurrently', async () => {
                 // Simulates: user was owner, but ownership transferred concurrently
                 // before the validation gate transaction reads the document

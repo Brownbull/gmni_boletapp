@@ -278,8 +278,9 @@ export async function deleteGroupAsLastMember(
             throw new Error('Cannot delete group with other members');
         }
 
-        // Validation-only transaction — no writes here. Provides snapshot isolation
-        // for the authorization check before cascade operations begin.
+        // Validation-only transaction — no writes here. Serves as an early-exit gate
+        // to prevent unnecessary cascade operations. The final transaction (below)
+        // re-validates atomically with the delete, providing the actual TOCTOU boundary.
     });
 
     // Execute cascade cleanup (idempotent operations - safe outside transaction)
@@ -441,7 +442,10 @@ export async function deleteGroupAsOwner(
             throw new Error('Only the group owner can delete the group');
         }
 
-        // Return validated memberIds for cascade use (read-only transaction — no writes here)
+        // Return validated memberIds for cascade use.
+        // This is a validation-only transaction (no writes). It serves as an early-exit gate
+        // to prevent unnecessary cascade operations. The final transaction (below)
+        // re-validates ownership atomically with the delete, providing the actual TOCTOU boundary.
         return { memberIds: groupData.members || [] };
     });
 

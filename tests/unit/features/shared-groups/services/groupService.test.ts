@@ -859,6 +859,7 @@ describe('transferAndLeaveWithCleanup (Story 14d-v2-1-12d, TD-CONSOLIDATED-10)',
                 mockDocRef,
                 expect.objectContaining({
                     ownerId: 'new-owner-456',
+                    members: expect.anything(), // arrayRemove sentinel
                     updatedAt: mockTimestamp,
                 })
             );
