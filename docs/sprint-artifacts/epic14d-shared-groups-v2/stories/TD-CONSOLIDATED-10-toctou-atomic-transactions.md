@@ -1,6 +1,6 @@
 # Story: TD-CONSOLIDATED-10: TOCTOU Atomic Transactions
 
-## Status: ready-for-dev
+## Status: review
 ## Epic: Epic 14d-v2 Shared Groups (Tech Debt - Tier 5)
 
 > **Consolidated from:** TD-14d-11

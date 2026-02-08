@@ -168,11 +168,11 @@ development_status:
   TD-CONSOLIDATED-8-test-infrastructure-cleanup: done  # 4-6 hrs - DRY test helpers, type safety, naming conventions [from: TD-14d-8, 31, 34, 35, 37, 49] - ECC Review 2026-02-08: APPROVED (9/10, 2 quick fixes applied, 1 TD story created: TD-22)
 
   # TIER 4: Documentation (DO WHEN NEEDED) - 2-3 hrs
-  TD-CONSOLIDATED-9-adr-documentation: ready-for-dev  # 2-3 hrs - Client-side filtering ADR-021, rate limiting ADR [from: TD-14d-32, 38]
+  TD-CONSOLIDATED-9-adr-documentation: done  # 2-3 hrs - Client-side filtering ADR-021, rate limiting ADR-022 [from: TD-14d-32, 38] - ECC Code Review 2026-02-08: APPROVED (9/10, 3 quick fixes applied)
 
   # TIER 5: Technical Improvements (BACKLOG) - 12-17 hrs optional
-  TD-CONSOLIDATED-10-toctou-atomic-transactions: ready-for-dev  # 2-3 hrs - Wrap membership validation in Firestore transaction [from: TD-14d-11] - ECC Story Created 2026-02-08 (Planner + Architect)
-  TD-CONSOLIDATED-11-server-side-rate-limiting: ready-for-dev  # 3-4 hrs - Rate limiting for destructive operations [from: TD-14d-6, 39] - ECC Story Created 2026-02-08 (Planner + Architect)
+  TD-CONSOLIDATED-10-toctou-atomic-transactions: review  # 2-3 hrs - Wrap membership validation in Firestore transaction [from: TD-14d-11] - ECC Story Created 2026-02-08 (Planner + Architect)
+  TD-CONSOLIDATED-11-server-side-rate-limiting: in-progress  # 3-4 hrs - Rate limiting for destructive operations [from: TD-14d-6, 39] - ECC Story Created 2026-02-08 (Planner + Architect)
   TD-CONSOLIDATED-12-react-query-cache-staleness: ready-for-dev  # 3-4 hrs - Fix optimistic cache update [from: TD-14d-47] - ECC Story Created 2026-02-08 (Planner + Architect, upgraded to 5 pts MEDIUM)
   TD-CONSOLIDATED-13-dialog-focus-management: ready-for-dev  # 3-4 hrs - Consistent focus cleanup across dialogs [from: TD-14d-17, 18] - ECC Story Created 2026-02-08 (Planner + Architect, upgraded to 3 pts MEDIUM)
   TD-CONSOLIDATED-14-cloud-function-type-sync-ci: ready-for-dev  # 1-2 hrs - CI validation for type synchronization [from: TD-14d-9] - ECC Story Created 2026-02-08 (Planner + Architect, 1 pt XS)

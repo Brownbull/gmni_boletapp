@@ -321,16 +321,22 @@ export async function leaveGroupWithCleanup(
 }
 
 /**
- * Transfer ownership, leave group, and cleanup preferences.
+ * Transfer ownership, leave group, and cleanup preferences — atomically.
  *
  * Story 14d-v2-1-12d: User Preferences Cleanup
+ * TD-CONSOLIDATED-10: TOCTOU fix — merged into single runTransaction()
+ *
  * - AC#6: Cleans up preference after ownership transfer + leave
  * - AC#7: Cleanup errors are logged but do NOT block the operation
  *
- * This wrapper function:
- * 1. Calls transferOwnership (throws if fails - blocking error)
- * 2. Calls leaveGroup (throws if fails - blocking error)
- * 3. Attempts to remove user's group preference (non-blocking, logged on failure)
+ * This function performs ownership transfer AND member removal in a single
+ * Firestore transaction, eliminating the TOCTOU window that existed when
+ * transferOwnership() and leaveGroup() were called as separate transactions.
+ *
+ * Flow:
+ * 1. Single runTransaction(): validate ownership, validate newOwnerId is member,
+ *    atomically set ownerId=newOwnerId + arrayRemove(currentOwnerId) from members
+ * 2. Attempts to remove user's group preference (non-blocking, logged on failure)
  *
  * @param db - Firestore instance
  * @param currentOwnerId - ID of the current owner transferring and leaving
@@ -338,8 +344,9 @@ export async function leaveGroupWithCleanup(
  * @param groupId - ID of the group
  * @param appId - Application ID (e.g., 'boletapp')
  *
- * @throws Error if transferOwnership fails
- * @throws Error if leaveGroup fails after transfer
+ * @throws Error if group not found
+ * @throws Error if currentOwnerId is not the group owner
+ * @throws Error if newOwnerId is not a member of the group
  * @returns void (cleanup errors are logged but don't throw)
  */
 export async function transferAndLeaveWithCleanup(
@@ -360,13 +367,39 @@ export async function transferAndLeaveWithCleanup(
         throw new Error('Invalid application ID');
     }
 
-    // Step 1: Transfer ownership (throws if fails - blocking)
-    await transferOwnership(db, currentOwnerId, newOwnerId, groupId);
+    // TD-CONSOLIDATED-10: Single atomic transaction for ownership transfer + member removal.
+    // Previously called transferOwnership() (Transaction 1) then leaveGroup() (Transaction 2),
+    // which left a TOCTOU window between the two transactions.
+    const groupRef = doc(db, GROUPS_COLLECTION, groupId);
 
-    // Step 2: Leave group (throws if fails - blocking)
-    await leaveGroup(db, currentOwnerId, groupId);
+    await runTransaction(db, async (transaction) => {
+        const groupSnap = await transaction.get(groupRef);
 
-    // Step 3: Cleanup preferences (non-blocking per AC#7)
+        if (!groupSnap.exists()) {
+            throw new Error('Group not found');
+        }
+
+        const group = groupSnap.data() as SharedGroup;
+
+        // Validate current owner (same error message as transferOwnership)
+        if (group.ownerId !== currentOwnerId) {
+            throw new Error('Only the group owner can transfer ownership');
+        }
+
+        // Validate new owner is a member (same error message as transferOwnership)
+        if (!group.members?.includes(newOwnerId)) {
+            throw new Error('Selected user is not a member of this group');
+        }
+
+        // Atomic: transfer ownership + remove departing member
+        transaction.update(groupRef, {
+            ownerId: newOwnerId,
+            members: arrayRemove(currentOwnerId),
+            updatedAt: serverTimestamp(),
+        });
+    });
+
+    // Preference cleanup (non-blocking per AC#7)
     try {
         await removeGroupPreference(db, currentOwnerId, appId, groupId);
     } catch (err) {

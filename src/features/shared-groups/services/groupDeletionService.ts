@@ -16,7 +16,6 @@ import {
     Firestore,
     collection,
     getDocs,
-    getDoc,
     doc,
     query,
     where,
@@ -255,25 +254,33 @@ export async function deleteGroupAsLastMember(
         });
     }
 
-    // Get the group document for validation and cascade operations
     const groupRef = doc(db, GROUPS_COLLECTION, groupId);
-    const groupSnap = await getDoc(groupRef);
 
-    if (!groupSnap.exists()) {
-        throw new Error('Group not found');
-    }
+    // TD-CONSOLIDATED-10: Transactional validation gate — read + validate in a transaction
+    // to prevent TOCTOU race conditions. Previously used bare getDoc() which could allow
+    // a concurrent operation to change membership between the validation read and cascade ops.
+    await runTransaction(db, async (transaction) => {
+        const groupSnap = await transaction.get(groupRef);
 
-    const group = groupSnap.data() as SharedGroup;
+        if (!groupSnap.exists()) {
+            throw new Error('Group not found');
+        }
 
-    // Verify user is a member
-    if (!group.members?.includes(userId)) {
-        throw new Error('You are not a member of this group');
-    }
+        const groupData = groupSnap.data() as SharedGroup;
 
-    // Verify user is the ONLY member (AC #1)
-    if (group.members.length > 1) {
-        throw new Error('Cannot delete group with other members');
-    }
+        // Verify user is a member
+        if (!groupData.members?.includes(userId)) {
+            throw new Error('You are not a member of this group');
+        }
+
+        // Verify user is the ONLY member (AC #1)
+        if (groupData.members.length > 1) {
+            throw new Error('Cannot delete group with other members');
+        }
+
+        // Validation-only transaction — no writes here. Provides snapshot isolation
+        // for the authorization check before cascade operations begin.
+    });
 
     // Execute cascade cleanup (idempotent operations - safe outside transaction)
     // ARCHITECTURAL NOTE: Cascade operations run outside the final transaction because:
@@ -414,24 +421,29 @@ export async function deleteGroupAsOwner(
         });
     }
 
-    // Get the group document for validation and cascade operations
     const groupRef = doc(db, GROUPS_COLLECTION, groupId);
-    const groupSnap = await getDoc(groupRef);
 
-    if (!groupSnap.exists()) {
-        throw new Error('Group not found');
-    }
+    // TD-CONSOLIDATED-10: Transactional validation gate — read + validate in a transaction
+    // to prevent TOCTOU race conditions. Previously used bare getDoc() which could allow
+    // a concurrent operation to change ownership between the validation read and cascade ops.
+    const { memberIds } = await runTransaction(db, async (transaction) => {
+        const groupSnap = await transaction.get(groupRef);
 
-    const group = groupSnap.data() as SharedGroup;
+        if (!groupSnap.exists()) {
+            throw new Error('Group not found');
+        }
 
-    // ECC Review 2026-02-02: HIGH severity fix - validate ownership BEFORE cascade operations
-    // This prevents unauthorized users from triggering transaction updates on other members' data
-    // even though the final delete would fail in the transaction
-    if (group.ownerId !== ownerId) {
-        throw new Error('Only the group owner can delete the group');
-    }
+        const groupData = groupSnap.data() as SharedGroup;
 
-    const memberIds = group.members || [];
+        // ECC Review 2026-02-02: HIGH severity fix - validate ownership BEFORE cascade operations
+        // This prevents unauthorized users from triggering transaction updates on other members' data
+        if (groupData.ownerId !== ownerId) {
+            throw new Error('Only the group owner can delete the group');
+        }
+
+        // Return validated memberIds for cascade use (read-only transaction — no writes here)
+        return { memberIds: groupData.members || [] };
+    });
 
     // Execute cascade cleanup (idempotent operations - safe outside transaction)
     // ARCHITECTURAL NOTE: Cascade operations run outside the final transaction because:
