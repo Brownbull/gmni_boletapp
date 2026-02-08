@@ -371,6 +371,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"`</action>
       - Sprint status synced
 
       **Next Steps:**
+      - Run `/workflow-close` to verify tests, status files, and branch state
       - Verify production functionality at {deployment_urls.production}
       {{#if deploy_targets}}- Verify backend in Firebase Console (functions list, rules, indexes)
       - Update `docs/firebase/DEPLOYMENT-MANIFEST.md` parity table{{/if}}

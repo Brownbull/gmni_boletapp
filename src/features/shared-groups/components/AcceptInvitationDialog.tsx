@@ -33,7 +33,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { X, Users, Check, Loader2, Share2, XCircle, ArrowLeft } from 'lucide-react';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
-import { validateGroupId } from '@/utils/validationUtils';
+import { validateGroupId, safeCSSColor } from '@/utils/validationUtils';
 import { useBodyScrollLock, useEscapeKey, useFocusTrap } from '@/shared/hooks';
 import { Z_INDEX } from '@/constants';
 import type { PendingInvitation, SharedGroup } from '@/types/sharedGroup';
@@ -242,7 +242,7 @@ export const AcceptInvitationDialog: React.FC<AcceptInvitationDialogProps> = ({
                         <div
                             className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
                             style={{
-                                backgroundColor: invitation.groupColor || '#10b981',
+                                backgroundColor: safeCSSColor(invitation.groupColor),
                             }}
                             data-testid="group-icon"
                         >

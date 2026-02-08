@@ -37,16 +37,14 @@
  * This file focuses on service layer integration testing.
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
-    setupFirebaseEmulator,
-    teardownFirebaseEmulator,
-    clearFirestoreData,
     withSecurityRulesDisabled,
     TEST_USERS,
     SHARED_GROUPS_PATH,
     PENDING_INVITATIONS_PATH,
 } from '../../setup/firebase-emulator';
+import { useFirebaseEmulatorLifecycle } from '../../helpers';
 import {
     doc,
     setDoc,
@@ -142,17 +140,7 @@ function createTestInvitation(groupId: string) {
 // =============================================================================
 
 describe('deleteGroupAsLastMember Integration Tests (Story 14d-v2-1-7f)', () => {
-    beforeAll(async () => {
-        await setupFirebaseEmulator();
-    });
-
-    afterAll(async () => {
-        await teardownFirebaseEmulator();
-    });
-
-    beforeEach(async () => {
-        await clearFirestoreData();
-    });
+    useFirebaseEmulatorLifecycle();
 
     // =========================================================================
     // Test 1: Delete group when last member leaves
@@ -430,17 +418,7 @@ describe('deleteGroupAsLastMember Integration Tests (Story 14d-v2-1-7f)', () => 
 // =============================================================================
 
 describe('deleteGroupAsOwner Integration Tests (Story 14d-v2-1-7f)', () => {
-    beforeAll(async () => {
-        await setupFirebaseEmulator();
-    });
-
-    afterAll(async () => {
-        await teardownFirebaseEmulator();
-    });
-
-    beforeEach(async () => {
-        await clearFirestoreData();
-    });
+    useFirebaseEmulatorLifecycle();
 
     // =========================================================================
     // Test 9: Allow owner to force delete group with members

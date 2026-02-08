@@ -26,6 +26,7 @@ import { X, LogOut, FileText, ShieldOff, Loader2 } from 'lucide-react';
 import { useBodyScrollLock, useEscapeKey, useFocusTrap } from '@/shared/hooks';
 import { Z_INDEX } from '@/constants';
 import type { LeaveMode } from '@/features/shared-groups';
+import { safeCSSColor } from '@/utils/validationUtils';
 
 // Re-export LeaveMode for backward compatibility with existing imports
 export type { LeaveMode } from '@/features/shared-groups';
@@ -186,7 +187,7 @@ export const LeaveGroupDialog: React.FC<LeaveGroupDialogProps> = ({
                     {/* Group Icon */}
                     <div
                         className="mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center text-2xl"
-                        style={{ backgroundColor: groupColor }}
+                        style={{ backgroundColor: safeCSSColor(groupColor) }}
                         aria-hidden="true"
                     >
                         {groupIcon || <LogOut className="text-white" size={28} />}
@@ -204,7 +205,7 @@ export const LeaveGroupDialog: React.FC<LeaveGroupDialogProps> = ({
                     {/* Group name */}
                     <p
                         className="text-sm mb-2 font-medium"
-                        style={{ color: groupColor }}
+                        style={{ color: safeCSSColor(groupColor) }}
                     >
                         {groupName}
                     </p>

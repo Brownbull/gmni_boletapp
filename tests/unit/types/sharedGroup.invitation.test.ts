@@ -9,30 +9,12 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Timestamp } from 'firebase/firestore';
 import {
     isInvitationExpired,
     getInvitationTimeRemaining,
     type PendingInvitation,
 } from '../../../src/types/sharedGroup';
-import { createMockInvitation } from '@helpers/sharedGroupFactory';
-
-// =============================================================================
-// Test Helpers
-// =============================================================================
-
-/**
- * Create a mock Timestamp for testing
- */
-function createMockTimestamp(date: Date): Timestamp {
-    return {
-        toDate: () => date,
-        seconds: Math.floor(date.getTime() / 1000),
-        nanoseconds: 0,
-    } as unknown as Timestamp;
-}
-
-// createMockInvitation imported from tests/helpers/sharedGroupFactory
+import { createMockInvitation, createMockTimestamp } from '../../helpers';
 
 // =============================================================================
 // Tests

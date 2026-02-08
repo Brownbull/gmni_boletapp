@@ -15,6 +15,7 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import { X, Crown, Users, Trash2 } from 'lucide-react';
 import { useBodyScrollLock, useEscapeKey, useFocusTrap } from '@/shared/hooks';
 import { Z_INDEX } from '@/constants';
+import { safeCSSColor } from '@/utils/validationUtils';
 
 export interface OwnerLeaveWarningDialogProps {
     /** Whether the modal is currently open */
@@ -137,7 +138,7 @@ export const OwnerLeaveWarningDialog: React.FC<OwnerLeaveWarningDialogProps> = (
                     <div className="relative mx-auto mb-4 w-16 h-16">
                         <div
                             className="w-16 h-16 rounded-full flex items-center justify-center text-2xl"
-                            style={{ backgroundColor: groupColor }}
+                            style={{ backgroundColor: safeCSSColor(groupColor) }}
                         >
                             {groupIcon || <Crown className="text-white" size={28} />}
                         </div>
@@ -162,7 +163,7 @@ export const OwnerLeaveWarningDialog: React.FC<OwnerLeaveWarningDialogProps> = (
 
                     <p
                         className="text-sm font-medium mb-4"
-                        style={{ color: groupColor }}
+                        style={{ color: safeCSSColor(groupColor) }}
                     >
                         {groupName}
                     </p>

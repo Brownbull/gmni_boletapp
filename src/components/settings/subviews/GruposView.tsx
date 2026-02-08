@@ -23,6 +23,7 @@ import { usePendingInvitationsCount } from '@/hooks/usePendingInvitationsCount';
 import { useGroupDialogs } from '@/hooks/useGroupDialogs';
 import { useGruposViewHandlers } from './useGruposViewHandlers';
 import { GruposViewDialogs } from './GruposViewDialogs';
+import { safeCSSColor } from '@/utils/validationUtils';
 
 export interface GruposViewProps {
     t: (key: string, params?: Record<string, string | number>) => string;
@@ -240,7 +241,7 @@ export const GruposView: React.FC<GruposViewProps> = ({
                                     <div
                                         className="w-10 h-10 rounded-full flex items-center justify-center text-lg"
                                         style={{
-                                            backgroundColor: group.color || 'var(--primary)',
+                                            backgroundColor: safeCSSColor(group.color, 'var(--primary)'),
                                             fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif',
                                         }}
                                     >

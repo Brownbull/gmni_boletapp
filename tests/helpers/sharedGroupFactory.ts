@@ -8,6 +8,7 @@
  */
 
 import type { SharedGroup, PendingInvitation } from '@/types/sharedGroup';
+import { createMockTimestamp, createMockTimestampDaysFromNow } from './firestore';
 
 export function createMockGroup(overrides: Partial<SharedGroup> = {}): SharedGroup {
     return {
@@ -18,11 +19,11 @@ export function createMockGroup(overrides: Partial<SharedGroup> = {}): SharedGro
         color: '#10b981',
         icon: '🏠',
         shareCode: 'MockShareCode12345',
-        shareCodeExpiresAt: { toDate: () => new Date() } as any,
+        shareCodeExpiresAt: createMockTimestamp(),
         members: ['user-123'],
         memberUpdates: {},
-        createdAt: { toDate: () => new Date() } as any,
-        updatedAt: { toDate: () => new Date() } as any,
+        createdAt: createMockTimestamp(),
+        updatedAt: createMockTimestamp(),
         timezone: 'America/Santiago',
         transactionSharingEnabled: true,
         transactionSharingLastToggleAt: null,
@@ -42,8 +43,8 @@ export function createMockInvitation(overrides: Partial<PendingInvitation> = {})
         invitedEmail: 'test@example.com',
         invitedByUserId: 'owner-xyz',
         invitedByName: 'Owner User',
-        createdAt: { toDate: () => new Date() } as any,
-        expiresAt: { toDate: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) } as any,
+        createdAt: createMockTimestamp(),
+        expiresAt: createMockTimestampDaysFromNow(7),
         status: 'pending',
         ...overrides,
     };

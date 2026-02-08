@@ -21,28 +21,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { InsightHistoryCard } from '../../../../src/components/insights/InsightHistoryCard';
 import { InsightRecord } from '../../../../src/types/insight';
-import { Timestamp } from 'firebase/firestore';
-
-// ============================================================================
-// Mock Helpers
-// ============================================================================
-
-/**
- * Creates a mock Firestore Timestamp for testing
- */
-function createMockTimestamp(daysAgo: number): Timestamp {
-  const date = new Date();
-  date.setDate(date.getDate() - daysAgo);
-  return {
-    toDate: () => date,
-    seconds: Math.floor(date.getTime() / 1000),
-    nanoseconds: 0,
-    toMillis: () => date.getTime(),
-    isEqual: () => false,
-    valueOf: () => '',
-    toJSON: () => ({ seconds: Math.floor(date.getTime() / 1000), nanoseconds: 0 }),
-  } as unknown as Timestamp;
-}
+import { createMockTimestampDaysAgo } from '../../../helpers';
 
 // ============================================================================
 // Test Data
@@ -50,7 +29,7 @@ function createMockTimestamp(daysAgo: number): Timestamp {
 
 const mockInsightWithAllFields: InsightRecord = {
   insightId: 'merchant_frequency',
-  shownAt: createMockTimestamp(2),
+  shownAt: createMockTimestampDaysAgo(2),
   transactionId: 'tx-123',
   title: 'Visita frecuente',
   message: '3ra vez en Jumbo este mes',
@@ -60,14 +39,14 @@ const mockInsightWithAllFields: InsightRecord = {
 
 const mockInsightOldFormat: InsightRecord = {
   insightId: 'biggest_item',
-  shownAt: createMockTimestamp(5),
+  shownAt: createMockTimestampDaysAgo(5),
   transactionId: 'tx-456',
   // No title, message, category, or icon - old format
 };
 
 const mockInsightNoTransaction: InsightRecord = {
   insightId: 'category_trend',
-  shownAt: createMockTimestamp(1),
+  shownAt: createMockTimestampDaysAgo(1),
   title: 'Tendencia de gastos',
   message: 'Has gastado más en restaurantes',
   icon: 'TrendingUp',
@@ -77,7 +56,7 @@ const mockInsightNoTransaction: InsightRecord = {
 // Story 14.33a: Test data for each visual type
 const mockQuirkyInsight: InsightRecord = {
   insightId: 'late_night_snacker',
-  shownAt: createMockTimestamp(1),
+  shownAt: createMockTimestampDaysAgo(1),
   title: 'Snacker Nocturno',
   message: '3 compras después de las 22:00',
   category: 'QUIRKY_FIRST',
@@ -85,7 +64,7 @@ const mockQuirkyInsight: InsightRecord = {
 
 const mockCelebrationInsight: InsightRecord = {
   insightId: 'milestone_reached',
-  shownAt: createMockTimestamp(1),
+  shownAt: createMockTimestampDaysAgo(1),
   title: 'Carrito Lleno',
   message: 'Compra #100 completada',
   category: 'CELEBRATORY',
@@ -93,7 +72,7 @@ const mockCelebrationInsight: InsightRecord = {
 
 const mockTrendInsight: InsightRecord = {
   insightId: 'day_pattern',
-  shownAt: createMockTimestamp(1),
+  shownAt: createMockTimestampDaysAgo(1),
   title: 'Día Favorito',
   message: 'Viernes es tu día top',
   category: 'ACTIONABLE', // Category is ACTIONABLE but insightId overrides to trend
@@ -101,7 +80,7 @@ const mockTrendInsight: InsightRecord = {
 
 const mockTradeoffInsight: InsightRecord = {
   insightId: 'category_variety',
-  shownAt: createMockTimestamp(1),
+  shownAt: createMockTimestampDaysAgo(1),
   title: 'Compra Variada',
   message: '5 categorías diferentes',
   category: 'ACTIONABLE', // Category is ACTIONABLE but insightId overrides to tradeoff
@@ -373,7 +352,7 @@ describe('InsightHistoryCard', () => {
     it('includes date with year in aria-label when from different year', () => {
       const oldInsight: InsightRecord = {
         insightId: 'old_insight',
-        shownAt: createMockTimestamp(400), // More than a year ago
+        shownAt: createMockTimestampDaysAgo(400), // More than a year ago
         title: 'Old insight',
       };
 
@@ -655,7 +634,7 @@ describe('InsightHistoryCard', () => {
       it('old InsightRecord entries without category render correctly', () => {
         const oldRecord: InsightRecord = {
           insightId: 'some_old_insight',
-          shownAt: createMockTimestamp(10),
+          shownAt: createMockTimestampDaysAgo(10),
           // No category, no title, no message
         };
 

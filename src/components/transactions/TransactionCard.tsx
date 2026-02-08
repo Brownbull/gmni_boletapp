@@ -24,6 +24,7 @@ import { useIsForeignLocation } from '../../hooks/useIsForeignLocation';
 import { useLocationDisplay } from '../../hooks/useLocations';
 import type { ForeignLocationDisplayFormat } from '../../services/userPreferencesService';
 import type { Language } from '../../types/settings';
+import { safeCSSColor } from '@/utils/validationUtils';
 import type { MemberProfile } from '../../types/sharedGroup';
 import { ProfileIndicator } from '@/features/shared-groups';
 
@@ -414,7 +415,7 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
         borderColor: getBorderColor(),
         // Only the left border shows the group color; other 3 borders use default color
         borderLeftWidth: hasGroupAccent ? '5px' : undefined,
-        borderLeftColor: hasGroupAccent ? groupColor : undefined,
+        borderLeftColor: hasGroupAccent ? safeCSSColor(groupColor) : undefined,
       }}
       data-testid="transaction-card"
       data-id={id}

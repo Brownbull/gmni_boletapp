@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Timestamp } from 'firebase/firestore';
+import { createMockTimestamp, createMockTimestampDaysAgo, createMockTimestampDaysFromNow } from '../../helpers';
 
 // Mock Firestore before importing the module
 vi.mock('firebase/firestore', async () => {
@@ -147,18 +147,6 @@ function createMockDoc(id: string, data: Partial<PendingInvitation>) {
     };
 }
 
-/**
- * Helper to create mock Timestamp
- */
-function createMockTimestamp(daysFromNow: number = 0): Timestamp {
-    const date = new Date();
-    date.setDate(date.getDate() + daysFromNow);
-    return {
-        toDate: () => date,
-        seconds: Math.floor(date.getTime() / 1000),
-        nanoseconds: 0,
-    } as unknown as Timestamp;
-}
 
 /**
  * Standard test input for creating invitations
@@ -1200,7 +1188,7 @@ describe('invitationService', () => {
                     groupName: 'Group 1',
                     invitedEmail: 'user@example.com',
                     invitedByName: 'Juan García',
-                    createdAt: createMockTimestamp(-1),
+                    createdAt: createMockTimestampDaysAgo(1),
                     status: 'pending',
                 }),
                 createMockDoc('invitation-2', {
@@ -1208,7 +1196,7 @@ describe('invitationService', () => {
                     groupName: 'Group 2',
                     invitedEmail: 'user@example.com',
                     invitedByName: 'María López',
-                    createdAt: createMockTimestamp(-2),
+                    createdAt: createMockTimestampDaysAgo(2),
                     status: 'pending',
                 }),
             ];
@@ -1229,7 +1217,7 @@ describe('invitationService', () => {
         });
 
         it('includes group name, inviter, and invitation date in results (AC #4)', async () => {
-            const mockTimestamp = createMockTimestamp(-1);
+            const mockTimestamp = createMockTimestampDaysAgo(1);
             const mockDocs = [
                 createMockDoc('invitation-1', {
                     groupId: 'group-1',
@@ -1239,7 +1227,7 @@ describe('invitationService', () => {
                     invitedByUserId: 'owner-123',
                     invitedByName: 'Juan García',
                     createdAt: mockTimestamp,
-                    expiresAt: createMockTimestamp(6),
+                    expiresAt: createMockTimestampDaysFromNow(6),
                     status: 'pending',
                 }),
             ];
@@ -1409,7 +1397,7 @@ describe('invitationService', () => {
                     docs: [createMockDoc('inv-1', {
                         shareCode: validShareCode,
                         status: 'accepted',
-                        expiresAt: createMockTimestamp(7),
+                        expiresAt: createMockTimestampDaysFromNow(7),
                     })],
                     empty: false,
                 } as any);
@@ -1427,7 +1415,7 @@ describe('invitationService', () => {
                     docs: [createMockDoc('inv-1', {
                         shareCode: validShareCode,
                         status: 'declined',
-                        expiresAt: createMockTimestamp(7),
+                        expiresAt: createMockTimestampDaysFromNow(7),
                     })],
                     empty: false,
                 } as any);
@@ -1450,7 +1438,7 @@ describe('invitationService', () => {
                     docs: [createMockDoc('inv-1', {
                         shareCode: validShareCode,
                         status: 'pending',
-                        expiresAt: createMockTimestamp(-1), // 1 day ago
+                        expiresAt: createMockTimestampDaysAgo(1), // 1 day ago
                     })],
                     empty: false,
                 } as any);
@@ -1468,7 +1456,7 @@ describe('invitationService', () => {
                     docs: [createMockDoc('inv-1', {
                         shareCode: validShareCode,
                         status: 'pending',
-                        expiresAt: createMockTimestamp(-7), // 7 days ago
+                        expiresAt: createMockTimestampDaysAgo(7), // 7 days ago
                     })],
                     empty: false,
                 } as any);
@@ -1496,8 +1484,8 @@ describe('invitationService', () => {
                     invitedByUserId: 'user-xyz',
                     invitedByName: 'Juan García',
                     status: 'pending',
-                    expiresAt: createMockTimestamp(6), // 6 days from now
-                    createdAt: createMockTimestamp(-1), // 1 day ago
+                    expiresAt: createMockTimestampDaysFromNow(6), // 6 days from now
+                    createdAt: createMockTimestampDaysAgo(1), // 1 day ago
                 };
 
                 mockGetDocs.mockResolvedValue({
@@ -1526,8 +1514,8 @@ describe('invitationService', () => {
                     invitedByUserId: 'owner-123',
                     invitedByName: 'María López',
                     status: 'pending',
-                    expiresAt: createMockTimestamp(5),
-                    createdAt: createMockTimestamp(-2),
+                    expiresAt: createMockTimestampDaysFromNow(5),
+                    createdAt: createMockTimestampDaysAgo(2),
                 };
 
                 mockGetDocs.mockResolvedValue({
@@ -1671,7 +1659,7 @@ describe('invitationService', () => {
                 mockTx.get.mockResolvedValue(createMockInvitationSnapshot(true, {
                     groupId: validGroupId,
                     status: 'accepted',
-                    expiresAt: createMockTimestamp(7),
+                    expiresAt: createMockTimestampDaysFromNow(7),
                 }));
 
                 mockRunTransaction.mockImplementation(async (db, callback) => {
@@ -1687,7 +1675,7 @@ describe('invitationService', () => {
                 mockTx.get.mockResolvedValue(createMockInvitationSnapshot(true, {
                     groupId: validGroupId,
                     status: 'declined',
-                    expiresAt: createMockTimestamp(7),
+                    expiresAt: createMockTimestampDaysFromNow(7),
                 }));
 
                 mockRunTransaction.mockImplementation(async (db, callback) => {
@@ -1708,7 +1696,7 @@ describe('invitationService', () => {
                 mockTx.get.mockResolvedValue(createMockInvitationSnapshot(true, {
                     groupId: validGroupId,
                     status: 'pending',
-                    expiresAt: createMockTimestamp(-1), // Expired
+                    expiresAt: createMockTimestampDaysAgo(1), // Expired
                 }));
 
                 mockRunTransaction.mockImplementation(async (db, callback) => {
@@ -1730,7 +1718,7 @@ describe('invitationService', () => {
                     .mockResolvedValueOnce(createMockInvitationSnapshot(true, {
                         groupId: validGroupId,
                         status: 'pending',
-                        expiresAt: createMockTimestamp(7),
+                        expiresAt: createMockTimestampDaysFromNow(7),
                     }))
                     .mockResolvedValueOnce(createMockGroupSnapshotForTx(false));
 
@@ -1753,7 +1741,7 @@ describe('invitationService', () => {
                     .mockResolvedValueOnce(createMockInvitationSnapshot(true, {
                         groupId: validGroupId,
                         status: 'pending',
-                        expiresAt: createMockTimestamp(7),
+                        expiresAt: createMockTimestampDaysFromNow(7),
                     }))
                     .mockResolvedValueOnce(createMockGroupSnapshotForTx(true, {
                         ownerId: 'owner-123',
@@ -1779,7 +1767,7 @@ describe('invitationService', () => {
                     .mockResolvedValueOnce(createMockInvitationSnapshot(true, {
                         groupId: validGroupId,
                         status: 'pending',
-                        expiresAt: createMockTimestamp(7),
+                        expiresAt: createMockTimestampDaysFromNow(7),
                     }))
                     .mockResolvedValueOnce(createMockGroupSnapshotForTx(true, {
                         ownerId: 'owner-123',
@@ -1805,7 +1793,7 @@ describe('invitationService', () => {
                     .mockResolvedValueOnce(createMockInvitationSnapshot(true, {
                         groupId: validGroupId,
                         status: 'pending',
-                        expiresAt: createMockTimestamp(7),
+                        expiresAt: createMockTimestampDaysFromNow(7),
                     }))
                     .mockResolvedValueOnce(createMockGroupSnapshotForTx(true, {
                         ownerId: 'owner-123',
@@ -1833,7 +1821,7 @@ describe('invitationService', () => {
                     .mockResolvedValueOnce(createMockInvitationSnapshot(true, {
                         groupId: validGroupId,
                         status: 'pending',
-                        expiresAt: createMockTimestamp(7),
+                        expiresAt: createMockTimestampDaysFromNow(7),
                     }))
                     .mockResolvedValueOnce(createMockGroupSnapshotForTx(true, {
                         ownerId: 'owner-123',
@@ -1859,7 +1847,7 @@ describe('invitationService', () => {
                     .mockResolvedValueOnce(createMockInvitationSnapshot(true, {
                         groupId: validGroupId,
                         status: 'pending',
-                        expiresAt: createMockTimestamp(7),
+                        expiresAt: createMockTimestampDaysFromNow(7),
                     }))
                     .mockResolvedValueOnce(createMockGroupSnapshotForTx(true, {
                         ownerId: 'owner-123',
@@ -1881,7 +1869,7 @@ describe('invitationService', () => {
                     .mockResolvedValueOnce(createMockInvitationSnapshot(true, {
                         groupId: validGroupId,
                         status: 'pending',
-                        expiresAt: createMockTimestamp(7),
+                        expiresAt: createMockTimestampDaysFromNow(7),
                     }))
                     .mockResolvedValueOnce(createMockGroupSnapshotForTx(true, {
                         ownerId: 'owner-123',
@@ -1919,7 +1907,7 @@ describe('invitationService', () => {
                     .mockResolvedValueOnce(createMockInvitationSnapshot(true, {
                         groupId: validGroupId,
                         status: 'pending',
-                        expiresAt: createMockTimestamp(7),
+                        expiresAt: createMockTimestampDaysFromNow(7),
                     }))
                     .mockResolvedValueOnce(createMockGroupSnapshotForTx(true, {
                         ownerId: 'owner-123',
@@ -1973,7 +1961,7 @@ describe('invitationService', () => {
                     data: () => ({
                         groupId: validGroupId,
                         status: 'pending',
-                        expiresAt: createMockTimestamp(7),
+                        expiresAt: createMockTimestampDaysFromNow(7),
                     }),
                 })
                 .mockResolvedValueOnce({

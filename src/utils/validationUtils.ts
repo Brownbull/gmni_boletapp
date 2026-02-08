@@ -147,3 +147,53 @@ export function validateGroupId(groupId: string): void {
         );
     }
 }
+
+// =============================================================================
+// CSS Color Validation (TD-CONSOLIDATED-7: CSS Color Injection Prevention)
+// =============================================================================
+
+/** Default fallback color for CSS color validation (emerald green, matches DEFAULT_GROUP_COLOR) */
+const DEFAULT_CSS_COLOR_FALLBACK = '#10b981';
+
+/**
+ * Regex pattern for valid CSS hex colors.
+ * Accepts 3-digit (#RGB) and 6-digit (#RRGGBB) hex colors only.
+ * Does NOT accept named colors, rgba(), var(), or any other CSS value.
+ */
+const VALID_HEX_COLOR_REGEX = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
+/**
+ * Validates a CSS color value against a strict hex pattern.
+ *
+ * Only accepts 3-digit and 6-digit hex colors (e.g., #abc, #10b981).
+ * Rejects all other CSS values including named colors, rgba(), var(),
+ * url(), expression(), and any string that could enable CSS injection.
+ *
+ * @param color - The color value to validate
+ * @returns true if the color is a valid hex color, false otherwise
+ */
+export function validateCSSColor(color: string): boolean {
+    if (!color || typeof color !== 'string') {
+        return false;
+    }
+    return VALID_HEX_COLOR_REGEX.test(color);
+}
+
+/**
+ * Returns a safe CSS color, falling back to a default if invalid.
+ *
+ * Use this at rendering boundaries to prevent CSS injection from
+ * Firestore-sourced group.color values.
+ *
+ * @param color - The color value to validate and return
+ * @param fallback - Fallback color if invalid (defaults to DEFAULT_GROUP_COLOR #10b981).
+ *   WARNING: The fallback is NOT validated. Only pass hardcoded string
+ *   literals (e.g., '#10b981', 'var(--primary)'), never user-controlled values.
+ * @returns The validated color or the fallback
+ */
+export function safeCSSColor(color: string | undefined | null, fallback: string = DEFAULT_CSS_COLOR_FALLBACK): string {
+    if (color && validateCSSColor(color)) {
+        return color;
+    }
+    return fallback;
+}

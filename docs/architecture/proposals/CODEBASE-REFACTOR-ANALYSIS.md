@@ -852,13 +852,41 @@ These patterns were investigated and found to be **already properly centralized*
 
 ---
 
+## Tooling Notes
+
+### ast-grep (Integrated 2026-02-08)
+
+ast-grep MCP server is configured for this project (`.mcp.json`). It provides AST-based structural code search — critical for Phases 1-4 where we need to find all instances of duplicated patterns before extracting shared utilities.
+
+**Key refactoring queries pre-built in `.claude/skills/ast-grep/SKILL.md`:**
+- Firebase direct imports (72 files) — Phase 1 DAL migration
+- Inline sort comparators (40+ files) — Phase 2 R-13
+- Manual localStorage JSON.parse (19 files) — Phase 2 R-14
+- Batch.commit() without chunking (bug detection) — Phase 0 R-0a
+- Hardcoded 'CLP' currency (13+ files) — Phase 2 R-9
+- Firestore collection path magic strings (45+ locations) — Phase 1 R-3
+
+### code-structure-plugin (Deferred — Install for Phase 5)
+
+[eran-broder/code-structure-plugin](https://github.com/eran-broder/code-structure-plugin) extracts structural skeletons from TypeScript files (function signatures, class hierarchies, interfaces) without reading full implementations. Token-efficient: a 5,960-line file skeleton uses ~200 tokens instead of ~15,000.
+
+**Install when starting Phase 5** (Mega-View Decomposition): Add as Claude Code skill to `.claude/skills/`. Useful for:
+- R-27: TrendsView decomposition planning (114 hooks, 15+ inline components)
+- R-28: DashboardView decomposition (72 hooks)
+- R-29: TransactionEditorViewInternal decomposition (60 hooks)
+- R-30: IconFilterBar decomposition (4 inline dropdowns)
+
+No value in Phases 0-4 where files are smaller and pattern extraction is the primary activity.
+
+---
+
 ## Risk Notes
 
 1. **TrendsView/DashboardView refactor** is the highest-risk change — they're the most-used views. Requires comprehensive test coverage before touching.
 2. **DAL introduction** (Phase 1) is low risk — wrapping existing code, no behavior change. Can be done incrementally (one repository at a time).
 3. **Business logic centralization** (Phase 2) is low risk — creating shared utilities and migrating callers incrementally. Each story is independent.
 4. **Mapping list component extraction** (Phase 3) is medium risk — 4 components have slight UI variations that need parameterization.
-5. **Feature module creation** (Phase 4) is mostly file moves with import rewiring — lower risk but tedious. Consider doing import rewiring in bulk with a codemod.
+5. **Feature module creation** (Phase 4) is mostly file moves with import rewiring — lower risk but tedious. Use ast-grep to find all import references before moving, then validate with `npx vitest run` after each move.
 6. **State management migration** (Phase 6) requires careful testing since contexts propagate differently than stores.
 7. **Dead service deletion** should verify via `git log` that these services aren't referenced in Cloud Functions or other non-src code.
 8. **Batch chunking fix** (Phase 0) is critical and should be done immediately — it's a silent data loss bug.

@@ -18,7 +18,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Timestamp } from 'firebase/firestore';
+import { createMockTimestampDaysAgo, createMockTimestampDaysFromNow } from '../../helpers';
 
 // Mock Firestore before importing the module
 vi.mock('firebase/firestore', async () => {
@@ -114,18 +114,6 @@ function createMockDoc(id: string, data: Partial<SharedGroup>) {
     };
 }
 
-/**
- * Helper to create mock Timestamp
- */
-function createMockTimestamp(daysAgo: number = 0): Timestamp {
-    const date = new Date();
-    date.setDate(date.getDate() - daysAgo);
-    return {
-        toDate: () => date,
-        seconds: Math.floor(date.getTime() / 1000),
-        nanoseconds: 0,
-    } as unknown as Timestamp;
-}
 
 // =============================================================================
 // Tests
@@ -841,11 +829,11 @@ describe('groupService', () => {
                 name: 'Test Group',
                 color: '#10b981',
                 shareCode: 'testcode123',
-                shareCodeExpiresAt: createMockTimestamp(-7),
+                shareCodeExpiresAt: createMockTimestampDaysFromNow(7),
                 members: [ownerId, memberId],
                 memberUpdates: {},
-                createdAt: createMockTimestamp(30),
-                updatedAt: createMockTimestamp(1),
+                createdAt: createMockTimestampDaysAgo(30),
+                updatedAt: createMockTimestampDaysAgo(1),
                 timezone: 'America/Santiago',
                 transactionSharingEnabled: true,
                 transactionSharingLastToggleAt: null,
@@ -1081,14 +1069,14 @@ describe('groupService', () => {
                 name: 'Test Group',
                 color: '#10b981',
                 shareCode: 'testcode123',
-                shareCodeExpiresAt: createMockTimestamp(-7),
+                shareCodeExpiresAt: createMockTimestampDaysFromNow(7),
                 members: [currentOwnerId, newOwnerId, otherMember],
                 memberUpdates: {},
-                createdAt: createMockTimestamp(30),
-                updatedAt: createMockTimestamp(1),
+                createdAt: createMockTimestampDaysAgo(30),
+                updatedAt: createMockTimestampDaysAgo(1),
                 timezone: 'America/Santiago',
                 transactionSharingEnabled: true,
-                transactionSharingLastToggleAt: createMockTimestamp(2),
+                transactionSharingLastToggleAt: createMockTimestampDaysAgo(2),
                 transactionSharingToggleCountToday: 2,
                 ...overrides,
             };
@@ -1398,11 +1386,11 @@ describe('groupService', () => {
                 name: 'Test Group',
                 color: '#10b981',
                 shareCode: 'testcode123',
-                shareCodeExpiresAt: createMockTimestamp(-7),
+                shareCodeExpiresAt: createMockTimestampDaysFromNow(7),
                 members: [userId], // Single member - last member
                 memberUpdates: {},
-                createdAt: createMockTimestamp(30),
-                updatedAt: createMockTimestamp(1),
+                createdAt: createMockTimestampDaysAgo(30),
+                updatedAt: createMockTimestampDaysAgo(1),
                 timezone: 'America/Santiago',
                 transactionSharingEnabled: true,
                 transactionSharingLastToggleAt: null,
@@ -1973,11 +1961,11 @@ describe('groupService', () => {
                 name: 'Test Group',
                 color: '#10b981',
                 shareCode: 'testcode123',
-                shareCodeExpiresAt: createMockTimestamp(-7),
+                shareCodeExpiresAt: createMockTimestampDaysFromNow(7),
                 members: [ownerId, memberId],
                 memberUpdates: {},
-                createdAt: createMockTimestamp(30),
-                updatedAt: createMockTimestamp(1),
+                createdAt: createMockTimestampDaysAgo(30),
+                updatedAt: createMockTimestampDaysAgo(1),
                 timezone: 'America/Santiago',
                 transactionSharingEnabled: true,
                 transactionSharingLastToggleAt: null,

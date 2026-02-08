@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Timestamp } from 'firebase/firestore';
+import { createMockTimestamp, createMockTimestampDaysAgo } from '../../helpers';
 
 // Mock Firestore before importing the module
 vi.mock('firebase/firestore', async () => {
@@ -91,18 +91,6 @@ function createMockDocSnapshotNotExists() {
     };
 }
 
-/**
- * Helper to create a mock Timestamp
- */
-function createMockTimestamp(daysAgo: number = 0): Timestamp {
-    const date = new Date();
-    date.setDate(date.getDate() - daysAgo);
-    return {
-        toDate: () => date,
-        seconds: Math.floor(date.getTime() / 1000),
-        nanoseconds: 0,
-    } as unknown as Timestamp;
-}
 
 // =============================================================================
 // Tests: getUserSharedGroupsPreferences
@@ -516,9 +504,9 @@ describe('updateShareMyTransactions', () => {
         // Arrange: Existing preference with high count from yesterday
         const existingPref: UserGroupPreference = {
             shareMyTransactions: true,
-            lastToggleAt: createMockTimestamp(1), // yesterday
+            lastToggleAt: createMockTimestampDaysAgo(1), // yesterday
             toggleCountToday: 3,
-            toggleCountResetAt: createMockTimestamp(1), // yesterday
+            toggleCountResetAt: createMockTimestampDaysAgo(1), // yesterday
         };
         mockGetDoc.mockResolvedValue(createMockDocSnapshot({
             groupPreferences: { [TEST_GROUP_ID]: existingPref },
@@ -567,9 +555,9 @@ describe('updateShareMyTransactions', () => {
         // Arrange: Existing preference that needs daily reset
         const existingPref: UserGroupPreference = {
             shareMyTransactions: true,
-            lastToggleAt: createMockTimestamp(1),
+            lastToggleAt: createMockTimestampDaysAgo(1),
             toggleCountToday: 2,
-            toggleCountResetAt: createMockTimestamp(1),
+            toggleCountResetAt: createMockTimestampDaysAgo(1),
         };
         mockGetDoc.mockResolvedValue(createMockDocSnapshot({
             groupPreferences: { [TEST_GROUP_ID]: existingPref },
@@ -593,9 +581,9 @@ describe('updateShareMyTransactions', () => {
         // Arrange: Same day, no reset needed
         const existingPref: UserGroupPreference = {
             shareMyTransactions: false,
-            lastToggleAt: createMockTimestamp(0),
+            lastToggleAt: createMockTimestamp(),
             toggleCountToday: 1,
-            toggleCountResetAt: createMockTimestamp(0),
+            toggleCountResetAt: createMockTimestamp(),
         };
         mockGetDoc.mockResolvedValue(createMockDocSnapshot({
             groupPreferences: { [TEST_GROUP_ID]: existingPref },

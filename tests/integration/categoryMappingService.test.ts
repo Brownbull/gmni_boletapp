@@ -9,11 +9,8 @@
  * AC #4: Unit tests cover all service functions with emulator
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
-    setupFirebaseEmulator,
-    teardownFirebaseEmulator,
-    clearFirestoreData,
     getAuthedFirestore,
     getUnauthFirestore,
     TEST_USERS,
@@ -21,6 +18,7 @@ import {
     assertSucceeds,
     assertFails,
 } from '../setup/firebase-emulator';
+import { useFirebaseEmulatorLifecycle } from '../helpers';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import {
     normalizeItemName,
@@ -67,17 +65,7 @@ describe('normalizeItemName', () => {
 describe('Category Mapping Service with Emulator', () => {
     const APP_ID = 'boletapp-d609f';
 
-    beforeAll(async () => {
-        await setupFirebaseEmulator();
-    });
-
-    afterAll(async () => {
-        await teardownFirebaseEmulator();
-    });
-
-    beforeEach(async () => {
-        await clearFirestoreData();
-    });
+    useFirebaseEmulatorLifecycle();
 
     describe('saveCategoryMapping', () => {
         it('should create a new mapping', async () => {

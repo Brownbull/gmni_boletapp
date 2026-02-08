@@ -33,6 +33,7 @@ import { getInvitationByShareCode } from '@/services/invitationService';
 import { getGroupByShareCode } from '@/features/shared-groups';
 import type { PendingInvitation, SharedGroup } from '@/types/sharedGroup';
 import { isShareCodeExpired } from '@/features/shared-groups';
+import { safeCSSColor } from '@/utils/validationUtils';
 
 // =============================================================================
 // Types
@@ -110,7 +111,7 @@ export const JoinGroupByCode: React.FC<JoinGroupByCodeProps> = ({
             id: `group-${groupId}`, // Synthetic ID to indicate it's from a group
             groupId,
             groupName: group.name,
-            groupColor: group.color || '#10b981',
+            groupColor: safeCSSColor(group.color),
             groupIcon: group.icon,
             shareCode: group.shareCode,
             invitedEmail: '', // No email for direct share code join

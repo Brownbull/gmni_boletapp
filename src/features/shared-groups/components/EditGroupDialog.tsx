@@ -35,6 +35,7 @@ import { EmojiPicker } from './EmojiPicker';
 import { ColorPicker } from './ColorPicker';
 import { TransactionSharingToggle } from './TransactionSharingToggle';
 import { MySharingPreferencesSection } from './MySharingPreferencesSection';
+import { safeCSSColor } from '@/utils/validationUtils';
 import type { SharedGroup } from '@/types/sharedGroup';
 
 // =============================================================================
@@ -264,7 +265,7 @@ export const EditGroupDialog: React.FC<EditGroupDialogProps> = ({
                         <div
                             className="w-12 h-12 shrink-0 aspect-square rounded-full flex items-center justify-center text-xl"
                             style={{
-                                backgroundColor: color,
+                                backgroundColor: safeCSSColor(color),
                                 fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif',
                                 lineHeight: 1,
                             }}

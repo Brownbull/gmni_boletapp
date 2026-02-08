@@ -143,7 +143,7 @@ export interface UseTrendsViewDataReturn {
     // === Callbacks ===
     /**
      * Callback to edit a transaction.
-     * In production, passed via __testData from App.tsx to coordinate with
+     * In production, passed via _testOverrides from App.tsx to coordinate with
      * setCurrentTransaction and navigation. Default stub just logs.
      */
     onEditTransaction: (transaction: Transaction) => void;
@@ -290,15 +290,15 @@ export function useTrendsViewData(): UseTrendsViewDataReturn {
         groupMembers,
         spendingByMember,
 
-        // Callbacks - stub implementation, override via __testData in production
-        // Story 14e-25b.1: No-op stub - App.tsx passes real callback via __testData
+        // Callbacks - stub implementation, override via _testOverrides in production
+        // Story 14e-25b.1: No-op stub - App.tsx passes real callback via _testOverrides
         onEditTransaction: (_transaction: Transaction) => {
-            // No-op: In production, App.tsx passes the real callback via __testData
+            // No-op: In production, App.tsx passes the real callback via _testOverrides
             // to coordinate with setCurrentTransaction and navigation state
             if (import.meta.env.DEV) {
                 console.warn(
-                    '[useTrendsViewData] onEditTransaction called without __testData. ' +
-                    'Pass onEditTransaction via __testData prop for production use.'
+                    '[useTrendsViewData] onEditTransaction called without _testOverrides. ' +
+                    'Pass onEditTransaction via _testOverrides prop for production use.'
                 );
             }
         },
@@ -310,6 +310,6 @@ export function useTrendsViewData(): UseTrendsViewDataReturn {
 // =============================================================================
 
 /**
- * Type alias for TrendsView data (for __testData prop typing)
+ * Type alias for TrendsView data (for _testOverrides prop typing)
  */
 export type TrendsViewData = UseTrendsViewDataReturn;

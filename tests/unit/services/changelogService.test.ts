@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Timestamp } from 'firebase/firestore';
+import { createMockTimestamp, createMockTimestampDaysAgo, createMockTimestampDaysFromNow } from '../../helpers';
 
 // Mock Firestore before importing the module
 vi.mock('firebase/firestore', async () => {
@@ -48,16 +48,6 @@ const mockOrderBy = vi.mocked(orderBy);
 const mockLimit = vi.mocked(limit);
 const mockGetDocs = vi.mocked(getDocs);
 
-// Helper to create mock Timestamp
-function createMockTimestamp(daysAgo: number = 0): Timestamp {
-    const date = new Date();
-    date.setDate(date.getDate() - daysAgo);
-    return {
-        toDate: () => date,
-        seconds: Math.floor(date.getTime() / 1000),
-        nanoseconds: 0,
-    } as unknown as Timestamp;
-}
 
 // Helper to create mock changelog entry data
 function createMockChangelogData(overrides?: Partial<ChangelogEntry>): Omit<ChangelogEntry, 'id'> {
@@ -84,7 +74,7 @@ function createMockChangelogData(overrides?: Partial<ChangelogEntry>): Omit<Chan
             description: 'Test Store',
             category: 'Supermarket',
         },
-        _ttl: createMockTimestamp(-30), // 30 days in the future
+        _ttl: createMockTimestampDaysFromNow(30), // 30 days in the future
         ...overrides,
     };
 }
@@ -101,7 +91,7 @@ function createMockDoc(id: string, data: Omit<ChangelogEntry, 'id'>) {
 describe('changelogService', () => {
     const mockDb = {} as any;
     const groupId = 'test-group-123';
-    const sinceTimestamp = createMockTimestamp(7); // 7 days ago
+    const sinceTimestamp = createMockTimestampDaysAgo(7); // 7 days ago
 
     beforeEach(() => {
         vi.clearAllMocks();

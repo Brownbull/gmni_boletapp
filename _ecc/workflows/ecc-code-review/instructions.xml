@@ -301,9 +301,15 @@
           2. Error handling completeness
           3. Performance considerations
           4. Naming conventions
-          5. DRY principle compliance
+          5. DRY principle compliance (use ast-grep to detect duplicated structural patterns across files)
           6. Complexity analysis
           7. Documentation quality
+
+          **ast-grep Structural Analysis (for DRY/duplication checks):**
+          Use ast-grep MCP tools when checking for duplicated patterns:
+          - `find_code`: Simple pattern search (e.g., `$ARR.sort(($A, $B) => $$$)` for inline comparators)
+          - `find_code_by_rule`: Complex rules (e.g., find batch.commit() without surrounding chunking loop)
+          See .claude/skills/ast-grep/SKILL.md for BoletApp-specific patterns.
 
           **Output Format:**
           ```
@@ -924,15 +930,16 @@
       {{/each}}
 
       **Next Steps:**
+      - Run `/workflow-close` to verify tests, status files, and branch state
       {{#if new_status == "done"}}
-      - Run `deploy-story` to deploy
+      - Run `/deploy-story` to deploy — or [C]ommit to branch for batching multiple stories
       {{/if}}
       {{#if ui_missing_e2e}}
       - Recommend: Run `/ecc-e2e` to add E2E coverage for new UI changes
       {{/if}}
       {{#if new_status != "done"}}
       - Address remaining issues
-      - Re-run `ecc-code-review` after fixes
+      - Re-run `/ecc-code-review` after fixes
       {{/if}}
     </output>
   </step>

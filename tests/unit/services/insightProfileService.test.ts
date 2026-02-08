@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
-import { Timestamp } from 'firebase/firestore';
+import { createMockTimestamp, createMockTimestampDaysAgo } from '../../helpers';
 import {
   getOrCreateInsightProfile,
   getInsightProfile,
@@ -59,24 +59,11 @@ function createMockFirestore() {
   return {} as import('firebase/firestore').Firestore;
 }
 
-function createMockTimestamp(daysAgo: number): Timestamp {
-  const date = new Date();
-  date.setDate(date.getDate() - daysAgo);
-  return {
-    toDate: () => date,
-    seconds: Math.floor(date.getTime() / 1000),
-    nanoseconds: 0,
-    toMillis: () => date.getTime(),
-    isEqual: () => false,
-    valueOf: () => '',
-    toJSON: () => ({ seconds: Math.floor(date.getTime() / 1000), nanoseconds: 0 }),
-  } as unknown as Timestamp;
-}
 
 function createUserProfile(overrides: Partial<UserInsightProfile> = {}): UserInsightProfile {
   return {
     schemaVersion: 1,
-    firstTransactionDate: createMockTimestamp(0),
+    firstTransactionDate: createMockTimestamp(),
     totalTransactions: 0,
     recentInsights: [],
     ...overrides,
@@ -86,7 +73,7 @@ function createUserProfile(overrides: Partial<UserInsightProfile> = {}): UserIns
 function createInsightRecord(insightId: string, daysAgo: number): InsightRecord {
   return {
     insightId,
-    shownAt: createMockTimestamp(daysAgo),
+    shownAt: createMockTimestampDaysAgo(daysAgo),
   };
 }
 
@@ -208,7 +195,7 @@ describe('trackTransactionForProfile', () => {
   it('should increment totalTransactions', async () => {
     const existingProfile = createUserProfile({
       totalTransactions: 5,
-      firstTransactionDate: createMockTimestamp(10),
+      firstTransactionDate: createMockTimestampDaysAgo(10),
     });
 
     (getDoc as Mock).mockResolvedValueOnce({
@@ -245,7 +232,7 @@ describe('trackTransactionForProfile', () => {
 
   it('should NOT overwrite existing firstTransactionDate', async () => {
     const existingProfile = createUserProfile({
-      firstTransactionDate: createMockTimestamp(30), // Already set
+      firstTransactionDate: createMockTimestampDaysAgo(30), // Already set
     });
 
     (getDoc as Mock).mockResolvedValueOnce({
@@ -416,7 +403,7 @@ describe('recordInsightShown', () => {
     // Simulate old InsightRecord format (only insightId, shownAt, transactionId)
     const oldStyleRecord: InsightRecord = {
       insightId: 'old_insight',
-      shownAt: createMockTimestamp(1),
+      shownAt: createMockTimestampDaysAgo(1),
       transactionId: 'old_tx',
       // No title, message, category, icon - simulating old data
     };
@@ -523,7 +510,7 @@ describe('resetInsightProfile', () => {
   it('should reset totalTransactions to 0', async () => {
     const profile = createUserProfile({
       totalTransactions: 100,
-      firstTransactionDate: createMockTimestamp(50),
+      firstTransactionDate: createMockTimestampDaysAgo(50),
     });
 
     (getDoc as Mock).mockResolvedValueOnce({
@@ -557,7 +544,7 @@ describe('resetInsightProfile', () => {
   });
 
   it('should preserve firstTransactionDate', async () => {
-    const originalTimestamp = createMockTimestamp(50);
+    const originalTimestamp = createMockTimestampDaysAgo(50);
     const profile = createUserProfile({
       firstTransactionDate: originalTimestamp,
       totalTransactions: 100,

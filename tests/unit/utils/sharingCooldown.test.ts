@@ -27,7 +27,7 @@ describe('sharingCooldown', () => {
     // =========================================================================
     describe('getCooldownRemainingMinutes', () => {
         it('returns 0 when lastToggleAt is null (no previous toggle)', () => {
-            const result = getCooldownRemainingMinutes(null, 15);
+            const result = getCooldownRemainingMinutes(null, SHARED_GROUP_LIMITS.TRANSACTION_SHARING_COOLDOWN_MINUTES);
             expect(result).toBe(0);
         });
 
@@ -37,7 +37,7 @@ describe('sharingCooldown', () => {
 
             const result = getCooldownRemainingMinutes(
                 createMockTimestamp(toggledAt),
-                15,
+                SHARED_GROUP_LIMITS.TRANSACTION_SHARING_COOLDOWN_MINUTES,
                 now
             );
 
@@ -50,7 +50,7 @@ describe('sharingCooldown', () => {
 
             const result = getCooldownRemainingMinutes(
                 createMockTimestamp(toggledAt),
-                15,
+                SHARED_GROUP_LIMITS.TRANSACTION_SHARING_COOLDOWN_MINUTES,
                 now
             );
 
@@ -63,7 +63,7 @@ describe('sharingCooldown', () => {
 
             const result = getCooldownRemainingMinutes(
                 createMockTimestamp(toggledAt),
-                15,
+                SHARED_GROUP_LIMITS.TRANSACTION_SHARING_COOLDOWN_MINUTES,
                 now
             );
 
@@ -76,7 +76,7 @@ describe('sharingCooldown', () => {
 
             const result = getCooldownRemainingMinutes(
                 createMockTimestamp(toggledAt),
-                15,
+                SHARED_GROUP_LIMITS.TRANSACTION_SHARING_COOLDOWN_MINUTES,
                 now
             );
 
@@ -91,7 +91,7 @@ describe('sharingCooldown', () => {
                 },
             } as unknown as Timestamp;
 
-            const result = getCooldownRemainingMinutes(corruptedTimestamp, 15);
+            const result = getCooldownRemainingMinutes(corruptedTimestamp, SHARED_GROUP_LIMITS.TRANSACTION_SHARING_COOLDOWN_MINUTES);
             expect(result).toBe(0);
         });
     });

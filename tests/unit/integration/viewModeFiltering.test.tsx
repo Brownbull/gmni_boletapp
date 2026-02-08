@@ -46,6 +46,7 @@ import {
 
 import type { Transaction } from '@/types/transaction';
 import type { SharedGroup } from '@/types/sharedGroup';
+import { createMockTimestamp } from '../../helpers';
 
 // =============================================================================
 // Test Data Factory
@@ -88,7 +89,7 @@ function createTestGroup(
         name,
         color: '#FF5733',
         members: ['user-1', 'user-2'],
-        createdAt: { toDate: () => new Date() } as any,
+        createdAt: createMockTimestamp(),
         createdBy: 'user-1',
         ...options,
     } as SharedGroup;

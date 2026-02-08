@@ -19,7 +19,6 @@ import {
     EditGroupDialog,
     TransactionSharingOptInDialog,
     SHARED_GROUP_LIMITS,
-    DEFAULT_GROUP_COLOR,
 } from '@/features/shared-groups';
 import type { GroupDialogsState, GroupDialogsActions } from '@/features/shared-groups';
 import type { useGruposViewHandlers } from './useGruposViewHandlers';
@@ -108,7 +107,7 @@ export const GruposViewDialogs: React.FC<GruposViewDialogsProps> = ({
             <TransactionSharingOptInDialog
                 open={handlers.isOptInDialogOpen}
                 groupName={handlers.optInGroup?.name || ''}
-                groupColor={handlers.optInGroup?.color || DEFAULT_GROUP_COLOR}
+                groupColor={handlers.optInGroup?.color ?? ''}
                 groupIcon={handlers.optInGroup?.icon}
                 onJoin={handlers.handleOptInJoin}
                 onCancel={handlers.handleOptInCancel}
@@ -123,7 +122,7 @@ export const GruposViewDialogs: React.FC<GruposViewDialogsProps> = ({
                 <LeaveGroupDialog
                     isOpen={dialogs.isLeaveDialogOpen}
                     groupName={dialogs.selectedGroupForAction.name}
-                    groupColor={dialogs.selectedGroupForAction.color || DEFAULT_GROUP_COLOR}
+                    groupColor={dialogs.selectedGroupForAction.color}
                     groupIcon={dialogs.selectedGroupForAction.icon}
                     onConfirm={handlers.handleConfirmLeave}
                     onClose={handlers.handleCloseLeaveDialog}
@@ -137,7 +136,7 @@ export const GruposViewDialogs: React.FC<GruposViewDialogsProps> = ({
                 <OwnerLeaveWarningDialog
                     isOpen={dialogs.isOwnerWarningOpen}
                     groupName={dialogs.selectedGroupForAction.name}
-                    groupColor={dialogs.selectedGroupForAction.color || DEFAULT_GROUP_COLOR}
+                    groupColor={dialogs.selectedGroupForAction.color}
                     groupIcon={dialogs.selectedGroupForAction.icon}
                     onManageMembers={handlers.handleOwnerWarningManageMembers}
                     onDeleteGroup={handlers.handleOwnerWarningDeleteGroup}
@@ -185,7 +184,7 @@ export const GruposViewDialogs: React.FC<GruposViewDialogsProps> = ({
                 <DeleteGroupDialog
                     isOpen={dialogs.isDeleteDialogOpen}
                     groupName={dialogs.selectedGroupForAction.name}
-                    groupColor={dialogs.selectedGroupForAction.color || DEFAULT_GROUP_COLOR}
+                    groupColor={dialogs.selectedGroupForAction.color}
                     groupIcon={dialogs.selectedGroupForAction.icon}
                     memberCount={dialogs.selectedGroupForAction.members?.length || 1}
                     onConfirm={handlers.handleConfirmDelete}

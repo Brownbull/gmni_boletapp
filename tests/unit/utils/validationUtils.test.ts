@@ -372,6 +372,17 @@ describe('validationUtils', () => {
     });
 
     // =========================================================================
+    // CSS Color Validation Shared Fixtures
+    // =========================================================================
+    const GROUP_COLORS = [
+        '#10b981', '#22c55e', '#84cc16', '#14b8a6',
+        '#3b82f6', '#0ea5e9', '#06b6d4', '#6366f1',
+        '#8b5cf6', '#a855f7', '#d946ef', '#ec4899',
+        '#f43f5e', '#ef4444', '#f97316', '#f59e0b',
+        '#eab308', '#78716c', '#64748b', '#71717a',
+    ];
+
+    // =========================================================================
     // validateCSSColor Tests (TD-CONSOLIDATED-7: CSS Color Injection Prevention)
     // =========================================================================
     describe('validateCSSColor', () => {
@@ -403,13 +414,6 @@ describe('validationUtils', () => {
             });
 
             it('accepts all GROUP_COLORS from allowlist', () => {
-                const GROUP_COLORS = [
-                    '#10b981', '#22c55e', '#84cc16', '#14b8a6',
-                    '#3b82f6', '#0ea5e9', '#06b6d4', '#6366f1',
-                    '#8b5cf6', '#a855f7', '#d946ef', '#ec4899',
-                    '#f43f5e', '#ef4444', '#f97316', '#f59e0b',
-                    '#eab308', '#78716c', '#64748b', '#71717a',
-                ];
                 for (const color of GROUP_COLORS) {
                     expect(validateCSSColor(color)).toBe(true);
                 }
@@ -538,16 +542,17 @@ describe('validationUtils', () => {
         });
 
         it('handles all GROUP_COLORS correctly', () => {
-            const GROUP_COLORS = [
-                '#10b981', '#22c55e', '#84cc16', '#14b8a6',
-                '#3b82f6', '#0ea5e9', '#06b6d4', '#6366f1',
-                '#8b5cf6', '#a855f7', '#d946ef', '#ec4899',
-                '#f43f5e', '#ef4444', '#f97316', '#f59e0b',
-                '#eab308', '#78716c', '#64748b', '#71717a',
-            ];
             for (const color of GROUP_COLORS) {
                 expect(safeCSSColor(color)).toBe(color);
             }
+        });
+
+        it('SECURITY: fallback is NOT validated - callers must use hardcoded values only', () => {
+            // Documents that safeCSSColor does NOT validate the fallback parameter.
+            // This is by design (allows var(--primary) fallbacks), but callers must
+            // NEVER pass user-controlled values as the fallback.
+            const maliciousFallback = 'red; position: fixed; z-index: 9999';
+            expect(safeCSSColor('invalid', maliciousFallback)).toBe(maliciousFallback);
         });
     });
 });

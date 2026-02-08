@@ -26,7 +26,7 @@ describe('userSharingCooldown', () => {
     // =========================================================================
     describe('getUserCooldownRemainingMinutes', () => {
         it('returns 0 when lastToggleAt is null (no previous toggle)', () => {
-            const result = getUserCooldownRemainingMinutes(null, 5);
+            const result = getUserCooldownRemainingMinutes(null, SHARED_GROUP_LIMITS.USER_SHARING_COOLDOWN_MINUTES);
             expect(result).toBe(0);
         });
 
@@ -36,7 +36,7 @@ describe('userSharingCooldown', () => {
 
             const result = getUserCooldownRemainingMinutes(
                 createMockTimestamp(toggledAt),
-                5,
+                SHARED_GROUP_LIMITS.USER_SHARING_COOLDOWN_MINUTES,
                 now
             );
 
@@ -49,7 +49,7 @@ describe('userSharingCooldown', () => {
 
             const result = getUserCooldownRemainingMinutes(
                 createMockTimestamp(toggledAt),
-                5,
+                SHARED_GROUP_LIMITS.USER_SHARING_COOLDOWN_MINUTES,
                 now
             );
 
@@ -62,7 +62,7 @@ describe('userSharingCooldown', () => {
 
             const result = getUserCooldownRemainingMinutes(
                 createMockTimestamp(toggledAt),
-                5,
+                SHARED_GROUP_LIMITS.USER_SHARING_COOLDOWN_MINUTES,
                 now
             );
 
@@ -75,7 +75,7 @@ describe('userSharingCooldown', () => {
 
             const result = getUserCooldownRemainingMinutes(
                 createMockTimestamp(toggledAt),
-                5,
+                SHARED_GROUP_LIMITS.USER_SHARING_COOLDOWN_MINUTES,
                 now
             );
 
@@ -90,7 +90,7 @@ describe('userSharingCooldown', () => {
                 },
             } as unknown as Timestamp;
 
-            const result = getUserCooldownRemainingMinutes(corruptedTimestamp, 5);
+            const result = getUserCooldownRemainingMinutes(corruptedTimestamp, SHARED_GROUP_LIMITS.USER_SHARING_COOLDOWN_MINUTES);
             expect(result).toBe(0);
         });
     });

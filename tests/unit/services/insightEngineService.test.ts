@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { Timestamp } from 'firebase/firestore';
+import { createMockTimestamp, createMockTimestampDaysAgo } from '../../helpers';
 import {
   generateInsightForTransaction,
   calculateUserPhase,
@@ -57,24 +57,11 @@ function createTransaction(overrides: Partial<Transaction> = {}): Transaction {
   };
 }
 
-function createMockTimestamp(daysAgo: number): Timestamp {
-  const date = new Date();
-  date.setDate(date.getDate() - daysAgo);
-  return {
-    toDate: () => date,
-    seconds: Math.floor(date.getTime() / 1000),
-    nanoseconds: 0,
-    toMillis: () => date.getTime(),
-    isEqual: () => false,
-    valueOf: () => '',
-    toJSON: () => ({ seconds: Math.floor(date.getTime() / 1000), nanoseconds: 0 }),
-  } as unknown as Timestamp;
-}
 
 function createUserProfile(overrides: Partial<UserInsightProfile> = {}): UserInsightProfile {
   return {
     schemaVersion: 1,
-    firstTransactionDate: createMockTimestamp(0),
+    firstTransactionDate: createMockTimestamp(),
     totalTransactions: 0,
     recentInsights: [],
     ...overrides,
@@ -105,7 +92,7 @@ function createInsight(overrides: Partial<Insight> = {}): Insight {
 function createInsightRecord(insightId: string, daysAgo: number): InsightRecord {
   return {
     insightId,
-    shownAt: createMockTimestamp(daysAgo),
+    shownAt: createMockTimestampDaysAgo(daysAgo),
   };
 }
 
@@ -136,56 +123,56 @@ describe('Type Exports', () => {
 describe('calculateUserPhase', () => {
   it('should return WEEK_1 for new user (0 days)', () => {
     const profile = createUserProfile({
-      firstTransactionDate: createMockTimestamp(0),
+      firstTransactionDate: createMockTimestamp(),
     });
     expect(calculateUserPhase(profile)).toBe('WEEK_1');
   });
 
   it('should return WEEK_1 for user with 5 days history', () => {
     const profile = createUserProfile({
-      firstTransactionDate: createMockTimestamp(5),
+      firstTransactionDate: createMockTimestampDaysAgo(5),
     });
     expect(calculateUserPhase(profile)).toBe('WEEK_1');
   });
 
   it('should return WEEK_1 for user at exactly 7 days', () => {
     const profile = createUserProfile({
-      firstTransactionDate: createMockTimestamp(7),
+      firstTransactionDate: createMockTimestampDaysAgo(7),
     });
     expect(calculateUserPhase(profile)).toBe('WEEK_1');
   });
 
   it('should return WEEKS_2_3 for user with 8 days history', () => {
     const profile = createUserProfile({
-      firstTransactionDate: createMockTimestamp(8),
+      firstTransactionDate: createMockTimestampDaysAgo(8),
     });
     expect(calculateUserPhase(profile)).toBe('WEEKS_2_3');
   });
 
   it('should return WEEKS_2_3 for user with 15 days history', () => {
     const profile = createUserProfile({
-      firstTransactionDate: createMockTimestamp(15),
+      firstTransactionDate: createMockTimestampDaysAgo(15),
     });
     expect(calculateUserPhase(profile)).toBe('WEEKS_2_3');
   });
 
   it('should return WEEKS_2_3 for user at exactly 21 days', () => {
     const profile = createUserProfile({
-      firstTransactionDate: createMockTimestamp(21),
+      firstTransactionDate: createMockTimestampDaysAgo(21),
     });
     expect(calculateUserPhase(profile)).toBe('WEEKS_2_3');
   });
 
   it('should return MATURE for user with 22 days history', () => {
     const profile = createUserProfile({
-      firstTransactionDate: createMockTimestamp(22),
+      firstTransactionDate: createMockTimestampDaysAgo(22),
     });
     expect(calculateUserPhase(profile)).toBe('MATURE');
   });
 
   it('should return MATURE for user with 100 days history', () => {
     const profile = createUserProfile({
-      firstTransactionDate: createMockTimestamp(100),
+      firstTransactionDate: createMockTimestampDaysAgo(100),
     });
     expect(calculateUserPhase(profile)).toBe('MATURE');
   });
@@ -554,7 +541,7 @@ describe('selectInsight - Story 10.5 enhancements', () => {
 
       const profile = createUserProfile({
         // User is in WEEK_1 (first transaction today)
-        firstTransactionDate: createMockTimestamp(0),
+        firstTransactionDate: createMockTimestamp(),
       });
       const cache = createLocalCache({ weekdayScanCount: 1 });
       const candidates: Insight[] = [
@@ -575,7 +562,7 @@ describe('selectInsight - Story 10.5 enhancements', () => {
 
       const profile = createUserProfile({
         // User is in WEEKS_2_3 (15 days ago)
-        firstTransactionDate: createMockTimestamp(15),
+        firstTransactionDate: createMockTimestampDaysAgo(15),
       });
       const cache = createLocalCache({ weekdayScanCount: 1 }); // Non-sprinkle
       const candidates: Insight[] = [
@@ -596,7 +583,7 @@ describe('selectInsight - Story 10.5 enhancements', () => {
 
       const profile = createUserProfile({
         // User is in MATURE (30 days ago)
-        firstTransactionDate: createMockTimestamp(30),
+        firstTransactionDate: createMockTimestampDaysAgo(30),
       });
       const cache = createLocalCache({ weekdayScanCount: 1 }); // Non-sprinkle
       const candidates: Insight[] = [
@@ -617,7 +604,7 @@ describe('selectInsight - Story 10.5 enhancements', () => {
 
       const profile = createUserProfile({
         // User is in MATURE (30 days ago)
-        firstTransactionDate: createMockTimestamp(30),
+        firstTransactionDate: createMockTimestampDaysAgo(30),
       });
       const cache = createLocalCache({ weekendScanCount: 1 }); // Non-sprinkle
       const candidates: Insight[] = [
@@ -639,7 +626,7 @@ describe('selectInsight - Story 10.5 enhancements', () => {
       vi.setSystemTime(new Date('2024-06-19T10:00:00')); // Wednesday
 
       const profile = createUserProfile({
-        firstTransactionDate: createMockTimestamp(30), // MATURE
+        firstTransactionDate: createMockTimestampDaysAgo(30), // MATURE
       });
       const cache = createLocalCache({ weekdayScanCount: 3 }); // Sprinkle scan
       const candidates: Insight[] = [
@@ -659,7 +646,7 @@ describe('selectInsight - Story 10.5 enhancements', () => {
       vi.setSystemTime(new Date('2024-06-19T10:00:00')); // Wednesday
 
       const profile = createUserProfile({
-        firstTransactionDate: createMockTimestamp(30), // MATURE
+        firstTransactionDate: createMockTimestampDaysAgo(30), // MATURE
       });
       const cache = createLocalCache({ weekdayScanCount: 4 }); // Non-sprinkle
       const candidates: Insight[] = [
@@ -698,7 +685,7 @@ describe('selectInsight - Story 10.5 enhancements', () => {
       vi.setSystemTime(new Date('2024-06-19T10:00:00')); // Wednesday
 
       const profile = createUserProfile({
-        firstTransactionDate: createMockTimestamp(0), // WEEK_1
+        firstTransactionDate: createMockTimestamp(), // WEEK_1
       });
       const cache = createLocalCache();
       // Only ACTIONABLE available, but WEEK_1 prefers QUIRKY_FIRST
@@ -721,7 +708,7 @@ describe('selectInsight - Story 10.5 enhancements', () => {
       vi.setSystemTime(new Date('2024-06-19T10:00:00')); // Wednesday
 
       const profile = createUserProfile({
-        firstTransactionDate: createMockTimestamp(0), // WEEK_1
+        firstTransactionDate: createMockTimestamp(), // WEEK_1
       });
       const cache = createLocalCache();
       const candidates: Insight[] = [
@@ -744,7 +731,7 @@ describe('selectInsight - Story 10.5 enhancements', () => {
 
       // MATURE user on weekday, non-sprinkle scan → prefers ACTIONABLE
       const profile = createUserProfile({
-        firstTransactionDate: createMockTimestamp(30), // MATURE
+        firstTransactionDate: createMockTimestampDaysAgo(30), // MATURE
       });
       const cache = createLocalCache({ weekdayScanCount: 1 }); // Non-sprinkle
 
@@ -772,7 +759,7 @@ describe('selectInsight - Story 10.5 enhancements', () => {
 
       // MATURE user on weekday → prefers ACTIONABLE, but all ACTIONABLE on cooldown
       const profile = createUserProfile({
-        firstTransactionDate: createMockTimestamp(30),
+        firstTransactionDate: createMockTimestampDaysAgo(30),
         recentInsights: [
           createInsightRecord('action_1', 1), // On cooldown
           createInsightRecord('action_2', 2), // On cooldown

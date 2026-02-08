@@ -15,7 +15,7 @@ import {
   type AirlockTemporalFilterState,
 } from '../../../../src/components/insights/AirlockTemporalFilter';
 import { AirlockRecord } from '../../../../src/types/airlock';
-import { Timestamp } from 'firebase/firestore';
+import { createMockTimestamp } from '../../../helpers';
 
 // ============================================================================
 // Test Helpers
@@ -32,18 +32,6 @@ const mockT = (key: string) => {
   };
   return translations[key] || key;
 };
-
-function createMockTimestamp(date: Date): Timestamp {
-  return {
-    toDate: () => date,
-    seconds: Math.floor(date.getTime() / 1000),
-    nanoseconds: 0,
-    toMillis: () => date.getTime(),
-    isEqual: () => false,
-    valueOf: () => '',
-    toJSON: () => ({ seconds: Math.floor(date.getTime() / 1000), nanoseconds: 0 }),
-  } as unknown as Timestamp;
-}
 
 function createMockAirlock(date: Date, id: string = 'airlock-1'): AirlockRecord {
   return {

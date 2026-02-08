@@ -10,22 +10,13 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import type { Timestamp } from 'firebase/firestore';
 import type { UserGroupPreference, UserSharedGroupsPreferences } from '@/types/sharedGroup';
 import {
     createDefaultGroupPreference,
     SHARED_GROUP_LIMITS,
     DEFAULT_GROUP_PREFERENCE,
 } from '@/types/sharedGroup';
-
-// Test helper: Create mock Timestamp
-function createMockTimestamp(date: Date): Timestamp {
-    return {
-        toDate: () => date,
-        seconds: Math.floor(date.getTime() / 1000),
-        nanoseconds: 0,
-    } as unknown as Timestamp;
-}
+import { createMockTimestamp } from '../../helpers';
 
 describe('UserGroupPreference Type (AC1)', () => {
     it('interface includes toggleCountResetAt field', () => {
