@@ -2292,6 +2292,24 @@ describe('GruposView', () => {
 
             expect(mockDialogActions.closeEditDialog).toHaveBeenCalled();
         });
+
+        it('shows error toast when update fails', async () => {
+            mockUpdateGroupAsync.mockRejectedValue(new Error('Update failed'));
+            mockGroups = [mockOwnedGroup];
+            mockDialogState.editingGroup = mockOwnedGroup;
+            mockDialogState.isEditDialogOpen = true;
+
+            render(<GruposView {...defaultProps} />);
+
+            await userEvent.click(screen.getByTestId('mock-edit-save'));
+
+            await waitFor(() => {
+                expect(defaultProps.onShowToast).toHaveBeenCalledWith(
+                    expect.any(String),
+                    'error'
+                );
+            });
+        });
     });
 
     // =========================================================================

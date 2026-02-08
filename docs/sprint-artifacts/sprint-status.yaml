@@ -155,7 +155,7 @@ development_status:
 
   # TIER 1: Code Bloat Prevention (MUST DO) - 11-16 hrs
   TD-CONSOLIDATED-1-groupservice-modularization: done  # 4-6 hrs - Split 1,509 LOC into 4 modules [from: TD-14d-4] - ECC Code Review 2026-02-07: APPROVED (8/10, 8 quick fixes applied, 3 complex deferred to TD-17/18)
-  TD-CONSOLIDATED-2-gruposview-dialog-extraction: ready-for-dev  # 2-3 hrs - Extract dialog rendering to GruposViewDialogs.tsx [from: TD-14d-3, DEPENDS: TD-CONSOLIDATED-1]
+  TD-CONSOLIDATED-2-gruposview-dialog-extraction: done  # 2-3 hrs - Extract dialog rendering to GruposViewDialogs.tsx [from: TD-14d-3, DEPENDS: TD-CONSOLIDATED-1] - ECC Code Review 2026-02-08: APPROVED (8.5/10, 2 quick fixes applied, 1 TD story created: TD-19)
   TD-CONSOLIDATED-3-dry-utilities-extraction: ready-for-dev  # 3-4 hrs - Transaction merge, ViewMode type consolidation, shared test factory [from: TD-14d-30, 33, 34]
   TD-CONSOLIDATED-4-cooldown-core-extraction: ready-for-dev  # 2-3 hrs - Extract ~80% duplicated cooldown logic to cooldownCore.ts [from: TD-14d-48 core, 36]
 
@@ -181,6 +181,9 @@ development_status:
   # Added from TD-CONSOLIDATED-1 code review (2026-02-07)
   TD-CONSOLIDATED-17-deletion-cascade-dry: ready-for-dev  # 1-2 hrs - Extract duplicated cascade cleanup helper in groupDeletionService [from: TD-CONSOLIDATED-1 review #5, DEPENDS: TD-CONSOLIDATED-1]
   TD-CONSOLIDATED-18-group-service-validation-gaps: ready-for-dev  # 1-2 hrs - photoURL URL validation + createGroup BC-1 atomicity [from: TD-CONSOLIDATED-1 review #9/#10]
+
+  # Added from TD-CONSOLIDATED-2 code review (2026-02-08)
+  TD-CONSOLIDATED-19-handler-error-coverage: ready-for-dev  # 1-2 hrs - Re-thrown errors + handleToggleTransactionSharing test coverage [from: TD-CONSOLIDATED-2 review #1/#2, DEPENDS: TD-CONSOLIDATED-2]
 
   # ARCHIVED (42+ items) - Fix inline if encountered, not tracked individually
   # See: stories/TD-ARCHIVED/ and TD-CONSOLIDATED-PLAN.md for full archive list
