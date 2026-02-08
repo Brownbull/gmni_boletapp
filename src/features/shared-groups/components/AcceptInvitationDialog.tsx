@@ -33,6 +33,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { X, Users, Check, Loader2, Share2, XCircle, ArrowLeft } from 'lucide-react';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { validateGroupId } from '@/utils/validationUtils';
 import { useBodyScrollLock, useEscapeKey, useFocusTrap } from '@/shared/hooks';
 import { Z_INDEX } from '@/constants';
 import type { PendingInvitation, SharedGroup } from '@/types/sharedGroup';
@@ -103,6 +104,9 @@ export const AcceptInvitationDialog: React.FC<AcceptInvitationDialogProps> = ({
             setGroupError(null);
 
             try {
+                // TD-CONSOLIDATED-6: Validate groupId before Firestore path construction
+                validateGroupId(invitation.groupId);
+
                 const db = getFirestore();
                 const groupRef = doc(db, 'sharedGroups', invitation.groupId);
                 const groupSnap = await getDoc(groupRef);

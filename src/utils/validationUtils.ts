@@ -116,3 +116,34 @@ export function validateAppId(appId: string): boolean {
     }
     return (ALLOWED_APP_IDS as readonly string[]).includes(appId);
 }
+
+// =============================================================================
+// Group ID Validation (TD-CONSOLIDATED-6: GroupId Validation)
+// =============================================================================
+
+/**
+ * Regex pattern for validating groupId.
+ *
+ * Rules:
+ * - Only alphanumeric characters, hyphens, and underscores allowed
+ * - Length must be between 1 and 128 characters
+ * - Prevents Firestore path injection (/) and field path injection (.)
+ */
+const VALID_GROUP_ID_REGEX = /^[a-zA-Z0-9_-]{1,128}$/;
+
+/**
+ * Validates a groupId against security and format constraints.
+ *
+ * Prevents path injection attacks by ensuring groupId contains only
+ * safe characters before use in Firestore document paths or field paths.
+ *
+ * @param groupId - The group ID to validate
+ * @throws Error if groupId is invalid
+ */
+export function validateGroupId(groupId: string): void {
+    if (!groupId || typeof groupId !== 'string' || !VALID_GROUP_ID_REGEX.test(groupId)) {
+        throw new Error(
+            'Invalid groupId: must be 1-128 characters containing only letters, numbers, hyphens, or underscores'
+        );
+    }
+}

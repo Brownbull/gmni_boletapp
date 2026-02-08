@@ -49,7 +49,7 @@ import type {
 import { SHARED_GROUP_LIMITS } from '@/types/sharedGroup';
 import { generateShareCode } from '@/services/sharedGroupService';
 import { sanitizeInput } from '@/utils/sanitize';
-import { validateAppId } from '@/utils/validationUtils';
+import { validateAppId, validateGroupId } from '@/utils/validationUtils';
 import { canToggleTransactionSharing, shouldResetDailyCount } from '@/utils/sharingCooldown';
 import {
     GROUPS_COLLECTION,
@@ -329,6 +329,8 @@ export async function updateGroup(
     if (!groupId || !userId) {
         throw new Error('Group ID and user ID are required');
     }
+    // TD-CONSOLIDATED-6: Validate groupId before Firestore path construction
+    validateGroupId(groupId);
 
     // Build the update object with validation BEFORE transaction
     // (validation doesn't require database state)
@@ -438,6 +440,8 @@ export async function updateTransactionSharingEnabled(
     if (!groupId || !userId) {
         throw new Error('Group ID and user ID are required');
     }
+    // TD-CONSOLIDATED-6: Validate groupId before Firestore path construction
+    validateGroupId(groupId);
 
     const groupRef = doc(db, GROUPS_COLLECTION, groupId);
 

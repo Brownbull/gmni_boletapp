@@ -16,6 +16,7 @@ import {
   Firestore,
   Unsubscribe,
 } from 'firebase/firestore';
+import { validateGroupId } from '@/utils/validationUtils';
 
 /**
  * Supported currencies for the application
@@ -184,33 +185,9 @@ import { shouldResetUserDailyCount } from '@/utils/userSharingCooldown';
 // Re-export for convenience
 export type { UserSharedGroupsPreferences, UserGroupPreference };
 
-/**
- * Regex pattern for validating groupId.
- *
- * Story 14d-v2-1-12c ECC Review #2: Enhanced validation with length limit and character whitelist.
- *
- * Rules:
- * - Only alphanumeric characters, hyphens, and underscores allowed
- * - Length must be between 1 and 128 characters
- * - Prevents Firestore path injection and ensures consistent data
- *
- * @see TD-14d-55-groupid-validation for centralized validation discussion
- */
-const VALID_GROUP_ID_REGEX = /^[a-zA-Z0-9_-]{1,128}$/;
-
-/**
- * Validates a groupId against security and format constraints.
- *
- * @param groupId - The group ID to validate
- * @throws Error if groupId is invalid
- */
-export function validateGroupId(groupId: string): void {
-  if (!groupId || typeof groupId !== 'string' || !VALID_GROUP_ID_REGEX.test(groupId)) {
-    throw new Error(
-      'Invalid groupId: must be 1-128 characters containing only letters, numbers, hyphens, or underscores'
-    );
-  }
-}
+// TD-CONSOLIDATED-6: validateGroupId moved to canonical location @/utils/validationUtils
+// Re-exported here for backward compatibility with existing importers
+export { validateGroupId } from '@/utils/validationUtils';
 
 /**
  * Get the Firestore document reference for user shared groups preferences.

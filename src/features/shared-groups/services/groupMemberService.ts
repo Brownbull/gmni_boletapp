@@ -18,11 +18,11 @@ import {
     arrayUnion,
     arrayRemove,
 } from 'firebase/firestore';
-import { removeGroupPreference, validateGroupId } from '@/services/userPreferencesService';
+import { removeGroupPreference } from '@/services/userPreferencesService';
 import type { SharedGroup, MemberProfile } from '@/types/sharedGroup';
 import { SHARED_GROUP_LIMITS, createDefaultGroupPreference } from '@/types/sharedGroup';
 import { sanitizeInput } from '@/utils/sanitize';
-import { validateAppId } from '@/utils/validationUtils';
+import { validateAppId, validateGroupId } from '@/utils/validationUtils';
 import { GROUPS_COLLECTION } from './groupConstants';
 
 // =============================================================================
@@ -62,6 +62,8 @@ export async function joinGroupDirectly(
     if (!groupId || !userId) {
         throw new Error('Group ID and user ID are required');
     }
+    // TD-CONSOLIDATED-6: Validate groupId before Firestore path construction
+    validateGroupId(groupId);
 
     // Story 14d-v2-1-13+14: Validate appId if provided (ECC Security Review fix)
     if (appId && !validateAppId(appId)) {
@@ -114,8 +116,6 @@ export async function joinGroupDirectly(
 
         // Story 14d-v2-1-13+14: Write user group preference atomically (AC15)
         if (appId) {
-            // H-1 fix: Validate groupId before dot-notation field path (prevents path injection)
-            validateGroupId(groupId);
             const prefsDocRef = doc(db, 'artifacts', appId, 'users', userId, 'preferences', 'sharedGroups');
             const preference = createDefaultGroupPreference({
                 shareMyTransactions: shareMyTransactions ?? false,
@@ -170,6 +170,8 @@ export async function leaveGroup(
     if (!userId || !groupId) {
         throw new Error('User ID and group ID are required');
     }
+    // TD-CONSOLIDATED-6: Validate groupId before Firestore path construction
+    validateGroupId(groupId);
 
     await runTransaction(db, async (transaction) => {
         // Get the group document
@@ -232,6 +234,8 @@ export async function transferOwnership(
     if (!currentOwnerId || !newOwnerId || !groupId) {
         throw new Error('Current owner ID, new owner ID, and group ID are required');
     }
+    // TD-CONSOLIDATED-6: Validate groupId before Firestore path construction
+    validateGroupId(groupId);
 
     await runTransaction(db, async (transaction) => {
         // Get the group document
@@ -293,6 +297,12 @@ export async function leaveGroupWithCleanup(
     groupId: string,
     appId: string
 ): Promise<void> {
+    // Input validation (consistent with leaveGroup)
+    if (!userId || !groupId) {
+        throw new Error('User ID and group ID are required');
+    }
+    // TD-CONSOLIDATED-6: Validate groupId at entry point (defense-in-depth)
+    validateGroupId(groupId);
     // ECC Review Fix: Validate appId for consistency with other functions
     if (!validateAppId(appId)) {
         throw new Error('Invalid application ID');
@@ -343,6 +353,8 @@ export async function transferAndLeaveWithCleanup(
     if (!currentOwnerId || !newOwnerId || !groupId) {
         throw new Error('Current owner ID, new owner ID, and group ID are required');
     }
+    // TD-CONSOLIDATED-6: Validate groupId at entry point (defense-in-depth)
+    validateGroupId(groupId);
     // ECC Review Fix: Validate appId for consistency with other functions
     if (!validateAppId(appId)) {
         throw new Error('Invalid application ID');

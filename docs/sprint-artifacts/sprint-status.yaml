@@ -161,8 +161,8 @@ development_status:
 
   # TIER 2: Security (SHOULD DO) - 4-7 hrs
   TD-CONSOLIDATED-5-invitation-read-restriction: done  # 2-3 hrs - Restrict pendingInvitations read to email match [from: TD-14d-5] - ECC Code Review 2026-02-08: APPROVED (8/10, 6 quick fixes applied, 0 blockers)
-  TD-CONSOLIDATED-6-groupid-validation: review  # 1-2 hrs - Validate groupId before Firestore field paths [from: TD-14d-55]
-  TD-CONSOLIDATED-7-css-color-injection-validation: ready-for-dev  # 1-2 hrs - Validate group.color before CSS injection [from: TD-14d-28]
+  TD-CONSOLIDATED-6-groupid-validation: done  # 1-2 hrs - Validate groupId before Firestore field paths [from: TD-14d-55] - ECC Code Review 2026-02-08: APPROVED (7.5/10, 5 quick fixes applied, 1 TD story created: TD-20)
+  TD-CONSOLIDATED-7-css-color-injection-validation: in-progress  # 1-2 hrs - Validate group.color before CSS injection [from: TD-14d-28]
 
   # TIER 3: Test Quality (DO WHEN TOUCHING) - 4-6 hrs
   TD-CONSOLIDATED-8-test-infrastructure-cleanup: ready-for-dev  # 4-6 hrs - DRY test helpers, type safety, naming conventions [from: TD-14d-8, 31, 34, 35, 37, 49]
@@ -184,6 +184,9 @@ development_status:
 
   # Added from TD-CONSOLIDATED-2 code review (2026-02-08)
   TD-CONSOLIDATED-19-handler-error-coverage: ready-for-dev  # 1-2 hrs - Re-thrown errors + handleToggleTransactionSharing test coverage [from: TD-CONSOLIDATED-2 review #1/#2, DEPENDS: TD-CONSOLIDATED-2]
+
+  # Added from TD-CONSOLIDATED-6 code review (2026-02-08)
+  TD-CONSOLIDATED-20-cloud-functions-groupid-validation: ready-for-dev  # 1 hr - Align Cloud Functions isValidGroupId() regex with client-side validateGroupId() [from: TD-CONSOLIDATED-6 review #4]
 
   # ARCHIVED (42+ items) - Fix inline if encountered, not tracked individually
   # See: stories/TD-ARCHIVED/ and TD-CONSOLIDATED-PLAN.md for full archive list
